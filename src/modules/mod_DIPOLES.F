@@ -138,7 +138,24 @@ module DIPOLES
      endif
    end subroutine
    !
-   subroutine DIPOLES_reset(Dip,nb)
+   subroutine DIPOLES_duplicate(Dip_in,Dip_out)
+     type(DIPOLE_t), intent(in) :: Dip_in
+     type(DIPOLE_t), intent(out):: Dip_out
+     Dip_out%iq        = Dip_in%iq
+     Dip_out%ib        = Dip_in%ib
+     Dip_out%ib_lim    = Dip_in%ib_lim
+     Dip_out%db_ib     = Dip_in%db_ib
+     Dip_out%db_ib_lim = Dip_in%db_ib_lim
+     Dip_out%ngostnts  = Dip_in%ngostnts
+     Dip_out%ehe       = Dip_in%ehe
+     Dip_out%q0        = Dip_in%q0
+     Dip_out%Energy_treshold    = Dip_in%Energy_treshold
+     Dip_out%Energy_treshold_vv = Dip_in%Energy_treshold_vv
+     Dip_out%Vnl_included       = Dip_in%Vnl_included
+     Dip_out%approach           = Dip_in%approach
+   end subroutine DIPOLES_duplicate
+   !
+   subroutine DIPOLES_reset(Dip)
      use pars,  ONLY:czero
      type(DIPOLE_t)::Dip
      integer       ::nb
@@ -154,7 +171,7 @@ module DIPOLES
      Dip%Energy_treshold_vv=1.E+5_SP/HA2EV
      Dip%Vnl_included=.false.
      Dip%approach="G-space v"
-   end subroutine
+   end subroutine DIPOLES_reset
    !
 end module
 

@@ -191,7 +191,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
-   call DIPOLES_reset(Dip,en%nb)
+   call DIPOLES_reset(Dip)
  endif
  !
  ! Presets (local)

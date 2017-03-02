@@ -61,7 +61,6 @@ module openmp
 #else
  logical     :: omp_is_off    = .TRUE.
 #endif
-
  !
  ! lock vars
  !
@@ -69,14 +68,12 @@ module openmp
  integer(omp_lock_kind), allocatable :: omp_locks(:)
 #endif
  integer :: openmp_num_locks=0
-
  !
  ! nesting
  !
  integer       :: n_outthr, n_innthr
  character(25) :: s_outthr, s_innthr
-
- 
+ !
  contains
    !
    subroutine OPENMP_initialize( )

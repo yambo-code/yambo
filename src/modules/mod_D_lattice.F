@@ -24,9 +24,6 @@
 module D_lattice
  !
  use pars,      ONLY:SP,lchlen
-!#if defined _CUDA
-! use cudafor
-!#endif
  !
  implicit none
  !
@@ -53,9 +50,9 @@ module D_lattice
  logical :: mag_syms
  real(SP),allocatable    :: dl_sop(:,:,:)
  complex(SP),allocatable :: spin_sop(:,:,:)
-!#if defined _CUDA
-! complex(SP),allocatable, device :: spin_sop_d(:,:,:)
-!#endif
+#if defined _CUDA
+ complex(SP),allocatable, device :: spin_sop_d(:,:,:)
+#endif
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
  !

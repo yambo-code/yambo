@@ -26,8 +26,8 @@ f90suffix   = @F90SUFFIX@
 pf90        = @PF90@
 pf90flags   = @PF90FLAGS@ @FCMFLAG@ @OPENMPLIBS@ @CUDA_FLAGS@
 f77         = @F77@
-f77flags    = @FFLAGS@ @CUDA_FLAGS@
-f77uflags   = @UFFLAGS@ @CUDA_FLAGS@
+f77flags    = @FFLAGS@
+f77uflags   = @UFFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
 shell       = @SHELL@
 #

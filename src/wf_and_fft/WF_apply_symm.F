@@ -127,12 +127,12 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  !
  use pars,          ONLY:SP
  use wave_func,     ONLY:WF
- use FFT_m,         ONLY:fft_rot_r,fft_size
+ use FFT_m,         ONLY:fft_rot_r_d,fft_size
  use com,           ONLY:error
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use electrons,     ONLY:n_spinor
- use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
+ use D_lattice,     ONLY:nsym,spin_sop_d,i_time_rev,idt_index
  use cudafor
  !
  implicit none
@@ -146,11 +146,6 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  integer         :: i, isp, isymm
  integer, device :: isymm_d
 
- !
- ! WORKAROUND
- !
- integer, allocatable, device :: fft_rot_r_d(:,:)
- complex(SP), allocatable, device :: spin_sop_d(:,:,:)
  !
  i_wf(1)=WF%index(isc(1),isc(2),isc(4))
  !
@@ -180,11 +175,6 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
    return
  endif
  !
- ! WORKAROUND
- !
- allocate(fft_rot_r_d,source=fft_rot_r)
- allocate(spin_sop_d,source=spin_sop)
- !
  if(n_spinor==1) then
    !
    !$cuf kernel do(1) <<<*,*>>>
@@ -211,9 +201,6 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
      enddo
    enddo
  endif
- !
- deallocate(fft_rot_r_d)
- deallocate(spin_sop_d)
  !
 end subroutine WF_apply_symm_gpu
 #endif

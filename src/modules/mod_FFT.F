@@ -23,9 +23,6 @@
 !
 module FFT_m
  use pars,         ONLY: SP
-!#ifdef _CUDA
-! use cudafor
-!#endif
  implicit none
  !
  real(SP)             :: fft_norm
@@ -36,11 +33,11 @@ module FFT_m
  integer, allocatable :: fft_g_table(:,:)
  integer, allocatable :: fft_rot_r(:,:)
  integer, allocatable :: fft_rot_r_inv(:)
-!#ifdef _CUDA
-! integer, allocatable, device :: fft_g_table_d(:,:)
-! integer, allocatable, device :: fft_rot_r_d(:,:)
-! integer, allocatable, device :: fft_rot_r_inv_d(:)
-!#endif
+#ifdef _CUDA
+ integer, allocatable, device :: fft_g_table_d(:,:)
+ integer, allocatable, device :: fft_rot_r_d(:,:)
+ integer, allocatable, device :: fft_rot_r_inv_d(:)
+#endif
  !
  ! FFTW support
  !

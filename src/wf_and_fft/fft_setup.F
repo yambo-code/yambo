@@ -30,9 +30,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
-!#if defined _CUDA
-! use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
-!#endif
+#if defined _CUDA
+ use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
+#endif
  use wave_func,      ONLY:wf_ng
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
@@ -151,14 +151,14 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    i4=1
-!#if defined _CUDA
-!   if (allocated(fft_g_table)) deallocate(fft_g_table)
-!   if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)
-!   if (allocated(fft_rot_r_inv_d)) deallocate(fft_rot_r_inv_d)
-!   allocate(fft_g_table_d,source=fft_g_table)
-!   allocate(fft_rot_r_d,source=fft_rot_r)
-!   allocate(fft_rot_r_inv_d,source=fft_rot_r_inv)
-!#endif
+#if defined _CUDA
+   if (allocated(fft_g_table)) deallocate(fft_g_table)
+   if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)
+   if (allocated(fft_rot_r_inv_d)) deallocate(fft_rot_r_inv_d)
+   allocate(fft_g_table_d,source=fft_g_table)
+   allocate(fft_rot_r_d,source=fft_rot_r)
+   allocate(fft_rot_r_inv_d,source=fft_rot_r_inv)
+#endif
  enddo
  
  !

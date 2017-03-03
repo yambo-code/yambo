@@ -96,8 +96,11 @@ subroutine fft_desc_init(n,iGo_max,dfft)
  !
  ! set up fft descriptors, including parallel stuff: sticks, planes, etc.
  !
+#ifndef _USE_3D_FFT
+ call error(" [FFT] QE FFT must be used with USE_3D_FFT")
+#endif
  CALL pstickset( .FALSE., bg, gcutm, gkcut, gcutm, &
-                 dfftp_dum, dfft, ngw, ngm, ngs, 0, 0, 1, INTRA_CHAIN(n_chains)%COMM, 1 )
+                 dfftp_dum, dfft, ngw, ngm, ngs, 0, 0, 1, mpi_comm_world, 1 )
  !
  return
 end subroutine fft_desc_init

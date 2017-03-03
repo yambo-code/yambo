@@ -204,9 +204,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        !
        iscp%rhotw=isc%rhotw
 #ifdef _CUDA
-       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
-#else
        if (isc%is(1)/=iscp%is(1)) call scatter_Bamp_gpu(iscp)
+#else
+       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
 #endif
        !
        !

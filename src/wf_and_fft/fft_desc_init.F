@@ -26,7 +26,7 @@ subroutine fft_desc_init(n,iGo_max,dfft)
  ! init dffts as required by the QE FFT lib
  !
  use pars,       ONLY:DP,pi
- use parallel_m, ONLY:INTRA_CHAIN,n_chains
+ use parallel_m, ONLY:mpi_comm_world
  use fft_types,  ONLY:fft_dlay_descriptor,fft_dlay_deallocate
  use fft_scalar, ONLY:good_fft_dimension
  use stick_set,  ONLY:pstickset

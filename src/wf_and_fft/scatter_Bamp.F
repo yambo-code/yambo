@@ -194,32 +194,19 @@ subroutine scatter_Bamp_gpu(isc)
  use electrons,      ONLY:n_spinor
  use collision_el,   ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
- use R_lattice,      ONLY:g_rot
- use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+ use R_lattice,      ONLY:g_rot_d
+ use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table_d
  use FFT_m,          ONLY:cufft_plan
  !
  implicit none
  !
  type(elemental_collision)::isc
- !
- ! WORKAROUND
- !
- integer, allocatable, device :: fft_g_table_d(:,:)
- integer, allocatable, device :: g_rot_d(:,:)
-
- !
+ 
  integer     :: qs,iGo
  integer     :: ig, ir
- !
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
-
- !
- ! WORKAROUND
- !
- allocate(fft_g_table_d,source=fft_g_table)
- allocate(g_rot_d,source=g_rot)
 
  !
  ! define pointer to enable CUF kernels
@@ -231,10 +218,10 @@ subroutine scatter_Bamp_gpu(isc)
 
  !
  ! |ib ik_is i_sp>
- call WF_apply_symm_gpu(isc%is,isc%WF_symm_i_d)
+ call WF_apply_symm_gpu(isc%is,WF_symm_i_d)
  !
  ! | ob ok_os o_sp>   
- call WF_apply_symm_gpu(isc%os,isc%WF_symm_o_d)
+ call WF_apply_symm_gpu(isc%os,WF_symm_o_d)
 
  !
  ! \tilde{\rho} in Real Space
@@ -285,12 +272,6 @@ subroutine scatter_Bamp_gpu(isc)
  if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  
- !
- ! WORKAROUND
- !
- deallocate(fft_g_table_d)
- deallocate(g_rot_d)
-
 end subroutine scatter_Bamp_gpu
 
 #endif

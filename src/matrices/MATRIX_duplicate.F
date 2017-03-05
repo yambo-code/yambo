@@ -124,6 +124,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  enddo
 #if defined _OPENMP
  !$omp enddo
+ !$omp end parallel
 #endif
  !
 end SUBROUTINE

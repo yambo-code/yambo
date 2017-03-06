@@ -116,10 +116,10 @@ module wave_func
      WF_out%N=WF_in%N
      WF_out%space=WF_in%space
      WF_out%to_load=WF_in%to_load
-     YAMBO_ALLOC(WF_out%c,(fft_size,WF_out%N))
-     YAMBO_ALLOC(WF_out%c,(wf_ng,WF_out%N))
-     YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
-     YAMBO_ALLOC(WF_out%index,(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
+     if (WF%space=="R") allocate(WF_out%c(fft_size,WF_out%N))
+     if (WF%space=="G") allocate(WF_out%c(wf_ng,WF_out%N))
+     if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N))
+     allocate(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index
    end subroutine
@@ -143,11 +143,11 @@ module wave_func
    end subroutine
    !
    subroutine WF_derivative_free()
-       !
-       YAMBO_FREE(wf_x)
-       YAMBO_FREE(wf_y)
-       YAMBO_FREE(wf_z)
-       !
+     !
+     YAMBO_FREE(wf_x)
+     YAMBO_FREE(wf_y)
+     YAMBO_FREE(wf_z)
+     !
    end subroutine
    !
 end module

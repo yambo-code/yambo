@@ -139,7 +139,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! 
  ! SLK matrix initialization before the Kernel loading
  !
- call MATRIX_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
  !
  if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
  !

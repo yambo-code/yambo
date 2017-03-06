@@ -248,8 +248,6 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    endif
    !
-#endif
-   !
    call OPENMP_set_threads(n_threads_in=n_threads_RT)
    !
  endif

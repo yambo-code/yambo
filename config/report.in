@@ -9,7 +9,7 @@
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
 # [@TIME_profile_str@] Run-Time timing profile 
-# [@MEM_profile_str@] On-the-fly memory monitor 
+# [@MEM_profile_str@] Run-Time memory profile 
 # 
 # - PARALLEL SUPPORT -
 #

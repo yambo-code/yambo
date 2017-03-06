@@ -32,6 +32,8 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
+compiler_cpp=
+#
 case "${host}" in
 i?86*linux*)
   case "${FC}" in
@@ -40,6 +42,7 @@ i?86*linux*)
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
+    compiler_cpp="-D_PGI"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -144,6 +147,7 @@ ia64*linux* )
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
+    compiler_cpp="-D_PGI"
     ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
@@ -203,6 +207,7 @@ ia64*linux* )
     UFFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
+    compiler_cpp="-D_PGI"
     ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
@@ -272,12 +277,14 @@ powerpc64*linux* )
   SYSFLAGS="-q64 -O2 -qnoescape -qnostrict -qarch=ppc970 -qtune=ppc970"
   UFFLAGS="-q64 -O0"
   OMPFLAGS=""
+  compiler_cpp="-D_XLF"
   ;;
 powerpc-ibm* )
   CFLAGS="-O -q64"
   SYSFLAGS="-O3 -q64 -qstrict -qarch=auto -qtune=auto -qmaxmem=-1"
   UFFLAGS="-q64"
   OMPFLAGS="-qthreaded"
+  compiler_cpp="-D_XLF"
   ;;
 mips-sgi-irix*)
   SYSFLAGS="-O3 -r10000 -mips4"
@@ -314,5 +321,6 @@ AC_SUBST(FCUFLAGS)
 AC_SUBST(UFFLAGS)
 AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)
+AC_SUBST(compiler_cpp)
 ])
 #

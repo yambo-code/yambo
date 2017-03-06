@@ -164,15 +164,7 @@ if test "$compile_p2y" = "yes"; then
 fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-# ============================================================================
-# BLUEGENE support
-AC_ARG_ENABLE(bluegene, AC_HELP_STRING([--enable-bluegene],[Bluegene specific code instructions.]))
-if test x"$enable_bluegene" = "x"; then enable_bluegene="no"; fi
-bluegene_cpp=" "
-if test x"$enable_bluegene" = "xyes"; then 
- bluegene_cpp="-D_BLUEGENE"
-fi
-AC_SUBST(bluegene_cpp)
+#
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -185,6 +177,7 @@ if test x"$enable_time_profile" = "xyes"; then
  time_profile_cpp="-D_TIMING"
 fi
 AC_SUBST(time_profile_cpp)
+#
 # ============================================================================
 #
 # Memory Profiling 

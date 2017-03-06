@@ -1,3 +1,9 @@
+#if  _RT
+RT_objs = PARALLEL_global_Real_Time.o
+#endif
+#if defined _SCALAPACK
+SLK_objs = PARALLEL_global_ScaLapacK.o
+#endif
 #if defined _RT || defined _SC || defined _QED
 RT_objs =  PARALLEL_collisions.o
 #endif

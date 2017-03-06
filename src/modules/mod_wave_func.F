@@ -116,37 +116,49 @@ module wave_func
      WF_out%N=WF_in%N
      WF_out%space=WF_in%space
      WF_out%to_load=WF_in%to_load
-     YAMBO_ALLOC(WF_out%c,(fft_size,WF_out%N))
-     YAMBO_ALLOC(WF_out%c,(wf_ng,WF_out%N))
-     YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
+     if (WF%space=="R") then
+       YAMBO_ALLOC(WF_out%c,(fft_size,WF_out%N))
+     endif
+     if (WF%space=="G") then
+       YAMBO_ALLOC(WF_out%c,(wf_ng,WF_out%N))
+     endif
+     if (WF%space=="C".or.WF%space=="B") then
+       YAMBO_ALLOC(WF_out%c,(wf_ncx,WF_out%N))        
+     endif     
      YAMBO_ALLOC(WF_out%index,(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)
+     use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       YAMBO_ALLOC(wf_x,(fft_size,WF%N))
+       allocate(wf_x(fft_size,WF%N))
+       call mem_est("WF_x",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
-       YAMBO_ALLOC(wf_y,(fft_size,WF%N))
+       allocate(wf_y(fft_size,WF%N))
+       call mem_est("WF_y",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
-       YAMBO_ALLOC(wf_z,(fft_size,WF%N))
+       allocate(wf_z(fft_size,WF%N))
+       call mem_est("WF_z",(/fft_size*WF%N/),quiet=QUIET_alloc)
        wf_z=(0.,0.)
      endif
    end subroutine
    !
    subroutine WF_derivative_free()
+     use memory_m, ONLY : mem_est
        !
-       YAMBO_FREE(wf_x)
-       YAMBO_FREE(wf_y)
-       YAMBO_FREE(wf_z)
+       if(allocated(wf_x)) deallocate(wf_x)
+       if(allocated(wf_y)) deallocate(wf_y)
+       if(allocated(wf_z)) deallocate(wf_z)
+       call mem_est("WF_x WF_y WF_z",quiet=QUIET_free)
        !
    end subroutine
    !

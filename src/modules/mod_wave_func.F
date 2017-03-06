@@ -118,7 +118,7 @@ module wave_func
    !
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
-     use FFT_m,      ONLY:fft_size
+     use FFT_m,      ONLY: fft_size
      type(WAVEs):: WF_in,WF_out
      WF_out%b      = WF_in%b
      WF_out%k      = WF_in%k
@@ -128,7 +128,7 @@ module wave_func
      WF_out%to_load= WF_in%to_load
      if (WF%space=="R") allocate(WF_out%c(fft_size,n_spinor,WF_out%N))
      if (WF%space=="G") allocate(WF_out%c(wf_ng,n_spinor,WF_out%N))
-     if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,n_spinor,WF%N))
+     if (WF%space=="C".or.WF%space=="B") allocate(WF_out%c(wf_ncx,n_spinor,WF%N))
      allocate(WF_out%index(WF_out%b(1):WF_out%b(2),WF_out%k(1):WF_out%k(2),WF_out%sp_pol(1):WF_out%sp_pol(2)))
      WF_out%c    =WF_in%c
      WF_out%index=WF_in%index

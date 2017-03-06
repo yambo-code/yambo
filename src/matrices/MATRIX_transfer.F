@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
+SUBROUTINE MATRIX_transfer( mode, M_slk, M_bse, M )
  !
  ! mode can be:
  !
@@ -33,7 +33,7 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
  use SLK_m,          ONLY:SLK_matrix,SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks,BS_K_dim,BS_K_coupling
  use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
- use linear_algebra, ONLY:SLK_matrix_transfer_side_crop
+ use linear_algebra, ONLY:MATRIX_transfer_side_crop
  !
  implicit none
  !
@@ -124,8 +124,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                !  - - -  - - - Cpl
                !  - - -  - - -  
                !
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
+               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
+               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
                if (.not.any(K_coo==0)) call elemental_transfer('N')
                call PP_redux_wait( )
                !
@@ -140,8 +140,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                  !  - - -  - - - Cpl
                  !  - - -  - - -  
                  !
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
                  if (.not.any(K_coo==0)) call elemental_transfer('-C')
                  call PP_redux_wait( )
                  !
@@ -158,8 +158,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                  !  - - -  - - - Cpl
                  !  - - -  - - -  
                  !
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
                  if (.not.any(K_coo==0)) call elemental_transfer('H')
                  call PP_redux_wait( )
                  !
@@ -174,9 +174,9 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                    !  - - -  X - - Cpl
                    !  - - -  - - -  
                    !
-                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), &
+                   call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), &
 &                                                     BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
-                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), &
+                   call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), &
 &                                                     BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
                    if (.not.any(K_coo==0)) call elemental_transfer('-T')
                    call PP_redux_wait( )
@@ -196,8 +196,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                !  - - -  - - - Cpl
                !  - - -  - - -  
                !
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
-               call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
+               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
                if (.not.any(K_coo==0)) call elemental_transfer('N')
                !
                if (BS_K_coupling) then
@@ -211,8 +211,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                  !  - - -  - - - Cpl
                  !  - - -  - - -  
                  !
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
                  if (.not.any(K_coo==0)) call elemental_transfer('-C')
                  !
                endif
@@ -228,8 +228,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                  !  - - -  - - - Cpl
                  !  - - -  - - -  
                  !
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
-                 call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
+                 call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
                  if (.not.any(K_coo==0)) call elemental_transfer('T')
                  !
                  if (BS_K_coupling) then
@@ -243,8 +243,8 @@ SUBROUTINE SLK_matrix_transfer( mode, M_slk, M_bse, M )
                    !  X - -  - - - Cpl
                    !  - - -  - - -  
                    !
-                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
-                   call SLK_matrix_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
+                   call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
+                   call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
                    if (.not.any(K_coo==0)) call elemental_transfer('-H')
                    !
                  endif

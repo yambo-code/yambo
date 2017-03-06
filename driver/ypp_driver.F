@@ -259,6 +259,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  ! END
  !
  call ypp_finalize(" ")
+ !
  return
  !
 contains

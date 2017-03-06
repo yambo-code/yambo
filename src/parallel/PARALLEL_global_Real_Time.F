@@ -33,11 +33,11 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
  use real_time,     ONLY:RT_bands
- use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_index_copy
+ use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
-&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_WORLD
+&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
@@ -63,13 +63,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    !
    CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,ROLE=(/"k ","b ","q ","qp"/),&
-&                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,COMM_index_2=PAR_COM_G_b_INDEX,&
-&                                        COMM_index_3=PAR_COM_Q_INDEX,&
-&                                        COMM_index_4=PAR_COM_PLASMA_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
-&                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
-&                                        COMM_A2A_3=PAR_COM_Q_A2A)
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_2=PAR_COM_G_b_INDEX,&
+&                                          COMM_index_3=PAR_COM_Q_INDEX,&
+&                                          COMM_index_4=PAR_COM_PLASMA_INDEX,&
+&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
+&                                          COMM_A2A_2=PAR_COM_G_b_A2A,&
+&                                          COMM_A2A_3=PAR_COM_Q_A2A)
+   !
+   ! COMMs setup
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -80,6 +82,11 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    if (PAR_COM_Q_INDEX%n_CPU==1) then
      call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
    endif
+   !
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
+   call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
+   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
    ! K-points (IBZ)
    !
@@ -95,7 +102,6 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    !.........................................................................
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_WF_k)
-   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
    PAR_IND_WF_b_ID=PAR_COM_WF_b_INDEX%CPU_id
    !
    call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
@@ -106,7 +112,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
 &                             TOTAL=UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1,&
 &                             NCPU=PAR_COM_WF_b_INDEX%n_CPU)
    !
-   allocate(PAR_IND_WF_b%n_of_elements(PAR_COM_WF_b_INDEX%n_CPU),PAR_IND_WF_b%element_1D(RT_bands(2)))
+   YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
+   YAMBO_ALLOC(PAR_IND_WF_b%element_1D,(RT_bands(2))) 
    PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=RT_bands(1)-1
    PAR_IND_WF_b%element_1D(:)=.FALSE.
    if (RT_bands(1)>1) PAR_IND_WF_b%element_1D(1:RT_bands(1)-1)=.TRUE.
@@ -137,14 +144,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    !
    !.........................................................................
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
-   allocate(PAR_Xk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   YAMBO_ALLOC(PAR_DIPk_ibz_index,(Xk%nibz))
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
        if (PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) then
@@ -200,8 +205,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
    PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
    !
-   allocate(PAR_Q_index(q%nbz)) 
-   call Build_up_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
+   YAMBO_ALLOC(PAR_Q_index,(q%nbz))
+   call PAR_build_index(PAR_IND_Q,q%nbz,PAR_Q_index,PAR_nQ)
    !
    call PARALLEL_live_message("Q(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=q%nbz,&
@@ -223,7 +228,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
    !
    ! Messaging...
    !
-   if (associated( PAR_IND_G_k%element_1D)) then
+   if (allocated( PAR_IND_G_k%element_1D)) then
      call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=count( PAR_IND_G_k%element_1D ),&
 &                               TOTAL=Xk%nibz)

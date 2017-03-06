@@ -21,17 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
+subroutine PARALLEL_global_Response_T(Xk,ENVIRONMENT,X_type)
  !
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,nXkbz,nXkibz
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_index_copy,K_range
+ use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
+ ! SLK
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PP_indexes_reset
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
+ use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered,PAR_COM_DIPOLES, &
 &                        PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
  ! IND
@@ -44,10 +45,9 @@ subroutine PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_DIPk_ID,PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
- implicit none
+#include<memory.h>
  !
- type(levels)         :: E
- type(bz_samp)        :: Xk,q
+ type(bz_samp)        :: Xk
  character(*)         :: ENVIRONMENT
  integer              :: X_type
  !
@@ -55,53 +55,51 @@ subroutine PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
  !
  integer              :: i_k
  !
- !
  !========================================================================================================
  if (ENVIRONMENT=="Response_T_space") then
    !======================================================================================================
    !
    CALL PARALLEL_structure(3,(/"k ","eh","t "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k ","eh","t "/),&
-&                                        COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
-&                                        COMM_index_2=PAR_COM_eh_INDEX,&
-&                                        COMM_index_3=PAR_COM_T_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
-&                                        COMM_A2A_2=PAR_COM_eh_A2A) 
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_3=PAR_COM_eh_INDEX,&
+&                                          COMM_index_4=PAR_COM_T_INDEX,&
+&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
+&                                          COMM_A2A_2=PAR_COM_eh_A2A) 
    if (PAR_COM_eh_INDEX%n_CPU==1) then
      call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
    endif
    !
    ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
    !
-   call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
    call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
    !
    ! K-points (IBZ)
    !
-   call PARALLEL_index(PAR_IND_Kk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   call PARALLEL_index(PAR_IND_Kk_ibz,(/nXkibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
    PAR_IND_Kk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
    PAR_Kk_nibz=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,&
-&           LOADED=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1),TOTAL=Xk%nibz,&
+&           LOADED=PAR_IND_Kk_ibz%n_of_elements(PAR_IND_Kk_ibz_ID+1),TOTAL=nXkibz,&
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    ! 
    ! Dipoles k-points uses same distribution of K k-points
    !
+   call PP_indexes_reset(PAR_IND_DIPk_ibz) ! Fix by AM (Jan 2017) to clean-up previous allocation
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
    call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Kk_ibz_ID
    PAR_Xk_nibz  =PAR_Kk_nibz
    PAR_DIPk_nibz=PAR_Kk_nibz
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
-   allocate(PAR_Xk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
-   allocate(PAR_Xk_bz_index(Xk%nbz))
+   YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
+   call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
+   call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
    call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
@@ -111,7 +109,7 @@ subroutine PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
    ! In this part I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
    ! I fill the PAR_IND_eh for all k in order to define the total number of Transition groups
    !
-   do i_k=1,Xk%nibz
+   do i_k=1,nXkibz
      !
      call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.FALSE.)
      !

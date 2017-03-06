@@ -213,9 +213,6 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_WF_b_and_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
- ! ... RL vectors
- type(PP_indexes),SAVE :: PAR_IND_RL
- !
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
@@ -256,9 +253,6 @@ module parallel_m
  ! ... BSK
  integer            :: PAR_IND_eh_ID
  !
- ! ... RL
- integer            :: PAR_IND_RL_ID
- !
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
@@ -279,10 +273,6 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
- !
- ! ... RL vectors
- type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
- type(MPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
@@ -311,7 +301,6 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
@@ -339,8 +328,6 @@ module parallel_m
  !
  ! ... and derived variables
  !==========================
- integer            :: PAR_nRL
- integer,allocatable:: PAR_RL_index(:)
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP

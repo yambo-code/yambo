@@ -63,6 +63,9 @@ fi
 TIME_profile_str="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
 
+MEM_profile_str="-"
+if test "$enable_memory_profile" = "yes" ; then MEM_profile_str="X"; fi
+
 PW_str="-"
 if test "$compile_p2y" = "yes" ; then
   PW_str="E"
@@ -134,5 +137,6 @@ AC_SUBST(SLE_str)
 AC_SUBST(BLACS_str)
 AC_SUBST(OPENMP_str)
 AC_SUBST(TIME_profile_str)
+AC_SUBST(MEM_profile_str)
 
 ])

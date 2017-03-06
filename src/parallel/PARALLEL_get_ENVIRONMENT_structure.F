@@ -62,8 +62,8 @@ subroutine PARALLEL_get_ENVIRONMENT_structure(ENVIRONMENT)
    CALL get_environment_variable("YAMBO_"//trim(PAR_pre_field)//"_nCPU_LinAlg_INV",INV_string)
    CALL get_environment_variable("YAMBO_"//trim(PAR_pre_field)//"_nCPU_LinAlg_DIAGO",DIAGO_string)
    !
-   if (len_trim(CPU_string)>0)    CPU_structure(i_s)%CPU_string=CPU_string
-   if (len_trim(ROLE_string)>0)   CPU_structure(i_s)%ROLE_string=ROLE_string
+   if (len_trim(CPU_string)>0)    read (CPU_string,*)   CPU_structure(i_s)%CPU_string
+   if (len_trim(ROLE_string)>0)   read (ROLE_string,*)  CPU_structure(i_s)%ROLE_string
    if (len_trim(INV_string)>0)    read (INV_string,*)   CPU_structure(i_s)%nCPU_lin_algebra_INV
    if (len_trim(DIAGO_string)>0)  read (DIAGO_string,*) CPU_structure(i_s)%nCPU_lin_algebra_DIAGO
    !

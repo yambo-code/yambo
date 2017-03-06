@@ -294,18 +294,24 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        io_err=io_DIPOLES(X,ID)
      endif
      !
+     ! In case io_err is /=0 all CPU have to sincronize before starting
+     ! to recompute the dipoles and write a new header
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
+     !
      if (io_err==0) then
        !
-       if(reading) IO_ACTION=OP_RD_CL
-       if(writing) IO_ACTION=OP_APP_WR_CL
+       if (reading) IO_ACTION=OP_RD_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
        do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
-         do i_sp_pol=1,n_sp_pol
-           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID)
-        enddo
+         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
+         if ((writing.and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0).or.reading) then
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+             io_err=io_DIPOLES(X,ID)
+          enddo
+         endif
        enddo
        !
      endif

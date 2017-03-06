@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_defaults(ENVIRONMENT)
+subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
-&                        PARALLEL_CPU_role,ncpu,QP_range,n_bands,n_c_bands,n_v_bands,Q_range,&
-&                        EH_range,K_range,CPU_structure,i_PAR_structure
+&                        PARALLEL_CPU_role,ncpu,PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
+&                        PAR_EH_range,PAR_K_range,CPU_structure,i_PAR_structure
  use interfaces,    ONLY:PARALLEL_live_message
  use com,           ONLY:error
  use stderr,        ONLY:intc
@@ -119,30 +119,30 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
        select case(ENVIRONMENT)
          case("Response_G_space_Zero_Momentum")
            CPU_structure(i_PAR_structure)%ROLE(1)="c"
-           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(PAR_n_c_bands(2)-PAR_n_c_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(2)="v"
-           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(PAR_n_v_bands(2)-PAR_n_v_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(3)="k"
-           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(PAR_K_range)
            CPU_structure(i_PAR_structure)%N_chains=3
          case("Response_G_space_Finite_Momentum","Response_G_space") 
            CPU_structure(i_PAR_structure)%ROLE(1)="c"
-           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_c_bands(2)-n_c_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(PAR_n_c_bands(2)-PAR_n_c_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(2)="v"
-           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_v_bands(2)-n_v_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(PAR_n_v_bands(2)-PAR_n_v_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(3)="k"
-           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(PAR_K_range)
            CPU_structure(i_PAR_structure)%ROLE(4)="q"
-           CPU_structure(i_PAR_structure)%CPU(4)=assign_cpu(Q_range(2)-Q_range(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(4)=assign_cpu(PAR_Q_range(2)-PAR_Q_range(1)+1)
            CPU_structure(i_PAR_structure)%N_chains=4
 #if defined _RT
          case("Real_Time") 
            CPU_structure(i_PAR_structure)%ROLE(1)="k"
-           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(PAR_K_range)
            CPU_structure(i_PAR_structure)%ROLE(2)="b"
-           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(n_bands(2)-n_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(PAR_n_bands(2)-PAR_n_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(3)="q"
-           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(PAR_Q_range(2))
            CPU_structure(i_PAR_structure)%N_chains=3
 #endif
 #if defined _SCALAPACK
@@ -155,17 +155,17 @@ subroutine PARALLEL_defaults(ENVIRONMENT)
 #endif
          case("Self_Energy") 
            CPU_structure(i_PAR_structure)%ROLE(1)="b"
-           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(n_bands(2)-n_bands(1)+1)
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(PAR_n_bands(2)-PAR_n_bands(1)+1)
            CPU_structure(i_PAR_structure)%ROLE(2)="qp"
-           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(QP_range)
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(PAR_QP_range)
            CPU_structure(i_PAR_structure)%ROLE(3)="q"
-           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(Q_range(2))
+           CPU_structure(i_PAR_structure)%CPU(3)=assign_cpu(PAR_Q_range(2))
            CPU_structure(i_PAR_structure)%N_chains=3
          case("Response_T_space") 
            CPU_structure(i_PAR_structure)%ROLE(1)="k"
-           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(K_range)
+           CPU_structure(i_PAR_structure)%CPU(1)=assign_cpu(PAR_K_range)
            CPU_structure(i_PAR_structure)%ROLE(2)="eh"
-           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(EH_range)
+           CPU_structure(i_PAR_structure)%CPU(2)=assign_cpu(PAR_EH_range)
            CPU_structure(i_PAR_structure)%N_chains=2
        end select
        !

@@ -177,6 +177,7 @@ if test x"$enable_time_profile" = "xyes"; then
  time_profile_cpp="-D_TIMING"
 fi
 AC_SUBST(time_profile_cpp)
+#
 # ============================================================================
 #
 # Memory Profiling 

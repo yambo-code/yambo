@@ -223,7 +223,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    call of_open_close(eel_file_name,'oa')
    call of_open_close(alpha_file_name,'oa')
    !
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_irredux
+   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !

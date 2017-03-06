@@ -47,6 +47,7 @@ subroutine PARALLEL_clean_up_the_structure(n_structures)
      if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="qp") cycle
      if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="eh") cycle
      if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="t" ) cycle
+     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="g" ) cycle
    endif
    !
    n_structures=n_structures+1

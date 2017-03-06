@@ -131,35 +131,29 @@ module wave_func
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)
-     use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size
      logical  :: cart_direction(3)
      !
      if(cart_direction(1)) then
-       allocate(wf_x(fft_size,WF%N))
-       call mem_est("WF_x",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       YAMBO_ALLOC(wf_x,(fft_size,WF%N))
        wf_x=(0.,0.)
      endif
      if(cart_direction(2)) then
-       allocate(wf_y(fft_size,WF%N))
-       call mem_est("WF_y",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       YAMBO_ALLOC(wf_y,(fft_size,WF%N))
        wf_y=(0.,0.)
      endif
      if(cart_direction(3)) then
-       allocate(wf_z(fft_size,WF%N))
-       call mem_est("WF_z",(/fft_size*WF%N/),quiet=QUIET_alloc)
+       YAMBO_ALLOC(wf_z,(fft_size,WF%N))
        wf_z=(0.,0.)
      endif
    end subroutine
    !
    subroutine WF_derivative_free()
-     use memory_m, ONLY : mem_est
-       !
-       if(allocated(wf_x)) deallocate(wf_x)
-       if(allocated(wf_y)) deallocate(wf_y)
-       if(allocated(wf_z)) deallocate(wf_z)
-       call mem_est("WF_x WF_y WF_z",quiet=QUIET_free)
-       !
+     !
+     YAMBO_FREE(wf_x)
+     YAMBO_FREE(wf_y)
+     YAMBO_FREE(wf_z)
+     !
    end subroutine
    !
 end module

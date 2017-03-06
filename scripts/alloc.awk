@@ -45,7 +45,7 @@ else
  if (index ($0,"implicit")> 0) {
    print "#include<memory.h>"
  }
-# else if (index ($0,"mem_est(")==0) {print $0}
+ else if (index ($0,"mem_est(")==0) {print $0}
 }
 }
 function repeat( str, n,    rep, i )

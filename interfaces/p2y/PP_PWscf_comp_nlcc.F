@@ -57,6 +57,8 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     G_norm(ig) = sqrt(sum(G_cc(:,ig)**2))
   enddo
   !
+  pp_rho_nlcc(:npw)=0.0
+  !
   do is=1,atoms%ntypes
     psp => atoms%pseudo(is)
     !
@@ -75,8 +77,6 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     !
     ! include the structure factors 
     ! 
-    pp_rho_nlcc(:npw)=0.0
-    !
     do ig = 1,npw
       !
       sf=0.0

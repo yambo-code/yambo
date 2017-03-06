@@ -139,9 +139,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  endif
 #endif
  !
- if (Add_PP_NLCC) then
-   rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)  !!! check normalization
- endif
+ if (Add_PP_NLCC) rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
@@ -256,6 +254,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (EvaluateDGradient) deallocate(sigma,drho)
  if (EvaluateDGradient.and.(ORDER==1)) deallocate (vdrho,vsigma)
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
+ !
+ if (Add_PP_NLCC) deallocate(pp_rho_nlcc)
  !
 end subroutine XC_libxc_driver
 

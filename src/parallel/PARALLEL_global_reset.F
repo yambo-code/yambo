@@ -27,9 +27,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
  use parallel_m,    ONLY:PP_indexes_reset
- ! SLK
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
- use linear_algebra,ONLY:TRANSFER_world
  ! COMMUNICATORS
  use parallel_m,    ONLY:COMM_reset,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -50,7 +47,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! INDEX
  use parallel_m,    ONLY:PAR_B_mat_index,PAR_Bp_mat_index,PAR_QP_index,PAR_G_bands_index,PAR_PLASMA_index, &
 &                        PAR_Q_index,PAR_Q_bz_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index,   &
-&                        PAR_BS_T_grps_index,PAR_RL_index
+&                        PAR_BS_T_grps_index
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,&
@@ -114,7 +111,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  YAMBO_FREE(states_to_load)
  YAMBO_FREE(PAR_DIPk_ibz_index)
  YAMBO_FREE(PAR_BS_T_grps_index)
- YAMBO_FREE(PAR_RL_index)
  !
  PAR_IND_Q_ID=0
  PAR_IND_Xk_ibz_ID=0
@@ -148,8 +144,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_WF_k_A2A)
  call COMM_reset(PAR_COM_WF_b_INDEX)
  call COMM_reset(PAR_COM_WF_k_INDEX)
- call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
- call COMM_reset(PAR_COM_X_WORLD)
  call COMM_reset(PAR_COM_DIPOLES)
  call COMM_reset(PAR_COM_DIPOLES_k_subgroup)
  call COMM_reset(PAR_COM_density)
@@ -157,7 +151,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_eh_A2A)
  call COMM_reset(PAR_COM_T_INDEX)
  call COMM_reset(PAR_COM_SLK_INDEX_local)
- call COMM_reset(TRANSFER_world)
 #if defined _SCALAPACK
  call COMM_reset(PAR_COM_SLK)
  call COMM_reset(PAR_COM_SLK_INDEX_global)

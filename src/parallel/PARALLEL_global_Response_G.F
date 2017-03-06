@@ -34,7 +34,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A, &
-&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
+&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX,PAR_build_index
  ! IND
  use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
  ! INDEX
@@ -128,9 +128,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
    ! The COMM is anyway the one for the all2all of each q.
    !
-   call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    ! K-points 

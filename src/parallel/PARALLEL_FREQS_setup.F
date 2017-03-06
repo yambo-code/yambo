@@ -25,7 +25,7 @@ subroutine PARALLEL_FREQS_setup(W,IND,COMM)
  !
  use frequency,   ONLY:w_samp
  use parallel_m,  ONLY:PP_indexes,MPI_comm,PAR_IND_FREQ_ID,PAR_n_freqs,PP_indexes_reset,&
-&                      PAR_build_index,PAR_FREQS_index
+&                      PAR_build_index,PAR_FREQS_index,PAR_build_index
  use interfaces,  ONLY:PARALLEL_index,PARALLEL_live_message
 #include<memory.h>
  !

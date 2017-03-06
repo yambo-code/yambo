@@ -318,13 +318,15 @@ module parallel_m
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
- integer            :: K_range
- integer            :: EH_range
- integer            :: QP_range
- integer            :: Q_range(2)
- integer            :: n_bands(2)
- integer            :: n_c_bands(2)
- integer            :: n_v_bands(2)
+ integer            :: PAR_K_range      = 0
+ integer            :: PAR_EH_range     = 0
+ integer            :: PAR_QP_range     = 0
+ integer            :: PAR_Q_range(2)   = 0
+ integer            :: PAR_X_ib(2)      = 0
+ integer            :: PAR_X_iq(2)      = 0
+ integer            :: PAR_n_bands(2)   = 0
+ integer            :: PAR_n_c_bands(2) = 0
+ integer            :: PAR_n_v_bands(2) = 0
  !
  ! ... and derived variables
  !==========================

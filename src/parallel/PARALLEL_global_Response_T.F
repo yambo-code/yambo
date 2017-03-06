@@ -28,9 +28,7 @@ subroutine PARALLEL_global_Response_T(Xk,ENVIRONMENT,X_type)
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
- ! SLK
- use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PP_indexes_reset
+ use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered,PAR_COM_DIPOLES, &

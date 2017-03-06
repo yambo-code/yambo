@@ -36,12 +36,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
- use FFT_m,          ONLY:fft_size
+ use FFT_m,          ONLY:fft_size,fft_dim
  use wrapper,        ONLY:real_V_dot_V
  use xc_functionals, ONLY:E_xc,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
+ !
+ use pseudo,         ONLY:pp_rho_nlcc_g => pp_rho_nlcc
+#if defined _FFTW
+ use FFT_m,          ONLY:fftw_plan
+#endif
+ use IO_m,           ONLY:io_control,OP_RD_CL,REP
  !
  implicit none
  !
@@ -53,6 +59,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Work Space
  !
  integer  :: i1,i2,i3,is,ic,is1,is2,ixc,ifft
+ integer  :: io_err,ID
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  !
@@ -64,6 +71,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(DP),allocatable:: sigma(:,:)
  complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
+ complex(SP), allocatable:: pp_rho_nlcc(:)
  !
  ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
@@ -71,10 +79,13 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(SP),allocatable :: vdrho(:,:)
  real(DP),allocatable :: vsigma(:,:)
  logical              :: EvaluateDGradient
+ logical              :: Add_PP_NLCC
  !
  ! Functional and Functional infos
  !
  type(xc_fnctl_t) :: fnctl(2) 
+ !
+ integer, external :: io_NLCC_pwscf
  !
  !=============================== 
  ! Convert and Initialize
@@ -94,6 +105,24 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
  !
+ ! NLCC
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_err=io_NLCC_pwscf(ID)
+ !
+ Add_PP_NLCC=(io_err==0)
+ if (Add_PP_NLCC) then
+   allocate(pp_rho_nlcc(fft_size))
+   pp_rho_nlcc=pp_rho_nlcc_g
+ #if defined _FFTW
+   call dfftw_destroy_plan(fftw_plan)
+   fftw_plan = 0
+   call fft_3d(pp_rho_nlcc,fft_dim,1,fftw_plan)
+#else
+   call fft_3d(pp_rho_nlcc,fft_dim,1)
+#endif  
+ endif
+ !
  !==========================
  ! Electronic/spin density 
  !==========================
@@ -109,6 +138,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 #if defined _RT
  endif
 #endif
+ !
+ if (Add_PP_NLCC) then
+   rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)  !!! check normalization
+ endif
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then

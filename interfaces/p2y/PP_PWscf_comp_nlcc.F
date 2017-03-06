@@ -29,7 +29,8 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   use pw_pseudo_module
   !
   use pars,          ONLY:SP,DP
-  use pseudo,        ONLY:pp_rho_nlcc,pp_has_nlcc
+  use pseudo,        ONLY:pp_rho_nlcc_atom,pp_rho_nlcc,pp_has_nlcc
+  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
   !
   implicit none
   !
@@ -37,35 +38,61 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   type(pw_atoms), intent(in) :: atoms
   type(pw_pseudo), pointer :: psp
   !
-  integer :: itype,ipw,npw
+  integer :: is,ia,ig,npw
   !
-  real(SP) :: b(3,3),G(3),G_cc(3)
+  real(SP) :: b(3,3),G(3)
   real(SP) :: G_norm(basis%npw)
   real(DP) :: rhoG(basis%npw), V_m1
+  real(DP) :: G_dot_R
+  complex(DP) :: e_iGR,sf
+  real(SP), allocatable :: G_cc(:,:)
   !
   b = basis%struct%b
   npw = basis%npw
-  do ipw=1,npw
-    G = real(basis%g(:,ipw),SP)
-    G_cc = matmul(b,G)
-    G_norm(ipw) = sqrt(sum(G_cc(:)**2))
+  allocate(G_cc(3,npw))
+  !
+  do ig=1,npw
+    G = real(basis%g(:,ig),SP)
+    G_cc(:,ig) = matmul(b,G)
+    G_norm(ig) = sqrt(sum(G_cc(:,ig)**2))
   enddo
   !
-  do itype=1,atoms%ntypes
-    psp => atoms%pseudo(itype)
+  do is=1,atoms%ntypes
+    psp => atoms%pseudo(is)
     !
     rhog=0._SP
-    pp_has_nlcc(itype)=0
-    if (psp%psp_has_nlcc) pp_has_nlcc(itype)=1
+    pp_has_nlcc(is)=0
+    if (psp%psp_has_nlcc) pp_has_nlcc(is)=1
     !
     if (.not.psp%psp_has_nlcc) cycle
     !
-    do ipw=1,npw
-      if(G_norm(ipw) < 1.E-5) cycle
-      rhog(ipw) = num_interpolation_calc(psp%interpolation_nlcc,G_norm(ipw),3)
+    do ig=1,npw
+      if(G_norm(ig) < 1.E-5) cycle
+      rhog(ig) = num_interpolation_calc(psp%interpolation_nlcc,G_norm(ig),3)
     enddo
     V_m1 = 1.0d0/basis%struct%a_omega
-    pp_rho_nlcc(:npw,itype) = sqrt(abs(V_m1))*rhog(:npw)
+    pp_rho_nlcc_atom(:npw,is) = sqrt(abs(V_m1))*rhog(:npw)
+    !
+    ! include the structure factors 
+    ! 
+    pp_rho_nlcc(:npw)=0.0
+    !
+    do ig = 1,npw
+      !
+      sf=0.0
+      !
+      do ia = 1,n_atoms_species(is)
+        G_dot_R = dot_product(G_cc(:,ig),atom_pos(:,ia,is))
+        e_iGR = cmplx(cos(G_dot_R),-sin(G_dot_R),DP)
+        sf = sf + e_iGR
+      enddo
+      !  
+      pp_rho_nlcc(ig) = pp_rho_nlcc(ig) + sf*pp_rho_nlcc_atom(ig,is)
+      !
+    enddo
+    !
   enddo
+  !
+  deallocate(G_cc)
   !
 end subroutine PP_PWscf_comp_nlcc

@@ -43,8 +43,9 @@ module pseudo
  real(SP), allocatable:: pp_kbs(:,:)
  real(SP), allocatable:: pp_kb(:,:,:,:)
  real(SP), allocatable:: pp_kbd(:,:,:,:)
- real(DP), allocatable:: pp_rho_nlcc(:,:)
- integer(LP),  allocatable:: pp_has_nlcc(:)
+ real(DP), allocatable:: pp_rho_nlcc_atom(:,:)
+ complex(DP), allocatable:: pp_rho_nlcc(:)
+ integer(LP), allocatable:: pp_has_nlcc(:)
  !
  ! PW (OLD)
  !=========
@@ -60,7 +61,7 @@ module pseudo
      allocate(pp_kbs(n_atomic_species,pp_n_l_times_proj_max),stat=alloc_err(1))
      allocate(pp_kb(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin),stat=alloc_err(2))
      allocate(pp_kbd(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin),stat=alloc_err(3))
-     allocate(pp_rho_nlcc(ng_vec,n_atomic_species),stat=alloc_err(4))
+     allocate(pp_rho_nlcc_atom(ng_vec,n_atomic_species),pp_rho_nlcc(ng_vec),stat=alloc_err(4))
      allocate(pp_has_nlcc(n_atomic_species),stat=alloc_err(5))
      call mem_est("pp_kbs pp_kb pp_kbd pp_nlcc pp_has_nlcc",&
 &                 (/size(pp_kbs),size(pp_kb),size(pp_kbd),size(pp_rho_nlcc),size(pp_has_nlcc)/),&
@@ -68,6 +69,7 @@ module pseudo
      pp_kbs =0.
      pp_kb  =0.
      pp_kbd =0.
+     pp_rho_nlcc_atom =0.
      pp_rho_nlcc =0.
      pp_has_nlcc =0
    end subroutine
@@ -81,7 +83,7 @@ module pseudo
      allocate(pp_kbs(n_atomic_species,pp_n_l_times_proj_max),stat=alloc_err(1))
      allocate(pp_kb(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1),stat=alloc_err(2))
      allocate(pp_kbd(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1),stat=alloc_err(3))
-     allocate(pp_rho_nlcc(ng_vec,n_atomic_species),stat=alloc_err(4))
+     allocate(pp_rho_nlcc_atom(ng_vec,n_atomic_species),pp_rho_nlcc(ng_vec),stat=alloc_err(4))
      allocate(pp_has_nlcc(n_atomic_species),stat=alloc_err(5))
      call mem_est("pp_kbs pp_kb pp_kbd pp_nlcc",&
 &                 (/size(pp_kbs),size(pp_kb),size(pp_kbd),size(pp_rho_nlcc),size(pp_has_nlcc)/),&
@@ -89,6 +91,7 @@ module pseudo
      pp_kbs =0.
      pp_kb  =0.
      pp_kbd =0.
+     pp_rho_nlcc_atom =0.
      pp_rho_nlcc =0.
      pp_has_nlcc =0
    end subroutine
@@ -96,7 +99,7 @@ module pseudo
    subroutine PP_free()
      use memory_m,   ONLY:mem_est
      if (.not.allocated(pp_kbs)) return
-     deallocate(pp_kbs,pp_kb,pp_kbd,pp_rho_nlcc,pp_has_nlcc)
+     deallocate(pp_kbs,pp_kb,pp_kbd,pp_rho_nlcc_atom,pp_rho_nlcc,pp_has_nlcc)
      call mem_est("pp_kbs pp_kb pp_kbd pp_nlcc pp_has_nlcc")
    end subroutine
    !

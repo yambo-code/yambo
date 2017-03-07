@@ -111,4 +111,48 @@ AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 #AC_CONFIG_FILES([lib/install/make_iotk.inc])
 
+
+# ============================================================================
+# check for p2y versions
+#
+AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
+ [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
+
+AC_MSG_CHECKING([for p2y version])
+
+PW_VER="5.0"
+PW_CPP="_P2Y_V50"
+if test "$compile_p2y" = "yes"; then
+ if test "$with_p2y_version" = "export"; then
+  PW_VER="export"
+  PW_CPP="_P2Y_EXPORT"
+ fi
+ if test "$with_p2y_version" = "3.1"; then
+  PW_VER="3.1"
+  PW_CPP="_P2Y_V31"
+ fi
+ if test "$with_p2y_version" = "3.1.1"; then
+  PW_VER="3.1.1"
+  PW_CPP="_P2Y_V311"
+ fi
+ if test "$with_p2y_version" = "3.2"; then
+  PW_VER="3.2"
+  PW_CPP="_P2Y_V32"
+ fi
+ if test "$with_p2y_version" = "4.0"; then
+  PW_VER="4.0"
+  PW_CPP="_P2Y_V40"
+ fi
+ if test "$with_p2y_version" = "5.0"; then
+  PW_VER="5.0"
+  PW_CPP="_P2Y_V50"
+ fi
+fi
+
+AC_MSG_RESULT([$PW_VER])
+
+AC_SUBST(PW_VER)
+AC_SUBST(PW_CPP)
+
+
 ])

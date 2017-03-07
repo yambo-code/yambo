@@ -7,6 +7,9 @@ AC_PREREQ(2.50)
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
+AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+
+BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
         [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
 case $with_blas_libs in
@@ -117,5 +120,19 @@ else
         acx_blas_ok=no
         $2
 fi
+
+if test $acx_blas_ok = "no"; then
+  compile_blas="yes";
+  AC_MSG_NOTICE([Could not find blas. Using the built-in library])
+elif test -d "$with_blas_libs" && test "$with_blas_libs" = "" ; then
+  compile_blas="yes"
+  if test $acx_blas_ok = "yes"; then AC_MSG_NOTICE([Blas found in ${BLAS_LIBS} but imposing built-in library]); fi
+fi
+  
+if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-L./lib -lblas"; fi
+
+AC_SUBST(compile_blas)
+AC_SUBST(BLAS_LIBS)
+
 ])dnl ACX_BLAS
 

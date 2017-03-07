@@ -17,7 +17,7 @@
 # 
 # - LIBRARIES (E=external library; I=internal library; -=not used;) -
 #
-#  I/O
+#  I/O LIBS
 # [ @PW_str@ ] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
 # [ @ETSF_str@ ] ETSF_IO : @ETSF_LIBS@
@@ -27,7 +27,7 @@
 # [ @HDF5_str@ ] HDF5    : @HDF5_LIBS@ @HDF5_support@
 #                 @HDF5_INCS@
 #
-#  MATH 
+#  MATH LIBS
 # [ @FFT_str@ ] FFT       : @FFT_LIBS@ @FFT_DESCRIPTION@
 #                   @FFT_INCS@
 # [ @BLAS_str@ ] BLAS      : @BLAS_LIBS@
@@ -39,11 +39,11 @@
 # [ @SLE_str@ ] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
 #
-#  OTHER
-# [ @LIBXC_str@ ] LibXC           : @LIBXC_LIBS@
-#                         @LIBXC_INCS@
-# [ @MPI_LIB_str@ ] MPI             : @MPI_LIBS@
-#                         @MPI_INCS@
+#  OTHERi LIBS
+# [ @LIBXC_str@ ] LibXC     : @LIBXC_LIBS@
+#                   @LIBXC_INCS@
+# [ @MPI_LIBS_str@ ] MPI       : @MPI_LIBS@
+#                   @MPI_INCS@
 #
 # - COMPILERS, MAKE and EDITOR -
 #

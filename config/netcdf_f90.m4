@@ -151,6 +151,8 @@ fi
 #
 if test x"$enable_hdf5" = "xno"; then
   #
+  netcdf=no;
+  #
   if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" || test x"$with_netcdf_libs" != "x"; then
     #
     save_fcflags="$FCFLAGS"
@@ -167,14 +169,15 @@ if test x"$enable_hdf5" = "xno"; then
        nf_err = nf90_create('netcdf_test',nf90_share,ID)]),
        [netcdf=yes], [netcdf=no]);
     #
-  fi
-  if test "x$netcdf" = xyes; then
-    AC_MSG_RESULT([yes])
-    NETCDF_INCS="$try_NETCDF_INCS"
-    NETCDF_LIBS="$try_NETCDF_LIBS"
+    if test "x$netcdf" = xyes; then
+      AC_MSG_RESULT([yes])
+      NETCDF_INCS="$try_NETCDF_INCS"
+      NETCDF_LIBS="$try_NETCDF_LIBS"
+    else
+      AC_MSG_RESULT([no])
+    fi
   fi
   if test "x$netcdf" = xno; then
-    AC_MSG_RESULT([no])
     #
     # internal netcdf
     #

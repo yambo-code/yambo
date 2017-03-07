@@ -114,11 +114,16 @@ if ! test x"$try_libs" = "x" ; then
   #
   save_libs=$LIBS
   save_fcflags=$FCFLAGS
-  if test x"$try_libdir" != "x" ; then FFT_PATH="-L$try_libdir" ; fi
-  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
+  FFT_LIBS="$try_libs";
+  FFT_INCS="";
+  #
+  if test x"$try_libdir" != "x" ; then FFT_LIBS="-L$try_libdir $try_libs" ; fi
+  if test x"$try_incdir" != "x" ; then FFT_INCS="$IFLAG$try_incdir" ; fi
+  #
+  LIBS="$FFT_LIBS $save_libs";
+  FCFLAGS="$FFT_INCS $save_fcflags";
   if test x"$enable_open_mp" = "xyes" ; then FCFLAGS="$FCFLAGS $OMPFLAGS" ; fi
-  LIBS="${FFT_PATH} ${try_libs}"
   #
   AC_LINK_IFELSE($testprog,     [HAVE_FFTW="yes";],    [HAVE_FFTW="no";])
   AC_LINK_IFELSE($testprog_omp, [HAVE_FFTW_OMP="yes";],[HAVE_FFTW_OMP="no";])
@@ -148,7 +153,10 @@ if ! test x"$try_libs" = "x" ; then
     FFT_LIBS=""
     LDFLAGS="$save_ldflags"
   fi
-  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes ; FFT_str="E" ;  fi
+  if test x"$HAVE_FFTW" = "xyes" ; then
+    HAVE_FFT=yes ;
+    FFT_str="E" ;
+  fi
 else
   HAVE_FFTW=no
   HAVE_FFT=no
@@ -198,8 +206,6 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     AC_MSG_RESULT(ESSL FFT)
   fi
 fi
-
-
 #
 # INTERNAL FFT
 #
@@ -277,6 +283,7 @@ fi
 
 AC_SUBST(FFT_str)
 AC_SUBST(FFT_LIBS)
+AC_SUBST(FFT_INCS)
 AC_SUBST(FFT_CPP)
 AC_SUBST(FFT_DESCRIPTION)
 AC_SUBST(compile_fftqe)

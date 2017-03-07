@@ -336,11 +336,11 @@ case $with_mpi_libs in
     mpibuild="no" 
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
-    MPILIBS="$with_mpi_libs"
+    MPI_LIBS="$with_mpi_libs"
     enable_mpi_libs="yes"
     ;;
   *) 
-    MPILIBS="-l$with_mpi_libs"
+    MPI_LIBS="-l$with_mpi_libs"
     enable_mpi_libs="yes"
     ;;
 esac
@@ -365,7 +365,7 @@ if test "$mpibuild" = "yes"; then
 #
  if test "$mpibuild" = "no" ; then 
   mpi_cpp=""
-  MPILIBS=""
+  MPI_LIBS=""
   PF90=""
   FC=$F77
   PF90FLAGS=""
@@ -375,7 +375,7 @@ if test "$mpibuild" = "yes"; then
  AC_SUBST(openmp_cpp)
  AC_SUBST(mpi_cpp)
  AC_SUBST(enable_mpi_libs)
- AC_SUBST(MPILIBS)
+ AC_SUBST(MPI_LIBS)
  AC_SUBST(PF90)
  AC_SUBST(PF90FLAGS)
  AC_SUBST(PCC)

@@ -59,36 +59,36 @@ AC_LANG_CASE([C], [
         acx_mpi_save_FC="$PFC"
 ])
 
-if test x = x"$MPILIBS"; then
-  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
-               [C++], [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
+if test x = x"$MPI_LIBS"; then
+  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [MPI_LIBS=" "])],
+               [C++], [AC_CHECK_FUNC(MPI_Init, [MPI_LIBS=" "])],
                [Fortran 77], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK([],[      call MPI_Init], [MPILIBS=" "
+                AC_TRY_LINK([],[      call MPI_Init], [MPI_LIBS=" "
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])],
                [Fortran], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK_FUNC(MPI_init,[MPILIBS=" "
+                AC_TRY_LINK_FUNC(MPI_init,[MPI_LIBS=" "
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])]
 )
 fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpi, MPI_Init, [MPILIBS="-lmpi"])
+if test x = x"$MPI_LIBS"; then
+        AC_CHECK_LIB(mpi, MPI_Init, [MPI_LIBS="-lmpi"])
 fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpich, MPI_Init, [MPILIBS="-lmpich"])
+if test x = x"$MPI_LIBS"; then
+        AC_CHECK_LIB(mpich, MPI_Init, [MPI_LIBS="-lmpich"])
 fi
 
 # We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
-AC_LANG_CASE([C], [if test x != x"$MPILIBS"; then
+AC_LANG_CASE([C], [if test x != x"$MPI_LIBS"; then
         AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 
         [#include <mpi.h>]),
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
-        [MPILIBS="";AC_MSG_RESULT(no)])
+        [MPI_LIBS="";AC_MSG_RESULT(no)])
 fi],
-[C++], [if test x != x"$MPILIBS"; then
+[C++], [if test x != x"$MPI_LIBS"; then
         AC_MSG_CHECKING([for mpi.h])
-        AC_TRY_COMPILE([#include <mpi.h>],[],[AC_MSG_RESULT(yes)], [MPILIBS=""
+        AC_TRY_COMPILE([#include <mpi.h>],[],[AC_MSG_RESULT(yes)], [MPI_LIBS=""
                 AC_MSG_RESULT(no)])
 fi])
 
@@ -127,7 +127,7 @@ AC_LANG_CASE([Fortran],
   [HAVE_MPI_MOD=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
   [HAVE_MPI_MOD=0; AC_MSG_RESULT(no)]);fi])
 #
-if test x = x"$MPILIBS"; then acx_mpi_ok="no"; fi
+if test x = x"$MPI_LIBS"; then acx_mpi_ok="no"; fi
 
 mpibuild="no"
 AC_LANG_CASE(
@@ -153,7 +153,7 @@ AC_LANG_CASE(
 )
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x = x"$MPILIBS"; then
+if test x = x"$MPI_LIBS"; then
         $2
         :
 else

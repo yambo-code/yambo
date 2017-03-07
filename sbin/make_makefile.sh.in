@@ -45,7 +45,6 @@ if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 fc="\$(f90)"
 fcflags="\$(f90flags)"
 fcuflags="\$(f90uflags)"
-lib_path="\$(libpath)"
 llibs=""
 lock_file="__lock"
 dep_file="make.dep"
@@ -72,35 +71,35 @@ for arg in $@; do
  esac
 done
 #
-llibs="$lib_path $llibs"
+llibs="-L\$(libdir) $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir)"
 linclude="-I\$(includedir)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
-llibinclude="\$(netcdf_idir)"
+llibinclude="\$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
 #
 case $target in
   yambo*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   p2y*)
    llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
+   linclude="$linclude \$(iiotk) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   e2y)
    llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
+   linclude="$linclude \$(ietsf) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   ypp*)
    llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
     ;;
 esac
 

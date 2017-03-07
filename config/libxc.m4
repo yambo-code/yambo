@@ -39,7 +39,7 @@ fi
 if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
 if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
 
-FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_incdir"
+LIBXC_INCS="$ax_cv_f90_modflag$libxc_incdir"
 
 dnl Backup LIBS and FCFLAGS
 acx_libxc_save_LIBS="$LIBS"
@@ -57,51 +57,51 @@ testprog="AC_LANG_PROGRAM([],[
     i = XC_EXCHANGE
 ])"
 
-FCFLAGS="$FCFLAGS_LIBXC $acx_libxc_save_FCFLAGS"
+FCFLAGS="$LIBXC_INCS $acx_libxc_save_FCFLAGS"
 
 # set from environment variable, if not blank
-if test ! -z "$LIBS_LIBXC"; then
-  LIBS="$LIBS_LIBXC"
+if test ! -z "$LIBXC_LIBS"; then
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # set from --with-libxc-libs flag
 if test x"$acx_libxc_ok" = xno && test ! -z "$with_libxc_libs" ; then
-  LIBS_LIBXC="$with_libxc_libs"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="$with_libxc_libs"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$libxc_libdir -lxcf90 -lxc"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxc"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="$libxc_libdir/libxc.a"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$libxc_libdir -lxc"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="-L$libxc_libdir -lxc"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
@@ -159,25 +159,21 @@ dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libxc_ok" = xyes; then
   compile_libxc=no
   #
-  if test ! -d include ; then mkdir include ; fi
-  for file in `find $libxc_incdir \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
-    cp $file include/ 
-  done
-  AC_MSG_RESULT([                  ... Compatible external LibXC ($FCFLAGS_LIBXC $LIBS_LIBXC)])
   AC_DEFINE(HAVE_LIBXC, 1, [Defined if you have the LIBXC library.])
 fi
 
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   # version y2.0.3
-  #LIBS_LIBXC="-lxc"
+  #LIBXC_LIBS="-L./lib -lxc"
   # version 2.2.3 is used
-  LIBS_LIBXC="-lxcf90 -lxc"
+  LIBXC_LIBS="-L./lib -lxcf90 -lxc"
+  LIBXC_INCS="$IFLAG./include"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
 fi 
 
-AC_SUBST(FCFLAGS_LIBXC)
-AC_SUBST(LIBS_LIBXC)
+AC_SUBST(LIBXC_LIBS)
+AC_SUBST(LIBXC_INCS)
 AC_SUBST(compile_libxc)
 FCFLAGS="$acx_libxc_save_FCFLAGS"
 LIBS="$acx_libxc_save_LIBS"

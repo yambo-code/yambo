@@ -56,7 +56,7 @@ subroutine MAG_Hamiltonian()
  !
  use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
- use hamiltonian,    ONLY:Ho
+ use hamiltonian,    ONLY:Hzero
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:nkibz
@@ -215,7 +215,8 @@ subroutine MAG_Hamiltonian()
              !
              if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor)+H_pauli(:,i_spin,j_spinor)*WF%c(:,j_wf(j_spinor))
              !
-             Ho(ib,ibp,ik,i_sp_pol)= Ho(ib,ibp,ik,i_sp_pol)+Vstar_dot_V(fft_size,WF%c(:,i_wf(i_spinor)),H_tmp(:,i_spinor,j_spinor))
+             Hzero(ib,ibp,ik,i_sp_pol)= Hzero(ib,ibp,ik,i_sp_pol)+&
+&              Vstar_dot_V(fft_size,WF%c(:,i_wf(i_spinor)),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
          enddo
@@ -231,7 +232,7 @@ subroutine MAG_Hamiltonian()
    if(MAG_landau) call WF_derivative_free()
    call WF_free(WF)
    !
-   call PP_redux_wait(Ho(:,:,ik,:))
+   call PP_redux_wait(Hzero(:,:,ik,:))
    !
  enddo
  !

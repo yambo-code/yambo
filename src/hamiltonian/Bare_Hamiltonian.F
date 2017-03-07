@@ -63,7 +63,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    ! - call WF_derivative which computes the derivative in space G
    ! - load the wf in real space
    ! - compute the magnetic part of the hamiltonian, 
-   !   allocate and initialise Ho, write H_magnetic in Ho 
+   !   allocate and initialise Hzero, write H_magnetic in Hzero 
    !
    call MAG_Hamiltonian()
    !

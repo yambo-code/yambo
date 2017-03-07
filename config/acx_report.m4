@@ -108,9 +108,6 @@ if ! test "$SLK_str" = "-" ; then
  if test "$compile_blacs"    = "yes" ; then BLACS_str="I"; fi
 fi
 
-BGQ_str="-"
-if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
-
 MPI_LIB_str="-"
 if test "$enable_mpi_lib" = "yes" ; then MPI_LIB_str="E"; fi
 
@@ -136,7 +133,6 @@ AC_SUBST(PET_str)
 AC_SUBST(SLE_str)
 AC_SUBST(BLACS_str)
 AC_SUBST(OPENMP_str)
-AC_SUBST(BGQ_str)
 AC_SUBST(TIME_profile_str)
 
 ])

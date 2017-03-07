@@ -128,9 +128,9 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   !
   try_NETCDF_LIBS="-L$try_libdir -lnetcdf"
   if test -r $tryf_libdir/libnetcdff.a ; then
-    try_NETCDF_LIBS="-L$try_libdir -lnetcdf -L$tryf_libdir -lnetcdf"
+    try_NETCDF_LIBS="-L$tryf_libdir -lnetcdff -L$try_libdir -lnetcdf"
   elif test -r $try_libdir/libnetcdff.a ; then
-    try_NETCDF_LIBS="-L$try_libdir -lnetcdf -lnetcdff"
+    try_NETCDF_LIBS="-L$try_libdir -lnetcdff -lnetcdf"
   fi
   #
 elif test x"$with_netcdf_libs" != "x" ; then

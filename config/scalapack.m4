@@ -95,20 +95,23 @@ fi
 AC_CHECK_FILE($with_mpi_path/include/mpif.h,[mpif_found="yes"],[mpif_found="no"])
 #
 compile_blacs="no"
-if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes" && test "$mpif_found" = "yes"; then
-compile_blacs="yes"
-BLACS_LIBS="-lblacs -lblacs_init"
-compile_slk="no"
-MPI_INCS=$with_mpi_path
- if test "$with_scalapack_libs" = "yes"; then
+compile_slk  ="no"
+if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && ( test "$with_blacs_libs" = "yes" ||  test "$with_scalapack_libs" = "yes" ); then
+  compile_blacs="yes"
   compile_slk="yes"
-  SCALAPACK_LIBS="-lscalapack"
+  BLACS_LIBS="-L./lib -lblacs -lblacs_init"
+  SCALAPACK_LIBS="-L./lib -lscalapack"
   enable_scalapack="yes"
   dscalapack="-D_SCALAPACK"
- fi
+  #
+  MPI_PATH=$with_mpi_path
+  IFLAG=$ax_cv_f90_modflag
+  if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+  MPI_INCS="$IFLAG$with_mpi_path/include"
 fi
 #
 AC_SUBST(MPI_INCS)
+AC_SUBST(MPI_PATH)
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)

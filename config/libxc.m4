@@ -74,17 +74,17 @@ dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
-# static linkage, separate Fortran interface
+# dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBXC_LIBS="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
+  LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxc"
   LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
-# dynamic linkage, separate Fortran interface
+# static linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxc"
+  LIBXC_LIBS="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
   LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])

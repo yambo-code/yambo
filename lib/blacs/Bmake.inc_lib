@@ -47,7 +47,6 @@
 #   BLACSCINIT  = $(BLACSdir)/blacsCinit_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 #   BLACSLIB    = $(BLACSdir)/blacs_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 
-#  -------------------------------------
 #  Name and location of the MPI library.
 #  -------------------------------------
    MPIdir = $(mpidir)
@@ -57,7 +56,7 @@
 #  -------------------------------------
 #  All libraries required by the tester.
 #  -------------------------------------
-   BTLIBS = $(BLACSFINIT) $(BLACSLIB) $(BLACSFINIT) $(MPILIB) 
+   BTLIBS = $(BLACSFINIT) $(BLACSLIB) $(BLACSFINIT) $(MPI_LIBS) 
 
 #  ----------------------------------------------------------------
 #  The directory to put the installation help routines' executables
@@ -88,7 +87,7 @@
 #  The directory to find the required communication library include files, 
 #  if they are required by your system.
 #  -----------------------------------------------------------------------
-   SYSINC = -I$(MPIINCdir)
+   SYSINC = $(impi)
 
 #  ---------------------------------------------------------------------------
 #  The Fortran 77 to C interface to be used.  If you are unsure of the correct

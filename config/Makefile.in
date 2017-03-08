@@ -28,7 +28,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -104,7 +104,7 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-all: interfaces
+all:
 	for target in $(TARGETS); do $(MAKE) $$target ; done
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(DEBUG); do $(MAKE) $$target ; done

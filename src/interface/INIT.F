@@ -544,7 +544,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_bse) then
    call CPU_activate("BS")
    call CPU_activate("DIP")
-   call initactivate(1,'X_Threads DIP_Threads')
+   call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
  !Setup

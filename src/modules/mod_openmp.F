@@ -34,17 +34,17 @@ module openmp
  !     from the environment var OMP_NUM_THREADS
  !     any other value given from input will overwrite the environment
  !
- integer     :: n_threads     = 0   ! Max number of threads possible
+ integer     :: n_threads       = 0   ! Max number of threads possible
  integer     :: n_threads_limit = 0
- integer     :: n_threads_FFT = 0    
- integer     :: n_threads_X   = 0    
- integer     :: n_threads_SE  = 0   
- integer     :: n_threads_RT  = 0  
- integer     :: n_threads_DIP = 0  
- integer     :: n_threads_K   = 0  
+ integer     :: n_threads_FFT   = 0    
+ integer     :: n_threads_X     = 0    
+ integer     :: n_threads_SE    = 0   
+ integer     :: n_threads_RT    = 0  
+ integer     :: n_threads_DIP   = 0  
+ integer     :: n_threads_K     = 0  
  integer     :: n_threads_NL  = 0
- integer     :: n_threads_now = 0
- logical     :: master_thread = .TRUE.
+ integer     :: n_threads_now   = 0
+ logical     :: master_thread   = .TRUE.
  !
 #if defined _OPENMP
  !
@@ -62,7 +62,6 @@ module openmp
 #else
  logical     :: omp_is_off    = .TRUE.
 #endif
-
  !
  ! lock vars
  !
@@ -70,14 +69,12 @@ module openmp
  integer(omp_lock_kind), allocatable :: omp_locks(:)
 #endif
  integer :: openmp_num_locks=0
-
  !
  ! nesting
  !
  integer       :: n_outthr, n_innthr
  character(25) :: s_outthr, s_innthr
-
- 
+ !
  contains
    !
    subroutine OPENMP_initialize( )

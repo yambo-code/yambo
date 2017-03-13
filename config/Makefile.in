@@ -33,6 +33,7 @@ debug       = @enable_debug@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
+do_fftw     = @compile_fftw@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
 do_netcdf   = @compile_netcdf@
@@ -108,20 +109,23 @@ all:
 	for target in $(TARGETS); do $(MAKE) $$target ; done
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(DEBUG); do $(MAKE) $$target ; done
-libs:
+#
+# External libs #
+#
+ext-libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
-	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib_ext) ; $(mklib_internal)
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal) 
-	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
+	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
@@ -133,6 +137,21 @@ libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
 	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+#
+# Internal libs #
+#
+int-libs:
+	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
+	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+#
+# All libs #
+#
+libs:	ext-libs int-libs
+#
+# Download external libs #
+#
 get_extlibs:
 	@+mkdir lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \
@@ -382,7 +401,7 @@ endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "slatec" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
@@ -399,7 +418,7 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "slatec" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \

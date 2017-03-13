@@ -32,10 +32,12 @@ Red_str="-"
 if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 
 MPI_str="-"
+MPI_LIBS_str="-"
+MPI_LIBS_info=""
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
   if test "$MPI_LIBS" = "" ; then
-    MPI_LIBS="(system default detected)";
+    MPI_LIBS_info="(system default detected)";
     MPI_LIBS_str="X";
   fi
 fi
@@ -123,6 +125,7 @@ AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
 AC_SUBST(MPI_LIBS)
+AC_SUBST(MPI_LIBS_info)
 AC_SUBST(MPI_LIBS_str)
 AC_SUBST(HDF5_str)
 AC_SUBST(HDF5_support)

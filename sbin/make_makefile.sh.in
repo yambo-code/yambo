@@ -81,24 +81,24 @@ llibinclude="\$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
 #
 case $target in
   yambo*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lnetcdf) \$(lhdf5) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(iiotk) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(ietsf) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
     ;;
   ypp*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
    linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
     ;;
 esac

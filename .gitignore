@@ -36,7 +36,6 @@ lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
 lib/slatec/*.o
-lib/slatec/*.f
 lib/fftqe/c_defs.h
 lib/fftqe/fftqe_defs.h
 #

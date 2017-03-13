@@ -182,7 +182,7 @@ if test x"$enable_hdf5" = "xno"; then
     # internal netcdf
     #
     AC_MSG_CHECKING([for NetCDF library])
-    # internal netcdf
+    #
     compile_netcdf="yes"
     if test "x$build_os" = "xaix" ; then ETCDF_AUX=-DIBMR2Fortran ; fi
     # 

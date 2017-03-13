@@ -35,7 +35,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,PAR_matrix
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
+ use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

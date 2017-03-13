@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF, AM
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -20,46 +20,32 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
+!    
+subroutine PARALLEL_PAR_to_PAR_comms_init()
  !
- !  Perform the parallel matrix multiplication
+ use pars,          ONLY:max_par_to_par_saved_comms
+ use parallel_m,    ONLY:COMM_reset,ncpu
+ use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME
  !
- !          A x B = C
- !
- !  where A(m,k), B(k,n), C(m,n)
- !
- use pars,           ONLY:cONE,cZERO
- use SLK_m,          ONLY:SLK_ORTHO
- use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  implicit none
  !
- integer           :: n,m,k
- type(PAR_matrix)  :: A, B, C
- character         :: transa,transb
+ integer :: i_comm,local_size
  !
- character(64) :: subname="PARALLEL_M_by_M"
+ ! PAR to PAR communicators
  !
- if (SLK_ORTHO%coordinate(1)==-1) return
+ if (N_PAR_to_PAR_comms>0) then
+   deallocate(PAR_to_PAR_comm_SAVE_NAME)
+   do i_comm=1,N_PAR_to_PAR_comms
+     call COMM_reset(PAR_to_PAR_comm_SAVE(i_comm))
+   enddo  
+   deallocate(PAR_to_PAR_comm_SAVE)
+ endif
+ if (ncpu> 1) local_size=max_par_to_par_saved_comms
+ if (ncpu==1) local_size=1
  !
-#if defined _TIMING
- call timing('PARALLEL_M_by_M',OPR='start')
-#endif
- !
-#if defined _DOUBLE
- CALL PZGEMM&
-#else
- CALL PCGEMM&
-#endif
-& ( transa, transb, m, n, k, cONE, A%blc(:,:,A%I), 1, 1, A%desc, &
-    B%blc(:,:,B%I), 1, 1, B%desc, cZERO, C%blc(:,:,C%I), 1, 1, C%desc)
- !
-#if defined _TIMING
- call timing('PARALLEL_M_by_M',OPR='stop')
-#endif
+ allocate(PAR_to_PAR_comm_SAVE(local_size))
+ allocate(PAR_to_PAR_comm_SAVE_NAME(local_size))
+ PAR_to_PAR_comm_SAVE_NAME=" "
+ N_PAR_to_PAR_comms=0
  !
 end subroutine

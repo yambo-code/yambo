@@ -27,7 +27,7 @@ SUBROUTINE MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
  !
  use parallel_m,     ONLY:COMM_copy
  use pars,           ONLY:cZERO,SP
- use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
+ use matrix,         ONLY:PAR_matrix,MATRIX_reset
 #include<memory.h>
  !
  character(*)               :: operation

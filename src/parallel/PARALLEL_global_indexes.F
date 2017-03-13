@@ -113,16 +113,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
- if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q)
  !
- if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(Xk,ENVIRONMENT,X_type)
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(Xk,X_type)
  !
 #if defined _RT
- if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
+ if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q)
 #endif
  !
 #if defined _SCALAPACK
- if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack(ENVIRONMENT)
+ if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif
  !
  !==========================================================================================================

@@ -23,10 +23,9 @@
 !
 subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
- use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,COMM_reset,&
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_NULL,&
 &                        PAR_COM_SLK,PAR_COM_SLK_INDEX_global,PAR_COM_Q_A2A,PAR_COM_Q_INDEX,&
-&                        linear_algebra_is_parallel,PAR_COM_SLK_INDEX_local
- use linear_algebra,ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME
+&                        linear_algebra_is_parallel
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
 #endif
@@ -41,7 +40,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  !
  ! Work Space
  !
- integer :: Ncpu_lin_algebra, slk_error,i_comm
+ integer :: Ncpu_lin_algebra, slk_error
  !
  !  LK -> Lapack,     serial linear algebra
  ! SLK -> Scalapack, parallel linear algebra
@@ -58,6 +57,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
+   call PARALLEL_PAR_to_PAR_comms_init()
    call SERIAL_fallback()
    !
    return
@@ -90,6 +90,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! 
  if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
  if (.not.linear_algebra_is_parallel) then
+   call PARALLEL_PAR_to_PAR_comms_init()
    call SERIAL_fallback( )
    return
  endif
@@ -117,19 +118,9 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  endif
 #endif
  !
- ! PAR to PAR communicators
+ ! PAR to PAR comms init
  !
- if (N_PAR_to_PAR_comms>0) then
-   deallocate(PAR_to_PAR_comm_SAVE_NAME)
-   do i_comm=1,N_PAR_to_PAR_comms
-     call COMM_reset(PAR_to_PAR_comm_SAVE(i_comm))
-   enddo  
-   deallocate(PAR_to_PAR_comm_SAVE)
- endif
- N_PAR_to_PAR_comms=PAR_COM_SLK_INDEX_local%n_CPU*2+1
- allocate(PAR_to_PAR_comm_SAVE(N_PAR_to_PAR_comms))
- allocate(PAR_to_PAR_comm_SAVE_NAME(N_PAR_to_PAR_comms))
- PAR_to_PAR_comm_SAVE_NAME=" "
+ call PARALLEL_PAR_to_PAR_comms_init()
  !
  contains
    !

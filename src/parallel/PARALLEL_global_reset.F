@@ -29,7 +29,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PP_indexes_reset
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
- use linear_algebra,ONLY:TRANSFER_world
+ use matrix,        ONLY:TRANSFER_world
  ! COMMUNICATORS
  use parallel_m,    ONLY:COMM_reset,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&

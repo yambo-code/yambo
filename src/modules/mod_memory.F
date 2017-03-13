@@ -23,18 +23,11 @@
 !
 module memory
  !
- use pars,          ONLY:SP,schlen,IP,DP
+ use pars,          ONLY:SP,schlen,IP,DP,N_MEM_max,N_MEM_SAVE_max,MEM_jump_treshold,MEM_treshold,MEM_SAVE_treshold
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
  implicit none
- !
- !...parameters
- integer, parameter  :: N_MEM_max      = 10000
- integer, parameter  :: N_MEM_SAVE_max = 1000
- integer, parameter  :: MEM_jump_treshold   = 200000 ! Kb
- integer, parameter  :: MEM_treshold        = 1000 ! Kb
- integer, parameter  :: MEM_SAVE_treshold   = 1000  ! Kb
  !
  integer :: N_MEM_SAVE_elements      = 0
  integer :: N_MEM_elements           = 0

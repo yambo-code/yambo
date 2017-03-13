@@ -39,7 +39,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                         PAR_COM_SLK_INDEX_local
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
- use linear_algebra, ONLY:MATRIX_reset
+ use matrix,         ONLY:MATRIX_reset
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer
  use parallel_m,     ONLY:linear_algebra_is_parallel

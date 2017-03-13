@@ -25,7 +25,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  use pars,          ONLY:cZERO
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
- use linear_algebra,ONLY:MATRIX_reset,PAR_matrix
+ use matrix,        ONLY:MATRIX_reset,PAR_matrix
  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use interfaces,    ONLY:PARALLEL_live_message

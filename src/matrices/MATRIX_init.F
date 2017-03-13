@@ -34,7 +34,7 @@ subroutine MATRIX_init( what, M_par, N, Nb)
  ! INTRA_comm is used to do ALL2ALL at the end of a single piece filling
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:PAR_matrix,MATRIX_reset
+ use matrix,         ONLY:PAR_matrix,MATRIX_reset
  use parallel_m,     ONLY:COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_RL_INDEX,PAR_COM_RL_A2A,ncpu
 #include <memory.h>

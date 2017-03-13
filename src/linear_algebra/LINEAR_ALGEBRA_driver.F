@@ -41,8 +41,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS,&
-&                        PAR_matrix,MATRIX_reset
+&                        LINEAR_ALGEBRA_WS_clean_up,WS
+ use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use interfaces,    ONLY:MATRIX_transfer

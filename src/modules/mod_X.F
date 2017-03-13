@@ -25,7 +25,7 @@ module X_m
  !
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
- use linear_algebra, ONLY:PAR_matrix
+ use matrix,         ONLY:PAR_matrix
  !
 #include <memory.h>
  !

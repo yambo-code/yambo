@@ -31,7 +31,7 @@
 subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
  use SLK_m,          ONLY:SLK_ORTHO
- use linear_algebra, ONLY:PAR_matrix
+ use matrix,         ONLY:PAR_matrix
 #include<memory.h>
  !
  integer           :: N,N_blocks

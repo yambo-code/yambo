@@ -29,7 +29,7 @@ SUBROUTINE MATRIX_BSE_to_PAR( M_bse , M_slk )
  use SLK_m,          ONLY:SLK_POOL,n_pools
  use BS,             ONLY:BS_block,n_BS_blks,BS_K_dim,BS_K_coupling
  use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
- use linear_algebra, ONLY:PAR_matrix
+ use matrix,         ONLY:PAR_matrix
  !
  implicit none
  !

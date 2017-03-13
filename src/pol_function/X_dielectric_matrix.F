@@ -44,7 +44,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                        PARALLEL_WF_index,WF_load,MATRIX_transfer
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use linear_algebra,ONLY:MATRIX_reset
+ use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
  !

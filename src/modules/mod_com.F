@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,       ONLY:lchlen,SP,schlen
+ use pars,       ONLY:lchlen,SP,schlen,nofs,max_open_ofs,n_max_jobstr
  use stderr,     ONLY:gen_fmt
  !
  implicit none
@@ -43,7 +43,6 @@ module com
  !
  ! JOB strings
  !
- integer, parameter :: n_max_jobstr=10
  integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
  character(lchlen)  :: alt_jobstr(n_max_jobstr)
@@ -56,8 +55,6 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=1000
- integer,parameter  :: max_open_ofs=1000
  integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)

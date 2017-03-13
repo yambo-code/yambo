@@ -43,7 +43,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,warning
- use linear_algebra,ONLY:PAR_matrix
+ use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved

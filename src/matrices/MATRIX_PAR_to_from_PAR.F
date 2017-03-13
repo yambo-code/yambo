@@ -24,8 +24,8 @@
 subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
 &                                  BLC_r, ROWS_r, COLS_r )
  !
- use pars,           ONLY:SP
- use linear_algebra, ONLY:I_do_RCV,I_do_SND,TRANSFER_world,N_PAR_to_PAR_comms,&
+ use pars,           ONLY:SP,max_par_to_par_saved_comms
+ use matrix,         ONLY:I_do_RCV,I_do_SND,TRANSFER_world,N_PAR_to_PAR_comms,&
 &                         PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_NAME,PAR_to_PAR_comm_SAVE_NAME
  use parallel_m,     ONLY:PP_redux_wait,myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm
  !
@@ -54,6 +54,8 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
      if (len_trim(PAR_to_PAR_comm_SAVE_NAME(i_s))==0.and.i_s_free==0) i_s_free=i_s
      if (PAR_to_PAR_comm_SAVE_NAME(i_s)==PAR_to_PAR_comm_NAME       ) i_COMM=i_s
    enddo
+   if (i_COMM==0.and.i_s_free==0)           i_s_free=N_PAR_to_PAR_comms+1
+   if (i_s_free>max_par_to_par_saved_comms) i_s_free=max_par_to_par_saved_comms
  endif
  !
  if (i_COMM==0) then
@@ -65,6 +67,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
    if (i_s_free>0) then
      call COMM_copy(COMM,PAR_to_PAR_comm_SAVE(i_s_free))
      PAR_to_PAR_comm_SAVE_NAME(i_s_free)=PAR_to_PAR_comm_NAME
+     N_PAR_to_PAR_comms=i_s_free
    endif
  else
    call COMM_copy(PAR_to_PAR_comm_SAVE(i_COMM),COMM)

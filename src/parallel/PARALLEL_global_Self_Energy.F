@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz
@@ -71,7 +71,6 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
- character(*)         :: ENVIRONMENT
  !
  ! Work space
  !
@@ -105,7 +104,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  YAMBO_ALLOC(PAR_QP_index,(QP_n_states))
  PAR_QP_index=0
  call PAR_build_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
- call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("QPs",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1),TOTAL=QP_n_states,&
 &                           NCPU=PAR_COM_QP_INDEX%n_CPU)
  !
@@ -121,7 +120,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  call PARALLEL_index(PAR_IND_Q,(/PAR_Q_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
  PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
- call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=PAR_Q_range(2),&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
@@ -188,7 +187,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  YAMBO_ALLOC(PAR_G_bands_index,(PAR_n_bands(2)))
  call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
  !
- call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                           TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
  !
@@ -213,7 +212,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
    !
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
-   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
+   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                           TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !

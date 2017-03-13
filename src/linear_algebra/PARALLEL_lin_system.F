@@ -30,7 +30,8 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use SLK_m,          ONLY:SLK_ORTHO
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,PAR_matrix
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing

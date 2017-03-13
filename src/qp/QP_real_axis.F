@@ -231,6 +231,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    do iqibz=1,q%nibz
      X%iq=iqibz
      i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
+     call PP_redux_wait()
    enddo
    !
  endif

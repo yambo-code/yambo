@@ -46,7 +46,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
- use linear_algebra,ONLY:MATRIX_reset
+ use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
  !

@@ -28,7 +28,7 @@ module interfaces
  interface
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
-     use linear_algebra, ONLY:PAR_matrix
+     use matrix,         ONLY:PAR_matrix
      character(*)               :: operation
      type(PAR_matrix), optional :: M_in
      type(PAR_matrix)           :: M_out
@@ -38,7 +38,7 @@ module interfaces
    subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
      !
      use parallel_m,     ONLY:MPI_comm
-     use linear_algebra, ONLY:PAR_matrix
+     use matrix,         ONLY:PAR_matrix
      use BS,             ONLY:BS_block
      use pars,           ONLY:SP
      !
@@ -58,7 +58,7 @@ module interfaces
    subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,B_slk,C,C_slk,V_left,V_right,E_real,&
 &                                   E_cmpl,SVD_digits,det)
      !
-     use linear_algebra, ONLY:PAR_matrix
+     use matrix,         ONLY:PAR_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !

@@ -58,10 +58,6 @@ module LIVE_t
  logical           :: log_line_to_dump
  character(lchlen) :: log_line
  !
- ! Definition of a time short enough to mess up I/O and MPI communications
- !
- real(SP), parameter :: SHORT_time= 60. ! seconds
- !
  contains
    !
    subroutine GET_user_WALL_time( )

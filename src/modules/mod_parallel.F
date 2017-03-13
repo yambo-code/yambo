@@ -53,10 +53,8 @@ module parallel_m
  !MPI_MAXLOC
  !    - return the maximum and the location 
  !
- use pars,       ONLY:SP,DP,schlen,lchlen
+ use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
 #include<memory.h>
- !
- integer, parameter :: max_n_of_cpus=100000
  !
 #if defined _MPI
  include 'mpif.h'
@@ -87,8 +85,6 @@ module parallel_m
  !
  ! Communicators
  !
- integer, parameter :: MAX_N_GROUPS   =100  ! MAX number of groups
- integer, parameter :: MAX_N_OF_CHAINS=100
  integer            :: n_groups                =0     ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
  integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
@@ -124,7 +120,6 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
- integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -140,7 +135,7 @@ module parallel_m
  !
  ! MPI operations
  !
- integer, parameter :: p_sum=1
+ integer, parameter :: p_sum =1
  integer, parameter :: p_prod=2
  !
  ! Logicals

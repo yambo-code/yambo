@@ -104,7 +104,7 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-all: interfaces
+all:
 	for target in $(TARGETS); do $(MAKE) $$target ; done
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(DEBUG); do $(MAKE) $$target ; done

@@ -70,6 +70,8 @@ module ELPH
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
  !
+ real(SP)  :: MAX_gkkp=0._SP
+ !
  contains
    !
    subroutine elph_global_alloc(what)

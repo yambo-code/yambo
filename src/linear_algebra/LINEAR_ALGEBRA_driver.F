@@ -175,9 +175,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  call timing("LINEAR ALGEBRA",OPR="stop")
 #endif
  !
- contains
-   !
 #if defined _SCALAPACK
+ !
+ contains
    !
    subroutine SCALAPACK_section(MAT,INIT)  
      !

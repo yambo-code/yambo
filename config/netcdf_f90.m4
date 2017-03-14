@@ -204,7 +204,7 @@ if test "x$netcdf" = xno; then
   AC_MSG_CHECKING([for NetCDF library])
   # internal netcdf
   compile_netcdf="yes"
-  if test "x$enable_bluegene" = "xyes" ; then NCFLAGS=-DIBMR2Fortran ; fi
+  if test "x$build_os" = "xaix" ; then NCFLAGS=-DIBMR2Fortran ; fi
   # 
   # the following may change if we use a different version
   # of the netcdf lib

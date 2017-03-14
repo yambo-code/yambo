@@ -251,10 +251,10 @@ subroutine RT_X_LRR_real_field(en)
  !
  if(     l_RT_induced_field) then
    EELS(:,1) = -1._SP+EELS(:,1)
-   EPS(:,:)  = -1._SP/EELS(:,:)
+   EPS(:,1)  = -1._SP/EELS(:,1)
  else
    EPS(:,1)  =  1._SP+EPS(:,1)
-   EELS(:,:) = -1._SP/EPS(:,:)
+   EELS(:,1) = -1._SP/EPS(:,1)
  endif
  !
  do i_w = 1, RT_conf%W_n_steps

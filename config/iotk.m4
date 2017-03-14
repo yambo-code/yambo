@@ -94,8 +94,8 @@ if test "x$enable_iotk" = "xyes" ; then
     AC_MSG_CHECKING([for IOTK library])
     compile_iotk="yes"
     compile_p2y="yes"
-    IOTK_INCS="$IFLAG./include"
-    IOTK_LIBS="-L./lib -liotk"
+    IOTK_INCS="$IFLAG${PWD}/lib/iotk/iotk/src/"
+    IOTK_LIBS="-L${PWD}/lib/iotk/iotk/src -liotk"
     if test ! -d lib ; then mkdir lib ; fi
     AC_MSG_RESULT(Internal)
     AC_CONFIG_FILES([lib/install/make_iotk.inc])

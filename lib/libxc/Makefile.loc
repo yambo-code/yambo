@@ -13,7 +13,7 @@ TARBALL=$(tarball_libxc)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/libxc/tmp
+INSTALL_DIR=$(libdir)/libxc/install
 
 #
 # MAIN target
@@ -41,15 +41,6 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
 	#
-	if test -d ./lib      ; then rm -rf ./lib      ; fi
-	if test -d ./include  ; then rm -rf ./include  ; fi
-	#
-	mv $(INSTALL_DIR)/lib .
-	mv $(INSTALL_DIR)/include .
-	#
-	mv ./lib/*.a $(libdir) 
-	mv ./include/*.mod ./include/*.h $(includedir)
-	#
 	touch package-ready-stamp
 
 #
@@ -57,7 +48,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 

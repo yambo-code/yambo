@@ -333,9 +333,9 @@ define mklib_ext
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    if [ "$(topdir)" != "$(prefix)" ] ; then \
     if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
-    cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; \
-    cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; \
-    cp $$VPATH/$$ldir/*inc* $$DIR2GO/$$ldir/ ; \
+    if test -e $$VPATH/$$ldir/Makefile.loc; then cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; fi ;\
+    if test -e $$VPATH/$$ldir/Makefile.lib; then cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; fi ;\
+    if test -e $$VPATH/$$ldir/*inc*;        then cp $$VPATH/$$ldir/*inc* $$DIR2GO/$$ldir/ ;        fi ;\
    fi ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -388,7 +388,7 @@ define objects_clean
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
-        grep -v '.*lapack*' | grep -v '.*fftw*' | grep -v '.*blacs*' |  \
+        grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*blacs*' |  \
         grep -v '.*scalapack*' | grep -v '.*slepc*' | \
         grep -v '.*petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"

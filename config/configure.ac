@@ -307,6 +307,7 @@ if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
  if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib" ; fi
  if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local" ; fi
+ if test ! -d "$prefix/lib/slatec" ; then mkdir "$prefix/lib/slatec" ; fi
  cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$file" "$prefix/driver" ;
@@ -317,6 +318,10 @@ if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  cd "../lib/local" ;
  for file in `ls *.f` ; do
   cp "$file" "$prefix/lib/local" ;
+ done ;
+ cd "../slatec" ;
+ for file in `ls *.f` ; do
+  cp "$file" "$prefix/lib/slatec" ;
  done ;
  cd "$prefix" ;
 fi

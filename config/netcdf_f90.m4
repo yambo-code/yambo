@@ -188,9 +188,9 @@ if test x"$enable_hdf5" = "xno"; then
     # the following may change if we use a different version
     # of the netcdf lib
     #
-    #NETCDF_LIBS="-L${PWD}/lib -lnetcdf"
-    NETCDF_LIBS="-L${PWD}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${PWD}/include"
+    #NETCDF_LIBS="-L${PWD}/lib/netcdf/install/lib -lnetcdf"
+    NETCDF_LIBS="-L${PWD}lib/netcdf/install/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/install/include"
     #
     netcdf=yes
     AC_MSG_RESULT([ok])
@@ -271,10 +271,8 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     HDF5_LIBS="-L${PWD}/lib/hdf5/install/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
     HDF5_INCS="${IFLAG}${PWD}/lib/hdf5/install/include"
-    #NETCDF_LIBS="-L${PWD}/lib/netcdf/tmp/lib -lnetcdff -lnetcdf"
-    #NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/tmp/include ${IFLAG}${PWD}/lib/netcdf/tmp/f90"
-    NETCDF_LIBS="-L${PWD}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${PWD}/include"
+    NETCDF_LIBS="-L${PWD}/lib/netcdf/install/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/install/include"
     #
     netcdf=yes
     hdf5=yes

@@ -249,7 +249,7 @@ if test "$use_internal_fftqe" = "yes" ; then
   FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
   FFT_str="I"
   FFT_LIBS="-L./lib -lfftqe";
-  #FFT_INCS="${IFLAG}./lib/fftqe/"
+  FFT_INCS="${IFLAG}./include/"
   HAVE_FFTQE=yes
   compile_fftqe=yes
   AC_MSG_RESULT(Internal FFTQE (FFTW2))
@@ -291,7 +291,8 @@ if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
   FFT_CPP="-D_FFTW"
   FFT_str="I"
-  FFT_LIBS="-L./lib/ -lfftw3";
+  FFT_LIBS="-L${PWD}/lib/fftw/install/lib -lfftw3";
+  FFT_INCS="${IFLAG}${PWD}/lib/fftw/install/include/"
   HAVE_FFTW=yes
   compile_fftw=yes
   AC_MSG_RESULT(Internal FFTW3)

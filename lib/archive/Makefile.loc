@@ -8,10 +8,10 @@ all: $(tarball_iotk) $(tarball_netcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarb
 #
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
-$(tarball_netcdf):
-	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
 $(tarball_hdf5):
 	@+TARBALL="$(tarball_hdf5)"     ; URL="$(url_hdf5)"     ; LIB="HDF5"; $(getsrc)
+$(tarball_netcdf):
+	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
 $(tarball_etsf_io):
 	@+TARBALL="$(tarball_etsf_io)"  ; URL="$(url_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
 $(tarball_libxc):

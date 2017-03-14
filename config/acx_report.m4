@@ -53,7 +53,11 @@ if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files su
 
 HDF5_str="-"
 if test "$hdf5" = "yes" ; then
-  HDF5_str="E"
+  if test "$compile_hdf5" = "yes" ; then
+    HDF5_str="I"
+  else
+    HDF5_str="E"
+  fi
   HDF5_support="(No HDF5-IO format)"
   if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(HDF5-IO format, no data compression)" ; fi
   if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_support="(HDF5-IO format with data compression)" ; fi

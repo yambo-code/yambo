@@ -1,5 +1,5 @@
 #
-# autoconf macro for detecting NetCDF module file
+
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
 #        Copyright (C) 2000-2016 the YAMBO team
@@ -74,7 +74,7 @@ enable_hdf5="no"
 compile_netcdf="no"
 compile_hdf5="no"
 dnetcdf=""
-NETCDF_AUX=""
+NETCDF_OPT="--disable-netcdf-4"
 IFLAG=""
 #
 # global options
@@ -91,7 +91,6 @@ IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 #
 # Set NETCDF LIBS and FLAGS from INPUT
-#
 #
 if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   #
@@ -181,7 +180,7 @@ if test x"$enable_hdf5" = "xno"; then
     #
     # internal netcdf
     #
-    AC_MSG_CHECKING([for NetCDF library])
+    AC_MSG_CHECKING([for internal NetCDF library])
     #
     compile_netcdf="yes"
     if test "x$build_os" = "xaix" ; then ETCDF_AUX=-DIBMR2Fortran ; fi
@@ -189,12 +188,12 @@ if test x"$enable_hdf5" = "xno"; then
     # the following may change if we use a different version
     # of the netcdf lib
     #
-    #NETCDF_LIBS="-L./lib -lnetcdf"
-    NETCDF_LIBS="-L./lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}./include"
+    #NETCDF_LIBS="-L${PWD}/lib -lnetcdf"
+    NETCDF_LIBS="-L${PWD}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${PWD}/include"
     #
     netcdf=yes
-    AC_MSG_RESULT(Internal)
+    AC_MSG_RESULT([ok])
     #
     # 
     FCFLAGS="$save_fcflags"
@@ -210,8 +209,6 @@ fi
 hdf5="no"
 #
 if test x"$enable_hdf5" = "xyes"; then
-  #
-  if test x"$compile_netcdf" = "xyes" ; then AC_MSG_ERROR([HDF5 support and Internal NetCDF not compatible]); fi
   #
   if   test -d "$with_hdf5_libdir"    ; then AC_MSG_CHECKING([for HDF5 in $with_hdf5_libdir]) 
   elif test -d "$with_hdf5_path"    ;   then AC_MSG_CHECKING([for HDF5 in $with_hdf5_path]) 
@@ -231,17 +228,17 @@ if test x"$enable_hdf5" = "xyes"; then
   #
   if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
   #
-  if test -d "$try_libdir" ; then try_HDF5_LIBS="-L$try_libdir -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test -d "$try_libdir" ; then try_HDF5_LIBS="-L$try_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
   if test -d "$try_incdir" ; then try_HDF5_INCS="$IFLAG$try_incdir" ; fi
   #
   save_libs="$LIBS"
   save_fcflags="$FCFLAGS"
   #
-  FCFLAGS="$try_NETCDF_INCS try_HDF5_INCS $save_fcflags"
+  FCFLAGS="$try_NETCDF_INCS $try_HDF5_INCS $save_fcflags"
   #
   for ldflag in "-lcurl -lz" "-lcurl -lsz -lz" "-lsz -lz" "-lz" " "; do
-    LIBS="$try_NETCDF_LIBS $try_HDF5_LIBS /usr/lib/$ldflag"
+    LIBS="$try_NETCDF_LIBS $try_HDF5_LIBS $ldflag"
     AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
        use hdf5
        use netcdf
@@ -255,7 +252,7 @@ if test x"$enable_hdf5" = "xyes"; then
     if test "x$hdf5" = xyes; then
       HDF5_LIBS="$try_HDF5_LIBS $ldflag"
       HDF5_INCS="$try_HDF5_INCS"
-      NETCDF_LIBS="$try_NETCDF_LIBS $ldflag"
+      NETCDF_LIBS="$try_NETCDF_LIBS"
       NETCDF_INCS="$try_NETCDF_INCS"
       AC_MSG_RESULT([yes])
       break
@@ -266,23 +263,27 @@ if test x"$enable_hdf5" = "xyes"; then
   LIBS="$save_libs"
   #
   if test "x$hdf5" = xno; then
-    AC_MSG_RESULT([no]) ;
+    if   test -d "$with_hdf5_libdir" || test -d "$with_hdf5_path"; then AC_MSG_RESULT([no]) ; fi
     #
-    AC_MSG_CHECKING([for NETCDF+HDF5 library]);
-    compile_hdf5  ="yes"  ;
+    AC_MSG_CHECKING([for internal NETCDF+HDF5 library]);
+    compile_hdf5="yes"  ;
     compile_netcdf="yes"  ;
-    #  
-    HDF5_LIBS="-L./lib -lhdf5_fortran -lhdf5_hl -lhdf5"
-    HDF5_INCS="${IFLAG}./include"
-    NETCDF_LIBS="-L./lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}./include"
+    #
+    HDF5_LIBS="-L${PWD}/lib/hdf5/install/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
+    HDF5_INCS="${IFLAG}${PWD}/lib/hdf5/install/include"
+    #NETCDF_LIBS="-L${PWD}/lib/netcdf/tmp/lib -lnetcdff -lnetcdf"
+    #NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/tmp/include ${IFLAG}${PWD}/lib/netcdf/tmp/f90"
+    NETCDF_LIBS="-L${PWD}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${PWD}/include"
     #
     netcdf=yes
     hdf5=yes
-    AC_MSG_RESULT(Internal)
+    AC_MSG_RESULT([ok])
     #
   fi
 fi
+#
+if test x"$enable_hdf5" = "xyes" && test x"$compile_netcdf" = "xyes" ; then NETCDF_OPT=""; fi
 #
 # Large File Support
 #
@@ -304,7 +305,7 @@ fi
 #
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(NETCDF_INCS)
-AC_SUBST(NETCDF_AUX)
+AC_SUBST(NETCDF_OPT)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(netcdf)

@@ -86,7 +86,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  type(QP_ctl_t)        :: QP_ctl,QP_ctl_dummy
  integer , allocatable :: DB_corrected(:,:,:)
  !
- !
 #if defined _TIMING
  call timing('GW(e-p)',OPR='start')
 #endif

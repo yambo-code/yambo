@@ -24,17 +24,17 @@
 subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
 &                                  BLC_r, ROWS_r, COLS_r )
  !
- use pars,           ONLY:SP,max_par_to_par_saved_comms
+ use pars,           ONLY:SP
  use matrix,         ONLY:I_do_RCV,I_do_SND,TRANSFER_world,N_PAR_to_PAR_comms,&
-&                         PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_NAME,PAR_to_PAR_comm_SAVE_NAME
+&                         PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_NAME,PAR_to_PAR_comm_SAVE_NAME,N_MAX_PAR_to_PAR_comms
  use parallel_m,     ONLY:PP_redux_wait,myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm
  !
  implicit none
  !
- integer          :: ROWS_s(2),COLS_s(2)
- integer          :: ROWS_r(2),COLS_r(2)
- complex(SP)      :: BLC_s(ROWS_s(2)-ROWS_s(1)+1,COLS_s(2)-COLS_s(1)+1)
- complex(SP)      :: BLC_r(ROWS_r(2)-ROWS_r(1)+1,COLS_r(2)-COLS_r(1)+1)
+ integer,  intent(IN)       :: ROWS_s(2),COLS_s(2)
+ integer,  intent(IN)       :: ROWS_r(2),COLS_r(2)
+ complex(SP), intent(IN)    :: BLC_s(ROWS_s(2)-ROWS_s(1)+1,COLS_s(2)-COLS_s(1)+1)
+ complex(SP), intent(INOUT) :: BLC_r(ROWS_r(2)-ROWS_r(1)+1,COLS_r(2)-COLS_r(1)+1)
  !
  ! Work Space
  !
@@ -54,8 +54,8 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
      if (len_trim(PAR_to_PAR_comm_SAVE_NAME(i_s))==0.and.i_s_free==0) i_s_free=i_s
      if (PAR_to_PAR_comm_SAVE_NAME(i_s)==PAR_to_PAR_comm_NAME       ) i_COMM=i_s
    enddo
-   if (i_COMM==0.and.i_s_free==0)           i_s_free=N_PAR_to_PAR_comms+1
-   if (i_s_free>max_par_to_par_saved_comms) i_s_free=max_par_to_par_saved_comms
+   if (i_COMM==0.and.i_s_free==0)       i_s_free=N_PAR_to_PAR_comms+1
+   if (i_s_free>N_MAX_PAR_to_PAR_comms) i_s_free=1
  endif
  !
  if (i_COMM==0) then

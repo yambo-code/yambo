@@ -92,8 +92,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_init( "SLK", Xo , X%ng, 1 )
  YAMBO_ALLOC(Xo%blc,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
  Xo%blc=cZERO
- call MATRIX_init( "SLK", BUFFER , X%ng, PAR_n_freqs )
- YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),PAR_n_freqs))
+ call MATRIX_init( "SLK", BUFFER , X%ng, max(PAR_n_freqs,1) )
+ YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )

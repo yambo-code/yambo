@@ -86,6 +86,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! Actual IO
  !
  error=0
+ dims =1
  !
  if (present(L1).or.present(I1).or.present(R1)               ) dims=1
  if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2

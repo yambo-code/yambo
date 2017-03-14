@@ -64,9 +64,6 @@ module pars
  !...QP
  integer, parameter :: max_qp_descs=100
  !
- !...Matrix
- integer, parameter :: max_par_to_par_saved_comms=100
- !
  ! KINDS
  !=======
  integer, parameter  :: DP = selected_real_kind(14,200)

@@ -23,28 +23,27 @@
 !    
 subroutine PARALLEL_PAR_to_PAR_comms_init()
  !
- use pars,          ONLY:max_par_to_par_saved_comms
- use parallel_m,    ONLY:COMM_reset,ncpu
- use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME
+ use parallel_m,    ONLY:COMM_reset,PAR_COM_SLK_INDEX_local
+ use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME,N_MAX_PAR_to_PAR_comms
  !
  implicit none
  !
- integer :: i_comm,local_size
+ integer :: i_comm
  !
  ! PAR to PAR communicators
  !
- if (N_PAR_to_PAR_comms>0) then
+ if (allocated(PAR_to_PAR_comm_SAVE_NAME)) then
    deallocate(PAR_to_PAR_comm_SAVE_NAME)
-   do i_comm=1,N_PAR_to_PAR_comms
+   do i_comm=1,N_MAX_PAR_to_PAR_comms
      call COMM_reset(PAR_to_PAR_comm_SAVE(i_comm))
    enddo  
    deallocate(PAR_to_PAR_comm_SAVE)
  endif
- if (ncpu> 1) local_size=max_par_to_par_saved_comms
- if (ncpu==1) local_size=1
  !
- allocate(PAR_to_PAR_comm_SAVE(local_size))
- allocate(PAR_to_PAR_comm_SAVE_NAME(local_size))
+ N_MAX_PAR_to_PAR_comms=2*PAR_COM_SLK_INDEX_local%n_CPU+1
+ !
+ allocate(PAR_to_PAR_comm_SAVE(N_MAX_PAR_to_PAR_comms))
+ allocate(PAR_to_PAR_comm_SAVE_NAME(N_MAX_PAR_to_PAR_comms))
  PAR_to_PAR_comm_SAVE_NAME=" "
  N_PAR_to_PAR_comms=0
  !

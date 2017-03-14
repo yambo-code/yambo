@@ -32,7 +32,7 @@ integer function io_ELPH(ID,what)
 &                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q
+&                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,elph_grids_are_expanded
  use stderr,         ONLY:intc
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
@@ -65,8 +65,11 @@ integer function io_ELPH(ID,what)
 #endif
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
- if (what=='gkkp_expanded')           db_name='elph_gkkp_expanded'
  if (what=='gFsq')                    db_name='elph_gFsq'
+ if (what=='gkkp_expanded') then
+   db_name='elph_gkkp_expanded'
+   elph_grids_are_expanded=.TRUE.
+ endif
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_ELPH/=0) goto 1

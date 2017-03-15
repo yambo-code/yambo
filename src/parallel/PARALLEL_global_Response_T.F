@@ -29,8 +29,6 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
  use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
- ! SLK
- use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered,PAR_COM_DIPOLES, &
@@ -54,15 +52,13 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  integer              :: i_k
  !
- CALL PARALLEL_structure(4,(/"g ","k ","eh","t "/))
+ CALL PARALLEL_structure(3,(/"k ","eh","t "/))
  !
- call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_RL_INDEX,&
-&                                        COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
-&                                        COMM_index_3=PAR_COM_eh_INDEX,&
-&                                        COMM_index_4=PAR_COM_T_INDEX,&
-&                                        COMM_A2A_1=PAR_COM_RL_A2A,&
-&                                        COMM_A2A_2=PAR_COM_Xk_ibz_A2A,&
-&                                        COMM_A2A_3=PAR_COM_eh_A2A) 
+ call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+&                                        COMM_index_2=PAR_COM_eh_INDEX,&
+&                                        COMM_index_3=PAR_COM_T_INDEX,&
+&                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
+&                                        COMM_A2A_2=PAR_COM_eh_A2A) 
  if (PAR_COM_eh_INDEX%n_CPU==1) then
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
  endif

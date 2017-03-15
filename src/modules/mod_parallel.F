@@ -128,6 +128,7 @@ module parallel_m
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
  logical          :: linear_algebra_is_parallel = .false.
+ character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
  !
  !... Logging CPUs ...
  !
@@ -333,6 +334,7 @@ module parallel_m
  integer            :: PAR_n_bands(2)   = 0
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
+ integer            :: PAR_n_G_vectors  = 0
  !
  ! ... and derived variables
  !==========================

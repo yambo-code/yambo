@@ -103,7 +103,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! DEFAULTS
  !==========
  !
- CALL PARALLEL_defaults(ENVIRONMENT)
+ CALL PARALLEL_global_defaults(ENVIRONMENT)
  !
  !==============================
  ! ENVIRONMENT DEPENDENT SCHEMES

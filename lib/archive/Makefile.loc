@@ -4,7 +4,8 @@
 include ./package.list
 #
 all: $(tarball_iotk) $(tarball_netcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_slatec) \
-     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw)
+     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
+
 #
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
@@ -28,6 +29,8 @@ $(tarball_petsc):
 	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
 $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
+$(tarball_fftqe):
+	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
 #
 # cleaning
 #
@@ -45,7 +48,8 @@ clean_all:
           if test -s $(tarball_blacs)    && test "$(keep_blacs)"     != "yes" ;  then rm $(tarball_blacs)     ; fi ; \
           if test -s $(tarball_petsc)    && test "$(keep_petsc)"     != "yes" ;  then rm $(tarball_petsc)     ; fi ; \
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \
-          if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)     ; fi ; \
+          if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)      ; fi ; \
+          if test -s $(tarball_fftqe)    && test "$(keep_fftqe)"     != "yes" ;  then rm $(tarball_fftqe)     ; fi ; \
 	fi
 #
 define getsrc

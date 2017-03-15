@@ -122,6 +122,8 @@ ext-libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
@@ -142,8 +144,6 @@ ext-libs:
 # Internal libs #
 #
 int-libs:
-	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal); fi
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 #
@@ -388,7 +388,7 @@ define objects_clean
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
-        grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*blacs*' |  \
+        grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*blacs*' |  \
         grep -v '.*scalapack*' | grep -v '.*slepc*' | \
         grep -v '.*petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
@@ -402,8 +402,8 @@ endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
-           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f 
- @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" ; do \
+           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
+ @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
@@ -414,14 +414,14 @@ endef
 define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
-           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f 
+           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  @if test -d $(libdir)/install; then \
   cd $(libdir)/install; \
   if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi ; \
   cd ../.. ; \
  fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
@@ -445,7 +445,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf_io  ncgen ncgen3 nc-config nccopy ncdump  iotk iotk.x ; cd ..
+ cd $(bindir) ; rm -f etsf*  nc*  iotk* ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

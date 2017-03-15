@@ -96,7 +96,7 @@ if test "x$enable_iotk" = "xyes" ; then
     IOTK_LIBS="$with_iotk_libs"
     AC_MSG_RESULT(yes)
   fi
-  if test x"IOTK_LIBS" = "x"; then
+  if test "$IOTK_LIBS" = " "; then
     #
     # internal IOTK
     #

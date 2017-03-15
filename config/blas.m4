@@ -129,7 +129,7 @@ elif test -d "$with_blas_libs" && test "$with_blas_libs" = "" ; then
   if test $acx_blas_ok = "yes"; then AC_MSG_NOTICE([Blas found in ${BLAS_LIBS} but imposing built-in library]); fi
 fi
   
-if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-L./lib -lblas"; fi
+if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-L${extlibs_path}/lib -lblas"; fi
 
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)

@@ -13,8 +13,7 @@ TARBALL=$(tarball_netcdf)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/netcdf/install
-AUXFLAGS=--prefix=$(INSTALL_DIR) \
+AUXFLAGS=--prefix=$(libs_prefix) \
          --without-pic --enable-static --disable-shared \
          --disable-dap --disable-cxx  $(netcdf_opt)
 
@@ -52,6 +51,8 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
+	#
+	chmod u+x $(libs_prefix)/lib/*netcdf*.a
 	#
 	touch package-ready-stamp
 	

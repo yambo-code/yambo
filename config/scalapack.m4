@@ -87,11 +87,11 @@ compile_blacs="no"
 compile_slk="no"
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_blacs_libs" = "yes"; then
   compile_blacs="yes"
-  BLACS_LIBS="-L./lib -lblacs -lblacs_init"
+  BLACS_LIBS="-L${extlibs_path}/lib -lblacs -lblacs_init"
 fi
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_scalapack_libs" = "yes"; then
   compile_slk="yes"
-  SCALAPACK_LIBS="-L./lib -lscalapack"
+  SCALAPACK_LIBS="-L${extlibs_path}/lib -lscalapack"
 fi
 #
 if (test "$acx_blacs_ok" = "yes" || test "$compile_blacs" = "yes") && (test "$acx_scalapack_ok" = "yes" || test "$compile_slk" = "yes" ) ; then

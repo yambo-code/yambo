@@ -188,9 +188,9 @@ if test x"$enable_hdf5" = "xno"; then
     # the following may change if we use a different version
     # of the netcdf lib
     #
-    #NETCDF_LIBS="-L${PWD}/lib/netcdf/install/lib -lnetcdf"
-    NETCDF_LIBS="-L${PWD}lib/netcdf/install/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/install/include"
+    #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf"
+    NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/include"
     #
     netcdf=yes
     AC_MSG_RESULT([ok])
@@ -237,7 +237,10 @@ if test x"$enable_hdf5" = "xyes"; then
   #
   FCFLAGS="$try_NETCDF_INCS $try_HDF5_INCS $save_fcflags"
   #
-  for ldflag in "-lcurl -lz" "-lcurl -lsz -lz" "-lsz -lz" "-lz" " "; do
+  for ldflag in "-lcurl -lz"           "-lcurl -lsz -lz"           "-lsz -lz"           "-lz"           " " \
+                "-lcurl -lz -lm"       "-lcurl -lsz -lz -lm"       "-lsz -lz -lm"       "-lz -lm"       "-lm" \
+                "-lcurl -lz -ldl"      "-lcurl -lsz -lz -ldl"      "-lsz -lz -ldl"      "-lz -ldl"      "-ldl" \
+                "-lcurl -lz -lm -ldl"  "-lcurl -lsz -lz -lm -ldl"  "-lsz -lz -lm -ldl"  "-lz -lm -ldl"  "-lm -ldl"; do
     LIBS="$try_NETCDF_LIBS $try_HDF5_LIBS $ldflag"
     AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
        use hdf5
@@ -269,10 +272,10 @@ if test x"$enable_hdf5" = "xyes"; then
     compile_hdf5="yes"  ;
     compile_netcdf="yes"  ;
     #
-    HDF5_LIBS="-L${PWD}/lib/hdf5/install/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
-    HDF5_INCS="${IFLAG}${PWD}/lib/hdf5/install/include"
-    NETCDF_LIBS="-L${PWD}/lib/netcdf/install/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${PWD}/lib/netcdf/install/include"
+    HDF5_LIBS="-L${extlibs_path}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
+    HDF5_INCS="${IFLAG}${extlibs_path}/include"
+    NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/include"
     #
     netcdf=yes
     hdf5=yes

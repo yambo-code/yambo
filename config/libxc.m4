@@ -165,10 +165,10 @@ fi
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   # version y2.0.3
-  #LIBXC_LIBS="-L${PWD}/lib/libxc/install/lib -lxc"
+  #LIBXC_LIBS="-L${extlibs_path}/lib -lxc"
   # version 2.2.3 is used
-  LIBXC_LIBS="-L${PWD}/lib/libxc/install/lib -lxcf90 -lxc"
-  LIBXC_INCS="$IFLAG${PWD}/lib/libxc/install/include"
+  LIBXC_LIBS="-L${extlibs_path}/lib -lxcf90 -lxc"
+  LIBXC_INCS="$IFLAG${extlibs_path}/include"
   AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
 fi 
 

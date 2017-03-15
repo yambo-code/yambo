@@ -13,8 +13,8 @@ TARBALL=$(tarball_iotk)
 #
 # redefinitions
 #
-#INSTALL_DIR=$(libdir)/iotk/install
-#AUXFLAGS= --prefix=$(INSTALL_DIR)
+AUXFLAGS=--prefix=$(libs_prefix) \
+         IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 
 #
 # MAIN target
@@ -38,11 +38,9 @@ configure-stamp: uncompress-stamp
 	        fi ) ; \
 	fi
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	        if test -x ./configure ; then ./configure  \
-	           FC="$(f90)" \
-	           IOTK_SAFEST="yes" \
-	           IOTK_MAX_RANK=4 \
-		   MAKE=$(make); \
+	        if test -x ./configure ; then \
+	           ./configure $(AUXFLAGS) \
+	           FC="$(f90)"; \
 	        fi ) ; \
 	fi
 	touch configure-stamp
@@ -51,6 +49,17 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp 
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
+	#
+	# Replaces make install which seems to be missing for iotk
+	#
+	if ! test -d ./lib      ; then mkdir $(libs_prefix)/lib      ; fi    ;
+	if ! test -d ./bin      ; then mkdir $(libs_prefix)/bin      ; fi    ;
+	if ! test -d ./include  ; then mkdir $(libs_prefix)/include  ; fi    ;
+	#
+	cp $(PACKAGE)/src/*.a $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
+	cp $(PACKAGE)/src/*.x $(libs_prefix)/bin ;
+	cp $(PACKAGE)/tools/iotk $(libs_prefix)/bin ;
+	cp $(PACKAGE)/src/*.mod $(libs_prefix)/include ;
 	#
 	touch package-ready-stamp
 

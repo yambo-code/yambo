@@ -25,6 +25,10 @@ m4_include([config/version.m4])
 #
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
+#
+# YAMBO SPECIFIC
+#
+m4_include([config/yambo_specific.m4])
 # 
 #  General
 #
@@ -94,10 +98,6 @@ else
 fi
 AC_SUBST(MAKE)
 
-#
-# YAMBO SPECIFIC
-#
-m4_include([config/yambo_specific.m4])
 
 # ============================================================================
 #AR 

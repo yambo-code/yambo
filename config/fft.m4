@@ -291,8 +291,8 @@ if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
   FFT_CPP="-D_FFTW"
   FFT_str="I"
-  FFT_LIBS="-L${PWD}/lib/fftw/install/lib -lfftw3";
-  FFT_INCS="${IFLAG}${PWD}/lib/fftw/install/include/"
+  FFT_LIBS="-L${extlibs_path}/lib -lfftw3";
+  FFT_INCS="${IFLAG}${extlibs_path}/include/"
   HAVE_FFTW=yes
   compile_fftw=yes
   AC_MSG_RESULT(Internal FFTW3)

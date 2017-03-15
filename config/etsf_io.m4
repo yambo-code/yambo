@@ -101,8 +101,8 @@ if test "x$enable_etsf_io" = "xyes" ; then
     AC_MSG_CHECKING([for ETSF_IO Library])
     compile_etsf="yes"
     compile_e2y="yes"
-    ETSF_INCS="${IFLAG}./include"
-    ETSF_LIBS="-L./lib -letsf_io"
+    ETSF_INCS="${IFLAG}${extlibs_path}/include"
+    ETSF_LIBS="-L${extlibs_path}/lib -letsf_io"
     AC_MSG_RESULT(Internal)
   fi
   #

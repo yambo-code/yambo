@@ -58,8 +58,10 @@ if test "x$enable_iotk" = "xyes" ; then
     if test -d "$with_iotk_libdir" ; then AC_MSG_CHECKING([for IOTK in $with_iotk_libdir]) ; fi
     #
     if test -d "$with_iotk_path" ; then
-        try_libdir=$with_iotk_path/src
-        try_incdir=$with_iotk_path/src
+        try_libdir_src=$with_iotk_path/src
+        try_incdir_src=$with_iotk_path/src
+        try_libdir=$with_iotk_path/lib
+        try_incdir=$with_iotk_path/include
     fi
     if test -d "$with_iotk_libdir"  ;    then try_libdir=$with_iotk_libdir ; fi
     if test -d "$with_iotk_includedir" ; then try_incdir=$with_iotk_includedir ; fi
@@ -74,8 +76,14 @@ if test "x$enable_iotk" = "xyes" ; then
       IOTK_INCS="$IFLAG$try_incdir"
       IOTK_LIBS="$try_libdir/libiotk.a"
       AC_MSG_RESULT([yes])
+    elif test -r $try_libdir_src/libiotk.a ; then
+      compile_p2y="yes"
+      compile_iotk="no"
+      IOTK_INCS="$IFLAG$try_incdir"
+      IOTK_LIBS="$try_libdir/libiotk.a"
+      AC_MSG_RESULT([yes])
     else
-      AC_MSG_RESULT([no])
+      AC_MSG_RESULT([no. Fallback to internal library.])
     fi
   elif test x"$with_iotk_libs" != "x" ; then
     #
@@ -87,17 +95,18 @@ if test "x$enable_iotk" = "xyes" ; then
     if test -d "$with_iotk_includedir" ; then IOTK_INCS="$IFLAG$with_iotk_includedir" ; fi
     IOTK_LIBS="$with_iotk_libs"
     AC_MSG_RESULT(yes)
-  else
+  fi
+  if test x"IOTK_LIBS" = "x"; then
     #
     # internal IOTK
     #
-    AC_MSG_CHECKING([for IOTK library])
+    AC_MSG_CHECKING([for internal IOTK library])
     compile_iotk="yes"
     compile_p2y="yes"
-    IOTK_INCS="$IFLAG${PWD}/lib/iotk/iotk/src/"
-    IOTK_LIBS="-L${PWD}/lib/iotk/iotk/src -liotk"
+    IOTK_INCS="${IFLAG}${extlibs_path}/include/"
+    IOTK_LIBS="-L${extlibs_path}/lib -liotk"
     if test ! -d lib ; then mkdir lib ; fi
-    AC_MSG_RESULT(Internal)
+    AC_MSG_RESULT(ok)
     AC_CONFIG_FILES([lib/install/make_iotk.inc])
   fi
 else

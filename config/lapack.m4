@@ -83,7 +83,7 @@ elif test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "" ; then
   if test "$acx_lalpack_ok" = "yes"; then AC_MSG_NOTICE([Lapack found in ${LAPACK_LIBS} but imposing built-in library]); fi
 fi
   
-if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-L./lib -llapack"; fi
+if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-L${extlibs_path}/lib -llapack"; fi
 
 AC_SUBST(compile_lapack)
 AC_SUBST(LAPACK_LIBS)

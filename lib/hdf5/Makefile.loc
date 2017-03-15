@@ -13,8 +13,7 @@ TARBALL=$(tarball_hdf5)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/hdf5/install
-AUXFLAGS=--prefix=$(INSTALL_DIR) \
+AUXFLAGS=--prefix=$(libs_prefix) \
          --enable-fortran --disable-shared --enable-static --without-pic
 
 
@@ -53,6 +52,9 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
+	#
+	chmod u+x $(libs_prefix)/lib/*hdf5*.a
+	#
 	touch package-ready-stamp
 	
 

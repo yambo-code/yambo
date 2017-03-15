@@ -13,8 +13,7 @@ TARBALL=$(tarball_fftw)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/fftw/install
-AUXFLAGS=--prefix=$(INSTALL_DIR)
+AUXFLAGS=--prefix=$(libs_prefix)
 
 #
 # MAIN target

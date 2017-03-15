@@ -13,7 +13,7 @@ TARBALL=$(tarball_libxc)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/libxc/install
+AUXFLAGS=--prefix=$(libs_prefix)
 
 #
 # MAIN target
@@ -24,13 +24,11 @@ uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	        ./configure \
-	        --prefix=$(INSTALL_DIR) \
+	        ./configure $(AUXFLAGS) \
 	        CC="$(cc)" \
 	        FC="$(f90)" \
 		FCCPP="$(fpp)" ); \
@@ -40,6 +38,8 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
+	#
+	chmod u+x $(libs_prefix)/lib/*xc*.a
 	#
 	touch package-ready-stamp
 

@@ -13,7 +13,7 @@
 #  -----------------------------
 #  The top level BLACS directory
 #  -----------------------------
-   BTOPdir = $(topdir)/lib/blacs/blacs
+   BTOPdir = $(srcdir)/lib/blacs/blacs
 
 #  ---------------------------------------------------------------------------
 #  The communication library your BLACS have been written for.
@@ -38,7 +38,7 @@
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
 #  ----------------------------------------------------------
-   BLACSdir    = $(BTOPdir)/../../
+   BLACSdir    = $(libs_prefix)/lib/
    BLACSDBGLVL = 0
    BLACSFINIT  = $(BLACSdir)/libblacs_init.a
    BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a

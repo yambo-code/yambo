@@ -513,7 +513,7 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
-   call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
+   call qexml_read_planewaves(ecutwfc=ecutwfc_,ecutrho=ecutrho_,igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
 
 #endif

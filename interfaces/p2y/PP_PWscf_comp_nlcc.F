@@ -91,19 +91,13 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     enddo
     !
   enddo
-!! XXXX
-!is=1234
-!open(is,file="debug_yambo_nlcc.dat")
-!do ig = 1, npw
-!   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc(ig)
-!enddo
-!close(is)
-!open(is,file="debug_yambo_nlcc_atom.dat")
-!do ig = 1, npw
-!   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc_atom(ig,:)
-!enddo
-!close(is)
 ! XXXX
+is=1234
+open(is,file="debug_yambo_nlcc.dat")
+do ig = 1, npw
+   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc(ig)
+enddo
+close(is)
   !
   deallocate(G_cc)
   !

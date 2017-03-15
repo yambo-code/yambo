@@ -42,6 +42,7 @@ type pw_pseudo
   integer           :: nbeta           ! Number of nonlocal projectors
   integer           :: nmesh           ! Number of points in mesh
   real(SP)          :: cutoff          ! Maximum useful cutoff (Ry)
+  real(SP)          :: cutoff_rho      ! Maximum useful cutoff for the density (Ry)
   real(SP), pointer :: mesh(:)         ! Mesh [nmesh]
   real(SP), pointer :: wmesh(:)        ! weights for integrals [nmesh]
   real(SP), pointer :: rho_nlcc(:)     ! nlcc charge density [nmesh]
@@ -74,6 +75,7 @@ subroutine pw_pseudo_init0(pseudo)
   pseudo%nbeta = 0
   pseudo%nmesh = 0
   pseudo%cutoff = 0.0
+  pseudo%cutoff_rho = 0.0
   allocate(pseudo%mesh(0))
   allocate(pseudo%wmesh(0))
   allocate(pseudo%rho_nlcc(0))
@@ -101,6 +103,7 @@ subroutine pw_pseudo_destroy0(pseudo)
   pseudo%nbeta = 0
   pseudo%nmesh = 0
   pseudo%cutoff = 0._SP
+  pseudo%cutoff_rho = 0._SP
   deallocate(pseudo%mesh)
   deallocate(pseudo%wmesh)
   deallocate(pseudo%rho_nlcc)
@@ -125,17 +128,19 @@ subroutine pw_pseudo_destroy1(pseudo)
   end do
 end subroutine pw_pseudo_destroy1
 
-subroutine pw_pseudo_set_table(pseudo,cutoff)
+subroutine pw_pseudo_set_table(pseudo,cutoff,cutoff_rho)
 ! use tools_module
 ! use num_module
   type (pw_pseudo), intent(inout) :: pseudo
   real(SP),         intent(in)    :: cutoff
+  real(SP),         intent(in)    :: cutoff_rho
   integer  :: nr
-  real(SP) :: q_max,q,delta_q
+  real(SP) :: q_max,q_max_rho,q,delta_q
   integer  :: ir,iq,ibeta,l
   real(SP) :: aux(pseudo%nmesh),aux1(pseudo%nmesh)
   
   pseudo%cutoff = cutoff
+  pseudo%cutoff_rho = cutoff_rho
   q_max = sqrt(2.0*cutoff)
   delta_q = 0.01
   deallocate(pseudo%interpolation)
@@ -162,7 +167,8 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
   ! NLCC
   !
   if (pseudo%psp_has_nlcc) then
-    call num_interpolation_init(pseudo%interpolation_nlcc,0._SP,q_max, &
+    q_max_rho = sqrt(2.0*cutoff_rho)
+    call num_interpolation_init(pseudo%interpolation_nlcc,0._SP,q_max_rho, &
                                 delta_q,parity=+1)
     nr = pseudo%nmesh
     do ir=1,nr

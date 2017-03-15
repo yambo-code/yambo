@@ -27,11 +27,11 @@ module pw_data
   public
   
 ! Cell
-  real(DP)                  :: alat_, a1_(3), a2_(3), a3_(3)
+  real(DP)                   :: alat_, a1_(3), a2_(3), a3_(3)
 
 ! Atoms
   integer                    :: nat_, nsp_
-  real(DP), allocatable     :: tau_(:,:)
+  real(DP), allocatable      :: tau_(:,:)
   integer, allocatable       :: ityp_(:)
   character(3), allocatable  :: atm_(:)
   character(len=2), allocatable   :: atom_type_(:), species_type_(:)
@@ -46,6 +46,7 @@ module pw_data
 ! Planewaves
   integer                    :: ngm_, npwx_
   real(DP)                   :: ecutwfc_
+  real(DP)                   :: ecutrho_
   integer, allocatable       :: igv_(:,:)
   logical                    :: gamma_only_
 

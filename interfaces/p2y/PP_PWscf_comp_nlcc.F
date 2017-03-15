@@ -69,12 +69,10 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     if (.not.psp%psp_has_nlcc) cycle
     !
     do ig=1,npw
-      ! AF: why ?
-      !if(G_norm(ig) < 1.E-5) cycle
       rhog(ig) = num_interpolation_calc(psp%interpolation_nlcc,G_norm(ig),3)
     enddo
     V_m1 = 1.0d0/basis%struct%a_omega
-    pp_rho_nlcc_atom(:npw,is) = sqrt(abs(V_m1))*rhog(:npw)
+    pp_rho_nlcc_atom(:npw,is) = rhog(:npw)*V_m1
     !
     ! include the structure factors 
     ! 
@@ -93,13 +91,18 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     enddo
     !
   enddo
-! XXXX
-is=1234
-open(is,file="debug_yambo_nlcc.dat")
-do ig = 1, npw
-   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc(ig)
-enddo
-close(is)
+!! XXXX
+!is=1234
+!open(is,file="debug_yambo_nlcc.dat")
+!do ig = 1, npw
+!   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc(ig)
+!enddo
+!close(is)
+!open(is,file="debug_yambo_nlcc_atom.dat")
+!do ig = 1, npw
+!   write(is,"(20f15.9)") G_cc(:,ig), pp_rho_nlcc_atom(ig,:)
+!enddo
+!close(is)
 ! XXXX
   !
   deallocate(G_cc)

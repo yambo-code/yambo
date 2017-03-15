@@ -165,9 +165,8 @@ subroutine pw_pseudo_set_table(pseudo,cutoff)
     call num_interpolation_init(pseudo%interpolation_nlcc,0._SP,q_max, &
                                 delta_q,parity=+1)
     nr = pseudo%nmesh
-    ! l = 0 is used
     do ir=1,nr
-      aux(ir) = pseudo%rho_nlcc(ir)*pseudo%wmesh(ir)*pseudo%mesh(ir)
+      aux(ir) = pseudo%rho_nlcc(ir)*pseudo%wmesh(ir)*(pseudo%mesh(ir)**2)
     end do
     do iq=0,pseudo%interpolation_nlcc%n
       q = pseudo%interpolation_nlcc%x(iq)

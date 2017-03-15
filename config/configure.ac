@@ -329,11 +329,15 @@ AC_SUBST(compile_lapack)
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
+AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>. Use --with-mpi-libs="no" to switch off MPI.],[32]))
+AC_ARG_WITH(mpi-path, AC_HELP_STRING([--with-mpi-path=<path>],[Use MPI path <path>.],[32]))
 case $with_mpi_libs in
-  yes | "") ;;
+  yes | "")
+    enable_mpi_libs="no"
+    ;;
   no ) 
     mpibuild="no" 
+    enable_mpi_libs="no"
     ;;
   -* | */* | *.a | *.so | *.so.* | *.o)
     MPILIBS="$with_mpi_libs"

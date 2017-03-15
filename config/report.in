@@ -6,36 +6,37 @@
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@
 # [BIN] @exec_prefix@/bin
-# [@DP_str@] Double precision
-# [@Red_str@] Redundant compilation  
-# [@TIME_profile_str@] Run-Time timing profile 
+# [ @OPENMP_str@ ] OpenMP
+# [ @DP_str@ ] Double precision
+# [ @Red_str@ ] Redundant compilation  
+# [ @TIME_profile_str@ ] Run-Time timing profile 
 # 
-# - PARALLEL SUPPORT -
+# - PATHS     (L=library  I=include  P=path -=not used) -
+# - LIBRARIES (E=external I=internal        -=not used) -
 #
-# [@MPI_str@] MPI
-# [@OPENMP_str@] OpenMP
-# 
-# - LIBRARIES (E=external library; I=internal library; -=not used;) -
+#  MPI
+# [ @MPI_str@ ] MPI
+# [ @MPI_LIB_str@ ] MPI       [L]: @MPILIBS@
+#                 [P]: @MPI_PATH@
 #
 #  I/O
-# [ @PW_str@ ] IOTK   : @IOTK_LIBS@ (QE @PW_VER@)
-# [ @ETSF_str@ ] ETSF_IO: @ETSF_LIBS@
-# [ @NETCDF_str@ ] NETCDF : @NETCDF_LIBS@ @NETCDF_LF_str@
-# [ @HDF5_str@ ] HDF5   : @HDF5_LIBS@ @HDF5_support@
+# [ @PW_str@ ] IOTK      [L]: @IOTK_LIBS@ (QE @PW_VER@)
+# [ @ETSF_str@ ] ETSF_IO   [L]: @ETSF_LIBS@
+# [ @NETCDF_str@ ] NETCDF    [L]: @NETCDF_LIBS@ @NETCDF_LF_str@
+#                 [I]: @netcdf_idir@
+# [ @HDF5_str@ ] HDF5      [L]: @HDF5_LIBS@ @HDF5_support@
 #
 #  MATH 
-# [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
-# [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
-# [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
-# [ @BLACS_str@ ] BLACS    : @BLACS_LIBS@
-# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ 
-# [ @PET_str@ ] PETSC    : @PETSC_LIBS@ 
-# [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
+# [ @FFT_str@ ] FFT       [L]: @FFT_LIBS@ @FFT_DESCRIPTION@
+# [ @BLAS_str@ ] BLAS      [L]: @BLAS_LIBS@
+# [ @LAPACK_str@ ] LAPACK    [L]: @LAPACK_LIBS@
+# [ @BLACS_str@ ] BLACS     [L]: @BLACS_LIBS@
+# [ @SLK_str@ ] SCALAPACK [L]: @SCALAPACK_LIBS@ 
+# [ @PET_str@ ] PETSC     [L]: @PETSC_LIBS@ 
+# [ @SLE_str@ ] SLEPC     [L]: @SLEPC_LIBS@ 
 #
 #  OTHER
 # [ @LIBXC_str@ ] LibXC          : @LIBS_LIBXC@
-# [ @MPI_LIB_str@ ] MPI linking lib: @MPILIBS@
-# [ @MPI_LIB_str@ ] MPI root       : @MPIROOT@
 #
 # - COMPILERS, MAKE and EDITOR -
 #

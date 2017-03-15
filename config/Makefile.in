@@ -445,7 +445,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf*  nc*  iotk* ; cd ..
+ cd $(bindir) ; rm -f etsf*  nc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

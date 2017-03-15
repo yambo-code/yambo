@@ -35,9 +35,7 @@ lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
-lib/slatec/*.o
-lib/fftqe/c_defs.h
-lib/fftqe/fftqe_defs.h
+lib/*/fftw-*
 #
 compile.sh
 sbin/make_makefile.sh

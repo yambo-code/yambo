@@ -28,7 +28,7 @@ netcdf      = @dnetcdf@
 scalapack   = @dscalapack@
 precision   = @dp_cpp@
 fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
+xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @time_profile_cpp@
 debug       = @enable_debug@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -67,7 +67,7 @@ INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules linear_algebra parallel parser xc_functionals communicate common io \
+BASIC_LIBS   = external_c modules matrices linear_algebra parallel parser xc_functionals communicate common io \
                interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
@@ -85,13 +85,14 @@ PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # Interfaces
 #
-2YLIBS       = external_c modules linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
 #
 # YPP
 #
-YPP_LIBS        = modules interpolate init qp plotting electrons excitons symmetries k-points bits 
-YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons symmetries k-points bits 
-YPPRT_LIBS      = modules interpolate init qp plotting electrons elph real_time excitons symmetries k-points bits 
+YPP_BASIC_LIBS  = modules interpolate init qp plotting electrons 
+YPP_LIBS        = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
+YPPPH_LIBS      = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
+YPPRT_LIBS      = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
@@ -103,9 +104,9 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-all: interfaces
-	for target in $(PROJECTS); do $(MAKE) $$target ; done
+all:
 	for target in $(TARGETS); do $(MAKE) $$target ; done
+	for target in $(PROJECTS); do $(MAKE) $$target ; done
 	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \

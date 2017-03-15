@@ -24,9 +24,13 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  use pars,          ONLY:IP
+<<<<<<< HEAD
  use com,           ONLY:secnm
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,&
 &                        Q_range,QP_range,n_v_bands,n_c_bands,K_range,n_bands
+=======
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,n_c_bands,n_v_bands
+>>>>>>> master
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
  ! COMMUNICATORS
@@ -36,6 +40,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+<<<<<<< HEAD
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_gw0,l_HF_and_locXC,l_life,l_elphoton_corr
  use BS,            ONLY:BS_bands
@@ -62,6 +67,16 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use IO_m,          ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_nb,QP_n_G_bands
+=======
+ use X_m,           ONLY:X_t,X_reset,X_duplicate,l_X_terminator
+ use drivers,       ONLY:l_HF_and_locXC,l_life,l_elphoton_corr
+#if defined _QED
+ use parallel_m,    ONLY:l_par_SC
+#endif
+ use electrons,     ONLY:levels
+ use R_lattice,     ONLY:bz_samp
+ use IO_m,          ONLY:IO_and_Messaging_switch
+>>>>>>> master
  use com,           ONLY:warning
  !
  implicit none
@@ -74,14 +89,21 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
  ! Work Space
  !
+<<<<<<< HEAD
  integer              :: X_type
  logical              :: reset_all,computing_Fock
+=======
+ type(X_t)            :: X_local
+ integer              :: X_type
+ logical              :: reset_all
+>>>>>>> master
  !
  ! Resets...
  !
  reset_all=.TRUE.
  if (present(RESET)) reset_all=RESET
  !
+<<<<<<< HEAD
  X_type=1
  if (present(X)) X_type=X%whoami
  if (ENVIRONMENT=="Response_T_space") X_type=5
@@ -90,8 +112,19 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    call PARALLEL_reset(Xk,ENVIRONMENT,X_type)
    if(present(RESET)) return
  endif
+=======
+ call X_reset(X_local)
+ if(present(X)) call X_duplicate(X,X_local)
  !
- computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
+ X_type=1
+ if (present(X)) X_type=X%whoami
+ if (ENVIRONMENT=="Response_T_space") X_type=5
+>>>>>>> master
+ !
+ if (reset_all) then
+   call PARALLEL_reset(Xk,ENVIRONMENT,X_type)
+   if(present(RESET)) return
+ endif
  !
  ! Logicals
  !
@@ -115,6 +148,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  ! Dimensions
  !============
  !
+<<<<<<< HEAD
  ! K-pts
  !-------
  K_range=Xk%nibz
@@ -177,6 +211,9 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #if defined _RT
  if (ENVIRONMENT=="Real_Time"                       ) n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
+=======
+ call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X_local)
+>>>>>>> master
  !
  !==========
  ! DEFAULTS
@@ -187,6 +224,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !==============================
  ! ENVIRONMENT DEPENDENT SCHEMES
  !==============================
+<<<<<<< HEAD
  !
  if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_Response_G_indexes(E,Xk,q,ENVIRONMENT,X_type)
  !
@@ -200,6 +238,21 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
 #if defined _SCALAPACK
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_ScaLapack_indexes(E,Xk,q,ENVIRONMENT)
+=======
+ !
+ if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
+ !
+ if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT,X_type)
+ !
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(E,Xk,q,ENVIRONMENT,X_type)
+ !
+#if defined _RT
+ if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,ENVIRONMENT)
+#endif
+ !
+#if defined _SCALAPACK
+ if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
+>>>>>>> master
 #endif
  !
  !======

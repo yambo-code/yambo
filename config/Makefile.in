@@ -55,8 +55,7 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           lib/install/make_iotk.inc 
+           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
@@ -323,11 +322,9 @@ endef
 #
 define mklib_ext
  if test ! -d "lib/archive" ; then mkdir "lib/archive" ; fi ; \
- if test ! -d "lib/install" ; then mkdir "lib/install" ; fi ; \
  if [ "$(topdir)" != "$(prefix)" ] ; then \
    cp $(topdir)/lib/archive/* lib/archive; \
    cp $(topdir)/config/missing config/ ; \
-   cp $(topdir)/lib/install/* lib/install; \
  fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
@@ -415,11 +412,6 @@ define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
- @if test -d $(libdir)/install; then \
-  cd $(libdir)/install; \
-  if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi ; \
-  cd ../.. ; \
- fi
  find . -name 'xc*.h' -type f -print | xargs rm -f
  @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \

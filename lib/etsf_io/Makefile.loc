@@ -14,8 +14,8 @@ TARBALL=$(tarball_etsf_io)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(libs_prefix) \
-         --with-netcdf-incs="$(inetcdf)" \
-         --with-netcdf-libs="$(lnetcdf)" 
+         --with-netcdf-incs="$(inetcdf) $(ihdf5)" \
+         --with-netcdf-libs="$(lnetcdf) $(lhdf5)" 
 
 #
 # MAIN target
@@ -44,6 +44,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
 	#
 	chmod u+x $(libs_prefix)/lib/*etsf*.a
+	cp $(libs_prefix)/include/gcc/* $(libs_prefix)/include
 	#
 	touch package-ready-stamp
 

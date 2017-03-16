@@ -29,12 +29,12 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-		if test -e ../make.sys ; then rm ../make.sys ; fi ; \
-	        if test -e ../../install/make_iotk.inc ; then \
-	           cp ../../install/make_iotk.inc ../make.sys ; \
+		if test -e ${srcdir}/lib/iotk/make.sys ; then rm ${srcdir}/lib/iotk/make.sys ; fi ; \
+	        if test -e ${srcdir}/lib/iotk/make_iotk.inc ; then \
+	           cp ${srcdir}/lib/iotk/make_iotk.inc ${srcdir}/lib/iotk/make.sys ; \
 	        fi ; \
-	        if test -e ../../install/iotk_specials.h ; then \
-	           cp ../../install/iotk_specials.h ../$(PACKAGE)/include ; \
+	        if test -e ${topdir}/lib/iotk/iotk_specials.h ; then \
+	           cp ${topdir}/lib/iotk/iotk_specials.h ${srcdir}/lib/iotk/$(PACKAGE)/include ; \
 	        fi ) ; \
 	fi
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
@@ -52,14 +52,11 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	#
 	# Replaces make install which seems to be missing for iotk
 	#
-	if ! test -d ./lib      ; then mkdir $(libs_prefix)/lib      ; fi    ;
-	if ! test -d ./bin      ; then mkdir $(libs_prefix)/bin      ; fi    ;
-	if ! test -d ./include  ; then mkdir $(libs_prefix)/include  ; fi    ;
-	#
-	cp $(PACKAGE)/src/*.a $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
-	cp $(PACKAGE)/src/*.x $(libs_prefix)/bin ;
-	cp $(PACKAGE)/tools/iotk $(libs_prefix)/bin ;
-	cp $(PACKAGE)/src/*.mod $(libs_prefix)/include ;
+	cp $(PACKAGE)/src/*.a     $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
+	cp $(PACKAGE)/src/*.x     $(libs_prefix)/bin ;
+	cp $(PACKAGE)/tools/iotk  $(libs_prefix)/bin ;
+	cp $(PACKAGE)/src/*.mod   $(libs_prefix)/include ;
+	cp $(PACKAGE)/include/*.h $(libs_prefix)/include ;
 	#
 	touch package-ready-stamp
 

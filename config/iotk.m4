@@ -70,13 +70,13 @@ if test "x$enable_iotk" = "xyes" ; then
     if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
     #
     # 
-    if test -r $try_libdir_src/libiotk.a ; then
+    if test -r $try_libdir_src/libiotk.a && test -e $try_incdir_src/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_incdir_src"
       IOTK_LIBS="$try_libdir_src/libiotk.a"
       AC_MSG_RESULT([yes])
-    elif test -r $try_libdir/libiotk.a ; then
+    elif test -r $try_libdir/libiotk.a  && test -e $try_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
       IOTK_INCS="$IFLAG$try_incdir"

@@ -3,7 +3,7 @@
 #
 include ./package.list
 #
-all: $(tarball_iotk) $(tarball_netcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_slatec) \
+all: $(tarball_iotk) $(tarball_netcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
      $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
 
 #
@@ -19,8 +19,6 @@ $(tarball_libxc):
 	@+TARBALL="$(tarball_libxc)"    ; URL="$(url_libxc)"    ; LIB="LIBXC"; $(getsrc)
 $(tarball_lapack):
 	@+TARBALL="$(tarball_lapack)"   ; URL="$(url_lapack)"   ; LIB="LAPACK"; $(getsrc)
-$(tarball_slatec):
-	@+TARBALL="$(tarball_slatec)"   ; URL="$(url_slatec)"   ; LIB="SLATEC"; $(getsrc)
 $(tarball_blacs):
 	@+TARBALL="$(tarball_blacs)"    ; URL="$(url_blacs)"    ; LIB="BLACS"; $(getsrc)
 $(tarball_scalapack):

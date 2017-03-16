@@ -32,13 +32,15 @@ Red_str="-"
 if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 
 MPI_str="-"
-MPI_LIBS_str="-"
+MPI_str="-"
 MPI_LIBS_info=""
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
-  if test "$MPI_LIBS" = "" ; then
+  if test "$MPI_LIBS" = "" && test "$MPI_INCS" = ""  ; then
     MPI_LIBS_info="(system default detected)";
-    MPI_LIBS_str="X";
+    MPI_str="X";
+  else
+    MPI_str="E";
   fi
 fi
 

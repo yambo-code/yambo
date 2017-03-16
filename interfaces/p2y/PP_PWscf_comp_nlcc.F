@@ -29,7 +29,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   use pw_pseudo_module
   !
   use pars,          ONLY:SP,DP
-  use pseudo,        ONLY:pp_rho_nlcc,pp_has_nlcc
+  use pseudo,        ONLY:pp_rhog_nlcc,pp_has_nlcc_atom
   use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
   !
   implicit none
@@ -46,12 +46,12 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   real(DP) :: G_dot_R
   complex(DP) :: e_iGR,sf
   real(SP), allocatable :: G_cc(:,:)
-  real(SP), allocatable :: pp_rho_nlcc_atom(:,:)
+  real(SP), allocatable :: pp_rhog_nlcc_atom(:,:)
   !
   b = basis%struct%b
   npw = basis%npw
   allocate(G_cc(3,npw))
-  allocate(pp_rho_nlcc_atom(npw,atoms%ntypes))
+  allocate(pp_rhog_nlcc_atom(npw,atoms%ntypes))
   !
   do ig=1,npw
     G = real(basis%g(:,ig),SP)
@@ -59,14 +59,14 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     G_norm(ig) = sqrt(sum(G_cc(:,ig)**2))
   enddo
   !
-  pp_rho_nlcc(:npw)=0.0
+  pp_rhog_nlcc(:npw)=0.0
   !
   do is=1,atoms%ntypes
     psp => atoms%pseudo(is)
     !
     rhog=0._SP
-    pp_has_nlcc(is)=0
-    if (psp%psp_has_nlcc) pp_has_nlcc(is)=1
+    pp_has_nlcc_atom(is)=0
+    if (psp%psp_has_nlcc) pp_has_nlcc_atom(is)=1
     !
     if (.not.psp%psp_has_nlcc) cycle
     !
@@ -74,7 +74,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
       rhog(ig) = num_interpolation_calc(psp%interpolation_nlcc,G_norm(ig),3)
     enddo
     V_m1 = 1.0d0/basis%struct%a_omega
-    pp_rho_nlcc_atom(:npw,is) = rhog(:npw)*V_m1
+    pp_rhog_nlcc_atom(:npw,is) = rhog(:npw)*V_m1
     !
     ! include the structure factors 
     ! 
@@ -88,13 +88,13 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
         sf = sf + e_iGR
       enddo
       !  
-      pp_rho_nlcc(ig) = pp_rho_nlcc(ig) + sf*pp_rho_nlcc_atom(ig,is)
+      pp_rhog_nlcc(ig) = pp_rhog_nlcc(ig) + sf*pp_rhog_nlcc_atom(ig,is)
       !
     enddo
     !
   enddo
   !
-  deallocate(pp_rho_nlcc_atom)
+  deallocate(pp_rhog_nlcc_atom)
   deallocate(G_cc)
   !
 end subroutine PP_PWscf_comp_nlcc

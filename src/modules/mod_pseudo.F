@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,7 +23,7 @@
 !
 module pseudo
  !
- use pars,      ONLY:SP,LP,IP
+ use pars,      ONLY:SP,DP,LP,IP
  use electrons, ONLY:n_spin,n_spinor
  use D_lattice, ONLY:n_atomic_species
  implicit none
@@ -38,13 +38,15 @@ module pseudo
  integer,  allocatable:: pp_n_l_comp(:)
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
  !
- ! ABINIT and PWSCF KB
+ ! ABINIT and PWSCF KB & NLCC
  !=====================
  real(SP), allocatable:: pp_kbs(:,:)
  real(SP), allocatable:: pp_kb(:,:,:,:)
  real(SP), allocatable:: pp_kbd(:,:,:,:)
- complex(SP), allocatable:: pp_rho_nlcc(:)
- integer(LP), allocatable:: pp_has_nlcc(:)
+ complex(SP), allocatable:: pp_rhog_nlcc(:)
+ complex(DP), allocatable:: pp_rho_nlcc(:)
+ integer(LP), allocatable:: pp_has_nlcc_atom(:)
+ logical                 :: pp_has_nlcc=.FALSE. 
  !
  ! PW (OLD)
  !=========
@@ -92,22 +94,28 @@ module pseudo
    subroutine PP_nlcc_alloc()
      use memory_m,   ONLY:mem_est
      use R_lattice,  ONLY:ng_vec
+     use FFT_m,      ONLY:fft_size
      implicit none
-     integer  :: alloc_err(2)
-     allocate(pp_rho_nlcc(ng_vec),stat=alloc_err(1))
-     allocate(pp_has_nlcc(n_atomic_species),stat=alloc_err(2))
-     call mem_est("pp_rho_nlcc pp_has_nlcc",(/size(pp_rho_nlcc),size(pp_has_nlcc)/),&
-&                 elements_kind=(/SP,SP/),errors=alloc_err)
+     integer  :: alloc_err(3)
+     allocate(pp_rhog_nlcc(ng_vec),stat=alloc_err(1))
+     allocate(pp_rho_nlcc(fft_size),stat=alloc_err(2))
+     allocate(pp_has_nlcc_atom(n_atomic_species),stat=alloc_err(3))
+     call mem_est("pp_rhog_nlcc pp_rho_nlcc pp_has_nlcc_atom",&
+&                 (/size(pp_rhog_nlcc),size(pp_rho_nlcc),size(pp_has_nlcc_atom)/),&
+&                 elements_kind=(/SP,DP,SP/),errors=alloc_err)
+     pp_rhog_nlcc =0.
      pp_rho_nlcc =0.
-     pp_has_nlcc =0
+     pp_has_nlcc_atom =0
    end subroutine 
    !
    subroutine PP_nlcc_free()
      use memory_m,   ONLY:mem_est
-     if (.not.allocated(pp_rho_nlcc)) return
+     if (.not.allocated(pp_rhog_nlcc)) return
+     deallocate(pp_rhog_nlcc)
      deallocate(pp_rho_nlcc)
-     deallocate(pp_has_nlcc)
-     call mem_est("pp_rho_nlcc pp_has_nlcc")
+     deallocate(pp_has_nlcc_atom)
+     pp_has_nlcc=.FALSE.
+     call mem_est("pp_rhog_nlcc pp_has_nlcc pp_has_nlcc_atom")
    end subroutine
    !
 end module pseudo

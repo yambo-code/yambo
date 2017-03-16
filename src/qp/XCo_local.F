@@ -90,12 +90,10 @@ subroutine XCo_local(E,Xk)
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    else
 #endif
-     ! evaluate E_xc as a double check agains DFT
+     ! evaluate E_xc as a double check against DFT
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
-     !
-     WRITE(0,*) "E_xc HERE: ", E_xc_val*2.0d0
-     !
+     ! evaluate v_xc
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT

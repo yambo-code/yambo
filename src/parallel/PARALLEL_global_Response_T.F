@@ -54,7 +54,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  !
  CALL PARALLEL_structure(3,(/"k ","eh","t "/))
  !
- call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
+ call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
 &                                        COMM_index_2=PAR_COM_eh_INDEX,&
 &                                        COMM_index_3=PAR_COM_T_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&

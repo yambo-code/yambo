@@ -29,7 +29,7 @@ AC_SUBST(enable_keep_extlibs)
 # ============================================================================= 
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
-            AC_HELP_STRING([--with-extlibs-path=<exe>], [Path where external libs compiled by yambo are placed],[]),
+            AC_HELP_STRING([--with-extlibs-path=<path>], [Path where external libs compiled by yambo are placed],[]),
             [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/ext_libs"])
 AC_SUBST(extlibs_path)
 if ! test -e $with_extlibs_path; then mkdir $with_extlibs_path; fi

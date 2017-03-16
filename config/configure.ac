@@ -166,9 +166,10 @@ if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
 openmp_cpp=" "
 OPENMPLIBS=" "
 if test x"$enable_open_mp" = "xyes"; then 
- OPENMPLIBS="$OMPFLAGS"; 
- openmp_cpp="-D_OPENMP"
+  OPENMPLIBS="$OMPFLAGS"; 
+  openmp_cpp="-D_OPENMP"
 fi
+AC_SUBST(openmp_cpp)
 AC_SUBST(OPENMPLIBS)
 # ============================================================================
 #
@@ -217,47 +218,40 @@ AC_LANG_POP(Fortran 77)
 # ============================================================================
 # MPI
 mpibuild="yes" 
-AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
-if test -d "$with_mpi_libs" && test "$with_mpi_libs" = "no"; then  mpibuild="no" ; fi
+AC_ARG_ENABLE(mpi, AC_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
+if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 if test "$mpibuild" = "yes"; then
-# MPIF90
-#
- mpi_cpp="-D_MPI"
- AC_LANG_PUSH(Fortran)
- ACX_MPI([], 
+  #
+  # MPIF90
+  #
+  mpi_cpp="-D_MPI"
+  AC_LANG_PUSH(Fortran)
+  ACX_MPI([], 
   AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
- AC_LANG_POP(Fortran)
-#
-# MPICC
-#
- if test "$mpibuild" = "yes" ; then
+  AC_LANG_POP(Fortran)
+  #
+  # MPICC
+  #
   AC_LANG_PUSH(C)
   ACX_MPI([], 
-   AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
- fi
-#
-# OVERALL CHECK
-#
- if test "$mpibuild" = "no" ; then 
+  AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
+  #
+else
+  #
   mpi_cpp=""
-  MPI_LIBS=""
   PF90=""
   FC=$F77
   PF90FLAGS=""
   PCC=""
   PCCFLAGS=""
- fi
- AC_SUBST(openmp_cpp)
- AC_SUBST(mpi_cpp)
- AC_SUBST(enable_mpi_libs)
- AC_SUBST(MPI_LIBS)
- AC_SUBST(PF90)
- AC_SUBST(PF90FLAGS)
- AC_SUBST(PCC)
- AC_SUBST(PCCFLAGS)
- AC_SUBST(mpibuild)
 fi
+AC_SUBST(mpi_cpp)
+AC_SUBST(PF90)
+AC_SUBST(PF90FLAGS)
+AC_SUBST(PCC)
+AC_SUBST(PCCFLAGS)
+AC_SUBST(mpibuild)
 
 AC_LANG_PUSH(Fortran)
 # ============================================================================

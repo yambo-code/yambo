@@ -42,7 +42,7 @@
 #  OTHER LIBS
 # [ @LIBXC_str@ ] LibXC     : @LIBXC_LIBS@
 #                   @LIBXC_INCS@
-# [ @MPI_str@ ] MPI       : @MPI_LIBS@ @MPI_LIBS_info@
+# [ @MPI_LIBS_str@ ] MPI       : @MPI_LIBS@ @MPI_LIBS_info@
 #                   @MPI_INCS@
 #
 # - COMPILERS, MAKE and EDITOR -

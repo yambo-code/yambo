@@ -173,20 +173,15 @@ AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI i
 AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
 AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
 
-mpi_routine="MPI_Init"
 MPI_LIBS=""
+MPI_INCS=""
 MPI_LIB_DIR=""
 MPI_INC_DIR=""
 MPI_LIBS_str="-"
 if test -d "$with_mpi_path"; then
   MPI_PATH="$with_mpi_path";
-#else
-#  MPI_PATH=`which $PFC|xargs dirname`;
-#  MPI_PATH="$MPI_PATH/..";
-fi
-if test -d "$MPI_PATH"; then
-  MPI_INC_DIR="$MPI_PATH/include";
-  MPI_LIB_DIR="$MPI_PATH/lib";
+  MPI_INC_DIR="$with_mpi_path/include";
+  MPI_LIB_DIR="$with_mpi_path/lib";
 fi
 if test -d "$with_mpi_libdir" ;     then MPI_LIB_DIR="$with_mpi_libdir";     fi
 if test -d "$with_mpi_includedir" ; then
@@ -197,12 +192,12 @@ fi
 if ! test "$mpi_libs" == "" ; then
   MPI_LIBS="$mpi_libs";
 fi
-if test -d "$MPI_PATH" || test -d "$with_mpi_libdir"  ; then
+if test -d "$with_mpi_path" || test -d "$with_mpi_libdir"  ; then
   MPI_LIBS="-L$MPI_LIB_DIR -lmpi";
 fi
 #
 if ! test  "$MPI_LIBS" = "" ;  then
-  AC_MSG_CHECKING([for $mpi_routine in $MPI_LIBS]);
+  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
   AC_TRY_LINK_FUNC($mpi_routine, [mpi_libs_ok=yes]);
   AC_MSG_RESULT($mpi_libs_ok);
   if test "$mpi_libs_ok" = "yes" ; then 
@@ -213,7 +208,7 @@ if ! test  "$MPI_LIBS" = "" ;  then
 fi
 #
 mpif_found="no"
-if test -d "$MPI_PATH" || test -d "$with_mpi_includedir"; then
+if test -d "$with_mpi_path" || test -d "$with_mpi_includedir"; then
   AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found="yes"],[mpif_found="no"])
   IFLAG=$ax_cv_f90_modflag
   if test -z "$IFLAG" ; then IFLAG="-I" ; fi

@@ -31,7 +31,7 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
+ use xc_functionals,ONLY:E_xc,E_xc_val,V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
@@ -62,6 +62,7 @@ subroutine XCo_local(E,Xk)
  integer     ::nb
 #endif
  integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
+ real(SP)    ::E_xc_
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
@@ -71,6 +72,7 @@ subroutine XCo_local(E,Xk)
  ! Allocation 
  !
  if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
+ if (.not.allocated(E_xc))   allocate(E_xc(fft_size))
  !
  if (n_spin>1.and..not.allocated(magn)) allocate(magn(fft_size,3))
  !
@@ -88,6 +90,12 @@ subroutine XCo_local(E,Xk)
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    else
 #endif
+     ! evaluate E_xc as a double check agains DFT
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
+&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
+     !
+     WRITE(0,*) "E_xc HERE: ", E_xc_val*2.0d0
+     !
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT
@@ -227,6 +235,7 @@ subroutine XCo_local(E,Xk)
  if(.not.(l_sc_run.or.l_real_time)) then
 #endif
    deallocate(V_xc)
+   if(allocated(E_xc)) deallocate(E_xc)
    if(n_spin>1) deallocate(magn)
 #if defined _SC || defined _RT
  endif

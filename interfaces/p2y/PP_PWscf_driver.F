@@ -35,7 +35,8 @@ subroutine PP_PWscf_driver(k)
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
-&                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
+&                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
+&                                PP_nlcc_alloc,PP_nlcc_free
  use com,                   ONLY:msg,warning
  use LIVE_t,                ONLY:live_timing
  use memory_m,              ONLY:mem_est
@@ -118,11 +119,15 @@ subroutine PP_PWscf_driver(k)
  !
  if( any(atoms%pseudo(:)%psp_has_nlcc) ) then
    !
+   call PP_nlcc_alloc()
+   !
    call fill_basis_rho(basis_con,struct,ng_vec)
    call PP_PWscf_comp_nlcc(basis_con,atoms)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_NLCC_pwscf(ID)
+   !
+   call PP_nlcc_free()
    !
  endif
  !

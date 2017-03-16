@@ -29,7 +29,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   use pw_pseudo_module
   !
   use pars,          ONLY:SP,DP
-  use pseudo,        ONLY:pp_rho_nlcc_atom,pp_rho_nlcc,pp_has_nlcc
+  use pseudo,        ONLY:pp_rho_nlcc,pp_has_nlcc
   use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
   !
   implicit none
@@ -46,10 +46,12 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   real(DP) :: G_dot_R
   complex(DP) :: e_iGR,sf
   real(SP), allocatable :: G_cc(:,:)
+  real(SP), allocatable :: pp_rho_nlcc_atom(:,:)
   !
   b = basis%struct%b
   npw = basis%npw
   allocate(G_cc(3,npw))
+  allocate(pp_rho_nlcc_atom(npw,atoms%ntypes))
   !
   do ig=1,npw
     G = real(basis%g(:,ig),SP)
@@ -92,6 +94,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     !
   enddo
   !
+  deallocate(pp_rho_nlcc_atom)
   deallocate(G_cc)
   !
 end subroutine PP_PWscf_comp_nlcc

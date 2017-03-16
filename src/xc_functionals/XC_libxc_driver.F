@@ -38,12 +38,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size,fft_dim
  use wrapper,        ONLY:real_V_dot_V
- use xc_functionals, ONLY:E_xc,F_xc,magn,V_xc,xc_setup_hyb,&
+ use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
  !
- use pseudo,         ONLY:pp_rho_nlcc_g => pp_rho_nlcc
+ use pseudo,         ONLY:pp_rho_nlcc_g => pp_rho_nlcc, PP_nlcc_free
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
@@ -114,13 +114,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (Add_PP_NLCC) then
    allocate(pp_rho_nlcc(fft_size))
    pp_rho_nlcc=pp_rho_nlcc_g
- #if defined _FFTW
+#if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
    call fft_3d(pp_rho_nlcc,fft_dim,1,fftw_plan)
 #else
    call fft_3d(pp_rho_nlcc,fft_dim,1)
 #endif  
+! XXXX
+WRITE(0,*) "normaliz G: ", pp_rho_nlcc_g(1:4)*DL_vol
+pp_rho_nlcc=pp_rho_nlcc*DL_vol/(real(fft_size)) 
+WRITE(0,*) "normaliz core R: ", sum(pp_rho_nlcc)
+!WRITE(0,*) "normaliz R: ", sum(pp_rho_nlcc)*DL_vol/(real(fft_size))
  endif
  !
  !==========================
@@ -139,7 +144,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  endif
 #endif
  !
+WRITE(0,*) "normaliz norm R: ", sum(rho)
  if (Add_PP_NLCC) rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)
+WRITE(0,*) "normaliz norm R: ", sum(rho)
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
@@ -206,6 +213,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
    call xc_rpa_kp(rspts,tmp_exc)
    E_xc = real(tmp_exc,SP) 
+   E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
    return
  end if
  !
@@ -251,11 +259,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    end if
  enddo
  !
+ E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+ !
  if (EvaluateDGradient) deallocate(sigma,drho)
  if (EvaluateDGradient.and.(ORDER==1)) deallocate (vdrho,vsigma)
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !
  if (Add_PP_NLCC) deallocate(pp_rho_nlcc)
+ ! AF: TO BE MOVED ELSEWHERE
+ call PP_nlcc_free()
  !
 end subroutine XC_libxc_driver
 

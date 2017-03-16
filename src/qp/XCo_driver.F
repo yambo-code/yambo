@@ -38,6 +38,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use memory_m,      ONLY:mem_est
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
+ use xc_functionals,ONLY:E_xc_val
 #if defined _SC
  use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
 #endif
@@ -205,6 +206,9 @@ subroutine XCo_driver(E,k,Xk,q)
 #else
      Vxc_kind='DFT'
 #endif
+     !
+     call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
+     call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
      !
      call QP_reset(qp)
      call E_reset(E_dummy)

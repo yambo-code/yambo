@@ -31,7 +31,7 @@ integer function io_NLCC_pwscf(ID)
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on
- use pseudo,           ONLY:pp_rho_nlcc,pp_rho_nlcc_atom,pp_has_nlcc,PP_alloc_pwscf
+ use pseudo,           ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_alloc
  !
  implicit none
  !
@@ -65,13 +65,11 @@ integer function io_NLCC_pwscf(ID)
    !
  endif
  !
- if (read_is_on(ID)) call PP_alloc_pwscf()
+ if (read_is_on(ID)) call PP_nlcc_alloc()
  !
  call io_bulk(ID,VAR="PP_HAS_NLCC",VAR_SZ=shape(pp_has_nlcc))
  call io_bulk(ID,L1=pp_has_nlcc)
- call io_bulk(ID,VAR="PP_RHO_NLCC_ATOM",VAR_SZ=shape(pp_rho_nlcc_atom))
- call io_bulk(ID,R2=pp_rho_nlcc_atom)
- call io_bulk(ID,VAR="PP_RHO_NLCC",VAR_SZ=shape(pp_rho_nlcc))
+ call io_bulk(ID,VAR="PP_RHO_NLCC",VAR_SZ=(/2,shape(pp_rho_nlcc)/))
  call io_bulk(ID,C1=pp_rho_nlcc)
  !
 1 call io_disconnect(ID=ID)

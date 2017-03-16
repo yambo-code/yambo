@@ -23,7 +23,7 @@
 !
 module pseudo
  !
- use pars,      ONLY:SP,DP,LP,IP
+ use pars,      ONLY:SP,LP,IP
  use electrons, ONLY:n_spin,n_spinor
  use D_lattice, ONLY:n_atomic_species
  implicit none
@@ -43,7 +43,7 @@ module pseudo
  real(SP), allocatable:: pp_kbs(:,:)
  real(SP), allocatable:: pp_kb(:,:,:,:)
  real(SP), allocatable:: pp_kbd(:,:,:,:)
- complex(DP), allocatable:: pp_rho_nlcc(:)
+ complex(SP), allocatable:: pp_rho_nlcc(:)
  integer(LP), allocatable:: pp_has_nlcc(:)
  !
  ! PW (OLD)

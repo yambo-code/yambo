@@ -71,7 +71,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(DP),allocatable:: sigma(:,:)
  complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
- complex(SP), allocatable:: pp_rho_nlcc(:)
+ complex(DP), allocatable:: pp_rho_nlcc_DP(:)
  !
  ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
@@ -112,19 +112,19 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  Add_PP_NLCC=(io_err==0)
  if (Add_PP_NLCC) then
-   allocate(pp_rho_nlcc(fft_size))
-   pp_rho_nlcc=pp_rho_nlcc_g
+   allocate(pp_rho_nlcc_DP(fft_size))
+   pp_rho_nlcc_DP=pp_rho_nlcc_g
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
-   call fft_3d(pp_rho_nlcc,fft_dim,1,fftw_plan)
+   call fft_3d(pp_rho_nlcc_DP,fft_dim,1,fftw_plan)
 #else
-   call fft_3d(pp_rho_nlcc,fft_dim,1)
+   call fft_3d(pp_rho_nlcc_DP,fft_dim,1)
 #endif  
 ! XXXX
 WRITE(0,*) "normaliz G: ", pp_rho_nlcc_g(1:4)*DL_vol
-pp_rho_nlcc=pp_rho_nlcc*DL_vol/(real(fft_size)) 
-WRITE(0,*) "normaliz core R: ", sum(pp_rho_nlcc)
+pp_rho_nlcc_DP=pp_rho_nlcc_DP*DL_vol/(real(fft_size)) 
+WRITE(0,*) "normaliz core R: ", sum(pp_rho_nlcc_DP)
 !WRITE(0,*) "normaliz R: ", sum(pp_rho_nlcc)*DL_vol/(real(fft_size))
  endif
  !
@@ -145,7 +145,7 @@ WRITE(0,*) "normaliz core R: ", sum(pp_rho_nlcc)
 #endif
  !
 WRITE(0,*) "normaliz norm R: ", sum(rho)
- if (Add_PP_NLCC) rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)
+ if (Add_PP_NLCC) rho(:)=rho(:)+real(pp_rho_nlcc_DP(:),SP)
 WRITE(0,*) "normaliz norm R: ", sum(rho)
  !
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
@@ -265,7 +265,7 @@ WRITE(0,*) "normaliz norm R: ", sum(rho)
  if (EvaluateDGradient.and.(ORDER==1)) deallocate (vdrho,vsigma)
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !
- if (Add_PP_NLCC) deallocate(pp_rho_nlcc)
+ if (Add_PP_NLCC) deallocate(pp_rho_nlcc_DP)
  ! AF: TO BE MOVED ELSEWHERE
  call PP_nlcc_free()
  !

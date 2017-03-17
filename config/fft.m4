@@ -43,9 +43,11 @@ AC_ARG_WITH(fftsg_fac, AC_HELP_STRING([--with-fftsg-fac=<val>],
 
 #
 HAVE_FFT="no"
-FFT_str="-"
 save_ldflags="$LDFLAGS"
 try_libs=
+internal_fft="no"
+compile_fftqe="no"
+compile_fftw="no"
 
 #
 # F90 module flag
@@ -153,14 +155,10 @@ if ! test x"$try_libs" = "x" ; then
     FFT_LIBS=""
     LDFLAGS="$save_ldflags"
   fi
-  if test x"$HAVE_FFTW" = "xyes" ; then
-    HAVE_FFT=yes ;
-    FFT_str="E" ;
-  fi
+  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes; fi
 else 
   HAVE_FFTW=no
   HAVE_FFT=no
-  FFT_str="-"
 fi
 
 
@@ -199,7 +197,6 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
       FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
     fi
     FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
-    FFT_str="E"
     FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
@@ -247,10 +244,10 @@ if test "$use_internal_fftqe" = "yes" ; then
     FFT_DESCRIPTION="(Internal FFTW2 (FFTQE))";
   fi
   FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
-  FFT_str="I"
   FFT_LIBS="-L./lib -lfftqe";
   FFT_INCS="${IFLAG}./include/"
   HAVE_FFTQE=yes
+  internal_fft=yes
   compile_fftqe=yes
   AC_MSG_RESULT(Internal FFTQE (FFTW2))
 fi
@@ -274,10 +271,9 @@ if test "$use_internal_fftsg" = "yes" ; then
   fi
   #
   FFT_DESCRIPTION="(Internal Goedecker FFT with $fft_cfactor cache)"
-  FFT_str="I"
   FFT_CPP="-D_FFTSG"
   FFT_LIBS=""
-  HAVE_FFTSG=yes
+  HAVE_FFTSG=yes;
   AC_MSG_RESULT(FFTSG)
   AC_SUBST(fft_cfactor)
 fi
@@ -290,11 +286,11 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
   FFT_CPP="-D_FFTW"
-  FFT_str="I"
   FFT_LIBS="-L${extlibs_path}/lib -lfftw3";
   FFT_INCS="${IFLAG}${extlibs_path}/include/"
   HAVE_FFTW=yes
   compile_fftw=yes
+  internal_fft=yes
   AC_MSG_RESULT(Internal FFTW3)
 fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
@@ -310,11 +306,11 @@ if test x"$compile_fftqe" = "xyes" ; then
     #
 fi
 
-AC_SUBST(FFT_str)
 AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_INCS)
 AC_SUBST(FFT_CPP)
 AC_SUBST(FFT_DESCRIPTION)
 AC_SUBST(compile_fftqe)
 AC_SUBST(compile_fftw)
+AC_SUBST(internal_fft)
 ])

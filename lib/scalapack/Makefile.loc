@@ -11,13 +11,12 @@ TARBALL=$(tarball_scalapack)
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(libs_prefix)/lib/$(LIBNAME)
 #
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp $(topdir)/lib/scalapack/Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
@@ -29,11 +28,16 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  make ; cp *.a $(libs_prefix)/lib ; \
-	chmod +x $(libs_prefix)/lib/*scalapack*.a ) ; \
+	( cd $(PACKAGE);  make ) ; \
 	fi
 	#
 	touch package-ready-stamp
+
+$(libs_prefix)/lib/$(LIBNAME): uncompress-stamp configure-stamp package-ready-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  cp *.a $(libs_prefix)/lib ; \
+	chmod +x $(libs_prefix)/lib/*scalapack*.a ) ; \
+
 #
 # cleaning
 #

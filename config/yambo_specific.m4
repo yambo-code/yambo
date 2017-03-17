@@ -32,7 +32,10 @@ AC_ARG_WITH(extlibs_path,
             AC_HELP_STRING([--with-extlibs-path=<path>], [Path where external libs compiled by yambo are placed],[]),
             [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/ext_libs"])
 AC_SUBST(extlibs_path)
-if ! test -e $with_extlibs_path; then mkdir $with_extlibs_path; fi
+if ! test -e "$extlibs_path";         then mkdir "$extlibs_path";         fi
+if ! test -e "$extlibs_path/lib";     then mkdir "$extlibs_path/lib";     fi
+if ! test -e "$extlibs_path/include"; then mkdir "$extlibs_path/include"; fi
+if ! test -e "$extlibs_path/bin";     then mkdir "$extlibs_path/bin";     fi
 
 # ============================================================================
 # DP

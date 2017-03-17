@@ -72,7 +72,9 @@ AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
 enable_netcdf="no"
 enable_hdf5="no"
 compile_netcdf="no"
+internal_netcdf="no"
 compile_hdf5="no"
+internal_hdf5="no"
 dnetcdf=""
 NETCDF_OPT="--disable-netcdf-4"
 IFLAG=""
@@ -137,7 +139,6 @@ elif test x"$with_netcdf_libs" != "x" ; then
   # directly provided lib
   #
   AC_MSG_CHECKING([for NetCDF Library using $with_netcdf_libs])
-  compile_netcdf="no"
   if test -d "$with_netcdf_includedir" ; then  try_NETCDF_INCS="$IFLAG$with_netcdf_includedir" ; fi
   if test -d "$with_netcdff_includedir" ; then try_NETCDF_INCS="$NETCDF_INCS $IFLAG$with_netcdff_includedir" ; fi
   netcdf=yes
@@ -182,7 +183,7 @@ if test x"$enable_hdf5" = "xno"; then
     #
     AC_MSG_CHECKING([for internal NetCDF library])
     #
-    compile_netcdf="yes"
+    internal_netcdf="yes"
     if test "x$build_os" = "xaix" ; then ETCDF_AUX=-DIBMR2Fortran ; fi
     # 
     # the following may change if we use a different version
@@ -193,7 +194,17 @@ if test x"$enable_hdf5" = "xno"; then
     NETCDF_INCS="${IFLAG}${extlibs_path}/include"
     #
     netcdf=yes
-    AC_MSG_RESULT([ok])
+    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && ! test -e "${extlibs_path}/lib/libhdf5.a"; then
+      compile_netcdf="no"
+      AC_MSG_RESULT([already compiled])
+    else 
+      if test -e "${extlibs_path}/lib/libhdf5.a"; then
+        rm "${extlibs_path}/lib/*hdf5*" "${extlibs_path}/lib/*netcdf*"
+        AC_MSG_RESULT([found version compiled with HDF5, erasing it, ])
+      fi 
+      compile_netcdf="yes"
+      AC_MSG_RESULT([to be compiled])
+    fi
     #
     # 
     FCFLAGS="$save_fcflags"
@@ -269,6 +280,8 @@ if test x"$enable_hdf5" = "xyes"; then
     if   test -d "$with_hdf5_libdir" || test -d "$with_hdf5_path"; then AC_MSG_RESULT([no]) ; fi
     #
     AC_MSG_CHECKING([for internal NETCDF+HDF5 library]);
+    internal_hdf5="yes" ;
+    internal_netcdf="yes" ;
     compile_hdf5="yes"  ;
     compile_netcdf="yes"  ;
     #
@@ -279,6 +292,17 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     netcdf=yes
     hdf5=yes
+    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
+      compile_netcdf="no"
+      AC_MSG_RESULT([already compiled])
+    else  
+      if test -e "${extlibs_path}/lib/libnetcdf.a" || test -e "${extlibs_path}/lib/libnetcdff.a"; then
+        rm "${extlibs_path}/lib/*netcdf*"
+        AC_MSG_RESULT([found local netcdf compiled without HDF5, erasing it, ])
+      fi 
+      compile_netcdf="yes"
+      AC_MSG_RESULT([to be compiled])
+    fi
     AC_MSG_RESULT([ok])
     #
   fi
@@ -314,5 +338,7 @@ AC_SUBST(hdf5)
 AC_SUBST(dnetcdf)
 AC_SUBST(compile_netcdf)
 AC_SUBST(compile_hdf5)
+AC_SUBST(internal_netcdf)
+AC_SUBST(internal_hdf5)
 
 ])

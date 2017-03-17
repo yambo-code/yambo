@@ -217,41 +217,7 @@ AC_LANG_POP(Fortran 77)
 #
 # ============================================================================
 # MPI
-mpibuild="yes" 
-AC_ARG_ENABLE(mpi, AC_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
-if test "$enable_mpi" = "no"; then mpibuild="no"; fi
-#
-if test "$mpibuild" = "yes"; then
-  #
-  # MPIF90
-  #
-  mpi_cpp="-D_MPI"
-  AC_LANG_PUSH(Fortran)
-  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
-  AC_LANG_POP(Fortran)
-  #
-  # MPICC
-  #
-  AC_LANG_PUSH(C)
-  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
-  #
-else
-  #
-  mpi_cpp=""
-  PF90=""
-  FC=$F77
-  PF90FLAGS=""
-  PCC=""
-  PCCFLAGS=""
-fi
-AC_SUBST(mpi_cpp)
-AC_SUBST(PF90)
-AC_SUBST(PF90FLAGS)
-AC_SUBST(PCC)
-AC_SUBST(PCCFLAGS)
-AC_SUBST(mpibuild)
+m4_include([config/mpi.m4])
 
 AC_LANG_PUSH(Fortran)
 # ============================================================================

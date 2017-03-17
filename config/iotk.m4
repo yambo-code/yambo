@@ -36,6 +36,7 @@ AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
 
 compile_p2y="no"
 compile_iotk="no"
+internal_iotk="no"
 IOTK_LIBS=" "
 IOTK_INCS=" "
 
@@ -101,13 +102,19 @@ if test "x$enable_iotk" = "xyes" ; then
     # internal IOTK
     #
     AC_MSG_CHECKING([for internal IOTK library])
-    compile_iotk="yes"
+    internal_iotk="yes"
     compile_p2y="yes"
     IOTK_INCS="${IFLAG}${extlibs_path}/include/"
     IOTK_LIBS="-L${extlibs_path}/lib -liotk"
-    if test ! -d lib ; then mkdir lib ; fi
-    AC_MSG_RESULT(ok)
-    AC_CONFIG_FILES([lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in])
+    if ! test -e "${extlibs_path}/lib/libiotk.a" || ! test -e "${extlibs_path}/include/iotk_base.mod" || ! test -e "${extlibs_path}/include/iotk_specials.h"; then
+      compile_iotk="yes"
+      if test ! -d lib ; then mkdir lib ; fi
+      AC_MSG_RESULT(to be compiled)
+      AC_CONFIG_FILES([lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in])
+    else
+      compile_iotk="no"
+      AC_MSG_RESULT(already compiled)
+    fi
   fi
 else
   AC_MSG_CHECKING([for IOTK library])
@@ -116,6 +123,7 @@ fi
 #
 AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
+AC_SUBST(internal_iotk)
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 

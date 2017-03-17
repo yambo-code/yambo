@@ -19,7 +19,7 @@ AUXFLAGS=--prefix=$(libs_prefix) \
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(libs_prefix)/lib/$(LIBNAME)
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
@@ -50,15 +50,22 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
 	#
+	touch package-ready-stamp
+
+$(libs_prefix)/lib/$(LIBNAME): uncompress-stamp configure-stamp package-ready-stamp
+	#
 	# Replaces make install which seems to be missing for iotk
+	#
+	@if ! test -e $(libs_prefix);         then  mkdir $(libs_prefix) ;         fi
+	@if ! test -e $(libs_prefix)/lib;     then  mkdir $(libs_prefix)/lib ;     fi
+	@if ! test -e $(libs_prefix)/bin;     then  mkdir $(libs_prefix)/bin ;     fi
+	@if ! test -e $(libs_prefix)/include; then  mkdir $(libs_prefix)/include ; fi
 	#
 	cp $(PACKAGE)/src/*.a     $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
 	cp $(PACKAGE)/src/*.x     $(libs_prefix)/bin ;
 	cp $(PACKAGE)/tools/iotk  $(libs_prefix)/bin ;
 	cp $(PACKAGE)/src/*.mod   $(libs_prefix)/include ;
 	cp $(PACKAGE)/include/*.h $(libs_prefix)/include ;
-	#
-	touch package-ready-stamp
 
 #
 # cleaning

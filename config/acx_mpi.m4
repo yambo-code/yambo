@@ -28,8 +28,6 @@ AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
-
-
 AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
 
 AC_LANG_CASE([C], [
@@ -163,73 +161,5 @@ else
         ifelse([$1],,[AC_DEFINE(HAVE_MPI,1,[Define if you have the MPI library.])],[$1])
         :
 fi
-
-#
-# Extra: look for MPI variables defition
-#
-
-AC_ARG_WITH(mpi_libs,AC_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
-AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
-AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
-AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
-
-MPI_LIBS="-lmpi"
-MPI_INCS=""
-#
-MPI_PATH=`which $PFC|xargs dirname`;
-MPI_LIB_DIR="$MPI_PATH/../lib"
-MPI_INC_DIR="$MPI_PATH/../include"
-MPI_LIBS_str="-"
-#
-if test -d "$with_mpi_path"; then
-  MPI_PATH="$with_mpi_path";
-  MPI_LIB_DIR="$MPI_PATH/lib";
-  MPI_INC_DIR="$MPI_PATH/include";
-fi
-if test -d "$with_mpi_libdir" && test -d "$with_mpi_includedir" ; then
-  MPI_PATH="$with_mpi_includedir/../";
-  MPI_LIB_DIR="$with_mpi_libdir";
-  MPI_INC_DIR="$with_mpi_includedir";
-fi
-#
-if test "$mpi_libs" != ""  ; then MPI_LIBS="$mpi_libs"; fi
-if test "$MPI_PATH" != ""  ; then MPI_LIBS="-L$MPI_LIB_DIR $MPI_LIBS"; fi
-#
-# Check libs
-#
-mpi_libs_ok="no"
-if test  "$MPI_LIBS" != "" ;  then
-  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
-  AC_TRY_LINK_FUNC($mpi_routine, [mpi_libs_ok=yes]);
-  AC_MSG_RESULT($mpi_libs_ok);
-  if test "$mpi_libs_ok" = "yes" ; then 
-    MPI_LIBS_str="E";
-  else
-    MPI_LIBS="";
-    MPI_LIB_DIR="";
-  fi
-fi
-#
-# Check include
-#
-mpif_found="no"
-if test "$MPI_INC_DIR" != ""; then
-  AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found="yes"],[mpif_found="no"])
-  if test "$mpif_found" = "yes" ; then
-    IFLAG=$ax_cv_f90_modflag
-    if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-    MPI_INCS="$IFLAG$MPI_INC_DIR"
-  else
-    MPI_PATH="";
-    MPI_INC_DIR="";
-  fi
-fi
-#
-AC_SUBST(mpif_found)
-AC_SUBST(MPI_INCS)
-AC_SUBST(MPI_LIBS)
-AC_SUBST(MPI_LIBS_str)
-#
-AC_SUBST(MPI_PATH)
 
 ])dnl ACX_MPI

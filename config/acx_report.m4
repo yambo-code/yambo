@@ -59,21 +59,24 @@ IOTK_str=" - "
 if test "$compile_p2y" = "yes" ; then
   IOTK_str=" E "
   if test "$internal_iotk" = "yes" ; then
-    if test "$compile_iotk" = "yes" ; then IOTK_str="I+C"; fi
-    if test "$compile_iotk" = "no"  ; then IOTK_str="I+F"; fi
+    if test "$compile_iotk" = "yes" ; then IOTK_str=" Ic"; fi
+    if test "$compile_iotk" = "no"  ; then IOTK_str=" If"; fi
   fi
 fi
 #
 ETSF_str=" - "
 if test "$compile_e2y" = "yes" ; then
   ETSF_str=" E "
-  if test "$compile_etsf" = "yes" ; then ETSF_str=" I "; fi
+  if test "$internal_etsf" = "yes" ; then
+    if test "$compile_etsf" = "yes" ; then ETSF_str=" Ic"; fi
+    if test "$compile_etsf" = "no"  ; then ETSF_str=" If"; fi
+  fi
 fi
 #
 NETCDF_str=" - "
 if test "$internal_netcdf" = "yes" ; then
-  if test "$compile_netcdf" = "yes" ; then NETCDF_str="I+C"; fi
-  if test "$compile_netcdf" = "no"  ; then NETCDF_str="I+F"; fi
+  if test "$compile_netcdf" = "yes" ; then NETCDF_str=" Ic"; fi
+  if test "$compile_netcdf" = "no"  ; then NETCDF_str=" If"; fi
 else
   NETCDF_str=" E "
 fi
@@ -83,8 +86,8 @@ if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files su
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
   if test "$internal_hdf5" = "yes" ; then
-    if test "$compile_hdf5" = "yes" ; then HDF5_str="I+C"; fi
-    if test "$compile_hdf5" = "no"  ; then HDF5_str="I+F"; fi
+    if test "$compile_hdf5" = "yes" ; then HDF5_str=" Ic"; fi
+    if test "$compile_hdf5" = "no"  ; then HDF5_str=" If"; fi
   else
     HDF5_str=" E "
   fi
@@ -97,27 +100,37 @@ fi
 #
 FFT_str=" E "
 if test "$internal_fft" = "yes" ; then
-  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_str="I+C"; fi
-  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_str="I+F"; fi
+  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_str=" Ic"; fi
+  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_str=" If"; fi
 else
   if test "$compile_fftqe" = "yes" ; then FFT_str="E+I"; fi
 fi
 #
 BLAS_str=" E "
-if test "$compile_blas" = "yes" ; then BLAS_str=" I "; fi
+if test "$internal_blas" = "yes" ; then
+  if test "$compile_blas" = "yes"; then BLAS_str=" Ic"; fi
+  if test "$compile_blas" = "no" ; then BLAS_str=" If"; fi
+fi
 #
 LAPACK_str=" E "
-if test "$compile_lapack" = "yes" ; then LAPACK_str=" I "; fi
-#
-BLACS_str=" - "
-if ! test "$SLK_str" = " - " ; then
- if test "$enable_scalapack" = "yes" ; then BLACS_str=" E "; fi
- if test "$compile_blacs"    = "yes" ; then BLACS_str=" I "; fi
+if test "$internal_lapack" = "yes" ; then
+  if test "$compile_lapack" = "yes"; then LAPACK_str=" Ic"; fi
+  if test "$compile_lapack" = "no" ; then LAPACK_str=" If"; fi
 fi
 #
 SLK_str=" - "
 if test "$enable_scalapack" = "yes" ; then SLK_str=" E "; fi
-if test "$compile_slk"      = "yes" ; then SLK_str=" I "; fi
+if test "$internal_slk" = "yes" ; then
+  if test "$compile_slk" = "yes"; then SLK_str=" Ic"; fi
+  if test "$compile_slk" = "no" ; then SLK_str=" If"; fi
+fi
+#
+BLACS_str=" - "
+if test "$enable_scalapack" = "yes" ; then BLACS_str=" E "; fi
+if test "$internal_blacs" = "yes" ; then
+  if test "$compile_blacs" = "yes"; then BLACS_str=" Ic"; fi
+  if test "$compile_blacs" = "no" ; then BLACS_str=" If"; fi
+fi
 #
 PET_str=" - "
 if test "$enable_petsc"  = "yes" ; 
@@ -132,11 +145,10 @@ if test "$enable_slepc"  = "yes" ;
 fi
 
 #
-LIBXC_str=" - "
-if test "$acx_libxc_ok" = "yes" ; then
-  LIBXC_str=" E "
-else
-  LIBXC_str=" I "
+LIBXC_str=" E "
+if test "$internal_libxc" = "yes" ; then
+  if test "$compile_libxc" = "yes"; then LIBXC_str=" Ic"; fi
+  if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
 #
 MPI_LIBS_info=""

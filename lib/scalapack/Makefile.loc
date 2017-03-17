@@ -15,7 +15,7 @@ all: $(libs_prefix)/lib/$(LIBNAME)
 #
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp $(topdir)/lib/scalapack/Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
 	touch uncompress-stamp
 
@@ -37,6 +37,7 @@ $(libs_prefix)/lib/$(LIBNAME): uncompress-stamp configure-stamp package-ready-st
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  cp *.a $(libs_prefix)/lib ; \
 	chmod +x $(libs_prefix)/lib/*scalapack*.a ) ; \
+	fi
 
 #
 # cleaning

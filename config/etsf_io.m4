@@ -36,6 +36,7 @@ AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>
 
 compile_e2y="no"
 compile_etsf="no"
+internal_etsf="no"
 etsf_libdir=" "
 ETSF_INCS=" "
 ETSF_LIBS=" "
@@ -76,7 +77,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     #
     if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
-      compile_etsf="no"
+      internal_etsf="no"
       ETSF_LIBS="$try_libdir/libetsf_io.a"
       ETSF_INCS="$IFLAG$try_incdir"
       #
@@ -89,7 +90,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     # directly provided lib
     #
     AC_MSG_CHECKING([for ETSF_IO Library using $with_etsf_io_libs])
-    compile_etsf="no"
+    internal_etsf="no"
     compile_e2y="yes"
     if test -d "$with_etsf_io_includedir" ; then ETSF_INCS="$IFLAG$with_etsf_io_includedir" ; fi
     ETSF_LIBS="$with_etsf_io_libs"
@@ -98,12 +99,18 @@ if test "x$enable_etsf_io" = "xyes" ; then
     #
     # internal ETSF_IO
     #
-    AC_MSG_CHECKING([for ETSF_IO Library])
-    compile_etsf="yes"
+    AC_MSG_CHECKING([for internal ETSF_IO Library])
+    internal_etsf="yes"
     compile_e2y="yes"
     ETSF_INCS="${IFLAG}${extlibs_path}/include"
     ETSF_LIBS="-L${extlibs_path}/lib -letsf_io"
-    AC_MSG_RESULT(Internal)
+    if test -e "${extlibs_path}/lib/libetsf_io.a"; then
+      compile_etsf="no"
+      AC_MSG_RESULT(found already compiled)
+    else
+      compile_etsf="yes"
+      AC_MSG_RESULT(to be compiled)
+    fi
   fi
   #
 else
@@ -113,6 +120,7 @@ fi
 #
 AC_SUBST(compile_e2y)
 AC_SUBST(compile_etsf)
+AC_SUBST(internal_etsf)
 AC_SUBST(ETSF_LIBS)
 AC_SUBST(ETSF_INCS)
 

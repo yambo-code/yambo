@@ -199,11 +199,12 @@ if test x"$enable_hdf5" = "xno"; then
       AC_MSG_RESULT([already compiled])
     else 
       if test -e "${extlibs_path}/lib/libhdf5.a"; then
-        rm "${extlibs_path}/lib/*hdf5*" "${extlibs_path}/lib/*netcdf*"
-        AC_MSG_RESULT([found version compiled with HDF5, erasing it, ])
+        rm ${extlibs_path}/lib/*hdf5* ${extlibs_path}/lib/*netcdf*
+        AC_MSG_RESULT([found version compiled with HDF5, erasing it, libs to be re-copiled])
+      else
+        AC_MSG_RESULT([to be compiled])
       fi 
       compile_netcdf="yes"
-      AC_MSG_RESULT([to be compiled])
     fi
     #
     # 
@@ -282,8 +283,6 @@ if test x"$enable_hdf5" = "xyes"; then
     AC_MSG_CHECKING([for internal NETCDF+HDF5 library]);
     internal_hdf5="yes" ;
     internal_netcdf="yes" ;
-    compile_hdf5="yes"  ;
-    compile_netcdf="yes"  ;
     #
     HDF5_LIBS="-L${extlibs_path}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
     HDF5_INCS="${IFLAG}${extlibs_path}/include"
@@ -294,21 +293,23 @@ if test x"$enable_hdf5" = "xyes"; then
     hdf5=yes
     if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
       compile_netcdf="no"
+      compile_hdf5="no"
       AC_MSG_RESULT([already compiled])
     else  
       if test -e "${extlibs_path}/lib/libnetcdf.a" || test -e "${extlibs_path}/lib/libnetcdff.a"; then
-        rm "${extlibs_path}/lib/*netcdf*"
-        AC_MSG_RESULT([found local netcdf compiled without HDF5, erasing it, ])
+        rm ${extlibs_path}/lib/*netcdf*
+        AC_MSG_RESULT([found local netcdf compiled without HDF5, erasing it, libs to be re-compiled])
+      else
+        AC_MSG_RESULT([to be compiled])
       fi 
       compile_netcdf="yes"
-      AC_MSG_RESULT([to be compiled])
+      compile_hdf5="yes"
     fi
-    AC_MSG_RESULT([ok])
     #
   fi
 fi
 #
-if test x"$enable_hdf5" = "xyes" && test x"$compile_netcdf" = "xyes" ; then NETCDF_OPT=""; fi
+if test x"$enable_hdf5" = "xyes" && test x"$compile_netcdf" = "xyes" ; then NETCDF_OPT="--enable-netcdf-4"; fi
 #
 # Large File Support
 #

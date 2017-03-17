@@ -214,21 +214,14 @@ if ! test x"$HAVE_FFT" = "xyes" ; then
       use_internal_fftqe=yes
       use_internal_fftsg=no
       use_internal_fftw=no
-      compile_fftw=no
-      compile_fftqe=yes
    elif test x"$enable_internal_fftsg" = "xyes"; then
       use_internal_fftqe=no
       use_internal_fftsg=yes
       use_internal_fftw=no
-      compile_fftw=no
-      compile_fftqe=no
    else
-     #
      use_internal_fftqe=no
      use_internal_fftsg=no
      use_internal_fftw=yes
-     compile_fftqe=no
-     compile_fftw=yes
   fi
 fi
 #
@@ -248,7 +241,11 @@ if test "$use_internal_fftqe" = "yes" ; then
   FFT_INCS="${IFLAG}./include/"
   HAVE_FFTQE=yes
   internal_fft=yes
-  compile_fftqe=yes
+  if test -e "./lib/libfftqe.a"; then
+    compile_fftqe="no"
+  else
+    compile_fftqe=yes
+  fi
   AC_MSG_RESULT(Internal FFTQE (FFTW2))
 fi
 if test "$HAVE_FFTQE" = "yes" ; then HAVE_FFT=yes ; fi
@@ -274,6 +271,7 @@ if test "$use_internal_fftsg" = "yes" ; then
   FFT_CPP="-D_FFTSG"
   FFT_LIBS=""
   HAVE_FFTSG=yes;
+  internal_fft="yes";
   AC_MSG_RESULT(FFTSG)
   AC_SUBST(fft_cfactor)
 fi
@@ -289,8 +287,12 @@ if test "$use_internal_fftw" = "yes" ; then
   FFT_LIBS="-L${extlibs_path}/lib -lfftw3";
   FFT_INCS="${IFLAG}${extlibs_path}/include/"
   HAVE_FFTW=yes
-  compile_fftw=yes
   internal_fft=yes
+  if test -e "${extlibs_path}/lib/libfftw3.a"; then
+    compile_fftw="no"
+  else
+    compile_fftw=yes
+  fi
   AC_MSG_RESULT(Internal FFTW3)
 fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi

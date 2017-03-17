@@ -15,7 +15,7 @@
 # [@MPI_str@] MPI
 # [@OPENMP_str@] OpenMP
 # 
-# - LIBRARIES [E=external library; I+C=internal library to be compiled; I+F=internal library found already compiled; X=system default; -=not used;) -
+# - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
 #  I/O LIBS
 #
@@ -34,8 +34,8 @@
 #                   @FFT_INCS@
 # [@BLAS_str@] BLAS      : @BLAS_LIBS@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
-# [@BLACS_str@] BLACS     : @BLACS_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
+# [@BLACS_str@] BLACS     : @BLACS_LIBS@
 # [@PET_str@] PETSC     : @PETSC_LIBS@ 
 #                   @PETSC_INCS@ 
 # [@SLE_str@] SLEPC     : @SLEPC_LIBS@ 

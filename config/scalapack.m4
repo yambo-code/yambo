@@ -33,7 +33,12 @@ SCALAPACK_LIBS=""
 BLACS_LIBS=""
 acx_blacs_ok="no"
 acx_scalapack_ok="no"
+
 enable_scalapack="no"
+internal_slk="no"
+internal_blacs="no"
+compile_slk="no"
+compile_blacs="no"
 
 case $with_blacs_libs in
         yes | "") ;;
@@ -83,18 +88,26 @@ if test "$mpibuild"  = "yes" && ! test "$with_scalapack_libs" = "no"; then
   fi
 fi
 #
-compile_blacs="no"
-compile_slk="no"
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_blacs_libs" = "yes"; then
-  compile_blacs="yes"
-  BLACS_LIBS="-L${extlibs_path}/lib -lblacs -lblacs_init"
+  internal_blacs="yes";
+  BLACS_LIBS="-L${extlibs_path}/lib -lblacs -lblacs_C_init -lblacs_init";
+  if test -e "${extlibs_path}/lib/libblacs.a" && test -e "${extlibs_path}/lib/libblacs_init.a"; then
+    compile_blacs="no"
+  else
+    compile_blacs="yes"
+  fi
 fi
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_scalapack_libs" = "yes"; then
-  compile_slk="yes"
+  internal_slk="yes"
   SCALAPACK_LIBS="-L${extlibs_path}/lib -lscalapack"
+  if test -e "${extlibs_path}/lib/libscalapack.a"; then
+    compile_slk="no"
+  else
+    compile_slk="yes"
+  fi
 fi
 #
-if (test "$acx_blacs_ok" = "yes" || test "$compile_blacs" = "yes") && (test "$acx_scalapack_ok" = "yes" || test "$compile_slk" = "yes" ) ; then
+if (test "$acx_blacs_ok" = "yes" || test "$internal_blacs" = "yes") && (test "$acx_scalapack_ok" = "yes" || test "$internal_slk" = "yes" ) ; then
   enable_scalapack="yes"
   dscalapack="-D_SCALAPACK"
 else
@@ -104,6 +117,8 @@ else
   SCALAPACK_LIBS=""
   compile_blacs="no"
   compile_slk="no"
+  internal_blacs="no"
+  internal_slk="no"
 fi
 #
 AC_SUBST(BLACS_LIBS)
@@ -111,6 +126,8 @@ AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)
 AC_SUBST(dscalapack)
 AC_SUBST(compile_slk)
+AC_SUBST(internal_slk)
 AC_SUBST(compile_blacs)
+AC_SUBST(internal_blacs)
 
 ])

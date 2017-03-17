@@ -164,7 +164,6 @@ if test "$compile_p2y" = "yes"; then
 fi
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-#
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -177,7 +176,6 @@ if test x"$enable_time_profile" = "xyes"; then
  time_profile_cpp="-D_TIMING"
 fi
 AC_SUBST(time_profile_cpp)
-#
 # ============================================================================
 #
 # Memory Profiling 
@@ -394,8 +392,6 @@ if test "$mpibuild" = "yes"; then
  AC_SUBST(PCCFLAGS)
  AC_SUBST(mpibuild)
 fi
-
-
 # ============================================================================
 # check if the structure mallinfo is present in malloc.h
 AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )

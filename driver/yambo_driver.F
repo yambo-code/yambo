@@ -42,9 +42,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
-#if defined _MEM_CHECK 
  use memory,        ONLY:MEM_manager
-#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif
@@ -143,9 +141,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !========
  !
  if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3))
-#if defined _MEM_CHECK 
  if (l_optics.and.l_chi) call MEM_manager("",REPORT="check")
-#endif
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
@@ -170,9 +166,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_dyn_em1)    i_err=X_dielectric_matrix(Xen,Xk,q,X(3),Xw(3),.false.)
  !
-#if defined _MEM_CHECK 
  if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_manager("",REPORT="check")
-#endif
  !
  ! HARTREE-FOCK AND VXC
  !======================
@@ -187,9 +181,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2))
 #endif
  !
-#if defined _MEM_CHECK 
  if (any((/l_eval_collisions,l_XCo/))) call MEM_manager("",REPORT="check")
-#endif
  !
  ! SELF-ENERGIES
  !===============
@@ -219,9 +211,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
      !
    endif
    !
-#if defined _MEM_CHECK 
    call MEM_manager("",REPORT="check")
-#endif
    !
  endif
  !
@@ -234,9 +224,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
    if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
    !
-#if defined _MEM_CHECK 
    call MEM_manager("",REPORT="check")
-#endif
    !
  endif
  !
@@ -259,9 +247,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
 #endif
    !
-#if defined _MEM_CHECK 
    call MEM_manager("",REPORT="check")
-#endif
    !
  endif
  !
@@ -274,11 +260,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    call RT_driver(en,X(:2),k,q)
    !
 #endif
-#if defined _MEM_CHECK 
    !
    call MEM_manager("",REPORT="check")
-   !
-#endif
    !
  endif
  !
@@ -310,13 +293,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Memory Overview
  !=================
-#if defined _MEM_CHECK 
  !
  call section('*','Memory Overview')
  !
  call MEM_manager("",REPORT="final")
- !
-#endif
  !
  ! GAME OVER :(
  !==============

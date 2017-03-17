@@ -56,6 +56,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	cp $(PACKAGE)/src/*.x     $(libs_prefix)/bin ;
 	cp $(PACKAGE)/tools/iotk  $(libs_prefix)/bin ;
 	cp $(PACKAGE)/src/*.mod   $(libs_prefix)/include ;
+	@if test -e $(libs_prefix)/include/iotk_auxmacros.h; then rm -fr $(libs_prefix)/include/iotk_auxmacros.h; fi
 	cp $(PACKAGE)/include/*.h $(libs_prefix)/include ;
 	#
 	touch package-ready-stamp

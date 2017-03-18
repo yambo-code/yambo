@@ -47,7 +47,7 @@ if test x"$with_etsf_io_libs" != "x" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
 #
-# F90 module flag
+# FC module flag
 #
 IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
@@ -102,9 +102,9 @@ if test "x$enable_etsf_io" = "xyes" ; then
     AC_MSG_CHECKING([for internal ETSF_IO Library])
     internal_etsf="yes"
     compile_e2y="yes"
-    ETSF_INCS="${IFLAG}${extlibs_path}/include"
-    ETSF_LIBS="-L${extlibs_path}/lib -letsf_io"
-    if test -e "${extlibs_path}/lib/libetsf_io.a"; then
+    ETSF_INCS="${IFLAG}${extlibs_path}/${FC}/include"
+    ETSF_LIBS="-L${extlibs_path}/${FC}/lib -letsf_io"
+    if test -e "${extlibs_path}/${FC}/lib/libetsf_io.a"; then
       compile_etsf="no"
       AC_MSG_RESULT(found already compiled)
     else

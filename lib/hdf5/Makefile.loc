@@ -14,7 +14,7 @@ TARBALL=$(tarball_hdf5)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(libs_prefix) \
-         --enable-fortran --disable-shared --enable-static --without-pic
+         --enable-fortran --enable-parallel --disable-shared --enable-static --without-pic
 
 
 #
@@ -31,11 +31,10 @@ uncompress-stamp:
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
-	      CC="$(cc)" \
-	      PCC="$(pcc)" \
+	      CC="$(mpicc)" \
 	      CPP="$(cpp)" \
 	      CFLAGS="$(cflags)" \
-	      CXX="$(cc)" \
+	      CXX="$(mpicc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(f90)" \
 	      PFC="$(pf90)" \

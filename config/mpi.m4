@@ -31,9 +31,9 @@ if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 if test "$mpibuild" = "yes"; then
   #
-  # MPIF90
+  # MPIFC
   #
-  mpi_cpp="-D_MPI"
+  def_mpi="-D_MPI"
   AC_LANG_PUSH(Fortran)
   ACX_MPI([], 
   AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
@@ -47,21 +47,29 @@ if test "$mpibuild" = "yes"; then
   #
 else
   #
-  mpi_cpp=""
-  PF90=""
-  FC=$F77
-  PF90FLAGS=""
-  PCC=""
-  PCCFLAGS=""
+  def_mpi=""
+  #
+  CC_save =$CC
+  CXX_save=$CXX
+  F77_save=$F77
+  FC_save =$FC
+  #
+  MPICC=""
+  MPIFC=""
+  MPICCFLAGS=""
+  MPIFCFLAGS=""
+  #
 fi
-AC_SUBST(mpi_cpp)
-AC_SUBST(PF90)
-AC_SUBST(PF90FLAGS)
-AC_SUBST(PCC)
-AC_SUBST(PCCFLAGS)
+AC_SUBST(CC_save)
+AC_SUBST(CXX_save)
+AC_SUBST(F77_save)
+AC_SUBST(FC_save)
+#
+AC_SUBST(MPIFCFLAGS)
+AC_SUBST(MPICCFLAGS)
+#
+AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
-
-
 
 AC_ARG_WITH(mpi_libs,AC_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
 AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
@@ -71,7 +79,7 @@ AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path t
 MPI_LIBS="-lmpi"
 MPI_INCS=""
 #
-MPI_PATH=`which $PFC|xargs dirname`;
+MPI_PATH=`which $MPIFC|xargs dirname`;
 MPI_LIB_DIR="$MPI_PATH/../lib"
 MPI_INC_DIR="$MPI_PATH/../include"
 #

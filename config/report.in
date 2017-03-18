@@ -50,12 +50,12 @@
 #
 # - COMPILERS, MAKE and EDITOR -
 #
-# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @time_profile_cpp@
-# [ FPP ] @FPP@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @time_profile_cpp@
-# [  C  ] @CC@ @CFLAGS@
-# [MPICC] @PCC@ @PCCFLAGS@
-# [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@
-# [MPIF ] @PF90@ @PF90FLAGS@ @OPENMPLIBS@
+# [ CPP ] @CPP@ @CPPFLAGS@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ CC  ] @CC_save@ @CFLAGS@
+# [MPICC] @MPICC@ @MPICCFLAGS@
+# [ FC  ] @FC_save@ @FCFLAGS@ @OPENMPLIBS@
+# [MPIF ] @MPIFC@ @MPIFCFLAGS@ @OPENMPLIBS@
 # [ F77 ] @F77@ @FFLAGS@
 # [Cmain] @FCMFLAG@
 # [NoOpt] @UFFLAGS@

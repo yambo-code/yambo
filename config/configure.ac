@@ -23,6 +23,7 @@
 #
 m4_include([config/version.m4])
 #
+AC_PREFIX_DEFAULT($PWD)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 #
@@ -35,6 +36,7 @@ m4_include([config/yambo_specific.m4])
 m4_include([config/acx_misc.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/acx_cpp.m4])
+m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_fortran_flags.m4])
@@ -44,7 +46,6 @@ m4_include([config/acx_mpi.m4])
 #
 m4_include([config/blas.m4])
 m4_include([config/lapack.m4])
-#m4_include([config/mpi.m4])
 m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
@@ -56,8 +57,6 @@ m4_include([config/petsc_slepc.m4])
 #  Report
 #
 m4_include([config/acx_report.m4])
-#
-AC_PREFIX_DEFAULT($PWD)
 #
 # Checks for library functions.
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
@@ -163,13 +162,13 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp=" "
+def_openmp=" "
 OPENMPLIBS=" "
 if test x"$enable_open_mp" = "xyes"; then 
   OPENMPLIBS="$OMPFLAGS"; 
-  openmp_cpp="-D_OPENMP"
+  def_openmp="-D_OPENMP"
 fi
-AC_SUBST(openmp_cpp)
+AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
 # ============================================================================
 #
@@ -186,8 +185,6 @@ ACX_EXTUS
 #
 AC_FC_FREEFORM
 #
-F90=$FC
-AC_SUBST(F90)
 AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
 #
@@ -200,6 +197,10 @@ AC_SUBST([F90_MODULE_FLAG])
 # ============================================================================
 # CPP check & flags
 ACX_CPP
+#
+# ============================================================================
+# FPP check
+ACX_FPP
 #
 # ============================================================================
 # Fortran 77: test if the FC works as F77 as well

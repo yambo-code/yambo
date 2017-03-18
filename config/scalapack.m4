@@ -109,10 +109,10 @@ fi
 #
 if (test "$acx_blacs_ok" = "yes" || test "$internal_blacs" = "yes") && (test "$acx_scalapack_ok" = "yes" || test "$internal_slk" = "yes" ) ; then
   enable_scalapack="yes"
-  dscalapack="-D_SCALAPACK"
+  def_scalapack="-D_SCALAPACK"
 else
   enable_scalapack="no"
-  dscalapack=""
+  def_scalapack=""
   BLACS_LIBS=""
   SCALAPACK_LIBS=""
   compile_blacs="no"
@@ -124,7 +124,7 @@ fi
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)
-AC_SUBST(dscalapack)
+AC_SUBST(def_scalapack)
 AC_SUBST(compile_slk)
 AC_SUBST(internal_slk)
 AC_SUBST(compile_blacs)

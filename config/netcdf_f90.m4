@@ -75,8 +75,9 @@ compile_netcdf="no"
 internal_netcdf="no"
 compile_hdf5="no"
 internal_hdf5="no"
-dnetcdf=""
+def_netcdf=""
 NETCDF_OPT="--disable-netcdf-4"
+NETCDF_FLAG="netcdf_v3"
 IFLAG=""
 #
 # global options
@@ -87,7 +88,7 @@ if test -d "$with_hdf5_path"            ; then enable_hdf5=yes ; fi
 if test x"$with_hdf5_libs" != "x"       ; then enable_hdf5=yes ; fi
 if test x"$enable_netcdf_hdf5" = "xyes" ; then enable_hdf5=yes ; fi
 #
-# F90 module flag
+# FC module flag
 #
 IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
@@ -176,6 +177,10 @@ if test x"$enable_hdf5" = "xno"; then
     else
       AC_MSG_RESULT([no])
     fi
+    # 
+    FCFLAGS="$save_fcflags"
+    LIBS="$save_libs"
+    #
   fi
   if test "x$netcdf" = xno; then
     #
@@ -190,26 +195,18 @@ if test x"$enable_hdf5" = "xno"; then
     # of the netcdf lib
     #
     #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf"
-    NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${extlibs_path}/include"
+    NETCDF_LIBS="-L${extlibs_path}/${FC}/${NETCDF_FLAG}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FC}/${NETCDF_FLAG}/include"
     #
     netcdf=yes
-    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && ! test -e "${extlibs_path}/lib/libhdf5.a"; then
+    if test -e ${extlibs_path}/${FC}/${NETCDF_FLAG}/lib/libnetcdf.a && test -e "${extlibs_path}/${FC}/${NETCDF_FLAG}/lib/libnetcdff.a" \
+    && ! test -e "${extlibs_path}/${FC}/lib/libhdf5.a"; then
       compile_netcdf="no"
       AC_MSG_RESULT([already compiled])
     else 
-      if test -e "${extlibs_path}/lib/libhdf5.a"; then
-        rm ${extlibs_path}/lib/*hdf5* ${extlibs_path}/lib/*netcdf*
-        AC_MSG_RESULT([found version compiled with HDF5, erasing it, libs to be re-copiled])
-      else
-        AC_MSG_RESULT([to be compiled])
-      fi 
       compile_netcdf="yes"
+      AC_MSG_RESULT([to be compiled])
     fi
-    #
-    # 
-    FCFLAGS="$save_fcflags"
-    LIBS="$save_libs"
     #
   fi
   #
@@ -260,7 +257,7 @@ if test x"$enable_hdf5" = "xyes"; then
        implicit none
        integer cmode
        cmode = NF90_HDF5
-       cmode = nf90_abort(1)
+       !cmode = nf90_abort(1)
        call h5open_f(cmode)]),
        [hdf5=yes], [hdf5=no]);
     netcdf=$hdf5;
@@ -284,59 +281,57 @@ if test x"$enable_hdf5" = "xyes"; then
     internal_hdf5="yes" ;
     internal_netcdf="yes" ;
     #
-    HDF5_LIBS="-L${extlibs_path}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
-    HDF5_INCS="${IFLAG}${extlibs_path}/include"
-    NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${extlibs_path}/include"
+    NETCDF_OPT="--enable-netcdf-4";
+    NETCDF_FLAG="netcdf_v4";
+    #
+    HDF5_LIBS="-L${extlibs_path}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
+    HDF5_INCS="${IFLAG}${extlibs_path}/${FC}/include"
+    NETCDF_LIBS="-L${extlibs_path}/${FC}/${NETCDF_FLAG}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FC}/${NETCDF_FLAG}/include"
     #
     netcdf=yes
     hdf5=yes
+    !
     if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
       compile_netcdf="no"
       compile_hdf5="no"
       AC_MSG_RESULT([already compiled])
     else  
-      if test -e "${extlibs_path}/lib/libnetcdf.a" || test -e "${extlibs_path}/lib/libnetcdff.a"; then
-        rm ${extlibs_path}/lib/*netcdf*
-        AC_MSG_RESULT([found local netcdf compiled without HDF5, erasing it, libs to be re-compiled])
-      else
-        AC_MSG_RESULT([to be compiled])
-      fi 
       compile_netcdf="yes"
       compile_hdf5="yes"
+      AC_MSG_RESULT([to be compiled])
     fi
     #
   fi
 fi
 #
-if test x"$enable_hdf5" = "xyes" && test x"$compile_netcdf" = "xyes" ; then NETCDF_OPT="--enable-netcdf-4"; fi
-#
 # Large File Support
 #
 if test x"$enable_netcdf_classic" = "xyes"; then
-  dnetcdf="-D_NC_CLASSIC";
+  def_netcdf="-D_NC_CLASSIC";
 fi
 #
 # NETCDF-HDF5 IO
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
-  dnetcdf="${dnetcdf} -D_HDF5_IO";
+  def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
 #
 # HDF5-DATA COMPRESSION
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    dnetcdf="${dnetcdf} -D_HDF5_COMPRESSION";
+    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
 fi
 #
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(NETCDF_INCS)
 AC_SUBST(NETCDF_OPT)
+AC_SUBST(NETCDF_FLAG)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
-AC_SUBST(dnetcdf)
+AC_SUBST(def_netcdf)
 AC_SUBST(compile_netcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)

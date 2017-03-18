@@ -50,7 +50,7 @@ compile_fftqe="no"
 compile_fftw="no"
 
 #
-# F90 module flag
+# FC module flag
 #
 IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
@@ -134,8 +134,8 @@ if ! test x"$try_libs" = "x" ; then
   FCFLAGS=$save_fcflags
   #
   if test "$HAVE_FFTW" = "yes" ; then
-    FFT_CPP="-D_FFTW"
-    if test "$HAVE_FFTW_OMP" = "yes" ; then FFT_CPP="-D_FFTW -D_FFTW_OMP" ; fi
+    def_fft="-D_FFTW"
+    if test "$HAVE_FFTW_OMP" = "yes" ; then def_fft="-D_FFTW -D_FFTW_OMP" ; fi
     #
     if test "$try_libs" = "-lfftw3" ; then
       FFT_DESCRIPTION="(FFTW v3)";
@@ -151,7 +151,7 @@ if ! test x"$try_libs" = "x" ; then
     fi
     FFT_LIBS="${FFT_PATH} ${try_libs}"
   else
-    FFT_CPP="" 
+    def_fft="" 
     FFT_LIBS=""
     LDFLAGS="$save_ldflags"
   fi
@@ -196,7 +196,7 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     else
       FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
     fi
-    FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
+    def_fft="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
@@ -236,7 +236,7 @@ if test "$use_internal_fftqe" = "yes" ; then
   else
     FFT_DESCRIPTION="(Internal FFTW2 (FFTQE))";
   fi
-  FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
+  def_fft="-D_FFTQE $FFT3D_CPP -D_FFTW2"
   FFT_LIBS="-L./lib -lfftqe";
   FFT_INCS="${IFLAG}./include/"
   HAVE_FFTQE=yes
@@ -268,7 +268,7 @@ if test "$use_internal_fftsg" = "yes" ; then
   fi
   #
   FFT_DESCRIPTION="(Internal Goedecker FFT with $fft_cfactor cache)"
-  FFT_CPP="-D_FFTSG"
+  def_fft="-D_FFTSG"
   FFT_LIBS=""
   HAVE_FFTSG=yes;
   internal_fft="yes";
@@ -283,12 +283,12 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 #
 if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
-  FFT_CPP="-D_FFTW"
-  FFT_LIBS="-L${extlibs_path}/lib -lfftw3";
-  FFT_INCS="${IFLAG}${extlibs_path}/include/"
+  def_fft="-D_FFTW"
+  FFT_LIBS="-L${extlibs_path}/${FC}/lib -lfftw3";
+  FFT_INCS="${IFLAG}${extlibs_path}/${FC}/include/"
   HAVE_FFTW=yes
   internal_fft=yes
-  if test -e "${extlibs_path}/lib/libfftw3.a"; then
+  if test -e "${extlibs_path}/${FC}/lib/libfftw3.a"; then
     compile_fftw="no"
   else
     compile_fftw=yes
@@ -310,7 +310,7 @@ fi
 
 AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_INCS)
-AC_SUBST(FFT_CPP)
+AC_SUBST(def_fft)
 AC_SUBST(FFT_DESCRIPTION)
 AC_SUBST(compile_fftqe)
 AC_SUBST(compile_fftw)

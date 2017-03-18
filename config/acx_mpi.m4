@@ -28,35 +28,37 @@ AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
-AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
-
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
-        AC_ARG_VAR(MPICC,[Parallel C compiler command])
+        AC_ARG_VAR(MPICC,[MPI C compiler command])
         AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
-        acx_mpi_save_CC="$CC"
+        CC_save=$CC
         CC="$MPICC"
+        AC_SUBST(MPICC)
 ],
 [C++], [
         AC_REQUIRE([AC_PROG_CXX])
         AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
         AC_CHECK_PROGS(MPICXX, mpic++ mpiCC mpCC hcp mpxlC mpxlC_r cmpic++, $CXX)
-        acx_mpi_save_CXX="$CXX"
+        CXX_save=$CXX
         CXX="$MPICXX"
         AC_SUBST(MPICXX)
 ],
 [Fortran 77], [
         AC_REQUIRE([AC_PROG_F77])
-        AC_ARG_VAR(MPIF77,[MPI Fortran compiler command])
+        AC_ARG_VAR(MPIF77,[MPI Fortran77 compiler command])
         AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
-        acx_mpi_save_F77="$F77"
+        F77_save=$F77
         F77="$MPIF77"
         AC_SUBST(MPIF77)
 ],
 [Fortran], [
-        AC_CHECK_PROGS(PFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
-        FC="$PFC"
-        acx_mpi_save_FC="$PFC"
+        AC_REQUIRE([AC_PROG_FC])
+        AC_ARG_VAR(MPIFC,[MPI Fortran compiler command])
+        AC_CHECK_PROGS(MPIFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        FC_save="$FC"
+        FC="$MPIFC"
+        AC_SUBST(MPIFC)
 ])
 
 if test x = x"$MPI_LIBS"; then
@@ -135,21 +137,14 @@ AC_LANG_CASE(
  [Fortran],
  [if test "$acx_mpi_ok" = "yes"; then
   mpibuild="yes"
-  PF90=$PFC
-  PF90FLAGS=$FCFLAGS
-  fi],
+  MPIFCFLAGS=$FCFLAGS
+  fi
+ ],
  [C],
  [if test "$acx_mpi_ok" = "yes"; then
   mpibuild="yes"
-  PCC=$MPICC
-  PCCFLAGS=$CFLAGS
+  MPICCFLAGS=$CFLAGS
   fi
-#
-# While the Fortran checks use FC (we use F90) the
-# variable for C is CC, the same used here. 
-# So we need to rename it.
-#
-  CC=$acx_mpi_save_CC
  ],
 )
 

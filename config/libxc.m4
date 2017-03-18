@@ -171,11 +171,11 @@ if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
   internal_libxc="yes"
   # version y2.0.3
-  #LIBXC_LIBS="-L${extlibs_path}/lib -lxc"
+  #LIBXC_LIBS="-L${extlibs_path}/${FC}/lib -lxc"
   # version 2.2.3 is used
-  LIBXC_LIBS="-L${extlibs_path}/lib -lxcf90 -lxc"
-  LIBXC_INCS="$IFLAG${extlibs_path}/include"
-  if test -e "${extlibs_path}/lib/libxc.a" && test -e "${extlibs_path}/lib/libxcf90.a"; then
+  LIBXC_LIBS="-L${extlibs_path}/${FC}/lib -lxcf90 -lxc"
+  LIBXC_INCS="$IFLAG${extlibs_path}/${FC}/include"
+  if test -e "${extlibs_path}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FC}/lib/libxcf90.a"; then
     compile_libxc="no"
     AC_MSG_RESULT([Compatible external LibXC not found/specified. Found internal already compiled.])
   else

@@ -33,11 +33,17 @@ if test "$mpibuild" = "yes"; then
   #
   # MPIFC
   #
-  def_mpi="-D_MPI"
   AC_LANG_PUSH(Fortran)
   ACX_MPI([], 
   AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
   AC_LANG_POP(Fortran)
+  #
+  # MPIF77
+  #
+  AC_LANG_PUSH(Fortrani 77)
+  ACX_MPI([], 
+  AC_MSG_WARN([could not compile a FORTRAN 77 mpi test program. YAMBO serial only.]))
+  AC_LANG_POP(Fortran 77)
   #
   # MPICC
   #
@@ -45,28 +51,13 @@ if test "$mpibuild" = "yes"; then
   ACX_MPI([], 
   AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
   #
+  def_mpi="-D_MPI"
+  #
 else
   #
   def_mpi=""
   #
-  CC_save =$CC
-  CXX_save=$CXX
-  F77_save=$F77
-  FC_save =$FC
-  #
-  MPICC=""
-  MPIFC=""
-  MPICCFLAGS=""
-  MPIFCFLAGS=""
-  #
 fi
-AC_SUBST(CC_save)
-AC_SUBST(CXX_save)
-AC_SUBST(F77_save)
-AC_SUBST(FC_save)
-#
-AC_SUBST(MPIFCFLAGS)
-AC_SUBST(MPICCFLAGS)
 #
 AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
@@ -79,7 +70,7 @@ AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path t
 MPI_LIBS="-lmpi"
 MPI_INCS=""
 #
-MPI_PATH=`which $MPIFC|xargs dirname`;
+MPI_PATH=`which $FC|xargs dirname`;
 MPI_LIB_DIR="$MPI_PATH/../lib"
 MPI_INC_DIR="$MPI_PATH/../include"
 #
@@ -126,6 +117,7 @@ if test "$MPI_INC_DIR" != ""; then
 fi
 #
 AC_SUBST(mpif_found)
+#
 AC_SUBST(MPI_INCS)
 AC_SUBST(MPI_LIBS)
 #

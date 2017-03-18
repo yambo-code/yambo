@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libnetcdf.a
-LIBPATH=$(libs_prefix)/${netcdf_flag}/${f90}
+LIBPATH=$(libs_prefix)/${fc}/${netcdf_flag}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_netcdf)
@@ -39,14 +39,12 @@ configure-stamp: uncompress-stamp
 	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
-	      FC="$(f90)" \
-	      FCFLAGS="$(f77flags)" \
-	      FFLAGS="$(f77flags)" \
-	      CPPFLAGS="$(ihdf5)" \
+	      FC="$(fc)" \
+	      FCFLAGS="$(fcflags)" \
+	      FFLAGS="$(fflags)" \
+	      CPPFLAGS="$(cppflags) $(ihdf5)" \
 	      LIBS="$(lhdf5)" \
-	      F90="$(f90)" \
-	      F77="$(f77)" \
-	      INSTALL_DIR="$(INSTALL_DIR)" ); \
+	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp
 

@@ -6,20 +6,22 @@
 include ../../config/setup
 include ../archive/package.list
 
-LIBNAME=libfftw.a
+LIBNAME=libfftw3.a
+LIBPATH=$(libs_prefix)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_fftw)
 TARBALL=$(tarball_fftw)
 
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(libs_prefix)
+AUXFLAGS=--prefix=$(LIBPATH)
 
 #
 # MAIN target
 #
-all: package-ready-stamp
-all: $(libs_prefix)/lib/$(LIBNAME)
+all: $(LIBRARY)
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
@@ -33,12 +35,7 @@ configure-stamp: uncompress-stamp
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
 	      CFLAGS="$(cflags)" \
-	      CXX="$(cc)" \
-	      CXXCPP="$(cpp)" \
-	      FC="$(f90)" \
-	      FCFLAGS="$(f77flags)" \
-	      FFLAGS="$(f77flags)" \
-	      F90="$(f90)" \
+	      FFLAGS="$(fflags)" \
 	      F77="$(f77)" \
 	      INSTALL_DIR="$(INSTALL_DIR)" ); \
 	fi
@@ -50,11 +47,11 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	#
 	touch package-ready-stamp
 
-$(libs_prefix)/lib/$(LIBNAME): uncompress-stamp configure-stamp package-ready-stamp
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) install ) ; fi
 	#
-	chmod u+x $(libs_prefix)/lib/*fft*.a
+	chmod u+x $(LIBPATH)/lib/*fft*.a
 
 
 #

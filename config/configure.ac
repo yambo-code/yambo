@@ -42,18 +42,6 @@ m4_include([config/acx_get_fc_version.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 
-#  Libs
-#
-m4_include([config/blas.m4])
-m4_include([config/lapack.m4])
-m4_include([config/netcdf_f90.m4])
-m4_include([config/libxc.m4])
-m4_include([config/fft.m4])
-m4_include([config/iotk.m4])
-m4_include([config/etsf_io.m4])
-m4_include([config/scalapack.m4])
-m4_include([config/petsc_slepc.m4])
-# 
 #  Report
 #
 m4_include([config/acx_report.m4])
@@ -220,6 +208,19 @@ AC_LANG_POP(Fortran 77)
 # MPI
 m4_include([config/mpi.m4])
 
+# 
+#  Libs
+#
+m4_include([config/blas.m4])
+m4_include([config/lapack.m4])
+m4_include([config/netcdf_f90.m4])
+m4_include([config/libxc.m4])
+m4_include([config/fft.m4])
+m4_include([config/iotk.m4])
+m4_include([config/etsf_io.m4])
+m4_include([config/scalapack.m4])
+m4_include([config/petsc_slepc.m4])
+#
 AC_LANG_PUSH(Fortran)
 # ============================================================================
 # BLAS/Lapack
@@ -261,6 +262,11 @@ cp config/Makefile .
 if test ! -d bin ; then mkdir bin ; fi ;
 if test ! -d include ; then mkdir include ; fi
 if test ! -d lib ; then mkdir lib ; fi
+#
+if ! test -e "$extlibs_path/${FC}";         then mkdir "$extlibs_path/${FC}";         fi
+if ! test -e "$extlibs_path/${FC}/lib";     then mkdir "$extlibs_path/${FC}/lib";     fi
+if ! test -e "$extlibs_path/${FC}/include"; then mkdir "$extlibs_path/${FC}/include"; fi
+if ! test -e "$extlibs_path/${FC}/bin";     then mkdir "$extlibs_path/${FC}/bin";     fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

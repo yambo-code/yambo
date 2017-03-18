@@ -151,6 +151,7 @@ if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
 #
+MPI_LIBS_str=" - ";
 MPI_LIBS_info=""
 if test "$mpibuild" = "yes" ; then
   if test "$MPI_LIBS" = "" ; then

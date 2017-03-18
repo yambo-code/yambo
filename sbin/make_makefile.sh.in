@@ -42,9 +42,9 @@ libs=$5
 if [ ! -f $cdir/$ofile ]; then exit 0; fi
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-fc="\$(f90)"
-fcflags="\$(f90flags)"
-fcuflags="\$(f90uflags)"
+fc="\$(fc)"
+fcflags="\$(fcflags)"
+fcuflags="\$(fcuflags)"
 llibs=""
 lock_file="__lock"
 dep_file="make.dep"
@@ -53,9 +53,6 @@ for arg in $@; do
   -D_MPI)
    dmpi="yes" ;
    dopts="$dopts $arg";
-   fc="\$(pf90)" ;
-   fcflags="\$(pf90flags)"
-   llmpi="\$(lmpi)"
    ;;
   -D_64BIT_OFFSET)
    dopts="$dopts $arg";
@@ -82,24 +79,24 @@ llibinclude="\$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) \$(lhdf5) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
+   llibs="$llibs \$(lnetcdf) \$(lhdf5) \$(llibxc) -lslatec -llocal \$(lfft) -lm \$(lmpi)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft) \$(impi)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm \$(lmpi)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(impi)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(iiotk) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
+   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm \$(lmpi)"
+   linclude="$linclude \$(iiotk) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(impi)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(ietsf) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc)"
+   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm \$(lmpi)"
+   linclude="$linclude \$(ietsf) \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(impi)"
     ;;
   ypp*)
-   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft)"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm \$(lmpi)"
+   linclude="$linclude \$(inetcdf) \$(ihdf5) \$(impi) \$(ilibxc) \$(ifft) \$(impi)"
     ;;
 esac
 
@@ -183,7 +180,7 @@ endef
 F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
-	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$(topdir)/$cdir/\$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fuflags) \$(topdir)/$cdir/\$*.f) > /dev/null
 #
 FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
@@ -227,7 +224,7 @@ cat << EOF >> $cdir/Makefile
 EOF
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fflags) \$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null

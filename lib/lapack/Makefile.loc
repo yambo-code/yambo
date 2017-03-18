@@ -7,17 +7,19 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=liblapack.a
+LIBPATH=$(libs_prefix)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_lapack)
 TARBALL=$(tarball_lapack)
 #
 # MAIN target
 #
-all: package-ready-stamp
-all: $(libs_prefix)/lib/$(LIBNAME)
+all: $(LIBRARY)
 #
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp $(topdir)/lib/lapack/Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
 	touch uncompress-stamp
 
@@ -30,15 +32,15 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make)  ) ; fi
+	( cd $(PACKAGE); echo  "$(make)"  ) ; fi
 	#
 	touch package-ready-stamp
 
-$(libs_prefix)/lib/$(LIBNAME): uncompress-stamp configure-stamp package-ready-stamp
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  cp *.a $(libs_prefix)/lib ; \
-	chmod +x $(libs_prefix)/lib/*lapack*.a ; \
-	chmod +x $(libs_prefix)/lib/*blas*.a ) ; \
+	( cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; \
+	chmod +x $(LIBPATH)/lib/*lapack*.a ; \
+	chmod +x $(LIBPATH)/lib/*blas*.a ) ; \
 	fi
 
 #

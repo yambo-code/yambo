@@ -6,6 +6,10 @@
 include ../../config/setup
 include ../archive/package.list
 
+LIBNAME=libblacs.a
+LIBPATH=$(libs_prefix)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_blacs)
 TARBALL=$(tarball_blacs)
 #
@@ -28,7 +32,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) mpi  ; chmod +x $(libs_prefix)/lib/*blacs*.a ) ; fi
+	( cd $(PACKAGE);  $(make) mpi  ; chmod +x $(LIBPATH)/lib/*blacs*.a ) ; fi
 	touch package-ready-stamp
 #
 # cleaning

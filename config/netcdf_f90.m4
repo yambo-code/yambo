@@ -175,6 +175,10 @@ if test x"$enable_hdf5" = "xno"; then
     else
       AC_MSG_RESULT([no])
     fi
+    #
+    FCFLAGS="$save_fcflags"
+    LIBS="$save_libs"
+    #
   fi
   if test "x$netcdf" = xno; then
     #
@@ -194,10 +198,6 @@ if test x"$enable_hdf5" = "xno"; then
     #
     netcdf=yes
     AC_MSG_RESULT([ok])
-    #
-    # 
-    FCFLAGS="$save_fcflags"
-    LIBS="$save_libs"
     #
   fi
   #

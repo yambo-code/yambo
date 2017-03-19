@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=liblapack.a
-LIBPATH=$(libs_prefix)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_lapack)
@@ -32,7 +32,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE); echo  "$(make)"  ) ; fi
+	( cd $(PACKAGE); $(make) ) ; fi
 	#
 	touch package-ready-stamp
 

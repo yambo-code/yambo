@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 #
 LIBNAME=libpetsc.a
-LIBPATH=$(libs_prefix)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_petsc)

@@ -102,9 +102,9 @@ if test "x$enable_etsf_io" = "xyes" ; then
     AC_MSG_CHECKING([for internal ETSF_IO Library])
     internal_etsf="yes"
     compile_e2y="yes"
-    ETSF_INCS="${IFLAG}${extlibs_path}/${FC}/include"
-    ETSF_LIBS="-L${extlibs_path}/${FC}/lib -letsf_io"
-    if test -e "${extlibs_path}/${FC}/lib/libetsf_io.a"; then
+    ETSF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include"
+    ETSF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -letsf_io"
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"; then
       compile_etsf="no"
       AC_MSG_RESULT(found already compiled)
     else

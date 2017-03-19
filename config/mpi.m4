@@ -34,22 +34,20 @@ if test "$mpibuild" = "yes"; then
   # MPIFC
   #
   AC_LANG_PUSH(Fortran)
-  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
+  ACX_MPI([],AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
   AC_LANG_POP(Fortran)
   #
   # MPIF77
   #
-  AC_LANG_PUSH(Fortrani 77)
-  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a FORTRAN 77 mpi test program. YAMBO serial only.]))
+  AC_LANG_PUSH(Fortran 77)
+  ACX_MPI([],AC_MSG_WARN([could not compile a FORTRAN 77 mpi test program. YAMBO serial only.]))
   AC_LANG_POP(Fortran 77)
   #
   # MPICC
   #
   AC_LANG_PUSH(C)
-  ACX_MPI([], 
-  AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
+  ACX_MPI([],AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
+  AC_LANG_POP(C)
   #
   def_mpi="-D_MPI"
   #

@@ -284,11 +284,11 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
   def_fft="-D_FFTW"
-  FFT_LIBS="-L${extlibs_path}/${FC}/lib -lfftw3";
-  FFT_INCS="${IFLAG}${extlibs_path}/${FC}/include/"
+  FFT_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lfftw3";
+  FFT_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
   HAVE_FFTW=yes
   internal_fft=yes
-  if test -e "${extlibs_path}/${FC}/lib/libfftw3.a"; then
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libfftw3.a"; then
     compile_fftw="no"
   else
     compile_fftw=yes

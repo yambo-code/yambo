@@ -18,10 +18,10 @@ SHELL = $(shell)
 #  and handle these quantities appropriately. As a consequence, one 
 #  should not compile LAPACK with flags such as -ffpe-trap=overflow.
 #
-FORTRAN  = $(fc)
-OPTS     = $(fcflags)
+FORTRAN  = $(f77)
+OPTS     = $(fflags)
 DRVOPTS  = $(OPTS)
-NOOPT    = $(fcuflags)
+NOOPT    = $(ufflags)
 LOADER   = $(fc)
 LOADOPTS = $(fcflags)
 #
@@ -76,8 +76,8 @@ XBLASLIB     =
 #  machine-specific, optimized BLAS library should be used whenever
 #  possible.)
 #
-BLASLIB      = $(libs_prefix)/$(fc)/lib/libblas.a
-CBLASLIB     = $(libs_prefix)/$(fc)/lib/libcblas.a
-LAPACKLIB    = liblapack.a
+BLASLIB      = $(libs_prefix)/$(fc_kind)/$(fc)/lib/libblas.a
+CBLASLIB     = $(libs_prefix)/$(fc_kind)/$(fc)/lib/libcblas.a
+LAPACKLIB    = ./liblapack.a
 #TMGLIB       = $(libs_prefix)/$(fc)/lib/libtmglib.a
 #LAPACKELIB   = $(libs_prefix)/$(fc)/lib/liblapacke.a

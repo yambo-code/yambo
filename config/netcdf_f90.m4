@@ -77,7 +77,7 @@ compile_hdf5="no"
 internal_hdf5="no"
 def_netcdf=""
 NETCDF_OPT="--disable-netcdf-4"
-NETCDF_FLAG="netcdf_v3"
+NETCDF_VER="v3"
 IFLAG=""
 #
 # global options
@@ -195,12 +195,12 @@ if test x"$enable_hdf5" = "xno"; then
     # of the netcdf lib
     #
     #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf"
-    NETCDF_LIBS="-L${extlibs_path}/${FC}/${NETCDF_FLAG}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FC}/${NETCDF_FLAG}/include"
+    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff -lnetcdf -lm -lcurl"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include"
     #
     netcdf=yes
-    if test -e ${extlibs_path}/${FC}/${NETCDF_FLAG}/lib/libnetcdf.a && test -e "${extlibs_path}/${FC}/${NETCDF_FLAG}/lib/libnetcdff.a" \
-    && ! test -e "${extlibs_path}/${FC}/lib/libhdf5.a"; then
+    if test -e ${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" \
+    && ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a"; then
       compile_netcdf="no"
       AC_MSG_RESULT([already compiled])
     else 
@@ -282,12 +282,12 @@ if test x"$enable_hdf5" = "xyes"; then
     internal_netcdf="yes" ;
     #
     NETCDF_OPT="--enable-netcdf-4";
-    NETCDF_FLAG="netcdf_v4";
+    NETCDF_VER="v4";
     #
-    HDF5_LIBS="-L${extlibs_path}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
-    HDF5_INCS="${IFLAG}${extlibs_path}/${FC}/include"
-    NETCDF_LIBS="-L${extlibs_path}/${FC}/${NETCDF_FLAG}/lib -lnetcdff -lnetcdf"
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FC}/${NETCDF_FLAG}/include"
+    HDF5_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl"
+    HDF5_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include"
+    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff -lnetcdf"
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include"
     #
     netcdf=yes
     hdf5=yes
@@ -326,7 +326,7 @@ fi
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(NETCDF_INCS)
 AC_SUBST(NETCDF_OPT)
-AC_SUBST(NETCDF_FLAG)
+AC_SUBST(NETCDF_VER)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(netcdf)

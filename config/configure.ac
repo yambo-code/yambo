@@ -38,7 +38,7 @@ m4_include([config/acx_gmake.m4])
 m4_include([config/acx_cpp.m4])
 m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
-m4_include([config/acx_get_fc_version.m4])
+m4_include([config/acx_get_fc_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 
@@ -135,7 +135,7 @@ esac
 AC_SUBST(F90SUFFIX)
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
-ACX_GET_FC_VERSION()
+ACX_GET_FC_KIND()
 #
 # Fortran FLAGS
 #
@@ -263,10 +263,10 @@ if test ! -d bin ; then mkdir bin ; fi ;
 if test ! -d include ; then mkdir include ; fi
 if test ! -d lib ; then mkdir lib ; fi
 #
-if ! test -e "$extlibs_path/${FC}";         then mkdir "$extlibs_path/${FC}";         fi
-if ! test -e "$extlibs_path/${FC}/lib";     then mkdir "$extlibs_path/${FC}/lib";     fi
-if ! test -e "$extlibs_path/${FC}/include"; then mkdir "$extlibs_path/${FC}/include"; fi
-if ! test -e "$extlibs_path/${FC}/bin";     then mkdir "$extlibs_path/${FC}/bin";     fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_path/${FCKIND}/${FC}";         fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

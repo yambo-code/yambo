@@ -90,8 +90,8 @@ fi
 #
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_blacs_libs" = "yes"; then
   internal_blacs="yes";
-  BLACS_LIBS="-L${extlibs_path}/lib -lblacs -lblacs_C_init -lblacs_init";
-  if test -e "${extlibs_path}/lib/libblacs.a" && test -e "${extlibs_path}/lib/libblacs_init.a"; then
+  BLACS_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lblacs -lblacs_C_init -lblacs_init";
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_init.a"; then
     compile_blacs="no"
   else
     compile_blacs="yes"
@@ -99,8 +99,8 @@ if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_blacs_
 fi
 if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_scalapack_libs" = "yes"; then
   internal_slk="yes"
-  SCALAPACK_LIBS="-L${extlibs_path}/lib -lscalapack"
-  if test -e "${extlibs_path}/lib/libscalapack.a"; then
+  SCALAPACK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lscalapack"
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libscalapack.a"; then
     compile_slk="no"
   else
     compile_slk="yes"

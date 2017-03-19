@@ -104,9 +104,9 @@ if test "x$enable_iotk" = "xyes" ; then
     AC_MSG_CHECKING([for internal IOTK library])
     internal_iotk="yes"
     compile_p2y="yes"
-    IOTK_INCS="${IFLAG}${extlibs_path}/${FC}/include/"
-    IOTK_LIBS="-L${extlibs_path}/${FC}/lib -liotk"
-    if ! test -e "${extlibs_path}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FC}/include/iotk_specials.h"; then
+    IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
+    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
+    if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
       compile_iotk="yes"
       if test ! -d lib ; then mkdir lib ; fi
       AC_MSG_RESULT(to be compiled)

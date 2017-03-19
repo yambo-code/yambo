@@ -89,8 +89,8 @@ elif test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "" ; then
 fi
   
 if test "$internal_lapack" = "yes"; then
-  LAPACK_LIBS="-L${extlibs_path}/${FC}/lib -llapack";
-  if test -e ${extlibs_path}/${FC}/lib/liblapack.a; then
+  LAPACK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -llapack";
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.a; then
     compile_lapack="no";
   else
     compile_lapack="yes";

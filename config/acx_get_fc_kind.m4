@@ -21,21 +21,29 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_DEFUN([ACX_GET_FC_VERSION],
+AC_DEFUN([ACX_GET_FC_KIND],
 [
 FCVERSION="unknown"
+FCKIND="unknown"
 case "${FC}" in
     *ftn*)
       ;;
     *pgf9*)
+      FCKIND="pgi"
       ;;
     *abf90*)
       ;;
     *ifc*)
+      FCKIND="intel"
+      ;;
+    *gfortran*)
+      FCKIND="gfortran" 
       ;;
     *g95*)
+      FCKIND="g95"
       ;;
     *ifort*)
+      FCKIND="intel"
       $FC -v >& ver_
       VER_8=`grep 8. ver_   | wc -l`
       VER_9=`grep 9. ver_   | wc -l`
@@ -65,7 +73,10 @@ case "${FC}" in
       ;;
     *)
 esac
-AC_MSG_CHECKING([for $FC version])
-AC_MSG_RESULT([$FCVERSION])
+AC_MSG_CHECKING([for $FC kind and version])
+AC_MSG_RESULT([$FCKIND $FCVERSION])
+
+AC_SUBST(FCKIND)
+AC_SUBST(FCVERSION)
 
 ])

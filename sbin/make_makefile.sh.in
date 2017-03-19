@@ -25,7 +25,7 @@
 os="@build_os@"
 cpp="@CPP@"
 fpp="@FPP@"
-cppflags="@C_AS_CPP_FLAGS@"
+cppflags="@CPPFLAGS@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 KEEPSRC="@enable_keep_src@"
@@ -42,9 +42,6 @@ libs=$5
 if [ ! -f $cdir/$ofile ]; then exit 0; fi
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-fc="\$(fc)"
-fcflags="\$(fcflags)"
-fcuflags="\$(fcuflags)"
 llibs=""
 lock_file="__lock"
 dep_file="make.dep"
@@ -101,9 +98,6 @@ case $target in
 esac
 
 cat config/setup >>$cdir/Makefile
-echo "fc=$fc" >> $cdir/Makefile
-echo "fcflags=$fcflags" >> $cdir/Makefile
-echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
 echo "llibinclude=$llibinclude" >> $cdir/Makefile
@@ -158,10 +152,7 @@ define driver
  ${PREFIX}if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
  ${PREFIX}( eval \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c > /dev/null)
- ${PREFIX}if test "\$(dmpi)" = ""; \
-  then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- ${PREFIX}if test ! "\$(dmpi)" = ""; \
-  then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c > /dev/null)
  ${PREFIX}rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
  @echo
 endef

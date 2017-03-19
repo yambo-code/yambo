@@ -9,6 +9,9 @@
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
 # [@TIME_profile_str@] Run-Time timing profile 
+#
+# [EDITOR] @editor@
+# [ MAKE ] @MAKE@
 # 
 # - PARALLEL SUPPORT -
 #
@@ -48,7 +51,7 @@
 # [@MPI_LIBS_str@] MPI       : @MPI_LIBS@ @MPI_LIBS_info@
 #                   @MPI_INCS@
 #
-# - COMPILERS, MAKE and EDITOR -
+# - COMPILERS (FC kind= @FCKIND@) -
 #
 # [ CPP ] @CPP@ @CPPFLAGS@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 # [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
@@ -56,9 +59,7 @@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
 # [ FCUF] @FCUFLAGS@
 # [ F77 ] @F77@ @FFLAGS@
-# [ F77U] @UFFLAGS@
+# [ F77U] @FUFLAGS@
 # [Cmain] @FCMFLAG@
 #
-# [ MAKE ] @MAKE@
-# [EDITOR] @editor@
 #

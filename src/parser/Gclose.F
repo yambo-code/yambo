@@ -24,6 +24,7 @@
 subroutine Gclose(ng,what)
  !
  use pars,        ONLY:SP
+ use com,         ONLY:error
  use units,       ONLY:HA2EV
  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
  implicit none
@@ -34,7 +35,10 @@ subroutine Gclose(ng,what)
  real(SP):: ng_r
  character(*) :: what
  !
- if (n_g_shells==0) return
+ if (n_g_shells==0.and.      (trim(what)=="fRL".or.trim(what)=="tRL") ) return
+ if (n_g_shells==0.and. .not.(trim(what)=="fRL".or.trim(what)=="tRL") ) then
+   call error(' Initialization not yet done. Use RL units in input or run initialization')
+ endif
  !
  ng_r=real(ng)
  select case (trim(what))

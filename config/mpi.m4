@@ -65,12 +65,12 @@ AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI i
 AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
 AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
 
-MPI_LIBS="-L`mpicc --showme:libdirs` -l`mpicc --showme:libs`"
+MPI_LIBS="-L`$CC --showme:libdirs` -l`mpicc --showme:libs`"
 MPI_INCS=""
 #
 #PATH_COMPILER=`which $FC|xargs dirname`
 #MPI_INC_DIRS_LIST="${PATH_COMPILER}/../include /usr/include /usr/lib/openmpi/include /usr/lib/mpich/include";
-MPI_INC_DIRS_LIST=`mpicc --showme:incdirs`
+MPI_INC_DIRS_LIST=`$CC --showme:incdirs`
 #
 if test -d "$with_mpi_path"; then
   MPI_PATH="$with_mpi_path";

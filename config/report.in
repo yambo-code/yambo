@@ -6,6 +6,7 @@
 # [SYS] @build_os@@@build_cpu@
 # [SRC] @srcdir_path@
 # [BIN] @exec_prefix@/bin
+# [LIB] @extlibs_path@
 # [@DP_str@] Double precision
 # [@Red_str@] Redundant compilation  
 # [@TIME_profile_str@] Run-Time timing profile 

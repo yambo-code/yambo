@@ -26,8 +26,7 @@ pkgname_libxc=libxc-2.2.3
 #
 # URL's
 #
-url_iotk=http://qe-forge.org/gf/download/frsrelease/157/785/iotk-y1.2.1.tar.gz
-url_netcdf=http://qe-forge.org/gf/download/frsrelease/157/866/netcdf-y4.1.3_v2.tar.gz
-url_etsf_io=http://qe-forge.org/gf/download/frsrelease/157/612/etsf_io-1.0.4.tar.gz
-url_libxc=http://qe-forge.org/gf/download/frsrelease/157/985/libxc-2.2.3.tar.gz
-
+url_netcdf=https://github.com/yambo-code/yambo/files/783148/netcdf-y4.1.3_v2.tar.gz$(tarball_netcdf)
+url_libxc=https://github.com/yambo-code/yambo/files/783150/libxc-2.2.3.tar.gz$(tarball_libxc)
+url_iotk=https://github.com/yambo-code/yambo/files/783147/iotk-y1.2.1.tar.gz$(tarball_iotk)
+url_etsf_io=https://github.com/yambo-code/yambo/files/845218/etsf_io-1.0.4.tar.gz$(tarball_etsf)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -158,6 +158,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    !
    if (idriver==INV) then
      call SERIAL_inversion(N,M,det_,present(det))
+     if(present(det)) det=det_
    endif
    !
    ! ###> SERIAL DIAGONALIZATION

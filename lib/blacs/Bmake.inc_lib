@@ -38,7 +38,7 @@
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
 #  ----------------------------------------------------------
-   BLACSdir    = $(libs_prefix)/$(fc)/lib/
+   BLACSdir    = $(BTOPdir)
    BLACSDBGLVL = 0
    BLACSFINIT  = $(BLACSdir)/libblacs_init.a
    BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a

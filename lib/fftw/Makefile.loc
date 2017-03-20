@@ -64,6 +64,5 @@ clean:
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp 
-	@- rm -rf $(INSTALL_DIR)
 	
 

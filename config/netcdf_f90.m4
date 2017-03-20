@@ -199,8 +199,7 @@ if test x"$enable_hdf5" = "xno"; then
     NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include"
     #
     netcdf=yes
-    if test -e ${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" \
-    && ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a"; then
+    if test -e ${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a"; then
       compile_netcdf="no"
       AC_MSG_RESULT([already compiled])
     else 

@@ -8,6 +8,7 @@ AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
 AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+AC_ARG_ENABLE(int_linalg,   AC_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
@@ -128,7 +129,7 @@ fi
 if test $acx_blas_ok = "no"; then
   internal_blas="yes";
   AC_MSG_NOTICE([Could not find blas. Using the built-in library])
-elif test -d "$with_blas_libs" && test "$with_blas_libs" = "" ; then
+elif (test -d "$with_blas_libs" && test "$with_blas_libs" = "") || test x"$enable_int_linalg" = "xyes" ; then
   internal_blas="yes"
   if test $acx_blas_ok = "yes"; then AC_MSG_NOTICE([Blas found in ${BLAS_LIBS} but imposing built-in library]); fi
 fi
@@ -143,6 +144,7 @@ if test "$internal_blas" = "yes"; then
 fi
 
 AC_SUBST(internal_blas)
+AC_SUBST(enabl_int_linalg)
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)
 

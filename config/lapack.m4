@@ -83,7 +83,7 @@ fi
 if test $acx_lapack_ok = "no"; then
   internal_lapack="yes";
   AC_MSG_NOTICE([Could not find lapack. Using the built-in library])
-elif test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "" ; then
+elif (test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "") || test x"$enable_int_linalg" = "xyes" ; then
   internal_lapack="yes"
   if test "$acx_lalpack_ok" = "yes"; then AC_MSG_NOTICE([Lapack found in ${LAPACK_LIBS} but imposing built-in library]); fi
 fi

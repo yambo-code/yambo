@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_format_converter(E,Xk)
+subroutine WF_format_converter(E,Xk,q)
  !
  use pars,                ONLY:SP,lchlen
  use R_lattice,           ONLY:bz_samp
@@ -39,6 +39,7 @@ subroutine WF_format_converter(E,Xk)
  !
  type(levels),intent(in)     :: E
  type(bz_samp),intent(inout) :: Xk
+ type(bz_samp),intent(inout) :: q
  !
  ! Work Space
  !
@@ -143,5 +144,9 @@ subroutine WF_format_converter(E,Xk)
  call mem_est("wf_disk_new wf_disk_old")
  !
  if (io_KB_abinit_err==0) call PP_free()
+ !
+#if defined _YPP_ELPH
+ call ELPH_format_converter(E,Xk,q)
+#endif
  !
 end subroutine

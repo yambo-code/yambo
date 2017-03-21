@@ -33,7 +33,7 @@ integer function ELPH_databases(k,E,q)
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
- use YPP_ELPH,            ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
+ use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  implicit none
@@ -56,6 +56,7 @@ integer function ELPH_databases(k,E,q)
  !
  !... dummies 
  !
+ logical            ::l_gkkp_expand
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)

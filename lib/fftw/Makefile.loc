@@ -1,0 +1,66 @@
+
+#===============================
+# WanT package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libfftw.a
+PACKAGE=$(pkgname_fftw)
+TARBALL=$(tarball_fftw)
+
+#
+# redefinitions
+#
+AUXFLAGS=--prefix=$(libs_prefix)
+
+#
+# MAIN target
+#
+all: package-ready-stamp
+
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	      ./configure $(AUXFLAGS) \
+	      CC="$(cc)" \
+	      CPP="$(cpp)" \
+	      CFLAGS="$(cflags)" \
+	      CXX="$(cc)" \
+	      CXXCPP="$(cpp)" \
+	      FC="$(f90)" \
+	      FCFLAGS="$(f77flags)" \
+	      FFLAGS="$(f77flags)" \
+	      F90="$(f90)" \
+	      F77="$(f77)" \
+	      INSTALL_DIR="$(INSTALL_DIR)" ); \
+	fi
+	touch configure-stamp
+
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
+	#
+	touch package-ready-stamp
+	
+
+#
+# cleaning
+#
+clean:
+	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf  package-ready-stamp configure-stamp
+
+clean_all: clean
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf uncompress-stamp 
+	@- rm -rf $(INSTALL_DIR)
+	
+

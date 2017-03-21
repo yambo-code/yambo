@@ -13,8 +13,8 @@ TARBALL=$(tarball_iotk)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/iotk/tmp
-#AUXFLAGS= --prefix=$(INSTALL_DIR)
+AUXFLAGS=--prefix=$(libs_prefix) \
+         IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 
 #
 # MAIN target
@@ -25,25 +25,22 @@ uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-		if test -e ../make.sys ; then rm ../make.sys ; fi ; \
-	        if test -e ../../install/make_iotk.inc ; then \
-	           cp ../../install/make_iotk.inc ../make.sys ; \
+		if test -e ${srcdir}/lib/iotk/make.sys ; then rm ${srcdir}/lib/iotk/make.sys ; fi ; \
+	        if test -e ${srcdir}/lib/iotk/make_iotk.inc ; then \
+	           cp ${srcdir}/lib/iotk/make_iotk.inc ${srcdir}/lib/iotk/make.sys ; \
 	        fi ; \
-	        if test -e ../../install/iotk_specials.h ; then \
-	           cp ../../install/iotk_specials.h ../$(PACKAGE)/include ; \
+	        if test -e ${topdir}/lib/iotk/iotk_specials.h ; then \
+	           cp ${topdir}/lib/iotk/iotk_specials.h ${srcdir}/lib/iotk/$(PACKAGE)/include ; \
 	        fi ) ; \
 	fi
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	        if test -x ./configure ; then ./configure  \
-	           FC="$(f90)" \
-	           IOTK_SAFEST="yes" \
-	           IOTK_MAX_RANK=4 \
-		   MAKE=$(make); \
+	        if test -x ./configure ; then \
+	           ./configure $(AUXFLAGS) \
+	           FC="$(f90)"; \
 	        fi ) ; \
 	fi
 	touch configure-stamp
@@ -53,17 +50,14 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
 	#
-	if test -d ./lib      ; then rm -rf ./lib      ; fi    ; mkdir ./lib ;
-	if test -d ./bin      ; then rm -rf ./bin      ; fi    ; mkdir ./bin ;
-	if test -d ./include  ; then rm -rf ./include  ; fi    ; mkdir ./include ;
-	cp $(PACKAGE)/src/*.a ./lib ; chmod u+x ./lib/*.a
-	cp $(PACKAGE)/src/*.x ./bin ;
-	cp $(PACKAGE)/tools/iotk ./bin ;
-	cp $(PACKAGE)/src/*.mod ./include ;
+	# Replaces make install which seems to be missing for iotk
 	#
-	mv ./lib/*.a $(libdir) 
-	mv ./bin/*.x ./bin/iotk $(exec_prefix)
-	mv ./include/*.mod $(includedir)
+	cp $(PACKAGE)/src/*.a     $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
+	cp $(PACKAGE)/src/*.x     $(libs_prefix)/bin ;
+	cp $(PACKAGE)/tools/iotk  $(libs_prefix)/bin ;
+	cp $(PACKAGE)/src/*.mod   $(libs_prefix)/include ;
+	@if test -e $(libs_prefix)/include/iotk_auxmacros.h; then rm -fr $(libs_prefix)/include/iotk_auxmacros.h; fi
+	cp $(PACKAGE)/include/*.h $(libs_prefix)/include ;
 	#
 	touch package-ready-stamp
 
@@ -72,11 +66,10 @@ package-ready-stamp: uncompress-stamp configure-stamp
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./lib ./bin ./include  package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf make.sys uncompress-stamp 
-	@- rm -rf $(INSTALL_DIR)
 	
 

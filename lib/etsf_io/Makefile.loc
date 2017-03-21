@@ -13,8 +13,9 @@ TARBALL=$(tarball_etsf_io)
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/etsf_io/tmp
-          #--with-netcdf-libs="$(libpath) -lnetcdff -lnetcdf"
+AUXFLAGS=--prefix=$(libs_prefix) \
+         --with-netcdf-incs="$(inetcdf) $(ihdf5)" \
+         --with-netcdf-libs="$(lnetcdf) $(lhdf5)" 
 
 #
 # MAIN target
@@ -25,15 +26,11 @@ uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	        ./configure \
-	        --prefix=$(INSTALL_DIR) \
-	        --with-netcdf-incs="-I$(includedir) $(netcdf_idir)" \
-	        --with-netcdf-libs="$(libpath) $(lnetcdf)" \
+	        ./configure $(AUXFLAGS) \
 	        FC="$(f90)" \
 	        F77="$(f77)" \
 	        FFLAGS="$(f77flags)" \
@@ -46,18 +43,8 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
 	#
-	if test -d ./bin      ; then rm -rf ./bin      ; fi
-	if test -d ./lib      ; then rm -rf ./lib      ; fi
-	if test -d ./include  ; then rm -rf ./include  ; fi
-	#
-	mv $(INSTALL_DIR)/lib .
-	mv $(INSTALL_DIR)/bin .
-	-( mv $(INSTALL_DIR)/include/*/*.mod  $(INSTALL_DIR)/include )
-	mv $(INSTALL_DIR)/include .
-	#
-	mv ./lib/*.a $(libdir) 
-	mv ./bin/*  $(exec_prefix)
-	mv ./include/*.mod $(includedir)
+	chmod u+x $(libs_prefix)/lib/*etsf*.a
+	cp $(libs_prefix)/include/gcc/* $(libs_prefix)/include
 	#
 	touch package-ready-stamp
 
@@ -66,7 +53,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 

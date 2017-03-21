@@ -47,9 +47,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _SURF
- use ras_module,    ONLY:lras, lreels
-#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -85,9 +82,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  infile   =inf
  !
  call SET_defaults(instr,ind,od,js,com_dir)
-#ifdef _SURF
- call ras_presets()
-#endif
  call it_reset(1)
  !
  ! not resetted in INIT call
@@ -147,14 +141,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3))
  !
-#if defined _SURF
- !
- ! SURFACE SPECTROSCOPY
- !=======================
- !
- if (lras.or.lreels) call surfdriver(Xen,Xk,q,Xw(3),X(3))
-#endif
- ! 
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !

@@ -124,7 +124,7 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   if test -d "$tryf_incdir" ; then
     try_NETCDF_INCS="$IFLAG$try_incdir $IFLAG$tryf_incdir"
   fi
-  !
+  #
   try_NETCDF_LIBS="-L$try_libdir -lnetcdf"
   if test -r $tryf_libdir/libnetcdff.a ; then
     try_NETCDF_LIBS="-L$tryf_libdir -lnetcdff -L$try_libdir -lnetcdf"
@@ -261,7 +261,7 @@ if test x"$enable_hdf5" = "xyes"; then
       break
     fi
   done
-  !
+  #
   FCFLAGS="$save_fcflags"    
   LIBS="$save_libs"
   #

@@ -153,7 +153,7 @@ libs:	ext-libs int-libs
 # Download external libs #
 #
 get_extlibs:
-	@+mkdir lib/archive; \
+	@+mkdir -p lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \
 	cp $(topdir)/lib/archive/* lib/archive; \
 	cp $(topdir)/config/missing config/ ; \
@@ -278,7 +278,7 @@ define mksrc
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+   if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
@@ -294,7 +294,7 @@ define mk_ypp_src
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+   if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
@@ -308,7 +308,7 @@ define mklib_internal
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
@@ -321,7 +321,7 @@ endef
 # External libs
 #
 define mklib_ext
- if test ! -d "lib/archive" ; then mkdir "lib/archive" ; fi ; \
+ if test ! -d "lib/archive" ; then mkdir -p "lib/archive" ; fi ; \
  if [ "$(topdir)" != "$(prefix)" ] ; then \
    cp $(topdir)/lib/archive/* lib/archive; \
    cp $(topdir)/config/missing config/ ; \
@@ -329,7 +329,7 @@ define mklib_ext
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    if [ "$(topdir)" != "$(prefix)" ] ; then \
-    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
     if test -e $$VPATH/$$ldir/Makefile.loc; then cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; fi ;\
     if test -e $$VPATH/$$ldir/Makefile.lib; then cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; fi ;\
     if test -e $$VPATH/$$ldir/*inc*;        then cp $$VPATH/$$ldir/*inc* $$DIR2GO/$$ldir/ ;        fi ;\
@@ -349,7 +349,7 @@ define mkx
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
   if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
-   if test ! -d $$XPATH ; then mkdir $$XPATH ; fi ; \
+   if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \

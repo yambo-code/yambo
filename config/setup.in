@@ -65,5 +65,3 @@ ietsf       = @ETSF_INCS@
 #
 VPATH = $$topdir
 #
-#
-#

@@ -76,10 +76,15 @@ if test "$mpibuild" = "yes"; then
   IFLAG=$ax_cv_f90_modflag
   if test -z "$IFLAG" ; then IFLAG="-I" ; fi
   #
-  CHECK_openmpi=`$CC --showme:incdirs > /dev/null` ;
-  CHECK_others=`$CC -c -show         > /dev/null` ;
+  SHADOW=`$CC --showme:incdirs 2> config_openmpi.err` ;
+  SHADOW=`$CC -c -show         2> config_others.err ` ;
   #
-  if test x"$CHECK_openmpi" = "x" ; then  MPI_INC_DIRS_LIST=`mpicc --showme:incdirs` ;
+  CHECK_openmpi=`cat config_openmpi.err`;
+  CHECK_others=`cat config_others.err`;
+  #
+  `rm config_openmpi.err config_others.err` ;
+  #
+  if test x"$CHECK_openmpi" = "x" ; then  MPI_INC_DIRS_LIST=`$CC --showme:incdirs` ;
   elif test x"$CHECK_others" = "x"; then  MPI_INC_DIRS_LIST=`$CC -c -show| sed "s/.*${IFLAG}//g"` ;
   fi
   #

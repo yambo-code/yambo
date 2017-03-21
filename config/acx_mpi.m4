@@ -30,21 +30,25 @@ acx_mpi_ok=no
 
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
+        AC_ARG_VAR(MPICC,[Parallel C compiler command])
         AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
         CC="$MPICC"
 ],
 [C++], [
         AC_REQUIRE([AC_PROG_CXX])
+        AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
         AC_CHECK_PROGS(MPICXX, mpic++ mpiCC mpCC hcp mpxlC mpxlC_r cmpic++, $CXX)
         CXX="$MPICXX"
 ],
 [Fortran 77], [
         AC_REQUIRE([AC_PROG_F77])
+        AC_ARG_VAR(MPIF77,[MPI Fortran compiler command])
         AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
         F77="$MPIF77"
 ],
 [Fortran], [
         AC_REQUIRE([AC_PROG_FC])
+        AC_ARG_VAR(MPIFC,[Parallel Fortran compiler command])
         AC_CHECK_PROGS(MPIFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
         FC="$MPIFC"
 ])

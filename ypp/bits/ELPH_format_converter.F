@@ -1,0 +1,110 @@
+!
+!        Copyright (C) 2000-2017 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine ELPH_format_converter(E,Xk,q)
+ !
+ use pars,                ONLY:SP,schlen
+ use electrons,           ONLY:levels
+ use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
+&                              elph_global_free,W_debye,elph_global_alloc,&
+&                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
+ use com,                 ONLY:msg,warning,file_exists,error,core_io_path,more_io_path
+ use R_lattice,           ONLY:bz_samp,qindx_B
+ use D_lattice,           ONLY:nsym,n_atoms
+ use parser_m,            ONLY:parser
+ use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
+ use LIVE_t,              ONLY:live_timing
+ !
+ implicit none
+ !
+ type(bz_samp) :: Xk,q
+ type(levels)  :: E
+ !
+ !Work Space...
+ !
+ !... I/O 
+ !
+ integer            ::idb,iq,io_err,io_elph_err,ID,nDBs_disk
+ integer, external  ::io_ELPH,io_ELPH_old
+ character(schlen)  ::db_name,core_io_path_save
+ !
+ core_io_path_save=core_io_path
+ !
+ call section("*","== Electron-Phonon DBs convertion ==")
+ !
+ call k_ibz2bz(Xk,'i',.false.)
+ !
+ !
+ elph_nDBs=q%nibz
+ db_name='gkkp'
+ !
+ write(*,*) 'pippo1'
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
+ io_elph_err=io_ELPH_old(ID,trim(db_name))
+ !
+ if (io_elph_err==0) then
+   !
+   elph_nDBs=q%nbz
+   db_name='gkkp_expanded'
+   !
+ endif
+ !
+ ! Allocation...
+ !
+ call elph_global_alloc('gkkp')
+ !
+ ! Force DB fragmentation
+ !
+ call IO_and_Messaging_switch("+DB_is_fragmented")
+ !
+ call live_timing('Conversion',elph_nDBs)
+ !
+ do idb=1,elph_nDBs
+   !
+   iq=idb
+ write(*,*) 'pippo',iq
+   !
+   core_io_path=core_io_path_save
+   !
+   if (idb==1) call io_control(ACTION=OP_RD_CL,SEC=(/1,iq+1/),ID=ID)
+   if (idb/=1) call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID)
+   io_elph_err=io_ELPH_old(ID,trim(db_name))
+   !
+   core_io_path=more_io_path
+   !
+   if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
+   if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
+   io_elph_err=io_ELPH(ID,trim(db_name))
+   !
+   call live_timing(steps=1)
+   !
+ enddo
+ !
+ call live_timing()
+ !
+ call elph_global_free()
+ !
+ call IO_and_Messaging_switch("-DB_is_fragmented")
+ !
+end subroutine

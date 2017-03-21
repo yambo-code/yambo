@@ -799,6 +799,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -940,6 +941,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1192,6 +1194,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1329,7 +1340,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1482,6 +1493,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -2742,7 +2754,7 @@ fi
 if test "${with_extlibs_path+set}" = set; then :
   withval=$with_extlibs_path; extlibs_path="$with_extlibs_path"
 else
-  extlibs_path="${PWD}/PIPPO"
+  extlibs_path="${PWD}/../yambo_ext_libs"
 fi
 
 
@@ -2852,7 +2864,7 @@ test -n "$editor" || editor="none"
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -2908,7 +2920,7 @@ test -n "$editor" || editor="none"
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -2933,7 +2945,7 @@ test -n "$editor" || editor="none"
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -3017,7 +3029,7 @@ test -n "$editor" || editor="none"
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -3042,7 +3054,7 @@ test -n "$editor" || editor="none"
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -3075,7 +3087,7 @@ test -n "$editor" || editor="none"
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -3102,7 +3114,7 @@ test -n "$editor" || editor="none"
 #  Report
 #
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -7955,7 +7967,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -7977,6 +7989,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+
 mpibuild="yes"
 # Check whether --enable-mpi was given.
 if test "${enable_mpi+set}" = set; then :
@@ -8643,10 +8656,7 @@ fi
 #
 
 
-#
-# User Fields
-#=============
-#
+
 
 # Check whether --with-mpi_libs was given.
 if test "${with_mpi_libs+set}" = set; then :
@@ -8671,6 +8681,13 @@ if test "${with_mpi_includedir+set}" = set; then :
   withval=$with_mpi_includedir;
 fi
 
+
+MPI_LIBS="-L`$CC --showme:libdirs` -l`mpicc --showme:libs`"
+MPI_INCS=""
+#
+#PATH_COMPILER=`which $FC|xargs dirname`
+#MPI_INC_DIRS_LIST="${PATH_COMPILER}/../include /usr/include /usr/lib/openmpi/include /usr/lib/mpich/include";
+MPI_INC_DIRS_LIST=`$CC --showme:incdirs`
 #
 if test -d "$with_mpi_path"; then
   MPI_PATH="$with_mpi_path";
@@ -8680,6 +8697,7 @@ fi
 if test -d "$with_mpi_libdir"; then
   MPI_LIB_DIR="$with_mpi_libdir";
 fi
+
 if test -d "$with_mpi_includedir" ; then
   MPI_PATH="$with_mpi_includedir/../";
   MPI_INC_DIR="$with_mpi_includedir";
@@ -8688,31 +8706,25 @@ fi
 if test "$mpi_libs" != ""  ; then MPI_LIBS="$mpi_libs"; fi
 if test "$MPI_LIB_DIR" != ""  ; then MPI_LIBS="-L$MPI_LIB_DIR $MPI_LIBS"; fi
 #
-# No success => Try self-test
-#=============================
+#mpi_libs_ok="no"
+#if test  "$MPI_LIBS" != "" ;  then
+#  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
+#  AC_LINK_IFELSE($mpi_routine, [mpi_libs_ok=yes]);
+#  AC_MSG_RESULT($mpi_libs_ok);
+#  if test "$mpi_libs_ok" = "no" ; then
+#    MPI_LIBS="";
+#    MPI_LIB_DIR="";
+#  fi
+#fi
 #
-PATH_COMPILER=`which $FC|xargs dirname`
-CC_SHOWME_LIBS=`mpicc     --showme:libs`
-CC_SHOWME_LIB_DIRS=`mpicc --showme:libdirs`
-CC_SHOWME_INC_DIRS=`mpicc --showme:incdirs`
-#
-if test "$CC_SHOWME_LIB_DIRS" != ""  ; then
- MPI_LIBS="-L$CC_SHOWME_LIB_DIRS";
-fi
-if test "$CC_SHOWME_LIBS" != ""  ; then
- MPI_LIBS="$MPI_LIBS -l$CC_SHOWME_LIBS";
-fi
-#
-MPI_INC_DIRS_LIST="/usr/include /usr/lib/openmpi/include /usr/lib/mpich/include";
-if test "$CC_SHOWME_INC_DIRS" != ""  ; then
- MPI_INC_DIRS_LIST="$MPI_INC_DIRS_LIST $CC_SHOWME_INC_DIRS"
-fi
-if test "$PATH_COMPILER" != ""  ; then
- MPI_INC_DIRS_LIST="MPI_INC_DIRS_LIST ${PATH_COMPILER}/../include"
- MPI_LIBS="$MPI_LIBS ${PATH_COMPILER}/../lib"
-fi
+# Check include
 #
 mpif_found="no"
+if test "$MPI_INC_DIR" != ""; then
+  MPI_INC_DIRS_LIST="$MPI_INC_DIR $MPI_INC_DIRS_LIST";
+  MPI_INC_DIR="";
+fi
+
 for MPI_INC_DIR in $MPI_INC_DIRS_LIST; do
   if ! test -e "$MPI_INC_DIR"; then continue; fi
   as_ac_File=`$as_echo "ac_cv_file_$MPI_INC_DIR/mpif.h" | $as_tr_sh`
@@ -8742,7 +8754,6 @@ fi
     IFLAG=$ax_cv_f90_modflag
     if test -z "$IFLAG" ; then IFLAG="-I" ; fi
     MPI_INCS="$IFLAG$MPI_INC_DIR"
-    MPI_PATH="$MPI_INC_DIR/.."
     break
   else
     MPI_PATH="";
@@ -8751,8 +8762,10 @@ fi
 done
 #
 
+#
 
 
+#
 
 
 
@@ -8775,7 +8788,7 @@ done
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -8821,7 +8834,7 @@ done
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -8846,7 +8859,7 @@ done
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -8871,7 +8884,7 @@ done
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -8896,7 +8909,7 @@ done
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -8922,7 +8935,7 @@ done
 
 
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM

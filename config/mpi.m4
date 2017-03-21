@@ -65,62 +65,75 @@ AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI i
 AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
 AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
 
-MPI_LIBS="-L`$CC --showme:libdirs` -l`mpicc --showme:libs`"
-MPI_INCS=""
-#
-#PATH_COMPILER=`which $FC|xargs dirname`
-#MPI_INC_DIRS_LIST="${PATH_COMPILER}/../include /usr/include /usr/lib/openmpi/include /usr/lib/mpich/include";
-MPI_INC_DIRS_LIST=`$CC --showme:incdirs`
-#
-if test -d "$with_mpi_path"; then
-  MPI_PATH="$with_mpi_path";
-  MPI_LIB_DIR="$MPI_PATH/lib";
-  MPI_INC_DIR="$MPI_PATH/include";
-fi
-if test -d "$with_mpi_libdir"; then
-  MPI_LIB_DIR="$with_mpi_libdir";
-fi
-
-if test -d "$with_mpi_includedir" ; then
-  MPI_PATH="$with_mpi_includedir/../";
-  MPI_INC_DIR="$with_mpi_includedir";
-fi
-#
-if test "$mpi_libs" != ""  ; then MPI_LIBS="$mpi_libs"; fi
-if test "$MPI_LIB_DIR" != ""  ; then MPI_LIBS="-L$MPI_LIB_DIR $MPI_LIBS"; fi
-#
-#mpi_libs_ok="no"
-#if test  "$MPI_LIBS" != "" ;  then
-#  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
-#  AC_LINK_IFELSE($mpi_routine, [mpi_libs_ok=yes]);
-#  AC_MSG_RESULT($mpi_libs_ok);
-#  if test "$mpi_libs_ok" = "no" ; then 
-#    MPI_LIBS="";
-#    MPI_LIB_DIR="";
-#  fi
-#fi
-#
-# Check include
-#
 mpif_found="no"
-if test "$MPI_INC_DIR" != ""; then
-  MPI_INC_DIRS_LIST="$MPI_INC_DIR $MPI_INC_DIRS_LIST";
-  MPI_INC_DIR="";
-fi
 
-for MPI_INC_DIR in $MPI_INC_DIRS_LIST; do
-  if ! test -e "$MPI_INC_DIR"; then continue; fi
-  AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found="yes"],[mpif_found="no"])
-  if test "$mpif_found" = "yes" ; then
-    IFLAG=$ax_cv_f90_modflag
-    if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-    MPI_INCS="$IFLAG$MPI_INC_DIR"
-    break
-  else
-    MPI_PATH="";
+MPI_INCS=""
+MPI_LIBS=""
+MPI_PATH=""
+
+if test "$mpibuild" = "yes"; then
+  #
+  if test "$FCKIND" = "gfortran"; then
+    #MPI_LIBS="-L`$CC --showme:libdirs` -l`$CC --showme:libs`"
+    MPI_INC_DIRS_LIST=`$CC --showme:incdirs`
+  elif test "$FCKIND" = "intel"; then
+    MPI_INC_DIRS_LIST=`$CC -c -show| sed "s/-I//g"`
+  fi
+  #
+  # Previous version by AndreaM
+  #PATH_COMPILER=`which $FC|xargs dirname`
+  #MPI_INC_DIRS_LIST="${PATH_COMPILER}/../include /usr/include /usr/lib/openmpi/include /usr/lib/mpich/include";
+  #
+  if test -d "$with_mpi_path"; then
+    MPI_PATH="$with_mpi_path";
+    MPI_LIB_DIR="$MPI_PATH/lib";
+    MPI_INC_DIR="$MPI_PATH/include";
+  fi
+  if test -d "$with_mpi_libdir"; then
+    MPI_LIB_DIR="$with_mpi_libdir";
+  fi
+  #
+  if test -d "$with_mpi_includedir" ; then
+    MPI_PATH="$with_mpi_includedir/../";
+    MPI_INC_DIR="$with_mpi_includedir";
+  fi
+  #
+  if test "$mpi_libs" != ""  ; then MPI_LIBS="$mpi_libs"; fi
+  if test "$MPI_LIB_DIR" != ""  ; then MPI_LIBS="-L$MPI_LIB_DIR $MPI_LIBS"; fi
+  #
+  #mpi_libs_ok="no"
+  #if test  "$MPI_LIBS" != "" ;  then
+  #  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
+  #  AC_LINK_IFELSE($mpi_routine, [mpi_libs_ok=yes]);
+  #  AC_MSG_RESULT($mpi_libs_ok);
+  #  if test "$mpi_libs_ok" = "no" ; then 
+  #    MPI_LIBS="";
+  #    MPI_LIB_DIR="";
+  #  fi
+  #fi
+  #
+  # Check include
+  #
+  if test "$MPI_INC_DIR" != ""; then
+    MPI_INC_DIRS_LIST="$MPI_INC_DIR $MPI_INC_DIRS_LIST";
     MPI_INC_DIR="";
   fi
-done
+  #
+  for MPI_INC_DIR in $MPI_INC_DIRS_LIST; do
+    if ! test -e "$MPI_INC_DIR"; then continue; fi
+    AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found="yes"],[mpif_found="no"])
+    if test "$mpif_found" = "yes" ; then
+      IFLAG=$ax_cv_f90_modflag
+      if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+      MPI_INCS="$IFLAG$MPI_INC_DIR"
+      break
+    else
+      MPI_PATH="";
+      MPI_INC_DIR="";
+    fi
+  done
+  #
+fi
 #
 AC_SUBST(mpif_found)
 #

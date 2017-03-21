@@ -190,7 +190,6 @@ if test x"$enable_hdf5" = "xno"; then
     AC_MSG_CHECKING([for internal NetCDF library])
     #
     internal_netcdf="yes"
-    if test "x$build_os" = "xaix" ; then NETCDFFLAGS="$NETCDFFLAGS -DIBMR2Fortran" ; fi
     # 
     # the following may change if we use a different version
     # of the netcdf lib

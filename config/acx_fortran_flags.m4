@@ -312,6 +312,8 @@ mips-sgi-irix*)
   SYSFLAGS="-O"
 esac
 #
+if test "x$build_os" = "xaix" ; then NETCDFFLAGS="$NETCDFFLAGS -DIBMR2Fortran" ; fi
+#
 AC_MSG_CHECKING([for specific $FC flags])
 if test -z "${FCFLAGS}"; then
  FCFLAGS="$SYSFLAGS"
@@ -334,6 +336,10 @@ else
  FCUFLAGS="$UFLAGS"
  FUFLAGS="$UFLAGS"
 fi 
+#
+AC_MSG_CHECKING([for specific NETCDF flags])
+AC_MSG_RESULT([$NETCDFFLAGS])
+#
 AC_SUBST(CFLAGS)
 AC_SUBST(FCFLAGS)
 AC_SUBST(FCUFLAGS)

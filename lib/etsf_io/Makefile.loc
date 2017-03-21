@@ -50,7 +50,7 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	( cd $(PACKAGE);  $(make) install ) ; fi
 	#
 	chmod u+x $(LIBPATH)/lib/*etsf*.a
-	cp $(LIBPATH)/include/gcc/* $(LIBPATH)/include
+	cp $(LIBPATH)/include/*/* $(LIBPATH)/include
 
 #
 # cleaning

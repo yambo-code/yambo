@@ -69,6 +69,7 @@ integer function io_ELPH(ID,what)
    elph_grids_are_expanded=.TRUE.
  endif
  !
+ !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_ELPH/=0) goto 1
  !
@@ -240,12 +241,12 @@ integer function io_ELPH(ID,what)
  ! 
  ! ELPH_gkkp 
  !
- call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
+ call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,nkbz,ph_modes,elph_nb,elph_nb/) )
  call io_bulk(ID,C4=elph_gkkp)
  !
  ! ELPH_DW 
  !
- call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+ call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/nkbz,ph_modes,elph_nb,elph_nb/))
  call io_bulk(ID,R4=elph_DW)
  !
 1 call io_disconnect(ID=ID)

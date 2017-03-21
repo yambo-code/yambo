@@ -33,7 +33,7 @@ subroutine ELPH_format_converter(E,Xk,q)
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_WR_CL,OP_RD_CL,DUMP,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  !
  implicit none
@@ -45,7 +45,7 @@ subroutine ELPH_format_converter(E,Xk,q)
  !
  !... I/O 
  !
- integer            ::idb,iq,io_err,io_elph_err,ID,nDBs_disk
+ integer            ::idb,iq,io_err,io_elph_err,ID_RD,ID_WR,nDBs_disk
  integer, external  ::io_ELPH,io_ELPH_old
  character(schlen)  ::db_name,core_io_path_save
  !
@@ -59,16 +59,25 @@ subroutine ELPH_format_converter(E,Xk,q)
  elph_nDBs=q%nibz
  db_name='gkkp'
  !
- write(*,*) 'pippo1'
- call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_elph_err=io_ELPH_old(ID,trim(db_name))
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),mode=DUMP,ID=ID_RD)
+ io_elph_err=io_ELPH_old(ID_RD,trim(db_name))
  !
- if (io_elph_err==0) then
+ if (io_elph_err/=0) then
    !
    elph_nDBs=q%nbz
    db_name='gkkp_expanded'
    !
+   call io_control(ACTION=OP_RD_CL,SEC=(/1/),mode=DUMP,ID=ID_RD)
+   io_elph_err=io_ELPH_old(ID_RD,trim(db_name))
+   !
  endif
+ !
+ if (io_elph_err/=0) return
+ !
+ core_io_path=more_io_path
+ !
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_WR)
+ io_elph_err=io_ELPH(ID_WR,trim(db_name))
  !
  ! Allocation...
  !
@@ -83,19 +92,16 @@ subroutine ELPH_format_converter(E,Xk,q)
  do idb=1,elph_nDBs
    !
    iq=idb
- write(*,*) 'pippo',iq
    !
    core_io_path=core_io_path_save
    !
-   if (idb==1) call io_control(ACTION=OP_RD_CL,SEC=(/1,iq+1/),ID=ID)
-   if (idb/=1) call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID)
-   io_elph_err=io_ELPH_old(ID,trim(db_name))
+   call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID_RD)
+   io_elph_err=io_ELPH_old(ID_RD,trim(db_name))
    !
    core_io_path=more_io_path
    !
-   if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
-   if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
-   io_elph_err=io_ELPH(ID,trim(db_name))
+   call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID_WR)
+   io_elph_err=io_ELPH(ID_WR,trim(db_name))
    !
    call live_timing(steps=1)
    !

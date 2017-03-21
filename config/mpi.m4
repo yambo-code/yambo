@@ -103,6 +103,7 @@ if test "$mpibuild" = "yes"; then
       MPI_PATH=`echo ${MPI_INC_DIR} | sed "s/\/include//g"` ;
     fi
   done
+  MPI_INC_DIRS_LIST="" ;
   MPI_INC_DIR="" ;
   #
   if test -d "$with_mpi_path"; then

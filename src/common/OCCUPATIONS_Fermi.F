@@ -206,7 +206,10 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    if (     balance <-1.E-5 ) T_elecs=T_elecs-Tel_step*abs(n_holes-n_elecs)*1000
    if (     balance > 1.E-5 ) T_elecs=T_elecs+Tel_step*abs(n_holes-n_elecs)*1000
    i_trials(1)=i_trials(1)+1
-   if (i_trials(1)==5000) call warning(' Impossible to balance electrons and holes number')
+   if (i_trials(1)==5000) then
+     T_elecs=Tel
+     call warning(' Impossible to balance electrons and holes number')
+   endif
  enddo
  !
  !

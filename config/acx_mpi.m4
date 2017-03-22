@@ -5,7 +5,7 @@
 #        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -27,6 +27,8 @@
 AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
+
+
 
 AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
 
@@ -59,36 +61,36 @@ AC_LANG_CASE([C], [
         acx_mpi_save_FC="$PFC"
 ])
 
-if test x = x"$MPILIBS"; then
-  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
-               [C++], [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
+if test x = x"$MPI_LIBS"; then
+  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [MPI_LIBS=" "])],
+               [C++], [AC_CHECK_FUNC(MPI_Init, [MPI_LIBS=" "])],
                [Fortran 77], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK([],[      call MPI_Init], [MPILIBS=" "
+                AC_TRY_LINK([],[      call MPI_Init], [MPI_LIBS=" "
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])],
                [Fortran], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK_FUNC(MPI_init,[MPILIBS=" "
+                AC_TRY_LINK_FUNC(MPI_init,[MPI_LIBS=" "
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])]
 )
 fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpi, MPI_Init, [MPILIBS="-lmpi"])
+if test x = x"$MPI_LIBS"; then
+        AC_CHECK_LIB(mpi, MPI_Init, [MPI_LIBS="-lmpi"])
 fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpich, MPI_Init, [MPILIBS="-lmpich"])
+if test x = x"$MPI_LIBS"; then
+        AC_CHECK_LIB(mpich, MPI_Init, [MPI_LIBS="-lmpich"])
 fi
 
 # We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
-AC_LANG_CASE([C], [if test x != x"$MPILIBS"; then
+AC_LANG_CASE([C], [if test x != x"$MPI_LIBS"; then
         AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 
         [#include <mpi.h>]),
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
-        [MPILIBS="";AC_MSG_RESULT(no)])
+        [MPI_LIBS="";AC_MSG_RESULT(no)])
 fi],
-[C++], [if test x != x"$MPILIBS"; then
+[C++], [if test x != x"$MPI_LIBS"; then
         AC_MSG_CHECKING([for mpi.h])
-        AC_TRY_COMPILE([#include <mpi.h>],[],[AC_MSG_RESULT(yes)], [MPILIBS=""
+        AC_TRY_COMPILE([#include <mpi.h>],[],[AC_MSG_RESULT(yes)], [MPI_LIBS=""
                 AC_MSG_RESULT(no)])
 fi])
 
@@ -102,6 +104,7 @@ AC_LANG_CASE([Fortran],
   call MPI_Init(ierr)]), 
   [HAVE_MPIF_H=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
   [HAVE_MPIF_H=0; AC_MSG_RESULT(no)])])
+
 
 AC_LANG_CASE([Fortran],
  [if test "$acx_mpi_ok" = "no"; then
@@ -127,7 +130,7 @@ AC_LANG_CASE([Fortran],
   [HAVE_MPI_MOD=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
   [HAVE_MPI_MOD=0; AC_MSG_RESULT(no)]);fi])
 #
-if test x = x"$MPILIBS"; then acx_mpi_ok="no"; fi
+if test x = x"$MPI_LIBS"; then acx_mpi_ok="no"; fi
 
 mpibuild="no"
 AC_LANG_CASE(
@@ -153,11 +156,80 @@ AC_LANG_CASE(
 )
 
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x = x"$MPILIBS"; then
+if test x = x"$MPI_LIBS"; then
         $2
         :
 else
         ifelse([$1],,[AC_DEFINE(HAVE_MPI,1,[Define if you have the MPI library.])],[$1])
         :
 fi
+
+#
+# Extra: look for MPI variables defition
+#
+
+AC_ARG_WITH(mpi_libs,AC_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
+AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
+AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
+AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
+
+MPI_LIBS="-lmpi"
+MPI_INCS=""
+#
+MPI_PATH=`which $PFC|xargs dirname`;
+MPI_LIB_DIR="$MPI_PATH/../lib"
+MPI_INC_DIR="$MPI_PATH/../include"
+MPI_LIBS_str="-"
+#
+if test -d "$with_mpi_path"; then
+  MPI_PATH="$with_mpi_path";
+  MPI_LIB_DIR="$MPI_PATH/lib";
+  MPI_INC_DIR="$MPI_PATH/include";
+fi
+if test -d "$with_mpi_libdir" && test -d "$with_mpi_includedir" ; then
+  MPI_PATH="$with_mpi_includedir/../";
+  MPI_LIB_DIR="$with_mpi_libdir";
+  MPI_INC_DIR="$with_mpi_includedir";
+fi
+#
+if test "$mpi_libs" != ""  ; then MPI_LIBS="$mpi_libs"; fi
+if test "$MPI_PATH" != ""  ; then MPI_LIBS="-L$MPI_LIB_DIR $MPI_LIBS"; fi
+#
+# Check libs
+#
+mpi_libs_ok="no"
+if test  "$MPI_LIBS" != "" ;  then
+  AC_MSG_CHECKING([for MPI_Init in $MPI_LIBS]);
+  AC_TRY_LINK_FUNC($mpi_routine, [mpi_libs_ok=yes]);
+  AC_MSG_RESULT($mpi_libs_ok);
+  if test "$mpi_libs_ok" = "yes" ; then 
+    MPI_LIBS_str="E";
+  else
+    MPI_LIBS="";
+    MPI_LIB_DIR="";
+  fi
+fi
+#
+# Check include
+#
+mpif_found="no"
+if test "$MPI_INC_DIR" != ""; then
+  AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found="yes"],[mpif_found="no"])
+  if test "$mpif_found" = "yes" ; then
+    IFLAG=$ax_cv_f90_modflag
+    if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+    MPI_INCS="$IFLAG$MPI_INC_DIR"
+  else
+    MPI_PATH="";
+    MPI_INC_DIR="";
+  fi
+fi
+#
+AC_SUBST(mpif_found)
+AC_SUBST(MPI_INCS)
+AC_SUBST(MPI_LIBS)
+AC_SUBST(MPI_LIBS_str)
+#
+AC_SUBST(MPI_PATH)
+
 ])dnl ACX_MPI

@@ -32,8 +32,14 @@ Red_str="-"
 if test "$enable_debug" = "yes" ; then Red_str="X"; fi
 
 MPI_str="-"
+MPI_LIBS_str="-"
+MPI_LIBS_info=""
 if test "$mpibuild" = "yes" ; then
   MPI_str="X"
+  if test "$MPI_LIBS" = "" ; then
+    MPI_LIBS_info="(system default detected)";
+    MPI_LIBS_str="X";
+  fi
 fi
 
 NETCDF_str="-"
@@ -47,7 +53,11 @@ if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files su
 
 HDF5_str="-"
 if test "$hdf5" = "yes" ; then
-  HDF5_str="E"
+  if test "$compile_hdf5" = "yes" ; then
+    HDF5_str="I"
+  else
+    HDF5_str="E"
+  fi
   HDF5_support="(No HDF5-IO format)"
   if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(HDF5-IO format, no data compression)" ; fi
   if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_support="(HDF5-IO format with data compression)" ; fi
@@ -118,7 +128,9 @@ AC_SUBST(exec_prefix)
 AC_SUBST(DP_str)
 AC_SUBST(Red_str)
 AC_SUBST(MPI_str)
-AC_SUBST(MPI_LIB_str)
+AC_SUBST(MPI_LIBS)
+AC_SUBST(MPI_LIBS_info)
+AC_SUBST(MPI_LIBS_str)
 AC_SUBST(HDF5_str)
 AC_SUBST(HDF5_support)
 AC_SUBST(NETCDF_str)

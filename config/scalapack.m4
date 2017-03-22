@@ -28,7 +28,6 @@ AC_ARG_WITH(blacs_libs,
         [AC_HELP_STRING([--with-blacs-libs=<libs>], [Use BLACS libraries <libs> or leave empty to use internal lib],[32])])
 AC_ARG_WITH(scalapack_libs,
         [AC_HELP_STRING([--with-scalapack-libs=<libs>], [Use SCALAPACK libraries <libs> or leave empty to use internal lib],[32])])
-AC_ARG_WITH(mpi-root, AC_HELP_STRING([--with-mpi-root=<path>],[MPI root directory (needed by BLACS)],[32]))
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
@@ -53,8 +52,9 @@ esac
 # Set fortran linker names of BLACS/SCALAPACK functions to check for.
 blacs_routine="blacs_set"
 scalapack_routine="pcheev"
+mpi_routine=MPI_Init
 
-if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$with_scalapack_libs" = "no"; then
+if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no"; then
   #
   acx_blacs_save_LIBS="$BLACS_LIBS"
   LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
@@ -67,9 +67,11 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$wit
           BLACS_LIBS="$acx_blacs_save_LIBS"
           LIBS="$save_LIBS"
   fi
-
+fi
+#
+if test "$mpibuild"  = "yes" && ! test "$with_scalapack_libs" = "no"; then
   acx_scalapack_save_LIBS="$SCALAPACK_LIBS"
-  LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS $BLACS_LIBS"
+  LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
   # First, check SCALAPACK_LIBS environment variable
   if test "x$SCALAPACK_LIBS" != x; then
           save_LIBS="$LIBS"; LIBS="$SCALAPACK_LIBS $LIBS"
@@ -79,10 +81,20 @@ if test "$mpibuild"  = "yes" && ! test "$with_blacs_libs" = "no" && ! test "$wit
           SCALAPACK_LIBS="$acx_scalapack_save_LIBS"
           LIBS="$save_LIBS"
   fi
-  #
 fi
 #
-if test "$acx_blacs_ok" = "yes" &&  test "$acx_scalapack_ok" = "yes"; then
+compile_blacs="no"
+compile_slk="no"
+if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_blacs_libs" = "yes"; then
+  compile_blacs="yes"
+  BLACS_LIBS="-L${extlibs_path}/lib -lblacs -lblacs_init"
+fi
+if test "$mpibuild"  = "yes" && test "$mpif_found" = "yes" && test "$with_scalapack_libs" = "yes"; then
+  compile_slk="yes"
+  SCALAPACK_LIBS="-L${extlibs_path}/lib -lscalapack"
+fi
+#
+if (test "$acx_blacs_ok" = "yes" || test "$compile_blacs" = "yes") && (test "$acx_scalapack_ok" = "yes" || test "$compile_slk" = "yes" ) ; then
   enable_scalapack="yes"
   dscalapack="-D_SCALAPACK"
 else
@@ -90,25 +102,10 @@ else
   dscalapack=""
   BLACS_LIBS=""
   SCALAPACK_LIBS=""
+  compile_blacs="no"
+  compile_slk="no"
 fi
 #
-AC_CHECK_FILE($with_mpi_root/include/mpif.h,[mpif_found="yes"],[mpif_found="no"])
-#
-compile_blacs="no"
-if test "$mpibuild"  = "yes" && test "$with_blacs_libs" = "yes" && test "$mpif_found" = "yes"; then
-compile_blacs="yes"
-BLACS_LIBS="-lblacs -lblacs_init"
-compile_slk="no"
-MPIROOT=$with_mpi_root
- if test "$with_scalapack_libs" = "yes"; then
-  compile_slk="yes"
-  SCALAPACK_LIBS="-lscalapack"
-  enable_scalapack="yes"
-  dscalapack="-D_SCALAPACK"
- fi
-fi
-#
-AC_SUBST(MPIROOT)
 AC_SUBST(BLACS_LIBS)
 AC_SUBST(SCALAPACK_LIBS)
 AC_SUBST(enable_scalapack)

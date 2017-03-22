@@ -22,21 +22,25 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat ../../../config/setup ../make.inc_lib > make.inc ; \
-	cp ../Makefile.lib  Makefile ); \
+	cat $(srcdir)/config/setup $(topdir)/lib/lapack/make.inc_lib > make.inc ; \
+	cp  $(topdir)/lib/lapack/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make)  ) ; fi
+	( cd $(PACKAGE);  make ; cp *.a $(libs_prefix)/lib ; \
+	chmod +x $(libs_prefix)/lib/*lapack*.a ; \
+	chmod +x $(libs_prefix)/lib/*blas*.a ) ; \
+	fi
 	touch package-ready-stamp
 #
 # cleaning
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: 
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 

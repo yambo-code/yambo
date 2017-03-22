@@ -63,7 +63,9 @@ else
 fi
 #
 AC_SUBST(PETSC_LIBS)
+AC_SUBST(PETSC_INCS)
 AC_SUBST(SLEPC_LIBS)
+AC_SUBST(SLEPC_INCS)
 AC_SUBST(enable_slepc)
 AC_SUBST(compile_slepc)
 AC_SUBST(compile_petsc)

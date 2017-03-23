@@ -28,11 +28,12 @@ integer function io_ELPH_old(ID,what)
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
- use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
+ use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,&
+&                         QP_PH_n_G_bands,W_debye,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,elph_grids_are_expanded
+ use ELPH_old,       ONLY:elph_gkkp_old,elph_DW_old
  use stderr,         ONLY:intc
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
@@ -271,9 +272,9 @@ integer function io_ELPH_old(ID,what)
    ! 
    if (write_is_on(ID)) then
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)=real(elph_gkkp(ik,im,i1,i2))
+&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)=real(elph_gkkp_old(ik,im,i1,i2))
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)=aimag(elph_gkkp(ik,im,i1,i2))
+&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)=aimag(elph_gkkp_old(ik,im,i1,i2))
    endif
    ! 
    call io_bulk(ID,R3=elph_gkkp_disk,IPOS=(/1,1,1,ik/))
@@ -282,7 +283,7 @@ integer function io_ELPH_old(ID,what)
    ! 
    if (read_is_on(ID)) then
      forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
+&          elph_gkkp_old(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
 &                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
    endif
    !
@@ -296,7 +297,7 @@ integer function io_ELPH_old(ID,what)
  !
  do ik=1,nkbz
    ! 
-   call io_bulk(ID,R3=elph_DW(ik,:,:,:),IPOS=(/1,1,1,ik/))
+   call io_bulk(ID,R3=elph_DW_old(ik,:,:,:),IPOS=(/1,1,1,ik/))
    ! 
  enddo
  !

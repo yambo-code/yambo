@@ -25,14 +25,12 @@ subroutine ELPH_format_converter(E,Xk,q)
  !
  use pars,                ONLY:SP,schlen
  use electrons,           ONLY:levels
- use ELPH,                ONLY:ph_freqs_sq,ph_modes,elph_nb,elph_use_q_grid,&
-&                              elph_global_free,W_debye,elph_global_alloc,&
-&                              elph_nDBs,ph_qpt,ph_kpt_bz,elph_nk_bz
+ use ELPH,                ONLY:elph_global_free,elph_global_alloc,&
+&                              elph_gkkp,elph_DW,elph_nDBs
+ use ELPH_old,            ONLY:elph_global_free_old,elph_global_alloc_old,&
+&                              elph_gkkp_old,elph_DW_old
  use com,                 ONLY:msg,warning,file_exists,error,core_io_path,more_io_path
- use R_lattice,           ONLY:bz_samp,qindx_B
- use D_lattice,           ONLY:nsym,n_atoms
- use parser_m,            ONLY:parser
- use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
+ use R_lattice,           ONLY:bz_samp
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_WR_CL,OP_RD_CL,DUMP,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  !
@@ -45,16 +43,13 @@ subroutine ELPH_format_converter(E,Xk,q)
  !
  !... I/O 
  !
- integer            ::idb,iq,io_err,io_elph_err,ID_RD,ID_WR,nDBs_disk
+ integer            ::idb,iq,ik,io_elph_err,ID_RD,ID_WR
  integer, external  ::io_ELPH,io_ELPH_old
  character(schlen)  ::db_name,core_io_path_save
  !
  core_io_path_save=core_io_path
  !
- call section("*","== Electron-Phonon DBs convertion ==")
- !
  call k_ibz2bz(Xk,'i',.false.)
- !
  !
  elph_nDBs=q%nibz
  db_name='gkkp'
@@ -74,6 +69,8 @@ subroutine ELPH_format_converter(E,Xk,q)
  !
  if (io_elph_err/=0) return
  !
+ call section("*","== Electron-Phonon DBs convertion ==")
+ !
  core_io_path=more_io_path
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_WR)
@@ -82,6 +79,7 @@ subroutine ELPH_format_converter(E,Xk,q)
  ! Allocation...
  !
  call elph_global_alloc('gkkp')
+ call elph_global_alloc_old('gkkp')
  !
  ! Force DB fragmentation
  !
@@ -98,6 +96,11 @@ subroutine ELPH_format_converter(E,Xk,q)
    call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID_RD)
    io_elph_err=io_ELPH_old(ID_RD,trim(db_name))
    !
+   do ik=1,Xk%nbz
+     elph_gkkp(:,:,:,ik)=elph_gkkp_old(ik,:,:,:)
+     elph_DW(:,:,:,ik)  =elph_DW_old(ik,:,:,:)
+   enddo
+   !
    core_io_path=more_io_path
    !
    call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID_WR)
@@ -110,6 +113,7 @@ subroutine ELPH_format_converter(E,Xk,q)
  call live_timing()
  !
  call elph_global_free()
+ call elph_global_free_old()
  !
  call IO_and_Messaging_switch("-DB_is_fragmented")
  !

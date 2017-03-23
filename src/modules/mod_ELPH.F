@@ -109,9 +109,9 @@ module ELPH
        case ('gkkp')
          !
          if (.not.allocated(elph_gkkp)) then
-           allocate(elph_gkkp(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+           allocate(elph_gkkp(ph_modes,elph_nb,elph_nb,nkbz),stat=alloc_err)
            call mem_est("GKKP",(/size(elph_gkkp)/),(/2*SP/),errors=(/alloc_err/))
-           allocate(elph_DW(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+           allocate(elph_DW(ph_modes,elph_nb,elph_nb,nkbz),stat=alloc_err)
            call mem_est("GKKP_DW",(/size(elph_DW)/),(/SP/),errors=(/alloc_err/))
            allocate(f_k_plus_q(elph_nb,nkbz,1))
          endif

@@ -170,7 +170,9 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
        enddo
      enddo sc_loop
      !
-     if (master_cpu) write  (*,*) VALS,FIELDS,MY_cpu
+     !DEBUG>
+     !if (master_cpu) write  (*,*) VALS,FIELDS,MY_cpu
+     !DEBUG<
      !
      do i_f=1,N_fields
        CPU_structure(i_PAR_structure)%CPU(i_f)=MY_cpu(i_f)

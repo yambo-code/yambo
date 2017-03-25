@@ -30,7 +30,7 @@ AC_SUBST(enable_keep_extlibs)
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
             AC_HELP_STRING([--with-extlibs-path=<path>], [Path where external libs compiled by yambo are placed],[]),
-            [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/../yambo_ext_libs"])
+            [extlibs_path="$with_extlibs_path"],[extlibs_path="./ext_libs"])
 AC_SUBST(extlibs_path)
 
 # ============================================================================

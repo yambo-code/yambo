@@ -270,13 +270,8 @@ if test x"$enable_hdf5" = "xyes"; then
     fi
   done
   #
-<<<<<<< 403a6d7b2a499e0a47304b856a82a151300f2395
   FCFLAGS="$save_fcflags" ;
   LIBS="$save_libs" ;
-=======
-  FCFLAGS="$save_fcflags"    
-  LIBS="$save_libs"
->>>>>>> Version 4.2.0,  Revision 14369,  Hash 97d4ff0
   #
   if test "x$hdf5" = xno; then
     if   test -d "$with_hdf5_libdir" || test -d "$with_hdf5_path"; then AC_MSG_RESULT([no]) ; fi

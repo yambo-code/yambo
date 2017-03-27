@@ -17,7 +17,6 @@ keep_fftqe=no
 # tarball names
 #
 tarball_iotk=iotk-y1.2.1.tar.gz
-#tarball_netcdf=netcdf-y4.1.3_v2.tar.gz
 tarball_netcdf=netcdf-4.4.1.1.tar.gz
 tarball_netcdff=netcdf-fortran-4.4.4.tar.gz
 tarball_hdf5=hdf5-1.8.18.tar.gz
@@ -49,8 +48,8 @@ pkgname_fftqe=fftqe
 #
 # URL's
 #
-url_netcdf=https://github.com/yambo-code/yambo/files/783148/$(tarball_netcdf)
-url_netcdf=https://github.com/yambo-code/yambo/files/783148/$(tarball_netcdff)
+url_netcdf=https://github.com/yambo-code/yambo/files/855476/$(tarball_netcdf)
+url_netcdff=https://github.com/yambo-code/yambo/files/855477/$(tarball_netcdff)
 url_hdf5=https://github.com/yambo-code/yambo/files/838459/$(tarball_hdf5)
 url_libxc=https://github.com/yambo-code/yambo/files/783150/$(tarball_libxc)
 url_iotk=https://github.com/yambo-code/yambo/files/783147/$(tarball_iotk)

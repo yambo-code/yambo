@@ -29,6 +29,11 @@ mpibuild="yes"
 AC_ARG_ENABLE(mpi, AC_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
+CC_serial=$CC
+#CXX_serial=$CXX
+F77_serial=$F77
+FC_serial=$FC
+#
 if test "$mpibuild" = "yes"; then
   #
   # MPIFC
@@ -37,11 +42,19 @@ if test "$mpibuild" = "yes"; then
   ACX_MPI([],AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
   AC_LANG_POP(Fortran)
   #
+fi
+#
+if test "$mpibuild" = "yes"; then
+  #
   # MPIF77
   #
   AC_LANG_PUSH(Fortran 77)
   ACX_MPI([],AC_MSG_WARN([could not compile a FORTRAN 77 mpi test program. YAMBO serial only.]))
   AC_LANG_POP(Fortran 77)
+  #
+fi
+#
+if test "$mpibuild" = "yes"; then
   #
   # MPICC
   #
@@ -49,11 +62,20 @@ if test "$mpibuild" = "yes"; then
   ACX_MPI([],AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
   AC_LANG_POP(C)
   #
+fi
+#
+if test "$mpibuild" = "yes"; then
+  #
   def_mpi="-D_MPI"
   #
 else
   #
   def_mpi=""
+  #
+  CC=$CC_serial
+  #CXX=$CXX_serial
+  F77=$F77_serial
+  FC=$FC_serial
   #
 fi
 #

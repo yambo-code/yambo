@@ -7,18 +7,21 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libxc.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_libxc)
 TARBALL=$(tarball_libxc)
 
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(libs_prefix)
+AUXFLAGS=--prefix=$(LIBPATH)
 
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(LIBRARY)
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
@@ -30,18 +33,24 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure $(AUXFLAGS) \
 	        CC="$(cc)" \
-	        FC="$(f90)" \
+	        CPP="$(cpp)" \
+	        FC="$(fc)" \
 		FCCPP="$(fpp)" ); \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
-	#
-	chmod u+x $(libs_prefix)/lib/*xc*.a
+	( cd $(PACKAGE);  $(make) ) ; fi
 	#
 	touch package-ready-stamp
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make) install ) ; fi
+	#
+	chmod u+x $(LIBPATH)/lib/*xc*.a
+
 
 #
 # cleaning
@@ -53,6 +62,5 @@ clean:
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
-	@- rm -rf $(INSTALL_DIR)
 	
 

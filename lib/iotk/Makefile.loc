@@ -7,19 +7,22 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libiotk.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_iotk)
 TARBALL=$(tarball_iotk)
 
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(libs_prefix) \
+AUXFLAGS=--prefix=$(LIBPATH) \
          IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(LIBRARY)
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
@@ -40,7 +43,8 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        if test -x ./configure ; then \
 	           ./configure $(AUXFLAGS) \
-	           FC="$(f90)"; \
+	           FC="$(fc)"; \
+	           FCFLAGS="$(fcflags)"; \
 	        fi ) ; \
 	fi
 	touch configure-stamp
@@ -50,16 +54,23 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
 	#
+	touch package-ready-stamp
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
+	#
 	# Replaces make install which seems to be missing for iotk
 	#
-	cp $(PACKAGE)/src/*.a     $(libs_prefix)/lib ; chmod u+x $(libs_prefix)/lib/*iotk*.a
-	cp $(PACKAGE)/src/*.x     $(libs_prefix)/bin ;
-	cp $(PACKAGE)/tools/iotk  $(libs_prefix)/bin ;
-	cp $(PACKAGE)/src/*.mod   $(libs_prefix)/include ;
-	@if test -e $(libs_prefix)/include/iotk_auxmacros.h; then rm -fr $(libs_prefix)/include/iotk_auxmacros.h; fi
-	cp $(PACKAGE)/include/*.h $(libs_prefix)/include ;
+	@if ! test -e $(LIBPATH);         then  mkdir $(LIBPATH) ;         fi
+	@if ! test -e $(LIBPATH)/lib;     then  mkdir $(LIBPATH)/lib ;     fi
+	@if ! test -e $(LIBPATH)/bin;     then  mkdir $(LIBPATH)/bin ;     fi
+	@if ! test -e $(LIBPATH)/include; then  mkdir $(LIBPATH)/include ; fi
 	#
-	touch package-ready-stamp
+	cp $(PACKAGE)/src/*.a     $(LIBPATH)/lib ; chmod u+x $(LIBPATH)/lib/*iotk*.a
+	cp $(PACKAGE)/src/*.x     $(LIBPATH)/bin ;
+	cp $(PACKAGE)/tools/iotk  $(LIBPATH)/bin ;
+	cp $(PACKAGE)/src/*.mod   $(LIBPATH)/include ;
+	@if test -e $(LIBPATH)/include/iotk_auxmacros.h; then rm -fr $(LIBPATH)/include/iotk_auxmacros.h; fi
+	cp $(PACKAGE)/include/*.h $(LIBPATH)/include ;
 
 #
 # cleaning

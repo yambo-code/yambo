@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -43,12 +43,14 @@ AC_ARG_WITH(fftsg_fac, AC_HELP_STRING([--with-fftsg-fac=<val>],
 
 #
 HAVE_FFT="no"
-FFT_str="-"
 save_ldflags="$LDFLAGS"
 try_libs=
+internal_fft="no"
+compile_fftqe="no"
+compile_fftw="no"
 
 #
-# F90 module flag
+# FC module flag
 #
 IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
@@ -132,8 +134,8 @@ if ! test x"$try_libs" = "x" ; then
   FCFLAGS=$save_fcflags
   #
   if test "$HAVE_FFTW" = "yes" ; then
-    FFT_CPP="-D_FFTW"
-    if test "$HAVE_FFTW_OMP" = "yes" ; then FFT_CPP="-D_FFTW -D_FFTW_OMP" ; fi
+    def_fft="-D_FFTW"
+    if test "$HAVE_FFTW_OMP" = "yes" ; then def_fft="-D_FFTW -D_FFTW_OMP" ; fi
     #
     if test "$try_libs" = "-lfftw3" ; then
       FFT_DESCRIPTION="(FFTW v3)";
@@ -149,18 +151,14 @@ if ! test x"$try_libs" = "x" ; then
     fi
     FFT_LIBS="${FFT_PATH} ${try_libs}"
   else
-    FFT_CPP="" 
+    def_fft="" 
     FFT_LIBS=""
     LDFLAGS="$save_ldflags"
   fi
-  if test x"$HAVE_FFTW" = "xyes" ; then
-    HAVE_FFT=yes ;
-    FFT_str="E" ;
-  fi
+  if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes; fi
 else 
   HAVE_FFTW=no
   HAVE_FFT=no
-  FFT_str="-"
 fi
 
 
@@ -198,8 +196,7 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     else
       FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
     fi
-    FFT_CPP="-D_FFTQE $FFT3D_CPP -D_ESSL"
-    FFT_str="E"
+    def_fft="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_LIBS="${FFT_PATH} $try_libs"
     HAVE_FFT=yes
     compile_fftqe=yes
@@ -217,21 +214,14 @@ if ! test x"$HAVE_FFT" = "xyes" ; then
       use_internal_fftqe=yes
       use_internal_fftsg=no
       use_internal_fftw=no
-      compile_fftw=no
-      compile_fftqe=yes
    elif test x"$enable_internal_fftsg" = "xyes"; then
       use_internal_fftqe=no
       use_internal_fftsg=yes
       use_internal_fftw=no
-      compile_fftw=no
-      compile_fftqe=no
    else
-     #
      use_internal_fftqe=no
      use_internal_fftsg=no
      use_internal_fftw=yes
-     compile_fftqe=no
-     compile_fftw=yes
   fi
 fi
 #
@@ -246,12 +236,16 @@ if test "$use_internal_fftqe" = "yes" ; then
   else
     FFT_DESCRIPTION="(Internal FFTW2 (FFTQE))";
   fi
-  FFT_CPP="-D_FFTQE $FFT3D_CPP -D_FFTW2"
-  FFT_str="I"
+  def_fft="-D_FFTQE $FFT3D_CPP -D_FFTW2"
   FFT_LIBS="-L./lib -lfftqe";
   FFT_INCS="${IFLAG}./include/"
   HAVE_FFTQE=yes
-  compile_fftqe=yes
+  internal_fft=yes
+  if test -e "./lib/libfftqe.a"; then
+    compile_fftqe="no"
+  else
+    compile_fftqe=yes
+  fi
   AC_MSG_RESULT(Internal FFTQE (FFTW2))
 fi
 if test "$HAVE_FFTQE" = "yes" ; then HAVE_FFT=yes ; fi
@@ -274,10 +268,10 @@ if test "$use_internal_fftsg" = "yes" ; then
   fi
   #
   FFT_DESCRIPTION="(Internal Goedecker FFT with $fft_cfactor cache)"
-  FFT_str="I"
-  FFT_CPP="-D_FFTSG"
+  def_fft="-D_FFTSG"
   FFT_LIBS=""
-  HAVE_FFTSG=yes
+  HAVE_FFTSG=yes;
+  internal_fft="yes";
   AC_MSG_RESULT(FFTSG)
   AC_SUBST(fft_cfactor)
 fi
@@ -289,12 +283,16 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 #
 if test "$use_internal_fftw" = "yes" ; then
   FFT_DESCRIPTION="(Internal FFTW3)";
-  FFT_CPP="-D_FFTW"
-  FFT_str="I"
-  FFT_LIBS="-L${extlibs_path}/lib -lfftw3";
-  FFT_INCS="${IFLAG}${extlibs_path}/include/"
+  def_fft="-D_FFTW"
+  FFT_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lfftw3";
+  FFT_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
   HAVE_FFTW=yes
-  compile_fftw=yes
+  internal_fft=yes
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libfftw3.a"; then
+    compile_fftw="no"
+  else
+    compile_fftw=yes
+  fi
   AC_MSG_RESULT(Internal FFTW3)
 fi
 if test "$HAVE_FFTW" = "yes" ; then HAVE_FFT=yes ; fi
@@ -310,11 +308,11 @@ if test x"$compile_fftqe" = "xyes" ; then
     #
 fi
 
-AC_SUBST(FFT_str)
 AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_INCS)
-AC_SUBST(FFT_CPP)
+AC_SUBST(def_fft)
 AC_SUBST(FFT_DESCRIPTION)
 AC_SUBST(compile_fftqe)
 AC_SUBST(compile_fftw)
+AC_SUBST(internal_fft)
 ])

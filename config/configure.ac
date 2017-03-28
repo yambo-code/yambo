@@ -23,6 +23,7 @@
 #
 m4_include([config/version.m4])
 #
+AC_PREFIX_DEFAULT($PWD)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 #
@@ -35,29 +36,15 @@ m4_include([config/yambo_specific.m4])
 m4_include([config/acx_misc.m4])
 m4_include([config/acx_gmake.m4])
 m4_include([config/acx_cpp.m4])
+m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
-m4_include([config/acx_get_fc_version.m4])
+m4_include([config/acx_get_fc_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
-# 
-#  Libs
-#
-m4_include([config/blas.m4])
-m4_include([config/lapack.m4])
-#m4_include([config/mpi.m4])
-m4_include([config/netcdf_f90.m4])
-m4_include([config/libxc.m4])
-m4_include([config/fft.m4])
-m4_include([config/iotk.m4])
-m4_include([config/etsf_io.m4])
-m4_include([config/scalapack.m4])
-m4_include([config/petsc_slepc.m4])
 # 
 #  Report
 #
 m4_include([config/acx_report.m4])
-#
-AC_PREFIX_DEFAULT($PWD)
 #
 # Checks for library functions.
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
@@ -148,7 +135,7 @@ esac
 AC_SUBST(F90SUFFIX)
 FCFLAGS="${acx_save_fcflags}"
 acx_save_fcflags="$FCFLAGS"
-ACX_GET_FC_VERSION()
+ACX_GET_FC_KIND()
 #
 # Fortran FLAGS
 #
@@ -163,12 +150,13 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-openmp_cpp=" "
+def_openmp=" "
 OPENMPLIBS=" "
 if test x"$enable_open_mp" = "xyes"; then 
- OPENMPLIBS="$OMPFLAGS"; 
- openmp_cpp="-D_OPENMP"
+  OPENMPLIBS="$OMPFLAGS"; 
+  def_openmp="-D_OPENMP"
 fi
+AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
 # ============================================================================
 #
@@ -185,8 +173,6 @@ ACX_EXTUS
 #
 AC_FC_FREEFORM
 #
-F90=$FC
-AC_SUBST(F90)
 AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
 #
@@ -199,6 +185,10 @@ AC_SUBST([F90_MODULE_FLAG])
 # ============================================================================
 # CPP check & flags
 ACX_CPP
+#
+# ============================================================================
+# FPP check
+ACX_FPP
 #
 # ============================================================================
 # Fortran 77: test if the FC works as F77 as well
@@ -216,49 +206,21 @@ AC_LANG_POP(Fortran 77)
 #
 # ============================================================================
 # MPI
-mpibuild="yes" 
-AC_ARG_WITH(mpi-libs, AC_HELP_STRING([--with-mpi-libs=<lib>],[Use MPI library <lib>],[32]))
-if test -d "$with_mpi_libs" && test "$with_mpi_libs" = "no"; then  mpibuild="no" ; fi
-#
-if test "$mpibuild" = "yes"; then
-# MPIF90
-#
- mpi_cpp="-D_MPI"
- AC_LANG_PUSH(Fortran)
- ACX_MPI([], 
-  AC_MSG_WARN([could not compile a FORTRAN mpi test program. YAMBO serial only.]))
- AC_LANG_POP(Fortran)
-#
-# MPICC
-#
- if test "$mpibuild" = "yes" ; then
-  AC_LANG_PUSH(C)
-  ACX_MPI([], 
-   AC_MSG_WARN([could not compile a C mpi test program. YAMBO serial only.]))
- fi
-#
-# OVERALL CHECK
-#
- if test "$mpibuild" = "no" ; then 
-  mpi_cpp=""
-  MPI_LIBS=""
-  PF90=""
-  FC=$F77
-  PF90FLAGS=""
-  PCC=""
-  PCCFLAGS=""
- fi
- AC_SUBST(openmp_cpp)
- AC_SUBST(mpi_cpp)
- AC_SUBST(enable_mpi_libs)
- AC_SUBST(MPI_LIBS)
- AC_SUBST(PF90)
- AC_SUBST(PF90FLAGS)
- AC_SUBST(PCC)
- AC_SUBST(PCCFLAGS)
- AC_SUBST(mpibuild)
-fi
+m4_include([config/mpi.m4])
 
+# 
+#  Libs
+#
+m4_include([config/blas.m4])
+m4_include([config/lapack.m4])
+m4_include([config/netcdf_f90.m4])
+m4_include([config/libxc.m4])
+m4_include([config/fft.m4])
+m4_include([config/iotk.m4])
+m4_include([config/etsf_io.m4])
+m4_include([config/scalapack.m4])
+m4_include([config/petsc_slepc.m4])
+#
 AC_LANG_PUSH(Fortran)
 # ============================================================================
 # BLAS/Lapack
@@ -300,6 +262,11 @@ cp config/Makefile .
 if test ! -d bin ; then mkdir bin ; fi ;
 if test ! -d include ; then mkdir include ; fi
 if test ! -d lib ; then mkdir lib ; fi
+#
+if ! test -e "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_path/${FCKIND}/${FC}";         fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
+if ! test -e "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

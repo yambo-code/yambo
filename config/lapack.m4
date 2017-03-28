@@ -15,6 +15,11 @@ case $with_lapack_libs in
         *) LAPACK_LIBS="-l$with_lapack_libs" ;;
 esac
 
+
+internal_lapack="no"
+compile_lapack="no"
+LAPACK_LIBS=""
+
 # Set fortran linker name of LAPACK function to check for.
 cheev="cheev"
 
@@ -76,15 +81,23 @@ else
 fi
 
 if test $acx_lapack_ok = "no"; then
-  compile_lapack="yes";
+  internal_lapack="yes";
   AC_MSG_NOTICE([Could not find lapack. Using the built-in library])
-elif test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "" ; then
-  compile_lapack="yes"
+elif (test -d  "$with_lapack_libs" && test "$with_lapack_libs" = "") || test x"$enable_int_linalg" = "xyes" ; then
+  internal_lapack="yes"
   if test "$acx_lalpack_ok" = "yes"; then AC_MSG_NOTICE([Lapack found in ${LAPACK_LIBS} but imposing built-in library]); fi
 fi
   
-if test x"$compile_lapack" = "xyes"; then LAPACK_LIBS="-L${extlibs_path}/lib -llapack"; fi
+if test "$internal_lapack" = "yes"; then
+  LAPACK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -llapack";
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.a; then
+    compile_lapack="no";
+  else
+    compile_lapack="yes";
+  fi
+fi
 
+AC_SUBST(internal_lapack)
 AC_SUBST(compile_lapack)
 AC_SUBST(LAPACK_LIBS)
 

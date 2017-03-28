@@ -38,7 +38,7 @@
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
 #  ----------------------------------------------------------
-   BLACSdir    = $(libs_prefix)/lib/
+   BLACSdir    = $(BTOPdir)
    BLACSDBGLVL = 0
    BLACSFINIT  = $(BLACSdir)/libblacs_init.a
    BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a
@@ -197,15 +197,15 @@
 #  optimization.  This is the F77NO_OPTFLAG.  The usage of the remaining
 #  macros should be obvious from the names.
 #=============================================================================
-   F77            = $(pf90)
-   F77NO_OPTFLAGS = 
-   F77FLAGS       = $(f90flags)
-   F77LOADER      = $(f90)
-   F77LOADFLAGS   = 
-   CC             = $(pcc)
-   CCFLAGS        = $(pccflags) 
+   F77            = $(fc)
+   F77NO_OPTFLAGS = $(fcuflags) 
+   F77FLAGS       = $(fcflags)
+   F77LOADER      = $(fc)
+   F77LOADFLAGS   = $(fcflags) 
+   CC             = $(cc)
+   CCFLAGS        = $(ccflags) 
    CCLOADER       = $(cc)
-   CCLOADFLAGS    = 
+   CCLOADFLAGS    = $(cflags)
 
 #  --------------------------------------------------------------------------
 #  The archiver and the flag(s) to use when building an archive (library).

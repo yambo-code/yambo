@@ -8,6 +8,7 @@ AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
 AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+AC_ARG_ENABLE(int_linalg,   AC_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
@@ -25,6 +26,10 @@ daxpy="daxpy"
 
 acx_blas_save_LIBS="$LIBS"
 LIBS="$LIBS $FLIBS"
+
+compile_blas="no"
+internal_blas="no"
+BLAS_LIBS=""
 
 # First, check BLAS_LIBS environment variable
 if test $acx_blas_ok = no; then
@@ -122,15 +127,24 @@ else
 fi
 
 if test $acx_blas_ok = "no"; then
-  compile_blas="yes";
+  internal_blas="yes";
   AC_MSG_NOTICE([Could not find blas. Using the built-in library])
-elif test -d "$with_blas_libs" && test "$with_blas_libs" = "" ; then
-  compile_blas="yes"
+elif (test -d "$with_blas_libs" && test "$with_blas_libs" = "") || test x"$enable_int_linalg" = "xyes" ; then
+  internal_blas="yes"
   if test $acx_blas_ok = "yes"; then AC_MSG_NOTICE([Blas found in ${BLAS_LIBS} but imposing built-in library]); fi
 fi
   
-if test x"$compile_blas" = "xyes"; then BLAS_LIBS="-L${extlibs_path}/lib -lblas"; fi
+if test "$internal_blas" = "yes"; then
+  BLAS_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lblas";
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.a; then
+    compile_blas="no";
+  else
+    compile_blas="yes";
+  fi
+fi
 
+AC_SUBST(internal_blas)
+AC_SUBST(enabl_int_linalg)
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)
 

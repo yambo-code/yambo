@@ -40,7 +40,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _BLUEGENE
+#if defined _aix || defined _XLF
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"
@@ -74,9 +74,9 @@ module stderr
        g_format_length=9
      endif
      !
-     of_tabs(1)=2
+     of_tabs(1)=4
      do it=2,30
-       of_tabs(it)=of_tabs(it-1)+2+max(f_format_length,g_format_length)
+       of_tabs(it)=of_tabs(it-1)+4+max(f_format_length,g_format_length)
      enddo
    end subroutine
    !

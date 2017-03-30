@@ -132,9 +132,7 @@ int main(int argc, char *argv[])
  strcpy(js," ");
  strcpy(id,".");
  strcpy(com_dir,".");
-
  ttd=guess_winsize();
-
  strcpy(rnstr2," ");
  if (argc>1) {
    while(opts[nr].ln!=NULL) {nr++;};
@@ -163,15 +161,19 @@ int main(int argc, char *argv[])
 #endif
  /*
    Upper Case actions
+   
+   Help...
  */
      if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
 /* 
- Switch off MPI_init for non-prallel options ...
+ ...switch off MPI_init for non-parallel options ...
 */
      if (opts[j].mp==0)  {mpi_init=-1;};
 /* 
+ ...or for an explicit request
 */
+     if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
 /*
  Switch off launch editor
 */
@@ -376,7 +378,19 @@ static void usage(int verbose)
  int i,j,nr=0;
  while(opts[nr].ln!=NULL) {nr++;};
  if (verbose==1) {
-  fprintf(stderr,"\nThis is %s %s\n",tool,codever); 
+  char* MPI_string="Serial";
+#if defined _MPI
+  MPI_string="MPI";
+#endif
+#if defined _SCALAPACK
+  MPI_string="MPI+SLK";
+#endif
+#if defined _OPENMP
+  char* OMP_string="+OpenMP";
+#else
+  char* OMP_string=" ";
+#endif
+  fprintf(stderr,"\nThis is %s %s - %s%s -\n",tool,codever,MPI_string,OMP_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 
@@ -405,8 +419,7 @@ static void usage(int verbose)
    };
   };
   fprintf(stderr,"\n");
-  fprintf(stderr,"%s\t%s\n\t%s\n\n","By","YAMBO developers group",
-                 "http://www.yambo-code.org");
+  fprintf(stderr,"%s\n\n"," YAMBO developers group (http://www.yambo-code.org)");
  };
 };
 static void title(FILE *file_name,char *cmnt)
@@ -418,6 +431,6 @@ static void title(FILE *file_name,char *cmnt)
  fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
- fprintf(file_name,"%s\n%s Tool: %s %s\n",cmnt,cmnt,tool,codever);
- fprintf(file_name,"%s Description: %s \n\n",cmnt,tdesc);
+ fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,tool,codever);
+ fprintf(file_name,"%s %s \n\n",cmnt,tdesc);
 };

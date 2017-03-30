@@ -138,7 +138,7 @@ module X_m
  end type
  !
  interface
-   logical function O_eels(wv,nw,be_verbose,ordering,eps,eel)
+   logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)
      use pars,          ONLY:SP
      integer              :: nw 
      complex(SP)          :: wv(nw)

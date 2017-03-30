@@ -35,8 +35,7 @@ lib/*/netcdf-*
 lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
-lib/slatec/*.o
-lib/slatec/*.f
+lib/*/fftw-*
 #
 compile.sh
 sbin/make_makefile.sh

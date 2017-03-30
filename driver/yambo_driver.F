@@ -160,7 +160,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=========
  !
  !if (l_dipoles)          call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
- if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
+ if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
  !
  !
  ! OPTICS

@@ -32,7 +32,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr,l_dipoles
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -159,6 +159,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
+ !if (l_dipoles)          call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
  if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
  !
  !
@@ -202,35 +203,24 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
  !
- ! GPL_EXCLUDE_END
- !
- if (l_sc_run) then
-   !
-   ! SC
-   !====
-   !
 #if defined _SC
-   call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
-#endif
-   !
- endif
  !
- if (l_real_time) then
-   !
-   ! REAL-TIME
-   !==========
-   !
+ ! SC
+ !====
+ if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
+#endif
+ !
 #if defined _RT
-   call RT_driver(en,X(:2),k,q,Dip)
-#endif
-   !
- endif
  !
- ! GPL_EXCLUDE_START
+ ! RT
+ !====
+ if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
+#endif
+ !
+#if defined _ELPH
  !
  ! Electron-Phonon Hamiltonian
  !=============================
-#if defined _ELPH
  if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
 #endif
  !

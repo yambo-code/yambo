@@ -38,19 +38,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- ! PARALLEL structure: The dipoles are based on a "derived" structure. 
- !                     K-points are driven by these communicators and indexes:
- !
- ! PAR_IND_DIPk_ibz
- ! PAR_DIPk_nibz
- ! PAR_COM_DIPk_ibz_A2A
- !
- ! while the general world where the calculations lives is
- !
- ! PAR_COM_DIPk_ibz_INDEX
- !
- ! being a derived structure it must be mapped in the calling routine.
- !
  use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                         l_gw0,l_elel_corr,l_life
 #if defined _PL
@@ -132,20 +119,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Dipole dimensions to be fixed
  !
- l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
- l_sta_X = l_em1s
- ! 
- if (  l_sta_X.or.l_dyn_X           ) ib=X%ib
- if ( (l_optics.and.l_bse).or.l_bss ) ib=BS_bands
- !
- if ( ((l_optics.and.l_bse).or.l_bss) .and. (l_sta_X.or.l_dyn_X)  ) then
-   !
-   ib(1)=min(X%ib(1),BS_bands(1))
-   ib(2)=max(X%ib(2),BS_bands(2))
-   !
- endif
- !
- call DIPOLE_dimensions(Xen,Dip,ib,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_dimensions(Xen,Dip,(/0._SP,0._SP,0._SP/))
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================

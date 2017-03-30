@@ -125,6 +125,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
+ call it('r',defs,'dipoles', '[R   ] Compute the dipoles')
  call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
  call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
  call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
@@ -532,11 +533,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! DIPOLES
  !
- call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
+ call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib,verb_level=V_resp)
+ call it(defs,'DipQpts',        '[DIP] Qpts range for dipoles',Dip%iq,verb_level=V_resp)
+ call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
- call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
- call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
- call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
+ call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
+ call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
+ call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
+ !
+ call DIP_mirror_bands( )
  !
  ! GPL_EXCLUDE_END
  !
@@ -749,6 +754,35 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call it(defs,nms(12),des(12),X%iq,verb_level=V_iq)
      call it(defs,nms(13),des(13),X%ib,verb_level=0)
      call it(defs,nms(14),des(14),wv%damp_reference,E_unit,verb_level=V_resp)
+     !
+   end subroutine
+   !
+   subroutine DIP_mirror_bands( )
+     use parser_m,       ONLY:parser
+     logical :: is_def(6)
+     integer :: i1,bands(2),tmp_bands(2)
+     call parser('BndsRnXx', is_def(1))
+     call parser('BndsRnXs', is_def(2))
+     call parser('BndsRnXd', is_def(3))
+     call parser('BndsRnXp', is_def(4))
+     call parser('DipBands', is_def(5))
+     call parser('BSEBands', is_def(6))
+     !
+     bands=-1
+     do i1=1,6
+       if(.not.(is_def(i1))) cycle
+       if(i1< 5) tmp_bands=X(i1)%ib
+       if(i1==5) tmp_bands=BS_bands
+       if(i1==6) tmp_bands=Dip%ib
+       if(any((/bands==-1/))) then
+         bands=tmp_bands
+       else
+         bands(1)=min(tmp_bands(1),bands(1))
+         bands(2)=max(tmp_bands(2),bands(2))
+       endif
+     enddo
+     !
+     Dip%ib=bands
      !
    end subroutine
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_dimensions(Xen,Dip,ib,q0)
+subroutine DIPOLE_dimensions(Xen,Dip,q0)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -41,7 +41,6 @@ use com,             ONLY:warning
  !
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
- integer,       intent(in)    :: ib(2)
  real(SP),      intent(in)    :: q0(3)
  !
  logical           :: Dipole_bands_ordered
@@ -54,14 +53,7 @@ use com,             ONLY:warning
  !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
  Dip%ngostnts=wf_ng
- Dip%ib=ib
  Dip%q0=q0
- !
- if (Dip%ib(1)<1 .or. Dip%ib(2)>Xen%nb) then
-   if (Dip%ib(1)<1)      Dip%ib(1)=1
-   if (Dip%ib(2)>Xen%nb) Dip%ib(2)=Xen%nb
-   call warning(' Bands range adjusted to number of bands in SAVE folder')
- endif
  !
  Dipole_bands_ordered=.true.
  !

@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_kerr
+&                         l_sc_magnetic,l_kerr,l_dipoles
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -366,6 +366,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! I transfer to all X types the X(3) used in the previous io's 
  !
  call X_var_setup
+ Dip%ib=X(3)%ib
  !
  ! When no setup has been done nqibz=0
  !
@@ -382,6 +383,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    enddo
    !
  endif
+ !
  !
  ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
  ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
@@ -503,6 +505,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! CPU structure
  !
+ if (l_dipoles) then
+   call CPU_activate("DIP")
+   call initactivate(1,'DIP_Threads')
+ endif
+ !
+ ! CPU structure
+ !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
    call CPU_activate("X")
    call CPU_activate("DIP")
@@ -571,6 +580,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
+ if (l_dipoles) call initactivate(1,'DipBands DipQpt DipApproach DipPDirect ShiftedPaths')
+ !
  if (l_optics.and.l_chi) then
    !
    ! GPL_EXCLUDE_START
@@ -597,7 +608,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
-   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
+   call initactivate(1,'Qdirection QShiftOrder')
    !
  endif
  !
@@ -1077,6 +1088,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
@@ -1196,16 +1208,16 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (l_ppa)    call initactivate(1,'em1d')
+     if (l_em1s)   call initactivate(1,'dipoles')
+     if (l_em1d)   call initactivate(1,'dipoles')
+     if (l_optics) call initactivate(1,'dipoles')
+     if (l_ppa)    call initactivate(1,'em1d dipoles')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
-&                  call initactivate(1,'em1d')
-     if (l_cohsex) call initactivate(1,'em1s')
-     if (l_bsk)    call initactivate(1,'optics')
-     if (l_bsk)    call initactivate(1,'bse')
-     if (l_bss)    call initactivate(1,'optics')
-     if (l_bss)    call initactivate(1,'bse')
-     if (l_bss)    call initactivate(1,'bsk')
+&                  call initactivate(1,'em1d dipoles')
+     if (l_cohsex) call initactivate(1,'em1s dipoles')
+     if (l_bsk)    call initactivate(1,'optics dipoles bse')
+     if (l_bss)    call initactivate(1,'optics dipoles bse bsk')
      if (l_bs_fxc) BSS_mode="t"
      !
      if (l_bse) then
@@ -1217,13 +1229,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(4)%ng
-         call initactivate(1,'em1d ppa')
+         call initactivate(1,'em1d dipoles ppa')
        endif
        !
      endif
      !
 #if defined _PL
-     if (l_photolum) call initactivate(1,'bse optics')
+     if (l_photolum) call initactivate(1,'bse optics dipoles')
 #endif
      !
 #if defined _SC
@@ -1235,6 +1247,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _OPENMP
+     if (l_dipoles) then
+       n_threads_DIP=n_threads
+     endif
      if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
        n_threads_K=n_threads
        n_threads_X=n_threads
@@ -1412,6 +1427,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (i_cycle==1) call GET_user_WALL_time()
          endif
          !
+         if ( trim(rstr_piece(i1)) == 'dipoles' )  then
+           call initactivate(1,'dipoles')
+         endif
+         !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
 &             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
 &             runlevel_is_on('cohsex')  &
@@ -1479,6 +1498,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
            if(l_bse)   call initactivate(1,'bsk')
+           if(trim(BSK_mode)=="SEX") call initactivate(1,'em1s')
            !
          endif
          !

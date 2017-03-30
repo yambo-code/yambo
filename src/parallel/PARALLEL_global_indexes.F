@@ -71,7 +71,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  if(present(X)) call X_duplicate(X,X_local)
  !
  call DIPOLES_reset(Dip_local)
- if(present(X)) call DIPOLES_duplicate(Dip,Dip_local)
+ if(present(Dip)) call DIPOLES_duplicate(Dip,Dip_local)
  !
  X_type=1
  if (present(X)) X_type=X%whoami

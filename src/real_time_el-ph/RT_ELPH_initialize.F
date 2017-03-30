@@ -25,7 +25,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use pars,           ONLY:SP,pi,cZERO
  use units,          ONLY:HA2EV
- use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded,THETA_matrix,&
+ use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
 &                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
@@ -92,8 +92,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Allocation
  !============
  !
- allocate(elph_gkkp_expanded(PAR_Xk_nibz*PAR_nQ,ph_modes,elph_nb,elph_nb),stat=alloc_err)
- call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
+ allocate(elph_gkkp_expanded_sq(PAR_Xk_nibz*PAR_nQ,ph_modes,elph_nb,elph_nb),stat=alloc_err)
+ call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded_sq)/),(/SP/),errors=(/alloc_err/))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
@@ -144,7 +144,7 @@ subroutine RT_ELPH_initialize(E,k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded(ik_store,:,i_n,i_np)=elph_gkkp(K_io_map(ik_bz),:,i_np,i_n)
+         elph_gkkp_expanded_sq(ik_store,:,i_n,i_np)=abs(elph_gkkp(K_io_map(ik_bz),:,i_np,i_n))**2
          !
        enddo
      enddo
@@ -160,8 +160,8 @@ subroutine RT_ELPH_initialize(E,k,q)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
-               if (i2==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
-               if (i2==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(1,i1)))
+               if (i2==1) gkkp_average=gkkp_average+elph_gkkp_expanded_sq(ik_store,il,i_n,i_np)
+               if (i2==2) elph_gkkp_expanded_sq(ik_store,il,i_n,i_np)=gkkp_average/real(n_of_el(1,i1))
              enddo
            enddo
          enddo
@@ -171,15 +171,15 @@ subroutine RT_ELPH_initialize(E,k,q)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
-               if (i2==1) gkkp_average=gkkp_average+abs(elph_gkkp_expanded(ik_store,il,i_n,i_np))**2.
-               if (i2==2) elph_gkkp_expanded(ik_store,il,i_n,i_np)=sqrt(gkkp_average/real(n_of_el(2,i1)))
+               if (i2==1) gkkp_average=gkkp_average+elph_gkkp_expanded_sq(ik_store,il,i_n,i_np)
+               if (i2==2) elph_gkkp_expanded_sq(ik_store,il,i_n,i_np)=gkkp_average/real(n_of_el(2,i1))
              enddo
            enddo
          enddo
        enddo
      enddo
      !
-     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(abs(elph_gkkp_expanded(ik_store,:,:,:)))
+     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(elph_gkkp_expanded_sq(ik_store,:,:,:))
      !
    enddo
    !

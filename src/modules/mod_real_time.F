@@ -180,7 +180,7 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
+ real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)
@@ -696,8 +696,8 @@ module real_time
        deallocate(THETA_matrix_index)
      endif
      !
-     if (allocated(elph_gkkp_expanded)) then
-       deallocate(elph_gkkp_expanded)
+     if (allocated(elph_gkkp_expanded_sq)) then
+       deallocate(elph_gkkp_expanded_sq)
        call mem_est("GKKP_expanded")
      endif
      !

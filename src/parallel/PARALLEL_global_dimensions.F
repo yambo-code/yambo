@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X)
+subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT,X,Dip)
  !
  use electrons,     ONLY:levels
  use X_m,           ONLY:X_t

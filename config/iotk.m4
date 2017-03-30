@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -36,6 +36,7 @@ AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
 
 compile_p2y="no"
 compile_iotk="no"
+internal_iotk="no"
 IOTK_LIBS=" "
 IOTK_INCS=" "
 
@@ -43,7 +44,7 @@ if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
 if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
 if test  x"$with_iotk_libs" != "x" ;  then enable_iotk=yes ; fi
 #
-# F90 module flag
+# FC module flag
 #
 IFLAG=$ax_cv_f90_modflag
 if test -z "$IFLAG" ; then IFLAG="-I" ; fi
@@ -101,13 +102,19 @@ if test "x$enable_iotk" = "xyes" ; then
     # internal IOTK
     #
     AC_MSG_CHECKING([for internal IOTK library])
-    compile_iotk="yes"
+    internal_iotk="yes"
     compile_p2y="yes"
-    IOTK_INCS="${IFLAG}${extlibs_path}/include/"
-    IOTK_LIBS="-L${extlibs_path}/lib -liotk"
-    if test ! -d lib ; then mkdir lib ; fi
-    AC_MSG_RESULT(ok)
-    AC_CONFIG_FILES([lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in])
+    IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
+    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
+    if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
+      compile_iotk="yes"
+      if test ! -d lib ; then mkdir lib ; fi
+      AC_MSG_RESULT(to be compiled)
+      AC_CONFIG_FILES([lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in])
+    else
+      compile_iotk="no"
+      AC_MSG_RESULT(already compiled)
+    fi
   fi
 else
   AC_MSG_CHECKING([for IOTK library])
@@ -116,6 +123,7 @@ fi
 #
 AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
+AC_SUBST(internal_iotk)
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 

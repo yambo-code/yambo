@@ -30,21 +30,17 @@ AC_SUBST(enable_keep_extlibs)
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
             AC_HELP_STRING([--with-extlibs-path=<path>], [Path where external libs compiled by yambo are placed],[]),
-            [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/ext_libs"])
+            [extlibs_path="$with_extlibs_path"],[extlibs_path="./ext_libs"])
 AC_SUBST(extlibs_path)
-if ! test -e "$extlibs_path";         then mkdir "$extlibs_path";         fi
-if ! test -e "$extlibs_path/lib";     then mkdir "$extlibs_path/lib";     fi
-if ! test -e "$extlibs_path/include"; then mkdir "$extlibs_path/include"; fi
-if ! test -e "$extlibs_path/bin";     then mkdir "$extlibs_path/bin";     fi
 
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
-dp_cpp=""
+def_dp=""
 if test x"$enable_dp" = "x"; then enable_dp="no"; fi
-if test x"$enable_dp" = "xyes"; then dp_cpp="-D_DOUBLE"; fi
+if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
-AC_SUBST(dp_cpp)
+AC_SUBST(def_dp)
 
 # ============================================================================
 #
@@ -53,11 +49,11 @@ AC_SUBST(dp_cpp)
 AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
               [Extended timing profile of specific sections]))
 if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
-time_profile_cpp=" "
+def_time_profile=" "
 if test x"$enable_time_profile" = "xyes"; then 
- time_profile_cpp="-D_TIMING"
+ def_time_profile="-D_TIMING"
 fi
-AC_SUBST(time_profile_cpp)
+AC_SUBST(def_time_profile)
 
 # ============================================================================
 #

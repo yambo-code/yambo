@@ -14,20 +14,17 @@ ar          = @AR@
 arflags     = @AR_FLAGS@
 cc          = @CC@
 cflags      = @CFLAGS@
-pcc         = @PCC@
-pccflags    = @PCCFLAGS@
-cpp         = @C_AS_CPP@
-cppflags    = @C_AS_CPP_FLAGS@ 
+cpp         = @CPP@
+cppflags    = @CPPFLAGS@ 
 fpp         = @FPP@
-f90         = @F90@
-f90flags    = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
-f90uflags   = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
+fc          = @FC@
+fc_kind     = @FCKIND@
+fcflags     = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
+fcuflags    = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f90suffix   = @F90SUFFIX@
-pf90        = @PF90@
-pf90flags   = @PF90FLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f77         = @F77@
-f77flags    = @FFLAGS@
-f77uflags   = @UFFLAGS@
+fflags      = @FFLAGS@
+fuflags     = @FUFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
 shell       = @SHELL@
 #
@@ -50,7 +47,9 @@ mpidir      = @MPI_PATH@
 lopenmp     = @OPENMPLIBS@
 lnetcdf     = @NETCDF_LIBS@
 inetcdf     = @NETCDF_INCS@
-netcdf_opt  = @NETCDF_OPT@ 
+netcdf_opt  = @NETCDF_OPT@
+netcdf_ver  = @NETCDF_VER@
+netcdf_flag = @NETCDFFLAGS@
 lhdf5       = @HDF5_LIBS@
 ihdf5       = @HDF5_INCS@
 llibxc      = @LIBXC_LIBS@
@@ -65,6 +64,4 @@ ietsf       = @ETSF_INCS@
 # VPATH
 #
 VPATH = $$topdir
-#
-#
 #

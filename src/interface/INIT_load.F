@@ -92,16 +92,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
-#if defined _SURF
- use bulkeps,              ONLY:init_bulk
- use eels_kinematics,      ONLY:init_kinematics
- use eels_detector,        ONLY:init_detector
- use optcut,               ONLY:init_cutoff
- use surface_geometry,     ONLY:init_surface
- use model_loss_function,  ONLY:init_loss_function
- use convolute,            ONLY:init_convolute
- use ras_module,           ONLY:locfac, loctype
-#endif
 #if defined _SCALAPACK
  use SLK_m,                ONLY:SLK_test_H_dim
 #endif
@@ -175,11 +165,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
-#endif
-#if defined _SURF
- call it('r',defs,'sursp',  '[R] Surface Spectroscopy ')
- call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ')
- call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
@@ -498,21 +483,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
-#endif
- !
-#if defined _SURF
- !
- ! Surface spectroscopy
- !
- call init_bulk(defs)
- call init_surface(defs)
- call init_cutoff(defs)
- call init_kinematics(defs)
- call init_loss_function(defs)
- call init_detector(defs)
- call init_convolute(defs)
- call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
- call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
 #endif
  !
  ! QP ctl 

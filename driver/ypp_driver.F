@@ -246,19 +246,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #endif
  !
-#if defined _YPP_SURF
- !
- if (lras) call ras_ypp
- if (lreels) call reels_ypp
-!if (lcelleps) call ras_generate_epsdb(en,k)
- if (lloc) call ras_loc_ypp
- if (ltrans) call ras_trans_ypp(en,k)
- !
-#endif
- !
  ! END
  !
  call ypp_finalize(" ")
+ !
  return
  !
 contains

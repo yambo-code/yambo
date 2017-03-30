@@ -1,0 +1,4 @@
+objs = MATRIX_empty.o
+#if defined _SCALAPACK
+objs = SLK_matrix_init.o MATRIX_transfer.o MATRIX_duplicate.o
+#endif

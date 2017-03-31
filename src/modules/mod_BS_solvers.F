@@ -143,7 +143,7 @@ module BS_solvers
      use BS,        ONLY:n_BS_blks
      character(*)   :: label
      type(BS_block) :: BLKs_in(:),BLKs_out(:)
-     integer        :: i_B,tot_size
+     integer        :: i_B
      !
      tot_size=0
      !

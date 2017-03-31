@@ -33,7 +33,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
-  implicit none
+ implicit none
  !
  character(*)      :: what
  logical, optional :: CONDITION

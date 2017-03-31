@@ -149,10 +149,10 @@ if ! test x"$try_libs" = "x" ; then
       FFT_DESCRIPTION="(FFTW $desc)";
       AC_MSG_RESULT(FFTW ($desc) )
     fi
-    FFT_LIBS="${FFT_PATH} ${try_libs}"
   else
     def_fft="" 
     FFT_LIBS=""
+    FFT_INCS=""
     LDFLAGS="$save_ldflags"
   fi
   if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes; fi
@@ -198,6 +198,7 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     fi
     def_fft="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_LIBS="${FFT_PATH} $try_libs"
+    FFT_INCS="$IFLAG$try_incdir"
     HAVE_FFT=yes
     compile_fftqe=yes
     AC_MSG_RESULT(ESSL FFT)

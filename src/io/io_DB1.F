@@ -37,7 +37,7 @@ integer function io_DB1(E,k,ID)
 &                           qp_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_is_found, &
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_exist, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_serial_number,io_code_revision,&
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
@@ -196,13 +196,13 @@ integer function io_DB1(E,k,ID)
    ! Hybrids stuff
    !	
    if (ver_is_gt_or_eq(ID,revision=2962)) then
-     if (variable_is_found(ID,"EXX_FRACTION")) then
+     if (variable_exist(ID,"EXX_FRACTION")) then
        call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
 &                           VAR=' Exact exchange fraction in XC   :')
      endif
    else if (ver_is_gt_or_eq(ID,revision=3997)) then
-     if (variable_is_found(ID,"EXX_SCREENING")) then
+     if (variable_exist(ID,"EXX_SCREENING")) then
        call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
 &                              VAR=' Exact exchange screening in XC  :')

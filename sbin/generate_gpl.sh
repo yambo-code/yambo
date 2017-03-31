@@ -5,9 +5,9 @@ if [ $1 = "-h" ] ; then
  exit 0
 fi
 
-BASE="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
-PREV="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/public_branches/4.1"
-TARGET="/home/sangalli/Data/Lavoro/Codici/yambo/the_wole_project_gpl/master"
+BASE="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
+PREV="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.1"
+TARGET="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/master"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
 #

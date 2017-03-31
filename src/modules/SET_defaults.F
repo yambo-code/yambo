@@ -35,7 +35,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
 &                     l_X_terminator,X_terminator_E,global_gauge,X_is_evaluated_for_all_Qs,&
 &                     Chi_linalg_mode,X_use_lin_sys
- use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,force_v_g_space_approach,&
+ use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
@@ -354,7 +354,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
  use_g_space_approach       = .TRUE.
- force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
  eps_2_alpha=1._SP
  alpha_dim='adim'

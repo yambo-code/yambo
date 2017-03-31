@@ -53,7 +53,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach
+&                         use_shifted_grids_approach,DIP_P
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -102,7 +102,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_covariant_approach      = trim(Dip%approach)=='Covariant'
  use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
- call parser('PDirect'  ,force_v_g_space_approach)
+ call parser('PDirect'  ,Dip%force_v_g_space)
  !
  if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
    call warning(' Dipoles approach defined in input not recognised. Reverting to G-space v')
@@ -111,10 +111,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  endif
  !
 #if defined _SC || defined _RT
- force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
+ Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time
 #endif
- force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
- use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach
+ Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
+ use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
  idir_not_done           =.true.
  !
  ! Dipole dimensions to be fixed

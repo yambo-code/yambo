@@ -43,8 +43,6 @@ use com,             ONLY:warning
  type(DIPOLE_t),intent(inout) :: Dip
  real(SP),      intent(in)    :: q0(3)
  !
- logical           :: Dipole_bands_ordered
- !
  !
  ! NOTE: 1 - that in case we will enter here during a SC run to update the
  !           screened interaction all transitions must be considered in order to rotate <P>.
@@ -52,21 +50,21 @@ use com,             ONLY:warning
  !           in the new basis. So all transitions are needed.
  !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
- Dip%ngostnts=wf_ng
+ Dip%ng=wf_ng
  Dip%q0=q0
  !
- Dipole_bands_ordered=.true.
+ Dip%bands_ordered=.true.
  !
 #if defined _SC 
- if ( l_sc_run.or.l_real_time ) Dipole_bands_ordered=.false.
+ if ( l_sc_run.or.l_real_time ) Dip%bands_ordered=.false.
 #endif
 #if defined _QED 
- if (l_elphoton_corr) Dipole_bands_ordered=.false.
+ if (l_elphoton_corr)           Dip%bands_ordered=.false.
 #endif
  !
  ! Set up band limits
  !
- if (Dipole_bands_ordered.or.Dip%Energy_treshold<0._SP) then
+ if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
    Dip%ib_lim(1)=Xen%nbm
    Dip%ib_lim(2)=Xen%nbf+1
    if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)

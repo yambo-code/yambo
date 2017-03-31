@@ -67,7 +67,7 @@ integer function io_Vnl(Dip,Xen,ID)
    call io_elemental(ID,DB_I0=db_nbf,&
 &       VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
    call io_elemental(ID,&
-&       VAR=" RL vectors in the sum  :",I0=Dip%ngostnts,WARN=.true.,OP=(/"<="/))
+&       VAR=" RL vectors in the sum  :",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

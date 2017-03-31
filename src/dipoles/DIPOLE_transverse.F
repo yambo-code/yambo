@@ -38,8 +38,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,&
-&                              use_g_space_approach,force_v_g_space_approach
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
  use IO_m,                ONLY:io_control,RD_CL,RD
  use memory_m,            ONLY:mem_est
@@ -90,9 +89,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  l_eval_DIP_iR=use_g_space_approach
 #if defined _PL
- l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach.or.l_photolum
+ l_eval_DIP_P =use_g_space_approach.or.Dip%force_v_g_space.or.l_photolum
 #else
- l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach
+ l_eval_DIP_P =use_g_space_approach.or.Dip%force_v_g_space
 #endif
  l_eval_DIP_P2=.false.
  wf_dim=3

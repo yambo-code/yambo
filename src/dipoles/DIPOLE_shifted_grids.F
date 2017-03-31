@@ -39,8 +39,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use interfaces,          ONLY: WF_load
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: l_X_terminator
- use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,&
-&                               force_v_g_space_approach,num_shifted_grids
+ use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,num_shifted_grids
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
@@ -214,7 +213,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !=====
            ! <P>
            !=====
-           if(.not.force_v_g_space_approach) DIP_P(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
+           if(.not.Dip%force_v_g_space) DIP_P(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
            !
            call live_timing(steps=1)
            !

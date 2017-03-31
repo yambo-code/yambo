@@ -24,8 +24,7 @@
 integer function variables_DIPOLES(Dip,ID)
  !
  use units,         ONLY:HA2EV
- use DIPOLES,       ONLY:DIPOLE_t,use_shifted_grids_approach,use_real_space_approach,&
-&                        use_g_space_approach,use_covariant_approach,force_v_g_space_approach
+ use DIPOLES,       ONLY:DIPOLE_t
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:q0_def_norm
  use IO_m,          ONLY:io_elemental,io_status
@@ -36,7 +35,7 @@ integer function variables_DIPOLES(Dip,ID)
  type(DIPOLE_t) :: Dip
  integer        :: ID
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=14,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=12,MENU=0)
  !
  call io_elemental(ID,DB_I1=Dip%db_ib,&
 &     VAR=" X band range           :",I1=Dip%ib    ,CHECK=.true.,OP=(/">=","<="/))
@@ -49,17 +48,13 @@ integer function variables_DIPOLES(Dip,ID)
  call io_elemental(ID,&
 &     VAR=" [r,Vnl] included       :",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Using shifted grids    :",L0=use_shifted_grids_approach,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Bands ordered          :",L0=Dip%bands_ordered,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Using covariant dipoles:",L0=use_covariant_approach,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,&
-&     VAR=" Using G-space approach :",L0=use_g_space_approach,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,&
-&     VAR=" Using R-space approach :",L0=use_real_space_approach,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,&
-&     VAR=" Direct v evaluation    :",L0=force_v_g_space_approach,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Direct v evaluation    :",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,&
+&     VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
  !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

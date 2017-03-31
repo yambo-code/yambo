@@ -32,7 +32,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_P,force_v_g_space_approach
+ use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_P
  use X_m,                ONLY:l_X_terminator
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
@@ -126,7 +126,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      !=====
      ! <P>
      !=====
-     if(.not.force_v_g_space_approach) then
+     if(.not.Dip%force_v_g_space) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)

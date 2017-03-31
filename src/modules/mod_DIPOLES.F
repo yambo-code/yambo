@@ -34,7 +34,6 @@ module DIPOLES
  logical                  :: use_shifted_grids_approach
  logical                  :: use_g_space_approach
  logical                  :: use_real_space_approach
- logical                  :: force_v_g_space_approach
  logical                  :: Vnl_commutator_warning
  ! 
  ! other
@@ -56,12 +55,14 @@ module DIPOLES
    integer    :: ib_lim(2)
    integer    :: db_ib(2)
    integer    :: db_ib_lim(2)
-   integer    :: ngostnts
+   integer    :: ng
    real(SP)   :: ehe(2)
    real(SP)   :: q0(3)
    real(SP)   :: Energy_treshold
    real(SP)   :: Energy_treshold_vv
    logical    :: Vnl_included
+   logical    :: bands_ordered
+   logical    :: force_v_g_space
    character(schlen) :: approach
  end type
  !
@@ -146,12 +147,14 @@ module DIPOLES
      Dip_out%ib_lim    = Dip_in%ib_lim
      Dip_out%db_ib     = Dip_in%db_ib
      Dip_out%db_ib_lim = Dip_in%db_ib_lim
-     Dip_out%ngostnts  = Dip_in%ngostnts
+     Dip_out%ng        = Dip_in%ng
      Dip_out%ehe       = Dip_in%ehe
      Dip_out%q0        = Dip_in%q0
      Dip_out%Energy_treshold    = Dip_in%Energy_treshold
      Dip_out%Energy_treshold_vv = Dip_in%Energy_treshold_vv
      Dip_out%Vnl_included       = Dip_in%Vnl_included
+     Dip_out%bands_ordered      = Dip_in%bands_ordered
+     Dip_out%force_v_g_space    = Dip_in%force_v_g_space
      Dip_out%approach           = Dip_in%approach
    end subroutine DIPOLES_duplicate
    !
@@ -164,12 +167,14 @@ module DIPOLES
      Dip%ib_lim=(/0,0/)
      Dip%db_ib=(/0,0/)
      Dip%db_ib_lim=(/0,0/)
-     Dip%ngostnts=0
+     Dip%ng=0
      Dip%ehe=(/-1._SP,-1._SP/)/HA2EV
      Dip%q0=(/1._SP,0._SP,0._SP/)
      Dip%Energy_treshold=1.E-5_SP/HA2EV
      Dip%Energy_treshold_vv=1.E+5_SP/HA2EV
      Dip%Vnl_included=.false.
+     Dip%bands_ordered=.true.
+     Dip%force_v_g_space=.false.
      Dip%approach="G-space v"
    end subroutine DIPOLES_reset
    !

@@ -91,7 +91,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  ! PWscf (old)
  Dip%ib=(/1,E%nb/)       ! full bands range
- Dip%ngostnts=1          ! to overcome check for io
+ Dip%ng=1                ! to overcome check for io
  nXkibz=k_save%nibz
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(Dip,E,ID)
@@ -361,7 +361,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     Dip%ngostnts=wf_ng
+     Dip%ng=wf_ng
      nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
      io_Vnl_err=io_Vnl(Dip,E,ID)
@@ -437,7 +437,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
      !
-     Dip%ngostnts=wf_ng
+     Dip%ng=wf_ng
      nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
      io_Vnl_err=io_Vnl(Dip,E,ID)

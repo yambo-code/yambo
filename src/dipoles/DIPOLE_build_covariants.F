@@ -31,7 +31,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use interfaces,     ONLY:WF_load
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P,force_v_g_space_approach
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
@@ -196,7 +196,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      !=====
      ! <P>
      !=====
-     if(.not.force_v_g_space_approach) then
+     if(.not.Dip%force_v_g_space) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)

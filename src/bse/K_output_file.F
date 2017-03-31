@@ -487,7 +487,7 @@ subroutine K_output_file(iq,mode)
      endif
 #endif
      !
-     if(.not.l_Haydock) call of_open_close(jdos_file_name)
+     if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name)
      !
    end subroutine
    !

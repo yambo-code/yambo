@@ -143,7 +143,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    if (HEAD_k_CPU.and.HEAD_QP_cpu) then
      do ik=1,nXkibz 
        H_nl_sc=cZERO
-       if (.not.PAR_IND_WF_k%element_1D(ik) ) return
+       if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
        if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
        if (n_spinor==2) then
          if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')

@@ -123,7 +123,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      !
      ! Exc Energy from dE_xc[rho_n] energy density ... to be fixed, E_xc_ref is wrong
      !
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
+     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      !
      call RT_average_operator(O_VALUE=E_xc_ref,O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
      call RT_average_operator(O_VALUE=E_xc_sc, O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)

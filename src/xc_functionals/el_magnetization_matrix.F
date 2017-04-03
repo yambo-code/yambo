@@ -35,11 +35,14 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
- use wave_func,      ONLY:WF
+ use interfaces,     ONLY:WF_load
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
+ use wave_func,      ONLY:WF,WAVEs
  use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index,m3det
-#if defined _TIMING && defined _RT
+ use electrons,      ONLY:Total_magn
+#if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
  !
@@ -56,9 +59,10 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  integer :: ib1,ib2,ik,ik_RT,isym,ifft,i_wf1(n_spin),i_wf2(n_spin)
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  complex(SP) :: f_occ(n_sp_pol)
+ type(WAVEs) :: WF_tmp
  !
-#if defined _TIMING && defined _RT
- call timing('el_magnetization_matrix',OPR='start')
+#if defined _TIMING
+ call timing('el_magn_matrix',OPR='start')
 #endif
  !
  magn=0._SP
@@ -69,11 +73,14 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  if(lowest_band<RT_bands(1)-1) then
    !
    do ik=1,Xk%nibz
+     if (.not.any(PAR_IND_WF_linear%element_2D(:,ik))) cycle
+     call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/lowest_band,RT_bands(1)-1/),(/ik,ik/),&
+     &                                 space='R',title='-RT',keep_states_to_load=.true.)
      do ib1=lowest_band,RT_bands(1)-1
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
        !
-       i_wf1(:)=WF%index(ib1,ik,:)
+       i_wf1(:)=WF_tmp%index(ib1,ik,:)
        !
        f_occ(:)=cmplx(en%f(ib1,ik,:),0._SP)
        !
@@ -84,25 +91,26 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
          ! mx
          !
          cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
-&                real(f_occ(1),SP)*real(conjg(WF%c(:,i_wf1(1)))*WF%c(:,i_wf1(2)))&
-&               +real(f_occ(1),SP)*real(conjg(WF%c(:,i_wf1(2)))*WF%c(:,i_wf1(1))) )
+&                real(f_occ(1),SP)*real(conjg(WF_tmp%c(:,i_wf1(1)))*WF_tmp%c(:,i_wf1(2)))&
+&               +real(f_occ(1),SP)*real(conjg(WF_tmp%c(:,i_wf1(2)))*WF_tmp%c(:,i_wf1(1))) )
          !
          ! my
          !
          cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
-&                real(f_occ(1),SP)*aimag(conjg(WF%c(:,i_wf1(1)))*WF%c(:,i_wf1(2)))&
-&               +real(f_occ(1),SP)*aimag(conjg(WF%c(:,i_wf1(2)))*WF%c(:,i_wf1(1))) )
+&                real(f_occ(1),SP)*aimag(conjg(WF_tmp%c(:,i_wf1(1)))*WF_tmp%c(:,i_wf1(2)))&
+&               +real(f_occ(1),SP)*aimag(conjg(WF_tmp%c(:,i_wf1(2)))*WF_tmp%c(:,i_wf1(1))) )
        endif
        !
        ! mz
        !
        cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
-&              real(f_occ(1)       ,SP)*real(conjg(WF%c(:,i_wf1(1)))*WF%c(:,i_wf1(1)))&
-&             -real(f_occ(n_sp_pol),SP)*real(conjg(WF%c(:,i_wf1(2)))*WF%c(:,i_wf1(2))) )
+&              real(f_occ(1)       ,SP)*real(conjg(WF_tmp%c(:,i_wf1(1)))*WF_tmp%c(:,i_wf1(1)))&
+&             -real(f_occ(n_sp_pol),SP)*real(conjg(WF_tmp%c(:,i_wf1(2)))*WF_tmp%c(:,i_wf1(2))) )
        !
      enddo
+     call WF_free(WF_tmp)
    enddo
-   !
+   !  
  endif
  !
  do ik=1,Xk%nibz
@@ -169,8 +177,14 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !
  enddo
  !
-#if defined _TIMING && defined _RT
- call timing('el_magnetization_matrix',OPR='stop')
+ if(lowest_band<RT_bands(1)-1) then
+   do ifft=1,fft_size
+     Total_magn(:)=Total_magn(:)+magn(ifft,:)
+   enddo
+ endif
+ !
+#if defined _TIMING
+ call timing('el_magn_matrix',OPR='stop')
 #endif
  !
 end subroutine

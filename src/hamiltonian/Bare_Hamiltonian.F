@@ -37,7 +37,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc
+ use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
@@ -79,8 +79,17 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !=======================================
  call WF_load(WF,WF_G_max,WF_Go_indx,(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
+#if defined _RT
+ if(l_real_time) then
+   rho_n=rho_reference
+   if(n_spin>1) magn_n=magn_reference
+ else
+#endif
  call el_density_and_current(E,Xk,rho=rho_n)
  if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+#if defined _RT
+ endif
+#endif
  V_xc_sc=V_xc
  !
  ! The Hzero = -nabla**2. + V_ext is deduced from the input energies en0:

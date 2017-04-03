@@ -61,7 +61,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  ! Wavefunctions in G space 
  !==========================
- call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
@@ -92,6 +92,8 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
    do ib=bands_to_load(1),bands_to_load(2)
      do i_spin=1,n_sp_pol   
        ifft=WF%index(ib,ik,i_spin)
+       !
+       if(ifft==0) cycle
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

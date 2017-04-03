@@ -143,7 +143,8 @@ subroutine RT_driver(E,X,k,q)
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   call WF_load(WF,WF_G_max,WF_Go_indx,(/1,RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT')  
+   call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
    ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size

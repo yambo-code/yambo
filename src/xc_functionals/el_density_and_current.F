@@ -78,7 +78,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
-! complex(SP):: WF_der(3,fft_size)
+! complex(SP):: WF_der(fft_size,n_spinor,3)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
 #if defined _TIMING && defined _RT
@@ -144,9 +144,11 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          !
          if (l_rho) rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_wf))**2
          !
+         ! Davide: to be fixed after merge with devel-wf-io
+         !
          !if (l_J) then
          !  !
-         !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
+         !  call eval_Gradient(WF%c(:,ifft),WF_der,n_spinor,"wave")
          !  !
          !  do i_r=1,fft_size
          !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_wf)*WF_der(i_r,:))

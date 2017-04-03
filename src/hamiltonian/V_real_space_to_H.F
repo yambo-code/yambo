@@ -40,17 +40,17 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  implicit none
  !
- integer     :: ik,i_sp_pol
- real(SP)    :: V(fft_size,n_spin)
- complex(SP) :: V_mat(fft_size,n_spin,n_spin)
- complex(SP) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
- character(3):: V_kind
+ integer,      intent(in)    :: ik,i_sp_pol
+ real(SP),     intent(in)    :: V(fft_size,n_spin)
+ complex(SP),  intent(inout) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
+ character(3), intent(in)    :: V_kind
  type(WAVEs) :: WF
  !
  ! Work Space
  !
- integer    :: i_qp,ib,ibp,ifft,ifftp
- complex(SP):: c_ws(fft_size,n_spin)
+ integer     :: ib,ibp,ifft,ifftp
+ complex(SP) :: V_mat(fft_size,n_spin,n_spin)
+ complex(SP) :: c_ws(fft_size,n_spin)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return

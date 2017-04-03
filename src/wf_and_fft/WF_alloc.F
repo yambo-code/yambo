@@ -28,10 +28,8 @@ subroutine WF_alloc(WF)
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,QUIET_alloc
  use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
-#if defined _FFTW
- use FFT_m,         ONLY:fftw_plan
-#endif
  use interfaces,    ONLY:PARALLEL_live_message
+ !
  implicit none
  !
  type(WAVEs)           :: WF
@@ -78,8 +76,5 @@ subroutine WF_alloc(WF)
  !
  WF%c=cZERO
  WF%index=0
-#if defined _FFTW
- fftw_plan=0
-#endif
  !
 end subroutine

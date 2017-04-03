@@ -41,6 +41,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
+ use fft_m,      ONLY:fft_size
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
@@ -85,6 +86,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  if(.not.l_RT_is_WFfree) then
    !
+   call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
+   if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
+   !
    call Bare_Hamiltonian(E,k,k)
    !
    ! Reference Hartree and XC
@@ -105,11 +109,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call PP_redux_wait(HARTREE0)
    call PP_redux_wait(XC0)
-   !
-   ! Reference density
-   !====================
-   rho_reference=rho_n
-   if(n_spin>1) magn_reference=magn_n
    !
  endif
  !
@@ -198,13 +197,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
    !
    NE_i_start_time=NE_i_time
-   !
-   ! If I'm doing the response to an external field I need rho_reference and G_lesser_reference
-   !
-   if (.not.l_use_Hxc_collisions.and. trim(RT_potential)/='IP') then
-     call el_density_matrix(G_lesser_reference,E,k,rho_reference,1)
-     if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
-   endif
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !

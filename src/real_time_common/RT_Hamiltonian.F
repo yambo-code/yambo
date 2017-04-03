@@ -53,6 +53,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
+ use units,          ONLY:SPEED_OF_LIGHT
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -80,8 +81,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  ! Work Space
  !
- integer          :: ik,ik_RT,ik_DbGd,ib,ibp
- real(SP)         :: delta_rho(fft_size),delta_magn(fft_size,3),E_new
+ integer                  :: ik,ik_RT,ik_DbGd,ib,ibp,i_dir
+ real(SP),    allocatable :: delta_rho(:),delta_magn(:,:),E_new
+ complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:)
  !
 #if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
@@ -114,27 +116,40 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  if ( .not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP' ) then
    !
+   !
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
    if (eval_HARTREE .or. eval_DFT) then
+     allocate(delta_rho(fft_size))
      call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
      rho_n=rho_reference+delta_rho
+     ! The VHartree term
+     !-------------------
+     if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
+     deallocate(delta_rho)
    endif
    !
    if(n_spin>1 .and. eval_DFT) then
+     allocate(delta_magn(fft_size,3))
      call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
      magn_n=magn_reference+delta_magn
+     deallocate(delta_magn)
    endif
-   !
-   ! The VHartree term
-   !-------------------
-   if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
    !
    ! The Vxc term
    !--------------
    if (eval_DFT) then
      call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
      V_xc_sc=V_xc-REF_V_xc_sc
+   endif
+   !
+   if(n_spinor==2 .and. (eval_DFT.or.eval_HARTREE) ) then
+     allocate(V_scf(fft_size),V_scf_grad(fft_size,3))
+     if(eval_HARTREE) V_scf=V_scf+V_Hartree_sc(:,1)
+     if(eval_DFT)     V_scf=V_scf+V_xc_sc(:,1)+V_xc_sc(:,2)
+     call eval_Gradient(V_scf,V_scf_grad,1,"potential")
+     forall(i_dir=1:3) V_scf_grad(:,i_dir)=V_scf_grad(:,i_dir)+A_input%vecpot_vel(i_dir)/SPEED_OF_LIGHT ! Gaussian units
+     deallocate(V_scf)
    endif
    !
    !
@@ -146,12 +161,15 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
        if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
        if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
        if (n_spinor==2) then
-         if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-         if(eval_DFT)     call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+         if(eval_HARTREE)              call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+         if(eval_DFT)                  call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+         !if(eval_DFT.or.eval_HARTREE)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
        endif
        forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
      enddo
    endif
+   !
+   if(allocated(V_scf_grad)) deallocate(V_scf_grad)
    !
  endif
  !

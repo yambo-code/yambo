@@ -29,13 +29,15 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,      ONLY:bz_samp
+ use interfaces,     ONLY:WF_load
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
- use wave_func,      ONLY:WF
+ use wave_func,      ONLY:WF,WAVEs
  use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,myid
  use matrix_operate, ONLY:UP_matrix_index
-#if defined _TIMING && defined _RT
+#if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
  !
@@ -52,8 +54,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  integer     :: ib1,ib2,ik,ik_RT,i_wf1,rho_syms,i_wf2,ir,i_sp_pol,i_spinor
  real(SP)    :: rho_no_sym(fft_size)
  complex(SP) :: f_occ
+ type(WAVEs) :: WF_tmp
  !
-#if defined _TIMING && defined _RT
+#if defined _TIMING
  call timing('el_density_matrix',OPR='start')
 #endif
  !
@@ -62,8 +65,13 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  if(lowest_band<RT_bands(1)) then
    !
+   !call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/1,Xk%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
+   !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz
+       if (.not.any(PAR_IND_WF_linear%element_2D(:,ik))) cycle
+       !call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/ik,ik/),&
+       !&                      space='R',title='-RT',keep_states_to_load=.true.)
        do ib1=lowest_band,RT_bands(1)-1
          !
          if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
@@ -73,11 +81,16 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          do i_spinor=1,n_spinor         
            i_wf1=WF%index(ib1,ik,i_sp_pol+i_spinor-1)
            rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2)
+           !i_wf1=WF_tmp%index(ib1,ik,i_sp_pol+i_spinor-1)
+           !rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF_tmp%c(:,i_wf1))**2)
          enddo
          !
        enddo
+       !call WF_free(WF_tmp)
      enddo
    enddo
+   !
+   !call WF_free(WF_tmp)
    !
  endif
  !
@@ -132,7 +145,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  rho(:)=real(1+i_time_rev,SP)*rho(:)
  !
-#if defined _TIMING && defined _RT
+#if defined _TIMING
  call timing('el_density_matrix',OPR='stop')
 #endif
  !

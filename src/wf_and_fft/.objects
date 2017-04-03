@@ -20,10 +20,10 @@ WF_rot_object =
 #if defined _SC
 WF_rot_object = WF_rotate.o
 #endif
-#if defined _MAGNETIC
+#if defined _MAGNETIC || defined _RT
 WF_der_objects = WF_derivative.o
 #endif
-objs = fft_setup.o $(FFT_object) $(FFT_more) $(QED_more) \
+objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) $(QED_more) \
        fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint.o  \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_inversion.o \
        WF_load.o WF_symm.o WF_apply_symm.o $(WF_rot_object) \

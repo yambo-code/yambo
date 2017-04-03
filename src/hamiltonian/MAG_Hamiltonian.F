@@ -59,6 +59,7 @@ subroutine MAG_Hamiltonian()
  use hamiltonian,    ONLY:Hzero
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
+ use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
 &                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
@@ -79,7 +80,6 @@ subroutine MAG_Hamiltonian()
  ! Dummies
  !
  integer    :: ir,i_sp_pol,i_wf(n_spin),j_wf(n_spin),ik,ib,ibp,i_spinor,j_spinor,i_spin
- complex(SP):: sigma_x(2,2),sigma_y(2,2),sigma_z(2,2)
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
  !
  ! Allocs
@@ -135,9 +135,6 @@ subroutine MAG_Hamiltonian()
      enddo 
    else if(n_spinor==2) then
      ! Pauli matrices
-     sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
-     sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
-     sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
        H_pauli(ir,:,:)=Bx*sigma_x+By*sigma_y+Bz*sigma_z

@@ -31,6 +31,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
@@ -149,7 +152,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
  enddo
- 
+ ! 
+#if defined _FFTW
+ fftw_plan=0
+#endif
  !
  contains
    !

@@ -37,6 +37,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
+ use parallel_m,     ONLY:PAR_IND_WF_linear
 #if defined _MAGNETIC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
@@ -91,9 +92,10 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  do ik=derivative_kpt(1),derivative_kpt(2)
    do ib=bands_to_load(1),bands_to_load(2)
      do i_spin=1,n_sp_pol   
-       ifft=WF%index(ib,ik,i_spin)
        !
-       if(ifft==0) cycle
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       !
+       ifft=WF%index(ib,ik,i_spin)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

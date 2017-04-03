@@ -65,13 +65,11 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  if(lowest_band<RT_bands(1)) then
    !
-   !call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/1,Xk%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
-   !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz
        if (.not.any(PAR_IND_WF_linear%element_2D(:,ik))) cycle
-       !call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/ik,ik/),&
-       !&                      space='R',title='-RT',keep_states_to_load=.true.)
+       call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/ik,ik/),&
+       &                      space='R',title='-RT',keep_states_to_load=.true.)
        do ib1=lowest_band,RT_bands(1)-1
          !
          if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
@@ -79,18 +77,14 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          f_occ=en%f(ib1,ik,1)
          !
          do i_spinor=1,n_spinor         
-           i_wf1=WF%index(ib1,ik,i_sp_pol+i_spinor-1)
-           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2)
-           !i_wf1=WF_tmp%index(ib1,ik,i_sp_pol+i_spinor-1)
-           !rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF_tmp%c(:,i_wf1))**2)
+           i_wf1=WF_tmp%index(ib1,ik,i_sp_pol+i_spinor-1)
+           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF_tmp%c(:,i_wf1))**2)
          enddo
          !
        enddo
-       !call WF_free(WF_tmp)
+       call WF_free(WF_tmp)
      enddo
    enddo
-   !
-   !call WF_free(WF_tmp)
    !
  endif
  !

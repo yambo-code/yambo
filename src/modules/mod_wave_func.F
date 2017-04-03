@@ -125,6 +125,7 @@ module wave_func
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)
+     use pars,     ONLY : cZERO
      use memory_m, ONLY : mem_est
      use FFT_m,    ONLY : fft_size
      logical  :: cart_direction(3)
@@ -132,17 +133,17 @@ module wave_func
      if(cart_direction(1)) then
        allocate(wf_x(fft_size,WF%N))
        call mem_est("WF_x",(/fft_size*WF%N/),quiet=QUIET_alloc)
-       wf_x=(0.,0.)
+       wf_x=cZERO
      endif
      if(cart_direction(2)) then
        allocate(wf_y(fft_size,WF%N))
        call mem_est("WF_y",(/fft_size*WF%N/),quiet=QUIET_alloc)
-       wf_y=(0.,0.)
+       wf_y=cZERO
      endif
      if(cart_direction(3)) then
        allocate(wf_z(fft_size,WF%N))
        call mem_est("WF_z",(/fft_size*WF%N/),quiet=QUIET_alloc)
-       wf_z=(0.,0.)
+       wf_z=cZERO
      endif
    end subroutine
    !

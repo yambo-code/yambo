@@ -61,7 +61,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k
+&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k,    &
+&                         l_update_SOC
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu,myid
@@ -114,7 +115,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
- if ( .not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP' ) then
+ if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') .or. l_update_SOC ) then
    !
    !
    ! Density & Magnetization (needed for VHartree and Vxc)
@@ -148,7 +149,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    !
    ! Update of SOC term
    !
-   if(n_spinor==2 .and. (eval_DFT.or.eval_HARTREE) ) then
+   if(n_spinor==2 .and. l_update_SOC ) then
      allocate(V_scf(fft_size),V_scf_grad(fft_size,3))!,V_tmp(fft_size,1,3))
      V_scf=cZERO
      V_scf_grad=cZERO
@@ -168,9 +169,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
        if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
        if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
        if (n_spinor==2) then
-         if(eval_HARTREE)              call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-         if(eval_DFT)                  call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
-         if(eval_DFT.or.eval_HARTREE)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
+         if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+         if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+         if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
        endif
        forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
      enddo

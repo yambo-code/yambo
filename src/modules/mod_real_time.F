@@ -160,7 +160,10 @@ module real_time
  logical                  :: l_update_QP_Energies
  logical                  :: l_update_QP_WFs=.false.
  !
+ logical                  :: l_update_SOC
+ !
  ! Relaxation and Dissipation 
+ !
  !----------------------------
  logical                  :: l_RT_uses_E_DbGd
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  

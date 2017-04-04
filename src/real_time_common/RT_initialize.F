@@ -47,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -87,6 +87,7 @@ subroutine RT_initialize(E,k,q)
  if(.not.eval_energy) eval_entropy=.false.
  !
  call parser('SaveGhistory',         SAVE_G_history)
+ call parser('UpdateSOC',            l_update_SOC)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
@@ -316,7 +317,8 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. .not. eval_energy
+ l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") &
+&                 .and. (.not.eval_energy) .and. (.not.l_update_SOC)
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !
@@ -362,6 +364,7 @@ subroutine RT_initialize(E,k,q)
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   :',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
  if (l_update_QP_Energies) call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
+ if (l_update_SOC)         call msg( 'r','Update SOC Interaction     :',l_update_SOC)
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)

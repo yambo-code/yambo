@@ -422,6 +422,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTEvalEnergt',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
+ call it('f',defs,'UpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
  !
  ! Scattering
  !

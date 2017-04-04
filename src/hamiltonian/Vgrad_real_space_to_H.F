@@ -77,7 +77,7 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
      ! x
      c_ws_x(:,i_spinor)= V_grad(:,2)*WF_z(:,ifftp)-V_grad(:,3)*WF_y(:,ifftp)
      ! y
-     c_ws_y(:,i_spinor)=-V_grad(:,1)*WF_z(:,ifftp)-V_grad(:,3)*WF_x(:,ifftp)
+     c_ws_y(:,i_spinor)=-V_grad(:,1)*WF_z(:,ifftp)+V_grad(:,3)*WF_x(:,ifftp)
      ! z
      c_ws_z(:,i_spinor)= V_grad(:,1)*WF_y(:,ifftp)-V_grad(:,2)*WF_x(:,ifftp)
      !

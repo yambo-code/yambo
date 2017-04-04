@@ -48,6 +48,7 @@ shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
+libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @srcdir_path@/lib
@@ -244,13 +245,16 @@ clean:
 	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
+distclean: clean_all remove_ext_libs
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
 	@$(conf_clean)
 	@$(xclean)
+remove_ext_libs: 
+	@echo "[CLEAN] Pre-compiled internal libraries ... done"
+	@rm -fr "$(libs_prefix)"
 
 #===========
 # Functions
@@ -406,7 +410,7 @@ define lib_ext_clean
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
- echo "[CLEAN] Libs EXT (clean) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean) ... done" 
 endef
 define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
@@ -426,7 +430,7 @@ define lib_ext_clean_all
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] Libs EXT (clean_all) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \

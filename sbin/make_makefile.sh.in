@@ -25,7 +25,7 @@
 os="@build_os@"
 cpp="@CPP@"
 fpp="@FPP@"
-cppflags="@CPPFLAGS@"
+cppflags="@CPPFLAGS_yambo@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 KEEPSRC="@enable_keep_src@"

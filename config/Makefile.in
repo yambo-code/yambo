@@ -59,7 +59,7 @@ CFGFILES = config/setup config/Makefile config/report  \
            sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
 TARGETS  = yambo interfaces ypp
-UTILS    = changelog get_extlibs
+UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
 PROJECTS = yambo_ph ypp_ph
 BROKEN   = yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
@@ -88,7 +88,7 @@ PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # Interfaces
 #
-2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
 #
 # YPP
 #
@@ -254,8 +254,9 @@ clean_all:
 	@$(conf_clean)
 	@$(xclean)
 remove_ext_libs: 
-	@$(lib_ext_remove)
-#
+	@echo "[CLEAN] Pre-compiled internal libraries ... done"
+	@rm -fr "$(libs_prefix)"
+
 #===========
 # Functions
 #===========
@@ -433,9 +434,9 @@ define lib_ext_clean_all
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
 endef
 define lib_ext_remove
- if test -f $(libs_prefix)/../driver/driver.c; then \
-  @echo "[CLEAN] Pre-compiled internal libraries ... done"; \
-  @rm -fr "$(libs_prefix)"; \
+ @if test -f $(libs_prefix)/../driver/driver.c; then \
+  echo "[CLEAN] Pre-compiled internal libraries ... done"; \
+  rm -fr "$(libs_prefix)"; \
  fi
 endef
 define lib_mod_clean

@@ -254,9 +254,8 @@ clean_all:
 	@$(conf_clean)
 	@$(xclean)
 remove_ext_libs: 
-	@echo "[CLEAN] Pre-compiled internal libraries ... done"
-	@rm -fr "$(libs_prefix)"
-
+	@$(lib_ext_remove)
+#
 #===========
 # Functions
 #===========
@@ -432,6 +431,12 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
+endef
+define lib_ext_remove
+ if test -f $(libs_prefix)/../driver/driver.c; then \
+  @echo "[CLEAN] Pre-compiled internal libraries ... done"; \
+  @rm -fr "$(libs_prefix)"; \
+ fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \

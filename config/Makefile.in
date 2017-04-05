@@ -432,9 +432,9 @@ define lib_ext_clean_all
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
 endef
 define lib_ext_remove
- if test -f $(libs_prefix)/../driver/driver.c; then \
-  @echo "[CLEAN] Pre-compiled internal libraries ... done"; \
-  @rm -fr "$(libs_prefix)"; \
+ @if test -f $(libs_prefix)/../driver/driver.c; then \
+  echo "[CLEAN] Pre-compiled internal libraries ... done"; \
+  rm -fr "$(libs_prefix)"; \
  fi
 endef
 define lib_mod_clean

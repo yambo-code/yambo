@@ -32,7 +32,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset,q_source
 #if defined _ELPH
- use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs
+ use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded
 #endif
  use vec_operate, ONLY:c2a
 #include<memory.h>
@@ -76,7 +76,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
    enddo
    return
 #if defined _ELPH
- else if (allocated(ph_qpt).and.elph_use_q_grid) then
+ else if (allocated(ph_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
    q_source="Electron-Phonon databases"
    nqibz=elph_nDBs
    YAMBO_ALLOC(q_pt,(nqibz,3))

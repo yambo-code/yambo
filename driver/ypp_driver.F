@@ -247,18 +247,6 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
-#endif
- !
-#if defined _YPP_SURF
- !
- if (lras) call ras_ypp
- if (lreels) call reels_ypp
-!if (lcelleps) call ras_generate_epsdb(en,k)
- if (lloc) call ras_loc_ypp
- if (ltrans) call ras_trans_ypp(en,k)
- !
-#endif
- !
  ! Memory Overview
  !=================
 #if defined _MEM_CHECK 

@@ -36,6 +36,7 @@ module ELPH
  integer   :: elph_branches(2)
  real(SP)  :: W_debye
  logical   :: elph_use_q_grid
+ logical   :: elph_grids_are_expanded=.FALSE.
  real(SP),    allocatable :: QP_OMS_Fan(:)
  real(SP),    allocatable :: QP_DW(:)
  real(SP),    allocatable :: ph_kpt_bz(:,:)
@@ -69,6 +70,7 @@ module ELPH
  logical   :: eval_G_using_KK ! Perform KK of the spectral function
  real(SP)  :: FAN_deltaE_treshold
  real(SP)  :: DW_deltaE_treshold
+ real(SP)  :: MAX_gkkp=0._SP
  !
  contains
    !

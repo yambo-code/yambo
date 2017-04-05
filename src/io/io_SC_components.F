@@ -34,7 +34,7 @@ integer function io_SC_components(what,E_sc,ID)
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
+&                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
@@ -105,7 +105,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
-     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")) then
+     if (write_is_on(ID).or.variable_exist(ID,"TEMPERATURES")) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)

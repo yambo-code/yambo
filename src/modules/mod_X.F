@@ -23,8 +23,8 @@
 !
 module X_m
  !
- use pars,     ONLY:SP,lchlen,schlen
- use units,    ONLY:HA2EV
+ use pars,           ONLY:SP,lchlen,schlen
+ use units,          ONLY:HA2EV
  !
 #include <memory.h>
  !

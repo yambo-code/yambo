@@ -247,6 +247,8 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !
+#endif
+ !
  ! Memory Overview
  !=================
 #if defined _MEM_CHECK 

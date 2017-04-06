@@ -39,7 +39,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim
  use SLK_m,          ONLY:BLACS_structure_in_use 
-!
+ !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR

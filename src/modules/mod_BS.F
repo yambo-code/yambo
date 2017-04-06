@@ -23,8 +23,8 @@
 !
 module BS
  !
- use pars,         ONLY:IP,SP,schlen,lchlen
- use collision_el, ONLY:elemental_collision
+ use pars,          ONLY:IP,SP,schlen,lchlen
+ use collision_el,  ONLY:elemental_collision
 #include<memory.h>
  !
  ! Modes and logicals

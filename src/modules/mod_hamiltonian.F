@@ -108,7 +108,7 @@ module hamiltonian
        YAMBO_ALLOC(magn_n,(fft_size,3))
      endif
      !
-     YAMBO_ALLOC(Ho(H_ref_bands,(2),H_ref_bands,(2),E%nk,n_sp_pol))
+     YAMBO_ALLOC(Ho,(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
      !
      YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
      !

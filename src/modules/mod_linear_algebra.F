@@ -23,8 +23,7 @@
 !
 module linear_algebra
  !
- use pars, ONLY:SP
- !
+ use pars,       ONLY:SP,schlen
 #include<memory.h>
  !
  integer, parameter :: USE_LK=1

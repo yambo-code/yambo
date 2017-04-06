@@ -23,8 +23,8 @@
 !
 module BS_solvers
  !
- use pars,       ONLY:SP,schlen,lchlen
- use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
+ use pars,           ONLY:SP,schlen,lchlen
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use SLK_m,      ONLY:SLK_matrix
 #include <memory.h>
  !
@@ -145,13 +145,9 @@ module BS_solvers
      type(BS_block) :: BLKs_in(:),BLKs_out(:)
      integer        :: i_B
      !
-     tot_size=0
-     !
      do i_B=1,n_BS_blks
        !
        YAMBO_ALLOC(BLKs_out(i_B)%mat,(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
-       !
-       tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
        !
        BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
        BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip

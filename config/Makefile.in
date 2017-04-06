@@ -28,7 +28,7 @@ netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
 debug       = @enable_debug@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -56,13 +56,14 @@ includedir  = @srcdir_path@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp include/c_defs.h
+           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
+           include/c_defs.h
 TARGETS  = yambo interfaces ypp
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
-           ypp_ph ypp_sc ypp_rt ypp_magnetic 
-BROKEN   = 
+PROJECTS = yambo_ph ypp_ph
+BROKEN   = yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
+           ypp_sc ypp_rt ypp_magnetic 
 DEBUG    = 
 EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
 INTERFCS = a2y p2y e2y c2y
@@ -87,7 +88,7 @@ PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 #
 # Interfaces
 #
-2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
 #
 # YPP
 #

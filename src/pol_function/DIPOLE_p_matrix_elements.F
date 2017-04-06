@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho_spinor,P2,l_eval_P2)
+subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho,rho_spinor,P2,l_eval_P2)
  !
  use pars,          ONLY:SP,cZERO,cONE,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
@@ -43,7 +43,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho_spinor,P2,l_eval_P2)
  type(bz_samp), intent(in)  :: Xk
  integer,       intent(in)  :: ivfft(n_spinor),icfft(n_spinor),ik
  logical,       intent(in)  :: l_eval_P2
- complex(SP),   intent(out) :: rho_spinor(3,n_spinor,n_spinor),P2
+ complex(SP),   intent(out) :: rho(3),rho_spinor(3,n_spinor,n_spinor),P2
  ! 
  ! Work Space
  !
@@ -52,10 +52,11 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho_spinor,P2,l_eval_P2)
  integer      :: i_spinor,j_spinor,i1
  complex(SP)  :: wf_grad(wf_ng),wf_der_sq(wf_ng)
  !
+ rho=cZERO
  rho_spinor=cZERO
  P2=cZERO
+ ! 
  eval_spinor_matrix=.false.
- !
 #if defined _RT
  eval_spinor_matrix=l_real_time.and.n_spinor==2.and.l_update_SOC
 #endif
@@ -92,6 +93,8 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho_spinor,P2,l_eval_P2)
        if( (.not.eval_spinor_matrix) .and. i_spinor/=j_spinor ) cycle
        rho_spinor(i1,i_spinor,j_spinor)=Vstar_dot_V_omp(wf_ng,wf_grad,WF%c(:,icfft(j_spinor)))
      enddo
+     !
+     rho(i1)=rho(i1)+rho_spinor(i1,i_spinor,i_spinor)
      !
    enddo
    !

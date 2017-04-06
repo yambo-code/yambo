@@ -189,17 +189,12 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! Evaluate <ivfft|   p   |icfft>
          !================================
-         call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho_spinor,P2,l_eval_DIP_P2)
+         call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
          ! Evaluate <ivfft|[x,Vnl]|icfft>
          !================================
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho_spinor,kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho_spinor,kbv)
-         !
-         rho=cZERO
-         do i_spinor=1,n_spinor
-           rho=rho+rho_spinor(1:3,i_spinor,i_spinor)
-         enddo
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ec may become very large)

@@ -32,49 +32,35 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim
-#if defined _RT
- use drivers,       ONLY:l_real_time
-#endif
  !
  implicit none
  !
  integer    :: ivfft(n_spinor),icfft(n_spinor)
- complex(SP):: rho(3,n_spinor,n_spinor),kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  ! 
  ! Work Space
  !
- logical     :: eval_spinor_matrix
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor,n_spinor)
+ complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)
  !
  drho=cZERO
- eval_spinor_matrix=.false.
  !
-#if defined _RT
- eval_spinor_matrix=l_real_time.and.n_spinor==2
-#endif
- !
-!$omp parallel do default(shared), private(i_spinor,j_spinor,i1,i2,Cv,Cc,Vv,Vc), collapse(3)
+!$omp parallel do default(shared), private(i_spinor,i1,i2,Cv,Cc,Vv,Vc), collapse(2)
  do i_spinor=1,n_spinor
-   do j_spinor=1,n_spinor
-   !
-   if(.not.eval_spinor_matrix.and.i_spinor/=j_spinor) cycle
    !
    do i1=1,pp_kbv_dim
      !
      Cv(i_spinor)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1,i_spinor))
-     Cc(j_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(j_spinor)),kbv(:,i1,1,j_spinor))
+     Cc(i_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1,i_spinor))
      !
-     if ( Cc(j_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
+     if ( Cc(i_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
+     !
+     do i2=1,3
        !
-       do i2=1,3
-         !
-         Vv(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
-         Vc(i2,j_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(j_spinor)),kbv(:,i1,1+i2,j_spinor))
-         !
-         drho(i2,i1,i_spinor,j_spinor)=conjg(Cv(i_spinor))*Vc(i2,j_spinor)+conjg(Vv(i2,i_spinor))*Cc(j_spinor)
-         !
-       enddo
+       Vv(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
+       Vc(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i1,1+i2,i_spinor))
+       !
+       drho(i2,i1,i_spinor)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
        !
      enddo
      !
@@ -82,8 +68,7 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  enddo
 !$omp end parallel do
  !
- forall(i1=1:3,i_spinor=1:n_spinor,j_spinor=1:n_spinor) &
-&  rho(i1,i_spinor,j_spinor)=rho(i1,i_spinor,j_spinor)+sum(drho(i1,:,i_spinor,j_spinor))
+ forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(i1,:,:))
  !
 end subroutine
 

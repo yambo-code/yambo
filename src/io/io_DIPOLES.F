@@ -166,7 +166,7 @@ integer function io_DIPOLES(X,ID)
    !
    ! P_Spin
    !
-   write (VAR_name,'(a,i4.4)') 'DIP_spinor_k_',ik
+   write (VAR_name,'(a,i4.4)') 'DIP_P_spinor_k_',ik
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=Pspinor_size)
    call io_bulk(ID,C5=DIP_P_spinor(:,:,:,:,:,ik_mem),IPOS=Pspinor_ipos)
    !

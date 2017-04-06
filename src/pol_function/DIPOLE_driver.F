@@ -387,7 +387,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           if (l_real_time.and.n_spin>1) &
 &           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           if (l_real_time.and.n_spinor>1) &
-&           DIP_spin(:,:,:,:,ik_mem)= DIP_spin(:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+&           DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
 #if defined _SC || defined _RT
           if (l_sc_run.or.l_real_time) &

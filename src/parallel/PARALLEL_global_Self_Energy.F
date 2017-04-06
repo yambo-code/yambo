@@ -150,18 +150,18 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    endif
    !
  else
- !   
+   !   
 #endif
- !
- ! 00000000          <- q
- ! 0000     0000     <- g
- ! x0 x0    x0 x0    <- qp
- ! 0 0 0 0  0 0 0 0  <- b
- !
- ! QP_cpu corresponds to x marked CPU's. This flag is used when no b loops are done
- !
- HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
- !
+   !
+   ! 00000000          <- q
+   ! 0000     0000     <- g
+   ! x0 x0    x0 x0    <- qp
+   ! 0 0 0 0  0 0 0 0  <- b
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when no b loops are done
+   !
+   HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
+   !
 #if defined _SC || defined _RT
  endif
 #endif

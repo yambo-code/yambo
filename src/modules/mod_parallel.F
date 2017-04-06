@@ -327,13 +327,15 @@ module parallel_m
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
- integer            :: K_range
- integer            :: EH_range
- integer            :: QP_range
- integer            :: Q_range(2)
- integer            :: n_bands(2)
- integer            :: n_c_bands(2)
- integer            :: n_v_bands(2)
+ integer            :: PAR_K_range      = 0
+ integer            :: PAR_EH_range     = 0
+ integer            :: PAR_QP_range     = 0
+ integer            :: PAR_Q_range(2)   = 0
+ integer            :: PAR_X_ib(2)      = 0
+ integer            :: PAR_X_iq(2)      = 0
+ integer            :: PAR_n_bands(2)   = 0
+ integer            :: PAR_n_c_bands(2) = 0
+ integer            :: PAR_n_v_bands(2) = 0
  !
  ! ... and derived variables
  !==========================
@@ -385,6 +387,31 @@ module parallel_m
  end interface PP_send_and_receive
  !
  contains
+   !
+   subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
+     !
+     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
+     type(PP_indexes)  ::PAR_ind
+     !
+     V_ind  =0
+     n_V_ind=0
+     if (N_elements==size(PAR_IND%element_1D)) then
+       do i_p=1,N_elements
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(i_p)=n_V_ind
+         endif
+       enddo
+     else 
+       do i_p=1,size(PAR_IND%element_1D)
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(n_V_ind)=i_p
+         endif
+       enddo
+     endif
+     !
+   end subroutine
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err

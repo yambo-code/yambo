@@ -88,7 +88,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      !
      use stderr,      ONLY:string_remove
      use vec_operate, ONLY:sort
-     use parallel_m,  ONLY:QP_range,n_bands,n_c_bands,n_v_bands,Q_range,EH_range,K_range,&
+     use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
+&                          PAR_EH_range,PAR_K_range,&
 &                          PARALLEL_default_mode,master_cpu
      !
      ! "c" -> PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
@@ -113,13 +114,13 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      do i_f=1,N_fields
        ch=string_remove(FIELDS(i_f)," ")
        CPU_structure(i_PAR_structure)%ROLE(i_f)=trim(ch)
-       if (trim(ch)=="c" ) VALS(i_f)=n_c_bands(2)-n_c_bands(1)+1
-       if (trim(ch)=="v" ) VALS(i_f)=n_v_bands(2)-n_v_bands(1)+1
-       if (trim(ch)=="b" ) VALS(i_f)=n_bands(2)-n_bands(1)+1
-       if (trim(ch)=="k" ) VALS(i_f)=K_range
-       if (trim(ch)=="q" ) VALS(i_f)=Q_range(2)-Q_range(1)+1
-       if (trim(ch)=="qp") VALS(i_f)=QP_range
-       if (trim(ch)=="eh") VALS(i_f)=EH_range
+       if (trim(ch)=="c" ) VALS(i_f)=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
+       if (trim(ch)=="v" ) VALS(i_f)=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+       if (trim(ch)=="b" ) VALS(i_f)=PAR_n_bands(2)-PAR_n_bands(1)+1
+       if (trim(ch)=="k" ) VALS(i_f)=PAR_K_range
+       if (trim(ch)=="q" ) VALS(i_f)=PAR_Q_range(2)-PAR_Q_range(1)+1
+       if (trim(ch)=="qp") VALS(i_f)=PAR_QP_range
+       if (trim(ch)=="eh") VALS(i_f)=PAR_EH_range
      enddo
      !
      VALS_sorted=VALS
@@ -169,10 +170,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
          enddo
        enddo
      enddo sc_loop
-     !
-     !DEBUG>
-     !if (master_cpu) write  (*,*) VALS,FIELDS,MY_cpu
-     !DEBUG<
      !
      do i_f=1,N_fields
        CPU_structure(i_PAR_structure)%CPU(i_f)=MY_cpu(i_f)

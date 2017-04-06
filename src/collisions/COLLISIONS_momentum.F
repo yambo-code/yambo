@@ -30,7 +30,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_index,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_INDEX,PAR_COM_G_b_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                        elemental_collision_copy
  use collision_ext, ONLY:P_COLL_element,COLL_bands,P_collisions
@@ -146,7 +146,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    enddo Q_loop
    !
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
    !
    call COLLISIONS_linearize_and_IO("Momentum",i_coll,P_collisions,P_COLL_element)
    !

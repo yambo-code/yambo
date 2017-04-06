@@ -33,7 +33,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
@@ -287,7 +287,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
      else
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif

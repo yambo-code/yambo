@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Real_Time(E,Xk,q)
+subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  use drivers,       ONLY:l_eval_collisions
  use electrons,     ONLY:levels
@@ -33,11 +33,12 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q)
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
  use real_time,     ONLY:RT_bands
- use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy
+ use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
-&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup
+&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_QP_INDEX,PAR_COM_CON_INDEX,&
+&                        PAR_COM_VAL_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
@@ -53,6 +54,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q)
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
+ integer              :: X_type
  !
  ! Work space
  !

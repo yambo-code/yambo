@@ -28,7 +28,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 &                        PAR_COM_VAL_INDEX,PAR_IND_VAL_BANDS_X,PAR_IND_VAL_BANDS_X_ID,&
 &                        PAR_COM_WORLD,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,&
 &                        l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
-&                        l_par_X_G_q0,l_par_X_T
+&                        l_par_X_G_q0,l_par_X_T,l_par_SC
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_elphoton_corr,l_life
@@ -118,7 +118,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(Xk,X_type)
  !
 #if defined _RT
- if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q)
+ if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,X_type)
 #endif
  !
 #if defined _SCALAPACK

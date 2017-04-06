@@ -107,15 +107,15 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 all:
-	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(PROJECTS); do $(MAKE) $$target ; done
-	for target in $(DEBUG); do $(MAKE) $$target ; done
+	for target in $(TARGETS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(PROJECTS); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(DEBUG)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
 ext-libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
@@ -133,13 +133,13 @@ ext-libs:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 #
 # Internal libs #
 #

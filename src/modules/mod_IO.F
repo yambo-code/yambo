@@ -163,7 +163,7 @@ module IO_m
    !
    subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                       &             R0,R1,R2,R3,R4,R5,&
-                      &             C0,C1,C2,C3,C4,   &
+                      &             C0,C1,C2,C3,C4,C5,&
                       &             L0,L1,L2,L3,L4,   &
                       &                            IPOS)
      !
@@ -173,7 +173,7 @@ module IO_m
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
@@ -601,7 +601,7 @@ module IO_m
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
      character(*), intent (in), optional :: VAR
-     character(schlen) :: msg
+     character(lchlen) :: msg
      character(schlen) :: VARNAME,FILENAME
      integer           :: local_error
      if(status /= NF90_NOERR) then
@@ -612,6 +612,7 @@ module IO_m
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
+       write(*,*) 'pippo',trim(FILENAME),trim(VARNAME),trim(nf90_strerror(status))
        write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if

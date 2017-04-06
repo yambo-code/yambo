@@ -62,8 +62,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
 &                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k,    &
-&                         l_update_SOC
- use fields,         ONLY:gauge_field
+&                         l_update_SOC,NE_time
+ use fields,         ONLY:gauge_field,Efield,n_ext_fields
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,HEAD_QP_cpu,myid
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
@@ -84,7 +84,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  integer                  :: ik,ik_RT,ik_DbGd,ib,ibp,i_dir
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:),E_new
- complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:)!,V_tmp(:,:,:)
+ complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
  !
 #if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
@@ -115,30 +115,28 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
- if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') .or. l_update_SOC ) then
+ if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') ) then
    !
    !
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
-   if (eval_HARTREE .or. eval_DFT) then
-     allocate(delta_rho(fft_size))
-     call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
-     rho_n=rho_reference+delta_rho
-   endif
+   allocate(delta_rho(fft_size))
+   call el_density_matrix(dG_in,E,k,delta_rho,RT_bands(1))
+   rho_n=rho_reference+delta_rho
    !
    ! The VHartree term
    !-------------------
    if (eval_HARTREE) call V_Hartree(delta_rho,V_hartree_sc)
    !
-   if(allocated(delta_rho))   deallocate(delta_rho)
+   deallocate(delta_rho)
    !
    if(n_spin>1 .and. eval_DFT) then
      allocate(delta_magn(fft_size,3))
      call el_magnetization_matrix(dG_in,E,k,delta_magn,RT_bands(1))
      magn_n=magn_reference+delta_magn
+     deallocate(delta_magn)
    endif
    !
-   if(allocated(delta_magn))  deallocate(delta_magn)
    !
    ! The Vxc term
    !--------------
@@ -150,16 +148,20 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    ! Update of SOC term
    !
    if(n_spinor==2 .and. l_update_SOC ) then
-     allocate(V_scf(fft_size),V_scf_grad(fft_size,3))!,V_tmp(fft_size,1,3))
+     allocate(V_scf(fft_size),V_scf_grad(fft_size,3))
      V_scf=cZERO
-     V_scf_grad=cZERO
      if(eval_HARTREE) V_scf=V_scf+V_Hartree_sc(:,1)
-     if(eval_DFT)     V_scf=V_scf+V_xc_sc(:,1)+V_xc_sc(:,2)
+     if(eval_DFT)     then
+       allocate(V_xc_mat(fft_size,n_spinor,n_spinor))
+       call Build_V_xc_mat(V_xc_sc,V_xc_mat)
+       V_scf=V_scf+V_xc_mat(:,1,1)+V_xc_mat(:,2,2)
+       deallocate(V_xc_mat)
+     endif
+     allocate(V_scf_grad(fft_size,3))
      call eval_Gradient(V_scf,V_scf_grad,1,"potential")
-     forall(i_dir=1:3) V_scf_grad(:,i_dir)=V_scf_grad(:,i_dir)+A_input%vecpot_vel(i_dir)/SPEED_OF_LIGHT ! Gaussian units
+     deallocate(V_scf)
    endif
    !
-   if(allocated(V_scf))       deallocate(V_scf)
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
@@ -167,8 +169,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik=1,nXkibz 
        H_nl_sc=cZERO
        if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
-       if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-       if (n_spinor==2) then
+       if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+       if (n_spinor==2 ) then
          if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
          if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
          if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
@@ -202,7 +204,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  ! The External Field
  !====================
- if (l_NE_with_fields.and.HEAD_k_cpu) then
+ if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
    !
    do ik=1,nXkibz 
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -217,7 +219,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  ! The bare Hamiltonian
  !=========================
- if (.not.l_RT_RWA.and.HEAD_k_CPU) then
+ if ((.not.l_RT_RWA).and.HEAD_k_CPU) then
    !
    do ik=1,nXkibz
      !

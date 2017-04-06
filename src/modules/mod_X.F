@@ -73,6 +73,7 @@ module X_m
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -152,7 +153,7 @@ module X_m
    !
    subroutine X_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol
+     use electrons, ONLY:n_sp_pol,n_spinor
      use memory_m,  ONLY:mem_est
      use pars,      ONLY:cZERO
      !
@@ -190,6 +191,11 @@ module X_m
          allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
          call mem_est(what,(/size(dip_P)/),errors=(/err/))
          DIP_spin=cZERO
+       case('DIP_P_spinor')
+         if (allocated(DIP_P_spinor).or.n_spinor==1) return
+         allocate(DIP_P_spinor(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)),stat=err)
+         call mem_est(what,(/size(DIP_P_spinor)/),errors=(/err/))
+         DIP_P_spinor=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
@@ -226,6 +232,9 @@ module X_m
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
          deallocate(DIP_spin)
+       case('DIP_P_spinor')
+         if (.not.allocated(DIP_P_spinor)) return
+         deallocate(DIP_P_spinor)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
          deallocate(DIP_projected)

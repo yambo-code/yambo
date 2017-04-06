@@ -74,8 +74,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use com,            ONLY:secnm
 #endif
 #if defined _RT
- use X_m,            ONLY:DIP_spin
- use electrons,      ONLY:n_spin
+ use X_m,            ONLY:DIP_spin,DIP_P_spinor
+ use electrons,      ONLY:n_spin,n_spinor
 #endif
 #if defined _SC || defined _RT
  use X_m,            ONLY:P_square
@@ -241,7 +241,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_P')
 #endif
 #if defined _RT
- if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
+ if (l_real_time.and.n_spin  >1) call X_alloc('DIP_spin')
+ if (l_real_time.and.n_spinor>1) call X_alloc('DIP_P_spinor')
 #endif
 #if defined _SC || defined _RT
  call X_alloc('P_square') 
@@ -329,6 +330,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
+     if (l_real_time.and.n_spinor>1) then
+       call X_alloc('DIP_P_spinor',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       DIP_P_spinor=cZERO
+     endif
 #endif
 
      !
@@ -360,19 +365,18 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
         !
 #if defined _RT
         !
-        if (l_real_time.and.n_spin>1) then
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        endif
+        if (l_real_time.and.n_spin>1) &
+&         call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+        if (l_real_time.and.n_spinor>1) &
+&         call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
         !
 #endif
         !
 #if defined _SC || defined _RT
         !
-        if (l_sc_run.or.l_real_time) then
-          !
-          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-          !
-        endif
+        if (l_sc_run.or.l_real_time) &
+&         call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+        !
 #endif
         !
         if (l_par_RT) then
@@ -382,6 +386,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
           if (l_real_time.and.n_spin>1) &
 &           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+          if (l_real_time.and.n_spinor>1) &
+&           DIP_spin(:,:,:,:,ik_mem)= DIP_spin(:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
 #if defined _SC || defined _RT
           if (l_sc_run.or.l_real_time) &
@@ -402,9 +408,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-            if (l_real_time.and.n_spin>1) then
-              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-            endif
+            if (l_real_time.and.n_spin>1) &
+&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            if (l_real_time.and.n_spinor>1) &
+              DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
 #endif
 #if defined _SC || defined _RT
             if (l_sc_run.or.l_real_time) &
@@ -416,9 +423,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
-              if (l_real_time.and.n_spin>1) then
+              if (l_real_time.and.n_spin>1) &
                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
-              endif
+              if (l_real_time.and.n_spinor>1) &
+                DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
 #endif
 #if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &

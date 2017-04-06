@@ -67,6 +67,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  allocate(Vr(fft_size),V3g(ng_,3))
  V3g(:,:) = cZERO
  !
+ f_gradient = cZERO
+ !
  do i_spinor=1,spinor_size
    !
    Vr=cmplx(f(:,i_spinor),kind=DP)

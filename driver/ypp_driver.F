@@ -34,7 +34,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
+#if defined _MEM_CHECK 
  use memory,              ONLY:MEM_manager
+#endif
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
@@ -249,10 +251,13 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! Memory Overview
  !=================
+#if defined _MEM_CHECK 
  !
  call section('*','Memory Overview')
  !
  call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  ! END
  !

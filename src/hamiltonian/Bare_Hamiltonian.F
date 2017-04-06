@@ -56,7 +56,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  integer     :: ik,ib,i_sp_pol
  !
  Ho=cZERO
- 1
+ !
 #if defined _TIMING
  call timing('Bare_Hamiltonian',OPR='start')
 #endif

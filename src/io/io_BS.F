@@ -35,8 +35,9 @@ integer function io_BS(iq,X,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
-
+ !
  implicit none
+ !
  type(X_t):: X 
  integer  :: iq,ID
  !

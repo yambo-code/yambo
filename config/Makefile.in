@@ -28,7 +28,7 @@ netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
 debug       = @enable_debug@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -254,9 +254,8 @@ clean_all:
 	@$(conf_clean)
 	@$(xclean)
 remove_ext_libs: 
-	@echo "[CLEAN] Pre-compiled internal libraries ... done"
-	@rm -fr "$(libs_prefix)"
-
+	@$(lib_ext_remove)
+#
 #===========
 # Functions
 #===========

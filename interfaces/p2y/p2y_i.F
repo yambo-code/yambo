@@ -39,7 +39,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if !defined _P2Y_EXPORT
  use qexml_module
 #endif
+#if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
+#endif
  !
 #include<memory.h>
  type(levels)                 :: en
@@ -200,8 +202,11 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Memory Overview
  !=================
+#if defined _MEM_CHECK 
  !
  call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')

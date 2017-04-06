@@ -34,7 +34,9 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
  use interfaces,          ONLY:PARALLEL_live_message
+#if defined _MEM_CHECK 
  use memory,              ONLY:MEM_manager
+#endif
  !
 #include<memory.h>
  type(levels)                 :: en 
@@ -127,8 +129,11 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Memory Overview
  !=================
+#if defined _MEM_CHECK 
  !
  call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('ln','done ==')
  !

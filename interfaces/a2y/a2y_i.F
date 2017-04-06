@@ -36,7 +36,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
+#if defined _MEM_CHECK 
  use memory,              ONLY:MEM_manager
+#endif
 #include<memory.h>
  !
  type(levels)                 :: en 
@@ -150,8 +152,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Memory Overview
  !=================
+#if defined _MEM_CHECK 
  !
  call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('s','... WF and PP done')
  call msg('s',' == A2Y completed ==')

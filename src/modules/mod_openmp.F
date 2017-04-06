@@ -26,6 +26,7 @@ module openmp
 #if defined _OPENMP
  use omp_lib,   ONLY:omp_lock_kind
 #endif
+ !
  implicit none
  !
  ! ... Threads

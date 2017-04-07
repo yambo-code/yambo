@@ -57,7 +57,7 @@ define getsrc
 if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
 wget -O $$TARBALL $$URL ; \
 elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-curl --progress-bar -o $$TARBALL $$URL ; \
+curl -L --progress-bar -o $$TARBALL $$URL ; \
 fi ; \
 if test ! -s $$TARBALL ; then \
 echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \

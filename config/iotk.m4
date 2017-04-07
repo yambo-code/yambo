@@ -43,11 +43,6 @@ IOTK_INCS=" "
 if test -d "$with_iotk_path"  ;  then enable_iotk=yes ; fi
 if test -d "$with_iotk_libdir" ; then enable_iotk=yes ; fi
 if test  x"$with_iotk_libs" != "x" ;  then enable_iotk=yes ; fi
-#
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 if test "x$enable_iotk" = "xyes" ; then
   #

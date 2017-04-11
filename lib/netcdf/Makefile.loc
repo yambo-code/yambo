@@ -42,7 +42,7 @@ configure-stamp: uncompress-stamp
 	      FC="$(fc)" \
 	      FCFLAGS="$(fcflags)" \
 	      FFLAGS="$(fflags)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(impi)" \
+	      CPPFLAGS="$(netcdf_flag) $(ihdf5)" \
 	      LIBS="$(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi

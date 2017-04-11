@@ -42,8 +42,8 @@ configure-stamp: uncompress-stamp
 	      FC="$(fc)" \
 	      FCFLAGS="$(fcflags)" \
 	      FFLAGS="$(fflags)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf) $(impi)" \
-	      LIBS="$(lhdf5)" \
+	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf)" \
+	      LIBS="$(lnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp

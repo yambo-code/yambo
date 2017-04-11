@@ -380,7 +380,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    next_file=next_file+1
  enddo
  !
- extension_ch='residual'
+ extension_ch='trans_residual'
  if (open_files.and..not.file_already_opened(next_file)) then
    file_name(next_file)=trim(append_ch)//trim(extension_ch)
  endif

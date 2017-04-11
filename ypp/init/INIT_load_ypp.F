@@ -170,6 +170,7 @@ subroutine ypp_INIT_load(defs)
  !
  ! TRANSIENT ABSORPTION
  !
+ call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
  call it('f',defs,'Transmission','Compute the transient transmissions')
  call it('f',defs,'Reflectivity','Compute the transient reflectivity')
  call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')

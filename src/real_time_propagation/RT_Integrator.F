@@ -150,7 +150,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
      !
      if (l_NE_with_fields) then
        !
-       if (l_RT_induced_field) call RT_current_AND_polarization(E,dG,A_vecpot) 
+       if (l_RT_induced_field) call RT_current_AND_polarization(k,E,dG,A_vecpot) 
        !
        call RT_propagate_fields(E,A_vecpot,T+dT,dT)
        !

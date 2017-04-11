@@ -774,10 +774,10 @@ MKMF_PREFIX
 def_time_profile
 def_dp
 enable_dp
-extlibs_path
 enable_keep_extlibs
 enable_keep_src
 enable_debug
+extlibs_path
 SHASH
 SREVISION
 SPATCHLEVEL
@@ -825,10 +825,10 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_extlibs_path
 enable_debug
 enable_keep_src
 enable_keep_extlibs
-with_extlibs_path
 enable_dp
 enable_time_profile
 enable_msgs_comps
@@ -1557,8 +1557,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-extlibs-path=<path>
-                          Path where external libs compiled by yambo are
-                          placed
+                          Path to the external libs
   --with-editor=<exe>           User-defined editor (none for no editor)
   --with-f90ext=<flags>         Use .<flags> Fortran 90 extension
   --with-mpi-libs=<libs>        Use MPI libraries <libs>
@@ -2710,7 +2709,41 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 #
 # YAMBO SPECIFIC
 #
+#
+#        Copyright (C) 2000-2016 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): DS
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
+# =============================================================================
+# PATH FOR EXT LIBS
+
+# Check whether --with-extlibs_path was given.
+if test "${with_extlibs_path+set}" = set; then :
+  withval=$with_extlibs_path; extlibs_path="$with_extlibs_path"
+else
+  extlibs_path="${PWD}/ext_libs"
+fi
+
+
+#
 # ============================================================================
 # DEBUG
 # Check whether --enable-debug was given.
@@ -2748,18 +2781,6 @@ if test x"$enable_keep_extlibs" = "xyes"; then
   enable_keep_extlibs="yes";
   touch ./lib/archive/keep-extlibs-stamp ;
 fi
-
-
-# =============================================================================
-# PATH FOR EXT LIBS
-
-# Check whether --with-extlibs_path was given.
-if test "${with_extlibs_path+set}" = set; then :
-  withval=$with_extlibs_path; extlibs_path="$with_extlibs_path"
-else
-  extlibs_path="${PWD}/ext_libs"
-fi
-
 
 
 # ============================================================================

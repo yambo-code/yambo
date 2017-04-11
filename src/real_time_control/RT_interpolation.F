@@ -31,6 +31,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers
  use com,            ONLY:msg
+#if defined _YPP_RT
+ use YPP_real_time, ONLY:l_RT_abs
+#endif
  !
  implicit none
  !
@@ -48,7 +51,8 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer,parameter     :: n_pieces=10
  logical               :: l_DbGd
  !
- l_DbGd=BZ_DbGd_tot_nkpts>0
+ !l_DbGd=BZ_DbGd_tot_nkpts>0
+ l_DbGd=.false.
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -140,6 +144,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
     !
     l_renormalize=.not.l_real_time
+#if defined _YPP_RT
+    l_renormalize=.not.l_RT_abs
+#endif
     ! 
     if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)

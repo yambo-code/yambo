@@ -53,6 +53,7 @@ if test x"$enable_keep_extlibs" = "xno";  then
 fi
 if test x"$enable_keep_extlibs" = "xyes"; then
   enable_keep_extlibs="yes";
+  if ! test -d ./lib/archive; then mkdir -p ./lib/archive ; fi
   touch ./lib/archive/keep-extlibs-stamp ;
 fi
 AC_SUBST(enable_keep_extlibs)

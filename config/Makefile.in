@@ -51,8 +51,8 @@ exec_prefix = @exec_prefix@
 libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
-libdir      = @srcdir_path@/lib
-includedir  = @srcdir_path@/include
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
@@ -244,6 +244,7 @@ clean:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
 distclean: clean_all remove_ext_libs
@@ -251,6 +252,7 @@ clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
 remove_ext_libs: 
@@ -431,6 +433,12 @@ define lib_ext_clean_all
   cd ../.. ; \
  fi
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
+endef
+define sysincs_clean
+ @if test -d $(prefix)/sys_incs/; then \
+   rm $(prefix)/sys_incs/* ; \
+   echo "[CLEAN] Libraries ... done"; \
+ fi 
 endef
 define lib_ext_remove
  @if test -f $(libs_prefix)/../driver/driver.c; then \

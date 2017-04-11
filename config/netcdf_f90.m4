@@ -78,7 +78,6 @@ internal_hdf5="no"
 def_netcdf=""
 NETCDF_OPT="--disable-netcdf-4"
 NETCDF_VER="v3"
-IFLAG=""
 #
 # global options
 #
@@ -87,11 +86,6 @@ if test -d "$with_hdf5_libdir"          ; then enable_hdf5=yes ; fi
 if test -d "$with_hdf5_path"            ; then enable_hdf5=yes ; fi
 if test x"$with_hdf5_libs" != "x"       ; then enable_hdf5=yes ; fi
 if test x"$enable_netcdf_hdf5" = "xyes" ; then enable_hdf5=yes ; fi
-#
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 #
 #
 # Set NETCDF LIBS and FLAGS from INPUT

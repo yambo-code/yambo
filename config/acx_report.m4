@@ -87,9 +87,19 @@ if test "$hdf5" = "yes" ; then
   else
     HDF5_str=" E "
   fi
-  HDF5_info="(No HDF5-IO format)"
-  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_info="(HDF5-IO format, no data compression)" ; fi
-  if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_info="(HDF5-IO format with data compression)" ; fi
+  if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
+  if test "$enable_netcdf_hdf5" = "yes" ; then
+    if test "$compile_hdf5" = "yes" && test "$mpibuild" = "yes" ; then
+      HDF5_info="(HDF5-IO formal, parallel lib";
+    else
+      HDF5_info="(HDF5-IO format"     ;
+    fi
+    if test "$enable_hdf5_compression" = "yes"; then
+      HDF5_info="${HDF5_info}, with data compression)" ;
+    else
+      HDF5_info="${HDF5_info}, no data compression)" ;
+    fi
+  fi
 fi
 #
 

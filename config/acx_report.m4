@@ -90,7 +90,7 @@ if test "$hdf5" = "yes" ; then
   if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
   if test "$enable_netcdf_hdf5" = "yes" ; then
     if test "$compile_hdf5" = "yes" && test "$mpibuild" = "yes" ; then
-      HDF5_info="(HDF5-IO formal, parallel lib";
+      HDF5_info="(HDF5-IO format, parallel lib";
     else
       HDF5_info="(HDF5-IO format"     ;
     fi

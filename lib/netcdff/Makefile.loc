@@ -17,8 +17,7 @@ TARBALL=$(tarball_netcdff)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --without-pic --enable-static --disable-shared \
-         --disable-dap --disable-cxx  $(netcdf_opt)
+         --without-pic --enable-static --disable-shared
 
 #
 # MAIN target
@@ -40,10 +39,10 @@ configure-stamp: uncompress-stamp
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
-	      FCFLAGS="$(fclags)" \
+	      FCFLAGS="$(fcflags)" \
 	      FFLAGS="$(fflags)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf) $(impi)" \
-	      LIBS="$(lhdf5)" \
+	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf)" \
+	      LIBS="$(lnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp

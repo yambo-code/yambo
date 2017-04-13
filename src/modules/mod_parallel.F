@@ -126,16 +126,6 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
- !      if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
- !      if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
- !      if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
- !      if (i_s==4) possible_fields='(k,eh,t)'  ! BS
- !      if (i_s==5) possible_fields='(q,qp,b)'  ! SE
- !      if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-#if defined _SCALAPACK
- !      if (i_s==7) possible_fields='  '        ! SLK test
-#endif
- !
  integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
@@ -145,6 +135,7 @@ module parallel_m
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
  logical          :: linear_algebra_is_parallel = .false.
+ character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
  !
  !... Logging CPUs ...
  !
@@ -336,13 +327,15 @@ module parallel_m
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
- integer            :: K_range
- integer            :: EH_range
- integer            :: QP_range
- integer            :: Q_range(2)
- integer            :: n_bands(2)
- integer            :: n_c_bands(2)
- integer            :: n_v_bands(2)
+ integer            :: PAR_K_range      = 0
+ integer            :: PAR_EH_range     = 0
+ integer            :: PAR_QP_range     = 0
+ integer            :: PAR_Q_range(2)   = 0
+ integer            :: PAR_X_ib(2)      = 0
+ integer            :: PAR_X_iq(2)      = 0
+ integer            :: PAR_n_bands(2)   = 0
+ integer            :: PAR_n_c_bands(2) = 0
+ integer            :: PAR_n_v_bands(2) = 0
  !
  ! ... and derived variables
  !==========================
@@ -394,6 +387,31 @@ module parallel_m
  end interface PP_send_and_receive
  !
  contains
+   !
+   subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
+     !
+     integer           ::N_elements,n_V_ind,V_ind(N_elements),i_p
+     type(PP_indexes)  ::PAR_ind
+     !
+     V_ind  =0
+     n_V_ind=0
+     if (N_elements==size(PAR_IND%element_1D)) then
+       do i_p=1,N_elements
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(i_p)=n_V_ind
+         endif
+       enddo
+     else 
+       do i_p=1,size(PAR_IND%element_1D)
+         if (PAR_IND%element_1D(i_p)) then
+           n_V_ind=n_V_ind+1
+           V_ind(n_V_ind)=i_p
+         endif
+       enddo
+     endif
+     !
+   end subroutine
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err

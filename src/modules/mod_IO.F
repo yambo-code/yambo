@@ -433,7 +433,7 @@ module IO_m
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
      character(*), intent (in), optional :: VAR
-     character(schlen) :: msg
+     character(lchlen) :: msg
      character(schlen) :: VARNAME,FILENAME
      integer           :: local_error
      if(status /= NF90_NOERR) then

@@ -72,7 +72,6 @@ AC_PROG_CC
 AC_CANONICAL_HOST
 hostname=`uname -n`
 AC_SUBST(hostname)
-
 # ============================================================================
 # GNU Make
 MAKE="make"
@@ -86,8 +85,6 @@ else
  MAKE=$_cv_gnu_make_command
 fi
 AC_SUBST(MAKE)
-
-
 # ============================================================================
 #AR 
 #AC_DISABLE_SHARED

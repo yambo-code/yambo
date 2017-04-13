@@ -35,14 +35,14 @@ AC_SUBST(extlibs_path)
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
 if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
 AC_SUBST(enable_debug)
-
+#
 # ============================================================================= 
 # KEEP SOURCE FILES 
 AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
-
+#
 # ============================================================================
 # KEEP EXT LIBS
 AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is yes.]))
@@ -57,7 +57,7 @@ if test x"$enable_keep_extlibs" = "xyes"; then
   touch ./lib/archive/keep-extlibs-stamp ;
 fi
 AC_SUBST(enable_keep_extlibs)
-
+#
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
@@ -66,7 +66,7 @@ if test x"$enable_dp" = "x"; then enable_dp="no"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
-
+#
 # ============================================================================
 #
 # Time Profiling (mod_timing)
@@ -91,7 +91,6 @@ MKMF_PREFIX=" "
 if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi
 AC_SUBST(MKMF_PREFIX)
 AC_SUBST(ECHO_N)
-
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],

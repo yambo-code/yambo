@@ -132,4 +132,4 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
  !
-end subroutine
+end subroutine PARALLEL_global_dimensions

@@ -218,6 +218,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (IO_colls.and.master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    if (l_HXC_collisions) io_err=io_COLLISIONS(ID,HXC_collisions)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    if (l_COH_collisions) io_err=io_COLLISIONS(ID,COH_collisions)
  endif
  !

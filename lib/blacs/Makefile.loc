@@ -6,42 +6,50 @@
 include ../../config/setup
 include ../archive/package.list
 
+LIBNAME=libblacs.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_blacs)
 TARBALL=$(tarball_blacs)
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(LIBRARY)
 #
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat ../../../config/setup ../Bmake.inc_lib > Bmake.inc ; \
-	cp ../Makefile.lib  Makefile );  \
+	cat $(prefix)/config/setup $(srcdir)/lib/blacs/Bmake.inc_lib > Bmake.inc ; \
+	cp  $(srcdir)/lib/blacs/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) mpi  ;\
-	) ; fi
+	( cd $(PACKAGE);  $(make) mpi ) ; fi
 	touch package-ready-stamp
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; \
+	chmod +x $(LIBPATH)/lib/*blacs*.a ) ; \
+	fi
+
 #
 # cleaning
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./bin ./lib ./include package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: 
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
-	@- rm -rf $(INSTALL_DIR)
 	
 

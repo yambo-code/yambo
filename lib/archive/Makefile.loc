@@ -3,29 +3,34 @@
 #
 include ./package.list
 #
-all: $(tarball_iotk) $(tarball_netcdf) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_slatec) \
-     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_slepc)
+all: $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
+     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
+
 #
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
+$(tarball_hdf5):
+	@+TARBALL="$(tarball_hdf5)"     ; URL="$(url_hdf5)"     ; LIB="HDF5"; $(getsrc)
 $(tarball_netcdf):
 	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
+$(tarball_netcdff):
+	@+TARBALL="$(tarball_netcdff)"  ; URL="$(url_netcdff)"  ; LIB="NETCDFF"; $(getsrc)
 $(tarball_etsf_io):
 	@+TARBALL="$(tarball_etsf_io)"  ; URL="$(url_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
 $(tarball_libxc):
 	@+TARBALL="$(tarball_libxc)"    ; URL="$(url_libxc)"    ; LIB="LIBXC"; $(getsrc)
 $(tarball_lapack):
 	@+TARBALL="$(tarball_lapack)"   ; URL="$(url_lapack)"   ; LIB="LAPACK"; $(getsrc)
-$(tarball_slatec):
-	@+TARBALL="$(tarball_slatec)"   ; URL="$(url_slatec)"   ; LIB="SLATEC"; $(getsrc)
 $(tarball_blacs):
 	@+TARBALL="$(tarball_blacs)"    ; URL="$(url_blacs)"    ; LIB="BLACS"; $(getsrc)
 $(tarball_scalapack):
 	@+TARBALL="$(tarball_scalapack)"; URL="$(url_scalapack)"; LIB="SCALAPACK"; $(getsrc)
 $(tarball_petsc):
 	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
-$(tarball_slepc):
-	@+TARBALL="$(tarball_slepc)"    ; URL="$(url_slepc)"    ; LIB="SLEPC"; $(getsrc)
+$(tarball_fftw):
+	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
+$(tarball_fftqe):
+	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
 #
 # cleaning
 #
@@ -36,20 +41,23 @@ clean_all:
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
+          if test -s $(tarball_netcdff)  && test "$(keep_netcdff)"   != "yes" ;  then rm $(tarball_netcdff)   ; fi ; \
+          if test -s $(tarball_hdf5)     && test "$(keep_hdf5)"      != "yes" ;  then rm $(tarball_hdf5)      ; fi ; \
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \
           if test -s $(tarball_scalapack)&& test "$(keep_scalapack)" != "yes" ;  then rm $(tarball_scalapack) ; fi ; \
           if test -s $(tarball_blacs)    && test "$(keep_blacs)"     != "yes" ;  then rm $(tarball_blacs)     ; fi ; \
           if test -s $(tarball_petsc)    && test "$(keep_petsc)"     != "yes" ;  then rm $(tarball_petsc)     ; fi ; \
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \
-          if test -s $(tarball_slatec)   && test "$(keep_slatec)"    != "yes" ;  then rm $(tarball_slatec)    ; fi ; \
+          if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)      ; fi ; \
+          if test -s $(tarball_fftqe)    && test "$(keep_fftqe)"     != "yes" ;  then rm $(tarball_fftqe)     ; fi ; \
 	fi
 #
 define getsrc
 if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
 wget -O $$TARBALL $$URL ; \
 elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-curl --progress-bar -o $$TARBALL $$URL ; \
+curl -L --progress-bar -o $$TARBALL $$URL ; \
 fi ; \
 if test ! -s $$TARBALL ; then \
 echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \

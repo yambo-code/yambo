@@ -36,7 +36,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,master_cpu,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -46,7 +46,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use timing_m,      ONLY:timing
 #endif
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs,OP_WR_CL
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -54,7 +54,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
  use xc_functionals,ONLY:magn
- use COLL_interfaces, ONLY:io_COLLISIONS
  !
  implicit none
  !
@@ -213,20 +212,16 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    PAR_NC_local=count(COH_collisions%IO_status==-1)
  endif
  !
- ! Write Database Header 
- !
- if (IO_colls.and.master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   if (l_HXC_collisions) io_err=io_COLLISIONS(ID,HXC_collisions)
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   if (l_COH_collisions) io_err=io_COLLISIONS(ID,COH_collisions)
- endif
- !
  n_steps=0
  if (l_loc_HXC_collisions)                     n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
  if (l_MBPT_XC_collisions.or.l_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
  !
  n_colls=max(HXC_collisions%N,COH_collisions%N)
+ !
+ ! Write Database Header 
+ !
+ if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
+ if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
  !
  call live_timing("Collisions",n_steps)
  !

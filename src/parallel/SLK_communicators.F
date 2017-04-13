@@ -23,6 +23,31 @@
 !
 subroutine SLK_communicators(INTRA_world,INTER_world,N)
  !
+ ! Here I have an example with 12 cpu's divided in two INTRA of 6 cpu's. In each INTRA I want to build-up a SLK structure.
+ !
+ !          MPI WORLD 
+ !  ________________________
+ !
+ !    INTRA            
+ !  ___________  
+ !  0 0 0 0 0 0 0 0 0 0 0 0  
+ !  |___________|
+ !    INTER
+ !
+ ! PAR_COM_SLK is made of the N cpu's in INTRA 
+ ! 
+ ! Let's assume  N=4
+ ! 
+ !  PAR_COM_SLK PAR_COM_SLK
+ !  _______     _______
+ !  0 0 0 0 0 0 0 0 0 0 0 0  
+ !  |___________|
+ !   PAR_COM_SLK_INDEX_global
+ !
+ ! In this case there is only one PAR_COM_SLK in INTRA so PAR_COM_SLK_INDEX_local is the serial COM.
+ ! If there are two or more PAR_COM_SLK in INTRA PAR_COM_SLK_INDEX_local connects 1-to-1 the cpu's
+ ! in PAR_COM_SLK's contained in INTRA.
+ !
  ! Input:
  !
  ! 1. INTRA_world is the communicator among the cpu's of the local world containg the SLK instances.
@@ -45,24 +70,16 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
  use parallel_m,    ONLY:MPI_comm,COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_global,&
 &                        PAR_COM_SLK_INDEX_local,PAR_COM_NULL,&
 &                        PAR_COM_WORLD,myid,i_INTER_CHAIN,CREATE_the_COMM
-#if defined _SCALAPACK
- use SLK_m,         ONLY:SLK_COM_A2A,SLK_COM_INDEX,SLK_ORTHO,SLK_POOL
-#endif
-! use com,           ONLY:warning,msg
-! use stderr,        ONLY:intc
  !
  implicit none
  !
  type(MPI_comm) :: INTRA_world,INTER_world
  integer        :: N
  !
- ! Work Space
- ! 
- integer :: i_err
- !
  ! First the simple cases where all (or none) CPU's of the "world" (/= from the MPI world) are used.
  !
  if (N==1.or.N==INTRA_world%n_CPU) then
+   !
    call COMM_copy(INTRA_world ,PAR_COM_SLK)
    call COMM_copy(INTER_world ,PAR_COM_SLK_INDEX_global)
    ! 

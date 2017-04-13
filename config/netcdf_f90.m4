@@ -80,6 +80,16 @@ NETCDF_OPT="--disable-netcdf-4"
 NETCDF_VER="v3"
 HDF5_OPT=""
 #
+# Other libs
+#
+AC_LANG_PUSH(C)
+AC_CHECK_LIB(z ,   deflate,      [use_libz="yes";   ],[use_libz="no";   ],[])
+AC_CHECK_LIB(sz,   deflate,      [use_libsz="yes";  ],[use_libsz="no";  ],[])
+AC_CHECK_LIB(dl,   dlopen,       [use_libdl="yes";  ],[use_libdl="no";  ],[])
+AC_CHECK_LIB(curl, curl_version, [use_libcurl="yes";],[use_libcurl="no";],[])
+AC_CHECK_LIB(m,    cos,          [use_libm="yes";   ],[use_libm="no";   ],[])
+AC_LANG_POP(C)
+#
 # global options
 #
 #
@@ -195,10 +205,13 @@ if test x"$enable_hdf5" = "xno"; then
     # of the netcdf lib
     #
     #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf" ;
-    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf -lm -lcurl" ;
+    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
     NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
     NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
     NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
+    if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
     #
     netcdf=yes
     if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a"; then
@@ -247,32 +260,31 @@ if test x"$enable_hdf5" = "xyes"; then
   #
   FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $try_HDF5_INCS $save_fcflags" ;
   #
-  for ldflag in "-lcurl -lz"           "-lcurl -lsz -lz"           "-lsz -lz"           "-lz"           " " \
-                "-lcurl -lz -lm"       "-lcurl -lsz -lz -lm"       "-lsz -lz -lm"       "-lz -lm"       "-lm" \
-                "-lcurl -lz -ldl"      "-lcurl -lsz -lz -ldl"      "-lsz -lz -ldl"      "-lz -ldl"      "-ldl" \
-                "-lcurl -lz -lm -ldl"  "-lcurl -lsz -lz -lm -ldl"  "-lsz -lz -lm -ldl"  "-lz -lm -ldl"  "-lm -ldl"; do
-    LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $try_HDF5_LIBS $ldflag"
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-       use hdf5
-       use netcdf
-       implicit none
-       integer cmode
-       cmode = NF90_HDF5
-       !cmode = nf90_abort(1)
-       call h5open_f(cmode)]),
-       [hdf5=yes], [hdf5=no]);
-    netcdf=$hdf5;
-    if test "x$hdf5" = xyes; then
-      HDF5_LIBS="$try_HDF5_LIBS $ldflag" ;
-      HDF5_INCS="$try_HDF5_INCS" ;
-      NETCDF_LIBS="$try_NETCDF_LIBS" ;
-      NETCDF_INCS="$try_NETCDF_INCS" ;
-      NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
-      NETCDFF_INCS="$try_NETCDFF_INCS" ;
-      AC_MSG_RESULT([yes]) ;
-      break ;
-    fi
-  done
+  if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
+  if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
+  if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
+  if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
+  if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
+  #
+  AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+     use hdf5
+     use netcdf
+     implicit none
+     integer cmode
+     cmode = NF90_HDF5
+     !cmode = nf90_abort(1)
+     call h5open_f(cmode)]),
+     [hdf5=yes], [hdf5=no]);
+  netcdf=$hdf5;
+  if test "x$hdf5" = xyes; then
+    HDF5_LIBS="$try_HDF5_LIBS" ;
+    HDF5_INCS="$try_HDF5_INCS" ;
+    NETCDF_LIBS="$try_NETCDF_LIBS" ;
+    NETCDF_INCS="$try_NETCDF_INCS" ;
+    NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
+    NETCDFF_INCS="$try_NETCDFF_INCS" ;
+    AC_MSG_RESULT([yes]) ;
+  fi
   #
   FCFLAGS="$save_fcflags" ;
   LIBS="$save_libs" ;
@@ -293,6 +305,12 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
     NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
     NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    if test "$use_libz"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lz"   ; fi
+    if test "$use_libsz"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -lsz"  ; fi
+    if test "$use_libm"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lm"   ; fi
+    if test "$use_libdl"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -ldl"  ; fi
+    if test "$use_libcurl" = "yes"; then HDF5_LIBS="$HDF5_LIBS -lcurl"; fi
     #
     netcdf=yes ;
     hdf5=yes ;

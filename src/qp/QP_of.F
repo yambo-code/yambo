@@ -148,6 +148,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
    if (what=="qp") call msg('o '//what,'#')
+   !
    do i1=2,qp%n_descs
      call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
    enddo

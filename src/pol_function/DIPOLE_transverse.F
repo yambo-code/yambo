@@ -118,8 +118,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
-#if defined _SC || defined _RT
- l_eval_DIP_P2=l_sc_run.or.l_real_time
+#if defined _SC
+ l_eval_DIP_P2=l_sc_run
+#endif
+#if defined _RT
+ l_eval_DIP_P2=l_real_time
 #endif
  !
  if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'

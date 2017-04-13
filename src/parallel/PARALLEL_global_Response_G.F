@@ -100,7 +100,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 #if defined _NL | defined _ELECTRIC
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
    call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz_ID,&
-&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,Q_range,Xk,q)
+&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,PAR_Q_range,Xk,q)
 #endif
    !
    ! I/O privileges

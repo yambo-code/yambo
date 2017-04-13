@@ -31,7 +31,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use real_time,     ONLY:RT_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,Q_range,n_bands,COMM_copy,PAR_index_copy
+ use parallel_m,    ONLY:ncpu,PAR_Q_range,PAR_n_bands,COMM_copy,PAR_index_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
@@ -66,14 +66,13 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    CALL PARALLEL_structure(4,(/"w ","k ","b ","q "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"w ","k ","b "/),  &
-&                                  COMM_index_1=PAR_COM_freqs_INDEX, &
-&                                  COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
-&                                  COMM_index_3=PAR_COM_G_b_INDEX,   &
-&                                  COMM_index_4=PAR_COM_Q_INDEX,     &
-&                                  COMM_A2A_1=PAR_COM_freqs_A2A,     &
-&                                  COMM_A2A_2=PAR_COM_Xk_ibz_A2A,    &
-&                                  COMM_A2A_3=PAR_COM_G_b_A2A)
+   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_freqs_INDEX, &
+&                                          COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_3=PAR_COM_G_b_INDEX,   &
+&                                          COMM_index_4=PAR_COM_Q_INDEX,     &
+&                                          COMM_A2A_1=PAR_COM_freqs_A2A,     &
+&                                          COMM_A2A_2=PAR_COM_Xk_ibz_A2A,    &
+&                                          COMM_A2A_3=PAR_COM_G_b_A2A)
    !
    ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
    ! A2A when there is no internal distribution
@@ -96,7 +95,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                             TOTAL=n_frequencies,NCPU=PAR_COM_freqs_INDEX%n_CPU)
    !
    allocate(PAR_freqs_index(n_frequencies)) 
-   call Build_up_index(PAR_IND_freqs,n_frequencies,PAR_freqs_index,PAR_nFreqs)
+   call PAR_build_index(PAR_IND_freqs,n_frequencies,PAR_freqs_index,PAR_nFreqs)
    !
    ! K-points
    !
@@ -105,7 +104,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
    !
    allocate(PAR_Xk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
+   call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    !
    ! Define the Xk_bz indeces for BZ parallelization
@@ -116,13 +115,13 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
 
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    ! Overlap indeces for WF distribution
    !
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
    call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz_ID,&
-&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,Q_range,Xk,q)
+&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,PAR_Q_range,Xk,q)
    !
    call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&
@@ -133,7 +132,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
-   allocate(PAR_G_bands_index(n_bands(2)))
+   allocate(PAR_G_bands_index(PAR_n_bands(2)))
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
    !
    ! Copy to WF
@@ -148,7 +147,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    ! Build Indexes
    !
-   call Build_up_index(PAR_IND_G_b,n_bands(2),PAR_G_bands_index,PAR_nG_bands)
+   call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
    call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
    ! Non evolved bands loaded by all
@@ -202,7 +201,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    call COMM_copy(PAR_COM_freqs_INDEX,PAR_COM_DIPOLES_k_subgroup)
    call PARALLEL_live_message("SCbands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
-&                             TOTAL=n_bands(2)-n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+&                             TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%CPU_id==0)

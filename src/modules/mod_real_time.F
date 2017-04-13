@@ -59,6 +59,11 @@ module real_time
  !
  logical           :: l_RT_induced_field = .FALSE.
  !
+ ! TMP SOLUTION FOR TR ABS
+ !
+ logical  :: l_RT_abs_YAMBO = .false.
+ !
+ !
  ! ... core step length and Time-points array...
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points

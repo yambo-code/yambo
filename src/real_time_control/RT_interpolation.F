@@ -29,11 +29,8 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:RT_carriers
+ use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
-#if defined _YPP_RT
- use YPP_real_time, ONLY:l_RT_abs
-#endif
  !
  implicit none
  !
@@ -143,10 +140,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     integer      :: ik,i_carr,nb_max
     real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
     !
-    l_renormalize=.not.l_real_time
-#if defined _YPP_RT
-    l_renormalize=.not.l_RT_abs
-#endif
+    l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
     if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)

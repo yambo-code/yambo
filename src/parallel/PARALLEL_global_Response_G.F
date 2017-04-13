@@ -30,11 +30,12 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
+ use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,&
+&                        PAR_Q_range,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A, &
-&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX,PAR_build_index
+&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
  ! INDEX
@@ -115,12 +116,12 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    CALL PARALLEL_structure(4,(/"q","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4, COMM_index_1=PAR_COM_Q_INDEX,&
-                                         COMM_index_2=PAR_COM_Xk_bz_INDEX,&
-&                                        COMM_index_3=PAR_COM_CON_INDEX(X_type),&
-&                                        COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
-&                                        COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                        COMM_A2A_2=PAR_COM_Xk_bz_A2A)
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_Xk_bz_INDEX,&
+&                                          COMM_index_3=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
+&                                          COMM_A2A_1=PAR_COM_Q_A2A,&
+&                                          COMM_A2A_2=PAR_COM_Xk_bz_A2A)
    !
    ! COMMs setup
    !

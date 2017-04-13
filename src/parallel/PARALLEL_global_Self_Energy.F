@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz
@@ -65,11 +65,10 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  use ELPH,          ONLY:elph_use_q_grid
 #endif
  !
-#include<memory.h>
+ implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
- character(*)         :: ENVIRONMENT
  !
  ! Work space
  !
@@ -80,7 +79,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  CALL PARALLEL_structure(3,(/"q ","qp","b "/))
  !
- call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,COMM_index_2=PAR_COM_QP_INDEX,&
+ call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                        COMM_index_2=PAR_COM_QP_INDEX,&
 &                                        COMM_index_3=PAR_COM_G_b_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Q_A2A,&
 &                                        COMM_A2A_2=PAR_COM_QP_A2A)
@@ -97,10 +97,10 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  call PARALLEL_index(PAR_IND_QP,(/QP_n_states/),COMM=PAR_COM_QP_INDEX,NO_EMPTIES=.TRUE.)
  PAR_IND_QP_ID=PAR_COM_QP_INDEX%CPU_id
  PAR_nQP=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)
- YAMBO_ALLOC(PAR_QP_index,(QP_n_states))
+ allocate(PAR_QP_index(QP_n_states))
  PAR_QP_index=0
  call PAR_build_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
- call PARALLEL_live_message("QPs",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("QPs",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1),TOTAL=QP_n_states,&
 &                           NCPU=PAR_COM_QP_INDEX%n_CPU)
  !
@@ -116,15 +116,15 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  call PARALLEL_index(PAR_IND_Q,(/PAR_Q_range(2)/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  PAR_IND_Q_ID=PAR_COM_Q_INDEX%CPU_id
  PAR_nQ=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)
- call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("Q("//trim(WHAT)//")",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=PAR_Q_range(2),&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
- YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
+ allocate(PAR_Q_index(PAR_Q_range(2)))
  call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
  !
  if (trim(WHAT)=="ibz") then
-   YAMBO_ALLOC(PAR_Q_bz_index,(nqbz))
+   allocate(PAR_Q_bz_index(nqbz))
    call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q   , PAR_IND_Q_ID,&
 &                                                   PAR_IND_Q_bz, PAR_IND_Q_ID,&
 &                                                   PAR_Q_bz_index,PAR_nQ_bz)
@@ -135,29 +135,30 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  !
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !
-   ! 0000     0000     <- q
+   ! 00000             <- q
    ! x0 x0    00 00    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
-   HEAD_QP_cpu=PAR_COM_Q_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
-   if (PAR_COM_Q_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
+   HEAD_QP_cpu=PAR_COM_Q_INDEX%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
+   if (PAR_COM_Q_INDEX%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
      HEAD_QP_cpu=PAR_COM_G_b_index%CPU_id==0
    endif
    !
  else
- !   
+   !   
 #endif
- !
- ! 0000     0000     <- q
- ! x0 x0    x0 x0    <- qp
- ! 0 0 0 0  0 0 0 0  <- b
- !
- ! QP_cpu corresponds to x marked CPU's. This flag is used when no b loops are done
- !
- HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
- !
+   !
+   ! 00000000          <- q
+   ! 0000     0000     <- g
+   ! x0 x0    x0 x0    <- qp
+   ! 0 0 0 0  0 0 0 0  <- b
+   !
+   ! QP_cpu corresponds to x marked CPU's. This flag is used when no b loops are done
+   !
+   HEAD_QP_cpu=PAR_COM_QP_A2A%CPU_id==0
+   !
 #if defined _SC || defined _RT
  endif
 #endif
@@ -181,7 +182,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
  YAMBO_ALLOC(PAR_G_bands_index,(PAR_n_bands(2)))
  call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
  !
- call PARALLEL_live_message("G bands",ENVIRONMENT=ENVIRONMENT,&
+ call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                           TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
  !
@@ -206,7 +207,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q,ENVIRONMENT)
    !
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
-   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT=ENVIRONMENT,&
+   call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                           TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
    !

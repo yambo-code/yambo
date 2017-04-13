@@ -56,7 +56,7 @@ subroutine G_b_to_B_mat(pCOMM,what,nb)
  endif
  !
  if (what=="B") then
-   YAMBO_ALLOC(PAR_B_mat_index,(nb(1):nb(2),nb(1):nb(2)))
+   allocate(PAR_B_mat_index(nb(1):nb(2),nb(1):nb(2)))
    PAR_n_B_mat_elements=PAR_IND_B_mat%n_of_elements(PAR_IND_B_mat_ID+1)
    PAR_B_mat_index=0
    PAR_n_B_mat_elements=0

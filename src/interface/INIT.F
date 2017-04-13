@@ -1027,6 +1027,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine CPU_activate(what)
      character(*) :: what 
 #if defined _MPI
+     call initactivate(1,"PAR_def_mode")
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.&

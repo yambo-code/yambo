@@ -85,7 +85,7 @@ module parallel_m
  !
  ! Communicators
  !
- integer            :: n_groups                =0     ! groups of active chains
+integer            :: n_groups                =0     ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
  integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
  !
@@ -208,6 +208,9 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_WF_b_and_k
  type(PP_indexes),SAVE :: PAR_IND_WF_linear
  !
+ ! ... RL vectors
+ type(PP_indexes),SAVE :: PAR_IND_RL
+ !
  ! ... Transitions
  type(PP_indexes),allocatable,SAVE :: PAR_IND_eh(:)
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
@@ -248,6 +251,9 @@ module parallel_m
  ! ... BSK
  integer            :: PAR_IND_eh_ID
  !
+ ! ... RL
+ integer            :: PAR_IND_RL_ID
+ !
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
@@ -268,6 +274,10 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
+ !
+ ! ... RL vectors
+ integer             :: PAR_nRL
+ integer,allocatable :: PAR_RL_index(:)
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX

@@ -28,7 +28,8 @@ if ! test -d sys_incs ; then mkdir sys_incs ; fi
   done
 #
   NETCDF_INCDIRS=`echo "$NETCDF_INCS" | sed "s/$IFLAG/ /g"`
-  for includedir in $NETCDF_INCDIRS; do
+  NETCDFF_INCDIRS=`echo "$NETCDFF_INCS" | sed "s/$IFLAG/ /g"`
+  for includedir in $NETCDF_INCDIRS $NETCDFF_INCDIRS; do
     count=`ls -1 $includedir/*netcdf*.h   2>/dev/null | wc -l`
     if test $count != 0; then ln -s $includedir/*netcdf*.h   sys_incs/  ; fi
     count=`ls -1 $includedir/*netcdf*.mod   2>/dev/null | wc -l`

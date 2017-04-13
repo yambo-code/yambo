@@ -47,7 +47,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! INDEX
  use parallel_m,    ONLY:PAR_B_mat_index,PAR_Bp_mat_index,PAR_QP_index,PAR_G_bands_index,PAR_PLASMA_index, &
 &                        PAR_Q_index,PAR_Q_bz_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index,   &
-&                        PAR_BS_T_grps_index
+&                        PAR_BS_T_grps_index,PAR_RL_index
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID,PAR_IND_Xk_bz_ID,&
 &                        PAR_IND_Xk_ibz_ID,PAR_IND_Q_ID,&
@@ -111,6 +111,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  YAMBO_FREE(states_to_load)
  YAMBO_FREE(PAR_DIPk_ibz_index)
  YAMBO_FREE(PAR_BS_T_grps_index)
+ YAMBO_FREE(PAR_RL_index)
  !
  PAR_IND_Q_ID=0
  PAR_IND_Xk_ibz_ID=0

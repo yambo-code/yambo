@@ -72,7 +72,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! aux data
  allocate(E_G_m_G(iG_,iGo_))
-
  !
  ! setup MPI parallelism if required
  !
@@ -167,9 +166,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
-#if defined _OPENMP
-!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
-#endif
+!#if defined _OPENMP
+!!$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
+!#endif
  do i2=1,iGo_
    !
    if(present(COMM)) then
@@ -184,9 +183,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      !
    enddo
  enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+!#if defined _OPENMP
+!!$omp end parallel do
+!#endif
  ! 
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !

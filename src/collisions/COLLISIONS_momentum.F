@@ -26,11 +26,11 @@ subroutine COLLISIONS_momentum(E,k,q)
  ! Momentum matrix elements
  !
  use pars,          ONLY:SP,schlen,cI,cZERO,rZERO
- use IO_m,          ONLY:io_COLLs
+ use IO_m,          ONLY:io_COLLs,OP_WR_CL,REP,io_control
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_index,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_QP_A2A,PAR_nQ,PAR_COM_Q_INDEX,PAR_COM_G_b_INDEX,master_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
 &                        elemental_collision_copy
  use collision_ext, ONLY:P_COLL_element,COLL_bands,P_collisions
@@ -41,7 +41,7 @@ subroutine COLLISIONS_momentum(E,k,q)
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
- use COLL_interfaces, ONLY:SCATTERING_GW_kinematics
+ use COLL_interfaces, ONLY:SCATTERING_GW_kinematics,io_COLLISIONS
  !
  implicit none
  type(levels)             ::E       
@@ -50,7 +50,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_coll,PAR_NC,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0
+ integer                  ::i_coll,PAR_NC,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID,io_err
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch
@@ -88,6 +88,13 @@ subroutine COLLISIONS_momentum(E,k,q)
  PAR_NC=P_collisions%PAR_N
  if (associated(P_collisions%IO_status)) then
    PAR_NC=count(P_collisions%IO_status==-1)
+ endif
+ !
+ ! Write Database Header 
+ !
+ if (IO_colls.and.master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_COLLISIONS(ID,P_collisions)
  endif
  !
  call live_timing("Collisions",PAR_NC*PAR_nQ)
@@ -146,7 +153,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    enddo Q_loop
    !
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+   call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
    !
    call COLLISIONS_linearize_and_IO("Momentum",i_coll,P_collisions,P_COLL_element)
    !

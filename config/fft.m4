@@ -50,12 +50,6 @@ compile_fftqe="no"
 compile_fftw="no"
 
 #
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-
-#
 # first identifies lib and include dirs
 #
 try_libdir=
@@ -138,21 +132,21 @@ if ! test x"$try_libs" = "x" ; then
     if test "$HAVE_FFTW_OMP" = "yes" ; then def_fft="-D_FFTW -D_FFTW_OMP" ; fi
     #
     if test "$try_libs" = "-lfftw3" ; then
-      FFT_DESCRIPTION="(FFTW v3)";
+      FFT_info="(FFTW v3)";
       AC_MSG_RESULT(FFTW3)
     elif test "$try_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
-      FFT_DESCRIPTION="(FFTW_OMP v3)";
+      FFT_info="(FFTW_OMP v3)";
       AC_MSG_RESULT(FFTW3_OMP)
     else 
       desc=Other
       if ! test -z "`echo $try_libs | grep -i mkl`" ; then desc="MKL" ; fi  
-      FFT_DESCRIPTION="(FFTW $desc)";
+      FFT_info="(FFTW $desc)";
       AC_MSG_RESULT(FFTW ($desc) )
     fi
-    FFT_LIBS="${FFT_PATH} ${try_libs}"
   else
     def_fft="" 
     FFT_LIBS=""
+    FFT_INCS=""
     LDFLAGS="$save_ldflags"
   fi
   if test x"$HAVE_FFTW" = "xyes" ; then HAVE_FFT=yes; fi
@@ -192,12 +186,13 @@ if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
     AC_MSG_CHECKING([for FFT])
     if ! test x"$enable_3d_fft" = "xno" ; then 
       FFT3D_CPP="-D_USE_3D_FFT"
-      FFT_DESCRIPTION="(FFT ESSL (FFTQE) with 3D support)";
+      FFT_info="(FFT ESSL (FFTQE) with 3D support)";
     else
-      FFT_DESCRIPTION="(FFT ESSL (FFTQE))";
+      FFT_info="(FFT ESSL (FFTQE))";
     fi
     def_fft="-D_FFTQE $FFT3D_CPP -D_ESSL"
     FFT_LIBS="${FFT_PATH} $try_libs"
+    FFT_INCS="$IFLAG$try_incdir"
     HAVE_FFT=yes
     compile_fftqe=yes
     AC_MSG_RESULT(ESSL FFT)
@@ -232,9 +227,9 @@ fi
 if test "$use_internal_fftqe" = "yes" ; then
   if ! test x"$enable_3d_fft" = "xno" ; then 
     FFT3D_CPP="-D_USE_3D_FFT"
-    FFT_DESCRIPTION="(Internal FFTW2 (FFTQE) with 3D support)";
+    FFT_info="(Internal FFTW2 (FFTQE) with 3D support)";
   else
-    FFT_DESCRIPTION="(Internal FFTW2 (FFTQE))";
+    FFT_info="(Internal FFTW2 (FFTQE))";
   fi
   def_fft="-D_FFTQE $FFT3D_CPP -D_FFTW2"
   FFT_LIBS="-L./lib -lfftqe";
@@ -267,7 +262,7 @@ if test "$use_internal_fftsg" = "yes" ; then
     fft_cfactor="$with_fftsg_fac"
   fi
   #
-  FFT_DESCRIPTION="(Internal Goedecker FFT with $fft_cfactor cache)"
+  FFT_info="(Internal Goedecker FFT with $fft_cfactor cache)"
   def_fft="-D_FFTSG"
   FFT_LIBS=""
   HAVE_FFTSG=yes;
@@ -282,7 +277,7 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 # INTERNAL FFTW3
 #
 if test "$use_internal_fftw" = "yes" ; then
-  FFT_DESCRIPTION="(Internal FFTW3)";
+  FFT_info="(Internal FFTW3)";
   def_fft="-D_FFTW"
   FFT_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lfftw3";
   FFT_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
@@ -311,7 +306,7 @@ fi
 AC_SUBST(FFT_LIBS)
 AC_SUBST(FFT_INCS)
 AC_SUBST(def_fft)
-AC_SUBST(FFT_DESCRIPTION)
+AC_SUBST(FFT_info)
 AC_SUBST(compile_fftqe)
 AC_SUBST(compile_fftw)
 AC_SUBST(internal_fft)

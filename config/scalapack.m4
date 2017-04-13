@@ -49,19 +49,20 @@ mpi_routine=MPI_Init
 if test x"$enable_par_linalg" = "xyes"; then
   enable_blacs="internal";
   enable_scalapack="internal"; 
+else
+  #
+  case $with_blacs_libs in
+    yes) enable_blacs="internal" ;;
+    no) enable_blacs="no" ;;
+    *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
+  esac
+  #
+  case $with_scalapack_libs in
+    yes) enable_scalapack="internal" ;;
+    no) enable_scalapack="no" ;;
+    *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
+  esac
 fi
-#
-case $with_blacs_libs in
-  yes) enable_blacs="internal" ;;
-  no) enable_blacs="no" ;;
-  *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
-esac
-#
-case $with_scalapack_libs in
-  yes) enable_scalapack="internal" ;;
-  no) enable_scalapack="no" ;;
-  *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
-esac
 #
 if test "$mpibuild"  = "yes"; then
   #

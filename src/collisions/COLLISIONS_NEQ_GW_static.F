@@ -31,9 +31,9 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
- use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
+ use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,master_cpu,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
@@ -42,13 +42,14 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use timing_m,      ONLY:timing
 #endif
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs,OP_WR_CL
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
+ use COLL_interfaces, ONLY:io_COLLISIONS
  !
  implicit none
  !
@@ -126,6 +127,13 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
  endif
  call live_timing("Collisions",PAR_NC_local*PAR_nQ)
+ !
+ ! Write Database Header 
+ !
+ if (IO_colls.and.master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_COLLISIONS(ID,GW_NEQ_collisions)
+ endif
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -287,7 +295,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
      else
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif

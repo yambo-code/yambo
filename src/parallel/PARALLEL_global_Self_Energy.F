@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,nqbz
+ use R_lattice,     ONLY:bz_samp,nqbz,nXkibz
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch

@@ -46,11 +46,6 @@ if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
 if test x"$with_etsf_io_libs" != "x" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
-#
-# FC module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 #
 # main search

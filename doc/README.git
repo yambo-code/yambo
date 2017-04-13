@@ -110,4 +110,3 @@ Set it as the default push/pull stream
 Remove the yambo-devel branch
 
 >git push origin --delete devel-sc-mu
->

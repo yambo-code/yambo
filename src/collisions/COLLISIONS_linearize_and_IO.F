@@ -24,8 +24,9 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
+ use parallel_m,      ONLY:master_cpu
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
- use IO_m,            ONLY:io_control,OP_APP_WR_CL,io_COLLs
+ use IO_m,            ONLY:io_control,REP,OP_APP_WR_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
  !
  implicit none                                              
@@ -40,6 +41,14 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,ID
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
+ !
+ if (i_coll==0) then
+   if(io_COLLs.and.master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+   endif
+   return
+ endif
  !
  l_COH      = index(what,"COH")     >0 
  l_HXC      = index(what,"HXC")     >0
@@ -96,7 +105,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  if (.not.IO_colls) return
  !
  call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
- !
  io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
  !
  call COLLISIONS_alloc_and_free(what,"v1","clean",1)

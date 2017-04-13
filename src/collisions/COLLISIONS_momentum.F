@@ -26,7 +26,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  ! Momentum matrix elements
  !
  use pars,          ONLY:SP,schlen,cI,cZERO,rZERO
- use IO_m,          ONLY:io_COLLs,OP_WR_CL
+ use IO_m,          ONLY:io_COLLs,OP_WR_CL,REP,io_control
  use com,           ONLY:msg
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
@@ -41,7 +41,7 @@ subroutine COLLISIONS_momentum(E,k,q)
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
- use COLL_interfaces, ONLY:SCATTERING_GW_kinematics
+ use COLL_interfaces, ONLY:SCATTERING_GW_kinematics,io_COLLISIONS
  !
  implicit none
  type(levels)             ::E       
@@ -50,7 +50,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_coll,PAR_NC,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID
+ integer                  ::i_coll,PAR_NC,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID,io_err
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch

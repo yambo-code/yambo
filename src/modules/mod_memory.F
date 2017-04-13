@@ -23,7 +23,7 @@
 !
 module memory
  !
- use pars,          ONLY:SP,schlen,IP,DP,N_MEM_max,N_MEM_SAVE_max,MEM_jump_treshold,MEM_treshold,MEM_SAVE_treshold
+ use pars,          ONLY:SP,schlen,IP,DP,N_MEM_max,N_MEM_SAVE_max,MEM_jump_treshold,MEM_treshold,MEM_SAVE_treshold,LP
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
@@ -46,9 +46,9 @@ module memory
  !
  interface MEM_dri
    module procedure MEM_clean,MEM_error,&
-&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,&
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
-&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,MEM_lp3,&
 &                                    MEM_r4,MEM_c4,&
 &                             MEM_i5,MEM_r5,MEM_c5
  end interface MEM_dri
@@ -78,6 +78,11 @@ module memory
      integer     ::i(:)
      call MEM_manager(name,kind(i(1)))
    end subroutine
+   subroutine MEM_lp1(name,i)
+     character(*)::name
+     integer(LP) ::i(:)
+     call MEM_manager(name,kind(i(1)))
+   end subroutine
    subroutine MEM_i2(name,i)
      character(*)::name
      integer     ::i(:,:)
@@ -86,6 +91,11 @@ module memory
    subroutine MEM_i3(name,i)
      character(*)::name
      integer     ::i(:,:,:)
+     call MEM_manager(name,kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_lp3(name,i)
+     character(*)::name
+     integer(LP) ::i(:,:,:)
      call MEM_manager(name,kind(i(1,1,1)))
    end subroutine
    subroutine MEM_i5(name,i)

@@ -28,7 +28,7 @@ subroutine PLASMA_parallel_setup(EH_gas)
  use interfaces,    ONLY:PARALLEL_live_message,PARALLEL_index
  use plasma,        ONLY:plasma_gas
  !
- implicit none
+#include<memory.h>
  !
  type(plasma_gas) :: EH_gas
  !
@@ -38,7 +38,7 @@ subroutine PLASMA_parallel_setup(EH_gas)
  PAR_IND_PLASMA_ID=PAR_COM_PLASMA_INDEX%CPU_id
  PAR_nPlasma=PAR_IND_Plasma%n_of_elements(PAR_IND_PLASMA_ID+1)
  !
- allocate(PAR_PLASMA_index(EH_gas%max_N_poles)) 
+ YAMBO_ALLOC(PAR_PLASMA_index,(EH_gas%max_N_poles))
  !
  PAR_PLASMA_index=0
  PAR_nPlasma=0

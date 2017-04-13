@@ -38,7 +38,7 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: N
  type(POOL_group)  :: POOL
@@ -59,9 +59,9 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  M_slk%lwork  = M_slk%nrows*M_slk%nrows
  M_slk%liwork = M_slk%nrows+M_slk%nrows
  !
- allocate( WS%v_cmplx(M_slk%lwork) )
- allocate( WS%vp_int(M_slk%liwork) ) 
- allocate( WS%v_int(N+M_slk%nrows) )
+ YAMBO_ALLOC(WS%v_cmplx,(M_slk%lwork))
+ YAMBO_ALLOC(WS%vp_int,(M_slk%liwork))
+ YAMBO_ALLOC(WS%v_int,(N+M_slk%nrows))
  !
 #if defined _DOUBLE
  CALL PZGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )

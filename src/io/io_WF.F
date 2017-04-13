@@ -26,12 +26,9 @@ integer function io_WF(ID,wf)
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_bands,n_spin
  use stderr,           ONLY:intc
- use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec, &
-&                           io_bulk,io_header,ver_is_gt_or_eq,&
-&                           RD_CL_IF_END,RD_CL,io_action,io_fragment,&
-&                           io_elemental,frag_WF
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
+&                           io_fragment,io_elemental,frag_WF
 #if defined _TIMING
  use timing_m,         ONLY:timing
 #endif

@@ -30,7 +30,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n),det
@@ -41,7 +41,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  call timing('SERIAL_inversion',OPR='start')
 #endif
  !
- allocate(WS%v_int(n))
+ YAMBO_ALLOC(WS%v_int,(n))
  !
  call LU_factorization(n,M,WS%v_int,WS%i_fail)
  !
@@ -62,7 +62,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,-1,WS%i_fail)
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
+ YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')

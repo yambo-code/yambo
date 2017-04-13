@@ -35,7 +35,7 @@ SUBROUTINE MATRIX_transfer( mode, M_slk, M_bse, M )
  use parallel_m,     ONLY:PP_redux_wait,ncpu,myid
  use linear_algebra, ONLY:MATRIX_transfer_side_crop
  !
- implicit none
+#include<memory.h>
  !
  character(*)     :: mode
  type(SLK_matrix) :: M_slk
@@ -73,7 +73,8 @@ SUBROUTINE MATRIX_transfer( mode, M_slk, M_bse, M )
      GLOBAL_n_BS_blks(myid+1) =n_BS_blks
      call PP_redux_wait(GLOBAL_n_BS_blks)
      MAX_n_BS_blks  =maxval(GLOBAL_n_BS_blks)
-     allocate(BSE_components(ncpu,MAX_n_BS_blks,7)) ! 1-4 rows,cols / 5-6 iTs / 7 Mode
+     ! 1-4 rows,cols / 5-6 iTs / 7 Mode
+     YAMBO_ALLOC(BSE_components,(ncpu,MAX_n_BS_blks,7))
      BSE_components =0
      !
      do i_B=1,n_BS_blks
@@ -262,7 +263,7 @@ SUBROUTINE MATRIX_transfer( mode, M_slk, M_bse, M )
        !
      enddo
      !
-     deallocate(BSE_components)
+     YAMBO_FREE(BSE_components)
      return
      !
    endif

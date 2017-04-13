@@ -89,7 +89,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! I extended the k-grid using a certain number of 
  ! RL vectors shells. (passed via G_shell)
  !
- allocate(extended_k_points(nXkbz*N_g_vecs,3))
+ YAMBO_ALLOC(extended_k_points,(nXkbz*N_g_vecs,3))
  N_ext_K_pts=0
  do ig=1,N_g_vecs
    call c2a(b,v_in=g_vec(ig,:),v_out=v1,mode='ki2a')
@@ -99,7 +99,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    enddo
  enddo
  !
- allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
+ YAMBO_ALLOC(idist,(N_ext_K_pts))
+ YAMBO_ALLOC(order,(N_ext_K_pts))
  !
  min_idist=1.E10
  !
@@ -135,7 +136,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    enddo
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
- deallocate(idist)
+ YAMBO_FREE(idist)
  !
  k_grid_dim=0
  k_grid_b=0.
@@ -173,7 +174,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
        exit
     end select
  enddo
- deallocate(order,extended_k_points)
+ YAMBO_FREE(order)
+ YAMBO_FREE(extended_k_points)
  k_grid=0
  k_grid(k_grid_dim+1:)=1
  !

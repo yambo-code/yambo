@@ -152,7 +152,7 @@ module electrons
      ! from %nb as it is limited by SC_bands.
      !
      BOUNDS(1)=Ei%nb
-     if (associated(Ei%Eo)) then
+     if (allocated(Ei%Eo)) then
        BOUNDS(1)=size(Ei%Eo,1)
      endif
      BOUNDS(2)=BOUNDS(1)

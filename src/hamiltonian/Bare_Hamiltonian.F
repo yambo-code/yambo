@@ -28,7 +28,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
- use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -46,7 +45,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k
@@ -106,8 +105,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc
- allocate(QP_Vxc(QP_n_states))
- call mem_est("QP_Vxc",(/QP_n_states/))    
+ YAMBO_ALLOC(QP_Vxc,(QP_n_states))
  QP_Vxc=cZERO
  call XCo_local(E,k)
  !
@@ -155,8 +153,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
 #endif
  !
- deallocate(QP_Vxc)
- call mem_est("QP_Vxc")
+ YAMBO_FREE(QP_Vxc)
  !
  call PP_redux_wait(Ho)
  !

@@ -119,7 +119,7 @@ module RT_control
        YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
        P_cache=rZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache,_steps))
+         YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache_steps))
          M_cache=rZERO
        endif
        !

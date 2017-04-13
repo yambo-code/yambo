@@ -128,6 +128,7 @@ integer            :: n_groups                =0     ! groups of active chains
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
  logical          :: linear_algebra_is_parallel = .false.
+ character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
  !
  !... Logging CPUs ...
  !
@@ -257,9 +258,6 @@ integer            :: n_groups                =0     ! groups of active chains
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
- ! ... Freqs
- integer            :: PAR_IND_FREQ_ID
- !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -306,7 +304,6 @@ integer            :: n_groups                =0     ! groups of active chains
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
@@ -358,8 +355,6 @@ integer            :: n_groups                =0     ! groups of active chains
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
- integer            :: PAR_n_freqs 
- integer,allocatable:: PAR_FREQS_index(:)
  !
  ! WorkSpace
  !

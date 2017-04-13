@@ -53,11 +53,9 @@ subroutine MAG_Hamiltonian()
  ! Ax =  0              Ay=  MAG_B x        Az=0    
  ! *******************************************************************************************
  !
- !
  use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
  use hamiltonian,    ONLY:Ho
- use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
@@ -70,7 +68,7 @@ subroutine MAG_Hamiltonian()
  use interfaces,     ONLY:PARALLEL_index,WF_load
  use wrapper,        ONLY:Vstar_dot_V
  !
- implicit none
+#include<memory.h>
  !
  ! Parallelization indexes
  !
@@ -248,28 +246,29 @@ subroutine MAG_Hamiltonian()
      integer :: level
      select case(level)
        case(0)
-         allocate(r_cell_cc(fft_size,3))
-         call mem_est("r_cell_cc",(/fft_size*3/))
+         YAMBO_ALLOC(r_cell_cc,(fft_size,3))
          if (MAG_landau) then
-           if(H_magn_x_on) allocate(H_paramagn_x(fft_size))
-           if(H_magn_y_on) allocate(H_paramagn_y(fft_size))
-           if(H_magn_z_on) allocate(H_paramagn_z(fft_size))
-           call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y",(/fft_size,fft_size,fft_size/))
-           allocate(H_diamagn(fft_size))
-           call mem_est("H_diamagn",(/fft_size/))
+           if(H_magn_x_on) then
+             YAMBO_ALLOC(H_paramagn_x,(fft_size))
+           endif
+           if(H_magn_y_on) then
+             YAMBO_ALLOC(H_paramagn_y,(fft_size))
+           endif
+           if(H_magn_z_on) then
+             YAMBO_ALLOC(H_paramagn_z,(fft_size))
+           endif
+           YAMBO_ALLOC(H_diamagn,(fft_size))
            if(H_magn_x_on) H_paramagn_x=0._SP
            if(H_magn_y_on) H_paramagn_y=0._SP
            if(H_magn_z_on) H_paramagn_z=0._SP
            H_diamagn=0._SP
          endif
          if (MAG_pauli) then
-           allocate(H_pauli(fft_size,n_spin,n_spinor))
-           call mem_est("H_pauli",(/size(H_pauli)/))
+           YAMBO_ALLOC(H_pauli,(fft_size,n_spin,n_spinor))
            H_pauli=cZERO
          endif
        case(1)
-         allocate(H_tmp(fft_size,n_spinor,n_spinor))
-         call mem_est("H_tmp",(/size(H_tmp)/))
+         YAMBO_ALLOC(H_tmp,(fft_size,n_spinor,n_spinor))
          H_tmp = cZERO
      end select
    end subroutine
@@ -278,20 +277,24 @@ subroutine MAG_Hamiltonian()
      integer :: level
      select case(level)
        case(1)
-         deallocate(r_cell_cc)
-         call mem_est("r_cell_cc")
+         YAMBO_FREE(r_cell_cc)
        case(2)
          if (MAG_landau) then
-           if(H_magn_x_on) deallocate(H_paramagn_x)
-           if(H_magn_y_on) deallocate(H_paramagn_y)
-           if(H_magn_z_on) deallocate(H_paramagn_z)
-           deallocate(H_diamagn)
+           if(H_magn_x_on) then
+             YAMBO_FREE(H_paramagn_x)
+           endif
+           if(H_magn_y_on) then
+             YAMBO_FREE(H_paramagn_y)
+           endif
+           if(H_magn_z_on) then
+             YAMBO_FREE(H_paramagn_z)
+           endif
+           YAMBO_FREE(H_diamagn)
          endif
-         if (MAG_pauli)  deallocate(H_pauli)
-         deallocate(H_tmp)
-         call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y")
-         call mem_est("H_pauli H_diamagn")
-         call mem_est("H_tmp")
+         if (MAG_pauli)  then
+           YAMBO_FREE(H_pauli)
+         endif
+         YAMBO_FREE(H_tmp)
      end select
   end subroutine
   !

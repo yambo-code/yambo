@@ -40,7 +40,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: N
  type(POOL_group)  :: POOL
@@ -77,8 +77,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  ! AF: better estimates should be used
  lwork=2*n**2
  lrwork=2*n + 2*n-2
- allocate(WS%v_cmplx(lwork))
- allocate(WS%v_real(lrwork))
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ YAMBO_ALLOC(WS%v_real,(lrwork))
  !
 #if defined _DOUBLE
  call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&

@@ -176,7 +176,7 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    ! So to be here in VERIFY mode you MUST have allocated and defined the qp%table 
    !
-   allocate(qp_table_disk(qp_n_states_disk,3+n_sp_pol-1))
+   YAMBO_ALLOC(qp_table_disk,(qp_n_states_disk,3+n_sp_pol-1))
    !
    if (write_is_on(ID)) qp_table_disk=qp%table
    !
@@ -200,7 +200,7 @@ integer function io_QP_and_GF(what,qp,ID)
      qp%table=qp_table_disk
    endif
    !
-   deallocate(qp_table_disk)
+   YAMBO_FREE(qp_table_disk)
    !
    io_QP_and_GF=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1

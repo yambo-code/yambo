@@ -111,7 +111,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call k_ibz2bz(Xk,'a',.false.)  
  !
- allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
+ YAMBO_ALLOC(q_map,(k_grid(1),k_grid(2),k_grid(3)))
+ YAMBO_ALLOC(q_iptbz,(Xk%nbz,3))
  !
  ! k_b_m1=transpose(k_grid_b) in rlu
  !
@@ -331,7 +332,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !CLEAN
  !
  call k_ibz2bz(Xk,'d',.false.)
- deallocate(q_map,q_iptbz)
+ YAMBO_FREE(q_map)
+ YAMBO_FREE(q_iptbz)
  if (Xk_grid_is_uniform) then
    YAMBO_FREE(q%ptbz)
  endif

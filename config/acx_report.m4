@@ -194,5 +194,4 @@ AC_SUBST(SLE_str)
 AC_SUBST(LIBXC_str)
 AC_SUBST(MPI_str)
 AC_SUBST(MPI_info)
-
 ])

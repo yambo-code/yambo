@@ -70,7 +70,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  if (iGo==0) iGo_=iG
  !
  ! aux data
- allocate(E_G_m_G(iG_,iGo_))
+ YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))
  !
  ! setup MPI parallelism if required
  !
@@ -187,7 +187,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
  call PP_indexes_reset(PAR_IND_G)
- deallocate(E_G_m_G)
+ YAMBO_FREE(E_G_m_G)
  !
 #if defined _TIMING
  call timing("eval_G_minus_G",opr="stop")

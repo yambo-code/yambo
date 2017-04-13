@@ -34,7 +34,7 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: n,nrhs
  type(POOL_group)  :: POOL
@@ -54,8 +54,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !
  ! better estimate of the dimensions to be included
  !
- if (allocated(WS%v_int)) deallocate(WS%v_int)
- allocate(WS%v_int(n+A_slk%nrows))
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(n+A_slk%nrows))
  !
 #if defined _DOUBLE
  CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)

@@ -36,7 +36,6 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use collision_el,    ONLY:elemental_collision
  use wave_func,       ONLY:WF
  use SC,              ONLY:l_oep_EWeight
  !
@@ -50,7 +49,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  ! Work space
  !
- integer          ::iv1,ig,i1,ik,ifft,os,is
+ integer          ::iv1,ig,i1,ik,ifft
  real(DP)         ::Vslt_DP(fft_size)
  complex(DP)      ::f(fft_size)
  real(SP)         ::EWeight

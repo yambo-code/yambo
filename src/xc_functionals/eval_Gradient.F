@@ -40,7 +40,7 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  use R_lattice,     ONLY:g_vec,ng_vec
  use wave_func,     ONLY:wf_ng
  !
- implicit none
+#include<memory.h>
  complex(SP),      intent(in) ::f(fft_size)
  complex(SP),      intent(out)::f_gradient(3,fft_size)
  character(len=*), intent(in) ::f_type       ! either "wave" or "density"
@@ -49,7 +49,6 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  !
  integer :: ng_,ic,ig
  complex(DP), allocatable :: Vr(:), V3g(:,:)
- !
  !
  select case( trim(f_type) )
  case( "wave" )
@@ -60,7 +59,8 @@ subroutine eval_Gradient(f,f_gradient,f_type)
    call error(' [FFT] unknown f_type when computing gradient')
  end select
  !
- allocate(Vr(fft_size),V3g(3,ng_))
+ YAMBO_ALLOC(Vr,(fft_size))
+ YAMBO_ALLOC(V3g,(3,ng_))
  V3g(:,:) = (0._SP,0._SP)
  Vr=f
  !
@@ -87,6 +87,7 @@ subroutine eval_Gradient(f,f_gradient,f_type)
    f_gradient(ic,:) = Vr(:)
  enddo
  !
- deallocate(Vr,V3g)
+ YAMBO_FREE(Vr)
+ YAMBO_FREE(V3g)
  !
 end subroutine eval_Gradient

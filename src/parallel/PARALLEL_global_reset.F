@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_reset(Xk,ENVIRONMENT,X_type)
+subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,nXkibz
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
  use parallel_m,    ONLY:PP_indexes_reset
@@ -92,8 +92,8 @@ subroutine PARALLEL_reset(Xk,ENVIRONMENT,X_type)
    !
    if (ENVIRONMENT=="Response_T_space") then
      if (.not.allocated(PAR_IND_eh)) then
-       allocate(PAR_IND_eh(Xk%nibz))
-       do i_k=1,Xk%nibz
+     allocate(PAR_IND_eh(nXkibz))
+     do i_k=1,nXkibz
          call PP_indexes_reset(PAR_IND_eh(i_k))
        enddo
      endif
@@ -167,4 +167,4 @@ subroutine PARALLEL_reset(Xk,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads( )
    !
-end subroutine PARALLEL_reset
+end subroutine PARALLEL_global_reset

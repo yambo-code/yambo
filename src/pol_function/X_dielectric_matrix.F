@@ -73,7 +73,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
 &   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  !
- X%ngostnts=Dip%ngostnts
+ X%ngostnts=Dip%ng
  !
  ! TDDFT SETUP (-1 argument)
  !

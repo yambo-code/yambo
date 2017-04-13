@@ -44,7 +44,7 @@ integer function variables_DIPOLES(Dip,ID)
  call io_elemental(ID,UNIT=HA2EV,&
 &     VAR=" X e/h energy range [ev]:",R1=Dip%ehe,CHECK=.true.,OP=(/">=","<="/))
  call io_elemental(ID,&
-&     VAR=" RL vectors in the sum  :",I0=Dip%ngostnts,WARN=.true.,OP=(/"<="/))
+&     VAR=" RL vectors in the sum  :",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
  call io_elemental(ID,&
 &     VAR=" [r,Vnl] included       :",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&

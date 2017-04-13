@@ -13,7 +13,7 @@
 #  -----------------------------
 #  The top level BLACS directory
 #  -----------------------------
-   BTOPdir = $(srcdir)/lib/blacs/blacs
+   BTOPdir = $(prefix)/lib/blacs/blacs
 
 #  ---------------------------------------------------------------------------
 #  The communication library your BLACS have been written for.

@@ -24,6 +24,8 @@
 m4_include([config/version.m4])
 #
 AC_PREFIX_DEFAULT($PWD)
+if test "$exec_prefix" = "NONE" ; then exec_prefix="$PWD" ; fi
+#
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_SRCDIR([driver/driver.c])
 #
@@ -92,7 +94,13 @@ AC_SUBST(MAKE)
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"
-
+AC_SUBST(AR_FLAGS)
+#
+# FC module flag
+#
+IFLAG=$ax_cv_f90_modflag
+if test -z "$IFLAG" ; then IFLAG="-I" ; fi
+AC_SUBST(IFLAG)
 #
 # ============================================================================
 #
@@ -173,7 +181,6 @@ ACX_EXTUS
 #
 AC_FC_FREEFORM
 #
-AC_SUBST(AR_FLAGS)
 AC_LANG_POP(Fortran)
 #
 #=============================================================================
@@ -255,46 +262,11 @@ AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F 
                  sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
+#
 AC_OUTPUT
-chmod u+x sbin/*
-cp config/Makefile .
 #
-if test ! -d bin ; then mkdir bin ; fi ;
-if test ! -d include ; then mkdir include ; fi
-if test ! -d lib ; then mkdir lib ; fi
+# yambo folders
 #
-if ! test -e "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_path/${FCKIND}/${FC}";         fi
-if ! test -e "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
-if ! test -e "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
-if ! test -e "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
+m4_include([config/yambo_folders.m4])
 #
-if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi
- if test ! -d "$prefix/ypp"        ; then mkdir "$prefix/ypp"        ; fi
- if test ! -d "$prefix/interfaces" ; then mkdir "$prefix/interfaces" ; fi
- if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib" ; fi
- if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local" ; fi
- if test ! -d "$prefix/lib/slatec" ; then mkdir "$prefix/lib/slatec" ; fi
- cd "$srcdir/driver/" ;
- for file in `ls *.h` ; do
-  cp "$file" "$prefix/driver" ;
- done ;
- for file in `ls *.c` ; do
-  cp "$file" "$prefix/driver" ;
- done ;
- cd "../lib/local" ;
- for file in `ls *.f` ; do
-  cp "$file" "$prefix/lib/local" ;
- done ;
- cd "../slatec" ;
- for file in `ls *.f` ; do
-  cp "$file" "$prefix/lib/slatec" ;
- done ;
- cd "$prefix" ;
-fi
-#
-if test "$mpibuild" = "no" ; then
- cat config/report | grep -v 'Parallel'
-else
- cat config/report
-fi
+cat config/report

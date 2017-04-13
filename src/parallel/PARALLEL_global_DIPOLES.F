@@ -30,7 +30,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,n_c_bands,n_v_bands
+ use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,PAR_build_index,PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_DIPk_ibz_A2A,PAR_COM_DIPk_ibz_INDEX, &
 &                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP
@@ -61,9 +61,10 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
    !
    call PARALLEL_structure(3,(/"k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,ROLE=(/"k","c","v"/),&
-&                                        COMM_index_1=PAR_COM_DIPk_ibz_INDEX,COMM_index_2=PAR_COM_CON_INDEX_DIP,&
-&                                        COMM_index_3=PAR_COM_VAL_INDEX_DIP,COMM_A2A_1=PAR_COM_DIPk_ibz_A2A)
+   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_DIPk_ibz_INDEX,&
+&                                          COMM_index_2=PAR_COM_CON_INDEX_DIP, &
+&                                          COMM_index_3=PAR_COM_VAL_INDEX_DIP, &
+&                                          COMM_A2A_1=PAR_COM_DIPk_ibz_A2A)
    !
    ! K-points (IBZ)
    !
@@ -78,7 +79,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
    !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call Build_up_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_DIPk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_DIPk_ibz_INDEX%n_CPU)
@@ -97,24 +98,24 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! Dipoles conduction bands
    !
-   call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/n_c_bands(2)/),low_range=(/n_c_bands(1)/),&
+   call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/PAR_n_c_bands(2)/),low_range=(/PAR_n_c_bands(1)/),&
 &                      COMM=PAR_COM_CON_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_CON_BANDS_DIP_ID=PAR_COM_CON_INDEX_DIP%CPU_id
    !
    call PARALLEL_live_message("CON bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_COM_CON_INDEX_DIP%CPU_id+1),&
-&                             TOTAL=n_c_bands(2)-n_c_bands(1)+1,&
+&                             TOTAL=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1,&
 &                             NCPU=PAR_COM_CON_INDEX_DIP%n_CPU)
    !
    ! Dipoles valence bands
    !
-   call PARALLEL_index(PAR_IND_VAL_BANDS_DIP,(/n_v_bands(2)/),low_range=(/n_v_bands(1)/),&
+   call PARALLEL_index(PAR_IND_VAL_BANDS_DIP,(/PAR_n_v_bands(2)/),low_range=(/PAR_n_v_bands(1)/),&
 &                      COMM=PAR_COM_VAL_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
    PAR_IND_VAL_BANDS_DIP_ID=PAR_COM_VAL_INDEX_DIP%CPU_id
    !
    call PARALLEL_live_message("VAL bands",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_COM_VAL_INDEX_DIP%CPU_id+1),&
-&                             TOTAL=n_v_bands(2)-n_v_bands(1)+1,&
+&                             TOTAL=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1,&
 &                             NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
    !
  endif

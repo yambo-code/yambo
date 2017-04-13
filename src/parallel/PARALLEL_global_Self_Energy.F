@@ -218,11 +218,14 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !
    ! Oscillators needed to evaluate the Radiative Lifetimes
    !
-   call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
-   call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
-   ! 
    PAR_n_c_bands=QP_n_G_bands
    PAR_n_v_bands=QP_n_G_bands
+   !
+   allocate(PAR_DIPk_ibz_index(nXkibz))
+   do i_k=1,nXkibz
+     PAR_DIPk_ibz_index(i_k)=i_k
+   enddo
+   PAR_DIPk_nibz=nXkibz
    ! 
  endif
  !

@@ -36,7 +36,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
-&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
+&                        PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X,   &
+&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat
@@ -80,10 +81,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
  endif
  !
- call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
- call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
- call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
+ call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
+ call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
  !
  ! K-points (IBZ)
  !

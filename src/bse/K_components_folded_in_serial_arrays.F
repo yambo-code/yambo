@@ -44,12 +44,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:BSS_dipoles_kerr,BS_KERR_alloc
+ use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
 #endif
  !
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BSS_dipoles_PL,BS_PL_alloc,BSS_PL_f,PL_weights
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -77,11 +77,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   call BS_KERR_alloc( )
+   call BSS_KERR_alloc( )
 #endif
    !
 #if defined _PL
-   call BS_PL_alloc( )
+   call BSS_PL_alloc( )
 #endif
    !
    ! GPL_EXCLUDE_END

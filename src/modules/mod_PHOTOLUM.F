@@ -58,7 +58,7 @@ module PHOTOLUM
      !
      if (allocated(PL))  return
      !
-     YAMBO_ALLOCATE(PL,(BSS_n_freqs,3))!2(int)3(nonint)
+     YAMBO_ALLOC(PL,(BSS_n_freqs,3))!2(int)3(nonint)
      PL = rZERO
      PL_weights=PL_weights/v_norm(PL_weights)
      !

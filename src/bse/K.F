@@ -63,10 +63,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
- use PHOTOLUM,       ONLY:BS_PL_free
+ use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -223,10 +223,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      ! GPL_EXCLUDE_START
      !
 #if defined _PL
-     call BS_PL_free( )
+     call BSS_PL_free( )
 #endif
 #if defined _KERR
-     call BS_KERR_free( )
+     call BSS_KERR_free( )
 #endif
      !
      ! GPL_EXCLUDE_END

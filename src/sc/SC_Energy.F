@@ -54,10 +54,8 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_V_is_local) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,&
-&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! V_xc
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0,& 
-&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! E_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)   ! V_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0)   ! E_xc
  !
  ! Hartree & XC
  !

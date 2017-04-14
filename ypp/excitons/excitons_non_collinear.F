@@ -33,7 +33,7 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  use electrons,     ONLY:n_spinor
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  !

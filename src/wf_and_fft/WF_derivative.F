@@ -27,7 +27,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  is the periodic part of the derivative
  !
  use pars,           ONLY:SP,DP,pi,cZERO
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan

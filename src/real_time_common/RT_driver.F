@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q)
  use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&

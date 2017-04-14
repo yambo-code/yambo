@@ -198,7 +198,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  T_elecs=Tel
  T_holes=Tel
  call ef2nel(T_holes,E%E_Fermi,n_holes,'holes')
- do while (i_trials(1)<=5000)
+ do while (i_trials(1)<5000)
    call ef2nel(T_elecs,E%E_Fermi,n_elecs,'elecs')
    if(abs(n_elecs+n_holes)==0._SP) exit
    balance=(n_holes-n_elecs)/(n_elecs+n_holes)

@@ -31,7 +31,7 @@ subroutine MAG_A_phase()
  use magnetic,       ONLY:Bz,MAG_radius,n_loops
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
  !
  implicit none

@@ -27,7 +27,7 @@ subroutine Dipole_magnetization(Xk,X)
  !
  use pars,                ONLY:cI
  use drivers,             ONLY:l_sc_run
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index

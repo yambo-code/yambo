@@ -35,7 +35,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use wave_func,      ONLY:WF,WAVEs
  use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
@@ -108,7 +108,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
 &             -real(f_occ(n_sp_pol),SP)*real(conjg(WF_tmp%c(:,i_wf1(2)))*WF_tmp%c(:,i_wf1(2))) )
        !
      enddo
-     call WF_free(WF_tmp)
+     call WF_free(WF_tmp,keep_fft=.true.)
    enddo
    !  
  endif

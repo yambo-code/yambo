@@ -45,7 +45,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use timing_m,      ONLY:timing
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,WF_free
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  !

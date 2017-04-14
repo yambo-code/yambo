@@ -23,6 +23,7 @@
 !
 subroutine fft_free()
  !
+ use memory_m, ONLY:mem_est
  use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
 &                    fft_rot_r,fft_rot_r_inv,fft_multiplier
 #if defined _FFTW

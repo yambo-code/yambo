@@ -34,7 +34,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
- use interfaces,          ONLY: WF_load
+ use interfaces,          ONLY: WF_load,WF_free
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
 &                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold

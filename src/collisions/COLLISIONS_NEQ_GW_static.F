@@ -44,7 +44,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
- use interfaces,    ONLY:WF_load,WF_free
+ use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
  use D_lattice,     ONLY:DL_vol

@@ -33,6 +33,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
+ use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan

@@ -39,7 +39,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&

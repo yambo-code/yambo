@@ -35,7 +35,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use hamiltonian,   ONLY:H_ref_bands,Hzero
  use memory_m,      ONLY:mem_est
  use magnetic,      ONLY:new_pp,old_pp
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:RD,RD_CL,io_control
  !
  implicit none

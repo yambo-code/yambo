@@ -42,7 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index,&
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index,&
 &                         LINEAR_ALGEBRA_driver
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc

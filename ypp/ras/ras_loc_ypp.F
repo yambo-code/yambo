@@ -35,7 +35,7 @@
    use LIVE_t,                  ONLY : live_timing,live_timing_is_on
    use stderr,                  ONLY : intc
    use parallel_m,              ONLY : PP_redux_wait,PP_indexes,myid,PP_indexes_reset
-   use interfaces,              ONLY : PARALLEL_index,WF_load
+   use interfaces,              ONLY : PARALLEL_index,WF_load,WF_free
    implicit none
    ! 
    ! Work Space

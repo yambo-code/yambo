@@ -21,11 +21,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_free(WF)
+subroutine WF_free(WF,keep_fft)
  !
  use wave_func,ONLY:WAVEs,QUIET_free
  use memory_m, ONLY:mem_est
- type(WAVEs)      ::WF
+ !
+ implicit none
+ !
+ type(WAVEs)       :: WF
+ logical, optional :: keep_fft 
+ !
+ ! Work-space
+ !
+ logical           :: keep_fft_
+ !
+ keep_fft_=.false.
+ if (present(keep_fft)) keep_fft_=keep_fft
  !
  if (.not.associated(WF%c)) return
  !
@@ -38,6 +49,8 @@ subroutine WF_free(WF)
    deallocate(WF%state)
    nullify(WF%state)
  endif 
+ !
+ if(.not.keep_fft_.and.WF%space=="R") call fft_free()
  !
  WF%k=0
  WF%b=0

@@ -40,7 +40,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  use timing_m,      ONLY:timing
 #endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use COLL_interfaces, ONLY:SCATTERING_GW_kinematics
  !
  implicit none

@@ -612,7 +612,6 @@ module IO_m
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR
-       write(*,*) 'pippo',trim(FILENAME),trim(VARNAME),trim(nf90_strerror(status))
        write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if

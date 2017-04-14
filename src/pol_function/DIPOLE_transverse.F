@@ -30,7 +30,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _PL
  use drivers,             ONLY:l_photolum
 #endif
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index

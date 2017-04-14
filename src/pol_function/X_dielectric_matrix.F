@@ -42,7 +42,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
-&                        PARALLEL_WF_index,WF_load
+&                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  !
  implicit none

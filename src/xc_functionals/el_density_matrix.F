@@ -29,7 +29,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
@@ -82,7 +82,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          enddo
          !
        enddo
-       call WF_free(WF_tmp)
+       call WF_free(WF_tmp,keep_fft=.true.)
      enddo
    enddo
    !

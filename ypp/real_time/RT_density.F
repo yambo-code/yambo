@@ -37,7 +37,7 @@ subroutine RT_density(en,kpt,qpt)
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
- use interfaces,     ONLY:WF_load,el_density_and_current
+ use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !

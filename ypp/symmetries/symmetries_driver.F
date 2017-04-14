@@ -33,7 +33,7 @@ subroutine symmetries_driver(E,Xk)
  use D_lattice,           ONLY:nsym
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  !
  implicit none
  !

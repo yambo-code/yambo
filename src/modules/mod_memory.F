@@ -48,9 +48,9 @@ module memory
    module procedure MEM_clean,MEM_error,&
 &                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
-&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,        MEM_rd3,MEM_lp3,&
-&                                    MEM_r4,MEM_c4,&
-&                             MEM_i5,MEM_r5,MEM_c5
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_cd3,MEM_rd3,MEM_lp3,&
+&                                    MEM_r4,MEM_c4,MEM_l4,MEM_cd4,&
+&                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5
  end interface MEM_dri
  !
  interface  
@@ -158,6 +158,21 @@ module memory
      complex(DP) ::c(:,:)
      call MEM_manager(name,size(c),2*kind(c(1,1)))
    end subroutine
+   subroutine MEM_cd3(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_cd4(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd5(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:,:)
+     call MEM_manager(name,size(c),2*kind(c(1,1,1,1,1)))
+   end subroutine
    subroutine MEM_c2(name,c)
      character(*)::name
      complex(SP) ::c(:,:)
@@ -192,5 +207,10 @@ module memory
      character(*)::name
      logical     ::l(:,:,:)
      call MEM_manager(name,size(l),kind(l(1,1,1)))
+   end subroutine
+   subroutine MEM_l4(name,l)
+     character(*)::name
+     logical     ::l(:,:,:,:)
+     call MEM_manager(name,size(l),kind(l(1,1,1,1)))
    end subroutine
 end module memory

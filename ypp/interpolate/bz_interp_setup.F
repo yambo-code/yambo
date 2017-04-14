@@ -107,7 +107,7 @@ subroutine bz_interp_setup(Xk)
  !
  ! Find R sheels
  !
- YAMBO_ALLOC(lattice_vectors,(3,n_vec))
+ YAMBO_ALLOC_P(lattice_vectors,(3,n_vec))
  YAMBO_ALLOC(lattice_vec_mod,(n_vec))
  !
  istart=1
@@ -150,17 +150,14 @@ subroutine bz_interp_setup(Xk)
    !
  enddo
  !
-! do i1=1,n_vec
-!   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
-! enddo
  call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !
- YAMBO_FREE(lattice_vectors)
+ YAMBO_FREE_P(lattice_vectors)
  YAMBO_FREE(lattice_vec_mod)
  !
- YAMBO_ALLOC(lattice_vectors,(3,nshells))
+ YAMBO_ALLOC_P(lattice_vectors,(3,nshells))
  !
  lattice_vectors(1:3,1:nshells)=all_vec(1:3,1:nshells)
  !

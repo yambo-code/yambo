@@ -33,7 +33,7 @@ subroutine k_special()
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  ! 
@@ -174,7 +174,8 @@ subroutine k_special()
    !
    call msg('s','Found '//trim(intc(n_lines-1))//' segments along the path')
    !
-   allocate(K_path(n_total_k+1,4),K_path_label(n_total_k+1))
+   YAMBO_ALLOC(K_path,(n_total_k+1,4))
+   allocate(K_path_label(n_total_k+1))
    n_total_k=0
    K_norm=0.
    K_path_label=" "
@@ -209,7 +210,8 @@ subroutine k_special()
    !
    call of_open_close(k_f_name)
    !
-   deallocate(K_path,K_path_label)
+   deallocate(K_path_label)
+   YAMBO_FREE(K_path)
  endif
  !
 end subroutine

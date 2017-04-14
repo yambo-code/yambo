@@ -34,7 +34,7 @@ subroutine QP_DBs_initialize()
  use units,     ONLY:HA2EV
  use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,QP_db,QP_db_what,QP_db_name
  !
-#include<memory.h>
+ implicit none
  ! 
  ! Work Space
  !
@@ -110,9 +110,9 @@ subroutine QP_DBs_initialize()
          endif
        enddo
        if (i_c==1) then
-         YAMBO_ALLOC(QP_db_what,(n_QP_dbs))
-         YAMBO_ALLOC(QP_db,(n_QP_dbs))
-         YAMBO_ALLOC(QP_db_name,(n_QP_dbs))
+         allocate(QP_db_what(n_QP_dbs))
+         allocate(QP_db(n_QP_dbs))
+        allocate(QP_db_name(n_QP_dbs))
        endif
      enddo
      !

@@ -32,7 +32,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
@@ -62,8 +62,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    USER_K%nibz=1
    !
    kgrid_main_loop: do while(real_ctl/=999._SP)
-     if (allocated(USER_K%pt)) deallocate(USER_K%pt)
-     allocate(USER_K%pt(USER_K%nibz,3))
+     YAMBO_FREE(USER_K%pt)
+     YAMBO_ALLOC(USER_K%pt,(USER_K%nibz,3))
      USER_K%pt(USER_K%nibz,:)=(/0._SP,0._SP,999._SP/)
      call parser('BKpts',USER_K%pt)
      real_ctl=USER_K%pt(USER_K%nibz,3)
@@ -95,7 +95,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !================================================================= 
  if( BANDS_steps> 0) then
    !
-   allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
+   YAMBO_ALLOC(distances,(USER_K%nibz-1))
+   YAMBO_ALLOC(int_distances,(USER_K%nibz-1))
    !
    do ik=1,USER_K%nibz-1
      v=USER_K%pt(ik,:)-USER_K%pt(ik+1,:)
@@ -110,8 +111,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    enddo
    CIRCUIT_K%nibz=sum(int_distances)+1
    !
-   allocate(CIRCUIT_K%pt(CIRCUIT_K%nibz,3))
-   allocate(CIRCUIT_K%weights(CIRCUIT_K%nibz))
+   YAMBO_ALLOC(CIRCUIT_K%pt,(CIRCUIT_K%nibz,3))
+   YAMBO_ALLOC(CIRCUIT_K%weights,(CIRCUIT_K%nibz))
    !
    CIRCUIT_K%weights=1._SP/real(CIRCUIT_K%nibz,SP)
    !
@@ -125,8 +126,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    enddo
    CIRCUIT_K%pt(CIRCUIT_K%nibz,:)=USER_K%pt(USER_K%nibz,:)
    !
-   !
-   deallocate(distances,int_distances)
+   YAMBO_FREE(distances)
+   YAMBO_FREE(int_distances)
    !
  endif
  !
@@ -155,12 +156,12 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
  if (BANDS_steps> 0) then
-   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
+   YAMBO_ALLOC_P(bands_output,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
    call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_output,ID=ID_interp)
  endif
  !
  if(all(interp_grid>0)) then
-   allocate(bands_output(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
+   YAMBO_ALLOC_P(bands_output,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
    call bz_interpolation(USER_k=INTERP_k,R2D=bands_output,ID=ID_interp)
  endif
  !

@@ -118,8 +118,7 @@ subroutine plot_gnuplot(eval_only)
      if (plot_is_2D(1)) dir2plot=(/1,2/)
      if (plot_is_2D(2)) dir2plot=(/1,3/)
      if (plot_is_2D(3)) dir2plot=(/2,3/)
-     YAMBO_ALLOC(v2plot2D,(nr2plot(1))
-     YAMBO_ALLOC(nr2plot,(2)))
+     YAMBO_ALLOC(v2plot2D,(nr2plot(1),nr2plot(2)))
      v2plot2D=0.
      ir=0
      do i1 = 0,nr(1)-1

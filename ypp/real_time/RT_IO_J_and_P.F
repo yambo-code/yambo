@@ -27,7 +27,6 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use pars,           ONLY:DP,SP,schlen
  use electrons,      ONLY:n_spin
  use R_lattice,      ONLY:nkibz
- use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:J_cache,P_cache,M_cache,IO_JPSM_cache_steps

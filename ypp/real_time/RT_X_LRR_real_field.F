@@ -32,7 +32,6 @@ subroutine RT_X_LRR_real_field(en)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
- use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:l_RT_induced_field
  use fields,         ONLY:Efield,small_a_frequency,small_a

@@ -444,6 +444,10 @@ define lib_ext_remove
   echo "[CLEAN] Pre-compiled internal libraries ... done"; \
   rm -fr "$(libs_prefix)"; \
  fi
+ @if test -f $(prefix)/sys_incs/../driver/driver.c; then \
+  echo "[CLEAN] Local include directory ... done"; \
+  rm -fr "$(prefix)/sys_incs"; \
+ fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \

@@ -1,4 +1,0 @@
-#if defined _YPP_SURF
-SURF_objects = ras_ypp.o reels_ypp.o ras_loc_ypp.o ras_trans_ypp.o 
-#endif
-objs = $(SURF_objects)

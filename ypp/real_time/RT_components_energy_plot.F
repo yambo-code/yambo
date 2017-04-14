@@ -38,7 +38,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use stderr,         ONLY:intc,real2ch
  use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
  !
- implicit none
+#include<memory.h>
  !
 #include <memory.h>
  !
@@ -96,7 +96,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  if (n_spinor==2) then
    call Load_and_Fit_alloc(DATA_grp(2),1,"spin-up")
    call Load_and_Fit_alloc(DATA_grp(3),1,"spin-dn")
-   allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
    call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
    n_groups=3
  endif

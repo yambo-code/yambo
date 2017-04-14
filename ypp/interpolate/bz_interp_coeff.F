@@ -36,7 +36,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   use vec_operate,    ONLY:c2a
   use com,            ONLY:error
   !
-  implicit none
+#include<memory.h>
   !
   integer,       intent(in)  :: nvalues
   integer,       intent(in)  :: Nk
@@ -58,10 +58,12 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
   ikn =Nk             ! last k-point index
   !
-  allocate(delta(Nkm1,nvalues))
-  allocate(rho(nshells))
-  allocate(h_mat(Nkm1,Nkm1),star_1(nshells,Nk),star_2(nshells,Nkm1))
-  allocate(ipiv(Nkm1))
+  YAMBO_ALLOC(delta,(Nkm1,nvalues))
+  YAMBO_ALLOC(rho,(nshells))
+  YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
+  YAMBO_ALLOC(star_1,(nshells,Nk))
+  YAMBO_ALLOC(star_2,(nshells,Nkm1))
+  YAMBO_ALLOC(ipiv,(Nkm1))
   !
   ! Construct delta_epsilon eq. 10
   !
@@ -140,9 +142,12 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
   !
   ! Deallocation
   !
-  deallocate(h_mat,star_1,star_2)
-  deallocate(ipiv)
-  deallocate(delta,rho)
+  YAMBO_FREE(h_mat)
+  YAMBO_FREE(star_1)
+  YAMBO_FREE(star_2)
+  YAMBO_FREE(ipiv)
+  YAMBO_FREE(delta)
+  YAMBO_FREE(rho)
   !
   call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
   !
@@ -174,7 +179,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
     real(SP), allocatable :: new_VALUEs(:,:)
     real(SP) :: ave_err,max_err,rel_ave_err
     !
-    allocate(new_VALUEs(nvalues,Nk))
+    YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
     !
     call fourier_interpolation(Xk,new_VALUEs,engre,nvalues,Nk)
     !

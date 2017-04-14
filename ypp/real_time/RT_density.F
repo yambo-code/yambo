@@ -41,7 +41,7 @@ subroutine RT_density(en,kpt,qpt)
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: kpt,qpt
@@ -74,12 +74,12 @@ subroutine RT_density(en,kpt,qpt)
  !
  if(load_G_history) then
    ch_ws(1)="Computing the density from the G lesser"
-   allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+   YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
    dG_lesser=cZERO
  else
    ch_ws(1)="Computing the density from the occupations"
    call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
-   allocate(RT_delta0_occupations(RT_bands(1):RT_bands(2),RT_nk))
+   YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
  endif
  !
  call msg('s',trim(ch_ws(1)))
@@ -95,12 +95,12 @@ subroutine RT_density(en,kpt,qpt)
  !
  call WF_load(WF,wf_ng,1,RT_bands,(/1,kpt%nibz/),space='R',title='-WF',impose_free_and_alloc=.TRUE.)
  !
- allocate(drho(fft_size))
+ YAMBO_ALLOC(drho,(fft_size))
  drho=0._SP
  !
  nr_tot = fft_size
  nr     = fft_dim
- allocate(v2plot(nr_tot))
+ YAMBO_ALLOC(v2plot,(nr_tot))
  !
  l_norm_to_one=.false.
  !
@@ -150,9 +150,12 @@ subroutine RT_density(en,kpt,qpt)
    !
  enddo
  !
- if(     load_G_history) deallocate(dG_lesser)
- if(.not.load_G_history) deallocate(RT_delta0_occupations)
- deallocate(drho)
+ if (load_G_history) then
+   YAMBO_FREE(dG_lesser)
+ else
+   YAMBO_FREE(RT_delta0_occupations)
+ endif
+ YAMBO_FREE(drho)
  !
  call WF_free(WF)
  !

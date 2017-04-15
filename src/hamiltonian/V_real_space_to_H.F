@@ -31,7 +31,12 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use wrapper,        ONLY:Vstar_dot_V
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
-#if defined _RT || defined _SC
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
+#endif
+#if defined _RT
+ use drivers,        ONLY:l_real_time
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
 #if defined _TIMING
@@ -48,12 +53,15 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  ! Work Space
  !
- integer     :: ib,ibp,ifft,ifftp
+ integer     :: i_qp,ib,ibp,ifft,ifftp
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  complex(SP) :: c_ws(fft_size,n_spin)
+#if defined _SC
+ logical     :: PAR_IND_SC(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
+#endif
  !
 #if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
+ if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu)) return
 #endif
  !
 #if defined _TIMING 
@@ -62,13 +70,44 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  !
+#if defined _SC
+ if (l_sc_run) then
+   !
+   PAR_IND_SC=.false.
+   !
+   do i_qp=1,QP_n_states
+     !
+     if (.not.HEAD_QP_cpu)                 cycle
+     if (     QP_table(i_qp,3) /=ik      ) cycle
+     if (spin(QP_table(i_qp,:))/=i_sp_pol) cycle
+     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+     !
+     ib =QP_table(i_qp,1)
+     ibp=QP_table(i_qp,2)
+     !
+     PAR_IND_SC(ib,ibp)=.TRUE.
+     !
+   enddo 
+   !
+ endif
+#endif
+ !
  ! Fill ...
  !
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
    if (.not.HEAD_QP_cpu) cycle
-   if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+#if defined _SC
+   if (l_sc_run) then
+     if (.not.PAR_IND_SC(ib,ibp)) cycle
+   endif
+#endif
+#if defined _RT
+   if (l_real_time) then
+     if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
+   endif
+#endif
    !
    ! <ifft|V|ifftp>
    !

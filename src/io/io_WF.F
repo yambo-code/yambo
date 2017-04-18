@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,6 +48,8 @@ integer function io_WF(ID,wf)
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
+   case(0)
+     goto 1
    case(1)
      ik=0
      ib_grp=0
@@ -91,10 +93,6 @@ integer function io_WF(ID,wf)
    ! BANDS BLOCKS (andrea 21/4/2008) VERSION >= 3.1.1
    !##################################################################
    !
-   ! Manage RD_CL_IF_END
-   !
-   if (io_action(ID)==RD_CL_IF_END.and.(ik==nkibz.and.ib_grp==wf_nb_io_groups)) io_action(ID)=RD_CL
-   !
    ! Fragmentation
    !
    call io_fragment(ID,i_fragment=ik,j_fragment=ib_grp)
@@ -108,10 +106,6 @@ integer function io_WF(ID,wf)
    call io_bulk(ID,R3=wf(2,:,:,:))
    !
  else
-   !
-   ! Manage RD_CL_IF_END
-   !
-   if (io_action(ID)==RD_CL_IF_END.and.ik==nkibz) io_action(ID)=RD_CL
    !
    ! Fragmentation
    !

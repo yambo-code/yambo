@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -235,6 +235,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
      endif
+     !
+     ! In case io_err is /=0 all CPU have to sincronize before starting
+     ! to recompute the dipoles and write a new header
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
      !
      if (io_err==0) then
        !

@@ -29,7 +29,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
  use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat
- use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded
+ use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,BS_blks_free
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -140,7 +140,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- ! CLEAN(final)
+ ! CLEAN (final)
  !
  YAMBO_FREE(X_drude_term)
  YAMBO_FREE(Epsilon_ii)
@@ -151,5 +151,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _PL
  call BSS_PL_free( )
 #endif
+ call BS_blks_free( )
  !
 end subroutine

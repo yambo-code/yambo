@@ -313,6 +313,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    call X_alloc('X')
    YAMBO_FREE(Alpha)
+   YAMBO_FREE(EEL)
    YAMBO_FREE(Epsilon_ii)
    YAMBO_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")

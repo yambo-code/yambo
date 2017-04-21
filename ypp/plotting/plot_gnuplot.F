@@ -159,7 +159,11 @@ subroutine plot_gnuplot(eval_only)
        enddo
      endif
      !
-     YAMBO_FREE(v2plot2D)
+     if (.not.use_xcrysden) then
+       !
+       YAMBO_FREE(v2plot2D)
+       !
+     endif
      !
  end select
  !

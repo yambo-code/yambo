@@ -108,11 +108,13 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
    !
  else if (nindxs==1.and..not.local_CONSECUTIVE) then
+   !
    if (.not.allocated(px%weight_1D)) then
      YAMBO_ALLOC(px%weight_1D,(uplim(1)))
      px%weight_1D=1
      if (lowlim(1)>1) px%weight_1D(1:lowlim(1)-1)=0
    endif
+   !
    allocate(i_done(uplim(1)))
    YAMBO_ALLOC(px%element_1D,(uplim(1)))
    YAMBO_ALLOC(px%first_of_1D,(ncpu_loop))
@@ -207,8 +209,6 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  !
  if (px%n_of_elements(myid_loop+1)==0) then
    call warning(" Empty workload for CPU "//trim(intc(myid+1)))
-   !if (.not.NO_EMPTIES_) call warning(" Empty workload for CPU "//trim(intc(myid+1)))
-   !if (     NO_EMPTIES_) call   error(" Empty workload for CPU "//trim(intc(myid+1)))
  endif
  !
 end subroutine

@@ -87,6 +87,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call E_reset(Xen)
  call E_reset(Ken)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! Switch off report file support
  !

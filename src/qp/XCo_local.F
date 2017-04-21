@@ -71,7 +71,6 @@ subroutine XCo_local(E,Xk)
  ! Allocation 
  !
  YAMBO_ALLOC(V_xc,(fft_size,n_spin))
- !
  YAMBO_ALLOC(magn,(fft_size,3))
  !
  ! Precompiler options in case a non-DFT potential is required
@@ -161,6 +160,8 @@ subroutine XCo_local(E,Xk)
    !
    call PP_redux_wait(QP_Vxc)
    !
+   call LOCAL_clean( )
+   !
    return
    !
  endif
@@ -236,6 +237,15 @@ subroutine XCo_local(E,Xk)
  endif
 #endif
  !
+ call LOCAL_clean( )
+ !
  call PP_redux_wait(QP_Vxc)
  !
+ contains
+   !
+   subroutine LOCAL_clean()
+     YAMBO_FREE(V_xc)
+     YAMBO_FREE(magn)
+   end subroutine
+   !
 end subroutine

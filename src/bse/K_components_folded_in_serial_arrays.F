@@ -37,7 +37,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 &                         PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
- use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim,BS_blks_free
  use SLK_m,          ONLY:BLACS_structure_in_use 
  !
  ! GPL_EXCLUDE_START
@@ -269,5 +269,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! BS_mat lives in the entire world.
  !
  call PP_redux_wait(BS_mat)
+ !
+ ! CLEAN
+ !=======
+ ! After the folding the %mat's are not needed anymore
+ !
+ call BS_blks_free( )
  !
 end subroutine K_components_folded_in_serial_arrays

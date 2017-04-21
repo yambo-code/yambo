@@ -572,8 +572,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  deallocate(dc)
  if(l_ppa) then
    deallocate(W_)
-   if(l_GW_terminator) then
-       YAMBO_FREE(eet_factor)
+   if (l_GW_terminator) then
+     YAMBO_FREE(eet_factor)
    endif
  endif
  l_X_alloc=.true.
@@ -586,6 +586,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(ppa)',OPR='stop')
 #endif
  !
+ if (.not.l_sc_run) call WF_free(WF)
+ !
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
+ !
  ! ALL 2 ALL of QP_Sc
  !
 #if defined _TIMING
@@ -595,10 +600,5 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _TIMING
  call timing('GW(REDUX)',OPR='stop')
 #endif
- !
- if(.not.l_sc_run) call WF_free(WF)
- !
- call elemental_collision_free(isc)
- call elemental_collision_free(iscp)
  !
 end subroutine

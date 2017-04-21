@@ -62,7 +62,6 @@ subroutine PARALLEL_WF_index(COMM)
  YAMBO_ALLOC(WF_linear%element_1D,(NB*NK))
  YAMBO_ALLOC(WF_linear%n_of_elements,(NC))
  YAMBO_ALLOC(PAR_IND_WF_linear%element_2D,(NB,NK))
- YAMBO_ALLOC(PAR_IND_WF_linear%n_of_elements,(NC))
  !
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.
@@ -101,9 +100,8 @@ subroutine PARALLEL_WF_index(COMM)
    enddo
  enddo
  !
- PAR_IND_WF_linear%n_of_elements(ID+1)=count(PAR_IND_WF_linear%element_2D)
- !
- call PP_indexes_reset(WF_linear)
+ YAMBO_FREE(WF_linear%element_1D)
+ YAMBO_FREE(WF_linear%n_of_elements)
  call PP_indexes_reset(WF_linear_no_overlaps)
  !
 end subroutine PARALLEL_WF_index

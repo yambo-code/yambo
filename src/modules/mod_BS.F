@@ -237,6 +237,13 @@ module BS
      !
    end subroutine
    !
+   subroutine BS_blks_free()
+     integer :: iB
+     do iB=1,n_BS_blks
+       YAMBO_FREE(BS_blk(iB)%mat)
+     enddo
+   end subroutine
+   !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use drivers,    ONLY:l_kerr,l_photolum

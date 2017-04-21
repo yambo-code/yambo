@@ -86,6 +86,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call SET_defaults(instr,ind,od,js,com_dir)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! not resetted in INIT call
  !

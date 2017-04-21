@@ -205,13 +205,6 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_E_SOC_corr)
    end subroutine
    !
-   subroutine BS_blks_free()
-     integer :: iB
-     do iB=1,n_BS_blks
-       YAMBO_FREE(BS_blk(iB)%mat)
-     enddo
-   end subroutine
-   !
    subroutine BS_HAYVEC_alloc(V)
      use parallel_m,    ONLY:PAR_IND_T_Haydock
      type(Haydock_vector) :: V(BS_nT_grps)

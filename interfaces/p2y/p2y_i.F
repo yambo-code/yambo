@@ -69,6 +69,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! LOGO
  !

@@ -47,7 +47,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
 &                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED
  use interfaces,    ONLY:eval_G_minus_G
- use parallel_m,    ONLY:PAR_COM_WORLD
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
 #include<memory.h>
  !
  type(levels) ::en,Xen
@@ -395,6 +395,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    end subroutine
    !
    subroutine local_free()
+     YAMBO_FREE(PAR_IND_WF_linear%element_2D)
      YAMBO_FREE(qp%Z)
      YAMBO_FREE(qp%E)
      YAMBO_FREE(qp%E_bare)

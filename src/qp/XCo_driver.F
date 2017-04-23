@@ -192,7 +192,6 @@ subroutine XCo_driver(E,k,Xk,q)
      else
        Vxc_kind='none'
      endif
-     
      if (WF_kind == H_SE_COHSEX) then 
        Vnlxc_kind='HF-QP_COHSEX'
      else if (WF_kind == H_SE_COH) then 

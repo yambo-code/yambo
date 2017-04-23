@@ -37,7 +37,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use drivers,       ONLY:l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
-                         PAR_COM_Q_A2A,PAR_COM_Q_index
+                         PAR_COM_Q_A2A,PAR_COM_Q_INDEX
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message
@@ -473,7 +473,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
    ! to get the DW elements written only for q=0. This means that all cpu's has the ph_freqs_sq(1,:)
    ! 
-   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/PAR_COM_Q_index%n_CPU
+   ph_freqs_sq(1,:)=ph_freqs_sq(1,:)/PAR_COM_Q_INDEX%n_CPU
    !
    ! AndreaM, Feb 2017
    !
@@ -490,7 +490,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        enddo
      enddo
      !
-     call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_index%COMM)
+     call PP_redux_wait(q_each_cpu,COMM=PAR_COM_Q_INDEX%COMM)
      !
      do iq_ibz=2,q%nibz
        if (q_each_cpu(iq_ibz)>0) ph_freqs_sq(iq_ibz,:)=ph_freqs_sq(iq_ibz,:)/q_each_cpu(iq_ibz)
@@ -498,7 +498,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
    endif
    !
-   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_index%COMM)
+   call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !

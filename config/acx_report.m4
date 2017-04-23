@@ -23,32 +23,25 @@
 #
 AC_DEFUN([ACX_REPORT],
 [
-#
-srcdir_path=$PWD
-#
-if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
-
 # 
 # - GENERAL CONFIGURATIONS -
 # 
-DP_str="-"
-if test "$enable_dp" = "yes" ; then DP_str="X"; fi
+DP_check="-"
+if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
-Red_str="-"
-if test "$enable_debug" = "yes" ; then Red_str="X"; fi
+DEBUG_check="-"
+if test "$enable_debug" = "yes" ; then DEBUG_check="X"; fi
 #
-TIME_profile_str="-"
-if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
-#
-
+TIME_profile_check="-"
+if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 # 
 # - PARALLEL SUPPORT -
 # 
-MPI_str="-"
-if test "$mpibuild" = "yes" ; then MPI_str="X" ; fi
+MPI_check="-"
+if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 #
-OPENMP_str="-"
-if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
+OPENMP_check="-"
+if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
 #
 # - LIBRARIES -
@@ -80,8 +73,8 @@ if test "$internal_netcdf" = "yes" ; then
 else
   NETCDF_str=" E "
 fi
-NETCDF_LF_str="(With large files support)"
-if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files support)"; fi
+NETCDF_info="(With large files support)"
+if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(No large files support)"; fi
 #
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
@@ -91,9 +84,19 @@ if test "$hdf5" = "yes" ; then
   else
     HDF5_str=" E "
   fi
-  HDF5_support="(No HDF5-IO format)"
-  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(HDF5-IO format, no data compression)" ; fi
-  if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_support="(HDF5-IO format with data compression)" ; fi
+  if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
+  if test "$enable_netcdf_hdf5" = "yes" ; then
+    if test "$compile_hdf5" = "yes" && test "$mpibuild" = "yes" ; then
+      HDF5_info="(HDF5-IO format, parallel lib";
+    else
+      HDF5_info="(HDF5-IO format"     ;
+    fi
+    if test "$enable_hdf5_compression" = "yes"; then
+      HDF5_info="${HDF5_info}, with data compression)" ;
+    else
+      HDF5_info="${HDF5_info}, no data compression)" ;
+    fi
+  fi
 fi
 #
 
@@ -151,34 +154,30 @@ if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
 #
-MPI_LIBS_str=" - ";
-MPI_LIBS_info=""
+MPI_str=" - ";
+MPI_info=""
 if test "$mpibuild" = "yes" ; then
   if test "$MPI_LIBS" = "" ; then
-    MPI_LIBS_info="(system default detected)";
-    MPI_LIBS_str=" X ";
+    MPI_info="(system default detected)";
+    MPI_str=" X ";
   else
-    MPI_LIBS_str=" E ";
+    MPI_str=" E ";
   fi
 fi
-
-
-AC_SUBST(srcdir_path)
-AC_SUBST(exec_prefix)
 #
-AC_SUBST(DP_str)
-AC_SUBST(Red_str)
-AC_SUBST(TIME_profile_str)
+AC_SUBST(DP_check)
+AC_SUBST(DEBUG_check)
+AC_SUBST(TIME_profile_check)
 #
-AC_SUBST(MPI_str)
-AC_SUBST(OPENMP_str)
+AC_SUBST(MPI_check)
+AC_SUBST(OPENMP_check)
 #
 AC_SUBST(IOTK_str)
 AC_SUBST(ETSF_str)
 AC_SUBST(NETCDF_str)
-AC_SUBST(NETCDF_LF_str)
+AC_SUBST(NETCDF_info)
 AC_SUBST(HDF5_str)
-AC_SUBST(HDF5_support)
+AC_SUBST(HDF5_info)
 #
 AC_SUBST(FFT_str)
 AC_SUBST(BLAS_str)
@@ -189,7 +188,6 @@ AC_SUBST(PET_str)
 AC_SUBST(SLE_str)
 #
 AC_SUBST(LIBXC_str)
-AC_SUBST(MPI_LIBS_str)
-AC_SUBST(MPI_LIBS_info)
-
+AC_SUBST(MPI_str)
+AC_SUBST(MPI_info)
 ])

@@ -29,7 +29,6 @@ LIBS="$LIBS $FLIBS"
 
 compile_blas="no"
 internal_blas="no"
-BLAS_LIBS=""
 
 # First, check BLAS_LIBS environment variable
 if test $acx_blas_ok = no; then

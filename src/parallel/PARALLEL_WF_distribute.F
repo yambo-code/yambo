@@ -61,7 +61,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  logical :: Vl(H_ref_bands(2))
 #endif
  !
- NB=n_bands
+ NB =n_bands
  NBp=n_bands
  NK=nkibz 
  if (present(K_index)) then 

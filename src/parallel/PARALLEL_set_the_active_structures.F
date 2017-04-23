@@ -21,7 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_clean_up_the_structure(n_structures)
+subroutine PARALLEL_set_the_active_structures(n_structures)
+ !
+ ! The CPU's /= 1 are active and stored in PARALLEL_CPU_used/_role. Moreover if "k" and "q" fields
+ ! are not present among the N_chains the CPU's are set to 1.
  !
  use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_CPU_used,PARALLEL_CPU_used,&
 &                        PARALLEL_CPU_role,i_PAR_structure
@@ -40,14 +43,8 @@ subroutine PARALLEL_clean_up_the_structure(n_structures)
  !
  do i_c=1,CPU_structure(i_PAR_structure)%N_chains
    !
-   if (CPU_structure(i_PAR_structure)%CPU(i_c)==1) then
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="v" ) cycle
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="c" ) cycle
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="b" ) cycle
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="qp") cycle
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="eh") cycle
-     if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="t" ) cycle
-   endif
+   if (CPU_structure(i_PAR_structure)%CPU(i_c)==1.and.&
+&      .not.any(trim(CPU_structure(i_PAR_structure)%ROLE(i_c))==(/"k","q"/))) cycle
    !
    n_structures=n_structures+1
    !

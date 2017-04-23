@@ -653,9 +653,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _MPI 
    !
    subroutine CPU_structure_load()
-     use parallel_m, ONLY:n_CPU_str_max,CPU_structure
+     use parallel_m, ONLY:n_CPU_str_max,CPU_structure,PARALLEL_default_mode
      integer           :: i_s
      character(schlen) :: name,possible_fields
+     !
+     call it(defs,"PAR_def_mode",'[PARALLEL] Default distribution mode ("balanced"/"memory"/"workload")',&
+&            PARALLEL_default_mode,verb_level=V_parallel)
      !
      do i_s=1,n_CPU_str_max 
        !

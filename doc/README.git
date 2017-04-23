@@ -91,3 +91,24 @@ Change remote origin
 ====================
 git remote set-url origin https://github.com/yambo/devel
 
+Fork
+====
+Example for the creation of a new repo (superconductivity) + moving of a branch in the new repo:
+
+Go here: https://github.com/organizations/yambo-code/repositories/new
+and create a new repo (For example superconductivity.git)
+
+>git remote add superconductivity git@github.com:yambo-code/superconductivity.git
+>cd devel-sc-mu (the branch)
+
+Push the local branch to the remote repo
+
+>git push superconductivity devel-sc-mu
+
+Set it as the default push/pull stream
+
+>git push -u superconductivity devel-sc-mu
+
+Remove the yambo-devel branch
+
+>git push origin --delete devel-sc-mu

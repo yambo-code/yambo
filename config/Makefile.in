@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -48,10 +48,11 @@ shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
+libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
-libdir      = @srcdir_path@/lib
-includedir  = @srcdir_path@/include
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
@@ -106,15 +107,15 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 all:
-	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(PROJECTS); do $(MAKE) $$target ; done
-	for target in $(DEBUG); do $(MAKE) $$target ; done
+	for target in $(TARGETS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(PROJECTS); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(DEBUG)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
 ext-libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
@@ -132,13 +133,13 @@ ext-libs:
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 #
 # Internal libs #
 #
@@ -242,16 +243,20 @@ clean:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
+distclean: clean_all remove_ext_libs
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-
+remove_ext_libs: 
+	@$(lib_ext_remove)
+#
 #===========
 # Functions
 #===========
@@ -400,20 +405,20 @@ define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
- echo "[CLEAN] Libs EXT (clean) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean) ... done" 
 endef
 define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
@@ -426,7 +431,19 @@ define lib_ext_clean_all
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] Libs EXT (clean_all) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
+endef
+define sysincs_clean
+ @if test -d $(prefix)/sys_incs/; then \
+   rm $(prefix)/sys_incs/* ; \
+   echo "[CLEAN] Libraries ... done"; \
+ fi 
+endef
+define lib_ext_remove
+ @if test -f $(libs_prefix)/../driver/driver.c; then \
+  echo "[CLEAN] Pre-compiled internal libraries ... done"; \
+  rm -fr "$(libs_prefix)"; \
+ fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \

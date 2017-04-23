@@ -25,8 +25,8 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat $(srcdir)/config/setup $(topdir)/lib/lapack/make.inc_lib > make.inc ; \
-	cp  $(topdir)/lib/lapack/Makefile.lib  Makefile );  \
+	cat $(prefix)/config/setup $(srcdir)/lib/lapack/make.inc_lib > make.inc ; \
+	cp  $(srcdir)/lib/lapack/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp
 	

@@ -23,9 +23,6 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
-#if !defined _P2Y_EXPORT
- use qexml_module
-#endif
  use wave_func,           ONLY : wf_nc_k, wf_igk, wf_ng
  use P2Y,                 ONLY : pw_init, pw_close 
  use LOGO,                ONLY : pickup_a_random

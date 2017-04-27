@@ -26,6 +26,7 @@ include/xc*.h
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
+lib/iotk/make_iotk.inc
 lib/*/*stamp
 lib/*/lib
 lib/*/bin
@@ -36,6 +37,7 @@ lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
+ext_libs
 #
 compile.sh
 sbin/make_makefile.sh

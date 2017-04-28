@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -23,12 +23,12 @@
 #
 cpu         = @build_cpu@
 os          = @build_os@
-mpi         = @mpi_cpp@
-netcdf      = @dnetcdf@
-scalapack   = @dscalapack@
-precision   = @dp_cpp@
-fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
+mpi         = @def_mpi@
+netcdf      = @def_netcdf@
+scalapack   = @def_scalapack@
+precision   = @def_dp@
+fft         = @def_fft@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 debug       = @enable_debug@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
@@ -45,8 +45,8 @@ prefix      = @prefix@
 exec_prefix = @exec_prefix@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
-libdir      = @srcdir_path@/lib
-includedir  = @srcdir_path@/include
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \

@@ -291,11 +291,7 @@ MODULE timing_m
      IF ( .NOT. obj%running  ) & 
            CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
      call cti(obj%stop)
-#if defined _BLUEGENE
      obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
-#else
-     obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
-#endif
      obj%running = .FALSE.
    END SUBROUTINE clock_stop
    !

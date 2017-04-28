@@ -27,7 +27,7 @@ module interfaces
  !
  interface
    !
-   subroutine SLK_matrix_transfer( mode, M_slk, M_bse, M )
+   subroutine MATRIX_transfer( mode, M_slk, M_bse, M )
      !
      use SLK_m, ONLY:SLK_matrix
      use pars,  ONLY:SP
@@ -181,18 +181,20 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+&                                              COMM_A2A_3,COMM_A2A_4)
      use parallel_m,    ONLY:MPI_comm
      integer                 :: n_elements
-     character(*)            :: ROLE(:)
      type(MPI_comm)          :: COMM_index_1
      type(MPI_comm),optional :: COMM_index_2
      type(MPI_comm),optional :: COMM_index_3
      type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_index_5
      type(MPI_comm),optional :: COMM_A2A_1
      type(MPI_comm),optional :: COMM_A2A_2
      type(MPI_comm),optional :: COMM_A2A_3
+     type(MPI_comm),optional :: COMM_A2A_4
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -36,8 +36,9 @@ AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>
 
 compile_e2y="no"
 compile_etsf="no"
+internal_etsf="no"
 etsf_libdir=" "
-etsf_idir=" "
+ETSF_INCS=" "
 ETSF_LIBS=" "
 
 if test -d "$with_etsf_io_path"  ;  then enable_etsf_io=yes ; fi
@@ -45,11 +46,6 @@ if test -d "$with_etsf_io_libdir" ; then enable_etsf_io=yes ; fi
 if test x"$with_etsf_io_libs" != "x" ;   then enable_etsf_io=yes ; fi
 #
 if test x"$netcdf" != "xyes" ; then enable_etsf_io=no ; fi
-#
-# F90 module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
 
 #
 # main search
@@ -76,18 +72,9 @@ if test "x$enable_etsf_io" = "xyes" ; then
     #
     if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
-      compile_etsf="no"
-      etsf_idir="$IFLAG$try_incdir"
+      internal_etsf="no"
       ETSF_LIBS="$try_libdir/libetsf_io.a"
-      #
-      if test ! -d include ; then mkdir include ; fi
-      for file in `find $try_incdir \( -name '*etsf_io*' -o -name '*typesizes*' \) `; do
-         cp $file include/
-      done
-      if test ! -d lib ; then mkdir lib ; fi
-      for file in `find $try_libdir -name '*etsf_io*.a'`; do
-         cp $file lib/
-      done
+      ETSF_INCS="$IFLAG$try_incdir"
       #
       AC_MSG_RESULT([yes])
     else
@@ -98,21 +85,27 @@ if test "x$enable_etsf_io" = "xyes" ; then
     # directly provided lib
     #
     AC_MSG_CHECKING([for ETSF_IO Library using $with_etsf_io_libs])
-    compile_etsf="no"
+    internal_etsf="no"
     compile_e2y="yes"
-    if test -d "$with_etsf_io_includedir" ; then etsf_idir="$IFLAG$with_etsf_io_includedir" ; fi
+    if test -d "$with_etsf_io_includedir" ; then ETSF_INCS="$IFLAG$with_etsf_io_includedir" ; fi
     ETSF_LIBS="$with_etsf_io_libs"
     AC_MSG_RESULT(yes)
   else
     #
     # internal ETSF_IO
     #
-    AC_MSG_CHECKING([for ETSF_IO Library])
-    compile_etsf="yes"
+    AC_MSG_CHECKING([for internal ETSF_IO Library])
+    internal_etsf="yes"
     compile_e2y="yes"
-    etsf_idir=" "
-    ETSF_LIBS="-letsf_io"
-    AC_MSG_RESULT(Internal)
+    ETSF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include"
+    ETSF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -letsf_io"
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"; then
+      compile_etsf="no"
+      AC_MSG_RESULT(found already compiled)
+    else
+      compile_etsf="yes"
+      AC_MSG_RESULT(to be compiled)
+    fi
   fi
   #
 else
@@ -122,7 +115,8 @@ fi
 #
 AC_SUBST(compile_e2y)
 AC_SUBST(compile_etsf)
-AC_SUBST(etsf_idir)
+AC_SUBST(internal_etsf)
 AC_SUBST(ETSF_LIBS)
+AC_SUBST(ETSF_INCS)
 
 ])

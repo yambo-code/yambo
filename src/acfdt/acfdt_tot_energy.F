@@ -61,7 +61,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  type(w_samp)      ::Xw
  integer           ::iqibz,i_err,ID,io_err
- integer, external ::X_em1,io_X
+ integer, external ::X_dielectric_matrix,io_X
  complex(SP), allocatable ::X_s(:,:),tddftk(:,:)
  complex(DP), allocatable ::dX(:)
  !
@@ -182,7 +182,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      allocate(Xw%p(ACFDT_n_freqs))
      Xw%p(:)=(0.,1.)*freq(:)
      call mem_est("W-p",(/ACFDT_n_freqs/))
-     i_err=X_em1(Xen,Xk,q,X,Xw,iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,iqibz>1)
      if (i_err==0) exit
    enddo
    !

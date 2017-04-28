@@ -30,7 +30,7 @@ subroutine PLASMA_build_up(E,k,q)
  use electrons,     ONLY:levels,n_sp_pol
  use plasma,        ONLY:PLASMA_alloc,PLASMA_redux_percent,N_plasma_poles_global,EH_gas
  use collision_ext, ONLY:COLL_bands,GW_NEQ_collisions
- use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_index
+ use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_INDEX
  !
  implicit none
  !
@@ -77,7 +77,7 @@ subroutine PLASMA_build_up(E,k,q)
  deallocate(poles)
  !
  EH_gas%max_N_poles=maxval(EH_gas%N_poles)
- call PP_redux_wait(EH_gas%N_poles,COMM=PAR_COM_Q_index%COMM)
+ call PP_redux_wait(EH_gas%N_poles,COMM=PAR_COM_Q_INDEX%COMM)
  N_plasma_poles_global =maxval(EH_gas%N_poles)
  !
  write (ch,'(3a)') "[PLASMA] Poles reduction (ALL q): "//&

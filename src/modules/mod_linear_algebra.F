@@ -87,7 +87,7 @@ module linear_algebra
      call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
    end subroutine
    !
-   subroutine SLK_matrix_transfer_side_crop(I,J,O)
+   subroutine MATRIX_transfer_side_crop(I,J,O)
      !
      integer :: I(2),J(2),O(2)
      !

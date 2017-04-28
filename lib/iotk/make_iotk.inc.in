@@ -1,0 +1,49 @@
+# @configure_input@
+
+# -----------------------------
+# compilation rules
+
+.SUFFIXES :
+.SUFFIXES : .o .c .F @F90SUFFIX@
+
+.F.o:
+	@rm -f $*@F90SUFFIX@
+	(eval $(FPP) $(IFLAGS) $(dopts) $*.F > $*@F90SUFFIX@ ) > /dev/null
+	(eval $(FC)  $(FCFLAGS) -c $*@F90SUFFIX@ ) > /dev/null
+	@rm -f $*@F90SUFFIX@
+
+#.f.o:
+#	$(F77) $(FFLAGS) -c $<
+#
+#.c.o:
+#	$(CC) $(CFLAGS) -c $<
+#
+# -----------------------------
+# compiler definitions
+
+make             = @MAKE@
+CC               = @CC@
+CFLAGS           = @CFLAGS@ $(IFLAGS)
+CPP              = @CPP@
+FPP              = @FPP@
+CPPFLAGS         = @CPPFLAGS@ $(IFLAGS)
+FC               = @FC@
+MPIF90           = @FC@
+F90FLAGS         = @FCFLAGS@ @OPENMPLIBS@ $(IFLAGS)
+F77              = @F77@
+FFLAGS           = @FFLAGS@
+LD               = @FC@
+LDFLAGS          = @FCFLAGS@ @OPENMPLIBS@ $(IFLAGS)
+AR               = @AR@
+ARFLAGS          = @AR_FLAGS@
+RANLIB           = echo
+#RANLIB           = @ranlib@
+
+
+# -----------------------------
+# libraries
+
+#
+#LIBS             = $(extlibs_prefix)/$(fc_kind)/$(f90)/lib/libiotk.a
+LIBS             = ./libiotk.a
+IFLAGS           = -I./ -I../ -I../include

@@ -166,7 +166,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
        ! when a large set of k-points is used
        !
        if (abs(m3det(k_grid_b))/v_norm(k_grid_b(1,:))<1.E-5)then
-         k_grid_b(3,:)=0.
+         k_grid_b(3,:)=0._SP
          cycle
        endif
        k_grid_dim=3
@@ -319,7 +319,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      real(SP) :: v1(3),v2(3),proj
      proj=0.
      if (v_is_zero(v2,zero_=k_rlu_zero)) return
-     proj=dot_product(v1,v2)/v_norm(v2)**2.
+     proj=dot_product(v1,v2)/v_norm(v2)**2
    end function
    !
 end function

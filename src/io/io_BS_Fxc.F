@@ -31,7 +31,6 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use BS_solvers,     ONLY:BSS_q0,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_n_descs,FXC_description,&
 &                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_retarded
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
@@ -48,7 +47,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  integer             ::i1,FXC_n_g_db,w_group
  character (schlen)  ::db_name,ch
  character (lchlen)  ::local_description(100)
- real(SP),allocatable::FXC_disk(:,:,:),W_disk(:,:)
+ complex(SP),allocatable ::FXC_disk(:,:)
  type(X_t)           ::X_dummy
  !
  w_group=1
@@ -143,16 +142,6 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/FXC_W%n_freqs,2/))
-   allocate(W_disk(FXC_W%n_freqs,2))
-   !
-   if (write_is_on(ID)) then
-     W_disk(:,1)=real(FXC_W%p(:))
-     W_disk(:,2)=aimag(FXC_W%p(:))
-   endif
-   !
-   call io_bulk(ID,R2=W_disk)
-   !
    if (read_is_on(ID)) then
      if (associated(FXC_W%p)) then
        deallocate(FXC_W%p)
@@ -160,10 +149,10 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
      endif
      allocate(FXC_W%p(FXC_W%n_freqs))
      call mem_est("W-p",(/FXC_W%n_freqs/))
-     FXC_W%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
    endif
    !
-   deallocate(W_disk)
+   call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/2,FXC_W%n_freqs/))
+   call io_bulk(ID,C1=FXC_W%p)
    !
    if (.not.allocated(FXC_K_diagonal)) allocate(FXC_K_diagonal(BS_K_dim))
    !
@@ -174,23 +163,24 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  if (maxval(io_sec(ID,:))==2) goto 1
  !
- call io_bulk(ID,VAR='FXC_RL_SIZE',VAR_SZ=(/1/))
  if (write_is_on(ID)) FXC_n_g_db=FXC_n_g_corr
+ !
+ call io_bulk(ID,VAR='FXC_RL_SIZE',VAR_SZ=(/1/))
  call io_bulk(ID,I0=FXC_n_g_db)
  !
- allocate(FXC_disk(FXC_n_g_db,FXC_n_g_db,2))
+ allocate(FXC_disk(FXC_n_g_db,FXC_n_g_db))
  !
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/FXC_n_g_db,FXC_n_g_db,2,FXC_n_mem_freqs/))
+ call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,FXC_n_g_db,FXC_n_g_db,FXC_n_mem_freqs/))
  !
  do i1=1,FXC_n_mem_freqs
    !
-   if (write_is_on(ID)) call mat_c2r(FXC(:,:,i1),FXC_disk)
+   if (write_is_on(ID)) FXC_disk=FXC(:,:,i1)
    !
-   call io_bulk(ID,R3=FXC_disk,IPOS=(/1,1,1,i1/))
+   call io_bulk(ID,C2=FXC_disk,IPOS=(/1,1,1,i1/))
    !
-   if (read_is_on(ID)) call mat_r2c(FXC_disk,FXC(:,:,i1))
+   if (read_is_on(ID)) FXC(:,:,i1)=FXC_disk(:FXC_n_g_corr,:FXC_n_g_corr)
    !
  enddo
  !

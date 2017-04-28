@@ -30,7 +30,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use SLK_m,         ONLY:SLK_matrix
- use interfaces,    ONLY:SLK_matrix_transfer
+ use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning
 #if defined _SCALAPACK
@@ -133,6 +133,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
    !
    if (idriver==INV) then
      call SERIAL_inversion(N,M,det_,present(det))
+     if(present(det)) det=det_
    endif
    !
    ! ###> SERIAL DIAGONALIZATION
@@ -174,9 +175,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  call timing("LINEAR ALGEBRA",OPR="stop")
 #endif
  !
- contains
-   !
 #if defined _SCALAPACK
+ !
+ contains
    !
    subroutine SCALAPACK_section(MAT,INIT)  
      !
@@ -188,9 +189,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        call SLK_matrix_init( SLK_ORTHO, SLK_POOL, MAT, N )
        !
        if (present(M_bse)) then
-         call SLK_matrix_transfer( "fill_the_SLK",  MAT, M_bse=M_bse, M=M )
+         call MATRIX_transfer( "fill_the_SLK",  MAT, M_bse=M_bse, M=M )
        else if (present(M)) then
-         call SLK_matrix_transfer( "fill_the_SLK",  MAT, M=M )
+         call MATRIX_transfer( "fill_the_SLK",  MAT, M=M )
        endif
        !
      endif
@@ -200,7 +201,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, MAT, N ) 
        !
        if (present(M)) then
-         call SLK_matrix_transfer( "transfer_from_the_SLK",  MAT, M=M )
+         call MATRIX_transfer( "transfer_from_the_SLK",  MAT, M=M )
        endif
        !
      else if (idriver==DIAGO) then
@@ -210,26 +211,26 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, MAT, EIGEN_slk, N, E_real )
        !
        if (present(M)) then
-         call SLK_matrix_transfer( "transfer_from_the_SLK", EIGEN_slk , M=M )
+         call MATRIX_transfer( "transfer_from_the_SLK", EIGEN_slk , M=M )
        endif
        !
      else if (idriver==LIN_SYS) then
        !
        call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
-       call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
+       call MATRIX_transfer( "fill_the_SLK", B_slk, M=B )
        !
        call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, MAT, B_slk, N, size(B,2), B )
-       call SLK_matrix_transfer( "transfer_from_the_SLK",  B_slk, M=B )
+       call MATRIX_transfer( "transfer_from_the_SLK",  B_slk, M=B )
        !
      else if (idriver==MAT_MUL) then
        ! 
        call SLK_matrix_init( SLK_ORTHO, SLK_POOL, B_slk, N )
        call SLK_matrix_init( SLK_ORTHO, SLK_POOL, C_slk, N )
-       call SLK_matrix_transfer( "fill_the_SLK", B_slk, M=B )
-       call SLK_matrix_transfer( "fill_the_SLK", C_slk, M=C )
+       call MATRIX_transfer( "fill_the_SLK", B_slk, M=B )
+       call MATRIX_transfer( "fill_the_SLK", C_slk, M=C )
        !
        call PARALLEL_M_by_M( SLK_ORTHO, SLK_POOL, MAT, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), N , C )
-       call SLK_matrix_transfer( "transfer_from_the_SLK",  C_slk, M=C )
+       call MATRIX_transfer( "transfer_from_the_SLK",  C_slk, M=C )
        !
      endif
      !

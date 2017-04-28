@@ -53,7 +53,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
- real(SP), allocatable :: COLLISIONS_v_disk(:,:)
  integer               :: V_kind_disk,i_desc,i_coll_loop,io_err,i_coll,SIZE_
  character(lchlen)     :: V_kind_string,X_string
  !
@@ -257,17 +256,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      call io_bulk(ID,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     allocate(COLLISIONS_v_disk(COLL_element%N,2))
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N,2/))
-     if(write_is_on(ID)) then
-       COLLISIONS_v_disk(:,1) =real(COLL_element%v_c(1:COLL_element%N))
-       COLLISIONS_v_disk(:,2)=aimag(COLL_element%v_c(1:COLL_element%N))
-       call io_bulk(ID,R2=COLLISIONS_v_disk)
-     else
-       call io_bulk(ID,R2=COLLISIONS_v_disk)
-       COLL_element%v_c(1:COLL_element%N)=CMPLX(COLLISIONS_v_disk(:,1),COLLISIONS_v_disk(:,2))
-     endif
-     deallocate(COLLISIONS_v_disk)
+     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/2,COLL_element%N/))
+     call io_bulk(ID,C1=COLL_element%v_c)
    endif
    !
  endif

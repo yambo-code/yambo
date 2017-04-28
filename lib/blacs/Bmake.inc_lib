@@ -13,7 +13,7 @@
 #  -----------------------------
 #  The top level BLACS directory
 #  -----------------------------
-   BTOPdir = $(topdir)/lib/blacs/blacs
+   BTOPdir = $(prefix)/lib/blacs/blacs
 
 #  ---------------------------------------------------------------------------
 #  The communication library your BLACS have been written for.
@@ -38,7 +38,7 @@
 #  Name and location of the BLACS library.  See section 2 for 
 #  details on BLACS debug level (BLACSDBGLVL).
 #  ----------------------------------------------------------
-   BLACSdir    = $(BTOPdir)/../../
+   BLACSdir    = $(BTOPdir)
    BLACSDBGLVL = 0
    BLACSFINIT  = $(BLACSdir)/libblacs_init.a
    BLACSCINIT  = $(BLACSdir)/libblacs_C_init.a
@@ -47,17 +47,16 @@
 #   BLACSCINIT  = $(BLACSdir)/blacsCinit_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 #   BLACSLIB    = $(BLACSdir)/blacs_$(COMMLIB)-$(PLAT)-$(BLACSDBGLVL).a
 
-#  -------------------------------------
 #  Name and location of the MPI library.
 #  -------------------------------------
    MPIdir = $(mpidir)
-   MPILIBdir = $(MPIdir)/lib/
+   MPILIBdir = $(MPIdir)/lib
    MPIINCdir = $(MPIdir)/include
 
 #  -------------------------------------
 #  All libraries required by the tester.
 #  -------------------------------------
-   BTLIBS = $(BLACSFINIT) $(BLACSLIB) $(BLACSFINIT) $(MPILIB) 
+   BTLIBS = $(BLACSFINIT) $(BLACSLIB) $(BLACSFINIT) $(MPI_LIBS) 
 
 #  ----------------------------------------------------------------
 #  The directory to put the installation help routines' executables
@@ -88,7 +87,7 @@
 #  The directory to find the required communication library include files, 
 #  if they are required by your system.
 #  -----------------------------------------------------------------------
-   SYSINC = -I$(MPIINCdir)
+   SYSINC = $(impi)
 
 #  ---------------------------------------------------------------------------
 #  The Fortran 77 to C interface to be used.  If you are unsure of the correct
@@ -198,15 +197,15 @@
 #  optimization.  This is the F77NO_OPTFLAG.  The usage of the remaining
 #  macros should be obvious from the names.
 #=============================================================================
-   F77            = $(pf90)
-   F77NO_OPTFLAGS = 
-   F77FLAGS       = $(f90flags)
-   F77LOADER      = $(f90)
-   F77LOADFLAGS   = 
-   CC             = $(pcc)
-   CCFLAGS        = $(pccflags) 
+   F77            = $(fc)
+   F77NO_OPTFLAGS = $(fcuflags) 
+   F77FLAGS       = $(fcflags)
+   F77LOADER      = $(fc)
+   F77LOADFLAGS   = $(fcflags) 
+   CC             = $(cc)
+   CCFLAGS        = $(ccflags) 
    CCLOADER       = $(cc)
-   CCLOADFLAGS    = 
+   CCLOADFLAGS    = $(cflags)
 
 #  --------------------------------------------------------------------------
 #  The archiver and the flag(s) to use when building an archive (library).

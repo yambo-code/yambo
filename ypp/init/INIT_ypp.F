@@ -98,9 +98,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
-#if defined _YPP_SURF
- what_is_running='YPP_SURF'
-#endif
 #if defined _YPP_RT
  what_is_running='YPP_RT'
 #endif
@@ -536,29 +533,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
-#endif
- !
-#if defined _YPP_SURF
- !
- lsurf =runlevel_is_on('surf')
- lras  =runlevel_is_on('ras')
- lreels=runlevel_is_on('reels')
- lloc  =runlevel_is_on('loc')
- ltrans=runlevel_is_on('trans')
- if(lsurf) then
-   if (lras) call initactivate(1,"XData YData "//&
-&       " BulkFile BulkForm BlkShift BlkBroad "//&
-&       " DataType SrfShift d_cell")
-   if (lreels) call initactivate(1,"XData YData ZData"//&
-&       " q0x q0y"//&
-&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
-&       " DataType SrfShift d_cell "//&
-&       " E0 Theta0 Thetap Phi DetAngle "//&
-&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
-   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
- endif
- !
 #endif
  !
  ! Check for existing QP control fields to be proposed in the new input files

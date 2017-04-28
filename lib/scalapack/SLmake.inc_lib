@@ -29,15 +29,15 @@ CDEFS         = -DAdd_
 #  The fortran and C compilers, loaders, and their flags
 #
 
-FC            = $(pf90)
-CC            = $(pcc) 
-NOOPT         = -O0
-FCFLAGS       = $(f90flags) -lblas -llapack -L$(topdir)/lib/
-CCFLAGS       = $(pccflags)
-FCLOADER      = $(FC)
-CCLOADER      = $(CC)
-FCLOADFLAGS   = $(FCFLAGS)
-CCLOADFLAGS   = $(CCFLAGS)
+FC            = $(fc)
+CC            = $(cc) 
+NOOPT         = $(fcuflags)
+FCFLAGS       = $(fcflags)
+CCFLAGS       = $(ccflags)
+FCLOADER      = $(fc)
+CCLOADER      = $(cc)
+FCLOADFLAGS   = $(fcflags)
+CCLOADFLAGS   = $(ccflags)
 
 #
 #  The archiver and the flag(s) to use when building archive (library)
@@ -58,6 +58,6 @@ SCALAPACKLIB  = libscalapack.a
 #  BLAS, LAPACK (and possibly other) libraries needed for linking test programs
 #
 
-BLASLIB       = 
-LAPACKLIB     = 
-LIBS          = $(LAPACKLIB) $(BLASLIB)
+BLASLIB       = $(lblas)
+LAPACKLIB     = $(llapack) 
+LIBS          =

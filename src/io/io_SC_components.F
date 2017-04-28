@@ -34,11 +34,10 @@ integer function io_SC_components(what,E_sc,ID)
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,io_SC,IO_NOT_ALLOWED,&
+&                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use electrons,      ONLY:levels,n_sp_pol,n_spin
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -54,7 +53,7 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: TMP_matrix(:,:,:),E_disk(:,:,:)
+ real(SP), allocatable :: E_disk(:,:,:)
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
@@ -106,7 +105,7 @@ integer function io_SC_components(what,E_sc,ID)
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
-     if (write_is_on(ID).or.variable_is_found(ID,"TEMPERATURES")) then
+     if (write_is_on(ID).or.variable_exist(ID,"TEMPERATURES")) then
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)
@@ -156,38 +155,29 @@ integer function io_SC_components(what,E_sc,ID)
    ! Energies
    !==========
    !
-   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
-   if (write_is_on(ID)) then
-     call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
-   else
-     allocate(E_disk(SC_bands(2),nkibz,n_sp_pol))
-     call io_bulk(ID,R3=E_disk)
-     !
+   if(read_is_on(ID)) then
      bands_to_load=size(E_sc%E,1)
-     !
-     ! Make a copy of Kohn-Sham Energies in E_sc%Eo
-     !
      if(l_sc_run .and. .not.associated(E_sc%Eo) ) then
        allocate(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
        call mem_est("E-Eo",(/size(E_sc%Eo)/),(/SP/))
        E_sc%Eo=E_sc%E
      endif
+   else
+     bands_to_load=SC_bands(2)
+   endif
+   !
+   call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
+   call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
+   !
+   if (bands_to_load>SC_bands(2)) then
      !
-     if (bands_to_load>SC_bands(2)) then
-       !
-       ! For either the H_sc and WFs I first check to 
-       ! have enough bands (in wf_load and X_O_strengths).
-       ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
-       !
-       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)-E_sc%E(SC_bands(2),:,:)
-       E_sc%E(:SC_bands(2),:,:)=E_disk(:SC_bands(2),:,:)
-       forall (ib=SC_bands(2)+1:bands_to_load) E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+E_sc%E(SC_bands(2),:,:)
-       !
-     else
-       E_sc%E(:bands_to_load,:,:)=E_disk(:bands_to_load,:,:)
-     endif
+     ! For either the H_sc and WFs I first check to 
+     ! have enough bands (in wf_load and X_O_strengths).
+     ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
      !
-     deallocate(E_disk)
+     forall (ib=SC_bands(2)+1:bands_to_load) &
+     & E_sc%E(ib,:,:)=E_sc%Eo(ib,:,:)+ ( E_sc%E(SC_bands(2),:,:)-E_sc%Eo(SC_bands(2),:,:) )
+     !
    endif
    !
  endif
@@ -208,16 +198,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! H_sc
    !======
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
-   !
-   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_sp_pol)),&
-&               VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-   !
-   if (write_is_on(ID)) call mat_c2r(H_nl_sc,TMP_matrix)
-   call io_bulk(ID,R3=TMP_matrix)
-   if (read_is_on(ID))  call mat_r2c(TMP_matrix,H_nl_sc)
-   !
-   deallocate(TMP_matrix)
+   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+   call io_bulk(ID,C2=H_nl_sc)
    !
  endif
  !
@@ -226,16 +209,10 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   allocate(TMP_matrix(SC_bands(2),SC_bands(2),2))
+   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+   call io_bulk(ID,C2=SC_R(:,:,ik,i_sp_pol))
    !
-   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_sp_pol)),&
-&               VAR_SZ=(/SC_bands(2),SC_bands(2),2/))
-   !
-   if (write_is_on(ID)) call mat_c2r(SC_R(:,:,ik,i_sp_pol),TMP_matrix)
-   call io_bulk(ID,R3=TMP_matrix)
-   if (read_is_on(ID))  call mat_r2c(TMP_matrix,SC_R(:,:,ik,i_sp_pol))
-     !
-   deallocate(TMP_matrix)
  endif
  !
  if ( l_MP ) then
@@ -243,16 +220,10 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   allocate(TMP_matrix(fft_size,SC_bands(2),2))
+   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+&               VAR_SZ=(/2,fft_size,SC_bands(2)/))
+   call io_bulk(ID,C2=V_mean)
    !
-   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_sp_pol)),&
-&               VAR_SZ=(/fft_size,SC_bands(2),2/))
-   !
-   if (write_is_on(ID)) call mat_c2r(V_mean(:,:),TMP_matrix)
-   call io_bulk(ID,R3=TMP_matrix)
-   if (read_is_on(ID))  call mat_r2c(TMP_matrix,V_mean)
-     !
-   deallocate(TMP_matrix)
  endif
  !
 1 call io_disconnect(ID=ID)

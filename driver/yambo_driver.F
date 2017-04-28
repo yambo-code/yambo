@@ -4,7 +4,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 ! 
-! This file is distributed under the terms of the GNU 
+! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
 ! License as published by the Free Software Foundation; 
@@ -47,9 +47,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _SURF
- use ras_module,    ONLY:lras, lreels
-#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -75,8 +72,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err
- integer, external ::X_em1,INIT
- logical           ::l_pp_em1,l_dyn_em1
+ integer, external ::X_dielectric_matrix,INIT
+ logical           ::l_pp_em1,l_dyn_em1,l_XCo
  !
  ! Presets
  !
@@ -85,9 +82,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  infile   =inf
  !
  call SET_defaults(instr,ind,od,js,com_dir)
-#ifdef _SURF
- call ras_presets()
-#endif
  call it_reset(1)
  !
  ! not resetted in INIT call
@@ -145,30 +139,22 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! OPTICS
  !========
  !
- if (l_optics.and.l_chi) call O_driver(Xen,Xk,q,Xw(3),X(3))
+ if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3))
  !
-#if defined _SURF
- !
- ! SURFACE SPECTROSCOPY
- !=======================
- !
- if (lras.or.lreels) call surfdriver(Xen,Xk,q,Xw(3),X(3))
-#endif
- ! 
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
  ! Static
  !--------
  !
- if (l_em1s)       i_err=X_em1(Xen,Xk,q,X(2),Xw(2),.false.)
+ if (l_em1s)       i_err=X_dielectric_matrix(Xen,Xk,q,X(2),Xw(2),.false.)
  !
  ! Plasmon Pole 
  !--------------
  !
  l_pp_em1=l_ppa.and.((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr).or.l_bse )
  !
- if (l_pp_em1)     i_err=X_em1(Xen,Xk,q,X(4),Xw(4),.false.)
+ if (l_pp_em1)     i_err=X_dielectric_matrix(Xen,Xk,q,X(4),Xw(4),.false.)
  !
  ! Dynamical 
  !-----------
@@ -176,12 +162,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  l_dyn_em1= (.not.l_ppa.and..not.l_cohsex.and..not.l_elphoton_corr).and. &
 &           ((l_em1d.and..not.l_life).or.(l_gw0.and.l_elel_corr))
  !
- if (l_dyn_em1)    i_err=X_em1(Xen,Xk,q,X(3),Xw(3),.false.)
+ if (l_dyn_em1)    i_err=X_dielectric_matrix(Xen,Xk,q,X(3),Xw(3),.false.)
  !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- if (l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))) call XCo_driver(en,k,Xk,q)
+ l_XCo=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
+ !
+ if (l_XCo)             call XCo_driver(en,k,Xk,q)
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
@@ -223,7 +211,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !================
  !
  if ((l_optics.and.l_bse).or.l_bss) then
+   !
    if (l_ppa)      call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
+   !
    if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
  endif
  !

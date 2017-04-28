@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -47,7 +47,12 @@
   {"idir",  "I","Core I/O directory",0,0,1,0,1},         
   {"odir",  "O","Additional I/O directory",0,0,1,0,1},        
   {"cdir",  "C","Communications I/O directory",0,0,1,0,1},
-  {"nompi", "N","Skip MPI initialization",0,0,0,0,0}, 
+#if defined _MPI
+  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
+#endif
+#if defined _OPENMP
+  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
+#endif
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom]",0,0,1,0,0}, 
   {"QPDBs",  "q","(g)enerate-modify/(m)erge quasi-particle databases",0,0,1,0,0}, 
   {"wannier","w","Wannier 90 interface",0,0,0,0,0}, 

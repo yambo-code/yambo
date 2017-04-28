@@ -152,7 +152,10 @@ module electrons
      ! This line is beacause in _RT calculations the actual first size of %Eo may differ
      ! from %nb as it is limited by SC_bands.
      !
-     BOUNDS(1)=size(Ei%Eo,1)
+     BOUNDS(1)=Ei%nb
+     if (associated(Ei%Eo)) then
+       BOUNDS(1)=size(Ei%Eo,1)
+     endif
      BOUNDS(2)=BOUNDS(1)
      !
      if (naive) then

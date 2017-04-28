@@ -84,6 +84,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
+#if defined _PL
+ use PHOTOLUM,   ONLY:PL_weights
+#endif
 #if defined _SC 
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
@@ -473,6 +476,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_KIND=-1                   ! unknow 
  GS_exx_FRACTION=0.0             ! no EXX part  
  GS_exx_SCREENING=0.0            ! no screening
+ !
+#if defined _PL
+ PL_weights=(/1._SP,1._SP,1._SP/)
+#endif
  !
 #if defined _ELPH 
  !

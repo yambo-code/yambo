@@ -210,7 +210,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
@@ -220,7 +220,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))

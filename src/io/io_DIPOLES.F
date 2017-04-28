@@ -38,8 +38,6 @@ integer function io_DIPOLES(X,ID)
 #if defined _SC || defined _RT
  use X_m,           ONLY:P_square
  use drivers,       ONLY:l_sc_run
-#endif
-#if defined _RT || defined _SC
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
 #if defined _TIMING
@@ -52,10 +50,10 @@ integer function io_DIPOLES(X,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),P2_size(3)
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,&
+&           DIP_size(4),DIP_ipos(4),P2_size(3),P2_ipos(3)
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
- complex(SP),allocatable :: disk_data(:,:,:)
  !
  if (.not.io_DIP) then
    io_DIPOLES=IO_NOT_ALLOWED
@@ -101,9 +99,16 @@ integer function io_DIPOLES(X,ID)
  !
  ik_mem=PAR_DIPk_ibz_index(ik)
  !
- allocate(disk_data(3,X%db_ib_lim(2):X%db_ib(2),X%db_ib(1):X%db_ib_lim(1)))
+ ! Reading size and position
+ !
+ P2_size(1)=2
+ P2_ipos(1)=1
+ !
  DIP_size=(/2,3,X%db_ib(2)-X%db_ib_lim(2)+1,X%db_ib_lim(1)-X%db_ib(1)+1/)
- P2_size(:)=DIP_size(2:4)
+ DIP_ipos=(/1,1,X%ib_lim(2)-X%db_ib_lim(2)+1,X%ib(1)-X%db_ib(1)+1/)
+ !
+ P2_size(2:3)=DIP_size(3:4)
+ P2_ipos(2:3)=DIP_ipos(3:4)
  !
  if (read_is_on(ID)) then
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
@@ -126,30 +131,24 @@ integer function io_DIPOLES(X,ID)
  !
  ! iR
  !
- if(write_is_on(ID)) disk_data=DIP_iR(:,:,:,ik_mem,i_sp_pol)
  write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
- call io_bulk(ID,C3=disk_data )
- if(read_is_on(ID)) DIP_iR(:,:,:,ik_mem,i_sp_pol)=disk_data(:,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ call io_bulk(ID,C3=DIP_iR(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
  ! P
  !
- if(write_is_on(ID)) disk_data=DIP_P(:,:,:,ik_mem,i_sp_pol)
  write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
- call io_bulk(ID,C3=disk_data )
- if(read_is_on(ID)) DIP_P(:,:,:,ik_mem,i_sp_pol)=disk_data(:,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ call io_bulk(ID,C3=DIP_P(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
 #if defined _RT
  if (l_real_time.and.n_spin>1) then
    !
    ! Spin
    !
-   if(write_is_on(ID)) disk_data=DIP_spin(:,:,:,ik_mem,i_sp_pol)
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID,C3=disk_data )
-   if(read_is_on(ID)) DIP_spin(:,:,:,ik_mem,i_sp_pol)=disk_data(:,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+   call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
    !
  endif
 #endif
@@ -159,11 +158,9 @@ integer function io_DIPOLES(X,ID)
    !
    ! P2
    !
-   if(write_is_on(ID)) disk_data(1,:,:)=P_square(:,:,ik_mem,i_sp_pol)
    write (VAR_name,'(3(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=P2_size)
-   call io_bulk(ID,C2=disk_data(1,:,:) )
-   if(read_is_on(ID)) P_square(:,:,ik_mem,i_sp_pol)=disk_data(1,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos )
    !
  endif
 #endif

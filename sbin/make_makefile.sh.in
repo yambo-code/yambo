@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@
 os="@build_os@"
 cpp="@CPP@"
 fpp="@FPP@"
-cppflags="@C_AS_CPP_FLAGS@"
+cppflags="@CPPFLAGS_yambo@"
 ECHO_N="@ECHO_N@"
 PREFIX="@MKMF_PREFIX@"
 KEEPSRC="@enable_keep_src@"
@@ -42,10 +42,6 @@ libs=$5
 if [ ! -f $cdir/$ofile ]; then exit 0; fi
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-fc="\$(f90)"
-fcflags="\$(f90flags)"
-fcuflags="\$(f90uflags)"
-lib_path="\$(libpath)"
 llibs=""
 lock_file="__lock"
 dep_file="make.dep"
@@ -54,9 +50,6 @@ for arg in $@; do
   -D_MPI)
    dmpi="yes" ;
    dopts="$dopts $arg";
-   fc="\$(pf90)" ;
-   fcflags="\$(pf90flags)"
-   llmpi="\$(lmpi)"
    ;;
   -D_64BIT_OFFSET)
    dopts="$dopts $arg";
@@ -72,42 +65,39 @@ for arg in $@; do
  esac
 done
 #
-llibs="$lib_path $llibs"
-lf90include="@F90_MODULE_FLAG@\$(includedir)"
-linclude="-I\$(includedir)"
+llibs="-L\$(libdir) $llibs"
+lf90include="@F90_MODULE_FLAG@\$(includedir) @F90_MODULE_FLAG@\$(sysinclude)"
+linclude="-I\$(includedir) -I\$(sysinclude)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
-llibinclude="\$(netcdf_idir)"
+llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
 #
 case $target in
   yambo*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdf) \$(llibxc) -lslatec -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lslatec -llocal \$(lfft) -lm"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(iotk_idir) \$(netcdf_idir)"
+   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm"
+   linclude="$linclude \$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)  \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(etsf_idir) \$(netcdf_idir)"
+   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm"
+   linclude="$linclude \$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   ypp*)
-   llibs="$llibs \$(lfftqe) \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdf) \$(llibxc) -llocal \$(lfft) -lm $llmpi"
-   linclude="$linclude \$(netcdf_idir)"
+   llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) -lslatec \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
 esac
 
 cat config/setup >>$cdir/Makefile
-echo "fc=$fc" >> $cdir/Makefile
-echo "fcflags=$fcflags" >> $cdir/Makefile
-echo "fcuflags=$fcuflags" >> $cdir/Makefile
 echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$linclude" >> $cdir/Makefile
 echo "llibinclude=$llibinclude" >> $cdir/Makefile
@@ -145,10 +135,10 @@ cat << EOF >> $cdir/Makefile
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); fi
 	${PREFIX}if test "\$(debug)" = "yes"; \
-	then \$(srcdir)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
+	then \$(prefix)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
 
 \$(dep_file): \$(lock_file)
-	cd \$(topdir)/$cdir; \$(topdir)/sbin/moduledep.sh \$(objs) > \$(srcdir)/$cdir/\$(dep_file)
+	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)
 
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
@@ -157,16 +147,13 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}if test -f \$(srcdir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                    \$(srcdir)/driver/yambo.h > \$(srcdir)/driver/yambo_cpp.h; fi
- ${PREFIX}if test -f \$(srcdir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                   \$(srcdir)/driver/ypp.h > \$(srcdir)/driver/ypp_cpp.h; fi
- ${PREFIX}( eval \$(cc) \$(cflags) -c \$(srcdir)/driver/getopt.c > /dev/null)
- ${PREFIX}if test "\$(dmpi)" = ""; \
-  then \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- ${PREFIX}if test ! "\$(dmpi)" = ""; \
-  then \$(pcc) \$(pccflags) \$(dopts) -D_\$@ -c \$(srcdir)/driver/driver.c; fi
- ${PREFIX}rm -f \$(srcdir)/driver/yambo_cpp.h \$(srcdir)/driver/ypp_cpp.h
+ ${PREFIX}if test -f \$(prefix)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                    \$(prefix)/driver/yambo.h > \$(prefix)/driver/yambo_cpp.h; fi
+ ${PREFIX}if test -f \$(prefix)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
+                   \$(prefix)/driver/ypp.h > \$(prefix)/driver/ypp_cpp.h; fi
+ ${PREFIX}( eval \$(cc) \$(cflags) -c \$(prefix)/driver/getopt.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
+ ${PREFIX}rm -f \$(prefix)/driver/yambo_cpp.h \$(prefix)/driver/ypp_cpp.h
  @echo
 endef
 define link
@@ -184,13 +171,13 @@ endef
 F77_NOOPT_SRC= xerbla.o slamch.o
 #
 \$(F77_NOOPT_SRC):
-	${PREFIX}(eval \$(f77) -c \$(f77uflags) \$(topdir)/$cdir/\$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fuflags) \$(srcdir)/$cdir/\$*.f) > /dev/null
 #
 FC_NOOPT_SRC= mod_parser_m.o mod_logo.o
 #
 \$(FC_NOOPT_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(srcdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$* " "
 	@rm -f \$*\$(f90suffix)
@@ -221,14 +208,14 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(topdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "
 EOF
 cat << EOF >> $cdir/Makefile
 .f.o:
-	${PREFIX}(eval \$(f77) -c \$(f77flags) \$*.f) > /dev/null
+	${PREFIX}(eval \$(f77) -c \$(fflags) \$*.f) > /dev/null
 	@echo $ECHO_N \$*".f "
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$<) > /dev/null

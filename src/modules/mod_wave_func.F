@@ -116,9 +116,9 @@ module wave_func
      WF_out%N=WF_in%N
      WF_out%space=WF_in%space
      WF_out%to_load=WF_in%to_load
-     if (WF%space=="R") allocate(WF_out%c(fft_size,WF_out%N))
-     if (WF%space=="G") allocate(WF_out%c(wf_ng,WF_out%N))
-     if (WF%space=="C".or.WF%space=="B") allocate(WF%c(wf_ncx,WF%N))
+     if (WF_out%space=="R") allocate(WF_out%c(fft_size,WF_out%N))
+     if (WF_out%space=="G") allocate(WF_out%c(wf_ng,WF_out%N))
+     if (WF_out%space=="C".or.WF_out%space=="B") allocate(WF_out%c(wf_ncx,WF_out%N))
      allocate(WF_out%index(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
      WF_out%c=WF_in%c
      WF_out%index=WF_in%index

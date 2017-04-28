@@ -80,9 +80,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
-#if defined _SURF
- use ras_module,     ONLY:lras, lreels
-#endif
 #if defined _OPENMP
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
@@ -155,9 +152,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
-#endif
-#if defined _SURF
- what_is_running='YAMBO_SURF'
 #endif
 #if defined _QED
  what_is_running='YAMBO_QED'
@@ -545,7 +539,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) then
    call CPU_activate("BS")
-   call initactivate(1,'X_Threads DIP_Threads')
+   call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
  !Setup
@@ -898,31 +892,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
- ! Surface spectroscopy
- !
-#if defined _SURF
- if (lras.or.lreels) then
-    call X_activate('Xd',(/'BndsRn',&
-&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
-&                 'DrudeW','EhEngy'/))
-    call initactivate(1,'FFTGvecs XfnQP_E'//&
-&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
-&     ' q0x q0y'//&                                     ! Polarizations
-&     ' Cutoff CutZero CutStep')               ! Cut off fn
- endif
- if (lras) then
-    call initactivate(1,&
-&     ' LocLimit LocType')               ! Analyse
- endif
- if (lreels) then
-    call initactivate(1,&
-&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
-&     ' LossForm ImpactFt'//&                        ! Model of loss function
-&     ' DetIntMd NumIntPt'//&                           ! Det. integration
-&     ' PenDepth GausConv')                    ! General flags
- endif
-#endif
- !
  ! Are we editing the input file ?
  !
  if (infile_editing) then
@@ -1060,6 +1029,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine CPU_activate(what)
      character(*) :: what 
 #if defined _MPI
+     call initactivate(1,"PAR_def_mode")
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
      if ((what=="X_q_0".and..not.l_real_time).or.&
@@ -1140,10 +1110,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
-#endif
-#if defined  _SURF
-       lreels=runlevel_is_on('reels')
-       lras=runlevel_is_on('ras')
 #endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
@@ -1227,11 +1193,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-#if defined _SURF
-     X(3)%iq = 1  ! 2 components
-     X(3)%ordering = 'R'
-     Xw(3)%n_freqs = 101 
-#endif 
      if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) l_elel_corr=.true.
 #if defined  _ELPH 
      elph_nDBs_used=elph_nDBs
@@ -1583,17 +1544,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
          endif
-         !
-#if defined _SURF
-         !
-         ! Surface spectroscopy
-         !
-         if ( trim(rstr_piece(i1)) == 'sursp' )  then
-           if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
-           if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
-           if ( trim(rstr_piece(i1+1)) == 'a') call initactivate(1,'ras reels')
-         endif
-#endif
          !
 #if defined _SC
          !

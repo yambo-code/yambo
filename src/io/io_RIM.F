@@ -36,9 +36,7 @@ integer function io_RIM(ID)
  ! Work Space
  !
  real(SP)            ::RL_vol_disk
- real(SP),allocatable::RIM_qpg_disk(:,:)
- integer             ::RIM_ng_disk,i1
- character(schlen)   ::VAR_name
+ integer             ::RIM_ng_disk
  !
  io_RIM=io_connect(desc="RIM",type=2,ID=ID)
  !
@@ -77,26 +75,13 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(RIM_qpg_disk(RIM_ng_disk,RIM_ng_disk))
-   !
    if (read_is_on(ID)) then
      allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
      call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
    endif
    !
-   do i1=1,nqibz 
-     !
-     if (write_is_on(ID)) RIM_qpg_disk=RIM_qpg(i1,:,:)
-     !
-     write (VAR_name,'(a,i4.4)') 'RIM_q_',i1
-     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(RIM_qpg_disk))
-     call io_bulk(ID,R2=RIM_qpg_disk)
-     !
-     if (read_is_on(ID)) RIM_qpg(i1,:,:)=RIM_qpg_disk(:RIM_ng,:RIM_ng)
-     !
-   enddo
-   !
-   deallocate(RIM_qpg_disk)
+   call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=(/shape(RIM_qpg)/))
+   call io_bulk(ID,R3=RIM_qpg)
    !
  endif
  !

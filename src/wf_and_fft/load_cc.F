@@ -73,8 +73,7 @@ subroutine load_cc(manage_zero,center_cc)
        ! Correclty compute x1, x2 and x3 with respect to cartesian axis
        ! They are saw-like and the jumps are always at the axis parallel to the vectors
        ! which defines the supercell and which cross at the center of the supercell
-       ! The differents "if" take into account how the supercell is "compound" around the
-       ! supercell corner
+       ! If center_cc is specified the saw-like jump is in the middle of the super-cell 
        !
        x_cc(ir,:)=tmp_x(:)
        !
@@ -83,12 +82,6 @@ subroutine load_cc(manage_zero,center_cc)
        tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
        tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
        tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
-       !
-       ! Correclty compute x1, x2 and x3 with respect to cartesian axis
-       ! They are saw-like and the jumps are always at the axis parallel to the vectors
-       ! which defines the supercell and which cross at the center of the supercell
-       ! The differents "if" take into account how the supercell is "compound" around the
-       ! supercell corner
        !
        do i_dir=1,3
          if (tmp_x(i_dir)>tmp_border(i_dir)) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)

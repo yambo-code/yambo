@@ -38,7 +38,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions
@@ -218,6 +218,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  n_colls=max(HXC_collisions%N,COH_collisions%N)
  !
+ ! Write Database Header 
+ !
+ if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
+ if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
+ !
  call live_timing("Collisions",n_steps)
  !
  do i_coll=1,n_colls
@@ -261,11 +266,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if (COLLISIONS_parallel_SC_structure) then
      if(l_HXC_collisions) then
        call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
      endif
      if(l_COH_collisions) then
        call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
      endif
    else
      if(l_HXC_collisions) call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)

@@ -167,7 +167,7 @@ integer function io_X(X,Xw,ID)
      call io_elemental(ID,&
 &         VAR=" :: Current Q-pt index     :",I0=iq)
      call io_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
+&         VAR=" :: X energy range     [ev]:",R1=Xw%er,WARN=.true.,OP=(/"==","=="/))
      call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
      call io_elemental(ID,&

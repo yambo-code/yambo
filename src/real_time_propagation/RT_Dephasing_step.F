@@ -51,6 +51,7 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=ib1+1,RT_bands(2)
        !
+       
        dG_out(ib1,ib2) = dG_out(ib1,ib2)*exp(-RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*deltaT)
        dG_out(ib2,ib1) = dG_out(ib2,ib1)*exp(-RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik))*deltaT)
        !

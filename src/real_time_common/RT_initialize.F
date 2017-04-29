@@ -39,15 +39,16 @@ subroutine RT_initialize(E,k,q)
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
-&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,             &
+&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,l_RT_simple, &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
-&                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
+&                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,l_RT_INV,   &
 &                         l_update_QP_energies,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics, &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,l_RT_RK4,      &
+&                         l_RT_low_pumping,integrator_exp_order
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -97,28 +98,58 @@ subroutine RT_initialize(E,k,q)
  ! Integrator FLAGS
  !==================
  !
- l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
+ ! a) Propagation kind: Euler / Exp /
  !
- l_RT_RK2  =index(Integrator_name,'RK2'  )/=0.or.index(Integrator_name,'rk2'  )/=0
+ l_RT_EXP  =(index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0)
  !
- l_RT_HEUN =index(Integrator_name,'HEUN' )/=0.or.index(Integrator_name,'heun' )/=0
+ l_RT_EULER=(index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0).and..not. l_RT_EXP
+ !
+ l_RT_INV  =(index(Integrator_name,'INV'  )/=0.or.index(Integrator_name,'inv'  )/=0).and..not.(l_RT_EXP.or.l_RT_EULER)
+ !
+ if ( .not.(l_RT_EXP.or.l_RT_EULER.or.l_RT_INV) ) then
+   call warning(" No integration method defined. Using default EULER")
+   l_RT_EULER=.TRUE.
+ endif
+ !
+ if (l_RT_EXP) then
+   integrator_exp_order=3
+   if ( index(Integrator_name,'EXP1')/=0 .or. index(Integrator_name,'exp1')/=0 )  integrator_exp_order=1
+   if ( index(Integrator_name,'EXP2')/=0 .or. index(Integrator_name,'exp2')/=0 )  integrator_exp_order=2
+   if ( index(Integrator_name,'EXP3')/=0 .or. index(Integrator_name,'exp3')/=0 )  integrator_exp_order=3
+   if ( index(Integrator_name,'EXP4')/=0 .or. index(Integrator_name,'exp4')/=0 )  integrator_exp_order=4
+   if ( index(Integrator_name,'EXP5')/=0 .or. index(Integrator_name,'exp5')/=0 )  integrator_exp_order=5
+ endif
+ !
+ ! b) Multi step approach: RK2 / HEUN
+ !
+ l_RT_RK2  = (index(Integrator_name,'RK2' )/=0.or.index(Integrator_name,'rk2'  )/=0)
+ !
+ l_RT_RK4  = (index(Integrator_name,'RK4' )/=0.or.index(Integrator_name,'rk4'  )/=0).and..not. l_RT_RK2
+ !
+ l_RT_HEUN = (index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun' )/=0).and..not.(l_RT_RK2.or.l_RT_RK4)
+ !
+ l_RT_SIMPLE=.not.(l_RT_RK2.or.l_RT_RK4.or.l_RT_HEUN)
+ !
+ ! c) Extra
  !
  l_RT_RWA  =index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
  !
- l_RT_EXP  =index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0
+ ! d) Reset integrator name
  !
  Integrator_name=""
- if ((     l_RT_EULER).and.(.not.l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "EULER"
- if ((.not.l_RT_EULER).and.(     l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "RK2"
- if ((.not.l_RT_EULER).and.(.not.l_RT_RK2).and.(     l_RT_HEUN)) Integrator_name = "HEUN"
- if(trim(Integrator_name)=="") then
-   call warning("Bad integrator. Using default RK2")
-   l_RT_RK2=.true.
-   Integrator_name = "RK2"
- endif
- if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
- if (l_RT_EXP)         Integrator_name = trim(Integrator_name)//" + EXP"
+ if (l_RT_EULER) Integrator_name = "EULER"
+ if (l_RT_EXP  ) Integrator_name = "EXP"//trim(intc(integrator_exp_order))
+ if (l_RT_INV  ) Integrator_name = "INV"
  !
+ if (l_RT_SIMPLE) Integrator_name = trim(Integrator_name)//" + SIMPLE"
+ if (l_RT_RK2   ) Integrator_name = trim(Integrator_name)//" + RK2"
+ if (l_RT_RK4   ) Integrator_name = trim(Integrator_name)//" + RK4"
+ if (l_RT_HEUN  ) Integrator_name = trim(Integrator_name)//" + HEUN"
+ !
+ if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
+ !
+ ! Global gauge
+ !==============
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"

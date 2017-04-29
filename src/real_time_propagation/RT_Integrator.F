@@ -26,8 +26,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !  This subroutine perform integration using different methods: EULER / EXP / NEW ??
  !        G(t),H[G(t')],dt  --> G(t+dt)
  !  * Euler's method:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)]
- !  * Exp integrator:    G(t+dt) = exp(i*H(t')*dt) * G(t) * exp(-i*H(t')*dt)
- !  * ??? integrator:    G(t+dt) = (1+i*H(t')*dt)/(1-i*H(t')*dt) * G(t)
+ !  * Exp integrator:    G(t+dt) = exp(-i*H(t')*dt) * G(t) * exp(+i*H(t')*dt)
+ !  * Inv integrator:    G(t+dt) = (1-i*H(t')*dt/2)/(1+i*H(t')*dt/2) * G(t) * (1+i*H(t')*dt/2)/(1-i*H(t')*dt/2)
  !
  !  In addition the IP oscillations and dephasing are "analytically integrated out"
  !
@@ -49,7 +49,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:l_RT_EULER,l_RT_RK2, &
+ use real_time,      ONLY:l_RT_EULER,l_RT_RK2,l_RT_simple, &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,l_RT_HEUN,       &
 &                         integrator_step,RT_nk,RT_bands,l_RT_induced_field
@@ -78,7 +78,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  call timing('RT integrator',OPR='start')
 #endif
  !
- if (l_RT_EULER) then
+ if (l_RT_SIMPLE) then
    !
    call RT_Glesser_evolve(E,dG_old,dG_old,dG_new,T_step,T_step)
    !

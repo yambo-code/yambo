@@ -296,12 +296,19 @@ module real_time
  ! Integrators
  !
  logical  :: l_RT_EULER
- logical  :: l_RT_RK2
- logical  :: l_RT_HEUN
  logical  :: l_RT_EXP
+ logical  :: l_RT_INV
+ !
  logical  :: l_RT_RWA
+ logical  :: l_RT_low_pumping
+ !
+ logical  :: l_RT_SIMPLE
+ logical  :: l_RT_RK2
+ logical  :: l_RT_RK4
+ logical  :: l_RT_HEUN
  !
  integer  :: integrator_step
+ integer  :: integrator_exp_order
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)

@@ -23,6 +23,11 @@
 !
 subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  !
+ ! dG(T) = G(T) - G(0)
+ !
+ ! dG(T+dt) - dG(T) =  G(T+dt) - G(T)
+ !                  = -i dt *(I1(T) - I2(T))
+ !
  use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use real_time,      ONLY:RT_bands,RT_nbands
@@ -33,8 +38,6 @@ subroutine RT_EULER_step(dG,I1_k,I2_k,deltaT)
  complex(SP), intent(in)  :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- !
- ! dG(T+dt) = - i dt *(I1(T) - I2(T))
  !
  call V_by_V_plus_V_omp(RT_nbands, -cI*deltaT, I1_k-I2_k, dG)
  !

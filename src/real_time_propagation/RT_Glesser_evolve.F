@@ -31,7 +31,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_RWA,integrator_step, &
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_RWA,integrator_step, &
 &                         G_lesser_reference,RT_bands,RT_nk
  !
  implicit none
@@ -52,7 +52,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  dG_out=cZERO
  !
- if(l_RT_EXP) then
+ if(l_RT_EXP.or.l_RT_INV) then
    I1_matrix=cZERO
    do ib=RT_bands(1),RT_bands(2)
      I1_matrix(ib,ib)=cONE
@@ -65,18 +65,19 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    if (l_RT_EXP) then
      !
-     ! U(T;dt) = exp ( Ho_plus_Sigma(T) * dt)
+     ! U1 = exp ( -i * Ho_plus_Sigma * dt)
+     ! U2 = exp ( +i + Ho_plus_Sigma * dt)
      !
      call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
      !
-     ! dG_out = G(T0+dt) -G(T0) = U(T;dt) G(T0) U(T;-dt) - G(T0)
+     ! dG_out = G(T0+dt) -G(T0) = U1(T;dt) G(T0) U2(T;-dt) - G(T0)
      !
-     call RT_EULEREXP_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+     call RT_EXP_or_INV_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
      !
-   else
+   else if(l_RT_EULER) then
      !
-     ! I1(t) = Ho_plus_Sigma*G   
-     ! I2(t) = G*Ho_plus_Sigma
+     ! I1 = Ho_plus_Sigma*G   
+     ! I2 = G*Ho_plus_Sigma
      !
      call RT_build_I1_and_I2(dG_in(:,:,ik),G_lesser_reference(:,:,ik),ik,I1_k,I2_k)
      !
@@ -84,9 +85,20 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
      !
      call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
      !
+   else if(l_RT_INV) then
+     !
+     ! T1 = (1-idt/2*H) / (1+idt/2*H) -1 
+     ! T2 = (1+idt/2*H) / (1-idt/2*H) -1
+     !
+     call RT_build_T1_and_T2(ik,I1_k,I2_k,i1_matrix,dT)
+     !
+     ! dG_out = G(T0+dt) -G(T0) = T1(T;dt) G(T0) T2(T;-dt) - G(T0)
+     !
+     call RT_EXP_or_INV_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
+     !
    endif
    !
-   ! Here the term G(t) [dG_old] is added to dG(t)
+   ! Here the term G(T0) [dG_old] is added to dG(t)
    !
    if(l_RT_RWA) then
      !

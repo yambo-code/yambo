@@ -21,11 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
+subroutine RT_EXP_or_INV_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
+ !
+ ! dG(T) = G(T) - G(0)
+ !
+ ! dG(T+dt) - dG(T) =  G(T+dt) - G(T)
+ !                  =  U1(dt)*dG(T)*U2(dt) +              order dG*1
+ !                   +(U1(dt)-1)*G0 + G0*(U2(dt)-1) +     order G0*dt
+ !                   +(U1(dt)-1)*G0*(U2(dt)-1)            order G0*dt**2
+ !                   -dG(T)                               remove dG(T)
  !
  use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
- use real_time,      ONLY:RT_bands,RT_nbands
+ use real_time,      ONLY:RT_bands,RT_nbands!,l_RT_low_pumping
  !
  implicit none
  !
@@ -38,33 +46,35 @@ subroutine RT_EULEREXP_step(dG_out,dG_in,G_ref_k,U1_k,U2_k,I1_matrix)
  !
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)) 
  complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)) 
- complex(SP) :: U1p1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: U2p1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- ! dG(T+dt) = U1(dt)*dG(T)*U2(dt) +               order= dG*1
- !            (U1(dt)-1)*G0 + G0*(U2(dt)-1) +     order= G0*dt
- !            (U1(dt)-1)*G0*(U2(dt)-1)            order= G0*dt**2
- !
- U1p1_k=U1_k+I1_matrix
- U2p1_k=U2_k+I1_matrix
+ logical :: l_RT_low_pumping=.true.
  !
  dG_out=cZERO
- M1_tmp=cZERO
- call M_by_M_omp('n','n',RT_nbands,U1p1_k,dG_in,M1_tmp)
- call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2p1_k,dG_out)
  !
- M1_tmp=cZERO
- M2_tmp=cZERO
- call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp('n','n',RT_nbands,G_ref_k,U2_k,M2_tmp)
- dG_out=dG_out+M1_tmp+M2_tmp
+ if (l_RT_low_pumping) then
+   !
+   M1_tmp=cZERO
+   call M_by_M_omp('n','n',RT_nbands,U1_k+I1_matrix,dG_in,M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k+I1_matrix,dG_out)
+   !
+   M1_tmp=cZERO
+   M2_tmp=cZERO
+   call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,G_ref_k,U2_k,M2_tmp)
+   dG_out=dG_out+M1_tmp+M2_tmp
+   !
+   M1_tmp=cZERO
+   M2_tmp=cZERO
+   call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,M2_tmp)
+   dG_out=dG_out+M2_tmp-dG_in
+   !
+ else
+   !
+   call M_by_M_omp('n','n',RT_nbands,U1_k+I1_matrix,dG_in+G_ref_k,M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k+I1_matrix,dG_out)
+   dG_out=dG_out-dG_in-G_ref_k
+   !
+ endif
  !
- M1_tmp=cZERO
- M2_tmp=cZERO
- call M_by_M_omp('n','n',RT_nbands,U1_k,G_ref_k,M1_tmp)
- call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,M2_tmp)
- dG_out=dG_out+M2_tmp
- !
- dG_out=dG_out-dG_in
- !
-end subroutine RT_EULEREXP_step
+end subroutine RT_EXP_or_INV_step

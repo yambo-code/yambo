@@ -522,8 +522,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    enddo
  endif
  !
- if (io_RESPONSE) call X_alloc('X')
- !
+ call X_alloc('X')
  call WF_free(WF)
  call elemental_collision_free(scattering_main)
  call elemental_collision_free(scattering_prime)

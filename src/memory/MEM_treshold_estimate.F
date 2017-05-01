@@ -21,33 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_defaults( )
+subroutine MEM_treshold_estimate( )
  !
- use memory, ONLY:MEM_library
+ use pars,         ONLY:SP
+ use units,        ONLY:Kilobyte
+ use electrons,    ONLY:n_spin,n_bands
+ use R_lattice,    ONLY:ng_vec,nkibz
+ use wave_func,    ONLY:wf_ng
+ use memory,       ONLY:MEM_treshold,MEM_SAVE_treshold
  !
  implicit none
  !
- call MEM_library("add","g_vec","RL")
- call MEM_library("add","minus_G","RL")
- call MEM_library("add","g_rot","RL")
- call MEM_library("add","bare_qpg","RL")
+ MEM_treshold=max(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.,Kilobyte)
  !
- call MEM_library("add","k%star","KPTS")
- call MEM_library("add","k%sstar","KPTS")
- !
- call MEM_library("add","%f","El.Energies")
- call MEM_library("add","%E","El.Energies")
- call MEM_library("add","%QP_corrected","El.Energies")
- !
- call MEM_library("add","%n_of_elements","PAR.indexes")
- call MEM_library("add","%element_1D","PAR.indexes")
- call MEM_library("add","%element_2D","PAR.indexes")
- call MEM_library("add","%weight_1D","PAR.indexes")
- call MEM_library("add","%first_of_1D","PAR.indexes")
- !
- call MEM_library("add","%Time","TIME_components")
- !
- call MEM_library("add","W%p","FREQS")
- call MEM_library("add","Xw%p","FREQS")
+ MEM_SAVE_treshold=10*MEM_treshold
  !
 end subroutine

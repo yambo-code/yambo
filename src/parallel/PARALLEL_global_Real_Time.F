@@ -33,7 +33,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
  use real_time,     ONLY:RT_bands
- use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index
+ use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
@@ -142,6 +142,13 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
  !
  !.........................................................................
+ if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then 
+   !
+   ! This allocation can be left over from previous calls to PARALLEL_global routine
+   !
+   call PP_indexes_reset(PAR_IND_DIPk_ibz)
+   !
+ endif
  call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID

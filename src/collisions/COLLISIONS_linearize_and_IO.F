@@ -109,12 +109,14 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    !
  enddo
  !
- if (.not.IO_colls) return
- !
- call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
- io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
- !
- call COLLISIONS_alloc_and_free(what,"v1","clean",1)
+ if (IO_colls) then
+   !
+   call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
+   io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+   !
+   call COLLISIONS_alloc_and_free(what,"v1","clean",1)
+   !
+ endif
  !
 #if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='stop')

@@ -357,6 +357,9 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
+     !
+     if (allocated(RT%kpt)) return
+     !
      YAMBO_ALLOC(RT%kpt,(RT%nk,3))
      YAMBO_ALLOC(RT%k_weight,(RT%nk))
      YAMBO_ALLOC(RT%table,(RT%nstates,4))

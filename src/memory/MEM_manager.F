@@ -23,15 +23,15 @@
 !
 subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
- use pars,         ONLY:lchlen,schlen
+ use pars,         ONLY:lchlen,schlen,MEM_jump_treshold
  use drivers,      ONLY:infile_editing
- use com,          ONLY:msg,error,secnm,warning
+ use com,          ONLY:msg,warning,secnm,error
  use openmp,       ONLY:master_thread
  use units,        ONLY:Kilobyte,Megabyte
  use memory,       ONLY:TOT_MEM_bytes,TOT_MEM_kilobytes_MEMSTAT,MEM_element_copy,&
 &                       MEM_err,MEM_treshold,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
-&                       MEM_SAVE_treshold,MEM_jump_treshold,MAX_MEM_bytes,TOT_MEM_bytes_SAVE,MEMs
+&                       MEM_SAVE_treshold,MAX_MEM_bytes,TOT_MEM_bytes_SAVE,MEMs
  !
  implicit none
  !
@@ -50,7 +50,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Error Message
  !===============
- if (MEM_err/=0) call error("Allocation of "//what//" failed")
+ if (MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
  !
  if (.not.present(Sz).and..not.present(Kn).and..not.present(REPORT)) return
  if (.not.master_thread) return
@@ -78,16 +78,28 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    SHELF=what
  endif
  call MEM_element_finder(trim(SHELF),what,Sz,i_FOUND,i_FOUND_COMPONENT,i_FOUND_SAVE)
- if (index(what,"%element_2D")>0) then
-  write (*,*) 
-  write (*,*) trim(SHELF),what,i_FOUND,i_FOUND_component,adding,Sz
-  if (i_FOUND>0) then
-    write (*,*) MEMs(i_FOUND)%N
-    do i_el=1,MEMs(i_FOUND)%N
-      write (*,*) trim(MEMs(i_FOUND)%name(i_el))
-    enddo
-  endif
-  write (*,*) 
+! if (index(SHELF,"Time")>0) then
+!  write (*,*) 
+!  write (*,*) what,trim(SHELF),i_FOUND,i_FOUND_component,adding,Sz
+!  if (i_FOUND>0) then
+!    write (*,*) MEMs(i_FOUND)%N
+!    do i_el=1,MEMs(i_FOUND)%N
+!      write (*,*) i_el,trim(MEMs(i_FOUND)%name(i_el)),MEMs(i_FOUND)%size(i_el)
+!    enddo
+!  endif
+!  write (*,*) 
+! endif
+ !
+ ! Error Message of an already allocated array
+ !=============================================
+ !
+ if (MEM_err/=0) then
+   if (i_FOUND==0) then
+     call error("Allocation of "//what//" failed. Object was already allocated but not in the DB.")
+   else
+     call error("Allocation of "//what//" failed. Object was already allocated in "//&
+&               trim(MEMs(i_FOUND)%section(I_FOUND_COMPONENT)))
+   endif
  endif
  !
  ! Database Update
@@ -95,8 +107,10 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  if (adding) then
    !
    MEM_now_b=Sz*Kn
-   TOT_MEM_bytes=TOT_MEM_bytes+MEM_now_b
    MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
+   if (MEM_now_kb==0) MEM_now_kb=1
+   !
+   TOT_MEM_bytes=TOT_MEM_bytes+MEM_now_b
    !
    if (TOT_MEM_bytes>MAX_MEM_bytes) MAX_MEM_bytes=TOT_MEM_bytes
    !
@@ -137,6 +151,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    MEM_now_b=MEMs(i_FOUND)%size(i_FOUND_component)*MEMs(i_FOUND)%kind(i_FOUND_component)
    TOT_MEM_bytes=TOT_MEM_bytes-MEM_now_b
    MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
+   if (MEM_now_kb==0) MEM_now_kb=1
    MEMs(i_FOUND)%use = MEMs(i_FOUND)%use-MEM_now_kb
    !
    if ( MEMs(i_FOUND)%use <= 0 ) then
@@ -163,25 +178,26 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  else if (i_FOUND/=0.and.i_FOUND_component==0) then
    !
    call warning(what//" not found in the "//trim(SHELF)//" shelf")
-   return
    !
  else if (i_FOUND==0.and.i_FOUND_component==0) then
    !
-   call error(what//" object and "//trim(SHELF)//" shelf not found")
+   call warning(what//" object and "//trim(SHELF)//" shelf not found")
    !
  endif
+ !
+ if (MEM_treshold==0) return
  !
  ! Messages
  !==========
  !#1
- deliver_a_msg=MEM_now_kb>MEM_treshold.and..not.infile_editing.and.trim(SHELF)/="untracked"
+ deliver_a_msg=MEM_now_kb>MEM_treshold.and..not.infile_editing
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY]"
    if (     adding) msg_=trim(msg_)//" Alloc "//what
    if (.not.adding) msg_=trim(msg_)//" Free "//what
    msg_=trim(msg_)//"("//trim(mem_string(MEM_now_b))//")"
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (sum)"
+   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (traced)"
    msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_kilobytes_MEMSTAT*int(Kilobyte)))//" (memstat)"
    call msg("s",trim(msg_))
  endif
@@ -190,7 +206,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY] In use: "
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (sum)"
+   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (traced)"
    msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_kilobytes_MEMSTAT*int(Kilobyte)))//" (memstat)"
    call msg("s",trim(msg_))
    TOT_MEM_bytes_SAVE=TOT_MEM_bytes

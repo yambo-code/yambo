@@ -1,1 +1,1 @@
-objs = MEM_defaults.o MEM_manager.o MEM_library.o MEM_bits.o MEM_report.o
+objs = MEM_defaults.o MEM_manager.o MEM_library.o MEM_bits.o MEM_report.o MEM_treshold_estimate.o

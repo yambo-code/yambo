@@ -55,17 +55,29 @@ end function
 !
 subroutine MEM_element_finder( shelf, name, Sz, i_FOUND, i_FOUND_element, i_FOUND_SAVE )
  !
+ use pars,   ONLY:schlen
  use memory, ONLY:N_MEM_elements,MEMs,N_MEM_SAVE_elements,LARGE_MEMs
  implicit none
  integer      :: i_m,i_l,i_FOUND,i_FOUND_SAVE,i_FOUND_element,Sz
  character(*) :: shelf,name
+ character(schlen) :: name_pattern,el_pattern
  i_FOUND=0
  i_FOUND_ELEMENT=0
+ !
+ name_pattern=name
+ if (index(name,"%")>0) then
+   name_pattern=name(index(name,"%")+1:len(name))
+ endif
+ !
  LOOP_1: do i_m=1,N_MEM_elements
    if ( trim(MEMs(i_m)%shelf)==shelf ) then
      i_FOUND=i_m
      do i_l=1,MEMs(i_m)%N
-       if (trim(MEMs(i_m)%name(i_l))==name.and.MEMs(i_m)%size(i_l)==Sz) i_FOUND_element=i_l
+       if (index(name,"%")>0) then
+         el_pattern=trim(MEMs(i_m)%name(i_l))
+         el_pattern=el_pattern(index(el_pattern,"%")+1:len(el_pattern))
+       endif
+       if (trim(el_pattern)==trim(name_pattern).and.MEMs(i_m)%size(i_l)==Sz) i_FOUND_element=i_l
      enddo
      if (i_FOUND_element==0) then
        do i_l=1,MEMs(i_m)%N

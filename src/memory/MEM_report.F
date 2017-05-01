@@ -25,8 +25,9 @@ subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
  use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
-&                       LARGE_MEMs
+&                       LARGE_MEMs,MEM_treshold
  use units,        ONLY:Kilobyte
+ use stderr,       ONLY:intc
  use com,          ONLY:msg
  implicit none
  !
@@ -34,7 +35,7 @@ subroutine MEM_report( REPORT )
  !
  character(lchlen) :: msg_,prefix
  character(1)      :: where
- integer :: i_mem,i_el,ORPHAN_TOT,MEM
+ integer :: i_mem,i_el,ORPHAN_TOT
  !
  if (REPORT=="check") then
    where="s"
@@ -49,13 +50,7 @@ subroutine MEM_report( REPORT )
  msg_=" "
  if (N_MEM_elements>0) then
    !
-   if (REPORT=="check") then
-     WRITE(msg_,'(a9,a40)') trim(prefix),"=== Unallocated ==="
-     call msg("s",msg_(1:len_trim(msg_)))
-   else
-     WRITE(msg_,'(a40)') "Unallocated components"
-     call msg("rn",msg_(1:len_trim(msg_)))
-   endif
+   if (REPORT/="check") call msg("nrn","Unallocated components")
    !
    do i_mem=1,N_MEM_elements
      !
@@ -67,7 +62,11 @@ subroutine MEM_report( REPORT )
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a70," : ",a,3x)') trim(prefix),"TOTAL",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   if (REPORT=="check") then
+     WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   else
+     WRITE(msg_,'(a8,a50," : ",a,3x)') trim(prefix),"TOTAL",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   endif
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !
@@ -80,26 +79,44 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
- WRITE(msg_,'(1x,a8,a40," : ",3x,i10,a)') trim(prefix),"Max memory used",int(MAX_MEM_bytes/Kilobyte),"Kb"
- call msg("nr",trim(msg_))
+ call msg("nr",trim(prefix)//"Max memory used : "//trim(intc(int(MAX_MEM_bytes/Kilobyte)))//" Kb" )
  !
  contains
    !
    subroutine plot_the_element(M)
      type(MEM_element) :: M
+     integer       :: MEM,MEM_now_kb
      MEM=M%use*int(Kilobyte)
      do i_el=1,M%N
        MEM=M%size(i_el)*M%kind(i_el)
-       if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
-         WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
+       !
+       MEM_now_kb=nint(real(MEM)/Kilobyte)
+       if (MEM_now_kb<MEM_treshold) return
+       !
+       if (REPORT=="check") then
+         WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(MEM))
+         if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
+           WRITE(msg_,'(2a)') trim(msg_),trim(M%name(i_el))//" "//trim(M%shelf)
+         else
+           WRITE(msg_,'(2a)') trim(msg_),trim(M%name(i_el))
+         endif
+         if (len_trim(M%section(i_el))>0) then
+           WRITE(msg_,'(2a)')  trim(msg_)," ("//trim(M%section(i_el))//")"
+         endif
        else
-         WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))
+         if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
+           WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
+         else
+           WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))
+         endif
+         WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
+         if (len_trim(M%section(i_el))>0) then
+           WRITE(msg_,'(a,a)')  trim(msg_)," ("//trim(M%section(i_el))//")"
+         endif
        endif
-       WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
-       if (len_trim(M%section(i_el))>0) then
-         WRITE(msg_,'(a,a)')  trim(msg_)," in Section: "//trim(M%section(i_el))
-       endif
+       !
        call msg(where,msg_(1:len_trim(msg_)))
+       !
      enddo
    end subroutine
    !

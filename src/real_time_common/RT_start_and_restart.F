@@ -100,17 +100,17 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Reference Hartree and XC
  !==========================
  do i_sp_pol=1,n_sp_pol
- do ik=1,nXkibz
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
- enddo
+   do ik=1,nXkibz
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+     HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+     XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+   enddo
  enddo
  !
  ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here

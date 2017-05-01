@@ -137,11 +137,17 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
    COLLISIONS_have_HARTREE=io_err(2)==0.and.HXC_collisions%kind>=H_SE_HARTREE
    !
+ endif
+ !
+ if (.not.l_use_collisions.or.CHECK_EXISTENCE_ONLY) then
+   !
+#if defined _TIMING
+   call timing('COLLISIONS_load',OPR='stop')
+#endif
+   !
    return
    !
  endif
- !
- if (.not.l_use_collisions) return
  !
  ! Actual I/O
  !============

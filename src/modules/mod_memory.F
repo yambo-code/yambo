@@ -23,8 +23,8 @@
 !
 module memory
  !
- use pars,          ONLY:SP,schlen,IP,DP,N_MEM_max,N_MEM_SAVE_max,MEM_jump_treshold,MEM_treshold,&
-&                        MEM_SAVE_treshold,LP,N_MEM_shelf_max,N_MEM_LIBs_max,N_MEM_max_element_components
+ use pars,          ONLY:SP,schlen,IP,DP,LP,N_MEM_max,N_MEM_SAVE_max,&
+&                        N_MEM_shelf_max,N_MEM_LIBs_max,N_MEM_max_element_components
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
@@ -34,7 +34,9 @@ module memory
  integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
  integer             :: MAX_MEM_bytes = 0
  integer             :: TOT_MEM_bytes
- integer             :: TOT_MEM_bytes_SAVE = 0
+ integer             :: TOT_MEM_bytes_SAVE =  0
+ integer             :: MEM_treshold             ! Mb*1000=Kb
+ integer             :: MEM_SAVE_treshold        ! "
  !
  integer :: N_MEM_elements           = 0
  type MEM_element

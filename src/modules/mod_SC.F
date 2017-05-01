@@ -100,13 +100,10 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use pars,           ONLY:SP
-     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
-     use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use xc_functionals, ONLY:magn,V_xc
+     use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
      !
      implicit none
      !

@@ -70,8 +70,12 @@ subroutine XCo_local(E,Xk)
  !
  ! Allocation 
  !
- YAMBO_ALLOC(V_xc,(fft_size,n_spin))
- YAMBO_ALLOC(magn,(fft_size,3))
+ if (.not.allocated(V_xc)) then
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+ endif
+ if (.not.allocated(magn)) then
+   YAMBO_ALLOC(magn,(fft_size,3))
+ endif
  !
  ! Precompiler options in case a non-DFT potential is required
  !
@@ -88,7 +92,7 @@ subroutine XCo_local(E,Xk)
    else
 #endif
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
-&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
+&                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT
    endif
 #endif
@@ -106,8 +110,10 @@ subroutine XCo_local(E,Xk)
    if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
+   !
    YAMBO_FREE(V_xc_sc)
    YAMBO_FREE(V_hartree_sc)
+   !
  endif
 #endif
  !
@@ -222,30 +228,26 @@ subroutine XCo_local(E,Xk)
    !
    YAMBO_FREE(V_xc_mat)
    !
+   call LOCAL_clean( )
+   !
+   call PP_redux_wait(QP_Vxc)
+   !
+   return
+   !
  endif
- !
- ! Clean
- !
-#if defined _SC || defined _RT
- if(.not.(l_sc_run.or.l_real_time)) then
-#endif
-   YAMBO_FREE(V_xc)
-   if(n_spin>1) then   
-     YAMBO_FREE(magn)
-   endif
-#if defined _SC || defined _RT
- endif
-#endif
- !
- call LOCAL_clean( )
- !
- call PP_redux_wait(QP_Vxc)
  !
  contains
    !
    subroutine LOCAL_clean()
-     YAMBO_FREE(V_xc)
-     YAMBO_FREE(magn)
+     !
+#if defined _SC || defined _RT
+     if (.not.(l_sc_run.or.l_real_time)) then
+#endif
+       YAMBO_FREE(V_xc)
+       YAMBO_FREE(magn)
+#if defined _SC || defined _RT
+     endif
+#endif
    end subroutine
    !
 end subroutine

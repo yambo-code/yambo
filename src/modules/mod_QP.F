@@ -24,6 +24,7 @@
 module QP_m
  !
  use pars,      ONLY:SP,schlen,max_qp_descs
+ !
 #include<memory.h>
  !
  ! Mixing for non perturbative calculations

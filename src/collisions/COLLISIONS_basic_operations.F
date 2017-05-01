@@ -80,7 +80,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  if (allocated(COLL%state)) then
    !
-   if (io_COLLs) then
+   if (io_COLLs.and..not.allocated(COLL%IO_status)) then
      YAMBO_ALLOC(COLL%IO_status,(COLL%N))
    endif
    !

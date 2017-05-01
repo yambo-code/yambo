@@ -97,56 +97,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Integrator FLAGS
  !==================
- !
- ! a) Propagation kind: Euler / Exp /
- !
- l_RT_EXP  =(index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0)
- !
- l_RT_EULER=(index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0).and..not. l_RT_EXP
- !
- l_RT_INV  =(index(Integrator_name,'INV'  )/=0.or.index(Integrator_name,'inv'  )/=0).and..not.(l_RT_EXP.or.l_RT_EULER)
- !
- if ( .not.(l_RT_EXP.or.l_RT_EULER.or.l_RT_INV) ) then
-   call warning(" No integration method defined. Using default EULER")
-   l_RT_EULER=.TRUE.
- endif
- !
- if (l_RT_EXP) then
-   integrator_exp_order=3
-   if ( index(Integrator_name,'EXP1')/=0 .or. index(Integrator_name,'exp1')/=0 )  integrator_exp_order=1
-   if ( index(Integrator_name,'EXP2')/=0 .or. index(Integrator_name,'exp2')/=0 )  integrator_exp_order=2
-   if ( index(Integrator_name,'EXP3')/=0 .or. index(Integrator_name,'exp3')/=0 )  integrator_exp_order=3
-   if ( index(Integrator_name,'EXP4')/=0 .or. index(Integrator_name,'exp4')/=0 )  integrator_exp_order=4
-   if ( index(Integrator_name,'EXP5')/=0 .or. index(Integrator_name,'exp5')/=0 )  integrator_exp_order=5
- endif
- !
- ! b) Multi step approach: RK2 / HEUN
- !
- l_RT_RK2  = (index(Integrator_name,'RK2' )/=0.or.index(Integrator_name,'rk2'  )/=0)
- !
- l_RT_RK4  = (index(Integrator_name,'RK4' )/=0.or.index(Integrator_name,'rk4'  )/=0).and..not. l_RT_RK2
- !
- l_RT_HEUN = (index(Integrator_name,'HEUN')/=0.or.index(Integrator_name,'heun' )/=0).and..not.(l_RT_RK2.or.l_RT_RK4)
- !
- l_RT_SIMPLE=.not.(l_RT_RK2.or.l_RT_RK4.or.l_RT_HEUN)
- !
- ! c) Extra
- !
- l_RT_RWA  =index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
- !
- ! d) Reset integrator name
- !
- Integrator_name=""
- if (l_RT_EULER) Integrator_name = "EULER"
- if (l_RT_EXP  ) Integrator_name = "EXP"//trim(intc(integrator_exp_order))
- if (l_RT_INV  ) Integrator_name = "INV"
- !
- if (l_RT_SIMPLE) Integrator_name = trim(Integrator_name)//" + SIMPLE"
- if (l_RT_RK2   ) Integrator_name = trim(Integrator_name)//" + RK2"
- if (l_RT_RK4   ) Integrator_name = trim(Integrator_name)//" + RK4"
- if (l_RT_HEUN  ) Integrator_name = trim(Integrator_name)//" + HEUN"
- !
- if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
+ call RT_Integrator_init()
  !
  ! Global gauge
  !==============

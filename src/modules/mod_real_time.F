@@ -308,8 +308,14 @@ module real_time
  logical  :: l_RT_RK4
  logical  :: l_RT_HEUN
  !
- integer  :: integrator_step
- integer  :: integrator_exp_order
+ integer  :: Integrator_step
+ integer  :: Integrator_nsteps
+ integer  :: Integrator_exp_order
+ !
+ real(SP) :: a_tableau(4)
+ real(SP) :: b_tableau(4)
+ real(SP) :: c_tableau(4)
+ real(SP) :: RWA_table(5)
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -442,7 +448,7 @@ module real_time
    !
    subroutine RT_alloc(en)
      !
-     use pars,           ONLY:SP,LP,schlen,cZERO,cONE
+     use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
@@ -454,8 +460,6 @@ module real_time
      implicit none
      !
      type(levels), intent(in) :: en
-     !
-     integer :: ib
      !
      call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
      !
@@ -572,12 +576,6 @@ module real_time
      !
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
-     !
-     allocate(I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
-     I1_matrix=cZERO
-     do ib=RT_bands(1),RT_bands(2)
-       I1_matrix(ib,ib)=cONE
-     enddo
      !
      allocate(MEM_pointer(G_MEM_steps)) 
      MEM_pointer    = 0

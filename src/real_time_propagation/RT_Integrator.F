@@ -53,7 +53,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  use real_time,      ONLY:l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_simple,                &
 &                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,                 &
-&                         integrator_step,RT_nk,RT_bands,l_RT_induced_field
+&                         Integrator_step,RT_nk,RT_bands,l_RT_induced_field,      &
+&                         a_tableau,b_tableau,c_tableau,RWA_table,Integrator_nsteps
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
 #if defined _TIMING
@@ -70,51 +71,17 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  ! Work Space
  !
- integer     :: i_step,n_steps
- real(SP)    :: df_H,delta_T1,delta_T2,delta_T3,a_tableau(4),b_tableau(4),c_tableau(4),RWA_table(5)
+ integer     :: i_step
+ real(SP)    :: df_H,delta_T1,delta_T2,delta_T3
  complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,5)
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
 #endif
  !
- a_tableau(1) = 0._SP
- c_tableau(1) = 0._SP    ! These are non-zero only for implicit methods
- !
- if (l_RT_SIMPLE) then
-   n_steps = 1
-   b_tableau(1) = 1._SP
-   c_tableau(2) = 1._SP
-   RWA_table(2) = 1._SP
- endif
- !
- if (l_RT_RK2   ) then
-   n_steps = 2
-   c_tableau(2) = 1._SP/2._SP
-   a_tableau(2) = 1._SP/2._SP
-   b_tableau(1:2) = (/0._SP      ,1._SP      /)
-   RWA_table(2:3) = (/1._SP/2._SP,1._SP/2._SP/)
- endif
- !
- if (l_RT_HEUN  ) then
-   n_steps = 2
-   c_tableau(2) = 1._SP
-   a_tableau(2) = 1._SP
-   b_tableau(1:2) = (/1._SP/2._SP,1._SP/2._SP/)
-   RWA_table(2:3) = (/1._SP      ,0._SP      /)
- endif
- !
- if (l_RT_RK4   ) then
-   n_steps = 4
-   c_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
-   a_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
-   b_tableau(1:4) = (/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1._SP/6._SP/)
-   !RWA_table(2:3) = (/1._SP/2._SP,1._SP/2._SP/) NOT DEFINED
- endif
- !
  dG_tmp(:,:,:,1)=dG_old
  !
- do i_step=1,n_steps
+ do i_step=1,Integrator_nsteps
    !
    if (c_tableau(i_step)==0._SP) cycle 
    !
@@ -147,10 +114,10 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  ! final step @ T+dt
  !
- call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,n_steps),dG_tmp(:,:,:,n_steps+1),T_step,T_step*RWA_table(n_steps+1))
+ call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),T_step,T_step*RWA_table(i_step))
  !
  dG_new=cZERO
- do i_step=1,n_steps
+ do i_step=1,Integrator_nsteps
    dG_new=dG_new+dG_tmp(:,:,:,i_step+1)*b_tableau(i_step)
  enddo
  !

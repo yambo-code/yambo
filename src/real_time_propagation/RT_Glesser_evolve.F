@@ -24,7 +24,7 @@
 subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  ! dG_old = dG(T0)     --> Time at first iteration in integrator with more than one step
- ! dG_in  = dG(T )     --> Effective time, i.e. at the second step of RK2 T=T0+dt/2
+ ! dG_in  = dG(T )     --> Effective time at the present step, i.e. for RK2 at step 2, T=T0+dt/2
  ! dG_out = dG(T0+dt)
  !
  !  T0+dt = T+dt'
@@ -43,60 +43,17 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
- ! Workspace
- !
- integer                :: ik,ib
- complex(SP)            :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP)            :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP)            :: I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ integer :: ik
  !
  dG_out=cZERO
  !
- if(l_RT_EXP.or.l_RT_INV) then
-   I1_matrix=cZERO
-   do ib=RT_bands(1),RT_bands(2)
-     I1_matrix(ib,ib)=cONE
-   enddo
- endif
- !
  do ik=1,RT_nk
    !
-   ! Here we compute dG(t)=G(t+dt)-G(t)
+   if (l_RT_EXP)   call RT_EXP_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   if (l_RT_EXP) then
-     !
-     ! U1 = exp ( -i * Ho_plus_Sigma * dt)
-     ! U2 = exp ( +i + Ho_plus_Sigma * dt)
-     !
-     call RT_build_U1_and_U2(ik,I1_k,I2_k,dT)
-     !
-     ! dG_out = G(T0+dt) -G(T0) = U1(T;dt) G(T0) U2(T;-dt) - G(T0)
-     !
-     call RT_EXP_or_INV_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
-     !
-   else if(l_RT_EULER) then
-     !
-     ! I1 = Ho_plus_Sigma*G   
-     ! I2 = G*Ho_plus_Sigma
-     !
-     call RT_build_I1_and_I2(dG_in(:,:,ik),G_lesser_reference(:,:,ik),ik,I1_k,I2_k)
-     !
-     ! dG_out = G(T0+dt) -G(T0)= - i dt *(I1(T) - I2(T))
-     !
-     call RT_EULER_step(dG_out(:,:,ik),I1_k,I2_k,dT)
-     !
-   else if(l_RT_INV) then
-     !
-     ! T1 = (1-idt/2*H) / (1+idt/2*H) -1 
-     ! T2 = (1+idt/2*H) / (1-idt/2*H) -1
-     !
-     call RT_build_T1_and_T2(ik,I1_k,I2_k,i1_matrix,dT)
-     !
-     ! dG_out = G(T0+dt) -G(T0) = T1(T;dt) G(T0) T2(T;-dt) - G(T0)
-     !
-     call RT_EXP_or_INV_step(dG_out(:,:,ik),dG_old(:,:,ik),G_lesser_reference(:,:,ik),I1_k,I2_k,I1_matrix)
-     !
-   endif
+   if (l_RT_EULER) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   !
+   if (l_RT_INV)   call RT_INV_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    ! Here the term G(T0) [dG_old] is added to dG(t)
    !
@@ -120,23 +77,23 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
    !
+   call RT_G_symmetrization(dG_out,ik)
+   !
  enddo
- !
- call RT_G_symmetrization(dG_out)
  !
  integrator_step=integrator_step+1
  !
  contains
    !
-   subroutine RT_G_symmetrization(G_inout)
+   subroutine RT_G_symmetrization(G_inout,ik)
      !
+     integer,     intent(in)    :: ik
      complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
-     integer                :: ik,ib,ibp
+     integer                :: ib,ibp
      real(SP)               :: E_occ_tmp,H_occ_tmp
      complex(SP)            :: tmp
      !
-     do ik=1,RT_nk
        !
        do ib=RT_bands(1),RT_bands(2)
          !
@@ -158,8 +115,6 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
          enddo
          !
        enddo
-       !
-     enddo
      !
    end subroutine
    !

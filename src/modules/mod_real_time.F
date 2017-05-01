@@ -280,6 +280,7 @@ module real_time
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
+ complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! COLLISIONS
  !------------
@@ -441,7 +442,7 @@ module real_time
    !
    subroutine RT_alloc(en)
      !
-     use pars,           ONLY:SP,LP,schlen,cZERO
+     use pars,           ONLY:SP,LP,schlen,cZERO,cONE
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
@@ -450,7 +451,11 @@ module real_time
      use xc_functionals, ONLY:E_xc
      use R_lattice,      ONLY:nqbz,nXkibz
      !
+     implicit none
+     !
      type(levels), intent(in) :: en
+     !
+     integer :: ib
      !
      call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
      !
@@ -567,6 +572,12 @@ module real_time
      !
      allocate(dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      call mem_est("dG_lesser",(/size(dG_lesser)/),(/2*SP/))
+     !
+     allocate(I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+     I1_matrix=cZERO
+     do ib=RT_bands(1),RT_bands(2)
+       I1_matrix(ib,ib)=cONE
+     enddo
      !
      allocate(MEM_pointer(G_MEM_steps)) 
      MEM_pointer    = 0
@@ -721,6 +732,9 @@ module real_time
      !
      deallocate(dG_lesser)
      call mem_est("dG_lesser")
+     !
+     deallocate(I1_matrix)
+     call mem_est("I1_matrix")
      !
      if(allocated(rho_reference)) then
        deallocate(rho_reference)

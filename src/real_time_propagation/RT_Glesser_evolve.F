@@ -59,7 +59,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    if(l_RT_RWA) then
      !
-     ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} - i dt *(I1(T) - I2(T)) e^{-i\delta\epsilon (dt')}
+     ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} + dGT0() e^{-i\delta\epsilon (dt')}
      !
      ! Dephasing is integrated analitically in this case.
      !

@@ -26,8 +26,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !  This subroutine perform integration using different methods: EULER / EXP / NEW ??
  !        G(t),H[G(t')],dt  --> G(t+dt)
  !  * Euler's method:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)]
- !  * Exp integrator:    G(t+dt) = exp(-i*H(t')*dt) * G(t) * exp(+i*H(t')*dt)
- !  * Inv integrator:    G(t+dt) = (1-i*H(t')*dt/2)/(1+i*H(t')*dt/2) * G(t) * (1+i*H(t')*dt/2)/(1-i*H(t')*dt/2)
+ !  * Exp integrator:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)] - dt^2 *[H(t'),[H(t'),G(t)]] + ....         [Can be expanded up to order]
+ !  * Inv integrator:    (1+iH(t')dt)*G(T+dt)+G(T+dt)(1-iH(t')dt) = (1-iH(t')dt)*G(T)+G(T)(1+iH(t')dt)   [This is an implicit solver ]
  !
  !  In addition the IP oscillations and dephasing are "analytically integrated out"
  !
@@ -78,16 +78,16 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
 #endif
- !  
- delta_T1=T_step*a_tableau(i_step)
- delta_T2=T_step*c_tableau(i_step)
- delta_T3=T_step*RWA_table(i_step)
  !
  dG_tmp(:,:,:,1)=dG_old
  !
  do i_step=1,Integrator_nsteps
    !
    if (a_tableau(i_step)==0._SP) cycle 
+   !  
+   delta_T1=T_step*a_tableau(i_step)
+   delta_T2=T_step*c_tableau(i_step)
+   delta_T3=T_step*RWA_table(i_step)
    !
    ! Evaluate @ T+dt1
    !
@@ -116,7 +116,17 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),T_step,T_step*RWA_table(i_step))
  !
- dG_new=cZERO
+ ! Now I remove dG_old from dG_tmp and rescale to a_tableau
+ !
+ do i_step=1,Integrator_nsteps
+   if (a_tableau(i_step)==0._SP) cycle 
+   dG_tmp(:,:,:,i_step)=(dG_tmp(:,:,:,i_step)-dG_old)/a_tableau(i_step)
+ enddo
+ dG_tmp(:,:,:,i_step)=dG_tmp(:,:,:,i_step)-dG_old
+ !
+ ! Finally I average using b_tableau
+ !
+ dG_new=dG_old
  do i_step=1,Integrator_nsteps
    dG_new=dG_new+dG_tmp(:,:,:,i_step+1)*b_tableau(i_step)
  enddo

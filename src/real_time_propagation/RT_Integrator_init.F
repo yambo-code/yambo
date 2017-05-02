@@ -27,10 +27,10 @@ subroutine RT_Integrator_init()
  use com,            ONLY:warning
  use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_RT_simple,l_RT_EULER,l_RT_RK2,l_RT_RWA,  &
-&                         l_RT_EXP,l_RT_INV,l_RT_HEUN,l_RT_RK4,      &
-&                         Integrator_exp_order,Integrator_name,      &
-&                         a_tableau,b_tableau,c_tableau,RWA_table,   &
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_RWA,   &
+&                         l_RT_simple,l_RT_HEUN,l_RT_RK2,l_RT_RK4, &
+&                         Integrator_exp_order,Integrator_name,    &
+&                         a_tableau,b_tableau,c_tableau,RWA_table, &
 &                         I1_matrix,Integrator_nsteps,RT_bands
  !
  implicit none

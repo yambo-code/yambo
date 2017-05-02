@@ -40,7 +40,7 @@ integer function io_RT_components(what,ID)
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
  use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -269,8 +269,8 @@ integer function io_RT_components(what,ID)
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
-     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
+     call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
    !
  endif

@@ -33,7 +33,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -57,7 +57,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Current, Polarization and Magnetization
  !==========================================
  ! (evaluated also in RT_integrator when and induced field is included)
- call RT_current_AND_polarization(k,en,dG_lesser,A_vecpot)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
  if (.not. RT_do_it('OUT') ) then
 #if defined _TIMING

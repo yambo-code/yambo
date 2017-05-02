@@ -107,7 +107,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_vecpot,A_ind,A_ind_previous,A_ext
+&                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
@@ -534,10 +534,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    call Efield_reset(Efield(i1))
  enddo
  !
- call A_vecpot_reset(A_vecpot)
+ call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  call A_vecpot_reset(A_ind)
- call A_vecpot_reset(A_ind_previous)
  !
  ! RT dynamics 
  !

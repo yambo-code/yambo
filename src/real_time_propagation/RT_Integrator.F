@@ -21,29 +21,40 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
+subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  !  This subroutine perform integration using different methods: EULER / EXP / NEW ??
  !        G(t),H[G(t')],dt  --> G(t+dt)
- !  * Euler's method:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)]
- !  * Exp integrator:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)] - dt^2 *[H(t'),[H(t'),G(t)]] + ....         [Can be expanded up to order]
- !  * Inv integrator:    (1+iH(t')dt)*G(T+dt)+G(T+dt)(1-iH(t')dt) = (1-iH(t')dt)*G(T)+G(T)(1+iH(t')dt)   [This is an implicit solver ]
+ !  * Explicit methods available
+ !    1 - Euler's method:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)]
+ !    2 - Exp integrator:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)] - dt^2 *[H(t'),[H(t'),G(t)]] + ....         [Can be expanded up to order 6]
+ !  * Implicit methods available
+ !    3 - Inv integrator:    (1+iH(t')dt)*G(t+dt)+G(t+dt)(1-iH(t')dt) = (1-iH(t')dt)*G(T)+G(T)(1+iH(t')dt)
+ !                                                                    = 2G(t) -i*dt *[H(t'),G(t)]
  !
- !  In addition the IP oscillations and dephasing are "analytically integrated out"
- !
- !  Each method can be used in different "multi step" approaches
+ !  Each method can be used with the following "multi step" approaches
  !
  !  * Single step approach:
- !    - "SIMPLE":  G(t),H[G(t)],dt  --> G(t+dt)
+ !    1 - "SIMPLE":  G(t),H[G(t)],dt  --> G(t+dt)
  !  * Two steps approaches:
- !    - "RK2" : Runge-Kutta 2nd order:
- !               G(t),H[G(t)],dt/2     --> G(t+dt/2)
- !               G(t),H[G(t+dt/2)),dt  --> G(t+dt)
- !    - "HEUN":
- !               G(t), H[G(t)],dt    --> G1(t+dt)
- !               G(t), H[G(t+dt)],dt --> G2(t+dt)
- !                     G(t+dt)=(G1+G2)/2
- !              
+ !    2 - "RK2" : (Runge-Kutta 2nd order)
+ !                G(t),H[G(t)],dt/2      --> G1(t+dt/2)
+ !                G(t),H[G1(t+dt/2)),dt  --> G2(t+dt)
+ !                      G(t+dt)=G2
+ !    3 - "HEUN":
+ !                G(t), H[G(t)],dt     --> G1(t+dt)
+ !                G(t), H[G1(t+dt)],dt --> G2(t+dt)
+ !                      G(t+dt)=G1(t+dt)/2+G2(t+dt)/2
+ !
+ !  * Four steps approaches:
+ !    4 - "RK4" : (Runge-Kutta 4th order)
+ !                G(t),H[G(t)],dt/2        --> G1(t+dt/2)
+ !                G(t),H[G1(t+dt/2)],dt/2  --> G2(t+dt/2)
+ !                G(t),H[G2(t+dt/2)),dt    --> G3(t+dt)
+ !                G(t),H[G3(t+dt)),dtcccc  --> G4(t+dt)
+ !                      G(t+dt)=G1(t+dt)/6+G2(t+dt)/3+G3(t+dt)/3+G2(t+dt)/6
+ !
+ !  In addition the IP oscillations and dephasing are "analytically integrated out"
  !
  ! Notice that dG_in is never overwritten 
  ! --------------------------------------
@@ -67,7 +78,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  real(SP),             intent(in) :: T_step,Time
  complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- type(gauge_field), intent(inout) :: A_vecpot
+ type(gauge_field),    intent(in) :: A_old
+ type(gauge_field),   intent(out) :: A_new
  !
  ! Work Space
  !
@@ -75,11 +87,14 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  real(SP)    :: df_H,delta_T1,delta_T2,delta_T3
  complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,Integrator_nsteps+1)
  !
+ type(gauge_field) :: A_tmp(Integrator_nsteps+1)
+ !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
 #endif
  !
  dG_tmp(:,:,:,1)=dG_old
+ A_tmp(1)       =A_old
  !
  do i_step=1,Integrator_nsteps
    !
@@ -97,14 +112,14 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
    !
    ! Fields @ T+dt2
    !
-   call FIELD_evolve(dG_tmp(:,:,:,i_step),Time,delta_T2)
+   call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
    !
    ! Recalculate H and S using G(t+dt1) 
    !
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_vecpot,E,k,q,Time+delta_T1)  ! The two time specifications here are useless
+   call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k,q,Time+delta_T1)  ! The two time specifications here are useless
    call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! since nothing explicitely depends on time
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
@@ -116,20 +131,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),T_step,T_step*RWA_table(i_step))
  !
- ! Now I remove dG_old from dG_tmp and rescale to a_tableau
- !
- do i_step=1,Integrator_nsteps
-   if (a_tableau(i_step)==0._SP) cycle 
-   dG_tmp(:,:,:,i_step)=(dG_tmp(:,:,:,i_step)-dG_old)/a_tableau(i_step)
- enddo
- dG_tmp(:,:,:,i_step)=dG_tmp(:,:,:,i_step)-dG_old
- !
- ! Finally I average using b_tableau
- !
- dG_new=dG_old
- do i_step=1,Integrator_nsteps
-   dG_new=dG_new+dG_tmp(:,:,:,i_step+1)*b_tableau(i_step)
- enddo
+ call RT_build_dG_new()
  !
  ! Occupations @ T+dT
  !
@@ -137,7 +139,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  ! Fields @ T+dT
  !
- call FIELD_evolve(dG_new,Time,T_step)
+ call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_new,Time,T_step)
+ !
+ call RT_build_A_new()
  !
  ! Reset integrator time-point
  !
@@ -148,20 +152,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
 #endif
  !
  contains
-   !
-   subroutine FIELD_evolve(dG,T,dT)
-     complex(SP),    intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
-     real(SP),       intent(in) :: T,dT
-     !
-     if (l_NE_with_fields) then
-       !
-       if (l_RT_induced_field) call RT_current_AND_polarization(k,E,dG,A_vecpot) 
-       !
-       call RT_propagate_fields(E,A_vecpot,T+dT,dT)
-       !
-     endif
-     !
-   end subroutine
    !
    subroutine RT_update_occ(G_inonly)
      !
@@ -193,5 +183,45 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
      enddo
      !
    end subroutine RT_update_occ
+   !
+   subroutine RT_build_dG_new()
+     ! Now I remove dG_old from dG_tmp and rescale to a_tableau
+     !
+     do i_step=1,Integrator_nsteps
+       if (a_tableau(i_step)==0._SP) cycle 
+       dG_tmp(:,:,:,i_step)=(dG_tmp(:,:,:,i_step)-dG_old)/a_tableau(i_step)
+     enddo
+     dG_tmp(:,:,:,i_step)=dG_tmp(:,:,:,i_step)-dG_old
+     !
+     ! Finally I average using b_tableau
+     !
+     dG_new=dG_old
+     do i_step=1,Integrator_nsteps
+       dG_new=dG_new+dG_tmp(:,:,:,i_step+1)*b_tableau(i_step)
+     enddo
+   end subroutine RT_build_dG_new
+   !
+   subroutine RT_build_A_new()
+     !
+     do i_step=1,Integrator_nsteps
+       if (a_tableau(i_step)==0._SP) cycle 
+       A_tmp%vecpot(i_step)    =(A_tmp%vecpot(i_step)    -A_old%vecpot)/a_tableau(i_step)
+       A_tmp%vecpot_vel(i_step)=(A_tmp%vecpot_vel(i_step)-A_old%vecpot_vel)/a_tableau(i_step)
+       A_tmp%vecpot_acc(i_step)=(A_tmp%vecpot_acc(i_step)-A_old%vecpot_acc)/a_tableau(i_step)
+     enddo
+     A_tmp%vecpot(i_step)    =A_tmp%vecpot(i_step)    -A_old%vecpot
+     A_tmp%vecpot_vel(i_step)=A_tmp%vecpot_vel(i_step)-A_old%vecpot_vel
+     A_tmp%vecpot_acc(i_step)=A_tmp%vecpot_acc(i_step)-A_old%vecpot_acc
+     !
+     ! Finally I average using b_tableau
+     !
+     A_new=A_old
+     do i_step=1,Integrator_nsteps
+        A_new%vecpot    =A_new%vecpot    +A_tmp%vecpot(i_step+1)    *b_tableau(i_step)
+        A_new%vecpot_vel=A_new%vecpot_vel+A_tmp%vecpot_vel(i_step+1)*b_tableau(i_step)
+        A_new%vecpot_acc=A_new%vecpot_acc+A_tmp%vecpot_acc(i_step+1)*b_tableau(i_step)
+     enddo
+     !
+   end subroutine RT_build_A_new
    !
 end subroutine RT_Integrator

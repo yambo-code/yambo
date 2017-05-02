@@ -50,7 +50,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:PLASMA_free,EH_gas
  use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot
+ use fields,          ONLY:A_tot
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -264,7 +264,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k,q,NE_time)
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
@@ -291,7 +291,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Integration
    !=============
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,RT_dyn_step,E,k,q,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,RT_dyn_step,E,k,q,NE_time)
    !
    ! G_lesser update
    !=================

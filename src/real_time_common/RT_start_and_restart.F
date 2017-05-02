@@ -53,7 +53,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
- use fields,         ONLY:A_vecpot,A_ext
+ use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
@@ -229,7 +229,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) call RT_propagate_fields(E,A_vecpot,NE_time,RT_step)
+ if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
  !
  call msg('r','')
  !

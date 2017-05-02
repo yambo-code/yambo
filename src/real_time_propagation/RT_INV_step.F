@@ -23,9 +23,13 @@
 !
 subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
+ ! The last term in the following come from the fact that G0=G_reference
+ ! is not included in G(t) nor in G(t+dt)
+ !
  ! G(T+dt)-G(T)=-idt/2[H,G(T+dt)+G(T)]-idt[H,G0]
  !
- ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt[H,G0]
+ ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt*[H,G0]
+ !                                  =G(t)+G(t)-idt*[H,G(t)]-2idt*[H,G0]
  !
  ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag
  ! 
@@ -71,9 +75,7 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  call M_by_M_omp('n','n',RT_nbands,H1_k,dG_old,M1_tmp)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
- G_com=G_com+M1_tmp+M2_tmp
- !
- dG_out=G_com
+ dG_out=G_com+M1_tmp+M2_tmp
  !
  vec_dG_out => linkM2V(dG_out,(/RT_nbands**2,1/))
  !

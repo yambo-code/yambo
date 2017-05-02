@@ -64,10 +64,9 @@ module fields
    real(SP)    :: intensity
  end type gauge_field
  !
- type(gauge_field) :: A_vecpot    ! This is either the total or the externa field
+ type(gauge_field) :: A_tot    ! This is either the total or the externa field
  type(gauge_field) :: A_ext
  type(gauge_field) :: A_ind
- type(gauge_field) :: A_ind_previous
  !
  contains
    !
@@ -283,7 +282,7 @@ module fields
    end subroutine
    !
    subroutine A_vecpot_reset(A)
-     type(gauge_field) A
+     type(gauge_field) :: A
      A%vecpot_acc=0._SP
      A%vecpot_vel=0._SP
      A%vecpot    =0._SP

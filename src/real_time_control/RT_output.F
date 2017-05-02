@@ -28,7 +28,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
- use fields,         ONLY:A_vecpot,A_ind,A_ext
+ use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Total_magn
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
@@ -524,8 +524,8 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('magnetization')
        data_to_dump(2:4) = real(RT_magn(:))
      case('total_field')
-       data_to_dump(2:4) = -real(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
-       data_to_dump(5:7) =-aimag(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('external_field')
        data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

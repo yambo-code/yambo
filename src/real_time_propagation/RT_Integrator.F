@@ -73,39 +73,39 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
  !
  integer     :: i_step
  real(SP)    :: df_H,delta_T1,delta_T2,delta_T3
- complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,5)
+ complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,Integrator_nsteps+1)
  !
 #if defined _TIMING
  call timing('RT integrator',OPR='start')
 #endif
+ !  
+ delta_T1=T_step*a_tableau(i_step)
+ delta_T2=T_step*c_tableau(i_step)
+ delta_T3=T_step*RWA_table(i_step)
  !
  dG_tmp(:,:,:,1)=dG_old
  !
  do i_step=1,Integrator_nsteps
    !
-   if (c_tableau(i_step)==0._SP) cycle 
+   if (a_tableau(i_step)==0._SP) cycle 
    !
-   ! Evaluate @ T+dt*a_tableau(i_step,1)
+   ! Evaluate @ T+dt1
    !
-   delta_T1=T_step*a_tableau(i_step)
-   delta_T2=T_step*c_tableau(i_step)
-   delta_T3=T_step*RWA_table(i_step)
-   !
-   call RT_Glesser_evolve(E,dG_old,dG_old,dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
+   call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
    call RT_update_occ(dG_tmp(:,:,:,i_step))
    !
-   ! Fields @ T+dt*c_tableau(i_step)
+   ! Fields @ T+dt2
    !
    call FIELD_evolve(dG_tmp(:,:,:,i_step),Time,delta_T2)
    !
-   ! Recalculate I1(t+dt*a_tableau(1,2)) and I2(t+dt*a_tableau(1,2)) using  G(t+dt*tableau(1,2)) 
+   ! Recalculate H and S using G(t+dt1) 
    !
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_vecpot,E,k,q,Time+delta_T1)  ! The two time specifications here are useless
-   call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! sine nothing exlpicitly depend on time
+   call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! since nothing explicitely depends on time
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
@@ -174,7 +174,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_vecpot,T_step,E,k,q,Time)
          ! df_H this problem is solved.
          !
          df_H                   =spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-         RT_H_occupations(ib,ik)=-aimag(G_inonly(ib,ib,ik))+ dF_H
+         RT_H_occupations(ib,ik)=-aimag(G_inonly(ib,ib,ik))+ df_H
          !
          RT_delta0_occupations(ib,ik)=aimag(G_inonly(ib,ib,ik))
          !

@@ -33,8 +33,8 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
- use linear_algebra, ONLY:INV,LIN_SYS,MAT_MUL
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+ !use linear_algebra, ONLY:LIN_SYS
+ !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use pointers,       ONLY:linkM2V
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
 &                         integrator_exp_order,G_lesser_reference,I1_matrix
@@ -49,7 +49,7 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Work space
  !
- integer     :: ib1,ib2,ib3,ib4,ibb1,ibb2
+ integer     :: ib1,ib2,ib3,ib4,ibb1,ibb2,i_fail,v_tmp(RT_nbands**2)
  complex(SP) :: AdA_k(RT_nbands**2,RT_nbands**2)
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -90,7 +90,8 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
    enddo
  enddo
  !
- call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
+ !call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
+ call SERIAL_lin_system(RT_nbands**2,1,AdA_k,vec_dG_out)
  !
  dG_out=dG_out-dG_old
  !

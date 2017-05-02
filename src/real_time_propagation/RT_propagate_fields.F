@@ -43,9 +43,8 @@ subroutine RT_propagate_fields(E,A,T,T_step)
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels
  use X_m,            ONLY:global_gauge
- use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
-&                         l_RT_induced_field,integrator_step,&
-&                         RT_dyn_step,l_RT_EULER
+ use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
+&                         l_RT_induced_field,Integrator_step,Integrator_nsteps
  use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
  !
  implicit none
@@ -128,7 +127,7 @@ subroutine RT_propagate_fields(E,A,T,T_step)
  ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
  ! F(t) = \int I(t) dt
  !
- if(integrator_step==3.or.l_RT_EULER) then
+ if(Integrator_step==Integrator_nsteps+1) then
    A%intensity=(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
    A%fluence=A%fluence+A%intensity*RT_dyn_step
    A_ext%intensity=(abs(A_ext%vecpot_vel(1))**2+abs(A_ext%vecpot_vel(2))**2+abs(A_ext%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi

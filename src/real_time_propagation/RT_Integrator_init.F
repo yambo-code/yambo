@@ -57,6 +57,7 @@ subroutine RT_Integrator_init()
    if ( index(Integrator_name,'EXP3')/=0 .or. index(Integrator_name,'exp3')/=0 )  integrator_exp_order=3
    if ( index(Integrator_name,'EXP4')/=0 .or. index(Integrator_name,'exp4')/=0 )  integrator_exp_order=4
    if ( index(Integrator_name,'EXP5')/=0 .or. index(Integrator_name,'exp5')/=0 )  integrator_exp_order=5
+   if ( index(Integrator_name,'EXP6')/=0 .or. index(Integrator_name,'exp6')/=0 )  integrator_exp_order=6
  endif
  !
  ! b) Multi step approach: RK2 / HEUN
@@ -120,7 +121,7 @@ subroutine RT_Integrator_init()
    c_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    a_tableau(2:4) = (/1._SP/2._SP,1._SP/2._SP,1._SP      /)
    b_tableau(1:4) = (/1._SP/6._SP,1._SP/3._SP,1._SP/3._SP,1._SP/6._SP/)
-   !RWA_table(2:3) = (/1._SP/2._SP,1._SP/2._SP/) NOT DEFINED
+   !RWA_table(2:3) = NOT DEFINED
  endif
  !
  ! This is needed by some integrators

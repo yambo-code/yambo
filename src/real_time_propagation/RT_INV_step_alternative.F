@@ -28,8 +28,11 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt[H,G0]
  !
  ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag
- ! 
- ! AdA v[G(t+dt)] = G_com
+ !
+ ! Diagonalize A and express the commutator as  
+ ! (a) M U G(t+dt) U^dag = U G_com U^dag
+ ! with M_{ij}=alpha*_i+alpha_j
+ ! I can solve (a) or rotate it back in the initial space
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
@@ -50,9 +53,9 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Work space
  !
  integer     :: ib1,ib2
- real(SP)    :: En(RT_bands(1):RT_bands(2))
+ real(DP)    :: En(RT_bands(1):RT_bands(2))
  complex(SP) :: det_tmp
- complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(DP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -77,38 +80,30 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Diagonalize U_k
  !
- U_k=Ho_plus_Sigma(:,:,ik,1)
+ U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
  call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
+ !
+ ! Implementation works, and it is much faster than before
+ ! However it is not sensitive
+ !call ZHEEV('V','U',RT_nbands,U_k,RT_nbands,En,v_cmplx,lwork,v_real,i_fail)
+ !
+ ! Rotate G_com in the new basis set
+ !
+ call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M1_tmp)
+ call M_by_M_omp('n','c',RT_nbands,M1_tmp,U_k  ,G_com)
  !
  ! Generate the matrix  
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=RT_bands(1),RT_bands(2)
-     M1_tmp(ib2,ib1)=2._SP+cI*deltaT*(En(ib2)-En(ib1))
+     G_com(ib2,ib1)=G_com(ib2,ib1)/(2._SP+cI*deltaT*real((En(ib2)-En(ib1),SP))
    enddo
  enddo
  !
- ! OPT 1 - Rotate M1_tmp back in the old basis set
+ ! Rotate G_com back the old basis set
  !
- call M_by_M_omp('n','n',RT_nbands,U_k   ,M1_tmp,M2_tmp)
- call M_by_M_omp('n','c',RT_nbands,M2_tmp,U_k   ,M1_tmp)
- !
- ! OPT 2 - Rotate G_com in the new basis set
- !
- !call M_by_M_omp('c','n',RT_nbands,U_k   ,G_com,M1_tmp)
- !call M_by_M_omp('n','n',RT_nbands,M1_tmp,U_k  ,G_com)
- !
- ! Linear system ...
- !call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,G_com)
- !
- ! .. or inversion
- call SERIAL_inversion(RT_nbands,M1_tmp,det_tmp,.false.)
- call M_by_M_omp('n','n',RT_nbands,M1_tmp,G_com,dG_out)
- !
- ! OPT 2 - Rotate G_com back the old basis set
- !
- !call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M1_tmp)
- !call M_by_M_omp('n','c',RT_nbands,M1_tmp,U_k  ,dG_out)
+ call M_by_M_omp('c','n',RT_nbands,U_k   ,G_com,M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,M1_tmp,U_k  ,dG_out)
  !
  dG_out=dG_out-dG_old
  !

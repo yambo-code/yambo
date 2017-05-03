@@ -50,10 +50,12 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  do ik=1,RT_nk
    !
    if (l_RT_EXP)   call RT_EXP_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   !if (l_RT_EXP)   call RT_EXP_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    if (l_RT_EULER) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    if (l_RT_INV)   call RT_INV_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   !if (l_RT_INV)   call RT_INV_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    ! Here the term G(T0) [dG_old] is added to dG(t)
    !

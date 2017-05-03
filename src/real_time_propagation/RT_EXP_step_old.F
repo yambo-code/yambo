@@ -44,63 +44,69 @@ subroutine RT_EXP_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  integer     :: i_order
  complex(SP) :: U1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: U2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: G_comm(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: M3_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  logical :: l_RT_low_pumping=.true.
  !
  ! The code below does an expansion up to arbitrary order (integrator_exp_order)
  ! of the U(t) matrix. Taylor expansion:
  !
- ! U(t) = exp(H*t) -1 = (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + (Ht)^5/5! + O(Ht^6)
+ ! U(t) = exp(H*t) = 1 + (Ht) + (Ht)^2/2! + (Ht)^3/3! + (Ht)^4/4! + (Ht)^5/5! + O(Ht^6)
  !
  ! However in the EOM for rho I need to expand U^dag(t)\rhoU(t) and not U(t) only
  !
  ! U1 = exp ( -i * Ho_plus_Sigma * dt)
  ! U2 = exp ( +i + Ho_plus_Sigma * dt)
  !
- U1_k=-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
- U2_k=+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ U1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ U2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
  !
- if(integrator_exp_order>1) M1_tmp=U2_k
+ if(integrator_exp_order>1) then
+   M1_tmp=U2_k-I1_matrix
+   M2_tmp=U2_k-I1_matrix
+ endif
  !
  do i_order=2,integrator_exp_order
    !
-   call M_by_M_omp('n','n',RT_nbands,U2_k,M1_tmp/real(i_order,SP),M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,M2_tmp/real(i_order,SP),M3_tmp)
    !
-   U1_k=U1_k+(-1._SP)**i_order*M1_tmp
-   U2_k=U2_k+(+1._SP)**i_order*M1_tmp
+   U1_k=U1_k+(-1._SP)**i_order*M3_tmp
+   U2_k=U2_k+(+1._SP)**i_order*M3_tmp
    !
-   if(i_order<integrator_exp_order) M1_tmp=M2_tmp
+   if (i_order<integrator_exp_order) M2_tmp=M3_tmp
    !
  enddo
  !
- !
  if (l_RT_low_pumping) then
    !
-   ! dG(T+dt) - dG(T) =  G(T+dt) - G(T)
-   !                  =  T1(dt)*dG(T)*T1(dt) +              order dG*1
-   !                   +(T1(dt)-1)*G0 + G0*(T2(dt)-1) +     order G0*dt
-   !                   +(T1(dt)-1)*G0*(T2(dt)-1)            order G0*dt**2
-   !                   -dG(T)                               remove dG(T)
+   ! dG(T+dt) + G0 =  U1(dt)*dG(T)*U2(dt) U1(dt)*G0(T)*U2(dt)
+   ! dG(T+dt)      =  U1(dt)*dG(T)*U2(dt) U1(dt)*G0(T)*U2(dt) - G0
+   !               =  U1(dt)*dG(T)*U2(dt)   +     order dG*1
+   !                 +U1(dt)*G0 - G0*U2(dt) +     order G0*dt
+   !                 +(U1(dt)-1)*G0*(U2(dt)+1)            order G0*dt**2
    !
-   call M_by_M_omp('n','n',RT_nbands,U1_k+I1_matrix,dG_old,M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k+I1_matrix,dG_out)
+   ! dG_out = G(T+dt) -G(t) 
    !
-   call M_by_M_omp('n','n',RT_nbands,U1_k,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),U2_k,M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,U1_k,dG_inp,M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,dG_out)
+   !
+   call M_by_M_omp('n','n',RT_nbands,-cI*U1_k,G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),-cI*U2_k,M2_tmp)
    dG_out=dG_out+M1_tmp+M2_tmp
    !
-   call M_by_M_omp('n','n',RT_nbands,U1_k,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,U1_k-cI*I1_matrix,G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k-cI*I1_matrix,M2_tmp)
    dG_out=dG_out+M2_tmp-dG_inp
    !
  else
    !
    ! dG_out = G(T0+dt) -G(T0) = U1(T;dt) G(T0) U2(T;-dt) - G(T0)
    !
-   call M_by_M_omp('n','n',RT_nbands,U1_k+I1_matrix,dG_old+G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k+I1_matrix,dG_out)
-   dG_out=dG_out-dG_old-G_lesser_reference(:,:,ik)
+   call M_by_M_omp('n','n',RT_nbands,U1_k,dG_inp+G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,dG_out)
+   dG_out=dG_out-dG_inp-G_lesser_reference(:,:,ik)
    !
  endif
  !

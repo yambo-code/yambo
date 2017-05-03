@@ -25,8 +25,8 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:SP,cI
  use wrapper_omp,    ONLY:M_by_M_omp
- use linear_algebra, ONLY:INV,LIN_SYS,MAT_MUL
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver 
+ !use linear_algebra, ONLY:INV,LIN_SYS,MAT_MUL
+ !use interfaces,     ONLY:LINEAR_ALGEBRA_driver 
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
 &                         integrator_exp_order,G_lesser_reference,I1_matrix
  !
@@ -38,6 +38,7 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
+ complex(SP) :: det_tmp
  complex(SP) :: T1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: T2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -77,14 +78,18 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    ! X1
    !
    M1_tmp=H2_k
-   call LINEAR_ALGEBRA_driver(INV,M=M1_tmp)
-   call LINEAR_ALGEBRA_driver(MAT_MUL,M=H1_k,B=M1_tmp,C=T1_k)
+   call SERIAL_inversion(RT_nbands,M1_tmp,det_tmp,.false.)
+   call M_by_M_omp('n','n',RT_nbands,H1_k,M1_tmp,T1_k)
+   !call LINEAR_ALGEBRA_driver(INV,M=M1_tmp)
+   !call LINEAR_ALGEBRA_driver(MAT_MUL,M=H1_k,B=M1_tmp,C=T1_k)
    !
    ! X2
    !
    M2_tmp=H1_k
-   call LINEAR_ALGEBRA_driver(INV,M=M2_tmp)
-   call LINEAR_ALGEBRA_driver(MAT_MUL,M=H2_k,B=M2_tmp,C=T2_k)
+   call SERIAL_inversion(RT_nbands,M2_tmp,det_tmp,.false.)
+   call M_by_M_omp('n','n',RT_nbands,H2_k,M2_tmp,T2_k)
+   !call LINEAR_ALGEBRA_driver(INV,M=M2_tmp)
+   !call LINEAR_ALGEBRA_driver(MAT_MUL,M=H2_k,B=M2_tmp,C=T2_k)
    !
  endif
  !

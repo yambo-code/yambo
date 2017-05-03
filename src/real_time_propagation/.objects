@@ -1,4 +1,4 @@
 objs = RT_Integrator_init.o RT_Integrator.o RT_MEMORY_index.o RT_time_step_update.o \
-       RT_INV_step.o RT_INV_step_old.o RT_EXP_step.o RT_EXP_step_old.o RT_EULER_step.o \
+       RT_INV_step.o RT_INV_step_old.o RT_INV_step_alternative.o RT_EXP_step.o RT_EXP_step_old.o RT_EULER_step.o \
        RT_Glesser_evolve.o RT_Scattering_step.o RT_Dephasing_step.o \
        RT_propagate_fields.o RT_apply_RWA.o RT_Ext_fields.o 

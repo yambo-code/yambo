@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! G(T+dt)-G(T)=-idt/2[H,G(T+dt)+G(T)]-idt[H,G0]
  !
@@ -51,6 +51,7 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  integer     :: ib1,ib2
  real(SP)    :: En(RT_bands(1):RT_bands(2))
+ complex(SP) :: det_tmp
  complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -74,10 +75,9 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
  G_com=G_com+M1_tmp+M2_tmp
  !
- U_k=Ho_plus_Sigma(:,:,ik,1)
- !
  ! Diagonalize U_k
  !
+ U_k=Ho_plus_Sigma(:,:,ik,1)
  call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
  !
  ! Generate the matrix  
@@ -98,15 +98,18 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !call M_by_M_omp('c','n',RT_nbands,U_k   ,G_com,M1_tmp)
  !call M_by_M_omp('n','n',RT_nbands,M1_tmp,U_k  ,G_com)
  !
- call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,G_com)
+ ! Linear system ...
+ !call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,G_com)
+ !
+ ! .. or inversion
+ call SERIAL_inversion(RT_nbands,M1_tmp,det_tmp,.false.)
+ call M_by_M_omp('n','n',RT_nbands,M1_tmp,G_com,dG_out)
  !
  ! OPT 2 - Rotate G_com back the old basis set
  !
  !call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M1_tmp)
  !call M_by_M_omp('n','c',RT_nbands,M1_tmp,U_k  ,dG_out)
  !
- endif
- !
  dG_out=dG_out-dG_old
  !
-end subroutine RT_INV_step
+end subroutine RT_INV_step_alternative

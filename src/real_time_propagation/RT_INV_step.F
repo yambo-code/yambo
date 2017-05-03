@@ -32,7 +32,9 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !                                  =G(t)+G(t)-idt*[H,G(t)]-2idt*[H,G0]
  !
  ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag
- ! 
+ !
+ ! AdA = 1xA + A^tx1
+ !
  ! AdA v[G(t+dt)] = G_com
  !
  use pars,           ONLY:SP,cI,cZERO
@@ -54,7 +56,9 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Work space
  !
  integer     :: ib1,ib2,ib3,ib4,ibb1,ibb2,i_fail,v_tmp(RT_nbands**2)
+ real(SP)    :: En(RT_bands(1):RT_bands(2))
  complex(SP) :: AdA_k(RT_nbands**2,RT_nbands**2)
+ complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -77,6 +81,25 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
  dG_out=G_com+M1_tmp+M2_tmp
  !
+ !*******************************************************
+ !U_k=Ho_plus_Sigma(:,:,ik,1)
+ !call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
+ !!
+ !! Generate the matrix  
+ !!
+ !H1_k=cZERO
+ !H2_k=cZERO
+ !do ib1=RT_bands(1),RT_bands(2)
+ !  H1_k(ib1,ib1)=1._SP+cI*deltaT*En(ib1)
+ !  H2_k(ib1,ib1)=1._SP-cI*deltaT*En(ib1)
+ !enddo
+ !!
+ !! Rotate dG_out in the new basis set
+ !!
+ !call M_by_M_omp('c','n',RT_nbands,U_k   ,dG_out,M2_tmp)
+ !call M_by_M_omp('n','n',RT_nbands,M2_tmp,U_k   ,dG_out)
+ !!*******************************************************
+ !
  vec_dG_out => linkM2V(dG_out,(/RT_nbands**2,1/))
  !
  AdA_k=cZERO
@@ -94,7 +117,14 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  !call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
  call SERIAL_lin_system(RT_nbands**2,1,AdA_k,vec_dG_out)
- !
+ !!*******************************************************
+ !!
+ !! Rotate G_com back the old basis set
+ !!
+ !call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M2_tmp)
+ !call M_by_M_omp('n','c',RT_nbands,M2_tmp,U_k  ,dG_out)
+ !!
+ !!*******************************************************
  dG_out=dG_out-dG_old
  !
 end subroutine RT_INV_step

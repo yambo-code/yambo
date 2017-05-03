@@ -39,9 +39,8 @@ module pars
  !...MEMORY
  !
  integer, parameter :: N_MEM_max                     = 1000
- integer, parameter :: N_MEM_max_element_components  = 100
+ integer, parameter :: N_MEM_max_element_components  = 1000
  integer, parameter :: N_MEM_SAVE_max      = 1000
- integer, parameter :: MEM_jump_treshold   = 200*1000  ! Mb*1000=Kb
  !
  !...MEMORY library
  integer, parameter :: N_MEM_LIBs_max   = 500

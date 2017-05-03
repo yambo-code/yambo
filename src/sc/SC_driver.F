@@ -534,7 +534,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Hartree and xc Energy 
  !=======================
  !
- call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n,magn_n)
+ call SC_Energy(E_total,E_tot_Hartree,E_tot_xc,E,k,rho_n)
  !
  if (l_SC_cycle) then
    !

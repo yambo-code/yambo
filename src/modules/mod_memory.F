@@ -37,6 +37,7 @@ module memory
  integer             :: TOT_MEM_bytes_SAVE =  0
  integer             :: MEM_treshold             ! Mb*1000=Kb
  integer             :: MEM_SAVE_treshold        ! "
+ integer             :: MEM_jump_treshold        ! "
  !
  integer :: N_MEM_elements           = 0
  type MEM_element

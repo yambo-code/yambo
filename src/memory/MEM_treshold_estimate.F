@@ -28,12 +28,13 @@ subroutine MEM_treshold_estimate( )
  use electrons,    ONLY:n_spin,n_bands
  use R_lattice,    ONLY:ng_vec,nkibz
  use wave_func,    ONLY:wf_ng
- use memory,       ONLY:MEM_treshold,MEM_SAVE_treshold
+ use memory,       ONLY:MEM_treshold,MEM_SAVE_treshold,MEM_jump_treshold
  !
  implicit none
  !
- MEM_treshold=max(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.,Kilobyte)
+ MEM_treshold=max(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/100.,Kilobyte)
  !
- MEM_SAVE_treshold=10*MEM_treshold
+ MEM_SAVE_treshold=10 *MEM_treshold
+ MEM_jump_treshold=100*MEM_treshold
  !
 end subroutine

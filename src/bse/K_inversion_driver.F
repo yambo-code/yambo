@@ -147,7 +147,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel and/or BSS components loading
  !======================================
- call K_components_folded_in_serial_arrays(iq)
+ call K_components_folded_in_serial_arrays(iq,"INV")
  !
  if (BLACS_structure_in_use) then
    !

@@ -206,7 +206,7 @@ module LIVE_t
      character(schlen):: lfmt_,rfmt_,sfmt_
      logical          :: add_cput,add_CPU_id
      !
-     if (.not.write_to_log) return
+     if (.not.write_to_log.and.index(message,"[ERROR]")==0) return
      !
      if (.not.log_as_a_file) lfmt_="r"
      if (log_as_a_file) lfmt_="n"

@@ -73,18 +73,13 @@ subroutine MEM_element_finder( shelf, name, Sz, i_FOUND, i_FOUND_element, i_FOUN
    if ( trim(MEMs(i_m)%shelf)==shelf ) then
      i_FOUND=i_m
      do i_l=1,MEMs(i_m)%N
+       el_pattern=trim(MEMs(i_m)%name(i_l))
        if (index(name,"%")>0) then
-         el_pattern=trim(MEMs(i_m)%name(i_l))
          el_pattern=el_pattern(index(el_pattern,"%")+1:len(el_pattern))
        endif
        if (trim(el_pattern)==trim(name_pattern).and.MEMs(i_m)%size(i_l)==Sz) i_FOUND_element=i_l
      enddo
-     if (i_FOUND_element==0) then
-       do i_l=1,MEMs(i_m)%N
-         if (MEMs(i_m)%size(i_l)==Sz) i_FOUND_element=i_l
-       enddo
-     endif
-     exit LOOP_1
+     if (i_FOUND_element>0) exit LOOP_1
    endif
  enddo LOOP_1
  i_FOUND_SAVE=0

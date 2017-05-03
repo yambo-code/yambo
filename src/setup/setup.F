@@ -111,15 +111,18 @@ subroutine setup(en,Xen,Ken,k,Xk)
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
- call c2a(b,b(1,:),rv,'kc2i')
+ rv=b(1,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(2,:),rv,'kc2i')
+ rv=b(2,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(3,:),rv,'kc2i')
+ rv=b(3,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
  call msg('rn',dumb_ch1)
@@ -161,13 +164,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
        do is=1,nsym
-         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
        enddo
      endif
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
-       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
      enddo
  end select
  !
@@ -175,7 +178,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  idt_index=-1
  do is=1,nsym
-   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1.,0.,0.,0.,1.,0.,0.,0.,1./)) ) idt_index=is
+   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1,0,0,0,1,0,0,0,1/)) ) idt_index=is
  enddo
  !
  !

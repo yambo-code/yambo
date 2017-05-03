@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_components_folded_in_serial_arrays(iq)
+subroutine K_components_folded_in_serial_arrays(iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
@@ -35,7 +35,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,&
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim,BS_blks_free
  use SLK_m,          ONLY:BLACS_structure_in_use 
@@ -57,6 +57,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #include <memory.h>
  !
  integer      :: iq
+ character(*) :: what
  !
  ! Work Space
  !
@@ -270,9 +271,10 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !
  call PP_redux_wait(BS_mat)
  !
- ! CLEAN
- !=======
- ! After the folding the %mat's are not needed anymore
+ ! After the folding the %mat's are (in some cases) not needed anymore 
+ !
+ if (run_Haydock) return
+ if (run_inversion.and.what=="DIAGO") return
  !
  call BS_blks_free( )
  !

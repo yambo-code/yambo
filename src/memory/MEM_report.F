@@ -35,7 +35,7 @@ subroutine MEM_report( REPORT )
  !
  character(lchlen) :: msg_,prefix
  character(1)      :: where
- integer :: i_mem,i_el,ORPHAN_TOT
+ integer :: i_mem,i_el,ORPHAN_TOT,i_title
  !
  if (REPORT=="check") then
    where="s"
@@ -47,51 +47,51 @@ subroutine MEM_report( REPORT )
  endif
  !
  ORPHAN_TOT=0
- msg_=" "
+ i_title   =0
+ msg_=" " 
  if (N_MEM_elements>0) then
-   !
-   if (REPORT/="check") call msg("nrn","Unallocated components")
    !
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem))
+     call plot_the_element(MEMs(i_mem),"Unallocated components")
      !
    enddo
    !
  endif
  !
  if (ORPHAN_TOT>0) then
-   if (REPORT=="check") then
-     WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
-   else
-     WRITE(msg_,'(a8,a50," : ",a,3x)') trim(prefix),"TOTAL",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
-   endif
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !
  if (REPORT=="check") return
  !
- call msg("nrn","MAX allocations")
  if (N_MEM_SAVE_elements>0) then
    do i_mem=1,N_MEM_SAVE_elements
-     call plot_the_element(LARGE_MEMs(i_mem))
+     call plot_the_element(LARGE_MEMs(i_mem),"MAX allocations")
    enddo
  endif
  !
- call msg("nr",trim(prefix)//"Max memory used : "//trim(intc(int(MAX_MEM_bytes/Kilobyte)))//" Kb" )
+ WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_bytes))
+ call msg("nr",msg_(1:len_trim(msg_)))
  !
  contains
    !
-   subroutine plot_the_element(M)
+   subroutine plot_the_element(M,what)
      type(MEM_element) :: M
-     integer       :: MEM,MEM_now_kb
+     character(*)      :: what
+     integer           :: MEM,MEM_now_kb,i_title
      MEM=M%use*int(Kilobyte)
+     i_title=0
      do i_el=1,M%N
        MEM=M%size(i_el)*M%kind(i_el)
        !
        MEM_now_kb=nint(real(MEM)/Kilobyte)
        if (MEM_now_kb<MEM_treshold) return
+       !
+       if (REPORT/="check".and.i_title==0) call msg("nrn",what)
+       i_title=1
        !
        if (REPORT=="check") then
          WRITE(msg_,'(a,1x,a," : ",a)') trim(PREFIX),trim(mem_string(MEM))

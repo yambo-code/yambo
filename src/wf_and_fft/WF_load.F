@@ -41,7 +41,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,&
-&                        DUMP,IO_and_Messaging_switch
+&                        DUMP,IO_and_Messaging_switch,RD_CL
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -308,9 +308,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
-       call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       if (kpts_to_load(1)==kpts_to_load(2).or.(ikibz==nkibz.and.ib_grp==wf_nb_io_groups)) then
+         call io_control(ACTION=RD_CL,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       else
+         call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       endif
        !
        io_err=io_WF(ID,wf_disk)
+       !
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
        if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
        !

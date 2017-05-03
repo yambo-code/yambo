@@ -50,4 +50,9 @@ subroutine MEM_defaults( )
  call MEM_library("add","W%p","FREQS")
  call MEM_library("add","Xw%p","FREQS")
  !
+ call MEM_library("add","WF%c","WFs")
+ call MEM_library("add","WF%index","WFs")
+ call MEM_library("add","WF_out%c","WFs")
+ call MEM_library("add","WF_out%index","WFs")
+ !
 end subroutine

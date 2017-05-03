@@ -21,25 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_library(action,member,shelf)
+subroutine MEM_library(member,shelf)
  !
  use memory,  ONLY:N_MEM_shelf,MEM_shelf,N_MEM_LIBs,MEM_LIBs
  !
  implicit none
  !
- character(*)         :: action
- character(*),optional:: member
- character(*),optional:: shelf
+ character(*) :: member
+ character(*) :: shelf
  ! 
  ! Work Space
  !
- integer           :: i_SHELF,i_LIB
- integer, external :: MEM_shelf_finder,MEM_LIB_finder
+ integer           :: i_SHELF,i_LIB,i_s
+ integer, external :: MEM_LIB_finder
  !
- i_SHELF=MEM_shelf_finder(shelf)
+ i_SHELF=0
+ do i_s=1,N_MEM_shelf
+   if ( trim(MEM_shelf(i_s))==shelf ) then
+     i_SHELF=i_s
+     exit 
+   endif
+ enddo 
  i_LIB  =MEM_LIB_finder(member)
  !
- if (action=="add".and.i_LIB==0) then
+ if (i_LIB==0) then
    !
    N_MEM_LIBs=N_MEM_LIBs+1
    !
@@ -52,9 +57,6 @@ subroutine MEM_library(action,member,shelf)
    MEM_LIBs(N_MEM_LIBs)%name =member
    MEM_LIBs(N_MEM_LIBs)%shelf=i_SHELF
    !
- endif
- !
- if (action=="remove".and.i_LIB>0) then
  endif
  !
 end subroutine

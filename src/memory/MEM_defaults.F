@@ -23,36 +23,11 @@
 !
 subroutine MEM_defaults( )
  !
- use memory, ONLY:MEM_library
- !
  implicit none
  !
- call MEM_library("add","g_vec","RL")
- call MEM_library("add","minus_G","RL")
- call MEM_library("add","g_rot","RL")
- call MEM_library("add","bare_qpg","RL")
- !
- call MEM_library("add","k%star","KPTS")
- call MEM_library("add","k%sstar","KPTS")
- !
- call MEM_library("add","%f","El.Energies")
- call MEM_library("add","%E","El.Energies")
- call MEM_library("add","%QP_corrected","El.Energies")
- !
- call MEM_library("add","%n_of_elements","PAR.indexes")
- call MEM_library("add","%element_1D","PAR.indexes")
- call MEM_library("add","%element_2D","PAR.indexes")
- call MEM_library("add","%weight_1D","PAR.indexes")
- call MEM_library("add","%first_of_1D","PAR.indexes")
- !
- call MEM_library("add","%Time","TIME_components")
- !
- call MEM_library("add","W%p","FREQS")
- call MEM_library("add","Xw%p","FREQS")
- !
- call MEM_library("add","WF%c","WFs")
- call MEM_library("add","WF%index","WFs")
- call MEM_library("add","WF_out%c","WFs")
- call MEM_library("add","WF_out%index","WFs")
+ call MEM_library("g_vec","RL")
+ call MEM_library("minus_G","RL")
+ call MEM_library("g_rot","RL")
+ call MEM_library("bare_qpg","RL")
  !
 end subroutine

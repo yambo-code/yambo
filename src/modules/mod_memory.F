@@ -90,12 +90,6 @@ module memory
      character(*),optional:: REPORT
    end subroutine 
    !
-   subroutine MEM_library(action,member,shelf)
-     character(*)         :: action
-     character(*),optional:: member
-     character(*),optional:: shelf
-   end subroutine 
-   !
  end interface
  !
  contains

@@ -25,7 +25,7 @@ subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
  use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
-&                       LARGE_MEMs,MEM_treshold
+&                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold
  use units,        ONLY:Kilobyte
  use stderr,       ONLY:intc
  use com,          ONLY:msg
@@ -43,18 +43,20 @@ subroutine MEM_report( REPORT )
  else
    prefix=" "
    where="r"
-   call msg("nrn","Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
+   call msg("r", "Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
+   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold*int(Kilobyte)))//" (basic treshold) "//&
+&                                        trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0
- i_title   =0
  msg_=" " 
  if (N_MEM_elements>0) then
    !
+   i_title=0
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem),"Unallocated components")
+     call plot_the_element(MEMs(i_mem),"Unallocated components:")
      !
    enddo
    !
@@ -68,8 +70,9 @@ subroutine MEM_report( REPORT )
  if (REPORT=="check") return
  !
  if (N_MEM_SAVE_elements>0) then
+   i_title=0
    do i_mem=1,N_MEM_SAVE_elements
-     call plot_the_element(LARGE_MEMs(i_mem),"MAX allocations")
+     call plot_the_element(LARGE_MEMs(i_mem),"MAX allocations:")
    enddo
  endif
  !
@@ -81,9 +84,8 @@ subroutine MEM_report( REPORT )
    subroutine plot_the_element(M,what)
      type(MEM_element) :: M
      character(*)      :: what
-     integer           :: MEM,MEM_now_kb,i_title
+     integer           :: MEM,MEM_now_kb
      MEM=M%use*int(Kilobyte)
-     i_title=0
      do i_el=1,M%N
        MEM=M%size(i_el)*M%kind(i_el)
        !
@@ -105,9 +107,9 @@ subroutine MEM_report( REPORT )
          endif
        else
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
-           WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
+           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
          else
-           WRITE(msg_,'(a8,a50)') trim(prefix),trim(M%name(i_el))
+           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))
          endif
          WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
          if (len_trim(M%section(i_el))>0) then

@@ -29,7 +29,7 @@ integer function MEM_LIB_finder( name )
  character(*) :: name
  MEM_LIB_finder=0
  do i_l=1,N_MEM_LIBs
-   if ( index(name,trim(MEM_LIBs(i_l)%name)) > 0 ) then
+   if ( name==trim(MEM_LIBs(i_l)%name)) then
      MEM_lib_finder=i_l
      exit 
    endif
@@ -39,58 +39,62 @@ end function
 !
 integer function MEM_shelf_finder( shelf )
  !
- use memory, ONLY:N_MEM_shelf,MEM_shelf
+ use memory, ONLY:N_MEM_max,MEMs
  implicit none
- integer      :: i_s
+ integer      :: i_m
  character(*) :: shelf
  MEM_shelf_finder=0
- do i_s=1,N_MEM_shelf
-   if ( trim(MEM_shelf(i_s))==shelf ) then
-     MEM_shelf_finder=i_s
+ do i_m=1,N_MEM_max
+   if ( trim(MEMs(i_m)%shelf)==shelf ) then
+     MEM_shelf_finder=i_m
      exit 
    endif
  enddo 
  !
 end function
 !
-subroutine MEM_element_finder( shelf, name, Sz, i_FOUND, i_FOUND_element, i_FOUND_SAVE )
+integer function MEM_save_finder( shelf )
+ !
+ use memory, ONLY:N_MEM_SAVE_elements,LARGE_MEMs
+ implicit none
+ integer      :: i_m
+ character(*) :: shelf
+ MEM_save_finder=0
+ do i_m=1,N_MEM_SAVE_elements
+   if ( trim(LARGE_MEMs(i_m)%shelf)==shelf ) then
+     MEM_save_finder=i_m
+     exit 
+   endif
+ enddo 
+ !
+end function
+!
+integer function MEM_component_finder( i_SHELF, name, Sz )
  !
  use pars,   ONLY:schlen
- use memory, ONLY:N_MEM_elements,MEMs,N_MEM_SAVE_elements,LARGE_MEMs
+ use memory, ONLY:MEMs
  implicit none
- integer      :: i_m,i_l,i_FOUND,i_FOUND_SAVE,i_FOUND_element,Sz
- character(*) :: shelf,name
+ integer      :: i_SHELF,Sz
+ character(*) :: name
+ !ws
+ integer      :: i_l
  character(schlen) :: name_pattern,el_pattern
- i_FOUND=0
- i_FOUND_ELEMENT=0
+ !
+ MEM_component_finder=0
  !
  name_pattern=name
  if (index(name,"%")>0) then
    name_pattern=name(index(name,"%")+1:len(name))
  endif
- !
- LOOP_1: do i_m=1,N_MEM_elements
-   if ( trim(MEMs(i_m)%shelf)==shelf ) then
-     i_FOUND=i_m
-     do i_l=1,MEMs(i_m)%N
-       el_pattern=trim(MEMs(i_m)%name(i_l))
-       if (index(name,"%")>0) then
-         el_pattern=el_pattern(index(el_pattern,"%")+1:len(el_pattern))
-       endif
-       if (trim(el_pattern)==trim(name_pattern).and.MEMs(i_m)%size(i_l)==Sz) i_FOUND_element=i_l
-     enddo
-     if (i_FOUND_element>0) exit LOOP_1
+ do i_l=1,MEMs(i_SHELF)%N
+   el_pattern=trim(MEMs(i_SHELF)%name(i_l))
+   if (index(name,"%")>0) then
+     el_pattern=el_pattern(index(el_pattern,"%")+1:len(el_pattern))
    endif
- enddo LOOP_1
- i_FOUND_SAVE=0
- LOOP_2: do i_m=1,N_MEM_SAVE_elements
-   if ( trim(LARGE_MEMs(i_m)%shelf)==shelf ) then
-     i_FOUND_SAVE=i_m
-     exit LOOP_2
-   endif
- enddo LOOP_2
+   if (trim(el_pattern)==trim(name_pattern).and.MEMs(i_SHELF)%size(i_l)==Sz) MEM_component_finder=i_l
+ enddo
  !
-end subroutine
+end function
 !
 subroutine MEM_STAT_update
  use memory, ONLY:TOT_MEM_kilobytes_MEMSTAT

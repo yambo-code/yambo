@@ -44,10 +44,10 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  ! Work Space
  !
  logical :: adding,deliver_a_msg
- integer :: i_mem,i_el,MEM_now_kb,MEM_now_b,i_FOUND,i_FOUND_SAVE,i_FOUND_COMPONENT,i_LIB
+ integer :: i_mem,i_el,MEM_now_kb,MEM_now_b,i_SAVE,i_COMPONENT,i_LIB,i_SHELF
  character(lchlen) :: msg_
- character(schlen) :: SHELF
- integer, external :: MEM_LIB_finder
+ character(schlen) :: SHELF,TRUNK
+ integer, external :: MEM_LIB_finder,MEM_shelf_finder,MEM_save_finder,MEM_component_finder
  !
  ! Error Message
  !===============
@@ -72,32 +72,34 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Search the element
  !====================
- i_LIB=MEM_LIB_finder(what)
+ !
+ !...in the library (here I associate to what a SHELF)
+ TRUNK=what
+ if (index(what,"%")>0) then
+   TRUNK=what(index(what,"%"):len(what))
+ endif
+ i_LIB=MEM_LIB_finder(trim(TRUNK))
  if (i_LIB>0) then
    SHELF=MEM_shelf(MEM_LIBs(i_LIB)%shelf)
+ else if (index(what,"%")>0) then
+   SHELF="["//trim(TRUNK)//"]"
  else
    SHELF=what
  endif
- call MEM_element_finder(trim(SHELF),what,Sz,i_FOUND,i_FOUND_COMPONENT,i_FOUND_SAVE)
-! if (index(what,"%c")>0) then
-!  write (*,*) 
-!  write (*,*) what,trim(SHELF),i_FOUND,i_FOUND_component,adding,Sz
-!  if (i_FOUND>0) then
-!    write (*,*) MEMs(i_FOUND)%N
-!    do i_el=1,MEMs(i_FOUND)%N
-!      write (*,*) i_el,trim(MEMs(i_FOUND)%name(i_el)),MEMs(i_FOUND)%size(i_el)
-!    enddo
-!  endif
-!  write (*,*) 
-! endif
+ !...here i search the SHELF in the already allocated objects (to add/remove an element)
+ i_SHELF=MEM_shelf_finder(trim(SHELF))
+ if (i_SHELF>0) then
+   SHELF=MEMs(i_SHELF)%shelf
+ endif
+ i_SAVE =MEM_save_finder(trim(SHELF))
  !
  ! Error Message of an already allocated array
  !=============================================
  !
  if (MEM_err/=0) then
-   if (i_FOUND>0.and.I_FOUND_COMPONENT>0) then
+   if (i_SHELF>0.and.i_COMPONENT>0) then
      call warning("Allocation of "//what//" failed. Object was already allocated in "//&
-&                 trim(MEMs(i_FOUND)%section(I_FOUND_COMPONENT)))
+&                 trim(MEMs(i_SHELF)%section(i_COMPONENT)))
    else
      call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
    endif
@@ -106,6 +108,9 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Database Update
  !=================
+ !
+ ! ALLOCATION => ADDITION
+ !.......................
  if (adding) then
    !
    MEM_now_b=Sz*Kn
@@ -117,7 +122,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    !
    if (TOT_MEM_bytes>MAX_MEM_bytes) MAX_MEM_bytes=TOT_MEM_bytes
    !
-   if (i_FOUND==0) then
+   if (i_SHELF==0) then
      if (N_MEM_elements<N_MEM_SAVE_max) then
        N_MEM_elements=N_MEM_elements+1
      else
@@ -125,74 +130,89 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
      endif
      MEMs(N_MEM_elements)%shelf=SHELF
      MEMs(N_MEM_elements)%use =MEM_now_kb
-     i_FOUND=N_MEM_elements
+     i_SHELF=N_MEM_elements
    else
-     MEMs(i_FOUND)%use = MEMs(i_FOUND)%use+MEM_now_kb
+     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_kb
    endif
    !
-   MEMs(i_FOUND)%N=MEMs(i_FOUND)%N+1
-   I_FOUND_COMPONENT=MEMs(i_FOUND)%N
-   if (I_FOUND_COMPONENT>N_MEM_max_element_components) then
+   MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
+   i_COMPONENT=MEMs(i_SHELF)%N
+   if (i_COMPONENT>N_MEM_max_element_components) then
      call error("Max Number of MEM elements reached.")
    endif
    !
-   MEMs(i_FOUND)%section(I_FOUND_COMPONENT)=secnm
-   MEMs(i_FOUND)%name(I_FOUND_COMPONENT)=what
-   MEMs(i_FOUND)%kind(I_FOUND_COMPONENT)=Kn
-   MEMs(i_FOUND)%size(I_FOUND_COMPONENT)=MEMs(i_FOUND)%size(I_FOUND_COMPONENT)+Sz
+   MEMs(i_SHELF)%section(i_COMPONENT)=secnm
+   MEMs(i_SHELF)%name(i_COMPONENT)=what
+   MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
+   MEMs(i_SHELF)%size(i_COMPONENT)=MEMs(i_SHELF)%size(i_COMPONENT)+Sz
    !
-   if (MEMs(i_FOUND)%use>MEM_SAVE_treshold) then
-     if (i_FOUND_SAVE==0) then
+   if (MEMs(i_SHELF)%use>MEM_SAVE_treshold) then
+     if (i_SAVE==0) then
        if (N_MEM_SAVE_elements<N_MEM_SAVE_max) then
          N_MEM_SAVE_elements=N_MEM_SAVE_elements+1
        else
          call error("Max Number of LARGE MEM elements reached.")
        endif
-       call MEM_element_copy(MEMs(i_FOUND),LARGE_MEMs(N_MEM_SAVE_elements))
+       call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(N_MEM_SAVE_elements))
      else
-       call MEM_element_copy(MEMs(i_FOUND),LARGE_MEMs(i_FOUND_SAVE))
+       call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(i_SAVE))
      endif
    endif
    !
- else if (i_FOUND/=0.and.i_FOUND_component/=0) then
+   !call LOCAL_report( )
    !
-   MEM_now_b=MEMs(i_FOUND)%size(i_FOUND_component)*MEMs(i_FOUND)%kind(i_FOUND_component)
-   TOT_MEM_bytes=TOT_MEM_bytes-MEM_now_b
-   MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
+ endif
+ !
+ ! DEALLOCATION => REMOVAL
+ !.........................
+ !
+ if (.not.adding) then
    !
-   if (MEM_now_kb==0) MEM_now_kb=1
+   i_COMPONENT=0
+   if (i_SHELF>0) i_COMPONENT=MEM_component_finder(i_SHELF,what,Sz)
    !
-   MEMs(i_FOUND)%use = MEMs(i_FOUND)%use-MEM_now_kb
-   MEMs(i_FOUND)%size(i_FOUND_component) = MEMs(i_FOUND)%size(i_FOUND_component)-MEM_now_kb
+   !call LOCAL_report( )
    !
-   if ( MEMs(i_FOUND)%use <= 0 ) then
+   if (i_SHELF/=0.and.i_COMPONENT/=0) then
      !
-     do i_mem=i_FOUND,N_MEM_elements
-       call MEM_element_copy(MEMs(i_mem+1),MEMs(i_mem))
-     enddo    
+     MEM_now_b=MEMs(i_SHELF)%size(i_COMPONENT)*MEMs(i_SHELF)%kind(i_COMPONENT)
+     TOT_MEM_bytes=TOT_MEM_bytes-MEM_now_b
+     MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
      !
-     N_MEM_elements=N_MEM_elements-1
+     if (MEM_now_kb==0) MEM_now_kb=1
      !
-   else if ( MEMs(i_FOUND)%size(i_FOUND_component)<=0) then
+     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_kb
      !
-     do i_el=i_FOUND_component,MEMs(i_FOUND)%N
-       MEMs(i_FOUND)%name(i_el)=MEMs(i_FOUND)%name(i_el+1)
-       MEMs(i_FOUND)%section(i_el)=MEMs(i_FOUND)%section(i_el+1)
-       MEMs(i_FOUND)%kind(i_el)=MEMs(i_FOUND)%kind(i_el+1)
-       MEMs(i_FOUND)%size(i_el)=MEMs(i_FOUND)%size(i_el+1)
-     enddo    
+     if ( MEMs(i_SHELF)%use <= 0 ) then
+       !
+       do i_mem=i_SHELF,N_MEM_elements
+         call MEM_element_copy(MEMs(i_mem+1),MEMs(i_mem))
+       enddo    
+       !
+       N_MEM_elements=N_MEM_elements-1
+       !
+     else 
+       !
+       do i_el=i_COMPONENT,MEMs(i_SHELF)%N-1
+         MEMs(i_SHELF)%name(i_el)=MEMs(i_SHELF)%name(i_el+1)
+         MEMs(i_SHELF)%section(i_el)=MEMs(i_SHELF)%section(i_el+1)
+         MEMs(i_SHELF)%kind(i_el)=MEMs(i_SHELF)%kind(i_el+1)
+         MEMs(i_SHELF)%size(i_el)=MEMs(i_SHELF)%size(i_el+1)
+       enddo    
+       !
+       MEMs(i_SHELF)%N=MEMs(i_SHELF)%N-1
+       !
+     endif
      !
-     MEMs(i_FOUND)%N=MEMs(i_FOUND)%N-1
+   else if (i_SHELF/=0.and.i_COMPONENT==0) then
+     !
+     call warning(what//" not found in the "//trim(SHELF)//" shelf")
+     !
+   else if (i_SHELF==0.and.i_COMPONENT==0) then
+     !
+     call warning(what//" object and "//trim(SHELF)//" shelf not found")
      !
    endif
-   !
- else if (i_FOUND/=0.and.i_FOUND_component==0) then
-   !
-   call warning(what//" not found in the "//trim(SHELF)//" shelf")
-   !
- else if (i_FOUND==0.and.i_FOUND_component==0) then
-   !
-   call warning(what//" object and "//trim(SHELF)//" shelf not found")
    !
  endif
  !
@@ -225,4 +245,28 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
 #endif
  !
+ contains
+   !
+   subroutine LOCAL_report( )
+     !
+     if (index(what,"%element_1D")==0) return
+     !
+     write (*,*) 
+     if (adding) then
+       write (*,*) "ALLOCATION"
+     else
+       write (*,*) "DEALLOCATION"
+     endif
+     write (*,*) "What=",what," Sz=",Sz
+     write (*,*) "i_SHELF=",i_SHELF," SHELF=",trim(SHELF)
+     if (.not.adding) then
+       write (*,*) "i_COMPONENT=",i_COMPONENT
+     endif
+     if (i_SHELF>0) then
+       do i_el=1,MEMs(i_SHELF)%N
+         write (*,*) i_el,trim(MEMs(i_SHELF)%name(i_el)),MEMs(i_SHELF)%size(i_el)
+       enddo
+     endif
+     write (*,*) 
+   end subroutine
 end subroutine

@@ -29,12 +29,16 @@ module wrapper_omp
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP,cZERO,cONE
+ use pars,   ONLY:DP,SP,cZERO,cONE,cZERO_DP,cONE_DP
  !
  implicit none
  !
  interface M_by_M_omp
-   module procedure mm_cgemm_omp,mm_c_omp 
+#if defined _DOUBLE
+   module procedure mm_cgemm_omp,mm_c_omp
+#else
+   module procedure mm_cgemm_omp,mm_c_omp,mm_c_omp_DP
+#endif
  end interface
  !
  interface M_by_V_omp
@@ -73,6 +77,22 @@ module wrapper_omp
      call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #endif
    end subroutine mm_cgemm_omp
+   !
+#if !defined _DOUBLE
+   subroutine mm_c_omp_DP(TRANSA,TRANSB,msize,A,B,C)
+     integer,  intent(in)  :: msize
+     complex(DP), intent(in)  :: A(msize,msize),B(msize,msize)
+     complex(DP), intent(out) :: C(msize,msize)
+     character,   intent(in)  :: TRANSA,TRANSB
+     !
+     !
+#if defined _OPENMP 
+     call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)
+#else
+     call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)
+#endif
+   end subroutine mm_c_omp_DP
+#endif
    !
    subroutine mm_c_omp(TRANSA,TRANSB,msize,A,B,C)
      integer,  intent(in)  :: msize

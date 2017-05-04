@@ -53,9 +53,9 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  ! Work space
  !
  integer     :: ib1,ib2
- real(DP)    :: En(RT_bands(1):RT_bands(2))
+ real(SP)    :: En(RT_bands(1):RT_bands(2))
  complex(SP) :: det_tmp
- complex(DP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -80,11 +80,12 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Diagonalize U_k
  !
- U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
+ U_k=Ho_plus_Sigma(:,:,ik,1)
  call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
  !
  ! Implementation works, and it is much faster than before
  ! However it is not sensitive
+ !U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
  !call ZHEEV('V','U',RT_nbands,U_k,RT_nbands,En,v_cmplx,lwork,v_real,i_fail)
  !
  ! Rotate G_com in the new basis set
@@ -96,7 +97,7 @@ subroutine RT_INV_step_alternative(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=RT_bands(1),RT_bands(2)
-     G_com(ib2,ib1)=G_com(ib2,ib1)/(2._SP+cI*deltaT*real((En(ib2)-En(ib1),SP))
+     G_com(ib2,ib1)=G_com(ib2,ib1)/(2._SP+cI*deltaT*real((En(ib2)-En(ib1)),SP))
    enddo
  enddo
  !

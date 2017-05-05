@@ -43,9 +43,9 @@ subroutine MEM_report( REPORT )
  else
    prefix=" "
    where="r"
-   call msg("r", "Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
+   call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
    call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold*int(Kilobyte)))//" (basic treshold) "//&
-&                                        trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
+&                                       trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0

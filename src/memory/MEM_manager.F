@@ -158,8 +158,6 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
      endif
    endif
    !
-   !call LOCAL_report( )
-   !
  endif
  !
  ! DEALLOCATION => REMOVAL
@@ -169,8 +167,6 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    !
    i_COMPONENT=0
    if (i_SHELF>0) i_COMPONENT=MEM_component_finder(i_SHELF,what,Sz)
-   !
-   !call LOCAL_report( )
    !
    if (i_SHELF/=0.and.i_COMPONENT/=0) then
      !
@@ -203,6 +199,8 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        !
      endif
      !
+   else
+     return
    endif
    !
  endif
@@ -238,28 +236,4 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
 #endif
  !
- contains
-   !
-   subroutine LOCAL_report( )
-     !
-     if (index(what,"%element_1D")==0) return
-     !
-     write (*,*) 
-     if (adding) then
-       write (*,*) "ALLOCATION"
-     else
-       write (*,*) "DEALLOCATION"
-     endif
-     write (*,*) "What=",what," Sz=",Sz
-     write (*,*) "i_SHELF=",i_SHELF," SHELF=",trim(SHELF)
-     if (.not.adding) then
-       write (*,*) "i_COMPONENT=",i_COMPONENT
-     endif
-     if (i_SHELF>0) then
-       do i_el=1,MEMs(i_SHELF)%N
-         write (*,*) i_el,trim(MEMs(i_SHELF)%name(i_el)),MEMs(i_SHELF)%size(i_el)
-       enddo
-     endif
-     write (*,*) 
-   end subroutine
 end subroutine

@@ -25,7 +25,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  use pars,         ONLY:lchlen,schlen
  use drivers,      ONLY:infile_editing
- use com,          ONLY:msg,warning,secnm,error
+ use com,          ONLY:msg,warning,secnm,error,repfile
  use openmp,       ONLY:master_thread
  use units,        ONLY:Kilobyte,Megabyte
  use memory,       ONLY:TOT_MEM_bytes,TOT_MEM_kilobytes_MEMSTAT,MEM_element_copy,&
@@ -97,9 +97,8 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !=============================================
  !
  if (MEM_err/=0) then
-   if (i_SHELF>0.and.i_COMPONENT>0) then
-     call warning("Allocation of "//what//" failed. Object was already allocated in "//&
-&                 trim(MEMs(i_SHELF)%section(i_COMPONENT)))
+   if (i_SHELF>0) then
+     call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
    else
      call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
    endif
@@ -204,24 +203,18 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        !
      endif
      !
-   else if (i_SHELF/=0.and.i_COMPONENT==0) then
-     !
-     call warning(what//" not found in the "//trim(SHELF)//" shelf")
-     !
-   else if (i_SHELF==0.and.i_COMPONENT==0) then
-     !
-     call warning(what//" object and "//trim(SHELF)//" shelf not found")
-     !
    endif
    !
  endif
  !
  if (MEM_treshold==0) return
+ if (infile_editing ) return
+ if (len_trim(repfile)==0) return
  !
  ! Messages
  !==========
  !#1
- deliver_a_msg=MEM_now_kb>MEM_treshold.and..not.infile_editing
+ deliver_a_msg=MEM_now_kb>MEM_treshold
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY]"

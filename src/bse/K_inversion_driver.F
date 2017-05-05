@@ -43,7 +43,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _SCALAPACK
  use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
  use interfaces,     ONLY:MATRIX_transfer
- use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -107,7 +106,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Symmetrize the K blocks (to be eventually sent to the BLACS)
  !=========================
- if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+ call BS_Blocks_symmetrize_K()
  !
 #endif
  !
@@ -136,12 +135,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  !
 #if defined _SCALAPACK
- ! 
+ !
  ! SLK matrix initialization before the Kernel loading
  !
  call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
  !
- if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
+ if ( SLK_ORTHO%coordinate(1) /= -1 ) BLACS_structure_in_use=.TRUE.
  !
 #endif
  !

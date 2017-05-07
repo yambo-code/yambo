@@ -74,11 +74,19 @@ module memory
  !
  interface MEM_dri
    module procedure MEM_clean,MEM_error,&
+#ifndef _DOUBLE
 &                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
 &                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_cd3,MEM_rd3,MEM_lp3,&
 &                                    MEM_r4,MEM_c4,MEM_l4,MEM_cd4,&
 &                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5
+#else
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_lp1,&
+&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_lp3,&
+&                                    MEM_r4,MEM_c4,MEM_l4,&
+&                             MEM_i5,MEM_r5,MEM_c5
+#endif
  end interface MEM_dri
  !
  interface  
@@ -169,6 +177,7 @@ module memory
      real(SP)    ::r(:,:)
      call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1)))
    end subroutine
+#ifndef _DOUBLE
    subroutine MEM_rd1(name,r)
      character(*)::name
      real(DP)    ::r(:)
@@ -184,6 +193,7 @@ module memory
      real(DP)    ::r(:,:,:)
      call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1)))
    end subroutine
+#endif
    subroutine MEM_r3(name,r)
      character(*)::name
      real(SP)    ::r(:,:,:)
@@ -204,6 +214,27 @@ module memory
      complex(SP) ::c(:)
      call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
    end subroutine
+   subroutine MEM_c2(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_c3(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_c4(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_c5(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+#ifndef _DOUBLE
    subroutine MEM_cd1(name,c)
      character(*)::name
      complex(DP) ::c(:)
@@ -229,26 +260,7 @@ module memory
      complex(DP) ::c(:,:,:,:,:)
      call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
    end subroutine
-   subroutine MEM_c2(name,c)
-     character(*)::name
-     complex(SP) ::c(:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
-   end subroutine
-   subroutine MEM_c3(name,c)
-     character(*)::name
-     complex(SP) ::c(:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
-   end subroutine
-   subroutine MEM_c4(name,c)
-     character(*)::name
-     complex(SP) ::c(:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
-   end subroutine
-   subroutine MEM_c5(name,c)
-     character(*)::name
-     complex(SP) ::c(:,:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
-   end subroutine
+#endif
    subroutine MEM_l1(name,l)
      character(*)::name
      logical     ::l(:)

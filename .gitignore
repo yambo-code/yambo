@@ -38,7 +38,9 @@ lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
+lib/hdf5/hdf5*
 ext_libs
+sys_incs
 #
 compile.sh
 sbin/make_makefile.sh

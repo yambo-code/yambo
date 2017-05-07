@@ -36,7 +36,7 @@ integer function ELPH_databases(k,E,q)
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
  use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
- implicit none
+#include<memory.h>
  type(bz_samp) ::k,q
  type(levels)  ::E
  !
@@ -131,7 +131,7 @@ integer function ELPH_databases(k,E,q)
  !
  ! KBZ + SYM table
  !
- allocate(ikbz_is_table(k%nbz,nsym))
+ YAMBO_ALLOC(ikbz_is_table,(k%nbz,nsym))
  call k_syms_tab(ikbz_is_table)
  !
  ! Check if DB is already done
@@ -193,7 +193,7 @@ integer function ELPH_databases(k,E,q)
  !
  iq_bz=0
  !
- allocate(grad_at_gamma(k%nbz,elph_nb,elph_nb,n_atoms,3))
+ YAMBO_ALLOC(grad_at_gamma,(k%nbz,elph_nb,elph_nb,n_atoms,3))
  !
  do idb=1,nDBs_disk
    !
@@ -254,7 +254,7 @@ integer function ELPH_databases(k,E,q)
  !
  call elph_global_free()
  !
- deallocate(grad_at_gamma)
+ YAMBO_FREE(grad_at_gamma)
  !
  call IO_and_Messaging_switch("-DB_is_fragmented")
  !
@@ -288,7 +288,7 @@ integer function ELPH_databases(k,E,q)
    use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
    use zeros,          ONLY:k_iku_zero,k_rlu_zero
    use electrons,      ONLY:n_bands
-   implicit none
+#include<memory.h>
    integer           :: idb_
    !
    !Work Space
@@ -399,8 +399,8 @@ integer function ELPH_databases(k,E,q)
    !
    ! Phonon Frequencies & Modes
    !
-   allocate(ph_freqs_sq_disk(ph_modes))
-   allocate(pol_vec(ph_modes,n_atoms,3))
+   YAMBO_ALLOC(ph_freqs_sq_disk,(ph_modes))
+   YAMBO_ALLOC(pol_vec,(ph_modes,n_atoms,3))
    !
    ! GS energies are in Rydbergs(PW)/Hartree(Abinit). Here we have the phonon frequencies square
    !
@@ -420,7 +420,7 @@ integer function ELPH_databases(k,E,q)
      !
    enddo
    if (idb_<0) then
-     deallocate(ph_freqs_sq_disk)
+     YAMBO_FREE(ph_freqs_sq_disk)
      goto 1
    endif
    if (use_ext_ph_freqs) then
@@ -465,7 +465,7 @@ integer function ELPH_databases(k,E,q)
    ! 
    ! ELPH_gkkp 
    !
-   allocate(gkkp_disk(elph_nb,elph_nb,ph_modes))
+   YAMBO_ALLOC(gkkp_disk,(elph_nb,elph_nb,ph_modes))
    !
    ! Reading
    !
@@ -600,7 +600,9 @@ integer function ELPH_databases(k,E,q)
    !
    ! CLEAN
    !
-   deallocate(ph_freqs_sq_disk,gkkp_disk,pol_vec)
+   YAMBO_FREE(ph_freqs_sq_disk)
+   YAMBO_FREE(gkkp_disk)
+   YAMBO_FREE(pol_vec)
    !
 1  call io_control(ACTION=RD_CL,ID=ID)
    call io_disconnect(ID,FORCE=.TRUE.)

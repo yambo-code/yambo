@@ -48,7 +48,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::K
@@ -202,7 +202,9 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
- if (.not.associated(E%f))          allocate(E%f(E%nb,E%nk,n_sp_pol))
+  if (.not.allocated(E%f)) then  
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+ endif
  Efdist=1.E5_SP
  !
  do i1=1,n_total_states
@@ -227,7 +229,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
  !
- if (BZ_DbGd_nbands>0.and.associated(E%E_DbGd)) then
+ if (BZ_DbGd_nbands>0.and.allocated(E%E_DbGd)) then
    ! 
    nel_DbGd=0._SP 
    !

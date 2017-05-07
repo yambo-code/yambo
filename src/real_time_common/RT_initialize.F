@@ -287,7 +287,7 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
-   if (.not.associated(E%W)) then
+   if (.not.allocated(E%W)) then
      call warning("NO QP damping provided. E-E and/or E-P switched off")
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.

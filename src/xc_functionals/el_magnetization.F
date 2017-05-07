@@ -65,7 +65,7 @@ subroutine el_magnetization(en,Xk,magn)
    do ik=1,Xk%nibz
      do ib=1,en%nbm
        !
-       if (associated(PAR_IND_WF_linear%element_2D)) then
+       if (allocated(PAR_IND_WF_linear%element_2D)) then
          if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        endif
        !
@@ -79,7 +79,7 @@ subroutine el_magnetization(en,Xk,magn)
        !
        f_occ=en%f(ib,ik,i_sp_pol)
 #if defined _RT
-       if(l_real_time.and.associated(en%fo)) f_occ=en%fo(ib,ik,i_sp_pol)
+       if(l_real_time.and.allocated(en%fo)) f_occ=en%fo(ib,ik,i_sp_pol)
 #endif
        !
        if (n_sp_pol==2) then
@@ -115,7 +115,7 @@ subroutine el_magnetization(en,Xk,magn)
    enddo
  enddo
  !
- if (associated(PAR_IND_WF_linear%element_2D)) then
+ if (allocated(PAR_IND_WF_linear%element_2D)) then
    call PP_redux_wait(cv,COMM=PAR_COM_density%COMM)
  endif
  ! 

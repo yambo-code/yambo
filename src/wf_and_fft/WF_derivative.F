@@ -34,7 +34,6 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use R_lattice,      ONLY:g_vec,nkibz
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
- use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
 #if defined _MAGNETIC
@@ -42,7 +41,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
 #endif
  use com,            ONLY:warning
  !
- implicit none
+#include<memory.h>
  ! Input variables
  integer :: derivative_bands(2)
  integer :: derivative_kpt(2)
@@ -76,10 +75,8 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  call WF_derivative_alloc(do_derivative)
  !
- allocate(wf_der(wf_ng,n_spinor))                              ! G space
- call mem_est("wf_der",(/wf_ng/))
- allocate(wf_DP(fft_size))                            ! real space
- call mem_est("wf_DP",(/fft_size/),(/DP/))
+ YAMBO_ALLOC(wf_der,(wf_ng,n_spinor))   ! reciprocal space
+ YAMBO_ALLOC(wf_DP,(fft_size,n_spinor)) ! direct     space
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
@@ -131,9 +128,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  if(use_live_timing) call live_timing()
  call WF_free(WF)
  !
- deallocate(wf_DP)
- call mem_est("wf_DP")
- deallocate(wf_der)
- call mem_est("wf_der")
+ YAMBO_FREE(wf_DP)
+ YAMBO_FREE(wf_der)
  !
 end subroutine

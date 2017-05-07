@@ -40,7 +40,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  use stderr,              ONLY:set_real_printed_length
- implicit none
+#include<memory.h>
  type(levels) ::en
  type(bz_samp)::k,q
  !
@@ -118,7 +118,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  ph_dos=0.
  !
  if (l_eliashberg) then
-   allocate(gamma(nq_todo,ph_modes))
+   YAMBO_ALLOC(gamma,(nq_todo,ph_modes))
    gamma=0.
  endif
  !
@@ -230,7 +230,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  !CLEAN
  !
- if (l_eliashberg) deallocate(gamma)
+ YAMBO_FREE(gamma)
  call elph_global_free()
  !
  contains

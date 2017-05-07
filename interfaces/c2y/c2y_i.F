@@ -34,8 +34,11 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
  use interfaces,          ONLY:PARALLEL_live_message
+#if defined _MEM_CHECK 
+ use memory,              ONLY:MEM_manager
+#endif
  !
- implicit none
+#include<memory.h>
  type(levels)                 :: en 
  type(bz_samp)                :: k 
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -61,6 +64,9 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! S/N
  !
@@ -104,7 +110,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','== DB2 ...')
  !
- allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
+ YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -125,7 +131,16 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    enddo
    !
  enddo
- deallocate(wf_disk)
+ !
+ YAMBO_FREE(wf_disk)
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('ln','done ==')
  !

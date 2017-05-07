@@ -26,10 +26,9 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !  k%ptbz
  !
  use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:c2a,k2bz
  use R_lattice,      ONLY:rl_sop,bz_samp
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  character(1) ::units
  logical      ::FORCE_BZ
@@ -44,21 +43,20 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! Clean
  !
- if (associated(k%ptbz).and.(units=="d".or.k%units/=units)) then
-   deallocate(k%ptbz)
-   call mem_est(trim(ch))
+ if (allocated(k%ptbz).and.(units=="d".or.k%units/=units)) then
+   YAMBO_FREE(k%ptbz)
    if (units=="d") return
  endif
- if (associated(k%ptbz).and.k%units==units) return
+ if (allocated(k%ptbz).and.k%units==units) return
  k%units=units
  !
  ! First the stars...
  !
- if (.not.associated(k%sstar)) call k_expand(k) 
+ if (.not.allocated(k%sstar)) call k_expand(k) 
  !
  ! ...then the pts
  !
- allocate(k%ptbz(k%nbz,3))
+ YAMBO_ALLOC(k%ptbz,(k%nbz,3))
  !
  do i1=1,k%nbz
    !
@@ -75,7 +73,5 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
    if (units=='c') call c2a(v_in=k_bz,v_out=k%ptbz(i1,:),mode='ki2c')
    !
  enddo
- !
- call mem_est(trim(ch),(/k%nbz*3/),(/SP/))
  !
 end subroutine

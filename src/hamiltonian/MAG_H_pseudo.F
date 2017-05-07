@@ -33,12 +33,11 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_ref_bands,Ho
- use memory_m,      ONLY:mem_est
  use magnetic,      ONLY:new_pp,old_pp
  use interfaces,    ONLY:WF_load
  use io_m,          ONLY:RD,RD_CL,io_control
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
@@ -52,7 +51,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
 &                           H_pseudo_tot(H_ref_bands(2),H_ref_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,alloc_err
+ integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf
  !
  ! I / O
  integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
@@ -69,14 +68,10 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  call fft_setup(0,1,.true.)  ! fft_size
  !
- allocate(kbv(wf_ng,pp_kbv_dim,4,n_spinor),stat=alloc_err)
- call mem_est("KBV",(/size(kbv)/),errors=(/alloc_err/))
- !
- allocate(new_pp(fft_size,pp_kbv_dim,n_spinor),old_pp(fft_size,pp_kbv_dim,n_spinor))
- call mem_est('new_pp old_pp',(/size(new_pp),size(old_pp)/))
- !
- allocate(kbv_ks_space(H_ref_bands(1):H_ref_bands(2),2))
- call mem_est('kbv_ks_space',(/size(kbv_ks_space)/))
+ YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
+ YAMBO_ALLOC(new_pp,(fft_size,pp_kbv_dim,n_spinor))
+ YAMBO_ALLOC(old_pp,(fft_size,pp_kbv_dim,n_spinor))
+ YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2),2))
  !
  H_pseudo_tot=cZERO
  !
@@ -147,13 +142,9 @@ subroutine MAG_H_pseudo(Xk,Xen)
  Ho(:,:,:,:)=Ho(:,:,:,:)+H_pseudo_tot(:,:,:,:)
  !
  ! Free mem
- deallocate(kbv_ks_space)
- call mem_est('kbv_ks_space')
- !
- deallocate(kbv)
- call mem_est('kbv')
- !
- deallocate(new_pp,old_pp)
- call mem_est('new_pp old_pp')
+ YAMBO_FREE(kbv_ks_space)
+ YAMBO_FREE(kbv)
+ YAMBO_FREE(new_pp)
+ YAMBO_FREE(old_pp)
  !
 end subroutine

@@ -62,7 +62,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #endif
  use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen
@@ -171,9 +171,12 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
-   allocate(v2plot(fft_size))
+   YAMBO_ALLOC(v2plot,(fft_size))
 #if defined _YPP_ELPH
-   if (l_polaronic_wf) allocate( v2plot_c(fft_size), wf_rot(fft_size) )
+   if (l_polaronic_wf) then
+     YAMBO_ALLOC(v2plot_c,(fft_size))
+     YAMBO_ALLOC(wf_rot,(fft_size))
+   endif
 #endif
  endif
  !
@@ -190,7 +193,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
    if (SC_fft_size/=fft_size) call error('Mismatch in FFT size')
    call msg("l",'done')
    nr=fft_dim
-   allocate(V_mean(fft_size,SC_bands(2)),v2plot(fft_size))
+   YAMBO_ALLOC(V_mean,(fft_size,SC_bands(2)))
+   YAMBO_ALLOC(v2plot,(fft_size))
  endif
 #endif
  !
@@ -435,7 +439,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    if (mag_dir=='Z'.or.mag_dir=='z') mag_i_dir=3
    if (mag_i_dir<0) goto 1
    !
-   allocate(magn(fft_size,3))
+   YAMBO_ALLOC(magn,(fft_size,3))
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
@@ -526,7 +530,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call section('*','Current Plot')
    !
-   allocate(el_cur(fft_size,3))
+   YAMBO_ALLOC(el_cur,(fft_size,3))
    !
    call el_density_and_current(Xen,Xk,J=el_cur)
    !
@@ -575,16 +579,17 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 1 continue
  call WF_free(WF)
- if (allocated(v2plot))     deallocate(v2plot)
- if (allocated(QP_table))   deallocate(QP_table,QP_state)
- if (allocated(magn))       deallocate(magn)
- if (allocated(el_den))     deallocate(el_den)
- if (allocated(el_cur))     deallocate(el_cur)
+ YAMBO_FREE(v2plot)
+ YAMBO_FREE(QP_table)
+ YAMBO_FREE(QP_state)
+ YAMBO_FREE(magn)
+ YAMBO_FREE(el_den)
+ YAMBO_FREE(el_cur)
 #if defined _YPP_SC 
- if (allocated(V_mean))     deallocate(V_mean)
+ YAMBO_FREE(V_mean)
 #endif
 #if defined _YPP_ELPH 
- if (allocated(v2plot_c))   deallocate(v2plot_c)
+ YAMBO_FREE(v2plot_c)
 #endif
  plot_title=' '
  !

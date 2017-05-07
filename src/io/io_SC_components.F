@@ -36,13 +36,12 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
 &                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
- use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer, intent(in)      :: ID
  type(levels)             :: E_sc
@@ -53,7 +52,6 @@ integer function io_SC_components(what,E_sc,ID)
  integer, external     :: variables_SC
  character(lchlen)     :: local_description(100)
  !
- real(SP), allocatable :: E_disk(:,:,:)
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
  !
@@ -150,16 +148,18 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if ( l_E.and.associated(E_sc%E)) then
+ if ( l_E.and.allocated(E_sc%E)) then
    !
    ! Energies
    !==========
    !
    if(read_is_on(ID)) then
      bands_to_load=size(E_sc%E,1)
-     if(l_sc_run .and. .not.associated(E_sc%Eo) ) then
-       allocate(E_sc%Eo(E_sc%nb,E_sc%nk,n_sp_pol))
-       call mem_est("E-Eo",(/size(E_sc%Eo)/),(/SP/))
+     !
+     ! Make a copy of Kohn-Sham Energies in E_sc%Eo
+     !
+     if(l_sc_run .and. .not.allocated(E_sc%Eo) ) then
+       YAMBO_ALLOC(E_sc%Eo,(E_sc%nb,E_sc%nk,n_sp_pol))
        E_sc%Eo=E_sc%E
      endif
    else

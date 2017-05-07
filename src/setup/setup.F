@@ -46,10 +46,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use global_XC,      ONLY:G_kind,G_xc_functional,X_kind,&
 &                         X_xc_functional,setup_global_XC,QP_MORE_NONE,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
- use memory_m,       ONLY:mem_est
 #endif
+#include <memory.h>
  !
- implicit none
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
  !
@@ -112,15 +111,18 @@ subroutine setup(en,Xen,Ken,k,Xk)
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
- call c2a(b,b(1,:),rv,'kc2i')
+ rv=b(1,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(2,:),rv,'kc2i')
+ rv=b(2,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(3,:),rv,'kc2i')
+ rv=b(3,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
  call msg('rn',dumb_ch1)
@@ -143,7 +145,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call build_spin_sop()
  !
- allocate(rl_sop(3,3,nsym))
+ YAMBO_ALLOC(rl_sop,(3,3,nsym))
+ !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
    if (is<=nsym/(1+i_time_rev))&
@@ -161,13 +164,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
        do is=1,nsym
-         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
        enddo
      endif
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
-       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
      enddo
  end select
  !
@@ -175,7 +178,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  idt_index=-1
  do is=1,nsym
-   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1.,0.,0.,0.,1.,0.,0.,0.,1./)) ) idt_index=is
+   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1,0,0,0,1,0,0,0,1/)) ) idt_index=is
  enddo
  !
  !
@@ -246,7 +249,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- if (BZ_DbGd_nbands>0.and.associated(en%E_DbGd)) then
+ if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
@@ -359,9 +362,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! Copy Ho eigenvalues in Xen%Eo for dipoles
  !
- if (l_sc_run .and. .not.associated(Xen%Eo) .and. found_SC_DB) then
-   allocate(Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-   call mem_est("XenE-Eo",(/size(Xen%Eo)/),(/SP/))
+ if (l_sc_run .and. .not.allocated(Xen%Eo) .and. found_SC_DB) then
+   YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
    Xen%Eo(:,:,:)=en%Eo(:,:en%nk,:)
  endif
  !

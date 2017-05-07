@@ -37,7 +37,6 @@ integer function io_ELPH(ID,what)
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
  use D_lattice,      ONLY:n_atoms_species
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use parallel_m,     ONLY:PAR_Q_index
@@ -47,7 +46,7 @@ integer function io_ELPH(ID,what)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer      ::ID
  character(*) ::what
@@ -124,10 +123,8 @@ integer function io_ELPH(ID,what)
    ! ... allocation
    !
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     allocate(ph_qpt(elph_nDBs,3))
-     call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
-     allocate(ph_kpt_bz(elph_nk_bz,3))
-     call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
+     YAMBO_ALLOC(ph_qpt,(elph_nDBs,3))
+     YAMBO_ALLOC(ph_kpt_bz,(elph_nk_bz,3))
      ph_kpt_bz=0._SP
    endif
    !
@@ -235,7 +232,7 @@ integer function io_ELPH(ID,what)
    call E_reset(E_k_p_q)
    E_k_p_q%nb=elph_nb
    E_k_p_q%nk=nkbz
-   allocate(E_k_p_q%E(elph_nb,nkbz,1))
+   YAMBO_ALLOC(E_k_p_q%E,(elph_nb,nkbz,1))
    E_k_p_q%E=E_k_plus_q
  endif
  ! 

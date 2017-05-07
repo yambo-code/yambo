@@ -45,7 +45,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -147,7 +147,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        !
        if (self_detect_E_range) then
          call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-         deallocate(X_poles)
+         YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
        !

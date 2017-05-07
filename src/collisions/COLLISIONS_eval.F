@@ -56,7 +56,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
- !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(levels)  :: E
@@ -68,6 +70,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  integer       :: ID,i_kind,IO_err
  character(20) :: PAR_ch,FREE_ch
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='start')
+#endif
  !
  call section('*','Extended collisions')
  !=======================================
@@ -239,6 +245,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='stop')
+#endif
  !
  contains
    !

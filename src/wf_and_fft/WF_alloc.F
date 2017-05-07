@@ -25,21 +25,20 @@ subroutine WF_alloc(WF)
  !
  use pars,          ONLY:cZERO
  use com,           ONLY:error
- use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,QUIET_alloc
- use memory_m,      ONLY:mem_est
+ use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
  use interfaces,    ONLY:PARALLEL_live_message
- implicit none
+#include<memory.h>
  !
  type(WAVEs)           :: WF
  !
  ! Work Space
  !
- integer :: err,ik,ib,i_sp_pol,N_total
+ integer :: ik,ib,i_sp_pol,N_total,wf_grid_size
  !
  ! Distributed allocation
  !
@@ -63,20 +62,15 @@ subroutine WF_alloc(WF)
    !
  endif
  !
- !
- if (WF%space=="R") allocate(WF%c(fft_size,n_spinor,WF%N),stat=err)
- if (WF%space=="G") allocate(WF%c(wf_ng,   n_spinor,WF%N),stat=err)
- if (WF%space=="C") allocate(WF%c(wf_ncx,  n_spinor,WF%N),stat=err)
- if (WF%space=="B") allocate(WF%c(wf_ncx,  n_spinor,WF%N),stat=err)
- !
- if (err/=0) call error(' Error allocating WFs')
- !
- if (WF%space/="B") call mem_est('WF'       ,(/size(WF%c)/),errors=(/err/),quiet=QUIET_alloc)
- if (WF%space=="B") call mem_est('WF_buffer',(/size(WF%c)/),errors=(/err/),quiet=QUIET_alloc)
+ if (WF%space=="R") wf_grid_size=fft_size
+ if (WF%space=="G") wf_grid_size=wf_ng
+ if (WF%space=="C") wf_grid_size=wf_ncx
+ if (WF%space=="B") wf_grid_size=wf_ncx
+ YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- allocate(WF%index(WF%b(2),WF%k(2),WF%sp_pol(2)),stat=err)
+ YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
  WF%index=0

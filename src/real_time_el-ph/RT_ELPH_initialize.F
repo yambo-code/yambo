@@ -37,21 +37,20 @@ subroutine RT_ELPH_initialize(E,k,q)
  use IO_m,           ONLY:io_control,REP,OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:ph_freqs_sq,elph_gkkp,ph_modes,elph_nb,W_debye,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:degeneration_finder
  use parser_m,       ONLY:parser
  use R_lattice,      ONLY:RIM_n_rand_pts
  use parallel_m,     ONLY:PAR_Q_index,PAR_IND_Q,PAR_nQ,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&
 &                         PP_redux_wait,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_index
  !
- implicit none
+#include<memory.h>
  !
  type(levels)             :: E
  type(bz_samp),intent(in) :: k,q
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,alloc_err,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
+ integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
 &                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,ik_store,io_REF
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
@@ -92,16 +91,14 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Allocation
  !============
  !
- allocate(elph_gkkp_expanded(ph_modes,elph_nb,elph_nb,PAR_Xk_nibz*PAR_nQ),stat=alloc_err)
- call mem_est("GKKP_expanded",(/size(elph_gkkp_expanded)/),(/2*SP/),errors=(/alloc_err/))
+ YAMBO_ALLOC(elph_gkkp_expanded,(ph_modes,elph_nb,elph_nb,PAR_Xk_nibz*PAR_nQ))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
  if (.not.l_RT_CCA_Kernel) then
-   allocate(THETA_matrix(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
-   call mem_est("THETA_matrix",(/size(THETA_matrix)/),(/2*SP/))
+   YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
    THETA_matrix=cZERO
-   allocate(THETA_matrix_index(q%nbz,ph_modes,2))
+   YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
  endif
  !
  ! Degeneration Finder
@@ -211,7 +208,7 @@ subroutine RT_ELPH_initialize(E,k,q)
    ! 1 - acustic phonons w_ph(i) ~ \alpha(i)*|q|
    ! 2 - optical phonons w_ph(i) ~ const(i)
    !
-   allocate(q_weight_RT(q%nbz,elph_branches(1):elph_branches(2),2))
+   YAMBO_ALLOC(q_weight_RT,(q%nbz,elph_branches(1):elph_branches(2),2))
    q0_mod=(3._SP*RL_vol/4._SP/4._SP/pi)**(1._SP/3._SP)
    i1=0
    ph_mean_speed=0._SP

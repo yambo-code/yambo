@@ -15,6 +15,7 @@
 # [@DP_check@] Double precision
 # [@DEBUG_check@] Enable Debug compilation
 # [@TIME_profile_check@] Run-Time timing profile 
+# [@TIME_profile_check@] Run-Time memory profile 
 #
 # 
 # - PARALLEL SUPPORT -

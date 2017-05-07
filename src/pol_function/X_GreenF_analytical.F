@@ -28,14 +28,14 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
-&                     X_t,l_X_terminator,X_terminator_E,X_term_E
+&                     X_t,l_X_terminator,X_term_E
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
-                      BZ_DbGd_ipol_weight,BZ_DbGd_kpts
+                      BZ_DbGd_weight,BZ_DbGd_kpts
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
- implicit none
+#include<memory.h>
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
@@ -74,8 +74,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  W_=0._SP
  Z_=cONE
- if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
- if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
+ if (allocated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
+ if (allocated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
  !
  pole_X_term=0.0_SP
@@ -131,13 +131,13 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !  \Omega_{anti-res} = -\Omega_{res}
  !
  allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
+ YAMBO_ALLOC(use_kpt,(BZ_DbGd_nkpt(ikbz),BZ_DbGd_nkpt(ikpbz)))
  !
  call tmp_double_grid()
  !
  do i1=1,BZ_DbGd_nkpt(ikbz)
    !
-   weight1   = BZ_DbGd_ipol_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
+   weight1   = BZ_DbGd_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
    ik_rand   = BZ_DbGd_table(ikbz,i1,1)
    ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
    !
@@ -148,7 +148,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      !
      if(.not.use_kpt(i1,i2)) cycle
      !
-     weight2    = BZ_DbGd_ipol_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
+     weight2    = BZ_DbGd_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
      ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
      ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !
@@ -181,7 +181,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
  enddo
  !
- deallocate(use_kpt,BZ_DbGd_iq_npt)
+ YAMBO_FREE(use_kpt)
+ deallocate(BZ_DbGd_iq_npt)
  !
  contains
    !

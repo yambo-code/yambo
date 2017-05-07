@@ -32,7 +32,6 @@
  use mod_com2y,             ONLY:verboseIO
  use qexml_module
  use pw_data,               only: n_spin_pw_, gamma_only_
- use memory_m,              ONLY: mem_est
  !
  implicit none
  !

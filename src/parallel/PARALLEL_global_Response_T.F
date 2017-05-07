@@ -43,7 +43,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_DIPk_ID,PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)        :: Xk
  integer              :: X_type
@@ -88,11 +88,11 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  PAR_IND_DIPk_ID=PAR_IND_Kk_ibz_ID
  PAR_Xk_nibz  =PAR_Kk_nibz
  PAR_DIPk_nibz=PAR_Kk_nibz
- allocate(PAR_DIPk_ibz_index(nXkibz))
+ YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
  call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
- allocate(PAR_Xk_ibz_index(nXkibz))
+ YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
  call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
- allocate(PAR_Xk_bz_index(nXkbz))
+ YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
  call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                       PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                       PAR_Xk_bz_index,PAR_Xk_nbz)

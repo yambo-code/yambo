@@ -37,7 +37,7 @@ subroutine k_reduce(k,FORCE_BZ)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  logical      ::FORCE_BZ
  !
@@ -80,7 +80,7 @@ subroutine k_reduce(k,FORCE_BZ)
  !
  call live_timing()
  !
- allocate(k%pt(k%nibz,3))
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  k%pt(:k%nibz,:)=k_ibz(:k%nibz,:)
  !
 end subroutine

@@ -26,7 +26,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! NEQ GW collisions 
  !
  use pars,          ONLY:SP,rZERO
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
@@ -50,7 +49,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  !
- implicit none
+#include<memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -112,8 +111,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !------------
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
- allocate(EM1s(X%ng,X%ng),stat=alloc_err)
- call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
+ YAMBO_ALLOC(EM1s,(X%ng,X%ng))
  !
  call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
@@ -121,7 +119,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=GW_NEQ_collisions%PAR_N
- if (associated(GW_NEQ_collisions%IO_status)) then
+ if (allocated(GW_NEQ_collisions%IO_status)) then
    PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
  endif
  call live_timing("Collisions",PAR_NC_local*PAR_nQ)
@@ -308,8 +306,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- deallocate(EM1s)
- call mem_est("EM1s")
+ YAMBO_FREE(EM1s)
  call X_alloc('X')
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)

@@ -302,12 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
          if (.not.any(states_to_load(ib1:ib2,ikibz,:))) cycle
        endif
        !
-       if (kpts_to_load(1)==kpts_to_load(2).or.(ikibz==nkibz.and.ib_grp==wf_nb_io_groups)) then
-         call io_control(ACTION=RD_CL,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-       else
-         call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-       endif
-       !
+       call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
@@ -364,7 +359,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! CLEAN
  !
  if (.not.buffer_is_ok) then
+   !
+   call io_control(ACTION=RD_CL,COM=NONE,MODE=VERIFY,SEC=(/0/),ID=ID)
+   io_err=io_WF(ID,wf_disk)
+   !
    YAMBO_FREE(wf_disk)
+   !
  endif
  !
  YAMBO_FREE(wf_DP)

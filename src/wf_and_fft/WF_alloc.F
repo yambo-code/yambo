@@ -37,7 +37,7 @@ subroutine WF_alloc(WF)
  !
  ! Work Space
  !
- integer :: ik,ib,is,N_total
+ integer :: ik,ib,is,N_total,wf_grid_size
  !
  ! Distributed allocation
  !
@@ -61,18 +61,12 @@ subroutine WF_alloc(WF)
    !
  endif
  !
- if (WF%space=="R") then
-   YAMBO_ALLOC(WF%c,(fft_size,WF%N))
- endif
- if (WF%space=="G") then
-   YAMBO_ALLOC(WF%c,(wf_ng,WF%N))
- endif
- if (WF%space=="C") then
-   YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
- endif
- if (WF%space=="B") then
-   YAMBO_ALLOC(WF%c,(wf_ncx,WF%N))
- endif
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
+ !
+ YAMBO_ALLOC(WF%c,(wf_grid_size,WF%N))
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !

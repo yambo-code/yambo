@@ -64,11 +64,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  character(1)     ::wf_space_here
  character(schlen)::wf_title
-#if defined _SC
- integer          ::wf_size
-#endif
  integer          ::i1,i_sp_pol,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
-&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
+&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,wf_grid_size
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -246,15 +243,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  call WF_alloc(WF)
  !
- if (WF%space=='R')  then
-   YAMBO_ALLOC(wf_DP,(fft_size))
- endif
- if (WF%space=='G') then
-   YAMBO_ALLOC(wf_DP,(wf_ng))
- endif
- if (WF%space=='C'.or.WF%space=='B') then
-   YAMBO_ALLOC(wf_DP,(wf_ncx))
- endif
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
+ !
+ YAMBO_ALLOC(wf_DP,(wf_grid_size))
  !
  ! LOG the states loaded
  !
@@ -398,9 +392,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    ! When using the buffer the states_to_load must not be cleaned
    !
    clean_up_states=.not.allocated(WF_buffer%c)
-   if (present(keep_states_to_load)) then
-     clean_up_states=.not.keep_states_to_load
-   endif
+   if (present(keep_states_to_load)) clean_up_states=.not.keep_states_to_load
    !
    if (clean_up_states) then
      YAMBO_FREE(states_to_load)
@@ -421,11 +413,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
-   if (WF%space=='R') wf_size=fft_size
-   if (WF%space=='G') wf_size=wf_ng
    do i_sp_pol=1,n_sp_pol
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,wf,wf_size)
+       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
      enddo
    enddo
    call load_SC_components('WF_clean')

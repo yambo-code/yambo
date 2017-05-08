@@ -62,10 +62,11 @@ subroutine WF_alloc(WF)
    !
  endif
  !
- if (WF%space=="R") wf_grid_size=fft_size
- if (WF%space=="G") wf_grid_size=wf_ng
- if (WF%space=="C") wf_grid_size=wf_ncx
- if (WF%space=="B") wf_grid_size=wf_ncx
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
+ !
  YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)

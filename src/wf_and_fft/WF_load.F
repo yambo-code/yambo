@@ -66,6 +66,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  character(schlen)::wf_title
  integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2),wf_grid_size
+
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -244,10 +245,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  call WF_alloc(WF)
  !
- if (WF%space=='R') wf_grid_size=fft_size 
- if (WF%space=='G') wf_grid_size=WF_ng
- if (WF%space=='C') wf_grid_size=wf_ncx
- if (WF%space=='B') wf_grid_size=wf_ncx
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
  !
@@ -402,9 +403,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    ! When using the buffer the states_to_load must not be cleaned
    !
    clean_up_states=.not.allocated(WF_buffer%c)
-   if (present(keep_states_to_load)) then
-     clean_up_states=.not.keep_states_to_load
-   endif
+   if (present(keep_states_to_load)) clean_up_states=.not.keep_states_to_load
    !
    if (clean_up_states) then
      YAMBO_FREE(states_to_load)
@@ -425,11 +424,17 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
+<<<<<<< HEAD
    if (WF%space=='R') wf_grid_size=fft_size
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
        call WF_rotate(i_sp_pol,ikibz,wf,wf_grid_size)
+=======
+   do i_sp_pol=1,n_sp_pol
+     do ikibz=WF%k(1),WF%k(2)
+       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
+>>>>>>> master
      enddo
    enddo
    !

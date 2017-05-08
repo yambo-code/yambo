@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -72,7 +72,6 @@ AC_PROG_CC
 AC_CANONICAL_HOST
 hostname=`uname -n`
 AC_SUBST(hostname)
-
 # ============================================================================
 # GNU Make
 MAKE="make"
@@ -86,8 +85,6 @@ else
  MAKE=$_cv_gnu_make_command
 fi
 AC_SUBST(MAKE)
-
-
 # ============================================================================
 #AR 
 #AC_DISABLE_SHARED
@@ -151,7 +148,7 @@ ACX_FCSETUP()
 #
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
-
+#
 # ============================================================================
 #
 # OpenMP
@@ -214,8 +211,8 @@ AC_LANG_POP(Fortran 77)
 # ============================================================================
 # MPI
 m4_include([config/mpi.m4])
-
 # 
+# ============================================================================
 #  Libs
 #
 m4_include([config/blas.m4])
@@ -258,8 +255,9 @@ ACX_LIBXC
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
+AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F 
+                 src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #

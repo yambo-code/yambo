@@ -38,7 +38,7 @@ subroutine k_grids(en,k,Xk,q)
  use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
  !
- implicit none
+#include<memory.h>
  type(levels) ::en       
  type(bz_samp)::k,Xk,q
  !
@@ -91,7 +91,7 @@ subroutine k_grids(en,k,Xk,q)
    if (l_k_grid) then
      if (Expand_internal_points) then
        call k_expand(Xk)
-       allocate(BZ_weights(Xk%nbz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nbz))
        BZ_weights=1._SP
        call msg("s",'K-points (BZ) formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -99,9 +99,9 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'K-points (BZ) PW-formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      else
-       allocate(BZ_weights(Xk%nibz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nibz))
        BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
        call msg("s",'K-points (IBZ) formatted')
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -109,14 +109,14 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'K-points (BZ) PW-formatted')
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      endif
    endif
    !
    if (l_q_grid) then
      if (Expand_internal_points) then
        call k_expand(q)
-       allocate(BZ_weights(q%nbz))
+       YAMBO_ALLOC(BZ_weights,(q%nbz))
        BZ_weights=1._SP
        call msg("s",'Q-points (BZ) formatted')
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -124,9 +124,9 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'Q-points (BZ) PW-formatted')
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      else
-       allocate(BZ_weights(q%nibz))
+       YAMBO_ALLOC(BZ_weights,(q%nibz))
        BZ_weights(:)=q%weights(:)*real(q%nbz,SP)
        call msg("s",'Q-points (IBZ) formatted')
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -134,7 +134,7 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'Q-points (IBZ) PW-formatted')
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      endif
    endif
    !
@@ -147,10 +147,10 @@ subroutine k_grids(en,k,Xk,q)
    write(ch,'(a,a,a)') "== Built-in IBZ K-grid [",trim(coo_out),"] =="
    !==================================================================
    call section('+',trim(ch))
-   allocate(BZ_weights(Xk%nibz))
+   YAMBO_ALLOC(BZ_weights,(Xk%nibz))
    BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
    call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
-   deallocate(BZ_weights)
+   YAMBO_FREE(BZ_weights)
    !
  endif
  !
@@ -165,8 +165,8 @@ subroutine k_grids(en,k,Xk,q)
    USER_K%nibz=1
    gw_main_loop: do ik=1,n_u_k_pts
      !
-     if (associated(USER_K%pt)) deallocate(USER_K%pt)
-     allocate(USER_K%pt(USER_K%nibz,3))
+     YAMBO_FREE(USER_K%pt)
+     YAMBO_ALLOC(USER_K%pt,(USER_K%nibz,3))
      USER_K%pt(USER_K%nibz,:)=U_k_pts(ik,:)
      !
      ! Transform the user_k_points in iku
@@ -202,7 +202,7 @@ subroutine k_grids(en,k,Xk,q)
    !
    ! Extended grid
    !
-   allocate(Final_K%ptbz(Xk%nibz+USER_K%nibz*q%nbz,3))
+   YAMBO_ALLOC(Final_K%ptbz,(Xk%nibz+USER_K%nibz*q%nbz,3))
    Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
    Final_K%nbz=Xk%nibz
    do i1=1,USER_K%nibz
@@ -229,8 +229,8 @@ subroutine k_grids(en,k,Xk,q)
    Q_user%nibz=1
    q_main_loop: do iq=1,n_u_q_pts
      !
-     if (associated(Q_user%pt)) deallocate(Q_user%pt)
-     allocate(Q_user%pt(Q_user%nibz,3))
+     YAMBO_FREE(Q_user%pt)
+     YAMBO_ALLOC(Q_user%pt,(Q_user%nibz,3))
      Q_user%pt(Q_user%nibz,:)=U_q_pts(iq,:)
      !
      do i1=1,q%nbz
@@ -251,16 +251,16 @@ subroutine k_grids(en,k,Xk,q)
    if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
    !
    if (Force_User_points) then
-     allocate(BZ_weights(Q_user%nibz))
+     YAMBO_ALLOC(BZ_weights,(Q_user%nibz))
      BZ_weights=0._SP
      call print_the_grid(Q_user%pt,Q_user%nibz,BZ_weights,coo_in,.TRUE.,.FALSE.)
-     deallocate(BZ_weights)
+     YAMBO_FREE(BZ_weights)
      goto 1
    endif
    !
    ! Extended grid
    !
-   allocate(Final_K%ptbz(Xk%nibz+Xk%nbz*Q_user%nibz,3))
+   YAMBO_ALLOC(Final_K%ptbz,(Xk%nibz+Xk%nbz*Q_user%nibz,3))
    Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
    Final_K%nbz=Xk%nibz
    do i1=1,Q_user%nibz
@@ -332,10 +332,10 @@ subroutine k_grids(en,k,Xk,q)
        !
        call set_real_printed_length(f_length=10,g_length=10)
        !
-       allocate(BZ_weights(Xk%nibz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nibz))
        BZ_weights=1._SP
        call print_the_grid(k_plus_q,Xk%nibz,BZ_weights,coo_out,.FALSE.,.FALSE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
        !
        call set_real_printed_length( )
        !
@@ -446,7 +446,7 @@ subroutine k_grids(en,k,Xk,q)
      ! position in the final grid of the given QP k-points 
      ! (read from the input file)
      !
-     allocate(int_ctl(K_grid%nibz))
+     YAMBO_ALLOC(int_ctl,(K_grid%nibz))
      int_ctl=0
      !
      ! int_ctl =0 -> nothing
@@ -470,7 +470,7 @@ subroutine k_grids(en,k,Xk,q)
        int_ctl=0
      endif
      !
-     allocate(GWK_table(USER_K%nibz))
+     YAMBO_ALLOC(GWK_table,(USER_K%nibz))
      !
      live_timing_is_on=.false.
      call msg("s","       ---------- Reduced K-grid ----------")
@@ -498,8 +498,8 @@ subroutine k_grids(en,k,Xk,q)
      enddo
      live_timing_is_on=.true.
      !
-     deallocate(GWK_table)
-     deallocate(int_ctl)
+     YAMBO_FREE(GWK_table)
+     YAMBO_FREE(int_ctl)
      !
    end subroutine
    !

@@ -43,9 +43,6 @@ SUBROUTINE SLK_ORTHO_group( ORTHO, POOL, nproc_try_in, comm_all )
  nproc_try = MAX( nproc_try, 1 )
  !
  IF( .NOT. first ) THEN
-   !  
-   ! AF: call not safe
-   !CALL MPI_comm_free( ORTHO%COMM, ierr )
    !
    IF(  ORTHO%COMM_id > 0  ) THEN
       CALL BLACS_GRIDEXIT( ORTHO%ortho_cntx )

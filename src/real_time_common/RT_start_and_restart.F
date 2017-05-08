@@ -62,7 +62,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -326,23 +326,23 @@ subroutine RT_start_and_restart(E,k,q,X)
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            if (l_RT_uses_E_DbGd) then
-             !if (associated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd,1) =abs(E%W_DbGd(ib,ik_E_DbGd,1))
-             if (associated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1) =abs(E%W(ib,ik,1))
+             !if (allocated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd,1) =abs(E%W_DbGd(ib,ik_E_DbGd,1))
+             if (allocated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1) =abs(E%W(ib,ik,1))
              RT_E_and_k%En(ib,ik_RT_DbGd,1)=E%E_DbGd(ib,ik_E_DbGd,1)
              !RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt(ik,:)
              G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_DbGd(ib,ik_E_DbGd,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
            else
              G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-             if (associated(E%W))  RT_E_and_k%W(ib,ik,1) =abs(E%W(ib,ik,1))
+             if (allocated(E%W))  RT_E_and_k%W(ib,ik,1) =abs(E%W(ib,ik,1))
              RT_E_and_k%En(ib,ik,1)=E%E(ib,ik,1)
              !RT_E_and_k%kpt(:,ik)=k%pt(ik,:)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
            endif
          enddo
        enddo
      enddo
-     if (.not.(associated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
+     if (.not.(allocated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
      dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser

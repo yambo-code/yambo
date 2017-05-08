@@ -42,13 +42,12 @@ subroutine SC_start_and_restart(X,E)
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
 &                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,  &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
- use memory_m,       ONLY:mem_est
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
- implicit none
+#include<memory.h>
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
  !

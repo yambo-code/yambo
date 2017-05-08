@@ -1,6 +1,6 @@
 #! @SHELL@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -208,7 +208,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F |sed -e 's/NEWLINE/\n/g'  > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "

@@ -26,7 +26,6 @@ subroutine X_redux(iq,X,Xw,W_range)
  use pars,          ONLY:SP,pi,cZERO,cONE
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use memory_m,      ONLY:mem_est
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_DIPOLES,PAR_COM_SLK_INDEX_local
  use R_lattice,     ONLY:bare_qpg,q_norm
@@ -43,7 +42,7 @@ subroutine X_redux(iq,X,Xw,W_range)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  type(X_t)    :: X
  type(w_samp) :: Xw
  integer      :: iq,W_range(2)
@@ -66,14 +65,13 @@ subroutine X_redux(iq,X,Xw,W_range)
  !
  call PP_indexes_reset(PAR_IND_freqs)
  !
- allocate(tddftk(X%ng,X%ng),Xo(X%ng,X%ng))
- call mem_est("X_WS",(/2*size(Xo)/))
+ YAMBO_ALLOC(tddftk,(X%ng,X%ng))
+ YAMBO_ALLOC(Xo,(X%ng,X%ng))
  !
  ! Xo^-1 matrix (BS Fxc)
  !
  if (l_bs_fxc) then
-   allocate(Xom1(FXC_n_g_corr,FXC_n_g_corr))
-   call mem_est("Xo_m1",(/size(Xom1)/))
+   YAMBO_ALLOC(Xom1,(FXC_n_g_corr,FXC_n_g_corr))
  endif
  !
  ! Stop... 
@@ -238,11 +236,10 @@ subroutine X_redux(iq,X,Xw,W_range)
  ! CLEAN
  !
  call PP_indexes_reset(PAR_IND_freqs)
- deallocate(tddftk,Xo)
+ YAMBO_FREE(tddftk)
+ YAMBO_FREE(Xo)
  if (l_bs_fxc) then
-   deallocate(Xom1)
-   call mem_est("Xo_m1")
+   YAMBO_FREE(Xom1)
  endif
- call mem_est("X_WS")
  !
 end subroutine

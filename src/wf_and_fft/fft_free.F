@@ -23,21 +23,21 @@
 !
 subroutine fft_free()
  !
- use memory_m, ONLY:mem_est
  use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                    fft_rot_r,fft_rot_r_inv,fft_multiplier
+&                   fft_rot_r,fft_rot_r_inv,fft_multiplier
 #if defined _FFTW
  use FFT_m,    ONLY:fftw_plan
 #endif
+ !
+#include<memory.h>
  !
  fft_size=0
  fft_dim=0
  fft_dim_loaded=0
  fft_multiplier=1
- if (allocated(fft_g_table)) then
-   deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-   call mem_est('FFT_g_tab FFT_rot')
- endif
+ YAMBO_FREE(fft_g_table)
+ YAMBO_FREE(fft_rot_r)
+ YAMBO_FREE(fft_rot_r_inv)
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
  fftw_plan=0

@@ -38,7 +38,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
 #endif
  !
- implicit none
+#include<memory.h>
  !
  character(3)     :: what
  integer          :: iw_2start,iw_2do,Lo_dim,Lo_n_loop
@@ -59,7 +59,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full.and..not.BLACS_structure_in_use) then
-   allocate(Mm1(BS_H_dim,BS_H_dim))
+   YAMBO_ALLOC(Mm1,(BS_H_dim,BS_H_dim))
    Mm1=cZERO
  endif
  !
@@ -131,7 +131,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  enddo
  !
  if (do_it_full) then
-   if (.not.BLACS_structure_in_use) deallocate(Mm1)
+   YAMBO_FREE(Mm1)
  else
    call live_timing()
  endif

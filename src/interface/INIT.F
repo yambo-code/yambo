@@ -53,7 +53,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,QP_table
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,&
+&                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
@@ -84,7 +85,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::en        
 #if defined _SC
@@ -237,6 +238,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
  !
+#if defined _MEM_CHECK
+ call MEM_treshold_estimate( )
+#endif
+ !
  ! wf
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
@@ -327,10 +332,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !In DUMP mode qp%table is dumped as well (to be used in QP_apply).
  !Here, however, qp%table is not needed
  !
- if (associated(qp%table)) then
-   deallocate(qp%table)
-   nullify(qp%table)
- endif
+ YAMBO_FREE(qp%table)
  !
  ! Green Functions
  !
@@ -492,7 +494,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh')
  !
  !FFT
  !
@@ -566,8 +568,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Kernels
  !
- if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod')
- if (l_optics.and.l_chi)           call initactivate(1,'Chimod')
+ if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod ChiLinAlgMod')
+ if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
@@ -753,7 +755,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
-       call initactivate(1,'GbndRnge') 
+       if (.not.l_cohsex.or.COHSEX_use_empties) call initactivate(1,'GbndRnge') 
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
        if (.not.l_elphoton_corr) then
@@ -930,7 +932,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (QP_state_in_input_file) then
        !
-       deallocate(QP_state)
+       YAMBO_FREE(QP_state)
        QP_nb=0
        QP_nk=0
        !
@@ -950,8 +952,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    ! ... but afterword I must deallocate it to use user defined values
    !
-   if (allocated(QP_state)) deallocate(QP_state)
-   if (allocated(QP_table)) deallocate(QP_table)
+   YAMBO_FREE(QP_state)
+   YAMBO_FREE(QP_table)
    !
  endif
  !
@@ -1216,7 +1218,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (l_alda_fxc) BS_res_mode='x'     
        !
-       !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
@@ -1225,6 +1226,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
      endif
+     !
+     if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
 #if defined _PL
      if (l_photolum) call initactivate(1,'bse optics')

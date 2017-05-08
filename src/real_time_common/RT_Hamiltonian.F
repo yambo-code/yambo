@@ -74,7 +74,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
+ type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)

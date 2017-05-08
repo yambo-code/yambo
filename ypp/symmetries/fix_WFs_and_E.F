@@ -24,8 +24,7 @@
 subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_kind)
  !
  use pars,                ONLY:SP,lchlen,cZERO
- use com,                 ONLY:msg,warning,core_io_path,more_io_path,error
- use memory_m,            ONLY:mem_est
+ use com,                 ONLY:msg,core_io_path,more_io_path,error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
 &                              OP_APP,cp_file,cp_directory, &
 &                              OP_RD_CL,RD_CL,RD,frag_WF
@@ -37,9 +36,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
  use interfaces,          ONLY:WF_load,WF_free
- use YPP_symm
+ use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
+&                              wf_nc_k_new,l_wf_nc_k_red,wf_igk_new,&
+&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save
  !
- implicit none
+#include<memory.h>
  !
  type(levels),intent(in)  :: E
  !
@@ -112,8 +113,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! After I/O of DB1 I need to restore the old WFs shells
  ! to make sure that WF_load works properly
  !
- deallocate(wf_nc_k,wf_igk)
- allocate(wf_nc_k(k_save%nibz),wf_igk(wf_ncx_save,k_save%nibz))
+ YAMBO_FREE(wf_nc_k)
+ YAMBO_FREE(wf_igk)
+ YAMBO_ALLOC(wf_nc_k,(k_save%nibz))
+ YAMBO_ALLOC(wf_igk,(wf_ncx_save,k_save%nibz))
  !
  wf_nc_k=wf_nc_k_save
  wf_igk =wf_igk_save
@@ -145,8 +148,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    ! Rotating wavefunctions by components
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx_new,n_spin))
    !
    if(l_wf_nc_k_red) then
      !
@@ -204,8 +206,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    n_steps=(k%nibz-k_save%nibz)
    if(n_steps>0) call live_timing('WFs rotation',n_steps)
    !
-   allocate(ic_rot_table(wf_ncx_new))
-   allocate(wf_tmp(wf_ncx_new,n_spin))
+   YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
+   YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spin))
    !
    ACTION_=OP_APP_WR_CL
    if (frag_WF) ACTION_=OP_WR_CL
@@ -282,8 +284,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    if(n_steps>0) call live_timing()
    !
-   deallocate(ic_rot_table)
-   deallocate(wf_tmp)
+   YAMBO_FREE(ic_rot_table)
+   YAMBO_FREE(wf_tmp)
    !
  case(2)
    !
@@ -292,8 +294,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx_new,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx_new,n_spin))
    !
    ACTION_=OP_APP_WR_CL
    if(frag_WF) ACTION_=OP_WR_CL
@@ -353,8 +354,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
 #endif
  !
  ! Finally I save again the new WFs_shells to be used by fix_PPs
- deallocate(wf_nc_k,wf_igk)
- allocate(wf_nc_k(k%nibz),wf_igk(wf_ncx,k%nibz))
+ YAMBO_FREE(wf_nc_k)
+ YAMBO_FREE(wf_igk)
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
  !
  wf_nc_k=wf_nc_k_new
  wf_igk =wf_igk_new
@@ -364,8 +367,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  ! CLEAN
  !=======
  call E_reset(E_new)
- deallocate(wf_disk)
- call mem_est("wf_disk")
+ YAMBO_FREE(wf_disk)
  !
 end subroutine
 !
@@ -374,7 +376,7 @@ subroutine map_energies(E,E_new,k,kpoints_map)
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
- implicit none
+#include<memory.h>
  !
  type(levels), intent(in)     :: E
  type(levels), intent(out)    :: E_new
@@ -388,7 +390,7 @@ subroutine map_energies(E,E_new,k,kpoints_map)
  call E_reset(E_new)
  E_new%nb=E%nb
  E_new%nk=k%nibz
- allocate(E_new%E(E%nb,k%nibz,n_sp_pol))
+ YAMBO_ALLOC(E_new%E,(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
    E_new%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)

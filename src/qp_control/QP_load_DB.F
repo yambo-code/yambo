@@ -28,14 +28,13 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  use pars,          ONLY:SP,schlen,lchlen,rZero
  use stderr,        ONLY:string_split,string_pack
  use QP_m,          ONLY:QP_t,QP_reset
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
  use com,           ONLY:msg,warning
  use QP_CTL_m,      ONLY:QP_ctl_t
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP,io_reset
  !
- implicit none
+#include<memory.h>
  !
  type(levels)    ::en
  type(QP_t)      ::qp
@@ -256,15 +255,13 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
    if (do_EWZ_using_Ik_IE(2)) then
      qp_msg(i1:i1)="W"
      i1=i1+1
-     allocate(en%W(en%nb,en%nk,n_sp_pol))
-     call mem_est("E-W",(/size(en%W)/),(/SP/))
+     YAMBO_ALLOC(en%W,(en%nb,en%nk,n_sp_pol))
      en%W=rZero
    endif
    if (do_EWZ_using_Ik_IE(3)) then
      qp_msg(i1:i1)="Z"
      i1=i1+1
-     allocate(en%Z(en%nb,en%nk,n_sp_pol))
-     call mem_est("E-Z",(/size(en%Z)/))
+     YAMBO_ALLOC(en%Z,(en%nb,en%nk,n_sp_pol))
      en%Z=1._SP
    endif
    if (GFs_From_DB) then
@@ -309,9 +306,8 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  !
  ! Backup bare energies (only once)
  !
- if (.not.associated(en%Eo)) then
-   allocate(en%Eo(en%nb,en%nk,n_sp_pol))
-   call mem_est("E-Eo",(/size(en%Eo)/),(/SP/))
+ if (.not.allocated(en%Eo)) then
+   YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
    en%Eo=en%E
  endif
  !

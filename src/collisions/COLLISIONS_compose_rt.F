@@ -27,8 +27,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! 
  use pars,             ONLY:SP,cZERO,cI
  use drivers,          ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_exx,l_sc_hartree
- use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,&
-&                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
+ use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
@@ -37,6 +36,9 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use timing_m,       ONLY:timing
 #endif
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -48,8 +50,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
-#if defined _TIMING 
- call timing('COLL compose RT',OPR='start')
+#if defined _TIMING
+ call timing('COLLISIONS_compose_rt',OPR='start')
 #endif
  !
  G_avg=cZERO
@@ -119,8 +121,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  call PP_redux_wait(RT_Vnl_xc)
  !
-#if defined _TIMING 
- call timing('COLL compose RT',OPR='stop')
+#if defined _TIMING
+ call timing('COLLISIONS_compose_rt',OPR='stop')
 #endif
  !
 end subroutine COLLISIONS_compose_rt

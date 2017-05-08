@@ -302,16 +302,17 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (io_err==0) then
        !
-       if(reading) IO_ACTION=OP_RD_CL
-       if(writing) IO_ACTION=OP_APP_WR_CL
+       if (reading) IO_ACTION=OP_RD_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
        do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
-         do i_sp_pol=1,n_sp_pol
-           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID)
-        enddo
+         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
+         if ((writing.and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0).or.reading) then
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+             io_err=io_DIPOLES(X,ID)
+          enddo
+         endif
        enddo
        !
      endif
@@ -347,98 +348,100 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    end subroutine DIPOLES_alloc
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
-    !
-    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
-    !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
-    !
-    do ik=1,Xk%nibz
-      !
-      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-      !
-      ik_mem=PAR_DIPk_ibz_index(ik)
-      ! 
-      do i_sp_pol=1,n_sp_pol
-        !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        !
+     !
+     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
+     !
+     integer  :: ic,iv,i_sp_pol,ik,ik_mem
+     !
+     do ik=1,Xk%nibz
+       !
+       if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+       !
+       ik_mem=PAR_DIPk_ibz_index(ik)
+       ! 
+       do i_sp_pol=1,n_sp_pol
+         !
+         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
 #if defined _RT
-        !
-        if (l_real_time.and.n_spin>1) &
-&         call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        if (l_real_time.and.n_spinor>1) &
-&         call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        !
+         !
+         if (l_real_time.and.n_spin>1) &
+&          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         if (l_real_time.and.n_spinor>1) &
+&          call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
 #endif
-        !
+         !
 #if defined _SC || defined _RT
-        !
-        if (l_sc_run.or.l_real_time) &
-&         call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        !
+         !
+         if (l_sc_run.or.l_real_time) &
+&          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
 #endif
-        !
-        if (l_par_RT) then
-          !
+         !
+         if (l_par_RT) then
+           !
 #if defined _RT
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          if (l_real_time.and.n_spin>1) &
-&           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          if (l_real_time.and.n_spinor>1) &
-&           DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-#endif
-#if defined _SC || defined _RT
-          if (l_sc_run.or.l_real_time) &
-&           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-#endif
-          !
-        endif
-        !
-      enddo
-      !
-      ! Symmetrization 
-      !================
-      ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
-      !
-      do i_sp_pol=1,n_sp_pol
-        do iv=X%ib(1),X%ib_lim(1)
-          if(iv>=X%ib_lim(2)) then
-            DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
-            DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-#if defined _RT
-            if (l_real_time.and.n_spin>1) &
-&             DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-            if (l_real_time.and.n_spinor>1) &
-              DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
+           DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spin>1) &
+&            DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spinor>1) &
+&            DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
 #if defined _SC || defined _RT
-            if (l_sc_run.or.l_real_time) &
-&             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+           if (l_sc_run.or.l_real_time) &
+&            P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
-          endif
-          do ic=iv+1,X%ib(2)
-            if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
-              DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
-              DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+           !
+         endif
+         !
+       enddo
+       !
+       ! Symmetrization 
+       !================
+       ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
+       !
+       do i_sp_pol=1,n_sp_pol
+         do iv=X%ib(1),X%ib_lim(1)
+           if(iv>=X%ib_lim(2)) then
+             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
+             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-              if (l_real_time.and.n_spin>1) &
-                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
-              if (l_real_time.and.n_spinor>1) &
-                DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
+             if (l_real_time.and.n_spin>1) &
+&              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             if (l_real_time.and.n_spinor>1) &
+               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
 #endif
 #if defined _SC || defined _RT
-              if (l_sc_run.or.l_real_time) &
-&               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+             if (l_sc_run.or.l_real_time) then
+               P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             endif
 #endif
-            endif
-          enddo
-        enddo
-      enddo
-      !
-    enddo
-    !
+           endif
+           do ic=iv+1,X%ib(2)
+             if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
+               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
+               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+#if defined _RT
+               if (l_real_time.and.n_spin>1) &
+&                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+               if (l_real_time.and.n_spinor>1) &
+&                DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
+#endif
+#if defined _SC || defined _RT
+               if (l_sc_run.or.l_real_time) then
+                 P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+               endif
+#endif
+             endif
+           enddo
+         enddo
+       enddo
+       !
+     enddo
+     !
    end subroutine DIPOLES_ppredux_and_symmetrize
    !
 end subroutine

@@ -92,12 +92,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if(l_RT_uses_E_DbGd) then
          RT%E_bare(i_RT)=E_reference%E_DbGd(i_b,i_k_DbGd,i_spin)
-         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
-         if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
        else
          RT%E_bare(i_RT)=E_reference%E(i_b,i_k,i_spin)
-         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
-         if(     associated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
        endif
        !
      enddo
@@ -213,7 +213,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
      !
-     if (associated(RT%GAMMA_bare)) then
+     if (allocated(RT%GAMMA_bare)) then
        call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
        call io_bulk(DB_id,R2=RT%GAMMA_bare)
      endif

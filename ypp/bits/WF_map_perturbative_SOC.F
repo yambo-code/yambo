@@ -25,7 +25,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  use YPP,                 ONLY:perturbative_SOC_path,SOC_split,SOC_bands_to_map,&
 &                              SOC_bands_buffer
- use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP,IP
+ use pars,                ONLY:lchlen,rZERO,cZERO,cI,SP
  use stderr,              ONLY:real2ch,intc
  use R_lattice,           ONLY:bz_samp
  use D_lattice,           ONLY:spin_sop,a,alat,x_cc
@@ -35,12 +35,11 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs
  use interfaces,          ONLY:WF_load,WF_free
- use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
  use LIVE_t,              ONLY:live_timing
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En
@@ -121,7 +120,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  core_io_path = trim(perturbative_SOC_path)
  call WF_load(WF_SOC,0,1,(/ 1, En_SOC%nb /),(/1,kpt%nibz/),space='R',title='-SOC mapping')
  !
- allocate(WF_SOC_rot(fft_size,n_spinor))
+ YAMBO_ALLOC(WF_SOC_rot,(fft_size,n_spinor))
  !
  core_io_path=core_io_path_save 
  n_spin  =n_spin_save
@@ -129,9 +128,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  n_sp_pol=n_sp_pol_save
  !
  E_SOC_nbands=En_SOC%nb
- allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
- allocate(E_SOC_table(2,En%nb,kpt%nibz))
- call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
+ YAMBO_ALLOC(En%E_SOC,(E_SOC_nbands,kpt%nibz))
+ YAMBO_ALLOC(E_SOC_table,(2,En%nb,kpt%nibz))
  En%E_SOC=0._SP
  E_SOC_table=0
  !
@@ -143,7 +141,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  NK_to_map=count(kpoint_to_map)
  NB_to_map=SOC_bands_to_map(2)-SOC_bands_to_map(1)+1
- allocate(E_vec(NB_to_map*n_sp_pol))
+ YAMBO_ALLOC(E_vec,(NB_to_map*n_sp_pol))
  !
  call load_cc(.false.,.false.)
  !
@@ -178,8 +176,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    enddo
    !
    NB_to_map=i_sorted
-   allocate(E_sorted(NB_to_map),E_sort_map(NB_to_map))
-   allocate(first_el(NB_to_map),n_of_el(NB_to_map))
+   YAMBO_ALLOC(E_sorted,(NB_to_map))
+   YAMBO_ALLOC(E_sort_map,(NB_to_map))
+   YAMBO_ALLOC(first_el,(NB_to_map))
+   YAMBO_ALLOC(n_of_el,(NB_to_map))
    !
    E_sorted=E_vec(:NB_to_map)
    !
@@ -306,8 +306,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      !
    enddo     ! i_b_SOC
    !
-   deallocate(E_sorted,E_sort_map)
-   deallocate(first_el,n_of_el)
+   YAMBO_FREE(E_sorted)
+   YAMBO_FREE(E_sort_map)
+   YAMBO_FREE(first_el)
+   YAMBO_FREE(n_of_el)
    !
  enddo       ! i_k
  !

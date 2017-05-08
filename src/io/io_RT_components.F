@@ -31,7 +31,7 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
+&                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
@@ -47,7 +47,7 @@ integer function io_RT_components(what,ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
@@ -58,7 +58,7 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- integer               :: nbands,ik,ib,i_spin,i_memory,i_time,db_type
+ integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  !
  ! DB kind and name
@@ -176,8 +176,8 @@ integer function io_RT_components(what,ID)
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
-       if(allocated(q_weight_RT)) deallocate(q_weight_RT)
-       allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+       YAMBO_FREE(q_weight_RT)
+       YAMBO_ALLOC(q_weight_RT,(nqbz,elph_branches(1):elph_branches(2),2))
      endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
@@ -325,7 +325,10 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     if (.not.allocated(TYP%Time)) allocate(TYP%Time(NE_steps))
+     if (.not.allocated(TYP%Time)) then
+       YAMBO_ALLOC(TYP%Time,(NE_steps))
+     endif
+     !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))
      !

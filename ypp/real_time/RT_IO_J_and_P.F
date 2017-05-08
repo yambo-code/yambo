@@ -27,7 +27,6 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use pars,           ONLY:DP,SP,schlen
  use electrons,      ONLY:n_spin
  use R_lattice,      ONLY:nkibz
- use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:J_cache,P_cache,M_cache,IO_JPSM_cache_steps
@@ -35,7 +34,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
- implicit none
+#include<memory.h>
  !
  logical, optional :: IO_error,first_sec_only,G_lesser_only
  integer, optional :: COM_
@@ -61,11 +60,9 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  if (present(G_lesser_only)) then
    if (G_lesser_only) then
      !
-     allocate(G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz,1))
-     call mem_est("G_lesser",(/size(G_lesser)/),(/2*SP/))
+     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz,1))
      !
-     allocate(G_lesser_reference(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz))
-     call mem_est("Gf_l_ref",(/size(G_lesser_reference)/),(/2*SP/))
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz))
      !
      call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
      io_G=io_RT_components('G',ID)
@@ -120,20 +117,16 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !=====================================
  !
  if (.not.allocated(RT_J_t)) then
-   allocate(RT_J_t(RT_conf%T_n_steps,3),RT_P_t(RT_conf%T_n_steps,6))
-   call mem_est("RT_P_t",(/size(RT_P_t)/),(/2*SP/))
-   call mem_est("RT_J_t",(/size(RT_J_t)/),(/2*SP/))
+   YAMBO_ALLOC(RT_J_t,(RT_conf%T_n_steps,3))
+   YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,6))
  endif
  !
- allocate(J_cache(6,IO_JPSM_cache_steps))
- call mem_est("Current_Cache",(/size(J_cache)/),(/SP/))
+ YAMBO_ALLOC(J_cache,(6,IO_JPSM_cache_steps))
  !
- allocate(P_cache(6,IO_JPSM_cache_steps))
- call mem_est("Polarization_Cache",(/size(P_cache)/),(/SP/))
+ YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
  !
  if(n_spin>1) then
-   allocate(M_cache(6,IO_JPSM_cache_steps))
-   call mem_est("Magnetization_Cache",(/size(M_cache)/),(/SP/))
+   YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache_steps))
  endif
  !
  RT_J_t        =(0._DP,0._DP)
@@ -169,11 +162,10 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo
  !
- deallocate(J_cache,P_cache)
- call mem_est("Current_Cache Polarization_Cache")
+ YAMBO_FREE(J_cache)
+ YAMBO_FREE(P_cache)
  if(n_spin>1) then
-   deallocate(M_cache)
-   call mem_est("Magnetization_Cache")
+   YAMBO_FREE(M_cache)
  endif
  !
 end subroutine

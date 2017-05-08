@@ -48,7 +48,6 @@ subroutine RT_driver(E,X,k,q)
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_update_QP_Energies
  use plasma,          ONLY:PLASMA_free,EH_gas
- use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
@@ -57,7 +56,7 @@ subroutine RT_driver(E,X,k,q)
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
- implicit none
+#include<memory.h>
  !
  ! Notice that E is never changed!
  !
@@ -159,10 +158,6 @@ subroutine RT_driver(E,X,k,q)
  call RT_alloc(E)
  call RT_alloc_control()
  !
- ! Initial allocation and basic definitions of the RT_carriers object
- !
- call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
- !
  ! Restart from a previous RT run or from a SC calculation
  ! 
  call section('=','Start and Restart')
@@ -176,12 +171,12 @@ subroutine RT_driver(E,X,k,q)
    !
    call WF_free(WF)
    !
-   deallocate(rho_n,rho_reference)
-   call mem_est("rho_reference rho")
+   YAMBO_FREE(rho_n)
+   YAMBO_FREE(rho_reference)
    !
    if(n_spin>1) then
-     deallocate(magn_n,magn_reference)
-     call mem_est("magn_reference magn")
+     YAMBO_FREE(magn_n)
+     YAMBO_FREE(magn_reference)
    endif
    !
  endif

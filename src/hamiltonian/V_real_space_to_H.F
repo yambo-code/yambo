@@ -23,7 +23,7 @@
 !
 subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
- use electrons,      ONLY:n_sp_pol,n_spin,n_spinor,spin
+ use electrons,      ONLY:n_spin,n_spinor,spin
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
@@ -64,7 +64,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu)) return
 #endif
  !
-#if defined _TIMING 
+#if defined _TIMING
  call timing('V_real_space_to_H',OPR='start')
 #endif
  !
@@ -162,7 +162,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
    enddo
  enddo
  !
-#if defined _TIMING 
+#if defined _TIMING
  call timing('V_real_space_to_H',OPR='stop')
 #endif
  !

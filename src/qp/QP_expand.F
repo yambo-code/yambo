@@ -27,7 +27,7 @@ subroutine QP_expand(k,qp,qp_expanded)
  use QP_m,          ONLY:QP_t
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_sp_pol
- implicit none
+#include<memory.h>
  !
  type(bz_samp)    ::k
  type(QP_t)       ::qp,qp_expanded
@@ -89,12 +89,12 @@ subroutine QP_expand(k,qp,qp_expanded)
      qp_expanded%nk=max_ik
      qp_expanded%n_states=n_qp_expanded
      !
-     allocate(qp_expanded%k(max_ik,3),&
-&             qp_expanded%wk(max_ik),&
-&             qp_expanded%table(qp_expanded%n_states,3+n_sp_pol-1),&
-&             qp_expanded%E_bare(qp_expanded%n_states),&
-&             qp_expanded%E(qp_expanded%n_states),&
-&             qp_expanded%Z(qp_expanded%n_states))
+     YAMBO_ALLOC(qp_expanded%k,(max_ik,3))
+     YAMBO_ALLOC(qp_expanded%table,(qp_expanded%n_states,3+n_sp_pol-1))
+     YAMBO_ALLOC(qp_expanded%E_bare,(qp_expanded%n_states))
+     YAMBO_ALLOC(qp_expanded%E,(qp_expanded%n_states))
+     YAMBO_ALLOC(qp_expanded%Z,(qp_expanded%n_states))
+     !
    endif
    !
  enddo

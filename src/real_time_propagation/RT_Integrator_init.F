@@ -25,7 +25,6 @@ subroutine RT_Integrator_init()
  ! 
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:warning
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_RWA,   &
 &                         l_RT_simple,l_RT_HEUN,l_RT_RK2,l_RT_RK4, &
@@ -33,7 +32,7 @@ subroutine RT_Integrator_init()
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
 &                         I1_matrix,Integrator_nsteps,RT_bands
  !
- implicit none
+#include<memory.h>
  !
  integer  :: ib
  !
@@ -126,8 +125,7 @@ subroutine RT_Integrator_init()
  !
  ! This is needed by some integrators
  !
- allocate(I1_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
- call mem_est("I1_matrix",(/size(I1_matrix)/),(/2*SP/))
+ YAMBO_ALLOC(I1_matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
  !
  I1_matrix=cZERO
  do ib=RT_bands(1),RT_bands(2)

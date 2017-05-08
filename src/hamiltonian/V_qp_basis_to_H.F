@@ -23,7 +23,7 @@
 !
 subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
- use electrons,      ONLY:n_sp_pol,spin
+ use electrons,      ONLY:spin
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use hamiltonian,    ONLY:H_ref_bands
@@ -54,7 +54,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_QP_cpu) return
 #endif
  !
-#if defined _TIMING 
+#if defined _TIMING
  call timing('V_qp_basis_to_H',OPR='start')
 #endif
  !
@@ -89,7 +89,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
    !
  end do
  !
-#if defined _TIMING 
+#if defined _TIMING
  call timing('V_qp_basis_to_H',OPR='stop')
 #endif
  !

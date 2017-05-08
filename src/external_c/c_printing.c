@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -21,16 +21,7 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-#if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC_(name,NAME) name
-#endif
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+#include "c_defs.h"
 int guess_winsize()
 {
  int width;

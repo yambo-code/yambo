@@ -43,7 +43,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  ! 
  ! Work Space
  !
- logical :: adding,deliver_a_msg
+ logical :: adding,deliver_a_msg,just_started
  integer :: i_mem,i_el,MEM_now_kb,MEM_now_b,i_SAVE,i_COMPONENT,i_LIB,i_SHELF
  character(lchlen) :: msg_
  character(schlen) :: SHELF,TRUNK
@@ -57,6 +57,8 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  if (.not.master_thread) return
  !
 #if defined _MEM_CHECK
+ !
+ just_started=MEM_treshold==0.or.infile_editing.or.len_trim(repfile)==0
  !
  ! REPORTs 
  !=========
@@ -86,10 +88,12 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  else
    SHELF=what
  endif
- !...here i search the SHELF in the already allocated objects (to add/remove an element)
+ !...here i search the SHELF & the COMPONENT in the already allocated objects (to add/remove an element)
  i_SHELF=MEM_shelf_finder(trim(SHELF))
+ i_COMPONENT=0
  if (i_SHELF>0) then
    SHELF=MEMs(i_SHELF)%shelf
+   i_COMPONENT=MEM_component_finder(i_SHELF,what,Sz,trim(secnm),adding)
  endif
  i_SAVE =MEM_save_finder(trim(SHELF))
  !
@@ -113,7 +117,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  if (adding) then
    !
    MEM_now_b=Sz*Kn
-   MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
+   MEM_now_kb=int(real(MEM_now_b)/Kilobyte)
    !
    if (MEM_now_kb==0) MEM_now_kb=1
    !
@@ -134,18 +138,23 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
      MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_kb
    endif
    !
-   MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
-   i_COMPONENT=MEMs(i_SHELF)%N
-   if (i_COMPONENT>N_MEM_max_element_components) then
-     call error("Max Number of MEM elements reached.")
+   if (i_COMPONENT==0) then
+     MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
+     i_COMPONENT=MEMs(i_SHELF)%N
+     if (i_COMPONENT>N_MEM_max_element_components) then
+       call error("Max Number of MEM elements COMPONENTS reached.")
+     endif
+     MEMs(i_SHELF)%desc(i_COMPONENT)=trim(secnm)
+     MEMs(i_SHELF)%name(i_COMPONENT)=what
+     MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
+     MEMs(i_SHELF)%composed(i_COMPONENT)=.FALSE.
+   else
+     MEMs(i_SHELF)%composed(i_COMPONENT)=.TRUE.
    endif
-   !
-   MEMs(i_SHELF)%section(i_COMPONENT)=secnm
-   MEMs(i_SHELF)%name(i_COMPONENT)=what
-   MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
    MEMs(i_SHELF)%size(i_COMPONENT)=MEMs(i_SHELF)%size(i_COMPONENT)+Sz
    !
-   if (MEMs(i_SHELF)%use>MEM_SAVE_treshold) then
+   if (MEMs(i_SHELF)%use>MEM_SAVE_treshold.and..not.just_started) then
+     write (100,*) what,MEMs(i_SHELF)%use,MEM_SAVE_treshold
      if (i_SAVE==0) then
        if (N_MEM_SAVE_elements<N_MEM_SAVE_max) then
          N_MEM_SAVE_elements=N_MEM_SAVE_elements+1
@@ -165,18 +174,16 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  if (.not.adding) then
    !
-   i_COMPONENT=0
-   if (i_SHELF>0) i_COMPONENT=MEM_component_finder(i_SHELF,what,Sz)
-   !
    if (i_SHELF/=0.and.i_COMPONENT/=0) then
      !
-     MEM_now_b=MEMs(i_SHELF)%size(i_COMPONENT)*MEMs(i_SHELF)%kind(i_COMPONENT)
+     MEM_now_b=Sz*MEMs(i_SHELF)%kind(i_COMPONENT)
      TOT_MEM_bytes=TOT_MEM_bytes-MEM_now_b
-     MEM_now_kb=nint(real(MEM_now_b)/Kilobyte)
+     MEM_now_kb=int(real(MEM_now_b)/Kilobyte)
      !
      if (MEM_now_kb==0) MEM_now_kb=1
      !
      MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_kb
+     MEMs(i_SHELF)%size(i_COMPONENT) = MEMs(i_SHELF)%size(i_COMPONENT)-Sz
      !
      if ( MEMs(i_SHELF)%use <= 0 ) then
        !
@@ -186,11 +193,11 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        !
        N_MEM_elements=N_MEM_elements-1
        !
-     else 
+     else if (MEMs(i_SHELF)%size(i_COMPONENT) <= 0) then
        !
        do i_el=i_COMPONENT,MEMs(i_SHELF)%N-1
          MEMs(i_SHELF)%name(i_el)=MEMs(i_SHELF)%name(i_el+1)
-         MEMs(i_SHELF)%section(i_el)=MEMs(i_SHELF)%section(i_el+1)
+         MEMs(i_SHELF)%desc(i_el)=MEMs(i_SHELF)%desc(i_el+1)
          MEMs(i_SHELF)%kind(i_el)=MEMs(i_SHELF)%kind(i_el+1)
          MEMs(i_SHELF)%size(i_el)=MEMs(i_SHELF)%size(i_el+1)
        enddo    
@@ -205,9 +212,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    !
  endif
  !
- if (MEM_treshold==0) return
- if (infile_editing ) return
- if (len_trim(repfile)==0) return
+ if (just_started) return
  !
  ! Messages
  !==========

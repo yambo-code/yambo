@@ -26,7 +26,7 @@ subroutine MEM_treshold_estimate( )
  use pars,         ONLY:SP
  use units,        ONLY:Kilobyte
  use electrons,    ONLY:n_spin,n_bands
- use R_lattice,    ONLY:ng_vec,nkibz
+ use R_lattice,    ONLY:nkibz
  use wave_func,    ONLY:wf_ng
  use memory,       ONLY:MEM_treshold,MEM_SAVE_treshold,MEM_jump_treshold
  !

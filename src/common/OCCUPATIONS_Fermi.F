@@ -256,8 +256,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  call OCCUPATIONS_Gaps(E)
  !
-! if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
- !
  ! Mode = 1. Define E%f and exits
  !
  if (mode==1) return

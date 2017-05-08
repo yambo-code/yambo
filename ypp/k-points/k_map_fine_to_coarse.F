@@ -415,5 +415,4 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  call k_ibz2bz(Xk,'d',.false.) 
  call k_ibz2bz(DbGd_k(i_db_merge),'d',.false.) 
  !
- !
 end subroutine

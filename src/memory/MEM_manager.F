@@ -137,7 +137,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
    i_COMPONENT=MEMs(i_SHELF)%N
    if (i_COMPONENT>N_MEM_max_element_components) then
-     call error("Max Number of MEM elements reached.")
+     call error("Max Number of MEM element components reached.")
    endif
    !
    MEMs(i_SHELF)%section(i_COMPONENT)=secnm

@@ -33,7 +33,6 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  ! This is true both at zero and finite temperature. Indeed also at finite temperature
  ! when the theory is causal the GF must be rotated to the real-energy axis.
  !
- !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use electrons,     ONLY:n_sp_pol,spin
@@ -44,6 +43,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
 #include<memory.h>
+ !
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k

@@ -29,6 +29,7 @@ subroutine QP_DBs_initialize()
  use QP_m,      ONLY:QP_t,QP_reset
  use drivers,   ONLY:infile_editing
  use it_m,      ONLY:nflines,flines,infile
+ use com,       ONLY:warning
  use parser_m,  ONLY:parser       
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
@@ -104,6 +105,7 @@ subroutine QP_DBs_initialize()
            call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
            io_QP_and_GF_err=io_QP_and_GF(trim(DB_file_name(i_qp,2)),QP_db(n_QP_dbs),ID)
            if (io_QP_and_GF_err/=0) then
+             call warning("QP DB "//trim(DB_file_name(i_qp,2))//" not found")
              call QP_reset(QP_db(n_QP_dbs))
              n_QP_dbs=n_QP_dbs-1
            endif

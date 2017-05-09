@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
+subroutine QP_load_GFs(band_range,qp,E,DB_corrected)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
  !

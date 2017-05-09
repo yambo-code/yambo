@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_merge( )
+subroutine QP_DBs_manipulate( )
  !
  use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name
 #if defined _YPP_RT
@@ -32,19 +32,21 @@ subroutine QP_DBs_merge( )
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
- integer           :: i_qp,i_d,i_err,ID
- integer, external :: io_QP_and_GF
- logical           :: plan_EWZ(n_QP_dbs,3)
- type(QP_t)        :: qp
+ integer                 :: i_qp,i_d,i_err,ID,n_GROUNDS
+ integer,    external    :: io_QP_and_GF
+ logical,    allocatable :: plan_EWZ(:,:)
+ type(QP_t), allocatable :: qp(:)
  !
  ! Resets
  !--------
+ call QP_DBs_initialize()
+ !
+ YAMBO_ALLOC(plan_EWZ,(n_QP_dbs,3))
  plan_EWZ=.FALSE.
- call QP_reset(qp)
  !
  call section("=",'QP databases mergering')
  !=========================================
@@ -68,11 +70,21 @@ subroutine QP_DBs_merge( )
  enddo
  !
  call msg('s','Merging...')
- !=========================
+ !==========================
  !
- call QP_merge_DBs(n_QP_dbs,QP_db,qp,plan_EWZ)
+ allocate(qp(1))
+ n_GROUNDS=-1
+ call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS,qp)
+ deallocate(qp)
+ allocate(qp(n_GROUNDS))
+ do i_qp=1,n_GROUNDS
+   call QP_reset(qp(i_qp))
+ enddo
+ call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS,qp)
+ deallocate(qp)
  !
  call msg('l','done')
+ stop
  !
 !#if defined _RT
 ! !

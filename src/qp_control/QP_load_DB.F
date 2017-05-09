@@ -297,7 +297,7 @@ integer function QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,&
  ! Green Functions
  !
  if (GFs_From_DB) then
-   call Load_Green_Functions(band_range,qp,en,DB_corrected)
+   call QP_load_GFs(band_range,qp,en,DB_corrected)
    return
  endif
  !

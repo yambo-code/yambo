@@ -28,11 +28,12 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! types. Moreover the Fermi level is decided on the basis
  ! of the X energies (supposed to be uniformly spread).
  !
- ! scheme
- !::::::::
+ ! QP_apply
+ !::::::::::
  ! |_ qp_load_DB
  ! |      |_ qp_apply_DB_interpolation
- ! |      |_ qp_fit_DB_values
+ ! |      |_ qp_fit_DB_energies/widths
+ ! |      |_ qp_load_GFs
  ! |_ qp_apply_global_stretch
  ! |_ (if X or K) fermi_level
  !
@@ -216,7 +217,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! 2] I am imposing a qp_impose that contains qp corrections
  !
  if (present(qp_impose)) QP_load_DB_err=QP_load_DB(band_range,en,k,qp_impose,&
-&                                                QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
+&                                                  QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
  !
  ! GPL_EXCLUDE_END
  !

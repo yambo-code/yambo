@@ -301,6 +301,8 @@ module real_time
  logical  :: l_RT_INV
  !
  logical  :: l_RT_RWA
+ logical  :: l_RT_ACC
+ logical  :: l_RT_DIAG
  logical  :: l_RT_low_pumping
  !
  logical  :: l_RT_SIMPLE

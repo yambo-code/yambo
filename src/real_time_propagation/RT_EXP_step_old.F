@@ -44,6 +44,9 @@ subroutine RT_EXP_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  integer     :: i_order
  complex(SP) :: U1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: U2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: U1_km1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: U2_km1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ !
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M3_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -60,45 +63,48 @@ subroutine RT_EXP_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  ! U1 = exp ( -i * Ho_plus_Sigma * dt)
  ! U2 = exp ( +i + Ho_plus_Sigma * dt)
  !
- U1_k=I1_matrix-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
- U2_k=I1_matrix+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ U1_km1=-cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
+ U2_km1=+cI*deltaT*Ho_plus_Sigma(:,:,ik,1)
  !
  if(integrator_exp_order>1) then
-   M1_tmp=U2_k-I1_matrix
-   M2_tmp=U2_k-I1_matrix
+   M1_tmp=U2_km1
+   M2_tmp=U2_km1
  endif
  !
  do i_order=2,integrator_exp_order
    !
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,M2_tmp/real(i_order,SP),M3_tmp)
    !
-   U1_k=U1_k+(-1._SP)**i_order*M3_tmp
-   U2_k=U2_k+(+1._SP)**i_order*M3_tmp
+   U1_km1=U1_km1+(-1._SP)**i_order*M3_tmp
+   U2_km1=U2_km1+(+1._SP)**i_order*M3_tmp
    !
    if (i_order<integrator_exp_order) M2_tmp=M3_tmp
    !
  enddo
  !
+ U1_k=U1_km1+I1_matrix
+ U2_k=U2_km1+I1_matrix
+ !
  if (l_RT_low_pumping) then
    !
-   ! dG(T+dt) + G0 =  U1(dt)*dG(T)*U2(dt) U1(dt)*G0(T)*U2(dt)
-   ! dG(T+dt)      =  U1(dt)*dG(T)*U2(dt) U1(dt)*G0(T)*U2(dt) - G0
-   !               =  U1(dt)*dG(T)*U2(dt)   +     order dG*1
-   !                 +U1(dt)*G0 - G0*U2(dt) +     order G0*dt
-   !                 +(U1(dt)-1)*G0*(U2(dt)+1)            order G0*dt**2
+   ! dG(T+dt) + G0 =  U1(dt)*dG(T)*U2(dt) + U1(dt)*G0(T)*U2(dt)
+   ! dG(T+dt)      =  U1(dt)*dG(T)*U2(dt) + U1(dt)*G0(T)*U2(dt) - G0
+   !               =  U1(dt)*dG(T)*U2(dt)
+   !                 +(U1(dt)-I1)*G0*I1 + I1*G0*(U2(dt)-I1) +(G0 - G0)
+   !                 +(U1(dt)-I1)*G0*(U2(dt)-I1)
    !
-   ! dG_out = G(T+dt) -G(t) 
+   ! dG_out = G(T+dt) -G(t)
    !
    call M_by_M_omp('n','n',RT_nbands,U1_k,dG_inp,M1_tmp)
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k,dG_out)
    !
-   call M_by_M_omp('n','n',RT_nbands,-cI*U1_k,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),-cI*U2_k,M2_tmp)
-   dG_out=dG_out+M1_tmp+M2_tmp
+   call M_by_M_omp('n','n',RT_nbands,U1_km1,G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),U2_km1,M2_tmp)
+   dG_out=dG_out+(M1_tmp+M2_tmp)
    !
-   call M_by_M_omp('n','n',RT_nbands,U1_k-cI*I1_matrix,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,U2_k-cI*I1_matrix,M2_tmp)
-   dG_out=dG_out+M2_tmp-dG_inp
+   call M_by_M_omp('n','n',RT_nbands,U1_km1,G_lesser_reference(:,:,ik),M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M2_tmp,U2_km1,M1_tmp)
+   dG_out=dG_out+M1_tmp-dG_inp
    !
  else
    !

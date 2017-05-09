@@ -31,7 +31,7 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt*[H,G0]
  !                                  =G(t)+G(t)-idt*[H,G(t)]-2idt*[H,G0]
  !
- ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag
+ ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag -2idt*[H,G0]
  !
  ! AdA = 1xA + A^tx1
  !

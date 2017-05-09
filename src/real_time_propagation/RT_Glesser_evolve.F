@@ -31,8 +31,9 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,spin_occ
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_RWA,integrator_step, &
-&                         G_lesser_reference,RT_bands,RT_nk
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
+&                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
+&                         integrator_step,G_lesser_reference,RT_bands,RT_nk
  !
  implicit none
  !
@@ -43,20 +44,25 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  complex(SP),    intent(in) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),   intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
+ ! Work space
+ !
+ logical :: l_RT_std
  integer :: ik
  !
  dG_out=cZERO
  !
+ l_RT_STD=.not.(l_RT_ACC.or.l_RT_DIAG)
+ !
  do ik=1,RT_nk
    !
-   if (l_RT_EXP)   call RT_EXP_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   !if (l_RT_EXP)   call RT_EXP_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   if (l_RT_EULER) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EULER            ) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   !if (l_RT_INV)   call RT_INV_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   !if (l_RT_INV)   call RT_INV_step_alternative(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
-   if (l_RT_INV)   call RT_INV_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_alternative(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_INV.and.l_RT_STD ) call RT_INV_step_old(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    ! Here the term G(T0) [dG_old] is added to dG(t)
    !

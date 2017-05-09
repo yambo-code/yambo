@@ -26,7 +26,8 @@ subroutine RT_Integrator_init()
  use pars,           ONLY:SP,cONE,cZERO
  use com,            ONLY:warning
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,l_RT_RWA,   &
+ use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
+&                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,             &
 &                         l_RT_simple,l_RT_HEUN,l_RT_RK2,l_RT_RK4, &
 &                         Integrator_exp_order,Integrator_name,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
@@ -71,7 +72,13 @@ subroutine RT_Integrator_init()
  !
  ! c) Extra
  !
- l_RT_RWA  =index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
+ l_RT_RWA = index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
+ !
+ l_RT_ACC = (l_RT_INV.or.l_RT_EXP) .and. &
+            index(Integrator_name,'ACC'  )/=0.or.index(Integrator_name,'acc'  )/=0
+ !
+ l_RT_DIAG=  l_RT_INV              .and. &
+&           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
  !
  ! d) Reset integrator name
  !
@@ -85,7 +92,9 @@ subroutine RT_Integrator_init()
  if (l_RT_RK4   ) Integrator_name = trim(Integrator_name)//" + RK4"
  if (l_RT_HEUN  ) Integrator_name = trim(Integrator_name)//" + HEUN"
  !
- if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
+ if (l_RT_RWA   ) Integrator_name = trim(Integrator_name)//" + RWA"
+ if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
+ if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
  !
  ! e) Define integrators tables
  !

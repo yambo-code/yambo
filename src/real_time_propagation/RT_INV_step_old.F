@@ -45,24 +45,19 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  complex(SP) :: T1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: T2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: T1_diag(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: T2_diag(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: T1_off(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: T2_off(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: T1_km1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: T2_km1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP) :: H_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  complex(SP) :: M1_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP) :: M3_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- logical :: l_RT_low_pumping=.true.,l_use_lin_sys=.false.
+ logical :: l_RT_low_pumping=.true.,l_use_lin_sys=.true.
  !
  ! Taylor expansion
  !
- H1_k=I1_matrix-cI*deltaT/2._SP*Ho_plus_Sigma(:,:,ik,1)
- H2_k=I1_matrix+cI*deltaT/2._SP*Ho_plus_Sigma(:,:,ik,1)
+ H_k=cI*deltaT/2._SP*Ho_plus_Sigma(:,:,ik,1)
  !
  if(l_use_lin_sys) then
    !
@@ -70,17 +65,19 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    !
    ! X1
    !
-   M1_tmp=H1_k
-   M2_tmp=H2_k
-   call SERIAL_lin_system(RT_nbands,RT_nbands,M2_tmp,M1_tmp)
-   T1_k=M1_tmp
+   M1_tmp=I1_matrix+H_k
+   T1_k  =I1_matrix-H_k
+   call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,T1_k)
+   T1_km1=         -H_k*2._SP
+   call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,T1_km1)
    !
    ! X1
    !
-   M1_tmp=H1_k
-   M2_tmp=H2_k
-   call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,M2_tmp)
-   T2_k=M2_tmp
+   M1_tmp=I1_matrix-H_k
+   T2_k  =I1_matrix+H_k
+   call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,T2_k)
+   T2_km1=         +H_k*2._SP
+   call SERIAL_lin_system(RT_nbands,RT_nbands,M1_tmp,T2_km1)
    !
  else
    !
@@ -88,19 +85,17 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    !
    ! X1
    !
-   M1_tmp=H2_k
+   M1_tmp=I1_matrix+H_k
    call SERIAL_inversion(RT_nbands,M1_tmp,det_tmp,.false.)
-   call M_by_M_omp('n','n',RT_nbands,H1_k,M1_tmp,T1_k)
-   !call LINEAR_ALGEBRA_driver(INV,M=M1_tmp)
-   !call LINEAR_ALGEBRA_driver(MAT_MUL,M=H1_k,B=M1_tmp,C=T1_k)
+   call M_by_M_omp('n','n',RT_nbands,I1_matrix-H_k      ,M1_tmp,T1_k)
+   call M_by_M_omp('n','n',RT_nbands,         -H_k*2._SP,M1_tmp,T1_km1)
    !
    ! X2
    !
-   M2_tmp=H1_k
-   call SERIAL_inversion(RT_nbands,M2_tmp,det_tmp,.false.)
-   call M_by_M_omp('n','n',RT_nbands,H2_k,M2_tmp,T2_k)
-   !call LINEAR_ALGEBRA_driver(INV,M=M2_tmp)
-   !call LINEAR_ALGEBRA_driver(MAT_MUL,M=H2_k,B=M2_tmp,C=T2_k)
+   M1_tmp=I1_matrix-H_k
+   call SERIAL_inversion(RT_nbands,M1_tmp,det_tmp,.false.)
+   call M_by_M_omp('n','n',RT_nbands,I1_matrix+H_k      ,M1_tmp,T2_k)
+   call M_by_M_omp('n','n',RT_nbands,         +H_k*2._SP,M1_tmp,T2_km1)
    !
  endif
  !
@@ -109,45 +104,34 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    ! dG(T+dt) + G0 =  T1(dt)*dG(T)*T2(dt) + T1(dt)*G0(T)*T2(dt)
    ! dG(T+dt)      =  T1(dt)*dG(T)*T2(dt) + T1(dt)*G0(T)*T2(dt) - G0
    !               =  T1(dt)*dG(T)*T2(dt)
-   !                 +T1_off(dt)*G0*T2_off(dt)
-   !                 +T1_off(dt)*G0*T2_diag(dt) +T1_diag(dt)*G0*T2_off(dt)
+   !                 +(T1(dt)-I1)*G0*I1 + I1*G0*(T2(dt)-I1) +(G0 - G0)
+   !                 +(T1(dt)-I1)*G0*(T2(dt)-I1)
    !
    ! dG_out = G(T+dt) -G(t)
-   !
-   T1_diag=cZERO
-   T2_diag=cZERO
-   do ib=RT_bands(1),RT_bands(2)
-     T1_diag(ib,ib)=T1_k(ib,ib)
-     T2_diag(ib,ib)=T2_k(ib,ib)
-   enddo
-   T1_off=T1_k
-   T2_off=T2_k
-   do ib=RT_bands(1),RT_bands(2)
-     T1_off(ib,ib)=cZERO
-     T2_off(ib,ib)=cZERO
-   enddo
    !
    call M_by_M_omp('n','n',RT_nbands,T1_k,dG_old,M1_tmp)
    call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_k,dG_out)
    !
-   call M_by_M_omp('n','n',RT_nbands,T1_off,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_off,M2_tmp)
-   M3_tmp=M2_tmp
+   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M1_tmp)
+   call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),T2_km1,M2_tmp)
+   dG_out=dG_out+(M1_tmp+M2_tmp)
+   !write(*,*) ' '
+   !write(*,*) 'M1 '
+   !do ib=RT_bands(1),RT_bands(2)
+   !  write(*,*) M1_tmp(:,ib)
+   !enddo
+   !write(*,*) 'M2 '
+   !do ib=RT_bands(1),RT_bands(2)
+   !  write(*,*) M2_tmp(:,ib)
+   !enddo
    !
-   call M_by_M_omp('n','n',RT_nbands,T1_off,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_diag,M2_tmp)
-   M3_tmp=M3_tmp+M2_tmp
-   !
-   call M_by_M_omp('n','n',RT_nbands,T1_diag,G_lesser_reference(:,:,ik),M1_tmp)
-   call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_off,M2_tmp)
-   M3_tmp=M3_tmp+M2_tmp
-   !
-   !call M_by_M_omp('n','n',RT_nbands,T1_diag,G_lesser_reference(:,:,ik),M1_tmp)
-   !call M_by_M_omp('n','n',RT_nbands,M1_tmp,T2_diag,M2_tmp)
-   !M3_tmp=M3_tmp+(M2_tmp-G_lesser_reference(:,:,ik))
-   !
-   dG_out=dG_out+M3_tmp
-   dG_out=dG_out-dG_old
+   call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M2_tmp)
+   call M_by_M_omp('n','n',RT_nbands,M2_tmp,T2_km1,M1_tmp)
+   !write(*,*) 'M3 '
+   !do ib=RT_bands(1),RT_bands(2)
+   !  write(*,*) M1_tmp(:,ib)
+   !enddo
+   dG_out=dG_out+M1_tmp-dG_old
    !
  else
    !

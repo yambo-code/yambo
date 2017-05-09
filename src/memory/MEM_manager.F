@@ -154,7 +154,6 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    MEMs(i_SHELF)%size(i_COMPONENT)=MEMs(i_SHELF)%size(i_COMPONENT)+Sz
    !
    if (MEMs(i_SHELF)%use>MEM_SAVE_treshold.and..not.just_started) then
-     write (100,*) what,MEMs(i_SHELF)%use,MEM_SAVE_treshold
      if (i_SAVE==0) then
        if (N_MEM_SAVE_elements<N_MEM_SAVE_max) then
          N_MEM_SAVE_elements=N_MEM_SAVE_elements+1

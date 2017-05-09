@@ -21,21 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
- !
- ! The last term in the following come from the fact that G0=G_reference
- ! is not included in G(t) nor in G(t+dt)
+subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! G(T+dt)-G(T)=-idt/2[H,G(T+dt)+G(T)]-idt[H,G0]
  !
- ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt*[H,G0]
- !                                  =G(t)+G(t)-idt*[H,G(t)]-2idt*[H,G0]
+ ! (1+idt*H)G(t+dt)+G(t+dt)(1-idt*H)=(1-idt*H)G(t)+G(t)(1+idt*H)-2idt[H,G0]
  !
- ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag -2idt*[H,G0]
+ ! A^dag G(t+dt) + G(t+dt) A = A G(t) + G(t) A^dag
  !
- ! AdA = 1xA + A^tx1
- !
- ! AdA v[G(t+dt)] = G_com
+ ! Diagonalize A and express the commutator as  
+ ! (a) M U G(t+dt) U^dag = U G_com U^dag
+ ! with M_{ij}=alpha*_i+alpha_j
+ ! I can solve (a) or rotate it back in the initial space
  !
  use pars,           ONLY:SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
@@ -55,9 +52,9 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! Work space
  !
- integer     :: ib1,ib2,ib3,ib4,ibb1,ibb2,i_fail,v_tmp(RT_nbands**2)
+ integer     :: ib1,ib2
  real(SP)    :: En(RT_bands(1):RT_bands(2))
- complex(SP) :: AdA_k(RT_nbands**2,RT_nbands**2)
+ complex(SP) :: det_tmp
  complex(SP) :: U_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: H2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
@@ -65,7 +62,7 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: G_com(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- complex(SP), pointer :: vec_dG_out(:,:)
+ logical     :: l_use_superindex=.true.
  !
  H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
  H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
@@ -79,52 +76,36 @@ subroutine RT_INV_step(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  call M_by_M_omp('n','n',RT_nbands,H1_k,dG_old,M1_tmp)
  call M_by_M_omp('n','n',RT_nbands,dG_old,H2_k,M2_tmp)
- dG_out=G_com+M1_tmp+M2_tmp
+ G_com=G_com+M1_tmp+M2_tmp
  !
- !*******************************************************
- !U_k=Ho_plus_Sigma(:,:,ik,1)
- !call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
- !!
- !! Generate the matrix  
- !!
- !H1_k=cZERO
- !H2_k=cZERO
- !do ib1=RT_bands(1),RT_bands(2)
- !  H1_k(ib1,ib1)=1._SP+cI*deltaT*En(ib1)
- !  H2_k(ib1,ib1)=1._SP-cI*deltaT*En(ib1)
- !enddo
- !!
- !! Rotate dG_out in the new basis set
- !!
- !call M_by_M_omp('c','n',RT_nbands,U_k   ,dG_out,M2_tmp)
- !call M_by_M_omp('n','n',RT_nbands,M2_tmp,U_k   ,dG_out)
- !!*******************************************************
+ ! Diagonalize U_k
  !
- vec_dG_out => linkM2V(dG_out,(/RT_nbands**2,1/))
+ U_k=Ho_plus_Sigma(:,:,ik,1)
+ call SERIAL_HERMITIAN_diagonalization(RT_nbands,U_k,En)
  !
- AdA_k=cZERO
+ ! Implementation works, and it is much faster than before
+ ! However it is not sensitive
+ !U_k=cmplx(Ho_plus_Sigma(:,:,ik,1),kind=DP)
+ !call ZHEEV('V','U',RT_nbands,U_k,RT_nbands,En,v_cmplx,lwork,v_real,i_fail)
+ !
+ ! Rotate G_com in the new basis set
+ !
+ call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M1_tmp)
+ call M_by_M_omp('n','c',RT_nbands,M1_tmp,U_k  ,G_com)
+ !
+ ! Generate the matrix  
+ !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=RT_bands(1),RT_bands(2)
-     do ib3=RT_bands(1),RT_bands(2)
-       do ib4=RT_bands(1),RT_bands(2)
-         ibb1=(ib3-RT_bands(1)+1)+RT_nbands*(ib1-RT_bands(1))
-         ibb2=(ib4-RT_bands(1)+1)+RT_nbands*(ib2-RT_bands(1))
-         AdA_k(ibb1,ibb2)=I1_matrix(ib1,ib2)*H2_k(ib3,ib4)+H1_k(ib2,ib1)*I1_matrix(ib3,ib4)
-       enddo
-     enddo
+     G_com(ib2,ib1)=G_com(ib2,ib1)/(2._SP+cI*deltaT*real((En(ib2)-En(ib1)),SP))
    enddo
  enddo
  !
- !call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
- call SERIAL_lin_system(RT_nbands**2,1,AdA_k,vec_dG_out)
- !!*******************************************************
- !!
- !! Rotate G_com back the old basis set
- !!
- !call M_by_M_omp('n','n',RT_nbands,U_k   ,G_com,M2_tmp)
- !call M_by_M_omp('n','c',RT_nbands,M2_tmp,U_k  ,dG_out)
- !!
- !!*******************************************************
+ ! Rotate G_com back the old basis set
+ !
+ call M_by_M_omp('c','n',RT_nbands,U_k   ,G_com,M1_tmp)
+ call M_by_M_omp('n','n',RT_nbands,M1_tmp,U_k  ,dG_out)
+ !
  dG_out=dG_out-dG_old
  !
-end subroutine RT_INV_step
+end subroutine RT_INV_step_diago

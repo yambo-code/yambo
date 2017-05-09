@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_EXP_step(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_EXP_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  ! The EXP integrator is better than the EULER integrator if Ho_plus_Sigma
  ! changes in time more slowly that G
@@ -65,4 +65,4 @@ subroutine RT_EXP_step(dG_old,dG_inp,dG_out,ik,deltaT)
    !
  enddo
  !
-end subroutine RT_EXP_step
+end subroutine RT_EXP_step_accurate

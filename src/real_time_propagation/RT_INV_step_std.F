@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
+subroutine RT_INV_step_std(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  use pars,           ONLY:DP,SP,cI,cZERO
  use wrapper_omp,    ONLY:M_by_M_omp
@@ -115,22 +115,9 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M1_tmp)
    call M_by_M_omp('n','n',RT_nbands,G_lesser_reference(:,:,ik),T2_km1,M2_tmp)
    dG_out=dG_out+(M1_tmp+M2_tmp)
-   !write(*,*) ' '
-   !write(*,*) 'M1 '
-   !do ib=RT_bands(1),RT_bands(2)
-   !  write(*,*) M1_tmp(:,ib)
-   !enddo
-   !write(*,*) 'M2 '
-   !do ib=RT_bands(1),RT_bands(2)
-   !  write(*,*) M2_tmp(:,ib)
-   !enddo
    !
    call M_by_M_omp('n','n',RT_nbands,T1_km1,G_lesser_reference(:,:,ik),M2_tmp)
    call M_by_M_omp('n','n',RT_nbands,M2_tmp,T2_km1,M1_tmp)
-   !write(*,*) 'M3 '
-   !do ib=RT_bands(1),RT_bands(2)
-   !  write(*,*) M1_tmp(:,ib)
-   !enddo
    dG_out=dG_out+M1_tmp-dG_old
    !
  else
@@ -143,4 +130,4 @@ subroutine RT_INV_step_old(dG_old,dG_inp,dG_out,ik,deltaT)
    !
  endif
  !
-end subroutine RT_INV_step_old
+end subroutine RT_INV_step_std

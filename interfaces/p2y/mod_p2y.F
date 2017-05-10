@@ -250,7 +250,7 @@ contains
    call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
    if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem',ABS(ierr))
    call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
    !
 #endif
 
@@ -363,7 +363,7 @@ contains
    allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
    !
    call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))  
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem II',ABS(ierr))
    
 #endif
 

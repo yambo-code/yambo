@@ -703,18 +703,18 @@ CONTAINS
          ityp_(i)=0
          sp_loop:&
          DO is = 1, nsp_
-            IF (name_==atm_(is)) THEN
+            IF (TRIM(name_)==TRIM(atm_(is))) THEN
                ityp_(i)=is
                EXIT sp_loop
             ENDIF
          ENDDO sp_loop
          !
-         IF (any(ityp_(1:nat_)==0)) THEN
-            ierr=2
-            RETURN
-         ENDIF
-         !
       ENDDO
+      !
+      IF (any(ityp_(1:nat_)==0)) THEN
+         ierr=2
+         RETURN
+      ENDIF
       !
       CALL iotk_scan_end( iunit, "atomic_positions", IERR=ierr )
       IF (ierr/=0) RETURN

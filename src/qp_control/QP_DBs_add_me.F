@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_add_me(qp_base,qp_to_add,plan_EWZ)
+subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZ,SAME_k,SAME_desc,QUIET)
  !
  ! This routine just adds to qp_base qp with the plan plan_EWZ
  !
  use pars,           ONLY:cZERO,rZERO,cI
- use QP_m,           ONLY:QP_t,QP_reset
+ use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
  use electrons,      ONLY:n_sp_pol
  use com,            ONLY:error,msg
  use LIVE_t,         ONLY:what_is_running
@@ -36,94 +36,121 @@ subroutine QP_add_me(qp_base,qp_to_add,plan_EWZ)
  !
  integer            ::n_GROUNDS
  type(QP_t)         ::qp_base,qp_to_add
- logical            ::plan_EWZ(3)
+ logical            ::plan_EWZ(3),SAME_k,SAME_desc,QUIET
  !
  ! Work Space
+
+ logical    ::l_QP_db,SAME_calculation,SAME_k_grid,l_ik_found
+ integer    ::i_sp,n_states_merged,ik,ik_p
  !
- logical  ::l_QP_db,SAME_calculation,SAME_k_grid,l_ik_found
- integer  ::i_db,i_desc,i_sp,n_states_merged,i_s,ik,ik_p
+ integer    ::N_states,i_s,i_d
  type(QP_t) ::qp
  integer, allocatable :: dummy_table(:,:)
  !
- qp%n_states=qp_base%n_states+qp_to_add%n_states
- qp%n_descs =qp_base%n_descs+qp_to_add%n_descs
+ ! Check if there is any new state to fill
  !
- YAMBO_ALLOC(dummy_table,(qp%n_states,3+n_sp_pol-1))
+ YAMBO_ALLOC(dummy_table,(qp_base%n_states+qp_to_add%n_states,3+n_sp_pol-1))
  dummy_table=0
- dummy_table(:qp_base%n_states,:)=qp_base%table(:,:)
- qp%description(:qp_base%n_descs)=qp_base%description(:qp_base%n_descs)
+ dummy_table(:qp_base%n_states,:)=qp_base%table
+ N_states=qp_base%n_states
+ I_S_LOOP: do i_s=1,qp_to_add%n_states
+   do i_sp=1,qp_base%n_states
+     if (all(qp_to_add%table(i_s,:)==qp_base%table(i_sp,:))) cycle I_S_LOOP
+   enddo
+   N_states=N_states+1
+   dummy_table(N_states,:)=qp_to_add%table(i_s,:)
+ enddo I_S_LOOP
+ write (*,*) "K",SAME_k,"D",SAME_desc
+ write (*,*) N_states,qp_base%n_states,qp_to_add%n_states
  !
-! do i_desc=1,qp2merge(i_db)%n_descs
-!   if ( trim(qp2merge(i_db)%description(i_desc)) /= trim(qp2merge(1)%description(i_desc)) )then
-!     if (index('QP @ K',qp2merge(1)%description(i_desc))==0) then
-!       qp%n_descs=qp%n_descs+1
-!       qp%description(qp%n_descs)=qp2merge(i_db)%description(i_desc)
-!       cycle
-!     endif
-!     call error('Incompatible Databases. Description strings differ.')
-!   endif 
-! enddo
-! do i_s=1,qp2merge(i_db)%n_states
-!   do i_sp=1,n_states_merged
-!     if (all(qp2merge(i_db)%table(i_s,:)==dummy_table(i_sp,:))) goto 1
-!   enddo
-!   n_states_merged=n_states_merged+1
-!   dummy_table(n_states_merged,:)=qp2merge(i_db)%table(i_s,:)
-!1  continue
-! enddo
+ if (SAME_desc) then
+   !
+   if (N_states==qp_base%n_states) then
+     write (*,*) "Nothing to do"
+     return
+   endif
+   !
+ endif
+ !
+ ! Add new descs/k-points
+ !
+ do i_d=1,qp_to_add%n_descs
+   if (SAME_k   .and.index(qp_to_add%description(i_d),"QP @ K") >  0) cycle
+   if (SAME_desc.and.index(qp_to_add%description(i_d),"QP @ K") == 0) cycle
+   qp_base%n_descs=qp_base%n_descs+1
+   qp_base%description(qp_base%n_descs)=qp_to_add%description(i_d)
+   write (*,*) trim(qp_to_add%description(i_d))
+ enddo
+ !
+ ! Prepare the new QP type
+ !
+ call QP_reset(qp)
  !
  qp%nb=maxval(dummy_table(:,1))
  qp%nk=maxval(dummy_table(:,3))
- !qp%n_states=n_states_merged
+ qp%n_states=N_states
+ qp%n_descs=qp_base%n_descs
+ qp%description=qp_base%description
  qp%GreenF_n_steps=qp_base%GreenF_n_steps
+ !
+ ! Is a QP/GF database?
  !
  l_QP_db=allocated(qp_base%E)
  !
- YAMBO_ALLOC(qp%k,(qp%nk,3))
- YAMBO_ALLOC(qp%wk,(qp%nk))
- YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
+ ! Allocation
+ !
+ call QP_alloc(qp)
+ !
+ ! Zeroing
  !
  qp%k =rZERO
  qp%wk=rZERO
- !
  if (l_QP_db) then
-   YAMBO_ALLOC(qp%Z,(qp%n_states))
-   YAMBO_ALLOC(qp%E,(qp%n_states))
-   YAMBO_ALLOC(qp%E_bare,(qp%n_states))
    qp%Z=cZERO
    qp%E=cZERO
    qp%E_bare=rZERO
- else
-   YAMBO_ALLOC(qp%S_total,(qp%n_states,qp%GreenF_n_steps))
-   YAMBO_ALLOC(qp%GreenF,(qp%n_states,qp%GreenF_n_steps))
-   YAMBO_ALLOC(qp%GreenF_W,(qp%n_states,qp%GreenF_n_steps))
  endif
  !
-! qp%table=dummy_table(:qp%n_states,:)
-! do i_s=1,qp%n_states
-!   do i_db=1,n_dbs
-!     do i_sp=1,qp2merge(i_db)%n_states
-!       if (all(qp2merge(i_db)%table(i_sp,:)==qp%table(i_s,:))) then
-!         if (l_QP_db) then
-!           if (i_db==1) qp%E_bare(i_s)=qp2merge(i_db)%E_bare(i_sp)
-!           if (plan_EWZ(i_db,1)) then
-!             if (i_db==1) qp%E(i_s)=qp%E(i_s)+real(qp2merge(i_db)%E(i_sp))
-!             if (i_db> 1) qp%E(i_s)=qp%E(i_s)+real(qp2merge(i_db)%E(i_sp))-qp%E_bare(i_s)
-!           endif
-!           qp%E_bare(i_s)=qp2merge(i_db)%E_bare(i_sp)
-!           if (plan_EWZ(i_db,2)) qp%E(i_s)=qp%E(i_s)+cI*aimag(qp2merge(i_db)%E(i_sp))
-!           if (plan_EWZ(i_db,3)) qp%Z(i_s)=qp%Z(i_s)+qp2merge(i_db)%Z(i_sp)
-!         else
-!           qp%S_total(i_s,:)=qp2merge(i_db)%S_total(i_sp,:)
-!           qp%GreenF(i_s,:)=qp2merge(i_db)%GreenF(i_sp,:)
-!           qp%GreenF_W(i_s,:)=qp2merge(i_db)%GreenF_W(i_sp,:)
-!         endif
-!         qp%k(qp%table(i_s,3),:)=qp2merge(i_db)%k( qp2merge(i_db)%table(i_sp,3),:)
-!         qp%wk(qp%table(i_s,3) )=qp2merge(i_db)%wk( qp2merge(i_db)%table(i_sp,3) )
-!       endif
-!     enddo
-!   enddo
-! enddo
+ ! Copying from qp_base
+ !
+ qp%table=dummy_table(:qp%n_states,:)
+ qp%k(:qp_base%nk,:)=qp_base%k
+ qp%wk(:qp_base%nk)=qp_base%wk
+ if (l_QP_db) then
+   qp%Z(:qp_base%n_states)=qp_base%Z
+   qp%E(:qp_base%n_states)=qp_base%E
+   qp%E_bare(:qp_base%n_states)=qp_base%E_bare
+ endif
+ !
+ ! Adding/Merging 
+ !
+ do i_s=1,qp%n_states
+   do i_sp=1,qp_to_add%n_states
+     if (all(qp_to_add%table(i_sp,:)==qp%table(i_s,:))) then
+       if (l_QP_db) then
+         if (plan_EWZ(1)) then
+           qp%E(i_s)=qp%E(i_s)+real(qp_to_add%E(i_sp))-qp_to_add%E_bare(i_sp)
+         endif
+         qp%E_bare(i_s)=qp_to_add%E_bare(i_sp)
+         if (plan_EWZ(2)) qp%E(i_s)=qp%E(i_s)+cI*aimag(qp_to_add%E(i_sp))
+         if (plan_EWZ(3)) qp%Z(i_s)=qp%Z(i_s)+qp_to_add%Z(i_sp)
+       else
+         qp%S_total(i_s,:)=qp_to_add%S_total(i_sp,:)
+         qp%GreenF(i_s,:)=qp_to_add%GreenF(i_sp,:)
+         qp%GreenF_W(i_s,:)=qp_to_add%GreenF_W(i_sp,:)
+       endif
+       qp%k(qp%table(i_s,3),:)=qp_to_add%k( qp_to_add%table(i_sp,3),:)
+       qp%wk(qp%table(i_s,3) )=qp_to_add%wk( qp_to_add%table(i_sp,3) )
+     endif
+   enddo
+ enddo
+ !
+ ! Finalization
+ !
+ call QP_reset(qp_base)
+ call QP_copy(qp,qp_base)
+ call QP_reset(qp)
+ write (*,*) qp_base%n_states,shape(qp_base%table)
  !
  YAMBO_FREE(dummy_table)
  !

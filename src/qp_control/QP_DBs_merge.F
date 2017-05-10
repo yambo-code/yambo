@@ -29,7 +29,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp)
  ! 2. They are relative to the SAME calculation but on different subsets of k-pts
  !
  use pars,           ONLY:cZERO,rZERO,cI
- use QP_m,           ONLY:QP_t,QP_reset
+ use QP_m,           ONLY:QP_t,QP_reset,QP_copy
  use electrons,      ONLY:n_sp_pol
  use com,            ONLY:error,msg
  use stderr,         ONLY:intc
@@ -46,15 +46,16 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp)
  ! Work Space
  !
  integer :: i_db,i_db_p,GROUND(n_dbs)
- logical :: MERGED(n_dbs),SAME_k,SAME_desc,just_COUNT
+ logical :: MERGED(n_dbs),SAME_k,SAME_desc,just_COUNT,QUIET
  !
  ! Affinity check
  !================
  !
- just_COUNT= n_GROUNDS < 0
+ just_COUNT=n_GROUNDS < 0
  MERGED    =.FALSE.
- GROUND    = 0
+ GROUND    =0
  n_GROUNDS =0
+ QUIET     =index(what_is_running,"YPP")==0
  !
  do i_db=1,n_dbs
    !
@@ -63,7 +64,8 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp)
    n_GROUNDS=n_GROUNDS+1
    GROUND(i_db)=n_GROUNDS
    if (.not.just_COUNT) then
-     write (*,*) i_db,"added to",GROUND(i_db)
+     write (*,*) i_db,"copied into ",GROUND(i_db)
+     call QP_copy(qp2merge(i_db), qp( n_GROUNDS ) )
    endif
    !
    do i_db_p=i_db+1,n_dbs
@@ -76,13 +78,15 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp)
      if (SAME_desc.and..not.SAME_k) then
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
-         write (*,*) i_db_p,"added to",GROUND(i_db_p)
+         write (*,*) i_db_p,"added (1) to",GROUND(i_db_p)
+         call QP_DBs_add_me(qp( n_GROUNDS ),qp2merge(i_db_p) ,plan_EWZ(i_db_p,:), SAME_k, SAME_desc, QUIET )
        endif
        MERGED(i_db_p)=.TRUE.
      else if (.not.SAME_desc.and.SAME_k) then
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
-         write (*,*) i_db_p,"added to",GROUND(i_db_p)
+         write (*,*) i_db_p,"added (2) to",GROUND(i_db_p)
+         call QP_DBs_add_me(qp( n_GROUNDS ),qp2merge(i_db_p) ,plan_EWZ(i_db_p,:), SAME_k, SAME_desc, QUIET )
        endif
      else 
      endif
@@ -90,7 +94,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp)
    MERGED(i_db  )=.TRUE.
  enddo
  !
- if (index(what_is_running,"YPP")>0.and.just_COUNT) then
+ if (.not.QUIET.and.just_COUNT) then
    !
    call msg('l','detected '//trim(intc(n_GROUNDS))//' family(ies) of QP databases')
    !

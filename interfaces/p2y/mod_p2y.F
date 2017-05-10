@@ -27,6 +27,7 @@ module P2Y
  use pw_export
 #else 
  use qexml_module
+ use qexsd_module
 #endif
  use pw_data
  use pars,                  ONLY : lchlen,SP, DP
@@ -85,17 +86,22 @@ contains
 #elif defined _P2Y_V32
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.3.2 generated data =='
+   write(lch,'(a)') '== PWscf v.3.2 generated data =='
 
 #elif defined _P2Y_V40 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.4.x generated data =='
+   write(lch,'(a)') '== PWscf v.4.x generated data =='
 
 #elif defined _P2Y_V50 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.5.0 generated data =='
+   write(lch,'(a)') '== PWscf v.5.x generated data =='
+
+#elif defined _P2Y_QEXSD
+
+   index_filename = 'data-file-schema.xml'
+   write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
 
 #endif
 
@@ -111,6 +117,7 @@ contains
    ! Open XML index files and units
    !
    pw_unit = 10
+   rhounit_ = 12
 #if defined _P2Y_EXPORT
     
    call msg('s','== pw_export generated data ==')
@@ -119,27 +126,26 @@ contains
 #elif defined _P2Y_V31  || defined _P2Y_V311
 
    call msg('s',trim(lch))
-   rhounit_ = 12
    call qexml_init(pw_unit,rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
 
 #elif defined _P2Y_V32
 
-   rhounit_ = 12
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
     
 #elif defined _P2Y_V40 || defined _P2Y_V50
 
-   rhounit_ = 12
    call qexml_init(pw_unit) 
    call qexml_openfile( index_filename, "read", .false., ierr)
     
+#elif defined _P2Y_QEXSD 
+
+   call qexsd_init_schema(pw_unit) 
+   call qexsd_openfile( index_filename, "read", .false., ierr)
+   call qexsd_open_output(ierr)
+    
 #endif
-   !
-   !  qexml_init(_,_,.true.)               : rho file is binary
-   !  qexml_openfile(_,"read"/"write",_,_) : read only from existing files
-   !  qexml_openfile(_,_,.false.,_)        : data-file.xml is not binary
    !
  end subroutine pw_init
  !
@@ -151,11 +157,16 @@ contains
    !
 #if defined _P2Y_EXPORT
 
-   call pw_closeindex(pw_unit) ! close index.xml file
+   call pw_closeindex(pw_unit)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   call qexml_closefile("read",ierr) ! close index.xml file
+   call qexml_closefile("read",ierr)
+
+#elif defined _P2Y_QEXSD
+
+   call qexsd_close_output(ierr)
+   call qexsd_closefile("read",ierr)
 
 #endif
    return
@@ -201,6 +212,9 @@ contains
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
+#elif defined _P2Y_QEXSD
+!   XXX
+
 #endif
 
    if (ierr.ne.0) then
@@ -211,21 +225,37 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
-
-   call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
-   call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
-   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
-   call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
+#if defined _P2Y_EXPORT
+   ! data not read
+   nelec_=0
+   nsp_=0
    !
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+   !
+   call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+   call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_spin','fmt problem',ABS(ierr))
+   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_planewaves','fmt problem',ABS(ierr))
+   call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))
+   !
+#elif defined _P2Y_QEXSD
+   !
+   call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+   call qexsd_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
+   call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem',ABS(ierr))
+   call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))
+   !
+#endif
+
    default_nel = nelec_
    n_atomic_species = nsp_     
-
-#endif
 
    k%nibz      = num_k_points_
    en%nb       = nbnd_
@@ -266,10 +296,12 @@ contains
    !
    call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
 &                               degauss_units=degauss_units_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_occ','IOTK error',ABS(ierr))  
+   if (ierr/=0) call errore('qexml_read_occ','fmt problem',ABS(ierr))  
    !
    if (lgauss_) input_GS_Tel=300._SP/HA2KEL
    !
+#elif defined _P2Y_QEXSD
+!   XXXX
 #endif
    !
    return
@@ -311,7 +343,6 @@ contains
      enddo
    enddo
    tau_units = alat_
-
    deallocate(atom_type_,species_type_)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
@@ -320,12 +351,29 @@ contains
    allocate( atm_(n_atomic_species))
    allocate( psfile (n_atomic_species))
    allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   !
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
+   
+#elif defined _P2Y_QEXSD
+
+   tau_units = 1.0_DP
+   allocate( atm_(n_atomic_species))
+   allocate( psfile (n_atomic_species))
+   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   !
+   call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))  
+   
+#endif
+
+#ifndef _P2Y_EXPORT
+   !
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
      call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
    enddo
-
+   !
 #endif
 
    allocate(n_atoms_species(n_atomic_species))
@@ -368,8 +416,13 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
+   if (ierr/=0) call errore('qexml_read_cell','fmt problem',ABS(ierr))
     
+#elif defined _P2Y_QEXSD
+
+   call qexsd_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_cell','fmt problem',ABS(ierr))
+
 #endif
 
    a(1,:) = a1_(:) ! assumes always atomic units
@@ -398,11 +451,15 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_symmetries
+   use pars
    use mod_com2y,  ONLY : symmetries_check_and_load
    use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
+   use D_lattice,  ONLY : a
+   use R_lattice,  ONLY : b
 
    real(DP) :: trasl_(3,48)
+   real     :: rmat1(3,3),rmat2(3,3)
 
    trasl_=0._SP
 
@@ -415,9 +472,25 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
-&                                         s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
+&                           s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
 
+#elif defined _P2Y_QEXSD
+   !
+   call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
+&                           s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+   !
+   ! convert to RLU
+   !
+   do i1 = 1, nsym_
+     rmat1=matmul(transpose(b),rsym_(:,:,i1))
+     rmat2=matmul(rmat1,a)/(2.0_SP*pi) 
+     isym_(:,:,i1) = nint(rmat2)
+   enddo
+   !
+   ! XXX t_rev & trevsym  need to be defined
+   !
 #endif
    !
    do i1=1,nsym_
@@ -514,7 +587,13 @@ contains
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
+   if (ierr/=0) call errore('qexml_read_planewaves','fmt error',ABS(ierr))
+
+#elif defined _P2Y_QEXSD
+
+   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
+   call qexsd_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt error',ABS(ierr))
 
 #endif
    !
@@ -726,6 +805,7 @@ contains
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif
+
 #if defined _P2Y_V50
    call qexml_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
 &                      exx_is_active=pw_exx_is_active,ierr=ierr)

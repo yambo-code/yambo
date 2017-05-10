@@ -127,7 +127,7 @@ AC_SUBST(IOTK_LIBS)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
+ [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0> <qexsd>],[32]))
 
 AC_MSG_CHECKING([for p2y version])
 
@@ -157,6 +157,10 @@ if test "$compile_p2y" = "yes"; then
  if test "$with_p2y_version" = "5.0"; then
   PW_VER="5.0"
   PW_CPP="_P2Y_V50"
+ fi
+ if test "$with_p2y_version" = "qexsd" || test "$with_p2y_version" = "QEXSD" ; then
+  PW_VER="6.0"
+  PW_CPP="_P2Y_QEXSD"
  fi
 fi
 

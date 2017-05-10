@@ -31,7 +31,7 @@ module pw_data
 
 ! Atoms
   integer                    :: nat_, nsp_
-  real(DP), allocatable     :: tau_(:,:)
+  real(DP), allocatable      :: tau_(:,:)
   integer, allocatable       :: ityp_(:)
   character(3), allocatable  :: atm_(:)
   character(len=2), allocatable   :: atom_type_(:), species_type_(:)
@@ -39,6 +39,7 @@ module pw_data
 ! Symmetry
   integer, allocatable       :: s_(:,:,:)
   integer                    :: nsym_, isym_(3,3,48)
+  real(DP)                   :: rsym_(3,3,48)
   integer                    :: t_rev_(48)
   logical                    :: invsym_
   logical                    :: trevsym_

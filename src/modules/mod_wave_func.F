@@ -110,24 +110,16 @@ module wave_func
    subroutine WF_copy(WF_in,WF_out)
      use FFT_m, ONLY:fft_size
      type(WAVEs):: WF_in,WF_out
-     WF_out%b=WF_in%b
-     WF_out%k=WF_in%k
-     WF_out%spin=WF_in%spin
-     WF_out%N=WF_in%N
-     WF_out%space=WF_in%space
-     WF_out%to_load=WF_in%to_load
-     if (WF%space=="R") then
-       YAMBO_ALLOC(WF_out%c,(fft_size,WF_out%N))
-     endif
-     if (WF%space=="G") then
-       YAMBO_ALLOC(WF_out%c,(wf_ng,WF_out%N))
-     endif
-     if (WF%space=="C".or.WF%space=="B") then
-       YAMBO_ALLOC(WF_out%c,(wf_ncx,WF_out%N))        
-     endif     
-     YAMBO_ALLOC(WF_out%index,(WF_out%b(2),WF_out%k(2),WF_out%spin(2)))
-     WF_out%c=WF_in%c
-     WF_out%index=WF_in%index
+     YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1)),WF_in%N))
+     YAMBO_ALLOC(WF_out%index,(WF_in%b(2),WF_in%k(2),WF_in%spin(2)))
+     WF_out%b      = WF_in%b
+     WF_out%k      = WF_in%k
+     WF_out%spin   = WF_in%spin
+     WF_out%N      = WF_in%N
+     WF_out%space  = WF_in%space
+     WF_out%to_load= WF_in%to_load
+     WF_out%c      = WF_in%c
+     WF_out%index  = WF_in%index
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

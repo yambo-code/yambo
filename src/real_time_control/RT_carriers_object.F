@@ -136,7 +136,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        ! Lifetimes
        !
-       if (what=="fill".and.allocated(REF_lifetime)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
+       if (what=="fill".and.(l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
        !
        if(l_elphoton_scatt) then
          if (what=="fill") then

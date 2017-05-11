@@ -51,9 +51,6 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  ! Check the points out of the BZ before bring them inside
  !
  call check_shifts(Xk,WF_shifts) 
-! do ikbz=1,Xk%nbz
-!   write(100,*) Xk%ptbz(ikbz,:)
-! enddo
  !
  Xk%ptbz(:,:)=Xk%ptbz(:,:)-nint(Xk%ptbz(:,:)) ! Bring in the BZ
  !  

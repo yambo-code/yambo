@@ -30,7 +30,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,Integrating_over_Qs,&
+ use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_integrated,&
 &                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
@@ -45,7 +45,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PARALLEL_WF_index,WF_load
  use QP_m,          ONLY:QP_n_W_freqs_redux
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
@@ -59,7 +59,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
-
  !
  ! logicals and control
  !
@@ -147,7 +146,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        !
        if (self_detect_E_range) then
          call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
-         deallocate(X_poles)
+         YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
        !
@@ -199,7 +198,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! As we are cycling over the q-points the screened interaction evaluated here is supposed
  ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
  !
- Integrating_over_Qs=.true.
+ X_is_integrated=.true.
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -253,7 +252,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
- Integrating_over_Qs=.false.
+ X_is_integrated=.false.
  l_X_terminator=.false.
  !
  ! CLEAN (2)

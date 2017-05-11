@@ -33,7 +33,7 @@ integer function RT_k_grid(E,k,q)
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands
  use R_lattice,      ONLY:bz_samp
  !
- implicit none
+#include<memory.h>
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k
@@ -47,8 +47,8 @@ integer function RT_k_grid(E,k,q)
  l_RT_uses_E_FineGd=k%nibz_FineGd>0.and.E%nb_FineGd>=RT_bands(2)
  !
  if (.not.allocated(RT_ibz_coo)) then
-   allocate(RT_ibz_coo(k%nibz,2))
-   allocate(RT_Nk_ibz(k%nibz))
+   YAMBO_ALLOC(RT_ibz_coo,(k%nibz,2))
+   YAMBO_ALLOC(RT_Nk_ibz,(k%nibz))
  endif
  !
  ! No DbGd, trivial definitions
@@ -59,10 +59,10 @@ integer function RT_k_grid(E,k,q)
    !
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
-   allocate(RT_all2ibz(k%nibz))
+   YAMBO_ALLOC(RT_all2ibz,(k%nibz))
    if(l_elel_scatt) then
-     allocate(DbGd_EE_scatt_table(k%nibz,q%nbz))
-     allocate(DbGd_EE_Nk_table(k%nibz,k%nibz))
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(k%nibz,q%nbz))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(k%nibz,k%nibz))
      DbGd_EE_scatt_table=.true.
      DbGd_EE_Nk_table=1
    endif
@@ -86,7 +86,7 @@ integer function RT_k_grid(E,k,q)
    RT_k_grid=RT_k_grid+1+k%nibz_mapped(ik)
    RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1
  enddo
- allocate(RT_all2ibz(RT_k_grid))
+ YAMBO_ALLOC(RT_all2ibz,(RT_k_grid))
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_all2ibz(ik_rim)=ik
@@ -96,8 +96,8 @@ integer function RT_k_grid(E,k,q)
  if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
-     allocate(DbGd_EE_scatt_table(RT_k_grid,RT_k_grid))
-     allocate(DbGd_EE_Nk_table(RT_k_grid,k%nibz))
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_k_grid,RT_k_grid))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(RT_k_grid,k%nibz))
    endif
    !
    l_check=.false.

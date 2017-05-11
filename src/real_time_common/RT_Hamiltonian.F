@@ -130,7 +130,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- !
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !

@@ -56,7 +56,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  ! WF procedure
  !
- if (.not.associated(WF%c).or.WF%space/='R') return
+ if (.not.allocated(WF%c).or.WF%space/='R') return
  !
  ! When using wf's the space inv is tested using the first
  ! nsym/(i_time_rev+1) and all the nsym. If there is not

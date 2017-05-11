@@ -23,7 +23,7 @@
 !
 integer function io_HF_and_locXC(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
@@ -34,7 +34,7 @@ integer function io_HF_and_locXC(ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  integer :: ID
  !
  ! Work Space
@@ -123,8 +123,8 @@ integer function io_HF_and_locXC(ID)
    !
    if (read_is_on(ID)) then
      if(io_mode(ID)==DUMP) then
-       if (allocated(QP_state)) deallocate(QP_state)
-       allocate(QP_state(QP_nb_disk,QP_nk_disk))
+       YAMBO_FREE(QP_state)
+       YAMBO_ALLOC(QP_state,(QP_nb_disk,QP_nk_disk))
        QP_state=.false.
        do i1=1,QP_n_states_disk
          call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))

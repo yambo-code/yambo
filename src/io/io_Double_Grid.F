@@ -23,14 +23,17 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
 &                         IO_OUTDATED_DB
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
+#include<memory.h>
  !
  type(levels) :: E
  type(bz_samp):: Xk
@@ -39,6 +42,10 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Work Space
  !
  integer :: DG_format
+ !
+#if defined _TIMING
+ call timing('io_Double_Grid',OPR='start')
+#endif
  !
  io_Double_Grid=-1
  !
@@ -67,9 +74,9 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
-   allocate(E%E_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   allocate(E%W_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   allocate(E%f_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%E_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%W_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%f_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
  endif
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 
@@ -128,8 +135,10 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_bulk(ID, VAR="KPTS_WEIGHT", VAR_SZ=(/Xk%nibz/) ) 
  call io_bulk(ID, R1=Xk%weights_DbGd)
  !
- ! REMOVED INTERPOLATION WEIGHTS (to check)
- !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_Double_Grid',OPR='stop')
+#endif
  !
 end function

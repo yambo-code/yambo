@@ -33,7 +33,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
 
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,Integrating_over_Qs,&
+ use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
 &                     X_t,l_X_terminator,X_terminator_E,X_term_E
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,spin_occ
@@ -41,7 +41,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
  !
- implicit none
+#include<memory.h>
  !
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
@@ -81,8 +81,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  W_=0._SP
  Z_=cONE
- if (associated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
- if (associated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
+ if (allocated(Xen%W)) W_=abs(Xen%W(ic,ik,i_spin))+abs(Xen%W(iv,ikp,i_spin))
+ if (allocated(Xen%Z)) Z_=Xen%Z(ic,ik,i_spin)*Xen%Z(iv,ikp,i_spin)
  !
  use_DbGd= (X_os_run .and.use_X_DbGd.and.ic<=Xen%nb_FineGd) .or. &
 &          (K_inv_run.and.BSS_uses_DbGd)
@@ -96,7 +96,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  if ( .not.use_DbGd ) then
    !
-   pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,SP)
+   pole=cmplx(Xen%E(ic,ik,i_spin)-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
    !
    pole_X_term=0.0_SP
    if(l_X_terminator) pole_X_term= cmplx(X_term_E-Xen%E(iv,ikp,i_spin),-W_,KIND=SP)
@@ -135,7 +135,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  !
  allocate(nkpt_DbGd_scatt( Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
- allocate(use_kpt_DbGd( Xk%bz_DbGd_map(1,ikpbz)-1:Xk%bz_DbGd_map(2,ikpbz), Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
+ YAMBO_ALLOC(use_kpt_DbGd,( Xk%bz_DbGd_map(1,ikpbz)-1:Xk%bz_DbGd_map(2,ikpbz), Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
  !
  call define_use_kpt()
  !
@@ -202,7 +202,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
  enddo
  !
- deallocate(use_kpt_DbGd,nkpt_DbGd_scatt)
+ YAMBO_FREE(use_kpt_DbGd)
+ deallocate(BZ_DbGd_iq_npt)
  !
  contains
    !
@@ -219,7 +220,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      !
      !
      qsize_fac=2._SP
-     if(.not.Integrating_over_Qs) qsize_fac=qsize_fac*10._SP
+     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
      !
      q_norm_ref=smallest_q_norm/qsize_fac
      !

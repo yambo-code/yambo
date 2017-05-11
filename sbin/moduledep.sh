@@ -23,6 +23,7 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 # moduledep.sh -- script that computes dependencies on Fortran 90 modules
+# modified from the moduledep.sh distributed with Quantum ESPRESSO
 #
 # make sure there is no locale setting creating unneeded differences.
 #
@@ -68,9 +69,9 @@ rm -f moduledep.tmp1 moduledep.tmp2 # destroy previous contents
 # each line is of the form:
 # file_name.o : @module_name@
 # cast all module names to lowercase because Fortran is case insensitive
-egrep -H -i "^ *use " $sources |             # look for "USE name"
+egrep -H -i -e "include ?<memory.h>" -e "^ *use " $sources |  # look for "USE name"
 sed 's/F:/o /
-     s/,/ /' |                            # replace extension, insert space
+     s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
 #                                         #   and remove trailing comma
 awk '{print $1 " : @" tolower($3) "@"}' | # create dependency entry
 sort | uniq > moduledep.tmp1              # remove duplicates

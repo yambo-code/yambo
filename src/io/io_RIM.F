@@ -23,14 +23,13 @@
 !
 integer function io_RIM(ID)
  !
- use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
- implicit none
+&                         io_elemental,io_status,io_bulk,read_is_on
+#include <memory.h>
  integer :: ID
  ! 
  ! Work Space
@@ -76,8 +75,7 @@ integer function io_RIM(ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID)) then
-     allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
-     call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
+     YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    endif
    !
    call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=(/shape(RIM_qpg)/))

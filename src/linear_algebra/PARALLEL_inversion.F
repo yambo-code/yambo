@@ -33,9 +33,12 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  ! perform the inversion by using scalapack
  !
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer           :: N
  type(POOL_group)  :: POOL
@@ -46,15 +49,19 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  !
  if (ORTHO%coordinate(1)==-1) return
  !
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='start')
+#endif
+ !
  ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
  ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
  !
  M_slk%lwork  = M_slk%nrows*M_slk%nrows
  M_slk%liwork = M_slk%nrows+M_slk%nrows
  !
- allocate( WS%v_cmplx(M_slk%lwork) )
- allocate( WS%vp_int(M_slk%liwork) ) 
- allocate( WS%v_int(N+M_slk%nrows) )
+ YAMBO_ALLOC(WS%v_cmplx,(M_slk%lwork))
+ YAMBO_ALLOC(WS%vp_int,(M_slk%liwork))
+ YAMBO_ALLOC(WS%v_int,(N+M_slk%nrows))
  !
 #if defined _DOUBLE
  CALL PZGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
@@ -70,4 +77,8 @@ subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N)
  if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRI')
 #endif
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_inversion

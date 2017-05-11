@@ -47,7 +47,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::K
@@ -201,7 +201,10 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! Build the occupations
  !
- if (.not.associated(E%f))          allocate(E%f(E%nb,E%nk,n_sp_pol))
+ if (.not.allocated(E%f)) then
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+ endif
+ Efdist=1.E5_SP
  !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
@@ -216,7 +219,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
  !
- if (E%nb_FineGd>0.and.associated(E%E_FineGd)) then
+ if (E%nb_FineGd>0.and.allocated(E%E_FineGd)) then
    ! 
    !nel_DbGd=0._SP 
    !
@@ -239,8 +242,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Eval Metallic/Filled bands and gaps
  !
  call OCCUPATIONS_Gaps(E)
- !
-! if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
  !
  ! Mode = 1. Define E%f and exits
  !

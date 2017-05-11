@@ -23,12 +23,10 @@
 !
 module BS_solvers
  !
- use pars,       ONLY:SP,schlen,lchlen
- use memory_m,   ONLY:mem_est
- use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block
+ use pars,           ONLY:SP,schlen,lchlen
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
  use SLK_m,      ONLY:SLK_matrix
- !
- implicit none
+#include <memory.h>
  !
  ! Epsilon factor
  !==================
@@ -66,6 +64,10 @@ module BS_solvers
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
  !
+ logical  :: run_Haydock=.FALSE.
+ logical  :: run_inversion=.FALSE.
+ logical  :: run_Diago=.FALSE.
+ !
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
@@ -84,7 +86,6 @@ module BS_solvers
  type(SLK_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
-   !
    character(3)             :: what
    integer                  :: n_freqs = 0
    integer                  :: n_full_inv_freqs = 0
@@ -93,7 +94,6 @@ module BS_solvers
    integer    , allocatable :: err(:)
    integer    , allocatable :: iw_full(:)
    complex(SP), allocatable :: spectra(:,:)
-   !
  end type K_Inversion_data
  !
  type(K_Inversion_data), save :: K_INV_EPS
@@ -145,18 +145,13 @@ module BS_solvers
    subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
      !
      use BS,        ONLY:n_BS_blks
-     use memory_m,  ONLY:mem_est
      character(*)   :: label
      type(BS_block) :: BLKs_in(:),BLKs_out(:)
-     integer        :: i_B,tot_size
-     !
-     tot_size=0
+     integer        :: i_B
      !
      do i_B=1,n_BS_blks
        !
-       allocate(BLKs_out(i_B)%mat( BLKS_in(i_B)%size(1) , BLKS_in(i_B)%size(2) ))
-       !
-       tot_size=tot_size+BLKS_in(i_B)%size(1)*BLKS_in(i_B)%size(2)
+       YAMBO_ALLOC(BLKs_out(i_B)%mat,(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
        !
        BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
        BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip
@@ -168,28 +163,18 @@ module BS_solvers
        !
      enddo
      !
-     call mem_est(label,(/tot_size/))
-     !
    end subroutine
    !
-   subroutine BS_mat_alloc( )
+   subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
-     use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g
-     logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
-     if (.not.BLACS_structure_in_use) then
-       allocate(BS_mat(BS_H_dim,BS_H_dim))
-       call mem_est('BS_mat',(/size(BS_mat)/))
-       BS_mat    = cZERO
-     endif
-     allocate(BSS_dipoles(BS_H_dim))
-     call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
+     logical :: W_is_allocated,Z_is_allocated
+     YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
-     allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
-&                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
+     YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -202,34 +187,27 @@ module BS_solvers
        if (.not.E_SOC_is_allocated) E_SOC_is_allocated = allocated(BS_T_grp(i_g)%E_SOC_corr)
      enddo
      if (W_is_allocated) then
-       allocate(BSS_eh_W(BS_K_dim))
-       call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
+       YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       allocate(BSS_eh_Z(BS_K_dim))
-       call mem_est("BSS_eh_Z",(/BS_K_dim/))
+       YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_is_allocated) then
-       allocate(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-       call mem_est("BSS_eh_E_SOC_corr",(/2/n_sp_pol*BS_H_dim/),(/SP/))
+       YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
-   subroutine BS_mat_free()
-     use memory_m,   ONLY:mem_est
-     if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_dipoles))       deallocate(BSS_dipoles)
-     if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
-     if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
-     if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
-     if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
-     if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
-     if (allocated(BS_mat))            deallocate(BS_mat)
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
-     call mem_est("BSS_eh_table BSS_eh_Z BS_mat")
+   subroutine BSS_free()
+     YAMBO_FREE(BSS_eh_table)
+     YAMBO_FREE(BSS_dipoles)
+     YAMBO_FREE(BSS_eh_E)
+     YAMBO_FREE(BSS_eh_W)
+     YAMBO_FREE(BSS_eh_f)
+     YAMBO_FREE(BSS_eh_Z)
+     YAMBO_FREE(BSS_eh_E_SOC_corr)
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -240,7 +218,7 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size))
      enddo
    end subroutine BS_HAYVEC_alloc
    !
@@ -251,7 +229,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
+       YAMBO_FREE(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

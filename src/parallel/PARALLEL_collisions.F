@@ -147,7 +147,7 @@ subroutine PARALLEL_collisions( k, COLL )
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
- implicit none
+#include<memory.h>
  !
  type(bz_samp)          :: k
  type(COLLISIONS_group) :: COLL
@@ -158,10 +158,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- allocate(COLL%PAR_map(COLL%N),COLL%PAR_IND%element_1D(COLL%N)) 
+ YAMBO_ALLOC(COLL%PAR_map,(COLL%N))
+ YAMBO_ALLOC(COLL%PAR_IND%element_1D,(COLL%N))
  !
- if (.not.associated(PAR_IND_G_k%element_1D) ) then
-   allocate(PAR_IND_G_k%element_1D(k%nibz))
+ if (.not.allocated(PAR_IND_G_k%element_1D) ) then
+   YAMBO_ALLOC(PAR_IND_G_k%element_1D,(k%nibz))
    PAR_IND_G_k%element_1D=.FALSE.
  endif
  COLL%PAR_IND%element_1D=.FALSE.

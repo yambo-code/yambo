@@ -63,7 +63,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -71,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_DbGd,ik_FineGd,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_DbGd,ik_FineGd,COM_,ib,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
@@ -89,7 +89,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Build Ho and save initial energies 
  !====================================
  !
- if(associated(E%Eo)) then
+ if(allocated(E%Eo)) then
    E_bare=E%Eo(:RT_bands(2),:,:)
  else
    E_bare=E%E(:RT_bands(2),:,:)
@@ -100,17 +100,17 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Reference Hartree and XC
  !==========================
  do i_sp_pol=1,n_sp_pol
- do ik=1,nXkibz
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
- enddo
+   do ik=1,nXkibz
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+     HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+     XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+   enddo
  enddo
  !
  ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
@@ -245,6 +245,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
+ else
+   !
+   NE_time=0._SP
+   !
  endif
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
@@ -284,7 +288,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),nXkibz,n_sp_pol))
+ if (.not.allocated(E%Eo)) then
+   YAMBO_ALLOC(E%Eo,(RT_bands(2),nXkibz,n_sp_pol))
+ endif
  E%Eo(1:RT_bands(2),1:nXkibz,1:n_sp_pol)=E%E(1:RT_bands(2),1:nXkibz,1:n_sp_pol)
  !
  ! Define RT_eh_en
@@ -370,25 +376,25 @@ subroutine RT_start_and_restart(E,k,q,X)
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            ik_FineGd=ik_RT_DbGd-ik
            if (ik_RT_DbGd==RT_ibz_coo(ik,1)) then
-             if (associated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd) =abs(E%W(ib,ik,1))
+             if (allocated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd) =abs(E%W(ib,ik,1))
              RT_E_and_k%En(ib,ik_RT_DbGd)=E%E(ib,ik,1)
              RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt(ik,:)
              G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f(ib,ik,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*E%fo(ib,ik,1)
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*E%fo(ib,ik,1)
            else
-             if (associated(E%W))  then
+             if (allocated(E%W))  then
                E%W_FineGd(ib,ik_FineGd,1)=E%W(ib,ik,1)
                RT_E_and_k%W(ib,ik_RT_DbGd) =abs(E%W_FineGd(ib,ik_FineGd,1))
              endif
              RT_E_and_k%En(ib,ik_RT_DbGd)=E%E_FineGd(ib,ik_FineGd,1)
              RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt_FineGd(ik_FineGd,:)
              G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_FineGd(ib,ik_FineGd,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1))
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_FineGd(ib,ik_FineGd,1)-E%df_FineGd(ib,ik_FineGd,1))
            endif
          enddo
        enddo
      enddo
-     if (.not.(associated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
+     if (.not.(allocated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
      dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser

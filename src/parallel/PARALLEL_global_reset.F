@@ -58,7 +58,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
 #endif
  !
- implicit none
+#include <memory.h>
  !
  type(bz_samp)        :: Xk
  character(*)         :: ENVIRONMENT
@@ -99,19 +99,19 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
    endif
  endif
  !
- if (allocated(PAR_B_mat_index))    deallocate(PAR_B_mat_index)
- if (allocated(PAR_Bp_mat_index))   deallocate(PAR_Bp_mat_index)
- if (allocated(PAR_QP_index))       deallocate(PAR_QP_index)
- if (allocated(PAR_G_bands_index))  deallocate(PAR_G_bands_index)
- if (allocated(PAR_PLASMA_index))   deallocate(PAR_PLASMA_index)
- if (allocated(PAR_Q_index))        deallocate(PAR_Q_index)
- if (allocated(PAR_Q_bz_index))     deallocate(PAR_Q_bz_index)
- if (allocated(PAR_Xk_ibz_index))   deallocate(PAR_Xk_ibz_index)
- if (allocated(PAR_Xk_bz_index))    deallocate(PAR_Xk_bz_index)
- if (allocated(states_to_load))     deallocate(states_to_load)
- if (allocated(PAR_DIPk_ibz_index)) deallocate(PAR_DIPk_ibz_index)
- if (allocated(PAR_BS_T_grps_index))deallocate(PAR_BS_T_grps_index)
- if (allocated(PAR_RL_index))       deallocate(PAR_RL_index)
+ YAMBO_FREE(PAR_B_mat_index)
+ YAMBO_FREE(PAR_Bp_mat_index)
+ YAMBO_FREE(PAR_QP_index)
+ YAMBO_FREE(PAR_G_bands_index)
+ YAMBO_FREE(PAR_PLASMA_index)
+ YAMBO_FREE(PAR_Q_index)
+ YAMBO_FREE(PAR_Q_bz_index)
+ YAMBO_FREE(PAR_Xk_ibz_index)
+ YAMBO_FREE(PAR_Xk_bz_index)
+ YAMBO_FREE(states_to_load)
+ YAMBO_FREE(PAR_DIPk_ibz_index)
+ YAMBO_FREE(PAR_BS_T_grps_index)
+ YAMBO_FREE(PAR_RL_index)
  !
  PAR_IND_Q_ID=0
  PAR_IND_Xk_ibz_ID=0

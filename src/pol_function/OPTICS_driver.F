@@ -29,7 +29,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! 
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
@@ -48,7 +47,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
@@ -125,11 +124,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! Arrays to be written in the o. files
    !
-   allocate(Epsilon_ii(wv%n_freqs,2))
-   allocate(EEL(wv%n_freqs,2))
-   allocate(Alpha(wv%n_freqs,2))
+   YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
+   YAMBO_ALLOC(EEL,(wv%n_freqs,2))
+   YAMBO_ALLOC(Alpha,(wv%n_freqs,2))
    if (l_bs_fxc) then
-     allocate(X_fxc(wv%n_freqs))
+     YAMBO_ALLOC(X_fxc,(wv%n_freqs))
      X_fxc=cZERO
    endif
    !
@@ -225,9 +224,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    call of_open_close(eel_file_name,'oa')
    call of_open_close(alpha_file_name,'oa')
    !
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_irredux
+   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
-   call X_write_messages_before_headers(iq,associated(Xen%GreenF),X%Vnl_included,X%ordering)
+   call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
    ! Titles 
    !
@@ -314,12 +313,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! CLEAN (each q)
    !
    call X_alloc('X')
-   !
-   deallocate(Epsilon_ii,EEL,Alpha)
-   !
+   YAMBO_FREE(Alpha)
+   YAMBO_FREE(EEL)
+   YAMBO_FREE(Epsilon_ii)
+   YAMBO_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
-   !
-   if (allocated(X_fxc)) deallocate(X_fxc)
    !
  enddo
  !
@@ -329,9 +327,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()
- if (l_bs_fxc.and.allocated(FXC)) then
-   deallocate(FXC,FXC_K_diagonal)
-   call mem_est("FXC FXC_K_diagonal")
+ if (allocated(FXC)) then
+   YAMBO_FREE(FXC)
+ endif
+ if (l_bs_fxc) then
+   YAMBO_FREE(FXC)
+   YAMBO_FREE(FXC_K_diagonal)
  endif
  !
 end subroutine

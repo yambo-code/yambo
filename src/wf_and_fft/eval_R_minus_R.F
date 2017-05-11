@@ -25,11 +25,9 @@ subroutine eval_R_minus_R()
  !
  ! Evaluate the R_i-R_j table
  ! 
- use pars,      ONLY:IP
  use FFT_m,     ONLY:fft_size,fft_dim,modx
  use D_lattice, ONLY:R_m_R
- use memory_m,  ONLY:mem_est
- implicit none
+#include<memory.h>
  !
  ! Work Space
  ! 
@@ -38,8 +36,7 @@ subroutine eval_R_minus_R()
  ! Allocation
  !
  if (.not.allocated(R_m_R)) then 
-   allocate(R_m_R(fft_size,fft_size))
-   call mem_est("R_m_R",(/fft_size,fft_size/),(/IP,IP/))
+   YAMBO_ALLOC(R_m_R,(fft_size,fft_size))
  end if
  !
  ! Loop

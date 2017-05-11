@@ -36,7 +36,6 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !   outer region opened here (not working yet)
  !
  ! X terminator (BG kind) implemented (IM,AF)
- !
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
@@ -57,10 +56,9 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  use D_lattice,     ONLY:i_space_inv
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
- use memory_m,      ONLY:mem_est
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,&
-&                        self_detect_E_range,half_X_mat_only,use_X_DbGd,&
+&                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,Dipole_Energy_treshold
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -70,7 +68,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -100,7 +98,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
- force_bare_X_G=use_X_DbGd.or.associated(Xen%W).or.associated(Xen%GreenF)
+ force_bare_X_G=use_X_DbGd.or.allocated(Xen%W).or.allocated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
@@ -142,8 +140,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
    !
    if (n_poles==0) call warning(' [CPU '//trim(intc(myid))//'] has no poles')
    !
-   allocate(X_poles_tab(n_poles,4)) 
-   call mem_est("X_poles_tab",(/size(X_poles_tab)/))
+   YAMBO_ALLOC(X_poles_tab,(n_poles,4))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
    if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
@@ -151,7 +148,8 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
    minmax_ehe=0._SP
    !
    n_poles=X_eh_setup(iq,X,Xen,Xk,minmax_ehe(:,PAR_COM_DIPOLES%CPU_id+1))
-   deallocate(X_poles,X_Ein_poles)
+   YAMBO_FREE(X_poles)
+   YAMBO_FREE(X_Ein_poles)
    !
    if (self_detect_E_range) then
      call PP_redux_wait(minmax_ehe,COMM=PAR_COM_DIPOLES%COMM)
@@ -174,7 +172,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  ! Green Functions must be all mapped to the Xw range so
  ! to be easily convoluted
  !
- if (associated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
+ if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
 #endif
  !
@@ -184,9 +182,9 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !                            ===================
  call WF_spatial_inversion(Xen,Xk)
  !
- half_X_mat_only=i_space_inv==1
- if (.not.half_X_mat_only) half_X_mat_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
- if (half_X_mat_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
+ X_FILL_UP_matrix_only=i_space_inv==1
+ if (.not.X_FILL_UP_matrix_only) X_FILL_UP_matrix_only= all( aimag(Xw%p(:))<1.E-4 ).and. all( real(Xw%p(:))<1.E-4 )
+ if (X_FILL_UP_matrix_only.and.current_iq==0) call msg('s','[X] Upper matrix triangle filled')
  !
  ! omp settings and workspace
  !=================================
@@ -212,7 +210,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
  !
- if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
+ if(coarse_grid_N/n_outthr>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
  !
  ! OpenMP setup
  !==============
@@ -226,8 +224,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !
  ! memory estimate and local alloc
  !=================================
- call mem_est("Xo_WS",(/X%ng**2 * n_outthr/))
- allocate(Xo_res(X%ng,X%ng))
+ YAMBO_ALLOC(Xo_res,(X%ng,X%ng))
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo")
  !
@@ -239,6 +236,8 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
 #endif
  do i_cg = 1,coarse_grid_N
    !
+   if (coarse_grid_N/n_outthr==0) cycle
+   !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !
    ! 1) First compute the residuals
@@ -247,7 +246,6 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
    !
    ! 2) Then the frequency dependent term
    !=======================================
-   !
    if( (iq==1) .and. abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold ) then
       GreenF=drude_GreenF
    else
@@ -255,7 +253,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
      ! GPL_EXCLUDE_START
      !
 #if defined _ELPH
-     if( associated(Xen%GreenF) ) then 
+     if( allocated(Xen%GreenF) ) then
        call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
      else
        call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
@@ -285,7 +283,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
 #endif
        call V_by_V_plus_V(ig2,GreenF(iw),Xo_res(:ig2,ig2),Xo(:ig2,ig2,iw))
        !
-       if (.not.half_X_mat_only) then
+       if (.not.X_FILL_UP_matrix_only) then
          call V_by_V_plus_V(X%ng-ig2,GreenF(iw),conjg(Xo_res(ig2,ig2+1:)),Xo(ig2+1:,ig2,iw))
        endif
 #if defined _OPENMP
@@ -304,15 +302,14 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !
  ! CLEAN
  !=======
- call mem_est("Xo_WS")
- deallocate(Xo_res)
+ YAMBO_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
 #if defined _OPENMP
 !$omp end parallel
 #endif
  !
- if(coarse_grid_N>0) call live_timing()
+ if(coarse_grid_N/n_outthr>0) call live_timing()
  !
  call OPENMP_update(master_thread) 
  call OPENMP_locks_reset()
@@ -333,7 +330,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  ! Symmetrize Xo when only half has been avaluated
  !=================================================
  !
- if (half_X_mat_only) then
+ if (X_FILL_UP_matrix_only) then
    !
 #if defined _OPENMP
    !$omp parallel default(shared), private(ig2,ig1)

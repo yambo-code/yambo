@@ -24,7 +24,7 @@
 module electrons
  !
  use pars,  ONLY:SP,IP
- implicit none
+#include<memory.h>
  !
  real(SP) :: nel
  real(SP) :: default_nel
@@ -71,43 +71,42 @@ module electrons
    !
    ! QP corrections
    !
-   integer,pointer :: QP_corrected(:,:,:)  => null()
-   real(SP),   pointer :: E(:,:,:)         => null()
-   real(SP),   pointer :: Eo(:,:,:)        => null()
-   real(SP),   pointer :: f(:,:,:)         => null()
-   real(SP),   pointer :: fo(:,:,:)        => null()
-   real(SP),   pointer :: df(:,:,:)        => null()
-   real(SP),   pointer :: W(:,:,:)         => null()
-   complex(SP),pointer :: Z(:,:,:)         => null()
+   integer,    allocatable :: QP_corrected(:,:,:)  
+   real(SP),   allocatable :: E(:,:,:)         
+   real(SP),   allocatable :: Eo(:,:,:)        
+   real(SP),   allocatable :: f(:,:,:)         
+   real(SP),   allocatable :: fo(:,:,:)        
+   real(SP),   allocatable :: df(:,:,:)        
+   real(SP),   allocatable :: W(:,:,:)         
+   complex(SP),allocatable :: Z(:,:,:)         
    !
    ! Green Functions
    !
-   logical             :: GreenF_is_causal
-   integer             :: GreenF_n_E_steps
-   complex(SP),pointer :: GreenF_W(:,:,:,:)   => null()
-   complex(SP),pointer :: GreenF(:,:,:,:)     => null()
-   !
-   ! Double energy and k-points grid
-   !
+   logical                 :: GreenF_is_causal
+   integer                 :: GreenF_n_E_steps
+   complex(SP),allocatable :: GreenF_W(:,:,:,:)   
+   complex(SP),allocatable :: GreenF(:,:,:,:)     
+   ! 
+   ! Fine grid energy and k-points grid
+   !   
    integer             :: nb_FineGd
    integer             :: nk_FineGd
-   real(SP),   pointer :: E_FineGd(:,:,:)        => null()
-   real(SP),   pointer :: W_FineGd(:,:,:)        => null()
-   real(SP),   pointer :: f_FineGd(:,:,:)        => null()
-   real(SP),   pointer :: df_FineGd(:,:,:)       => null()
+   real(SP),   allocatable :: E_FineGd(:,:,:)        
+   real(SP),   allocatable :: W_FineGd(:,:,:)        
+   real(SP),   allocatable :: f_FineGd(:,:,:)        
+   real(SP),   allocatable :: df_FineGd(:,:,:)       
    !
    ! Perturbative SOC
    !
    integer              :: nb_SOC
-   integer,    pointer  :: table_SOC(:,:,:)    => null()
-   real(SP),   pointer  :: E_SOC(:,:)          => null()
+   integer,    allocatable :: table_SOC(:,:,:)
+   real(SP),   allocatable :: E_SOC(:,:)           
    !
  end type levels
- !
+ ! 
  contains
    !
    subroutine E_duplicate(Ei,Eo)
-     use memory_m,  ONLY:mem_est
      type(levels):: Ei,Eo
      !
      integer :: BOUNDS(2)
@@ -129,8 +128,8 @@ module electrons
        Eo%E_dir_gap=Ei%E_dir_gap
        Eo%E_ind_gap=Ei%E_ind_gap
      endif
-     allocate(Eo%E(Eo%nb,Eo%nk,n_sp_pol),Eo%f(Eo%nb,Eo%nk,n_sp_pol))
-     call mem_est("E-E E-f",(/size(Eo%E),size(Eo%f)/),(/SP,SP/))
+     YAMBO_ALLOC(Eo%E,(Eo%nb,Eo%nk,n_sp_pol))
+     YAMBO_ALLOC(Eo%f,(Eo%nb,Eo%nk,n_sp_pol))
      Eo%E=0._SP
      Eo%f=0._SP
      !
@@ -138,7 +137,7 @@ module electrons
      ! from %nb as it is limited by SC_bands.
      !
      BOUNDS(1)=Ei%nb
-     if (associated(Ei%Eo)) then
+     if (allocated(Ei%Eo)) then
        BOUNDS(1)=size(Ei%Eo,1)
      endif
      BOUNDS(2)=BOUNDS(1)
@@ -146,41 +145,35 @@ module electrons
      if (naive) then
        ! %E
        Eo%E(:,:,:)=Ei%E(:,:,:)
-       if (associated(Ei%Eo)) then
-         allocate(Eo%Eo(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-Eo",(/size(Eo%Eo)/),(/SP/))
+       if (allocated(Ei%Eo)) then
+         YAMBO_ALLOC(Eo%Eo,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%Eo(:BOUNDS(1),:,:)=Ei%Eo(:BOUNDS(1),:,:)
        endif
        ! %f
        Eo%f(:,:,:)=Ei%f(:,:,:) 
-       if (associated(Ei%fo)) then
-         allocate(Eo%fo(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-fo",(/size(Eo%fo)/),(/SP/))
+       if (allocated(Ei%fo)) then
+         YAMBO_ALLOC(Eo%fo,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%fo(:BOUNDS(1),:,:)=Ei%fo(:BOUNDS(1),:,:)
        endif
-       if (associated(Ei%df)) then
-         allocate(Eo%df(BOUNDS(1),Eo%nk,n_sp_pol))
-         call mem_est("E-df",(/size(Eo%df)/),(/SP/))
+       if (allocated(Ei%df)) then
+         YAMBO_ALLOC(Eo%df,(BOUNDS(1),Eo%nk,n_sp_pol))
          Eo%df(:BOUNDS(1),:,:)=Ei%df(:BOUNDS(1),:,:)
        endif
        ! %W
-       if (associated(Ei%W)) then
-         allocate(Eo%W(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-W",(/size(Eo%W)/),(/SP/))
+       if (allocated(Ei%W)) then
+         YAMBO_ALLOC(Eo%W,(BOUNDS(2),Eo%nk,n_sp_pol))
          Eo%W(:BOUNDS(2),:,:)=Ei%W(:BOUNDS(2),:,:)
        endif
        ! %Z
-       if (associated(Ei%Z)) then
-         allocate(Eo%Z(BOUNDS(2),Eo%nk,n_sp_pol))
-         call mem_est("E-Z",(/size(Eo%Z)/))
+       if (allocated(Ei%Z)) then
+         YAMBO_ALLOC(Eo%Z,(BOUNDS(2),Eo%nk,n_sp_pol))
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
        ! %QP_corrected
-       if (associated(Ei%QP_corrected)) then
+       if (allocated(Ei%QP_corrected)) then
          BOUNDS(1)=size(Ei%QP_corrected,1)
          BOUNDS(2)=size(Ei%QP_corrected,2)
-         allocate(Eo%QP_corrected(BOUNDS(1),BOUNDS(2),n_sp_pol))
-         call mem_est("E-QP_corrected",(/size(Eo%QP_corrected)/),(/IP/))
+         YAMBO_ALLOC(Eo%QP_corrected,(BOUNDS(1),BOUNDS(2),n_sp_pol))
          Eo%QP_corrected=Ei%QP_corrected
        endif
      else
@@ -191,16 +184,14 @@ module electrons
      !
      if (Eo%nb_FineGd/=0.and.Ei%nk==Eo%nk) then
        Eo%nk_FineGd=Ei%nk_FineGd
-       allocate(Eo%E_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       allocate(Eo%W_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       allocate(Eo%f_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-       call mem_est("E_FineGd W_FineGd f_FineGd",(/size(Eo%E_FineGd),size(Eo%W_FineGd),size(Eo%f_FineGd)/),(/SP,SP,SP/))
+       YAMBO_ALLOC(Eo%E_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       YAMBO_ALLOC(Eo%W_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
+       YAMBO_ALLOC(Eo%f_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
        Eo%E_FineGd=Ei%E_FineGd
        Eo%W_FineGd=Ei%W_FineGd
        Eo%f_FineGd=Ei%f_FineGd
-       if(associated(Ei%df_FineGd)) then
-         allocate(Eo%df_FineGd(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
-         call mem_est("df_FineGd",(/size(Eo%df_FineGd)/),(/SP/))
+       if(allocated(Ei%df_FineGd)) then
+         YAMBO_ALLOC(Eo%df_FineGd,(Eo%nb_FineGd,Eo%nk_FineGd,n_sp_pol))
          Eo%df_FineGd=Ei%df_FineGd
        endif
      endif
@@ -208,8 +199,7 @@ module electrons
      ! E_SOC
      !
      if (Eo%nb_SOC/=0.and.Ei%nk==Eo%nk) then
-       allocate(Eo%E_SOC(Eo%nb_SOC,Eo%nk))
-       call mem_est("E_SOC",(/size(Eo%E_SOC)/),(/SP/))
+       YAMBO_ALLOC(Eo%E_SOC,(Eo%nb_SOC,Eo%nk))
        Eo%E_SOC=Ei%E_SOC
        allocate(Eo%table_SOC(2,Eo%nb,Eo%nk))
        call mem_est("table_SOC",(/size(Eo%table_SOC)/),(/IP/))
@@ -219,9 +209,8 @@ module electrons
    end subroutine
    !
    subroutine E_reset(E)
-     use memory_m, ONLY:mem_est
      type(levels)::E
-     E%E_ind_gap=0._SP
+     !
      E%E_dir_gap=0._SP
      E%E_ind_gap=0._SP
      E%E_Fermi=0._SP
@@ -234,31 +223,26 @@ module electrons
      E%nbc=0
      E%GreenF_n_E_steps=0 
      E%GreenF_is_causal=.FALSE. 
-     if(associated(E%E))              deallocate(E%E)
-     if(associated(E%Eo))             deallocate(E%Eo)
-     if(associated(E%Z))              deallocate(E%Z)
-     if(associated(E%W))              deallocate(E%W)
-     if(associated(E%f))              deallocate(E%f)
-     if(associated(E%fo))             deallocate(E%fo)
-     if(associated(E%df))             deallocate(E%df)
-     if(associated(E%QP_corrected))   deallocate(E%QP_corrected)
-     if(associated(E%GreenF))         deallocate(E%GreenF)
-     if(associated(E%GreenF_W))       deallocate(E%GreenF_W)
-     nullify(E%E,E%Eo,E%Z,E%W,E%f,E%QP_corrected,E%GreenF,E%GreenF_W)
-     call mem_est("E-E E-Eo E-f E-fo E-df E-W E-Z")
-     call mem_est("E-QP_corrected E-GreenF E-GreenF_W")
+     YAMBO_FREE(E%E)
+     YAMBO_FREE(E%Eo)
+     YAMBO_FREE(E%Z)
+     YAMBO_FREE(E%W)
+     YAMBO_FREE(E%f)
+     YAMBO_FREE(E%fo)
+     YAMBO_FREE(E%df)
+     YAMBO_FREE(E%QP_corrected)
+     YAMBO_FREE(E%GreenF)
+     YAMBO_FREE(E%GreenF_W)
      !
      call E_FineGd_components_reset(E,.FALSE.)
      !
      E%nb_SOC=0
-     if(associated(E%E_SOC))          deallocate(E%E_SOC)
-     if(associated(E%table_SOC))      deallocate(E%table_SOC)
+     YAMBO_FREE(E%E_SOC)
+     YAMBO_FREE(E%table_SOC)
      !
    end subroutine
    !
    subroutine E_FineGd_components_reset(E,FULL_RESET)
-     !
-     use memory_m, ONLY:mem_est
      !
      type(levels)::E
      logical     ::FULL_RESET
@@ -266,13 +250,12 @@ module electrons
      E%nb_FineGd=0
      E%nk_FineGd=0
      !
-     if(associated(E%E_FineGd) )      deallocate(E%E_FineGd )
-     if(associated(E%W_FineGd) )      deallocate(E%W_FineGd )
-     if(associated(E%f_FineGd) )      deallocate(E%f_FineGd )
-     if(associated(E%df_FineGd))      deallocate(E%df_FineGd)
+     if (.not.FULL_RESET) return
      !
-     nullify(E%E_FineGd,E%W_FineGd,E%f_FineGd,E%df_FineGd)
-     call mem_est("E_FineGd W_FineGd f_FineGd df_FineGd")
+     YAMBO_FREE(E%E_FineGd)
+     YAMBO_FREE(E%W_FineGd)
+     YAMBO_FREE(E%f_FineGd)
+     YAMBO_FREE(E%df_FineGd)
      !
    end subroutine
    !

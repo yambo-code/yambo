@@ -23,13 +23,12 @@
 !
 integer function io_E_SOC_map(En,kpt,ID)
  !
- use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,file_is_present,write_is_on
- implicit none
+ !
+#include<memory.h>
  !
  type(levels) :: En
  type(bz_samp):: kpt
@@ -54,9 +53,8 @@ integer function io_E_SOC_map(En,kpt,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   allocate(En%E_SOC(En%nb_SOC,En%nk))
-   allocate(En%table_SOC(2,En%nb,En%nk))
-   call mem_est("E_SOC table_SOC",(/size(En%E_SOC),size(En%table_SOC)/),(/SP,IP/))
+   YAMBO_ALLOC(En%E_SOC,(En%nb_SOC,En%nk))
+   YAMBO_ALLOC(En%table_SOC,(2,En%nb,En%nk))
  endif
  !
  ! Eigenvalues

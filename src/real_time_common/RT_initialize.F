@@ -46,7 +46,7 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
-&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,RT_DbGd_nk
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -287,7 +287,7 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
-   if (.not.associated(E%W)) then
+   if (.not.allocated(E%W)) then
      call warning("NO QP damping provided. E-E and/or E-P switched off")
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.

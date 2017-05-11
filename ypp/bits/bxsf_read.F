@@ -34,7 +34,7 @@ subroutine bxsf_read(Xk,Xen)
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
- implicit none
+#include<memory.h>
  type(bz_samp) :: Xk
  type(levels)  :: Xen
  !
@@ -61,9 +61,9 @@ subroutine bxsf_read(Xk,Xen)
 
  real(SP) :: efermitest
 
- allocate(nkpoints_gengrid(3))
- allocate(nkpoints(3))
- allocate(startkpoint(3))
+ YAMBO_ALLOC(nkpoints_gengrid,(3))
+ YAMBO_ALLOC(nkpoints,(3))
+ YAMBO_ALLOC(startkpoint,(3))
  
  nkpoints_gengrid = 0
  nkpoints = 0
@@ -105,14 +105,14 @@ subroutine bxsf_read(Xk,Xen)
   if(nkpoints(ii) >= 1) ndim = ndim + 1 
  enddo
  !
- allocate(recip_lattice(ndim,ndim))
+ YAMBO_ALLOC(recip_lattice,(ndim,ndim))
  ! set nbands
  !wannier_bands(2)=min(wannier_bands(2),bxsf_bands-wannier_bands(1)+1)
  wannier_bands(2)=min(wannier_bands(2),bxsf_bands)
  nbands=wannier_bands(2)-wannier_bands(1)+1
  !
- allocate(ene(nbands, product(nkpoints)))
- allocate(kpoints( product(nkpoints), ndim))
+ YAMBO_ALLOC(ene,(nbands,product(nkpoints)))
+ YAMBO_ALLOC(kpoints,(product(nkpoints),ndim))
  ene = 0.0_SP
  kpoints = 0.0_SP
  recip_lattice = 0.0_SP 
@@ -192,8 +192,8 @@ subroutine bxsf_read(Xk,Xen)
  ! DbGd_k are in reciproc unit cell, not Brillouin zone
  DbGd_k%nbz=size(kpoints, 1)
  DbGd_k%nibz=DbGd_k%nbz
- allocate(DbGd_k%ptbz(DbGd_k%nbz,3))
- allocate(DbGd_k%weights(DbGd_k%nibz))
+ YAMBO_ALLOC(DbGd_k%ptbz,(DbGd_k%nbz,3))
+ YAMBO_ALLOC(DbGd_k%weights,(DbGd_k%nibz))
  DbGd_k%ptbz = 0_SP
  DbGd_k%weights = 1_SP
  ! map read kpoints to BZ 
@@ -210,7 +210,7 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- allocate(Xk%nbz_mapped(Xk%nbz))
+ YAMBO_ALLOC(Xk%nbz_mapped,(Xk%nbz))
  Xk%nbz_mapped = 0
  Xen%nb_FineGd=nbands
  Xk%nbz_FineGd=DbGd_k%nbz
@@ -224,7 +224,7 @@ subroutine bxsf_read(Xk,Xen)
    ! have to go twice through all elements as BZ_DbGd_k cannot be
    ! allocated without knowing the number of maximum elements. 
    !
-   do while(.not.associated(Xk%bz_DbGd_map)) 
+   do while(.not.allocated(Xk%bz_DbGd_map)) 
      if (maxval(Xk%nbz_mapped)>0) then
        allocate(Xk%bz_DbGd_map(Xk%nbz,maxval(Xk%nbz_mapped)))
        Xk%bz_DbGd_map=0
@@ -235,7 +235,7 @@ subroutine bxsf_read(Xk,Xen)
        ikbz=k_the_nearest(DbGd_k%ptbz(ii,:),Xk%ptbz(:,:),Xk%nbz)
        Xk%nbz_mapped(ikbz)=Xk%nbz_mapped(ikbz)+1
        !
-       if (associated(Xk%bz_DbGd_map)) Xk%bz_DbGd_map(ikbz,Xk%nbz_mapped(ikbz))= ii
+       if (allocated(Xk%bz_DbGd_map)) Xk%bz_DbGd_map(ikbz,Xk%nbz_mapped(ikbz))= ii
        !   
        call live_timing(steps=1)
        !
@@ -243,7 +243,7 @@ subroutine bxsf_read(Xk,Xen)
    enddo
    call live_timing()
    ! 
-   allocate(Xk%weights_ipol(maxval(Xk%nbz_mapped)))
+   YAMBO_ALLOC(Xk%weights_ipol,(maxval(Xk%nbz_mapped)))
    Xk%weights_ipol = 1.0_SP
  else
    call section('*','Employ double grid method' )
@@ -268,7 +268,7 @@ subroutine bxsf_read(Xk,Xen)
  !
  call section('*','Create & write BZ_DbGd')
  !
- allocate(Xen%E_FineGd(Xen%nb_FineGd,Xen%nk,n_spin))
+ YAMBO_ALLOC(Xen%E_FineGd,(Xen%nb_FineGd,Xen%nk,n_spin))
  Xen%E_FineGd(:,:,1)=ene/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
@@ -290,12 +290,14 @@ subroutine bxsf_read(Xk,Xen)
  ! clean up
  ! 
  call k_ibz2bz(Xk,'d',.false.)  
- deallocate(ene)
- deallocate(kpoints)
- deallocate(nkpoints)
- deallocate(nkpoints_gengrid)
- deallocate(startkpoint)
- deallocate(recip_lattice)
- deallocate(Xk%nbz_mapped,Xk%bz_DbGd_map,Xk%weights_ipol)
+ YAMBO_FREE(ene)
+ YAMBO_FREE(kpoints)
+ YAMBO_FREE(nkpoints)
+ YAMBO_FREE(nkpoints_gengrid)
+ YAMBO_FREE(startkpoint)
+ YAMBO_FREE(recip_lattice)
+ YAMBO_FREE(Xk%nbz_mapped)
+ YAMBO_FREE(Xk%bz_DbGd_map)
+ YAMBO_FREE(Xk%weights_ipol)
  !
 end subroutine

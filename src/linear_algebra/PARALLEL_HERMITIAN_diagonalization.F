@@ -37,7 +37,10 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer           :: N
  type(POOL_group)  :: POOL
@@ -53,6 +56,10 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  E=0.0_SP
  !
  if (ORTHO%coordinate(1)==-1) return
+ !
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
+#endif
  !
  lwork=-1
  lrwork=-1
@@ -70,8 +77,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  ! AF: better estimates should be used
  lwork=2*n**2
  lrwork=2*n + 2*n-2
- allocate(WS%v_cmplx(lwork))
- allocate(WS%v_real(lrwork))
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ YAMBO_ALLOC(WS%v_real,(lrwork))
  !
 #if defined _DOUBLE
  call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
@@ -87,5 +94,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  !
  call PP_redux_wait(E,COMM=POOL%INTRA_comm)
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

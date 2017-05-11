@@ -24,7 +24,6 @@
 subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  use pars,           ONLY:SP
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
@@ -32,7 +31,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use real_time,      ONLY:RT_carriers
  use com,            ONLY:msg
  !
- implicit none
+#include<memory.h>
  !
  integer,intent(in)    :: bands(2)
  type(levels),  intent(inout) :: E
@@ -55,25 +54,22 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  N_carriers=0._SP
  !
- if (l_f.and..not.associated(E%df)) then
+ if (l_f.and..not.allocated(E%df)) then
    !
    ! These are *always* the equilibrium occupations
    !
-   if(.not.associated(E%fo)) then
-     allocate(E%fo(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-df E-fo",(/size(E%fo),size(E%df)/),(/SP,SP/))
+   if(.not.allocated(E%fo)) then
+     YAMBO_ALLOC(E%fo,(E%nb,E%nk,n_sp_pol))
      E%fo=E%f
    endif
    !
-   allocate(E%df(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-df",(/size(E%df)/),(/SP,SP/))
+   YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
    call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
-     allocate(E%df_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-     call mem_est("E-df_FineGd",(/size(E%df_FineGd)/),(/SP,SP/))
+     YAMBO_ALLOC(E%df_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
      E%df_FineGd=0._SP
      call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt_FineGd,K%nibz_FineGd)
      E%f_FineGd=E%f_FineGd+E%df_FineGd
@@ -87,9 +83,8 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    ! Eo may already contain the DFT energies in case QP corrections have been applyed
    ! In this case the equilibrium QP energies are not stored anywhere
    !
-   if(.not.associated(E%Eo)) then
-     allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
+   if(.not.allocated(E%Eo)) then
+     YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
      E%Eo=E%E
    endif
    !

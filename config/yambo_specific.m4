@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2016 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -20,7 +20,7 @@
 # License along with this program; if not, write to the Free
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-
+#
 # ============================================================================= 
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
@@ -79,7 +79,20 @@ if test x"$enable_time_profile" = "xyes"; then
  def_time_profile="-D_TIMING"
 fi
 AC_SUBST(def_time_profile)
-
+#
+# ============================================================================
+#
+# Memory Profiling 
+#
+AC_ARG_ENABLE(memory-profile, AC_HELP_STRING([--enable-memory-profile],
+              [Extended Memory profile of specific sections]))
+if test x"$enable_memory_profile" = "x"; then enable_memory_profile="no"; fi
+def_memory_profile=" "
+if test x"$enable_memory_profile" = "xyes"; then 
+ def_memory_profile="-D_MEM_CHECK"
+fi
+AC_SUBST(def_memory_profile)
+#
 # ============================================================================
 #
 # Verbose compilation
@@ -91,9 +104,24 @@ MKMF_PREFIX=" "
 if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi
 AC_SUBST(MKMF_PREFIX)
 AC_SUBST(ECHO_N)
+#
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],
   [User-defined editor (none for no editor)],[32]),[],[with_editor="vim vi pico"]) 
 AC_CHECK_PROGS(editor,[$with_editor],[none])
 AC_SUBST(editor)
+#
+# ============================================================================
+# Copyright (C) 2001-2016 Quantum ESPRESSO Foundation
+#
+# check if the structure mallinfo is present in malloc.h
+AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
+if test "$have_malloc_h" -ne 0
+then
+AC_CHECK_MEMBER([struct mallinfo.arena],
+                [AC_DEFINE(HAVE_MALLINFO)],
+                ,
+                [#include <malloc.h>])
+
+fi

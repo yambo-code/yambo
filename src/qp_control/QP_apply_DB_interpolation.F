@@ -43,7 +43,7 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t,QP_ctl_applied
  !
- implicit none
+#include<memory.h>
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k
@@ -164,8 +164,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
          if(do_EWZ_using_Ik_IE(2)) N_val_to_int=N_val_to_int+1
          if(do_EWZ_using_Ik_IE(3)) N_val_to_int=N_val_to_int+2
          !
-         allocate(Vali(qp%n_states,N_val_to_int))
-         allocate(Valo(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
+         YAMBO_ALLOC(Vali,(qp%n_states,N_val_to_int))
+         YAMBO_ALLOC(Valo,(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
          Valo=0._SP
          !
          i1=0
@@ -229,7 +229,8 @@ subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
            enddo
          enddo
          !
-         deallocate(Vali,Valo)
+         YAMBO_FREE(Vali)
+         YAMBO_FREE(Valo)
          !
      end select
      !

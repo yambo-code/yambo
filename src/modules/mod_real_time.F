@@ -151,6 +151,7 @@ module real_time
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
+ integer                 :: RT_DbGd_nk
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !

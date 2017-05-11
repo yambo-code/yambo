@@ -32,8 +32,8 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
- use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
+ use electrons,      ONLY:levels
+ use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
@@ -47,8 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,l_RT_RK4,      &
-&                         l_RT_low_pumping,integrator_exp_order
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -367,7 +366,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Double Grid---')
  call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
-   call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
+   call msg( 'r', 'K-points            (TOTAL):',RT_DbGd_nk)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)

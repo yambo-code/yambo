@@ -49,6 +49,7 @@ integer function io_QP_and_GF(what,qp,ID)
 &                       QP_DB_kind_disk 
  character(schlen)    ::ch
  integer ,    allocatable ::qp_table_disk(:,:)
+ real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
  if (what=="QP".or.what=="G") then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
@@ -236,7 +237,7 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    if (index(what,".QP")/=0.or.what=="QP") then
      !
-     ! QP corrections 
+     ! QP corrections ...
      !
      if (read_is_on(ID).and..not.allocated(qp%E)) then
        YAMBO_ALLOC(qp%Z,(qp%n_states))
@@ -244,14 +245,35 @@ integer function io_QP_and_GF(what,qp,ID)
        YAMBO_ALLOC(qp%E_bare,(qp%n_states))
      endif
      !
-     call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
-     call io_bulk(ID,C1=qp%E)
+     ! ...back Compatibility!
      !
-     call io_bulk(ID,VAR="QP_Eo",VAR_SZ=(/qp%n_states/))
-     call io_bulk(ID,R1=qp%E_bare)
-     !
-     call io_bulk(ID,VAR="QP_Z",VAR_SZ=(/2,qp%n_states/))
-     call io_bulk(ID,C1=qp%Z)
+     if (variable_exist(ID,"QP_E_Eo_Z")) then
+        !
+       allocate(qp_DATA_disk(3,qp%n_states,2))
+       !
+       call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+       call io_bulk(ID,R3=qp_DATA_disk)
+       !
+       if (read_is_on(ID)) then
+         do i1=1,qp%n_states
+           qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
+           qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
+           qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
+         enddo
+       endif
+       !
+     else
+       !
+       call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
+       call io_bulk(ID,C1=qp%E)
+       !
+       call io_bulk(ID,VAR="QP_Eo",VAR_SZ=(/qp%n_states/))
+       call io_bulk(ID,R1=qp%E_bare)
+       !
+       call io_bulk(ID,VAR="QP_Z",VAR_SZ=(/2,qp%n_states/))
+       call io_bulk(ID,C1=qp%Z)
+       !
+     endif
      !
    endif
    !

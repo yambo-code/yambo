@@ -69,18 +69,21 @@ integer function MEM_save_finder( shelf )
  !
 end function
 !
-integer function MEM_component_finder( i_SHELF, name, Sz )
+integer function MEM_component_finder( i_SHELF, name, Sz, desc, ADD )
  !
  use pars,   ONLY:schlen
  use memory, ONLY:MEMs
  implicit none
  integer      :: i_SHELF,Sz
- character(*) :: name
+ character(*) :: name,desc
+ logical      :: ADD
  !ws
  integer      :: i_l
+ logical      :: condition
  character(schlen) :: name_pattern,el_pattern
  !
  MEM_component_finder=0
+ condition = .FALSE.
  !
  name_pattern=name
  if (index(name,"%")>0) then
@@ -91,7 +94,28 @@ integer function MEM_component_finder( i_SHELF, name, Sz )
    if (index(name,"%")>0) then
      el_pattern=el_pattern(index(el_pattern,"%")+1:len(el_pattern))
    endif
-   if (trim(el_pattern)==trim(name_pattern).and.MEMs(i_SHELF)%size(i_l)==Sz) MEM_component_finder=i_l
+   if (trim(el_pattern)==trim(name_pattern)) then
+     !
+     if (ADD) then
+       !
+       condition=trim(MEMs(i_SHELF)%desc(i_l))==desc
+       !
+     else
+       !
+       if (MEMs(i_SHELF)%composed(i_l)) then
+         condition=MEMs(i_SHELF)%size(i_l)>=Sz
+       else
+         condition=MEMs(i_SHELF)%size(i_l)==Sz
+       endif
+       !
+     endif
+     !
+     if (condition) then
+       MEM_component_finder=i_l
+       return
+     endif
+     !
+   endif
  enddo
  !
 end function

@@ -27,7 +27,6 @@ subroutine MEM_report( REPORT )
  use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold
  use units,        ONLY:Kilobyte
- use stderr,       ONLY:intc
  use com,          ONLY:msg
  implicit none
  !
@@ -85,11 +84,11 @@ subroutine MEM_report( REPORT )
      type(MEM_element) :: M
      character(*)      :: what
      integer           :: MEM,MEM_now_kb
-     MEM=M%use*int(Kilobyte)
+     !
      do i_el=1,M%N
-       MEM=M%size(i_el)*M%kind(i_el)
        !
-       MEM_now_kb=nint(real(MEM)/Kilobyte)
+       MEM=M%size(i_el)*M%kind(i_el)
+       MEM_now_kb=int(real(MEM)/Kilobyte)
        if (MEM_now_kb<MEM_treshold) return
        !
        if (REPORT/="check".and.i_title==0) call msg("nrn",what)
@@ -102,8 +101,8 @@ subroutine MEM_report( REPORT )
          else
            WRITE(msg_,'(2a)') trim(msg_),trim(M%name(i_el))
          endif
-         if (len_trim(M%section(i_el))>0) then
-           WRITE(msg_,'(2a)')  trim(msg_)," ("//trim(M%section(i_el))//")"
+         if (len_trim(M%desc(i_el))>0) then
+           WRITE(msg_,'(2a)')  trim(msg_)," ("//trim(M%desc(i_el))//")"
          endif
        else
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
@@ -112,8 +111,8 @@ subroutine MEM_report( REPORT )
            WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))
          endif
          WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
-         if (len_trim(M%section(i_el))>0) then
-           WRITE(msg_,'(a,a)')  trim(msg_)," ("//trim(M%section(i_el))//")"
+         if (len_trim(M%desc(i_el))>0) then
+           WRITE(msg_,'(a,a)')  trim(msg_)," ("//trim(M%desc(i_el))//")"
          endif
        endif
        !

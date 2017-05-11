@@ -52,6 +52,7 @@ module memory
    character(schlen) :: section(N_MEM_max_element_components)
    integer           :: kind(   N_MEM_max_element_components)
    integer           :: size(   N_MEM_max_element_components)
+   logical           :: composed(N_MEM_max_element_components)
    !
  end type MEM_element
  type(MEM_element) :: MEMs(N_MEM_max)
@@ -65,8 +66,8 @@ module memory
  integer :: N_MEM_LIBs        = 0
  !
  type MEM_lib_element
-   character(schlen) :: name  = " "
-   integer           :: shelf = 0
+   character(schlen) :: name
+   integer           :: shelf
  end type MEM_lib_element
  !
  character(schlen)     :: MEM_shelf(N_MEM_shelf_max)
@@ -110,12 +111,13 @@ module memory
      integer                        :: i1
      do i1=1,size_
        MEM_element_to_init(i1)%shelf      = " "
-       MEM_element_to_init(i1)%use        = 0  
+       MEM_element_to_init(i1)%use        = 0
        MEM_element_to_init(i1)%N          = 0
        MEM_element_to_init(i1)%name(:)    = " "
        MEM_element_to_init(i1)%section(:) = " "
-       MEM_element_to_init(i1)%kind(:)    = 0  
-       MEM_element_to_init(i1)%size(:)    = 0  
+       MEM_element_to_init(i1)%kind(:)    = 0
+       MEM_element_to_init(i1)%size(:)    = 0
+       MEM_element_to_init(i1)%composed(:)= .false.
      enddo
    end subroutine
    !
@@ -136,13 +138,14 @@ module memory
    !
    subroutine MEM_element_copy(M1,M2)
      type(MEM_element) :: M1,M2
-     M2%shelf  = M1%shelf
-     M2%use    = M1%use
-     M2%N      = M1%N
-     M2%name   = M1%name
-     M2%section= M1%section
-     M2%kind   = M1%kind
-     M2%size   = M1%size
+     M2%shelf      = M1%shelf
+     M2%use        = M1%use
+     M2%N          = M1%N
+     M2%name       = M1%name
+     M2%desc       = M1%desc
+     M2%kind       = M1%kind
+     M2%size       = M1%size
+     M2%composed   = M1%composed
    end subroutine
    !
    subroutine MEM_error(name)

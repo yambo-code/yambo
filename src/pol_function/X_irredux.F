@@ -36,7 +36,6 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  !   outer region opened here (not working yet)
  !
  ! X terminator (BG kind) implemented (IM,AF)
- !
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE
@@ -209,7 +208,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
  !
- if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
+ if(coarse_grid_N/n_outthr>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
  !
  ! OpenMP setup
  !==============
@@ -234,6 +233,8 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
 !$omp do
 #endif
  do i_cg = 1,coarse_grid_N
+   !
+   if (coarse_grid_N/n_outthr==0) cycle
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !
@@ -314,8 +315,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X)
 !$omp end parallel
 #endif
  !
- !
- if(coarse_grid_N>0) call live_timing()
+ if(coarse_grid_N/n_outthr>0) call live_timing()
  !
  call OPENMP_update(master_thread) 
  call OPENMP_locks_reset()

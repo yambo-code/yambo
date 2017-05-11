@@ -222,6 +222,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
+ else
+   !
+   NE_time=0._SP
+   !
  endif
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time

@@ -105,7 +105,6 @@ MODULE timing_m
      ENDIF
      ! 
      CALL clock_find(listp,name,found,index)
-
      !
      ! clock NOT found
      !

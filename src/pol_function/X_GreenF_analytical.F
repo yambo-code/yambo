@@ -27,7 +27,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
+ use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
 &                     X_t,l_X_terminator,X_term_E
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
@@ -203,7 +203,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      enddo
      !
      qsize_fac=2._SP
-     if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
+     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
      !
      q_norm_ref=q_norm_ref/qsize_fac
      !

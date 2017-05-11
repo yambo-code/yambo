@@ -232,7 +232,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    endif
    !
    deallocate(Xen%df)
-   nullify(Xen%df)
    !
    Epsilon_ii(:,1)=1._SP+Epsilon_ii(:,1)*Co
    Epsilon_ii(:,2)=      Epsilon_ii(:,2)*Co

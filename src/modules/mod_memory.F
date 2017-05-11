@@ -43,15 +43,15 @@ module memory
  type MEM_element
    !
    ! Total...
-   character(schlen) :: shelf   != " "
-   integer           :: use     !=0  
+   character(schlen) :: shelf
+   integer           :: use  
    !
    ! Specific...
-   integer           :: N       !=0
-   character(schlen) :: name(   N_MEM_max_element_components) != " "
-   character(schlen) :: section(N_MEM_max_element_components) != " "
-   integer           :: kind(   N_MEM_max_element_components) !=0  
-   integer           :: size(   N_MEM_max_element_components) !=0  
+   integer           :: N
+   character(schlen) :: name(   N_MEM_max_element_components)
+   character(schlen) :: section(N_MEM_max_element_components)
+   integer           :: kind(   N_MEM_max_element_components)
+   integer           :: size(   N_MEM_max_element_components)
    !
  end type MEM_element
  type(MEM_element) :: MEMs(N_MEM_max)
@@ -103,6 +103,21 @@ module memory
  end interface
  !
  contains
+   !
+   subroutine MEM_element_init(MEM_element_to_init,size_)
+     integer,           intent(in)  :: size_
+     type(MEM_element), intent(out) :: MEM_element_to_init(size_)
+     integer                        :: i1
+     do i1=1,size_
+       MEM_element_to_init(i1)%shelf      = " "
+       MEM_element_to_init(i1)%use        = 0  
+       MEM_element_to_init(i1)%N          = 0
+       MEM_element_to_init(i1)%name(:)    = " "
+       MEM_element_to_init(i1)%section(:) = " "
+       MEM_element_to_init(i1)%kind(:)    = 0  
+       MEM_element_to_init(i1)%size(:)    = 0  
+     enddo
+   end subroutine
    !
    character(schlen) function mem_string(MEM)
      use units,        ONLY:Kilobyte,Megabyte,Gigabyte

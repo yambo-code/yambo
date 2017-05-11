@@ -82,6 +82,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
+ use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _PL
  use PHOTOLUM,   ONLY:PL_weights
@@ -163,6 +164,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TIMING
  call timing_allocate(nclockx)
 #endif
+ !
+ call MEM_element_init(MEMs,N_MEM_max)
+ call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
  !
  ! ZEROs 
  !

@@ -134,7 +134,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  iq=BS_q(1)
  !
  if(en%nb_SOC/=0) then
-   YAMBO_ALLOC(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
+   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
  endif
  !
  ! Here I read energies and residuum

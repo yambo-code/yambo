@@ -30,10 +30,10 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  use vec_operate,         ONLY:c2a
  !
 #include<memory.h>
- integer                  :: err
- type(bz_samp),intent(in) :: Xk
- integer,      intent(in) :: nkpoint_f(3)
- integer,      intent(in) :: order_ipol
+ integer                     :: err
+ type(bz_samp),intent(inout) :: Xk
+ integer,      intent(in)    :: nkpoint_f(3)
+ integer,      intent(in)    :: order_ipol
  !
  ! Work Space
  ! 

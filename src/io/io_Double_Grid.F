@@ -25,7 +25,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
- use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
 &                         IO_OUTDATED_DB
@@ -74,9 +73,9 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Eigenvalues
  !
  if (read_is_on(ID)) then
-   YAMBO_ALLOC(E%E_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   YAMBO_ALLOC(E%W_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
-   YAMBO_ALLOC(E%f_FineGd(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%E_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%W_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
+   YAMBO_ALLOC(E%f_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
  endif
  !
  call io_bulk(ID, VAR="EIGENVALUES", VAR_SZ=shape(E%E_FineGd) ) 

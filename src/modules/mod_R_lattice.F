@@ -70,21 +70,21 @@ module R_lattice
    !
    integer           :: nibz_FineGd
    integer           :: nbz_FineGd                     
-   integer,  pointer :: sstar_FineGd(:)   => null()
-   real(SP), pointer :: pt_FineGd(:,:)    => null()
-   real(SP), pointer :: ptbz_FineGd(:,:)  => null() 
-   real(SP), pointer :: weights_FineGd(:) => null()
+   integer,  allocatable :: sstar_FineGd(:)
+   real(SP), allocatable :: pt_FineGd(:,:)
+   real(SP), allocatable :: ptbz_FineGd(:,:)
+   real(SP), allocatable :: weights_FineGd(:)
    !
    ! Double grid: Mapping Fine to Coarse grid
    !
    integer           :: nibz_duplicate
    integer           :: nbz_duplicate
-   integer,  pointer :: nibz_mapped(:)    => null()  ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd associated
-   integer,  pointer :: nbz_mapped(:)     => null()  ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd associated
-   integer,  pointer :: ibz_DbGd_map(:,:) => null()  ! map kpt_FineGd in the IBZ --> kpts in the IBZ
-   integer,  pointer :: bz_DbGd_map(:,:)  => null()  ! map kpt_FineGd in the  BZ --> kpts in the  BZ
-   real(SP), pointer :: weights_DbGd(:)   => null()  
-   real(SP), pointer :: weights_ipol(:)   => null()  ! something used by mapping with wannier
+   integer,  allocatable :: nibz_mapped(:)            ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
+   integer,  allocatable :: nbz_mapped(:)             ! For each IBZ kpt in the Cg, n° of IBZ kpt_FineGd assoc.
+   integer,  allocatable :: ibz_DbGd_map(:,:)         ! map kpt_FineGd in the IBZ --> kpts in the IBZ
+   integer,  allocatable :: bz_DbGd_map(:,:)          ! map kpt_FineGd in the  BZ --> kpts in the  BZ
+   real(SP), allocatable :: weights_DbGd(:) 
+   real(SP), allocatable :: weights_ipol(:)           ! something used by mapping with wannier
    !                                               
  end type bz_samp
  !
@@ -156,7 +156,7 @@ module R_lattice
  !
  type(bz_map) :: k_map
  !
- ! Shift by a G-vector associated for points out of the BZ
+ ! Shift by a G-vector assoc. for points out of the BZ
  ! because of symmtry operations
  ! 
  integer, allocatable :: WF_shifts(:,:)
@@ -223,19 +223,17 @@ module R_lattice
      k%nbz_FineGd=0
      k%nibz_FineGd=0
      !
-     if(associated(k%sstar_FineGd))    deallocate(k%sstar_FineGd)
-     if(associated(k%pt_FineGd))       deallocate(k%pt_FineGd)
-     if(associated(k%pt_FineGd))       deallocate(k%ptbz_FineGd)
-     if(associated(k%weights_FineGd))  deallocate(k%weights_FineGd)
-     nullify(k%sstar_FineGd,k%pt_FineGd,k%pt_FineGd,k%weights_FineGd)
+     YAMBO_FREE(k%sstar_FineGd)
+     YAMBO_FREE(k%pt_FineGd)
+     YAMBO_FREE(k%ptbz_FineGd)
+     YAMBO_FREE(k%weights_FineGd)
      !
-     if(associated(k%nibz_mapped))     deallocate(k%nibz_mapped)
-     if(associated(k%nbz_mapped))      deallocate(k%nbz_mapped)
-     if(associated(k%ibz_DbGd_map))    deallocate(k%ibz_DbGd_map)
-     if(associated(k%bz_DbGd_map))     deallocate(k%bz_DbGd_map)
-     if(associated(k%weights_DbGd))    deallocate(k%weights_DbGd)
-     if(associated(k%weights_ipol))    deallocate(k%weights_ipol)
-     nullify(k%nibz_mapped,k%nbz_mapped,k%ibz_DbGd_map,k%bz_DbGd_map,k%weights_DbGd,k%weights_ipol)
+     YAMBO_FREE(k%nibz_mapped)
+     YAMBO_FREE(k%nbz_mapped)
+     YAMBO_FREE(k%ibz_DbGd_map)
+     YAMBO_FREE(k%bz_DbGd_map)
+     YAMBO_FREE(k%weights_DbGd)
+     YAMBO_FREE(k%weights_ipol)
      !
    end subroutine bz_samp_reset
    !
@@ -272,15 +270,15 @@ module R_lattice
      BZo%nbz_FineGd =BZi%nbz_FineGd
      BZo%nibz_FineGd=BZi%nibz_FineGd
      !
-     if (associated( BZi%sstar_FineGd )) then
+     if (allocated( BZi%sstar_FineGd )) then
        allocate(BZo%sstar_FineGd(BZo%nbz_FineGd))
        BZo%sstar_FineGd=BZi%sstar_FineGd
      endif
-     if (associated( BZi%pt_FineGd )) then
+     if (allocated( BZi%pt_FineGd )) then
        allocate(BZo%pt_FineGd(BZo%nibz_FineGd,3))
        BZo%pt_FineGd=BZi%pt_FineGd
      endif
-     if (associated( BZi%ptbz_FineGd )) then
+     if (allocated( BZi%ptbz_FineGd )) then
        allocate(BZo%ptbz_FineGd(BZo%nbz_FineGd,3))
        BZo%ptbz_FineGd=BZi%ptbz_FineGd
      endif
@@ -288,19 +286,19 @@ module R_lattice
      BZo%nbz_duplicate =BZi%nbz_duplicate
      BZo%nibz_duplicate=BZi%nibz_duplicate
      !
-     if (associated( BZi%nibz_mapped )) then
+     if (allocated( BZi%nibz_mapped )) then
        allocate(BZo%nibz_mapped(BZo%nibz))
        BZo%nibz_mapped=BZi%nibz_mapped
      endif
-     if (associated( BZi%nbz_mapped )) then
+     if (allocated( BZi%nbz_mapped )) then
        allocate(BZo%nbz_mapped(BZo%nbz))
        BZo%nbz_mapped=BZi%nbz_mapped
      endif
-     if (associated( BZi%ibz_DbGd_map )) then
+     if (allocated( BZi%ibz_DbGd_map )) then
        allocate(BZo%ibz_DbGd_map(2,BZo%nibz))
        BZo%ibz_DbGd_map=BZi%ibz_DbGd_map
      endif
-     if (associated( BZi%bz_DbGd_map )) then
+     if (allocated( BZi%bz_DbGd_map )) then
        allocate(BZo%bz_DbGd_map(2,BZo%nbz))
        BZo%ibz_DbGd_map=BZi%bz_DbGd_map
      endif

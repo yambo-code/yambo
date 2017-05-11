@@ -169,7 +169,7 @@ module BS_solvers
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      integer :: i_g
-     logical :: W_is_allocated,Z_is_allocated
+     logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
      YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))

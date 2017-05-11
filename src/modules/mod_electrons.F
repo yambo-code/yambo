@@ -201,8 +201,7 @@ module electrons
      if (Eo%nb_SOC/=0.and.Ei%nk==Eo%nk) then
        YAMBO_ALLOC(Eo%E_SOC,(Eo%nb_SOC,Eo%nk))
        Eo%E_SOC=Ei%E_SOC
-       allocate(Eo%table_SOC(2,Eo%nb,Eo%nk))
-       call mem_est("table_SOC",(/size(Eo%table_SOC)/),(/IP/))
+       YAMBO_ALLOC(Eo%table_SOC,(2,Eo%nb,Eo%nk))
        Eo%table_SOC=Ei%table_SOC
      endif
      !

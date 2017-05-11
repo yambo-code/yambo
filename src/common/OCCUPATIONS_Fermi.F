@@ -204,7 +204,6 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (.not.allocated(E%f)) then
    YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
  endif
- Efdist=1.E5_SP
  !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)

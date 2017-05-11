@@ -54,7 +54,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! Work Space
  !
  logical      :: X_os_run,K_inv_run,use_DbGd
- integer      :: ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp
+ integer      :: ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp,&
+&                low_ik,upp_ik,low_ikp,upp_ikp
  real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
  complex(SP)  :: Z_,pole,pole_X_term
  !
@@ -134,8 +135,12 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
  if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  !
- allocate(nkpt_DbGd_scatt( Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
- YAMBO_ALLOC(use_kpt_DbGd,( Xk%bz_DbGd_map(1,ikpbz)-1:Xk%bz_DbGd_map(2,ikpbz), Xk%bz_DbGd_map(1,ikbz)-1:Xk%bz_DbGd_map(2,ikbz) ) )
+ low_ik=Xk%bz_DbGd_map(1,ikbz)-1
+ upp_ik=Xk%bz_DbGd_map(2,ikbz)
+ low_ikp=Xk%bz_DbGd_map(1,ikpbz)-1
+ upp_ikp=Xk%bz_DbGd_map(2,ikpbz)
+ allocate( nkpt_DbGd_scatt(low_ik:upp_ik) )
+ YAMBO_ALLOC(use_kpt_DbGd,(low_ikp:upp_ikp,low_ik:upp_ik))
  !
  call define_use_kpt()
  !
@@ -203,7 +208,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  enddo
  !
  YAMBO_FREE(use_kpt_DbGd)
- deallocate(BZ_DbGd_iq_npt)
+ deallocate(nkpt_DbGd_scatt)
  !
  contains
    !

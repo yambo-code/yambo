@@ -204,7 +204,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
      l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
      if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-     if (l_QP_DBs_manipulate)             call initactivate(1,'QPDB_merge')
+     if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
    endif
    !
 #if defined _YPP_ELPH
@@ -444,8 +444,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
- !
- if(l_QP_DBs_manipulate) call initactivate(1,"Z_input")
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

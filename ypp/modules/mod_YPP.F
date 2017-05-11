@@ -151,6 +151,8 @@ module YPP
  integer     :: n_QP_dbs 
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
+ character(schlen),  allocatable :: QP_db_operation(:)
+ real(SP),           allocatable :: QP_db_prefactor(:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy

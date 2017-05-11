@@ -149,11 +149,11 @@ module QP_m
  ! interface
  !
  interface
+   !
    subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
-      use pars,          ONLY:SP,schlen,DP,pi
-      use electrons,     ONLY:levels,spin_occ,spin
-      use R_lattice,     ONLY:qindx_S,bz_samp
-     !
+     use pars,          ONLY:SP,schlen,DP,pi
+     use electrons,     ONLY:levels,spin_occ,spin
+     use R_lattice,     ONLY:qindx_S,bz_samp
      implicit none
      type(levels) ::E       
      type(bz_samp)::k,Xk,q
@@ -205,9 +205,14 @@ module QP_m
      if (Finite_Tel) QP_time_order_sign=1 ! Retared
    end subroutine
    !
-   subroutine QP_copy(qp_in,qp)
+   subroutine QP_copy(qp_in,qp,what,OP,pre_factor)
+     use pars,      ONLY:SP,cI,rONE,rZERO
      use electrons, ONLY:n_sp_pol
-     type(QP_t)::qp_in,qp
+     type(QP_t)   ::qp_in,qp
+     character(*) ::what,OP
+     real(SP)     ::pre_factor,operation
+     operation =1.
+     if (OP=="-") operation =-1.
      qp%nk=qp_in%nk
      qp%nb=qp%nb
      qp%n_descs=qp_in%n_descs
@@ -217,13 +222,25 @@ module QP_m
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
+     qp%k=qp_in%k
+     qp%table=qp_in%table
+     qp%wk=qp_in%wk
      if (allocated(qp_in%E)) then
        YAMBO_ALLOC(qp%Z,(qp%n_states))
        YAMBO_ALLOC(qp%E,(qp%n_states))
        YAMBO_ALLOC(qp%E_bare,(qp%n_states))
-       qp%Z=qp_in%Z
-       qp%E=qp_in%E
+       qp%Z=rONE
+       qp%E=rZERO
        qp%E_bare=qp_in%E_bare
+       if (what=="ALL".or.what=="Z") then
+         qp%Z=qp_in%Z
+       endif
+       if (what=="ALL".or.what=="E") then
+         qp%E=qp%E_bare+operation*pre_factor*real(qp_in%E-qp_in%E_bare)
+       endif
+       if (what=="ALL".or.what=="W") then
+         qp%E=qp%E+operation*pre_factor*cI*aimag(qp_in%E-qp_in%E_bare)
+       endif
      endif
      if (allocated(qp_in%S_total)) then
        YAMBO_ALLOC(qp%S_total,(qp%n_states,qp%GreenF_n_steps))

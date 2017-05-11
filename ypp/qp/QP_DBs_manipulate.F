@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,99 +23,88 @@
 !
 subroutine QP_DBs_manipulate( )
  !
- use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name
-#if defined _YPP_RT
- use YPP_real_time, ONLY:Z_input
-#endif
- use stderr,        ONLY:intc
+ use pars,          ONLY:schlen
+ use YPP,           ONLY:n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_operation,QP_db_prefactor
+ use stderr,        ONLY:intc,real2ch
  use com,           ONLY:msg
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset
+ use interfaces,    ONLY:QP_merge_DBs
  !
 #include<memory.h>
  !
  ! Work Space
  !
- integer                 :: i_qp,i_d,i_err,ID,n_GROUNDS
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS
  integer,    external    :: io_QP_and_GF
- logical,    allocatable :: plan_EWZ(:,:)
- type(QP_t), allocatable :: qp(:)
+ character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
+ logical,           allocatable :: plan_EWZ(:,:)
+ type(QP_t),        allocatable :: qp(:)
  !
  ! Resets
  !--------
  call QP_DBs_initialize()
+ !
+ if (n_QP_dbs==0) return
  !
  YAMBO_ALLOC(plan_EWZ,(n_QP_dbs,3))
  plan_EWZ=.FALSE.
  !
  call section("=",'QP databases mergering')
  !=========================================
- !
- do i_qp=1,n_QP_dbs
+ do i_db=1,n_QP_dbs
    !
-   call msg('s',repeat("-",len_trim(QP_db_name(i_qp))+13))
-   call msg('s','[DB #'//trim(intc(i_qp))//']'//trim(QP_db_what(i_qp))//" < "//trim(QP_db_name(i_qp)))
-   call msg('s',repeat("-",len_trim(QP_db_name(i_qp))+13))
+   ACTION=trim(QP_db_operation(i_db))//trim(real2ch(QP_db_prefactor(i_db)))//" x "//trim(QP_db_what(i_db))
    !
-   if (index(QP_db_what(i_qp),"E")>0) plan_EWZ(i_qp,1)=.TRUE.
-   if (index(QP_db_what(i_qp),"W")>0) plan_EWZ(i_qp,2)=.TRUE.
-   if (index(QP_db_what(i_qp),"Z")>0) plan_EWZ(i_qp,3)=.TRUE.
+   call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
+   call msg('s','[DB #'//trim(intc(i_db))//']'//trim(ACTION)//" < "//trim(QP_db_name(i_db)))
+   call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
    !
-   do i_d=1,QP_db(i_qp)%n_descs
-     call msg('s','[DB #'//trim(intc(i_qp))//']'//trim(QP_db(i_qp)%description(i_d)))
+   if (index(QP_db_what(i_db),"E")>0) plan_EWZ(i_db,1)=.TRUE.
+   if (index(QP_db_what(i_db),"W")>0) plan_EWZ(i_db,2)=.TRUE.
+   if (index(QP_db_what(i_db),"Z")>0) plan_EWZ(i_db,3)=.TRUE.
+   !
+   do i_d=1,QP_db(i_db)%n_descs
+     call msg('s','[DB #'//trim(intc(i_db))//']'//trim(QP_db(i_db)%description(i_d)))
    enddo
    !
-   if (i_qp==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_qp))+13))
+   if (i_db==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
    !
  enddo
  !
  call msg('s','Merging...')
  !==========================
  !
- allocate(qp(1))
  n_GROUNDS=-1
- call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS,qp)
- deallocate(qp)
+ call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS)
  allocate(qp(n_GROUNDS))
  do i_qp=1,n_GROUNDS
    call QP_reset(qp(i_qp))
  enddo
- call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS,qp)
- deallocate(qp)
+ call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZ,n_GROUNDS,qp,QP_db_operation,QP_db_prefactor)
  !
  call msg('l','done')
- stop
- !
-!#if defined _RT
-! !
-! call msg('s','Post-Processing...')
-! !==================================
-! !
-! do i_sp=1,qp%n_states
-!   !
-!   COHSEX_eq= real(qp%E(i_sp)-qp%E_bare(i_sp))
-!   dE_Neq   = real(qp%E(i_sp)-qp%E_bare(i_sp))
-!   !
-!   if (index(trim(QP_db_what(i_qp)),"C")==0) COHSEX_eq=0._SP
-!   if (index(trim(QP_db_what(i_qp)),"N")==0) dE_Neq   =0._SP
-!   if (Z_input<=0._SP) then
-!     if(index(trim(QP_db_what(i_qp)),"Z")==0) then
-!     Z_local=real(QP_db(i_qp_ref)%E(i_sp)-QP_db(i_qp_ref)%E_bare(i_sp))/ &
-!  &          real(QP_db(1)%E(i_sp)-QP_db(1)%E_bare(i_sp))
-!   else
-!     Z_local=QP_db(i_qp_ref)%Z(i_sp)
-!   endif
-! else
-!           Z_local=Z_input
-!         endif
-!         QP_db(i_qp_ref)%E(i_s)=QP_db(i_qp_ref)%E(i_s)+Z_local*(dE_Neq-COHSEX_eq)
-!         !
-!#endif
  !
  call msg('s','I/O...')
  !=====================
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
- i_err=io_QP_and_GF('QP',qp,ID)
- call msg('l','done')
+ do i_qp=1,n_GROUNDS
+   QP_db_kind=" "
+   call msg('s',repeat("-",60))
+   do i_d=1,qp(i_qp)%n_descs
+     if (index(qp(i_qp)%description(i_d),"Real Axis GW")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
+     if (index(qp(i_qp)%description(i_d),"El-Ph Self-Energy")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
+     if (index(qp(i_qp)%description(i_d),"PPA imaginary")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
+   enddo
+   QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
+   do i_d=1,qp(i_qp)%n_descs
+     call msg('s','['//trim(QP_merged_name)//']'//trim(qp(i_qp)%description(i_d)))
+   enddo
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
+   i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)
+ enddo
+ call msg('s',repeat("-",60))
+ !
+ deallocate(qp)
+ YAMBO_FREE(plan_EWZ)
  !
 end subroutine

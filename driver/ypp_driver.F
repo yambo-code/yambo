@@ -109,6 +109,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    call mk_dir(com_path)
  endif
  !
+#if defined _MEM_CHECK
+ call MEM_treshold_estimate( )
+#endif
+ !
  ! WF
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=ID)
@@ -202,7 +206,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
- if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
+ if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
  if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( )
  !

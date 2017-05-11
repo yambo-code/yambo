@@ -209,6 +209,18 @@ module interfaces
      logical,       optional::MASK(:)
    end subroutine
    !
+   subroutine QP_merge_DBs(N,DBs,plan,N_qp,qp,OP,PRE_FAC)
+     use pars, ONLY:SP
+     use QP_m, ONLY:QP_t
+     implicit none
+     integer              :: N,N_qp
+     type(QP_t)           :: DBs(N)
+     logical              :: plan(N,3)
+     type(QP_t),  optional:: qp(N_qp)
+     character(*),optional:: OP(N)
+     real(SP)    ,optional:: PRE_FAC(N)
+   end subroutine QP_merge_DBs
+   !
  end interface
  !
 end module

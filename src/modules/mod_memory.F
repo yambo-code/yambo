@@ -48,10 +48,10 @@ module memory
    !
    ! Specific...
    integer           :: N
-   character(schlen) :: name(   N_MEM_max_element_components)
-   character(schlen) :: section(N_MEM_max_element_components)
-   integer           :: kind(   N_MEM_max_element_components)
-   integer           :: size(   N_MEM_max_element_components)
+   character(schlen) :: name(N_MEM_max_element_components)
+   character(schlen) :: desc(N_MEM_max_element_components)
+   integer           :: kind(N_MEM_max_element_components)
+   integer           :: size(N_MEM_max_element_components)
    logical           :: composed(N_MEM_max_element_components)
    !
  end type MEM_element
@@ -114,7 +114,7 @@ module memory
        MEM_element_to_init(i1)%use        = 0
        MEM_element_to_init(i1)%N          = 0
        MEM_element_to_init(i1)%name(:)    = " "
-       MEM_element_to_init(i1)%section(:) = " "
+       MEM_element_to_init(i1)%desc(:)    = " "
        MEM_element_to_init(i1)%kind(:)    = 0
        MEM_element_to_init(i1)%size(:)    = 0
        MEM_element_to_init(i1)%composed(:)= .false.

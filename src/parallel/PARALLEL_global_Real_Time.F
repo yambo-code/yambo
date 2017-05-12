@@ -139,13 +139,6 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Note that PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
  !
  !.........................................................................
- if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then 
-   !
-   ! This allocation can be left over from previous calls to PARALLEL_global routine
-   !
-   call PP_indexes_reset(PAR_IND_DIPk_ibz)
-   !
- endif
  call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
  YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))
  call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)

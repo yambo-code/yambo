@@ -53,6 +53,8 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt)
  !
+ if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt)
+ !
  JPC_RT_IO_t%N=1
  allocate(JPC_RT_IO_t%Time(1))
  JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=0._SP

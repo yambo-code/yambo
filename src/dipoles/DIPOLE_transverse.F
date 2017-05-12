@@ -76,9 +76,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #if defined _TIMING
  call timing('DIPOLE_transverse',OPR='start')
 #endif
-#if defined _SC || defined _RT
- l_evaluating_em1s=index(secnm,"Dielectric")/=0
-#endif
  !
  call DIPOLE_kb_init(Xen,Dip,io_err,ID)
  !

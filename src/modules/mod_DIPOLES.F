@@ -71,7 +71,6 @@ module DIPOLES
    subroutine DIP_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use pars,      ONLY:cZERO
      !
      character(*)      :: what

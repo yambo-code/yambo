@@ -137,7 +137,6 @@ module X_m
      integer, optional :: d(:)
      !
      if (present(d)) then
-<<<<<<< HEAD
        if (allocated(X_mat)) return
        YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
        X_mat=cZERO
@@ -151,8 +150,6 @@ module X_m
        !
        YAMBO_FREE(X_mat)
        !
-=======
->>>>>>> master
      endif
      !
    end subroutine

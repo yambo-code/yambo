@@ -208,7 +208,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
- if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( )
+ if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( en )
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========

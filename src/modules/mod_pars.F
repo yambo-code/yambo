@@ -37,7 +37,6 @@ module pars
  integer, parameter :: n_CPU_str_max=20
  !
  !...MEMORY
- !
  integer, parameter :: N_MEM_max                     = 1000
  integer, parameter :: N_MEM_max_element_components  = 200
  integer, parameter :: N_MEM_SAVE_max      = 500
@@ -66,6 +65,9 @@ module pars
  !
  !...QP
  integer, parameter :: max_qp_descs=100
+ !
+ !...QP_apply
+ integer, parameter :: n_QP_actions_MAX=10
  !
  ! KINDS
  !=======

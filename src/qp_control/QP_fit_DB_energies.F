@@ -42,8 +42,7 @@ subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
  ! Work Space
  !
  integer  :: i1,Nqpc,Nqpv,fit_order,i_spin
- real(SP) :: Eoc,Eov,Ec,Ev
- real(SP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(2),TCv(2),TCc(2)
+ real(SP) :: Eoc,Eov,Ec,Ev,EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(2),TCv(2),TCc(2)
  !
  ! Loop on spin polarizations
  !

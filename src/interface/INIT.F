@@ -733,7 +733,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0) then
        call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -767,7 +767,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then
-           call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+           call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
            call initactivate(1,'GWoIter')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -792,7 +792,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+     call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
    !

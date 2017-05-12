@@ -1,6 +1,6 @@
 #if defined _ELPH
 ELPH_objects= QP_load_GFs.o
 #endif
-objs= QP_apply.o QP_load_DB.o QP_check_if_corrected.o QP_fit_DB_energies.o QP_fit_DB_widths.o \
-      QP_apply_DB_interpolation.o QP_apply_global_stretch.o QP_DBs_add_me.o QP_DBs_merge.o \
+objs= QP_apply.o QP_load_DB.o QP_apply_QP_type.o QP_check_if_corrected.o QP_fit_DB_energies.o QP_fit_DB_widths.o \
+      QP_apply_DB_interpolation.o QP_apply_global_stretch.o QP_DBs_add_me.o QP_DBs_merge.o  QP_DB_message.o \
       Nearest_level_interpolation.o Nearest_kpt_interpolation.o $(ELPH_objects)

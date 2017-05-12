@@ -33,8 +33,7 @@ subroutine QP_DBs_initialize()
  use parser_m,  ONLY:parser       
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
- use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,QP_db,QP_db_what,QP_db_name,&
-&                    QP_db_operation,QP_db_prefactor
+ use YPP,       ONLY:l_QP_DBs_create_and_modify,QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name
  !
  implicit none
  ! 

@@ -21,8 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,&
-&                                    DB_corrected,n_neigh)
+subroutine QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,DB_corrected,n_neigh)
  !
  ! Extend the QP correction from the kpt in qp to the kpt in k
  ! Requires qp%nk, qp%k, qp%table, qp%n_states, qp%E, qp%E_bare, qp%Z

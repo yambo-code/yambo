@@ -30,11 +30,12 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! QP_apply
  !::::::::::
- ! |_ qp_load_DB
- ! |      |_ qp_apply_DB_interpolation
- ! |      |_ qp_fit_DB_energies/widths
- ! |      |_ qp_load_GFs
- ! |_ qp_apply_global_stretch
+ ! |_ QP_load_DB
+ ! |      |_ QP_apply_DB_interpolation
+ ! |      |_ QP_fit_DB_energies/widths
+ ! |      |_ QP_load_GFs
+ ! |_ QP_apply_QP_type
+ ! |_ QP_apply_global_stretch
  ! |_ (if X or K) fermi_level
  !
  ! Eid
@@ -53,7 +54,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_sc_run
  use units,         ONLY:HA2EV
- use QP_m,          ONLY:QP_t,QP_reset,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
+ use QP_m,          ONLY:QP_t,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
 &                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  use com,           ONLY:msg,depth
  use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
@@ -79,14 +80,13 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! Work Space
  !
  type(levels)     ::Fermi_en
- type(QP_t)       ::qp
  type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
  integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
-&                       ik_r,QP_SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
+&                   ik_r,QP_SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
  character(schlen)::ch
  character(1)     ::what
  character(11)    ::spin_ch(2)
- logical          ::is_def(4),GFs_from_DB,W_def(2)
+ logical          ::is_def(4),W_def(2)
  integer          ::Eid
  integer, allocatable :: DbGd_k_done(:)
  integer, external    :: QP_load_DB
@@ -97,7 +97,6 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  if (object=="K") Eid=2
  if (object=="G") Eid=3
  !
- call QP_reset(qp)
  do i_spin=1,n_sp_pol
    call reset_QP_ctl(QP_ctl_from_DB(i_spin))
    call reset_QP_ctl(QP_ctl_input_or_impose(i_spin))
@@ -120,7 +119,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    if (.not.any((/is_def,W_def/))) return
  endif
  !
- ! Allocation of qp_done table to keep track of the corrections
+ ! Allocation of QP_corrected table to keep track of the corrections
  ! done
  !
  if (.not.allocated(en%QP_corrected)) then
@@ -160,7 +159,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
    !
    QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
-   QP_load_DB_err=QP_load_DB(band_range,en,k,qp,QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
+   QP_load_DB_err=QP_load_DB(band_range,en,k,QP_ctl_from_DB,msg_fmt,DB_corrected)
    !
    ! Update QP db kind in the global_XC kinds 
    !
@@ -216,8 +215,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! 2] I am imposing a qp_impose that contains qp corrections
  !
- if (present(qp_impose)) QP_load_DB_err=QP_load_DB(band_range,en,k,qp_impose,&
-&                                                  QP_ctl_from_DB,msg_fmt,DB_corrected,GFs_from_DB)
+ if (present(qp_impose)) call QP_apply_QP_type(band_range,en,k,qp_impose)
  !
  ! GPL_EXCLUDE_END
  !
@@ -304,7 +302,6 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! CLEAN
  !
- call QP_reset(qp)
  call E_reset(Fermi_en)
  !
  if (.not.QP_ctl_applied) return

@@ -55,6 +55,7 @@ module QP_m
  logical           :: use_GreenF_Zoom
  logical           :: GF_is_causal
  character(schlen) :: QP_solver
+ character(schlen) :: GF_energy_range_mode="centered"
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp

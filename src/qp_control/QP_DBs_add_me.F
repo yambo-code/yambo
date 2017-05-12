@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZ,SAME_k,SAME_desc,OPERATION,PRE_FAC)
+subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,PRE_FAC)
  !
- ! This routine just adds to qp_base qp with the plan plan_EWZ
+ ! This routine just adds to qp_base qp with the plan plan_EWZG
  !
  use pars,           ONLY:cZERO,rZERO,cI,SP
  use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
@@ -32,13 +32,13 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZ,SAME_k,SAME_desc,OPERATION,P
 #include<memory.h>
  !
  type(QP_t)         ::qp_base,qp_to_add
- logical            ::plan_EWZ(3),SAME_k,SAME_desc
+ logical            ::plan_EWZG(4),SAME_k,SAME_desc
  character(*)       ::OPERATION
  real(SP)           ::PRE_FAC
  !
  ! Work Space
 
- logical    ::l_QP_db
+ logical    ::l_QP_db,CONDITION
  integer    ::N_states,i_s,i_d,i_sp
  type(QP_t) ::qp
  real(SP)   ::PRE_SIGN
@@ -105,6 +105,10 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZ,SAME_k,SAME_desc,OPERATION,P
    qp%Z(:qp_base%n_states)=qp_base%Z
    qp%E(:qp_base%n_states)=qp_base%E
    qp%E_bare(:qp_base%n_states)=qp_base%E_bare
+ else
+   qp%S_total(:qp_base%n_states,:)=qp_base%S_total
+   qp%GreenF(:qp_base%n_states,:)=qp_base%GreenF
+   qp%GreenF_W(:qp_base%n_states,:)=qp_base%GreenF_W
  endif
  !
  ! Adding/Merging |
@@ -117,16 +121,26 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZ,SAME_k,SAME_desc,OPERATION,P
      if (all(qp_to_add%table(i_sp,:)==qp%table(i_s,:))) then
        !
        if (l_QP_db) then
-         if (plan_EWZ(1)) then
+         if (plan_EWZG(1)) then
            qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*real(qp_to_add%E(i_sp)-qp_to_add%E_bare(i_sp))
          endif
          qp%E_bare(i_s)=qp_to_add%E_bare(i_sp)
-         if (plan_EWZ(2)) qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*cI*aimag(qp_to_add%E(i_sp))
-         if (plan_EWZ(3)) qp%Z(i_s)=qp%Z(i_s)+qp_to_add%Z(i_sp)
+         if (plan_EWZG(2)) qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*cI*aimag(qp_to_add%E(i_sp))
+         if (plan_EWZG(3)) qp%Z(i_s)=qp%Z(i_s)+qp_to_add%Z(i_sp)
        else
-         qp%S_total(i_s,:)=qp_to_add%S_total(i_sp,:)
-         qp%GreenF(i_s,:)=qp_to_add%GreenF(i_sp,:)
-         qp%GreenF_W(i_s,:)=qp_to_add%GreenF_W(i_sp,:)
+         if (plan_EWZG(4)) then
+           if (i_s>qp_base%n_states) then
+             CONDITION=.TRUE.
+           else
+             CONDITION=abs(qp%GreenF_W(i_s,qp%GreenF_n_steps)-qp_to_add%GreenF_W(i_sp,qp%GreenF_n_steps))<1.E-5.and.&
+&                      abs(qp%GreenF_W(i_s,1)-qp_to_add%GreenF_W(i_sp,1))<1.E-5
+           endif
+           if (CONDITION) then
+             qp%S_total(i_s,:)=qp%S_total(i_s,:)+qp_to_add%S_total(i_sp,:)
+             qp%GreenF(i_s,:)=qp%GreenF(i_s,:)+qp_to_add%GreenF(i_sp,:)
+             qp%GreenF_W(i_s,:)=qp_to_add%GreenF_W(i_sp,:)
+           endif
+         endif
        endif
        qp%k(qp%table(i_s,3),:)=qp_to_add%k( qp_to_add%table(i_sp,3),:)
        qp%wk(qp%table(i_s,3) )=qp_to_add%wk( qp_to_add%table(i_sp,3) )

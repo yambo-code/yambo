@@ -23,8 +23,9 @@
 !
 module QP_CTL_m
  !
- use pars,  ONLY:SP,schlen
+ use pars,  ONLY:SP,schlen,lchlen,n_QP_actions_MAX
  use units, ONLY:HA2EV
+ use QP_m,  ONLY:QP_T
  !
  implicit none
  !
@@ -58,6 +59,18 @@ module QP_CTL_m
    character(schlen):: short_descr
    !
  end type
+ !
+ type QP_apply_t
+   character(lchlen)    :: name
+   character(schlen)    :: what
+   type(QP_ctl_t)       :: CTL
+   integer, allocatable :: STATES_done(:,:,:,:)
+ end type
+ !
+ ! QP DBs load and apply 
+ !
+ integer                :: n_QP_actions
+ type(QP_apply_t)       :: QP_action(n_QP_actions_MAX)
  !
  interface
    !

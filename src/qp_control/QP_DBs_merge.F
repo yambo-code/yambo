@@ -21,12 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp,OP,PRE_FAC)
- !
- ! This routine merges DBs that respect the two following statements:
- !
- ! 1. They are different (e-e vs e-p) but done on the same grid of k-pts
- ! 2. They are relative to the SAME calculation but on different subsets of k-pts
+subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
  use pars,           ONLY:SP,cI
  use QP_m,           ONLY:QP_t,QP_copy
@@ -39,10 +34,11 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp,OP,PRE_FAC)
  !
  integer              :: n_dbs,n_GROUNDS
  type(QP_t)           :: qp2merge(n_dbs)
- logical              :: plan_EWZ(n_dbs,3)
+ logical              :: plan_EWZG(n_dbs,4)
  type(QP_t),  optional:: qp(n_GROUNDS)
  character(*),optional:: OP(n_dbs)
  real(SP)    ,optional:: PRE_FAC(n_dbs)
+ integer     ,optional:: MAP(n_dbs)
  !
  ! Work Space
  !
@@ -60,16 +56,22 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp,OP,PRE_FAC)
  !
  do i_db=1,n_dbs
    !
+   if (qp2merge(i_db)%n_states==0) cycle
+   !
    if (MERGED(i_db  )) cycle
    !
    n_GROUNDS=n_GROUNDS+1
    GROUND(i_db)=n_GROUNDS
+   if (present(MAP)) then
+     MAP(i_db)=n_GROUNDS
+   endif
    if (.not.just_COUNT) then
-     if (plan_EWZ(i_db,1)) WHAT="E"
-     if (plan_EWZ(i_db,2)) WHAT="W"
-     if (plan_EWZ(i_db,3)) WHAT="Z"
+     if (plan_EWZG(i_db,1)) WHAT="E"
+     if (plan_EWZG(i_db,2)) WHAT="W"
+     if (plan_EWZG(i_db,3)) WHAT="Z"
+     if (plan_EWZG(i_db,4)) WHAT="G"
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
-     if (WHAT/="E") qp( n_GROUNDS )%E=qp2merge(i_db)%E_bare+cI*aimag( qp( n_GROUNDS )%E )
+     if (WHAT/="E".and.what/="G") qp( n_GROUNDS )%E=qp2merge(i_db)%E_bare+cI*aimag( qp( n_GROUNDS )%E )
    endif
    !
    do i_db_p=i_db+1,n_dbs
@@ -89,15 +91,21 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZ,n_GROUNDS,qp,OP,PRE_FAC)
      ! .not.SAME_desc <
      !                 .not.SAME_k => No merge
      !
-     !
      CONDITION= (SAME_desc.and..not.SAME_k) .or. (.not.SAME_desc.and.SAME_k) .or. &
-&               (SAME_desc.and.SAME_k.and..not.all(plan_EWZ(i_db,:).eqv.plan_EWZ(i_db_p,:)))
+&               (SAME_desc.and.SAME_k.and..not.all(plan_EWZG(i_db,:).eqv.plan_EWZG(i_db_p,:)))
+     !
+     if (plan_EWZG(i_db,4)) then
+       CONDITION=qp2merge(i_db)%GreenF_n_steps==qp2merge(i_db_p)%GreenF_n_steps
+     endif
      !
      if (CONDITION) then
+       if (present(MAP)) then
+         MAP(i_db_p)=GROUND(i_db)
+       endif
        MERGED(i_db_p)=.TRUE.
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
-         call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZ(i_db_p,:), &
+         call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
 &                           SAME_k, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
        endif
      endif

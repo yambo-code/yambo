@@ -23,7 +23,7 @@
 !
 module fields
  !
- use pars, ONLY:SP,schlen,lchlen,pi
+ use pars, ONLY:SP,schlen,lchlen,pi,n_ext_fields_max
  use units,ONLY:FS2AUT
  !
  implicit none
@@ -50,8 +50,7 @@ module fields
    real(SP) :: versor_circ(3)
  end type ext_field
  !
- integer, parameter  :: n_ext_fields_max=4
- integer             :: n_ext_fields    =0
+ integer               :: n_ext_fields    =0
  type(ext_field), save :: Efield(n_ext_fields_max)
  !
  ! Vector potential

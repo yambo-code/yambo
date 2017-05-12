@@ -33,7 +33,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max
  !
- implicit none
+#include<memory.h>
  !
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
@@ -45,7 +45,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  logical                      :: psp_has_so
  integer                      :: is,ia,il,i_ml,i_mj,l,ml,twojp1,i_m_shift(2),&
 &                                i_pp,pp_spin,i_spinor
- integer                      :: io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
+ integer                      :: io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err,D(3)
  !
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
@@ -87,7 +87,8 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  if (io_KB_pwscf_err==0) then
    !
-   allocate(pp_factor(2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1),n_atomic_species,2))
+   D=(/2*(pp_n_l_max-1)+1,pp_n_l_max,maxval(pp_table(2,:,:)+1)/)
+   YAMBO_ALLOC(pp_factor,(D(1),D(2),D(3),n_atomic_species,2))
    !
    do is = 1,n_atomic_species
      !

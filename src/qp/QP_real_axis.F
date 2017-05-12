@@ -28,7 +28,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! [1] Real axis GW S.E.
  ! [2] Electronic Lifetimes
  !
- use pars,          ONLY:SP,schlen,pi,IP,cZERO,cI
+ use pars,          ONLY:SP,schlen,pi,cZERO,cI
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_life
  use electrons,     ONLY:levels,spin,spin_occ
@@ -50,7 +50,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        QP_n_W_freqs_redux,e2et,h2ht
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:bose_decay
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
@@ -59,7 +58,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
@@ -105,14 +104,15 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! W energy and damping ranges
  !-----------------------------
- if (GW_iter==0) allocate(QP_W_er(q%nbz,2),QP_W_dr(q%nbz,2))
+ YAMBO_ALLOC(QP_W_er,(q%nbz,2))
+ YAMBO_ALLOC(QP_W_dr,(q%nbz,2))
  !
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
  if (trim(QP_solver)=='n') then
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     allocate(Sc_W(i_qp)%p(Sc_W(i_qp)%n_freqs))
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
      forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
    enddo
  else if (trim(QP_solver)=='g') then
@@ -167,8 +167,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !==================
      QP_n_W_freqs=Xw%n_freqs
      QP_n_W_freqs_redux=Xw%n_freqs
-     allocate(QP_W(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs),stat=i_err)
-     call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+     YAMBO_ALLOC(QP_W,(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
      !
      if (QP_solver=="n".or.QP_solver=="g") then
        QP_Sc=cZERO
@@ -188,8 +187,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
          call live_timing(steps=1)
        enddo
-       deallocate(QP_W)
-       call mem_est("QP_W")
+       YAMBO_FREE(QP_W)
        call live_timing()
        !
        return
@@ -217,8 +215,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    call section('=','Lifetimes Transitions Selector')
    !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
-   allocate(life_W_table(q%nibz,QP_n_W_freqs))
-   call mem_est("life_W_table",(/size(life_W_table)/),(/IP/))
+   YAMBO_ALLOC(life_W_table,(q%nibz,QP_n_W_freqs))
    life_W_table=0
    QP_n_W_freqs_redux=-1
    do iqibz=1,q%nibz
@@ -229,14 +226,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      life_W_table(iqibz,:size(coarse_grid_index))=coarse_grid_index(:)
      !
      QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
-     deallocate(coarse_grid_index)
-     call mem_est("CGi")
+     YAMBO_FREE(coarse_grid_index)
      !
    enddo
    !
    do iqibz=1,q%nibz
      X%iq=iqibz
      i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
+     call PP_redux_wait()
    enddo
    !
  endif
@@ -275,8 +272,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (.not.l_life) then
    QP_n_W_freqs=Xw%n_freqs
    QP_n_W_freqs_redux=Xw%n_freqs
-   allocate(QP_W(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs),stat=i_err)
-   call mem_est("QP_W",(/size(QP_W)/),errors=(/i_err/))
+   YAMBO_ALLOC(QP_W,(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
    QP_W=cZERO
  endif
  !
@@ -507,8 +503,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! CLEAN
  !
  if (l_life) then
-   deallocate(life_W_table)
-   call mem_est("life_W_table")
+   YAMBO_FREE(life_W_table)
    call PP_redux_wait(qp%E)
  else
    call PP_redux_wait(QP_Sc)
@@ -516,8 +511,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  if (io_SCREEN) then
    if (trim(QP_solver)=='n'.or.trim(QP_solver)=='g') then
-     deallocate(QP_W)
-     call mem_est("QP_W")
+     YAMBO_FREE(QP_W)
    endif
  endif
  if (l_life) then
@@ -530,8 +524,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo
  endif
  !
- if (io_RESPONSE) call X_alloc('X')
- !
+ call X_alloc('X')
  call WF_free(WF)
  call elemental_collision_free(scattering_main)
  call elemental_collision_free(scattering_prime)

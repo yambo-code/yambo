@@ -23,10 +23,10 @@
 !
 module X_m
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,           ONLY:SP,lchlen,schlen
+ use units,          ONLY:HA2EV
  !
- implicit none
+#include <memory.h>
  !
  ! Polarizability
  !
@@ -51,7 +51,7 @@ module X_m
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: X_is_evaluated_for_all_Qs
+ logical                  :: X_is_integrated
  !
  ! Absorption & Polarizability
  !
@@ -76,7 +76,7 @@ module X_m
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: half_X_mat_only
+ logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
@@ -131,50 +131,49 @@ module X_m
    subroutine X_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
+<<<<<<< HEAD
        if (allocated(X_mat)) return
-       allocate(X_mat(d(1),d(2),d(3)),stat=err)
-       call mem_est("X_mat",(/size(X_mat)/),errors=(/err/))
+       YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
        X_mat=cZERO
      else
        !
        ! I clean the RL components mapping
        !
-       if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
-       if (.not.allocated(X_mat)) return
-       deallocate(X_mat)
-       call mem_est("X_mat")
+       YAMBO_FREE(X_RLcomp_ig)
+       !
+       ! and the matrix itself
+       !
+       YAMBO_FREE(X_mat)
+       !
+=======
+>>>>>>> master
      endif
      !
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo
-     Xo%ng=Xi%ng
-     Xo%ng_db=Xi%ng_db
-     Xo%iq=Xi%iq
-     Xo%ib    =Xi%ib
-     Xo%ib_lim=Xi%ib_lim
-     Xo%db_ib    =Xi%db_ib
-     Xo%db_ib_lim=Xi%db_ib_lim
-     Xo%ngostnts=Xi%ngostnts
-     Xo%ordering=Xi%ordering
-     Xo%Vnl_included=Xi%Vnl_included
-     Xo%ehe=Xi%ehe
-     Xo%q0=Xi%q0
+     Xo%ng           =Xi%ng
+     Xo%ng_db        =Xi%ng_db
+     Xo%iq           =Xi%iq
+     Xo%ib           =Xi%ib
+     Xo%ib_lim       =Xi%ib_lim
+     Xo%db_ib        =Xi%db_ib
+     Xo%db_ib_lim    =Xi%db_ib_lim
+     Xo%ngostnts     =Xi%ngostnts
+     Xo%ordering     =Xi%ordering
+     Xo%Vnl_included =Xi%Vnl_included
+     Xo%ehe          =Xi%ehe
+     Xo%q0           =Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
-     Xo%ppaE=Xi%ppaE
-     Xo%Wd=Xi%Wd
+     Xo%ppaE         =Xi%ppaE
+     Xo%Wd           =Xi%Wd
      Xo%f_xc=Xi%f_xc
    end subroutine
    !
@@ -182,20 +181,20 @@ module X_m
      use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
-     X%ng=1
-     X%ng_db=0
-     X%iq=(/1,-1/)
-     X%ngostnts=0
-     X%whoami=0
-     X%Vnl_included=.false.
+     X%ng           =1
+     X%ng_db        =0
+     X%iq           =(/1,-1/)
+     X%ngostnts     =0
+     X%whoami       =0
+     X%Vnl_included =.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1._SP,-1._SP/)/HA2EV
-     X%q0=(/1._SP,0._SP,0._SP/)
-     X%Wd=cZERO
+     X%ehe          =(/-1._SP,-1._SP/)/HA2EV
+     X%q0           =(/1._SP,0._SP,0._SP/)
+     X%Wd           =cZERO
      X%cg_percentual=100._SP
-     X%ppaE=1._SP
-     X%ordering="T"
-     X%f_xc="none"       
+     X%ppaE         =1._SP
+     X%ordering     ="T"
+     X%f_xc         ="none"       
    end subroutine
    !
 end module

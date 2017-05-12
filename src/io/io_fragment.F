@@ -40,6 +40,9 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  use interfaces, ONLY:PARALLEL_live_message
  use parallel_m, ONLY:ncpu
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr
@@ -76,6 +79,10 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  if (index(trim(io_raw_extension(ID)),"BS_Q")>0) then
    if (.not.frag_BS_K) return
  endif
+ !
+#if defined _TIMING
+ call timing('io_fragment',OPR='start')
+#endif
  !
  close_is_on_save=close_is_on(ID)
  !
@@ -114,5 +121,9 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF) 
  !
  if (close_is_on_save) io_resetable(ID)=.true.
+ !
+#if defined _TIMING
+ call timing('io_fragment',OPR='stop')
+#endif
  !
 end subroutine 

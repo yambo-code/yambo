@@ -38,7 +38,7 @@ subroutine K_kerr_IP(iq,w,Dip)
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
 &                         PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  !
- implicit none
+#include<memory.h>
  !
  type(DIPOLE_t), intent(in) :: Dip
  integer,    intent(in) :: iq
@@ -50,7 +50,7 @@ subroutine K_kerr_IP(iq,w,Dip)
  complex(SP)       :: E_plus_W0,res,E_plus_W(2/n_sp_pol)
  integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
- allocate(Epsilon_ij(BSS_n_freqs,4))
+ YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
  Epsilon_ij=cZERO
  !
  Epsilon_ij(:,1)=w(:)

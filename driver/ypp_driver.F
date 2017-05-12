@@ -34,6 +34,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
+#if defined _MEM_CHECK 
+ use memory,              ONLY:MEM_manager
+#endif
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
@@ -42,7 +45,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
 #endif
  !
  implicit none
@@ -84,6 +87,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call E_reset(Xen)
  call E_reset(Ken)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! Switch off report file support
  !
@@ -198,7 +204,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
  !
- if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
+ if (l_QP_DBs_merge)  call QP_DBs_merge( )
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========
@@ -243,6 +249,16 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  endif
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
+ !
+#endif
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call section('*','Memory Overview')
+ !
+ call MEM_manager("",REPORT="final")
  !
 #endif
  !

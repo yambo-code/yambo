@@ -23,16 +23,18 @@
 !
 integer function io_Overlaps(Dip,ID)
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:schlen
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz,nXkbz
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  type(DIPOLE_t) :: Dip
  integer        :: ID
@@ -47,6 +49,10 @@ integer function io_Overlaps(Dip,ID)
    io_Overlaps=IO_NOT_ALLOWED
    goto 1
  endif
+ !
+#if defined _TIMING
+ call timing('io_Overlaps',OPR='start')
+#endif
  !
  io_Overlaps=io_connect(desc='Overlaps',type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
@@ -102,5 +108,9 @@ integer function io_Overlaps(Dip,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_Overlaps',OPR='stop')
+#endif
  !
 end function

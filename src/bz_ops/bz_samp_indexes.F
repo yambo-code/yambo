@@ -39,16 +39,15 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,lchlen,IP
+ use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_bse,l_elel_scatt
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
  use parallel_m,     ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
+ use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
@@ -58,8 +57,11 @@ subroutine bz_samp_indexes(k,Xk,q)
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k,Xk,q
  !
  !Work Space
@@ -75,6 +77,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  logical :: bse_setup_scatt
 #endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
+ !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='start')
+#endif
  !
  call section('*','Transferred momenta grid')
  !
@@ -105,7 +111,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call k_ibz2bz(Xk,'a',.false.)  
  !
- allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
+ YAMBO_ALLOC(q_map,(k_grid(1),k_grid(2),k_grid(3)))
+ YAMBO_ALLOC(q_iptbz,(Xk%nbz,3))
  !
  ! k_b_m1=transpose(k_grid_b) in rlu
  !
@@ -141,7 +148,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    ! q_ptbz in iku for k_reduce
    !
-   allocate(q%ptbz(q%nbz,3))
+   YAMBO_ALLOC(q%ptbz,(q%nbz,3))
    do i1=1,q%nbz
      !
      v1=Xk%ptbz(i1,:)-Xk%ptbz(1,:)
@@ -151,10 +158,10 @@ subroutine bz_samp_indexes(k,Xk,q)
    enddo
    if (.not.allocated(q_pt)) then
      call k_reduce(q,.TRUE.)
-     deallocate(q%ptbz)
+     YAMBO_FREE(q%ptbz)
    else
      q%nibz=nqibz
-     allocate(q%pt(q%nibz,3))
+     YAMBO_ALLOC(q%pt,(q%nibz,3))
      q%pt=q_pt(:q%nibz,:)
      call msg('rsn','[RL indx] Q-grid:'//trim(q_source))
      user_defined_qpts=.true.
@@ -264,7 +271,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call live_timing('SSE indexes',k%nbz)
  else
    call msg('rn',':: Indices: Self-Energy')
-   call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1)
+   call live_timing('SE indexes',QP_states_k(2)-QP_states_k(1)+1)
  endif
  !
  call k_ibz2bz(k,'a',.false.)
@@ -325,9 +332,16 @@ subroutine bz_samp_indexes(k,Xk,q)
  !CLEAN
  !
  call k_ibz2bz(Xk,'d',.false.)
- deallocate(q_map,q_iptbz)
- if (Xk_grid_is_uniform) deallocate(q%ptbz)
+ YAMBO_FREE(q_map)
+ YAMBO_FREE(q_iptbz)
+ if (Xk_grid_is_uniform) then
+   YAMBO_FREE(q%ptbz)
+ endif
  call PP_redux_wait()
+ !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='stop')
+#endif
  !
  contains 
    !
@@ -406,56 +420,47 @@ subroutine bz_samp_indexes(k,Xk,q)
      ! using Gamma point only definition
      !
      if (force_gamma_only) then
-       if (allocated(k_pt))    deallocate(k_pt)
-       if (allocated(q_pt))    deallocate(q_pt)
-       if (allocated(q_norm))  deallocate(q_norm)
-       if (allocated(q_sstar)) deallocate(q_sstar)
-       if (associated(q%pt)) then
-         deallocate(q%pt)      
-         nullify(q%pt)
-       endif
-       call mem_est("k_pt q_pt q_norm q_sstar q-pt")
-       allocate(q%pt(1,3),q_pt(1,3),k_pt(k%nibz,3),q_norm(1),q_sstar(1,2)) 
-       q%pt=0.
-       q_pt=0.
-       k_pt=k%pt
-       q_norm=q0_def_norm
+       YAMBO_FREE(k_pt)
+       YAMBO_FREE(q_pt)
+       YAMBO_FREE(q_norm)
+       YAMBO_FREE(q_sstar)
+       YAMBO_FREE(q%pt)
        nqbz=1
        nqibz=1
        q%nibz=1
        q%nbz=1
-       q_sstar=1
        return
      endif
      !
-     ! q_pt , q_norm & k_pt
-     !
      if (.not.allocated(q_pt)) then
-       allocate(q_pt(q%nibz,3))
-       q_pt=q%pt
-       call mem_est("q_pt",(/q%nibz*3/),(/SP/))
+       YAMBO_ALLOC(q_pt,(q%nibz,3))
      endif
      if (.not.allocated(k_pt)) then
-       allocate(k_pt(k%nibz,3))
-       k_pt=k%pt
-       call mem_est("q_pt",(/k%nibz*3/),(/SP/))
+       YAMBO_ALLOC(k_pt,(k%nibz,3))
      endif
      if (.not.allocated(q_norm)) then
-       allocate(q_norm(q%nibz))
+       YAMBO_ALLOC(q_norm,(q%nibz))
+     endif
+     if (allocated(q%sstar).and..not.allocated(q_sstar)) then
+       YAMBO_ALLOC(q_sstar,(q%nbz,2))
+     endif
+     !
+     if (force_gamma_only) then
+       q%pt=0.
+       q_pt=0.
+       k_pt=k%pt
+       q_sstar=1
+       q_norm=q0_def_norm
+     else
+       q_pt=q%pt
+       k_pt=k%pt
        do i1=1,q%nibz
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
        q_norm(1)=q0_def_norm
-       call mem_est("q_norm",(/q%nibz/),(/SP/))
-     endif
-     !
-     ! sstar
-     !
-     if (associated(q%sstar).and..not.allocated(q_sstar)) then
-       allocate(q_sstar(q%nbz,2))
        q_sstar=q%sstar
-       call mem_est("q_sstar",(/q%nbz*2/),(/IP/))
      endif
+     !
    end subroutine
    !
 end subroutine

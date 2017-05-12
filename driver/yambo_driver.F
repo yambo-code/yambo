@@ -44,6 +44,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+#if defined _MEM_CHECK 
+ use memory,        ONLY:MEM_manager
+#endif
 #if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
 #endif
@@ -91,6 +94,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call SET_defaults(instr,ind,od,js,com_dir)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! not resetted in INIT call
  !
@@ -147,8 +153,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Logicals for \eps^-1
  !======================
  !
- ! Logicals to be fixed
- !
  l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
  l_sta_X = l_em1s
  !
@@ -167,11 +171,18 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !========
  !
  if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
+#if defined _MEM_CHECK 
+ if (l_optics.and.l_chi) call MEM_manager("",REPORT="check")
+#endif
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
  if (l_em1s.or.l_em1d.or.l_ppa) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ !
+#if defined _MEM_CHECK 
+ if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_manager("",REPORT="check")
+#endif
  !
  ! HARTREE-FOCK AND VXC
  !======================
@@ -186,15 +197,25 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
 #endif
  !
+#if defined _MEM_CHECK 
+ if (any((/l_eval_collisions,l_XCo/))) call MEM_manager("",REPORT="check")
+#endif
+ !
  ! SELF-ENERGIES
  !===============
  !
  if (l_gw0.or.l_life)   call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+#if defined _MEM_CHECK 
+  if (l_gw0.or.l_life)  call MEM_manager("",REPORT="check")
+#endif
  !
  ! BETHE-SALPETER
  !================
  !
  if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
+#if defined _MEM_CHECK 
+ if ((l_optics.and.l_bse).or.l_bss) call MEM_manager("",REPORT="check")
+#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -210,11 +231,19 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
 #endif
  !
+#if defined _MEM_CHECK 
+  if (l_sc_run) call MEM_manager("",REPORT="check")
+#endif
+ !
 #if defined _RT
  !
  ! RT
  !====
  if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
+#endif
+ !
+#if defined _MEM_CHECK 
+ if (l_real_time) call MEM_manager("",REPORT="check")
 #endif
  !
 #if defined _ELPH
@@ -240,6 +269,16 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+#endif
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call section('*','Memory Overview')
+ !
+ call MEM_manager("",REPORT="final")
+ !
 #endif
  !
  ! GAME OVER :(

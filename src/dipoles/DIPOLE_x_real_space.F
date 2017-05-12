@@ -40,7 +40,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -149,6 +149,6 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  call live_timing()
  !
- deallocate(x_cc)
+ YAMBO_FREE(x_cc)
  !
 end subroutine Dipole_x_real_space

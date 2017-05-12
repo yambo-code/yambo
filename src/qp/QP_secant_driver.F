@@ -47,9 +47,8 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  ! 2. SECANT SOLUTION: see "Numerical Recipes (Fortran version)", Pag. 248
  !
- use pars,          ONLY:SP,IP
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use LIVE_t,        ONLY:live_timing
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -64,7 +63,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use stderr,        ONLY:intc
  use com,           ONLY:warning
  !
- implicit none
+#include<memory.h>
  type(levels)::en,Xen
  type(bz_samp)::Xk,k,q
  type(X_t):: X
@@ -91,7 +90,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  do i1=1,qp%n_states
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=1
-   allocate(Sc_W(i1)%p(1))
+   YAMBO_ALLOC(Sc_W(i1)%p,(1))
  enddo
  !
  !SOLVER STATE
@@ -102,8 +101,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  ! <0: Eqp_raxis(?,iabs(SOLVER_STATE))  converged
  !
- allocate(QP_solver_state(qp%n_states))
- call mem_est("QP_solver_state",(/qp%n_states/),(/IP/))
+ YAMBO_ALLOC(QP_solver_state,(qp%n_states))
  !
  !Brackets
  !
@@ -173,11 +171,10 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    Eqp_raxis(i1,1)=Eqp_raxis(i1,iabs(QP_solver_state(i1)))
    call W_reset(Sc_W(i1))
    Sc_W(i1)%n_freqs=QP_dSc_steps
-   allocate(Sc_W(i1)%p(QP_dSc_steps))
+   YAMBO_ALLOC(Sc_W(i1)%p,(QP_dSc_steps))
    forall (i2=1:QP_dSc_steps) Sc_W(i1)%p(i2)=Eqp_raxis(i1,1)+(i2-1)*QP_dSc_delta
  enddo
- deallocate(QP_solver_state)
- call mem_est("QP_solver_state")
+ YAMBO_FREE(QP_solver_state)
  !
  call W2Sc_local_call()
  !
@@ -197,8 +194,9 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  do i1=1,QP_n_states
    call W_reset(Sc_W(i1))
  enddo
- deallocate(QP_W,QP_W_er,QP_W_dr)
- call mem_est("QP_W")
+ YAMBO_FREE(QP_W)
+ YAMBO_FREE(QP_W_dr)
+ YAMBO_FREE(QP_W_er)
  call PP_redux_wait()
  !
  contains 

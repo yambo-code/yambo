@@ -29,11 +29,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP,cZERO,schlen
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,l_drude,&
+ use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
-&                     l_X_terminator,X_terminator_E,global_gauge,X_is_evaluated_for_all_Qs,&
+&                     l_X_terminator,X_terminator_E,global_gauge,X_is_integrated,&
 &                     Chi_linalg_mode,X_use_lin_sys
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
@@ -82,7 +82,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
- use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _PL
@@ -313,10 +312,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  eval_magn=.FALSE.
  !
- !memory
- !
- call mem_reset()
- !
  !wave_func
  !
  WF%b=0
@@ -350,6 +345,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
+ X_FILL_UP_matrix_only=.FALSE.
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
@@ -362,12 +358,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- X_is_evaluated_for_all_Qs=.FALSE.
+ X_is_integrated=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
  l_X_terminator=.FALSE.
- X_terminator_E=1.5_SP
+ X_terminator_E=40._SP/HA2EV
  !
  !QPm
  !

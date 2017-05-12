@@ -26,7 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
@@ -93,10 +93,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
 #if defined _SCALAPACK
- use SLK_m,                ONLY:SLK_test_H_dim
+ use SLK_m,         ONLY:SLK_test_H_dim
 #endif
 #if defined _PL
- use PHOTOLUM,             ONLY:PL_weights
+ use PHOTOLUM,      ONLY:PL_weights
+#endif
+#if defined _MEM_CHECK
+ use memory,        ONLY:MEM_treshold
 #endif
  !
  implicit none
@@ -227,11 +230,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! I/O
  !
  call it(defs,'DBsIOoff', &
-& '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
-& DBs_IO_control_string,verb_level=V_io)
+&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
+&             DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
-& '[IO] Space-separated list of +DB to be FRAG and -DB NOT to be FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
-& DBs_FRAG_control_string,verb_level=V_io)
+&             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+&             DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc
  !
@@ -257,10 +260,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.)
  call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
-! call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', &
-&                          GW_terminator_Kind,verb_level=V_qp)
- call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind,verb_level=V_qp)
+ call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")', GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  !
@@ -484,6 +485,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
+#endif
+ !
+#if defined _MEM_CHECK
+ !
+ ! Memory
+ !
+ call it(defs,'MEM_tresh',     '[MEMORY] Treshold on traced memory allocations/deallocations',MEM_treshold,verb_level=V_general,&
+&                                                                                             unit=MEM_unit(1))
+ !
 #endif
  !
  ! QP ctl 

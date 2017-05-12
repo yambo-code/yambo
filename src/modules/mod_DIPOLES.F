@@ -26,7 +26,7 @@ module DIPOLES
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:HA2EV
  !
- implicit none
+#include <memory.h>
  !
  ! Logicals
  !
@@ -83,59 +83,54 @@ module DIPOLES
      !
      if (present(d)) then
        select case(what)
+       case('X')
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_S)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(P_square)/),errors=(/err/))
+         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
        end select
      else
        select case(what)
+       case('X')
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         deallocate(DIP_iR)
+         YAMBO_FREE(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         deallocate(DIP_P)
+         YAMBO_FREE(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         deallocate(DIP_S)
+         YAMBO_FREE(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         deallocate(DIP_spin)
+         YAMBO_FREE(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         deallocate(DIP_projected)
+         YAMBO_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         deallocate(P_square)
+         YAMBO_FREE(P_square)
        end select
-       call mem_est(what)
      endif
    end subroutine
    !

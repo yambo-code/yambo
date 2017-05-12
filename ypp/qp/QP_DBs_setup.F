@@ -31,7 +31,7 @@ subroutine QP_DBs_setup(en,k)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states
  use R_lattice,     ONLY:bz_samp
- implicit none
+#include<memory.h>
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: k
  !
@@ -45,7 +45,7 @@ subroutine QP_DBs_setup(en,k)
  type(QP_t) :: qp
  !
  call QP_reset(qp)
- if(allocated(QP_state)) deallocate(QP_state)
+ YAMBO_FREE(QP_state)
  !
  call QP_state_table_setup(en)
  !
@@ -53,13 +53,17 @@ subroutine QP_DBs_setup(en,k)
  qp%nb      =QP_nb
  qp%nk      =QP_nk
  !
- allocate(qp%table(QP_n_states,3+n_sp_pol-1),qp%Z(QP_n_states),qp%E(QP_n_states),qp%E_bare(QP_n_states),qp%k(qp%nk,3))
+ YAMBO_ALLOC(qp%table,(QP_n_states,3+n_sp_pol-1))
+ YAMBO_ALLOC(qp%Z,(QP_n_states))
+ YAMBO_ALLOC(qp%E,(QP_n_states))
+ YAMBO_ALLOC(qp%E_bare,(QP_n_states))
+ YAMBO_ALLOC(qp%k,(qp%nk,3))
  !
  k_rng_lines=1
  icheck=1
  do while(icheck/=0)
-   if (allocated(QP_r_corrections)) deallocate(QP_r_corrections)
-   allocate(QP_r_corrections(k_rng_lines,7))
+   YAMBO_FREE(QP_r_corrections)
+   YAMBO_ALLOC(QP_r_corrections,(k_rng_lines,7))
    QP_r_corrections=0._SP
    call parser('QPkrange',QP_r_corrections)
    icheck=sum(QP_r_corrections(k_rng_lines,:))
@@ -68,7 +72,7 @@ subroutine QP_DBs_setup(en,k)
  enddo
  k_rng_lines=k_rng_lines-2
  !
- allocate(QP_done(QP_nb,QP_nb,QP_nk,n_sp_pol))
+ YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
  QP_done=.FALSE.
  !
  ic=1
@@ -97,11 +101,16 @@ subroutine QP_DBs_setup(en,k)
    enddo
  enddo
  !
- deallocate(QP_done)
+ YAMBO_FREE(QP_done)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
- deallocate(QP_r_corrections,qp%k,qp%table,qp%Z,qp%E_bare,qp%E)
+ YAMBO_FREE(QP_r_corrections)
+ YAMBO_FREE(qp%k)
+ YAMBO_FREE(qp%table)
+ YAMBO_FREE(qp%Z)
+ YAMBO_FREE(qp%E_bare)
+ YAMBO_FREE(qp%E)
  !
 end subroutine

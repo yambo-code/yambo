@@ -66,7 +66,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use ELPH,          ONLY:elph_use_q_grid
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
@@ -98,7 +98,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  call PARALLEL_index(PAR_IND_QP,(/QP_n_states/),COMM=PAR_COM_QP_INDEX,NO_EMPTIES=.TRUE.)
  PAR_IND_QP_ID=PAR_COM_QP_INDEX%CPU_id
  PAR_nQP=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)
- allocate(PAR_QP_index(QP_n_states))
+ YAMBO_ALLOC(PAR_QP_index,(QP_n_states))
  PAR_QP_index=0
  call PAR_build_index(PAR_IND_QP,QP_n_states,PAR_QP_index,PAR_nQP)
  call PARALLEL_live_message("QPs",ENVIRONMENT="Self_Energy",&
@@ -121,11 +121,11 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                           LOADED=PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1),TOTAL=PAR_Q_range(2),&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
- allocate(PAR_Q_index(PAR_Q_range(2)))
+ YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
  call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
  !
  if (trim(WHAT)=="ibz") then
-   allocate(PAR_Q_bz_index(nqbz))
+   YAMBO_ALLOC(PAR_Q_bz_index,(nqbz))
    call distribute_BZk_using_IBZk(PAR_COM_Q_INDEX,q,PAR_IND_Q   , PAR_IND_Q_ID,&
 &                                                   PAR_IND_Q_bz, PAR_IND_Q_ID,&
 &                                                   PAR_Q_bz_index,PAR_nQ_bz)
@@ -180,7 +180,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                    COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
  PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
  PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
- allocate(PAR_G_bands_index(PAR_n_bands(2)))
+ YAMBO_ALLOC(PAR_G_bands_index,(PAR_n_bands(2)))
  call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
  !
  call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
@@ -221,7 +221,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    PAR_n_c_bands=QP_n_G_bands
    PAR_n_v_bands=QP_n_G_bands
    !
-   allocate(PAR_DIPk_ibz_index(nXkibz))
+   YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    do i_k=1,nXkibz
      PAR_DIPk_ibz_index(i_k)=i_k
    enddo

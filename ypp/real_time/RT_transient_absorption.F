@@ -39,7 +39,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use real_time,       ONLY:RT_bands
  use parser_m,        ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(X_t)         :: Xbsk
  type(levels)      :: Xen
@@ -80,9 +80,13 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call DIPOLE_IO(Xk,Xbsk,'read',io_err)
  call DIPOLE_expand_and_project(Xk,X_oscillators,BSS_q0)
  !
- allocate(Epsilon_ii(RT_conf%W_n_steps,2))
- if(l_TR_reflec) allocate(X_reflectance(RT_conf%W_n_steps,2))
- if(l_TR_transm) allocate(X_absorption_coeff(RT_conf%W_n_steps,2))
+ YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
+ if(l_TR_reflec) then
+   YAMBO_ALLOC(X_reflectance,(RT_conf%W_n_steps,2))
+ endif
+ if(l_TR_transm) then
+   YAMBO_ALLOC(X_absorption_coeff,(RT_conf%W_n_steps,2))
+ endif
  !
  ! Frequency setup
  !
@@ -253,9 +257,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- deallocate(Epsilon_ii)
- if(allocated(X_reflectance))       deallocate(X_reflectance)
- if(allocated(X_absorption_coeff))  deallocate(X_absorption_coeff)
+ YAMBO_FREE(Epsilon_ii)
+ YAMBO_FREE(X_reflectance)
+ YAMBO_FREE(X_absorption_coeff)
  !
  call live_timing()
  !

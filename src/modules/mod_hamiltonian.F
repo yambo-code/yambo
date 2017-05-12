@@ -25,6 +25,8 @@ module hamiltonian
  !
  use pars,       ONLY:SP,schlen
  !
+#include<memory.h>
+ !
  integer           :: H_ref_bands(2)
  !
  character(schlen) :: H_potential
@@ -71,9 +73,6 @@ module hamiltonian
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     use memory_m,       ONLY:mem_est
-     !
-     implicit none
      !
      type(levels) :: E
      !
@@ -84,10 +83,9 @@ module hamiltonian
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     if (allocated(QP_state)) deallocate(QP_state)
+     YAMBO_FREE(QP_state)
      !
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
@@ -99,83 +97,60 @@ module hamiltonian
      use electrons,      ONLY:n_spin,n_sp_pol,levels
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
-     !
-     implicit none
      !
      type(levels) :: E
      !
-     allocate(rho_n(fft_size))
-     call mem_est("rho",(/fft_size/),(/SP/))
+     YAMBO_ALLOC(rho_n,(fft_size))
      !
      if(n_spin>1) then
-       allocate(magn(fft_size,3))
-       allocate(magn_n(fft_size,3))
-       call mem_est("magn",(/2*fft_size*3/),(/SP/))
+       YAMBO_ALLOC(magn,(fft_size,3))
+       YAMBO_ALLOC(magn_n,(fft_size,3))
      endif
      !
      if (.not.l_nl_optics) then
-       allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
-       call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+       YAMBO_ALLOC(Ho,(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
      endif
      !
-     allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
+     YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
      !
-     allocate(V_xc(fft_size,n_spin))
-     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
+     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
      !
-     allocate(V_hartree_sc(fft_size,n_spin))
-     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
+     YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
      !
-     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
+     YAMBO_ALLOC(H_nl_sc,(H_ref_bands(2),H_ref_bands(2)))
      !
    end subroutine
    !
    subroutine H_free()
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !
-     implicit none
-     !
      if(allocated(rho_n)) then
-       deallocate(rho_n)
-       call mem_est("rho")
+       YAMBO_FREE(rho_n)
      endif
      !
      if(allocated(magn_n)) then
-       deallocate(magn_n)
-       call mem_est("magn")
+       YAMBO_FREE(magn_n)
      endif
      !
      if(allocated(magn)) then
-       deallocate(magn)
-       call mem_est("magn")
+       YAMBO_FREE(magn)
      endif
      !
-     if(allocated(Ho)) then 
-       deallocate(Ho)
-       call mem_est("Ho")
-     end if
+     YAMBO_FREE(Ho)
      !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
+     YAMBO_FREE(H_nl_sc)
      !
      if(allocated(V_xc)) then 
-       deallocate(V_xc)
-       call mem_est('V_xc')
+       YAMBO_FREE(V_xc)
      endif
      !
-     deallocate(V_xc_sc)
-     call mem_est('V_xc_sc')
+     YAMBO_FREE(V_xc_sc)
      !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Potential")
+     YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
    !

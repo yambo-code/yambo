@@ -30,7 +30,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  use real_time,       ONLY:RT_step,NE_steps
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
- implicit none
+#include<memory.h>
  !
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
@@ -48,7 +48,10 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  i_t_start=nint(RT_conf%T_range(1)/RT_step)+1
  i_deltaT=nint(T_period/RT_step)/M_size
  !
- allocate(M(M_size,M_size),P_i(M_size),T_i(M_size),X_here(nP_components))
+ YAMBO_ALLOC(M,(M_size,M_size))
+ YAMBO_ALLOC(P_i,(M_size))
+ YAMBO_ALLOC(T_i,(M_size))
+ YAMBO_ALLOC(X_here,(nP_components))
  !
  M=cZERO
  !
@@ -77,7 +80,10 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  !
  X(:)=X_here(:)
  !
- deallocate(M,P_i,T_i,X_here)
+ YAMBO_FREE(M)
+ YAMBO_FREE(P_i)
+ YAMBO_FREE(T_i)
+ YAMBO_FREE(X_here)
  ! 
 end subroutine RT_coefficients_Inversion
 

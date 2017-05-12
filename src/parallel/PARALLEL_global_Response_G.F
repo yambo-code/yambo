@@ -45,7 +45,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_DIPk_ID,PAR_IND_Q_ID
  !
- implicit none
+#include<memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
@@ -69,7 +69,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! COMMs setup
    !
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)   
    !
    ! K-points (IBZ)
    !
@@ -78,11 +78,11 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! ... indexes
    !
-   allocate(PAR_Xk_bz_index(Xk%nbz))
+   YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
    call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
-   allocate(PAR_Xk_ibz_index(nXkibz))
+   YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
    call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    ! Inversion
@@ -94,7 +94,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
-   allocate(PAR_DIPk_ibz_index(nXkibz))
+   YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
 #if defined _NL | defined _ELECTRIC
@@ -147,7 +147,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    call PARALLEL_live_message("K(bz)",ENVIRONMENT=ENVIRONMENT,&
 &                             LOADED=PAR_IND_Xk_bz%n_of_elements(PAR_COM_Xk_bz_INDEX%CPU_id+1),TOTAL=nXkbz,&
 &                             NCPU=PAR_COM_Xk_bz_INDEX%n_CPU)
-   allocate(PAR_Xk_bz_index(nXkbz))
+   YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
    call PAR_build_index(PAR_IND_Xk_bz,nXkbz,PAR_Xk_bz_index,PAR_Xk_nbz)
    !
    ! Q-points 
@@ -164,7 +164,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 &                             TOTAL=PAR_Q_range(2)-PAR_Q_range(1)+1,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
-   allocate(PAR_Q_index(PAR_Q_range(2))) 
+   YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
    call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
    !
    ! K-points (IBZ) after shifting of Q (BZ/IBZ)
@@ -177,7 +177,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! ... indexes
    !
-   allocate(PAR_Xk_ibz_index(nXkibz))
+   YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
    call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    !
    call PARALLEL_live_message("K-q(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=nXkibz,&
@@ -208,7 +208,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
      call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Xk_bz_INDEX)
      PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
      !
-     allocate(PAR_DIPk_ibz_index(nXkibz))
+     YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
      call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
      !
    endif

@@ -23,7 +23,6 @@
 #
 AC_DEFUN([ACX_REPORT],
 [
-
 # 
 # - GENERAL CONFIGURATIONS -
 # 
@@ -36,7 +35,8 @@ if test "$enable_debug" = "yes" ; then DEBUG_check="X"; fi
 TIME_profile_check="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 #
-
+MEM_profile_check="-"
+if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
 # - PARALLEL SUPPORT -
 # 
@@ -167,12 +167,11 @@ if test "$mpibuild" = "yes" ; then
     MPI_str=" E ";
   fi
 fi
-
-
 #
 AC_SUBST(DP_check)
 AC_SUBST(DEBUG_check)
 AC_SUBST(TIME_profile_check)
+AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
@@ -195,5 +194,4 @@ AC_SUBST(SLE_str)
 AC_SUBST(LIBXC_str)
 AC_SUBST(MPI_str)
 AC_SUBST(MPI_info)
-
 ])

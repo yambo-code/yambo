@@ -23,9 +23,8 @@
 !
 integer function io_KB_pwscf(ID)
  !
- use pars,             ONLY:SP,IP
+ use pars,             ONLY:SP
  use stderr,           ONLY:intc
- use memory_m,         ONLY:mem_est
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
@@ -35,13 +34,20 @@ integer function io_KB_pwscf(ID)
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer,intent(in) :: ID
  ! 
  ! Work Space
  !
  integer :: ik
+ !
+#if defined _TIMING
+ call timing('io_KB_pwscf',OPR='start')
+#endif
  !
  ik=maxval(io_sec(ID,:))-1
  !
@@ -71,14 +77,11 @@ integer function io_KB_pwscf(ID)
    if (read_is_on(ID)) then
      ! 
      if (.not.allocated(n_atoms_species)) then
-       allocate(n_atoms_species(n_atomic_species))
-       allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
-       call mem_est("n_atoms_species atom_pos",&
-&                   (/n_atomic_species,size(atom_pos)/),(/IP,SP/))
+       YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+       YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      endif
      if (.not.allocated(pp_n_l_comp)) then
-       allocate(pp_n_l_comp(n_atomic_species))
-       call mem_est("pp_n_l_comp",(/n_atomic_species/),(/IP/))
+       YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
      endif
      !
    endif
@@ -89,9 +92,8 @@ integer function io_KB_pwscf(ID)
    call io_bulk(ID,I1=pp_n_l_comp)
    !
    if (read_is_on(ID)) then
-     if(allocated(pp_table)) deallocate(pp_table)
-     allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
-     call mem_est("pp_table",(/size(pp_table)/),(/IP/))
+     YAMBO_FREE(pp_table)
+     YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
    endif
    !
    call io_bulk(ID,VAR="PP_TABLE",VAR_SZ=(/3,n_atomic_species,pp_n_l_times_proj_max/))
@@ -126,5 +128,9 @@ integer function io_KB_pwscf(ID)
  call io_bulk(ID,R3=pp_kbd(:,:,:,1))
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_KB_pwscf',OPR='stop')
+#endif
  !
 end function io_KB_pwscf

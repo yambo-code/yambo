@@ -30,7 +30,7 @@ subroutine RT_time_configuration_setup(what)
  use real_time,      ONLY:RT_step
  use RT_control,     ONLY:JPC_RT_IO_t,TIME_adjust
  !
- implicit none
+#include<memory.h>
  !
  character(*) :: what 
  !
@@ -125,7 +125,7 @@ subroutine RT_time_configuration_setup(what)
          endif
        enddo
        !
-       allocate(RT_time(RT_conf%T_n_steps))
+       YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
        !
        i_ref(1)          =j_ref
        RT_conf%T_range(1)=JPC_RT_IO_t%Time(i_ref(1))
@@ -154,7 +154,7 @@ subroutine RT_time_configuration_setup(what)
    RT_conf%delta_T   = STEP
    RT_conf%T_n_steps = i_ref(2)-i_ref(1)+1
    !
-   allocate(RT_time(RT_conf%T_n_steps))
+   YAMBO_ALLOC(RT_time,(RT_conf%T_n_steps))
    do i_t=i_ref(1),i_ref(2)
      RT_time(i_t-i_ref(1)+1) = JPC_RT_IO_t%Time(i_t)
    enddo

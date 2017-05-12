@@ -27,23 +27,17 @@ subroutine eval_minus_G()
  !
  ! G_{minus_G(ig)} = -G_ig
  !
- use pars,         ONLY:IP
- use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
  integer  :: ig
  !
- if (allocated(minus_G)) then
-   deallocate(minus_G)
-   call mem_est("minus_G")
- endif
- allocate(minus_G(ng_closed))
- call mem_est("minus_G",(/ng_closed/),(/IP/))
+ YAMBO_FREE(minus_G)
+ YAMBO_ALLOC(minus_G,(ng_closed))
  !
  minus_G=0
  !

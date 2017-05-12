@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
-&                        ncpu,CPU_structure,i_PAR_structure
+&                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default
  use interfaces,    ONLY:PARALLEL_live_message
  use vec_operate,   ONLY:GreatestCommonDivisor
  use com,           ONLY:error
@@ -38,7 +38,11 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  ! 
  integer :: i_p,NC,BASIS
  !
- if (product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu.or.ncpu==1) return
+ ! Is there anything to do?
+ !
+ if (ncpu==1) return
+ if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&
+&    product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu) return
  !
  call PARALLEL_live_message(trim(ENVIRONMENT)//' parallel ENVIRONMENT is incomplete. Switching to defaults')
  !
@@ -78,6 +82,10 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE_string)//"."//&
 &                                             trim(CPU_structure(i_PAR_structure)%ROLE(i_p))
  enddo
+ !
+ ! Save that this ENVIRONMENT uses defaults to repeat the default procedure
+ !
+ PARALLEL_ENV_uses_default(i_PAR_structure)=.TRUE.
  !
  ! Ok?
  !-----

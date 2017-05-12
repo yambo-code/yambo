@@ -41,14 +41,13 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         l_oep_iterative,rho_convergence,E_convergence,        &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
 &                         SC_fft_size,E_bare_Ef,l_oep_EWeight,SC_cycle_mixing,  &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
- use memory_m,       ONLY:mem_est
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
@@ -116,8 +115,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Reference energies & Fermi Level
  !==================================
  !
- allocate(E_bare(SC_bands(2),nkibz,n_sp_pol))
- call mem_est("E_bare ",(/size(E_bare)/))
+ YAMBO_ALLOC(E_bare,(SC_bands(2),nkibz,n_sp_pol))
  E_bare=E%E(:SC_bands(2),:,:)
  E_bare_Ef=E%E_Fermi
  !

@@ -39,7 +39,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 &                         V_hartree_sc,Ho,V_xc_sc,E_bare,l_sc_XC_is_local,            &
 &                         H_QP_table_setup
  use wave_func,      ONLY:WF,WAVEs,WF_copy
- use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index,&
@@ -50,7 +49,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:E_xc
  use frequency,      ONLY:w_samp
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait,ncpu
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PP_redux_wait
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,REP,VERIFY,io_COLLs,io_RESPONSE,&
 &                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
  use vec_operate,    ONLY:degeneration_finder,v_norm
@@ -62,7 +61,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::k,q,Xk
@@ -630,8 +629,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call SC_report()
  !
- deallocate(E_bare)
- call mem_est("E_bare")
+ YAMBO_FREE(E_bare)
  if (l_SC_cycle.or.l_NSC_shot) then
    call WF_free(WF)
    call WF_free(WFo)
@@ -643,46 +641,37 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    subroutine SC_local_alloc()
      !
-     allocate(rho_nm1(fft_size))
-     call mem_est("rho_nm1",(/fft_size/),(/SP/))
+     YAMBO_ALLOC(rho_nm1,(fft_size))
      rho_nm1=0._SP
      !
      if(n_spin>1) then
-       allocate(magn_nm1(fft_size,3))
-       call mem_est("magn_nm1",(/fft_size*3/),(/SP/))
+       YAMBO_ALLOC(magn_nm1,(fft_size,3))
        magn_nm1=0._SP
      endif
      !
-     allocate(E_xc(fft_size))
-     call mem_est("E_xc",(/fft_size/),(/SP/))
+     YAMBO_ALLOC(E_xc,(fft_size))
      !
-     allocate(V_xc_nm1(fft_size,n_spin))
-     call mem_est("V_xc_nm1",(/size(V_xc_nm1)/))
+     YAMBO_ALLOC(V_xc_nm1,(fft_size,n_spin))
      !
      if (trim(SC_preconditioning)=="thomas-fermi") then
-       allocate(delta_rho(fft_size))
-       call mem_est("delta_rho",(/fft_size/),(/SP/))
+       YAMBO_ALLOC(delta_rho,(fft_size))
        if(n_spin>1) then
-         allocate(delta_magn(fft_size,3))
-         call mem_est("delta_magn",(/fft_size*3/),(/SP/))
+         YAMBO_ALLOC(delta_magn,(fft_size,3))
        endif
      endif
      !
      if (l_Mean_Potential) then
-       allocate(V_mean(fft_size,SC_bands(2)))
-       call mem_est("V_mean",(/fft_size*SC_bands(2)/))
+       YAMBO_ALLOC(V_mean,(fft_size,SC_bands(2)))
      endif
      !
      if(l_use_collisions) then
        !
-       allocate(QP_Vnl_xc(QP_n_states))
-       call mem_est("QP_Vnl_xc",(/size(QP_Vnl_xc)/),(/2*SP/))
+       YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
        !
      endif
      !
      if (l_SC_nl_mix) then
-       allocate(H_nl_nm1(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("H_nl_nm1",(/size(QP_Vnl_xc)/),(/2*SP/))
+       YAMBO_ALLOC(H_nl_nm1,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
        H_nl_nm1=cZERO
      endif
      !
@@ -700,38 +689,30 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    subroutine SC_local_free()
      !
-     deallocate(rho_nm1)
-     call mem_est("rho_nm1")
+     YAMBO_FREE(rho_nm1)
      !
      if(n_spin>1) then
-       deallocate(magn_nm1)
-       call mem_est("magn_nm1")
+       YAMBO_FREE(magn_nm1)
      endif
      !
-     deallocate(E_xc)
-     call mem_est("E_xc")
+     YAMBO_FREE(E_xc)
      !
-     deallocate(V_xc_nm1)
-     call mem_est("V_xc_nm1")
+     YAMBO_FREE(V_xc_nm1)
      !
      if (trim(SC_preconditioning)=="thomas-fermi") then
-       deallocate(delta_rho)
-       call mem_est("delta_rho")
+       YAMBO_FREE(delta_rho)
        if(n_spin>1) then
-         deallocate(delta_magn)
-         call mem_est("delta_magn")
+         YAMBO_FREE(delta_magn)
        endif
      endif
      !
      if (l_Mean_Potential) then
-       deallocate(V_mean)
-       call mem_est("V_mean")
+       YAMBO_FREE(V_mean)
      endif
      !
      if(l_use_collisions) then
        !
-       if (allocated(QP_Vnl_xc)) deallocate(QP_Vnl_xc)
-       call mem_est("QP_Vnl_xc")
+       YAMBO_FREE(QP_Vnl_xc)
        !
        if (allocated(COH_COLL_element)) call COLLISIONS_alloc_and_free("COH","v1 table","clean",0)
        if (allocated(HXC_COLL_element)) call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
@@ -739,8 +720,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      if (l_SC_nl_mix) then
-       deallocate(H_nl_nm1)
-       call mem_est("H_nl_nm1")
+       YAMBO_FREE(H_nl_nm1)
      endif
      !
      if (.not.io_RESPONSE) call X_alloc('X')

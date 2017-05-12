@@ -26,10 +26,10 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
  !
  use electrons,     ONLY:n_sp_pol,spin,levels
- use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,GF_is_causal
  !
- implicit none
+#include<memory.h>
+ !
  type(levels) ::E
  type(QP_t)   ::qp
  integer      ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
@@ -41,10 +41,8 @@ subroutine Load_Green_Functions(band_range,qp,E,DB_corrected)
  E%GreenF_is_causal=GF_is_causal
  E%GreenF_n_E_steps=qp%GreenF_n_steps
  !
- allocate(E%GreenF(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- allocate(E%GreenF_W(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- call mem_est("E-GreenF",(/size(E%GreenF)/))
- call mem_est("E-GreenF_W",(/size(E%GreenF_W)/))
+ YAMBO_ALLOC(E%GreenF,(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
+ YAMBO_ALLOC(E%GreenF_W,(band_range(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  !
  do i_qp=1,qp%n_states
    i_band=qp%table(i_qp,1)

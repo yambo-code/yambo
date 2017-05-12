@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,lchlen,schlen
+ use pars,       ONLY:SP,lchlen,schlen,max_io_units,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
@@ -106,8 +106,6 @@ module IO_m
  !
  ! Units
  !
- integer, parameter:: max_io_units=10
- integer, parameter:: max_active_sections=10
  integer :: io_action(max_io_units)
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
@@ -264,9 +262,10 @@ module IO_m
      logical          ::file_found
      !
      io_connect=0
+     !
      if ( (read_is_on(ID).and..not.IO_read).or.&
 &         (write_is_on(ID).and..not.IO_write) ) then
-       io_connect=IO_NO_DATABASE
+       io_connect=IO_NOT_ALLOWED
        call io_reset(ID)
        return
      endif

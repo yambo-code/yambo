@@ -30,6 +30,7 @@ module it_m
  !
  ! Units Names
  !
+ character(2),parameter :: MEM_unit(3)=(/'Kb','Mb','Gb'/)
  character(2),parameter :: E_unit='eV'
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'
@@ -781,7 +782,7 @@ module it_m
        do i2=1,nrnlvls
          if (rstatus(i2)==ifpos) then
            nflines=nflines+1
-           write (flines(nflines),'(a,t30,2a)') trim(rnlvls(i2,1)),'# ',trim(rnlvls(i2,2))
+           write (flines(nflines),'(a,t32,2a)') trim(rnlvls(i2,1)),'# ',trim(rnlvls(i2,2))
          endif
        enddo
        !
@@ -792,7 +793,7 @@ module it_m
            if (.not.Chverbose_enough(trim(chvars(i2,1)),defs%chdef(i2))) cycle
            nflines=nflines+1
            !
-           ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,30)
+           ch_length=max(len_trim(defs%chdef(i2))+len_trim(chvars(i2,1))+6,32)
            !  
            ch(1)='(4a,t'//trim(intc(ch_length))//',2a)'
            write (flines(nflines),trim(ch(1))) &                                                     !
@@ -805,7 +806,7 @@ module it_m
            nflines=nflines+1
            if (ou/=20) call init_convert_i(defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
 &                defs%i1def(i2),trim(i1vars(i2,3)),'# ',trim(i1vars(i2,2))
          endif
@@ -818,7 +819,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t32,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%i2def(i2,1),'|',defs%i2def(i2,2),'|',&
@@ -868,7 +869,7 @@ module it_m
            call init_convert_r(unit_factor,r1vars(i2,3))
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
-           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t30,2a)'
+           write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
            write (flines(nflines),trim(ch(1))) &
 &                trim(r1vars(i2,1)),'=',defs%r1def(i2)*unit_factor,&
 &                trim(r1vars(i2,3)),'# ',trim(r1vars(i2,2))
@@ -882,7 +883,7 @@ module it_m
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
-           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t30,2a)'
+           write (ch(1),'(3a)') '(2(',trim(ch(2)),',1x,a),t24,a,t32,2a)'
            nflines=nflines+1
            write (flines(nflines),trim(ch(1))) &
 &           defs%r2def(i2,1)*unit_factor,'|',defs%r2def(i2,2)*unit_factor,&
@@ -931,11 +932,11 @@ module it_m
          if (fstatus(i2)==ifpos) then
            if (.not.Fverbose_enough(trim(flags(i2,1)),i2)) cycle
            nflines=nflines+1
-           write (flines(nflines),'(2a,t30,2a)') '#',trim(flags(i2,1)),'# ',trim(flags(i2,2))
+           write (flines(nflines),'(2a,t32,2a)') '#',trim(flags(i2,1)),'# ',trim(flags(i2,2))
          else if (fstatus(i2)==-ifpos) then
            if (.not.Fverbose_enough(trim(flags(i2,1)),i2)) cycle
            nflines=nflines+1
-           write (flines(nflines),'(a,t30,2a)') trim(flags(i2,1)),'# ',trim(flags(i2,2))
+           write (flines(nflines),'(a,t32,2a)') trim(flags(i2,1)),'# ',trim(flags(i2,2))
          endif
        enddo
      enddo

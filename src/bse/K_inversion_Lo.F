@@ -47,7 +47,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp),  intent(in)  :: W
  type(levels),  intent(in)  :: E
@@ -81,7 +81,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  ! Green Functions must be all mapped to the Xw range
  ! to be easily convoluted
  !
- if (associated(E%GreenF)) then
+ if (allocated(E%GreenF)) then
    call X_GreenF_remap(BS_bands,E,W)
    BSS_uses_GreenF=.TRUE.
  endif
@@ -150,7 +150,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
-     if ( .not.associated(E%GreenF) ) then
+     if ( .not.allocated(E%GreenF) ) then
        !
        ! Analytical GFs
        !================
@@ -235,7 +235,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
    !
  enddo
  !
- if(.not.K_diago_in_BS_mat) deallocate(BS_diagonal)
+ if(.not.K_diago_in_BS_mat) then
+   YAMBO_FREE(BS_diagonal)
+ endif
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '

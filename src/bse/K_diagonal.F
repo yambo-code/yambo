@@ -30,7 +30,7 @@ subroutine K_diagonal(iq,what)
  use SLK_m,          ONLY:BLACS_structure_in_use,SLK_POOL
  use parallel_m,     ONLY:PP_redux_wait
  !
- implicit none
+#include<memory.h>
  !
  integer,       intent(in) :: iq
  character(*)              :: what
@@ -43,7 +43,7 @@ subroutine K_diagonal(iq,what)
  !
  ! Diagonal (Energies) 
  !====================
- if ( (BLACS_structure_in_use.and.index(what,"add_E")>0.and.rows(1)<=rows(2)) .or.&
+ if ( (BLACS_structure_in_use.and.index(what,"add_E")>0) .or.&
 &     (.not.BLACS_structure_in_use.and.index(what,"rm_E")>0) ) then
    !
    rows=(/1,BS_H_dim/)
@@ -70,7 +70,7 @@ subroutine K_diagonal(iq,what)
      else if (.not.BLACS_structure_in_use.and.index(what,"rm_E")>0)then
        !
        if (i_r<=BS_K_dim) then
-          BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
+         BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
        else if (cpl(i_r)) then
          BS_mat(i_r,i_r)= BS_mat(i_r,i_r)+conjg(E_plus_W)
        endif
@@ -135,7 +135,7 @@ subroutine K_diagonal(iq,what)
    !
    if (.not.K_diago_in_BS_mat) then
      !
-     allocate(BS_diagonal(BS_K_dim))
+     YAMBO_ALLOC(BS_diagonal,(BS_K_dim))
      BS_diagonal=cZERO
      !
      if (rows(1)<=rows(2)) then

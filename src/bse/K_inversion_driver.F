@@ -27,10 +27,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm,bz_samp
@@ -55,16 +54,16 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
- use PHOTOLUM,       ONLY:BS_PL_free,PL
+ use PHOTOLUM,       ONLY:BSS_PL_free,PL
 #endif
  !
  ! GPL_EXCLUDE_END
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp) :: W
  integer      :: iq
@@ -114,6 +113,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Restart database
  !==================
  call K_inversion_restart(iq,W)
+ !
  completed=count(K_INV_EPS%err/=0)==0
 #if defined _PL
  completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
@@ -135,18 +135,18 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  !
 #if defined _SCALAPACK
- ! 
+ !
  ! SLK matrix initialization before the Kernel loading
  !
  call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
  !
- if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
+ if ( SLK_ORTHO%coordinate(1) /= -1 ) BLACS_structure_in_use=.TRUE.
  !
 #endif
  !
- ! Kernel Loading 
- !================
- call K_components_folded_in_serial_arrays(iq)
+ ! Kernel and/or BSS components loading
+ !======================================
+ call K_components_folded_in_serial_arrays(iq,"INV")
  !
  if (BLACS_structure_in_use) then
    !
@@ -191,8 +191,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- call mem_est("Lo",(/size(Lo)/))
+ YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -309,6 +308,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
+ call LOCAL_clean()
+ !
  contains 
    !
    subroutine do_it_FULL(TYP)
@@ -414,15 +415,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine LOCAL_clean
-     call BS_mat_free( )
 #if defined _PL
-     call BS_PL_free( )
+     call BSS_PL_free( )
 #endif
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     call BS_KERR_free( )
+     call BSS_KERR_free( )
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -433,8 +433,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     deallocate(Lo)
-     call mem_est("Lo")
+     YAMBO_FREE(Lo)
      !
 #if defined _SCALAPACK
      call SLK_matrix_reset(K_slk)

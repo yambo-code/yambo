@@ -28,7 +28,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg,core_io_path
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spin,n_spinor,n_sp_pol
@@ -41,8 +40,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,&
 &                        wf_nb_io,wf_nb_io_groups,QUIET_alloc,&
 &                        QUIET_free,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
-&                        DUMP,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,&
+&                        DUMP,IO_and_Messaging_switch,RD_CL
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
@@ -50,7 +49,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 &                        WF_perturbation,global_XC_string,QP_SE_NONE
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs)           :: WF
@@ -65,11 +64,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  character(1)     ::wf_space_here
  character(schlen)::wf_title
-#if defined _SC
- integer          ::wf_size
-#endif
  integer          ::i1,i_sp_pol,ikibz,ib,ib1,ib2,i2,ic,is,ig,igfft,ib_grp,&
-&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max
+&                   s_to_load(2),iG_max,iG_bounds_loaded(2),iGo_max,wf_grid_size
  real(SP)         ::mndp,mxdp
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -129,11 +125,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
      !
      ! See if the %c in WF is already ok
      !
-     if (associated(WF%state)) call check_states(WF,loaded_bounds_ok)
+     if (allocated(WF%state)) call check_states(WF,loaded_bounds_ok)
      !
    endif
    !
-   if (associated(WF_buffer%state).and.wf_space_here/='B') then
+   if (allocated(WF_buffer%state).and.wf_space_here/='B') then
      !
      ! See if the %c Buffered are ok
      !
@@ -200,10 +196,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load .eqv. .true.)>0
    if (.not.WF%to_load) then
-     if (associated(WF%state)) deallocate(WF%state)
-     allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+     YAMBO_FREE(WF%state)
+     YAMBO_ALLOC(WF%state,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
      WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))=.FALSE.
-     deallocate(states_to_load)
+     YAMBO_FREE(states_to_load)
    endif
  endif
  !
@@ -226,7 +222,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  if (found_SC_DB.and.compatible_SC_DB) then
    !
    if(allocated(states_to_load).and..not.force_WFo_) then
-     deallocate(states_to_load)
+     YAMBO_FREE(states_to_load)
      call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
@@ -247,10 +243,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  call WF_alloc(WF)
  !
- if (WF%space=='R') allocate(wf_DP(fft_size))
- if (WF%space=='G') allocate(wf_DP(wf_ng))
- if (WF%space=='C'.or.WF%space=='B') allocate(wf_DP(wf_ncx))
- call mem_est("wf_DP",(/size(wf_DP)/),(/2*DP/))
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
+ !
+ YAMBO_ALLOC(wf_DP,(wf_grid_size))
  !
  ! LOG the states loaded
  !
@@ -275,8 +273,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if (.not.buffer_is_ok) then
    !
-   allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/SP/),quiet=QUIET_alloc)
+   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
    !
    call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_err=io_WF(ID,wf_disk)
@@ -306,8 +303,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        endif
        !
        call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
-       !
        io_err=io_WF(ID,wf_disk)
+       !
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
        if (wf_nb_io*(ib_grp-1)+1>WF%b(2)) cycle
        !
@@ -366,13 +363,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call io_control(ACTION=RD_CL,COM=NONE,MODE=VERIFY,SEC=(/0/),ID=ID)
    io_err=io_WF(ID,wf_disk)
    !
-   deallocate(wf_disk)
-   call mem_est("wf_disk",quiet=QUIET_free)
+   YAMBO_FREE(wf_disk)
    !
  endif
  !
- deallocate(wf_DP)
- call mem_est("wf_DP")
+ YAMBO_FREE(wf_DP)
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
  ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 
@@ -387,21 +382,21 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
  !
  if(allocated(states_to_load)) then
    !
-   if (associated(WF%state)) deallocate(WF%state)
+   YAMBO_FREE(WF%state)
    !
-   allocate(WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
+   YAMBO_ALLOC(WF%state,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2)))
    !
    WF%state(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))= &
 &           states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%spin(1):WF%spin(2))
    !
    ! When using the buffer the states_to_load must not be cleaned
    !
-   clean_up_states=.not.associated(WF_buffer%c)
-   if (present(keep_states_to_load)) then
-     clean_up_states=.not.keep_states_to_load
-   endif
+   clean_up_states=.not.allocated(WF_buffer%c)
+   if (present(keep_states_to_load)) clean_up_states=.not.keep_states_to_load
    !
-   if (clean_up_states) deallocate(states_to_load)
+   if (clean_up_states) then
+     YAMBO_FREE(states_to_load)
+   endif
    !
  endif
  !
@@ -418,11 +413,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
-   if (WF%space=='R') wf_size=fft_size
-   if (WF%space=='G') wf_size=wf_ng
    do i_sp_pol=1,n_sp_pol
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,wf,wf_size)
+       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
      enddo
    enddo
    call load_SC_components('WF_clean')

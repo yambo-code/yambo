@@ -23,19 +23,20 @@
 !
 integer function io_Overlaps(X,ID)
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:schlen
  use X_m,           ONLY:X_t,X_alloc,DIP_S
- use electrons,     ONLY:levels
  use R_lattice,     ONLY:nXkbz
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        io_bulk,read_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  type(X_t)   ::X
  integer     ::ID
@@ -103,7 +104,7 @@ integer function io_Overlaps(X,ID)
 1 call io_disconnect(ID=ID)
  !
 #if defined _TIMING
- if (io_DIP) call timing('io_Overlaps',OPR='stop')
+ call timing('io_Overlaps',OPR='stop')
 #endif
  !
 end function

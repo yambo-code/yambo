@@ -100,6 +100,7 @@ subroutine RT_Integrator_init()
  !
  a_tableau(1) = 0._SP
  c_tableau(1) = 0._SP    ! These are non-zero only for implicit methods
+ RWA_table(1) = 0._SP
  !
  if (l_RT_SIMPLE) then
    Integrator_nsteps = 1

@@ -205,21 +205,21 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do i_step=1,Integrator_nsteps
        if (a_tableau(i_step)==0._SP) cycle 
-       A_tmp%vecpot(i_step)    =(A_tmp%vecpot(i_step)    -A_old%vecpot)/a_tableau(i_step)
-       A_tmp%vecpot_vel(i_step)=(A_tmp%vecpot_vel(i_step)-A_old%vecpot_vel)/a_tableau(i_step)
-       A_tmp%vecpot_acc(i_step)=(A_tmp%vecpot_acc(i_step)-A_old%vecpot_acc)/a_tableau(i_step)
+       A_tmp(i_step)%vecpot    =(A_tmp(i_step)%vecpot    -A_old%vecpot)/a_tableau(i_step)
+       A_tmp(i_step)%vecpot_vel=(A_tmp(i_step)%vecpot_vel-A_old%vecpot_vel)/a_tableau(i_step)
+       A_tmp(i_step)%vecpot_acc=(A_tmp(i_step)%vecpot_acc-A_old%vecpot_acc)/a_tableau(i_step)
      enddo
-     A_tmp%vecpot(i_step)    =A_tmp%vecpot(i_step)    -A_old%vecpot
-     A_tmp%vecpot_vel(i_step)=A_tmp%vecpot_vel(i_step)-A_old%vecpot_vel
-     A_tmp%vecpot_acc(i_step)=A_tmp%vecpot_acc(i_step)-A_old%vecpot_acc
+     A_tmp(i_step)%vecpot    =A_tmp(i_step)%vecpot    -A_old%vecpot
+     A_tmp(i_step)%vecpot_vel=A_tmp(i_step)%vecpot_vel-A_old%vecpot_vel
+     A_tmp(i_step)%vecpot_acc=A_tmp(i_step)%vecpot_acc-A_old%vecpot_acc
      !
      ! Finally I average using b_tableau
      !
      A_new=A_old
      do i_step=1,Integrator_nsteps
-        A_new%vecpot    =A_new%vecpot    +A_tmp%vecpot(i_step+1)    *b_tableau(i_step)
-        A_new%vecpot_vel=A_new%vecpot_vel+A_tmp%vecpot_vel(i_step+1)*b_tableau(i_step)
-        A_new%vecpot_acc=A_new%vecpot_acc+A_tmp%vecpot_acc(i_step+1)*b_tableau(i_step)
+        A_new%vecpot    =A_new%vecpot    +A_tmp(i_step+1)%vecpot    *b_tableau(i_step)
+        A_new%vecpot_vel=A_new%vecpot_vel+A_tmp(i_step+1)%vecpot_vel*b_tableau(i_step)
+        A_new%vecpot_acc=A_new%vecpot_acc+A_tmp(i_step+1)%vecpot_acc*b_tableau(i_step)
      enddo
      !
    end subroutine RT_build_A_new

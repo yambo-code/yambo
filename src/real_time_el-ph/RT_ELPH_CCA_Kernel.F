@@ -45,8 +45,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  !
  ! Work Space ...
  !
- integer  :: i_n,i_np,B_dim,i_n_shift,i_np_shift,i_b_mat_mem,ik_mem,iq_mem,ik_rim,&
-&            ip_rim,i1,i2
+ integer  :: i_n,i_np,i_b_mat_mem,ik_mem,iq_mem,ik_rim,ip_rim,i1,i2
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
 &            TMP_Hole_lifetime(2),TMP_Electron_lifetime(2),f_kmq,Hole_f_kmq
  real(SP), external :: RT_G_retarded_convolution
@@ -54,7 +53,6 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
  ! Dimensions
  !============
  !
- B_dim=RT_bands(2)-RT_bands(1)+1
  ik_mem=PAR_Xk_ibz_index(ik)
  iq_mem=PAR_Q_index(i_q)
  !

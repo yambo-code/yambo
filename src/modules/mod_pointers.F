@@ -41,14 +41,14 @@ module pointers
    ! Interface which links Matrix to Vector
    !
    function linkM2V_real(M,N) result(VEC_pointer)
-     real(SP), target  :: M(:,:)
+     real(SP), target  :: M(1,1)
      integer, intent(in)  :: N(:)
      real(SP), pointer :: VEC_pointer(:,:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
    end function linkM2V_real
    !
    function linkM2V_complex(M,N) result(VEC_pointer)
-     complex(SP), target  :: M(:,:)
+     complex(SP), target  :: M(1,1)
      integer, intent(in)  :: N(:)
      complex(SP), pointer :: VEC_pointer(:,:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )

@@ -119,7 +119,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
  !
- call REPORT_OCCUPATIONS(E)
+ if(.not.l_real_time) call REPORT_OCCUPATIONS(E)
  !
  contains
   !

@@ -47,8 +47,8 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer,parameter     :: n_pieces=10
  logical               :: l_DbGd
  !
- !l_DbGd=BZ_DbGd_tot_nkpts>0
- l_DbGd=.false.
+ l_DbGd=BZ_DbGd_tot_nkpts>0
+ !l_DbGd=.false.
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))

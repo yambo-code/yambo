@@ -385,8 +385,6 @@ MODULE timing_m
            if (ncpu>1) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
          ENDIF
-         if (ncpu>1) call LIVE_message(message=local_ch(:100),lfmt="n",CPU_TIME=.FALSE.) 
-         call msg('r',local_ch(:100))
        CASE ( "sec " )
          !
          ! time in seconds

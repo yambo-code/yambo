@@ -434,7 +434,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'RTAtemp',   '[RT] Temperatures for relaxation time approximation',&
 &              RT_RTA_temp,unit=T_unit,Verb_level=V_real_time)
  call it(defs,'RTAchem',   '[RT] Chemical potentials for relaxation time approximation',&
-&              RT_RTA_chem,unit=T_unit,Verb_level=V_real_time)
+&              RT_RTA_chem,unit=E_unit,Verb_level=V_real_time)
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 

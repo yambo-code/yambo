@@ -50,7 +50,8 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
-&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt
+&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt,QP_ctl_xc_STRING,QP_ctl_what
+ use global_XC,     ONLY:QP_SE_NONE,setup_global_XC
  !
 #include<memory.h>
  !
@@ -72,8 +73,8 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !========
  call QP_actions_reset( )
  call E_reset(Fermi_en)
- !
  QP_ctl_msg_fmt=msg_fmt
+ QP_ctl_xc_STRING=" "
  !
  ! CTLs
  !======
@@ -133,9 +134,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
  enddo
  !
- !
- ! Finally I apply the generalized stretch obtained from the procedures 1,2 and 3.
- !========================================
+ call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
  !
  ! Extend the QP corrections to the RIM energies
  !========
@@ -210,20 +209,20 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! Reporting
  !
- call msg('r', '[QP] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
- call msg('r', '[QP] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
+ call msg('r', '[QP apply] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
+ call msg('r', '[QP apply] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
  !
  if (en%nbf==en%nbm) then
    !
    if (n_sp_pol==1) then
      !
-     call msg('r','[QP] Ind. Gap Correction  [ev]:',&
+     call msg('r','[QP apply] Ind. Gap Correction  [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !
    else
      !
-     call msg('r','[QP] Ind. Gap Correction  (up) [ev]:',&
+     call msg('r','[QP apply] Ind. Gap Correction  (up) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !

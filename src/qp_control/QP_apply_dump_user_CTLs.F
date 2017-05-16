@@ -27,9 +27,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
- use QP_CTL_m,      ONLY:QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,QP_ctl_E,QP_action,n_QP_actions,&
+ use QP_CTL_m,      ONLY:QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,QP_ctl_E,QP_action,n_QP_actions,QP_ctl_what,&
 &                        QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_ID
- use global_XC,     ONLY:QP_MORE_SCISSOR,QP_MORE_WIDTH,QP_MORE_STRETCH
  use stderr,        ONLY:string_split
  !
 #include<memory.h>
@@ -39,7 +38,6 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  !
  ! Work Space
  !
- character(1)     ::what
  character(schlen)::spin_ch(2)
  logical          ::E_def(3),W_def(2),HAVE_QP_dbs
  integer          ::i_spin,i_p,i2
@@ -50,16 +48,16 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  if (object=="K") QP_ctl_ID=2
  if (object=="G") QP_ctl_ID=3
  !
- if (QP_ctl_ID==1) what='X'
- if (QP_ctl_ID==2) what='K'
- if (QP_ctl_ID==3) what='G'
+ if (QP_ctl_ID==1) QP_ctl_what='X'
+ if (QP_ctl_ID==2) QP_ctl_what='K'
+ if (QP_ctl_ID==3) QP_ctl_what='G'
  !
- call parser(what//'fnQP_E',E_def(1))
- call parser(what//'fnQP_up_E',E_def(2))
- call parser(what//'fnQP_dn_E',E_def(3))
- call parser(what//'fnQPdb',HAVE_QP_dbs)
- call parser(what//'fnQP_Wv',W_def(1))
- call parser(what//'fnQP_Wc',W_def(2))
+ call parser(trim(QP_ctl_what)//'fnQP_E',E_def(1))
+ call parser(trim(QP_ctl_what)//'fnQP_up_E',E_def(2))
+ call parser(trim(QP_ctl_what)//'fnQP_dn_E',E_def(3))
+ call parser(trim(QP_ctl_what)//'fnQPdb',HAVE_QP_dbs)
+ call parser(trim(QP_ctl_what)//'fnQP_Wv',W_def(1))
+ call parser(trim(QP_ctl_what)//'fnQP_Wc',W_def(2))
  !
  ! User defined QP database
  !
@@ -85,19 +83,19 @@ subroutine QP_apply_dump_user_CTLs( E, object )
        enddo
        if (.not.QP_action(n_QP_actions)%plan(4).and..not.QP_action(n_QP_actions)%plan(5)) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !
-       do i_spin=1,n_sp_pol
-         if (QP_action(n_QP_actions)%plan(1)) then
-           QP_action(n_QP_actions)%what="E<"//trim(QP_action(n_QP_actions)%CTL(i_spin)%db)
-         endif
-         if (QP_action(n_QP_actions)%plan(2)) then
-           QP_action(n_QP_actions)%what="W<"//trim(QP_action(n_QP_actions)%CTL(i_spin)%db)
-         endif
-         if (QP_action(n_QP_actions)%plan(3)) then
-           QP_action(n_QP_actions)%what="Z<"//trim(QP_action(n_QP_actions)%CTL(i_spin)%db)
-         endif
-       enddo
+       if (QP_action(n_QP_actions)%plan(1)) then
+         QP_action(n_QP_actions)%what=trim(QP_action(n_QP_actions)%what)//" E"
+       endif
+       if (QP_action(n_QP_actions)%plan(2)) then
+         QP_action(n_QP_actions)%what=trim(QP_action(n_QP_actions)%what)//" W"
+       endif
+       if (QP_action(n_QP_actions)%plan(3)) then
+         QP_action(n_QP_actions)%what=trim(QP_action(n_QP_actions)%what)//" Z"
+       endif
        !
-       if (.not.any( QP_action(n_QP_actions)%plan(1:3))) then
+       if (any( QP_action(n_QP_actions)%plan(1:3))) then
+         QP_action(n_QP_actions)%what=trim(QP_action(n_QP_actions)%what)//" < "//trim(QP_action(n_QP_actions)%CTL(1)%db)
+       else
          QP_action(n_QP_actions)%active=.FALSE.
        endif
        !
@@ -109,6 +107,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  !
  do i_spin=1,n_sp_pol
    !
+   if (i_spin==1) n_QP_actions=n_QP_actions+1
+   !
    if (any(E_def)) then
      if (QP_ctl_E(QP_ctl_ID,1,i_spin)==rZERO.and.all((/QP_ctl_E(QP_ctl_ID,2:3,i_spin)==rONE/))) cycle
    endif
@@ -116,28 +116,11 @@ subroutine QP_apply_dump_user_CTLs( E, object )
      if (all((/QP_ctl_Wc(QP_ctl_ID,:,i_spin)==rZERO/)).and.all((/QP_ctl_Wv(QP_ctl_ID,:,i_spin)==rZERO/))) cycle
    endif
    !
-   if (i_spin==1) then
-     n_QP_actions=n_QP_actions+1
-     QP_action(n_QP_actions)%active=.TRUE.
-     !
-     if (any(E_def).and.any(W_def)) then
-       QP_action(n_QP_actions)%what="E+W"
-       QP_action(n_QP_actions)%kind=QP_MORE_SCISSOR+QP_MORE_WIDTH
-     else if (any(E_def).and..not.any(W_def)) then
-       QP_action(n_QP_actions)%what="E"
-       QP_action(n_QP_actions)%kind=QP_MORE_SCISSOR
-     else if (.not.any(E_def).and.any(W_def)) then
-       QP_action(n_QP_actions)%what="W"
-       QP_action(n_QP_actions)%kind=QP_MORE_WIDTH
-     endif
-     if (any((/QP_ctl_E(QP_ctl_ID,2:3,i_spin)/=rONE/))) then
-       QP_action(n_QP_actions)%kind=QP_action(n_QP_actions)%kind+QP_MORE_STRETCH
-     endif
-   endif
+   QP_action(n_QP_actions)%active=.TRUE.
    !
    spin_ch=(/'',''/)
    if (n_sp_pol==2) spin_ch=(/'  (spin up)','(spin down)'/)
-   QP_action(n_QP_actions)%desc="User defined "//trim(QP_action(n_QP_actions)%what)//trim(spin_ch(i_spin))
+   QP_action(n_QP_actions)%what="User defined "//trim(QP_action(n_QP_actions)%what)//trim(spin_ch(i_spin))
    !
    !
    ! Now I move to the input file provided stretching and generalized QP parameters. 
@@ -150,13 +133,13 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    !   QP_ctl_Wc/v(QP_ctl_ID,3,:) is ev^{-1}
    !
    QP_action(n_QP_actions)%CTL(i_spin)%E=(/QP_ctl_E(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                     QP_ctl_E(QP_ctl_ID,2,i_spin),rZERO,QP_ctl_E(QP_ctl_ID,3,i_spin)/)
+&                                          QP_ctl_E(QP_ctl_ID,2,i_spin),rZERO,QP_ctl_E(QP_ctl_ID,3,i_spin)/)
    QP_action(n_QP_actions)%CTL(i_spin)%W(1:3)=(/QP_ctl_Wc(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                          QP_ctl_Wc(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wc(QP_ctl_ID,3,i_spin)*HA2EV/)
+&                                               QP_ctl_Wc(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wc(QP_ctl_ID,3,i_spin)*HA2EV/)
    QP_action(n_QP_actions)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(QP_ctl_ID,i_spin)+E%E_CBm,&
-&                                           QP_ctl_Wv_E_ref(QP_ctl_ID,i_spin)+E%E_VBM/)
+&                                                   QP_ctl_Wv_E_ref(QP_ctl_ID,i_spin)+E%E_VBM/)
    QP_action(n_QP_actions)%CTL(i_spin)%W(4:6)=(/QP_ctl_Wv(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                       QP_ctl_Wv(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wv(QP_ctl_ID,3,i_spin)*HA2EV/)
+&                                               QP_ctl_Wv(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wv(QP_ctl_ID,3,i_spin)*HA2EV/)
    QP_action(n_QP_actions)%CTL(i_spin)%Z=QP_ctl_Z(QP_ctl_ID,i_spin)
    !
  enddo

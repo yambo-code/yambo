@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_DB_energies(i_ACTION,band_range,qp)
+subroutine QP_fit_energies(i_ACTION,band_range,qp)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by

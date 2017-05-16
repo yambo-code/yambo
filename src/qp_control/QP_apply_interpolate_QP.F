@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
+subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
  !
  ! Extend the QP correction from the kpt in qp to the kpt in k
  ! Requires qp%nk, qp%k, qp%table, qp%n_states, qp%E, qp%E_bare, qp%Z
@@ -40,7 +40,7 @@ subroutine QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
  use R_lattice,     ONLY:bz_samp
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
- use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
  !
 #include<memory.h>
  !
@@ -131,7 +131,7 @@ subroutine QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
          if (QP_action(i_ACTION)%plan(3)) then
            if (QP_check_if_corrected((/iband,iband/),(/ik,ik/),(/i_spin,i_spin/),en,'Z')) cycle
            en%Z(iband,ik,i_spin)=qp%Z(i_qp_ref)
-           QP_action(i_ACTION)%STATES_done(iband,i1,i_spin)=1
+           QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
            en%QP_corrected(iband,ik,i_spin)=en%QP_corrected(iband,ik,i_spin)+4
          endif
          !
@@ -146,6 +146,16 @@ subroutine QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
  endif
  !
  if (index(QP_ctl_msg_fmt,"r")>0) call msg("rn","")
+ !
+ ! XC kind update
+ !
+ if (any((/QP_action(i_ACTION)%STATES_done==1/))) then
+   if (len_trim(QP_ctl_xc_STRING)>0) then
+     QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" + "//trim(QP_action(i_ACTION)%what)
+   else
+     QP_ctl_xc_STRING=trim(QP_action(i_ACTION)%what)
+   endif
+ endif
  !
  ! Clean
  !

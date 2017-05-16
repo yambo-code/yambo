@@ -31,7 +31,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor
  use R_lattice,     ONLY:bz_samp
- use QP_CTL_m,      ONLY:QP_action
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING
  use interfaces,    ONLY:el_density_of_states
  !
 #include<memory.h>
@@ -43,66 +43,72 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
  !
  ! Work Space
  !
- integer  ::ib,ik,i_sp,n_of_coeff,i_spin
+ integer  ::ib,ik,n_of_coeff,i_spin
  real(SP) ::M_factors(6),dos_factor(n_spin)
  character(lchlen) :: ch
- logical           :: do_E,do_W,do_Z
+ logical           :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
  logical,external  :: QP_check_if_corrected
  !
  ! Loop on spins
  !
- do i_sp= 1,n_sp_pol
+ do i_spin= 1,n_sp_pol
    !
    ! Is there anything to do ?
    !
-   do_E=.false.
-   do_W=.false.
-   do_Z=.false.
+   do_E(i_spin)=.false.
+   do_W(i_spin)=.false.
+   do_Z(i_spin)=.false.
    M_factors=rZERO
    !
-   if (any(QP_action(i_ACTION)%CTL(i_sp)%E/=(/rZERO,rONE,rZERO,rONE/))) then
+   if (any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))) then
      if (.not.apply_anyway) then
-       do_E=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'E')
+       do_E(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'E')
      endif
    endif
-   if (any((/QP_action(i_ACTION)%CTL(i_sp)%W(:)/=rZERO/))) then
+   if (any((/QP_action(i_ACTION)%CTL(i_spin)%W(:)/=rZERO/))) then
      if (.not.apply_anyway) then
-       do_W=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'W')
+       do_W(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'W')
      endif
      if (.not.allocated(E%W)) then
        YAMBO_ALLOC(E%W,(E%nb,E%nk,n_sp_pol))
        E%W=rZERO
      endif
    endif
-   if (QP_action(i_ACTION)%CTL(i_sp)%Z/=cONE) then
+   if (QP_action(i_ACTION)%CTL(i_spin)%Z/=cONE) then
      if (.not.apply_anyway) then
-       do_Z=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_sp,i_sp/),E,'Z')
+       do_Z(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'Z')
      endif
      if (.not.allocated(E%Z)) then
        YAMBO_ALLOC(E%Z,(E%nb,E%nk,n_sp_pol))
        E%Z=1._SP
      endif
    endif
-   if (.not.any((/do_E,do_W,do_Z/))) return
+   if (.not.any((/do_E(i_spin),do_W(i_spin),do_Z(i_spin)/))) cycle
    !
-   i_spin=i_sp
-   if (do_E) then
+   if (do_E(i_spin)) then
      n_of_coeff=2
-     M_factors(:4)=QP_action(i_ACTION)%CTL(i_sp)%E
+     M_factors(:4)=QP_action(i_ACTION)%CTL(i_spin)%E
      call do_fit_operation('E')
    endif
-   if (do_W) then
+   if (do_W(i_spin)) then
      n_of_coeff=3
-     M_factors(:6)=QP_action(i_ACTION)%CTL(i_sp)%W
+     M_factors(:6)=QP_action(i_ACTION)%CTL(i_spin)%W
      call do_fit_operation('W')
    endif
-   if (do_Z) then
+   if (do_Z(i_spin)) then
      n_of_coeff=1
-     M_factors(:2)=(/real(QP_action(i_ACTION)%CTL(i_sp)%Z),aimag(QP_action(i_ACTION)%CTL(i_sp)%Z)/)
+     M_factors(:2)=(/real(QP_action(i_ACTION)%CTL(i_spin)%Z),aimag(QP_action(i_ACTION)%CTL(i_spin)%Z)/)
      call do_fit_operation('Z')
    endif
    !
  enddo
+ !
+ ! XC string update
+ !
+ if (any(do_E).or.any(do_W).or.any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" + Fitted" 
+ if (any(do_E)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" E" 
+ if (any(do_W)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" W" 
+ if (any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Z" 
  !
  contains
    !
@@ -156,8 +162,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
            M_factor_local=M_factors(iref+2)
            delta=delta+M_factor_local*dos_factor(i_spin)*real(n_spinor,SP)
            ! Quadratic correction
-           if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) rref=QP_action(i_ACTION)%CTL(i_sp)%W_E_ref(1)
-           if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) rref=QP_action(i_ACTION)%CTL(i_sp)%W_E_ref(2)
+           if (E%Eo(ib,ik,i_spin)> 1.E-5_SP) rref=QP_action(i_ACTION)%CTL(i_spin)%W_E_ref(1)
+           if (E%Eo(ib,ik,i_spin)<=1.E-5_SP) rref=QP_action(i_ACTION)%CTL(i_spin)%W_E_ref(2)
            if (E%Eo(ib,ik,i_spin)> max(1.E-5_SP,rref) .or. E%Eo(ib,ik,i_spin)<min(1.E-5_SP,rref)) then
              delta=delta+M_factors(iref+3)*(E%Eo(ib,ik,i_spin)-rref)**2
            endif

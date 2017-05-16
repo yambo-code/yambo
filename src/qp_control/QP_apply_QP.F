@@ -58,12 +58,12 @@ subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
  !
  ! Interpolation
  !
- call QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
+ call QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
  !
  ! FIT
  !
- if (QP_action(i_ACTION)%plan(1)) call QP_fit_DB_energies(i_ACTION,band_range,qp)
- if (QP_action(i_ACTION)%plan(2)) call QP_fit_DB_widths(i_ACTION,band_range,en,k,qp)
+ if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,band_range,qp)
+ if (QP_action(i_ACTION)%plan(2)) call QP_fit_widths(i_ACTION,band_range,en,k,qp)
  if (QP_action(i_ACTION)%plan(3)) then
    do i_spin=1,n_sp_pol
      QP_action(i_ACTION)%CTL(i_spin)%Z=sum(qp%Z(:))/qp%n_states

@@ -2,8 +2,8 @@
 ELPH_objects= QP_load_GFs.o
 #endif
 objs= QP_apply.o QP_load_DB.o QP_apply_QP.o QP_check_if_corrected.o \
-      QP_fit_DB_energies.o QP_fit_DB_widths.o QP_fit_report.o \
-      QP_apply_DB_interpolation.o QP_apply_the_ACTION.o \
+      QP_fit_energies.o QP_fit_widths.o QP_fit_report.o \
+      QP_apply_interpolate_QP.o QP_apply_the_ACTION.o \
       QP_apply_dump_user_CTLs.o \
       QP_DBs_add_me.o QP_DBs_merge.o QP_DB_message.o \
       Nearest_level_interpolation.o Nearest_kpt_interpolation.o $(ELPH_objects)

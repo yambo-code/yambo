@@ -46,9 +46,11 @@ module QP_CTL_m
  !%
  !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
  !
- integer                 :: QP_ctl_ID ! 1(X) 2(K) 3(G) 
+ integer                 :: QP_ctl_ID   ! 1(X) 2(K) 3(G) 
+ character(schlen)       :: QP_ctl_what ! X,K,G
  character(schlen)       :: QP_ctl_db(3)
  character(schlen)       :: QP_ctl_msg_fmt
+ character(lchlen)       :: QP_ctl_xc_STRING
  integer                 :: QP_ctl_interp_neigh(3)
  !
  ! Note that QP_ctl_E/W/Z are dimensioned *,2)
@@ -87,8 +89,8 @@ module QP_CTL_m
    integer              :: kind
    logical              :: plan(5)
    logical              :: active
+   character(schlen)    :: what 
    character(lchlen)    :: desc 
-   character(schlen)    :: what
    type(QP_ctl_t)       :: CTL(2) ! Spin polarizations
    integer, allocatable :: STATES_done(:,:,:)
  end type
@@ -129,8 +131,8 @@ module QP_CTL_m
      do i_a=1,n_QP_actions_MAX
        QP_action(i_a)%plan=.FALSE.
        QP_action(i_a)%active=.FALSE.
-       QP_action(i_a)%desc=" "
        QP_action(i_a)%what=" "
+       QP_action(i_a)%desc=" "
        QP_action(i_a)%kind=QP_SE_NONE
        call QP_ctl_reset(QP_action(i_a)%CTL(1))
        call QP_ctl_reset(QP_action(i_a)%CTL(2))

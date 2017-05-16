@@ -52,10 +52,10 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  use real_time,      ONLY:RT_bands,RT_all2ibz,l_RT_CCA_kernel,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
 &                         l_RT_relax_time_approx,RT_RTA_temp,RT_RTA_chem,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
 &                         RT_E_occupations,RT_H_occupations,RT_E_occupations_reference,RT_H_occupations_reference, &
-&                         RT_delta_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,               &
+&                         RT_delta0_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,         &
 &                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,                                           &
-&                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix
+&                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
  !
  implicit none
  !
@@ -70,7 +70,6 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
 &               GAMMA_(2),dGAMMA(2),GAMMA0(2),GAMMA__TOT,dGAMMA_TOT,GAMMA0_TOT
  !
  if( .not. RT_is_dynamically_dephased) return
- ! 
  !
  do ib=RT_bands(1),RT_bands(2)
    !
@@ -79,11 +78,24 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    !
    f_(1)=RT_E_occupations(ib,ik)
    f_(2)=RT_H_occupations(ib,ik)
-   f0(1)=RT_E_occupations_reference(ib,ik)
-   f0(2)=RT_H_occupations_reference(ib,ik)
    !
-   df_in(1)= RT_delta_occupations(ib,ik)
-   df_in(2)=-RT_delta_occupations(ib,ik)
+   ! 
+   ! The following is not sensitive 
+   !
+   ! DEBUG <
+   !f0(1)=RT_E_occupations_reference(ib,ik)
+   !f0(2)=RT_H_occupations_reference(ib,ik)
+   !df_in(1)= RT_delta_occupations(ib,ik)
+   !df_in(2)=-RT_delta_occupations(ib,ik)
+   ! DEBUG >
+   !
+   f0(1)=         aimag(G_lesser_reference(ib,ib,ik))
+   f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+   df_in(1)= RT_delta0_occupations(ib,ik)
+   df_in(2)=-RT_delta0_occupations(ib,ik)
+   !
+   ! The GAMMA0 term could be moved inside RT_apply_RWA.F
+   ! For the moment I keep it here, together with the rest of the relaxation term
    !
    GAMMA0(1)=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)
    GAMMA0(2)=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
@@ -105,29 +117,41 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      endif
    endif
    !
-   ! This term could be moved inside RT_apply_zero_dyn.F
-   ! However it's better to keep is together with the rest of the 
-   ! relaxation term
-   !
    GAMMA_(1)=GAMMA0(1)+dGAMMA(1)
    GAMMA_(2)=GAMMA0(2)+dGAMMA(2)
+   !
    dGAMMA_TOT=dGAMMA(1)+dGAMMA(2)
    GAMMA0_TOT=GAMMA0(1)+GAMMA0(2)
    GAMMA__TOT=GAMMA_(1)+GAMMA_(2)
    !
+   ! DEBUG<
+   !if(.not.l_RT_relax_time_approx) then
+   !  ! Standard definition, however not compatible with RTA
+   !  if (RT_is_statically_dephased) GAMMA_(1)=GAMMA_(1)+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
+   !  df_out(:) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
+   !  dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
+   !  cycle
+   !endif
+   ! DEBUG>
+   !
    if (RT_is_statically_dephased) GAMMA0_TOT=GAMMA0_TOT+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
    !
    if(.not.l_RT_relax_time_approx) then
-     if( GAMMA__TOT> 0._SP  ) f_inf(:)= GAMMA_(:)/GAMMA__TOT*spin_occ
-     if( GAMMA__TOT<=0._SP  ) f_inf(:)= 0._SP
+     if( GAMMA__TOT> 0._SP  ) then
+       f_inf(1)= GAMMA_(2)/GAMMA__TOT*spin_occ
+       f_inf(2)= GAMMA_(1)/GAMMA__TOT*spin_occ
+     endif
+     if( GAMMA__TOT<=0._SP  ) then
+       f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
+       f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+     endif
    else
      f_inf(1)= RT_RTA_E_occ_infty(ib,ik)
      f_inf(2)= RT_RTA_H_occ_infty(ib,ik)
    endif
    !
-   df_out(:)= - deltaT*GAMMA0_TOT*df_in(:) - deltaT*GAMMA0_TOT*(f0(:)-f_inf(:)) + &
-&             - deltaT*dGAMMA_TOT*df_in(:) - deltaT*dGAMMA_TOT*(f0(:)-f_inf(:))
-   !
+   df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
+&                       dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
    !
    if (f0(1)<=0.5_SP) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
    if (f0(1)> 0.5_SP) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel

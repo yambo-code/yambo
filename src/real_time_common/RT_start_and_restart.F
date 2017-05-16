@@ -367,6 +367,7 @@ subroutine RT_start_and_restart(E,k,q,X)
        RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
        RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
        RT_delta0_occupations(ib,:)     =         aimag(dG_lesser(ib,ib,:,1))
+       RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
        RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta0_occupations(ib,:)
        RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta0_occupations(ib,:)
      enddo

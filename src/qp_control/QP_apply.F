@@ -107,13 +107,6 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  if (depth>0 ) call section('=',"External/Internal QP corrections")
  if (depth==0) call section('+',"External/Internal QP corrections")
  !
- ! Allocation of QP_corrected table to keep track of the corrections done
- !
- if (.not.allocated(en%QP_corrected)) then
-   YAMBO_ALLOC(en%QP_corrected,(en%nb,en%nk,n_sp_pol))
-   en%QP_corrected=0
- endif 
- !
  !==============
  ! QP's section
  !==============

@@ -124,6 +124,25 @@ module QP_CTL_m
  !
  contains
    !
+   subroutine QP_CTL_fill(iA,i_spin,ID,CBm,VBM)
+     use pars, ONLY:rZERO
+     integer  :: iA,i_spin,ID
+     real(SP) :: CBm,VBM
+     !
+     QP_action(iA)%active=.TRUE.
+     !
+     QP_action(iA)%CTL(i_spin)%E=(/QP_ctl_E(ID,1,i_spin)/HA2EV,&
+&                                  QP_ctl_E(ID,2,i_spin),rZERO,QP_ctl_E(ID,3,i_spin)/)
+     QP_action(iA)%CTL(i_spin)%W(1:3)=(/QP_ctl_Wc(ID,1,i_spin)/HA2EV,&
+&                                       QP_ctl_Wc(ID,2,i_spin)/HA2EV,QP_ctl_Wc(ID,3,i_spin)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(ID,i_spin)+CBm,&
+&                                           QP_ctl_Wv_E_ref(ID,i_spin)+VBM/)
+     QP_action(iA)%CTL(i_spin)%W(4:6)=(/QP_ctl_Wv(ID,1,i_spin)/HA2EV,&
+&                                       QP_ctl_Wv(ID,2,i_spin)/HA2EV,QP_ctl_Wv(ID,3,i_spin)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%Z=QP_ctl_Z(ID,i_spin)
+     !
+   end subroutine
+   !
    subroutine QP_actions_reset
 #include<memory.h>
      integer :: i_a,i_s

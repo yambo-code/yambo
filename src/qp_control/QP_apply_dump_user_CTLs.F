@@ -24,11 +24,10 @@
 subroutine QP_apply_dump_user_CTLs( E, object )
  !
  use pars,          ONLY:rZERO,schlen,rONE
- use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
- use QP_CTL_m,      ONLY:QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,QP_ctl_E,QP_action,n_QP_actions,QP_ctl_what,&
-&                        QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_ID
+ use QP_CTL_m,      ONLY:QP_ctl_Wc,QP_ctl_Wv,QP_ctl_E,QP_action,n_QP_actions,QP_ctl_what,&
+&                        QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_ID,QP_CTL_fill
  use stderr,        ONLY:string_split
  !
 #include<memory.h>
@@ -116,8 +115,6 @@ subroutine QP_apply_dump_user_CTLs( E, object )
      if (all((/QP_ctl_Wc(QP_ctl_ID,:,i_spin)==rZERO/)).and.all((/QP_ctl_Wv(QP_ctl_ID,:,i_spin)==rZERO/))) cycle
    endif
    !
-   QP_action(n_QP_actions)%active=.TRUE.
-   !
    spin_ch=(/'',''/)
    if (n_sp_pol==2) spin_ch=(/'  (spin up)','(spin down)'/)
    QP_action(n_QP_actions)%what="User defined "//trim(QP_action(n_QP_actions)%what)//trim(spin_ch(i_spin))
@@ -132,15 +129,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    !   QP_ctl_Wc/v(QP_ctl_ID,2,:) is in ev
    !   QP_ctl_Wc/v(QP_ctl_ID,3,:) is ev^{-1}
    !
-   QP_action(n_QP_actions)%CTL(i_spin)%E=(/QP_ctl_E(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                          QP_ctl_E(QP_ctl_ID,2,i_spin),rZERO,QP_ctl_E(QP_ctl_ID,3,i_spin)/)
-   QP_action(n_QP_actions)%CTL(i_spin)%W(1:3)=(/QP_ctl_Wc(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                               QP_ctl_Wc(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wc(QP_ctl_ID,3,i_spin)*HA2EV/)
-   QP_action(n_QP_actions)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(QP_ctl_ID,i_spin)+E%E_CBm,&
-&                                                   QP_ctl_Wv_E_ref(QP_ctl_ID,i_spin)+E%E_VBM/)
-   QP_action(n_QP_actions)%CTL(i_spin)%W(4:6)=(/QP_ctl_Wv(QP_ctl_ID,1,i_spin)/HA2EV,&
-&                                               QP_ctl_Wv(QP_ctl_ID,2,i_spin)/HA2EV,QP_ctl_Wv(QP_ctl_ID,3,i_spin)*HA2EV/)
-   QP_action(n_QP_actions)%CTL(i_spin)%Z=QP_ctl_Z(QP_ctl_ID,i_spin)
+   call QP_CTL_fill(n_QP_actions,i_spin,QP_ctl_ID,+E%E_CBm,E%E_VBM)
    !
  enddo
  !

@@ -21,11 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
+subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k)
  !
  ! Here I apply the strecth for both QP_action.
- !
- ! When apply_anyway=.TRUE. the corrections are applied anyway.
  !
  use pars,          ONLY:SP,lchlen,rZERO,cI,cONE,rONE
  use units,         ONLY:HA2EV
@@ -39,7 +37,6 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
  type(levels)    ::E
  type(bz_samp)   ::k
  integer         ::i_ACTION,band_range(2)
- logical         ::apply_anyway
  !
  ! Work Space
  !
@@ -47,7 +44,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
  real(SP) ::M_factors(6),dos_factor(n_spin)
  character(lchlen) :: ch
  logical           :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
- logical,external  :: QP_check_if_corrected
+ !
+ if (.not.QP_action(i_ACTION)%active) return
  !
  ! Loop on spins
  !
@@ -61,44 +59,30 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
    M_factors=rZERO
    !
    if (any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))) then
-     if (.not.apply_anyway) then
-       do_E(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'E')
-     endif
+     n_of_coeff=2
+     M_factors(:4)=QP_action(i_ACTION)%CTL(i_spin)%E
+     call do_fit_operation('E')
+     do_E(i_spin)=.TRUE.
    endif
    if (any((/QP_action(i_ACTION)%CTL(i_spin)%W(:)/=rZERO/))) then
-     if (.not.apply_anyway) then
-       do_W(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'W')
-     endif
      if (.not.allocated(E%W)) then
        YAMBO_ALLOC(E%W,(E%nb,E%nk,n_sp_pol))
        E%W=rZERO
      endif
+     n_of_coeff=3
+     M_factors(:6)=QP_action(i_ACTION)%CTL(i_spin)%W
+     call do_fit_operation('W')
+     do_W(i_spin)=.TRUE.
    endif
    if (QP_action(i_ACTION)%CTL(i_spin)%Z/=cONE) then
-     if (.not.apply_anyway) then
-       do_Z(i_spin)=.not.QP_check_if_corrected(band_range,(/1,E%nk/),(/i_spin,i_spin/),E,'Z')
-     endif
      if (.not.allocated(E%Z)) then
        YAMBO_ALLOC(E%Z,(E%nb,E%nk,n_sp_pol))
        E%Z=1._SP
      endif
-   endif
-   if (.not.any((/do_E(i_spin),do_W(i_spin),do_Z(i_spin)/))) cycle
-   !
-   if (do_E(i_spin)) then
-     n_of_coeff=2
-     M_factors(:4)=QP_action(i_ACTION)%CTL(i_spin)%E
-     call do_fit_operation('E')
-   endif
-   if (do_W(i_spin)) then
-     n_of_coeff=3
-     M_factors(:6)=QP_action(i_ACTION)%CTL(i_spin)%W
-     call do_fit_operation('W')
-   endif
-   if (do_Z(i_spin)) then
      n_of_coeff=1
      M_factors(:2)=(/real(QP_action(i_ACTION)%CTL(i_spin)%Z),aimag(QP_action(i_ACTION)%CTL(i_spin)%Z)/)
      call do_fit_operation('Z')
+     do_Z(i_spin)=.TRUE.
    endif
    !
  enddo
@@ -130,7 +114,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
          if (E%Eo(ib,ik,i_spin)> 1.E-5) iref=0
          if (E%Eo(ib,ik,i_spin)<=1.E-5) iref=n_of_coeff
          !
-         l_add_DB_corr = (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)/=1).or.apply_anyway
+         l_add_DB_corr = (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)/=1)
          !
          ! Energy
          !========
@@ -178,12 +162,6 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k,apply_anyway)
          if (what=='Z') then
            Z_tmp=M_factors(1)+cI*M_factors(2)
            E%Z(ib,ik,i_spin)=Z_tmp
-         endif
-         !
-         if (.not.apply_anyway) then
-           if (what=='E') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+1
-           if (what=='W') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+2
-           if (what=='Z') E%QP_corrected(ib,ik,i_spin)=E%QP_corrected(ib,ik,i_spin)+4
          endif
          !
        enddo

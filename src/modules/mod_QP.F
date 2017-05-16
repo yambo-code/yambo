@@ -115,38 +115,6 @@ module QP_m
    !
  end type QP_t
  !
- ! QP CTL
- !
- !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
- !% ?fnQP_E
- !  0 |  0 | 0 |               # [?] QP parameters (E).
- !% 
- !% ?fnQP_Wc
- !  0 |  0 | 0 |               # [?] QP parameters (W) conduction.
- !%
- !% ?fnQP_Wv
- !  0 |  0 | 0 |               # [?] QP parameters (W) valence.
- !%
- !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
- !  
- ! 1(X) 2(K) 3(G) 
- !
- character(schlen)       :: QP_ctl_db(3)
- integer                 :: QP_ctl_interp_neigh(3)
- !
- ! Note that QP_ctl_E/W/Z are dimensioned *,2)
- ! to describe spin polarized systems.
- ! The second element of the last argument 
- ! is not used in non-collinear or scalar cases.
- !
- real(SP)                :: QP_ctl_E(3,3,2)
- real(SP)                :: QP_ctl_Wc_E_ref(3,2)
- real(SP)                :: QP_ctl_Wv_E_ref(3,2)
- real(SP)                :: QP_ctl_Wc(3,3,2)
- real(SP)                :: QP_ctl_Wv(3,3,2)
- complex(SP)             :: QP_ctl_Z(3,2)
- logical                 :: QP_ctl_applied
- !
  ! interface
  !
  interface

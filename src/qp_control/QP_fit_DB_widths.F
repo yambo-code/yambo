@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,18 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
+subroutine QP_fit_DB_widths(i_ACTION,band_range,en,k,qp)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by
  ! the mod_QP_CTL module
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,rZERO
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:warning
  use QP_m,          ONLY:QP_t
- use QP_CTL_m,      ONLY:QP_ctl_t
+ use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor,spin
  use interfaces,    ONLY:el_density_of_states
  !
@@ -41,21 +40,20 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
  type(levels)    ::en
  type(bz_samp)   ::k
  type(QP_t)      ::qp
- type(QP_ctl_t)  ::QP_ctl(n_sp_pol)
- integer         ::band_range(2)
+ integer         ::i_ACTION,band_range(2)
  !
  ! Work Space
  !
- integer  :: i1,Nqpc,Nqpv,Nqpc_DOS,Nqpv_DOS,fit_order,i_sp_pol
+ integer  :: i1,Nqpc,Nqpv,Nqpc_DOS,Nqpv_DOS,fit_order,i_spin
  real(SP) :: Eoc,Eov,Ec,Ev,dos_factor(n_spin),Ev_ref,Ec_ref,dos_broad
  real(SP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Dy_DOS(qp%n_states),Dx_DOS(qp%n_states),&
-&            Tt_def(3),TCv(3),TCc(3)
+&            TCv(3),TCc(3)
  !
  dos_broad=0.01_SP/HA2EV
  !
  ! Loop on spin polarizations
  !
- do i_sp_pol =1 , n_sp_pol
+ do i_spin =1 , n_sp_pol
    !
    ! Fit energy range 
    !
@@ -66,7 +64,7 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
    !
    do i1=1,qp%n_states
      if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
-     if (spin(qp%table(i1,:))/=i_sp_pol) cycle
+     if (spin(qp%table(i1,:))/=i_spin) cycle
      if (qp%E_bare(i1)<=1.E-5_SP) then
        Eov=max(Eov,qp%E_bare(i1))
        Ev=max(Ev ,real(qp%E(i1),SP)) 
@@ -76,12 +74,11 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
      endif
    enddo
    !
-   Ev_ref=Eov-en%E_ind_gap(i_sp_pol) 
-   Ec_ref=Eoc+en%E_ind_gap(i_sp_pol)
+   Ev_ref=Eov-en%E_ind_gap(i_spin) 
+   Ec_ref=Eoc+en%E_ind_gap(i_spin)
    !
-   Tt_def=0._SP
-   TCv=Tt_def
-   TCc=Tt_def
+   TCv=rZERO
+   TCc=rZERO
    !
    ! a) perform a constant fit in the energy reagion E_CBM<E<E_CBM+E_gap
    !    of a function proportional to the DOS: A_coeff~W
@@ -103,18 +100,19 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
      Dx(Nqpc)=qp%E_bare(i1)
      Dy(Nqpc)=aimag(qp%E(i1))
      call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     if(dos_factor(i_sp_pol)<1.E-6_SP) cycle
+     if(dos_factor(i_spin)<1.E-6_SP) cycle
+     if(index(QP_action(i_ACTION)%desc,"E-P")==0) cycle
      Nqpc_DOS=Nqpc_DOS+1
      Dx_DOS(Nqpc_DOS)=qp%E_bare(i1)
-     Dy_DOS(Nqpc_DOS)=aimag(qp%E(i1))/(dos_factor(i_sp_pol)*real(n_spinor,SP))
+     Dy_DOS(Nqpc_DOS)=aimag(qp%E(i1))/(dos_factor(i_spin)*real(n_spinor,SP))
    enddo
    if (Nqpc>1) then
      call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc)    ,fit_order,TCc(1),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(1)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(1)=EPS
    endif
    if (Nqpc_DOS>1) then
      call pol_fit(Nqpc_DOS,Dx(:Nqpc_DOS),Dy_DOS(:Nqpc_DOS),fit_order,TCc(2),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(3)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(3)=EPS
    endif
    !
    ! E<0 (valence)
@@ -129,18 +127,19 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
      Dx(Nqpv)=qp%E_bare(i1)
      Dy(Nqpv)=aimag(qp%E(i1))
      call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     if(dos_factor(i_sp_pol)<1.E-6_SP) cycle
+     if(dos_factor(i_spin)<1.E-6_SP) cycle
+     if(index(QP_action(i_ACTION)%desc,"E-P")==0) cycle
      Nqpv_DOS=Nqpv_DOS+1
      Dx_DOS(Nqpv_DOS)=qp%E_bare(i1)
-     Dy_DOS(Nqpv_DOS)=aimag(qp%E(i1))/(dos_factor(i_sp_pol)*real(n_spinor,SP))
+     Dy_DOS(Nqpv_DOS)=aimag(qp%E(i1))/(dos_factor(i_spin)*real(n_spinor,SP))
    enddo
    if (Nqpv>1) then
      call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv)    ,fit_order,TCv(1),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(2)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(2)=EPS
    endif
    if (Nqpv_DOS>1) then
      call pol_fit(Nqpv_DOS,Dx(:Nqpv_DOS),Dy_DOS(:Nqpv_DOS),fit_order,TCv(2),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(4)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(4)=EPS
    endif
    !
    ! c) perform a quadratic fit in the energy reagion E>E_CBM+E_gap
@@ -158,11 +157,11 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
      Nqpc=Nqpc+1
      Dx(Nqpc)=qp%E_bare(i1)
      call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     Dy(Nqpc)=(aimag(qp%E(i1))-dos_factor(i_sp_pol)*real(n_spinor,SP)*TCc(2))/(qp%E_bare(i1)-Ec_ref)**2
+     Dy(Nqpc)=(aimag(qp%E(i1))-dos_factor(i_spin)*real(n_spinor,SP)*TCc(2))/(qp%E_bare(i1)-Ec_ref)**2
    enddo
    if (Nqpc>1) then
      call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc)    ,fit_order,TCc(3),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(5)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(5)=EPS
    endif
    !
    ! E<0 (valence)
@@ -175,16 +174,16 @@ subroutine QP_fit_DB_widths(band_range,qp,en,k,QP_ctl)
      Nqpv=Nqpv+1
      Dx(Nqpv)=qp%E_bare(i1)
      call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     Dy(Nqpv)=(aimag(qp%E(i1))-dos_factor(i_sp_pol)*real(n_spinor,SP)*Tcv(2))/(qp%E_bare(i1)-Ev_ref)**2
+     Dy(Nqpv)=(aimag(qp%E(i1))-dos_factor(i_spin)*real(n_spinor,SP)*Tcv(2))/(qp%E_bare(i1)-Ev_ref)**2
    enddo
    if (Nqpv>1) then
      call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv)    ,fit_order,TCv(3),EPS,0._SP)
-     QP_ctl(i_sp_pol)%W_err(6)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%W_err(6)=EPS
    endif
    !
    ! Storing
    !
-   QP_ctl(i_sp_pol)%W=QP_ctl(i_sp_pol)%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
+   QP_action(i_ACTION)%CTL(i_spin)%W=QP_action(i_ACTION)%CTL(i_spin)%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
    !
  enddo
  !

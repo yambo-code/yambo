@@ -21,54 +21,57 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function QP_apply_QP_type(band_range,en,k,qp)
+subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
  !
+ use pars,          ONLY:rZERO
  use QP_m,          ONLY:QP_t
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol
- use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
+ use QP_CTL_m,      ONLY:QP_action
  !
 #include<memory.h>
  !
  type(levels)    ::en
  type(QP_t)      ::qp
  type(bz_samp)   ::k
- integer         ::band_range(2)
+ integer         ::i_ACTION,band_range(2)
  !
  ! Work Space
+ integer :: i_spin
  !
- logical         ::do_EWZ_using_Ik_IE(5) ! = ( E W Z INTERPOLATION/k INTERPOLATION/E )
- type(QP_ctl_t)  ::QP_ctl(n_sp_pol)
- integer         ::DB_corrected(en%nb,en%nk,n_sp_pol),i_spin
+ ! Allocations
  !
- ! Presets
- do i_spin=1,n_sp_pol
-   call reset_QP_ctl(QP_ctl(i_spin))
- enddo
- DB_corrected=0
- do_EWZ_using_Ik_IE=.false.
- do_EWZ_using_Ik_IE(1)=.true. ! Apply QP corrections to energies only
- QP_ctl(:)%db="none"
- QP_ctl(:)%short_descr="none"
- QP_ctl(:)%interp_neigh=1
- !
- ! Backup bare energies (only once)
- !
+ if (QP_action(i_ACTION)%plan(2).and..not.allocated(en%W)) then
+   YAMBO_ALLOC(en%W,(en%nb,en%nk,n_sp_pol))
+   en%W=rZERO
+ endif
+ if (QP_action(i_ACTION)%plan(3).and..not.allocated(en%Z)) then
+   YAMBO_ALLOC(en%Z,(en%nb,en%nk,n_sp_pol))
+   en%Z=rZERO
+ endif
  if (.not.allocated(en%Eo)) then
    YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
    en%Eo=en%E
  endif
+ YAMBO_ALLOC(QP_action(i_ACTION)%STATES_done,( band_range(1):band_range(2),en%nk,n_sp_pol ))
+ QP_action(i_ACTION)%STATES_done=0
  !
  ! Interpolation
  !
- call QP_apply_DB_interpolation(band_range,qp,en,k,do_EWZ_using_Ik_IE,DB_corrected,QP_ctl%interp_neigh)
+ call QP_apply_DB_interpolation(i_ACTION,band_range,en,k,qp)
  !
- ! Collect corrected flags and, eventually, switch off Extrapolation 
- ! 
- if (all(DB_corrected(band_range(1):band_range(2),:,:)==1)) return
+ ! FIT
  !
- ! If not all corrected FIT it
+ if (QP_action(i_ACTION)%plan(1)) call QP_fit_DB_energies(i_ACTION,band_range,qp)
+ if (QP_action(i_ACTION)%plan(2)) call QP_fit_DB_widths(i_ACTION,band_range,en,k,qp)
+ if (QP_action(i_ACTION)%plan(3)) then
+   do i_spin=1,n_sp_pol
+     QP_action(i_ACTION)%CTL(i_spin)%Z=sum(qp%Z(:))/qp%n_states
+   enddo
+ endif
  !
- call QP_fit_DB_energies(band_range,qp,QP_ctl)
+ ! FIT report
  !
-end function
+ call QP_fit_report(i_ACTION," ")
+ !
+end subroutine

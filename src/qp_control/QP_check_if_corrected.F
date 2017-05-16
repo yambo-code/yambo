@@ -49,7 +49,7 @@ logical function QP_check_if_corrected(band_range,k_range,spin_range,en,what)
  ! 
  ! Work Space
  !
- integer :: i1,i2,i_sp,any_of(4)
+ integer :: ib,ik,i_sp,any_of(4)
  !
  QP_check_if_corrected=.true.
  !
@@ -58,13 +58,13 @@ logical function QP_check_if_corrected(band_range,k_range,spin_range,en,what)
  if (what=='Z') any_of=(/3,5,6,7/)
  if (what=='G') any_of=(/8,8,8,8/)
  !
- do i1=band_range(1),band_range(2)
-   do i2=k_range(1),k_range(2)
+ do ib=band_range(1),band_range(2)
+   do ik=k_range(1),k_range(2)
      do i_sp=spin_range(1),spin_range(2)
-       if (en%QP_corrected(i1,i2,i_sp)/=any_of(1).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=any_of(2).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=any_of(3).and.&
-&          en%QP_corrected(i1,i2,i_sp)/=any_of(4)) QP_check_if_corrected=.false.
+       if (en%QP_corrected(ib,ik,i_sp)/=any_of(1).and.&
+&          en%QP_corrected(ib,ik,i_sp)/=any_of(2).and.&
+&          en%QP_corrected(ib,ik,i_sp)/=any_of(3).and.&
+&          en%QP_corrected(ib,ik,i_sp)/=any_of(4)) QP_check_if_corrected=.false.
      enddo
    enddo
  enddo

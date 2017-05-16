@@ -28,18 +28,8 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! types. Moreover the Fermi level is decided on the basis
  ! of the X energies (supposed to be uniformly spread).
  !
- ! QP_apply
- !::::::::::
- ! |_ QP_load_DB
- ! |      |_ QP_apply_DB_interpolation
- ! |      |_ QP_fit_DB_energies/widths
- ! |      |_ QP_load_GFs
- ! |_ QP_apply_QP_type
- ! |_ QP_apply_global_stretch
- ! |_ (if X or K) fermi_level
- !
- ! Eid
- !::::::
+ ! Objects
+ !:::::::::
  ! 1 : X (object = "X")
  ! 2 : BSK (object = "K")
  ! 3 : G (object = "G")
@@ -51,21 +41,16 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! This convention about sign is imposed (when reading DB's made at finite Temperature)
  ! in QP_apply_global_stretch and  QP_apply_DB_interpolation
  !
- use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_sc_run
  use units,         ONLY:HA2EV
- use QP_m,          ONLY:QP_t,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
-&                        QP_ctl_applied,QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+ use QP_m,          ONLY:QP_t
  use com,           ONLY:msg,depth
  use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
 &                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
- use parser_m,      ONLY:parser
- use global_XC,     ONLY:setup_global_XC,QP_MORE_SCISSOR,QP_MORE_SCIS_AND_STRE,QP_MORE_STRETCH,&
-&                        K_kind,K_xc_functional,QP_MORE_NONE,G_kind,G_xc_functional,&
-&                        X_kind,X_xc_functional,QP_DB_kind,QP_SE_NONE
- use QP_CTL_m,      ONLY:QP_ctl_t,reset_QP_ctl
+ use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
+&                        QP_ctl_ID,QP_ctl_t,QP_ctl_msg_fmt
  !
 #include<memory.h>
  !
@@ -74,167 +59,86 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  type(bz_samp) ::k
  character(*)  ::msg_fmt
  character(1)  ::object
- type(QP_t),       optional::qp_impose
- type(QP_ctl_t),   optional::QP_ctl_impose(n_sp_pol)
+ type(QP_t),     optional::qp_impose
+ type(QP_ctl_t), optional::QP_ctl_impose(n_sp_pol)
  !
  ! Work Space
  !
  type(levels)     ::Fermi_en
- type(QP_ctl_t)   ::QP_ctl_from_DB(n_sp_pol),QP_ctl_input_or_impose(n_sp_pol)
- integer          ::DB_corrected(en%nb,en%nk,n_sp_pol),ik_bz,ik_ibz,ib,i1,&
-&                   ik_r,QP_SE_MORE,i_spin,QP_load_DB_err,nbf_m_SAVE(2)
- character(schlen)::ch
- character(1)     ::what
- character(11)    ::spin_ch(2)
- logical          ::is_def(4),W_def(2)
- integer          ::Eid
+ integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_spin,nbf_m_SAVE(2),i_a
  integer, allocatable :: DbGd_k_done(:)
- integer, external    :: QP_load_DB
  !
  ! Resets
- !
- if (object=="X") Eid=1
- if (object=="K") Eid=2
- if (object=="G") Eid=3
- !
- do i_spin=1,n_sp_pol
-   call reset_QP_ctl(QP_ctl_from_DB(i_spin))
-   call reset_QP_ctl(QP_ctl_input_or_impose(i_spin))
- enddo
+ !========
+ call QP_actions_reset( )
  call E_reset(Fermi_en)
  !
- ! If I'm not imposing a fit (QP_ctl_impose) of QP (qp_impose)
- ! return if the field are not present in the input file
+ QP_ctl_msg_fmt=msg_fmt
  !
- if (.not.present(QP_ctl_impose).and..not.present(qp_impose)) then
-   if (Eid==1) what='X'
-   if (Eid==2) what='K'
-   if (Eid==3) what='G'
-   call parser(what//'fnQP_E',is_def(1))
-   call parser(what//'fnQP_up_E',is_def(2))
-   call parser(what//'fnQP_dn_E',is_def(3))
-   call parser(what//'fnQPdb',is_def(4))
-   call parser(what//'fnQP_Wv',W_def(1))
-   call parser(what//'fnQP_Wc',W_def(2))
-   if (.not.any((/is_def,W_def/))) return
+ ! CTLs
+ !======
+ ! ... Input file driven
+ call QP_apply_dump_user_CTLs( en, object )
+ !
+ ! ... externally defined
+ if (present(QP_ctl_impose)) then
+   n_QP_actions=n_QP_actions+1
+   QP_action(n_QP_actions)%active=.TRUE.
+   do i_spin=1,n_sp_pol
+     call QP_CTL_copy(QP_ctl_impose(i_spin),QP_action(n_QP_actions)%CTL(i_spin))
+   enddo
  endif
  !
- ! Allocation of QP_corrected table to keep track of the corrections
- ! done
+ ! I am imposing a qp_impose that contains qp corrections
+ !                ===========
+ if (present(qp_impose)) then
+   n_QP_actions=n_QP_actions+1
+   QP_action(n_QP_actions)%active=.TRUE.
+   QP_action(n_QP_actions)%desc="Internally defined QP database"
+ endif
+ !
+ ! Is there anything to do?
+ !
+ if ( .not.any( QP_action(:)%active ) ) return
+ !
+ ! Sectioning
+ !=============
+ if (depth>0 ) call section('=',"External/Internal QP corrections")
+ if (depth==0) call section('+',"External/Internal QP corrections")
+ !
+ ! Allocation of QP_corrected table to keep track of the corrections done
  !
  if (.not.allocated(en%QP_corrected)) then
    YAMBO_ALLOC(en%QP_corrected,(en%nb,en%nk,n_sp_pol))
    en%QP_corrected=0
  endif 
  !
- DB_corrected=0
- QP_ctl_applied=.false.
+ !==============
+ ! QP's section
+ !==============
+ if (present(qp_impose)) then
+   call QP_apply_QP(band_range,en,k,qp_impose)
+ endif
  !
- ! Description initialization
- !
- spin_ch=(/'',''/)
- if (n_sp_pol==2) spin_ch=(/'  (spin up)','(spin down)'/)
- !
- do i_spin=1,n_sp_pol
-   QP_ctl_from_DB(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'
-   QP_ctl_input_or_impose(i_spin)%short_descr='[QP@'//what//trim(spin_ch(i_spin))//']'
-   ch='External QP corrections ('//what//')'
-   if (present(qp_impose)) ch='Internal QP corrections ('//what//')'
+ !=========
+ ! Actions
+ !=========
+ do i_a=1,n_QP_actions
+   !
+   if (.not.QP_action(i_a)%active) cycle
+   !
+   if (len_trim(QP_action(i_a)%CTL(1)%db)>0) call QP_load_DB(i_a,band_range,en,k)
+   !
+   call QP_apply_the_ACTION(i_a,band_range,en,k,.FALSE.)
+   !
  enddo
  !
- ! Sectioning
- !
- if (depth>0 ) call section('=',trim(ch))
- if (depth==0) call section('+',trim(ch))
- !
- ! Interpolation neighbours is always input file controlled
- !
- QP_ctl_input_or_impose(:)%interp_neigh=QP_ctl_interp_neigh(Eid)
- QP_ctl_from_DB(:)%interp_neigh=QP_ctl_interp_neigh(Eid)
- !
- ! NOW I HAVE DIFFERENT OPTIONS ... 
- !
- ! 1] I am using the input file specifed QP corrections (contained in the qp_impose type)
- !
- if (.not.present(qp_impose).and..not.present(QP_ctl_impose)) then
-   !
-   QP_ctl_from_DB(:)%db=QP_ctl_db(Eid)
-   QP_load_DB_err=QP_load_DB(band_range,en,k,QP_ctl_from_DB,msg_fmt,DB_corrected)
-   !
-   ! Update QP db kind in the global_XC kinds 
-   !
-   if (QP_DB_kind/=QP_SE_NONE.and.QP_load_DB_err>0) then
-     if (Eid==1) X_kind=QP_DB_kind
-     if (Eid==2) K_kind=QP_DB_kind
-     if (Eid==3) G_kind=QP_DB_kind
-   endif
-   !
-   ! Now I have to include the input file QP parameters in QP_ctl
-   ! being careful that the scissor must go in QP_ctl_input_or_impose%E(1)
-   !
-   do i_spin=1,n_sp_pol
-     QP_ctl_input_or_impose(i_spin)%E=(/QP_ctl_E(Eid,1,i_spin)/HA2EV,&
-&                                       QP_ctl_E(Eid,2,i_spin),0._SP,QP_ctl_E(Eid,3,i_spin)/)
-   enddo
-   !
-   ! Then update scissor & stretching in the global_XC kinds 
-   !
-   QP_SE_MORE=QP_MORE_NONE
-   if (any(QP_ctl_E(Eid,1,:)  /=0._SP)) QP_SE_MORE=QP_MORE_SCISSOR
-   if (any(QP_ctl_E(Eid,2:3,:)/=1._SP)) QP_SE_MORE=QP_MORE_STRETCH
-   if (any(QP_ctl_E(Eid,1,:)  /=0._SP).and.any(QP_ctl_E(Eid,2:3,:)/=1._SP)) QP_SE_MORE=QP_MORE_SCIS_AND_STRE
-   !
-   if (QP_SE_MORE>0.and.Eid==1) call setup_global_XC(what,X_kind,QP_SE_MORE,X_xc_functional)
-   if (QP_SE_MORE>0.and.Eid==2) call setup_global_XC(what,K_kind,QP_SE_MORE,K_xc_functional)
-   if (QP_SE_MORE>0.and.Eid==3) call setup_global_XC(what,G_kind,QP_SE_MORE,G_xc_functional)
-   !
-   QP_ctl_db(Eid)=trim(QP_ctl_from_DB(1)%db)
-   !
-   ! Now I move to the input file provided stretching and generalized QP parameters. 
-   ! Those are contained in the QP_ctl* fields.
-   !
-   ! Note the units of QP_ctl_W:
-   !
-   !   QP_ctl_Wc/v(Eid,1,:) is in ev
-   !   QP_ctl_Wc/v(Eid,2,:) is in ev
-   !   QP_ctl_Wc/v(Eid,3,:) is ev^{-1}
-   !
-   do i_spin=1,n_sp_pol
-     QP_ctl_input_or_impose(i_spin)%W(1:3)=(/QP_ctl_Wc(Eid,1,i_spin)/HA2EV,&
-&                                            QP_ctl_Wc(Eid,2,i_spin)/HA2EV,QP_ctl_Wc(Eid,3,i_spin)*HA2EV/)
-     QP_ctl_input_or_impose(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(Eid,i_spin)+en%E_CBm,&
-&                                                QP_ctl_Wv_E_ref(Eid,i_spin)+en%E_VBM/)
-     QP_ctl_input_or_impose(i_spin)%W(4:6)=(/QP_ctl_Wv(Eid,1,i_spin)/HA2EV,&
-&                                            QP_ctl_Wv(Eid,2,i_spin)/HA2EV,QP_ctl_Wv(Eid,3,i_spin)*HA2EV/)
-     QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_Z(Eid,i_spin)
-   enddo
-   !
- endif
- !
- ! GPL_EXCLUDE_START
- !
- ! 2] I am imposing a qp_impose that contains qp corrections
- !
- if (present(qp_impose)) call QP_apply_QP_type(band_range,en,k,qp_impose)
- !
- ! GPL_EXCLUDE_END
- !
- ! 3] I am using an externally defined FIT parameters
- !
- if (present(QP_ctl_impose)) then
-   do i_spin=1,n_sp_pol
-     QP_ctl_input_or_impose(i_spin)%E=QP_ctl_impose(i_spin)%E
-     QP_ctl_input_or_impose(i_spin)%W=QP_ctl_impose(i_spin)%W
-     QP_ctl_input_or_impose(i_spin)%Z=QP_ctl_impose(i_spin)%Z
-   enddo
- endif
  !
  ! Finally I apply the generalized stretch obtained from the procedures 1,2 and 3.
- !
- call QP_apply_global_stretch(band_range,en,k,QP_ctl_from_DB,QP_ctl_input_or_impose,DB_corrected,.FALSE.)
+ !========================================
  !
  ! Extend the QP corrections to the RIM energies
- !
+ !========
  if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
    !
    YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nkpts))
@@ -266,7 +170,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! X/K -> Fermi Level Update
  !
- if ((Eid<3.and.allocated(en%Eo).and..not.allocated(en%GreenF)).or.allocated(en%E_DbGd)) then
+ if ((QP_ctl_ID<3.and.allocated(en%Eo).and..not.allocated(en%GreenF)).or.allocated(en%E_DbGd)) then
    !
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
@@ -282,7 +186,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! G -> Fermi Level Update... but using the levels cooresponding to
  ! the K-points of the X grid !
  !
- if (Eid==3.and.allocated(en%Eo).and..not.allocated(en%GreenF).and..not.allocated(en%E_DbGd)) then
+ if (QP_ctl_ID==3.and.allocated(en%Eo).and..not.allocated(en%GreenF).and..not.allocated(en%E_DbGd)) then
    !
    call E_duplicate(en,Fermi_en)
    !
@@ -303,8 +207,6 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! CLEAN
  !
  call E_reset(Fermi_en)
- !
- if (.not.QP_ctl_applied) return
  !
  ! Reporting
  !

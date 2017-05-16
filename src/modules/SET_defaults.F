@@ -38,13 +38,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     X_use_lin_sys
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_cg_percent,QP_n_states,&
-&                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
+&                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     GWo_SC_done,GWo_iterations,&
-&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
+ use QP_CTL_m,   ONLY:QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,QP_ctl_db,QP_ctl_interp_neigh
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp

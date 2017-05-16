@@ -21,13 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DB_message( )
+subroutine QP_DB_message( i_ACTION, qp )
  !
- use pars, ONLY:lchlen
+ use pars,     ONLY:lchlen
+ use QP_m,     ONLY:QP_t
+ use com,      ONLY:msg
+ use QP_CTL_m, ONLY:QP_action,QP_ctl_msg_fmt
  !
- integer, parameter :: n_fields=4
- integer            :: if,c_pos
- character(lchlen)  :: field(n_fields,2),qp_msg
+ implicit none
+ !
+ integer    :: i_ACTION
+ type(QP_t) :: qp
+ !
+ ! Work Space
+ !
+ integer, parameter :: n_fields=6
+ integer            :: if,c_pos,i_msg,i1
+ character(lchlen)  :: field(n_fields,2)
  !
  field(1,1)="X G`s            [used]"
  field(1,2)="XG"
@@ -37,48 +47,44 @@ subroutine QP_DB_message( )
  field(3,2)="Scb"
  field(4,1)="Sc. G bands"
  field(4,2)="Sphb"
+ field(5,1)="PPA"
+ field(5,2)="E-E PPA"
+ field(6,1)="El-Ph Self"
+ field(6,2)="E-P"
  !
- ! Here I build the qp_msg char on the basis of the qp%description lines.
+ ! Here I build the %desc char on the basis of the qp%description lines.
  ! This to give a compact description of the QP details.
- ! To be used in the DB headers.
- !  
-! if (do_EWZ_using_Ik_IE(1)) then
-!   qp_msg(i_msg:i_msg)="E"
-!   i_msg=i_msg+1
-! endif
-! if (do_EWZ_using_Ik_IE(2)) then
-!   qp_msg(i_msg:i_msg)="W"
-!   i_msg=i_msg+1
-! endif
-! if (do_EWZ_using_Ik_IE(3)) then
-!   qp_msg(i_msg:i_msg)="Z"
-!   i_msg=i_msg+1
-! endif
-! if (GFs_From_DB) then
-!   qp_msg(i_msg:i_msg)="G"
-!   i_msg=i_msg+1
-! endif
  !
-! qp_msg=trim(qp_msg)//'<'//trim(QP_db_name(i_db))//'['
-! i_msg=i_msg+2+len_trim(QP_db_name(i_db))
+ i_msg=1
+ if (QP_action(i_ACTION)%plan(1)) then
+   QP_action(i_ACTION)%desc(i_msg:i_msg)="E"
+   i_msg=i_msg+1
+ endif
+ if (QP_action(i_ACTION)%plan(2)) then
+   QP_action(i_ACTION)%desc(i_msg:i_msg)="W"
+   i_msg=i_msg+1
+ endif
+ if (QP_action(i_ACTION)%plan(3)) then
+   QP_action(i_ACTION)%desc(i_msg:i_msg)="Z"
+   i_msg=i_msg+1
+ endif
  !
-! do i1=1,qp%n_descs
-!   do if=1,n_fields
-!     if (index(qp%description(i1),trim(field(if,1)))/=0) then
-!       c_pos=index(qp%description(i1),":")+1
-!       qp_msg=trim(qp_msg)//' '//trim(field(if,2))//':'
-!       call CHappend(qp%description(i1)(c_pos:))
-!     endif
-!   enddo
-!   if (index(qp%description(i1),"PPA")/=0) qp_msg=trim(qp_msg)//' PPA '
-! enddo
-! !
-! qp_msg=trim(qp_msg)//']'
-!
-! do i_sp=1,n_sp_pol
-!   QP_ctl_from_DB(i_sp)%short_descr=trim(QP_ctl_from_DB(i_sp)%short_descr)//trim(qp_msg)
-!   call msg(msg_fmt,trim(QP_ctl_from_DB(i_sp)%short_descr))
-! enddo
+ QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//'<'//trim(QP_action(i_ACTION)%CTL(1)%db)//'['
+ i_msg=i_msg+2+len_trim(QP_action(i_ACTION)%CTL(1)%db)
+ !
+ do i1=1,qp%n_descs
+   do if=1,n_fields
+     if (index(qp%description(i1),trim(field(if,1)))/=0) then
+       c_pos=index(qp%description(i1),":")+1
+       QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(if,2))
+       if (c_pos>1) call CHappend(":"//qp%description(i1)(c_pos:))
+     endif
+   enddo
+ enddo
+ !
+ QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//']'
+ !
+ call msg("n"//trim(QP_ctl_msg_fmt),trim(QP_action(i_ACTION)%desc))
  ! 
  contains
   !
@@ -93,7 +99,7 @@ subroutine QP_DB_message( )
       if (c(ic:ic)==' '.and.ic_start>0) ic_end=ic
     enddo
     !
-    qp_msg=trim(qp_msg)//c(ic_start:ic_end)
+    QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//c(ic_start:ic_end)
   end subroutine
   !
 end subroutine

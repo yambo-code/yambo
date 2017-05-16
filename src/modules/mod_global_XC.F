@@ -94,8 +94,7 @@ module global_XC
    QP_MORE_NONE          = 501, &
    QP_MORE_SCISSOR       = 502, &
    QP_MORE_STRETCH       = 503, &
-   QP_MORE_SCIS_AND_STRE = 504, &
-   QP_MORE_INTERPOLATION = 505
+   QP_MORE_WIDTH         = 504
  !
  ! Perturbations
  integer, public, parameter :: &
@@ -266,10 +265,12 @@ module global_XC
           global_XC_string=trim(ch)//trim(ch_plus)//'Scissor'
         case(QP_MORE_STRETCH)
           global_XC_string=trim(ch)//trim(ch_plus)//'Stretching'
-        case(QP_MORE_SCIS_AND_STRE)
-          global_XC_string=trim(ch)//trim(ch_plus)//'Scissor & Stretching'
-        case(QP_MORE_INTERPOLATION)
-          global_XC_string=trim(ch)//trim(ch_plus)//'Interpolation'
+        case(QP_MORE_WIDTH)
+          global_XC_string=trim(ch)//trim(ch_plus)//'QP widths'
+        case(QP_MORE_SCISSOR+QP_MORE_STRETCH)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Scissor+Stretching'
+        case(QP_MORE_SCISSOR+QP_MORE_WIDTH)
+          global_XC_string=trim(ch)//trim(ch_plus)//'Scissor+Widths'
       end select
     endif
     !

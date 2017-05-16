@@ -41,7 +41,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message
- use QP_ctl_m,      ONLY:QP_ctl_t,reset_QP_ctl
+ use QP_ctl_m,      ONLY:QP_ctl_t,QP_ctl_reset
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,&
@@ -98,12 +98,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  QP_DW=rZERO
  QP_OMS_Fan=rZERO
  !
- call reset_QP_ctl(QP_ctl)
- call reset_QP_ctl(QP_ctl_dummy)
+ call QP_ctl_reset(QP_ctl)
+ call QP_ctl_reset(QP_ctl_dummy)
  !
  ! QPctl for k+q energies
  !
- QP_ctl%short_descr='[QP@G_k+q]'
  QP_ctl%db=QP_ctl_db(3)
  QP_ctl%interp_neigh=QP_ctl_interp_neigh(3)
  QP_ctl%E=(/QP_ctl_E(3,1,1)/HA2EV,QP_ctl_E(3,2,1),0._SP,QP_ctl_E(3,3,1)/)
@@ -274,7 +273,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        YAMBO_ALLOC(DB_corrected,(elph_nb,k%nbz,1))
        DB_corrected=0
-       call QP_apply_global_stretch((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
+       call QP_apply_the_ACTION((/1,elph_nb/),E_k_p_q,k,QP_ctl_dummy,QP_ctl,DB_corrected,.TRUE.)
        YAMBO_FREE(DB_corrected)
        !
      endif

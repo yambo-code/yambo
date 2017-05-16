@@ -32,7 +32,7 @@ subroutine INIT_QP_ctl_load(defs,i_type)
  !
  use electrons,     ONLY:n_sp_pol
  use it_m,          ONLY:it,initmode,initdefs,V_qp,E_unit
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
+ use QP_CTL_m,      ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
 &                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
  !
  implicit none

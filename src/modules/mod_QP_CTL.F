@@ -23,25 +23,48 @@
 !
 module QP_CTL_m
  !
- use pars,  ONLY:SP,schlen,lchlen,n_QP_actions_MAX
- use units, ONLY:HA2EV
- use QP_m,  ONLY:QP_T
+ use pars,      ONLY:SP,schlen,lchlen,n_QP_actions_MAX
+ use units,     ONLY:HA2EV
+ use QP_m,      ONLY:QP_t
+ use electrons, ONLY:n_sp_pol
+ use global_XC, ONLY:QP_SE_NONE
  !
  implicit none
  !
- ! QP Pars
+ ! INPUT file parameters
+ !=======================
  !
- !?fnQP_db= " E W Z < db-pp.qp "     # [?] QP database.
+ !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
  !% ?fnQP_E
  !  0 |  0 | 0 |               # [?] QP parameters (E).
  !% 
+ !% ?fnQP_Wc
+ !  0 |  0 | 0 |               # [?] QP parameters (W) conduction.
+ !%
  !% ?fnQP_W
  !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
  !%
- !?fbQP_Z= (  0.00000 ,  0.00000 )  # [?] QP parameters (Z).
- !  
- ! 1(X) 2(K) 3(G) 
+ !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
  !
+ integer                 :: QP_ctl_ID ! 1(X) 2(K) 3(G) 
+ character(schlen)       :: QP_ctl_db(3)
+ character(schlen)       :: QP_ctl_msg_fmt
+ integer                 :: QP_ctl_interp_neigh(3)
+ !
+ ! Note that QP_ctl_E/W/Z are dimensioned *,2)
+ ! to describe spin polarized systems.
+ ! The second element of the last argument 
+ ! is not used in non-collinear or scalar cases.
+ !
+ real(SP)                :: QP_ctl_E(3,3,2)
+ real(SP)                :: QP_ctl_Wc_E_ref(3,2)
+ real(SP)                :: QP_ctl_Wv_E_ref(3,2)
+ real(SP)                :: QP_ctl_Wc(3,3,2)
+ real(SP)                :: QP_ctl_Wv(3,3,2)
+ complex(SP)             :: QP_ctl_Z(3,2)
+ !
+ ! Internal QP_ctl's (derived from a QP type and/or dumped from the input)
+ !===================
  type QP_ctl_t
    !
    ! Convention is first c then v
@@ -56,21 +79,24 @@ module QP_CTL_m
    real(SP)   :: W_err(6)
    complex(SP):: Z
    character(schlen):: db
-   character(schlen):: short_descr
-   !
  end type
  !
- type QP_apply_t
-   character(lchlen)    :: name
+ ! "ACTION" type (can be a fit/interpolation/QP/...)
+ !===============
+ type QP_action_t
+   integer              :: kind
+   logical              :: plan(5)
+   logical              :: active
+   character(lchlen)    :: desc 
    character(schlen)    :: what
-   type(QP_ctl_t)       :: CTL
-   integer, allocatable :: STATES_done(:,:,:,:)
+   type(QP_ctl_t)       :: CTL(2) ! Spin polarizations
+   integer, allocatable :: STATES_done(:,:,:)
  end type
  !
  ! QP DBs load and apply 
  !
  integer                :: n_QP_actions
- type(QP_apply_t)       :: QP_action(n_QP_actions_MAX)
+ type(QP_action_t)      :: QP_action(n_QP_actions_MAX)
  !
  interface
    !
@@ -96,8 +122,39 @@ module QP_CTL_m
  !
  contains
    !
-   subroutine reset_QP_ctl(QP_ctl)
+   subroutine QP_actions_reset
+#include<memory.h>
+     integer :: i_a,i_s
+     n_QP_actions=0
+     do i_a=1,n_QP_actions_MAX
+       QP_action(i_a)%plan=.FALSE.
+       QP_action(i_a)%active=.FALSE.
+       QP_action(i_a)%desc=" "
+       QP_action(i_a)%what=" "
+       QP_action(i_a)%kind=QP_SE_NONE
+       call QP_ctl_reset(QP_action(i_a)%CTL(1))
+       call QP_ctl_reset(QP_action(i_a)%CTL(2))
+       YAMBO_FREE(QP_action(i_a)%STATES_done)
+     enddo
+   end subroutine
+   !
+   subroutine QP_ctl_copy(ctl1,ctl2)
+     type(QP_ctl_t)::ctl1,ctl2
+     ctl2%interp_neigh=ctl1%interp_neigh
+     ctl2%db=ctl1%db  
+     ctl2%E=ctl1%E  
+     ctl2%W=ctl1%W  
+     ctl2%Z=ctl1%Z  
+     ctl2%E_err=ctl1%E_err  
+     ctl2%W_err=ctl1%W_err  
+     ctl2%W_E_ref=ctl1%W_E_ref  
+     ctl2%db_scissor=ctl1%db_scissor  
+     ctl2%fit_scissor=ctl1%fit_scissor  
+   end subroutine
+   !
+   subroutine QP_ctl_reset(QP_ctl)
      type(QP_ctl_t)::QP_ctl
+     QP_ctl%interp_neigh=1
      QP_ctl%db="none"
      QP_ctl%E=(/0.,1.,0.,1./)
      QP_ctl%W=0.

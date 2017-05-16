@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_load_GFs(band_range,qp,E,DB_corrected)
+subroutine QP_load_GFs(band_range,qp,E)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
  !
@@ -32,7 +32,7 @@ subroutine QP_load_GFs(band_range,qp,E,DB_corrected)
  !
  type(levels) ::E
  type(QP_t)   ::qp
- integer      ::band_range(2),DB_corrected(E%nb,E%nk,n_sp_pol)
+ integer      ::band_range(2)
  !
  ! Work Space
  !
@@ -50,7 +50,6 @@ subroutine QP_load_GFs(band_range,qp,E,DB_corrected)
    i_spin=spin(qp%table(i_qp,:))
    E%GreenF(i_band,i_k_pt,i_spin,:)=qp%GreenF(i_qp,:)
    E%GreenF_W(i_band,i_k_pt,i_spin,:)=qp%GreenF_W(i_qp,:)
-   DB_corrected(i_band,i_k_pt,i_spin)=1
  enddo
  !
 end subroutine

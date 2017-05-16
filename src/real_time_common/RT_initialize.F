@@ -47,7 +47,8 @@ subroutine RT_initialize(E,k,q)
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
-&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
+&                         l_RT_relax_time_approx
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -78,6 +79,8 @@ subroutine RT_initialize(E,k,q)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
+ !
+ call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  !
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.

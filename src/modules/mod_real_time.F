@@ -90,6 +90,12 @@ module real_time
  logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
  real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
  real(SP) :: RT_life_extrap_times_SAVE(2)
+ !
+ logical  :: l_RT_relax_time_approx = .FALSE.
+ real(SP) :: RT_RTA_temp(2)
+ real(SP) :: RT_RTA_chem(2)
+ real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
+ real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
  ! 
  ! Lifetimes Extrapolation Time status 
  ! 
@@ -287,7 +293,7 @@ module real_time
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
- complex(SP), allocatable :: I_relax_static(:,:,:)
+ !complex(SP), allocatable :: I_relax_static(:,:,:)
  !
  ! Density
  !---------
@@ -498,6 +504,11 @@ module real_time
      !
      YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
+     if(l_RT_relax_time_approx) then
+       YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(RT_RTA_H_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
+     endif
+     !
      if (l_elphoton_scatt) then
        YAMBO_ALLOC(E_PHOT_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        YAMBO_ALLOC(E_PHOT_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
@@ -539,9 +550,9 @@ module real_time
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-       YAMBO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     endif
+     !if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
+     !  YAMBOO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     !endif
      !
      YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      HARTREE0=cZERO
@@ -589,7 +600,7 @@ module real_time
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
      YAMBO_FREE(RT_TIME_status)
-     YAMBO_FREE(I_relax_static)
+     !YAMBOO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
      YAMBO_FREE(E_PHOT_Hole_lifetime)

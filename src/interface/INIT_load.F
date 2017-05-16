@@ -77,7 +77,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -430,6 +430,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
  call it(defs,'LifeExtrapSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                                  RT_life_extrap_times_SAVE,unit=Time_unit(1))
+ call it('f',defs,'RelaxTimeApprox',    '[RT] Skipped Lifetimes are extrapolated',Verb_level=V_real_time)
+ call it(defs,'RTAtemp',   '[RT] Temperatures for relaxation time approximation',&
+&              RT_RTA_temp,unit=T_unit,Verb_level=V_real_time)
+ call it(defs,'RTAchem',   '[RT] Chemical potentials for relaxation time approximation',&
+&              RT_RTA_chem,unit=T_unit,Verb_level=V_real_time)
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 

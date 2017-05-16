@@ -42,7 +42,8 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:I_relax_static,elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ !use real_time,      ONLY:I_relax_static,elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
@@ -164,14 +165,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Kernel composition
  !====================
  !
- if (.not.l_RT_CCA_Kernel) then
-   !
-   do i_n=RT_bands(1),RT_bands(2)
-     do i_np=RT_bands(1),RT_bands(2)
-       I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
-     enddo 
-   enddo
-   !
- endif
+ !if (.not.l_RT_CCA_Kernel) then
+ !  !
+ !  do i_n=RT_bands(1),RT_bands(2)
+ !    do i_np=RT_bands(1),RT_bands(2)
+ !      I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
+ !    enddo 
+ !  enddo
+ !  !
+ !endif
  !
 end subroutine RT_ELPH_total_kernel

@@ -84,7 +84,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
    !
-   call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
+   call RT_Scattering_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    call RT_G_symmetrization(dG_out,ik)
    !

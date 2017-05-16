@@ -41,7 +41,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  use com,            ONLY:msg
  use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
- use fft_m,      ONLY:fft_size
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
@@ -70,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_DbGd,ik_E_DbGd,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -321,6 +320,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    subroutine RT_set_G_lesser()
      !
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     !
      ! Defined from occupations %f
      ! In case RT_apply has been used the reference is
      ! defined from the %fo occupations
@@ -353,6 +354,13 @@ subroutine RT_start_and_restart(E,k,q,X)
    ! 
    subroutine RT_set_occupations()
      !
+     use functions,  ONLY:Fermi_fnc
+     use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
+&                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
+     !
+     real(SP):: En
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
      do ib=RT_bands(1),RT_bands(2)
@@ -362,6 +370,22 @@ subroutine RT_start_and_restart(E,k,q,X)
        RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta0_occupations(ib,:)
        RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta0_occupations(ib,:)
      enddo
+     !
+     ! RTA infinity ditributions
+     !
+     if (l_RT_relax_time_approx) then
+       do ib=RT_bands(1),RT_bands(2)
+         do ik=1,k%nibz
+           do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+             ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+             if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
+             if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
+             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
+           enddo
+         enddo
+       enddo
+     endif
      !
    end subroutine RT_set_occupations
    !

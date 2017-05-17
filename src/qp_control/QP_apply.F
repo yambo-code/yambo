@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
+subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  ! This routine manages the external qp corrections.
  ! The task is tricky, as YAMBO has three different energy
@@ -55,7 +55,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
 #include<memory.h>
  !
- integer       ::band_range(2)
+ integer       ::bands(2)
  type(levels)  ::en
  type(bz_samp) ::k
  character(*)  ::msg_fmt
@@ -111,7 +111,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! QP's section
  !==============
  if (present(qp_impose)) then
-   call QP_apply_QP(band_range,en,k,qp_impose)
+   call QP_apply_QP(bands,en,k,qp_impose)
  endif
  !
  !=========
@@ -121,9 +121,10 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (.not.QP_action(i_a)%active) cycle
    !
-   if (len_trim(QP_action(i_a)%CTL(1)%db)>0) call QP_load_DB(i_a,band_range,en,k)
+   if (len_trim(QP_action(i_a)%CTL(1)%db)>0.and.&
+&          trim(QP_action(i_a)%CTL(1)%db)/="none") call QP_load_DB(i_a,bands,en,k)
    !
-   call QP_apply_the_ACTION(i_a,band_range,en,k)
+   call QP_apply_the_ACTION(i_a,bands,en,k)
    !
  enddo
  !

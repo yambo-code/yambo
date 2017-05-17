@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_load_DB(i_ACTION,band_range,en,k)
+subroutine QP_load_DB(i_ACTION,bands,en,k)
  !
  use drivers,       ONLY:l_chi,l_bss
  use QP_m,          ONLY:QP_t,QP_reset
@@ -35,7 +35,7 @@ subroutine QP_load_DB(i_ACTION,band_range,en,k)
  !
  type(levels)    ::en
  type(bz_samp)   ::k
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
@@ -60,7 +60,7 @@ subroutine QP_load_DB(i_ACTION,band_range,en,k)
  ! exactly the same number of bands/k-points
  !
  if (index(trim(QP_action(i_ACTION)%CTL(1)%db),'.G')/=0) then
-   if (qp%nb/=band_range(2).or.qp%nk/=k%nibz) then
+   if (qp%nb/=bands(2).or.qp%nk/=k%nibz) then
      call warning("Wrong number of bands/k-points in "//trim(QP_action(i_ACTION)%CTL(1)%db))
      QP_action(i_ACTION)%active=.FALSE.
      return
@@ -75,7 +75,7 @@ subroutine QP_load_DB(i_ACTION,band_range,en,k)
  ! GF's cannot be interpolated
  !
  if (index(trim(QP_action(i_ACTION)%CTL(1)%db),'.G')/=0) then
-   call QP_load_GFs(band_range,qp,en)
+   call QP_load_GFs(bands,qp,en)
    QP_action(i_ACTION)%active=.FALSE.
    return
  endif
@@ -88,6 +88,6 @@ subroutine QP_load_DB(i_ACTION,band_range,en,k)
  !
  ! QP application
  !================
- call QP_apply_QP(i_ACTION,band_range,en,k,qp)
+ call QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
 end subroutine

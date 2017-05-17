@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_report(i_ACTION,band_range,en,k,qp)
+subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  use pars,          ONLY:SP,cONE,lchlen,schlen
  use units,         ONLY:HA2EV
@@ -38,7 +38,7 @@ subroutine QP_fit_report(i_ACTION,band_range,en,k,qp)
  type(levels)    ::en
  type(QP_t)      ::qp
  type(bz_samp)   ::k
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
@@ -93,7 +93,7 @@ subroutine QP_fit_report(i_ACTION,band_range,en,k,qp)
    endif
    !
    if (fit_scissor/=0._SP) then
-     call msg(' r','                     (FIT) [ev]:',fit_scissor*HA2EV)
+     call msg(' r',' Additional GAP corr. (FIT)[ev]:',fit_scissor*HA2EV)
    endif
    !
    if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
@@ -205,17 +205,17 @@ subroutine QP_fit_report(i_ACTION,band_range,en,k,qp)
      value(1)=Eo*HA2EV
      if (l_E) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,band_range,en,k,"E")*HA2EV
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"E")*HA2EV
      endif
      if (l_W) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,band_range,en,k,"W")*HA2EV*1000.
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"W")*HA2EV*1000.
      endif
      if (l_Z) then
        n_titles=n_titles+1
-       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,band_range,en,k,"Z"))
+       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"Z"))
        n_titles=n_titles+1
-       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,band_range,en,k,"Z"))
+       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"Z"))
      endif
      call msg('o .fit','',value(:n_titles),INDENT=-2,USE_TABS=.TRUE.)
    enddo

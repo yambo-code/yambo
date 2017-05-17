@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_energies(i_ACTION,band_range,qp)
+subroutine QP_fit_energies(i_ACTION,bands,qp)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by
@@ -37,7 +37,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
  implicit none
  !
  type(QP_t)      ::qp
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
@@ -56,7 +56,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
    Ec = 1.E5_SP
    !
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2)) cycle
      if (spin(qp%table(i1,:))/=i_spin) cycle
      if (real(qp%E_bare(i1))<=1.E-5_SP) then
        Eov=max(Eov,real(qp%E_bare(i1),SP))
@@ -78,7 +78,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
    !
    Nqpc=0
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.real(qp%E_bare(i1))<=1.E-5_SP) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))<=1.E-5_SP) cycle
      Nqpc=Nqpc+1
      Dy(Nqpc)=real(qp%E(i1)-Ec)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
@@ -98,7 +98,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
    !
    Nqpv=0
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.real(qp%E_bare(i1))>1.E-5) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))>1.E-5) cycle
      Nqpv=Nqpv+1
      Dy(Nqpv)=real(qp%E(i1)-Ev)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)

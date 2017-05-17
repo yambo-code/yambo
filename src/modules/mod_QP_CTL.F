@@ -96,7 +96,7 @@ module QP_CTL_m
  !===============
  type QP_action_t
    integer              :: kind
-   logical              :: plan(6) ! E W Z ukI ueI dos
+   logical              :: plan(5) ! E W Z ukI ueI 
    logical              :: active
    character(schlen)    :: what 
    character(lchlen)    :: desc 
@@ -111,7 +111,7 @@ module QP_CTL_m
  !
  interface
    !
-   subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
+   subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      !
      use electrons,     ONLY:levels,n_sp_pol
      use R_lattice,     ONLY:bz_samp
@@ -119,7 +119,7 @@ module QP_CTL_m
      !
      import
      !
-     integer       ::band_range(2)
+     integer       ::bands(2)
      type(levels)  ::en
      type(bz_samp) ::k
      character(*)  ::msg_fmt
@@ -134,9 +134,17 @@ module QP_CTL_m
  contains
    !
    subroutine QP_CTL_fill(iA,i_spin,ID,CBm,VBM)
-     use pars, ONLY:rZERO
+     use pars, ONLY:rZERO,rONE
      integer  :: iA,i_spin,ID
      real(SP) :: CBm,VBM
+     !
+     QP_action(iA)%active=.FALSE.
+     !
+     if (QP_ctl_E(ID,1,i_spin)==rZERO.and.all((/QP_ctl_E(ID,2:3,i_spin)==rONE/)).and.&
+&        all((/QP_ctl_Wc(ID,:,i_spin)==rZERO/)).and.all((/QP_ctl_Wv(ID,:,i_spin)==rZERO/)).and.&
+         QP_ctl_Wv_dos(ID,i_spin)==rZERO.and.QP_ctl_Wc_dos(ID,i_spin)==rZERO.and.&
+         real(QP_ctl_Z(ID,i_spin))==rZERO.and.aimag(QP_ctl_Z(ID,i_spin))==rZERO &
+&       ) return
      !
      QP_action(iA)%active=.TRUE.
      !

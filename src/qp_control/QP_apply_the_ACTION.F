@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k)
+subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  !
  ! Here I apply the strecth for both QP_action.
  !
@@ -34,7 +34,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k)
  !
  type(levels)    ::E
  type(bz_samp)   ::k
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
@@ -48,10 +48,18 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k)
    !
    ! Is there anything to do ?
    !
+   do_E(i_spin)=.false.
    do_W(i_spin)=.false.
    do_Z(i_spin)=.false.
    !
-   do_E(i_spin)=any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/)) 
+   if (any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))) then
+     if (.not.allocated(E%Eo)) then
+       YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
+       E%Eo=E%E
+     endif
+     do_E(i_spin)=.TRUE.
+   endif
+   !
    if (any((/QP_action(i_ACTION)%CTL(i_spin)%W(:)/=rZERO/))) then
      if (.not.allocated(E%W)) then
        YAMBO_ALLOC(E%W,(E%nb,E%nk,n_sp_pol))
@@ -64,19 +72,20 @@ subroutine QP_apply_the_ACTION(i_ACTION,band_range,E,k)
        YAMBO_ALLOC(E%Z,(E%nb,E%nk,n_sp_pol))
        E%Z=1._SP
      endif
-     E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E,k,"Z")
      do_Z(i_spin)=.TRUE.
    endif
    !
-   do ib=band_range(1),band_range(2)
+   do ib=bands(1),bands(2)
      !
      do ik=1,E%nk
        !
-       if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) return
+       if (allocated(QP_action(i_ACTION)%STATES_done)) then
+          if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) return
+       endif
        !
-       if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E,k,"E")
-       if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E,k,"W")
-       if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E,k,"Z")
+       if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"E")
+       if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"W")
+       if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"Z")
        !
      enddo
      !

@@ -145,7 +145,7 @@ subroutine RT_driver(E,X,k,q)
  ! QP & carriers corrections 
  !===========================
  !
- call QP_apply(RT_bands,E,k,     "G",msg_fmt='s')
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
  ! Core initialization

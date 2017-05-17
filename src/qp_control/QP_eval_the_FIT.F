@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,band_range,E,k,what)
+complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
  !
  use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
@@ -34,7 +34,7 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,band_range,E,k,what)
  !
  type(levels)    ::E
  type(bz_samp)   ::k
- integer         ::i_ACTION,i_spin,band_range(2)
+ integer         ::i_ACTION,i_spin,bands(2)
  real(SP)        ::Energy
  character(1)    ::what
  !
@@ -75,24 +75,26 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,band_range,E,k,what)
      iref=3
      jref=1
      E_ref=QP_action(i_ACTION)%CTL(i_spin)%W_E_ref(2)
-     !if (Energy>E_ref) return
    else
      E_ref=QP_action(i_ACTION)%CTL(i_spin)%W_E_ref(1)
-     !if (Energy<E_ref) return
    endif
    !
    ! Constant correction 
-   !QP_eval_the_FIT=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1)
+   QP_eval_the_FIT=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1)
    !
    ! DOS proportional correction
-   call el_density_of_states(k,E,Energy,0.1_SP/HA2EV,band_range,dos_factor,.false.)
+   call el_density_of_states(k,E,Energy,0.1_SP/HA2EV,bands,dos_factor,USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
    M_factor=QP_action(i_ACTION)%CTL(i_spin)%W_dos(jref+1)
    QP_eval_the_FIT=QP_eval_the_FIT+M_factor*dos_factor(i_spin)*real(n_spinor,SP)
    !
    ! Linear/Quadratic correction
+   !
+   if (     is_valence.and.Energy>E_ref) return
+   if (.not.is_valence.and.Energy<E_ref) return
+   !
    do i_p=1,2
      M_factor=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1+i_p)
-     !QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)**i_p
+     QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)**i_p
    enddo
    !
    if (.not.is_valence) QP_eval_the_FIT=-abs(QP_eval_the_FIT)

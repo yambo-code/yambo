@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
+subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  use pars,          ONLY:rZERO
  use QP_m,          ONLY:QP_t
@@ -34,7 +34,7 @@ subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
  type(levels)    ::en
  type(QP_t)      ::qp
  type(bz_samp)   ::k
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  integer :: i_spin
@@ -53,17 +53,17 @@ subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
    YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
    en%Eo=en%E
  endif
- YAMBO_ALLOC(QP_action(i_ACTION)%STATES_done,( band_range(1):band_range(2),en%nk,n_sp_pol ))
+ YAMBO_ALLOC(QP_action(i_ACTION)%STATES_done,( bands(1):bands(2),en%nk,n_sp_pol ))
  QP_action(i_ACTION)%STATES_done=0
  !
  ! Interpolation
  !
- call QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
+ call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! FIT
  !
- if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,band_range,qp)
- if (QP_action(i_ACTION)%plan(2)) call QP_fit_widths(i_ACTION,band_range,en,k,qp)
+ if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,bands,qp)
+ if (QP_action(i_ACTION)%plan(2)) call QP_fit_widths(i_ACTION,bands,en,k,qp)
  if (QP_action(i_ACTION)%plan(3)) then
    do i_spin=1,n_sp_pol
      QP_action(i_ACTION)%CTL(i_spin)%Z=sum(qp%Z(:))/qp%n_states
@@ -72,6 +72,6 @@ subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
  !
  ! FIT report
  !
- call QP_fit_report(i_ACTION,band_range,en,k,qp)
+ call QP_fit_report(i_ACTION,bands,en,k,qp)
  !
 end subroutine

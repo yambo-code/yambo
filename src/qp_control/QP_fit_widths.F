@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
+subroutine QP_fit_widths(i_ACTION,bands,en,k,qp)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by
@@ -41,7 +41,7 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
  type(levels)    ::en
  type(bz_samp)   ::k
  type(QP_t)      ::qp
- integer         ::i_ACTION,band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
@@ -62,7 +62,7 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
  !
  if (l_EP) then
    do i_s=1,qp%n_states
-     call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,band_range,DOS(:,i_s),.false.)
+     call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,bands,DOS(:,i_s),USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
      DOS(:,i_s)=DOS(:,i_s)*real(n_spinor,SP)
    enddo
  endif
@@ -76,7 +76,7 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
    !
    do i_s=1,qp%n_states
      !
-     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) cycle
+     if (qp%table(i_s,1)<bands(1).or.qp%table(i_s,1)>bands(2)) cycle
      if (spin(qp%table(i_s,:))/=i_spin) cycle
      !
      if (qp%E_bare(i_s)<=1.E-5_SP) then
@@ -99,12 +99,15 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
      ! STEP 1
      !========
      !
-     ! ...E-P =>  uses DOS trick+constant only insied twice the gap
-     ! ...E-E => constant
+     ! ...E-P     =>  uses DOS trick+constant anywhere
+     ! ...E-E+E-P =>  uses DOS trick+constant only inside twice the gap
+     ! ...E-E     => constant
      !
      N=0
      do i_s=1,qp%n_states
-       if (.not.is_inside_twice_the_gap(qp%E_bare(i_s))) cycle
+       if (l_EE.and..not.is_inside_twice_the_gap(qp%E_bare(i_s))) cycle
+       if (l_EP.and.i_c==1.and.qp%E_bare(i_s)<0.) cycle
+       if (l_EP.and.i_c==2.and.qp%E_bare(i_s)>0.) cycle
        if (l_EP.and.DOS(i_spin,i_s)<1.E-6_SP) cycle
        N=N+1
        Dx(N)=qp%E_bare(i_s)
@@ -153,7 +156,7 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
    logical function is_inside_twice_the_gap(E)
      real(SP)      :: E
      is_inside_twice_the_gap=.TRUE.
-     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) is_inside_twice_the_gap=.FALSE.
+     if (qp%table(i_s,1)<bands(1).or.qp%table(i_s,1)>bands(2)) is_inside_twice_the_gap=.FALSE.
      if (where=="c") then
        is_inside_twice_the_gap=qp%E_bare(i_s)<E_ref(1).and.qp%E_bare(i_s)>1.E-5_SP
      else
@@ -164,7 +167,7 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
    logical function is_outside_twice_the_gap(E)
      real(SP)      :: E
      is_outside_twice_the_gap=.TRUE.
-     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) is_outside_twice_the_gap=.FALSE.
+     if (qp%table(i_s,1)<bands(1).or.qp%table(i_s,1)>bands(2)) is_outside_twice_the_gap=.FALSE.
      if (where=="c") then
        is_outside_twice_the_gap=qp%E_bare(i_s)>E_ref(1).and.qp%E_bare(i_s)>1.E-5_SP
      else

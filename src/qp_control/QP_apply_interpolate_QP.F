@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
+subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! Extend the QP correction from the kpt in qp to the kpt in k
  ! Requires qp%nk, qp%k, qp%table, qp%n_states, qp%E, qp%E_bare, qp%Z
@@ -47,14 +47,14 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
  type(levels)::en
  type(QP_t)  ::qp
  type(bz_samp)::k
- integer :: i_ACTION,band_range(2)
+ integer :: i_ACTION,bands(2)
  !
  ! Work Space
  !
  real(SP), allocatable :: Vali(:,:),Valo(:,:,:,:)
  real(SP) :: E_diff
  integer  :: i1,ik,iband,i_spin,nk_interpolated,&
-&            nk_exact,i_qp_ref,N_val_to_int,N_exact,N_close,N_far,DB_band_range(2)
+&            nk_exact,i_qp_ref,N_val_to_int,N_exact,N_close,N_far,DB_bands(2)
  logical  :: wrong_width_sign_warn
  !
  ! IBZ -> BZ (iku)
@@ -67,7 +67,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
  nk_interpolated=0
  nk_exact=0
  !
- DB_band_range=(/minval(qp%table(:,1)),maxval(qp%table(:,1))/)
+ DB_bands=(/minval(qp%table(:,1)),maxval(qp%table(:,1))/)
  !
  if (QP_action(i_ACTION)%plan(4)) then
    !
@@ -76,7 +76,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
    !
    call QP_transfer('init')
    !
-   call Nearest_kpt_interpolation(qp%nk,k%nibz,band_range,qp%n_states,N_val_to_int,&
+   call Nearest_kpt_interpolation(qp%nk,k%nibz,bands,qp%n_states,N_val_to_int,&
 &                                 QP_action(i_ACTION)%CTL(1)%interp_neigh,&
 &                                 qp%table,qp%k,k%pt,qp%wk,k%weights,Vali,Valo,'QP_ctl (Nearest K-pt)',.false.)
    !
@@ -87,7 +87,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
    ! Nearest Level interpolation
    !===============================
    !
-   E_diff=minval(En%Eo(DB_band_range(1),:,:))-minval(qp%E_bare)
+   E_diff=minval(En%Eo(DB_bands(1),:,:))-minval(qp%E_bare)
    !
    N_exact=0
    N_close=0
@@ -98,7 +98,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
    endif
    !
    do ik=1,k%nibz
-     do iband=band_range(1),band_range(2)
+     do iband=bands(1),bands(2)
        do i_spin=1,n_sp_pol
          !
          call Nearest_level_interpolation(En%Eo(iband,ik,i_spin),qp%E_bare(:),qp%n_states,E_diff,i_qp_ref)
@@ -170,7 +170,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
          if(QP_action(i_ACTION)%plan(3)) N_val_to_int=N_val_to_int+2
          !
          YAMBO_ALLOC(Vali,(qp%n_states,N_val_to_int))
-         YAMBO_ALLOC(Valo,(band_range(1):band_range(2),k%nibz,n_sp_pol,N_val_to_int))
+         YAMBO_ALLOC(Valo,(bands(1):bands(2),k%nibz,n_sp_pol,N_val_to_int))
          Valo=0._SP
          !
          i1=0
@@ -191,10 +191,10 @@ subroutine QP_apply_interpolate_QP(i_ACTION,band_range,en,k,qp)
        case('appl')
          !
          do ik=1,k%nibz
-           do iband=band_range(1),band_range(2)
+           do iband=bands(1),bands(2)
              !
-             if (iband<DB_band_range(1)) cycle
-             if (iband>DB_band_range(2)) cycle
+             if (iband<DB_bands(1)) cycle
+             if (iband>DB_bands(2)) cycle
              !
              i1=0
              if(QP_action(i_ACTION)%plan(1)) then

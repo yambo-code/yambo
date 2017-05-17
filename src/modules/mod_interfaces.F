@@ -78,7 +78,8 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
-   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,l_DbGd,WF_fac)
+   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,&
+&                                  USE_the_DbGd,USE_Eo,WF_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -89,7 +90,8 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,dos_broadening
      integer,       intent(in)  :: dos_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,       intent(in)  :: l_DbGd
+     logical,  optional, intent(in) :: USE_Eo
+     logical,  optional, intent(in) :: USE_the_DbGd
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !

@@ -224,7 +224,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      !
    enddo
    !
-   !
    call of_open_close(file_name)
    !
  else if (trim(QP_solver)=='g') then

@@ -27,13 +27,14 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
  ! that will be passed to the QP_apply_stretch routine driven by
  ! the mod_QP_CTL module
  !
- use pars,          ONLY:SP,rZERO
+ use pars,          ONLY:SP,DP
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:levels,n_sp_pol,n_spin,n_spinor,spin
  use interfaces,    ONLY:el_density_of_states
+ use POL_FIT_m,     ONLY:POL_Gilbreth_fit
  !
  implicit none
  !
@@ -44,147 +45,131 @@ subroutine QP_fit_widths(i_ACTION,band_range,en,k,qp)
  !
  ! Work Space
  !
- integer  :: i1,Nqpc,Nqpv,Nqpc_DOS,Nqpv_DOS,fit_order,i_spin
- real(SP) :: Eoc,Eov,Ec,Ev,dos_factor(n_spin),Ev_ref,Ec_ref,dos_broad
- real(SP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Dy_DOS(qp%n_states),Dx_DOS(qp%n_states),&
-&            TCv(3),TCc(3)
+ integer  :: i_s,N,i_c,i_spin
+ real(DP) :: Dx(qp%n_states),Dy(qp%n_states),COEFF(3),SIG(qp%n_states)
+ real(SP) :: dos_broad,E_ref(2),DOS(n_spin,qp%n_states)
+ logical  :: l_EP,l_EE
+ character(1) :: where
  !
- dos_broad=0.01_SP/HA2EV
+ ! Defaults
  !
- ! Loop on spin polarizations
+ SIG=0.05
+ dos_broad=0.1_SP/HA2EV
+ l_EP=index(QP_action(i_ACTION)%desc,"E-P")>0
+ l_EE=index(QP_action(i_ACTION)%desc,"E-E")>0
+ !
+ ! DOS
+ !
+ if (l_EP) then
+   do i_s=1,qp%n_states
+     call el_density_of_states(k,en,qp%E_bare(i_s),dos_broad,band_range,DOS(:,i_s),.false.)
+     DOS(:,i_s)=DOS(:,i_s)*real(n_spinor,SP)
+   enddo
+ endif
  !
  do i_spin =1 , n_sp_pol
    !
-   ! Fit energy range 
+   ! References
    !
-   Eov=-1.E5_SP
-   Eoc= 1.E5_SP
-   Ev =-1.E5_SP
-   Ec = 1.E5_SP
+   E_ref(1)= 1.E5_SP ! c
+   E_ref(2)=-1.E5_SP ! v
    !
-   do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
-     if (spin(qp%table(i1,:))/=i_spin) cycle
-     if (qp%E_bare(i1)<=1.E-5_SP) then
-       Eov=max(Eov,qp%E_bare(i1))
-       Ev=max(Ev ,real(qp%E(i1),SP)) 
+   do i_s=1,qp%n_states
+     !
+     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) cycle
+     if (spin(qp%table(i_s,:))/=i_spin) cycle
+     !
+     if (qp%E_bare(i_s)<=1.E-5_SP) then
+       E_ref(2)=max(E_ref(2),qp%E_bare(i_s))
      else
-       Eoc=min(Eoc,qp%E_bare(i1))
-       Ec=min(Ec,real(qp%E(i1),SP)) 
+       E_ref(1)=min(E_ref(1),qp%E_bare(i_s))
      endif
    enddo
    !
-   Ev_ref=Eov-en%E_ind_gap(i_spin) 
-   Ec_ref=Eoc+en%E_ind_gap(i_spin)
+   E_ref(1)=E_ref(1)+en%E_ind_gap(i_spin)
+   E_ref(2)=E_ref(2)-en%E_ind_gap(i_spin) 
    !
-   TCv=rZERO
-   TCc=rZERO
+   QP_action(i_ACTION)%CTL(i_spin)%W_E_ref=E_ref
    !
-   ! a) perform a constant fit in the energy reagion E_CBM<E<E_CBM+E_gap
-   !    of a function proportional to the DOS: A_coeff~W
-   !    (This value will not be used)
-   ! +
-   ! b) perform a constant fit in the energy reagion E_CBM<E<E_CBM+E_gap
-   !    of a function proportional to the DOS: B_coeff~W/dos(E)
-   !=========================================================================
-   !
-   ! E>0 (conduction)
-   !
-   fit_order=0
-   Nqpc=0
-   Nqpc_DOS=0
-   do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or. &
-&           qp%E_bare(i1)>Ec_ref.or.qp%E_bare(i1)<=1.E-5_SP) cycle
-     Nqpc=Nqpc+1
-     Dx(Nqpc)=qp%E_bare(i1)
-     Dy(Nqpc)=aimag(qp%E(i1))
-     call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     if(dos_factor(i_spin)<1.E-6_SP) cycle
-     if(index(QP_action(i_ACTION)%desc,"E-P")==0) cycle
-     Nqpc_DOS=Nqpc_DOS+1
-     Dx_DOS(Nqpc_DOS)=qp%E_bare(i1)
-     Dy_DOS(Nqpc_DOS)=aimag(qp%E(i1))/(dos_factor(i_spin)*real(n_spinor,SP))
+   do i_c=1,2
+     !
+     if (i_c==1) where="c"
+     if (i_c==2) where="v"
+     !
+     ! STEP 1
+     !========
+     !
+     ! ...E-P =>  uses DOS trick+constant only insied twice the gap
+     ! ...E-E => constant
+     !
+     N=0
+     do i_s=1,qp%n_states
+       if (.not.is_inside_twice_the_gap(qp%E_bare(i_s))) cycle
+       if (l_EP.and.DOS(i_spin,i_s)<1.E-6_SP) cycle
+       N=N+1
+       Dx(N)=qp%E_bare(i_s)
+       Dy(N)=aimag(qp%E(i_s))
+       if (l_EP) Dy(N)=aimag(qp%E(i_s))/DOS(i_spin,i_s)
+     enddo 
+     if (N>1) then
+       call POL_Gilbreth_fit(Dx(:N),Dy(:N),SIG(:N),COEFF(1:1))
+       QP_action(i_ACTION)%CTL(i_spin)%W(3*(i_c-1)+1)=COEFF(1)
+       if (l_EP) then
+         QP_action(i_ACTION)%CTL(i_spin)%W_dos(i_c)=COEFF(1)
+         QP_action(i_ACTION)%CTL(i_spin)%W(3*(i_c-1)+1)=0.
+       endif
+     endif
+     !
+     ! STEP 2
+     !========
+     !
+     ! ...above twice the gap (only E-E)
+     !
+     ! \G-\G_STEP_1=COEFF(1)+COEFF(2)*(E-E_ref)+COEFF(3)(E-E_ref)^2
+     !
+     if (.not.l_EE) cycle
+     !
+     N=0
+     do i_s=1,qp%n_states
+       if (.not.is_outside_twice_the_gap(qp%E_bare(i_s))) cycle
+       N=N+1
+       Dx(N)=qp%E_bare(i_s)-E_ref(i_c)
+       Dy(N)=aimag(qp%E(i_s))-COEFF(1)
+       if (l_EP) Dy(N)=aimag(qp%E(i_s))-COEFF(1)*DOS(i_spin,i_s)
+     enddo
+     if (N>3) then
+       call POL_Gilbreth_fit(Dx(:N),Dy(:N),SIG(:N),COEFF)
+       QP_action(i_ACTION)%CTL(i_spin)%W(3*(i_c-1)+1)=QP_action(i_ACTION)%CTL(i_spin)%W(3*(i_c-1)+1)+COEFF(1)
+       QP_action(i_ACTION)%CTL(i_spin)%W(3*(i_c-1)+2:3*(i_c-1)+3)=COEFF(2:3)
+       QP_action(i_ACTION)%CTL(i_spin)%W_err(i_c)=0.
+     endif
+     !
    enddo
-   if (Nqpc>1) then
-     call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc)    ,fit_order,TCc(1),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(1)=EPS
-   endif
-   if (Nqpc_DOS>1) then
-     call pol_fit(Nqpc_DOS,Dx(:Nqpc_DOS),Dy_DOS(:Nqpc_DOS),fit_order,TCc(2),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(3)=EPS
-   endif
-   !
-   ! E<0 (valence)
-   !
-   fit_order=0
-   Nqpv=0
-   Nqpv_DOS=0
-   do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.&
-&          qp%E_bare(i1)<Ev_ref.or.qp%E_bare(i1)> 1.E-5) cycle
-     Nqpv=Nqpv+1
-     Dx(Nqpv)=qp%E_bare(i1)
-     Dy(Nqpv)=aimag(qp%E(i1))
-     call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     if(dos_factor(i_spin)<1.E-6_SP) cycle
-     if(index(QP_action(i_ACTION)%desc,"E-P")==0) cycle
-     Nqpv_DOS=Nqpv_DOS+1
-     Dx_DOS(Nqpv_DOS)=qp%E_bare(i1)
-     Dy_DOS(Nqpv_DOS)=aimag(qp%E(i1))/(dos_factor(i_spin)*real(n_spinor,SP))
-   enddo
-   if (Nqpv>1) then
-     call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv)    ,fit_order,TCv(1),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(2)=EPS
-   endif
-   if (Nqpv_DOS>1) then
-     call pol_fit(Nqpv_DOS,Dx(:Nqpv_DOS),Dy_DOS(:Nqpv_DOS),fit_order,TCv(2),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(4)=EPS
-   endif
-   !
-   ! c) perform a quadratic fit in the energy reagion E>E_CBM+E_gap
-   !    after removing the of a constant plus a function proportional to the DOS
-   !    the result of the previous fit C_coeff=(W(E)-B_coeff*dos(E))/(E-Eref)**2
-   !=============================================================================
-   !
-   ! E>0 (conduction)
-   !
-   fit_order=0
-   Nqpc=0
-   do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or. &
-&          qp%E_bare(i1)<=Ec_ref.or.qp%E_bare(i1)<=1.E-5_SP) cycle
-     Nqpc=Nqpc+1
-     Dx(Nqpc)=qp%E_bare(i1)
-     call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     Dy(Nqpc)=(aimag(qp%E(i1))-dos_factor(i_spin)*real(n_spinor,SP)*TCc(2))/(qp%E_bare(i1)-Ec_ref)**2
-   enddo
-   if (Nqpc>1) then
-     call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc)    ,fit_order,TCc(3),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(5)=EPS
-   endif
-   !
-   ! E<0 (valence)
-   !
-   fit_order=0
-   Nqpv=0
-   do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.&
-&          qp%E_bare(i1)>=Ev_ref.or.qp%E_bare(i1)> 1.E-5) cycle
-     Nqpv=Nqpv+1
-     Dx(Nqpv)=qp%E_bare(i1)
-     call el_density_of_states(k,en,qp%E_bare(i1),dos_broad,(/1,en%nb/),dos_factor,.false.)
-     Dy(Nqpv)=(aimag(qp%E(i1))-dos_factor(i_spin)*real(n_spinor,SP)*Tcv(2))/(qp%E_bare(i1)-Ev_ref)**2
-   enddo
-   if (Nqpv>1) then
-     call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv)    ,fit_order,TCv(3),EPS,0._SP)
-     QP_action(i_ACTION)%CTL(i_spin)%W_err(6)=EPS
-   endif
-   !
-   ! Storing
-   !
-   QP_action(i_ACTION)%CTL(i_spin)%W=QP_action(i_ACTION)%CTL(i_spin)%W+(/TCc(1),TCc(2),TCc(3),TCv(1),TCv(2),TCv(3)/)
    !
  enddo
  !
+ contains
+   !
+   logical function is_inside_twice_the_gap(E)
+     real(SP)      :: E
+     is_inside_twice_the_gap=.TRUE.
+     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) is_inside_twice_the_gap=.FALSE.
+     if (where=="c") then
+       is_inside_twice_the_gap=qp%E_bare(i_s)<E_ref(1).and.qp%E_bare(i_s)>1.E-5_SP
+     else
+       is_inside_twice_the_gap=qp%E_bare(i_s)>E_ref(2).and.qp%E_bare(i_s)<=1.E-5_SP
+     endif
+   end function
+   !
+   logical function is_outside_twice_the_gap(E)
+     real(SP)      :: E
+     is_outside_twice_the_gap=.TRUE.
+     if (qp%table(i_s,1)<band_range(1).or.qp%table(i_s,1)>band_range(2)) is_outside_twice_the_gap=.FALSE.
+     if (where=="c") then
+       is_outside_twice_the_gap=qp%E_bare(i_s)>E_ref(1).and.qp%E_bare(i_s)>1.E-5_SP
+     else
+       is_outside_twice_the_gap=qp%E_bare(i_s)<E_ref(2).and.qp%E_bare(i_s)<=1.E-5_SP
+     endif
+   end function
+   !
 end subroutine

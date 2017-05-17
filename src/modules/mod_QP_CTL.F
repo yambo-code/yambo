@@ -34,17 +34,22 @@ module QP_CTL_m
  ! INPUT file parameters
  !=======================
  !
- !?fnQP_db= "EWZ<db-pp.qp"     # [?] QP database.
- !% ?fnQP_E
- !  0 |  0 | 0 |               # [?] QP parameters (E).
- !% 
- !% ?fnQP_Wc
- !  0 |  0 | 0 |               # [?] QP parameters (W) conduction.
+ !XfnQPdb= "none"                # [EXTQP Xd] Database
+ !XfnQP_N= 1                     # [EXTQP Xd] Interpolation neighbours
+ !% XfnQP_E
+ ! 0.000000 | 1.000000 | 1.000000 |        # [EXTQP Xd] E parameters  (c/v) eV|adim|adim
  !%
- !% ?fnQP_W
- !  0 |  0 | 0 | 0 |           # [?] QP parameters (W).
+ !XfnQP_Z= ( 1.000000 , 0.000000 )       # [EXTQP Xd] Z factor  (c/v)
+ !XfnQP_Wv_E= 0.000000   eV      # [EXTQP Xd] W Energy reference  (valence)
+ !% XfnQP_Wv
+ ! 0.00     | 0.00     | 0.00     |        # [EXTQP Xd] W parameters  (valence) eV| 1|eV^-1
  !%
- !?fbQP_Z= (  0.00000 ,  0.00000 )  eV  # [?] QP parameters (Z).
+ !XfnQP_Wv_dos= 0.000000 eV      # [EXTQP Xd] W dos pre-factor  (valence)
+ !XfnQP_Wc_E= 0.000000   eV      # [EXTQP Xd] W Energy reference  (conduction)
+ !% XfnQP_Wc
+ ! 0.00     | 0.00     | 0.00     |        # [EXTQP Xd] W parameters  (conduction) eV| 1 |eV^-1
+ !%
+ !XfnQP_Wc_dos= 0.000000 eV      # [EXTQP Xd] W dos pre-factor  (conduction)
  !
  integer                 :: QP_ctl_ID   ! 1(X) 2(K) 3(G) 
  character(schlen)       :: QP_ctl_what ! X,K,G
@@ -62,7 +67,9 @@ module QP_CTL_m
  real(SP)                :: QP_ctl_Wc_E_ref(3,2)
  real(SP)                :: QP_ctl_Wv_E_ref(3,2)
  real(SP)                :: QP_ctl_Wc(3,3,2)
+ real(SP)                :: QP_ctl_Wc_dos(3,2)
  real(SP)                :: QP_ctl_Wv(3,3,2)
+ real(SP)                :: QP_ctl_Wv_dos(3,2)
  complex(SP)             :: QP_ctl_Z(3,2)
  !
  ! Internal QP_ctl's (derived from a QP type and/or dumped from the input)
@@ -76,9 +83,11 @@ module QP_CTL_m
    real(SP)   :: fit_scissor
    real(SP)   :: E(4)
    real(SP)   :: W(6)
+   real(SP)   :: W_dos(2)
    real(SP)   :: W_E_ref(2)
    real(SP)   :: E_err(2)
-   real(SP)   :: W_err(6)
+   real(SP)   :: W_err(2)
+   real(SP)   :: W_dos_err(2)
    complex(SP):: Z
    character(schlen):: db
  end type
@@ -87,7 +96,7 @@ module QP_CTL_m
  !===============
  type QP_action_t
    integer              :: kind
-   logical              :: plan(5)
+   logical              :: plan(6) ! E W Z ukI ueI dos
    logical              :: active
    character(schlen)    :: what 
    character(lchlen)    :: desc 
@@ -135,10 +144,12 @@ module QP_CTL_m
 &                                  QP_ctl_E(ID,2,i_spin),rZERO,QP_ctl_E(ID,3,i_spin)/)
      QP_action(iA)%CTL(i_spin)%W(1:3)=(/QP_ctl_Wc(ID,1,i_spin)/HA2EV,&
 &                                       QP_ctl_Wc(ID,2,i_spin)/HA2EV,QP_ctl_Wc(ID,3,i_spin)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%W_dos(1)=QP_ctl_Wc_dos(ID,i_spin)/HA2EV
      QP_action(iA)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(ID,i_spin)+CBm,&
 &                                           QP_ctl_Wv_E_ref(ID,i_spin)+VBM/)
      QP_action(iA)%CTL(i_spin)%W(4:6)=(/QP_ctl_Wv(ID,1,i_spin)/HA2EV,&
 &                                       QP_ctl_Wv(ID,2,i_spin)/HA2EV,QP_ctl_Wv(ID,3,i_spin)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%W_dos(2)=QP_ctl_Wv_dos(ID,i_spin)/HA2EV
      QP_action(iA)%CTL(i_spin)%Z=QP_ctl_Z(ID,i_spin)
      !
    end subroutine
@@ -165,9 +176,11 @@ module QP_CTL_m
      ctl2%db=ctl1%db  
      ctl2%E=ctl1%E  
      ctl2%W=ctl1%W  
+     ctl2%W_dos=ctl1%W_dos
      ctl2%Z=ctl1%Z  
      ctl2%E_err=ctl1%E_err  
      ctl2%W_err=ctl1%W_err  
+     ctl2%W_dos_err=ctl1%W_dos_err  
      ctl2%W_E_ref=ctl1%W_E_ref  
      ctl2%db_scissor=ctl1%db_scissor  
      ctl2%fit_scissor=ctl1%fit_scissor  
@@ -179,9 +192,11 @@ module QP_CTL_m
      QP_ctl%db="none"
      QP_ctl%E=(/0.,1.,0.,1./)
      QP_ctl%W=0.
+     QP_ctl%W_dos=0.
      QP_ctl%Z=(1.,0.)
      QP_ctl%E_err=0.
      QP_ctl%W_err=0.
+     QP_ctl%W_dos_err=0.
      QP_ctl%W_E_ref=0.
      QP_ctl%db_scissor=0.
      QP_ctl%fit_scissor=0.

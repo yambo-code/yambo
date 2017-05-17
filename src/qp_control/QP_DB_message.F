@@ -35,7 +35,7 @@ subroutine QP_DB_message( i_ACTION, qp )
  !
  ! Work Space
  !
- integer, parameter :: n_fields=6
+ integer, parameter :: n_fields=7
  integer            :: if,c_pos,i_msg,i1
  character(lchlen)  :: field(n_fields,2)
  !
@@ -51,6 +51,8 @@ subroutine QP_DB_message( i_ACTION, qp )
  field(5,2)="E-E PPA"
  field(6,1)="El-Ph Self"
  field(6,2)="E-P"
+ field(7,1)="Real Axis GW"
+ field(7,2)="E-E"
  !
  ! Here I build the %desc char on the basis of the qp%description lines.
  ! This to give a compact description of the QP details.

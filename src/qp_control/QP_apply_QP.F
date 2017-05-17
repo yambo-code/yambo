@@ -72,6 +72,6 @@ subroutine QP_apply_QP(i_ACTION,band_range,en,k,qp)
  !
  ! FIT report
  !
- call QP_fit_report(i_ACTION," ")
+ call QP_fit_report(i_ACTION,band_range,en,k,qp)
  !
 end subroutine

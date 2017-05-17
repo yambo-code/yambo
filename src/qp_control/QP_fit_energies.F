@@ -32,6 +32,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:n_sp_pol,spin
+ use POL_FIT_m,     ONLY:POL_LK_fit
  !
  implicit none
  !
@@ -83,7 +84,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
    enddo
    if (Nqpc>1) then
-     call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,TCc,EPS,0._SP)
+     call POL_LK_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,TCc,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [c] reduced to 0')
        TCc(2)=Tt_def(2)
@@ -103,7 +104,7 @@ subroutine QP_fit_energies(i_ACTION,band_range,qp)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
    enddo
    if (Nqpv>1) then
-     call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,TCv,EPS,0._SP)
+     call POL_LK_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,TCv,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [v] reduced to 0')
        TCv(2)=Tt_def(2)

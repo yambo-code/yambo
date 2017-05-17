@@ -33,7 +33,8 @@ subroutine INIT_QP_ctl_load(defs,i_type)
  use electrons,     ONLY:n_sp_pol
  use it_m,          ONLY:it,initmode,initdefs,V_qp,E_unit
  use QP_CTL_m,      ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
-&                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+&                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,&
+&                        QP_ctl_Wc_dos,QP_ctl_Wv_dos
  !
  implicit none
  integer, intent(in) :: i_type
@@ -81,7 +82,7 @@ subroutine INIT_QP_ctl_load(defs,i_type)
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (valence) eV| eV|eV^-1',&
+&          trim(spin_description_ch(i1))//' (valence) eV| 1|eV^-1',&
 &          QP_ctl_Wv(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&
@@ -93,7 +94,7 @@ subroutine INIT_QP_ctl_load(defs,i_type)
    call it(defs,&
 &          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&
 &          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (conduction) eV| eV|eV^-1',&
+&          trim(spin_description_ch(i1))//' (conduction) eV| 1 |eV^-1',&
 &          QP_ctl_Wc(i_type,:,i_spin),verb_level=verbosity_here)
    !
    call it(defs,&
@@ -101,6 +102,18 @@ subroutine INIT_QP_ctl_load(defs,i_type)
 &          '[EXTQP '//trim(description_ch(i_type))//'] Z factor '//&
 &          trim(spin_description_ch(i1))//' (c/v)',&
 &          QP_ctl_Z(i_type,i_spin),verb_level=V_qp)
+   !
+   call it(defs,&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc_dos',&
+&          '[EXTQP '//trim(description_ch(i_type))//'] W dos pre-factor '//&
+&          trim(spin_description_ch(i1))//' (conduction)',&
+&          QP_ctl_Wc_dos(i_type,i_spin),E_unit,verb_level=V_qp)
+   !
+   call it(defs,&
+&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv_dos',&
+&          '[EXTQP '//trim(description_ch(i_type))//'] W dos pre-factor '//&
+&          trim(spin_description_ch(i1))//' (valence)',&
+&          QP_ctl_Wv_dos(i_type,i_spin),E_unit,verb_level=V_qp)
    !
  enddo
  !

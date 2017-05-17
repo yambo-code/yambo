@@ -117,9 +117,9 @@ YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface 
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian 
+                     pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian 
+                     pol_function qp bse collisions hamiltonian 
 
 nothing: 
 	@$(make_message)

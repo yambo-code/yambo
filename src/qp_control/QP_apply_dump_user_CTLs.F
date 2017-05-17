@@ -79,8 +79,10 @@ subroutine QP_apply_dump_user_CTLs( E, object )
          call FLAG_the_logical(QP_action(n_QP_actions)%plan(4),"UKI")
          call FLAG_the_logical(QP_action(n_QP_actions)%plan(5),"uei")
          call FLAG_the_logical(QP_action(n_QP_actions)%plan(5),"UEI")
+         call FLAG_the_logical(QP_action(n_QP_actions)%plan(6),"dos")
+         call FLAG_the_logical(QP_action(n_QP_actions)%plan(6),"DOS")
        enddo
-       if (.not.QP_action(n_QP_actions)%plan(4).and..not.QP_action(n_QP_actions)%plan(5)) QP_action(n_QP_actions)%plan(4)=.TRUE.
+       if (.not.any((/QP_action(n_QP_actions)%plan(4:5)/))) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !
        if (QP_action(n_QP_actions)%plan(1)) then
          QP_action(n_QP_actions)%what=trim(QP_action(n_QP_actions)%what)//" E"
@@ -119,15 +121,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    if (n_sp_pol==2) spin_ch=(/'  (spin up)','(spin down)'/)
    QP_action(n_QP_actions)%what="User defined "//trim(QP_action(n_QP_actions)%what)//trim(spin_ch(i_spin))
    !
-   !
    ! Now I move to the input file provided stretching and generalized QP parameters. 
    ! Those are contained in the QP_ctl* fields.
-   !
-   ! Note the units of QP_ctl_W:
-   !
-   !   QP_ctl_Wc/v(QP_ctl_ID,1,:) is in ev
-   !   QP_ctl_Wc/v(QP_ctl_ID,2,:) is in ev
-   !   QP_ctl_Wc/v(QP_ctl_ID,3,:) is ev^{-1}
    !
    call QP_CTL_fill(n_QP_actions,i_spin,QP_ctl_ID,+E%E_CBm,E%E_VBM)
    !

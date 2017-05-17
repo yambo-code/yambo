@@ -123,7 +123,7 @@ subroutine QP_apply(band_range,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (len_trim(QP_action(i_a)%CTL(1)%db)>0) call QP_load_DB(i_a,band_range,en,k)
    !
-   call QP_apply_the_ACTION(i_a,band_range,en,k,.FALSE.)
+   call QP_apply_the_ACTION(i_a,band_range,en,k)
    !
  enddo
  !

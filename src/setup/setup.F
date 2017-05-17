@@ -342,7 +342,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  K_kind=X_kind
  K_xc_functional=X_xc_functional
  K_perturbation=X_perturbation
- call setup_global_XC('K',K_kind,QP_MORE_NONE,K_xc_functional,K_perturbation)
+ call setup_global_XC('K',K_kind,K_xc_functional,K_perturbation)
  !
  if (.not.l_sc_run) then
    !
@@ -354,7 +354,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                          kind=WF_kind,xc_functional=WF_xc_functional,perturbation=WF_perturbation)
    !
    if (found_SC_DB) then
-     call setup_global_XC('WF',WF_kind,QP_MORE_NONE,WF_xc_functional,WF_perturbation)
+     call setup_global_XC('WF',WF_kind,WF_xc_functional,WF_perturbation)
      call warning(trim(loaded_WF_xc_string)//' wavefunctions found. Bands check at loading time.')
    endif
    !

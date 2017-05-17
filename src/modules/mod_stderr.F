@@ -181,10 +181,11 @@ module stderr
      !
    end subroutine
    !
-   character(lchlen) function string_remove(string_in,what)
+   character(lchlen) function string_remove(string_in,what,replace)
      !
-     character(*)     :: string_in
-     character(*)     :: what
+     character(*)           :: string_in
+     character(*)           :: what
+     character(*), optional :: replace
      !
      ! Work Space
      !
@@ -193,7 +194,11 @@ module stderr
      string_remove=string_in
      i_pos=index(string_in,what)
      if (i_pos==0) return
-     write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+len(what):)
+     if (present(replace)) then
+       write (string_remove,'(3a)') string_in(:i_pos-1),replace,string_in(i_pos+len(what):)
+     else
+       write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+len(what):)
+     endif
      !
    end function
    !

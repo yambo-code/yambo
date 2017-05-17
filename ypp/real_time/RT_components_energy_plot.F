@@ -82,7 +82,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    real(SP), allocatable :: Ef(:,:)
  end type Load_and_Fit
  !
- type(Load_and_Fit)    :: DATA_grp(8) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio, neq
+ type(Load_and_Fit)    :: DATA_grp(9) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio, e-photon neq
  !
  !... metallic bands precision
  filled_tresh=1.E-7

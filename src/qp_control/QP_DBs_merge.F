@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
+subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
  use pars,           ONLY:SP,cI
  use QP_m,           ONLY:QP_t,QP_copy
@@ -44,7 +44,7 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
  integer      :: i_db,i_db_p,GROUND(n_dbs)
  logical      :: MERGED(n_dbs),SAME_k,SAME_desc,just_COUNT,CONDITION
- character(1) :: WHAT
+ character(4) :: WHAT
  !
  ! Affinity check
  !================
@@ -66,12 +66,12 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      MAP(i_db)=n_GROUNDS
    endif
    if (.not.just_COUNT) then
-     if (plan_EWZG(i_db,1)) WHAT="E"
-     if (plan_EWZG(i_db,2)) WHAT="W"
-     if (plan_EWZG(i_db,3)) WHAT="Z"
-     if (plan_EWZG(i_db,4)) WHAT="G"
+     WHAT=" "
+     if (plan_EWZG(i_db,1)) WHAT=trim(WHAT)//"E"
+     if (plan_EWZG(i_db,2)) WHAT=trim(WHAT)//"W"
+     if (plan_EWZG(i_db,3)) WHAT=trim(WHAT)//"Z"
+     if (plan_EWZG(i_db,4)) WHAT=trim(WHAT)//"G"
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
-     if (WHAT/="E".and.what/="G") qp( n_GROUNDS )%E=qp2merge(i_db)%E_bare+cI*aimag( qp( n_GROUNDS )%E )
    endif
    !
    do i_db_p=i_db+1,n_dbs
@@ -91,8 +91,12 @@ subroutine QP_merge_DBs(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      ! .not.SAME_desc <
      !                 .not.SAME_k => No merge
      !
-     CONDITION= (SAME_desc.and..not.SAME_k) .or. (.not.SAME_desc.and.SAME_k) .or. &
-&               (SAME_desc.and.SAME_k.and..not.all(plan_EWZG(i_db,:).eqv.plan_EWZG(i_db_p,:)))
+     CONDITION= (SAME_desc.and..not.SAME_k) .or. (.not.SAME_desc.and.SAME_k)
+     if (SAME_desc.and.SAME_k) then
+       CONDITION=.FALSE.
+       if (.not.all(plan_EWZG(i_db,:).eqv.plan_EWZG(i_db_p,:)).or.OP(i_db)/=OP(i_db_p).or.&
+&          PRE_FAC(i_db)/=PRE_FAC(i_db_p)) CONDITION=.TRUE.
+     endif
      !
      if (plan_EWZG(i_db,4)) then
        CONDITION=qp2merge(i_db)%GreenF_n_steps==qp2merge(i_db_p)%GreenF_n_steps

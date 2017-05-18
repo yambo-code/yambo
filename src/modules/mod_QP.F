@@ -201,13 +201,13 @@ module QP_m
        qp%Z=rONE
        qp%E=rZERO
        qp%E_bare=qp_in%E_bare
-       if (what=="ALL".or.what=="Z") then
+       if (what=="ALL".or.index(what,"Z")>0) then
          qp%Z=qp_in%Z
        endif
-       if (what=="ALL".or.what=="E") then
+       if (what=="ALL".or.index(what,"E")>0) then
          qp%E=qp%E_bare+operation*pre_factor*real(qp_in%E-qp_in%E_bare)
        endif
-       if (what=="ALL".or.what=="W") then
+       if (what=="ALL".or.index(what,"W")>0) then
          qp%E=qp%E+operation*pre_factor*cI*aimag(qp_in%E-qp_in%E_bare)
        endif
      endif

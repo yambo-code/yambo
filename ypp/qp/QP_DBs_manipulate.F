@@ -30,7 +30,7 @@ subroutine QP_DBs_manipulate( E )
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states,&
 &                        report_Vnlxc,report_Sc,report_dSc,l_extended_output
- use interfaces,    ONLY:QP_merge_DBs
+ use interfaces,    ONLY:QP_DBs_merge
  use electrons,     ONLY:levels,n_sp_pol
  !
 #include<memory.h>
@@ -81,12 +81,12 @@ subroutine QP_DBs_manipulate( E )
  !==========================
  !
  n_GROUNDS=-1
- call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS)
+ call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
  allocate(qp(n_GROUNDS))
  do i_qp=1,n_GROUNDS
    call QP_reset(qp(i_qp))
  enddo
- call QP_merge_DBs(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp,QP_db_operation,QP_db_prefactor)
+ call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp,QP_db_operation,QP_db_prefactor)
  !
  call msg('l','done')
  !

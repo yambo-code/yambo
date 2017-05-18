@@ -124,9 +124,13 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    if (len_trim(QP_action(i_a)%CTL(1)%db)>0.and.&
 &          trim(QP_action(i_a)%CTL(1)%db)/="none") call QP_load_DB(i_a,bands,en,k)
    !
+   if (.not.QP_action(i_a)%active) cycle
+   !
    call QP_apply_the_ACTION(i_a,bands,en,k)
    !
  enddo
+ !
+ if ( .not.any( QP_action(:)%active ) ) return
  !
  call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
  !
@@ -212,7 +216,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (n_sp_pol==1) then
      !
-     call msg('r','[QP apply] Ind. Gap Correction  [ev]:',&
+     call msg('r','[QP apply] Ind. Gap Correction   [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !

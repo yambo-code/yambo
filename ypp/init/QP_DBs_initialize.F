@@ -116,7 +116,7 @@ subroutine QP_DBs_initialize()
      !
      nflines=nflines+1
      write (flines(nflines),'(a,t30,a)') '%Actions_and_names',&
-&                           '# [QPDB] QP databases and Actions (format is "what"|"OP"|"prefactor"|"DB"|). OP can be +/-. '
+&                           '# [QPDB] Format is "what"|"OP"|"prefactor"|"DB"|. OP can be +/-/x(ony for Z). '
      !
      if (n_QP_dbs==0) then
        nflines=nflines+1

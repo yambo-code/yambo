@@ -84,20 +84,19 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
    !
    ! DOS proportional correction
    M_factor=QP_action(i_ACTION)%CTL(i_spin)%W_dos(jref+1)
-   if (M_factor>0.) then
+   if (abs(M_factor)>0.) then
      call el_density_of_states(k,E,Energy,0.1_SP/HA2EV,bands,dos_factor,USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
      QP_eval_the_FIT=QP_eval_the_FIT+M_factor*dos_factor(i_spin)*real(n_spinor,SP)
    endif
    !
    ! Linear/Quadratic correction
    !
-   if (     is_valence.and.Energy>E_ref) return
-   if (.not.is_valence.and.Energy<E_ref) return
-   !
-   do i_p=1,2
-     M_factor=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1+i_p)
-     QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)**i_p
-   enddo
+   if ( (     is_valence.and.Energy>E_ref) .or. (.not.is_valence.and.Energy<E_ref) ) then
+     do i_p=1,2
+       M_factor=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1+i_p)
+       QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)**i_p
+     enddo
+   endif
    !
    if (.not.is_valence) QP_eval_the_FIT=-abs(QP_eval_the_FIT)
    if (     is_valence) QP_eval_the_FIT= abs(QP_eval_the_FIT)

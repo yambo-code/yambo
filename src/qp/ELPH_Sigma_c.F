@@ -41,7 +41,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
 &                        deliver_IO_error_message
- use QP_ctl_m,      ONLY:QP_CTL_fill
+ use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_time_order_sign
@@ -80,10 +80,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
- ! QP corrections on k+q states
- !
- integer , allocatable :: DB_corrected(:,:,:)
- !
 #if defined _TIMING
  call timing('GW(e-p)',OPR='start')
 #endif
@@ -95,10 +91,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  enddo
  QP_DW=rZERO
  QP_OMS_Fan=rZERO
- !
- ! QP_ctl for k+q energies
- !
- call QP_CTL_fill(1,1,3,en%E_CBm,en%E_VBM)
  !
  if (l_elel_corr) then
    call section('+','Correlation: Phonon-mediated Self-energy')
@@ -260,7 +252,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        E_k_p_q%E(:,:,1)=E_k_plus_q(:,:,1)
        !
-       call QP_apply_the_ACTION(1,(/1,elph_nb/),E_k_p_q,k)
+       call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt=' ')
        !
      endif
      !

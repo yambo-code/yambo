@@ -110,8 +110,11 @@ subroutine electrons_dos(Xk,Xen)
    !
    dos_E=dos_E_range(1)+i_E*delta_E
    !
-   if(.not.allocated(WF_fac)) call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd)
-   if(     allocated(WF_fac)) call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
+   if(     allocated(WF_fac)) then
+     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
+   else
+     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd)
+   endif
    !
    call live_timing(steps=1)
    !

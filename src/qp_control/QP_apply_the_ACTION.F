@@ -80,7 +80,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
      do ik=1,E%nk
        !
        if (allocated(QP_action(i_ACTION)%STATES_done)) then
-          if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) return
+          if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
        endif
        !
        if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"E")

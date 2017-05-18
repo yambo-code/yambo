@@ -200,6 +200,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  ! CLEAN
  !
  call E_reset(Fermi_en)
+ YAMBO_FREE(DbGd_k_done)
+ call QP_actions_reset( )
  !
  ! Reporting
  !
@@ -220,7 +222,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
 &                  (minval(en%E(en%nbf+1,:,1))-maxval(en%E(en%nbf,:,1)) &
 &                  -minval(en%Eo(en%nbf+1,:,1))+maxval(en%Eo(en%nbf,:,1)) )*HA2EV)
      !
-     call msg('r','                        (down) [ev]:',&
+     call msg('r','                              (down) [ev]:',&
 &                  (minval(en%E(en%nbf+1,:,2))-maxval(en%E(en%nbf,:,2)) &
 &                  -minval(en%Eo(en%nbf+1,:,2))+maxval(en%Eo(en%nbf,:,2)) )*HA2EV)
      !

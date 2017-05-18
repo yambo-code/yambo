@@ -53,24 +53,23 @@ module QP_CTL_m
  !
  integer                 :: QP_ctl_ID   ! 1(X) 2(K) 3(G) 
  character(schlen)       :: QP_ctl_what ! X,K,G
- character(schlen)       :: QP_ctl_db(3)
  character(schlen)       :: QP_ctl_msg_fmt
  character(lchlen)       :: QP_ctl_xc_STRING
+ !
+ type QP_ctl_input_file
+   real(SP)    :: E(3)
+   real(SP)    :: Wc_E_ref
+   real(SP)    :: Wv_E_ref
+   real(SP)    :: Wc(3)
+   real(SP)    :: Wc_dos
+   real(SP)    :: Wv(3)
+   real(SP)    :: Wv_dos
+   complex(SP) :: Z
+ end type
+ !
+ type(QP_ctl_input_file) :: QP_ctl_user(3,3) ! 3 types x ( spin-unpolarized/non-collinear + 2 spin components (up/dn))
  integer                 :: QP_ctl_interp_neigh(3)
- !
- ! Note that QP_ctl_E/W/Z are dimensioned *,2)
- ! to describe spin polarized systems.
- ! The second element of the last argument 
- ! is not used in non-collinear or scalar cases.
- !
- real(SP)                :: QP_ctl_E(3,3,2)
- real(SP)                :: QP_ctl_Wc_E_ref(3,2)
- real(SP)                :: QP_ctl_Wv_E_ref(3,2)
- real(SP)                :: QP_ctl_Wc(3,3,2)
- real(SP)                :: QP_ctl_Wc_dos(3,2)
- real(SP)                :: QP_ctl_Wv(3,3,2)
- real(SP)                :: QP_ctl_Wv_dos(3,2)
- complex(SP)             :: QP_ctl_Z(3,2)
+ character(schlen)       :: QP_ctl_db(3)
  !
  ! Internal QP_ctl's (derived from a QP type and/or dumped from the input)
  !===================
@@ -133,32 +132,36 @@ module QP_CTL_m
  !
  contains
    !
-   subroutine QP_CTL_fill(iA,i_spin,ID,CBm,VBM)
+   logical function QP_CTL_is_active(ID,i_field)
+     integer      :: i_field,ID
+     QP_CTL_is_active=.FALSE.
+     if (any((/QP_ctl_user(ID,i_field)%E/=(/0.,1.,1./)/))) QP_CTL_is_active=.TRUE.
+     if (any((/QP_ctl_user(ID,i_field)%Wc/=0._SP/)))  QP_CTL_is_active=.TRUE.
+     if (any((/QP_ctl_user(ID,i_field)%Wv/=0._SP/)))  QP_CTL_is_active=.TRUE.
+     if (QP_ctl_user(ID,i_field)%Wc_dos/=0._SP     )  QP_CTL_is_active=.TRUE.
+     if (QP_ctl_user(ID,i_field)%Wv_dos/=0._SP     )  QP_CTL_is_active=.TRUE.
+     if (QP_ctl_user(ID,i_field)%Z/=(1._SP,0._SP)  )  QP_CTL_is_active=.TRUE.
+   end function
+   !
+   subroutine QP_CTL_fill(iA,i_spin,ID,i_field,CBm,VBM)
      use pars, ONLY:rZERO,rONE
-     integer  :: iA,i_spin,ID
+     integer  :: iA,i_spin,ID,i_field
      real(SP) :: CBm,VBM
      !
-     QP_action(iA)%active=.FALSE.
-     !
-     if (QP_ctl_E(ID,1,i_spin)==rZERO.and.all((/QP_ctl_E(ID,2:3,i_spin)==rONE/)).and.&
-&        all((/QP_ctl_Wc(ID,:,i_spin)==rZERO/)).and.all((/QP_ctl_Wv(ID,:,i_spin)==rZERO/)).and.&
-         QP_ctl_Wv_dos(ID,i_spin)==rZERO.and.QP_ctl_Wc_dos(ID,i_spin)==rZERO.and.&
-         real(QP_ctl_Z(ID,i_spin))==rZERO.and.aimag(QP_ctl_Z(ID,i_spin))==rZERO &
-&       ) return
-     !
-     QP_action(iA)%active=.TRUE.
-     !
-     QP_action(iA)%CTL(i_spin)%E=(/QP_ctl_E(ID,1,i_spin)/HA2EV,&
-&                                  QP_ctl_E(ID,2,i_spin),rZERO,QP_ctl_E(ID,3,i_spin)/)
-     QP_action(iA)%CTL(i_spin)%W(1:3)=(/QP_ctl_Wc(ID,1,i_spin)/HA2EV,&
-&                                       QP_ctl_Wc(ID,2,i_spin)/HA2EV,QP_ctl_Wc(ID,3,i_spin)*HA2EV/)
-     QP_action(iA)%CTL(i_spin)%W_dos(1)=QP_ctl_Wc_dos(ID,i_spin)/HA2EV
-     QP_action(iA)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_Wc_E_ref(ID,i_spin)+CBm,&
-&                                           QP_ctl_Wv_E_ref(ID,i_spin)+VBM/)
-     QP_action(iA)%CTL(i_spin)%W(4:6)=(/QP_ctl_Wv(ID,1,i_spin)/HA2EV,&
-&                                       QP_ctl_Wv(ID,2,i_spin)/HA2EV,QP_ctl_Wv(ID,3,i_spin)*HA2EV/)
-     QP_action(iA)%CTL(i_spin)%W_dos(2)=QP_ctl_Wv_dos(ID,i_spin)/HA2EV
-     QP_action(iA)%CTL(i_spin)%Z=QP_ctl_Z(ID,i_spin)
+     QP_action(iA)%CTL(i_spin)%E=(/QP_ctl_user(ID,i_field)%E(1)/HA2EV,&
+&                                  QP_ctl_user(ID,i_field)%E(2),rZERO,&
+&                                  QP_ctl_user(ID,i_field)%E(3)/)
+     QP_action(iA)%CTL(i_spin)%W(1:3)=(/QP_ctl_user(ID,i_field)%Wc(1)/HA2EV,&
+&                                       QP_ctl_user(ID,i_field)%Wc(2),&
+&                                       QP_ctl_user(ID,i_field)%Wc(3)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%W_dos(1)=QP_ctl_user(ID,i_field)%Wc_dos/HA2EV
+     QP_action(iA)%CTL(i_spin)%W_E_ref(:)=(/QP_ctl_user(ID,i_field)%Wc_E_ref+CBm,&
+&                                           QP_ctl_user(ID,i_field)%Wv_E_ref+VBM/)
+     QP_action(iA)%CTL(i_spin)%W(4:6)=(/QP_ctl_user(ID,i_field)%Wv(1)/HA2EV,&
+&                                       QP_ctl_user(ID,i_field)%Wv(2),&
+&                                       QP_ctl_user(ID,i_field)%Wv(3)*HA2EV/)
+     QP_action(iA)%CTL(i_spin)%W_dos(2)=QP_ctl_user(ID,i_field)%Wv_dos/HA2EV
+     QP_action(iA)%CTL(i_spin)%Z=QP_ctl_user(ID,i_field)%Z
      !
    end subroutine
    !

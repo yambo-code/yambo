@@ -55,7 +55,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
- use QP_CTL_m,       ONLY:QP_ctl_E
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
@@ -1188,7 +1187,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the F_xc specs
      !
      if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,io_BS_Fxc_err==0/))) then
-       QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
        X(3)%q0= BSS_q0

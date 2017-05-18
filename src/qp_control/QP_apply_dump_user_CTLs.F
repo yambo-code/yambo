@@ -26,8 +26,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  use pars,          ONLY:schlen
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
- use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,&
-&                        QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_ID,QP_CTL_fill
+ use QP_CTL_m,      ONLY:QP_action,n_QP_actions,QP_ctl_what,QP_ctl_user,&
+&                        QP_ctl_interp_neigh,QP_ctl_db,QP_ctl_ID,QP_CTL_is_active,QP_CTL_fill
  use stderr,        ONLY:string_split
  !
 #include<memory.h>
@@ -37,8 +37,8 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  !
  ! Work Space
  !
- logical          ::E_def(3),W_def(2),HAVE_QP_dbs
- integer          ::i_spin,i_p,i2
+ logical          ::HAVE_QP_dbs
+ integer          ::i_p,i2
  integer,parameter:: n_pieces=30
  character(schlen):: db_piece(n_pieces)
  !
@@ -50,12 +50,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
  if (QP_ctl_ID==2) QP_ctl_what='K'
  if (QP_ctl_ID==3) QP_ctl_what='G'
  !
- call parser(trim(QP_ctl_what)//'fnQP_E',E_def(1))
- call parser(trim(QP_ctl_what)//'fnQP_up_E',E_def(2))
- call parser(trim(QP_ctl_what)//'fnQP_dn_E',E_def(3))
  call parser(trim(QP_ctl_what)//'fnQPdb',HAVE_QP_dbs)
- call parser(trim(QP_ctl_what)//'fnQP_Wv',W_def(1))
- call parser(trim(QP_ctl_what)//'fnQP_Wc',W_def(2))
  !
  ! User defined QP database
  !
@@ -101,19 +96,44 @@ subroutine QP_apply_dump_user_CTLs( E, object )
    enddo
  endif
  !
- if (.not.any((/E_def,W_def/))) return
- !
- do i_spin=1,n_sp_pol
+ ! User defined parameters
+ !  
+ if (n_sp_pol==2) then
    !
-   if (i_spin==1) n_QP_actions=n_QP_actions+1
+   if (QP_CTL_is_active(QP_ctl_ID,2).or.QP_CTL_is_active(QP_ctl_ID,3)) then
+     !
+     call USER_action_active( )
+     !
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,2,E%E_CBm,E%E_VBM)
+     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,3,E%E_CBm,E%E_VBM)
+     !
+   else if (QP_CTL_is_active(QP_ctl_ID,1)) then
+     !
+     call USER_action_active( )
+     !
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
+     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
+     !
+   endif
    !
-   QP_action(n_QP_actions)%what="User defined QP_ctl"
+ else
    !
-   call QP_CTL_fill(n_QP_actions,i_spin,QP_ctl_ID,E%E_CBm,E%E_VBM)
+   if (QP_CTL_is_active(QP_ctl_ID,1)) then
+     !
+     call USER_action_active( )
+     !
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
+     !
+   endif
    !
- enddo
+ endif
  !
  contains
+   !
+   subroutine USER_action_active()
+     n_QP_actions=n_QP_actions+1
+     QP_action(n_QP_actions)%active=.TRUE.
+   end subroutine
    !
    subroutine FLAG_the_logical(FLAG,FIELD)
      logical      :: FLAG

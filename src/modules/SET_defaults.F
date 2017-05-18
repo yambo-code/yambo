@@ -44,7 +44,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
- use QP_CTL_m,   ONLY:QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,QP_ctl_db,QP_ctl_interp_neigh
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -398,10 +398,18 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
- forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
- forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0._SP
- forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0._SP
- forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1._SP,0._SP)
+ do i1=1,3
+   do i2=1,3
+     QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
+     QP_ctl_user(i1,i2)%Wc=0._SP
+     QP_ctl_user(i1,i2)%Wv=0._SP
+     QP_ctl_user(i1,i2)%Wc_E_ref=0._SP
+     QP_ctl_user(i1,i2)%Wv_E_ref=0._SP
+     QP_ctl_user(i1,i2)%Wc_dos=0._SP
+     QP_ctl_user(i1,i2)%Wv_dos=0._SP
+     QP_ctl_user(i1,i2)%Z=(1._SP,0._SP)
+   enddo
+ enddo
  !
 #if defined _RT
  !

@@ -98,9 +98,12 @@ module collision_el
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
-     YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
-     YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
-     YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
+     !
+     if (fft_size>0) then
+       YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
+       YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
+       YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
+     endif
      !
      if (present(NG)) then
        if (present(GRADIENT)) then

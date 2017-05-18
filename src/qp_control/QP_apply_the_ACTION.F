@@ -52,13 +52,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
    do_W(i_spin)=.false.
    do_Z(i_spin)=.false.
    !
-   if (any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))) then
-     if (.not.allocated(E%Eo)) then
-       YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
-       E%Eo=E%E
-     endif
-     do_E(i_spin)=.TRUE.
-   endif
+   do_E(i_spin)= any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))
    !
    if (any((/QP_action(i_ACTION)%CTL(i_spin)%W(:)/=rZERO/))) then
      if (.not.allocated(E%W)) then
@@ -73,6 +67,13 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
        E%Z=1._SP
      endif
      do_Z(i_spin)=.TRUE.
+   endif
+   !
+   if (any((/do_E(i_spin),do_W(i_spin),do_Z(i_spin)/))) then
+     if (.not.allocated(E%Eo)) then
+       YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
+       E%Eo=E%E
+     endif
    endif
    !
    do ib=bands(1),bands(2)

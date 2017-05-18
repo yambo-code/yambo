@@ -83,9 +83,11 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
    QP_eval_the_FIT=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1)
    !
    ! DOS proportional correction
-   call el_density_of_states(k,E,Energy,0.1_SP/HA2EV,bands,dos_factor,USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
    M_factor=QP_action(i_ACTION)%CTL(i_spin)%W_dos(jref+1)
-   QP_eval_the_FIT=QP_eval_the_FIT+M_factor*dos_factor(i_spin)*real(n_spinor,SP)
+   if (M_factor>0.) then
+     call el_density_of_states(k,E,Energy,0.1_SP/HA2EV,bands,dos_factor,USE_the_DbGd=.FALSE.,USE_Eo=.TRUE.)
+     QP_eval_the_FIT=QP_eval_the_FIT+M_factor*dos_factor(i_spin)*real(n_spinor,SP)
+   endif
    !
    ! Linear/Quadratic correction
    !

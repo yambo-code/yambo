@@ -106,15 +106,19 @@ module collision_el
      endif
      !
      if (present(NG)) then
-       if (present(GRADIENT)) then
-         YAMBO_ALLOC(ggw%rhotw,(3*NG))
-       else
-         YAMBO_ALLOC(ggw%rhotw,(NG))
+       if (NG>0) then
+         if (present(GRADIENT)) then
+           YAMBO_ALLOC(ggw%rhotw,(3*NG))
+         else
+           YAMBO_ALLOC(ggw%rhotw,(NG))
+         endif
        endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then
-       YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+       if (all((/NG_GAMP>0/))) then
+         YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+       endif
      endif
      !
    end subroutine

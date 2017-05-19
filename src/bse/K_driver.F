@@ -23,10 +23,9 @@
 !
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
@@ -49,7 +48,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:error
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -211,7 +210,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 3. The SOLVER
  ! =================
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
@@ -226,9 +225,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
-   if (associated(Ken%QP_corrected)) then
-     allocate(Xen%QP_corrected(Xen%nb,Xen%nk,n_sp_pol),Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-     call mem_est("E-QP_corrected E-Eo",(/size(Xen%QP_corrected),size(Xen%Eo)/),(/IP,SP/))
+   if (allocated(Ken%QP_corrected)) then
+     YAMBO_ALLOC(Xen%QP_corrected,(Xen%nb,Xen%nk,n_sp_pol))
+     YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
      Xen%QP_corrected=Ken%QP_corrected
      Xen%Eo=Xen%E
      Xen%E =Ken%E

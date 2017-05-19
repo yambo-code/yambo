@@ -234,11 +234,11 @@ module openmp
      endif
      !
      if (INIT_) then
-        openmp_num_locks=nlocks_
-        allocate(omp_locks(nlocks_))
-        do i = 1, nlocks_
-           call omp_init_lock(omp_locks(i))
-        enddo
+       openmp_num_locks=nlocks_
+       allocate(omp_locks(nlocks_))
+       do i = 1, nlocks_
+         call omp_init_lock(omp_locks(i))
+       enddo
      endif
 #else
      return

@@ -30,7 +30,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  use frequency,     ONLY:ordered_grid_index
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,PAR_IND_VAL_BANDS_X
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  ::Xen 
  type(bz_samp) ::Xk
@@ -51,10 +51,10 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  Nc_XTerm=0
  if (l_X_terminator) Nc_XTerm=Nv
  !
- allocate(poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
- allocate(Ein_poles(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ YAMBO_ALLOC(poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ YAMBO_ALLOC(Ein_poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
  !
- MPI_logicals_on=associated(PAR_IND_Xk_bz%element_1D)
+ MPI_logicals_on=allocated(PAR_IND_Xk_bz%element_1D)
  !
  ! Note that in metals not all the elements are defined
  !
@@ -159,18 +159,19 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  if (iq<0) then
    if (.not.allocated(X_poles)) then
-     allocate(X_poles(X_eh_setup))
+     YAMBO_ALLOC(X_poles,(X_eh_setup))
      X_poles=0._SP
    endif
    X_poles=X_poles+poles(:X_eh_setup)
    !
    if (.not.allocated(X_Ein_poles)) then
-     allocate(X_Ein_poles(X_eh_setup))
+     YAMBO_ALLOC(X_Ein_poles,(X_eh_setup))
      X_Ein_poles=0._SP
    endif
    X_Ein_poles=X_Ein_poles+Ein_poles(:X_eh_setup)
  endif
  !
- deallocate(poles,Ein_poles)
+ YAMBO_FREE(poles)
+ YAMBO_FREE(Ein_poles)
  !
 end function

@@ -29,10 +29,8 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:bz_samp,bz_map,WF_shifts
  use com,            ONLY:msg,error
- use memory_m,       ONLY:mem_est
  use pars,           ONLY:zero_dfl
- !
- implicit none
+#include<memory.h>
  !
  type(bz_map), intent(inout) :: k_map
  type(bz_samp),intent(inout) :: Xk
@@ -43,8 +41,7 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  real(SP) :: k_shift(3),dshift
  character(schlen) :: dump_ch
  !
- allocate(WF_shifts(Xk%nbz,3))
- call mem_est("WF_shifts",(/size(WF_shifts)/),(/IP/))
+ YAMBO_ALLOC(WF_shifts,(Xk%nbz,3))
  !
  ! Map k-points on a regular grid with information and the neighboars
  ! along the reciprocal lattice vectors 
@@ -54,9 +51,6 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  ! Check the points out of the BZ before bring them inside
  !
  call check_shifts(Xk,WF_shifts) 
-! do ikbz=1,Xk%nbz
-!   write(100,*) Xk%ptbz(ikbz,:)
-! enddo
  !
  Xk%ptbz(:,:)=Xk%ptbz(:,:)-nint(Xk%ptbz(:,:)) ! Bring in the BZ
  !  
@@ -101,13 +95,11 @@ subroutine k_map_nearest_by_dir(Xk,k_map)
  call msg("s",dump_ch)
  !
  if(allocated(k_map%k_map_dir)) then
-   deallocate(k_map%k_map_dir,k_map%k_map_inv)
-   call mem_est("k_map k_map_inv")
+   YAMBO_FREE(k_map%k_map_dir)
+   YAMBO_FREE(k_map%k_map_inv)
  endif
- allocate(k_map%k_map_dir(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
- call mem_est("k_map",(/size(k_map%k_map_dir)/),(/IP/))
- allocate(k_map%k_map_inv(Xk%nbz,3))
- call mem_est("k_map_inv",(/size(k_map%k_map_inv)/),(/IP/))
+ YAMBO_ALLOC(k_map%k_map_dir,(k_map%max_kdir(1),k_map%max_kdir(2),k_map%max_kdir(3)))
+ YAMBO_ALLOC(k_map%k_map_inv,(Xk%nbz,3))
  ! 
  !Find index	     
  ! 

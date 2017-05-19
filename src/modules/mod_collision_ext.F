@@ -58,11 +58,11 @@ module collision_ext
  type COLLISIONS_element
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
-   integer(LP), pointer  :: table(:,:,:)  => null()
-   complex(SP), pointer  :: v_c(:)        => null()  ! SEX and HF
-   complex(SP), pointer  :: v3_c(:,:,:)   => null()
-   real(SP)   , pointer  :: v_r(:)        => null()  ! GW NEQ collisions
-   real(SP)   , pointer  :: v3_r(:,:,:)   => null()
+   integer(LP), allocatable  :: table(:,:,:)
+   complex(SP), allocatable  :: v_c(:)       ! SEX and HF
+   complex(SP), allocatable  :: v3_c(:,:,:)
+   real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions
+   real(SP)   , allocatable  :: v3_r(:,:,:)
  end type
  !
  type COLLISIONS_group
@@ -70,17 +70,17 @@ module collision_ext
    character(schlen)     :: name="none"
    integer               :: kind=0
    integer               :: N=0         ! # of collisions (dimension of linked COLLISIONS_element)
-   integer,     pointer  :: state(:,:)   => null()
+   integer,     allocatable  :: state(:,:)
    !
    ! I/O
    !
-   integer,     pointer  :: IO_status(:) => null()
+   integer,     allocatable  :: IO_status(:)
    !
    ! Parallel Substructure
    !
    type(PP_indexes)      :: PAR_IND
    integer               :: PAR_N=0
-   integer,     pointer  :: PAR_map(:) => null()
+   integer, allocatable  :: PAR_map(:)
    !
  end type
  !

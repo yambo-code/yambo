@@ -33,7 +33,7 @@ subroutine MAG_pseudo_nl(kbv)
  use com,           ONLY:warning
  use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -108,6 +108,6 @@ subroutine MAG_pseudo_nl(kbv)
    enddo   ! ia
  enddo  ! is
  !
- deallocate(x_cc)
+ YAMBO_FREE(x_cc)
  !
 end subroutine

@@ -86,7 +86,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  call elemental_collision_alloc(I_grad_p,NG=QP_QED_ng,GRADIENT=.TRUE.,TITLE="COLL_P")
  !
  PAR_NC=P_collisions%PAR_N
- if (associated(P_collisions%IO_status)) then
+ if (allocated(P_collisions%IO_status)) then
    PAR_NC=count(P_collisions%IO_status==-1)
  endif
  !

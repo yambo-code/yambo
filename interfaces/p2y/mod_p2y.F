@@ -34,7 +34,7 @@ module P2Y
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
  ! 
- implicit none
+#include<memory.h>
  !
  character(lchlen) :: index_filename
  !
@@ -282,25 +282,27 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number
+   ! 
+#include<memory.h>
    !
    ! Work Space
    !
    real(DP)                       :: tau_units
    real(SP)                       :: z
    integer                        :: i1,i2,u
-
-   allocate( ityp_(nat_) )
-   allocate( tau_(3,nat_) )  
+   !
+   YAMBO_ALLOC(ityp_,(nat_))
+   YAMBO_ALLOC(tau_,(3,nat_))
 
 #if defined _P2Y_EXPORT
 
-   allocate(atom_type_ ( nat_), stat=ierr)
-   allocate(species_type_ ( nat_), stat=ierr) 
+   YAMBO_ALLOC(atom_type_,(nat_))
+   YAMBO_ALLOC(species_type_,(nat_))
 
    call pw_atoms(pw_unit)
 
    n_atomic_species = nsp_     ! n_atom_species only read here
-   allocate( atm_(n_atomic_species)) 
+   allocate(atm_(n_atomic_species))
    atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_
      ityp_(i1) = -1
@@ -312,14 +314,15 @@ contains
    enddo
    tau_units = alat_
 
-   deallocate(atom_type_,species_type_)
+   YAMBO_FREE(atom_type_,species_type_)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
-   allocate( atm_(n_atomic_species))
-   allocate( psfile (n_atomic_species))
-   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   allocate(atm_(n_atomic_species))
+   allocate(psfile(n_atomic_species))
+   YAMBO_ALLOC(nmesh,(n_atomic_species))
+   YAMBO_ALLOC(nbeta,(n_atomic_species))
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
@@ -328,20 +331,20 @@ contains
 
 #endif
 
-   allocate(n_atoms_species(n_atomic_species))
+   YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
    n_atoms_species_max = maxval(n_atoms_species)
-   allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
+   YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
    enddo
 
-   allocate(Z_species(n_atomic_species))
+   YAMBO_ALLOC(Z_species,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
@@ -439,14 +442,15 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_k_points(k)
-   !
+   ! 
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero
    use com,         ONLY:warning
+#include<memory.h>
    type(bz_samp) :: k
    !
-   allocate(xk_(3, k%nibz))
+   YAMBO_ALLOC(xk_,(3,k%nibz))
 #if defined _P2Y_EXPORT
 
    call pw_kpoints(pw_unit)
@@ -461,11 +465,10 @@ contains
    ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
    ! PW cart tpiba/cart au/cart alat/RLU units
    !
-   allocate(k%pt(k%nibz,3))
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
    do i1=1,k%nibz
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
-!  deallocate(xk_)
 
 #if defined _P2Y_EXPORT
  
@@ -499,20 +502,22 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_R_vectors
+   ! 
    use pars,        only : pi
    use R_lattice,   ONLY:b, ng_vec, g_vec
    use D_lattice,   ONLY:alat
+#include<memory.h>
    !
-   allocate(g_vec(ng_vec,3)) ! The YAMBO array
+   YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
 
 #if defined _P2Y_EXPORT
 
-   allocate(igv_(3,ng_vec))    
+   YAMBO_ALLOC(igv_,(3,ng_vec))
    call pw_gvectors(pw_unit)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
+   YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
    if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
 
@@ -536,8 +541,6 @@ contains
      enddo
      !
    endif
-
-!  deallocate(igv_)
    !
  end subroutine get_R_vectors
  !
@@ -554,20 +557,20 @@ contains
    type(bz_samp) :: k
    integer i1,ik
    !
-   allocate( wf_nc_k(k%nibz) )
+   YAMBO_ALLOC(wf_nc_k,(k%nibz))
 
 #if defined _P2Y_EXPORT
 
-   allocate( pw_igk_(wf_ncx, k%nibz))
-   allocate( pw_npwk_(k%nibz) )
+   YAMBO_ALLOC(pw_igk_,(wf_ncx,k%nibz))
+   YAMBO_ALLOC(pw_npwk_,(k%nibz))
    call pw_igkindex(pw_unit)
    wf_nc_k(:) = pw_npwk_(:)
-   deallocate(pw_npwk_)
+   YAMBO_FREE(pw_npwk_)
 
 #elif defined _P2Y_V31  || defined _P2Y_V311 
 
-   allocate( pw_igk_(ngm_, k%nibz))
-   allocate(index_(ngm_))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
+   YAMBO_ALLOC(pw_igk_,(ngm_,k%nibz))
+   YAMBO_ALLOC(index_,(ngm_)) ! avoid allocate(index_,(wf_ncx)) in case of v3.1 bug
    do ik = 1, k%nibz
      !
      pw_igk_(1:ngm_, ik)= 0
@@ -595,7 +598,7 @@ contains
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
-   deallocate(index_)
+   YAMBO_FREE(index_)
 !
 ! This is a correct definition of wf_ncx only if gamma_only = .false.
 !
@@ -603,19 +606,19 @@ contains
 
 #elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
-   allocate( pw_igk_(npwx_, k%nibz))
-   allocate( index_(npwx_) )     
+   YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
+   YAMBO_ALLOC(index_,(npwx_))
    do ik = 1, k%nibz
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
-   deallocate(index_)
+   YAMBO_FREE(index_)
      
 #endif
 
-   allocate( wf_igk(wf_ncx, k%nibz) )  ! this will be incorrect for parallel 3.1
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz)) ! this will be incorrect for parallel 3.1
    wf_igk(:,:)=-1 ! for checking
 
    if(gamma_only_) then
@@ -635,7 +638,7 @@ contains
        wf_igk(1:wf_nc_k(i1),i1)= pw_igk_(1:wf_nc_k(i1),i1) 
      enddo   
    endif
-   deallocate(pw_igk_)
+   YAMBO_FREE(pw_igk_)
 
    wf_ng = maxval(wf_igk)
    !
@@ -659,11 +662,11 @@ contains
    integer      :: ik_,ispin_
    type(levels) :: en
    !
-   allocate( en%E(en%nb, k%nibz, n_sp_pol) )
+   YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_sp_pol))
 
 #if defined _P2Y_EXPORT
 
-   allocate(eig_(en%nb, k%nibz))
+   YAMBO_ALLOC(eig_,(en%nb,k%nibz))
 
    call pw_eigenvalues(pw_unit)
     
@@ -673,22 +676,22 @@ contains
 
    select case(n_sp_pol)
    case(1)
-     allocate(eig_(en%nb, k%nibz))
+     YAMBO_ALLOC(eig_,(en%nb,k%nibz))
      call qexml_read_bands(eig=eig_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
-     deallocate(eig_)
+     YAMBO_FREE(eig_)
    case(2)
-     allocate(eig_s_(en%nb, k%nibz,n_sp_pol))
+     YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
      call qexml_read_bands(eig_s=eig_s_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
-     deallocate(eig_s_)
+     YAMBO_FREE(eig_s_)
    end select
 
 #elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
 
-   allocate(eigb_(en%nb))
+   YAMBO_ALLOC(eigb_,(en%nb))
    select case(n_sp_pol)
    case(2)
      do ik_ = 1,k%nibz
@@ -705,7 +708,7 @@ contains
         en%E(:,ik_,1) = eigb_( 1:en%nb )
      enddo
    end select
-   deallocate(eigb_)
+   YAMBO_FREE(eigb_)
 
 #endif
     

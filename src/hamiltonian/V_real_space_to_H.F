@@ -23,7 +23,7 @@
 !
 subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
- use electrons,      ONLY:n_sp_pol,n_spin,n_spinor,spin
+ use electrons,      ONLY:n_spin,n_spinor,spin
  use pars,           ONLY:SP
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
@@ -36,6 +36,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
 #endif
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
+#endif
+#if defined _TIMING
+ use timing_m,       ONLY:timing
 #endif
  implicit none
  !
@@ -53,6 +56,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
+#endif
+ !
+#if defined _TIMING
+ call timing('V_real_space_to_H',OPR='start')
 #endif
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
@@ -134,5 +141,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
      H(ib,ibp)=conjg(H(ibp,ib))
    enddo
  enddo
+ !
+#if defined _TIMING
+ call timing('V_real_space_to_H',OPR='stop')
+#endif
  !
 end subroutine 

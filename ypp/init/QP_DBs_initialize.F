@@ -109,7 +109,11 @@ subroutine QP_DBs_initialize()
            endif
          endif
        enddo
-       if (i_c==1) allocate(QP_db_what(n_QP_dbs),QP_db(n_QP_dbs),QP_db_name(n_QP_dbs))
+       if (i_c==1) then
+         allocate(QP_db_what(n_QP_dbs))
+         allocate(QP_db(n_QP_dbs))
+        allocate(QP_db_name(n_QP_dbs))
+       endif
      enddo
      !
    endif

@@ -43,7 +43,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqibz,nqbz
  use QP_m,          ONLY:QP_n_states,QP_nb,QP_n_G_bands
- implicit none
+#include<memory.h>
  !
  type(levels)               ::E
  type(bz_samp)              ::Xk,q

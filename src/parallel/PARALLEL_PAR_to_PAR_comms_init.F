@@ -24,7 +24,8 @@
 subroutine PARALLEL_PAR_to_PAR_comms_init()
  !
  use parallel_m,    ONLY:COMM_reset,PAR_COM_SLK_INDEX_local
- use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME,N_MAX_PAR_to_PAR_comms
+ use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME,&
+&                        N_MAX_PAR_to_PAR_comms
  !
  implicit none
  !
@@ -40,7 +41,9 @@ subroutine PARALLEL_PAR_to_PAR_comms_init()
    deallocate(PAR_to_PAR_comm_SAVE)
  endif
  !
- N_MAX_PAR_to_PAR_comms=2*PAR_COM_SLK_INDEX_local%n_CPU+1
+ N_MAX_PAR_to_PAR_comms=PAR_COM_SLK_INDEX_local%n_CPU*5
+ !                                                    |_ are the potential transfer structures
+ !                                                       3  in X_redux, 1 in X_dielectric_matrix, 1 in BSE
  !
  allocate(PAR_to_PAR_comm_SAVE(N_MAX_PAR_to_PAR_comms))
  allocate(PAR_to_PAR_comm_SAVE_NAME(N_MAX_PAR_to_PAR_comms))

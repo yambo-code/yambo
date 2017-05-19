@@ -41,36 +41,36 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
  integer :: i_rcv,i_snd,CROP(4),i_snd_world,i_rcv_world,i_cpu,&
 &           RCV_corners(TRANSFER_world%n_CPU,4),SND_corners(TRANSFER_world%n_CPU,4),&
 &           ACTIVE_cpus_snd(TRANSFER_world%n_CPU),ACTIVE_cpus_rcv(TRANSFER_world%n_CPU),&
-&           CPU_in_the_world(TRANSFER_world%n_CPU),i_COMM,i_s,i_s_free
+&           CPU_in_the_world(TRANSFER_world%n_CPU),i_COMM_found,i_c,i_COMM_free
  !
  ! Local WORLD
  !
  type(MPI_comm) :: COMM
  !
- i_COMM  =0
- i_s_free=0
+ i_COMM_found =0
+ i_COMM_free  =0
  if (trim(PAR_to_PAR_comm_NAME)/="NONE") then
-   do i_s=1,N_PAR_to_PAR_comms
-     if (len_trim(PAR_to_PAR_comm_SAVE_NAME(i_s))==0.and.i_s_free==0) i_s_free=i_s
-     if (PAR_to_PAR_comm_SAVE_NAME(i_s)==PAR_to_PAR_comm_NAME       ) i_COMM=i_s
+   do i_c=1,N_PAR_to_PAR_comms
+     if (len_trim(PAR_to_PAR_comm_SAVE_NAME(i_c))==0.and.i_COMM_free==0) i_COMM_free=i_c
+     if (PAR_to_PAR_comm_SAVE_NAME(i_c)==PAR_to_PAR_comm_NAME          ) i_COMM_found=i_c
    enddo
-   if (i_COMM==0.and.i_s_free==0)       i_s_free=N_PAR_to_PAR_comms+1
-   if (i_s_free>N_MAX_PAR_to_PAR_comms) i_s_free=1
+   if (i_COMM_found==0.and.i_COMM_free==0) i_COMM_free=N_PAR_to_PAR_comms+1
+   if (i_COMM_free>N_MAX_PAR_to_PAR_comms) i_COMM_free=1
  endif
  !
- if (i_COMM==0) then
+ if (i_COMM_found==0) then
    call COMM_reset(COMM)
    COMM%my_CHAIN=myid
    if (I_do_SND.or.I_do_RCV) COMM%my_CHAIN=-1
    if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,COMM,myid)
    if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,COMM)
-   if (i_s_free>0) then
-     call COMM_copy(COMM,PAR_to_PAR_comm_SAVE(i_s_free))
-     PAR_to_PAR_comm_SAVE_NAME(i_s_free)=PAR_to_PAR_comm_NAME
-     N_PAR_to_PAR_comms=i_s_free
+   if (i_COMM_free>0) then
+     call COMM_copy(COMM,PAR_to_PAR_comm_SAVE(i_COMM_free))
+     PAR_to_PAR_comm_SAVE_NAME(i_COMM_free)=PAR_to_PAR_comm_NAME
+     if (i_COMM_free>N_PAR_to_PAR_comms) N_PAR_to_PAR_comms=i_COMM_free
    endif
  else
-   call COMM_copy(PAR_to_PAR_comm_SAVE(i_COMM),COMM)
+   call COMM_copy(PAR_to_PAR_comm_SAVE(i_COMM_found),COMM)
  endif
  ! 
  if (.not.I_do_SND.and..not.I_do_RCV) return

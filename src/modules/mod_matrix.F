@@ -38,7 +38,7 @@ module matrix
  ! PAR to PAR special COMMs
  !
  integer              :: N_MAX_PAR_to_PAR_comms=0
- integer              :: N_PAR_to_PAR_comms=0
+ integer              :: N_PAR_to_PAR_comms    =0
  character(schlen)    :: PAR_to_PAR_comm_NAME
  type(MPI_comm),    allocatable  :: PAR_to_PAR_comm_SAVE(:)
  character(schlen), allocatable  :: PAR_to_PAR_comm_SAVE_NAME(:)

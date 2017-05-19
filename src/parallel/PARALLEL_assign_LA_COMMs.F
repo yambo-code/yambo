@@ -57,8 +57,8 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
-   call PARALLEL_PAR_to_PAR_comms_init()
    call SERIAL_fallback()
+   call PARALLEL_PAR_to_PAR_comms_init()
    !
    return
    !
@@ -90,8 +90,8 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! 
  if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
  if (.not.linear_algebra_is_parallel) then
-   call PARALLEL_PAR_to_PAR_comms_init()
    call SERIAL_fallback( )
+   call PARALLEL_PAR_to_PAR_comms_init()
    return
  endif
  !

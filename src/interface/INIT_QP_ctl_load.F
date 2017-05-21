@@ -100,6 +100,13 @@ subroutine INIT_QP_ctl_load(defs,ID)
    !
  enddo
  !
+ ! Back Compataibility with master input fields (temporary)
+ !
+ QP_ctl_user(ID,i_f)%Wv_dos=QP_ctl_user(ID,i_f)%Wv(2)
+ QP_ctl_user(ID,i_f)%Wv(2)=QP_ctl_user(ID,i_f)%Wv(3)
+ QP_ctl_user(ID,i_f)%Wc_dos=QP_ctl_user(ID,i_f)%Wc(2)
+ QP_ctl_user(ID,i_f)%Wc(2)=QP_ctl_user(ID,i_f)%Wc(3)
+ !
  call it(defs,prefix(ID)//'fnQPdb',&
 &        '[EXTQP '//trim(description_ch(ID))//'] Database',&
 &        QP_ctl_db(ID),verb_level=V_qp)

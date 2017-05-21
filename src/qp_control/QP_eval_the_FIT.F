@@ -91,10 +91,10 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
    !
    ! Linear/Quadratic correction
    !
-   if ( (     is_valence.and.Energy>E_ref) .or. (.not.is_valence.and.Energy<E_ref) ) then
+   if ( (     is_valence.and.Energy<E_ref) .or. (.not.is_valence.and.Energy>E_ref) ) then
      do i_p=1,2
        M_factor=QP_action(i_ACTION)%CTL(i_spin)%W(iref+1+i_p)
-       QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)**i_p
+       QP_eval_the_FIT=QP_eval_the_FIT+M_factor*abs(Energy-E_ref)**i_p
      enddo
    endif
    !

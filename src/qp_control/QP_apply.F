@@ -67,6 +67,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  type(levels)     ::Fermi_en
  integer          ::ik_bz,ik_ibz,ib,i1,ik_r,i_spin,nbf_m_SAVE(2),i_a
+ logical          ::l_E_done
  integer, allocatable :: DbGd_k_done(:)
  !
  ! Resets
@@ -126,7 +127,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (.not.QP_action(i_a)%active) cycle
    !
-   call QP_apply_the_ACTION(i_a,bands,en,k)
+   call QP_apply_the_ACTION(i_a,bands,en,k,l_E_done)
    !
  enddo
  !
@@ -159,6 +160,18 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    enddo
    !
    YAMBO_FREE(DbGd_k_done)
+   !
+ endif
+ !
+ ! Energy corrected?
+ !
+ if (.not.l_E_done) then
+   !
+   call E_reset(Fermi_en)
+   YAMBO_FREE(DbGd_k_done)
+   call QP_actions_reset( )
+   !
+   return
    !
  endif
  !

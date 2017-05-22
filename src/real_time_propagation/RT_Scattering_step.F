@@ -97,8 +97,8 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term
    !
-   GAMMA0(1)=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)
-   GAMMA0(2)=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)
+   GAMMA0(1)=REF_lifetime(ib,ik,2)+REF_lifetime(ib,ik,4)+REF_lifetime(ib,ik,6)+REF_lifetime(ib,ik,8)
+   GAMMA0(2)=REF_lifetime(ib,ik,1)+REF_lifetime(ib,ik,3)+REF_lifetime(ib,ik,5)+REF_lifetime(ib,ik,7)
    !
    dGAMMA(1)=0._SP
    dGAMMA(2)=0._SP
@@ -124,37 +124,44 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    GAMMA0_TOT=GAMMA0(1)+GAMMA0(2)
    GAMMA__TOT=GAMMA_(1)+GAMMA_(2)
    !
-   ! DEBUG<
-   !if(.not.l_RT_relax_time_approx) then
-   !  ! Standard definition, however not compatible with RTA
-   !  if (RT_is_statically_dephased) GAMMA_(1)=GAMMA_(1)+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
-   !  df_out(:) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
-   !  dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
-   !  cycle
-   !endif
-   ! DEBUG>
-   !
-   if (RT_is_statically_dephased) GAMMA0_TOT=GAMMA0_TOT+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
-   !
    if(.not.l_RT_relax_time_approx) then
-     if( GAMMA__TOT> 0._SP  ) then
-       f_inf(1)= GAMMA_(2)/GAMMA__TOT*spin_occ
-       f_inf(2)= GAMMA_(1)/GAMMA__TOT*spin_occ
-     endif
-     if( GAMMA__TOT<=0._SP  ) then
-       f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
-       f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-     endif
+     !
+     ! Option A: Standard definition, however not compatible with RTA
+     if (RT_is_statically_dephased) GAMMA_(1)=GAMMA_(1)+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
+     df_out(1) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
+     dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
+     !
+     ! DEBUG<
+     !! Option B: Written in the same form of RTA
+     !if( GAMMA__TOT> 0._SP  ) then
+     !  f_inf(1)= GAMMA_(2)/GAMMA__TOT*spin_occ
+     !  f_inf(2)= GAMMA_(1)/GAMMA__TOT*spin_occ
+     !endif
+     !if( GAMMA__TOT<=0._SP  ) then
+     !  f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
+     !  f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+     !endif
+     !df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
+     !&                    dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
+     !!
+     !if (f0(1)<=0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
+     !if (f0(1)> 0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel
+     ! DEBUG>
+     !
    else
+     !
+     if (RT_is_statically_dephased) GAMMA0_TOT=GAMMA0_TOT+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
+     !
      f_inf(1)= RT_RTA_E_occ_infty(ib,ik)
      f_inf(2)= RT_RTA_H_occ_infty(ib,ik)
+     !
+     df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
+&                         dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
+     !
+     if (f0(1)<=0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
+     if (f0(1)> 0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel
+     !
    endif
-   !
-   df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
-&                       dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
-   !
-   if (f0(1)<=0.5_SP) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
-   if (f0(1)> 0.5_SP) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel
    !
  enddo
  !

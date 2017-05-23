@@ -109,9 +109,12 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    endif
    return
  endif
- if (Sz<0.or.Sz==0) then
-   call error("Allocation attempt of "//what//" of zero or negative size.")
+ if (Sz==0) then
+   call warning("Allocation attempt of "//what//" of zero size.")
    return
+ endif
+ if (Sz<0) then
+   call error("Allocation attempt of "//what//" of negative size.")
  endif
  !
  ! Database Update

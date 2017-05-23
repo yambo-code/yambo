@@ -266,6 +266,8 @@ if test x"$enable_hdf5" = "xyes"; then
   if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
   if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
   #
+  LIBS="$try_HDF5_LIBS"
+  #
   AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
      use hdf5
      use netcdf

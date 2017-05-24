@@ -33,7 +33,7 @@ integer function io_DB1(E,k,ID)
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
-&                           qp_states_k,nXkibz,ng_closed
+&                           QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_exist, &
@@ -231,7 +231,7 @@ integer function io_DB1(E,k,ID)
      nXkibz=k%nibz
      QP_nk =k%nibz
      E%nk =k%nibz
-     qp_states_k=(/1,k%nibz/)
+     QP_states_k=(/1,k%nibz/)
      !
      n_bands=E%nb
      wf_nb_io=E%nb

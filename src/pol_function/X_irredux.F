@@ -335,6 +335,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 !$omp end parallel
 #endif
  !
+ !
  if(coarse_grid_N>0) call live_timing()
  !
  call OPENMP_update(master_thread) 

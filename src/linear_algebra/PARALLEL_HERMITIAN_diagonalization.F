@@ -41,7 +41,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: N
  type(PAR_matrix)  :: M,V
@@ -73,8 +73,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  ! AF: A better estimates should be used
  lwork=2*n**2
  lrwork=2*n + 2*n-2
- allocate(WS%v_cmplx(lwork))
- allocate(WS%v_real(lrwork))
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ YAMBO_ALLOC(WS%v_real,(lrwork))
  !
 #if defined _DOUBLE
  call PZHEEV&

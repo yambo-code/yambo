@@ -34,7 +34,7 @@ subroutine bz_interp_setup(Xk)
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  !
@@ -48,7 +48,7 @@ subroutine bz_interp_setup(Xk)
  logical                   :: add_vec,vec_in_star
  real(SP),  parameter      :: zero=2e-05
  !
- allocate(int_sop(3,3,nsym))
+ YAMBO_ALLOC(int_sop,(3,3,nsym))
  ! 
  metric=matmul(a,transpose(a))
  !
@@ -74,7 +74,10 @@ subroutine bz_interp_setup(Xk)
  !
  nR_max=product(2*R_max+1)
  !
- allocate(all_vec(3,nR_max),all_vec_mod(nR_max),indx(nR_max),tmp_vec(3,nR_max))
+ YAMBO_ALLOC(all_vec,(3,nR_max))
+ YAMBO_ALLOC(all_vec_mod,(nR_max))
+ YAMBO_ALLOC(indx,(nR_max))
+ YAMBO_ALLOC(tmp_vec,(3,nR_max))
  !
  all_vec    =0._SP
  all_vec_mod=0._SP
@@ -100,11 +103,12 @@ subroutine bz_interp_setup(Xk)
  !
  tmp_vec(:,1:n_vec)=all_vec(:,indx(1:n_vec))
  all_vec(:,1:n_vec)=tmp_vec(:,1:n_vec)
- deallocate(tmp_vec)
+ YAMBO_FREE(tmp_vec)
  !
  ! Find R sheels
  !
- allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
+ YAMBO_ALLOC_P(lattice_vectors,(3,n_vec))
+ YAMBO_ALLOC(lattice_vec_mod,(n_vec))
  !
  istart=1
  iend=1
@@ -146,20 +150,20 @@ subroutine bz_interp_setup(Xk)
    !
  enddo
  !
-! do i1=1,n_vec
-!   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
-! enddo
  call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !
- deallocate(lattice_vectors,lattice_vec_mod)
+ YAMBO_FREE_P(lattice_vectors)
+ YAMBO_FREE(lattice_vec_mod)
  !
- allocate(lattice_vectors(3,nshells))
+ YAMBO_ALLOC_P(lattice_vectors,(3,nshells))
  !
  lattice_vectors(1:3,1:nshells)=all_vec(1:3,1:nshells)
  !
- deallocate(all_vec,all_vec_mod,indx)
+ YAMBO_FREE(all_vec)
+ YAMBO_FREE(all_vec_mod)
+ YAMBO_FREE(indx)
  !
 end subroutine bz_interp_setup
 

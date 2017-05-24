@@ -69,7 +69,7 @@ subroutine G_b_to_B_mat(pCOMM,what,nb)
      enddo
    enddo
  else
-   allocate(PAR_Bp_mat_index(nb(1):nb(2),nb(1):nb(2)))
+   YAMBO_ALLOC(PAR_Bp_mat_index,(nb(1):nb(2),nb(1):nb(2)))
    PAR_n_Bp_mat_elements=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1)
    PAR_Bp_mat_index=0
    PAR_n_Bp_mat_elements=0
@@ -87,40 +87,7 @@ end subroutine
 !
 #endif
 !
-subroutine fill_IBZk_using_BZk(IND_ibz,IND_bz,COMM,Xk)
- !
- use parallel_m,    ONLY:PP_indexes,MPI_comm
- use R_lattice,     ONLY:bz_samp
- !
-#include <memory.h>
- !
- type(PP_indexes) :: IND_ibz,IND_bz
- type(MPI_comm)   :: COMM
- type(bz_samp)    :: Xk
- !
- ! Work Space
- !
- integer :: i_k,i_k_bz
- !
- if (.not.allocated(IND_ibz%element_1D)) then
-   YAMBO_ALLOC(IND_ibz%element_1D,(Xk%nibz))
-   YAMBO_ALLOC(IND_ibz%n_of_elements,(COMM%n_CPU))
-   IND_ibz%element_1D=.FALSE.
- endif
- !
- do i_k_bz=1,Xk%nbz
-   !
-   i_k=Xk%sstar(i_k_bz,1)
-   !
-   if (IND_bz%element_1D(i_k_bz)) IND_ibz%element_1D(i_k)=.TRUE.
-   !
- enddo
- !
- IND_ibz%n_of_elements(COMM%CPU_ID+1)=count(IND_ibz%element_1D)
- !
-end subroutine
-!
-subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_bz,BZ_id,BZ_index,PAR_n_bz)
+subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_out,BZ_id,BZ_index,PAR_n_bz)
  !
  use R_lattice,     ONLY:bz_samp
  use parallel_m,    ONLY:PP_indexes,MPI_comm
@@ -128,7 +95,7 @@ subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_bz,BZ_id,BZ_index
 #include <memory.h>
  !
  type(MPI_comm)   :: COMM
- type(PP_indexes) :: IND_ibz,IND_bz
+ type(PP_indexes) :: IND_ibz,IND_out
  type(bz_samp)    :: K
  !
  integer          :: IBZ_id,BZ_id,BZ_index(K%nbz),PAR_n_bz
@@ -138,10 +105,9 @@ subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_bz,BZ_id,BZ_index
  !
  ! K-points in the BZ 
  !
- YAMBO_ALLOC(IND_bz%element_1D,(K%nbz))
- IND_bz%element_1D=.FALSE.
- !
- YAMBO_ALLOC(IND_bz%n_of_elements,(COMM%n_CPU))
+ YAMBO_ALLOC(IND_out%element_1D,(K%nbz))
+ YAMBO_ALLOC(IND_out%n_of_elements,(COMM%n_CPU))
+ IND_out%element_1D=.FALSE.
  ! 
  BZ_index=0
  !
@@ -155,16 +121,16 @@ subroutine distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_bz,BZ_id,BZ_index
    !
    if (IND_ibz%element_1D(i_ibz)) then
      i_p=i_p+1
-     IND_bz%element_1D(i_bz)=.TRUE.
+     IND_out%element_1D(i_bz)=.TRUE.
      BZ_index(i_bz)=i_p
    else
-     IND_bz%element_1D(i_bz)=.FALSE.
+     IND_out%element_1D(i_bz)=.FALSE.
    endif
    !
  enddo
  !
  PAR_n_bz=i_p
  !
- IND_bz%n_of_elements(BZ_ID+1)=PAR_n_bz
+ IND_out%n_of_elements(BZ_ID+1)=PAR_n_bz
  !
 end subroutine

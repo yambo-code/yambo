@@ -26,7 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
@@ -92,10 +92,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
 #if defined _SCALAPACK
- use SLK_m,                ONLY:SLK_test_H_dim
+ use SLK_m,         ONLY:SLK_test_H_dim
 #endif
 #if defined _PL
- use PHOTOLUM,             ONLY:PL_weights
+ use PHOTOLUM,      ONLY:PL_weights
+#endif
+#if defined _MEM_CHECK
+ use memory,        ONLY:MEM_treshold
 #endif
  !
  implicit none
@@ -479,6 +482,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'B_Gauge',       '[MAG] Gauge ("SYMM"etric, "X_ASYMM", "Y_ASYMM" or "Z_ASYMM"etric)',MAG_gauge,verb_level=V_sc)
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization',verb_level=V_sc)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
+#endif
+ !
+#if defined _MEM_CHECK
+ !
+ ! Memory
+ !
+ call it(defs,'MEM_tresh',     '[MEMORY] Treshold on traced memory allocations/deallocations',MEM_treshold,verb_level=V_general,&
+&                                                                                             unit=MEM_unit(1))
+ !
 #endif
  !
  ! QP ctl 

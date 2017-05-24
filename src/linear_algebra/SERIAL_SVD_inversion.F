@@ -30,7 +30,7 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n)
@@ -42,7 +42,11 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  call timing('SERIAL_SVD_inversion',OPR='start')
 #endif
  !
- allocate(WS%v_real(5*n),WS%vp_real(n),WS%m2_cmplx(n,n),WS%m1_cmplx(n,n),WS%v_cmplx(1))
+ YAMBO_ALLOC(WS%v_real,(5*n))
+ YAMBO_ALLOC(WS%vp_real,(n))
+ YAMBO_ALLOC(WS%m2_cmplx,(n,n))
+ YAMBO_ALLOC(WS%m1_cmplx,(n,n))
+ allocate(WS%v_cmplx(1))
  !
  call SV_decomposition(n,M,WS%vp_real,WS%m2_cmplx,WS%m1_cmplx,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
@@ -50,7 +54,7 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
+ YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
  call SV_decomposition(n,M,WS%vp_real,WS%m2_cmplx,WS%m1_cmplx,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
  if(WS%i_fail/=0) call LINEAR_ALGEBRA_error('GESVD (SVD)','failed')

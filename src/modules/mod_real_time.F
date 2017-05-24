@@ -24,7 +24,7 @@
 module real_time
  !
  use drivers,    ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
- use pars,       ONLY:DP,SP,schlen,lchlen
+ use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
  use electrons,  ONLY:levels
@@ -85,7 +85,7 @@ module real_time
  ! 
  ! Lifetimes Extrapolation Time status 
  ! 
- integer(2), allocatable :: RT_TIME_status(:)
+ integer(LP), allocatable :: RT_TIME_status(:)
  !
  ! Kind of e-e interactions (for the CORR and SCATT parts)
  !
@@ -143,6 +143,7 @@ module real_time
  ! of a post-run I need to keep here the number of k-points 
  !
  integer                 :: RT_nk
+ integer                 :: RT_DbGd_nk
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
@@ -357,6 +358,9 @@ module real_time
    !
    subroutine RT_obj_alloc(RT)
      type(RT_t)::RT
+     !
+     if (allocated(RT%kpt)) return
+     !
      YAMBO_ALLOC(RT%kpt,(RT%nk,3))
      YAMBO_ALLOC(RT%k_weight,(RT%nk))
      YAMBO_ALLOC(RT%table,(RT%nstates,4))
@@ -505,7 +509,7 @@ module real_time
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
        YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
-       YAMBO_ALLOCATE(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
+       YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
        YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
        REF_lifetime=0._SP
        SAVED_lifetime=0._SP
@@ -528,8 +532,6 @@ module real_time
      !
      YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      XC0=cZERO
-     !
-     YAMBO_ALLOC(SC_R,(1:RT_bands(2),1:RT_bands(2),nXkibz,n_sp_pol))
      !
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      !
@@ -580,7 +582,6 @@ module real_time
      YAMBO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
-     YAMBO_FREE(SC_R)
      YAMBO_FREE(E_PHOT_Hole_lifetime)
      YAMBO_FREE(E_PHOT_Electron_lifetime)
      YAMBO_FREE(E_E_Hole_lifetime)

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_components_folded_in_serial_arrays(iq)
+subroutine K_components_folded_in_serial_arrays(iq,what)
  !
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
@@ -35,20 +35,20 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,K_slk,&
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
- use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim,BS_blks_free
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:BSS_dipoles_kerr,BS_KERR_alloc
+ use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
 #endif
  !
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BSS_dipoles_PL,BS_PL_alloc,BSS_PL_f,PL_weights
+ use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -56,6 +56,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
 #include <memory.h>
  !
  integer      :: iq
+ character(*) :: what
  !
  ! Work Space
  !
@@ -76,11 +77,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   call BS_KERR_alloc( )
+   call BSS_KERR_alloc( )
 #endif
    !
 #if defined _PL
-   call BS_PL_alloc( )
+   call BSS_PL_alloc( )
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -268,5 +269,12 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! BS_mat lives in the entire world.
  !
  call PP_redux_wait(BS_mat)
+ !
+ ! After the folding the %mat's are (in some cases) not needed anymore 
+ !
+ if (run_Haydock) return
+ if (run_inversion.and.what=="DIAGO") return
+ !
+ call BS_blks_free( )
  !
 end subroutine K_components_folded_in_serial_arrays

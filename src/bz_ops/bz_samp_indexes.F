@@ -47,7 +47,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
- use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,qp_states_k,&
+ use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
@@ -78,10 +78,6 @@ subroutine bz_samp_indexes(k,Xk,q)
 #endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
-#if defined _TIMING
- call timing('bz_samp_indexes',OPR='start')
-#endif
- !
  call section('*','Transferred momenta grid')
  !
  user_defined_qpts=.false.
@@ -107,11 +103,17 @@ subroutine bz_samp_indexes(k,Xk,q)
    return
  endif
  !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='start')
+#endif
+ !
+ !
  ! First I map the Xk grid in a simple cubic Net
  !
  call k_ibz2bz(Xk,'a',.false.)  
  !
- allocate(q_map(k_grid(1),k_grid(2),k_grid(3)),q_iptbz(Xk%nbz,3))
+ YAMBO_ALLOC(q_map,(k_grid(1),k_grid(2),k_grid(3)))
+ YAMBO_ALLOC(q_iptbz,(Xk%nbz,3))
  !
  ! k_b_m1=transpose(k_grid_b) in rlu
  !
@@ -270,7 +272,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call live_timing('SSE indexes',k%nbz)
  else
    call msg('rn',':: Indices: Self-Energy')
-   call live_timing('SE indexes',qp_states_k(2)-qp_states_k(1)+1)
+   call live_timing('SE indexes',QP_states_k(2)-QP_states_k(1)+1)
  endif
  !
  call k_ibz2bz(k,'a',.false.)
@@ -331,7 +333,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !CLEAN
  !
  call k_ibz2bz(Xk,'d',.false.)
- deallocate(q_map,q_iptbz)
+ YAMBO_FREE(q_map)
+ YAMBO_FREE(q_iptbz)
  if (Xk_grid_is_uniform) then
    YAMBO_FREE(q%ptbz)
  endif

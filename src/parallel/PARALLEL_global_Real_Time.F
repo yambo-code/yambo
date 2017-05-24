@@ -49,7 +49,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
 &                        PAR_IND_DIPk_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
  !
- implicit none
+#include<memory.h>
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
@@ -111,7 +111,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                           NCPU=PAR_COM_WF_b_INDEX%n_CPU)
  !
  YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
- YAMBO_ALLOC(PAR_IND_WF_b%element_1D,(RT_bands(2))) 
+ YAMBO_ALLOC(PAR_IND_WF_b%element_1D,(RT_bands(2)))
  PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=RT_bands(1)-1
  PAR_IND_WF_b%element_1D(:)=.FALSE.
  if (RT_bands(1)>1) PAR_IND_WF_b%element_1D(1:RT_bands(1)-1)=.TRUE.
@@ -141,6 +141,13 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! PAR_WF_k is like PAR_IND_Xk_ibz with WF loaded only for 1 cpu per k-block
  !
  !.........................................................................
+ if (allocated(PAR_IND_Xk_ibz%n_of_elements)) then 
+   !
+   ! This allocation can be left over from previous calls to PARALLEL_global routine
+   !
+   call PP_indexes_reset(PAR_IND_DIPk_ibz)
+   !
+ endif
  call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID

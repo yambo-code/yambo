@@ -325,7 +325,9 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     YAMBO_ALLOC(TYP%Time,(NE_steps))
+     if (.not.allocated(TYP%Time)) then
+       YAMBO_ALLOC(TYP%Time,(NE_steps))
+     endif
      !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))

@@ -30,6 +30,7 @@ module it_m
  !
  ! Units Names
  !
+ character(2),parameter :: MEM_unit(3)=(/'Kb','Mb','Gb'/)
  character(2),parameter :: E_unit='eV'
  character(2),parameter :: G_unit='RL'
  character(2),parameter :: T_unit='eV'

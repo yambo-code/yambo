@@ -32,7 +32,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
@@ -44,8 +44,8 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
 #endif
  !
  WS%dim=n
- if (allocated(WS%v_int)) deallocate(WS%v_int)
- allocate(WS%v_int(WS%dim))
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(WS%dim))
  !
 #if defined _DOUBLE
  CALL ZGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)

@@ -28,7 +28,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
   use vec_operate,    ONLY:c2a
-  implicit none
+#include<memory.h>
   !
   integer,intent(in)        :: nvalues
   integer,intent(in)        :: Nk
@@ -43,7 +43,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   real(SP) :: star_vec(3,nsym),v(3)
   complex(SP), allocatable :: star(:,:)
   !
-  allocate (star(nshells,Nk))
+  YAMBO_ALLOC(star,(nshells,Nk))
   !
   ! Make stars
   !
@@ -65,6 +65,6 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
     enddo
   enddo
   !
-  deallocate (star)
+  YAMBO_FREE(star)
   !
 end subroutine fourier_interpolation

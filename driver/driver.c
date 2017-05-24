@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -413,7 +413,7 @@ static void load_environments(char *file_name)
  }else{
   fp = fopen(file_name, "w+");
   fputs("#\n",fp);
-  fputs("# Edit it and use with -E during runtim\n#\n",fp);
+  fputs("# Edit it and use with -E during runtime\n#\n",fp);
   fputs("# CPU section (just edit, do not remove fields)\n",fp);
   fputs("setenv YAMBO_X_q_0_CPU 1.1.1.1\n",fp);
   fputs("setenv YAMBO_X_finite_q_CPU 1.1.1.1.1\n",fp);

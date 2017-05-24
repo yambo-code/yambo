@@ -39,14 +39,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS_solvers,   ONLY:BSS_q0,BS_blks_free
+ use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
@@ -63,10 +63,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
- use PHOTOLUM,       ONLY:BS_PL_free
+ use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -223,10 +223,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      ! GPL_EXCLUDE_START
      !
 #if defined _PL
-     call BS_PL_free( )
+     call BSS_PL_free( )
 #endif
 #if defined _KERR
-     call BS_KERR_free( )
+     call BSS_KERR_free( )
 #endif
      !
      ! GPL_EXCLUDE_END

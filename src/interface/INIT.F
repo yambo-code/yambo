@@ -238,6 +238,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=io_ID)
  io_err=io_DB1(en,k,io_ID) 
  !
+#if defined _MEM_CHECK
+ call MEM_treshold_estimate( )
+#endif
+ !
  ! wf
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),COM=NONE,MODE=DUMP,ID=io_ID)
@@ -490,7 +494,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn')
+ call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh')
  !
  !FFT
  !

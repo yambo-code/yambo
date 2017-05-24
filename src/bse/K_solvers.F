@@ -140,7 +140,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
- ! CLEAN(final)
+ ! CLEAN (final)
  !
  YAMBO_FREE(X_drude_term)
  YAMBO_FREE(Epsilon_ii)
@@ -151,5 +151,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _PL
  call BSS_PL_free( )
 #endif
+ call BS_blks_free( )
  !
 end subroutine

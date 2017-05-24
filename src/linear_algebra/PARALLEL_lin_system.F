@@ -36,7 +36,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: n,nrhs
  type(PAR_matrix)  :: A, B
@@ -51,8 +51,8 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  ! better estimate of the dimensions to be included
  !
- if (allocated(WS%v_int)) deallocate(WS%v_int)
- allocate(WS%v_int(n+A%BLCnrows))
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(n+A_slk%nrows))
  !
 #if defined _DOUBLE
  CALL PZGESV&

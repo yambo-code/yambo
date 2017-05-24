@@ -30,7 +30,6 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use hamiltonian, ONLY:H_nl_sc
  use electrons,   ONLY:levels,E_reset,n_sp_pol
  use R_lattice,   ONLY:nkibz
- use memory_m,    ONLY:mem_est
  use IO_m,        ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
 &                      DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
 #include<memory.h>
@@ -86,7 +85,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      io_err=io_SC_components('V',E_dummy,ID)
      if (io_err==0.and.ik>0.and.i_sp_pol>0) then
        if (ik==1.and.i_sp_pol==1) then
-         YAMBO_ALLOC(H_nl_sc,(SC_bands(2),SC_bands(2),n_sp_pol))
+         YAMBO_ALLOC(H_nl_sc,(SC_bands(2),SC_bands(2)))
        endif
        call io_control(ACTION=RD_CL,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
        io_err=io_SC_components('V',E_dummy,ID)

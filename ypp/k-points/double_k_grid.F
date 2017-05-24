@@ -31,7 +31,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  !
- implicit none
+#include<memory.h>
  integer                  :: err
  type(bz_samp),intent(in) :: Xk
  integer,      intent(in) :: nkpoint_f(3)
@@ -103,7 +103,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! bring (internal) coarse grid to interval [0,1)
  !
- allocate(kpts_c(product(nkpoint_c), 3))
+ YAMBO_ALLOC(kpts_c,(product(nkpoint_c),3))
  kpts_c=0
  ! conversion kpoints to reciprocal coord 
  !
@@ -114,9 +114,9 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! prepare Double Grid quantities
  !
- allocate(BZ_DbGd_table(Xk%nbz, npts_around_coarse,2))
+ YAMBO_ALLOC(BZ_DbGd_table,(Xk%nbz,npts_around_coarse,2))
  BZ_DbGd_table = 0
- allocate(BZ_DbGd_weight(npts_around_coarse))
+ YAMBO_ALLOC(BZ_DbGd_weight,(npts_around_coarse))
  BZ_DbGd_weight = 0.0_SP
  !
  !---------------------- SAMPLE POINTS (KNOTS) -----------------------------
@@ -239,7 +239,7 @@ function double_k_grid(Xk,nkpoint_f,order_ipol) result(err)
  !
  ! clean up
  !
- deallocate(kpts_c)
+ YAMBO_FREE(kpts_c)
  !
  contains
    !

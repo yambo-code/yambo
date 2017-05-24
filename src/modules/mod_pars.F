@@ -37,11 +37,14 @@ module pars
  integer, parameter :: n_CPU_str_max=20
  !
  !...MEMORY
- integer, parameter :: N_MEM_max      = 10000
- integer, parameter :: N_MEM_SAVE_max = 1000
- integer, parameter :: MEM_jump_treshold   = 200*1000 ! Mb*1000=Kb
- integer, parameter :: MEM_treshold        = 1  *1000 ! "
- integer, parameter :: MEM_SAVE_treshold   = 1  *1000 ! "
+ !
+ integer, parameter :: N_MEM_max                     = 1000
+ integer, parameter :: N_MEM_max_element_components  = 200
+ integer, parameter :: N_MEM_SAVE_max      = 500
+ !
+ !...MEMORY library
+ integer, parameter :: N_MEM_LIBs_max   = 200
+ integer, parameter :: N_MEM_shelf_max  = 200
  !
  !...RT
  integer, parameter :: n_ext_fields_max=4

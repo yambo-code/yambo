@@ -38,19 +38,16 @@ subroutine K_diago_driver(iq,W)
  use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
-#if defined _SCALAPACK
- use parallel_m,     ONLY:linear_algebra_is_parallel
-#endif
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BS_PL_free
+ use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -122,7 +119,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Kernel and/or BSS components loading
  !======================================
- if (io_err<0) call K_components_folded_in_serial_arrays(iq)
+ if (io_err<0) call K_components_folded_in_serial_arrays(iq,"DIAGO")
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
@@ -140,7 +137,7 @@ subroutine K_diago_driver(iq,W)
    !
    ! Symmetrize the K blocks (to be eventually sent to the BLACS)
    !=========================
-   if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+   call BS_Blocks_symmetrize_K()
    !
 #endif
    !
@@ -249,10 +246,10 @@ subroutine K_diago_driver(iq,W)
  ! GPL_EXCLUDE_START
  !
 #if defined _PL
- call BS_PL_free( )
+ call BSS_PL_free( )
 #endif
 #if defined _KERR
- call BS_KERR_free( )
+ call BSS_KERR_free( )
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -281,10 +278,10 @@ subroutine K_diago_driver(iq,W)
        ! GPL_EXCLUDE_START
        !
 #if defined _KERR
-       YAMBO_ALLOC(BS_R_right_kerr,(BS_H_dim))
+       YAMBO_ALLOC_P(BS_R_right_kerr,(BS_H_dim))
 #endif
 #if defined _PL
-       YAMBO_ALLOC(BS_R_PL,(2,BS_H_dim))
+       YAMBO_ALLOC_P(BS_R_PL,(2,BS_H_dim))
 #endif
        !
        ! GPL_EXCLUDE_END

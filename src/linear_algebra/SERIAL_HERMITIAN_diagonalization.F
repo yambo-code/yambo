@@ -30,7 +30,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n)
@@ -44,7 +44,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
 #endif
  !
  lwork=-1
- allocate(WS%v_cmplx(1),WS%v_real(max(1,3*n-2)))
+ allocate(WS%v_cmplx(1))
+ YAMBO_ALLOC(WS%v_real,(max(1,3*n-2)))
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
@@ -54,7 +55,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  lwork=nint(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(lwork))
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)

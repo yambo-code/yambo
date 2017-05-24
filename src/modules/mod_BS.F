@@ -237,6 +237,13 @@ module BS
      !
    end subroutine
    !
+   subroutine BS_blks_free()
+     integer :: iB
+     do iB=1,n_BS_blks
+       YAMBO_FREE(BS_blk(iB)%mat)
+     enddo
+   end subroutine
+   !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
      use drivers,    ONLY:l_kerr,l_photolum
@@ -298,16 +305,19 @@ module BS
        ! Resonant part (mode ==R) is hermitian
        ! Coupling part (mode ==A) is symmetric
        !
-       if (.not.(i_Tk.eq.i_Tp)) cycle
+       if (i_Tk/=i_Tp) cycle
        !
-       if (BS_blk(i_B)%mode=="R") then
-         forall(i_r=1:BS_blk(i_B)%size(1),&
-&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-       else
-         forall(i_r=1:BS_blk(i_B)%size(1),&
-&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
-       end if
-     end do
+       do i_r=1,BS_blk(i_B)%size(1)
+         do i_c=i_r+1,BS_blk(i_B)%size(2)
+           if (BS_blk(i_B)%mode=="R") then
+             BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+           else
+             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+           endif
+         enddo
+       enddo
+       !
+     enddo
      !
    end subroutine BS_Blocks_symmetrize_K
    !

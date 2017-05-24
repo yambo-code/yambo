@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -148,7 +148,7 @@ ACX_FCSETUP()
 #
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
-
+#
 # ============================================================================
 #
 # OpenMP
@@ -211,8 +211,8 @@ AC_LANG_POP(Fortran 77)
 # ============================================================================
 # MPI
 m4_include([config/mpi.m4])
-
 # 
+# ============================================================================
 #  Libs
 #
 m4_include([config/blas.m4])
@@ -255,8 +255,9 @@ ACX_LIBXC
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
+AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F include/c_defs.h
+                 src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_debug.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #

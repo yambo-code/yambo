@@ -24,7 +24,7 @@
 integer function io_QINDX(Xk,q,io_db)
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
-&                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
+&                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
@@ -64,7 +64,7 @@ integer function io_QINDX(Xk,q,io_db)
    call io_elemental(io_db,&
 &       VAR=" Polarization last K   :",I0=nXkibz)
    call io_elemental(io_db,&
-&       VAR=" QP states             :",I1=qp_states_k,CHECK=.true.,OP=(/">=","<="/))
+&       VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&

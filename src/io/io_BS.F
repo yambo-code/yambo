@@ -36,7 +36,7 @@ integer function io_BS(iq,X,ID)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(X_t):: X 
  integer  :: iq,ID
@@ -124,10 +124,10 @@ integer function io_BS(iq,X,ID)
    if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
    if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
    if(read_is_on(ID)) then
-     allocate(tmp_map(n1*n2))
+     YAMBO_ALLOC(tmp_map,(n1*n2))
      call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
      BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-     deallocate(tmp_map)
+     YAMBO_FREE(tmp_map)
    endif
  endif
  !

@@ -32,7 +32,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
@@ -89,9 +89,12 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  qp_expanded%nb      =qp%nb
  qp_expanded%n_states=(qp%n_states/qp%nk)*k%nibz
  !
- allocate(qp_expanded%k(k%nibz,3),qp_expanded%wk(k%nibz))
- allocate(qp_expanded%table(qp_expanded%n_states,3+n_sp_pol-1))
- allocate(qp_expanded%E_bare(qp_expanded%n_states),qp_expanded%E(qp_expanded%n_states),qp_expanded%Z(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%k,(k%nibz,3))
+ YAMBO_ALLOC(qp_expanded%wk,(k%nibz))
+ YAMBO_ALLOC(qp_expanded%table,(qp_expanded%n_states,3+n_sp_pol-1))
+ YAMBO_ALLOC(qp_expanded%E_bare,(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%E,(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%Z,(qp_expanded%n_states))
  !
  i1=0
  ik_old_prev=0

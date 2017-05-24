@@ -36,12 +36,13 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n),E(n),V_left(n,n),V_right(n,n)
  !
- allocate(WS%v_cmplx(1),WS%v_real(2*n))
+ allocate(WS%v_cmplx(1))
+ YAMBO_ALLOC(WS%v_real,(2*n))
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,-1,WS%v_real,WS%i_fail)
  !
 #if defined _TIMING
@@ -52,7 +53,7 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
+ YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
  call M_eigenvalues(n,M,E,V_left,V_right,WS%v_cmplx,WS%dim,WS%v_real,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('M_eigenvalues (SD)','failed')

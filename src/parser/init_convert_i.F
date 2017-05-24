@@ -23,15 +23,15 @@
 !
 subroutine init_convert_i(ivar,v_descr,force_RL)
  !
- use units
+ use units,  ONLY:Gigabyte,Megabyte,Kilobyte
  !
  implicit none
  !
- integer :: ivar
+ integer     ::ivar
  character(*)::v_descr
  logical     ::force_RL
  !
- if(ivar<0) return
+ if (ivar<0) return
  !
  if (index(v_descr,'RL')/=0) then
    call Gclose(ivar,'tRL')
@@ -50,6 +50,10 @@ subroutine init_convert_i(ivar,v_descr,force_RL)
  else if (index(v_descr,'eV')/=0) then
    if (force_RL     ) call Gclose(ivar,'tRL')
    if (.not.force_RL) call Gclose(ivar,'teV')
+ else if (index(v_descr,'Mb')/=0) then
+   ivar=ivar*Kilobyte/Megabyte
+ else if (index(v_descr,'Gb')/=0) then
+   ivar=ivar*Kilobyte/Gigabyte
  endif
  !
 end subroutine

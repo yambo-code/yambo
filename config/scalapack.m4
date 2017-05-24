@@ -84,7 +84,7 @@ if test "$mpibuild"  = "yes"; then
   #
   if test "$enable_scalapack" = "check" ; then
     acx_scalapack_save_LIBS="$SCALAPACK_LIBS"
-    LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
+    LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS $BLACS_LIBS"
     # First, check SCALAPACK_LIBS environment variable
     if test "x$SCALAPACK_LIBS" != x; then
       save_LIBS="$LIBS"; LIBS="$SCALAPACK_LIBS $LIBS"

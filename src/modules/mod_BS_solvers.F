@@ -64,6 +64,10 @@ module BS_solvers
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
  !
+ logical  :: run_Haydock=.FALSE.
+ logical  :: run_inversion=.FALSE.
+ logical  :: run_Diago=.FALSE.
+ !
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db

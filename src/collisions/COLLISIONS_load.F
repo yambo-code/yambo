@@ -137,11 +137,17 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
    COLLISIONS_have_HARTREE=io_err(2)==0.and.HXC_collisions%kind>=H_SE_HARTREE
    !
+ endif
+ !
+ if (.not.l_use_collisions.or.CHECK_EXISTENCE_ONLY) then
+   !
+#if defined _TIMING
+   call timing('COLLISIONS_load',OPR='stop')
+#endif
+   !
    return
    !
  endif
- !
- if (.not.l_use_collisions) return
  !
  ! Actual I/O
  !============
@@ -210,7 +216,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        endif
 #if defined _RT
        if (COLL%kind==QP_SE_GW_NEQ) then
-         if(.not.associated(GW_NEQ_COLL_element(1)%v_r)) then
+         if(.not.allocated(GW_NEQ_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
          endif
@@ -218,7 +224,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
 #if defined _QED
        if (COLL%kind==QP_SE_GW_QED) then
-         if(.not.associated(P_COLL_element(1)%v_r)) then
+         if(.not.allocated(P_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
          endif

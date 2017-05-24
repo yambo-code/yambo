@@ -45,7 +45,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
 #endif
  !
  implicit none
@@ -87,6 +87,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call E_reset(Xen)
  call E_reset(Ken)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! Switch off report file support
  !
@@ -201,7 +204,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
  !
- if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
+ if (l_QP_DBs_merge)  call QP_DBs_merge( )
  !
  if (l_wannier) call WANNIER_driver(k,en)
  !   =========

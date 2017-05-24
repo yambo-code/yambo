@@ -39,7 +39,7 @@ subroutine PARALLEL_inversion(M,N)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer           :: N
  type(PAR_matrix)  :: M
@@ -58,9 +58,9 @@ subroutine PARALLEL_inversion(M,N)
  M%lwork  = M%BLCnrows*M%BLCnrows
  M%liwork = M%BLCnrows+M%BLCnrows
  !
- allocate( WS%v_cmplx(M%lwork) )
- allocate( WS%vp_int(M%liwork) ) 
- allocate( WS%v_int(N+M%BLCnrows) )
+ YAMBO_ALLOC(WS%v_cmplx,(M_slk%lwork))
+ YAMBO_ALLOC(WS%vp_int,(M_slk%liwork))
+ YAMBO_ALLOC(WS%v_int,(N+M_slk%nrows))
  !
 #if defined _DOUBLE
  CALL PZGETRF&

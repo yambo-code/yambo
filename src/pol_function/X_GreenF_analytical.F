@@ -27,7 +27,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_evaluated_for_all_Qs,&
+ use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
 &                     X_t,l_X_terminator,X_term_E
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
@@ -35,7 +35,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
- implicit none
+#include<memory.h>
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
@@ -131,7 +131,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !  \Omega_{anti-res} = -\Omega_{res}
  !
  allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- allocate(use_kpt( BZ_DbGd_nkpt(ikbz), BZ_DbGd_nkpt(ikpbz) ) )
+ YAMBO_ALLOC(use_kpt,(BZ_DbGd_nkpt(ikbz),BZ_DbGd_nkpt(ikpbz)))
  !
  call tmp_double_grid()
  !
@@ -181,7 +181,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
  enddo
  !
- deallocate(use_kpt,BZ_DbGd_iq_npt)
+ YAMBO_FREE(use_kpt)
+ deallocate(BZ_DbGd_iq_npt)
  !
  contains
    !
@@ -202,7 +203,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      enddo
      !
      qsize_fac=2._SP
-     if(.not.X_is_evaluated_for_all_Qs) qsize_fac=qsize_fac*10._SP
+     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
      !
      q_norm_ref=q_norm_ref/qsize_fac
      !

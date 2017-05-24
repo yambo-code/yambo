@@ -76,6 +76,7 @@ subroutine k_reduce(k,FORCE_BZ)
    k%nibz=k%nibz+1
    if(     FORCE_BZ) call k2bz(k%ptbz(i1,:),k_ibz(k%nibz,:),b)
    if(.not.FORCE_BZ) k_ibz(k%nibz,:)=k%ptbz(i1,:)
+   !
  enddo kloop
  !
  call live_timing()

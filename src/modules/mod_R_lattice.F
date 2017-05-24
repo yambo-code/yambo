@@ -80,7 +80,7 @@ module R_lattice
  !
  ! Q/K-tables (scattering geometry)
  !
- integer  :: qp_states_k(2)
+ integer  :: QP_states_k(2)
  logical  :: bse_scattering
  logical  :: coll_scattering
  integer, allocatable :: qindx_X(:,:,:)
@@ -158,7 +158,7 @@ module R_lattice
      YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
      if (.not.Xk_grid_is_uniform) return
      !
-     YAMBO_ALLOC(qindx_S,(qp_states_k(2),nqbz,2))
+     YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
      !     
      if (bse_scattering) then
        YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))

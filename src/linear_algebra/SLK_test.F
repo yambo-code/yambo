@@ -63,9 +63,9 @@ subroutine SLK_test(E,k,q)
  !
  ! workspace
  !
- allocate( A_in(ndim,ndim) )
- allocate( A_out(ndim,ndim) )
- allocate( A_out_par(ndim,ndim) )
+ YAMBO_ALLOC(A_in,(ndim,ndim))
+ YAMBO_ALLOC(A_out,(ndim,ndim))
+ YAMBO_ALLOC(A_out_par,(ndim,ndim))
  !
  ! matrix inversion
  !
@@ -85,7 +85,8 @@ subroutine SLK_test(E,k,q)
  !
  call section("=",'Linear system solution')
  !
- allocate(B_in(ndim,ndim),M_mat(ndim,ndim))
+ YAMBO_ALLOC(B_in,(ndim,ndim))
+ YAMBO_ALLOC(M_mat,(ndim,ndim))
  call build_matrix( ndim, A_in )
  call build_matrix( ndim, B_in )
  !
@@ -98,7 +99,8 @@ subroutine SLK_test(E,k,q)
  call LINEAR_ALGEBRA_driver(LIN_SYS,M=M_mat,B=A_out_par,lib_in=USE_SLK)
  !
  call matrix_check( "LinSys X", ndim, ndim, A_out, A_out_par )
- deallocate(B_in,M_mat)
+ YAMBO_FREE(B_in)
+ YAMBO_FREE(M_mat)
  !
  ! matrix multiplication
  !
@@ -119,7 +121,8 @@ subroutine SLK_test(E,k,q)
  call build_matrix( ndim, A_in )
  A_in=hermitian(A_in)
  !
- allocate(W(ndim),W_par(ndim))
+ YAMBO_ALLOC(W,(ndim))
+ YAMBO_ALLOC(W_par,(ndim))
  !
  A_out  =A_in
  call LINEAR_ALGEBRA_driver(DIAGO,M=A_out,lib_in=USE_LK,e_real=W)
@@ -135,11 +138,14 @@ subroutine SLK_test(E,k,q)
  !
  call matrix_check( "EigenVect", ndim, ndim, cmplx(abs(A_out),KIND=SP), cmplx(abs(A_out_par),KIND=SP) )
  !
- deallocate(W,W_par)
+ YAMBO_FREE(W)
+ YAMBO_FREE(W_par)
  !
  ! cleanup
  !
- deallocate(A_in,A_out,A_out_par)
+ YAMBO_FREE(A_in)
+ YAMBO_FREE(A_out)
+ YAMBO_FREE(A_out_par)
  !
 end subroutine SLK_test 
 !
@@ -198,7 +204,7 @@ end subroutine build_matrix
  use com,        ONLY:error,msg
  use parallel_m, ONLY:mpi_comm_world
  use wrapper,    ONLY:M_by_M
- implicit none
+#include<memory.h>
  !
  integer            :: ndim
  complex(SP) :: Amat(ndim,ndim)
@@ -209,7 +215,7 @@ end subroutine build_matrix
  real(SP)  :: toll=1._SP
  complex(SP), allocatable :: zmat(:,:)
  !
- allocate( zmat(ndim,ndim) )
+ YAMBO_ALLOC(zmat,(ndim,ndim))
  !
  zmat=0._SP
  !
@@ -236,7 +242,7 @@ end subroutine build_matrix
  if ( .not. lerror ) call msg("sr",'  Inverse_check:   passed')
  if (       lerror ) call msg("sr",'  Inverse_check:   failed')
  !
- deallocate( zmat )
+ YAMBO_FREE(zmat)
  !
  call MPI_barrier( mpi_comm_world, ierr)
  return

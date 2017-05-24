@@ -280,7 +280,14 @@ subroutine X_redux(iq,X_par,Xw,X)
      endif
      call PP_redux_wait(iw_X,COMM=PAR_COM_X_WORLD%COMM)
      !
-     call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw_par,INDEX_out=iw_X(1),&
+     ! iw_par is used ONLY by the CPU's that SEND the matrix (i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1)
+     ! All other CPU's do not use the BUFFER and can set INDEX_in as a dummy 1. This is needed as 
+     ! BUFFER is dimensioned with the PAR #of freqs.
+     !
+     iw=iw_par
+     if (iw_par>PAR_n_freqs) iw=1
+     !
+     call MATRIX_transfer(M_in=BUFFER,M_out=X_par,INDEX_in=iw,INDEX_out=iw_X(1),&
 &                         SND=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
 &                         COMM=PAR_COM_X_WORLD,COMM_name="X_redux_2_"//trim(intc(i_LA_pool)))
      !

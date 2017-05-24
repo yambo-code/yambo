@@ -35,8 +35,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_Q_index, PAR_nq, &
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
@@ -125,9 +125,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
  ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
  !
- if (l_life.and.X%iq(1)>1) then
-   call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
- endif
+ if (l_life .and. X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_X_WORLD%COMM)
  !
  if (io_RESPONSE) then
    !
@@ -221,7 +219,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
      !
-     call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+     call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
@@ -249,16 +247,16 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      X_par(iq_mem)%I=iw
      !
      if (io_RESPONSE) then
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_Q_A2A,&
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_X_WORLD,&
 &                                              COMM_name="X_dielectric")
      else
        call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),&
-&                           COMM=PAR_COM_Q_A2A,COMM_name="X_dielectric")
+&                           COMM=PAR_COM_X_WORLD,COMM_name="X_dielectric")
      endif
      !
    enddo
    !
-   call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus

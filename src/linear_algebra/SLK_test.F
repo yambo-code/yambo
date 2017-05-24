@@ -41,7 +41,7 @@ subroutine SLK_test(E,k,q)
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
  !
- implicit none
+#include<memory.h>
  !
  type(levels)   ::E
  type(bz_samp)  ::k,q

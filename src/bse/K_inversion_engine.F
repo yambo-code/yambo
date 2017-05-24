@@ -31,7 +31,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use R_lattice,      ONLY:q_norm
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk
+ use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk,K_slk
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL

@@ -29,6 +29,7 @@ subroutine RT_ELPH_initialize(E,k,q)
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
 &                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
+ use D_lattice,      ONLY:Bose_Temp
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:warning

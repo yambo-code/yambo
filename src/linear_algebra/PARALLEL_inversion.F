@@ -58,9 +58,9 @@ subroutine PARALLEL_inversion(M,N)
  M%lwork  = M%BLCnrows*M%BLCnrows
  M%liwork = M%BLCnrows+M%BLCnrows
  !
- YAMBO_ALLOC(WS%v_cmplx,(M_slk%lwork))
- YAMBO_ALLOC(WS%vp_int,(M_slk%liwork))
- YAMBO_ALLOC(WS%v_int,(N+M_slk%nrows))
+ YAMBO_ALLOC(WS%v_cmplx,(M%lwork))
+ YAMBO_ALLOC(WS%vp_int,(M%liwork))
+ YAMBO_ALLOC(WS%v_int,(N+M%nrows))
  !
 #if defined _DOUBLE
  CALL PZGETRF&

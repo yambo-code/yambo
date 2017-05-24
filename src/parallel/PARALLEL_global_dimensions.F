@@ -28,6 +28,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 &                        PAR_EH_range,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
+ use X_m,           ONLY:X_ng
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif

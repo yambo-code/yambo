@@ -33,7 +33,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
  use real_time,     ONLY:RT_bands
- use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy
+ use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
@@ -42,7 +42,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index,PAR_COM_VAL_INDEX,PAR_COM_QP_INDEX,&
+&                        PAR_COM_CON_INDEX
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nibz
  ! ID's

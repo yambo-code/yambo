@@ -84,10 +84,10 @@ module PHOTOLUM
      if (.not.l_photolum) return
      !
      if (allocated(BSS_dipoles_PL)) then
-       Y_FREE(BSS_dipoles_PL)
+       YAMBO_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
-       Y_FREE(BSS_PL_f)
+       YAMBO_FREE(BSS_PL_f)
      endif
      !
    end subroutine

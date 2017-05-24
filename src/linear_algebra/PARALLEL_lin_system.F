@@ -52,7 +52,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  ! better estimate of the dimensions to be included
  !
  YAMBO_FREE(WS%v_int)
- YAMBO_ALLOC(WS%v_int,(n+A_slk%nrows))
+ YAMBO_ALLOC(WS%v_int,(n+A%nrows))
  !
 #if defined _DOUBLE
  CALL PZGESV&

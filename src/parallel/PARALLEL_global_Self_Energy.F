@@ -31,8 +31,6 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use QP_m,          ONLY:QP_n_states
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states
- ! SLK
- use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
  use parallel_m,    ONLY:HEAD_QP_cpu,master_cpu,n_WF_bands_to_load,PARALLEL_n_structures_active,&
 &                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index
  ! COMMUNICATORS
@@ -137,15 +135,14 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !
-   ! 00000000          <- q
-   ! 0000     0000     <- g
+   ! 00000             <- q
    ! x0 x0    00 00    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
    !
    ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
    !
-   HEAD_QP_cpu=PAR_COM_RL_index%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
-   if (PAR_COM_RL_index%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
+   HEAD_QP_cpu=PAR_COM_Q_INDEX%CPU_id==0.and.PAR_COM_QP_A2A%CPU_id==0
+   if (PAR_COM_Q_INDEX%n_CPU==1.and.PAR_COM_QP_A2A%n_CPU==1) then
      HEAD_QP_cpu=PAR_COM_G_b_index%CPU_id==0
    endif
    !

@@ -523,13 +523,13 @@ integer            :: n_groups                =0     ! groups of active chains
      endif
    end subroutine
    !
-   subroutine PP_indexes_reset(px)
-     type(PP_indexes)::px
-     YAMBO_FREE(px%element_1D)
-     YAMBO_FREE(px%element_2D)
-     YAMBO_FREE(px%weight_1D)
-     YAMBO_FREE(px%n_of_elements)
-     YAMBO_FREE(px%first_of_1D)
+   subroutine PP_indexes_reset(IND_out)
+     type(PP_indexes)::IND_out
+     YAMBO_FREE(IND_out%element_1D)
+     YAMBO_FREE(IND_out%element_2D)
+     YAMBO_FREE(IND_out%weight_1D)
+     YAMBO_FREE(IND_out%n_of_elements)
+     YAMBO_FREE(IND_out%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

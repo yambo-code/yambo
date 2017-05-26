@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
+subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
  !
  ! Here I apply the strecth for both QP_action.
  !
@@ -35,12 +35,15 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  type(levels)    ::E
  type(bz_samp)   ::k
  integer         ::i_ACTION,bands(2)
+ logical         ::l_E_done
  !
  ! Work Space
  !
  integer  :: ib,ik,i_spin
  logical  :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
  complex(SP), external ::QP_eval_the_FIT
+ !
+ l_E_done=.FALSE.
  !
  if (.not.QP_action(i_ACTION)%active) return
  !
@@ -98,6 +101,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  ! XC string update
  !
  if (.not.(any(do_E).or.any(do_W).or.any(do_Z))) return
+ !
+ if (.not.l_E_done) l_E_done=any(do_E)
  !
  if (len_trim(QP_ctl_xc_STRING)>0) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" +" 
  !

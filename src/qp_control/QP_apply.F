@@ -135,6 +135,18 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !
  call setup_global_XC(trim(QP_ctl_what),QP_SE_NONE,STRING=QP_ctl_xc_STRING)
  !
+ ! Energy corrected?
+ !
+ if (.not.l_E_done) then
+   !
+   call E_reset(Fermi_en)
+   YAMBO_FREE(DbGd_k_done)
+   call QP_actions_reset( )
+   !
+   return
+   !
+ endif
+ !
  ! Extend the QP corrections to the RIM energies
  !========
  if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
@@ -160,18 +172,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    enddo
    !
    YAMBO_FREE(DbGd_k_done)
-   !
- endif
- !
- ! Energy corrected?
- !
- if (.not.l_E_done) then
-   !
-   call E_reset(Fermi_en)
-   YAMBO_FREE(DbGd_k_done)
-   call QP_actions_reset( )
-   !
-   return
    !
  endif
  !

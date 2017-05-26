@@ -66,7 +66,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  real(SP),    intent(in)    :: deltaT
  !
  integer     :: ib
- real(SP)    :: f_(2),df_in(2),df_out(2),f0(2),f_inf(2),&
+ real(SP)    :: f_(2),df(2),f0(2),df_out(2),f_inf(2),&
 &               GAMMA_(2),dGAMMA(2),GAMMA0(2),GAMMA__TOT,dGAMMA_TOT,GAMMA0_TOT
  !
  if( .not. RT_is_dynamically_dephased) return
@@ -85,14 +85,14 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    ! DEBUG <
    !f0(1)=RT_E_occupations_reference(ib,ik)
    !f0(2)=RT_H_occupations_reference(ib,ik)
-   !df_in(1)= RT_delta_occupations(ib,ik)
-   !df_in(2)=-RT_delta_occupations(ib,ik)
+   !df(1)= RT_delta_occupations(ib,ik)
+   !df(2)=-RT_delta_occupations(ib,ik)
    ! DEBUG >
    !
    f0(1)=         aimag(G_lesser_reference(ib,ib,ik))
    f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-   df_in(1)= RT_delta0_occupations(ib,ik)
-   df_in(2)=-RT_delta0_occupations(ib,ik)
+   df(1)= RT_delta0_occupations(ib,ik)
+   df(2)=-RT_delta0_occupations(ib,ik)
    !
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term
@@ -117,6 +117,8 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      endif
    endif
    !
+   if (RT_is_statically_dephased) GAMMA0(1)=GAMMA0(1)+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
+   !
    GAMMA_(1)=GAMMA0(1)+dGAMMA(1)
    GAMMA_(2)=GAMMA0(2)+dGAMMA(2)
    !
@@ -127,8 +129,12 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    if(.not.l_RT_relax_time_approx) then
      !
      ! Option A: Standard definition, however not compatible with RTA
-     if (RT_is_statically_dephased) GAMMA_(1)=GAMMA_(1)+RT_Deph_Matrix(ib,ib,RT_all2ibz(ik))
-     df_out(1) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
+     !        A1 with    gamma0*f0 terms
+     !df_out(1) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
+     !        A2 without gamma0*f0 terms
+     df_out(1) = -deltaT*( (GAMMA0(1)*df(1)-GAMMA0(2)*df(2))+ &
+&                          (dGAMMA(1)*f0(1)-dGAMMA(2)*f0(2))+ &
+&                          (dGAMMA(1)*df(1)-dGAMMA(2)*df(2))  )
      dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
      !
      ! DEBUG<
@@ -141,8 +147,8 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      !  f_inf(1)=         aimag(G_lesser_reference(ib,ib,ik))
      !  f_inf(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
      !endif
-     !df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
-     !&                    dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
+     !df_out(:) = -deltaT*(GAMMA0_TOT*df(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
+     !&                    dGAMMA_TOT*df(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
      !!
      !if (f0(1)<=0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
      !if (f0(1)> 0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel
@@ -155,8 +161,8 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
      f_inf(1)= RT_RTA_E_occ_infty(ib,ik)
      f_inf(2)= RT_RTA_H_occ_infty(ib,ik)
      !
-     df_out(:) = -deltaT*(GAMMA0_TOT*df_in(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
-&                         dGAMMA_TOT*df_in(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
+     df_out(:) = -deltaT*(GAMMA0_TOT*df(:) + GAMMA0_TOT*(f0(:)-f_inf(:)) + &
+&                         dGAMMA_TOT*df(:) + dGAMMA_TOT*(f0(:)-f_inf(:)) )
      !
      if (f0(1)<=0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)   ! electron channel
      if (f0(1)> 0.5_SP*spin_occ) dG_out(ib,ib) = dG_out(ib,ib) - cI*df_out(2)   ! hole     channel

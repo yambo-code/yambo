@@ -43,8 +43,6 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
  logical  :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
  complex(SP), external ::QP_eval_the_FIT
  !
- l_E_done=.FALSE.
- !
  if (.not.QP_action(i_ACTION)%active) return
  !
  do i_spin= 1,n_sp_pol
@@ -100,7 +98,7 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
  !
  ! XC string update
  !
- if (.not.(any(do_E).or.any(do_W).or.any(do_Z))) return
+ if (.not.(any(do_E).or.any(do_W).or.any(do_Z))) return 
  !
  if (.not.l_E_done) l_E_done=any(do_E)
  !

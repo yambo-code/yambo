@@ -94,7 +94,6 @@ module QP_CTL_m
  ! "ACTION" type (can be a fit/interpolation/QP/...)
  !===============
  type QP_action_t
-   integer              :: kind
    logical              :: plan(5) ! E W Z ukI ueI 
    logical              :: active
    character(schlen)    :: what 
@@ -174,7 +173,6 @@ module QP_CTL_m
        QP_action(i_a)%active=.FALSE.
        QP_action(i_a)%what=" "
        QP_action(i_a)%desc=" "
-       QP_action(i_a)%kind=QP_SE_NONE
        call QP_ctl_reset(QP_action(i_a)%CTL(1))
        call QP_ctl_reset(QP_action(i_a)%CTL(2))
        YAMBO_FREE(QP_action(i_a)%STATES_done)

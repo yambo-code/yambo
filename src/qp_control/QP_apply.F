@@ -118,6 +118,9 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !=========
  ! Actions
  !=========
+ !
+ l_E_done=.FALSE.
+ !
  do i_a=1,n_QP_actions
    !
    if (.not.QP_action(i_a)%active) cycle
@@ -159,13 +162,16 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
      ik_ibz=k%sstar(ik_bz,1)
      !
      do i1=1,BZ_DbGd_nkpt(ik_bz)
+       !
        ik_r=BZ_DbGd_table(ik_bz,i1,1)
        !
        if (DbGd_k_done(ik_r)==1) cycle
        !
-       forall (ib=1:BZ_DbGd_nbands,i_spin=1:n_sp_pol) &
-&                                        en%E_DbGd(ib,ik_r,i_spin)=en%E_DbGd(ib,ik_r,i_spin)+&
-&                                        en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin)
+       do ib=1,BZ_DbGd_nbands
+         do i_spin=1,n_sp_pol
+           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%E(ib,ik_ibz,i_spin))
+         enddo
+       enddo
        DbGd_k_done(ik_r)=1
      enddo
      !

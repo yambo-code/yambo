@@ -98,14 +98,14 @@ subroutine INIT_QP_ctl_load(defs,ID)
 &          trim(spin_description_ch(i_f))//' (valence)',&
 &          QP_ctl_user(ID,i_f)%Wv_dos,E_unit,verb_level=V_qp)
    !
+   ! Back Compataibility with master input fields (temporary)
+   !
+   QP_ctl_user(ID,i_f)%Wv_dos=QP_ctl_user(ID,i_f)%Wv(2)
+   QP_ctl_user(ID,i_f)%Wv(3)=QP_ctl_user(ID,i_f)%Wv(3)
+   QP_ctl_user(ID,i_f)%Wc_dos=QP_ctl_user(ID,i_f)%Wc(2)
+   QP_ctl_user(ID,i_f)%Wc(3)=QP_ctl_user(ID,i_f)%Wc(3)
+   !
  enddo
- !
- ! Back Compataibility with master input fields (temporary)
- !
- QP_ctl_user(ID,i_f)%Wv_dos=QP_ctl_user(ID,i_f)%Wv(2)
- QP_ctl_user(ID,i_f)%Wv(2)=QP_ctl_user(ID,i_f)%Wv(3)
- QP_ctl_user(ID,i_f)%Wc_dos=QP_ctl_user(ID,i_f)%Wc(2)
- QP_ctl_user(ID,i_f)%Wc(2)=QP_ctl_user(ID,i_f)%Wc(3)
  !
  call it(defs,prefix(ID)//'fnQPdb',&
 &        '[EXTQP '//trim(description_ch(ID))//'] Database',&

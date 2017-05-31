@@ -169,7 +169,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
        !
        do ib=1,BZ_DbGd_nbands
          do i_spin=1,n_sp_pol
-           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%E(ib,ik_ibz,i_spin))
+           en%E_DbGd(ib,ik_r,1)=en%E_DbGd(ib,ik_r,1)+ (en%E(ib,ik_ibz,i_spin)-en%Eo(ib,ik_ibz,i_spin))
          enddo
        enddo
        DbGd_k_done(ik_r)=1

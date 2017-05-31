@@ -251,7 +251,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_IO(read_or_write)
      !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu,PAR_COM_RL_INDEX
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -263,7 +263,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (.not.io_DIP) return 
      !
      reading=trim(read_or_write)=="read"
-     writing=trim(read_or_write)=="write"
+     writing=trim(read_or_write)=="write".and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0.and.&
+&                                             PAR_COM_RL_INDEX%CPU_id==0
      !
      ID=0
      write_header  =(     master_cpu.and.writing)
@@ -306,7 +307,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
-         if ((writing.and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0).or.reading) then
+         if (writing.or.reading) then
            do i_sp_pol=1,n_sp_pol
              call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
              io_err=io_DIPOLES(X,ID)
@@ -315,6 +316,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        enddo
        !
      endif
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
      !
    end subroutine DIPOLES_IO
    !
@@ -344,7 +347,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
      !
-     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
+     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup,PAR_COM_DIPOLES
      !
      integer  :: ic,iv,i_sp_pol,ik,ik_mem
      !

@@ -139,8 +139,11 @@ subroutine K_diago_driver(iq,W)
 #if defined _SCALAPACK
    !
    ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+   !
+   ! This line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+   ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
    !=========================
-   if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+   !if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
    !
 #endif
    !

@@ -73,8 +73,12 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! COMMs setup
    !
+   ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
+   ! It is rather an additional level of parallelization.
+   !
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
    if (PAR_COM_RL_INDEX%n_CPU> 1) then
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    endif
    !
@@ -134,15 +138,18 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! COMMs setup
    !
-   ! To define proper indexes to calculate the dipoles I need to build up
-   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
-   ! The COMM is anyway the one for the all2all of each q.
-   !
-   if (PAR_COM_RL_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
-   if (PAR_COM_RL_INDEX%n_CPU> 1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   !
+   ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
+   ! It is rather an additional level of parallelization.
+   !
+   if (PAR_COM_RL_INDEX%n_CPU>1) then
+!     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   endif
    !
    ! K-points 
    !

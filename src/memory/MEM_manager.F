@@ -104,6 +104,8 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  if (MEM_err/=0) then
    if (i_SHELF>0) then
      call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
+     write (*,*) what,Sz,Kn
+     stop
    else
      call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
    endif

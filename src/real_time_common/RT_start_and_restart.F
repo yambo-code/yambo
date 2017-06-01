@@ -333,12 +333,12 @@ subroutine RT_start_and_restart(E,k,q,X)
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            !
-           if (     l_RT_uses_E_DbGd) then
+           if (l_RT_uses_E_DbGd) then
              Energy    = E%E_DbGd(ib,ik_E_DbGd,1)
              f_occ     = E%f_DbGd(ib,ik_E_DbGd,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
+             if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
              !if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            else
@@ -346,7 +346,7 @@ subroutine RT_start_and_restart(E,k,q,X)
              f_occ     = E%f(ib,ik,1)
              f_occ_ref = f_occ
              Width     = 0._SP
-             if (allocated(E%fo)) f_occ_ref = cI*E%fo(ib,ik,1)
+             if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            endif
            !
@@ -360,12 +360,12 @@ subroutine RT_start_and_restart(E,k,q,X)
              endif
            endif
            !
-           RT_E_and_k%En(ib,ik_RT_DbGd,1)= Energy
-           RT_E_and_k%W(ib,ik,1)         = Width 
+           RT_E_and_k%En(ib,ik_RT_DbGd,1) = Energy
+           RT_E_and_k%W(ib,ik_RT_DbGd,1)  = Width 
            !RT_E_and_k%kpt(:,ik_RT_DbGd)  = k%pt(ik,:)
            !
-           G_lesser(ib,ib,ik_RT_DbGd,1)         = cI*f_occ
-           G_lesser_reference(ib,ib,ik_RT_DbGd) = cI*f_occ_ref
+           G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
+           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
            dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
            !
          enddo

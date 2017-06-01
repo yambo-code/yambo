@@ -48,7 +48,7 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
-&                         l_RT_relax_time_approx
+&                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -81,6 +81,8 @@ subroutine RT_initialize(E,k,q)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
+ call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
+ call parser('RTEqScatt',            l_RT_include_eq_scatt)
  !
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.
@@ -337,6 +339,9 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Extrapolation                  :',l_RT_lifetimes_extrapolation)
    call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
+   call msg( 'r', 'Relaxation time approximation  :',l_RT_relax_time_approx)
+   call msg( 'r', 'Equilibrium is zero temperature:',l_RT_eq_is_zero_temp)
+   call msg( 'r', 'Equilibrium scattering included:',l_RT_include_eq_scatt)
  endif
  !
  call msg( 'nr','---Flags (if any)---')

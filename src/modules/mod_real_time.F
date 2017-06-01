@@ -178,6 +178,8 @@ module real_time
  !
  !----------------------------
  logical                  :: l_RT_uses_E_DbGd
+ logical                  :: l_RT_eq_is_zero_temp
+ logical                  :: l_RT_include_eq_scatt
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
  integer,     allocatable :: DbGd_ibz_coo(:,:)

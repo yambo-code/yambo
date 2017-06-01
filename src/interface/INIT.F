@@ -872,7 +872,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField IOtime UpdateSOC SaveGhistory')
-   call initactivate(1,'RTupdateEqp RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F

@@ -54,7 +54,7 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
 &                         RT_E_occupations,RT_H_occupations,RT_E_occupations_reference,RT_H_occupations_reference, &
 &                         RT_delta0_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,         &
-&                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,                                           &
+&                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,l_RT_include_eq_scatt,                     &
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
  !
  implicit none
@@ -129,12 +129,17 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    if(.not.l_RT_relax_time_approx) then
      !
      ! Option A: Standard definition, however not compatible with RTA
-     !        A1 with    gamma0*f0 terms
-     !df_out(1) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
-     !        A2 without gamma0*f0 terms
-     df_out(1) = -deltaT*( (GAMMA0(1)*df(1)-GAMMA0(2)*df(2))+ &
-&                          (dGAMMA(1)*f0(1)-dGAMMA(2)*f0(2))+ &
-&                          (dGAMMA(1)*df(1)-dGAMMA(2)*df(2))  )
+     !
+     if(l_RT_include_eq_scatt) then
+       !        A1 with    gamma0*f0 terms
+       df_out(1) = -deltaT*(GAMMA_(1)*f_(1)-GAMMA_(2)*f_(2))
+     else
+       !        A2 without gamma0*f0 terms
+       df_out(1) = -deltaT*( (GAMMA0(1)*df(1)-GAMMA0(2)*df(2))+ &
+&                            (dGAMMA(1)*f0(1)-dGAMMA(2)*f0(2))+ &
+&                            (dGAMMA(1)*df(1)-dGAMMA(2)*df(2))  )
+     endif
+     !
      dG_out(ib,ib) = dG_out(ib,ib) + cI*df_out(1)
      !
      ! DEBUG<

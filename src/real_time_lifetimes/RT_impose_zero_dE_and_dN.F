@@ -33,7 +33,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,&
 &                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
-&                         l_RT_impose_N_dN,RT_bands,RAD_prefactor
+&                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
  !
  implicit none
  !
@@ -118,9 +118,15 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        df=real(RT_delta0_occupations(ib,ik_rim),DP)
        !
        Hole_fac =real(Hole_lifetime(ib,ik_rim)      ,DP)*(f0_H-df)
-       Hole_fac0=real(REF_lifetime(ib,ik_rim,iref  ),DP)*(    -df)  
        Elec_fac =real(Electron_lifetime(ib,ik_rim)  ,DP)*(f0_E+df)
-       Elec_fac0=real(REF_lifetime(ib,ik_rim,iref+1),DP)*(     df)
+       !
+       if(.not.l_RT_include_eq_scatt) then
+         f0_E=0._SP
+         f0_H=0._SP
+       endif
+       !
+       Hole_fac0=real(REF_lifetime(ib,ik_rim,iref  ),DP)*(f0_H-df)  
+       Elec_fac0=real(REF_lifetime(ib,ik_rim,iref+1),DP)*(f0_E+df)
        !
        if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
        if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP) 

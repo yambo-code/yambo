@@ -51,7 +51,8 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,RT_potential, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
-&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
+&                         l_RT_eq_is_zero_temp
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -321,6 +322,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    subroutine RT_set_G_lesser()
      !
      integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     real(SP):: Energy,f_occ,f_occ_ref,Width
      !
      ! Defined from occupations %f
      ! In case RT_apply has been used the reference is
@@ -330,25 +332,45 @@ subroutine RT_start_and_restart(E,k,q,X)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           if (l_RT_uses_E_DbGd) then
-             !if (allocated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd,1) =abs(E%W_DbGd(ib,ik_E_DbGd,1))
-             if (allocated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1) =abs(E%W(ib,ik,1))
-             RT_E_and_k%En(ib,ik_RT_DbGd,1)=E%E_DbGd(ib,ik_E_DbGd,1)
-             !RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt(ik,:)
-             G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_DbGd(ib,ik_E_DbGd,1)
-             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
+           !
+           if (     l_RT_uses_E_DbGd) then
+             Energy    = E%E_DbGd(ib,ik_E_DbGd,1)
+             f_occ     = E%f_DbGd(ib,ik_E_DbGd,1)
+             f_occ_ref = f_occ
+             Width     = 0._SP
+             if (allocated(E%fo)) f_occ_ref = cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
+             !if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
+             if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            else
-             G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-             if (allocated(E%W))  RT_E_and_k%W(ib,ik,1) =abs(E%W(ib,ik,1))
-             RT_E_and_k%En(ib,ik,1)=E%E(ib,ik,1)
-             !RT_E_and_k%kpt(:,ik)=k%pt(ik,:)
-             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
+             Energy    = E%E(ib,ik,1)
+             f_occ     = E%f(ib,ik,1)
+             f_occ_ref = f_occ
+             Width     = 0._SP
+             if (allocated(E%fo)) f_occ_ref = cI*E%fo(ib,ik,1)
+             if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            endif
+           !
+           if (l_RT_eq_is_zero_temp) then
+             if (Energy<=E%E_Fermi) then
+               f_occ    =f_occ+(f_occ_ref-spin_occ)
+               f_occ_ref=                +spin_occ
+             else
+               f_occ    =f_occ+f_occ_ref
+               f_occ_ref=0._SP
+             endif
+           endif
+           !
+           RT_E_and_k%En(ib,ik_RT_DbGd,1)= Energy
+           RT_E_and_k%W(ib,ik,1)         = Width 
+           !RT_E_and_k%kpt(:,ik_RT_DbGd)  = k%pt(ik,:)
+           !
+           G_lesser(ib,ib,ik_RT_DbGd,1)         = cI*f_occ
+           G_lesser_reference(ib,ib,ik_RT_DbGd) = cI*f_occ_ref
+           dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
+           !
          enddo
        enddo
      enddo
-     if (.not.(allocated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
-     dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser
    ! 

@@ -52,7 +52,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Error Message
  !===============
- if (MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
+ if (.not.present(REPORT).and.MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
  !
  if (.not.present(Sz).and..not.present(Kn).and..not.present(REPORT)) return
  if (.not.master_thread) return
@@ -101,22 +101,22 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Error Message of an already allocated array and/or other errors
  !=================================================================
- if (MEM_err/=0) then
-   if (i_SHELF>0) then
-     call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
-     write (*,*) what,Sz,Kn
-     stop
-   else
-     call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+ if (adding) then
+   if (MEM_err/=0) then
+     if (i_SHELF>0) then
+       call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
+     else
+       call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+     endif
+     return
    endif
-   return
- endif
- if (Sz==0) then
-   call warning("Allocation attempt of "//what//" of zero size.")
-   return
- endif
- if (Sz<0) then
-   call error("Allocation attempt of "//what//" of negative size.")
+   if (Sz==0) then
+     call warning("Allocation attempt of "//what//" of zero size.")
+     return
+   endif
+   if (Sz<0) then
+     call error("Allocation attempt of "//what//" of negative size.")
+   endif
  endif
  !
  ! Database Update

@@ -98,8 +98,8 @@ PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setu
 #
 # Interfaces
 #
-2YLIBS       = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
-2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #

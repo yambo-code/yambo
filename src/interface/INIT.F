@@ -1244,18 +1244,18 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP
      if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
-       n_threads_K=n_threads
-       n_threads_X=n_threads
-       n_threads_DIP=n_threads
+       n_threads_K=0
+       n_threads_X=0
+       n_threads_DIP=0
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=n_threads
-     if (l_real_time)                                     n_threads_RT=n_threads
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
+     if (l_real_time)                                     n_threads_RT=0
 #endif
 #if defined _OPENMP && defined _SC && !defined _RT
-     if (l_eval_collisions)    n_threads_SE=n_threads
+     if (l_eval_collisions)    n_threads_SE=0
 #endif
 #if defined _OPENMP && defined _SC && defined _RT
-     if (l_eval_collisions)    n_threads_RT=n_threads
+     if (l_eval_collisions)    n_threads_RT=0
 #endif
      !
    end subroutine before_infile_write_setup 

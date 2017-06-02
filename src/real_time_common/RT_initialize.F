@@ -38,11 +38,10 @@ subroutine RT_initialize(E,k,q)
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
-&                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
-&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,l_RT_simple, &
-&                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
-&                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,l_RT_INV,   &
-&                         l_update_QP_energies,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics, &
+&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
+&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
+&                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
+&                         l_update_QP_energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
@@ -54,10 +53,10 @@ subroutine RT_initialize(E,k,q)
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
- type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: q,k
+ type(levels), intent(inout) :: E
+ type(bz_samp),intent(in)    :: q,k
  !
  ! Work space
  !
@@ -309,6 +308,8 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
  !
+ call RT_adjust_equilibrium()
+ !
  ! LOG
  ! ===
  !
@@ -411,4 +412,61 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ contains
+   !
+   subroutine RT_adjust_equilibrium()
+     !
+     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nkpts
+     use real_time,          ONLY:RT_ibz_coo,DbGd_ibz_coo
+     !
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     !
+     if(.not.l_RT_eq_is_zero_temp) return
+     !
+     if(.not.allocated(E%fo)) then
+       YAMBO_ALLOC(E%fo,(E%nb,E%nk,n_sp_pol))
+       E%fo=E%f
+     endif
+     !
+     if(.not.allocated(E%df)) then
+       YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
+       E%df=0._SP
+     endif
+     !
+     if (l_RT_uses_E_DbGd.and..not.allocated(E%df_DbGd)) then
+       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+       E%df_DbGd=0._SP
+     endif
+     !
+     ! Defined from occupations %f
+     ! In case RT_apply has been used the reference is
+     ! defined from the %fo occupations
+     !
+     do ib=RT_bands(1),RT_bands(2)
+       do ik=1,k%nibz
+         do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+           !
+           if (l_RT_uses_E_DbGd) then
+             if(E%E_DbGd(ib,ik_E_DbGd,1)<=E%E_Fermi) then
+               E%df_DbGd(ib,ik_E_DbGd,1)=(E%f_DbGd(ib,ik_E_DbGd,1)-spin_occ)
+             else
+               E%df_DbGd(ib,ik_E_DbGd,1)= E%f_DbGd(ib,ik_E_DbGd,1)
+             endif
+           else
+             if(E%E(ib,ik,1)<=E%E_Fermi) then
+               E%df(ib,ik,1)=(E%f(ib,ik,1)-spin_occ)
+               E%fo(ib,ik,1)= spin_occ
+             else
+               E%df(ib,ik,1)= E%f(ib,ik,1)
+               E%fo(ib,ik,1)= 0._SP
+             endif
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine RT_adjust_equilibrium
+   !
 end subroutine RT_initialize

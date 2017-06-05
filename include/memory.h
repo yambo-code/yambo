@@ -26,15 +26,15 @@
  implicit none
 #define YAMBO_ALLOC_P(x,SIZE) \
   allocate(x SIZE,stat=MEM_err)NEWLINE \
-  if (associated(x)) call MEM_dri("x",x)NEWLINE \
-  if (.not.associated(x)) call MEM_dri("x")
+  if (associated(x)) call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.associated(x)) call MEM_dri(QUOTES x QUOTES)
 #define YAMBO_ALLOC(x,SIZE) \
   allocate(x SIZE,stat=MEM_err)NEWLINE \
-  if (allocated(x)) call MEM_dri("x",x)NEWLINE \
-  if (.not.allocated(x)) call MEM_dri("x")
+  if (allocated(x)) call MEM_dri(QUOTES x QUOTES,x)NEWLINE \
+  if (.not.allocated(x)) call MEM_dri(QUOTES x QUOTES)
 #define YAMBO_FREE(x) \
-  if (allocated(x)) call MEM_dri("x",size(x))NEWLINE \
+  if (allocated(x)) call MEM_dri(QUOTES x QUOTES,size(x))NEWLINE \
   if (allocated(x)) deallocate(x)
 #define YAMBO_FREE_P(x) \
-  if (associated(x)) call MEM_dri("x",size(x))NEWLINE \
+  if (associated(x)) call MEM_dri(QUOTES x QUOTES,size(x))NEWLINE \
   if (associated(x)) deallocate(x);nullify(x)

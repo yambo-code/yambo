@@ -208,7 +208,9 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F |sed -e 's/NEWLINE/\n/g'  > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F \
+	  | sed -e 's/NEWLINE/\n/g' |  sed -e 's/\. *not *\./\.not\./g' \
+	  | sed -e 's/QUOTES\ /\"/g' | sed -e 's/\ QUOTES/\"/g' > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(linclude) \$*\$(f90suffix)) > /dev/null
 	${rm_command}
 	@echo $ECHO_N \$*".F "

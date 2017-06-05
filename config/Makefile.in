@@ -453,19 +453,19 @@ define lib_ext_clean_all
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
 endef
 define sysincs_clean
- @if test -d $(prefix)/sys_incs/; then \
-   rm $(prefix)/sys_incs/* ; \
+ @if test -d $(prefix)/include/system/; then \
+   rm $(prefix)/include/system/* ; \
    echo "[CLEAN] Libraries ... done"; \
  fi 
 endef
 define lib_ext_remove
- @if test -f $(libs_prefix)/../driver/driver.c; then \
+ @if test -f $(libs_prefix)/../../driver/driver.c; then \
   echo "[CLEAN] Pre-compiled internal libraries ... done"; \
   rm -fr "$(libs_prefix)"; \
  fi
- @if test -f $(prefix)/sys_incs/../driver/driver.c; then \
+ @if test -f $(prefix)/include/system/../../driver/driver.c; then \
   echo "[CLEAN] Local include directory ... done"; \
-  rm -fr "$(prefix)/sys_incs"; \
+  rm -fr "$(prefix)/include/system"; \
  fi
 endef
 define lib_mod_clean
@@ -477,7 +477,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf*  nc*  iotk* fftw* h5* gif2h5 ; cd ..
+ cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

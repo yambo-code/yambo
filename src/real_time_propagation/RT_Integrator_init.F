@@ -24,7 +24,7 @@
 subroutine RT_Integrator_init()
  ! 
  use pars,           ONLY:SP,cONE,cZERO
- use com,            ONLY:warning
+ use com,            ONLY:msg
  use stderr,         ONLY:intc
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
 &                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,             &
@@ -45,10 +45,7 @@ subroutine RT_Integrator_init()
  !
  l_RT_INV  =(index(Integrator_name,'INV'  )/=0.or.index(Integrator_name,'inv'  )/=0).and..not.(l_RT_EXP.or.l_RT_EULER)
  !
- if ( .not.(l_RT_EXP.or.l_RT_EULER.or.l_RT_INV) ) then
-   call warning(" No integration method defined. Using default EULER")
-   l_RT_EULER=.TRUE.
- endif
+ if ( .not.(l_RT_EXP.or.l_RT_EULER.or.l_RT_INV) ) l_RT_EULER=.TRUE.
  !
  if (l_RT_EXP) then
    integrator_exp_order=3
@@ -95,6 +92,8 @@ subroutine RT_Integrator_init()
  if (l_RT_RWA   ) Integrator_name = trim(Integrator_name)//" + RWA"
  if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
+ !
+ call msg('s','Integrator: '//trim(Integrator_name))
  !
  ! e) Define integrators tables
  !

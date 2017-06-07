@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_manual_excitation(E,k)
+subroutine RT_Fermi_excitation(E,k)
  !
  use pars,           ONLY:SP
  use units,          ONLY:BO2ANG
@@ -62,4 +62,4 @@ subroutine RT_manual_excitation(E,k)
  !
  call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
  !
-end subroutine RT_manual_excitation
+end subroutine RT_Fermi_excitation

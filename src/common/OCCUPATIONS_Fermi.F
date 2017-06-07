@@ -166,7 +166,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
    do i1=i_Ef_fine(1),i_Ef_fine(2)
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
-     if (abs(n_of_el_from_zero(1))<nel_diff_zero.and.E_sorted(i1+1)-E_sorted(i1)<Tel_step) then
+     if (abs(n_of_el_from_zero(1))<nel_diff_zero.and.E_sorted(i1+1)-E_sorted(i1)>Tel_step) then
        E%E_Fermi=E_sorted(i1)
        exit FERMI_LOOP
      endif

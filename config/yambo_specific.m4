@@ -32,9 +32,10 @@ AC_SUBST(extlibs_path)
 #
 # ============================================================================
 # DEBUG
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
-if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
-AC_SUBST(enable_debug)
+AC_ARG_ENABLE(keep-objects, AC_HELP_STRING([--enable-keep-objects],
+              [Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_keep_objects" = "x"; then enable_keep_objects="yes"; fi
+AC_SUBST(enable_keep_objects)
 #
 # ============================================================================= 
 # KEEP SOURCE FILES 
@@ -72,8 +73,8 @@ AC_SUBST(def_dp)
 # Time Profiling (mod_timing)
 #
 AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
-              [Extended timing profile of specific sections]))
-if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+              [Extended timing profile of specific sections. Default is yes.]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="yes"; fi
 def_time_profile=" "
 if test x"$enable_time_profile" = "xyes"; then 
  def_time_profile="-D_TIMING"

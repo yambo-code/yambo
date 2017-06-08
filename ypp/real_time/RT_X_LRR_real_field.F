@@ -176,7 +176,7 @@ subroutine RT_X_LRR_real_field(en)
    ! Polarization
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),RT_conf%W_n_steps,&
-&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,,Use_FFT,1)
+&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
  !

@@ -29,7 +29,7 @@ scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
 xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
@@ -298,7 +298,7 @@ endef
 define mksrc
  if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -314,7 +314,7 @@ endef
 define mk_ypp_src
  if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -372,7 +372,7 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
@@ -389,7 +389,7 @@ define mk_ypp_x
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
@@ -415,7 +415,7 @@ define objects_clean
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
- if test "$(debug)" = yes ; then \
+ if test "$(keep_objs)" = yes ; then \
  find . -name '.debug*' | xargs rm -fr ; \
  echo "[CLEAN] Debug locks and directories ... done" ; \
  fi

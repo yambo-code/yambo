@@ -131,10 +131,10 @@ fi
 
 cat << EOF >> $cdir/Makefile
 \$(lock_file):
-	${PREFIX}if test ! -f \$(lock_file) && test "\$(debug)" = "no" ; then \
+	${PREFIX}if test ! -f \$(lock_file) && test "\$(keep_objs)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); fi
-	${PREFIX}if test "\$(debug)" = "yes"; \
+	${PREFIX}if test "\$(keep_objs)" = "yes"; \
 	then \$(prefix)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
 
 \$(dep_file): \$(lock_file)

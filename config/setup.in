@@ -8,7 +8,7 @@
 package_string    = @PACKAGE_STRING@
 cpu         = @build_cpu@
 os          = @build_os@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 make        = @MAKE@
 ar          = @AR@
 arflags     = @AR_FLAGS@

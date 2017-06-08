@@ -263,6 +263,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
      l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
+     l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
    endif
    !
    if ( trim(rstr_piece(i1)) == 'RealTime') then

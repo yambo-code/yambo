@@ -189,17 +189,20 @@ module stderr
      !
      ! Work Space
      !
-     integer          :: i_pos
+     integer          :: i_pos,i_s
      character(lchlen):: string_tmp
      !
      string_remove=string_in
+     !
+     if (len_trim(what)==0) return
+     !
      i_pos=index(string_in,what)
      !
      if (i_pos==0) return
      !
      string_tmp=string_in
      !
-     do while (i_pos/=0) 
+     do i_s=1,len_trim(string_in)
        if (present(replace)) then
          string_remove=string_tmp(:i_pos-1)//replace//string_tmp(i_pos+len(what):)
        else

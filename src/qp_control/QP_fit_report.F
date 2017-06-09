@@ -134,9 +134,13 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  !
  do i_spin=1,n_sp_pol
    !
-   fname(1)=QP_action(i_ACTION)%CTL(1)%db
-   fname(1)=string_remove(fname(1),"/",replace="_")
-   if (index(fname(1),'ndb.QP')>1) fname(1)=string_remove(fname(1),"nbd.QP")
+   fname(2)=QP_action(i_ACTION)%CTL(1)%db
+   fname(1)=string_remove(fname(2),"/ndb.QP")
+   fname(2)=fname(1)
+   fname(1)=string_remove(fname(2),"/",replace="-")
+   fname(2)=fname(1)
+   fname(1)=string_remove(fname(2),".")
+   !
    if (n_sp_pol>1) then 
      if (i_spin==1) fname(2)=trim(fname(1))//"-spin-dn.fit"
      if (i_spin==2) fname(2)=trim(fname(1))//"-spin-up.fit"

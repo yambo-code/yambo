@@ -190,15 +190,24 @@ module stderr
      ! Work Space
      !
      integer          :: i_pos
+     character(lchlen):: string_tmp
      !
      string_remove=string_in
      i_pos=index(string_in,what)
+     !
      if (i_pos==0) return
-     if (present(replace)) then
-       write (string_remove,'(3a)') string_in(:i_pos-1),replace,string_in(i_pos+len(what):)
-     else
-       write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+len(what):)
-     endif
+     !
+     string_tmp=string_in
+     !
+     do while (i_pos/=0) 
+       if (present(replace)) then
+         string_remove=string_tmp(:i_pos-1)//replace//string_tmp(i_pos+len(what):)
+       else
+         string_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
+       endif
+       string_tmp=string_remove
+       i_pos=index(string_tmp,what)
+     enddo
      !
    end function
    !

@@ -166,13 +166,13 @@ clean:
 	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
 	@$(conf_clean)
 	@$(xclean)
+distclean: clean_all
 	
 # Functions
 define make_message

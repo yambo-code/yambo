@@ -266,7 +266,6 @@ clean:
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all remove_ext_libs
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
@@ -276,6 +275,7 @@ clean_all:
 	@$(xclean)
 remove_ext_libs: 
 	@$(lib_ext_remove)
+distclean: clean_all remove_ext_libs
 #
 #===========
 # Functions
@@ -455,7 +455,7 @@ define lib_ext_clean_all
 endef
 define sysincs_clean
  @if test -d $(prefix)/include/system/; then \
-   rm $(prefix)/include/system/* ; \
+   rm -rf $(prefix)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \
  fi 
 endef

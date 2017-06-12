@@ -201,7 +201,6 @@ module stderr
      if (i_pos==0) return
      !
      string_tmp=string_in
-     write (*,*) "IN",trim(string_in)
      !
      do i_s=1,len_trim(string_in)
        if (present(replace)) then

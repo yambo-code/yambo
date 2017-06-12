@@ -29,7 +29,7 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP
+ use pars,   ONLY:SP,cI
  !
  implicit none
  !
@@ -50,6 +50,7 @@ module wrapper
  public :: V_dot_V
  public :: real_V_dot_V
  public :: M_by_V
+ public :: ERFI
  !
  contains
    !
@@ -244,5 +245,24 @@ module wrapper
 #endif
      !
    end function V_dot_V
+   !
+   complex(SP) function ERFI(Z)
+     complex(SP), intent(in) :: Z
+     complex(SP) :: TMP_ERFI
+     real(SP)    :: rW(2),rZ(2)
+     integer     :: istatus
+     !
+     istatus=0
+     rZ=(/real(Z),aimag(Z)/)
+     !
+#if defined _DOUBLE
+     call zwofz(rZ,rW,istatus)
+#else
+     call cwofz(rZ,rW,istatus)
+#endif
+     !
+     ERFI=cI*(exp(Z**2)*cmplx(rW(1),rW(2))-1._SP)
+     !
+   end function
    !
 end module

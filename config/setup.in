@@ -46,6 +46,7 @@ lmpi        = @MPI_LIBS@
 impi        = @MPI_INCS@
 mpidir      = @MPI_PATH@
 lopenmp     = @OPENMPLIBS@
+lmath77     = -L/home/sangalli/data/Pacchetti/libs/math77-master/src/MATH77/ -lmath77
 lnetcdf     = @NETCDF_LIBS@
 inetcdf     = @NETCDF_INCS@
 lnetcdff    = @NETCDFF_LIBS@

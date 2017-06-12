@@ -76,8 +76,8 @@ llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lslatec -llocal \$(lfft) -lm"
-   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lmath77) -lslatec -llocal \$(lfft) -lm"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)  \$(ifft)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft) -lm"

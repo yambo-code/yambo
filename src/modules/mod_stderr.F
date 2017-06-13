@@ -194,8 +194,6 @@ module stderr
      !
      string_remove=string_in
      !
-     if (len_trim(what)==0) return
-     !
      i_pos=index(string_in,what)
      !
      if (i_pos==0) return

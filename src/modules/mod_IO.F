@@ -407,6 +407,8 @@ module IO_m
      logical, optional :: FORCE
      logical           :: I_OPEN
      !
+     I_OPEN=.FALSE.
+     !
      if (present(FORCE)) then
        !
        if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return

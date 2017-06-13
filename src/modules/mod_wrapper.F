@@ -247,19 +247,27 @@ module wrapper
    end function V_dot_V
    !
    complex(SP) function ERFI(Z)
+     !
      complex(SP), intent(in) :: Z
-     complex(SP) :: TMP_ERFI
      real(SP)    :: rW(2),rZ(2)
      integer     :: istatus
      !
      istatus=0
      rZ=(/real(Z),aimag(Z)/)
      !
+     ! Compute rW=w(-z)
+     !=================
 #if defined _DOUBLE
-     call zwofz(rZ,rW,istatus)
+     call zwofz(-rZ,rW,istatus)
 #else
-     call cwofz(rZ,rW,istatus)
+     call cwofz(-rZ,rW,istatus)
 #endif
+     ! Since:
+     !========
+     ! W(-z)=exp(-z^2)*(1-  erf (i*z))
+     !      =exp(-z^2)*(1-i*erfi( z ))
+     !
+     ! erfi(z)=i*exp(z^2)*(W(-z)-1)
      !
      ERFI=cI*(exp(Z**2)*cmplx(rW(1),rW(2))-1._SP)
      !

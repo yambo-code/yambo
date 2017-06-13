@@ -15,7 +15,7 @@
 # [@DP_check@] Double precision
 # [@KEEP_OBJS_check@] Keep object files
 # [@TIME_profile_check@] Run-Time timing profile 
-# [@TIME_profile_check@] Run-Time memory profile 
+# [@MEM_profile_check@] Run-Time memory profile 
 #
 # 
 # - PARALLEL SUPPORT -

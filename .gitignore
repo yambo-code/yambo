@@ -44,7 +44,7 @@ sys_incs
 #
 compile.sh
 sbin/make_makefile.sh
-sbin/objects_debug.sh
+sbin/objects_store.sh
 src/wf_and_fft/sgfft.F
 bin/*
 

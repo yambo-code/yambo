@@ -56,15 +56,16 @@ includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
+           sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
-TARGETS  = yambo interfaces ypp
+CORE     = yambo interfaces ypp
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
 PROJECTS = yambo_ph ypp_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
            ypp_sc ypp_rt ypp_magnetic
-DEBUG    = 
-EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
+BROKEN   =
+TESTS    = 
+EXE      = $(CORE) $(PROJECTS) $(BROKEN) $(TESTS)
 INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
@@ -126,9 +127,9 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 all:
-	for target in $(TARGETS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(CORE)    ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
 	for target in $(PROJECTS); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(DEBUG)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(TESTS)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
@@ -265,7 +266,6 @@ clean:
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all remove_ext_libs
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
@@ -275,6 +275,7 @@ clean_all:
 	@$(xclean)
 remove_ext_libs: 
 	@$(lib_ext_remove)
+distclean: clean_all remove_ext_libs
 #
 #===========
 # Functions
@@ -285,11 +286,11 @@ remove_ext_libs:
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [stable] all";\
- for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
+ for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
+ for target in $(PROJECTS); do echo " [projects] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo
- for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
+ for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
+ for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 #
@@ -416,8 +417,8 @@ define objects_clean
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
  if test "$(keep_objs)" = yes ; then \
- find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] Debug locks and directories ... done" ; \
+ find . -name '.objects__lock*' | xargs rm -fr ; \
+ echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean
@@ -454,7 +455,7 @@ define lib_ext_clean_all
 endef
 define sysincs_clean
  @if test -d $(prefix)/include/system/; then \
-   rm $(prefix)/include/system/* ; \
+   rm -rf $(prefix)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \
  fi 
 endef

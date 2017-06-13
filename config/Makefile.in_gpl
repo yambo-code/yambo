@@ -50,9 +50,9 @@ includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
+           sbin/objects_store.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
            lib/install/make_iotk.inc
-TARGETS  = yambo interfaces ypp
+CORE     = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all distclean
 INTERFCS = a2y p2y e2y 
@@ -79,16 +79,15 @@ YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tdd
 # PROJECTS
 #
 PROJECTS = yambo_kerr yambo_ph ypp_ph
-EXE      = $(TARGETS) $(PROJECTS)
+EXE      = $(CORE) $(PROJECTS)
 #
 nothing: 
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
 all:
+	for target in $(CORE);     do $(MAKE) $$target ; done
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
-	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
@@ -167,21 +166,21 @@ clean:
 	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
 	@$(conf_clean)
 	@$(xclean)
+distclean: clean_all
 	
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [stable] all";\
- for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(CORE); do echo  " [core $$target" ; done;echo;\
+ for target in $(PROJECTS); do echo " [projects] $$target" ; done;echo;\
+ for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc
@@ -304,8 +303,8 @@ define objects_clean
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
  if test "$(keep_objs)" = yes ; then \
- find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] Debug locks and directories ... done" ; \
+ find . -name '.objects__lock*' | xargs rm -fr ; \
+ echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean

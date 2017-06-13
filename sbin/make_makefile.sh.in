@@ -135,7 +135,7 @@ cat << EOF >> $cdir/Makefile
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
 	touch \$(lock_file); rm -f \$(dep_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
-	then \$(prefix)/sbin/objects_debug.sh \$(lock_file); rm -f \$(dep_file); fi
+	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); fi
 
 \$(dep_file): \$(lock_file)
 	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)

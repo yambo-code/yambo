@@ -37,10 +37,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use drivers,       ONLY:l_elel_corr
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index,PAR_IND_QP,&
 &                        PAR_IND_Q_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
-                         PAR_COM_Q_A2A,PAR_COM_Q_INDEX
+                         PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
-&                        deliver_IO_error_message
+&                        deliver_IO_error_message,OP_WR_CL,OP_APP_WR_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -436,14 +436,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  if (l_WRgFsq) then
    !
-   iq_range=(/nq_to_sum,1/)
-   do iq_loop=1,nq_to_sum
-     if (PAR_Q_index(iq_loop)>0) then
-       iq_range(1)=min(iq_range(1),iq_loop)
-       iq_range(2)=max(iq_range(2),iq_loop)
-     endif
-   enddo
-   !
    ! AndreaM, March 2015.
    !
    ! In the iq_loop loop the q=1 is read by ALL cpu's. This is in order
@@ -476,17 +468,25 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
    !
+   iq_range=(/nq_to_sum,1/)
+   do iq_loop=1,nq_to_sum
+     if (PAR_Q_index(iq_loop)>0) then
+       iq_range(1)=min(iq_range(1),iq_loop)
+       iq_range(2)=max(iq_range(2),iq_loop)
+     endif
+   enddo
+   !
+   call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_ELPH(ID,'gFsq')
+   !
+   call PP_redux_wait
+   !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    do iq_loop=iq_range(1),iq_range(2)
-     if (iq_loop==iq_range(1)) then
-       if (iq_loop==1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/1,iq_loop+1/),ID=ID)
-       if (iq_loop> 1) call io_control(ACTION=OP_WR,COM=REP,SEC=(/iq_loop+1/),ID=ID)
-     else if (iq_loop<iq_range(2)) then
-       call io_control(ACTION=WR,COM=REP,SEC=(/iq_loop+1/),ID=ID)
-     else if (iq_loop==iq_range(2)) then
-       call io_control(ACTION=WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
-     endif
+     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      io_err=io_ELPH(ID,'gFsq')
    enddo
    !

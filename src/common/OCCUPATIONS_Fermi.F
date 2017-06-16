@@ -36,23 +36,22 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !  Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:HA2EV,HA2KEL,BO2ANG
+ use units,         ONLY:HA2KEL
  use drivers,       ONLY:Finite_Tel
- use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
+ use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
 &                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:error,warning
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
- use interfaces,    ONLY:OCCUPATIONS_Gaps
 #include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::K
- integer      ::mode
+ character(*) ::mode
  !
  ! Work Space
  !
@@ -162,7 +161,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
      !
    endif
    !
-   ! 3. Is any level in the E_fine range ok?
+   ! 3. Is any level in the Ef_fine range ok?
    !
    do i1=i_Ef_fine(1),i_Ef_fine(2)
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
@@ -226,7 +225,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
- if (mode==0) return
+ if (len_trim(mode)==0) return
  !
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
@@ -280,23 +279,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
  endif
  !
- ! Eval Metallic/Filled bands and gaps
- !
- call OCCUPATIONS_Gaps(E)
- !
- ! Mode = 1. Define E%f and exits
- !
- if (mode==1) return
- !
- ! Complete Report
- !
- call msg('r',  'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
- call msg('r',  'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
- call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
- call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
- call msg('r',  'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
- !
- call REPORT_Occupations(E)
+ call REPORT_Occupations(mode,E)
  !
  contains
    !

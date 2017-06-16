@@ -308,13 +308,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (input_Tel_is_negative) then
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk," ")
    nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
    call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
- call OCCUPATIONS_Fermi(Xen,Xk,2)
+ call OCCUPATIONS_Fermi(Xen,Xk,"Xen")
  call OCCUPATIONS_Extend(Xen,en)
  !
  if (input_Tel_is_negative) then

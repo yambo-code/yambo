@@ -190,7 +190,10 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
-   if (.not.allocated(en%fo) .and. .not. l_sc_run) call OCCUPATIONS_Fermi(en,k,1)
+   if (.not.allocated(en%fo) .and. .not. l_sc_run) then
+     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,"X")
+     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,"K")
+   endif
    !
    if (input_Tel_is_negative) then
      en%nbf=nbf_m_SAVE(1)
@@ -206,7 +209,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    call E_duplicate(en,Fermi_en)
    !
-   call OCCUPATIONS_Fermi(Fermi_en,k,1)
+   call OCCUPATIONS_Fermi(Fermi_en,k," ")
    !
    ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
    ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
@@ -225,11 +228,6 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  call E_reset(Fermi_en)
  YAMBO_FREE(DbGd_k_done)
  call QP_actions_reset( )
- !
- ! Reporting
- !
- call msg('r', '[QP apply] Fermi level variation [ev]:',en%E_Fermi*HA2EV)
- call msg('r', '[QP apply] Last Filled/Metallic band :',(/en%nbf,en%nbm/))
  !
  if (en%nbf==en%nbm) then
    !

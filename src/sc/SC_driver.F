@@ -362,7 +362,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    enddo ! i_sp_pol
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,1) 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k," ") 
    !
    if (l_SC_cycle) then
      !
@@ -380,7 +380,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
      !
-     call OCCUPATIONS_Fermi(E,k,1) 
+     call OCCUPATIONS_Fermi(E,k," ") 
      !
      ! New density 
      !=============
@@ -713,7 +713,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,2)  
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
      !
      dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_bare(:,:,:)
      !

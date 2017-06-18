@@ -280,6 +280,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
  endif
  !
+ call PP_redux_wait()
+ !
  contains
    !
    subroutine RT_initialize_local()

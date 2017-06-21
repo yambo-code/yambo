@@ -84,6 +84,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
+#if defined _KERR
+ use drivers,    ONLY:l_kerr,l_anomalous_Hall
+#endif
 #if defined _PL
  use PHOTOLUM,   ONLY:PL_weights
 #endif
@@ -474,6 +477,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_KIND=-1                   ! unknow 
  GS_exx_FRACTION=0.0             ! no EXX part  
  GS_exx_SCREENING=0.0            ! no screening
+ !
+#if defined _KERR
+ l_kerr=.false.
+ l_anomalous_Hall=.false.
+#endif
  !
 #if defined _PL
  PL_weights=(/1._SP,1._SP,1._SP/)

@@ -31,7 +31,7 @@ subroutine RT_density(en,kpt,qpt)
  use stderr,         ONLY:intc
  use com,            ONLY:msg,of_open_close,warning
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history
+ use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta0_occupations
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
@@ -85,7 +85,7 @@ subroutine RT_density(en,kpt,qpt)
  call msg('s',trim(ch_ws(1)))
  !
  RT_dyn_step=RT_step
- call RT_time_configuration_setup("DENSITY")
+ call RT_time_configuration_setup("DENSITY",GF_RT_IO_t)
  !
  ! Parallel Setups & WF_load
  !===========================

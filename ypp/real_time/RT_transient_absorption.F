@@ -34,7 +34,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use drivers,         ONLY:l_kerr
  use KERR,            ONLY:DIP_projected_r90
 #endif
- use RT_control,      ONLY:RT_output,RT_apply
+ use RT_control,      ONLY:RT_output,RT_apply,JPC_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
  use X_m,             ONLY:Epsilon_ii
@@ -76,7 +76,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Setup of Time-range & Report
  !
- call RT_time_configuration_setup("CARRIERS")
+ call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 

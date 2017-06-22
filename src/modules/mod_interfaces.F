@@ -27,6 +27,14 @@ module interfaces
  !
  interface
    !
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     type(levels)  ::E
+     type(bz_samp) ::K
+     character(*), OPTIONAL ::mode,OBJ
+   end subroutine
+   !
    subroutine MATRIX_transfer( mode, M_slk, M_bse, M )
      !
      use SLK_m, ONLY:SLK_matrix
@@ -163,8 +171,8 @@ module interfaces
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
-     real(SP), optional :: E_g_dir(n_sp_pol,2) ! min - max
-     real(SP), optional :: E_g_ind(n_sp_pol,2) ! min - max
+     real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+     real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)

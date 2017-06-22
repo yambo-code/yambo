@@ -21,19 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Fermi(E,K,mode)
+subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  !
- ! Mode = 0 
+ ! Mode = "FERMI" 
  !  Update the Fermi energy
  !  Output : E%E_fermi
  !
- ! Mode = 1 -> Mode 0 +
+ ! Mode =  "OCCUPATIONS" (implies "FERMI")
  !  Define E%f and reports variations in Ef/nbf/nbm
  !  Output : E%nbf,E%nbm
  !  E%E are shifted 
  !
- ! Mode > 1 -> Mode 1 +
- !  Full report of system electronic character
+ ! no Mode  (implies "FERMI" and "OCCUPATIONS")
+ ! Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
  use units,         ONLY:HA2KEL
@@ -47,11 +47,12 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
+ use interfaces,    ONLY:OCCUPATIONS_Gaps
 #include<memory.h>
  !
- type(levels) ::E
- type(bz_samp)::K
- character(*) ::mode
+ type(levels)  ::E
+ type(bz_samp) ::K
+ character(*), OPTIONAL ::mode,OBJ
  !
  ! Work Space
  !
@@ -169,7 +170,8 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if (abs(n_of_el_from_zero(1))<nel_diff_zero.and.E_sorted(i1+1)-E_sorted(i1)>Tel_step) then
        E%E_Fermi=E_sorted(i1)
-!+E_sorted(i1+1))/2.
+       ! To Code!
+       !E%E_Fermi=E_sorted(i1)+E_sorted(i1+1))/2.
        exit FERMI_LOOP
      endif
    enddo
@@ -228,7 +230,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
- if (len_trim(mode)==0) return
+ if (mode=="FERMI") return
  !
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
@@ -282,7 +284,18 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
  endif
  !
- call REPORT_Occupations(mode,E)
+ ! Gaps, VBM/CBM
+ !
+ if (mode=="OCCUPATIONS") then
+   call OCCUPATIONS_Gaps(E)
+   return
+ endif
+ !
+ if (present(OBJ)) then
+   call REPORT_Occupations(OBJ,E)
+ else
+   call REPORT_Occupations(" ",E)
+ endif
  !
  contains
    !

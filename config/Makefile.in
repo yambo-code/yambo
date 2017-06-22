@@ -61,11 +61,13 @@ CFGFILES = config/setup config/Makefile config/report  \
 CORE     = yambo interfaces ypp
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PROJECTS = yambo_ph ypp_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl \
-           ypp_sc ypp_rt ypp_magnetic
+PH_PROJ  = yambo_ph ypp_ph 
+SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
+RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
+KERR_PROJ= yambo_kerr 
 BROKEN   =
 TESTS    = 
-EXE      = $(CORE) $(PROJECTS) $(BROKEN) $(TESTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
 INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
@@ -126,14 +128,22 @@ nothing:
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-all:
-	for target in $(CORE)    ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
-	for target in $(PROJECTS); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+core:      
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+ph-project:
+	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+sc-project:
+	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rt-project:
+	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+kerr-project:
+	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+all: core ph-project sc-project rt-project kerr-project
 	for target in $(TESTS)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
-ext-libs:
+ext-libs: 
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -285,9 +295,13 @@ distclean: clean_all remove_ext_libs
 #
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo  " [stable] all";\
+ echo  " [all projects] all";\
+ echo  " [project-related suite] project";echo;\
  for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [projects] $$target" ; done;echo;\
+ for target in $(PH_PROJ); do echo " [ph-projects] $$target" ; done;echo;\
+ for target in $(SC_PROJ); do echo " [sc-projects] $$target" ; done;echo;\
+ for target in $(RT_PROJ); do echo " [rt-projects] $$target" ; done;echo;\
+ for target in $(KERR_PROJ); do echo " [kerr-projects] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
  for target in $(TESTS); do echo  " [tests] $$target" ; done;echo

@@ -44,6 +44,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use drivers,       ONLY:l_sc_run
  use units,         ONLY:HA2EV
  use QP_m,          ONLY:QP_t
+ use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg,depth
  use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
 &                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
@@ -191,8 +192,8 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
    !
    if (.not.allocated(en%fo) .and. .not. l_sc_run) then
-     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,"X")
-     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,"K")
+     if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X")
+     if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K")
    endif
    !
    if (input_Tel_is_negative) then
@@ -209,7 +210,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    !
    call E_duplicate(en,Fermi_en)
    !
-   call OCCUPATIONS_Fermi(Fermi_en,k," ")
+   call OCCUPATIONS_Fermi(Fermi_en,k,mode="OCCUPATIONS")
    !
    ! In OCCUPATIONS_Fermi the Fermi_en the %E and CBm and VMB are coherent. 
    ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.

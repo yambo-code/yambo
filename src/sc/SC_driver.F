@@ -42,7 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index,&
-&                         LINEAR_ALGEBRA_driver
+&                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use LIVE_t,         ONLY:LIVE_message
@@ -362,7 +362,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    !
    enddo ! i_sp_pol
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k," ") 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
    !
    if (l_SC_cycle) then
      !
@@ -380,7 +380,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      forall (ib=1:SC_bands(1)-1) E%E(ib,:,:)=E%E(ib,:,:)+E%E(SC_bands(1),:,:)-E_previous(SC_bands(1),:,:)
      !
-     call OCCUPATIONS_Fermi(E,k," ") 
+     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
      !
      ! New density 
      !=============
@@ -713,7 +713,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
      !
      dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_bare(:,:,:)
      !

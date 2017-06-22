@@ -38,6 +38,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
+ use interfaces,     ONLY:OCCUPATIONS_Fermi
 #if defined _SC
  use wave_func,      ONLY:WF_buffered_IO 
  use drivers,        ONLY:l_sc_run
@@ -308,13 +309,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (input_Tel_is_negative) then
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk," ")
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,mode="OCCUPATIONS")
    nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
    call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
- call OCCUPATIONS_Fermi(Xen,Xk,"Xen")
+ call OCCUPATIONS_Fermi(Xen,Xk,OBJ="X")
  call OCCUPATIONS_Extend(Xen,en)
  !
  if (input_Tel_is_negative) then

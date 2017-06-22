@@ -165,6 +165,7 @@ ext-libs:
 #
 int-libs:
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 #
 # All libs #

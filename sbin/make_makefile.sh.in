@@ -76,7 +76,7 @@ llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
 case $target in
   yambo*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lmath77) -lslatec -llocal \$(lfft)"
+   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lmath77 -lslatec -llocal \$(lfft)"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)  \$(ifft)"
     ;;
   a2y|elk2y|c2y)
@@ -93,7 +93,7 @@ case $target in
     ;;
   ypp*)
    llibs="$llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lmath77) -lslatec -llocal \$(lfft)"
+   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lmath77 -lslatec -llocal \$(lfft)"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
 esac

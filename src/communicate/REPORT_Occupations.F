@@ -42,9 +42,8 @@ subroutine REPORT_Occupations(what,E)
  integer           ::first_occ_state
  integer           ::Nbf(n_sp_pol)
  integer           ::Nbm(n_sp_pol)
- character(lchlen) ::ch_
+ character(lchlen) ::ch_,prefix_
  character(schlen) ::title
- character(23)     ::prefix_
  real(SP)          ::N_met
  real(SP)          ::f_met
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
@@ -85,7 +84,7 @@ subroutine REPORT_Occupations(what,E)
    else
      write (ch_,'(2(i4.4,a,i4.4,15x))') first_occ_state,'-',Nbf(i_sp_pol),Nbf(i_sp_pol)+1,'-',E%nb
    endif
-   call msg('r',prefix_//repeat(" ",len_trim(title))//'  '//trim(ch_))
+   call msg('r',prefix_(1:25+len_trim(what))//repeat(" ",len_trim(title))//'  '//trim(ch_))
    !
  enddo
  !
@@ -93,7 +92,7 @@ subroutine REPORT_Occupations(what,E)
  !
  if(all(Nbf==Nbm)) then
    prefix_=                               trim(title)//'Indirect Gaps      [ev]'
-   call msg('r',prefix_//':',E_g_ind(1,:)*HA2EV)
+   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(1,:)*HA2EV)
  endif
  !
  if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
@@ -102,7 +101,7 @@ subroutine REPORT_Occupations(what,E)
      if (Nbf(i_sp_pol)==0) cycle
      if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
      if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
+     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
    enddo
  endif
  !
@@ -110,7 +109,7 @@ subroutine REPORT_Occupations(what,E)
  !
  if(all(Nbf==Nbm)) then
    prefix_=trim(title)//'Direct Gaps        [ev]'
-   call msg('r',prefix_//':',E_g_dir(1,:)*HA2EV)
+   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(1,:)*HA2EV)
  endif
  !
  if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
@@ -119,7 +118,7 @@ subroutine REPORT_Occupations(what,E)
      if (Nbf(i_sp_pol)==0) cycle
      if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
      if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
-     call msg('r',prefix_//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
+     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
    enddo
  endif
  !

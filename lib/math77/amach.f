@@ -752,12 +752,13 @@ C The comparison with 1.875E0*D6 in the line below is to guard
 C against the possibility that TEST is > 0 as a result of rounding
 C up in the addition of D6 to 1.
 C
-      IF ((TEST .eq. 0.D0) .or. (TEST .gt. 1.875D0*D6)) THEN
-         TEST = (D6 + D6) + 1.D0
-         IF (AMSUB1(TEST) .ne. 0.D0) RETURN
-      END IF
-      test = 0.0d0
-      END
+C  YAMBO-DS: 2017/06/23  lines commented to avoid error message
+C      IF ((TEST .eq. 0.D0) .or. (TEST .gt. 1.875D0*D6)) THEN
+C         TEST = (D6 + D6) + 1.D0
+C         IF (AMSUB1(TEST) .ne. 0.D0) RETURN
+C      END IF
+C      test = 0.0d0
+C      END
 c     ==================================================================
 c
       DOUBLE PRECISION FUNCTION AMSUB1 (TEST1)

@@ -111,8 +111,8 @@ module fields
      !
      ! Note that A is evolved using A''(t) starting from A(0) and A'(0). 
      !
-     use pars,      ONLY:cI,cZERO,pi
-     use wrapper,   ONLY:ERFI
+     use pars,      ONLY:cI,cONE,cZERO,pi
+     use wrapper,   ONLY:FADEVA
      !
      type(ext_field)   ::E_field
      !
@@ -123,7 +123,7 @@ module fields
      !
      integer           ::i_fr,i_field,n_fields
      real(SP)          ::T_0,W_0,W_i,sigma,WT_i,EXPf,fr_shift(2)
-     complex(SP)       ::f_t(2),f_tmp(3),cZ
+     complex(SP)       ::f_t(2),cZ,cS
      !
      small_a=cZERO
      !
@@ -180,9 +180,18 @@ module fields
        case('QSSIN')
          WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
          EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0+cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
-         if (order==0 ) f_t(i_field)=-sqrt(pi/2._SP)*sigma*exp(-W_0**2*sigma**2/2._SP)*real(exp(cI*fr_shift(i_field))*ERFI(cZ))
+         ! W    =FADEVA function
+         ! W(-z)=exp(-z^2)*(1-  erf (i*z))
+         !      =exp(-z^2)*(1-i*erfi( z ))
+         !
+         ! ERFI(z)=i*(exp(z^2)*W(-z)-1)
+         !
+         if (order==0 ) f_t(i_field)=-sqrt(pi/2._SP)*sigma/2._SP*                                              &
+&                                      cI*( (exp(      cZ **2-      cS )*FADEVA(-      cZ )-exp(-      cS )) + &
+&                                           (exp(conjg(cZ)**2-conjg(cS))*FADEVA(-conjg(cZ))-exp(-conjg(cS))) )
          if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
          if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
          !

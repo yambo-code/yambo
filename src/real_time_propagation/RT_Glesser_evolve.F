@@ -66,19 +66,13 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    ! Here the term G(T0) [dG_old] is added to dG(t)
    !
-   if(l_RT_RWA) then
-     !
-     ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} + dGT0() e^{-i\delta\epsilon (dt')}
-     !
-     ! Dephasing is integrated analitically in this case.
-     !
-     call RT_apply_RWA(ik,En,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
-     !
-   else
-     !
-     call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
-     !
-   endif
+   ! G(T0+dt) = G(T0) e^{-i\delta\epsilon dt} + dGT0() e^{-i\delta\epsilon (dt')}
+   !
+   ! Dephasing is integrated analitically in this case.
+   !
+   if(     l_RT_RWA)           call RT_apply_RWA(ik,En,dT,dTp,dG_out(:,:,ik),dG_old(:,:,ik))
+   !
+   if(.not.l_RT_RWA)           call RT_Dephasing_step(dG_out(:,:,ik),dG_old(:,:,ik),ik,dT)
    !
    ! Carriers relaxation step:
    !
@@ -86,7 +80,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    !
    call RT_Scattering_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   call RT_G_symmetrization(dG_out,ik)
+   call RT_G_symmetrization(dG_out(:,:,ik),ik)
    !
  enddo
  !
@@ -97,7 +91,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    subroutine RT_G_symmetrization(G_inout,ik)
      !
      integer,     intent(in)    :: ik
-     complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+     complex(SP), intent(inout) :: G_inout(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
      !
      integer                :: ib,ibp
      real(SP)               :: E_occ_tmp,H_occ_tmp
@@ -106,20 +100,20 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
        !
        do ib=RT_bands(1),RT_bands(2)
          !
-         G_inout(ib,ib,ik)=cmplx(0._SP,aimag(G_inout(ib,ib,ik)))
+         G_inout(ib,ib)=cmplx(0._SP,aimag(G_inout(ib,ib)))
          !
-         E_occ_tmp= aimag(G_inout(ib,ib,ik))+            aimag(G_lesser_reference(ib,ib,ik))
-         H_occ_tmp=-aimag(G_inout(ib,ib,ik))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
+         E_occ_tmp= aimag(G_inout(ib,ib))+            aimag(G_lesser_reference(ib,ib,ik))
+         H_occ_tmp=-aimag(G_inout(ib,ib))+ ( spin_occ-aimag(G_lesser_reference(ib,ib,ik)) )
          !
-         if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib,ik)=                      G_lesser_reference(ib,ib,ik)
-         if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib,ik)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
+         if ( E_occ_tmp<0._SP .or. H_occ_tmp>spin_occ ) G_inout(ib,ib)=                      G_lesser_reference(ib,ib,ik)
+         if ( H_occ_tmp<0._SP .or. E_occ_tmp>spin_occ ) G_inout(ib,ib)=cmplx(0._SP,spin_occ)-G_lesser_reference(ib,ib,ik)
          !
          do ibp=ib+1,RT_bands(2)
            !
-           tmp=( G_inout(ib,ibp,ik)-conjg(G_inout(ibp,ib,ik)) )/2._SP
+           tmp=( G_inout(ib,ibp)-conjg(G_inout(ibp,ib)) )/2._SP
            !
-           G_inout(ib,ibp,ik)=       tmp
-           G_inout(ibp,ib,ik)=-conjg(tmp)
+           G_inout(ib,ibp)=       tmp
+           G_inout(ibp,ib)=-conjg(tmp)
            !
          enddo
          !

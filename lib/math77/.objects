@@ -3,4 +3,4 @@ ERFI = derv1.o zwofz.o
 #else
 ERFI = serv1.o cwofz.o 
 #endif
-objs = erfin.o ermor.o ermsg.o $(ERFI)
+objs = amach.o erfin.o ermor.o ermsg.o $(ERFI)

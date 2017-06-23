@@ -758,7 +758,7 @@ C         TEST = (D6 + D6) + 1.D0
 C         IF (AMSUB1(TEST) .ne. 0.D0) RETURN
 C      END IF
 C      test = 0.0d0
-C      END
+      END
 c     ==================================================================
 c
       DOUBLE PRECISION FUNCTION AMSUB1 (TEST1)

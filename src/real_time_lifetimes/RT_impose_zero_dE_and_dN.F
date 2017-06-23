@@ -50,7 +50,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  integer      :: i1,ib,ik,ik_rim,iE_rim,iref
  real(DP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
-&                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e
+&                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e,denominator
  !
  logical      :: l_energy,l_n_electrons,l_n_carriers
  !
@@ -156,22 +156,26 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! Electrons number and Energy
  !
- if (l_energy.and.l_n_electrons.and..not.l_n_carriers) then
-   prefactor(1)=( dE_c*(dN_e-dN_h)-dN_c*(dE_e-dE_h) )/(dE_c*dN_v-dE_v*dN_c)
-   prefactor(2)=( dN_v*(dE_e-dE_h)-dE_v*(dN_e-dN_h) )/(dE_c*dN_v-dE_v*dN_c)
+ denominator=dE_c*dN_v-dE_v*dN_c
+ if (l_energy.and.l_n_electrons.and..not.l_n_carriers.and.abs(denominator)>epsilon(1._SP)) then
+   prefactor(1)=( dE_c*(dN_e-dN_h)-dN_c*(dE_e-dE_h) )/denominator
+   prefactor(2)=( dN_v*(dE_e-dE_h)-dE_v*(dN_e-dN_h) )/denominator
  endif
  !
  ! Electrons and carriers number
  !
  if (l_n_carriers.and.l_n_electrons.and..not.l_energy) then
-   prefactor(1)= (dN_dT_e_v-dN_dT_h_v)/dN_v
-   prefactor(2)= (dN_dT_e_c-dN_dT_h_c)/dN_c
+   denominator=dN_v
+   if (abs(denominator)>epsilon(1._SP)) prefactor(1)= (dN_dT_e_v-dN_dT_h_v)/dN_v
+   denominator=dN_c
+   if (abs(denominator)>epsilon(1._SP)) prefactor(2)= (dN_dT_e_c-dN_dT_h_c)/dN_c
  endif
  !
  ! Electrons number only
  !
- if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) then
-   prefactor(1)=(dN_e-dN_h)/(dN_e+dN_h)
+ denominator=dN_e+dN_h
+ if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons.and.abs(denominator)>epsilon(1._SP)) then
+   prefactor(1)=(dN_e-dN_h)/denominator
    prefactor(2)=prefactor(1)
  endif
  !

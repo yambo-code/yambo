@@ -39,12 +39,12 @@ lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
 lib/hdf5/hdf5*
-ext_libs
-sys_incs
+libs/external
+include/system
 #
 compile.sh
 sbin/make_makefile.sh
-sbin/objects_debug.sh
+sbin/objects_store.sh
 src/wf_and_fft/sgfft.F
 bin/*
 

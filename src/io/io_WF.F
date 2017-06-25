@@ -28,7 +28,7 @@ integer function io_WF(ID,wf)
  use stderr,           ONLY:intc
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
-&                           io_fragment,io_elemental,frag_WF
+&                           io_fragment,io_elemental,io_resetable,frag_WF
 #if defined _TIMING
  use timing_m,         ONLY:timing
 #endif
@@ -46,6 +46,7 @@ integer function io_WF(ID,wf)
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
    case(0)
+     io_resetable(ID)=.true.
      goto 1
    case(1)
      ik=0

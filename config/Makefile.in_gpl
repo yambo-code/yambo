@@ -29,7 +29,7 @@ scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
 xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 do_blas     = @compile_blas@
 do_lapack   = @compile_lapack@
 do_fftqe    = @compile_fftqe@
@@ -50,9 +50,9 @@ includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
+           sbin/objects_store.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
            lib/install/make_iotk.inc
-TARGETS  = yambo interfaces ypp
+CORE     = yambo interfaces ypp
 UTILS    = changelog get_extlibs
 CLEANS   = clean clean_all distclean
 INTERFCS = a2y p2y e2y 
@@ -79,16 +79,15 @@ YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tdd
 # PROJECTS
 #
 PROJECTS = yambo_kerr yambo_ph ypp_ph
-EXE      = $(TARGETS) $(PROJECTS)
+EXE      = $(CORE) $(PROJECTS)
 #
 nothing: 
 	@$(make_message)
 changelog:
 	svn log | perl sbin/svn2cl.pl > ChangeLog
 all:
+	for target in $(CORE);     do $(MAKE) $$target ; done
 	for target in $(PROJECTS); do $(MAKE) $$target ; done
-	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(DEBUG); do $(MAKE) $$target ; done
 libs:
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
@@ -167,27 +166,27 @@ clean:
 	@$(lib_ext_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
 	@$(conf_clean)
 	@$(xclean)
+distclean: clean_all
 	
 # Functions
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [stable] all";\
- for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo
+ for target in $(CORE); do echo  " [core $$target" ; done;echo;\
+ for target in $(PROJECTS); do echo " [projects] $$target" ; done;echo;\
+ for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 define mksrc
  if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -203,7 +202,7 @@ endef
 define mk_ypp_src
  if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -266,7 +265,7 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if test ! -d $$XPATH ; then mkdir $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
@@ -283,7 +282,7 @@ define mk_ypp_x
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
@@ -303,9 +302,9 @@ define objects_clean
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
- if test "$(debug)" = yes ; then \
- find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] Debug locks and directories ... done" ; \
+ if test "$(keep_objs)" = yes ; then \
+ find . -name '.objects__lock*' | xargs rm -fr ; \
+ echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean

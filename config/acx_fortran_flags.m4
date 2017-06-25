@@ -32,6 +32,10 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
+AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
+              [DEbug flags are set for compilation. Default is no.]))
+if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
+#
 def_compiler=
 #
 case "${host}" in
@@ -44,6 +48,7 @@ i?86*linux*)
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
+    DEBUG_FLAGS=""
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -54,12 +59,14 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS=""
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore -mtune=pentium4"
     FUFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *gfortran*)
     SYSFLAGS="-g -O3 -mtune=native"
@@ -67,8 +74,10 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
     ;;
   *ifort*)
+    DEBUG_FLAGS="-CA -CB"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
@@ -97,9 +106,10 @@ i?86*linux*)
     FUFLAGS="-g -O0 -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
+    DEBUG_FLAGS="-ffortran-bounds-check -C"
     ;;
   *)
-    SYSFLAGS="-O"
+    SYSFLAGS="-g -O"
     FUFLAGS="-O0"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-Df2cFortran"
@@ -120,13 +130,16 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fno-second-underscore -mtune=pentium4"
     FUFLAGS="-g -O0 -fno-second-underscore"
     FCMFLAG=""
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *ifort*)
+    DEBUG_FLAGS="-CA -CB"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *1*)
@@ -165,11 +178,13 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
     FUFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -181,6 +196,7 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *ifort*)
+    DEBUG_FLAGS="-CA -CB"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *1*)
@@ -206,9 +222,10 @@ ia64*linux* )
     FUFLAGS="-O0 -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
+    DEBUG_FLAGS="-ffortran-bounds-check -C"
     ;;
   *)
-    SYSFLAGS="-O"
+    SYSFLAGS="-g -O"
     FUFLAGS="-O0"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-Df2cFortran"
@@ -230,11 +247,13 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
     FUFLAGS="-g -O0 -fbackslash -fno-second-underscore"
     FCMFLAG=""
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -246,6 +265,7 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *ifort*)
+    DEBUG_FLAGS="-CA -CB"
     OMPFLAGS="-openmp"
     CPU_FLAG=""
     case "${FCVERSION}" in
@@ -279,9 +299,10 @@ ia64*linux* )
     FUFLAGS="-O0 -fno-second-underscore"
     FCMFLAG=""
     OMPFLAGS=""
+    DEBUG_FLAGS="-ffortran-bounds-check -C"
     ;;
   *)
-    SYSFLAGS="-O"
+    SYSFLAGS="-g -O"
     FUFLAGS="-O0"
     NETCDFFLAGS="-Df2cFortran"
   esac
@@ -337,6 +358,8 @@ else
  FUFLAGS="$UFLAGS"
 fi 
 #
+if test x"$enable_debug_flags" = "xyes"; then FCFLAGS="$FUFLAGS $DEBUG_FLAGS" ; fi
+#
 AC_MSG_CHECKING([for specific NETCDF flags])
 AC_MSG_RESULT([$NETCDFFLAGS])
 #
@@ -347,6 +370,7 @@ AC_SUBST(FUFLAGS)
 AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)
 AC_SUBST(NETCDFFLAGS)
+AC_SUBST(DEBUG_FLAGS)
 AC_SUBST(def_compiler)
 ])
 #

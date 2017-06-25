@@ -56,7 +56,7 @@ integer function io_ELPH(ID,what)
  !
  integer                ::iq,im,ik,i1,i2,ierr,iq_mem
  real(SP)               ::v(3)
- real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
+ real(SP), allocatable  ::data_disk(:,:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
 #if defined _TIMING
@@ -257,45 +257,61 @@ integer function io_ELPH(ID,what)
  ! 
  ! ELPH_gkkp 
  !
- YAMBO_ALLOC(elph_gkkp_disk,(elph_nb*elph_nb,ph_modes,2))
+ YAMBO_ALLOC(data_disk,(elph_nb*elph_nb,ph_modes,2,1))
  !
- call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),&
-&                VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
+ call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
  !
  do ik=1,nkbz
    ! 
    ! WRITE
    ! 
    if (write_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)=real(elph_gkkp(ik,im,i1,i2))
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)=aimag(elph_gkkp(ik,im,i1,i2))
+     do im=1,ph_modes
+       do i1=1,elph_nb
+         do i2=1,elph_nb
+           data_disk((i1-1)*elph_nb+i2,im,1,1)=real(elph_gkkp(ik,im,i1,i2))
+           data_disk((i1-1)*elph_nb+i2,im,2,1)=aimag(elph_gkkp(ik,im,i1,i2))
+         enddo
+       enddo
+     enddo
    endif
    ! 
-   call io_bulk(ID,R3=elph_gkkp_disk,IPOS=(/1,1,1,ik/))
+   call io_bulk(ID,R4=data_disk,IPOS=(/1,1,1,ik/))
    ! 
    ! READ 
    ! 
    if (read_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
-&                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
+     do im=1,ph_modes
+       do i1=1,elph_nb
+         do i2=1,elph_nb
+           elph_gkkp(ik,im,i1,i2)=data_disk((i1-1)*elph_nb+i2,im,1,1)+&
+&                   (0._SP,1._SP)*data_disk((i1-1)*elph_nb+i2,im,2,1)
+         enddo
+       enddo
+     enddo
    endif
    !
  enddo
  !
- YAMBO_FREE(elph_gkkp_disk)
+ YAMBO_FREE(data_disk)
  ! 
  ! ELPH_DW 
+ !
+ YAMBO_ALLOC(data_disk,(ph_modes,elph_nb,elph_nb,1))
  !
  call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
  !
  do ik=1,nkbz
    ! 
-   call io_bulk(ID,R3=elph_DW(ik,:,:,:),IPOS=(/1,1,1,ik/))
+   if (write_is_on(ID)) data_disk(:,:,:,1)=elph_DW(ik,:,:,:)
+   ! 
+   call io_bulk(ID,R4=data_disk,IPOS=(/1,1,1,ik/))
+   ! 
+   if (read_is_on(ID)) elph_DW(ik,:,:,:)=data_disk(:,:,:,1)
    ! 
  enddo
+ !
+ YAMBO_FREE(data_disk)
  !
 1 call io_disconnect(ID=ID)
  !

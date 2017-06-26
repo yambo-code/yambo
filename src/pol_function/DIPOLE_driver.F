@@ -74,7 +74,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use com,            ONLY:secnm
 #endif
 #if defined _RT
- use X_m,            ONLY:DIP_spin,DIP_P_spinor
+ use X_m,            ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,      ONLY:n_spin,n_spinor
 #endif
 #if defined _SC || defined _RT
@@ -195,6 +195,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
 #if defined _RT
+   if (l_real_time.and.n_spin>1)   call DIPOLE_orbital_magnetization(Xen,Xk,X)
+   !
    if (l_real_time.and.n_spin>1)   call DIPOLE_spin_magnetization(Xk,X)
 #endif
    !
@@ -241,6 +243,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_P')
 #endif
 #if defined _RT
+ if (l_real_time.and.n_spin  >1) call X_alloc('DIP_orbital')
  if (l_real_time.and.n_spin  >1) call X_alloc('DIP_spin')
  if (l_real_time.and.n_spinor>1) call X_alloc('DIP_P_spinor')
 #endif
@@ -328,6 +331,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
+       call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       DIP_orbital=cZERO
+     endif
+     if (l_real_time.and.n_spin>1) then
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
@@ -367,6 +374,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
          !
          if (l_real_time.and.n_spin>1) &
+&          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         if (l_real_time.and.n_spin>1) &
 &          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          if (l_real_time.and.n_spinor>1) &
 &          call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
@@ -385,6 +394,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
            DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spin>1) &
+&            DIP_orbital(:,:,:,ik_mem,:)= DIP_orbital(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            if (l_real_time.and.n_spin>1) &
 &            DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            if (l_real_time.and.n_spinor>1) &
@@ -410,6 +421,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
              DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
              if (l_real_time.and.n_spin>1) &
+&              DIP_orbital(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             if (l_real_time.and.n_spin>1) &
 &              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
              if (l_real_time.and.n_spinor>1) &
                DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
@@ -425,6 +438,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
                DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
                DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
+               if (l_real_time.and.n_spin>1) &
+&                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol))
                if (l_real_time.and.n_spin>1) &
 &                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
                if (l_real_time.and.n_spinor>1) &

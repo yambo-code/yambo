@@ -63,7 +63,7 @@ subroutine Dipole_spin_magnetization(Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin magnetization',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !

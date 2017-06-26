@@ -355,9 +355,9 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (open_files.and..not.file_already_opened(next_file)) &
 &     file_name(next_file)=trim(append_ch)//'magnetization'
    short_file_name(next_file)=trim(append_ch)//'magnetization'
-   n_headings(next_file)=4
+   n_headings(next_file)=7
    headings(next_file,1)='T [fs]'
-   headings(next_file,2:4)=(/"M_x","M_y","M_z"/)
+   headings(next_file,2:7)=(/"Ms_x","Ms_y","Ms_z","Ml_x","Ml_y","Ml_z"/)
    next_file=next_file+1
  endif
  !
@@ -522,7 +522,8 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
      case('magnetization')
-       data_to_dump(2:4) = real(RT_magn(:))
+       data_to_dump(2:4) = real(RT_magn(:,1))
+       data_to_dump(5:7) = real(RT_magn(:,2))
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

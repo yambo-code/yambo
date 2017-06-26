@@ -33,7 +33,7 @@ integer function io_DIPOLES(X,ID)
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
- use X_m,           ONLY:DIP_spin,DIP_P_spinor
+ use X_m,           ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
 #endif
 #if defined _SC || defined _RT
@@ -127,6 +127,7 @@ integer function io_DIPOLES(X,ID)
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #if defined _RT
+   if (l_real_time.and.n_spin>1)   call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    if (l_real_time.and.n_spin>1)   call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    if (l_real_time.and.n_spinor>1) call X_alloc('DIP_P_spinor',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
@@ -158,7 +159,13 @@ integer function io_DIPOLES(X,ID)
 #if defined _RT
  if (l_real_time.and.n_spin>1) then
    !
-   ! Spin
+   ! Orbital magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   !
+   ! Spin magntization
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)

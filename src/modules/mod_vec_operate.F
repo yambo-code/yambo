@@ -116,9 +116,9 @@ module vec_operate
    function c_cross_product(a,b)
      complex(SP), intent(in) :: a(3),b(3)
      complex(SP)             :: c_cross_product(3)
-     c_cross_product(1) = a(2) * b(3) - a(3) * b(2)
-     c_cross_product(2) = a(3) * b(1) - a(1) * b(3)
-     c_cross_product(3) = a(1) * b(2) - a(2) * b(1)
+     c_cross_product(1) = conjg(a(2)) * b(3) - conjg(a(3)) * b(2)
+     c_cross_product(2) = conjg(a(3)) * b(1) - conjg(a(1)) * b(3)
+     c_cross_product(3) = conjg(a(1)) * b(2) - conjg(a(2)) * b(1)
    end function c_cross_product
    !
    pure logical function v_is_zero(v,zero_)

@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_kerr
+&                         l_sc_magnetic
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -642,7 +642,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _KERR
-   if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+   call initactivate(1,'EvalKerr AnHall')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -1434,9 +1434,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'optics')
            if (l_chi) call initactivate(1,'chi')
            if (l_bse) call initactivate(1,'bse')
-#if defined _KERR
-           l_kerr=l_bse
-#endif
+           !
            if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
            if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
            !

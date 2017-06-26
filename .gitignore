@@ -44,6 +44,9 @@ sbin/make_makefile.sh
 sbin/objects_store.sh
 src/wf_and_fft/sgfft.F
 bin/*
+
+# source #
+##########
 src/external_c/.objects
 *__lock*
 Makefile.locks

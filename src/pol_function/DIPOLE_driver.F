@@ -195,7 +195,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xk,X)
+   if (l_real_time.and.n_spin>1)   call DIPOLE_spin_magnetization(Xk,X)
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize()

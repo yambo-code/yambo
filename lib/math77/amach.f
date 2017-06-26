@@ -754,7 +754,7 @@ C up in the addition of D6 to 1.
 C
 C  YAMBO-DS: 2017/06/23  lines commented to avoid error message
 C      IF ((TEST .eq. 0.D0) .or. (TEST .gt. 1.875D0*D6)) THEN
-C         TEST = (D6 + D6) + 1.D0
+          TEST = (D6 + D6) + 1.D0
 C         IF (AMSUB1(TEST) .ne. 0.D0) RETURN
 C      END IF
 C      test = 0.0d0

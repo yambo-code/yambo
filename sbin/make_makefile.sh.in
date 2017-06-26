@@ -80,15 +80,15 @@ case $target in
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)  \$(ifft)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft)"
+   llibs="-lint_modules $llibs \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lmath77 -llocal \$(lfft)"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   p2y*)
-   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft)"
+   llibs="-lint_modules $llibs \$(liotk) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lmath77 -llocal \$(lfft)"
    linclude="$linclude \$(iiotk) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   e2y)
-   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -llocal \$(lfft)"
+   llibs="-lint_modules $llibs \$(letsf) \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) -lmath77 -llocal \$(lfft)"
    linclude="$linclude \$(ietsf) \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   ypp*)

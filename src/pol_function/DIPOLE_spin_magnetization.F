@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_magnetization(Xk,X)
+subroutine Dipole_spin_magnetization(Xk,X)
  !
- ! This routine returns <sigma> (and <L> todo).
+ ! This routine returns <sigma>
  !
  use pars,                ONLY:cI
  use drivers,             ONLY:l_sc_run
@@ -128,4 +128,4 @@ subroutine Dipole_magnetization(Xk,X)
  !
  call WF_free(WF)
  !
-end subroutine Dipole_magnetization
+end subroutine Dipole_spin_magnetization

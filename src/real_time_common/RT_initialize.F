@@ -41,7 +41,7 @@ subroutine RT_initialize(E,k,q)
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
-&                         l_update_QP_energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
+&                         l_update_QP_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
@@ -73,7 +73,6 @@ subroutine RT_initialize(E,k,q)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTUpdateEqp',          l_update_QP_Energies)
- if(l_update_QP_Energies) l_update_QP_Energies=.not.trim(RT_potential)=='IP'
  call parser('RTskipImposeN',        l_skip_it)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)

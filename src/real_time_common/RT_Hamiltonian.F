@@ -183,7 +183,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- ! Non local part computed with collisions (RT_Vnl_xc)
+ ! Local and/or non local part computed with collisions (RT_Vnl_xc)
  !======================================================
  if (l_use_Hxc_collisions) then
    !
@@ -251,7 +251,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
          E_new=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
          ! Here I update both E%E and RT_E_and_k%En
          ! In future only RT_E_and_k could be used, like for the occupations
-         if(     l_RT_uses_E_DbGd) RT_E_and_k%En(ib,ik_RT,1)=E_new
+         RT_E_and_k%En(ib,ik_RT,1)=E_new
          if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)   =E_new
          if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)             =E_new
        enddo

@@ -41,7 +41,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index,m3det
- use electrons,      ONLY:Total_magn
+ use electrons,      ONLY:Spin_magn
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -179,7 +179,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  if(lowest_band<RT_bands(1)-1) then
    do ifft=1,fft_size
-     Total_magn(:)=Total_magn(:)+magn(ifft,:)
+     Spin_magn(:)=Spin_magn(:)+magn(ifft,:)
    enddo
  endif
  !

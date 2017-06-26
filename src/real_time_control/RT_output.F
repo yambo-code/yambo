@@ -29,7 +29,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
- use electrons,      ONLY:n_spin,Total_magn
+ use electrons,      ONLY:n_spin,Spin_magn,Orbital_magn
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
@@ -487,8 +487,11 @@ subroutine RT_output(what,VALUES,TIME,E)
      !
      if (n_spin>1.and.trim(short_file_name(i_f))=="magnetization") then
        call msg('o '//trim(short_file_name(i_f)),'#')
-       tmp_ch="Equilibrium magnetization is "//trim(real2ch(Total_magn(1)))//", "&
-&             //trim(real2ch(Total_magn(2)))//", "//trim(real2ch(Total_magn(3)))//". "
+       tmp_ch="Equilibrium spin    magnetization is "//&
+&             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
+       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+       tmp_ch="Equilibrium orbital magnetization is "//&
+&             trim(real2ch(Orbital_magn(1)))//", "//trim(real2ch(Orbital_magn(2)))//", "//trim(real2ch(Orbital_magn(3)))//". "
        call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
      endif
      !

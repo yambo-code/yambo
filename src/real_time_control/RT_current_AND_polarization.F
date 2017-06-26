@@ -39,9 +39,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin
+ use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference
+&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -99,11 +99,21 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,1)=RT_M_tmp
    !
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Spin_magn=real(RT_M_tmp,SP)
+   endif
+   !
    ! D : Orbital magentization (local contribution only)
    !
    call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    !
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital,G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Orbital_magn=real(RT_M_tmp,SP)
+   endif
+   ! 
  endif
  !
 end subroutine RT_current_AND_polarization

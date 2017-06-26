@@ -55,7 +55,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
- use electrons,      ONLY:Total_magn
+ use electrons,      ONLY:Spin_magn
  !
 #include<memory.h>
  !
@@ -460,7 +460,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (n_spin==2) then
        if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] :'
        if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] :'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Total_magn(:))))//' :'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' :'
      endif
      if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
      dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &

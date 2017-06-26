@@ -36,7 +36,7 @@ subroutine el_magnetization(en,Xk,magn)
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
- use electrons,      ONLY:Total_magn
+ use electrons,      ONLY:Spin_magn
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
 #if defined _RT
@@ -64,7 +64,7 @@ subroutine el_magnetization(en,Xk,magn)
  magn=0._SP
  cv=0._SP
  !
- Total_magn=0._SP
+ Spin_magn=0._SP
  !
  if (n_spin==1) return
  !
@@ -135,7 +135,7 @@ subroutine el_magnetization(en,Xk,magn)
  enddo
  !
  do ifft=1,fft_size
-   Total_magn(:)=Total_magn(:)+magn(ifft,:)
+   Spin_magn(:)=Spin_magn(:)+magn(ifft,:)
  enddo
  !
 #if defined _TIMING && defined _RT

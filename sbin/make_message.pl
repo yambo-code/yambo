@@ -101,7 +101,8 @@ while($line = <VER>) {
   if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1; last;};
 }
 close(VER);
-$Revision=`git rev-list  --count HEAD | awk '{print $1+1}`;
+$Revision=`git rev-list  --count HEAD`;
+$Revision++;
 $Hash    =`git rev-parse --short HEAD`;
 $Revision+=10000 ;
 #

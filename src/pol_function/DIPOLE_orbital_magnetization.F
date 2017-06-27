@@ -82,7 +82,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
            if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
            if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol)+&
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol) &
 &                                                -cI*Eb*cross_product(DIP_pos(:,1),DIP_pos(:,2))
            !
          enddo

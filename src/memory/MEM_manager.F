@@ -33,6 +33,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
 &                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
 &                       MEM_SAVE_treshold,MAX_MEM_bytes,TOT_MEM_bytes_SAVE,MEMs,&
 &                       N_MEM_max_element_components,MEM_jump_treshold
+ use LIVE_t,       ONLY:what_is_running
  !
  implicit none
  !
@@ -51,14 +52,15 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
  ! Error Message
  !===============
- if (MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
+ if (.not.present(REPORT).and.MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
  !
  if (.not.present(Sz).and..not.present(Kn).and..not.present(REPORT)) return
  if (.not.master_thread) return
  !
 #if defined _MEM_CHECK
  !
- just_started=MEM_treshold==0.or.infile_editing.or.len_trim(repfile)==0
+ just_started=infile_editing
+ if (index(what_is_running,"YPP")==0.and.len_trim(repfile)==0) just_started=.TRUE.
  !
  ! REPORTs 
  !=========
@@ -97,16 +99,24 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  endif
  i_SAVE =MEM_save_finder(trim(SHELF))
  !
- ! Error Message of an already allocated array
- !=============================================
- !
- if (MEM_err/=0) then
-   if (i_SHELF>0) then
-     call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
-   else
-     call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+ ! Error Message of an already allocated array and/or other errors
+ !=================================================================
+ if (adding) then
+   if (MEM_err/=0) then
+     if (i_SHELF>0) then
+       call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
+     else
+       call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+     endif
+     return
    endif
-   return
+   if (Sz==0) then
+     call warning("Allocation attempt of "//what//" of zero size.")
+     return
+   endif
+   if (Sz<0) then
+     call error("Allocation attempt of "//what//" of negative size.")
+   endif
  endif
  !
  ! Database Update

@@ -138,6 +138,10 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! COMMs setup
    !
+   ! To define proper indexes to calculate the dipoles I need to build up
+   ! the PAR_IND_DIPk_ibz by avoiding the overlaps of PAR_IND_Xk_ibz.
+   ! The COMM is anyway the one for the all2all of each q.
+   !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
    call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
@@ -210,7 +214,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! I/O privileges
    !
-   if (PARALLEL_n_structures_active>1) then
+   if (ncpu>1) then
      call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)

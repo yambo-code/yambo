@@ -194,6 +194,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
  endif
  !
+ Co=1._SP
  if (l_tddft) then
    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))

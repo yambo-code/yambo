@@ -1,0 +1,117 @@
+!
+!        Copyright (C) 2000-2017 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k,l_E_done)
+ !
+ ! Here I apply the strecth for both QP_action.
+ !
+ use pars,          ONLY:SP,rZERO,cONE,rONE
+ use electrons,     ONLY:levels,n_sp_pol
+ use R_lattice,     ONLY:bz_samp
+ use QP_CTL_m,      ONLY:QP_action,QP_ctl_xc_STRING
+ !
+#include<memory.h>
+ !
+ type(levels)    ::E
+ type(bz_samp)   ::k
+ integer         ::i_ACTION,bands(2)
+ logical         ::l_E_done
+ !
+ ! Work Space
+ !
+ integer  :: ib,ik,i_spin
+ logical  :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
+ complex(SP), external ::QP_eval_the_FIT
+ !
+ if (.not.QP_action(i_ACTION)%active) return
+ !
+ do i_spin= 1,n_sp_pol
+   !
+   ! Is there anything to do ?
+   !
+   do_E(i_spin)=.false.
+   do_W(i_spin)=.false.
+   do_Z(i_spin)=.false.
+   !
+   do_E(i_spin)= any(QP_action(i_ACTION)%CTL(i_spin)%E/=(/rZERO,rONE,rZERO,rONE/))
+   !
+   if (any((/QP_action(i_ACTION)%CTL(i_spin)%W(:)/=rZERO/)).or.&
+&      any((/QP_action(i_ACTION)%CTL(i_spin)%W_dos(:)/=rZERO/))) then
+     if (.not.allocated(E%W)) then
+       YAMBO_ALLOC(E%W,(E%nb,E%nk,n_sp_pol))
+       E%W=rZERO
+     endif
+     do_W(i_spin)=.TRUE.
+   endif
+   if (QP_action(i_ACTION)%CTL(i_spin)%Z/=cONE) then
+     if (.not.allocated(E%Z)) then
+       YAMBO_ALLOC(E%Z,(E%nb,E%nk,n_sp_pol))
+       E%Z=1._SP
+     endif
+     do_Z(i_spin)=.TRUE.
+   endif
+   !
+   if (any((/do_E(i_spin),do_W(i_spin),do_Z(i_spin)/))) then
+     if (.not.allocated(E%Eo)) then
+       YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
+       E%Eo=E%E
+     endif
+   endif
+   !
+   do ib=bands(1),bands(2)
+     !
+     do ik=1,E%nk
+       !
+       if (allocated(QP_action(i_ACTION)%STATES_done)) then
+          if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
+       endif
+       !
+       if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"E")
+       if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"W")
+       if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),bands,E,k,"Z")
+       !
+     enddo
+     !
+   enddo
+   !
+ enddo
+ !
+ ! XC string update
+ !
+ if (.not.(any(do_E).or.any(do_W).or.any(do_Z))) return 
+ !
+ if (.not.l_E_done) l_E_done=any(do_E)
+ !
+ if (len_trim(QP_ctl_xc_STRING)>0) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" +" 
+ !
+ if (.not.allocated(QP_action(i_ACTION)%STATES_done)) then
+   QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Analyt. " 
+ endif
+ if (any(do_E)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" E" 
+ if (any(do_W)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" W" 
+ if (any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Z" 
+ if (allocated(QP_action(i_ACTION)%STATES_done)) then
+   if (any(do_E).or.any(do_W).or.any(do_Z)) QP_ctl_xc_STRING=trim(QP_ctl_xc_STRING)//" Fit" 
+ endif
+ !
+end subroutine

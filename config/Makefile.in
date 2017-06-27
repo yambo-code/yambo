@@ -301,12 +301,12 @@ distclean: clean_all remove_ext_libs
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
  echo  " [all projects] all";\
- echo  " [project-related suite] project";echo;\
+ echo  " [project-related suite] project (core, rt-project,...)";echo;\
  for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
- for target in $(PH_PROJ); do echo " [ph-projects] $$target" ; done;echo;\
- for target in $(SC_PROJ); do echo " [sc-projects] $$target" ; done;echo;\
- for target in $(RT_PROJ); do echo " [rt-projects] $$target" ; done;echo;\
- for target in $(KERR_PROJ); do echo " [kerr-projects] $$target" ; done;echo;\
+ for target in $(PH_PROJ); do echo " [ph-project] $$target" ; done;echo;\
+ for target in $(SC_PROJ); do echo " [sc-project] $$target" ; done;echo;\
+ for target in $(RT_PROJ); do echo " [rt-project] $$target" ; done;echo;\
+ for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
  for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
  for target in $(TESTS); do echo  " [tests] $$target" ; done;echo

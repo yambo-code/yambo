@@ -1,7 +1,7 @@
 
 Extracted from https://docs.google.com/document/d/1JecXBxlHlEKYY86x6McfbwKcs7W-E8xoWm2PC3UJ43U/edit
 
-clone
+Clone
 =====
 git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
 

@@ -70,16 +70,16 @@ Checkout a branch:
 
 Create a new branch:
 ===================
-“git checkout -b new_branch”
+>git checkout -b new_branch
 (equivalent to “git branch new_branch” + “git checkout new_branch”)
-“git push origin new_branch”: if you want to make available the new branch
-“git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
+>git push origin new_branch  #if you want to make available the new branch
+>git branch -u origin/new_branch new_branch #to set that the new branch tracks the new remote one
 
 Create a new tag:
 =================
 From current branch you want to tag
-“git tag -a 4.1.0 -m "Version 4.1.0"”: new local tag created
-“git push origin 4.1.0”: if you want to make available the new tag
+>git tag -a 4.1.0 -m "Version 4.1.0" # new local tag created
+>git push origin 4.1.0 # if you want to make available the new tag
 
 Moving/removing files branches:
 ===============================

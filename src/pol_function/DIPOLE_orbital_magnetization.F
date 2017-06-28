@@ -68,9 +68,14 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
    ! 
    do i_sp_pol=1,n_sp_pol
      do iv=X%ib(1),X%ib_lim(1) 
+       !
        Ev=Xen%E(iv,ik,i_sp_pol)
+       if (allocated(Xen%Eo)) Ev=Xen%Eo(iv,ik,i_sp_pol)
+       !
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
+         !
          Ec=Xen%E(ic,ik,i_sp_pol)
+         if (allocated(Xen%Eo)) Ec=Xen%Eo(ic,ik,i_sp_pol)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !

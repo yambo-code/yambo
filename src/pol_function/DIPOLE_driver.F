@@ -331,7 +331,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
-       call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+       call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz,2/))
        DIP_orbital=cZERO
      endif
      if (l_real_time.and.n_spin>1) then
@@ -374,7 +374,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _RT
          !
          if (l_real_time.and.n_spin>1) &
-&          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+&          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          if (l_real_time.and.n_spin>1) &
 &          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          if (l_real_time.and.n_spinor>1) &
@@ -392,18 +392,18 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          if (l_par_RT) then
            !
 #if defined _RT
-           DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           if (l_real_time.and.n_spin>1) &
-&            DIP_orbital(:,:,:,ik_mem,:)= DIP_orbital(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           if (l_real_time.and.n_spin>1) &
-&            DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           if (l_real_time.and.n_spinor>1) &
-&            DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_P(:,:,:,ik_mem,i_sp_pol)= DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spin>1) DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)= &
+&            DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spin>1) DIP_spin(:,:,:,ik_mem,i_sp_pol)= &
+&            DIP_spin(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_real_time.and.n_spinor>1) DIP_P_spinor(:,:,:,:,:,ik_mem)= &
+&            DIP_P_spinor(:,:,:,:,:,ik_mem)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
 #if defined _SC || defined _RT
            if (l_sc_run.or.l_real_time) &
-&            P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+&            P_square(:,:,ik_mem,i_sp_pol)= P_square(:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
 #endif
            !
          endif
@@ -421,7 +421,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
              DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
              if (l_real_time.and.n_spin>1) &
-&              DIP_orbital(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+&              DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
              if (l_real_time.and.n_spin>1) &
 &              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
              if (l_real_time.and.n_spinor>1) &
@@ -439,7 +439,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
                DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
 #if defined _RT
                if (l_real_time.and.n_spin>1) &
-&                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol))
+&                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
                if (l_real_time.and.n_spin>1) &
 &                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
                if (l_real_time.and.n_spinor>1) &

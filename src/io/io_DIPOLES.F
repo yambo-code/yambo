@@ -159,11 +159,17 @@ integer function io_DIPOLES(X,ID)
 #if defined _RT
  if (l_real_time.and.n_spin>1) then
    !
+   ! Itinerant magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_itinerant_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),IPOS=DIP_ipos)
+   !
    ! Orbital magnetization
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
    ! Spin magntization
    !

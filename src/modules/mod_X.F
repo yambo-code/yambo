@@ -72,7 +72,7 @@ module X_m
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
- complex(SP), allocatable :: DIP_orbital(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
@@ -180,7 +180,7 @@ module X_m
          DIP_S=cZERO
        case('DIP_orbital')
          if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return

@@ -45,7 +45,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
  !
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic,iv,ib,i_sp_pol,i_spin,n_LT_steps,ik_mem
- real(SP)                     :: Eb
+ real(SP)                     :: Eb,Ev,Ec
  complex(SP)                  :: DIP_pos(3,2)
  !
  ! Parallelization Mask 
@@ -68,7 +68,9 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
    ! 
    do i_sp_pol=1,n_sp_pol
      do iv=X%ib(1),X%ib_lim(1) 
+       Ev=Xen%E(iv,ik,i_sp_pol)
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
+         Ec=Xen%E(ic,ik,i_sp_pol)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
@@ -82,8 +84,15 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
            if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
            if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol) &
+           ! Local part
+           !
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1) &
 &                                                -cI*Eb*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           !
+           ! Itinerant part
+           !
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2) &
+&                                                -cI*(Ev+Ec)/2._SP*cross_product(DIP_pos(:,1),DIP_pos(:,2))
            !
          enddo
          !

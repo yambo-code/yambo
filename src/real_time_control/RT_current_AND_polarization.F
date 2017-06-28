@@ -39,7 +39,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn
+ use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
 &                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time
  use fields,         ONLY:gauge_field
@@ -104,14 +104,26 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
      Spin_magn=real(RT_M_tmp,SP)
    endif
    !
-   ! D : Orbital magentization (local contribution only)
+   ! D : Orbital magentization (local and itinerant contributions)
    !
-   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital(:,:,:,:,:,1),&
+&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
-     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital,G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
-     Orbital_magn=real(RT_M_tmp,SP)
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital(:,:,:,:,:,1),&
+&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+   endif
+   !
+   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital(:,:,:,:,:,2),&
+&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   RT_magn(:,3)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   ! 
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=-DIP_orbital(:,:,:,:,:,2),&
+&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
    endif
    ! 
  endif

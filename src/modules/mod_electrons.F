@@ -57,6 +57,7 @@ module electrons
  logical                  :: eval_magn
  real(SP)                 :: Spin_magn(3)
  real(SP)                 :: Orbital_magn(3)
+ real(SP)                 :: Itinerant_magn(3)
  !
  type levels
    integer         :: nb

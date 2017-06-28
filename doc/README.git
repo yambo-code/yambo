@@ -7,9 +7,9 @@ git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
 
 status
 ==========
-“git status” (show status of local branch)
-"git status -uno" to show only modified files
-“git remote show origin” (show status of all branches)
+>git status #show status of local branch
+>git status -uno #to show only modified files
+>git remote show origin #show status of all branches
 
 commit: The process of committing to the $YAMBO_REPO is a 3-steps process:
 ==========
@@ -22,9 +22,9 @@ merge your local repo with the $YAMBO_REPO: “git push”
 
 diff:
 ========
-“git diff” shows changes not staged (before “add”)
-“git diff HEAD” shows also changes staged but not commited (before “commit”)
-“git diff origin/master” shown also changes committed (before “push”)
+>git diff # shows changes not staged (before “add”)
+>git diff HEAD # shows also changes staged but not commited (before “commit”)
+>git diff origin/master # shown also changes committed (before “push”)
 [ “-M50%” option is very useful in case of file renamed/moved ]
 
 patch -p0 < patch:
@@ -83,9 +83,15 @@ From current branch you want to tag
 
 Moving/removing files branches:
 ===============================
-$$ git mv hello.html lib/
-$$ git rm hello.html
-$git branch -d the_local_branch
+> git mv hello.html lib/
+> git rm hello.html
+
+Local & Remote
+>git branch -d the_local_branch (local remove)
+>git push origin :the_remote_branch (remote remove)
+
+Only Remote
+>git push origin --delete the_remote_branch
 
 Sorting passws
 ===============

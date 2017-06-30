@@ -302,6 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        endif
        !
        call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       !
        io_err=io_WF(ID,wf_disk)
        !
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle

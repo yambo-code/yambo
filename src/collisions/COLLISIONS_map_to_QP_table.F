@@ -23,7 +23,6 @@
 !
 subroutine COLLISIONS_map_to_QP_table(what,COLL)
  !
- use pars,          ONLY:IP
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use QP_m,          ONLY:QP_nk,QP_nb,QP_table,QP_n_states
  use electrons,     ONLY:n_sp_pol

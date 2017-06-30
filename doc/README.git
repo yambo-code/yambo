@@ -1,15 +1,15 @@
 
 Extracted from https://docs.google.com/document/d/1JecXBxlHlEKYY86x6McfbwKcs7W-E8xoWm2PC3UJ43U/edit
 
-clone
+Clone
 =====
 git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
 
 status
 ==========
-“git status” (show status of local branch)
-"git status -uno" to show only modified files
-“git remote show origin” (show status of all branches)
+>git status #show status of local branch
+>git status -uno #to show only modified files
+>git remote show origin #show status of all branches
 
 commit: The process of committing to the $YAMBO_REPO is a 3-steps process:
 ==========
@@ -22,9 +22,9 @@ merge your local repo with the $YAMBO_REPO: “git push”
 
 diff:
 ========
-“git diff” shows changes not staged (before “add”)
-“git diff HEAD” shows also changes staged but not commited (before “commit”)
-“git diff origin/master” shown also changes committed (before “push”)
+>git diff # shows changes not staged (before “add”)
+>git diff HEAD # shows also changes staged but not commited (before “commit”)
+>git diff origin/master # shown also changes committed (before “push”)
 [ “-M50%” option is very useful in case of file renamed/moved ]
 
 patch -p0 < patch:
@@ -70,22 +70,28 @@ Checkout a branch:
 
 Create a new branch:
 ===================
-“git checkout -b new_branch”
+>git checkout -b new_branch
 (equivalent to “git branch new_branch” + “git checkout new_branch”)
-“git push origin new_branch”: if you want to make available the new branch
-“git branch -u origin/new_branch new_branch”: to set that the new branch tracks the new remote one
+>git push origin new_branch  #if you want to make available the new branch
+>git branch -u origin/new_branch new_branch #to set that the new branch tracks the new remote one
 
 Create a new tag:
 =================
 From current branch you want to tag
-“git tag -a 4.1.0 -m "Version 4.1.0"”: new local tag created
-“git push origin 4.1.0”: if you want to make available the new tag
+>git tag -a 4.1.0 -m "Version 4.1.0" # new local tag created
+>git push origin 4.1.0 # if you want to make available the new tag
 
 Moving/removing files branches:
 ===============================
-$$ git mv hello.html lib/
-$$ git rm hello.html
-$git branch -d the_local_branch
+> git mv hello.html lib/
+> git rm hello.html
+
+Local & Remote
+>git branch -d the_local_branch (local remove)
+>git push origin :the_remote_branch (remote remove)
+
+Only Remote
+>git push origin --delete the_remote_branch
 
 Sorting passws
 ===============

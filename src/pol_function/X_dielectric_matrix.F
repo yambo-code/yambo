@@ -84,29 +84,27 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  X_dielectric_matrix=-1
  !
- if (.not.APPEND_NO_VERIFY) then
-   if (X%whoami==2) then
-     call section(sec_mode,'Static Dielectric Matrix')
-     Xw%n_freqs    =1
-     X_MEM_n_freqs =1
-   else if (X%whoami==3) then
-     call section(sec_mode,'Dynamical Dielectric Matrix')
-     if (l_gw0) self_detect_E_range=.true.
-     !
-     ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
-     ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
-     !
-     X_MEM_n_freqs             = Xw%n_freqs
-     if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
-     !
-   else if (X%whoami==4) then
-     call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
-     Xw%n_freqs    =2
-     X_MEM_n_freqs =2
-     Xw%er=(/epsilon(1._SP),0._SP/)
-     Xw%dr=(/0._SP,X%ppaE/)
-     X%ordering='R'
-   endif
+ if (X%whoami==2) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Static Dielectric Matrix')
+   Xw%n_freqs    =1
+   X_MEM_n_freqs =1
+ else if (X%whoami==3) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamical Dielectric Matrix')
+   if (l_gw0) self_detect_E_range=.true.
+   !
+   ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
+   ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
+   !
+   X_MEM_n_freqs             = Xw%n_freqs
+   if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
+   !
+ else if (X%whoami==4) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
+   Xw%n_freqs    =2
+   X_MEM_n_freqs =2
+   Xw%er=(/epsilon(1._SP),0._SP/)
+   Xw%dr=(/0._SP,X%ppaE/)
+   X%ordering='R'
  endif
  !
  call X_pre_setup(Xen,X)

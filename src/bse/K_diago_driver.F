@@ -89,7 +89,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! I/O
  !
- integer              ::io_err,ID
+ integer                 :: io_err,ID
  !
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')

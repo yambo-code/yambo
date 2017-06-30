@@ -438,6 +438,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _SCALAPACK
      YAMBO_FREE(K_slk%blc)
      call MATRIX_reset(K_slk)
+     !
+     ! Here I call MATRIX_duplicate instead of a simple YAMBO_FREE to keep the correct naming 
+     ! to be used in the memory module
+     !
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif
      !

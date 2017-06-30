@@ -151,7 +151,6 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    ! It is rather an additional level of parallelization.
    !
    if (PAR_COM_RL_INDEX%n_CPU>1) then
-!     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    endif
    !

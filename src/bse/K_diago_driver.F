@@ -38,9 +38,6 @@ subroutine K_diago_driver(iq,W)
  use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
-#if defined _SCALAPACK
- use parallel_m,     ONLY:linear_algebra_is_parallel
-#endif
  !
  ! GPL_EXCLUDE_START
  !

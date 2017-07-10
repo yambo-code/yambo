@@ -155,8 +155,8 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-def_openmp=" "
 OPENMPLIBS=" "
+def_openmp=" "
 if test x"$enable_open_mp" = "xyes"; then 
   OPENMPLIBS="$OMPFLAGS"; 
   def_openmp="-D_OPENMP"

@@ -27,7 +27,7 @@ subroutine RT_Integrator_init()
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV,            &
-&                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,             &
+&                         l_RT_RWA,l_RT_ACC,l_RT_DIAG,l_RT_PERT,   &
 &                         l_RT_simple,l_RT_HEUN,l_RT_RK2,l_RT_RK4, &
 &                         Integrator_exp_order,Integrator_name,    &
 &                         a_tableau,b_tableau,c_tableau,RWA_table, &
@@ -77,6 +77,9 @@ subroutine RT_Integrator_init()
  l_RT_DIAG=  l_RT_INV              .and. &
 &           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
  !
+ l_RT_PERT=  l_RT_EULER            .and. &
+&           index(Integrator_name,'PERT'  )/=0.or.index(Integrator_name,'pert' )/=0
+ !
  ! d) Reset integrator name
  !
  Integrator_name=""
@@ -92,6 +95,7 @@ subroutine RT_Integrator_init()
  if (l_RT_RWA   ) Integrator_name = trim(Integrator_name)//" + RWA"
  if (l_RT_ACC   ) Integrator_name = trim(Integrator_name)//" + ACC"
  if (l_RT_DIAG  ) Integrator_name = trim(Integrator_name)//" + DIAG"
+ if (l_RT_PERT  ) Integrator_name = trim(Integrator_name)//" + PERT"
  !
  call msg('s','Integrator: '//trim(Integrator_name))
  !

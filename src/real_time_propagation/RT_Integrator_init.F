@@ -71,13 +71,13 @@ subroutine RT_Integrator_init()
  !
  l_RT_RWA = index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
  !
- l_RT_ACC = (l_RT_INV.or.l_RT_EXP) .and. &
+ l_RT_ACC = (l_RT_INV  .or. l_RT_EXP) .and. &
             index(Integrator_name,'ACC'  )/=0.or.index(Integrator_name,'acc'  )/=0
  !
- l_RT_DIAG=  l_RT_INV              .and. &
+ l_RT_DIAG=  l_RT_INV                 .and. &
 &           index(Integrator_name,'DIAG' )/=0.or.index(Integrator_name,'diag' )/=0
  !
- l_RT_PERT=  l_RT_EULER            .and. &
+ l_RT_PERT= (l_RT_EULER.and.l_RT_RWA) .and. &
 &           index(Integrator_name,'PERT'  )/=0.or.index(Integrator_name,'pert' )/=0
  !
  ! d) Reset integrator name

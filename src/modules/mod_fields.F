@@ -111,6 +111,7 @@ module fields
      !
      ! Note that A is evolved using A''(t) starting from A(0) and A'(0). 
      !
+     use X_m,       ONLY:global_gauge
      use pars,      ONLY:cI,cONE,cZERO,pi
      use wrapper,   ONLY:FADEVA
      !
@@ -189,9 +190,10 @@ module fields
          !
          ! ERFI(z)=i*(exp(z^2)*W(-z)-1)
          !
-         if (order==0 ) f_t(i_field)=-sqrt(pi/2._SP)*sigma/2._SP*                                              &
+         if (order==0 .and. trim(global_gauge)=="velocity" ) f_t(i_field)=-sqrt(pi/2._SP)*sigma/2._SP*         &
 &                                      cI*( (exp(      cZ **2-      cS )*FADEVA(-      cZ )-exp(-      cS )) + &
 &                                           (exp(conjg(cZ)**2-conjg(cS))*FADEVA(-conjg(cZ))-exp(-conjg(cS))) )
+         if (order==0 .and. trim(global_gauge)=="length" ) f_t(i_field)=cZERO
          if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
          if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
          !

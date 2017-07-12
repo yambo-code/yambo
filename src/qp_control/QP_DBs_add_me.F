@@ -164,7 +164,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,
  ! Finalization
  !
  call QP_reset(qp_base)
- call QP_copy(qp,qp_base,"ALL","+",1.)
+ call QP_copy(qp,qp_base,"ALL","+",1._SP)
  call QP_reset(qp)
  !
  YAMBO_FREE(dummy_table)

@@ -306,7 +306,8 @@ subroutine RT_initialize(E,k,q)
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !
- if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
+ if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
+ if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
  !
  call RT_adjust_equilibrium()
  !

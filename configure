@@ -1550,7 +1550,7 @@ Optional Features:
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
                           Default is yes.
-  --enable-debug-flags    DEbug flags are set for compilation. Default is no.
+  --enable-debug-flags    Debug flags are set for compilation. Default is no.
   --enable-open-mp        Enable OpenMP support
   --enable-mpi            Enable mpi parallelization . Default is yes.
   --enable-int-linalg     Force internal linear algebra. Default is no
@@ -2735,8 +2735,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="2"
 SPATCHLEVEL="0"
-SREVISION="14745"
-SHASH="e302405"
+SREVISION="14746"
+SHASH="12057b3"
 
 
 
@@ -14020,6 +14020,7 @@ if [ "$prefix" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib"        ; fi
  if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local"  ; fi
  if test ! -d "$prefix/lib/slatec" ; then mkdir "$prefix/lib/slatec" ; fi
+ if test ! -d "$prefix/lib/math77" ; then mkdir "$prefix/lib/math77" ; fi
  cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$file" "$prefix/driver" ;
@@ -14034,6 +14035,10 @@ if [ "$prefix" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  cd "../slatec" ;
  for file in `ls *.f` ; do
   cp "$file" "$prefix/lib/slatec" ;
+ done ;
+ cd "../math77" ;
+ for file in `ls *.f` ; do
+  cp "$file" "$prefix/lib/math77" ;
  done ;
  cd "$prefix" ;
 fi

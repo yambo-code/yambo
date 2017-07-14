@@ -40,7 +40,7 @@
 #
 # [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
 #                   @FFT_INCS@
-# [@BLAS_str@] BLAS      : @BLAS_LIBS@
+# [@BLAS_str@] BLAS      : @BLAS_LIBS@ @BLAS_info@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@

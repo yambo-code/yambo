@@ -69,9 +69,9 @@ module wrapper_omp
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), intent(in)  :: A(LDA,*),B(LDB,*)
      complex(SP), intent(out) :: C(LDC,*)
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMM_omp(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call CGEMM_omp(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #elif defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
@@ -102,9 +102,9 @@ module wrapper_omp
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
      !
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call CGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
 #elif defined _DOUBLE
      call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE,A,msize,B,msize,cZERO,C,msize)
@@ -123,9 +123,9 @@ module wrapper_omp
      character,intent(in) :: TRANS
      real(SP), intent(in) :: A(LDA,*),X(*)
      real(SP), intent(out):: Y(*)
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call DGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call SGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _DOUBLE
      call DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
@@ -140,9 +140,9 @@ module wrapper_omp
      character,   intent(in) :: TRANS
      complex(SP), intent(in) :: A(LDA,*),X(*)
      complex(SP), intent(out):: Y(*)
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call CGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _DOUBLE
      call ZGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
@@ -156,9 +156,9 @@ module wrapper_omp
      complex(SP), intent(in) :: A(msize,*),X(*)
      complex(SP), intent(out):: Y(*)
      character,   intent(in) :: TRANS
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call ZGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call CGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #elif defined _DOUBLE
      call ZGEMV(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
@@ -172,9 +172,9 @@ module wrapper_omp
      real(SP), intent(in) :: A(msize,*),X(*)
      real(SP), intent(out):: Y(*)
      character,intent(in) :: TRANS
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP_INT_LINALG && defined _DOUBLE
      call DGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP_INT_LINALG && !defined _DOUBLE
      call SGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
 #elif defined _DOUBLE
      call DGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
@@ -193,7 +193,7 @@ module wrapper_omp
      complex(SP), intent(in) :: CX(N,N)
      complex(SP), intent(out):: CY(N,N)
      !
-#if defined _OPENMP 
+#if defined _OPENMP_INT_LINALG 
      integer :: i,j
      if (n_threads_now>1) then
 !$omp parallel do default(shared), private(i,j)
@@ -218,7 +218,7 @@ module wrapper_omp
      complex(SP), intent(in) :: CX(*)
      complex(SP), intent(out):: CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
 !$omp parallel do default(shared), private(i)
@@ -241,7 +241,7 @@ module wrapper_omp
      real(SP),    intent(in) :: CX(*)
      real(SP),    intent(out):: CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
 !$omp parallel do default(shared), private(i)
@@ -267,7 +267,7 @@ module wrapper_omp
      complex(SP),intent(in)  :: CX(*)
      complex(SP),intent(out) :: CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer :: i
      if (n_threads_now>1) then
 !$omp parallel do default(shared), private(i)
@@ -292,7 +292,7 @@ module wrapper_omp
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer     :: i
      complex(SP) :: ctmp
      if (n_threads_now>1) then
@@ -316,7 +316,7 @@ module wrapper_omp
      integer, intent(in) :: N
      real(SP),intent(in) :: CX(*),CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer  :: i
      real(SP) :: rtmp
      if (n_threads_now>1) then
@@ -339,7 +339,7 @@ module wrapper_omp
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
      !
-#if defined _OPENMP
+#if defined _OPENMP_INT_LINALG
      integer     :: i
      complex(SP) :: ctmp
      if (n_threads_now>1) then

@@ -1,6 +1,6 @@
 OMP_objs = 
 #if defined _OPENMP_INT_LINALG
 OMP_objs = cgemv_omp.o dgemv_omp.o sgemv_omp.o zgemv_omp.o cgemm_omp.o zgemm_omp.o
-#fi
+#endif
 objs = dlaran.o $(OMP_objs)
 

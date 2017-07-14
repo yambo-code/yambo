@@ -29,7 +29,7 @@ module wrapper_omp
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,    ONLY:SP,cZERO,cONE
+ use pars,    ONLY:DP,SP,cZERO,cONE,cZERO_DP,cONE_DP
  use wrapper, ONLY:V_copy,MM_caxpy,vv_caxpy,vv_saxpy,Vstar_dot_V,real_V_dot_V,V_dot_V
  use openmp,  ONLY:n_threads_now
  !

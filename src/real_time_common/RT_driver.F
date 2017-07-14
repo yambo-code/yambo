@@ -53,7 +53,8 @@ subroutine RT_driver(E,X,k,q)
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,&
+&                          PP_redux_wait
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
 #include<memory.h>
@@ -283,6 +284,8 @@ subroutine RT_driver(E,X,k,q)
    !
    ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
    !=======================
+   !
+   call PP_redux_wait()
    !
    l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
    !

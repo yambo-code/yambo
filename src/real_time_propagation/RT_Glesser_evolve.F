@@ -31,9 +31,10 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,spin_occ
+ use parallel_m,     ONLY:PP_redux_wait,HEAD_k_cpu,HEAD_QP_cpu,PAR_IND_WF_k
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
-&                         integrator_step,G_lesser_reference,RT_bands,RT_nk
+&                         integrator_step,G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
  !
  implicit none
  !
@@ -54,6 +55,8 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  l_RT_STD=.not.(l_RT_ACC.or.l_RT_DIAG)
  !
  do ik=1,RT_nk
+   !
+   if( .not.(HEAD_QP_cpu.and.HEAD_k_cpu.and.PAR_IND_WF_k%element_1D(RT_all2ibz(ik))) ) cycle
    !
    if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
@@ -83,6 +86,8 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    call RT_G_symmetrization(dG_out(:,:,ik),ik)
    !
  enddo
+ !
+ call PP_redux_wait(dG_out)
  !
  integrator_step=integrator_step+1
  !

@@ -58,8 +58,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  !
  integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero
-&           n_elecs,n_holes,balance
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero,n_elecs,n_holes,balance
  logical :: Fermi_is_converged
  real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
  !
@@ -139,7 +138,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
    group_size=max(1,int(n_total_states/500))
    do i1=1,n_total_states,group_size
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1),'both ')
-     call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
      if (n_of_el_from_zero(1)<-nel_diff_zero) i_Ef(1)=i1
      if (n_of_el_from_zero(1)> nel_diff_zero) then
        i_Ef(2)=i1

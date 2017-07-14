@@ -194,7 +194,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
+         Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
        enddo
      enddo
    endif

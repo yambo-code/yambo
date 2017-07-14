@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
+subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! 1) The KBE is coded in terms of :
  !
@@ -75,8 +75,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  implicit none
  !
  type(levels),  intent(inout) :: E
- type(bz_samp), intent(in)    :: k,q
- real(SP),      intent(in)    :: Time
+ type(bz_samp), intent(in)    :: k
  complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field), intent(in):: A_input
  !

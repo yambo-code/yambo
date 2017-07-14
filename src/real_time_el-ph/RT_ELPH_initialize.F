@@ -84,7 +84,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Q/K grid remapping
  !====================
- !
  call RT_ELPH_gkkp_remap(k,q)
  !
  ! Allocation
@@ -100,8 +99,8 @@ subroutine RT_ELPH_initialize(E,k,q)
    YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
  endif
  !
- ! I/O
- !=====
+ ! Degeneration Finder & I/O
+ !===========================
  !
  i_counter   =0
  ph_Esq_local=0._SP
@@ -187,7 +186,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  ph_freqs_sq=ph_Esq_local
  !
  call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
- !
  call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
  call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
@@ -219,9 +217,9 @@ subroutine RT_ELPH_initialize(E,k,q)
    q_mod=0._SP
    q_weight_RT=0._SP
    !
+   call k_ibz2bz(q,'c',.TRUE.)  
+   !
    if (RIM_n_rand_pts>0) then
-     !
-     call k_ibz2bz(q,'c',.TRUE.)  
      !
      do iq=1,q%nbz
        !

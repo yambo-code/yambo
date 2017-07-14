@@ -37,6 +37,22 @@ module vec_operate
  !
  contains
    ! 
+   integer function min_index(N,v)
+     !
+     integer,  intent(in) :: N
+     real(SP), intent(in) :: v(N)
+     !
+     real(SP) :: v_min
+     integer  :: i_v
+     !
+     v_min=minval(v)
+     min_index=0
+     do i_v=1,N
+       if (abs(v(i_v)-v_min)<1.E-5) min_index=i_v
+     enddo
+     !
+   end function min_index
+   ! 
    function normalize_v(v,zero_norm_)
      !
      real(SP), intent(in) :: v(3)

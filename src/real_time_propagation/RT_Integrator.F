@@ -119,7 +119,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
 #if defined _TIMING
    call timing('RT integrator',OPR='stop')
 #endif
-   call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k,q,Time+delta_T1)  ! The two time specifications here are useless
+   call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! since nothing explicitely depends on time
 #if defined _TIMING
    call timing('RT integrator',OPR='start')

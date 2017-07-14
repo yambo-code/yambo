@@ -393,7 +393,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            !
 #if defined _RT
            DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           DIP_P(:,:,:,ik_mem,i_sp_pol)= DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            if (l_real_time.and.n_spin>1) DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)= &
 &            DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            if (l_real_time.and.n_spin>1) DIP_spin(:,:,:,ik_mem,i_sp_pol)= &

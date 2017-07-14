@@ -29,7 +29,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  use pointers,ONLY:linkC2R
  use netcdf
  use drivers, ONLY:list_dbs
- use com,     ONLY:msg,warning
+ use com,     ONLY:msg
  use stderr,  ONLY:string_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
@@ -87,7 +87,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (write_is_on(ID)) then
        call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
        nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
-       !if (nf_error==NF90_NOERR) call warning(' Owriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
        if (nf_error/=NF90_NOERR) then
          if (present(CH0).or.present(CH1) ) then
            nf_error=nf90_def_var(io_unit(ID),VAR,nf90_char,(/netcdf_dim(ID,schlen),netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID))

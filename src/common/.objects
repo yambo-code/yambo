@@ -9,4 +9,4 @@ objs = eval_G_minus_G.o G_rot_grid.o G_index.o eval_Gradient.o \
        CIntegrate.o QPartilize.o Lorentzian_FT.o \
        OCCUPATIONS_Fermi.o OCCUPATIONS_Extend.o OCCUPATIONS_Gaps.o \
        crystal_lattice.o QP_state_extract.o \
-       pol_fit.o spline_fit.o $(RT_objects)
+       spline_fit.o $(RT_objects)

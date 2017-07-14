@@ -52,6 +52,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
+ use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -69,9 +70,9 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
- integer          ::i1,i2,i3,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
+ integer          ::i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
 &                   iv4(4),io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
- complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng)
+ complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::io_X,QP_state_extract,io_QP_and_GF,X_dielectric_matrix,QP_life_transitions
@@ -446,20 +447,41 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          ! Note that the same procedure is applied in QP_W2Sc when S_c is
          ! calculated
          ! 
-         qp%E(i_qp)=qp%E(i_qp)-2._SP*cI*pi*(life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
+         qp%E(i_qp)=qp%E(i_qp)-2._SP*cI*pi*&
+&                   (life_Fe+life_Fh)*bose_decay( real(X_life_W(iqibz)%p(i2)) )*&
 &                   Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
          !
        else ! .not.l_life
          !
+#if defined _OPENMP
+         !
+!$omp parallel do default(shared), private(i2,i3,i4)
+         !
+         do i2=1,QP_n_W_freqs
+           W_dummy=cZERO
+           do i3=1,X%ng
+             do i4=1,X%ng
+               W_dummy=W_dummy+scattering_main%rhotw(i3)*X_mat(i3,i4,i2+X_range(1)-1)*conjg(scattering_prime%rhotw(i4))
+             enddo
+           enddo
+           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*W_dummy
+         enddo
+         !
+!$omp end parallel do
+#else
+         !
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
-             lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
+             lrhotw(i3)=V_dot_V(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
            enddo
            !
-           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+           W_dummy=Vstar_dot_V_omp(X%ng,scattering_prime%rhotw,lrhotw)
+           !
+           QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*W_dummy
            !
          enddo
+#endif
          !
        endif
        !

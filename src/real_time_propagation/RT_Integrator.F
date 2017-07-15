@@ -155,6 +155,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    subroutine RT_update_occ(G_inonly)
      !
+     use parallel_m,     ONLY:PP_redux_wait,HEAD_k_cpu,PAR_IND_WF_k
+     use real_time,      ONLY:RT_all2ibz
+     !
      complex(SP), intent(in) :: G_inonly(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
      !
      integer                 :: ik,ib,ibp
@@ -164,7 +167,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      !  for Gref~spin_occ RT_H_occ is also sensitive
      !  for Gref~0        RT_E_occ is also sensitive
      !
+     RT_E_occupations=0._SP
+     RT_H_occupations=0._SP
+     RT_delta0_occupations=0._SP
+     !
      do ik=1,RT_nk
+       !
+       if (.not.(HEAD_k_cpu.and.PAR_IND_WF_k%element_1D(RT_all2ibz(ik))) ) cycle
        !
        do ib=RT_bands(1),RT_bands(2)
          !
@@ -182,22 +191,38 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        !
      enddo
      !
+     call PP_redux_wait(RT_E_occupations)
+     call PP_redux_wait(RT_H_occupations)
+     call PP_redux_wait(RT_delta0_occupations)
+     !
    end subroutine RT_update_occ
    !
    subroutine RT_build_dG_new()
+     !
+     use parallel_m,     ONLY:PP_redux_wait,HEAD_k_cpu,PAR_IND_WF_k
+     use real_time,      ONLY:RT_all2ibz
+     !
      ! Now I remove dG_old from dG_tmp and rescale to a_tableau
      !
+     integer  :: ik
+     !
+     do ik=1,RT_nk
+       !
+       if (.not.(HEAD_k_cpu.and.PAR_IND_WF_k%element_1D(RT_all2ibz(ik))) ) cycle
+       !
      do i_step=1,Integrator_nsteps
        if (a_tableau(i_step)==0._SP) cycle 
-       dG_tmp(:,:,:,i_step)=(dG_tmp(:,:,:,i_step)-dG_old)/a_tableau(i_step)
+       dG_tmp(:,:,ik,i_step)=(dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik))/a_tableau(i_step)
      enddo
-     dG_tmp(:,:,:,i_step)=dG_tmp(:,:,:,i_step)-dG_old
+     dG_tmp(:,:,ik,i_step)=dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik)
      !
      ! Finally I average using b_tableau
      !
-     dG_new=dG_old
+     dG_new(:,:,ik)=dG_old(:,:,ik)
      do i_step=1,Integrator_nsteps
-       dG_new=dG_new+dG_tmp(:,:,:,i_step+1)*b_tableau(i_step)
+       dG_new(:,:,ik)=dG_new(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
+     enddo
+     !
      enddo
    end subroutine RT_build_dG_new
    !

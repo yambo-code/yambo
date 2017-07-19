@@ -31,6 +31,7 @@ module BS
  !
  ! Modes and logicals
  !====================
+ logical :: l_BSE_minimize_memory
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -195,7 +196,7 @@ module BS
      do i_b=iB,1,-1
        ik_loop=BS_blk(i_b)%ik
        ip_loop=BS_blk(i_b)%ip
-       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
+       if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(i_b)%O_c)) exit
        if (     allocated(BS_blk(i_b)%O_c)) then
          deallocate(BS_blk(i_b)%O_c)

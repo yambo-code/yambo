@@ -23,7 +23,7 @@
 !
 subroutine INIT_barriers()
  !
- use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_kerr,&
+ use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,&
 &                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
@@ -148,14 +148,5 @@ subroutine INIT_barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
- !
-#if defined _KERR
- if(l_kerr) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
-   on_runlevels='optics bse'
-   if(bss_inv.or.bss_tddft) on_runlevels=' '
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
- endif
-#endif
  !
 end subroutine

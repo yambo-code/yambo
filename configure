@@ -704,9 +704,12 @@ fft_cfactor
 LAPACK_LIBS
 compile_lapack
 internal_lapack
+BLAS_info
 BLAS_LIBS
 compile_blas
-enabl_int_linalg
+def_openmp_int_linalg
+enable_openmp_int_linalg
+enable_int_linalg
 internal_blas
 FLIBS
 MPI_PATH
@@ -852,6 +855,7 @@ with_mpi_libdir
 with_mpi_includedir
 with_blas_libs
 enable_int_linalg
+enable_openmp_int_linalg
 with_lapack_libs
 with_fft_libs
 with_fft_path
@@ -1550,10 +1554,13 @@ Optional Features:
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
                           Default is yes.
-  --enable-debug-flags    DEbug flags are set for compilation. Default is no.
+  --enable-debug-flags    Debug flags are set for compilation. Default is no.
   --enable-open-mp        Enable OpenMP support
   --enable-mpi            Enable mpi parallelization . Default is yes.
   --enable-int-linalg     Force internal linear algebra. Default is no
+  --enable-openmp-int-linalg
+                          Use openmp internal linear algebra for few selected
+                          operations. Default is no
   --enable-internal-fftqe Use internal QE FFT library
   --enable-internal-fftsg Use internal Goedecker FFT library
   --enable-3d-fft         Use 3D FFT
@@ -2735,8 +2742,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="2"
 SPATCHLEVEL="0"
-SREVISION="14624"
-SHASH="2bb15ec"
+SREVISION="14759"
+SHASH="e2a37e4"
 
 
 
@@ -6756,8 +6763,8 @@ if test "${enable_open_mp+set}" = set; then :
 fi
 
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-def_openmp=" "
 OPENMPLIBS=" "
+def_openmp=" "
 if test x"$enable_open_mp" = "xyes"; then
   OPENMPLIBS="$OMPFLAGS";
   def_openmp="-D_OPENMP"
@@ -9397,6 +9404,11 @@ if test "${enable_int_linalg+set}" = set; then :
   enableval=$enable_int_linalg;
 fi
 
+# Check whether --enable-openmp_int_linalg was given.
+if test "${enable_openmp_int_linalg+set}" = set; then :
+  enableval=$enable_openmp_int_linalg;
+fi
+
 
 BLAS_LIBS=""
 
@@ -9953,6 +9965,20 @@ if test "$internal_blas" = "yes"; then
     compile_blas="yes";
   fi
 fi
+
+BLAS_info=""
+def_openmp_int_linalg=""
+if test x"$enable_openmp_int_linalg" = "xyes" ; then
+  if test x"$enable_openmp_int_linalg" = "xyes" ; then
+    BLAS_info="(With some operations internally OpenMP distributed)"
+    def_openmp_int_linalg="-D_OPENMP_INT_LINALG"
+  else
+    enable_openmp_int_linalg="no"
+  fi
+fi
+
+
+
 
 
 
@@ -14020,6 +14046,7 @@ if [ "$prefix" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  if test ! -d "$prefix/lib"        ; then mkdir "$prefix/lib"        ; fi
  if test ! -d "$prefix/lib/local"  ; then mkdir "$prefix/lib/local"  ; fi
  if test ! -d "$prefix/lib/slatec" ; then mkdir "$prefix/lib/slatec" ; fi
+ if test ! -d "$prefix/lib/math77" ; then mkdir "$prefix/lib/math77" ; fi
  cd "$srcdir/driver/" ;
  for file in `ls *.h` ; do
   cp "$file" "$prefix/driver" ;
@@ -14034,6 +14061,10 @@ if [ "$prefix" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  cd "../slatec" ;
  for file in `ls *.f` ; do
   cp "$file" "$prefix/lib/slatec" ;
+ done ;
+ cd "../math77" ;
+ for file in `ls *.f` ; do
+  cp "$file" "$prefix/lib/math77" ;
  done ;
  cd "$prefix" ;
 fi

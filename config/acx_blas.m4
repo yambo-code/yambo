@@ -9,12 +9,25 @@ acx_blas_ok=no
 
 AC_ARG_WITH(blas_libs,
         [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+
+AC_ARG_ENABLE(blas-mt,AC_HELP_STRING([--enable-blas-mt],
+            [BLAS library is multi-threaded]),[],[])
+
+
 case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
         -* | */* | *.a | *.so | *.so.* | *.o) BLAS_LIBS="$with_blas_libs" ;;
         *) BLAS_LIBS="-l$with_blas_libs" ;;
 esac
+
+if test "x$enable_blas_mt" = "xyes"; then
+    have_blas_mt=1
+else
+    have_blas_mt=0
+fi
+
+AC_DEFINE(HAVE_BLAS_MT,$have_blas_mt,[Define if you have a multi-threaded BLAS library.])
 
 # Set fortran linker names of BLAS functions to check for.
 caxpy="caxpy"

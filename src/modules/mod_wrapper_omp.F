@@ -103,9 +103,9 @@ module wrapper_omp
      character,intent(in) :: TRANS
      real(SP), intent(in) :: A(LDA,*),X(*)
      real(SP), intent(out):: Y(*)
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP && defined _DOUBLE && !HAVE_BLAS_MT
      call DGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP && !defined _DOUBLE && !HAVE_BLAS_MT
      call SGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _DOUBLE
      call DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
@@ -120,9 +120,9 @@ module wrapper_omp
      character,   intent(in) :: TRANS
      complex(SP), intent(in) :: A(LDA,*),X(*)
      complex(SP), intent(out):: Y(*)
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP && defined _DOUBLE && ! HAVE_BLAS_MT
      call ZGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP && !defined _DOUBLE && ! HAVE_BLAS_MT
      call CGEMV_omp(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
 #elif defined _DOUBLE
      call ZGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
@@ -136,9 +136,9 @@ module wrapper_omp
      complex(SP), intent(in) :: A(msize,*),X(*)
      complex(SP), intent(out):: Y(*)
      character,   intent(in) :: TRANS
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP && defined _DOUBLE && !HAVE_BLAS_MT
      call ZGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP && !defined _DOUBLE && !HAVE_BLAS_MT
      call CGEMV_omp(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
 #elif defined _DOUBLE
      call ZGEMV(TRANS,msize,msize,cONE,A,msize,X,1,cZERO,Y,1)
@@ -152,9 +152,9 @@ module wrapper_omp
      real(SP), intent(in) :: A(msize,*),X(*)
      real(SP), intent(out):: Y(*)
      character,intent(in) :: TRANS
-#if defined _OPENMP && defined _DOUBLE
+#if defined _OPENMP && defined _DOUBLE && !HAVE_BLAS_MT
      call DGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
-#elif defined _OPENMP && !defined _DOUBLE
+#elif defined _OPENMP && !defined _DOUBLE && !HAVE_BLAS_MT
      call SGEMV_omp(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)
 #elif defined _DOUBLE
      call DGEMV(TRANS,msize,msize,1._SP,A,msize,X,1,0._SP,Y,1)

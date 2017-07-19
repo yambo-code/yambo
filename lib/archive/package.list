@@ -26,7 +26,7 @@ pkgname_libxc=libxc-2.2.3
 #
 # URL's
 #
-url_netcdf=https://github.com/yambo-code/yambo/files/783148/netcdf-y4.1.3_v2.tar.gz$(tarball_netcdf)
-url_libxc=https://github.com/yambo-code/yambo/files/783150/libxc-2.2.3.tar.gz$(tarball_libxc)
-url_iotk=https://github.com/yambo-code/yambo/files/783147/iotk-y1.2.1.tar.gz$(tarball_iotk)
-url_etsf_io=https://github.com/yambo-code/yambo/files/845218/etsf_io-1.0.4.tar.gz$(tarball_etsf)
+url_netcdf=https://github.com/yambo-code/yambo/files/783148/$(tarball_netcdf)
+url_libxc=https://github.com/yambo-code/yambo/files/783150/$(tarball_libxc)
+url_iotk=https://github.com/yambo-code/yambo/files/783147/$(tarball_iotk)
+url_etsf_io=https://github.com/yambo-code/yambo/files/845218/$(tarball_etsf)

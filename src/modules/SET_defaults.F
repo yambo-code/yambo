@@ -86,6 +86,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
+#if defined _KERR
+ use drivers,    ONLY:l_kerr,l_anomalous_Hall
+#endif
 #if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
 #endif
@@ -485,6 +488,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_KIND=-1                   ! unknow 
  GS_exx_FRACTION=0.0             ! no EXX part  
  GS_exx_SCREENING=0.0            ! no screening
+ !
+#if defined _KERR
+ l_kerr=.false.
+ l_anomalous_Hall=.false.
+#endif
  !
  !
 #if defined _ELPH 

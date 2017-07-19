@@ -204,20 +204,30 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
  endif
  !
+ n_colls=max(HXC_collisions%N,COH_collisions%N)
+ !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
  if (allocated(HXC_collisions%IO_status)) then
-   PAR_NC_local=count(HXC_collisions%IO_status==-1)
+   PAR_NC_local=0
+   do i_coll=1,HXC_collisions%N
+     if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+     if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  else if (allocated(COH_collisions%IO_status)) then
-   PAR_NC_local=count(COH_collisions%IO_status==-1)
+   PAR_NC_local=0
+   do i_coll=1,COH_collisions%N
+     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+     if (COH_collisions%IO_status(i_coll)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  !
  n_steps=0
  if (l_loc_HXC_collisions)                     n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
  if (l_MBPT_XC_collisions.or.l_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
- !
- n_colls=max(HXC_collisions%N,COH_collisions%N)
  !
  ! Write Database Header 
  !

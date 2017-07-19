@@ -87,7 +87,12 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  PAR_NC=P_collisions%PAR_N
  if (allocated(P_collisions%IO_status)) then
-   PAR_NC=count(P_collisions%IO_status==-1)
+   PAR_NC_local=0
+   do i_coll1=1,P_collisions%N
+     if (.not.P_collisions%PAR_IND%element_1D(i_coll1)) cycle
+     if (P_collisions%IO_status(i_coll1)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  !
  ! Write Database Header 

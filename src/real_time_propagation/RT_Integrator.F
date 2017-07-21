@@ -191,9 +191,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        !
      enddo
      !
+#if defined _TIMING
+   call timing('RT int. redux',OPR='start')
+#endif
      call PP_redux_wait(RT_E_occupations)
      call PP_redux_wait(RT_H_occupations)
      call PP_redux_wait(RT_delta0_occupations)
+#if defined _TIMING
+   call timing('RT int. redux',OPR='stop')
+#endif
      !
    end subroutine RT_update_occ
    !

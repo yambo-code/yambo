@@ -94,19 +94,25 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   !     Create the eigensolver and display info
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  call msg( 'rs', 'Creating eigensolver' )
   !Create eigensolver context
   call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
   
+  call msg( 'rs', 'Set monitor' )
   !Set monitor
-  call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
+  !call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
   
+  call msg( 'rs', 'Set operators' )
   !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
   call EPSSetProblemType(eps,EPS_HEP,ierr)
+
   if (present(target_energy)) then
-    call EPSSetTarget(eps,target_energy)
+    call msg( 'rs', 'Target energy:', target_energy )
+    call EPSSetTarget(eps,target_energy,ierr)
     call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
   else
+    call msg( 'rs', 'Smaller eigenvalues' )
     call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
   endif
 

@@ -47,7 +47,7 @@ AC_COMPILE_IFELSE([
   ],[],[])
 cd ..
 ax_cv_f90_modflag="not found"
-for ax_flag in "-I " "-M" "-p"; do
+for ax_flag in "-I" "-M" "-p"; do
   if test "$ax_cv_f90_modflag" = "not found" ; then
     ax_save_FCFLAGS="$FCFLAGS"
     FCFLAGS="$ax_save_FCFLAGS ${ax_flag}tmpdir_$i"
@@ -116,7 +116,7 @@ AC_COMPILE_IFELSE([
   ],[],[])
 cd ..
 ax_cv_f90_modflag="not found"
-for ax_flag in "-I " "-M" "-p"; do
+for ax_flag in "-I" "-M" "-p"; do
   if test "$ax_cv_f90_modflag" = "not found" ; then
     ax_save_FCFLAGS="$FCFLAGS"
     FCFLAGS="$ax_save_FCFLAGS ${ax_flag}tmpdir_$i"

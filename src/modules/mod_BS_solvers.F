@@ -212,11 +212,6 @@ module BS_solvers
      use SLK_m,     ONLY:BLACS_structure_in_use
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     if (.not.BLACS_structure_in_use) then
-       allocate(BS_mat(BS_H_dim,BS_H_dim))
-       call mem_est('BS_mat',(/size(BS_mat)/))
-       BS_mat    = cZERO
-     endif
      allocate(BSS_dipoles(BS_H_dim))
      call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
      BSS_dipoles = cZERO

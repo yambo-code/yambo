@@ -589,37 +589,41 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- Vec                  :: vi,vo
+ VecScatter           :: ctx
+ PetscScalar, pointer :: xx(:)
+ Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
  integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
  !
- ! from vi (distributed) build Slepc%Vi
+ ! create scattering context vi (distributed) -> x (local)
  !
- call VecGetOwnershipRange(vi,low,high,ierr)
+ call VecScatterCreateToAll(vi,ctx,x,ierr);
  !
- forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Slepc_v%Vi(i_g)%fragment = cZERO
+ ! scatter from vi (distributed) -> x (local)
+ !
+ call VecScatterBegin(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
+ call VecScatterEnd(ctx,vi,x,INSERT_VALUES,SCATTER_FORWARD,ierr);
+ !
+ ! from x (local) build Slepc%Vi
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     if (H_pos<high .and. H_pos>low) then
-        !SLEPC funcitons expect C indexes both in Fortran and C
-        call VecGetValues( vi, 1, H_pos, tmp_value, ierr )
-        Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
-     endif
+     !SLEPC funcitons expect C indexes both in Fortran and C
+     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
+     Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
    enddo
  enddo
  !
-#if defined _MPI
- do i_g=1,BS_nT_grps
-   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-   call PP_redux_wait(Slepc_v%Vi(i_g)%fragment,COMM=PAR_COM_T_Haydock(i_g)%COMM)
- enddo
-#endif
+ ! destroy scatter context and local vector when no longer needed
  !
- ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
+ call VecScatterDestroy(ctx,ierr);
+ call VecDestroy(x,ierr);
+ !
+ ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian
+ ! matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
  !
  call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo, 1 )
@@ -631,13 +635,14 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    start_index = sum(BS_T_grp(:i_g-1)%size)-1
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     if (H_pos<high .and. H_pos>low) then
-         tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
-         !SLEPC funcitons expect C indexes both in Fortran and C
-         call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
-     endif
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
+     !SLEPC funcitons expect C indexes both in Fortran and C
+     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
    enddo
  enddo
+ !
+ call VecAssemblyBegin(vo,ierr)
+ call VecAssemblyEnd(vo,ierr)
  !
 end subroutine
 

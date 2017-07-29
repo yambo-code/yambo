@@ -78,10 +78,6 @@ subroutine bz_samp_indexes(k,Xk,q)
 #endif
  integer, allocatable :: q_map(:,:,:),q_iptbz(:,:)
  !
-#if defined _TIMING
- call timing('bz_samp_indexes',OPR='start')
-#endif
- !
  call section('*','Transferred momenta grid')
  !
  user_defined_qpts=.false.
@@ -106,6 +102,11 @@ subroutine bz_samp_indexes(k,Xk,q)
    call q_shadows(.false.)
    return
  endif
+ !
+#if defined _TIMING
+ call timing('bz_samp_indexes',OPR='start')
+#endif
+ !
  !
  ! First I map the Xk grid in a simple cubic Net
  !

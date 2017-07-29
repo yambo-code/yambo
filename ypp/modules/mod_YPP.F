@@ -147,10 +147,12 @@ module YPP
  ! QP databases
  !
  logical     :: l_QP_DBs_create_and_modify
- logical     :: l_QP_DBs_merge
+ logical     :: l_QP_DBs_manipulate
  integer     :: n_QP_dbs 
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
+ character(schlen),  allocatable :: QP_db_operation(:)
+ real(SP),           allocatable :: QP_db_prefactor(:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy

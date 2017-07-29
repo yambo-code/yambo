@@ -25,7 +25,6 @@ subroutine WF_format_converter(E,Xk,q)
  !
  use pars,                ONLY:SP,lchlen
  use R_lattice,           ONLY:bz_samp
- use memory_m,            ONLY:mem_est
  use pseudo,              ONLY:PP_free
  use LIVE_t,              ONLY:live_timing
  use D_lattice,           ONLY:n_atoms_species_max
@@ -35,7 +34,7 @@ subroutine WF_format_converter(E,Xk,q)
  use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,NONE,DUMP,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
  !
- implicit none
+#include<memory.h>
  !
  type(levels),intent(in)     :: E
  type(bz_samp),intent(inout) :: Xk
@@ -82,11 +81,9 @@ subroutine WF_format_converter(E,Xk,q)
  call section('=',trim(section_name))
  !====================================
  !
- allocate(wf_disk_new(wf_ncx,n_spinor,wf_nb_io))
- call mem_est("wf_disk_new",(/size(wf_disk_new)/),(/2*SP/))
+ YAMBO_ALLOC(wf_disk_new,(wf_ncx,n_spinor,wf_nb_io))
  !
- allocate(wf_disk_old(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk_old",(/size(wf_disk_old)/),(/SP/))
+ YAMBO_ALLOC(wf_disk_old,(2,wf_nb_io,wf_ncx,n_spin))
  !
  call live_timing('Conversion',E%nk*wf_nb_io_groups)
  !
@@ -140,8 +137,8 @@ subroutine WF_format_converter(E,Xk,q)
  !
  core_io_path=core_io_path_save
  !
- deallocate(wf_disk_new,wf_disk_old)
- call mem_est("wf_disk_new wf_disk_old")
+ YAMBO_FREE(wf_disk_new)
+ YAMBO_FREE(wf_disk_old)
  !
  if (io_KB_abinit_err==0) call PP_free()
  !

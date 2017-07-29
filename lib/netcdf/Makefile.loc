@@ -51,13 +51,12 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) ) ; fi
-	#
 	touch package-ready-stamp
 
 $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) install ) ; fi
-	#
+	( cd $(PACKAGE);  $(make) install ; \
+	cp $(LIBPATH)/bin/* $(exec_prefix) ); fi
 	chmod u+x $(LIBPATH)/lib/*netcdf*.a
 #
 # cleaning

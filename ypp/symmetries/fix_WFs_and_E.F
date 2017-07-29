@@ -127,8 +127,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  case(1)
    !
-   allocate(wf_disk(wf_ncx_new,n_spinor,wf_nb_io))
-   call mem_est("wf_disk",(/size(wf_disk)/),(/2*SP/))
+   YAMBO_ALLOC(wf_disk,(wf_ncx_new,n_spinor,wf_nb_io))
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)

@@ -403,8 +403,11 @@ module IO_m
    !
    subroutine io_disconnect(ID,FORCE)
      !
-     integer           :: ID
+     integer           :: ID,NC_ERR
      logical, optional :: FORCE
+     logical           :: I_OPEN
+     !
+     I_OPEN=.FALSE.
      !
      if (present(FORCE)) then
        !
@@ -416,19 +419,15 @@ module IO_m
        !
      endif
      !
-     !
-     if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
-&         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
-       !
-       if (io_type(ID)==-2) then
-         close(unit=io_unit(ID))
-       else
-         call netcdf_call(nf90_close(io_unit(ID)),ID)
-       endif
-       !
-       io_unit(ID)=0
-       !
+     if (io_type(ID)==-2) then
+       I_OPEN=PLAIN_file_is_open(IO_file(ID))
+       if (I_OPEN) close(unit=io_unit(ID))
+     else
+       I_OPEN=NETCDF_file_is_open(ID)
+       if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
      endif
+     !
+     if (I_OPEN) io_unit(ID)=0
      !
      if (io_resetable(ID)) call io_reset(ID)
      !
@@ -483,13 +482,13 @@ module IO_m
      endif
      !
      if (read_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
      else  if (write_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
      endif
      !
    end subroutine
@@ -579,21 +578,21 @@ module IO_m
      !
    end function file_is_present
    !
-   logical function file_is_open(filename,ID)
-     character(*)      :: filename
+   logical function NETCDF_file_is_open(ID)
      integer, optional :: ID
      integer :: NC_ERR
-     file_is_open=.false.
-     if (trim(filename)=='') return
-     if (present(ID)) then
-       NC_ERR=nf90_inquire(io_unit(ID))
-       file_is_open=NC_ERR==NF90_NOERR
-     else
-       inquire(file=filename,opened=file_is_open)
-     endif
-     !
+     NETCDF_file_is_open=.false.
+     if (trim(IO_file(ID))=='') return
+     NC_ERR=nf90_inquire(io_unit(ID))
+     NETCDF_file_is_open=NC_ERR==NF90_NOERR
    end function
    !
+   logical function PLAIN_file_is_open(filename)
+     character(*) :: filename
+     PLAIN_file_is_open=.FALSE.
+     if (trim(filename)=='') return
+     INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
+   end function
    !
    subroutine netcdf_call(status,ID,VAR)
      use com,           ONLY:error

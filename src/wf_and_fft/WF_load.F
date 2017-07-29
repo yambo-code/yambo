@@ -45,8 +45,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
- use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_XC_string,QP_SE_NONE
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
  !
 #include<memory.h>
@@ -421,20 +420,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
-<<<<<<< HEAD
    if (WF%space=='R') wf_grid_size=fft_size
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
        call WF_rotate(i_sp_pol,ikibz,wf,wf_grid_size)
-=======
-   do i_sp_pol=1,n_sp_pol
-     do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
->>>>>>> master
      enddo
    enddo
    !

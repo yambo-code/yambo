@@ -25,7 +25,7 @@ module ELPH_old
  !
  use pars,       ONLY:SP
  !
- implicit none
+#include<memory.h>
  !
  real(SP),    allocatable :: elph_DW_old(:,:,:,:)
  complex(SP), allocatable :: elph_gkkp_old(:,:,:,:)
@@ -33,7 +33,6 @@ module ELPH_old
  contains
    !
    subroutine elph_global_alloc_old(what)
-     use memory_m,  ONLY:mem_est
      use R_lattice, ONLY:nkbz
      use ELPH,      ONLY:ph_modes,elph_nb
      character(*)      ::what
@@ -44,10 +43,8 @@ module ELPH_old
        case ('gkkp')
          !
          if (.not.allocated(elph_gkkp_old)) then
-           allocate(elph_gkkp_old(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-           call mem_est("GKKP_old",(/size(elph_gkkp_old)/),(/2*SP/),errors=(/alloc_err/))
-           allocate(elph_DW_old(nkbz,ph_modes,elph_nb,elph_nb),stat=alloc_err)
-           call mem_est("GKKP_DW_old",(/size(elph_DW_old)/),(/SP/),errors=(/alloc_err/))
+           YAMBO_ALLOC(elph_gkkp_old,(nkbz,ph_modes,elph_nb,elph_nb))
+           YAMBO_ALLOC(elph_DW_old,(nkbz,ph_modes,elph_nb,elph_nb))
          endif
          !
      end select
@@ -55,10 +52,9 @@ module ELPH_old
    end subroutine
    !
    subroutine elph_global_free_old()
-     use memory_m,  ONLY:mem_est
      if (allocated(elph_gkkp_old)) then
-       deallocate(elph_gkkp_old,elph_DW_old)
-       call mem_est("elph_gkkp_old elph_DW_old")
+       YAMBO_FREE(elph_gkkp_old)
+       YAMBO_FREE(elph_DW_old)
      endif
    end subroutine
    !

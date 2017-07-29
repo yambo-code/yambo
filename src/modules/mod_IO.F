@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,lchlen,schlen
+ use pars,       ONLY:SP,lchlen,schlen,max_io_units,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
@@ -107,8 +107,6 @@ module IO_m
  !
  ! Units
  !
- integer, parameter:: max_io_units=10
- integer, parameter:: max_active_sections=10
  integer :: io_action(max_io_units)
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
@@ -253,20 +251,28 @@ module IO_m
    !
    subroutine io_disconnect(ID,FORCE)
      !
-     integer           :: ID
+     integer           :: ID,NC_ERR
      logical, optional :: FORCE
+     logical           :: I_OPEN
      !
      logical :: FORCE_
+     !
+     I_OPEN=.FALSE.
      !
      FORCE_=.FALSE.
      if (present(FORCE)) FORCE_=FORCE
      !
      if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
      !
-     if ( io_type(ID)/=-2.and.file_is_open(io_file(ID),ID) ) call netcdf_call(nf90_close(io_unit(ID)),ID)
-     if ( io_type(ID)==-2.and.file_is_open(io_file(ID))    ) close(unit=io_unit(ID))
+     if (io_type(ID)==-2) then
+       I_OPEN=PLAIN_file_is_open(IO_file(ID))
+       if (I_OPEN) close(unit=io_unit(ID))
+     else
+       I_OPEN=NETCDF_file_is_open(ID)
+       if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
+     endif
      !
-     io_unit(ID)=0
+     if (I_OPEN) io_unit(ID)=0
      !
      if (io_resetable(ID)) call io_reset(ID)
      !
@@ -314,15 +320,15 @@ module IO_m
      integer :: start_,end_
      !
      if (read_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
        if (io_action(ID)==            RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
      else  if (write_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
        if (io_action(ID)==            WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
      endif
      !
    end subroutine
@@ -413,19 +419,20 @@ module IO_m
      !
    end function file_is_present
    !
-   logical function file_is_open(filename,ID)
-     character(*)      :: filename
+   logical function NETCDF_file_is_open(ID)
      integer, optional :: ID
      integer :: NC_ERR
-     file_is_open=.false.
+     NETCDF_file_is_open=.false.
+     if (trim(IO_file(ID))=='') return
+     NC_ERR=nf90_inquire(io_unit(ID))
+     NETCDF_file_is_open=NC_ERR==NF90_NOERR
+   end function
+   !
+   logical function PLAIN_file_is_open(filename)
+     character(*) :: filename
+     PLAIN_file_is_open=.FALSE.
      if (trim(filename)=='') return
-     if (present(ID)) then
-       NC_ERR=nf90_inquire(io_unit(ID))
-       file_is_open=NC_ERR==NF90_NOERR
-     else
-       inquire(file=filename,opened=file_is_open)
-     endif
-     !
+     INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
    end function
    !
    subroutine netcdf_call(status,ID,VAR)

@@ -29,10 +29,11 @@ subroutine RT_initialize(E,k,q)
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
+ use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,      ONLY:levels
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
@@ -46,7 +47,7 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
-&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,RT_DbGd_nk
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -287,7 +288,7 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
-   if (.not.associated(E%W)) then
+   if (.not.allocated(E%W)) then
      call warning("NO QP damping provided. E-E and/or E-P switched off")
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.
@@ -369,7 +370,11 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
- call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ call msg( 'r', '        (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ call msg( 'r', '        Energy ref  (c)[eV]:',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)
+ call msg( 'r', '                    (v)[eV]:',QP_ctl_user(3,1)%Wv_E_ref*HA2EV)
+ call msg( 'r', '        Analytic term (c)[eV,adim,eV^-1]:',QP_ctl_user(3,1)%Wc)
+ call msg( 'r', '                      (v)[eV,adim,eV^-1]:',QP_ctl_user(3,1)%Wv)
  !
  if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
@@ -380,7 +385,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Double Grid---')
  call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
-   call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
+   call msg( 'r', 'K-points            (TOTAL):',RT_DbGd_nk)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)

@@ -23,12 +23,12 @@
 !
 integer function io_DIPOLES(X,ID)
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:schlen
  use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT

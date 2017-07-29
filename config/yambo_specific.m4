@@ -20,29 +20,30 @@
 # License along with this program; if not, write to the Free
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-
+#
 # ============================================================================= 
 # PATH FOR EXT LIBS
 AC_ARG_WITH(extlibs_path,
             AC_HELP_STRING([--with-extlibs-path=<path>], [Path to the external libs],[]),
-            [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/ext_libs"])
-if test x"$extlibs_path" = "xyes"; then extlibs_path="${PWD}/ext_libs"; fi
-if test x"$extlibs_path" = "x"; then extlibs_path="${PWD}/ext_libs"; fi
+            [extlibs_path="$with_extlibs_path"],[extlibs_path="${PWD}/lib/external"])
+if test x"$extlibs_path" = "xyes"; then extlibs_path="${PWD}/lib/external"; fi
+if test x"$extlibs_path" = "x"; then extlibs_path="${PWD}/lib/external"; fi
 AC_SUBST(extlibs_path)
 #
 # ============================================================================
 # DEBUG
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],[Objects are not removed but saved in appropriate directories. Default is yes.]))
-if test x"$enable_debug" = "x"; then enable_debug="yes"; fi
-AC_SUBST(enable_debug)
-
+AC_ARG_ENABLE(keep-objects, AC_HELP_STRING([--enable-keep-objects],
+              [Objects are not removed but saved in appropriate directories. Default is yes.]))
+if test x"$enable_keep_objects" = "x"; then enable_keep_objects="yes"; fi
+AC_SUBST(enable_keep_objects)
+#
 # ============================================================================= 
 # KEEP SOURCE FILES 
 AC_ARG_ENABLE(keep-src, AC_HELP_STRING([--enable-keep-src], [Keep preprocessed.f90 file. Default is no.]))
 if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 AC_SUBST(enable_keep_src)
-
+#
 # ============================================================================
 # KEEP EXT LIBS
 AC_ARG_ENABLE(keep-extlibs, AC_HELP_STRING([--enable-keep-extlibs], [Keep downloaded packages as tar.gz . Default is yes.]))
@@ -57,7 +58,7 @@ if test x"$enable_keep_extlibs" = "xyes"; then
   touch ./lib/archive/keep-extlibs-stamp ;
 fi
 AC_SUBST(enable_keep_extlibs)
-
+#
 # ============================================================================
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
@@ -66,20 +67,33 @@ if test x"$enable_dp" = "x"; then enable_dp="no"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
-
+#
 # ============================================================================
 #
 # Time Profiling (mod_timing)
 #
 AC_ARG_ENABLE(time-profile, AC_HELP_STRING([--enable-time-profile],
-              [Extended timing profile of specific sections]))
-if test x"$enable_time_profile" = "x"; then enable_time_profile="no"; fi
+              [Extended timing profile of specific sections. Default is yes.]))
+if test x"$enable_time_profile" = "x"; then enable_time_profile="yes"; fi
 def_time_profile=" "
 if test x"$enable_time_profile" = "xyes"; then 
  def_time_profile="-D_TIMING"
 fi
 AC_SUBST(def_time_profile)
-
+#
+# ============================================================================
+#
+# Memory Profiling 
+#
+AC_ARG_ENABLE(memory-profile, AC_HELP_STRING([--enable-memory-profile],
+              [Extended Memory profile of specific sections]))
+if test x"$enable_memory_profile" = "x"; then enable_memory_profile="no"; fi
+def_memory_profile=" "
+if test x"$enable_memory_profile" = "xyes"; then 
+ def_memory_profile="-D_MEM_CHECK"
+fi
+AC_SUBST(def_memory_profile)
+#
 # ============================================================================
 #
 # Verbose compilation
@@ -91,10 +105,24 @@ MKMF_PREFIX=" "
 if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi
 AC_SUBST(MKMF_PREFIX)
 AC_SUBST(ECHO_N)
-
+#
 # ============================================================================
 # EDITOR
 AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],
   [User-defined editor (none for no editor)],[32]),[],[with_editor="vim vi pico"]) 
 AC_CHECK_PROGS(editor,[$with_editor],[none])
 AC_SUBST(editor)
+#
+# ============================================================================
+# Copyright (C) 2001-2016 Quantum ESPRESSO Foundation
+#
+# check if the structure mallinfo is present in malloc.h
+AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
+if test "$have_malloc_h" -ne 0
+then
+AC_CHECK_MEMBER([struct mallinfo.arena],
+                [AC_DEFINE(HAVE_MALLINFO)],
+                ,
+                [#include <malloc.h>])
+
+fi

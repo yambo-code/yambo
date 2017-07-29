@@ -53,11 +53,8 @@ module parallel_m
  !MPI_MAXLOC
  !    - return the maximum and the location 
  !
- use pars,       ONLY:SP,DP,schlen,lchlen
- !
- implicit none
- !
- integer, parameter :: max_n_of_cpus=100000
+ use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
+#include<memory.h>
  !
 #if defined _MPI
  include 'mpif.h'
@@ -88,9 +85,7 @@ module parallel_m
  !
  ! Communicators
  !
- integer, parameter :: MAX_N_GROUPS   =100  ! MAX number of groups
- integer, parameter :: MAX_N_OF_CHAINS=100
- integer            :: n_groups                =0     ! groups of active chains
+integer            :: n_groups                =0     ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
  integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
  !
@@ -100,7 +95,6 @@ module parallel_m
    integer  :: COMM      
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
-   integer  :: chain_name  ! INTRA, INTER, CHILD
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
  end type MPI_comm
@@ -126,7 +120,6 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
- integer,parameter   :: n_CPU_str_max=20
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -134,6 +127,7 @@ module parallel_m
  integer          :: PARALLEL_CPU_used(MAX_N_OF_CHAINS) = 1
  character(4)     :: PARALLEL_CPU_role(MAX_N_OF_CHAINS) = " "
  integer          :: PARALLEL_n_structures_active = 0
+ logical          :: PARALLEL_ENV_uses_default(n_CPU_str_max) = .false.
  logical          :: linear_algebra_is_parallel = .false.
  character(schlen):: PARALLEL_default_mode="balanced" ! "memory"/"workload"
  !
@@ -143,7 +137,7 @@ module parallel_m
  !
  ! MPI operations
  !
- integer, parameter :: p_sum=1
+ integer, parameter :: p_sum =1
  integer, parameter :: p_prod=2
  !
  ! Logicals
@@ -155,13 +149,13 @@ module parallel_m
  ! PP indexes
  !
  type PP_indexes
-   logical, pointer :: element_1D(:)     => null()
-   logical, pointer :: element_2D(:,:)   => null()
-   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a pointer
+   logical, allocatable :: element_1D(:)
+   logical, allocatable :: element_2D(:,:)
+   ! Davide 4/09/2015: n_of_elements should be a number. It is useless that it is a vector
    !                   allocated to nCPU and that each CPU fills only the element myid.
-   integer, pointer :: n_of_elements(:)  => null()
-   integer, pointer :: weight_1D(:)      => null()
-   integer, pointer :: first_of_1D(:)    => null()
+   integer, allocatable :: n_of_elements(:)
+   integer, allocatable :: weight_1D(:)
+   integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
  ! Number of Bands to load
@@ -497,36 +491,35 @@ module parallel_m
    subroutine PAR_INDEX_copy(IND_in,IND_out)
      type(PP_indexes):: IND_in,IND_out
      integer :: dim_
-     if (associated(IND_in%n_of_elements)) then
+     if (allocated(IND_in%n_of_elements)) then
        dim_=size(IND_in%n_of_elements)
-       allocate(IND_out%n_of_elements(dim_))
+       YAMBO_ALLOC(IND_out%n_of_elements,(dim_))
        IND_out%n_of_elements=IND_in%n_of_elements
      endif
-     if (associated(IND_in%element_1D)) then
+     if (allocated(IND_in%element_1D)) then
        dim_=size(IND_in%element_1D)
-       allocate(IND_out%element_1D(dim_))
+       YAMBO_ALLOC(IND_out%element_1D,(dim_))
        IND_out%element_1D=IND_in%element_1D
      endif
-     if (associated(IND_in%weight_1D)) then
+     if (allocated(IND_in%weight_1D)) then
        dim_=size(IND_in%weight_1D)
-       allocate(IND_out%weight_1D(dim_))
+       YAMBO_ALLOC(IND_out%weight_1D,(dim_))
        IND_out%weight_1D=IND_in%weight_1D
      endif
-     if (associated(IND_in%first_of_1D)) then
+     if (allocated(IND_in%first_of_1D)) then
        dim_=size(IND_in%first_of_1D)
-       allocate(IND_out%first_of_1D(dim_))
+       YAMBO_ALLOC(IND_out%first_of_1D,(dim_))
        IND_out%first_of_1D=IND_in%first_of_1D
      endif
    end subroutine
    !
-   subroutine PP_indexes_reset(ip)
-     type(PP_indexes)::ip
-     if(associated(ip%element_1D))    deallocate(ip%element_1D)
-     if(associated(ip%element_2D))    deallocate(ip%element_2D)
-     if(associated(ip%weight_1D))     deallocate(ip%weight_1D)
-     if(associated(ip%n_of_elements)) deallocate(ip%n_of_elements)
-     if(associated(ip%first_of_1D))   deallocate(ip%first_of_1D)
-     nullify(ip%element_1D,ip%element_2D,ip%n_of_elements,ip%weight_1D,ip%first_of_1D)
+   subroutine PP_indexes_reset(IND_out)
+     type(PP_indexes)::IND_out
+     YAMBO_FREE(IND_out%element_1D)
+     YAMBO_FREE(IND_out%element_2D)
+     YAMBO_FREE(IND_out%weight_1D)
+     YAMBO_FREE(IND_out%n_of_elements)
+     YAMBO_FREE(IND_out%first_of_1D)
    end subroutine
    !
    subroutine PARALLEL_wait(COMM)

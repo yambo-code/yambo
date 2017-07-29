@@ -32,6 +32,9 @@ subroutine PLASMA_build_up(E,k,q)
  use collision_ext, ONLY:COLL_bands,GW_NEQ_collisions
  use parallel_m,    ONLY:PAR_nQ,PAR_IND_Q,PAR_Q_index,PP_redux_wait,PAR_COM_Q_INDEX
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(levels)  :: E 
@@ -43,6 +46,10 @@ subroutine PLASMA_build_up(E,k,q)
  integer                :: iqbz,i_q_mem,n_poles,N_poles_bare
  real(SP), allocatable  :: poles(:)
  integer, external      :: PLASMA_tables_and_dimensions
+ !
+#if defined _TIMING
+ call timing('PLASMA_build_up',OPR='start')
+#endif
  !
  call k_build_up_BZ_tables(q)
  call k_build_up_BZ_tables(k)
@@ -83,5 +90,9 @@ subroutine PLASMA_build_up(E,k,q)
  write (ch,'(3a)') "[PLASMA] Poles reduction (ALL q): "//&
 &      trim(intc(N_poles_bare*q%nbz))//" => "//trim(intc(sum(EH_gas%N_poles)))
  call msg('rs',trim(ch))
+ !
+#if defined _TIMING
+ call timing('PLASMA_build_up',OPR='stop')
+#endif
  !
 end subroutine PLASMA_build_up

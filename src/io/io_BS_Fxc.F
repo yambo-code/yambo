@@ -25,7 +25,6 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HA2EV
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:BSS_q0,variables_BS
@@ -37,7 +36,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
 &                         io_elemental,io_status,io_bulk,io_mode,&
 &                         read_is_on,write_is_on,io_header,DUMP,&
 &                         close_is_on,RD_CL,io_action
- implicit none
+#include<memory.h>
  type(w_samp)        ::FXC_W
  integer             ::ID,iq
  type(X_t), optional ::X 
@@ -142,18 +141,16 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID)) then
-     if (associated(FXC_W%p)) then
-       deallocate(FXC_W%p)
-       call mem_est("W-p")
-     endif
-     allocate(FXC_W%p(FXC_W%n_freqs))
-     call mem_est("W-p",(/FXC_W%n_freqs/))
+     YAMBO_FREE(FXC_W%p)
+     YAMBO_ALLOC(FXC_W%p,(FXC_W%n_freqs))
    endif
    !
    call io_bulk(ID,VAR='FREQUENCIES',VAR_SZ=(/2,FXC_W%n_freqs/))
    call io_bulk(ID,C1=FXC_W%p)
    !
-   if (.not.allocated(FXC_K_diagonal)) allocate(FXC_K_diagonal(BS_K_dim))
+   if (.not.allocated(FXC_K_diagonal)) then
+     YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   endif
    !
    call io_bulk(ID,VAR='FXC_K_diagonal',VAR_SZ=(/BS_K_dim/))
    call io_bulk(ID,R1=FXC_K_diagonal)

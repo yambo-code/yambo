@@ -32,6 +32,9 @@ subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  use pars,           ONLY:SP,cONE,cZERO
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  integer           :: n,m,k
@@ -47,12 +50,20 @@ subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
  !
  if (ORTHO%coordinate(1)==-1) return
  !
+#if defined _TIMING
+ call timing('PARALLEL_M_by_M',OPR='start')
+#endif
+ !
 #if defined _DOUBLE
  CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
               B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
 #else
  CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
               B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+#endif
+ !
+#if defined _TIMING
+ call timing('PARALLEL_M_by_M',OPR='stop')
 #endif
  !
 end subroutine

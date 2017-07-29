@@ -26,7 +26,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! HXC collisions 
  !
  use pars,          ONLY:SP,pi,cZERO
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
@@ -55,7 +54,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use fft_m,         ONLY:fft_size
  use xc_functionals,ONLY:magn
  !
- implicit none
+#include<memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -154,7 +153,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call elemental_collision_alloc(isc_H ,NG=N_g_vecs_H,NG_GAMP=(/N_g_vecs_H,    1   /),TITLE='HARTREE')
    call elemental_collision_alloc(iscp_H,NG=N_g_vecs_H,                                TITLE='HARTREE')
    !
-   allocate(rhotw_tmp(N_g_vecs_H))
+   YAMBO_ALLOC(rhotw_tmp,(N_g_vecs_H))
    !
  endif
  !
@@ -185,8 +184,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    ! Allocation (EM1S can be bigger than N_g_vecs_C)
    !
    call X_alloc('X',(/X%ng,X%ng,1/))
-   allocate(EM1s(N_g_vecs_C,N_g_vecs_C),stat=alloc_err)
-   call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
+   YAMBO_ALLOC(EM1s,(N_g_vecs_C,N_g_vecs_C))
    !
    call elemental_collision_alloc(isc_XC, NG=NG_XC,NG_GAMP=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
    !
@@ -196,19 +194,22 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
  endif
  !
+ Co=1._SP
  if (l_tddft) then
    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
-   allocate(F_xc(fft_size,n_spin,n_spin))
-   if (n_spin>1) allocate(magn(fft_size,3))
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   if (n_spin>1) then
+     YAMBO_ALLOC(magn,(fft_size,3))
+   endif
    call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
  endif
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
- if (associated(HXC_collisions%IO_status)) then
+ if (allocated(HXC_collisions%IO_status)) then
    PAR_NC_local=count(HXC_collisions%IO_status==-1)
- else if (associated(COH_collisions%IO_status)) then
+ else if (allocated(COH_collisions%IO_status)) then
    PAR_NC_local=count(COH_collisions%IO_status==-1)
  endif
  !
@@ -287,8 +288,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! CLEAN
  !
  if(l_compute_screening) then
-   deallocate(EM1s)
-   call mem_est("EM1s")
+   YAMBO_FREE(EM1s)
    call X_alloc('X')
    call elemental_collision_free(isc_H)
    call elemental_collision_free(iscp_H)
@@ -297,8 +297,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  endif
  !
  if (l_tddft) then
-   deallocate(F_xc)
-   if (n_spin>1) deallocate(magn)
+   YAMBO_FREE(F_xc)
+   YAMBO_FREE(magn)
  endif
  !
 #if defined _TIMING

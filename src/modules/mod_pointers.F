@@ -34,6 +34,8 @@ module pointers
  !
  contains
    !
+   ! LinkC2R interface
+   !
    function linkC2R_0D(M,N) result(REAL_pointer)
      complex(SP), target  :: M
      integer, intent(in)  :: N(:)
@@ -68,5 +70,19 @@ module pointers
      real(SP), pointer :: REAL_pointer(:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_4D
+   ! 
+   ! More
+   !
+   function linkM2V(M,N) result(VEC_pointer)
+     !
+     use iso_c_binding, only: C_LOC, C_F_POINTER
+     !
+     complex(SP), target  :: M(1,1)
+     integer, intent(in)  :: N(1)
+     complex(SP), pointer :: VEC_pointer(:)
+     !
+     call C_F_POINTER(C_LOC(M), VEC_pointer, N )
+     !
+   end function linkM2V
    !
 end module

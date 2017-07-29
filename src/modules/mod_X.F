@@ -23,10 +23,10 @@
 !
 module X_m
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,           ONLY:SP,lchlen,schlen
+ use units,          ONLY:HA2EV
  !
- implicit none
+#include <memory.h>
  !
  ! Polarizability
  !
@@ -55,7 +55,7 @@ module X_m
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: X_is_evaluated_for_all_Qs
+ logical                  :: X_is_integrated
  !
  ! Dipole M.E.
  !
@@ -98,7 +98,7 @@ module X_m
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
- logical :: half_X_mat_only
+ logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
  logical :: use_X_DbGd
  real(SP):: X_terminator_E
@@ -153,52 +153,40 @@ module X_m
    subroutine X_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
        select case(what)
        case('X')
          if (allocated(X_mat)) return
-         allocate(X_mat(d(1),d(2),d(3)),stat=err)
-         call mem_est(what,(/size(X_mat)/),errors=(/err/))
+         YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
        case('DIP_iR')
          if (allocated(DIP_iR)) return
-         allocate(DIP_iR(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_iR)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
-         allocate(DIP_P(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
-         allocate(DIP_S(d(1),d(2),d(3),d(4),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_S)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         allocate(DIP_spin(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol),stat=err)
-         call mem_est(what,(/size(dip_P)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
-         allocate(DIP_projected(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(DIP_projected)/),errors=(/err/))
+         YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          DIP_projected=cZERO
        case('P_square')
          if (allocated(P_square)) return
-         allocate(P_square(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/size(P_square)/),errors=(/err/))
+         YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
        end select
      else
@@ -207,53 +195,51 @@ module X_m
          !
          ! I clean the RL components mapping
          !
-         if (allocated(X_RLcomp_ig)) deallocate(X_RLcomp_ig)
+         YAMBO_FREE(X_RLcomp_ig)
          !
          ! and the matrix itself
          !
-         if (.not.allocated(X_mat)) return
-         deallocate(X_mat)
+         YAMBO_FREE(X_mat)
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
-         deallocate(DIP_iR)
+         YAMBO_FREE(DIP_iR)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
-         deallocate(DIP_P)
+         YAMBO_FREE(DIP_P)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
-         deallocate(DIP_S)
+         YAMBO_FREE(DIP_S)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
-         deallocate(DIP_spin)
+         YAMBO_FREE(DIP_spin)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
-         deallocate(DIP_projected)
+         YAMBO_FREE(DIP_projected)
        case('P_square')
          if (.not.allocated(P_square)) return
-         deallocate(P_square)
+         YAMBO_FREE(P_square)
        end select
-       call mem_est(what)
      endif
    end subroutine
    !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo
-     Xo%ng=Xi%ng
-     Xo%ng_db=Xi%ng_db
-     Xo%iq=Xi%iq
-     Xo%ib    =Xi%ib
-     Xo%ib_lim=Xi%ib_lim
-     Xo%db_ib    =Xi%db_ib
-     Xo%db_ib_lim=Xi%db_ib_lim
-     Xo%ngostnts=Xi%ngostnts
-     Xo%ordering=Xi%ordering
-     Xo%Vnl_included=Xi%Vnl_included
-     Xo%ehe=Xi%ehe
-     Xo%q0=Xi%q0
+     Xo%ng           =Xi%ng
+     Xo%ng_db        =Xi%ng_db
+     Xo%iq           =Xi%iq
+     Xo%ib           =Xi%ib
+     Xo%ib_lim       =Xi%ib_lim
+     Xo%db_ib        =Xi%db_ib
+     Xo%db_ib_lim    =Xi%db_ib_lim
+     Xo%ngostnts     =Xi%ngostnts
+     Xo%ordering     =Xi%ordering
+     Xo%Vnl_included =Xi%Vnl_included
+     Xo%ehe          =Xi%ehe
+     Xo%q0           =Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
-     Xo%ppaE=Xi%ppaE
-     Xo%Wd=Xi%Wd
+     Xo%ppaE         =Xi%ppaE
+     Xo%Wd           =Xi%Wd
      Xo%f_xc=Xi%f_xc
    end subroutine
    !
@@ -261,20 +247,20 @@ module X_m
      use pars,  ONLY:czero
      integer, optional :: type
      type(X_t)::X
-     X%ng=1
-     X%ng_db=0
-     X%iq=(/1,-1/)
-     X%ngostnts=0
-     X%whoami=0
-     X%Vnl_included=.false.
+     X%ng           =1
+     X%ng_db        =0
+     X%iq           =(/1,-1/)
+     X%ngostnts     =0
+     X%whoami       =0
+     X%Vnl_included =.false.
      if (present(type)) X%whoami=type
-     X%ehe=(/-1._SP,-1._SP/)/HA2EV
-     X%q0=(/1._SP,0._SP,0._SP/)
-     X%Wd=cZERO
+     X%ehe          =(/-1._SP,-1._SP/)/HA2EV
+     X%q0           =(/1._SP,0._SP,0._SP/)
+     X%Wd           =cZERO
      X%cg_percentual=100._SP
-     X%ppaE=1._SP
-     X%ordering="T"
-     X%f_xc="none"       
+     X%ppaE         =1._SP
+     X%ordering     ="T"
+     X%f_xc         ="none"       
    end subroutine
    !
 end module

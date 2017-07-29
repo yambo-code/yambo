@@ -175,7 +175,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
            !
            rho=cZERO
            !
-           if (associated(Xen%Eo)) then 
+           if (allocated(Xen%Eo)) then 
              Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
              Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
            else

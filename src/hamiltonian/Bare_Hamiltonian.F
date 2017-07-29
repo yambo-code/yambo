@@ -28,7 +28,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Ho,E_bare,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
- use memory_m,       ONLY:mem_est
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -43,7 +42,10 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use drivers,        ONLY:l_sc_magnetic
 #endif
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  type(levels)             :: E
  type(bz_samp)            :: Xk,k
@@ -53,6 +55,10 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  integer     :: ik,ib,i_sp_pol
  !
  Ho=cZERO
+ !
+#if defined _TIMING
+ call timing('Bare_Hamiltonian',OPR='start')
+#endif
  !
 #if defined _MAGNETIC
  !
@@ -80,7 +86,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
  !
  call el_density_and_current(E,Xk,rho=rho_n)
+ !
  if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+ !
  V_xc_sc=V_xc
  !
  ! The Ho = -nabla**2. + V_ext is deduced from the input energies en0:
@@ -99,41 +107,41 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc
- allocate(QP_Vxc(QP_n_states))
- call mem_est("QP_Vxc",(/QP_n_states/))    
+ YAMBO_ALLOC(QP_Vxc,(QP_n_states))
  QP_Vxc=cZERO
+ !
  call XCo_local(E,k)
  !
  do i_sp_pol=1,n_sp_pol
- !
- do ik=1,QP_nk
    !
-   ! Add bare energies ... 
-   !=======================
-   !
-   do ib=1,QP_nb
-     if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     Ho(ib,ib,ik,i_sp_pol) = Ho(ib,ib,ik,i_sp_pol) + E_bare(ib,ik,i_sp_pol)  
+   do ik=1,QP_nk
+     !
+     ! Add bare energies ... 
+     !=======================
+     !
+     do ib=1,QP_nb
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       Ho(ib,ib,ik,i_sp_pol) = Ho(ib,ib,ik,i_sp_pol) + E_bare(ib,ik,i_sp_pol)  
+     enddo
+     !
+#if defined _RT
+     if(l_real_time) then
+       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     endif
+#endif
+     !
+     ! ... then remove Vh[rho_0] 
+     !===========================
+     !
+     call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Ho(:,:,ik,i_sp_pol),WF,'def')
+     !
+     ! ... then remove Vxc[rho_0] also
+     !=================================
+     !
+     call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Ho(:,:,ik,i_sp_pol))
+     !
    enddo
    !
-#if defined _RT
-   if(l_real_time) then
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-   endif
-#endif
-   !
-   ! ... then remove Vh[rho_0] 
-   !===========================
-   !
-   call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Ho(:,:,ik,i_sp_pol),WF,'def')
-   !
-   ! ... then remove Vxc[rho_0] also
-   !=================================
-   !
-   call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Ho(:,:,ik,i_sp_pol))
-   !
- enddo
- !
  enddo
  !
 #if defined _RT
@@ -141,16 +149,19 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  ! Save the reference xc and Hartree potentials 
  !==============================================
  !
- if(l_real_time) then
+ if (l_real_time) then
    REF_V_xc_sc=V_xc
    REF_V_hartree_sc=V_hartree_sc
  endif
  !
 #endif
  !
- deallocate(QP_Vxc)
- call mem_est("QP_Vxc")
+ YAMBO_FREE(QP_Vxc)
  !
  call PP_redux_wait(Ho)
+ !
+#if defined _TIMING
+ call timing('Bare_Hamiltonian',OPR='stop')
+#endif
  !
 end subroutine Bare_Hamiltonian

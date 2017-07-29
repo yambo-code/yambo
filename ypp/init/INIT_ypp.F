@@ -27,7 +27,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
-&                         l_QP_DBs_merge,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
+&                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
  use pars,           ONLY:pi,SP,schlen
@@ -202,9 +202,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'QPDBs') then
      call initactivate(1,'QPDBs')
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-     l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+     l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
      if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-     if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+     if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
    endif
    !
 #if defined _YPP_ELPH
@@ -418,7 +418,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
- l_QP_DBs_merge = runlevel_is_on('QPDB_merge')
+ l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
  !
  ! GPL_EXCLUDE_START
  !
@@ -444,8 +444,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
- !
- if(l_QP_DBs_merge) call initactivate(1,"Z_input")
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
@@ -546,7 +544,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
  l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH

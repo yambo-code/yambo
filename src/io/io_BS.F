@@ -26,14 +26,18 @@ integer function io_BS(iq,X,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
+ use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
- implicit none
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
+ !
+#include<memory.h>
  !
  type(X_t):: X 
  integer  :: iq,ID
@@ -50,6 +54,10 @@ integer function io_BS(iq,X,ID)
    call io_disconnect(ID,FORCE=.TRUE.)
    return
  endif
+ !
+#if defined _TIMING
+ call timing('io_BS',OPR='start')
+#endif
  !
  db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
@@ -113,7 +121,7 @@ integer function io_BS(iq,X,ID)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
-   tmp_link => linkMatrix(BS_blk(i_block)%mat(1,1),(/n1*n2/))
+   tmp_link => linkM2V(BS_blk(i_block)%mat(1,1),(/n1*n2/))
    call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif
@@ -128,18 +136,8 @@ integer function io_BS(iq,X,ID)
  !
  call io_disconnect(ID)
  !
- contains
-   !
-   function linkMatrix(M,N) result(VEC_pointer)
-     !
-     use iso_c_binding, only: C_LOC, C_F_POINTER
-     !
-     complex(SP), target  :: M(1,1)
-     integer, intent(in)  :: N(1)
-     complex(SP), pointer :: VEC_pointer(:)
-     !
-     call C_F_POINTER(C_LOC(M), VEC_pointer, N )
-     !
-   end function linkMatrix
-   !
+#if defined _TIMING
+ call timing('io_BS',OPR='stop')
+#endif
+ !
 end function

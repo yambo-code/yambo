@@ -38,7 +38,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  integer       :: lambda_s(n_lambda),n_lambda
@@ -60,12 +60,13 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  io_err=io_ELPH(ID,'gkkp')
  if (io_err/=0.or.elph_use_q_grid) return
  !
- allocate(diagonal_xhi(elph_nDBS_used,ph_modes,n_lambda),ph_freqs(ph_modes))
+ YAMBO_ALLOC(diagonal_xhi,(elph_nDBS_used,ph_modes,n_lambda))
+ YAMBO_ALLOC(ph_freqs,(ph_modes))
  diagonal_xhi = cZERO
  !
  ! Fill locally BS_blk_dim
  !
- allocate(BS_nT_at_k(Xk%nibz))
+ YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz))
  BS_nT_at_k=0
  do neh1=1,BS_K_dim
    ik_ibz=Xk%sstar(BSS_eh_table(neh1,1),1)
@@ -174,9 +175,9 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
  !
  call of_open_close(trim(ch))
  !
- deallocate(diagonal_xhi)
- deallocate(ph_freqs)
- deallocate(BS_nT_at_k)
+ YAMBO_FREE(diagonal_xhi)
+ YAMBO_FREE(ph_freqs)
+ YAMBO_FREE(BS_nT_at_k)
  call elph_global_free()
  !
 end subroutine

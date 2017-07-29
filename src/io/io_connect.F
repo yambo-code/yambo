@@ -27,7 +27,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  use stderr,        ONLY:string_pack
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
-&                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE
+&                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
+&                        IO_NOT_ALLOWED
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                        num_of_alternative_locations,n_alt_jobstr
@@ -55,7 +56,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  io_connect=0
  if ( ( read_is_on(ID).and..not.IO_read ).or.&
 &     (write_is_on(ID).and..not.IO_write)      ) then
-   io_connect=IO_NO_DATABASE
+   io_connect=IO_NOT_ALLOWED
    call io_reset(ID)
    return
  endif

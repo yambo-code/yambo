@@ -36,8 +36,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
+#if defined _MEM_CHECK 
+ use memory,              ONLY:MEM_manager
+#endif
+#include<memory.h>
  !
- implicit none
  type(levels)                 :: en 
  type(bz_samp)                :: k 
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -63,6 +66,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! S/N
  !
@@ -123,7 +129,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
  !
  do ik=1,nkibz
    !
@@ -144,8 +150,16 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    enddo
    !
  enddo
- deallocate(wf_disk)
+ YAMBO_FREE(wf_disk)
  call PP_free()
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('s','... WF and PP done')
  call msg('s',' == A2Y completed ==')

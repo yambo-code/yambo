@@ -93,7 +93,7 @@ integer function io_kb_abinit_old(ID)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=898)) pp_n_l_times_proj_max=maxval(pp_n_l_comp)
    if (read_is_on(ID)) then
-     if(allocated(pp_table)) deallocate(pp_table)
+     YAMBO_FREE(pp_table)
      YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
    endif
    !
@@ -123,7 +123,7 @@ integer function io_kb_abinit_old(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- allocate(pp_disk(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
+ YAMBO_ALLOC(pp_disk,(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
  call io_fragment(ID,i_fragment=ik)
  !
@@ -160,7 +160,7 @@ integer function io_kb_abinit_old(ID)
    ! 
  enddo
  !
- deallocate(pp_disk)
+ YAMBO_FREE(pp_disk)
  !
 1 call io_disconnect(ID=ID)
  !

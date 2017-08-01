@@ -143,10 +143,10 @@ integer function io_KB_abinit(ID)
    pp_kbd=0._SP
  endif
  ! 
- call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol))) 
+ call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
  call io_bulk(ID,R3=pp_kb(:,:,:,i_sp_pol))
  ! 
- call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol))) 
+ call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
  call io_bulk(ID,R3=pp_kbd(:,:,:,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)

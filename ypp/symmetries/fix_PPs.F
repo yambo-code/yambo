@@ -27,7 +27,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use com,                 ONLY:msg,core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
- use electrons,           ONLY:n_spin,n_sp_pol
+ use electrons,           ONLY:n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
  use LIVE_t,              ONLY:live_timing
@@ -125,8 +125,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_KB_abinit_err=io_KB_abinit(ID) 
    !  
-   YAMBO_ALLOC(pp_kb_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
-   YAMBO_ALLOC(pp_kbd_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
+   YAMBO_ALLOC(pp_kb_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
+   YAMBO_ALLOC(pp_kbd_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
    YAMBO_ALLOC(pp_kbs_store,(n_atomic_species,pp_n_l_times_proj_max))
    !
    do ik=1,k_save%nibz

@@ -76,7 +76,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  call WF_derivative_alloc(do_derivative)
  !
  YAMBO_ALLOC(wf_der,(wf_ng,n_spinor))   ! reciprocal space
- YAMBO_ALLOC(wf_DP,(fft_size,n_spinor)) ! direct     space
+ YAMBO_ALLOC(wf_DP,(fft_size))          ! direct     space
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.

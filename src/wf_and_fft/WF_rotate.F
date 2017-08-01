@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_rotate(i_sp_pol,ik,WFo,wf_size)
+subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! <r|n'>= <m|n'><r|m>
  !
@@ -59,7 +59,8 @@ subroutine WF_rotate(i_sp_pol,ik,WFo,wf_size)
    do ibp = SC_bands(1),SC_bands(2)
      i_wfp = WFo%index(ibp,ik,i_sp_pol)
      if (i_wfp==0) cycle
-     call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,:,i_wfp),WS_wf(:,:,ib))
+     !call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,:,i_wfp),WS_wf(:,:,ib))
+     WS_wf(:,:,ib)=WS_wf(:,:,ib)+SC_R(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
    end do
    !
  enddo

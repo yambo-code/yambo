@@ -46,7 +46,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  integer     :: ik,i_sp_pol
  real(SP)    :: V(fft_size,n_spin)
- complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  complex(SP) :: H(QP_nb,QP_nb)
  character(3):: V_kind
  type(WAVEs) :: WF
@@ -54,7 +53,8 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  ! Work Space
  !
  integer    :: i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
- complex(SP):: c_ws(fft_size,n_spinor)
+ complex(SP) :: c_ws(fft_size,n_spinor)
+ complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
@@ -67,7 +67,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  if(V_kind=="def") then
   V_mat=cZERO
-  forall(i_spin=1:n_spin) V_mat(:,i_spin,i_spin)=V(:,i_spin)
+  forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)=V(:,i_sp_pol+i_spinor-1)
  endif
  !
  ! Fill ...

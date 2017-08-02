@@ -26,8 +26,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path,error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
-&                              OP_APP,cp_file,cp_directory, &
-&                              OP_RD_CL,RD_CL,RD,frag_WF
+&                              OP_APP,OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
@@ -191,6 +190,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      !
      do ik=k_save%nibz+1,k%nibz 
        !      
+       ifrag=ik+(i_sp_pol-1)*k%nibz
+       !
        ik_save=kpoints_map(1,ik)
        is=kpoints_map(2,ik)
        !

@@ -1550,7 +1550,7 @@ Optional Features:
   --enable-msgs-comps     Verbose compilation log
   --enable-options-check  Enable the command line options check in driver.c.
                           Default is yes.
-  --enable-debug-flags    DEbug flags are set for compilation. Default is no.
+  --enable-debug-flags    Debug flags are set for compilation. Default is no.
   --enable-open-mp        Enable OpenMP support
   --enable-mpi            Enable mpi parallelization . Default is yes.
   --enable-int-linalg     Force internal linear algebra. Default is no
@@ -2735,8 +2735,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="2"
 SPATCHLEVEL="0"
-SREVISION="14697"
-SHASH="00e70ed6e"
+SREVISION="14628"
+SHASH="a30b363"
 
 
 

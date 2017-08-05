@@ -237,6 +237,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            i_b=i_deg-NB_up+SOC_bands_to_map(1)-1
          endif
          !
+         i_b_low_lim(i_sp_pol)=min(i_b_low_lim(i_sp_pol),i_b)
+         i_b_upp_lim(i_sp_pol)=max(i_b_upp_lim(i_sp_pol),i_b)
+         !
          i_b_low_lim(i_sp_pol)=max(i_b_low_lim(i_sp_pol),SOC_bands_to_map(1))
          i_b_upp_lim(i_sp_pol)=min(i_b_upp_lim(i_sp_pol),SOC_bands_to_map(2))
          !

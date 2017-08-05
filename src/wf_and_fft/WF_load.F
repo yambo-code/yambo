@@ -45,8 +45,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
 #if defined _SC
  use com,           ONLY:warning,error
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
- use global_XC,     ONLY:WF_kind,WF_xc_functional,&
-&                        WF_perturbation,global_XC_string,QP_SE_NONE
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
  !
 #include<memory.h>
@@ -303,6 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
        endif
        !
        call io_control(ACTION=RD,COM=NONE,SEC=(/ikibz+1,ib_grp/),ID=ID)
+       !
        io_err=io_WF(ID,wf_disk)
        !
        if (any((/ikibz<WF%k(1),ikibz>WF%k(2)/))) cycle
@@ -410,7 +410,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,&
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,QP_SE_NONE,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
    do i_sp_pol=1,n_sp_pol

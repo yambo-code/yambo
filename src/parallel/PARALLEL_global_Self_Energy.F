@@ -31,8 +31,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use QP_m,          ONLY:QP_n_states
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states
- use parallel_m,    ONLY:HEAD_QP_cpu,master_cpu,n_WF_bands_to_load,PARALLEL_n_structures_active,&
-&                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index
+ use parallel_m,    ONLY:HEAD_QP_cpu,master_cpu,n_WF_bands_to_load,&
+&                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
 &                        PAR_COM_Q_A2A
@@ -233,7 +233,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  ! I/O privileges
  !
- if (PARALLEL_n_structures_active>1) then
+ if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 

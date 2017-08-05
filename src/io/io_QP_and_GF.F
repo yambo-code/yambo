@@ -51,7 +51,7 @@ integer function io_QP_and_GF(what,qp,ID)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
- if (what=="QP".or.what=="G") then
+ if (what=="QP".or.what=="G".or.(index(what,"QP_merged")>0.and.write_is_on(ID))) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
    io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
@@ -235,7 +235,7 @@ integer function io_QP_and_GF(what,qp,ID)
      enddo
    endif
    !
-   if (index(what,".QP")/=0.or.what=="QP") then
+   if (index(what,".QP")/=0.or.what=="QP".or.index(what,"QP_merged")/=0) then
      !
      ! QP corrections ...
      !

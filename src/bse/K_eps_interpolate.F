@@ -26,6 +26,7 @@ subroutine K_eps_interpolate(nW,W,err)
  use pars,         ONLY:SP,cI
  use vec_operate,  ONLY:sort
  use X_m,          ONLY:Epsilon_ii
+ use POL_FIT_m,    ONLY:POL_LK_fit
  !
  implicit none
  !
@@ -69,7 +70,7 @@ subroutine K_eps_interpolate(nW,W,err)
          if (i1==1) Dy(iw_fit)=aimag( Epsilon_ii(fit_pt(iw_fit),1) )
          if (i1==2) Dy(iw_fit)= real( Epsilon_ii(fit_pt(iw_fit),1) )
        enddo
-       call pol_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0._SP)
+       call POL_LK_fit(n_pts,Dx(:n_pts),Dy(:n_pts),order,Pol_coeff(:order+1),EPS,0._SP)
        !
        if (i1==1) Epsilon_ii(iw,1)=cI*pol_eval(0._SP)
        if (i1==2) Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+pol_eval(0._SP)

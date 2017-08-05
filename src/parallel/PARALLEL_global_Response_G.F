@@ -30,7 +30,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,&
+ use parallel_m,    ONLY:ncpu,CPU_structure,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_Q_range,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
@@ -142,7 +142,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! I/O privileges
    !
-   if (PARALLEL_n_structures_active>1) then
+   if (ncpu>1) then
      call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)

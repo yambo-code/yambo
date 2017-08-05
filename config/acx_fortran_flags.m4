@@ -33,7 +33,7 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
 AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
-              [DEbug flags are set for compilation. Default is no.]))
+              [Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
 def_compiler=

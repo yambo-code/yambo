@@ -24,7 +24,6 @@
 subroutine WF_alloc(WF)
  !
  use pars,          ONLY:cZERO
- use com,           ONLY:error
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use FFT_m,         ONLY:fft_size
 #if defined _FFTW

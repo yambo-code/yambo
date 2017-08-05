@@ -229,10 +229,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
-   if (allocated(Ken%QP_corrected)) then
-     YAMBO_ALLOC(Xen%QP_corrected,(Xen%nb,Xen%nk,n_sp_pol))
+   if (allocated(Ken%Eo)) then
      YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
-     Xen%QP_corrected=Ken%QP_corrected
      Xen%Eo=Xen%E
      Xen%E =Ken%E
    endif

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
+subroutine QP_fit_energies(i_ACTION,bands,qp)
  !
  ! Performs a linear fit of the QP corrections in the database
  ! that will be passed to the QP_apply_stretch routine driven by
@@ -30,20 +30,19 @@ subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
  use pars,          ONLY:SP
  use com,           ONLY:warning
  use QP_m,          ONLY:QP_t
- use QP_CTL_m,      ONLY:QP_ctl_t
+ use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:n_sp_pol,spin
+ use POL_FIT_m,     ONLY:POL_LK_fit
  !
  implicit none
  !
  type(QP_t)      ::qp
- type(QP_ctl_t)  ::QP_ctl(n_sp_pol)
- integer         ::band_range(2)
+ integer         ::i_ACTION,bands(2)
  !
  ! Work Space
  !
  integer  :: i1,Nqpc,Nqpv,fit_order,i_spin
- real(SP) :: Eoc,Eov,Ec,Ev
- real(SP) :: EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(2),TCv(2),TCc(2)
+ real(SP) :: Eoc,Eov,Ec,Ev,EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(2),TCv(2),TCc(2)
  !
  ! Loop on spin polarizations
  !
@@ -57,7 +56,7 @@ subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
    Ec = 1.E5_SP
    !
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2)) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2)) cycle
      if (spin(qp%table(i1,:))/=i_spin) cycle
      if (real(qp%E_bare(i1))<=1.E-5_SP) then
        Eov=max(Eov,real(qp%E_bare(i1),SP))
@@ -79,18 +78,18 @@ subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
    !
    Nqpc=0
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.real(qp%E_bare(i1))<=1.E-5_SP) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))<=1.E-5_SP) cycle
      Nqpc=Nqpc+1
      Dy(Nqpc)=real(qp%E(i1)-Ec)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
    enddo
    if (Nqpc>1) then
-     call pol_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,TCc,EPS,0._SP)
+     call POL_LK_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,TCc,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [c] reduced to 0')
        TCc(2)=Tt_def(2)
      endif
-     QP_ctl(i_spin)%E_err(1)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%E_err(1)=EPS
    endif
    !
    ! E<0 (valence)
@@ -99,25 +98,25 @@ subroutine QP_fit_DB_energies(band_range,qp,QP_ctl)
    !
    Nqpv=0
    do i1=1,qp%n_states
-     if (qp%table(i1,1)<band_range(1).or.qp%table(i1,1)>band_range(2).or.real(qp%E_bare(i1))>1.E-5) cycle
+     if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))>1.E-5) cycle
      Nqpv=Nqpv+1
      Dy(Nqpv)=real(qp%E(i1)-Ev)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
    enddo
    if (Nqpv>1) then
-     call pol_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,TCv,EPS,0._SP)
+     call POL_LK_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,TCv,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [v] reduced to 0')
        TCv(2)=Tt_def(2)
      endif
-     QP_ctl(i_spin)%E_err(2)=EPS
+     QP_action(i_ACTION)%CTL(i_spin)%E_err(2)=EPS
    endif
    !
    ! Storing
    !
-   QP_ctl(i_spin)%db_scissor=(Ec-Eoc)-(Ev-Eov)
-   QP_ctl(i_spin)%fit_scissor=TCc(1)-TCv(1)
-   QP_ctl(i_spin)%E=(/TCc(1)+Ec-Eoc,TCc(2),TCv(1)+Ev-Eov,TCv(2)/)
+   QP_action(i_ACTION)%CTL(i_spin)%db_scissor=(Ec-Eoc)-(Ev-Eov)
+   QP_action(i_ACTION)%CTL(i_spin)%fit_scissor=TCc(1)-TCv(1)
+   QP_action(i_ACTION)%CTL(i_spin)%E=(/TCc(1)+Ec-Eoc,TCc(2),TCv(1)+Ev-Eov,TCv(2)/)
    !
  enddo
  !

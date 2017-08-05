@@ -390,7 +390,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
        qp%GreenF_n_steps=QP_Sc_steps
        YAMBO_ALLOC(QP_G_amplitude_integral,(QP_n_states))
        YAMBO_ALLOC(QP_G_info,(QP_n_states,3,2))
-     else if (.not.l_life) then
+     else if (.not.l_life.and.QP_dSc_steps>1) then
        YAMBO_ALLOC(QP_dSc,(qp%n_states,QP_dSc_steps-1))
      endif
      !

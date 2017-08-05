@@ -63,7 +63,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  ! Character variables
  !
- call io_elemental(ID,VAR="PARS_CH",VAR_SZ=1,CH0="",MENU=0)
+ call io_elemental(ID,VAR="APPROACH",VAR_SZ=1,CH0="",MENU=0)
  call io_elemental(ID,&
 &     VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="",VAR_SZ=0)

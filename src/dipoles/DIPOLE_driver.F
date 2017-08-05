@@ -119,7 +119,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Dipole dimensions to be fixed
  !
- call DIPOLE_dimensions(Xen,Dip,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
  !
  ! Check if Dipoles DBs exist and are ok
  !=======================================

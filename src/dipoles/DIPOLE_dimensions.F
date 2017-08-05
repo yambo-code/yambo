@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_dimensions(Xen,Dip,q0)
+subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -39,6 +39,7 @@ use com,             ONLY:warning
  !
  implicit none
  !
+ integer,       intent(in)    :: bands(2)
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
  real(SP),      intent(in)    :: q0(3)
@@ -52,6 +53,7 @@ use com,             ONLY:warning
  !
  Dip%ng=wf_ng
  Dip%q0=q0
+ Dip%ib=bands
  !
  Dip%bands_ordered=.true.
  !

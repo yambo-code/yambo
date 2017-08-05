@@ -53,7 +53,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
- integer :: i1,i_wf,i_spin,i_spinor,ib,ik,ifft
+ integer :: i1,i_wf,i_spin,i_spinor,ib,ik
  !
  ! wf_load could change bands_to_load(:) if it founds an SC-database 
  bands_to_load(:)=derivative_bands(:)
@@ -113,9 +113,9 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
            ! when using FFTQE
            call fft_3d(wf_DP,fft_dim,2)
 #endif
-           if(i1==1) wf_x(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
-           if(i1==2) wf_y(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
-           if(i1==3) wf_z(:,ifft,i_spinor)=cmplx(wf_DP(:),kind=SP)
+           if(i1==1) wf_x(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
+           if(i1==2) wf_y(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
+           if(i1==3) wf_z(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
            !
          enddo
        enddo

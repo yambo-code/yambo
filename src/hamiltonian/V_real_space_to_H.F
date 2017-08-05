@@ -66,8 +66,8 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  if(V_kind=="def") then
-  V_mat=cZERO
-  forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)=V(:,i_sp_pol+i_spinor-1)
+   V_mat=cZERO
+   forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)=V(:,i_sp_pol+i_spinor-1)
  endif
  !
  ! Fill ...
@@ -96,11 +96,12 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
    i_wf  =WF%index(ib ,ik,i_sp_pol)
    i_wfp =WF%index(ibp,ik,i_sp_pol)
    !
+   c_ws=cZERO
    do i_spinor=1,n_spinor
      i_spin=i_sp_pol+i_spinor-1
      do j_spinor=1,n_spinor
        j_spin=i_sp_pol+j_spinor-1
-       c_ws(:,i_spinor)=V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
+       c_ws(:,i_spinor)=c_ws(:,i_spinor)+V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
      enddo
    enddo
    !

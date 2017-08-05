@@ -430,7 +430,6 @@ subroutine bz_samp_indexes(k,Xk,q)
        nqibz=1
        q%nibz=1
        q%nbz=1
-       return
      endif
      !
      if (.not.allocated(q_pt)) then
@@ -447,10 +446,12 @@ subroutine bz_samp_indexes(k,Xk,q)
      endif
      !
      if (force_gamma_only) then
-       q%pt=0.
-       q_pt=0.
+       YAMBO_ALLOC(q%pt,(q%nibz,3))
+       YAMBO_ALLOC(q_sstar,(q%nbz,2))
+       q%pt=0._SP
+       q_pt=0._SP
        k_pt=k%pt
-       q_sstar=1
+       if(allocated(q_sstar)) q_sstar=1
        q_norm=q0_def_norm
      else
        q_pt=q%pt

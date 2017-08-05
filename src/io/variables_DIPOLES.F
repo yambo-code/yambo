@@ -23,6 +23,7 @@
 !
 integer function variables_DIPOLES(Dip,ID)
  !
+ use pars,          ONLY:lchlen
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t
  use electrons,     ONLY:levels
@@ -34,6 +35,10 @@ integer function variables_DIPOLES(Dip,ID)
  !
  type(DIPOLE_t) :: Dip
  integer        :: ID
+ !
+ ! Workspace
+ !
+ character(lchlen)  ::local_description
  !
  call io_elemental(ID,VAR="PARS",VAR_SZ=12,MENU=0)
  !
@@ -53,10 +58,15 @@ integer function variables_DIPOLES(Dip,ID)
 &     VAR=" Direct v evaluation    :",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
 &     VAR=" Field momentum norm    :",R0=q0_def_norm,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,&
-&     VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
  !
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ ! Character variables
+ !
+ call io_elemental(ID,VAR="PARS_CH",VAR_SZ=1,CH0="",MENU=0)
+ call io_elemental(ID,&
+&     VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,VAR="",VAR_SZ=0)
  !
  ! Wavefunctions xc 
  !

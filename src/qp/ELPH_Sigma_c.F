@@ -333,12 +333,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          ! In the SE expression I have the m.e. 
          !
          !  <ib ik|g(q_YAMBO l r)|ob ik-q_YAMBO> = [<ob ik+q_PW|g(q_PW l r)|ib ik>]^* = 
-         !                              elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)^*
+         !                              elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp)^*
          !
          ! with q_YAMBO = - q_PW
          !
-         elph_gkkp_sq=conjg(elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp))*&
-&                           elph_gkkp(ik_bz_gkkp,il,ob_gkkp,ib_gkkp)/2./ph_E
+         elph_gkkp_sq=conjg(elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp))*&
+&                           elph_gkkp(il,ob_gkkp,ib_gkkp,ik_bz_gkkp)/2._SP/ph_E
          !
          ! Frequency Loop
          !
@@ -387,15 +387,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
            ! important for metals).
            !
            gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+elph_gkkp_sq*&
-&                                              ph_E*one_minus_2f_occ/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
+&                                              ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)*q_weight(iq_loop)
            !
            ! Cardona-Allen formulation
            !
            ! (a) Fan Term                                          this 2 is to be consistent with AC definition
            !                                                       |
            !                                                      \/
-           gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2.*elph_gkkp_sq*&
-&                                      delta_E/(delta_E**2.-ph_E**2.)*q_weight(iq_loop)
+           gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2._SP*elph_gkkp_sq*&
+&                                      delta_E/(delta_E**2-ph_E**2)*q_weight(iq_loop)
            !
          enddo
          !
@@ -407,8 +407,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! (b) Debye Waller Term
          !
-         gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1./2.*&
-&                                    2.*elph_DW(ik_bz,il,ib,ob)/delta_E_at_gamma*q_weight(iq_loop)/2./ph_E
+         gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
+&                                    2._SP*elph_DW(il,ib,ob,ik_bz)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
          !                          /\
          !                           |
          !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)

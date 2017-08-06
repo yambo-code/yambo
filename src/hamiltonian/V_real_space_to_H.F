@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -24,7 +24,7 @@
 subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  use electrons,      ONLY:n_spin,n_spinor,spin
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use wave_func,      ONLY:WAVEs
@@ -37,22 +37,24 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
+ !
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ !
  implicit none
  !
  integer     :: ik,i_sp_pol
  real(SP)    :: V(fft_size,n_spin)
- complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  complex(SP) :: H(QP_nb,QP_nb)
  character(3):: V_kind
  type(WAVEs) :: WF
  !
  ! Work Space
  !
- integer    :: i_qp,ib,ibp,ifft,ifftp
- complex(SP):: c_ws(fft_size,n_spin)
+ integer    :: i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
+ complex(SP) :: c_ws(fft_size,n_spinor)
+ complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  !
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
@@ -63,6 +65,10 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
 #endif
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
+ if(V_kind=="def") then
+   V_mat=cZERO
+   forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)=V(:,i_sp_pol+i_spinor-1)
+ endif
  !
  ! Fill ...
  !
@@ -84,52 +90,22 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
 #endif
    !
-   ! <ifft|V|ifftp>
+   ! <i_wf|V_mat|i_wfp>
    !
-   if (n_spinor==1) then
-     !
-     ifft   =WF%index(ib,ik,i_sp_pol)
-     ifftp  =WF%index(ibp,ik,i_sp_pol)
-     c_ws(:,1)=V(:,i_sp_pol)*WF%c(:,ifftp)
-     !
-     H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
-     !
-   elseif (n_spinor==2) then
-     !
-     if (V_kind=='def') then
-       !
-       ifft   =WF%index(ib,ik,1)
-       ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V(:,1)*WF%c(:,ifftp)
-       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))
-       ifft   =WF%index(ib,ik,2)
-       ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V(:,2)*WF%c(:,ifftp)
-       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
-       !
-     elseif(V_kind=='xc ') then
-       !
-       ifft   =WF%index(ib,ik,1)
-       !
-       ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V_mat(:,1,1)*WF%c(:,ifftp)
-       ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V_mat(:,1,2)*WF%c(:,ifftp)
-       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
-&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
-       !
-       ifft   =WF%index(ib,ik,2)
-       !
-       ifftp  =WF%index(ibp,ik,1)
-       c_ws(:,1)=V_mat(:,2,1)*WF%c(:,ifftp)
-       ifftp  =WF%index(ibp,ik,2)
-       c_ws(:,2)=V_mat(:,2,2)*WF%c(:,ifftp)
-       H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,1))+&
-&                                Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,2))
-       !
-     endif
-     !
-   endif
+   !
+   i_wf  =WF%index(ib ,ik,i_sp_pol)
+   i_wfp =WF%index(ibp,ik,i_sp_pol)
+   !
+   c_ws=cZERO
+   do i_spinor=1,n_spinor
+     i_spin=i_sp_pol+i_spinor-1
+     do j_spinor=1,n_spinor
+       j_spin=i_sp_pol+j_spinor-1
+       c_ws(:,i_spinor)=c_ws(:,i_spinor)+V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
+     enddo
+   enddo
+   !
+   H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size*n_spinor,WF%c(:,:,i_wf),c_ws(:,:))
    !
  enddo
  !

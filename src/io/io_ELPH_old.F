@@ -21,24 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_ELPH(ID,what)
+integer function io_ELPH_old(ID,what)
  !
  use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
 &                         io_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,RD_CL,RD_CL_IF_END,io_action,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
- use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,elph_gkkp,&
-&                         QP_PH_n_G_bands,W_debye,elph_DW,elph_nDBs,&
+ use ELPH,           ONLY:ph_modes,elph_nb,elph_global_alloc,ph_freqs_sq,&
+&                         QP_PH_n_G_bands,W_debye,elph_nDBs,&
 &                         elph_use_q_grid,E_k_plus_q,ph_qpt,ph_kpt_bz,elph_nDBs_used,&
 &                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
 &                         pol_vector,elph_Ham_bands,elph_branches,elph_nk_bz,E_k_p_q,elph_grids_are_expanded
+ use ELPH_old,       ONLY:elph_gkkp_old,elph_DW_old
  use stderr,         ONLY:intc
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
  use D_lattice,      ONLY:n_atoms_species
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
+ use matrix_operate, ONLY:mat_c2r,mat_r2c
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
@@ -53,12 +55,13 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ik,ierr,iq_mem
+ integer                ::iq,im,ik,i1,i2,ierr,iq_mem
  real(SP)               ::v(3)
+ real(SP), allocatable  ::data_disk(:,:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
 #if defined _TIMING
- call timing('io_ELPH',OPR='start')
+ call timing('io_ELPH_old',OPR='start')
 #endif
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
@@ -68,15 +71,14 @@ integer function io_ELPH(ID,what)
    elph_grids_are_expanded=.TRUE.
  endif
  !
- !
- io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (io_ELPH/=0) goto 1
+ io_ELPH_old=io_connect(desc=trim(db_name),type=2,ID=ID)
+ if (io_ELPH_old/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (what/='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
-   if (what=='gkkp_expanded') io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
-   if (io_ELPH/=0) goto 1
+   if (what/='gkkp_expanded') io_ELPH_old=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
+   if (what=='gkkp_expanded') io_ELPH_old=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
+   if (io_ELPH_old/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
@@ -112,8 +114,8 @@ integer function io_ELPH(ID,what)
      elph_branches  =(/1,ph_modes/)
    endif
    !
-   io_ELPH=io_status(ID)
-   if (io_ELPH/=0) goto 1
+   io_ELPH_old=io_status(ID)
+   if (io_ELPH_old/=0) goto 1
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
    call io_bulk(ID,R0=W_debye)
@@ -135,7 +137,7 @@ integer function io_ELPH(ID,what)
      do iq=1,nqibz
        call c2a(v_in=q_pt(iq,:)+ph_qpt(iq,:),v_out=v,mode="ki2a")
        if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
-         io_ELPH=IO_INCOMPATIBLE_VAR
+         io_ELPH_old=IO_INCOMPATIBLE_VAR
          goto 1
        endif
      enddo
@@ -162,7 +164,7 @@ integer function io_ELPH(ID,what)
  ! If the fragment does not exist (ierr<0) I return an error code
  !
  if (ierr<0.and.read_is_on(ID)) then
-   io_ELPH=-1
+   io_ELPH_old=-1
    goto 1
  endif
  !
@@ -216,11 +218,29 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
  !
+ YAMBO_ALLOC(pol_vec_disk,(ph_modes,sum(n_atoms_species),2,3))
+ !
  ! Polarization vectors
  ! 
- call io_bulk(ID,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,sum(n_atoms_species),3/))
- call io_bulk(ID,C3=pol_vector)
+ if (write_is_on(ID)) then
+   call mat_c2r(pol_vector(:,:,1),pol_vec_disk(:,:,:,1))
+   call mat_c2r(pol_vector(:,:,2),pol_vec_disk(:,:,:,2))
+   call mat_c2r(pol_vector(:,:,3),pol_vec_disk(:,:,:,3))
+ endif
+ !
+ call io_bulk(ID,VAR="POLARIZATION_VECTORS_REAL",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
+ call io_bulk(ID,R3=pol_vec_disk(:,:,1,:))
+ call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
+ call io_bulk(ID,R3=pol_vec_disk(:,:,2,:))
  ! 
+ if (read_is_on(ID)) then
+   call mat_r2c(pol_vec_disk(:,:,:,1),pol_vector(:,:,1))
+   call mat_r2c(pol_vec_disk(:,:,:,2),pol_vector(:,:,2))
+   call mat_r2c(pol_vec_disk(:,:,:,3),pol_vector(:,:,3))
+ endif
+ !
+ YAMBO_FREE(pol_vec_disk)
+ !
  if (what=='no_gkkp') goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
@@ -238,18 +258,66 @@ integer function io_ELPH(ID,what)
  ! 
  ! ELPH_gkkp 
  !
- call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
- call io_bulk(ID,C4=elph_gkkp)
+ YAMBO_ALLOC(data_disk,(elph_nb*elph_nb,ph_modes,2,1))
  !
+ call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
+ !
+ do ik=1,nkbz
+   ! 
+   ! WRITE
+   ! 
+   if (write_is_on(ID)) then
+     do im=1,ph_modes
+       do i1=1,elph_nb
+         do i2=1,elph_nb
+           data_disk((i1-1)*elph_nb+i2,im,1,1)=real(elph_gkkp_old(ik,im,i1,i2))
+           data_disk((i1-1)*elph_nb+i2,im,2,1)=aimag(elph_gkkp_old(ik,im,i1,i2))
+         enddo
+       enddo
+     enddo
+   endif
+   ! 
+   call io_bulk(ID,R4=data_disk,IPOS=(/1,1,1,ik/))
+   ! 
+   ! READ 
+   ! 
+   if (read_is_on(ID)) then
+     do im=1,ph_modes
+       do i1=1,elph_nb
+         do i2=1,elph_nb
+           elph_gkkp_old(ik,im,i1,i2)=data_disk((i1-1)*elph_nb+i2,im,1,1)+&
+&                   (0._SP,1._SP)*data_disk((i1-1)*elph_nb+i2,im,2,1)
+         enddo
+       enddo
+     enddo
+   endif
+   !
+ enddo
+ !
+ YAMBO_FREE(data_disk)
+ ! 
  ! ELPH_DW 
  !
+ YAMBO_ALLOC(data_disk,(ph_modes,elph_nb,elph_nb,1))
+ !
  call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- call io_bulk(ID,R4=elph_DW)
+ !
+ do ik=1,nkbz
+   ! 
+   if (write_is_on(ID)) data_disk(:,:,:,1)=elph_DW_old(ik,:,:,:)
+   ! 
+   call io_bulk(ID,R4=data_disk,IPOS=(/1,1,1,ik/))
+   ! 
+   if (read_is_on(ID)) elph_DW_old(ik,:,:,:)=data_disk(:,:,:,1)
+   ! 
+ enddo
+ !
+ YAMBO_FREE(data_disk)
  !
 1 call io_disconnect(ID=ID)
  !
 #if defined _TIMING
- call timing('io_ELPH',OPR='stop')
+ call timing('io_ELPH_old',OPR='stop')
 #endif
  !
 end function

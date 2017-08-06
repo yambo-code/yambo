@@ -76,14 +76,14 @@ subroutine MAG_Hamiltonian()
  !
  ! Dummies
  !
- integer    :: ir,i_sp_pol,i_wf(n_spin),j_wf(n_spin),ik,ib,ibp,i_spinor,j_spinor,i_spin
+ integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_spinor,j_spinor
  complex(SP):: sigma_x(2,2),sigma_y(2,2),sigma_z(2,2)
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
  !
  ! Allocs
  !
  real(SP),    allocatable :: r_cell_cc(:,:)
- complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:)
+ complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:,:)
  real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),H_paramagn_z(:),&
 &                            H_diamagn(:) 
  !
@@ -128,8 +128,8 @@ subroutine MAG_Hamiltonian()
    if(n_sp_pol==2) then
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,1,1)= 0.5*MAG_B/SPEED_OF_LIGHT
-       H_pauli(ir,2,1)=-0.5*MAG_B/SPEED_OF_LIGHT
+       H_pauli(ir,1,1,1)= 0.5*MAG_B/SPEED_OF_LIGHT
+       H_pauli(ir,1,1,2)=-0.5*MAG_B/SPEED_OF_LIGHT
      enddo 
    else if(n_spinor==2) then
      ! Pauli matrices
@@ -138,7 +138,7 @@ subroutine MAG_Hamiltonian()
      sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,:,:)=Bx*sigma_x+By*sigma_y+Bz*sigma_z
+       H_pauli(ir,:,:,1)=Bx*sigma_x+By*sigma_y+Bz*sigma_z
      enddo 
      H_pauli=0.5*H_pauli/SPEED_OF_LIGHT
    endif
@@ -182,12 +182,13 @@ subroutine MAG_Hamiltonian()
        !
        if (.not.px%element_2D(ik,ib)) cycle
        !
+       i_wf=WF%index(ib ,ik,i_sp_pol)
+       !
        do ibp=1,SC_bands(2)
          !
+         ip_wf=WF%index(ibp,ik,i_sp_pol)
+         !
          do j_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+j_spinor-1
-           j_wf(j_spinor)=WF%index(ibp,ik,i_spin)
            !
            ! Matrix Elements
            !=================
@@ -199,21 +200,19 @@ subroutine MAG_Hamiltonian()
            !
            H_tmp=cZERO
            !
+           if (MAG_landau) then
+             if(H_magn_x_on) H_tmp(:,j_spinor,j_spinor)= H_paramagn_x(:)*wf_x(:,j_spinor,ip_wf)
+             if(H_magn_y_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_y(:)*wf_y(:,j_spinor,ip_wf)
+             if(H_magn_z_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_z(:)*wf_z(:,j_spinor,ip_wf)
+             H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%c(:,j_spinor,ip_wf)
+           endif
+           !
            do i_spinor=1,n_spinor
              !
-             i_spin=i_sp_pol+i_spinor-1
-             i_wf(i_spinor)=WF%index(ib ,ik,i_spin)
+             if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor) &
+             &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%c(:,j_spinor,ip_wf)
              !
-             if (MAG_landau.and.i_spinor==j_spinor) then
-               if(H_magn_x_on) H_tmp(:,j_spinor,j_spinor)= H_paramagn_x(:)*wf_x(:,j_wf(j_spinor))
-               if(H_magn_y_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_y(:)*wf_y(:,j_wf(j_spinor))
-               if(H_magn_z_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_z(:)*wf_z(:,j_wf(j_spinor))
-               H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%c(:,j_wf(j_spinor))
-             endif
-             !
-             if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor)+H_pauli(:,i_spin,j_spinor)*WF%c(:,j_wf(j_spinor))
-             !
-             Ho(ib,ibp,ik,i_sp_pol)= Ho(ib,ibp,ik,i_sp_pol)+Vstar_dot_V(fft_size,WF%c(:,i_wf(i_spinor)),H_tmp(:,i_spinor,j_spinor))
+             Ho(ib,ibp,ik,i_sp_pol)= Ho(ib,ibp,ik,i_sp_pol)+Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
          enddo
@@ -264,7 +263,7 @@ subroutine MAG_Hamiltonian()
            H_diamagn=0._SP
          endif
          if (MAG_pauli) then
-           YAMBO_ALLOC(H_pauli,(fft_size,n_spin,n_spinor))
+           YAMBO_ALLOC(H_pauli,(fft_size,n_spin,n_spinor,n_sp_pol))
            H_pauli=cZERO
          endif
        case(1)

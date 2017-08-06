@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_DIPOLES(X,ID)
+integer function io_DIPOLES(X,ID,OWRITE)
  !
  use pars,          ONLY:schlen
  use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
@@ -46,6 +46,7 @@ integer function io_DIPOLES(X,ID)
  implicit none
  type(X_t)   ::X
  integer     ::ID
+ logical     ::OWRITE
  !
  ! Work Space
  !
@@ -72,7 +73,7 @@ integer function io_DIPOLES(X,ID)
  if (l_real_time) io_extension(ID)='dip_iR_P_spin_and_P2'
 #endif
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,OWRITE=(OWRITE.and.any((/io_sec(ID,:)==1/))),ID=ID)
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -126,7 +127,7 @@ integer function io_DIPOLES(X,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
+ call io_fragment(ID,i_fragment=i_fragment,owrite=OWRITE)
  !
  ! iR
  !

@@ -347,7 +347,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ostnts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(X(3),io_ID)
+ io_err=io_DIPOLES(X(3),io_ID,.FALSE.)
  !
  OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
  !

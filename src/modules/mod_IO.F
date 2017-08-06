@@ -201,9 +201,10 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,owrite)
      integer           :: ID
      integer, optional :: i_fragment,j_fragment,ierr
+     logical, optional :: owrite
    end subroutine
    !
  end interface

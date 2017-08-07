@@ -33,7 +33,7 @@ integer function ELPH_databases(k,E,q)
  use R_lattice,           ONLY:bz_samp,qindx_B
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
- use YPP_ELPH,            ONLY:ph_freqs_file,l_gkkp_expand,ph_modes_file
+ use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
  use IO_m,                ONLY:io_control,OP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
 #include<memory.h>
@@ -56,6 +56,7 @@ integer function ELPH_databases(k,E,q)
  !
  !... dummies 
  !
+ logical            ::l_gkkp_expand
  integer,allocatable::ikbz_is_table(:,:)
  integer            ::iq,elph_nk,iq_db(q%nbz),iq_bz,iq_s,i1
  complex(DP), allocatable :: grad_at_gamma(:,:,:,:,:)
@@ -548,7 +549,7 @@ integer function ELPH_databases(k,E,q)
          dVRY2Ha=2._DP**(-3._DP/2._DP)
          if (abinit_DB) dVRY2Ha=1._DP
          !
-         elph_gkkp(k2k_tab(ik),:,ib1,ib2)=gkkp_disk(ib1,ib2,:)*dVRY2Ha
+         elph_gkkp(:,ib1,ib2,k2k_tab(ik))=gkkp_disk(ib1,ib2,:)*dVRY2Ha
          !
          ! Debye Waller Term
          !
@@ -561,8 +562,8 @@ integer function ELPH_databases(k,E,q)
            do j=1,3
              do ia=1,n_atoms
                do il=1,ph_modes
-                 elph_DW(k2k_tab(ik),il,ib1,ib2)=elph_DW(k2k_tab(ik),il,ib1,ib2)+&
-&                2.*real(&
+                 elph_DW(il,ib1,ib2,k2k_tab(ik))=elph_DW(il,ib1,ib2,k2k_tab(ik))+&
+&                2._SP*real(&
 &                  F1(i)*grad_at_gamma(k2k_tab(ik),ib2,ib1,ia,j)*pol_vec(il,ia,i)*&
 &                  conjg(pol_vec(il,ia,j))*dVRY2Ha&
 &                )
@@ -588,8 +589,8 @@ integer function ELPH_databases(k,E,q)
      do i1=1,nsmall
        ikbz_rot=ikbz_is_table(ik,sop_inv(small(i1)))
        if (k_found(ikbz_rot)/=0) cycle
-       elph_gkkp(ikbz_rot,:,:,:)=elph_gkkp(ik,:,:,:)
-       elph_DW(ikbz_rot,:,:,:)=elph_DW(ik,:,:,:)
+       elph_gkkp(:,:,:,ikbz_rot)=elph_gkkp(:,:,:,ik)
+       elph_DW(:,:,:,ikbz_rot)=elph_DW(:,:,:,ik)
        E_k_plus_q(:,ikbz_rot,1)=E_k_plus_q(:,ik,1)
        k_found(ikbz_rot)=-1
      enddo

@@ -26,10 +26,10 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path,error
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,&
-&                              cp_file,cp_directory,OP_RD_CL,RD_CL,frag_WF
+&                              OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
- use electrons,           ONLY:levels,E_reset,n_spin,n_spinor
+ use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
@@ -64,13 +64,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  integer               :: wf_nb_io_save
  !
  integer,     allocatable :: ic_rot_table(:) 
- real(SP),    allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  complex(SP), allocatable :: wf_tmp(:,:)
  !
  ! Dummies
  !
- integer               :: is,ik,ik_save
- integer               :: ib,ib_grp,ib_disk,i_wf,i_spin
+ integer               :: is,i_sp_pol,ik,ik_save,ifrag
+ integer               :: ib,ib_grp,ib_disk,i_wf,i_spinor
  integer               :: ic,ic_rot,ig,ig_rot
  logical               :: l_found
  !
@@ -126,43 +126,32 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  case(1)
    !
-   if (.not.l_wf_nc_k_red) then
-     !
-     call msg('s',':: Copying existing database ...')
-     !
-     call cp_file(trim(core_io_path_save)//"/SAVE/s.wf",trim(more_io_path)//"/SAVE",ierr)
-     call cp_file(trim(core_io_path_save)//"/SAVE/ns.wf",trim(more_io_path)//"/SAVE",ierr)
-     do ik=1,k_save%nibz
-       do ib_grp=1,wf_nb_io_groups
-         fragment_name='s.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-         fragment_name='ns.wf_fragments_'//trim(intc(ik))//'_'//trim(intc(ib_grp))
-         call cp_directory(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE",ierr)
-       enddo
-     enddo
-     !
-     call msg('l','done')
-     !
-   endif
+   YAMBO_ALLOC(wf_disk,(wf_ncx_new,n_spinor,wf_nb_io))
    !
-   ! Rotating wavefunctions by components
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=io_WF(ID)
    !
-   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx_new,n_spin))
+   ACTION_=OP_APP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
    !
-   if(l_wf_nc_k_red) then
+   do i_sp_pol=1,n_sp_pol
      !
-     call live_timing('WFs comp. reduction',k_save%nibz)
-     !
+<<<<<<< HEAD
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
      io_err=io_WF(ID)
+=======
+     call live_timing('WFs comp. reduction i_sp_pol= '//trim(intc(i_sp_pol)),k_save%nibz)
+>>>>>>> master
      !
      do ik=1,k_save%nibz
+       !
+       ifrag=ik+(i_sp_pol-1)*k%nibz
        !
        ik_save=kpoints_map(1,ik)
        !
        do ib_grp=1,wf_nb_io_groups
          !
-         wf_disk=0._SP
+         wf_disk=cZERO
          !
          nb1=wf_nb_io*(ib_grp-1)+1
          nb2=wf_nb_io*ib_grp
@@ -170,15 +159,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k_save%nibz
          wf_ncx=wf_ncx_save
          core_io_path=core_io_path_save
-         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                     space='C',title='',impose_free_and_alloc=.true.)
          !
          do ib=nb1,nb2
            ib_disk=ib-nb1+1
-           do i_spin=1,n_spin
-             i_wf=WF%index(ib,ik_save,i_spin)
-             wf_disk(1,ib_disk,:wf_nc_k_new(ik),i_spin)=  real(WF%c(:wf_nc_k_reduced(ik_save),i_wf))
-             wf_disk(2,ib_disk,:wf_nc_k_new(ik),i_spin)= aimag(WF%c(:wf_nc_k_reduced(ik_save),i_wf))
-           enddo
+           i_wf=WF%index(ib,ik_save,i_sp_pol)
+           wf_disk(:wf_nc_k_new(ik),:,ib_disk)= WF%c(:wf_nc_k_reduced(ik_save),:,i_wf)
          enddo
          !
          call WF_free(WF)
@@ -186,8 +173,13 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
+<<<<<<< HEAD
          call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf=wf_disk)
+=======
+         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         io_err=io_WF(ID,wf_disk)
+>>>>>>> master
          !
        enddo
        !
@@ -197,6 +189,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      !
      call live_timing()
      !
+<<<<<<< HEAD
    endif
    !
    n_steps=(k%nibz-k_save%nibz)
@@ -209,58 +202,83 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      !      
      ik_save=kpoints_map(1,ik)
      is=kpoints_map(2,ik)
+=======
+     n_steps=(k%nibz-k_save%nibz)
+     if(n_steps>0) call live_timing('WFs rotation  i_sp_pol= '//trim(intc(i_sp_pol)),n_steps)
+>>>>>>> master
      !
-     ic_rot_table=-1
-     do ic=1,wf_nc_k_reduced(ik_save)
-       ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
-       l_found=.false.
-       do ic_rot=1,wf_nc_k_new(ik)
-         ig=wf_igk_new(ic_rot,ik)
-         if(ig==ig_rot) then
-           l_found=.true.
-           exit
-         endif
+     YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
+     YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spinor))
+     !
+     ACTION_=OP_APP_WR_CL
+     if (frag_WF) ACTION_=OP_WR_CL
+     !
+     do ik=k_save%nibz+1,k%nibz 
+       !      
+       ifrag=ik+(i_sp_pol-1)*k%nibz
+       !
+       ik_save=kpoints_map(1,ik)
+       is=kpoints_map(2,ik)
+       !
+       ic_rot_table=-1
+       do ic=1,wf_nc_k_reduced(ik_save)
+         ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
+         l_found=.false.
+         do ic_rot=1,wf_nc_k_new(ik)
+           ig=wf_igk_new(ic_rot,ik)
+           if(ig==ig_rot) then
+             l_found=.true.
+             exit
+           endif
+         enddo
+         if(.not.l_found) call error("Erro rotating an wf_igk array")
+         ic_rot_table(ic)=ic_rot
        enddo
-       if(.not.l_found) call error("Erro rotating an wf_igk array")
-       ic_rot_table(ic)=ic_rot
-     enddo
-     !
-     do ib_grp=1,wf_nb_io_groups
        !
-       wf_disk=0._SP
-       !
-       nb1=wf_nb_io*(ib_grp-1)+1
-       nb2=wf_nb_io*ib_grp
-       !
-       nkibz=k_save%nibz
-       wf_ncx=wf_ncx_save
-       core_io_path=core_io_path_save
-       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
-       !
-       do ib=nb1,nb2
+       do ib_grp=1,wf_nb_io_groups
          !
-         ib_disk=ib-nb1+1
+         wf_disk=cZERO
          !
-         wf_tmp=cZERO
+         nb1=wf_nb_io*(ib_grp-1)+1
+         nb2=wf_nb_io*ib_grp
          !
-         do i_spin=1,n_spin
+         nkibz=k_save%nibz
+         wf_ncx=wf_ncx_save
+         core_io_path=core_io_path_save
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                     space='C',title='',impose_free_and_alloc=.true.)
+         !
+         do ib=nb1,nb2
            !
-           i_wf=WF%index(ib,ik_save,i_spin)
+           ib_disk=ib-nb1+1
            !
-           forall(ic=1:wf_nc_k_reduced(ik_save)) wf_tmp(ic_rot_table(ic),i_spin)=WF%c(ic,i_wf)
+           wf_tmp=cZERO
+           !
+           i_wf=WF%index(ib,ik_save,i_sp_pol)
+           !
+           forall(ic=1:wf_nc_k_reduced(ik_save),i_spinor=1:n_spinor) &
+&            wf_tmp(ic_rot_table(ic),i_spinor)=WF%c(ic,i_spinor,i_wf)
+           !
+           if(n_spinor==2) then
+             forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
+           endif
+           if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
+           !  
+           wf_disk(:,:,ib_disk)= wf_tmp(:,:)
            !
          enddo
          !
-         if(n_spinor==2) then
-           forall(ic=1:wf_nc_k_new(ik)) wf_tmp(ic,:)=matmul(spin_sop(:,:,is),wf_tmp(ic,:))
-         endif
-         if ( S_contains_TR(is) ) wf_tmp=conjg(wf_tmp)
+         call WF_free(WF)
          !
-         wf_disk(1,ib_disk,1:wf_ncx_new,:)= real(wf_tmp(:wf_ncx_new,:))
-         wf_disk(2,ib_disk,1:wf_ncx_new,:)= aimag(wf_tmp(:wf_ncx_new,:))
+         nkibz=k%nibz
+         wf_ncx=wf_ncx_new
+         core_io_path=more_io_path
+         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
        !
+<<<<<<< HEAD
        call WF_free(WF)
        !
        nkibz=k%nibz
@@ -268,17 +286,16 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        core_io_path=more_io_path
        call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
+=======
+       if(n_steps>0) call live_timing(steps=1)
+>>>>>>> master
        !
      enddo
      !
-     if(n_steps>0) call live_timing(steps=1)
+     YAMBO_FREE(ic_rot_table)
+     YAMBO_FREE(wf_tmp)
      !
    enddo
-   !
-   if(n_steps>0) call live_timing()
-   !
-   YAMBO_FREE(ic_rot_table)
-   YAMBO_FREE(wf_tmp)
    !
  case(2)
    !
@@ -287,33 +304,53 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
    !
-   YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx_new,n_spin))
+   YAMBO_ALLOC(wf_disk,(wf_ncx_new,n_spinor,wf_nb_io))
    !
+<<<<<<< HEAD
    do ik=1,k%nibz
+=======
+   ACTION_=OP_APP_WR_CL
+   if(frag_WF) ACTION_=OP_WR_CL
+   !
+   do i_sp_pol=1,n_sp_pol
+>>>>>>> master
      !
-     ik_save=kpoints_map(1,ik)
-     !
-     do ib_grp=1,wf_nb_io_groups
+     do ik=1,k%nibz
        !
-       wf_disk=0._SP
+       ifrag=ik+(i_sp_pol-1)*k%nibz
        !
-       nb1=wf_nb_io*(ib_grp-1)+1
-       nb2=wf_nb_io*ib_grp
+       ik_save=kpoints_map(1,ik)
        !
-       nkibz=k_save%nibz
-       wf_ncx=wf_ncx_save
-       core_io_path=core_io_path_save
-       call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),space='C',title='',impose_free_and_alloc=.true.)
-       !
-       do ib=nb1,nb2
-         ib_disk=ib-nb1+1
-         do i_spin=1,n_spin
-           i_wf=WF%index(ib,ik_save,i_spin)
-           wf_disk(1,ib_disk,1:wf_ncx_new,i_spin)= real(WF%c(1:wf_ncx_new,i_wf))
-           wf_disk(2,ib_disk,1:wf_ncx_new,i_spin)= aimag(WF%c(1:wf_ncx_new,i_wf))
+       do ib_grp=1,wf_nb_io_groups
+         !
+         wf_disk=cZERO
+         !
+         nb1=wf_nb_io*(ib_grp-1)+1
+         nb2=wf_nb_io*ib_grp
+         !
+         nkibz=k_save%nibz
+         wf_ncx=wf_ncx_save
+         core_io_path=core_io_path_save
+         call WF_load(WF,wf_ng,1,(/nb1,nb2/),(/ik_save,ik_save/),(/i_sp_pol,i_sp_pol/),&
+&                     space='C',title='',impose_free_and_alloc=.true.)
+         !
+         do ib=nb1,nb2
+           ib_disk=ib-nb1+1
+           i_wf=WF%index(ib,ik_save,i_sp_pol)
+           wf_disk(:,:,ib_disk)=  WF%c(:,:,i_wf)
          enddo
+         !
+         call WF_free(WF)
+         !
+         nkibz=k%nibz
+         wf_ncx=wf_ncx_new
+         core_io_path=more_io_path
+         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         io_err=io_WF(ID,wf_disk)
+         !
        enddo
        !
+<<<<<<< HEAD
        call WF_free(WF)
        !
        nkibz=k%nibz
@@ -322,6 +359,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf=wf_disk)
        !
+=======
+>>>>>>> master
      enddo
      !
    enddo

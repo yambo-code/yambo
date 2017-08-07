@@ -131,17 +131,9 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
    !
-   ACTION_=OP_APP_WR_CL
-   if(frag_WF) ACTION_=OP_WR_CL
-   !
    do i_sp_pol=1,n_sp_pol
      !
-<<<<<<< HEAD
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-     io_err=io_WF(ID)
-=======
      call live_timing('WFs comp. reduction i_sp_pol= '//trim(intc(i_sp_pol)),k_save%nibz)
->>>>>>> master
      !
      do ik=1,k_save%nibz
        !
@@ -173,13 +165,8 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
-<<<<<<< HEAD
-         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf=wf_disk)
-=======
-         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-         io_err=io_WF(ID,wf_disk)
->>>>>>> master
          !
        enddo
        !
@@ -189,29 +176,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      !
      call live_timing()
      !
-<<<<<<< HEAD
-   endif
-   !
-   n_steps=(k%nibz-k_save%nibz)
-   if(n_steps>0) call live_timing('WFs rotation',n_steps)
-   !
-   YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
-   YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spin))
-   !
-   do ik=k_save%nibz+1,k%nibz 
-     !      
-     ik_save=kpoints_map(1,ik)
-     is=kpoints_map(2,ik)
-=======
      n_steps=(k%nibz-k_save%nibz)
      if(n_steps>0) call live_timing('WFs rotation  i_sp_pol= '//trim(intc(i_sp_pol)),n_steps)
->>>>>>> master
      !
      YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
      YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spinor))
-     !
-     ACTION_=OP_APP_WR_CL
-     if (frag_WF) ACTION_=OP_WR_CL
      !
      do ik=k_save%nibz+1,k%nibz 
        !      
@@ -273,22 +242,12 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
-         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf=wf_disk)
          !
        enddo
        !
-<<<<<<< HEAD
-       call WF_free(WF)
-       !
-       nkibz=k%nibz
-       wf_ncx=wf_ncx_new
-       core_io_path=more_io_path
-       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-       io_err=io_WF(ID,wf=wf_disk)
-=======
        if(n_steps>0) call live_timing(steps=1)
->>>>>>> master
        !
      enddo
      !
@@ -306,14 +265,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    YAMBO_ALLOC(wf_disk,(wf_ncx_new,n_spinor,wf_nb_io))
    !
-<<<<<<< HEAD
-   do ik=1,k%nibz
-=======
-   ACTION_=OP_APP_WR_CL
-   if(frag_WF) ACTION_=OP_WR_CL
-   !
    do i_sp_pol=1,n_sp_pol
->>>>>>> master
      !
      do ik=1,k%nibz
        !
@@ -345,22 +297,11 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
          nkibz=k%nibz
          wf_ncx=wf_ncx_new
          core_io_path=more_io_path
-         call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          io_err=io_WF(ID,wf_disk)
          !
        enddo
        !
-<<<<<<< HEAD
-       call WF_free(WF)
-       !
-       nkibz=k%nibz
-       wf_ncx=wf_ncx_new
-       core_io_path=more_io_path
-       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-       io_err=io_WF(ID,wf=wf_disk)
-       !
-=======
->>>>>>> master
      enddo
      !
    enddo

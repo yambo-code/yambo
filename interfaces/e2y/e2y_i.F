@@ -35,7 +35,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use LIVE_t,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                only : io_control,OP_WR_CL,NONE,OP_WR_CL,serial_number
+ use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           only : interface_presets, force_noWFs
  use mod_wf2y,            only : wf_splitter
  !
@@ -172,14 +172,14 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        ! Write to the YAMBO WF database
        ! 
        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
        if(trim(ETSF_kind)=='KSS') then
          call e2y_kb_pp(ik,ncid) 
          if (n_atoms_species_max>0.and.ib_grp==1) then
            if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-           if (ifrag> 1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+           if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
            io_err=io_KB_abinit(ID) 
          endif
        endif

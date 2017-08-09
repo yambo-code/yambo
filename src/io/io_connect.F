@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
+integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
  !
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:string_pack
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
-&                        IO_NOT_ALLOWED
+&                        IO_NOT_ALLOWED,OP_APP,OP_APP_WR_CL,io_action,OP_WR,OP_WR_CL
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                        num_of_alternative_locations,n_alt_jobstr
@@ -38,20 +38,17 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  character(*)           :: desc
  integer                :: type,ID
  character(*), optional :: subfolder
- logical,      optional :: no_full_RESET,OWRITE
+ logical,      optional :: no_full_RESET
  !
  ! Work Space
  !
  integer          ::CREATE_MODE,i_jobstr
  character(lchlen)::alternative_file(num_of_alternative_locations),folder
  character(schlen)::subfolder_
- logical          ::file_found,full_RESET,OWRITE_
+ logical          ::file_found,full_RESET
  !
  full_RESET=.true.
  if (present(no_full_RESET)) full_RESET=.not.no_full_RESET
- !
- OWRITE_=.false.
- if (present(OWRITE)) OWRITE_=OWRITE
  !
  io_connect=0
  if ( ( read_is_on(ID).and..not.IO_read ).or.&
@@ -95,6 +92,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
  io_extension(ID) =desc
  io_folder(ID)    =trim(subfolder_)
+ io_type(ID)      =type
  !
  ! Create Directories 
  !
@@ -110,14 +108,18 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
  !
  if (open_is_on(ID).and.write_is_on(ID)) then
    !
-   if( file_exists(trim(io_file(ID))) .and. (.not.OWRITE_) ) then
+   if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
+     !
      call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
+     !
    else
+     !
      call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
      call netcdf_call(nf90_enddef(io_unit(ID)),ID)
+     if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
+     if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
+     !
    endif
-   !
-   io_type(ID)=type
    !
  endif
  !
@@ -145,10 +147,9 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
      !
    endif
    !
+   !
    if (type==-2) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
    if (type/=-2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
-   !
-   io_type(ID)=type
    !
  endif
  !

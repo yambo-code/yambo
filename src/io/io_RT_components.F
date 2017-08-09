@@ -100,7 +100,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
  !
- io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,owrite=any((/io_sec(ID,:)==1/)))
+ io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  if (io_RT_components/=0) goto 1
  !
  ! 1st SECTION

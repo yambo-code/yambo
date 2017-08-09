@@ -34,7 +34,7 @@ integer function ELPH_databases(k,E,q)
  use D_lattice,           ONLY:nsym,n_atoms
  use parser_m,            ONLY:parser
  use YPP_ELPH,            ONLY:ph_freqs_file,ph_modes_file
- use IO_m,                ONLY:io_control,OP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
+ use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_RD_CL,VERIFY,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
 #include<memory.h>
  type(bz_samp) ::k,q
@@ -214,8 +214,8 @@ integer function ELPH_databases(k,E,q)
        !
        ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
        !
-       if (iq_bz==1) call io_control(ACTION=OP_WR_CL,SEC=(/1,iq_bz+1/),ID=ID)
-       if (iq_bz >1) call io_control(ACTION=OP_WR_CL,SEC=(/iq_bz+1/),ID=ID)
+       if (iq_bz==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq_bz+1/),ID=ID)
+       if (iq_bz >1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq_bz+1/),ID=ID)
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
@@ -234,8 +234,8 @@ integer function ELPH_databases(k,E,q)
      !
      if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
      !
-     if (idb==1) call io_control(ACTION=OP_WR_CL,SEC=(/1,iq+1/),ID=ID)
-     if (idb/=1) call io_control(ACTION=OP_WR_CL,SEC=(/iq+1/),ID=ID)
+     if (idb==1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/1,iq+1/),ID=ID)
+     if (idb/=1) call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID)
      !
      io_elph_err=io_ELPH(ID,trim(db_name))
      !

@@ -63,7 +63,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
 &                         l_X_terminator
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_WR_CL,OP_RD,&
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
@@ -283,7 +283,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(write_header) then
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,ID,.TRUE.)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -291,7 +291,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if(read_header) then
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       io_err=io_DIPOLES(X,ID,.FALSE.)
+       io_err=io_DIPOLES(X,ID)
      endif
      !
      ! In case io_err is /=0 all CPU have to sincronize before starting
@@ -302,14 +302,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (io_err==0) then
        !
        if (reading) IO_ACTION=OP_RD_CL
-       if (writing) IO_ACTION=OP_WR_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
        do i_sp_pol=1,n_sp_pol
          do ik=1,Xk%nibz
            if ( .not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
            if ((.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0) .and. writing) cycle
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID,.TRUE.)
+           io_err=io_DIPOLES(X,ID)
          enddo
        enddo
        !

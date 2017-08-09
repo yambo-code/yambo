@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_fragment(ID,i_fragment,j_fragment,ierr,owrite)
+subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  ! This routine closes the main DB and opens the fragment. 
  !
@@ -47,18 +47,14 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,owrite)
  !
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr
- logical, optional :: owrite
  !
  ! Work Space
  !
  integer           :: ierr_,i_frag
- logical           :: close_is_on_save,owrite_
+ logical           :: close_is_on_save
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
- !
- owrite_=.false.
- if (present(owrite)) owrite_=owrite
  !
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
@@ -111,7 +107,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,owrite)
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
  endif
  !
- ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),OWRITE=owrite_,ID=ID)
+ ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
  if (present(ierr)) ierr=ierr_
  !
  if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then

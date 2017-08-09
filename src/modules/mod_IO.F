@@ -71,8 +71,8 @@ module IO_m
  !
  ! Actions
  !
- integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_RD=5,OP_WR=7,RD=8,WR=9,WR_CL=11, &
-&                                 RD_CL_IF_END=10,            WR_CL_IF_END=12,          &
+ integer, parameter:: RD_CL=1,OP_RD_CL=2,OP_WR_CL=3,OP_APP_WR_CL=4,OP_RD=5,OP_APP=6,&
+&                     OP_WR=7,RD=8,WR=9,RD_CL_IF_END=10,WR_CL=11,WR_CL_IF_END=12,   &
 &                     OP_IF_START_RD_CL_IF_END=13,OP_IF_START_WR_CL_IF_END=14
  !
  ! Modes
@@ -177,11 +177,11 @@ module IO_m
      !
    end subroutine
    !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,OWRITE,ID)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
-     logical,      optional :: no_full_RESET,OWRITE
+     logical,      optional :: no_full_RESET
    end function
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
@@ -201,10 +201,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,owrite)
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
      integer           :: ID
      integer, optional :: i_fragment,j_fragment,ierr
-     logical, optional :: owrite
    end subroutine
    !
  end interface
@@ -217,14 +216,16 @@ module IO_m
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&
-&                     io_action(ID)==OP_RD,   io_action(ID)==OP_WR    /))
+&                     io_action(ID)==OP_APP_WR_CL,io_action(ID)==OP_RD,&
+&                     io_action(ID)==OP_APP,io_action(ID)==OP_WR/))
    end function
    !
    logical function close_is_on(ID)
      !
      integer :: ID
-     close_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_RD_CL,&
-&                      io_action(ID)==   WR_CL,io_action(ID)==   RD_CL/))
+     close_is_on=any((/io_action(ID)==RD_CL,io_action(ID)==OP_RD_CL,&
+&                      io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==WR_CL/))
    end function
    !
    logical function read_is_on(ID)
@@ -238,8 +239,9 @@ module IO_m
    logical function write_is_on(ID)
      !
      integer :: ID
-     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_WR,&
-&                      io_action(ID)==   WR_CL,io_action(ID)==   WR,&
+     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
+&                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
 &                      io_action(ID)==WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
@@ -292,7 +294,8 @@ module IO_m
      ! Assign a new unit if the unit is not already open
      !
      if ( any((/ACTION==OP_RD_CL,ACTION==OP_WR_CL,&
-&               ACTION==OP_RD,   ACTION==OP_WR    /)) ) then
+&               ACTION==OP_APP_WR_CL,ACTION==OP_RD,&
+&               ACTION==OP_APP,ACTION==OP_WR/)) ) then
        ID=-1
        do i1=1,max_io_units
          if (io_unit(i1)==0) then

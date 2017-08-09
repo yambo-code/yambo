@@ -30,7 +30,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,           ONLY:levels,E_reset,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR_CL,serial_number
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:wf_splitter
  use interfaces,          ONLY:PARALLEL_live_message
@@ -123,7 +123,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        call c2y_wf(wf_disk,i_sp_pol,ik,ib_grp,trim(file_name_))
        !
        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
      enddo

@@ -28,7 +28,7 @@ netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_openmp_int_linalg@ @def_time_profile@ @def_memory_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -58,17 +58,17 @@ CFGFILES = config/setup config/Makefile config/report  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
-CORE     = yambo interfaces ypp
+CORE     = yambo ypp a2y p2y e2y c2y
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
 PH_PROJ  = yambo_ph ypp_ph 
 SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
 RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
 KERR_PROJ= yambo_kerr 
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
 EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
-INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -129,7 +129,7 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 core:      
-	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 ph-project:
 	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project:
@@ -139,12 +139,7 @@ rt-project:
 kerr-project:
 	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: 
-	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
-	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(TESTS)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(ALL) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
@@ -228,14 +223,23 @@ yambo_qed: libs
 #
 # Interfaces #
 #
-interfaces: libs
+a2y: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+c2y: libs
+	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+p2y: libs
+	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+if test "$(do_p2y)" = yes ; then \
 	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="-D@PW_CPP@"; $(mkx) ; \
 	fi
+e2y: libs
+	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
+	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 	@+if test "$(do_e2y)" = yes ; then \
 	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ; \
 	fi
@@ -496,7 +500,6 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
  cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef

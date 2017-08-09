@@ -98,20 +98,27 @@ module collision_el
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
-     YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
-     YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
-     YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
+     !
+     if (fft_size>0) then
+       YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
+       YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
+       YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
+     endif
      !
      if (present(NG)) then
-       if (present(GRADIENT)) then
-         YAMBO_ALLOC(ggw%rhotw,(3*NG))
-       else
-         YAMBO_ALLOC(ggw%rhotw,(NG))
+       if (NG>0) then
+         if (present(GRADIENT)) then
+           YAMBO_ALLOC(ggw%rhotw,(3*NG))
+         else
+           YAMBO_ALLOC(ggw%rhotw,(NG))
+         endif
        endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then
-       YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+       if (all((/NG_GAMP>0/))) then
+         YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+       endif
      endif
      !
    end subroutine

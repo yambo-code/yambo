@@ -116,10 +116,10 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
      do ic = E%nbf+1, X%ib(2)
        ifft=WF%index(iv,ik,1)
        offt=WF%index(ic,ik,1)
-       SigmaXC = dot_product(WF%c(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
+       SigmaXC = dot_product(WF%c(:,1,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
        !
        !rho_tw_rs(:) = conjg(WF%c(:,ifft))*WF%c(:,offt)
-       rho_tw_rs(:) = WF%c(:,ifft)*conjg(WF%c(:,offt))
+       rho_tw_rs(:) = WF%c(:,1,ifft)*conjg(WF%c(:,1,offt))
        !
        ! r -> G transform; 
        ! In order to be compliant with FFTQE -1 should be used in calls to FFT

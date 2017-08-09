@@ -54,6 +54,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
+ real(SP), allocatable :: E_tmp(:,:)
  !
  if (.not.io_SC) then
    io_SC_components=IO_NOT_ALLOWED
@@ -166,8 +167,14 @@ integer function io_SC_components(what,E_sc,ID)
      bands_to_load=SC_bands(2)
    endif
    !
+   if (bands_to_load>SC_bands(2)) then
+     YAMBO_ALLOC(E_tmp,(E_sc%nk,n_sp_pol))
+     E_tmp=-E_sc%E(SC_bands(2),:,:)
+   endif
+   !
    call io_bulk(ID,VAR="E_sc",VAR_SZ=(/SC_bands(2),nkibz,n_sp_pol/))
    call io_bulk(ID,R3=E_sc%E(:SC_bands(2),:,:))
+   !
    !
    if (bands_to_load>SC_bands(2)) then
      !
@@ -175,8 +182,12 @@ integer function io_SC_components(what,E_sc,ID)
      ! have enough bands (in wf_load and X_O_strengths).
      ! For the energies instead I need to shift the levels > SC_bands(2) (if any).
      !
+     E_tmp=E_tmp+E_sc%E(SC_bands(2),:,:)
+     !
      forall (ib=SC_bands(2)+1:bands_to_load) &
-     & E_sc%E(ib,:,:)=E_sc%Eo(ib,:,:)+ ( E_sc%E(SC_bands(2),:,:)-E_sc%Eo(SC_bands(2),:,:) )
+     & E_sc%E(ib,:,:)=E_sc%E(ib,:,:)+ E_tmp(:,:)
+     !
+     YAMBO_FREE(E_tmp)
      !
    endif
    !

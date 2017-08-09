@@ -32,8 +32,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim, l_pf_fxc,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
-&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions, l_nl_optics,&
-&                         l_sc_magnetic,l_kerr
+&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,l_nl_optics,&
+&                         l_sc_magnetic
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -53,7 +53,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,QP_ctl_E,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
@@ -664,7 +664,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _KERR
-   if(l_kerr) call initactivate(1,'EvalKerr AnHall')
+   call initactivate(1,'EvalKerr AnHall')
 #endif
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -755,7 +755,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0) then
        call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -789,7 +789,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then
-           call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+           call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
            call initactivate(1,'GWoIter')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -814,7 +814,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,'WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
-     call initactivate(1,'GEnSteps GEnRnge GDmRnge GreenFTresh GreenF2QP') 
+     call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
    !
@@ -1222,7 +1222,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! If optics with BS FXC I need to dump on X(3) the F_xc specs
      !
      if (all((/l_bs_fxc,l_optics,l_chi.or.l_bse,io_BS_Fxc_err==0/))) then
-       QP_ctl_E(1,:,:)=QP_ctl_E(2,:,:) 
        X(3)%ib= BS_bands
        X(3)%ehe=BS_eh_en
        X(3)%q0= BSS_q0
@@ -1277,18 +1276,18 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP
      if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
-       n_threads_K=n_threads
-       n_threads_X=n_threads
-       n_threads_DIP=n_threads
+       n_threads_K=0
+       n_threads_X=0
+       n_threads_DIP=0
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=n_threads
-     if (l_real_time)                                     n_threads_RT=n_threads
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
+     if (l_real_time)                                     n_threads_RT=0
 #endif
 #if defined _OPENMP && defined _SC && !defined _RT
-     if (l_eval_collisions)    n_threads_SE=n_threads
+     if (l_eval_collisions)    n_threads_SE=0
 #endif
 #if defined _OPENMP && defined _SC && defined _RT
-     if (l_eval_collisions)    n_threads_RT=n_threads
+     if (l_eval_collisions)    n_threads_RT=0
 #endif
      !
    end subroutine before_infile_write_setup 
@@ -1473,9 +1472,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            call initactivate(1,'optics')
            if (l_chi) call initactivate(1,'chi')
            if (l_bse) call initactivate(1,'bse')
-#if defined _KERR
-           l_kerr=l_bse
-#endif
+           !
            if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
            if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
            !

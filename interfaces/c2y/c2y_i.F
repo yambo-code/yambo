@@ -27,7 +27,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
  use parallel_m,          ONLY:ncpu,myid
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number
@@ -51,9 +51,9 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: file_name_
- integer           :: ID,io_err,ik,ib_grp
+ integer           :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer,     external :: c2y_file_name,io_DB1
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  !
  ! Presets
  !
@@ -106,28 +106,32 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l','done ==')
  endif
  !
- ! Splitting + SPIN support still not implemented (see a2y_wf.F for
- ! more details)
- !
- if (n_spin==1) call wf_splitter()
+ call wf_splitter()
  !
  call msg('s','== DB2 ...')
  !
- YAMBO_ALLOC(wf_disk,(2,wf_nb_io,wf_ncx,n_spin))
+ YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
  !
- do ik=1,nkibz
+ do i_sp_pol=1,n_sp_pol
    !
-   do ib_grp=1,wf_nb_io_groups
+   do ik=1,nkibz
      !
-     call c2y_wf(wf_disk,ik,ib_grp,trim(file_name_))
+     ifrag=ik+(i_sp_pol-1)*nkibz
      !
-     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=io_WF(ID,wf=wf_disk)
+     do ib_grp=1,wf_nb_io_groups
+       !
+       call c2y_wf(wf_disk,i_sp_pol,ik,ib_grp,trim(file_name_))
+       !
+       if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+       io_err=io_WF(ID,wf_disk)
+       !
+     enddo
      !
    enddo
    !
  enddo
+ !
  YAMBO_FREE(wf_disk)
  !
  ! Memory Overview

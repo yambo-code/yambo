@@ -23,16 +23,16 @@
 !      
 subroutine DIPOLE_overlaps(Xk,X)
  !    
- use pars,         ONLY:SP,cZERO,pi
- use LIVE_t,       ONLY:live_timing
- use R_lattice,    ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
- use vec_operate,  ONLY:k_periodic_idx
- use X_m,          ONLY:X_t,DIP_S
- use electrons,    ONLY:levels,n_spinor,n_sp_pol,n_spin
- use wrapper_omp,  ONLY:Vstar_dot_V_omp
- use wave_func,    ONLY:wf_ng
- use parallel_m,   ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
- use IO_m,         ONLY:IO_and_Messaging_switch
+ use pars,              ONLY:SP,cZERO,pi
+ use LIVE_t,            ONLY:live_timing
+ use R_lattice,         ONLY:k_map,bz_samp,WF_shifts,ng_closed,ng_vec
+ use vec_operate,       ONLY:k_periodic_idx
+ use X_m,               ONLY:X_t,DIP_S
+ use electrons,         ONLY:n_spinor,n_sp_pol
+ use wrapper_omp,       ONLY:Vstar_dot_V_omp
+ use wave_func,         ONLY:wf_ng
+ use IO_m,              ONLY:IO_and_Messaging_switch
+ use parallel_m,        ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
  !
  implicit none
  !
@@ -43,9 +43,9 @@ subroutine DIPOLE_overlaps(Xk,X)
  !
  integer           :: ikbz,ikbzp,is,isp,ib,ibp,id,i_spin,i_spinor,i_sp_pol,ik,ikp
  integer           :: idx_kp(3),idx_k(3),shift(3),max_step,istep
- complex(SP)       :: WF_symm(wf_ng,X%ib(2),n_spin)
- complex(SP)       :: WF_shifted(wf_ng,X%ib(2),n_spin)
- complex(SP)       :: WF_ik(wf_ng,X%ib(2),n_spin),WF_ikp(wf_ng,X%ib(2),n_spin)
+ complex(SP)       :: WF_symm(wf_ng,n_spinor,X%ib(2),n_sp_pol)
+ complex(SP)       :: WF_shifted(wf_ng,n_spinor,X%ib(2),n_sp_pol)
+ complex(SP)       :: WF_ik(wf_ng,n_spinor,X%ib(2),n_sp_pol),WF_ikp(wf_ng,n_spinor,X%ib(2),n_sp_pol)
  logical           :: USE_shifted_wf
  !
  ! This is needed to construct grot for all wf_ngs.
@@ -110,17 +110,13 @@ subroutine DIPOLE_overlaps(Xk,X)
        endif
        !
        do i_sp_pol=1,n_sp_pol
-         !
-         do ib=1,X%ib(2)
-           do ibp=1,X%ib(2)
-             do i_spinor=1,n_spinor
-               i_spin=i_sp_pol+i_spinor-1
-               DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &
-                       &  Vstar_dot_V_omp(wf_ng,WF_ik(:wf_ng,ib,i_spin),WF_shifted(:wf_ng,ibp,i_spin)) 
-             enddo
+         do ibp=1,X%ib(2)
+           do ib=1,X%ib(2)
+             !DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &
+             DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
+             &  Vstar_dot_V_omp(wf_ng*n_spinor,WF_ik(:wf_ng,:,ib,i_sp_pol),WF_shifted(:wf_ng,:,ibp,i_sp_pol)) 
            enddo ! ibp
          enddo ! ib
-         !
        enddo ! i_sp_pol
        !
      enddo ! istep

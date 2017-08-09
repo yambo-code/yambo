@@ -27,10 +27,6 @@ module YPP_real_time
  !
  implicit none
  !
- ! RT, merge QP DBs
- !
- real(SP) :: Z_input
- !
  ! RT
  !
  logical  :: l_RealTime

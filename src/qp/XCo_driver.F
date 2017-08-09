@@ -270,7 +270,7 @@ subroutine XCo_driver(E,k,Xk,q)
      ! Direct GAP
      !
      call section('+',trim(Vnlxc_kind)//' occupations report')
-     call REPORT_Occupations(E_dummy)
+     call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
      !
      ! Output 
      !

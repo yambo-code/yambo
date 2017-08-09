@@ -29,7 +29,7 @@ scalapack   = @def_scalapack@
 precision   = @def_dp@
 fft         = @def_fft@
 xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
@@ -56,16 +56,19 @@ includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/archive/keep-extlibs-stamp \
+           sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
-TARGETS  = yambo interfaces ypp
+CORE     = yambo interfaces ypp
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PROJECTS = yambo_ph yambo_magnetic yambo_sc yambo_rt yambo_qed yambo_kerr yambo_pl yambo_nl \
-           ypp_ph ypp_sc ypp_rt ypp_magnetic ypp_nl
+PH_PROJ  = yambo_ph ypp_ph 
+SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
+RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
+NL_PROJ  = yambo_nl ypp_nl
+KERR_PROJ= yambo_kerr 
 BROKEN   = yambo_electric
-DEBUG    = 
-EXE      = $(TARGETS) $(PROJECTS) $(BROKEN) $(DEBUG)
+TESTS    = 
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
 INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
@@ -101,8 +104,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBSLD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
-2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
@@ -115,31 +118,46 @@ YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface tddft pol_function bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian
+                     pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian 
+                     pol_function qp bse collisions hamiltonian 
 YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian nloptics 
+                     pol_function qp bse collisions hamiltonian nloptics 
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
-                     pol_function bse collisions hamiltonian nloptics 
+                     pol_function qp bse collisions hamiltonian nloptics 
 
 nothing: 
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-all:
-	for target in $(TARGETS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
-	for target in $(PROJECTS); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(DEBUG)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+core:      
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+ph-project:
+	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+sc-project:
+	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rt-project:
+	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+nl-project:
+	for target in $(NL_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+kerr-project:
+	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+all: 
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(TESTS)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
-ext-libs:
+ext-libs: 
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
@@ -283,7 +301,6 @@ clean:
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all remove_ext_libs
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
@@ -293,6 +310,7 @@ clean_all:
 	@$(xclean)
 remove_ext_libs: 
 	@$(lib_ext_remove)
+distclean: clean_all remove_ext_libs
 #
 #===========
 # Functions
@@ -302,12 +320,16 @@ remove_ext_libs:
 #
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo  " [stable] all";\
- for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
+ echo  " [all projects] all";\
+ echo  " [project-related suite] project (core, rt-project,...)";echo;\
+ for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
+ for target in $(PH_PROJ); do echo " [ph-project] $$target" ; done;echo;\
+ for target in $(SC_PROJ); do echo " [sc-project] $$target" ; done;echo;\
+ for target in $(RT_PROJ); do echo " [rt-project] $$target" ; done;echo;\
+ for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo
- for target in $(DEBUG); do echo  " [debug] $$target" ; done;echo
+ for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
+ for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
  for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
 endef
 #
@@ -316,7 +338,7 @@ endef
 define mksrc
  if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -332,7 +354,7 @@ endef
 define mk_ypp_src
  if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -390,7 +412,7 @@ define mkx
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
@@ -407,7 +429,7 @@ define mk_ypp_x
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
@@ -433,9 +455,9 @@ define objects_clean
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
- if test "$(debug)" = yes ; then \
- find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] Debug locks and directories ... done" ; \
+ if test "$(keep_objs)" = yes ; then \
+ find . -name '.objects__lock*' | xargs rm -fr ; \
+ echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean
@@ -471,19 +493,19 @@ define lib_ext_clean_all
  echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
 endef
 define sysincs_clean
- @if test -d $(prefix)/sys_incs/; then \
-   rm $(prefix)/sys_incs/* ; \
+ @if test -d $(prefix)/include/system/; then \
+   rm -rf $(prefix)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \
  fi 
 endef
 define lib_ext_remove
- @if test -f $(libs_prefix)/../driver/driver.c; then \
+ @if test -f $(libs_prefix)/../../driver/driver.c; then \
   echo "[CLEAN] Pre-compiled internal libraries ... done"; \
   rm -fr "$(libs_prefix)"; \
  fi
- @if test -f $(prefix)/sys_incs/../driver/driver.c; then \
+ @if test -f $(prefix)/include/system/../../driver/driver.c; then \
   echo "[CLEAN] Local include directory ... done"; \
-  rm -fr "$(prefix)/sys_incs"; \
+  rm -fr "$(prefix)/include/system"; \
  fi
 endef
 define lib_mod_clean
@@ -495,7 +517,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf*  nc*  iotk* fftw* h5* gif2h5 ; cd ..
+ cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

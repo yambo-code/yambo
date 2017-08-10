@@ -46,7 +46,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  XX=cZERO
  drho=cZERO
  !
- !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(2)
+ !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,4
      do i_spinor=1,n_spinor

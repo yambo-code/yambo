@@ -99,5 +99,11 @@ if test "x$CPP_TESTS_PASSED" = xno ; then
 fi
 #
 # AS CPPFLAGS are used (dunno why) in the MPI check of MPICC
-# we need to rename the CPP precompiler in C_AS_CPP
+# we need to rename the CPPFLAGS as CPPFLAGS_yambo
+
+CPPFLAGS_yambo=$CPPFLAGS
+CPPFLAGS=""
+#
+AC_SUBST(CPPFLAGS_yambo)
+#
 ])

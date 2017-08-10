@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -49,6 +49,7 @@
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP

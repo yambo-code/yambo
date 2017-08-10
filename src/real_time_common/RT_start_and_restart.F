@@ -41,7 +41,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
  use com,            ONLY:msg
- use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
@@ -63,7 +63,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -71,7 +71,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,ik_RT_rim,ik_E_rim,COM_,ib,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
  integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
@@ -89,7 +89,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Build Ho and save initial energies 
  !====================================
  !
- if(associated(E%Eo)) then
+ if(allocated(E%Eo)) then
    E_bare=E%Eo(:RT_bands(2),:,:)
  else
    E_bare=E%E(:RT_bands(2),:,:)
@@ -100,17 +100,17 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Reference Hartree and XC
  !==========================
  do i_sp_pol=1,n_sp_pol
- do ik=1,nXkibz
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
-   HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
-   M_tmp=cZERO
-   call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
-   XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-   !
- enddo
+   do ik=1,nXkibz
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,M_tmp,WF,'def') 
+     HARTREE0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+     M_tmp=cZERO
+     call V_real_space_to_H(ik,i_sp_pol,V_xc,        M_tmp,WF,'xc ') 
+     XC0(:,:,ik,i_sp_pol)=M_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     !
+   enddo
  enddo
  !
  ! In the driver loop both V_hartree_sc and V_xc corresponds to the [delta_rho] value. As here
@@ -245,6 +245,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
+ else
+   !
+   NE_time=0._SP
+   !
  endif
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
@@ -284,7 +288,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Store the starting Eigenvalues in Eo
  !======================================
  !
- if (.not.associated(E%Eo)) allocate(E%Eo(RT_bands(2),nXkibz,n_sp_pol))
+ if (.not.allocated(E%Eo)) then
+   YAMBO_ALLOC(E%Eo,(RT_bands(2),nXkibz,n_sp_pol))
+ endif
  E%Eo(1:RT_bands(2),1:nXkibz,1:n_sp_pol)=E%E(1:RT_bands(2),1:nXkibz,1:n_sp_pol)
  !
  ! Define RT_eh_en
@@ -315,14 +321,16 @@ subroutine RT_start_and_restart(E,k,q,X)
    N_Gr_descs=5
    !
    Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
-   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wc_E_ref(3,1)*HA2EV))
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
    Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_Wc(3,1,1)))//' '//&
-&                    trim(real2ch(QP_ctl_Wc(3,2,1)))//' '//trim(real2ch(QP_ctl_Wc(3,3,1)))
-   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wv_E_ref(3,1)*HA2EV))
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
    Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_Wv(3,1,1)))//' '//&
-&                    trim(real2ch(QP_ctl_Wv(3,2,1)))//' '//trim(real2ch(QP_ctl_Wv(3,3,1)))
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
    !
  else
    !
@@ -376,16 +384,16 @@ subroutine RT_start_and_restart(E,k,q,X)
            ik_E_rim=ik_RT_rim-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            if (l_RT_uses_E_DbGd) then
              G_lesser(ib,ib,ik_RT_rim,1) =cI*E%f_DbGd(ib,ik_E_rim,1)
-             if (associated(E%W))  E%W_DbGd(ib,ik_E_rim,1)=E%W(ib,ik,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_rim) =cI*(E%f_DbGd(ib,ik_E_rim,1)-E%df_DbGd(ib,ik_E_rim,1))
+             if (allocated(E%W))  E%W_DbGd(ib,ik_E_rim,1)=E%W(ib,ik,1)
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik_RT_rim) =cI*(E%f_DbGd(ib,ik_E_rim,1)-E%df_DbGd(ib,ik_E_rim,1))
            else
              G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
+             if (allocated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
            endif
          enddo
        enddo
      enddo
-     if (.not.(associated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
+     if (.not.(allocated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
      dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser

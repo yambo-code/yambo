@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
+subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  use pars,          ONLY:SP,cZERO
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V,V_by_V_plus_V
@@ -35,7 +35,7 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  !
  implicit none
  !
- integer    :: ivfft(n_spinor),icfft(n_spinor)
+ integer    :: iv_wf,ic_wf
  complex(SP):: rho(3),kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
@@ -46,12 +46,12 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  XX=cZERO
  drho=cZERO
  !
- !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+ !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(2)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,4
      do i_spinor=1,n_spinor
-       XX(1,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,ivfft(i_spinor)),kbv(:,i_spinor,i2,i1))
-       XX(2,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,icfft(i_spinor)),kbv(:,i_spinor,i2,i1))
+       XX(1,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,i_spinor,iv_wf),kbv(:,i_spinor,i2,i1))
+       XX(2,i_spinor,i2,i1)=V_dot_V(wf_ng,WF%c(:,i_spinor,ic_wf),kbv(:,i_spinor,i2,i1))
      enddo
    enddo
  enddo
@@ -70,4 +70,3 @@ subroutine DIPOLE_kb_sum(icfft,ivfft,rho,kbv)
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine
-

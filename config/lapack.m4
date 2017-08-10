@@ -6,6 +6,7 @@ AC_DEFUN([ACX_LAPACK], [
 AC_REQUIRE([ACX_BLAS])
 acx_lapack_ok=no
 
+LAPACK_LIBS=""
 AC_ARG_WITH(lapack_libs,
         [AC_HELP_STRING([--with-lapack-libs=<libs>], [Use LAPACK libraries <libs>],[32])])
 case $with_lapack_libs in
@@ -18,7 +19,6 @@ esac
 
 internal_lapack="no"
 compile_lapack="no"
-LAPACK_LIBS=""
 
 # Set fortran linker name of LAPACK function to check for.
 cheev="cheev"

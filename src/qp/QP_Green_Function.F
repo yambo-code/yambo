@@ -84,7 +84,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    i_spin=spin(QP_table(iqp,:))
    !
    Eo=E%E(ib,ik,i_spin) 
-   if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
+   if (allocated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
    if (GFdb_read_err<0) then
      if ( allocated(QP_Vnl_xc) ) then

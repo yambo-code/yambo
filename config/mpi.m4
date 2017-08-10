@@ -95,9 +95,6 @@ MPI_PATH=""
 
 if test "$mpibuild" = "yes"; then
   #
-  IFLAG=$ax_cv_f90_modflag
-  if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-  #
   SHADOW=`$CC --showme:incdirs 2> config_openmpi.err` ;
   SHADOW=`$CC -c -show         2> config_others.err ` ;
   #

@@ -61,7 +61,7 @@ if test "$acx_mpi_ok" = "yes"; then
   AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [acx_mpi_ok="yes"])],
                [C++], [AC_CHECK_FUNC(MPI_Init, [acx_mpi_ok="yes"])],
                [Fortran 77], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK([],[      call MPI_Init], [ac_mpi_ok="yes"
+                AC_TRY_LINK_FUNC(MPI_Init,[ac_mpi_ok="yes"
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])],
                [Fortran], [AC_MSG_CHECKING([for MPI_Init])
                 AC_TRY_LINK_FUNC(MPI_init,[acx_mpi_ok="yes"
@@ -84,6 +84,8 @@ fi],
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
         [AC_MSG_RESULT(no); acx_mpi_ok="no" ])
 fi])
+
+AC_LANG_CASE([Fortran 77],[acx_mpi_ok="yes"])
 
 AC_LANG_CASE([Fortran],
  [AC_MSG_CHECKING([for a working mpif.h])
@@ -120,8 +122,7 @@ AC_LANG_CASE([Fortran],
   call MPI_Init(ierr)]), 
   [HAVE_MPI_MOD=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
   [HAVE_MPI_MOD=0; acx_mpi_ok="no";  AC_MSG_RESULT(no)]);fi])
-#
-AC_LANG_CASE([Fortran 77],[acx_mpi_ok="yes"])
+
 #
 #
 mpibuild="no"

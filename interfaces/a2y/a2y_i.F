@@ -27,7 +27,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use LOGO,                ONLY:pickup_a_random
  use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
  use parallel_m,          ONLY:ncpu,myid
- use electrons,           ONLY:levels,E_reset,n_spin
+ use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
@@ -36,8 +36,11 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
  use pseudo,              ONLY:PP_free
+#if defined _MEM_CHECK 
+ use memory,              ONLY:MEM_manager
+#endif
+#include<memory.h>
  !
- implicit none
  type(levels)                 :: en 
  type(bz_samp)                :: k 
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -50,9 +53,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen) :: KSS_file_name
- integer           :: ID,io_err,ik,ib_grp
+ integer           :: ID,io_err,ik,ib_grp,i_sp_pol,ifrag
  integer,     external :: a2y_KSS_file_name,io_DB1,io_KB_abinit
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  !
  ! Presets
  !
@@ -63,6 +66,9 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! S/N
  !
@@ -123,29 +129,43 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
+ YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
  !
- do ik=1,nkibz
-   !
-   do ib_grp=1,wf_nb_io_groups
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,nkibz
      !
-     call a2y_wf(wf_disk,ik,ib_grp,trim(KSS_file_name))
+     ifrag=ik+(i_sp_pol-1)*nkibz
      !
-     if (n_atoms_species_max>0.and.ib_grp==1) then
-       if (ik==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-       if (ik> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)
-       io_err=io_KB_abinit(ID)
-     endif
+     do ib_grp=1,wf_nb_io_groups
+       !
+       call a2y_wf(wf_disk,i_sp_pol,ik,ib_grp,trim(KSS_file_name))
+       !
+       if (n_atoms_species_max>0.and.ib_grp==1) then
+         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+         if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+         io_err=io_KB_abinit(ID)
+       endif
+       !
+       if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+       io_err=io_WF(ID,wf_disk)
+       !
+     enddo
      !
-     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-     io_err=io_WF(ID,wf=wf_disk)
-     !
-   enddo
-   !
+  enddo
  enddo
- deallocate(wf_disk)
+ !
+ YAMBO_FREE(wf_disk)
+ !
  call PP_free()
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('s','... WF and PP done')
  call msg('s',' == A2Y completed ==')

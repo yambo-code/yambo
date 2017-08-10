@@ -4,20 +4,24 @@
 # - GENERAL CONFIGURATIONS -
 # 
 # [SYS] @build_os@@@build_cpu@
-# [SRC] @srcdir_path@
+# [SRC] @abs_top_srcdir@
+# [TGT] @prefix@
 # [BIN] @exec_prefix@/bin
 # [LIB] @extlibs_path@
-# [@DP_str@] Double precision
-# [@Red_str@] Redundant compilation  
-# [@TIME_profile_str@] Run-Time timing profile 
 #
 # [EDITOR] @editor@
 # [ MAKE ] @MAKE@
+#
+# [@DP_check@] Double precision
+# [@KEEP_OBJS_check@] Keep object files
+# [@TIME_profile_check@] Run-Time timing profile 
+# [@MEM_profile_check@] Run-Time memory profile 
+#
 # 
 # - PARALLEL SUPPORT -
 #
-# [@MPI_str@] MPI
-# [@OPENMP_str@] OpenMP
+# [@MPI_check@] MPI
+# [@OPENMP_check@] OpenMP
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
@@ -27,14 +31,14 @@
 #                 @IOTK_INCS@
 # [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
 #                 @ETSF_INCS@
-# [@NETCDF_str@] NETCDF  : @NETCDF_LIBS@ @NETCDF_LF_str@
-#                 @NETCDF_INCS@
-# [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_support@
+# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @NETCDF_info@
+#                 @NETCDFF_INCS@ @NETCDF_INCS@
+# [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@
 #                 @HDF5_INCS@
 #
 #  MATH LIBS
 #
-# [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_DESCRIPTION@
+# [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
 #                   @FFT_INCS@
 # [@BLAS_str@] BLAS      : @BLAS_LIBS@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
@@ -49,12 +53,12 @@
 #
 # [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
 #                   @LIBXC_INCS@
-# [@MPI_LIBS_str@] MPI       : @MPI_LIBS@ @MPI_LIBS_info@
+# [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
 #
 # - COMPILERS (FC kind= @FCKIND@) -
 #
-# [ CPP ] @CPP@ @CPPFLAGS@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 # [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
@@ -62,5 +66,4 @@
 # [ F77 ] @F77@ @FFLAGS@
 # [ F77U] @FUFLAGS@
 # [Cmain] @FCMFLAG@
-#
 #

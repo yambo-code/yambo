@@ -51,7 +51,7 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::Xk
@@ -61,7 +61,7 @@ subroutine XCo_local(E,Xk)
 #if defined _RT
  integer     ::nb
 #endif
- integer     ::i1,ifft,iwf,iwfp,iwf_sp1,iwfp_sp1,iwf_sp2,iwfp_sp2,ib,ibp,ik,i_sp
+ integer     ::i1,ifft,iwf,iwfp,ib,ibp,ik,i_sp_pol
  complex(SP) ::c_ws(fft_size,n_spin)
  !
  ! Spin support (collinear and not collinear)
@@ -70,14 +70,17 @@ subroutine XCo_local(E,Xk)
  !
  ! Allocation 
  !
- if (.not.allocated(V_xc))   allocate(V_xc(fft_size,n_spin))
- !
- if (n_spin>1.and..not.allocated(magn)) allocate(magn(fft_size,3))
+ if (.not.allocated(V_xc)) then
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+ endif
+ if (.not.allocated(magn)) then
+   YAMBO_ALLOC(magn,(fft_size,3))
+ endif
  !
  ! Precompiler options in case a non-DFT potential is required
  !
 #if defined _SC
- if (WF_KIND< 300) then
+ if (mod(WF_KIND,1000)< 300) then
    !
    ! ...LDA (and more) Vxc
    !
@@ -89,7 +92,7 @@ subroutine XCo_local(E,Xk)
    else
 #endif
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
-&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
+&                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT
    endif
 #endif
@@ -99,14 +102,18 @@ subroutine XCo_local(E,Xk)
    !
    ! ...SC EXX and EXX+LDA_C
    !
-   allocate(V_xc_sc(fft_size,n_spin),V_hartree_sc(fft_size,n_spin))
+   YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
+   YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
    SC_fft_size=fft_size
    call load_SC_components('V',COM_=REP,MODE_=VERIFY)
    !
    if (.not.compatible_SC_DB) call error('Incompatible potential database')
    !
    V_xc=V_xc_sc
-   deallocate(V_xc_sc,V_hartree_sc)
+   !
+   YAMBO_FREE(V_xc_sc)
+   YAMBO_FREE(V_hartree_sc)
+   !
  endif
 #endif
  !
@@ -147,17 +154,19 @@ subroutine XCo_local(E,Xk)
 !$omp parallel do default(shared), private(ifft)
 #endif
      do ifft=1,fft_size
-       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,iwfp)
+         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
      enddo
 #if defined _OPENMP
 !$omp end parallel do
 #endif
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
      !
    enddo
    !
    call PP_redux_wait(QP_Vxc)
+   !
+   call LOCAL_clean( )
    !
    return
    !
@@ -169,7 +178,7 @@ subroutine XCo_local(E,Xk)
  !
  if (n_spin==2) then
    !
-   allocate(V_xc_mat(fft_size,n_spin,n_spin))
+   YAMBO_ALLOC(V_xc_mat,(fft_size,n_spin,n_spin))
    !
    call Build_V_xc_mat(V_xc,V_xc_mat)
    !
@@ -192,46 +201,51 @@ subroutine XCo_local(E,Xk)
      !
      if (n_spinor==1) then
        !
-       i_sp=spin(QP_table(i1,:))
-       iwf =WF%index(ib,ik,i_sp)
-       iwfp=WF%index(ibp,ik,i_sp)
+       i_sp_pol=spin(QP_table(i1,:))
+       iwf =WF%index(ib,ik,i_sp_pol)
+       iwfp=WF%index(ibp,ik,i_sp_pol)
        !
-       c_ws(:,1)=V_xc_mat(:,i_sp,i_sp)*WF%c(:,iwfp)
+       c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%c(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
        !
      else
        !
-       iwf_sp1=WF%index(ib,ik,1)
-       iwf_sp2=WF%index(ib,ik,2)
-       iwfp_sp1=WF%index(ibp,ik,1)
-       iwfp_sp2=WF%index(ibp,ik,2)
+       iwf=WF%index(ib,ik,1)
+       iwfp=WF%index(ibp,ik,1)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,1,2)*WF%c(:,iwfp_sp2)
-       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,iwfp_sp1)+V_xc_mat(:,2,2)*WF%c(:,iwfp_sp2)
+       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,1,iwfp)+V_xc_mat(:,1,2)*WF%c(:,2,iwfp)
+       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp1),c_ws(:,1))+&
-&                 Vstar_dot_V_omp(fft_size,WF%c(:,iwf_sp2),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))+&
+&                 Vstar_dot_V_omp(fft_size,WF%c(:,2,iwf),c_ws(:,2))
        !
      endif
      !
    enddo
    !
-   deallocate(V_xc_mat)
+   YAMBO_FREE(V_xc_mat)
+   !
+   call LOCAL_clean( )
+   !
+   call PP_redux_wait(QP_Vxc)
+   !
+   return
    !
  endif
  !
- ! Clean
- !
+ contains
+   !
+   subroutine LOCAL_clean()
+     !
 #if defined _SC || defined _RT
- if(.not.(l_sc_run.or.l_real_time)) then
+     if (.not.(l_sc_run.or.l_real_time)) then
 #endif
-   deallocate(V_xc)
-   if(n_spin>1) deallocate(magn)
+       YAMBO_FREE(V_xc)
+       YAMBO_FREE(magn)
 #if defined _SC || defined _RT
- endif
+     endif
 #endif
- !
- call PP_redux_wait(QP_Vxc)
- !
+   end subroutine
+   !
 end subroutine

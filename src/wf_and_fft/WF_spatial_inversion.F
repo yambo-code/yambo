@@ -30,7 +30,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !  i_space_inv=1 (it is)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_spinor
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
  use com,           ONLY:msg
@@ -45,7 +45,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  ! Work Space
  !
- integer                 ::i1
+ integer                 ::i1,i_spinor
  real(SP),   allocatable ::rho_si(:),rho_nsi(:)
  complex(SP),allocatable ::cv(:)
  complex(SP)             ::mv(2)
@@ -56,7 +56,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  ! WF procedure
  !
- if (.not.associated(WF%c).or.WF%space/='R') return
+ if (.not.allocated(WF%c).or.WF%space/='R') return
  !
  ! When using wf's the space inv is tested using the first
  ! nsym/(i_time_rev+1) and all the nsym. If there is not
@@ -77,19 +77,21 @@ subroutine WF_spatial_inversion(en,Xk)
    !
 #if !defined _OPENMP
    !
-   forall(i1=1:fft_size) cv(i1)=conjg(WF%c(i1,1))*WF%c(i1,1)
+   forall(i1=1:fft_size) cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
    mv(1)=sum(rho_nsi(:)*cv(:))
    mv(2)=sum(rho_si(:)*cv(:))
    !
 #else
    !
-!$omp parallel do default(shared), private(i1), reduction(+:mv)
-   do i1=1,fft_size
-       cv(i1)=conjg(WF%c(i1,1))*WF%c(i1,1)
+   !$omp parallel do default(shared), private(i1,i_spinor), reduction(+:mv)
+   do i_spinor=1,n_spinor
+     do i1=1,fft_size
+       cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
        mv(1)=mv(1) +rho_nsi(i1)*cv(i1)
-       mv(2)=mv(2) +rho_si(i1)*cv(i1)
+       mv(2)=mv(2) +rho_si(i1) *cv(i1)
+     enddo
    enddo
-!$omp end parallel do
+   !$omp end parallel do
    !
 #endif
    !
@@ -99,7 +101,7 @@ subroutine WF_spatial_inversion(en,Xk)
      i_space_inv=0
    endif
    !
-   deallocate(rho_nsi,rho_si,cv)
+   deallocate(rho_nsi,rho_si)
  endif
  !
  if (i_space_inv==1) call msg('r','[SYMs] Inversion symmetry is used')

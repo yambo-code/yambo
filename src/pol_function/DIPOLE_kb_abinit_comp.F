@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
+subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  !
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
@@ -40,7 +40,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
  !
  type(bz_samp) :: Xk
  complex(SP)   :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
- integer       :: ik,i_spin
+ integer       :: ik,i_sp_pol
  ! 
  ! Work Space
  !
@@ -87,9 +87,9 @@ subroutine Dipole_kb_abinit_comp(ik,i_spin,Xk,kbv)
            !
            if(i2==0) cycle
            !
-           kbv(ig,1, 1 ,i2)= kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_spin)*e_iGR*sf
-           kbv(ig,1,2:4,i2)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_spin)+ &
-&                                 kb_Ylm(2:4)*pp_kb(ig,is,i_pp,i_spin))*e_iGR*sf
+           kbv(ig,1, 1 ,i2)= kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ig,is,i_pp,i_sp_pol)*e_iGR*sf
+           kbv(ig,1,2:4,i2)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ig,is,i_pp,i_sp_pol)+ &
+&                                 kb_Ylm(2:4)*pp_kb(ig,is,i_pp,i_sp_pol))*e_iGR*sf
            !
          enddo
        enddo

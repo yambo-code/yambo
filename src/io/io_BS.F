@@ -26,14 +26,17 @@ integer function io_BS(iq,X,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
- implicit none
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
+ !
+#include<memory.h>
  !
  type(X_t):: X 
  integer  :: iq,ID
@@ -50,6 +53,10 @@ integer function io_BS(iq,X,ID)
    call io_disconnect(ID,FORCE=.TRUE.)
    return
  endif
+ !
+#if defined _TIMING
+ call timing('io_BS',OPR='start')
+#endif
  !
  db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
@@ -117,10 +124,10 @@ integer function io_BS(iq,X,ID)
    if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
    if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
    if(read_is_on(ID)) then
-     allocate(tmp_map(n1*n2))
+     YAMBO_ALLOC(tmp_map,(n1*n2))
      call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
      BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-     deallocate(tmp_map)
+     YAMBO_FREE(tmp_map)
    endif
  endif
  !
@@ -133,5 +140,9 @@ integer function io_BS(iq,X,ID)
  if (io_BS< 0) BS_K_has_been_calculated_loaded=.FALSE.
  !
  call io_disconnect(ID)
+ !
+#if defined _TIMING
+ call timing('io_BS',OPR='stop')
+#endif
  !
 end function

@@ -102,6 +102,7 @@ while($line = <VER>) {
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;
+$Revision++;
 $Hash    =`git rev-parse --short HEAD`;
 $Revision+=10000 ;
 #

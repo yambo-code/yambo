@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -76,6 +76,7 @@
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
   {"WFs_map", "p","WF perturbative SOC mapping",0,0,0,0,0},
   {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+  {"fixsave", "z","Convert wave--functions to new format",0,0,0,0,0}, 
 #if defined _YPP_RT
   {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(m)anual]",0,0,1,0,0}, 
   {"RealTime","t","TD-polarization [(X)response,Tr(a)bs]",0,0,1,0,0}, 

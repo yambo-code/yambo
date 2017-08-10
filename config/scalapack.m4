@@ -37,36 +37,32 @@ internal_slk="no"
 internal_blacs="no"
 compile_slk="no"
 compile_blacs="no"
-
+#
 # Set fortran linker names of BLACS/SCALAPACK functions to check for.
 #
 blacs_routine="blacs_set"
 scalapack_routine="pcheev"
 mpi_routine=MPI_Init
-
+#
 # Parse configure options
 #
 if test x"$enable_par_linalg" = "xyes"; then
   enable_blacs="internal";
   enable_scalapack="internal"; 
-fi
-
-if test -d "$with_blacs_libs" ; then
+else
+  #
   case $with_blacs_libs in
-    yes | "") enable_blacs="internal" ;;
+    yes) enable_blacs="internal" ;;
     no) enable_blacs="no" ;;
     *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
   esac
-fi
-
-if test -d "$with_scalapack_libs" ; then
+  #
   case $with_scalapack_libs in
-    yes | "") enable_scalapack="internal" ;;
+    yes) enable_scalapack="internal" ;;
     no) enable_scalapack="no" ;;
     *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
   esac
 fi
-
 #
 if test "$mpibuild"  = "yes"; then
   #
@@ -88,7 +84,7 @@ if test "$mpibuild"  = "yes"; then
   #
   if test "$enable_scalapack" = "check" ; then
     acx_scalapack_save_LIBS="$SCALAPACK_LIBS"
-    LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS"
+    LIBS="$LIBS $FLIBS $LAPACK_LIBS $BLAS_LIBS $BLACS_LIBS"
     # First, check SCALAPACK_LIBS environment variable
     if test "x$SCALAPACK_LIBS" != x; then
       save_LIBS="$LIBS"; LIBS="$SCALAPACK_LIBS $LIBS"

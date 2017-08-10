@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_setup(en,k)
+subroutine QP_DBs_create_and_modify(en,k)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
@@ -29,9 +29,11 @@ subroutine QP_DBs_setup(en,k)
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
- use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states
+ use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
- implicit none
+ !
+#include<memory.h>
+ !
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: k
  !
@@ -39,27 +41,32 @@ subroutine QP_DBs_setup(en,k)
  !
  integer  :: io_QP_and_GF_err,ID,icheck,i1,ib,ik,ic,is
  integer  :: k_rng_lines,ikrange(2),ibrange(2)
- integer, external :: io_QP_and_GF
+ integer, external     :: io_QP_and_GF
  real(SP), allocatable :: QP_r_corrections(:,:)
  logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
  call QP_reset(qp)
- if(allocated(QP_state)) deallocate(QP_state)
+ !
+ YAMBO_FREE(QP_state)
  !
  call QP_state_table_setup(en)
  !
  qp%n_states=QP_n_states
  qp%nb      =QP_nb
  qp%nk      =QP_nk
+ ! 
+ call QP_alloc(qp)
+ write (*,*) QP%nb,QP%nk
+ stop
  !
- allocate(qp%table(QP_n_states,3+n_sp_pol-1),qp%Z(QP_n_states),qp%E(QP_n_states),qp%E_bare(QP_n_states),qp%k(qp%nk,3))
+ ! Check the input file
  !
  k_rng_lines=1
  icheck=1
  do while(icheck/=0)
-   if (allocated(QP_r_corrections)) deallocate(QP_r_corrections)
-   allocate(QP_r_corrections(k_rng_lines,7))
+   YAMBO_FREE(QP_r_corrections)
+   YAMBO_ALLOC(QP_r_corrections,(k_rng_lines,7))
    QP_r_corrections=0._SP
    call parser('QPkrange',QP_r_corrections)
    icheck=sum(QP_r_corrections(k_rng_lines,:))
@@ -68,7 +75,7 @@ subroutine QP_DBs_setup(en,k)
  enddo
  k_rng_lines=k_rng_lines-2
  !
- allocate(QP_done(QP_nb,QP_nb,QP_nk,n_sp_pol))
+ YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
  QP_done=.FALSE.
  !
  ic=1
@@ -97,11 +104,16 @@ subroutine QP_DBs_setup(en,k)
    enddo
  enddo
  !
- deallocate(QP_done)
+ YAMBO_FREE(QP_done)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
- deallocate(QP_r_corrections,qp%k,qp%table,qp%Z,qp%E_bare,qp%E)
+ YAMBO_FREE(QP_r_corrections)
+ YAMBO_FREE(qp%k)
+ YAMBO_FREE(qp%table)
+ YAMBO_FREE(qp%Z)
+ YAMBO_FREE(qp%E_bare)
+ YAMBO_FREE(qp%E)
  !
 end subroutine

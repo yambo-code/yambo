@@ -29,22 +29,22 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use pars,       ONLY:SP,cZERO,schlen
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
- use X_m,        ONLY:current_iq,self_detect_E_range,half_X_mat_only,eps_2_alpha,l_drude,&
+ use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_evaluated_for_all_Qs,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_integrated,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
 &                     X_use_lin_sys
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
-&                     QP_cg_percent,QP_n_states,&
-&                     QP_ctl_db,QP_ctl_interp_neigh,SC_E_threshold, &
+&                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
 &                     GWo_SC_done,GWo_iterations,&
-&                     COHSEX_use_empties,QP_ctl_E,QP_ctl_Wc,QP_ctl_Wv,QP_ctl_Z,On_Mass_Shell_approx,&
+&                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
+ use QP_CTL_m,   ONLY:QP_ctl_user,QP_ctl_db,QP_ctl_interp_neigh
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp
@@ -81,9 +81,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
- use memory_m,   ONLY:mem_reset
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
+#if defined _KERR
+ use drivers,    ONLY:l_kerr,l_anomalous_Hall
+#endif
 #if defined _PL
  use PHOTOLUM,   ONLY:PL_weights
 #endif
@@ -312,10 +314,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  eval_magn=.FALSE.
  !
- !memory
- !
- call mem_reset()
- !
  !wave_func
  !
  WF%b=0
@@ -349,7 +347,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
- half_X_mat_only=.FALSE.
+ X_FILL_UP_matrix_only=.FALSE.
  Dipole_Energy_treshold=1.E-5_SP/HA2EV
  Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
  Dipole_approach="G-space v"
@@ -366,12 +364,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- X_is_evaluated_for_all_Qs=.FALSE.
+ X_is_integrated=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
  l_X_terminator=.FALSE.
- X_terminator_E=1.5_SP
+ X_terminator_E=40._SP/HA2EV
  !
  !QPm
  !
@@ -403,10 +401,18 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  QP_ctl_db="none"
  QP_ctl_interp_neigh=1
- forall (i1=1:3,i2=1:2) QP_ctl_E(i1,:,i2)=(/0.,1.,1./)
- forall (i1=1:3,i2=1:2) QP_ctl_Wc(i1,:,i2)=0._SP
- forall (i1=1:3,i2=1:2) QP_ctl_Wv(i1,:,i2)=0._SP
- forall (i1=1:3,i2=1:2) QP_ctl_Z(i1,i2)=(1._SP,0._SP)
+ do i1=1,3
+   do i2=1,3
+     QP_ctl_user(i1,i2)%E=(/0.,1.,1./)
+     QP_ctl_user(i1,i2)%Wc=0._SP
+     QP_ctl_user(i1,i2)%Wv=0._SP
+     QP_ctl_user(i1,i2)%Wc_E_ref=0._SP
+     QP_ctl_user(i1,i2)%Wv_E_ref=0._SP
+     QP_ctl_user(i1,i2)%Wc_dos=0._SP
+     QP_ctl_user(i1,i2)%Wv_dos=0._SP
+     QP_ctl_user(i1,i2)%Z=(1._SP,0._SP)
+   enddo
+ enddo
  !
 #if defined _RT
  !
@@ -476,6 +482,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GS_xc_KIND=-1                   ! unknow 
  GS_exx_FRACTION=0.0             ! no EXX part  
  GS_exx_SCREENING=0.0            ! no screening
+ !
+#if defined _KERR
+ l_kerr=.false.
+ l_anomalous_Hall=.false.
+#endif
  !
 #if defined _PL
  PL_weights=(/1._SP,1._SP,1._SP/)

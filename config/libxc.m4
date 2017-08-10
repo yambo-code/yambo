@@ -43,7 +43,7 @@ fi
 if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
 if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
 
-LIBXC_INCS="$ax_cv_f90_modflag$libxc_incdir"
+LIBXC_INCS="$IFLAG$libxc_incdir"
 
 dnl Backup LIBS and FCFLAGS
 acx_libxc_save_LIBS="$LIBS"

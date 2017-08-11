@@ -27,7 +27,7 @@ subroutine NL_average_operator(Xen,Xk,V_bands,OMATRIX,TRANS,VALUE)
  !
  use pars,        ONLY:SP,cZERO,cONE
  use electrons,   ONLY:levels,n_sp_pol,spin_occ
- use real_time,   ONLY:RT_bands
+ use nl_optics,   ONLY:NL_bands
  use QP_m,        ONLY:QP_nk
  use wrapper_omp, ONLY:M_by_V_omp,Vstar_dot_V_omp
  use R_lattice,   ONLY:bz_samp,nXkbz
@@ -37,16 +37,16 @@ subroutine NL_average_operator(Xen,Xk,V_bands,OMATRIX,TRANS,VALUE)
  !
  type(levels), intent(in)  :: Xen
  type(bz_samp),intent(in)  :: Xk
- complex(SP), intent(in)   :: V_bands(RT_bands(2),Xen%nbf,QP_nk,n_sp_pol)
- complex(SP), intent(in)   :: OMATRIX(RT_bands(2),RT_bands(2),nXkbz,n_sp_pol)
+ complex(SP), intent(in)   :: V_bands(NL_bands(2),Xen%nbf,QP_nk,n_sp_pol)
+ complex(SP), intent(in)   :: OMATRIX(NL_bands(2),NL_bands(2),nXkbz,n_sp_pol)
  logical,     intent(in)   :: TRANS
  complex(SP), intent(out)  :: VALUE
  !
  ! Work Space
  !
  integer      :: iv,ik,is,ik_bz,i_star
- complex(SP)  :: V_tmp(RT_bands(2))
- complex(SP)  :: Hk(RT_bands(2),RT_bands(2),n_sp_pol)
+ complex(SP)  :: V_tmp(NL_bands(2))
+ complex(SP)  :: Hk(NL_bands(2),NL_bands(2),n_sp_pol)
  character(1) :: op
  !
  VALUE=cZERO
@@ -75,8 +75,8 @@ subroutine NL_average_operator(Xen,Xk,V_bands,OMATRIX,TRANS,VALUE)
    !   
    do iv=1,Xen%nbf
      do is=1,n_sp_pol
-       call M_by_V_omp(op,RT_bands(2),RT_bands(2),cONE,Hk(:,:,is),RT_bands(2),V_bands(:,iv,ik,is),1,cZERO,V_tmp,1)
-       VALUE=VALUE+spin_occ*Vstar_dot_V_omp(RT_bands(2),V_bands(:,iv,ik,is),V_tmp) 
+       call M_by_V_omp(op,NL_bands(2),NL_bands(2),cONE,Hk(:,:,is),NL_bands(2),V_bands(:,iv,ik,is),1,cZERO,V_tmp,1)
+       VALUE=VALUE+spin_occ*Vstar_dot_V_omp(NL_bands(2),V_bands(:,iv,ik,is),V_tmp) 
      enddo
    enddo
    !

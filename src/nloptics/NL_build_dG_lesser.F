@@ -28,7 +28,7 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  use pars,        ONLY:SP,cI,cZERO
  use electrons,   ONLY:levels,spin_occ,n_sp_pol
- use real_time,   ONLY:RT_bands,RT_nbands
+ use nl_optics,   ONLY:NL_bands
  use wrapper_omp, ONLY:Vstar_dot_V_omp
  use QP_m,        ONLY:QP_nk
  use parallel_m,  ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
@@ -39,8 +39,8 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  implicit none
  !
  type(levels), intent(in)  :: en
- complex(SP),  intent(in)  :: V_bands(RT_bands(2),en%nbf,QP_nk,n_sp_pol)
- complex(SP),  intent(out) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk)
+ complex(SP),  intent(in)  :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
  !
  ! Work Space
  !
@@ -55,8 +55,8 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  do ik=1,QP_nk
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   do i1=RT_bands(1),RT_bands(2)             
-     do i2=i1,RT_bands(2)
+   do i1=NL_bands(1),NL_bands(2)             
+     do i2=i1,NL_bands(2)
        dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf,V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
        dG(i2,i1,ik)=conjg(dG(i1,i2,ik))
      enddo
@@ -67,7 +67,7 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
- do i1=RT_bands(1),en%nbf
+ do i1=NL_bands(1),en%nbf
    dG(i1,i1,:)=dG(i1,i1,:)-cI*spin_occ
  enddo
  !

@@ -28,7 +28,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use collision_ext, ONLY:HXC_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
- use real_time,     ONLY:RT_bands
+ use nl_optics,     ONLY:NL_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,PAR_Q_range,PAR_n_bands,COMM_copy,PAR_index_copy,PAR_build_index
@@ -128,12 +128,12 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
    ! Bands
    ! 
-   call PARALLEL_index(PAR_IND_G_b,(/RT_bands(2)/),low_range=(/RT_bands(1)/),&
+   call PARALLEL_index(PAR_IND_G_b,(/NL_bands(2)/),low_range=(/NL_bands(1)/),&
 &                      COMM=PAR_COM_G_b_INDEX,CONSECUTIVE=.TRUE.)
    PAR_IND_G_b_ID=PAR_COM_G_b_INDEX%CPU_id
    PAR_nG_bands=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
    allocate(PAR_G_bands_index(PAR_n_bands(2)))
-   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
+   call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',NL_bands)
    !
    ! Copy to WF
    !
@@ -148,15 +148,15 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! Build Indexes
    !
    call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
-   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,RT_bands(2)-RT_bands(1)+1)-1 /),&
+   call PARALLEL_index(PAR_IND_B_mat_ordered,(/ UP_matrix_index(1,NL_bands(2)-NL_bands(1)+1)-1 /),&
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
    ! Non evolved bands loaded by all
    !
-   PAR_IND_WF_b%element_1D(:max(RT_bands(1)-1,1))=.TRUE.
+   PAR_IND_WF_b%element_1D(:max(NL_bands(1)-1,1))=.TRUE.
    !
-   do ib1=RT_bands(1),RT_bands(2)
-     do ib2=ib1,RT_bands(2)
-       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) then
+   do ib1=NL_bands(1),NL_bands(2)
+     do ib2=ib1,NL_bands(2)
+       if (PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-NL_bands(1)+1,ib2-NL_bands(1)+1)-1 )) then
          if (.not.PAR_IND_WF_b%element_1D(ib1)) then
            PAR_IND_WF_b%element_1D(ib1)=.TRUE.
            PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
@@ -181,7 +181,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
      ib2 = QP_table(i_qp,2)
      i_k = QP_table(i_qp,3)
      if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
-     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,RT_bands) ) ) cycle
+     if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,NL_bands) ) ) cycle
      PAR_nQP=PAR_nQP+1
      PAR_QP_index(i_qp)=PAR_nQP
      PAR_IND_QP%element_1D(i_qp)=.TRUE.

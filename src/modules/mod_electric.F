@@ -26,6 +26,8 @@ module electric
  use pars,       ONLY:SP,schlen,lchlen
  use electrons,  ONLY:levels
  !
+#include<memory.h>
+ !
  complex(SP)            :: NL_initial_P(3) ! in principle it can be different from zero
  !
  ! Variable for overlaps and Berry phase
@@ -45,7 +47,6 @@ module electric
    subroutine ELECTRIC_alloc(en)
      !
      use pars,           ONLY:SP
-     use memory_m,       ONLY:mem_est
      use electrons,      ONLY:levels,n_sp_pol
      use R_lattice,      ONLY:nXkbz
      !
@@ -53,23 +54,19 @@ module electric
      !
      type(levels), intent(in) :: en
      !
-     allocate(All_S_det(6,nXkbz,n_sp_pol))
-     call mem_est("All_S_det",(/size(All_S_det)/))
-     allocate(Sm1_plus(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
-     call mem_est("Sm1_plus",(/size(Sm1_plus)/))
-     allocate(Sm1_minus(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
-     call mem_est("Sm1_minus",(/size(Sm1_minus)/))
+     YAMBO_ALLOC(All_S_det,(6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_plus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_minus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
      !
    end subroutine ELECTRIC_alloc
    
    subroutine ELECTRIC_free
      !
-     use memory_m,       ONLY:mem_est
-     !
      implicit none
      !
-     deallocate(All_S_det,Sm1_plus,Sm1_minus)
-     call mem_est("All_S_det Sm1_plus Sm1_minus")
+     YAMBO_FREE(All_S_det)
+     YAMBO_FREE(Sm1_plus)
+     YAMBO_FREE(Sm1_minus)
      !
    end subroutine ELECTRIC_free
    !

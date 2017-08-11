@@ -1,4 +1,4 @@
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
 COMMON_objects = mod_hamiltonian.o mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o
 #endif
 #if defined _SC

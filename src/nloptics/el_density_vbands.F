@@ -50,7 +50,7 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
  use FFT_m,         ONLY:fft_size,fft_rot_r
  use wave_func,     ONLY:WF
  use QP_m,          ONLY:QP_nk
- use real_time,     ONLY:RT_bands
+ use nl_optics,     ONLY:NL_bands
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
@@ -59,11 +59,11 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
  type(levels), intent(in)  :: en       
  real(SP),     intent(out) :: rho(fft_size)
  integer,      intent(in)  :: lowest_band
- complex(SP),  intent(in)  :: V_input(RT_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)  :: V_input(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
  !
  ! Work Space 
  !
- integer     :: i1,ib,iv,ik,i_spin,rho_syms,i_wf,ir
+ integer     :: i1,ib,iv,ik,i_spinor,i_sp_pol,rho_syms,i_wf,ir
  real(SP)    :: rho_no_sym(fft_size)
  complex(SP) :: Val_bands(fft_size,en%nbf)
  !
@@ -77,7 +77,7 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
    !
    Val_bands=cZERO
    !
-   do ib=lowest_band,RT_bands(2)
+   do ib=lowest_band,NL_bands(2)
      !
      i_wf=WF%index(ib,ik,i_sp_pol)
      do iv=1,en%nbf

@@ -33,26 +33,24 @@ subroutine NL_start_and_restart(E,k,X)
  use pars,           ONLY:cZERO,rZERO,cONE,SP,LP
  use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
- use real_time,      ONLY:rho_reference,RT_bands
+ use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
  use X_m,            ONLY:X_t
  use hamiltonian,    ONLY:V_hartree_sc,E_bare,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use QP_m,           ONLY:QP_nk
- use memory_m,       ONLY:mem_est
  use global_XC,      ONLY:WF_kind,WF_xc_functional
  use fields,         ONLY:A_vecpot,A_ext,A_vecpot_reset
  use parallel_m,     ONLY:master_cpu
- use real_time,      ONLY:RT_P
- use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED, &
+ use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k
@@ -80,7 +78,7 @@ subroutine NL_start_and_restart(E,k,X)
  if(Correlation/=IPA) then
    !  
    call el_density_vbands(E,k,full_rho,V_bands,1)
-   call el_density_vbands(E,k,rho_reference,V_bands,RT_bands(1))
+   call el_density_vbands(E,k,rho_reference,V_bands,NL_bands(1))
    rho_n=full_rho
    !
  endif
@@ -108,24 +106,24 @@ subroutine NL_start_and_restart(E,k,X)
  !
  ! Build initial energies
  !=======================
- if(associated(E%Eo)) then
-   E_bare=E%Eo(:RT_bands(2),:,:)
+ if(allocated(E%Eo)) then
+   E_bare=E%Eo(:NL_bands(2),:,:)
  else
-   E_bare=E%E(:RT_bands(2),:,:)
+   E_bare=E%E(:NL_bands(2),:,:)
  endif
  !
  E_full=E_bare
  !
  ! Apply QP Corrections
  ! ====================
- do ib=RT_bands(1),RT_bands(2)
+ do ib=NL_bands(1),NL_bands(2)
    E_full(ib,1:QP_nk,1:n_sp_pol)=E_full(ib,1:QP_nk,1:n_sp_pol) &
 &                                 -E_bare(ib,1:QP_nk,1:n_sp_pol)+E%E(ib,1:QP_nk,1:n_sp_pol)
  enddo
  !
- do ib=1,RT_bands(1)-1
+ do ib=1,NL_bands(1)-1
    E_full(ib,1:QP_nk,1:n_sp_pol)=E_full(ib,1:QP_nk,1:n_sp_pol) &
-& -E_bare(RT_bands(1),1:QP_nk,1:n_sp_pol)+E%E(RT_bands(1),1:QP_nk,1:n_sp_pol)
+& -E_bare(NL_bands(1),1:QP_nk,1:n_sp_pol)+E%E(NL_bands(1),1:QP_nk,1:n_sp_pol)
  enddo
  !
  ! Evaluate Initial Polarization
@@ -133,7 +131,7 @@ subroutine NL_start_and_restart(E,k,X)
  !
  if(.not.l_use_DIPOLES) then
    if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
-   if(.not.associated(k%k_table))      call k_build_up_BZ_tables(k)
+   if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
    call POLARIZATION_output(E,k,X)
  endif
  !
@@ -149,8 +147,7 @@ subroutine NL_start_and_restart(E,k,X)
  !
  ! Restart
  ! ====================================
- allocate(freqs_done(n_frequencies))
- call mem_est("freqs_done",(/size(freqs_done)/),(/LP/))
+ YAMBO_ALLOC(freqs_done,(n_frequencies))
  !
  freqs_done=.false.
  !

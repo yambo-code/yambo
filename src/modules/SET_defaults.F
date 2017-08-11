@@ -95,7 +95,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
 #endif
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
 #endif
 #if defined _RT || defined _YPP_RT
@@ -115,6 +115,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+ use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&

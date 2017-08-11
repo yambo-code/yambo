@@ -36,11 +36,10 @@ subroutine NL_driver(en,k)
  use com,            ONLY:msg,error,warning
  use real_time,      ONLY:NE_steps,RT_step,NE_time,NE_steps
  use stderr,         ONLY:intc,real2ch
- use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:JPC_RT_IO_t
  use LIVE_t,         ONLY:live_timing
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k
@@ -65,7 +64,8 @@ subroutine NL_driver(en,k)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
  l_skip_pol_and_curr_IO=.false.
  !
- allocate(RT_P_probe(NE_steps,n_frequencies,3),Probe_frequency(n_frequencies))
+ YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
+ YAMBO_ALLOC(Probe_frequency,(n_frequencies))
  !
  ! Reads the polarization from dbs containing simulation at different frequencies 
  !
@@ -124,8 +124,9 @@ subroutine NL_driver(en,k)
    !
  case('SIN','SOFTSIN','ANTIRES')
      !  
-     allocate(X_effective(0:X_order,n_frequencies,3))
-     allocate(Susceptibility(0:X_order,n_frequencies,3),Harmonic_Frequency(0:X_order,n_frequencies))
+     YAMBO_ALLOC(X_effective,(0:X_order,n_frequencies,3))
+     YAMBO_ALLOC(Susceptibility,(0:X_order,n_frequencies,3))
+     YAMBO_ALLOC(Harmonic_Frequency,(0:X_order,n_frequencies))
      !
      do i_order=0,X_order
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
@@ -178,16 +179,18 @@ subroutine NL_driver(en,k)
      ! Plot
      !
      call plot_X_effective()
-     deallocate(X_effective,Susceptibility,Harmonic_Frequency)
+     YAMBO_FREE(X_effective)
+     YAMBO_FREE(Susceptibility)
+     YAMBO_FREE(Harmonic_Frequency)
      !
   case ('DELTA')
     !
-    allocate(RT_P_t(RT_conf%T_n_steps,3))
+    YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,3))
     RT_P_t(:,:) =RT_P_probe(:,i_Probe,:)
     if(trim(RT_conf%damping) /= "NONE") &
 &     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,3)
     call RT_X_LRR_real_field(en)
-    deallocate(RT_P_t)
+    YAMBO_FREE(RT_P_t)
      !
      ! OTHER CASES NOT YET WORKING
      !
@@ -195,7 +198,7 @@ subroutine NL_driver(en,k)
     call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
   end select
   !
-  deallocate(RT_P_probe)
+  YAMBO_FREE(RT_P_probe)
   !
 contains
    !

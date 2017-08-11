@@ -30,20 +30,19 @@ subroutine NL_initialize(E,k,q)
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
- use memory_m,       ONLY:mem_est
  use zeros,          ONLY:zero_dfl
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
-&                         Phase_LifeTime,Integrator_name,RT_bands,RT_dyn_step,NE_i_time,RT_potential
+&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
  use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: q,k
@@ -67,7 +66,7 @@ subroutine NL_initialize(E,k,q)
  !
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
  if(n_sp_pol/=1) call error(" Spin-polarized systems not full implemented")
- if(any(RT_bands(:)==0)) call error(" Error set RTBands == 0 ! ")
+ if(any(NL_bands(:)==0)) call error(" Error set RTBands == 0 ! ")
  !
  ! Integrator ! ============
  !
@@ -190,8 +189,7 @@ subroutine NL_initialize(E,k,q)
  ! Deallocate bare_qpg if not required
  !=============================
  if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
-   deallocate(bare_qpg)
-   call mem_est("bare_qpg")
+   YAMBO_FREE(bare_qpg)
  endif
  !
  ! Frequencies range
@@ -207,7 +205,7 @@ subroutine NL_initialize(E,k,q)
  JPC_RT_IO_t%INTERVAL_time     =RT_step
  JPC_RT_IO_t%INTERVAL_time_SAVE=RT_step
  call SETUP_RT_IO_type(JPC_RT_IO_t,.TRUE.)
- allocate(JPC_RT_IO_t%Time(NE_steps))
+ YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
    JPC_RT_IO_t%Time(NE_i_time)=Time

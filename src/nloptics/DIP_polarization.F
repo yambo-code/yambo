@@ -27,15 +27,14 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  use electrons,      ONLY:n_sp_pol,levels
  use D_lattice,      ONLY:a,DL_vol
  use R_lattice,      ONLY:bz_samp,k_map,nXkbz
- use real_time,      ONLY:RT_bands
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:DIP_bz
+ use nl_optics,      ONLY:DIP_bz,NL_bands
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none           
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
- complex(SP),   intent(in)  :: V_bands(RT_bands(2),Xen%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(NL_bands(2),Xen%nbf,QP_nk,n_sp_pol)
  complex(SP),   intent(out) :: Polarization(3)
  !
  ! Work Space
@@ -50,7 +49,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  !
  do id=1,3
      call NL_average_operator(Xen,Xk,V_bands, &
- &      cI*DIP_bz(id,1:RT_bands(2),1:RT_bands(2),1:nXkbz,1:n_sp_pol),.true.,Polarization(id))  
+ &      cI*DIP_bz(id,1:NL_bands(2),1:NL_bands(2),1:nXkbz,1:n_sp_pol),.true.,Polarization(id))  
  enddo
  !
  Polarization=Polarization/DL_Vol

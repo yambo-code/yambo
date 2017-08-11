@@ -27,7 +27,7 @@ module nl_optics
  use electrons,  ONLY:levels
  use real_time,  ONLY:NE_steps
  !
- implicit none
+#include<memory.h>
  !
  ! Long range correction field
  !
@@ -101,6 +101,7 @@ module nl_optics
  !
  real(SP) :: NL_er(2)
  real(SP) :: NL_estep
+ integer  :: NL_bands(2)
  integer  :: n_frequencies
  integer  :: n_freqs_todo
  !
@@ -127,7 +128,6 @@ module nl_optics
    subroutine NL_alloc(en)
      !
      use pars,           ONLY:SP
-     use memory_m,       ONLY:mem_est
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use hamiltonian,    ONLY:H_alloc,E_bare
@@ -143,60 +143,44 @@ module nl_optics
      !
      call H_alloc(en)
      !
-     allocate(Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
-     call mem_est("Ho_plus_Sigma",(/size(Ho_plus_Sigma)/),(/2*SP/))
+     YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(V_bands,(1:RT_bands(2),en%nbf,QP_nk,n_sp_pol))
      !
-     allocate(I_relax(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),en%nbf,QP_nk,n_sp_pol))
-     call mem_est("I_relax",(/size(I_relax)/),(/2*SP/))
-     !
-     allocate(V_bands(1:RT_bands(2),en%nbf,QP_nk,n_sp_pol))
-     call mem_est("V_bands",(/size(V_bands)/),(/2*SP/))
-     !
-     allocate(rho_reference(fft_size))
-     call mem_est("rho_reference",(/fft_size/),(/SP/))
-     !
-     allocate(full_rho(fft_size))
-     call mem_est("full_rho",(/fft_size/),(/SP/))
+     YAMBO_ALLOC(rho_reference,(fft_size))
+     YAMBO_ALLOC(full_rho,(fft_size))
      !
      if(Correlation==TDDFT.or.Correlation==JGM) then
-       allocate(V_xc_0(fft_size,n_spin))
-       call mem_est("V_xc_0",(/fft_size,n_spin/),(/SP/))
+       YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
      endif          
      !
      if(l_use_Hxc_collisions) then
-       allocate(dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
-       call mem_est("dG",(/size(dG)/),(/2*SP/))
-       allocate(RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
-       call mem_est("RT_Vnl_xc",(/size(RT_Vnl_xc)/),(/2*SP/))
+       YAMBO_ALLOC(dG,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
+       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
      endif          
      !
      ! Reference energies
      !
-     allocate(E_bare(1:RT_bands(2),QP_nk,n_sp_pol))
-     call mem_est("E_bare",(/size(E_bare)/))
+     YAMBO_ALLOC(E_bare,(1:RT_bands(2),QP_nk,n_sp_pol))
      E_bare=en%E(:RT_bands(2),:,:)
      !
-     allocate(E_full(1:RT_bands(2),QP_nk,n_sp_pol))
-     call mem_est("E_full",(/size(E_full)/))
+     YAMBO_ALLOC(E_full,(1:RT_bands(2),QP_nk,n_sp_pol))
      !
      if(l_use_DIPOLES) then
-       allocate(DIP_bz(3,RT_bands(2),RT_bands(2),nXkbz,n_sp_pol))
-       call mem_est("DIP_bz",(/size(DIP_bz)/))
+       YAMBO_ALLOC(DIP_bz,(3,RT_bands(2),RT_bands(2),nXkbz,n_sp_pol))
      else
        call  ELECTRIC_alloc(en)
      endif
      !
-     allocate(NL_P_t(NE_steps,3))
-     call mem_est("NL_P_t",(/size(NL_P_t)/))
-     !
-     allocate(E_tot_t(NE_steps,3),E_ext_t(NE_steps,3),E_ks_t(NE_steps,3))
-     call mem_est("E_tot_t E_ext_t",(/size(E_tot_t),size(E_ext_t),size(E_ks_t)/))
+     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+     YAMBO_ALLOC(E_tot_t,(NE_steps,3))
+     YAMBO_ALLOC(E_ext_t,(NE_steps,3))
+     YAMBO_ALLOC(E_ks_t,(NE_steps,3))
      !
    end subroutine NL_alloc
    
    subroutine NL_free
      !
-     use memory_m,       ONLY:mem_est
      use hamiltonian,    ONLY:H_free,E_bare
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
@@ -206,56 +190,42 @@ module nl_optics
      !
      call H_free()
      !
-     deallocate(Ho_plus_Sigma)
-     call mem_est("Ho_plus_Sigma")
-     !
-     deallocate(I_relax)
-     call mem_est("I_relax")
-     !
-     deallocate(V_bands)
-     call mem_est("V_bands")
+     YAMBO_FREE(Ho_plus_Sigma)
+     YAMBO_FREE(I_relax)
+     YAMBO_FREE(V_bands)
      !
      if(allocated(rho_reference)) then
-       deallocate(rho_reference)
-       call mem_est("rho_reference")
+       YAMBO_FREE(rho_reference)
      endif
      !
      if(allocated(full_rho)) then
-       deallocate(full_rho)
-       call mem_est("full_rho")
+       YAMBO_FREE(full_rho)
      endif
      !
-     deallocate(E_bare)
-     call mem_est("E_bare")
+     YAMBO_FREE(E_bare)
      !
      if(allocated(E_full)) then
-       deallocate(E_full)
-       call mem_est("E_full")
+       YAMBO_FREE(E_full)
      endif
      !
      if(allocated(V_xc_0)) then
-       deallocate(V_xc_0)
-       call mem_est("V_xc_0")
+       YAMBO_FREE(V_xc_0)
      endif
      !
      if(l_use_DIPOLES) then
-       deallocate(DIP_bz)
-       call mem_est("DIP_bz")
+       YAMBO_FREE(DIP_bz)
      else
        call ELECTRIC_free()
      endif
      !
-     deallocate(NL_P_t)
-     call mem_est("NL_P_t")
-     !
-     deallocate(E_tot_t,E_ext_t,E_ks_t)
-     call mem_est("E_tot_t E_ext_t E_ks_t")
+     YAMBO_FREE(NL_P_t)
+     YAMBO_FREE(E_tot_t)
+     YAMBO_FREE(E_ext_t)
+     YAMBO_FREE(E_ks_t)
      !
      if(l_use_Hxc_collisions) then
-       deallocate(dG)
-       call mem_est("dG")
-       deallocate(RT_Vnl_xc)
-       call mem_est("RT_Vnl_xc")
+       YAMBO_FREE(dG)
+       YAMBO_FREE(RT_Vnl_xc)
      endif
      !
    end subroutine NL_free

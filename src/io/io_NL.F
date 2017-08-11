@@ -31,7 +31,6 @@ integer function io_NL(ID)
  use RT_control,    ONLY:JPC_RT_IO_t
  use matrix_operate,ONLY:mat_r2c,mat_c2r
  use fields,        ONLY:Efield
- use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
@@ -41,7 +40,8 @@ integer function io_NL(ID)
  use timing_m,      ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
+ !
  integer,      intent(in) :: ID
  !
  integer, external    :: variables_NL
@@ -100,11 +100,11 @@ integer function io_NL(ID)
    !  
    if(.not.allocated(NL_P_t)) then
      !
-     allocate(NL_P_t(NE_steps,3))
-     call mem_est("NL_P_t",(/size(NL_P_t)/))
+     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
      !
-     allocate(E_tot_t(NE_steps,3),E_ext_t(NE_steps,3),E_ks_t(NE_steps,3))
-     call mem_est("E_tot_t E_ext_t",(/size(E_tot_t),size(E_ext_t),size(E_ks_t)/))
+     YAMBO_ALLOC(E_tot_t,(NE_steps,3))
+     YAMBO_ALLOC(E_ext_t,(NE_steps,3))
+     YAMBO_ALLOC(E_ks_t,(NE_steps,3))
      !
    endif
    !

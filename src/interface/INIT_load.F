@@ -82,7 +82,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,     ONLY:NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha
+ use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha
 #endif 
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
@@ -487,6 +487,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
 #if defined _NL
  !
+ ! Non liner optics
+ !
+ call it(defs,'NLBands',      '[NL] Bands',NL_bands)
  call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name,&
@@ -824,11 +827,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
    !TMP>
    subroutine TMP_mirror_bands( )
      use parser_m,       ONLY:parser
-     logical :: is_def(3)
+     logical :: is_def(4)
      integer :: bands_(2)
      call parser('SCbands',  is_def(1))
      call parser('RTbands',  is_def(2))
      call parser('COLLbands',is_def(3))
+     call parser('NLbands',  is_def(4))
 #endif
      !
 #if defined _SC 
@@ -837,8 +841,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT || defined _QED
      if (is_def(2)) bands_=RT_bands
 #endif
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
      if (is_def(3)) bands_=COLL_bands
+#endif
+#if defined _RT || defined _QED
+     if (is_def(4)) bands_=NL_bands
 #endif
      !
 #if defined _SC 
@@ -847,7 +854,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT || defined _QED
      RT_bands  =bands_
 #endif
-#if defined _SC || defined _RT || defined _QED
+#if defined _NL
+     NL_bands  =bands_
+     RT_bands  =bands_
+#endif
+#if defined _SC || defined _RT || defined _QED || defined _NL
      COLL_bands=bands_
      H_ref_bands=bands_     
      !

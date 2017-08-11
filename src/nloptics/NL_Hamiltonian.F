@@ -38,12 +38,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use X_m,            ONLY:X_t
  use fields,         ONLY:A_ext,A_vecpot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_field,rho_reference,&
-&                         Ho_plus_Sigma,RT_P,Phase_LifeTime,RT_Vnl_xc,RT_bands,RT_nbands         
+&                         Ho_plus_Sigma,RT_P,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF
+&                         SEX,HF,NL_bands
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -55,7 +55,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
- complex(SP),   intent(in)    :: V_bands(RT_bands(2),E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: V_bands(NL_bands(2),E%nbf,QP_nk,n_sp_pol)
  integer,       intent(in)    :: i_time
  !
  ! Working Space
@@ -66,14 +66,14 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  if(.not.l_use_Hxc_collisions) then
  !
- if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,RT_bands(1))
+ if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,NL_bands(1))
  !
  if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
  !
  ! I reconstruct the full density if necessary because both TDDFT 
  ! and JGM are not linear in rho_n and require the full density
  ! 
- if(RT_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
+ if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
  !
  if(eval_DFT) then
    !
@@ -185,7 +185,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Add Ho = T+V_ion+V_h+V_xc
    !==================
    !
-   forall(i1=RT_bands(1):RT_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
+   forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
    !
    if(l_use_DIPOLES) then
      !    
@@ -203,8 +203,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! GPL_EXCLUDE_START
    !
    if(l_use_Hxc_collisions) then
-     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol),&
-&                                            H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
+     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
+&                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
 
    endif
    !
@@ -217,8 +217,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Store the Hamiltonian
    ! =====================
-   Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_sp_pol)= &
-&        H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+   Ho_plus_Sigma(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol)= &
+&        H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
    !
  enddo  !---- loop on k-point
  enddo

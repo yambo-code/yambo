@@ -35,7 +35,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use SC,            ONLY:SC_bands
 #endif
 #if defined _NL
- use nl_optics,     ONLY:n_frequencies
+ use nl_optics,     ONLY:n_frequencies,NL_bands
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_bands
@@ -136,7 +136,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Real_Time"                       ) PAR_n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
 #endif
 #if defined _NL
- if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_bands=RT_bands
+ if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_bands=NL_bands
 #endif
  !
  ! QP states

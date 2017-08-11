@@ -44,8 +44,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  use pars,           ONLY:SP,cI,cZERO,cONE
  use com,            ONLY:error
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax 
- use real_time,      ONLY:RT_step,Ho_plus_Sigma,RT_bands
+ use nl_optics,      ONLY:RK2,EULEREXP,RK2EXP,INVINT,RK4,RK4EXP,HEUN,CRANK_NICOLSON,I_relax,&
+&                         NL_bands 
+ use real_time,      ONLY:RT_step,Ho_plus_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
  use fields,         ONLY:gauge_field
@@ -63,12 +64,12 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  type(X_t),            intent(in) :: X
  type(levels),         intent(in) :: E
  integer,              intent(in) :: i_time
- complex(SP),       intent(inout) :: V_bands(RT_bands(2),E%nbf,QP_nk,n_sp_pol)
+ complex(SP),       intent(inout) :: V_bands(NL_bands(2),E%nbf,QP_nk,n_sp_pol)
  !
  ! Working space
  !
  integer :: ik,ib,is
- complex(SP) :: K_all(RT_bands(2),E%nbf,QP_nk,n_sp_pol),Ktmp(RT_bands(2),E%nbf)
+ complex(SP) :: K_all(NL_bands(2),E%nbf,QP_nk,n_sp_pol),Ktmp(NL_bands(2),E%nbf)
  complex(SP), allocatable   :: U_tot(:,:,:,:,:),U_tmp(:,:)
  complex(SP), allocatable   :: V_tmp(:,:,:,:)
  real(SP) :: Time
@@ -212,7 +213,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
  case(HEUN) 
    !
-   allocate(V_tmp(RT_bands(2),E%nbf,QP_nk,n_sp_pol))
+   allocate(V_tmp(NL_bands(2),E%nbf,QP_nk,n_sp_pol))
    !
    ! Evaluate V(t+dt/3)
    !
@@ -256,9 +257,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
  case(RK4EXP)
    !
    !
-   allocate(U_tot(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),E%nbf,QP_nk,n_sp_pol))
-   allocate(U_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)))
-   allocate(V_tmp(RT_bands(2),E%nbf,QP_nk,n_sp_pol))
+   allocate(U_tot(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),E%nbf,QP_nk,n_sp_pol))
+   allocate(U_tmp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
+   allocate(V_tmp(NL_bands(2),E%nbf,QP_nk,n_sp_pol))
    !
    ! Evaluate V(t+dt/2)
    !
@@ -269,13 +270,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        do ib=1,E%nbf
          call EXP_op(U_tmp(:,:),Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is),RT_step*RK4_apar(1))
-         V_tmp(RT_bands(1):,ib,ik,is)=matmul(U_tmp,V_bands(RT_bands(1):,ib,ik,is))
+         V_tmp(NL_bands(1):,ib,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,ib,ik,is))
          U_tot(:,:,ib,ik,is) =RK4_bpar(1)*(Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is))
        enddo
      enddo
    enddo
    call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
-   if(RT_bands(1)/=1) V_tmp(1:RT_bands(1)-1,:,:,:)=V_bands(1:RT_bands(1)-1,:,:,:)
+   if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
@@ -289,13 +290,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        do ib=1,E%nbf
          call EXP_op(U_tmp(:,:),Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is),RT_step*RK4_apar(2))
-         V_tmp(RT_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(RT_bands(1):,:,ik,is))
+         V_tmp(NL_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,:,ik,is))
          U_tot(:,:,ib,ik,is) = U_tot(:,:,ib,ik,is) + RK4_bpar(2)*(Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is)) 
        enddo
      enddo
    enddo
    call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
-   if(RT_bands(1)/=1) V_tmp(1:RT_bands(1)-1,:,:,:)=V_bands(1:RT_bands(1)-1,:,:,:)
+   if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V'(t+dt/2) 
    !
@@ -308,13 +309,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do ik=1,QP_nk
        do ib=1,E%nbf
          call EXP_op(U_tmp(:,:),Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is),RT_step*RK4_apar(3))
-         V_tmp(RT_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(RT_bands(1):,:,ik,is))
+         V_tmp(NL_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,:,ik,is))
          U_tot(:,:,ib,ik,is) = U_tot(:,:,ib,ik,is) + RK4_bpar(3)*(Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is))
        enddo
      enddo
    enddo
    call PP_redux_wait(V_tmp,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
-   if(RT_bands(1)/=1) V_tmp(1:RT_bands(1)-1,:,:,:)=V_bands(1:RT_bands(1)-1,:,:,:)
+   if(NL_bands(1)/=1) V_tmp(1:NL_bands(1)-1,:,:,:)=V_bands(1:NL_bands(1)-1,:,:,:)
    !
    ! Recalculate H(t) using  V'(t+dt) 
    !
@@ -333,7 +334,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
        do ib=1,E%nbf
          U_tot(:,:,ib,ik,is) = U_tot(:,:,ib,ik,is) + RK4_bpar(4)*(Ho_plus_Sigma(:,:,ik,is)+I_relax(:,:,ib,ik,is))
          call EXP_op(U_tmp(:,:),U_tot(:,:,ib,ik,is),RT_step)
-         V_bands(RT_bands(1):,ib,ik,is)=matmul(U_tmp,V_tmp(RT_bands(1):,ib,ik,is))
+         V_bands(NL_bands(1):,ib,ik,is)=matmul(U_tmp,V_tmp(NL_bands(1):,ib,ik,is))
        enddo
      enddo
    enddo
@@ -341,7 +342,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
  case(RK4)
    !
-   allocate(V_tmp(RT_bands(2),E%nbf,QP_nk,n_sp_pol))
+   allocate(V_tmp(NL_bands(2),E%nbf,QP_nk,n_sp_pol))
    !
    ! Evaluate V(t+dt/2)
    !
@@ -426,21 +427,21 @@ end subroutine NL_Integrator
    !
    subroutine EXP_op(U,H,dT)
      use pars,           ONLY:SP,cI,cZERO,cONE
-     use real_time,      ONLY:RT_bands
+     use nl_optics,      ONLY:NL_bands
      implicit none
-     complex(SP), intent(out) :: U(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP), intent(in)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP), intent(out) :: U(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP), intent(in)  :: H(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      real(SP),    intent(in)  :: dT
      !
      ! Work Space
      !
-     complex(SP)  :: H_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)  :: H_tmp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      integer      :: i1
      !
      ! Expand U=exp(-i*dt*H) up to the fourth order
      !
      U=cZERO
-     do i1=RT_bands(1),RT_bands(2)
+     do i1=NL_bands(1),NL_bands(2)
        U(i1,i1)=cONE
      enddo
      !
@@ -470,19 +471,19 @@ end subroutine NL_Integrator
    !  
    subroutine EXP_step(K_out,V_in,H_in,I_in,nbf,dT)
      use pars,           ONLY:SP,cI,cZERO,cONE
-     use real_time,      ONLY:RT_bands
+     use nl_optics,      ONLY:NL_bands
      implicit none
      integer,     intent(in)  :: nbf
-     complex(SP), intent(in)  :: V_in(RT_bands(2),nbf)
-     complex(SP), intent(out) :: K_out(RT_bands(2),nbf)
-     complex(SP), intent(in)  :: H_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP), intent(in)  :: I_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nbf)
+     complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
+     complex(SP), intent(out) :: K_out(NL_bands(2),nbf)
+     complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
      real(SP),    intent(in)  :: dT
      !
      ! Work Space
      !
-     complex(SP)  :: U(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)  :: U(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP)  :: H(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      integer      :: i1,ib
      !
      ! Expand U=exp(-i*dt*H) up to the fourth (eigth) order
@@ -494,12 +495,12 @@ end subroutine NL_Integrator
        !
        call EXP_op(U,H,dT)
        !
-       K_out(RT_bands(1):,ib)=matmul(U,V_in(RT_bands(1):,ib))-V_in(RT_bands(1):,ib)
+       K_out(NL_bands(1):,ib)=matmul(U,V_in(NL_bands(1):,ib))-V_in(NL_bands(1):,ib)
        !
      enddo
 !$omp end parallel do
      !
-     if(RT_bands(1)/=1) K_out(:RT_bands(1)-1,:)=cZERO
+     if(NL_bands(1)/=1) K_out(:NL_bands(1)-1,:)=cZERO
      !
    end subroutine
    !
@@ -508,28 +509,28 @@ end subroutine NL_Integrator
      use linear_algebra, ONLY:INV,USE_LK
      use interfaces,     ONLY:LINEAR_ALGEBRA_driver
      use pars,           ONLY:SP,cI,cZERO,cONE
-     use real_time,      ONLY:RT_bands
+     use nl_optics,      ONLY:NL_bands
      !
      implicit none
      !
      integer,     intent(in)  :: nbf
-     complex(SP), intent(in)  :: V_in(RT_bands(2),nbf)
-     complex(SP), intent(out) :: V_out(RT_bands(2),nbf)
-     complex(SP), intent(in)  :: H_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP), intent(in)  :: I_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nbf)
+     complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
+     complex(SP), intent(out) :: V_out(NL_bands(2),nbf)
+     complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
      real(SP),    intent(in)  :: dT
      !
      ! Workspace
      !
-     complex(SP)   :: Hp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP)   :: Hm(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)   :: Hp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP)   :: Hm(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      integer       :: i1,ib
      !
 !$omp parallel do default(shared), private(ib,Hp,Hm)
      do ib=1,nbf
        !
        Hp=cZERO
-       forall(i1=RT_bands(1):RT_bands(2)) Hp(i1,i1)=cONE
+       forall(i1=NL_bands(1):NL_bands(2)) Hp(i1,i1)=cONE
        Hm=Hp
        !
        Hm=Hm-cI*dT/2._SP*(H_in+I_in(:,:,ib))
@@ -539,28 +540,28 @@ end subroutine NL_Integrator
        !
        Hm=matmul(Hm,Hp)
        !
-       V_out(RT_bands(1):,ib)=matmul(Hm,V_in(RT_bands(1):,ib))
+       V_out(NL_bands(1):,ib)=matmul(Hm,V_in(NL_bands(1):,ib))
        !
      enddo
 !$omp end parallel do
      !
-     if(RT_bands(1)/=1) V_out(:RT_bands(1)-1,:)=V_in(:RT_bands(1)-1,:)
+     if(NL_bands(1)/=1) V_out(:NL_bands(1)-1,:)=V_in(:NL_bands(1)-1,:)
      !
    end subroutine INVINT_step
    !
    subroutine RK_basestep(K_out,V_in,H_in,I_in,nbf)
      use pars,           ONLY:SP,cI,cZERO,cONE
-     use real_time,      ONLY:RT_bands
+     use nl_optics,      ONLY:NL_bands
      implicit none
      integer,     intent(in)  :: nbf
-     complex(SP), intent(in)  :: V_in(RT_bands(2),nbf)
-     complex(SP), intent(out) :: K_out(RT_bands(2),nbf)
-     complex(SP), intent(in)  :: H_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-     complex(SP), intent(in)  :: I_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nbf)
+     complex(SP), intent(in)  :: V_in(NL_bands(2),nbf)
+     complex(SP), intent(out) :: K_out(NL_bands(2),nbf)
+     complex(SP), intent(in)  :: H_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     complex(SP), intent(in)  :: I_in(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nbf)
      !
      ! Workspace
      !
-     complex(SP)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+     complex(SP)  :: H(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      integer      :: ib
      !
      K_out=cZERO
@@ -568,11 +569,11 @@ end subroutine NL_Integrator
 !$omp parallel do default(shared), private(ib,H)
      do ib=1,nbf
        H = H_in + I_in(:,:,ib)
-       K_out(RT_bands(1):,ib)=-cI*matmul(H,V_in(RT_bands(1):,ib))
+       K_out(NL_bands(1):,ib)=-cI*matmul(H,V_in(NL_bands(1):,ib))
      enddo
 !$omp end parallel do
      !
-     if(RT_bands(1)/=1) K_out(1:RT_bands(1)-1,:)=cZERO
+     if(NL_bands(1)/=1) K_out(1:NL_bands(1)-1,:)=cZERO
      !
    end subroutine RK_basestep
 

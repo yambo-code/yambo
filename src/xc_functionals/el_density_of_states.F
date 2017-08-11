@@ -63,8 +63,6 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  if(.not.allocated(Xen%Eo)) USE_Eo_=.FALSE.
  if (USE_the_DbGd)          USE_Eo_=.FALSE.
  !
- if (present(USE_Eo)) USE_Eo=USE_Eo_
- !
  do i_sp_pol=1,n_sp_pol
    !
    ik_ibz_done=.false.

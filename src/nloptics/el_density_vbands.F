@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2015 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG CA   
+! Authors (see AUTHORS file for details): MG CA DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -44,7 +44,7 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
  !
  !
  use pars,          ONLY:SP,cZERO,rZERO
- use electrons,     ONLY:levels,n_sp_pol,spin_occ,n_spin,n_spinor
+ use electrons,     ONLY:levels,n_sp_pol,spin_occ,n_spinor
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
@@ -54,6 +54,7 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
+ !
  type(bz_samp),intent(in)  :: Xk
  type(levels), intent(in)  :: en       
  real(SP),     intent(out) :: rho(fft_size)
@@ -64,11 +65,12 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
  !
  integer     :: i1,ib,iv,ik,i_spin,rho_syms,i_wf,ir
  real(SP)    :: rho_no_sym(fft_size)
- complex(SP) :: Val_bands(fft_size,en%nbf,n_spin)
+ complex(SP) :: Val_bands(fft_size,en%nbf)
  !
  rho=rZERO
  rho_no_sym=rZERO
  !
+ do i_sp_pol=1,n_sp_pol
  do ik=1,Xk%nibz
    !  
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
@@ -77,48 +79,28 @@ subroutine el_density_vbands(en,Xk,rho,V_input,lowest_band)
    !
    do ib=lowest_band,RT_bands(2)
      !
-     i_wf=WF%index(ib,ik,1)
+     i_wf=WF%index(ib,ik,i_sp_pol)
      do iv=1,en%nbf
-!$omp parallel do default(shared), private(ir)
-       do ir=1,fft_size
-         Val_bands(ir,iv,1)=Val_bands(ir,iv,1)+V_input(ib,iv,ik,1)*WF%c(ir,i_wf)
+!$omp parallel do default(shared), private(ir,i_spinor),collapse(2)
+       do i_spinor=1,n_spinor
+         do ir=1,fft_size
+           Val_bands(ir,iv)=Val_bands(ir,iv)+V_input(ib,iv,ik,i_sp_pol)*WF%c(ir,i_spinor,i_wf)
+         enddo
        enddo
 !$omp end parallel do
      enddo
-     !
-     if(n_spinor>1) then
-       !    
-       i_wf=WF%index(ib,ik,2)
-       !
-       do iv=1,en%nbf
-!$omp parallel do default(shared), private(ir)
-         do ir=1,fft_size
-           Val_bands(ir,iv,2)=Val_bands(ir,iv,2)+V_input(ib,iv,ik,1)*WF%c(ir,i_wf)
-         enddo
-!$omp end parallel do
-       enddo
-       !
-     endif
      !
    enddo
    !
    do iv=1,en%nbf
 !$omp parallel do default(shared), private(ir)
      do ir=1,fft_size
-       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*abs(Val_bands(ir,iv,1))**2._SP
+       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*abs(Val_bands(ir,iv))**2
      enddo
 !$omp end parallel do
    enddo
-   if(n_spinor>1) then
-     do iv=1,en%nbf
-!$omp parallel do default(shared), private(ir)
-       do ir=1,fft_size
-         rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*abs(Val_bands(ir,iv,2))**2._SP
-       enddo
-!$omp end parallel do
-     enddo
-   endif
    !
+ enddo
  enddo
  !
  call PP_redux_wait(rho_no_sym,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

@@ -48,14 +48,22 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  !
  integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
  real(SP)  :: el_dos_tmp(n_sp_pol),weight,f_occ,E
- logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only
+ logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only,USE_Eo_,USE_the_DbGd_
  !
  call parser('PrtOccOnly',l_prt_occ_only)
  !
  dos_value=0._SP
  !
- if(.not.allocated(Xen%Eo)) USE_Eo=.FALSE.
- if (USE_the_DbGd)          USE_Eo=.FALSE.
+ USE_Eo_=.FALSE.
+ if (present(USE_Eo)) USE_Eo_=USE_Eo
+ !
+ USE_the_DbGd_=.FALSE.
+ if (present(USE_the_DbGd)) USE_the_DbGd_=USE_the_DbGd
+ !
+ if(.not.allocated(Xen%Eo)) USE_Eo_=.FALSE.
+ if (USE_the_DbGd)          USE_Eo_=.FALSE.
+ !
+ if (present(USE_Eo)) USE_Eo=USE_Eo_
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -68,18 +76,18 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
        el_dos_tmp=0._SP
        f_occ=spin_occ
        !
-       if (.not.USE_the_DbGd) weight=Xk%weights(ik)
-       if (     USE_the_DbGd) weight=Xk%weights_DbGd(ik)
+       if (.not.USE_the_DbGd_) weight=Xk%weights(ik)
+       if (     USE_the_DbGd_) weight=Xk%weights_DbGd(ik)
        !
-       if (.not.USE_Eo) E=Xen%E(ib,ik,i_sp_pol)
-       if (     USE_Eo) E=Xen%Eo(ib,ik,i_sp_pol)
+       if (.not.USE_Eo_) E=Xen%E(ib,ik,i_sp_pol)
+       if (     USE_Eo_) E=Xen%Eo(ib,ik,i_sp_pol)
        !
        if ( abs(E-dos_E)>20._SP*dos_broadening ) cycle
        if (l_prt_occ_only ) f_occ=Xen%f(ib,ik,i_sp_pol)
        el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
 &                      Fermi_fnc_derivative(Xen%E(ib,ik,i_sp_pol)          -dos_E,dos_broadening)
        !
-       if (USE_the_DbGd) then
+       if (USE_the_DbGd_) then
          !
          do i1=2,Xk%nibz_mapped(ik)
            ik_rand=Xk%ibz_DbGd_map(ik_bz,i1)

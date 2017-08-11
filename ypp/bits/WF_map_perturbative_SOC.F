@@ -52,8 +52,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  character(lchlen)    :: core_io_path_save
  integer              :: n_deg_grp,mapped_in_group(2,En%nb*n_sp_pol),kpts_map(2,kpt%nibz)
- integer              :: i_k,i_b,i_b_to_map(2),i_b_low_lim(2),i_b_upp_lim(2),i_grp,i_b_SOC,i_wf,i_wf_SOC(2),&
-&                        i_sp_pol,n_miss,n_tot,i_sorted,i_deg,i_fft,i_fft_rot,i_k_SOC,i_k_SOC_bz,i_symm,i_star
+ integer              :: i_k,i_b,i_b_to_map(2),i_b_low_lim(2),i_b_upp_lim(2),i_grp,i_b_SOC,i_wf,i_wf_SOC,&
+&                        i_sp_pol,n_miss,n_tot,i_sorted,i_deg,i_fft,i_fft_rot,i_k_SOC,i_k_SOC_bz,i_symm,i_star,&
+&                        i_spinor
  integer              :: n_spin_save,n_spinor_save,n_sp_pol_save,fft_size_save,NB_to_map,NK_to_map,NB_up
  logical              :: group_already_mapped(En%nb*n_sp_pol),DB_is_ok,map_up,map_dw,kpoint_to_map(kpt%nibz)
  real(SP)             :: sq2,proj_up,proj_dw,mapping_tresh,min_sq(kpt%nibz),max_overlap,&
@@ -194,16 +195,16 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
    do i_b_SOC=2*SOC_bands_to_map(1)-1,2*SOC_bands_to_map(2)
      !
-     i_wf_SOC=WF_SOC%index(i_b_SOC,i_k_SOC,:)
+     i_wf_SOC=WF_SOC%index(i_b_SOC,i_k,1)
      !
      WF_SOC_rot=cZERO
      if(i_symm>1) then
        do i_fft=1,fft_size
          i_fft_rot=fft_rot_r(i_fft,i_symm)
-         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%c(i_fft_rot,i_wf_SOC(:)) )
+         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%c(i_fft_rot,:,i_wf_SOC) )
        enddo
      else
-       WF_SOC_rot=WF_SOC%c(:,i_wf_SOC(:))
+       WF_SOC_rot=WF_SOC%c(:,:,i_wf_SOC)
      endif
      !
      do i_fft=1,fft_size
@@ -249,16 +250,13 @@ subroutine WF_map_perturbative_SOC(kpt,En)
          !
          i_wf=WF%index(i_b,i_k,i_sp_pol)
          !
-         if(n_sp_pol==2) then
+         do i_spinor=1,2
            !
-           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_sp_pol),WF%c(:, i_wf )))**2
+           if (n_sp_pol==2 .and. i_spinor/=i_sp_pol) cycle
            !
-         else
+           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_spinor),WF%c(:,1,i_wf )))**2
            !
-           sq2=sq2+abs(dot_product(WF_SOC_rot(:, 1 ),WF%c(:, i_wf )))**2   &
-&                 +abs(dot_product(WF_SOC_rot(:, 2 ),WF%c(:, i_wf )))**2
-           !
-         endif
+         enddo
          !
        enddo ! i_b
        !

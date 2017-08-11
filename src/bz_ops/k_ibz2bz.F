@@ -43,12 +43,13 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! Clean
  !
- if (allocated(k%ptbz).and.(units=="d".or.k%units/=units)) then
+ if (units=="d") then
    YAMBO_FREE(k%ptbz)
-   if (units=="d") return
+   k%units=' '
+   return
  endif
+ !
  if (allocated(k%ptbz).and.k%units==units) return
- k%units=units
  !
  ! First the stars...
  !
@@ -57,6 +58,8 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  ! ...then the pts
  !
  YAMBO_ALLOC(k%ptbz,(k%nbz,3))
+ !
+ k%units=units
  !
  do i1=1,k%nbz
    !

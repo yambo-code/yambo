@@ -8,7 +8,7 @@
 package_string    = @PACKAGE_STRING@
 cpu         = @build_cpu@
 os          = @build_os@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 make        = @MAKE@
 ar          = @AR@
 arflags     = @AR_FLAGS@
@@ -37,7 +37,7 @@ srcdir      = @abs_top_srcdir@
 prefix      = @prefix@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
-sysinclude  = @prefix@/sys_incs
+sysinclude  = @prefix@/include/system
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@

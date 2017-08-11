@@ -116,7 +116,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
               do i_l=1,ph_modes
                 diagonal_xhi(iq,i_l,i_lambda)= diagonal_xhi(iq,i_l,i_lambda)- &
 &                           conjg(BS_mat(lambda,ikk+neh2))*BS_mat(lambda,ikk+neh1) * &
-&                           elph_gkkp(ik_bz1,i_l,ic2,ic1)/sqrt(2.*ph_freqs(i_l))
+&                           elph_gkkp(i_l,ic2,ic1,ik_bz1)/sqrt(2._SP*ph_freqs(i_l))
               enddo
               !
             endif
@@ -126,7 +126,7 @@ subroutine ELPH_excitonic_gkkp(Xk,lambda_s,n_lambda)
               do i_l=1,ph_modes
                 diagonal_xhi(iq,i_l,i_lambda)= diagonal_xhi(iq,i_l,i_lambda)+ &
 &                           conjg(BS_mat(lambda,ikk+neh2))*BS_mat(lambda,ikk+neh1) * &
-&                           elph_gkkp(ik_bz1,i_l,iv2,iv1)/sqrt(2.*ph_freqs(i_l))
+&                           elph_gkkp(i_l,iv2,iv1,ik_bz1)/sqrt(2._SP*ph_freqs(i_l))
               enddo
               !
             endif

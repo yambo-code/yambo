@@ -29,6 +29,7 @@ module BS
  !
  ! Modes and logicals
  !====================
+ logical :: l_BSE_minimize_memory
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -190,6 +191,8 @@ module BS
        ik_loop=BS_blk(iB)%ik
        ip_loop=BS_blk(iB)%ip
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
+       if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
+       if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%O_table)
      enddo

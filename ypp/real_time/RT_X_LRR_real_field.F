@@ -147,8 +147,8 @@ subroutine RT_X_LRR_real_field(en)
    if (i_field==1) FT_title=' E#1'
    if (i_field==2) FT_title=' E#2'
    !
-   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:,i_field),RT_conf%W_n_steps,&
-&                                E_t(:,i_field),RT_conf%T_n_steps,USE_FFT,1)
+   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:RT_conf%W_n_steps,i_field),RT_conf%W_n_steps,&
+&                                E_t(:RT_conf%T_n_steps,i_field),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
  YAMBO_FREE(E_t)
@@ -176,7 +176,7 @@ subroutine RT_X_LRR_real_field(en)
    ! Polarization
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),RT_conf%W_n_steps,&
-&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,USE_FFT,1)
+&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
  !

@@ -120,7 +120,12 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  PAR_NC_local=GW_NEQ_collisions%PAR_N
  if (allocated(GW_NEQ_collisions%IO_status)) then
-   PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
+   PAR_NC_local=0
+   do i_coll1=1,GW_NEQ_collisions%N
+     if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll1)) cycle
+     if (GW_NEQ_collisions%IO_status(i_coll1)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  call live_timing("Collisions",PAR_NC_local*PAR_nQ)
  !

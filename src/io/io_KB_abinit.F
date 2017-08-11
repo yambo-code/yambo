@@ -27,7 +27,7 @@ integer function io_KB_abinit(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
- use R_lattice,        ONLY:ng_vec
+ use R_lattice,        ONLY:ng_vec,nXkibz
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
@@ -38,20 +38,27 @@ integer function io_KB_abinit(ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
-#include<memory.h>
- integer,       intent(in) :: ID
- character(schlen)         :: VAR_NAME
- real(SP),      allocatable:: pp_disk(:,:,:)
- ! 
- ! Work Space
  !
- integer :: ik,i1,i_spin,var_size
+#include<memory.h>
+ !
+ integer,       intent(in) :: ID
+ !
+ ! Workspace
+ !
+ integer :: ik,ifrag,i1,i_sp_pol,var_size
  !
 #if defined _TIMING
  call timing('io_KB_abinit',OPR='start')
 #endif
  !
- ik=maxval(io_sec(ID,:))-1
+ ifrag=maxval(io_sec(ID,:))-1
+ if(ifrag<=nXkibz) then
+   ik=ifrag
+   i_sp_pol=1
+ else
+   ik=ifrag-nXkibz
+   i_sp_pol=2
+ endif
  !
  io_KB_abinit=io_connect(desc="kb_pp",type=0,ID=ID)
  if (io_KB_abinit/=0) goto 1
@@ -121,52 +128,26 @@ integer function io_KB_abinit(ID)
    !
  endif
  !
- if (ik==0) goto 1
+ if (ifrag==0) goto 1
  !
- if (ik==1) then
+ if (ifrag==1) then
    if (read_is_on(ID)) call PP_alloc_abinit()
    call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs))
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- YAMBO_ALLOC(pp_disk,(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
- !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,i_fragment=ifrag)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    pp_kbd=0._SP
  endif
  ! 
- do i_spin=1,n_sp_pol
-   ! 
-   if (write_is_on(ID)) pp_disk=pp_kb(:,:,:,i_spin)
-   !
-   if (ver_is_gt_or_eq(ID,revision=374)) then
-     call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
-   else
-     write (VAR_NAME,'(a,i4.4)') 'PP_KB_IK',ik
-     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
-   endif
-   call io_bulk(ID,R3=pp_disk)
-   !
-   if (read_is_on(ID)) pp_kb(:,:,:,i_spin) = pp_disk(:,:,:)
-   !
-   if (write_is_on(ID)) pp_disk=pp_kbd(:,:,:,i_spin)
-   !
-   if (ver_is_gt_or_eq(ID,revision=374)) then
-     call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
-   else
-     write (VAR_NAME,'(a,i4.4)') 'PP_KBD_IK',ik
-     call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=shape(pp_disk)) 
-   endif
-   call io_bulk(ID,R3=pp_disk)
-   !
-   if (read_is_on(ID)) pp_kbd(:,:,:,i_spin) = pp_disk(:,:,:)
-   ! 
- enddo
- !
- YAMBO_FREE(pp_disk)
+ call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
+ call io_bulk(ID,R3=pp_kb(:,:,:,i_sp_pol))
+ ! 
+ call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
+ call io_bulk(ID,R3=pp_kbd(:,:,:,i_sp_pol))
  !
 1 call io_disconnect(ID=ID)
  !

@@ -23,7 +23,7 @@
 !
 subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
@@ -45,6 +45,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
+ character(schlen)     :: title
  logical               :: l_DbGd
  !
  l_DbGd=K%nibz_FineGd>0
@@ -101,24 +102,30 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
  endif
  !
+ title=" "
+ if (l_f) title="f"
+ if (l_E) title=trim(title)//"E"
+ if (l_W) title=trim(title)//"W"
+ title=trim(title)//"@"//trim(what)
+ !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '[RT] Reference Time           [fs]: ',Time*AUT2FS)
- call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
+ call msg('r',    '['//trim(title)//'] Reference Time           [fs]: ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Bands range                  : ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
-   call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
-   call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
-   if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
+   call msg('r',  '['//trim(title)//'] Maximum occupations change   : ',df_Max)
+   call msg('r',  '['//trim(title)//'] N of carriers                : ',N_carriers(1))
+   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid): ',N_carriers(2))
  endif
  !
  if (l_E) then
-   call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change [ev]: ',dE_Max*HA2EV)
  endif
  !
- call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+ call msg('rn',  '['//trim(title)//'] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
  !
- call REPORT_OCCUPATIONS(E)
+ if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
  contains
   !

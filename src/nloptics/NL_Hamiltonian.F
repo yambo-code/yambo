@@ -48,6 +48,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
  use IO_m,           ONLY:IO_and_Messaging_switch
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -63,6 +66,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  integer     :: ik,i_sp_pol,is,i1
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
+ !
+#if defined _TIMING
+ call timing('NL Hamiltonian',OPR='start')
+#endif
  !
  if(.not.l_use_Hxc_collisions) then
  !
@@ -226,6 +233,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  call PP_redux_wait(Ho_plus_Sigma,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
  if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
+ !
+#if defined _TIMING
+ call timing('NL Hamiltonian',OPR='start')
+#endif
  !
 end subroutine NL_Hamiltonian
 

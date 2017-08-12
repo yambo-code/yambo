@@ -856,7 +856,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _NL
      NL_bands  =bands_
-     RT_bands  =bands_
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
      COLL_bands=bands_

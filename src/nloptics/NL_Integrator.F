@@ -130,7 +130,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t+dt/2) using  V(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>=[ (1 - dt/2 H(t +dt/2)) / ( 1 + dt/2 H(t+dt/2)) ] |V(t)> 
    ! see 
@@ -163,7 +169,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>=|V(t)> - i dt * H(t+dt/2) | V(t+dt/2)>
    !
@@ -195,7 +207,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step/2._SP,i_time,K_all)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>
    !
@@ -227,7 +245,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+dt/3) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(1),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! Evaluate V(t+2dt/3)
    !
@@ -240,7 +264,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+2dt/3) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*Heun_apar(2),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>
    !
@@ -280,7 +310,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! Evaluate V'(t+dt/2)
    !
@@ -300,7 +336,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V'(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! Evaluate V'(t+dt)
    !
@@ -319,7 +361,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V'(t+dt) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>
    !
@@ -360,7 +408,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(1),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! Evaluate V'(t+dt/2)
    !
@@ -379,7 +433,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V'(t+dt/2) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(2),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! Evaluate V'(t+dt)
    !
@@ -398,7 +458,13 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
    !
    ! Recalculate H(t) using  V'(t+dt) 
    !
+#if defined _TIMING
+ call timing('NL Integrator',OPR='stop')
+#endif
    call NL_Hamiltonian(E,k,q,X,Time+RT_step*RK4_apar(3),i_time,V_tmp)
+#if defined _TIMING
+ call timing('NL Integrator',OPR='start')
+#endif
    !
    ! final step |V(t+dt)>
    !
@@ -506,8 +572,7 @@ end subroutine NL_Integrator
    !
    subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
      !
-     use linear_algebra, ONLY:INV,USE_LK
-     use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+     use wrapper,        ONLY:M_by_M,M_by_V
      use pars,           ONLY:SP,cI,cZERO,cONE
      use nl_optics,      ONLY:NL_bands
      !
@@ -524,7 +589,14 @@ end subroutine NL_Integrator
      !
      complex(SP)   :: Hp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      complex(SP)   :: Hm(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-     integer       :: i1,ib
+     complex(SP)   :: tmp_det
+     integer       :: i1,ib,NL_nbands
+     logical       :: l_use_inv,l_use_lin
+     !
+     NL_nbands=(NL_bands(2)-NL_bands(1)+1)
+     !
+     l_use_inv=.false.
+     l_use_lin=.true.
      !
 !$omp parallel do default(shared), private(ib,Hp,Hm)
      do ib=1,nbf
@@ -535,17 +607,24 @@ end subroutine NL_Integrator
        !
        Hm=Hm-cI*dT/2._SP*(H_in+I_in(:,:,ib))
        Hp=Hp+cI*dT/2._SP*(H_in+I_in(:,:,ib))
-       !     
-       call LINEAR_ALGEBRA_driver(INV,M=Hp,lib_in=USE_LK)
        !
-       Hm=matmul(Hm,Hp)
+       if (l_use_inv) then
+         ! 
+         call SERIAL_inversion(NL_nbands,Hp,tmp_det,.false.)
+         call M_by_M('n','n',NL_nbands,Hm,Hp,Hm)
+         !
+       else if (l_use_lin) then
+         !
+         call SERIAL_lin_system(NL_nbands,NL_nbands,Hp,Hm)
+         !
+       endif
        !
-       V_out(NL_bands(1):,ib)=matmul(Hm,V_in(NL_bands(1):,ib))
+       call M_by_V('n',NL_nbands,Hm,V_in(NL_bands(1):,ib),V_out(NL_bands(1):,ib))
+       !
+       if(NL_bands(1)/=1) V_out(:NL_bands(1)-1,ib)=V_in(:NL_bands(1)-1,ib)
        !
      enddo
 !$omp end parallel do
-     !
-     if(NL_bands(1)/=1) V_out(:NL_bands(1)-1,:)=V_in(:NL_bands(1)-1,:)
      !
    end subroutine INVINT_step
    !

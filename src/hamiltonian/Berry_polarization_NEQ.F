@@ -31,6 +31,9 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:All_S_det,Sm1_plus,Sm1_minus
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none           
  type(bz_samp), intent(in)  :: Xk
@@ -42,6 +45,10 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  !
  integer       :: id,is,ik_bz
  complex(SP)   :: Polarization_red(3)
+ !
+#if defined _TIMING
+ call timing('NL Berry Pol NEQ',OPR='start')
+#endif
  !
  Sm1_minus=cZERO
  Sm1_plus =cZERO
@@ -71,5 +78,9 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  do id=1,3
    Polarization(id)=sum(Polarization_red(:)*a(:,id))/DL_Vol
  enddo
+ !
+#if defined _TIMING
+ call timing('NL Berry Pol NEQ',OPR='stop')
+#endif
  !
 end subroutine Berry_polarization_NEQ

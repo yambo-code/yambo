@@ -27,14 +27,12 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
- use real_time,      ONLY:RT_bands
+ use nl_optics,      ONLY:NL_bands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
  use X_m,            ONLY:DIP_S
  use wrapper    ,    ONLY:M_by_V
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use matrix_operate, ONLY:hermitian
- use linear_algebra, ONLY:INV,USE_LK
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
  !
@@ -44,7 +42,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  integer,      intent(in) :: i_sp
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
- complex(SP),  intent(in) :: V_bands(RT_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in) :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
  complex(SP), intent(out) :: S_det(6)
  complex(SP), intent(out) :: Sm1_plus (en%nbf,en%nbf,6)
  complex(SP), intent(out) :: Sm1_minus(en%nbf,en%nbf,6)
@@ -53,7 +51,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  integer     :: i2,idx(3),id,ikp,ikm
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
- complex(SP) :: V_tmp(RT_bands(2))
+ complex(SP) :: V_tmp(NL_bands(2)),tmp_det
  !
  S_det    =cZERO
  Sm1_plus =cZERO
@@ -84,15 +82,15 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
 !$omp parallel do default(shared), private(i2,V_tmp)
        do i2=1,en%nbf
          !
-         call M_by_V('C',RT_bands(2),RT_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
-&                        RT_bands(2),V_bands(:,i2,ikm_ibz,i_sp),1,cZERO,V_tmp,1)
+         call M_by_V('C',NL_bands(2),NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
+&                        NL_bands(2),V_bands(:,i2,ikm_ibz,i_sp),1,cZERO,V_tmp,1)
          !
-         call M_by_V('C',RT_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                        RT_bands(2),V_tmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
+         call M_by_V('C',NL_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                        NL_bands(2),V_tmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
        enddo
 !$omp end parallel do
        !
-       call LINEAR_ALGEBRA_driver(INV,M=Sm1_minus(:,:,id+(istep-1)*3),lib_in=USE_LK)
+       call SERIAL_inversion(en%nbf,Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.false.)
        !
        idx=k_map%k_map_inv(ikbz,:)
        idx(id)=idx(id)+istep
@@ -105,15 +103,15 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
 !$omp parallel do default(shared), private(i2,V_tmp)
        do i2=1,en%nbf
-         call M_by_V('N',RT_bands(2),RT_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
-&                        RT_bands(2),V_bands(:,i2,ikp_ibz,i_sp),1,cZERO,V_tmp,1)
+         call M_by_V('N',NL_bands(2),NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
+&                        NL_bands(2),V_bands(:,i2,ikp_ibz,i_sp),1,cZERO,V_tmp,1)
          !
-         call M_by_V('C',RT_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                      RT_bands(2),V_tmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
+         call M_by_V('C',NL_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                      NL_bands(2),V_tmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
        enddo
 !$omp end parallel do
        !
-       call LINEAR_ALGEBRA_driver(INV,M=Sm1_plus(:,:,id+(istep-1)*3),lib_in=USE_LK,det=S_det(id+(istep-1)*3))
+       call SERIAL_inversion(en%nbf,Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.true.)
        !
      enddo  
      !

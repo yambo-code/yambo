@@ -214,9 +214,11 @@ subroutine NL_driver(E,X,k,q)
    !
    l_dynamics_is_over=.false.
    !
-   NE_i_time=1
+   NE_i_time=0
    !
    do while(.not.l_dynamics_is_over)
+     !
+     NE_i_time=NE_i_time+1
      !
      Time=real(NE_i_time-1,SP)*RT_step
      !
@@ -234,8 +236,6 @@ subroutine NL_driver(E,X,k,q)
      call NL_Integrator(E,k,q,X,Integrator,NE_i_time,V_bands)
      !
      call live_timing(steps=1)
-     !
-     NE_i_time=NE_i_time+1
      !
      l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
      !

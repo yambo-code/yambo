@@ -85,7 +85,7 @@ module parallel_m
  !
  ! Communicators
  !
-integer            :: n_groups                =0     ! groups of active chains
+ integer            :: n_groups                =0     ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
  integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
  !

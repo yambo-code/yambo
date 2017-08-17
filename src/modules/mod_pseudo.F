@@ -24,7 +24,7 @@
 module pseudo
  !
  use pars,      ONLY:SP
- use electrons, ONLY:n_spin,n_spinor
+ use electrons, ONLY:n_sp_pol
  use D_lattice, ONLY:n_atomic_species
 #include <memory.h>
  !
@@ -54,11 +54,11 @@ module pseudo
    subroutine PP_alloc_abinit()
      use R_lattice,  ONLY:ng_vec
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
-     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
-     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin))
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    ! PWscf
@@ -67,9 +67,9 @@ module pseudo
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
      YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
      YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    subroutine PP_free()

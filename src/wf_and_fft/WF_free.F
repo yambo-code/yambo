@@ -56,7 +56,7 @@ subroutine WF_free(WF)
  endif
  WF%k=0
  WF%b=0
- WF%spin=0
+ WF%sp_pol=0
  WF%space=' '
  WF%to_load=.TRUE.
  !

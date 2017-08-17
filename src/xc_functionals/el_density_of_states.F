@@ -49,11 +49,17 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  !
  integer   :: i_sp_pol,ik_bz,ik,ik_rand,i1,ib
  real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E
- logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only
+ logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only,USE_Eo_,USE_the_DbGd_
  !
  call parser('PrtOccOnly',l_prt_occ_only)
  !
  dos_value=0._SP
+ !
+ USE_Eo_=.FALSE.
+ if (present(USE_Eo)) USE_Eo_=USE_Eo
+ !
+ USE_the_DbGd_=.FALSE.
+ if (present(USE_the_DbGd)) USE_the_DbGd_=USE_the_DbGd
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -62,7 +68,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
    do ik_bz=1,nkbz
      !
      ik=Xk%sstar(ik_bz,1)
-     if (.not.USE_the_DbGd) then
+     if (.not.USE_the_DbGd_) then
        if(ik_ibz_done(ik)) cycle
        ik_ibz_done(ik)=.true.
      endif
@@ -72,7 +78,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
        el_dos_tmp=0._SP
        f_occ=spin_occ
        !
-       if (USE_the_DbGd) then
+       if (USE_the_DbGd_) then
          !
          do i1=1,BZ_DbGd_nkpt(ik_bz)
            ik_rand=BZ_DbGd_table(ik_bz,i1,1)
@@ -85,7 +91,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
        else
          !
          E=Xen%E(ib,ik,i_sp_pol)
-         if (USE_Eo.and.allocated(Xen%Eo)) then
+         if (USE_Eo_.and.allocated(Xen%Eo)) then
            E=Xen%Eo(ib,ik,i_sp_pol)
          endif
          !
@@ -113,7 +119,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  enddo      ! i_sp_pol
  !
  dos_norm=1._SP/DL_vol
- if (USE_the_DbGd) dos_norm=dos_norm/real(sum(BZ_DbGd_nkpt))
+ if (USE_the_DbGd_) dos_norm=dos_norm/real(sum(BZ_DbGd_nkpt))
  !
  dos_value=dos_value*dos_norm
  !

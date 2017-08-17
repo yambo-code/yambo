@@ -130,7 +130,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
        rhotw_sum_TR = (0._SP,0._SP)
        Prefactor = 1.0_SP
        if (iv1.ne.iv2) Prefactor = 2.0_SP
-       SigmaXC = dot_product(WF%c(:,ifft),U(ik,iv2,:)) 
+       SigmaXC = dot_product(WF%c(:,1,ifft),U(ik,iv2,:)) 
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)
          l_is_TR = is>nsym/(i_time_rev+1)
@@ -139,8 +139,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%qs = (/1,1,1/)
          call scatter_Bamp(isc)
          !
-         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),ifft))*WF%c(fft_rot_r(:,is),offt)/EWeight
-         rhotw_ds(:)=WF%c(fft_rot_r(:,is),ifft)*conjg(WF%c(fft_rot_r(:,is),offt))/EWeight
+         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),1,ifft))*WF%c(fft_rot_r(:,is),1,offt)/EWeight
+         rhotw_ds(:)=WF%c(fft_rot_r(:,is),1,ifft)*conjg(WF%c(fft_rot_r(:,is),1,offt))/EWeight
          !
          rhotw_ds = rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = cZERO

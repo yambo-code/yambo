@@ -50,7 +50,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_coll,PAR_NC,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0
+ integer                  ::i_coll,PAR_NC_local,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch
@@ -85,16 +85,21 @@ subroutine COLLISIONS_momentum(E,k,q)
  call elemental_collision_alloc(I_grad_k,NG=QP_QED_ng,GRADIENT=.TRUE.,TITLE="COLL_P")
  call elemental_collision_alloc(I_grad_p,NG=QP_QED_ng,GRADIENT=.TRUE.,TITLE="COLL_P")
  !
- PAR_NC=P_collisions%PAR_N
+ PAR_NC_local=P_collisions%PAR_N
  if (allocated(P_collisions%IO_status)) then
-   PAR_NC=count(P_collisions%IO_status==-1)
+   PAR_NC_local=0
+   do i_coll=1,P_collisions%N
+     if (.not.P_collisions%PAR_IND%element_1D(i_coll)) cycle
+     if (P_collisions%IO_status(i_coll)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  !
  ! Write Database Header 
  !
  call COLLISIONS_linearize_and_IO("Momentum",0,P_collisions,P_COLL_element)
  !
- call live_timing("Collisions",PAR_NC*PAR_nQ)
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ)
  !
  QP_loop: do i_coll=1,P_collisions%N
    !

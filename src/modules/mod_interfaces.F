@@ -127,12 +127,12 @@ module interfaces
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,&
+&                     sp_pol_to_load,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
      type(WAVEs)           :: WF
-     integer,     optional :: spins_to_load(2)
+     integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
      character(*),optional :: title
      logical     ,optional :: impose_free_and_alloc

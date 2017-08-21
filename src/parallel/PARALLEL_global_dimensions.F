@@ -25,7 +25,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  use com,           ONLY:secnm
  use parallel_m,    ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                        PAR_EH_range,PAR_Dip_ib,PAR_X_ib,PAR_X_iq
+&                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
 #if defined _ELPH
@@ -56,6 +56,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  computing_Fock= ( l_HF_and_locXC .and. index(secnm,"Bare local and non-local Exchange-Correlation")/=0 )
  !
+ !
  ! K-pts
  !-------
  PAR_K_range=Xk%nibz
@@ -67,14 +68,14 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! COND bands
  !------------
- if (ENVIRONMENT=="DIPOLES")                          PAR_n_c_bands= (/E%nbf+1,PAR_Dip_ib(2)/)
+ if (ENVIRONMENT=="DIPOLES")                          PAR_n_c_bands= (/PAR_Dip_ib_lim(2),PAR_Dip_ib(2)/)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
  if (ENVIRONMENT=="Response_G_space")                 PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
- if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),E%nbm/)
+ if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),PAR_Dip_ib_lim(1)/)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space")                 PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)

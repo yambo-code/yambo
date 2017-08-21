@@ -368,7 +368,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! I transfer to all X types the X(3) used in the previous io's 
  !
  call X_var_setup
- Dip%ib=X(3)%ib
  !
  ! When no setup has been done nqibz=0
  !
@@ -976,6 +975,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
+ call Dip_check_ordered
+ !
  ! Report/Log Files
  !
  if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
@@ -1190,6 +1191,24 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine X_var_setup
    !
+   subroutine Dip_check_ordered
+     !
+     use X_m,  ONLY:l_X_terminator
+     implicit none
+     logical :: all_bands
+     !
+     call parser('DipBandsAll',all_bands)
+     !
+     Dip%bands_ordered=.not.all_bands
+#if defined _SC  || defined _RT
+     if ( l_sc_run.or.l_real_time ) Dip%bands_ordered=.false.
+#endif
+#if defined _QED 
+     if (l_elphoton_corr)           Dip%bands_ordered=.false.
+#endif
+     !
+   end subroutine Dip_check_ordered
+   ! 
    subroutine before_infile_write_setup 
      !
      ! After DB reading/stdin logicals I propose here values for the input file

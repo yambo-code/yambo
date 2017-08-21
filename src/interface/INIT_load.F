@@ -552,6 +552,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DipApproach',    '[DIP] [G-space v/R-space x/Covariant/Shifted grids]',Dip%approach,verb_level=V_resp)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
+ call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
  !
  call DIP_mirror_bands( )
  !
@@ -774,21 +775,38 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
    !
    subroutine DIP_mirror_bands( )
      use parser_m,       ONLY:parser
-     logical :: is_def(6)
+     logical :: is_def(9)
      integer :: i1,bands(2),tmp_bands(2)
+     !
+     if(initmode/=4) return
+     !
+     is_def=.false.
+     !
      call parser('BndsRnXx', is_def(1))
      call parser('BndsRnXs', is_def(2))
      call parser('BndsRnXd', is_def(3))
      call parser('BndsRnXp', is_def(4))
      call parser('DipBands', is_def(5))
      call parser('BSEBands', is_def(6))
+     call parser('RTBands',  is_def(7))
+     call parser('SCBands',  is_def(8))
+     call parser('COLLBands',is_def(9))
      !
      bands=-1
-     do i1=1,6
+     do i1=1,9
        if(.not.(is_def(i1))) cycle
        if(i1< 5) tmp_bands=X(i1)%ib
-       if(i1==5) tmp_bands=BS_bands
-       if(i1==6) tmp_bands=Dip%ib
+       if(i1==5) tmp_bands=Dip%ib
+       if(i1==6) tmp_bands=BS_bands
+#if defined _RT
+       if(i1==7) tmp_bands=RT_bands
+#endif
+#if defined _SC
+       if(i1==8) tmp_bands=SC_bands
+#endif
+#if defined _RT || defined _SC
+       if(i1==9) tmp_bands=COLL_bands
+#endif
        if(any((/bands==-1/))) then
          bands=tmp_bands
        else

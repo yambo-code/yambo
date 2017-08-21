@@ -35,13 +35,14 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  ! DIMENSIONS 
- use parallel_m,    ONLY:PAR_Dip_ib,PAR_X_ib,PAR_X_iq,PAR_n_c_bands,PAR_n_v_bands
+ use parallel_m,    ONLY:PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_c_bands,PAR_n_v_bands
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_elphoton_corr,l_life
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
+ use pars,          ONLY:SP
  !
 #include<memory.h>
  !
@@ -107,7 +108,20 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  if (present(X)) PAR_X_ib=X%ib
  if (present(X)) PAR_X_iq=X%iq
- if (present(Dip)) PAR_Dip_ib=Dip%ib
+ !
+ if (present(Dip)) then
+   if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
+     Dip%ib_lim(1)=E%nbm
+     Dip%ib_lim(2)=E%nbf+1
+     if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
+   else
+     Dip%ib_lim(1)=Dip%ib(2)
+     Dip%ib_lim(2)=Dip%ib(1)
+   endif
+   PAR_Dip_ib=Dip%ib
+   PAR_Dip_ib_lim=Dip%ib_lim
+ endif
+ !
  call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  !==========

@@ -156,6 +156,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
  l_sta_X = l_em1s
  !
+ if ( l_real_time .or. l_sc_run) i_X_kind=1
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
  if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
  if (                    l_ppa ) i_X_kind=4
@@ -164,7 +165,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=========
  !
  !if (l_dipoles)          call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
- if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
+ if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.&
+&    l_real_time.or.l_sc_run) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
  !
  !
  ! OPTICS

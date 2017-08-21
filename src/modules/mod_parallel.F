@@ -339,6 +339,7 @@ integer            :: n_groups                =0     ! groups of active chains
  integer            :: PAR_QP_range     = 0
  integer            :: PAR_Q_range(2)   = 0
  integer            :: PAR_Dip_ib(2)    = 0
+ integer            :: PAR_Dip_ib_lim(2)= 0
  integer            :: PAR_X_ib(2)      = 0
  integer            :: PAR_X_iq(2)      = 0
  integer            :: PAR_n_bands(2)   = 0

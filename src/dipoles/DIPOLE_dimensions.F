@@ -28,14 +28,6 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  use DIPOLES,        ONLY:DIPOLE_t
  use X_m,            ONLY:l_X_terminator
  use wave_func,      ONLY:wf_ng
-use com,             ONLY:warning
-#if defined _SC
- use drivers,        ONLY:l_real_time,l_sc_run
- use DIPOLES,        ONLY:P_square
-#endif
-#if defined _QED
- use drivers,        ONLY:l_elphoton_corr
-#endif
  !
  implicit none
  !
@@ -54,15 +46,6 @@ use com,             ONLY:warning
  Dip%ng=wf_ng
  Dip%q0=q0
  Dip%ib=bands
- !
- Dip%bands_ordered=.true.
- !
-#if defined _SC 
- if ( l_sc_run.or.l_real_time ) Dip%bands_ordered=.false.
-#endif
-#if defined _QED 
- if (l_elphoton_corr)           Dip%bands_ordered=.false.
-#endif
  !
  ! Set up band limits
  !

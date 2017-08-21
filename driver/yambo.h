@@ -80,7 +80,7 @@
   {"photolum", "u","Photo-Luminescence",0,0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf",   "n","Real-time dynamic [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf",   "n","NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _QED && !defined _ELPH

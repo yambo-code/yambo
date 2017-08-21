@@ -581,7 +581,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
- if (l_dipoles) call initactivate(1,'DipBands DipQpt DipApproach DipPDirect ShiftedPaths')
+ if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
  !
  if (l_optics.and.l_chi) then
    !

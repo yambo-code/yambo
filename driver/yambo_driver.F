@@ -38,7 +38,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
- use BS,            ONLY:BS_bands
  use parallel_m,    ONLY:myid,ncpu
  use it_m,          ONLY:it_reset,infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
@@ -80,7 +79,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Local Variables
  !
  integer           ::i_err,i_X_kind
- logical           ::l_sta_X,l_dyn_X,l_XCo
+ logical           ::l_sta_X,l_dyn_X,driver_now
  !
  ! Externals
  !
@@ -153,7 +152,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Logicals for \eps^-1
  !======================
  !
- l_dyn_X = (l_optics.and.l_chi) .or. l_em1d .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
+ l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
  l_sta_X = l_em1s
  !
  if ( l_real_time .or. l_sc_run) i_X_kind=1
@@ -164,102 +163,116 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
- !if (l_dipoles)          call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
- if (l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.&
-&    l_real_time.or.l_sc_run) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
+ driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time.or.l_sc_run
  !
+ if (driver_now) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
+ if (driver_now) call mem_manager_report
  !
  ! OPTICS
  !========
  !
- if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
-#if defined _MEM_CHECK 
- if (l_optics.and.l_chi) call MEM_manager("",REPORT="check")
-#endif
+ driver_now=l_optics.and.l_chi
+ !
+ if (driver_now) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
+ if (driver_now) call mem_manager_report
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- if (l_em1s.or.l_em1d.or.l_ppa) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ driver_now=l_em1s.or.l_em1d.or.l_ppa
  !
-#if defined _MEM_CHECK 
- if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_manager("",REPORT="check")
-#endif
+ if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
+ if (driver_now) call mem_manager_report
  !
  ! HARTREE-FOCK AND VXC
  !======================
  !
- l_XCo=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
+ driver_now=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
  !
- if (l_XCo)             call XCo_driver(en,k,Xk,q)
+ if (driver_now) call XCo_driver(en,k,Xk,q)
+ if (driver_now) call mem_manager_report
  !
  ! EXTENDED COLLISIONS (HF & COHSEX)
  !===================================
-#if defined _SC || defined _RT
- if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
-#endif
  !
-#if defined _MEM_CHECK 
- if (any((/l_eval_collisions,l_XCo/))) call MEM_manager("",REPORT="check")
+ driver_now=l_eval_collisions
+ !
+#if defined _SC || defined _RT
+ if (driver_now) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2),Dip)
+ if (driver_now) call mem_manager_report
 #endif
  !
  ! SELF-ENERGIES
  !===============
  !
- if (l_gw0.or.l_life)   call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
-#if defined _MEM_CHECK 
-  if (l_gw0.or.l_life)  call MEM_manager("",REPORT="check")
-#endif
+ driver_now=l_gw0.or.l_life
+ !
+ if (driver_now) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (driver_now) call mem_manager_report
  !
  ! BETHE-SALPETER
  !================
  !
- if ((l_optics.and.l_bse).or.l_bss) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
-#if defined _MEM_CHECK 
- if ((l_optics.and.l_bse).or.l_bss) call MEM_manager("",REPORT="check")
-#endif
+ driver_now=(l_optics.and.l_bse).or.l_bss
+ !
+ if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
+ if (driver_now) call mem_manager_report
  !
  ! GPL_EXCLUDE_START
  !
  ! ACFDT
  !=======
  !
- if (l_acfdt) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
+ driver_now=l_acfdt
+ !
+ if (driver_now) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
+ if (driver_now) call mem_manager_report
  !
 #if defined _SC
  !
  ! SC
  !====
- if (l_sc_run) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
-#endif
  !
-#if defined _MEM_CHECK 
-  if (l_sc_run) call MEM_manager("",REPORT="check")
+ driver_now=l_sc_run
+ !
+ if (driver_now) call SC_driver(X(:2),Xw(:2),Xk,en,k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
 #endif
  !
 #if defined _RT
  !
  ! RT
  !====
- if (l_real_time) call RT_driver(en,X(:2),k,q,Dip)
-#endif
  !
-#if defined _MEM_CHECK 
- if (l_real_time) call MEM_manager("",REPORT="check")
+ driver_now=l_real_time
+ !
+ if (driver_now) call RT_driver(en,X(:2),k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
 #endif
  !
 #if defined _ELPH
  !
  ! Electron-Phonon Hamiltonian
  !=============================
- if (l_elph_Hamiltonian) call ELPH_Hamiltonian(en,k,q)
+ !
+ driver_now=l_elph_hamiltonian
+ !
+ if (driver_now) call ELPH_Hamiltonian(en,k,q)
+ if (driver_now) call mem_manager_report
+ !
 #endif
  !
 #if defined _SCALAPACK 
  !
  ! SLK TESTER
  !============
- if (l_slk_test) call SLK_test(en,k,q)
+ !
+ driver_now=l_slk_test
+ !
+ if (driver_now) call SLK_test(en,k,q)
+ if (driver_now) call mem_manager_report
  !
 #endif
  !
@@ -273,12 +286,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
 #endif
  !
- ! Memory Overview
- !=================
 #if defined _MEM_CHECK 
  !
+ ! Memory Overview
+ !=================
  call section('*','Memory Overview')
- !
  call MEM_manager("",REPORT="final")
  !
 #endif
@@ -297,4 +309,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  call it_reset(-1)
  !
+ contains
+  !
+  subroutine mem_manager_report
+#if defined _MEM_CHECK 
+    call MEM_manager("",REPORT="check")
+#endif
+  end subroutine mem_manager_report
+  !
 end function

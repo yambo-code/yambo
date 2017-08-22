@@ -112,7 +112,7 @@ integer function io_DIPOLES(Dip,ID)
  if (read_is_on(ID)) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-#if defined _RD
+#if defined _RT
    if (l_real_time.and.n_spin>1) call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
 #endif
 #if defined _SC || defined _RT

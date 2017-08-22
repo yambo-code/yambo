@@ -164,7 +164,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
- driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time.or.l_sc_run
+ ! DS, 2017/08/22 sc_run case to be fixed
+ !
+ driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time !.or.l_sc_run
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
  if (driver_now) call mem_manager_report

@@ -94,6 +94,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  call section('*','Dipoles')
  !
+ ! DS 2017/08/22 : Case with io_DIP=.false. to be fixed
+ if (.not.io_DIP) then
+   call warning(' Cannot use DIP_P on the flight at the moment. Setting io_DIP=.true.')
+   io_DIP=.true.
+ endif
+ !
+ !
  ! Setup logicals 
  !================
  !
@@ -193,13 +200,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Clean up
  !
- ! DS 2017/08/22 : Case with io_DIP=.false. to be fixed
- !if (.not.io_DIP) return 
- !
- if (.not.io_DIP) then
-   call warning(' Cannot compute use DIP_P on the flight at the moment. Setting io_DIP=.true.')
-   io_DIP=.true.
- endif
+ if (.not.io_DIP) return 
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

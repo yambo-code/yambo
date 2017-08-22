@@ -57,7 +57,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  implicit none
  !
- type(levels) ::en,Xen,Ken
+ type(levels) ::en,Xen,Ken,DIPen
  type(bz_samp)::q,k,Xk
  ! 
  ! 4 response function & energies types: x s d p
@@ -102,6 +102,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  call bz_samp_reset(Xk)  
  call E_reset(Xen) 
  call E_reset(Ken) 
+ call E_reset(DIPen) 
  !
  ! INPUT FILE PARSING
  !====================
@@ -147,7 +148,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! RESPONSE FUNCTIONS QP CORRECTIONS (FROM INPUT FILE)
  !======================================================
  !
- call External_corrections(en,Xen,Ken,Xk,k,X)
+ call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! Logicals for \eps^-1
  !======================
@@ -165,14 +166,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time.or.l_sc_run
  !
- ! DS: 2017/08/22 
- ! Problem here: the dipoles depend on the exernal corrections, both QP (DIP_P) and RT (size)
- ! (RT) Possible workarounds is to consider the minimum of nbf / maximum of nbm
- ! (QP) I changed what is stored in DIP_P / P_square
- !      Now always the KS P / P2 are used. P_eff is defined at IO time
- !      Still to fix the case with io_DIP=.false.
- !
- if (driver_now) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
+ if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
  if (driver_now) call mem_manager_report
  !
  ! OPTICS

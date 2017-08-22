@@ -153,7 +153,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !======================
  !
  l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
- l_sta_X = l_em1s
+ l_sta_X = l_em1s .or. (l_bse.and..not.l_ppa)
  !
  if ( l_real_time .or. l_sc_run) i_X_kind=1
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2

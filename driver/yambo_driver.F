@@ -165,6 +165,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time.or.l_sc_run
  !
+ ! DS: 2017/08/22 
+ ! Problem here: the dipoles depend on the exernal corrections, both QP (DIP_P) and RT (size)
+ ! Possible workarounds:
+ !               - For the RT dependence consider the minimum of nbf / maximum of nbm
+ !               - For the QP dependence define a variable "DIP_P_correction" and
+ !                 different DIP_P / P_square to be stored in the ndb.dip_
+ !
  if (driver_now) call DIPOLE_driver(Xen, Xk, q, X(i_X_kind), Dip)
  if (driver_now) call mem_manager_report
  !

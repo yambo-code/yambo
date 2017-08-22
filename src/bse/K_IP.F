@@ -145,7 +145,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
    !
    !
-   call DIPOLE_IO(Xk,Dip,'read ',io_err)
+   call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err)
    call DIPOLE_expand_and_project(Xk,Dip)
    !
    BSS_Vnl_included=Dip%Vnl_included

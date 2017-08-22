@@ -112,7 +112,7 @@ subroutine X_irredux(Xo,iq,Xen,Xk,Xw,X,Dip)
  !=========
  if (iq==1) then
    call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
-   call DIPOLE_IO(Xk,Dip,'read ',io_err)
+   call DIPOLE_IO(Xk,Xen,Dip,'read ',io_err)
    call DIPOLE_expand_and_project(Xk,Dip)   
  endif
  !

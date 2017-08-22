@@ -124,7 +124,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
- call DIPOLE_IO(Xk,Dip,'check',io_err)
+ call DIPOLE_IO(Xk,Xen,Dip,'check',io_err)
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -172,7 +172,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   call DIPOLE_IO(Xk,Dip,'write',io_err)
+   call DIPOLE_IO(Xk,Xen,Dip,'write',io_err)
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -193,7 +193,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! Clean up
  !
- if (.not.IO_dip) return 
+ ! DS 2017/08/22 : Case with io_DIP=.false. to be fixed
+ !if (.not.io_DIP) return 
+ !
+ if (.not.io_DIP) then
+   call warning(' Cannot compute use DIP_P on the flight at the moment. Setting io_DIP=.true.')
+   io_DIP=.true.
+ endif
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

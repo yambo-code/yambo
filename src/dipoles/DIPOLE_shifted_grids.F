@@ -75,7 +75,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
- real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP,q_mod(3)
+ real(SP)                     :: Ev_m_Ec,q_mod(3)
  !
  !ioDB1 shifted grids
  !
@@ -176,12 +176,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            rho=cZERO
            !
-           if (allocated(Xen%Eo)) then 
-             Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
-             Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           else
-             Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           endif
+           Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
            if (abs(Ev_m_Ec)<=Dip%Energy_treshold .or. iv==ic) then
              call live_timing(steps=1)

@@ -117,7 +117,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !=========
  !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
- call DIPOLE_IO(k,Dip,'read ',io_err)
+ call DIPOLE_IO(k,E,Dip,'read ',io_err)
  !
  ! IO 
  !====

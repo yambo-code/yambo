@@ -77,7 +77,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES")
  !
  io_DIP=.TRUE.
- call DIPOLE_IO(Xk,Xbsk,'read',io_err)
+ call DIPOLE_IO(Xk,Xen,Xbsk,'read',io_err)
  call DIPOLE_expand_and_project(Xk,X_oscillators,BSS_q0)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))

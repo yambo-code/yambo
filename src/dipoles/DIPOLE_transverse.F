@@ -65,8 +65,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                                i_sp_pol,i_spinor,i_spin,wf_dim,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
- real(SP)                     :: Ev_m_Ec,W_,Dipole_Energy_treshold
- complex(SP)                  :: Ev_m_Ec_QP
+ real(SP)                     :: Ev_m_Ec,Dipole_Energy_treshold
  !
  !I/O and external functions
  !
@@ -119,7 +118,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! Main loop over k in IBZ
  !
- W_=0._SP
  !
  do ik=1,Xk%nibz
    !
@@ -174,11 +172,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
          enddo
          !
-         if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
-         !
          Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-         Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
-         !
          if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
          ! Evaluate <ivfft|   p   |icfft>
@@ -205,13 +199,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          if (l_eval_DIP_P) then
            !
-           ! See for this PRB 48, 11789 (1993), definition of p_eff
-           !
-           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
-           if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
-           endif
+           DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
            !
          endif
          !
@@ -244,12 +232,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !======
          !
          if (l_eval_DIP_P2) then
-           ! See for this PRB 48, 11789 (1993), definition of p_eff
-           if(.not.allocated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
-           if(     allocated(Xen%Eo)) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
-           endif
+           !
+           P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
+           !
          endif
          !
          !

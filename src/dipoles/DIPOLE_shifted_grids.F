@@ -72,7 +72,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  character(schlen)            :: grid_paths_vector(3)
  logical                      :: idir_not_done(3)
- integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
+ integer                      :: ik,ik_mem,ic_wf,iv_wf,ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
  real(SP)                     :: Ev_m_Ec,q_mod(3)
@@ -149,7 +149,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      !
      ! Load WFs first at k and then at k+q_iq
      ! 
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
 &           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      do iq = 1, num_shifted_grids
@@ -184,20 +184,18 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
              cycle
            endif
            !
+           iv_wf=WF_shifted%index(iv,ik,i_sp_pol)
+           ic_wf=WF%index(ic,ik,i_sp_pol)
+           !
+           if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+           if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
+           !
+           ! rho = < v,k+q | c,k >
+           !
            do i_spinor=1,n_spinor
              !
-             i_spin=i_sp_pol+i_spinor-1
-             ivfft(i_spinor)=WF_shifted%index(iv,ik,i_spin)
-             icfft(i_spinor)=WF%index(ic,ik,i_spin)
-             !
-             if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-             if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-             !
-             ! rho = < v,k+q | c,k >
-             !
-             !
-             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,ivfft(i_spinor)), &
-&                                                  WF%c(1:wf_ng_eff,icfft(i_spinor)))
+             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
+&                                                  WF%c(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !

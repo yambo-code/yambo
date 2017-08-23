@@ -201,7 +201,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
  else
    !
-   call msg('nrsn','[RL indx] X grid is not uniform.  Gamma point only.')
+   call msg('nrsn','[RL indx] X grid is not uniform. Gamma point only.')
    call q_shadows(.true.)
    gamma_point_only=.true.
    bse_scattering=.false.
@@ -312,7 +312,18 @@ subroutine bz_samp_indexes(k,Xk,q)
      if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
    enddo
    !
-   if (any(qindx_S(ikibz,:,:)==0)) call error(' Null transition detected [qindx_S]')
+   if (any(qindx_S(ikibz,:,:)==0)) then
+     !
+     call warning(' Null transition detected [qindx_S]. Gamma point only.')
+     call q_shadows(.true.)
+     !
+     Xk_grid_is_uniform=.false.
+     bse_scattering=.false.
+     gamma_point_only=.true.
+     !
+     exit
+     !
+   endif
    !
    call live_timing(steps=1)
    !

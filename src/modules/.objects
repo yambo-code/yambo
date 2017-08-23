@@ -17,7 +17,7 @@ KERR_objects = mod_KERR.o
 PL_objects = mod_PHOTOLUM.o
 #endif
 #if defined _ELPH 
-ELPH_objects = mod_ELPH.o
+ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 #endif
 objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_SLK.o  \
        mod_linear_algebra.o mod_wrapper.o mod_wrapper_omp.o mod_drivers.o mod_FFT.o\

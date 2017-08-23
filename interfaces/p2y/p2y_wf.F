@@ -21,40 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
- subroutine p2y_wf(wf_disk,ikibz, ib_grp)
+ subroutine p2y_wf(wf_disk,i_sp_pol,ikibz, ib_grp)
  !
  ! Reads the WFs for single k-point ikibz and group of bands
  ! associated with group ib_grp
  !
- use P2Y,                   ONLY:pw_unit
- use pars,                  ONLY:SP,DP
- use electrons,             ONLY:n_bands, n_spin
- use R_lattice,             ONLY:nkibz
+ use pars,                  ONLY:SP,DP,cZERO
+ use electrons,             ONLY:n_bands,n_spinor
  use wave_func,             ONLY:wf_ncx,wf_nc_k, wf_igk, wf_nb_io
  use mod_com2y,             ONLY:verboseIO
-#if defined _P2Y_EXPORT
- use pw_export
-#else
  use qexml_module
-#endif
  use pw_data,               only: n_spin_pw_, gamma_only_
+ !
  implicit none
  !
- integer,  intent(in)   :: ikibz, ib_grp
- real(SP), intent(out)  :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
+ integer,     intent(in)   :: i_sp_pol,ikibz, ib_grp
+ complex(SP), intent(out)  :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
  !
  ! Work Space
  !
- integer        :: ib, ikeff, ispin, npwk, ierr, ig
+ integer        :: ib, i_spinor, npwk, ierr
  integer        :: ic, ib1, ib2, n_b
  !
  ! holds the double precision pwscf record
  !
-#if defined _P2Y_EXPORT
- complex(DP)    :: wf_disk_DP(wf_nc_k(ikibz))
-#else
- complex(DP)   :: wf_disk_DP(wf_ncx, wf_nb_io)
-#endif
+ complex(DP)   :: wf_disk_DP(wf_ncx,wf_nb_io)
 
  !---------------------------------------------------------------------*
  !    Set up main data
@@ -62,39 +53,19 @@
 
  npwk = wf_nc_k(ikibz)
  if(gamma_only_) npwk=(npwk-1)/2+1 ! PWs actually read from file
- wf_disk=(0._SP,0._SP)
+ wf_disk=cZERO
  !
  ! Set the range of bands to be read from disk (ib1, ib2, n_b)
  !
  call set_band_block
 
  !---------------------------------------------------------------------*
- !    P2Y_EXPORT
- !---------------------------------------------------------------------*
-#if defined _P2Y_EXPORT
- !
- ! Note that EXPORT does not support block splitting
- !
- if (ikibz==1) call pw_wfcstart(pw_unit)
- do ispin=1,n_spin
-   ikeff = ikibz + (ispin-1)*nkibz
-   call pw_wfcscan( pw_unit, ikeff ) ! scan for this ikibz
-   do ib = 1, n_bands
-     call pw_wfcread(pw_unit,ib,npwk,wf_disk_DP)
-     wf_disk(1,ib,1:npwk,ispin) =  real( wf_disk_DP(1:npwk) )
-     wf_disk(2,ib,1:npwk,ispin) = aimag( wf_disk_DP(1:npwk) )
-     !call make_real_wf(ib,i,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispinor),wf_nc_k(ikibz))
-   enddo
-   call pw_wfcscanend(pw_unit,ikeff)
- enddo
- if (ikibz==nkibz) call pw_wfcstop(pw_unit)
-
- !---------------------------------------------------------------------*
  !    PW 3.1 and 3.1.1
  !---------------------------------------------------------------------*
-#elif defined _P2Y_V31  || defined _P2Y_V311
+#if defined _P2Y_V31  || defined _P2Y_V311
 
- do ispin = 1, n_spin
+ do i_spinor = 1, n_spinor
+     ispin=i_sp_pol+i_spinor-1
      call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=ispin, &
 &       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
      if(ierr.ne.0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
@@ -108,21 +79,21 @@
  !---------------------------------------------------------------------*
 #elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
- do ispin = 1, n_spin
+ do i_spinor = 1, n_spinor
 
      select case(n_spin_pw_)
      case(1)
        call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
 &         igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
        if(ierr.ne.0) call errore('qexml_read_wfc',' Check version of PW data!',ierr)
-     case(2) ! note ipol=ispin
-       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ipol=ispin, &
+     case(2) ! note ipol=i_sp_pol
+       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ipol=i_sp_pol, &
 &         igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr.ne.0) call errore('qexml_read_wfc',' Check ipol/PWscf version!',ierr)
-     case(4) ! note ispin=ispin
-       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=ispin, &
+       if(ierr.ne.0) call errore('qexml_read_wfc',' Check i_sp_pol/PWscf version!',ierr)
+     case(4) ! note ispin=i_spinor
+       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spinor, &
 &           igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr.ne.0) call errore('qexml_read_wfc',' Check ispin/PWscf version!',ierr)
+       if(ierr.ne.0) call errore('qexml_read_wfc',' Check ispinor/PWscf version!',ierr)
      end select
      !
      call sort_wf_disk
@@ -155,21 +126,17 @@
      if(gamma_only_) then
 
        do ib=1, n_b
-         wf_disk(1,ib,1,ispin) = real( wf_disk_DP(1,ib) )
-         wf_disk(2,ib,1,ispin) =aimag( wf_disk_DP(1,ib) )
+         wf_disk(1,i_spinor,ib) = cmplx(wf_disk_DP(1,ib) ,kind=SP)
          do ic=2,npwk
-           wf_disk(1,ib,2*ic-2,ispin) =   real(wf_disk_DP(ic,ib))
-           wf_disk(2,ib,2*ic-2,ispin) =  aimag(wf_disk_DP(ic,ib))
-           wf_disk(1,ib,2*ic-1,ispin) =   real(wf_disk_DP(ic,ib))
-           wf_disk(2,ib,2*ic-1,ispin) = -aimag(wf_disk_DP(ic,ib))
+           wf_disk(2*ic-2,i_spinor,ib) = cmplx(      wf_disk_DP(ic,ib) , kind=SP)
+           wf_disk(2*ic-1,i_spinor,ib) = cmplx(conjg(wf_disk_DP(ic,ib)), kind=SP)
          enddo
        enddo
 
      else
 
        do ib=1,n_b
-         forall(ic=1:npwk) wf_disk(1,ib,ic,ispin) = real( wf_disk_DP(ic,ib) )
-         forall(ic=1:npwk) wf_disk(2,ib,ic,ispin) =aimag( wf_disk_DP(ic,ib) )
+         forall(ic=1:npwk) wf_disk(ic,i_spinor,ib) = cmplx( wf_disk_DP(ic,ib) , kind=SP)
        enddo
 
      endif
@@ -177,7 +144,7 @@
      !   Lines relating to real WF workaround
      !
      !do ib=1,n_bands
-     !  call make_real_wf(ib,ikibz,wf_disk(:,ib,:wf_nc_k(ikibz),ispin),wf_nc_k(ikibz))
+     !  call make_real_wf(ib,ikibz,wf_disk(:,:wf_nc_k(ikibz),i_spinor,ib),wf_nc_k(ikibz))
      !enddo
      !
 #endif

@@ -50,7 +50,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  ! Work space
  !
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,ic_min,&
-&                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
+&                                ic_wf,iv_wf,idir,n_LT_steps
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
  !
@@ -68,7 +68,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
      !
-     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),space='R',title='-Oscillators/R space',&
+     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
@@ -86,15 +86,13 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
+         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ic_wf=WF%index(ic,ik,i_sp_pol)
+         !
+         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
+         !
          do i_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+i_spinor-1
-           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
-           icfft(i_spinor)=WF%index(ic,ik,i_spin)
-           !
-           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-           !
            do idir=1,3
              !
              ! Here I assume that for the non periodic direction id_red==id_cartesian
@@ -102,11 +100,10 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
              if(.not.idir_todo(idir)) cycle
              !
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
-&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,ivfft(i_spinor)), &
-&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,icfft(i_spinor)) )
+&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
+&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
              !
            enddo
-           !
          enddo
          !
          call live_timing(steps=1)

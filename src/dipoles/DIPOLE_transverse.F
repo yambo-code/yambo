@@ -61,8 +61,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2
- integer                      :: ik,icfft(n_spinor),ivfft(n_spinor),ic,iv,&
-&                                i_sp_pol,i_spinor,i_spin,wf_dim,n_LT_steps,ik_mem,ic_min
+ integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
+&                                i_sp_pol,wf_dim,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho(4)
  real(SP)                     :: Ev_m_Ec,Dipole_Energy_treshold
@@ -119,33 +119,35 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! Main loop over k in IBZ
  !
  !
- do ik=1,Xk%nibz
+ do i_sp_pol=1,n_sp_pol
    !
    if (n_LT_steps==0) cycle
    !
-   ! [Vnl,r]
-   !
-   if (io_KB_pwscf_err==0) then
-     if (ik< Xk%nibz ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_pwscf_err=io_KB_pwscf(ID)
-   endif
-   !
-   if (io_KB_abinit_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_abinit_err=io_KB_abinit(ID)
-   endif
-   !
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-   !
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   !
-   ! WF load
-   call WF_load(WF,0,1,Dip%ib,(/ik,ik/),space='G',title='-Oscillators/G space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
-   ! 
-   do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     ifrag=ik+(i_sp_pol-1)*Xk%nibz
+     ! 
+     ! [Vnl,r]
+     !
+     if (io_KB_pwscf_err==0) then
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+       io_KB_pwscf_err=io_KB_pwscf(ID)
+     endif
+     !
+     if (io_KB_abinit_err==0) then
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+       io_KB_abinit_err=io_KB_abinit(ID)
+     endif
+     ! 
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     !
+     ! WF load
+     !
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
+&               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      ! 
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
@@ -161,29 +163,24 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
-         do i_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+i_spinor-1
-           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
-           icfft(i_spinor)=WF%index(ic,ik,i_spin)
-           !
-           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-           !
-         enddo
+         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ic_wf=WF%index(ic,ik,i_sp_pol)
+         !
+         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
          !
          Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
          if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
-         ! Evaluate <ivfft|   p   |icfft>
+         ! Evaluate <iv_wf|   p   |ic_wf>
          !================================
-         call DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
+         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
          !
-         ! Evaluate <ivfft|[x,Vnl]|icfft>
+         ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(icfft,ivfft,rho(:3),kbv)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
          !
          !
          ! define a different thr for val-val transitions
@@ -242,12 +239,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
        enddo    ! conduction band loop
      enddo      ! valence    band loop
+     !
+     call WF_free(WF)
      ! 
-   enddo        ! sp_pol loop
-   !
-   call WF_free(WF)
-   ! 
- enddo          ! k-points
+   enddo        ! k-points
+ enddo          ! sp_pol loop
  !
  call live_timing()
  !

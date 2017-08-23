@@ -83,10 +83,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  if(reading) IO_ACTION=OP_RD_CL
  if(writing) IO_ACTION=OP_APP_WR_CL
  !
- do ik=1,Xk%nibz
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-   if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
-   do i_sp_pol=1,n_sp_pol
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
+     if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
      call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)
    enddo
@@ -100,12 +100,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  !
  W_=0._SP
  !
- do ik=1,Xk%nibz
-   !
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   !
-   do i_sp_pol=1,n_sp_pol
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     !
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     ik_mem=PAR_DIPk_ibz_index(ik)
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        do ic=Dip%ib_lim(2),Dip%ib(2)

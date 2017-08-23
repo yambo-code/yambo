@@ -40,7 +40,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  character(lchlen)  ::local_description
  !
- call io_elemental(ID,VAR="PARS",VAR_SZ=12,MENU=0)
+ call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
  !
  call io_elemental(ID,DB_I1=Dip%db_ib,&
 &     VAR=" X band range           :",I1=Dip%ib    ,CHECK=.true.,OP=(/">=","<="/))

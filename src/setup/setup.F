@@ -48,6 +48,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+ !
 #include <memory.h>
  !
  type(levels)    ::en,Xen,Ken
@@ -99,17 +100,17 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! DL vol
  !
- DL_vol=0.
+ DL_vol=0._SP
  rv=cross_product(a(2,:),a(3,:))
  DL_vol=abs(dot_product(a(1,:),rv))
  call msg('r','DL volume [au]:',DL_vol)
- RL_vol=(2.*pi)**3./DL_vol
+ RL_vol=(2._SP*pi)**3._SP/DL_vol
  !
  ! RL unit vectors 
  !
- b(1,:)=cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
- b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
- b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
+ b(1,:)=cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
+ b(2,:)=cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
+ b(3,:)=cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  rv=b(1,:)

@@ -46,7 +46,8 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  use pars,          ONLY:SP
  use com,           ONLY:warning
- use electrons,     ONLY:levels,n_spinor,n_sp_pol
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol, &
+&                        eval_rho_max,rho_max_is_def,ir_rho_max
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
  use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
@@ -170,6 +171,11 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    if (mag_syms)      return
    if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
    if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
+ endif
+ !
+ if(eval_rho_max) then
+   ir_rho_max=maxloc(rho,fft_size)
+   rho_max_is_def=.true.
  endif
  !
  !if (l_J) then

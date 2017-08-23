@@ -141,12 +141,17 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
+ ! MAGN and DEN
+ !=============
+ !
+ call RHOmax_and_Mtot(en,k,q)
+ !
  ! reset the section numbering
  !
  call section('*','') 
  !
- ! RESPONSE FUNCTIONS QP CORRECTIONS (FROM INPUT FILE)
- !======================================================
+ ! QP and RT CORRECTIONS
+ !=======================
  !
  call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !

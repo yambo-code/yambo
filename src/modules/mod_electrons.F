@@ -54,8 +54,14 @@ module electrons
  !
  ! Average magnetization density
  !
- logical                  :: eval_magn
- real(SP)                 :: Total_magn(3)
+ logical  :: eval_magn
+ real(SP) :: Total_magn(3)
+ !
+ ! Minimum of the electronic density
+ !
+ logical :: eval_rho_max
+ logical :: rho_max_is_def
+ integer :: ir_rho_max
  !
  type levels
    integer         :: nb

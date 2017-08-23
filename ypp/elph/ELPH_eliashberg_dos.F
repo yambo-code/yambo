@@ -282,7 +282,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
          weight=Fermi_fnc_derivative(Ek,  elph_gamma_broad)*&
 &               Fermi_fnc_derivative(Ekmq,elph_gamma_broad)
          !      
-         weight=weight*2./real(k%nbz)
+         weight=weight*2._SP/real(k%nbz)
          !             |
          !             SPIN
          ! The factor 2 is provided by the sum over spins
@@ -294,7 +294,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
          !
          do im=1,ph_modes
            gamma(iq,im)=gamma(iq,im)+&
-  &              conjg(elph_gkkp(i1,im,ib2,ib1))*elph_gkkp(i1,im,ib2,ib1)*weight
+  &              conjg(elph_gkkp(im,ib2,ib1,i1))*elph_gkkp(im,ib2,ib1,i1)*weight
          enddo
        enddo
      enddo

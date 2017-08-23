@@ -145,7 +145,7 @@ subroutine RT_driver(E,X,k,q)
  ! QP & carriers corrections 
  !===========================
  !
- call QP_apply(RT_bands,E,k,     "G",msg_fmt='s')
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
  ! Core initialization
@@ -294,7 +294,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k)
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================

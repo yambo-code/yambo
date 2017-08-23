@@ -304,14 +304,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        if (reading) IO_ACTION=OP_RD_CL
        if (writing) IO_ACTION=OP_APP_WR_CL
        !
-       do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
-         if ((writing.and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0).or.reading) then
-           do i_sp_pol=1,n_sp_pol
-             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-             io_err=io_DIPOLES(X,ID)
-          enddo
-         endif
+       do i_sp_pol=1,n_sp_pol
+         do ik=1,Xk%nibz
+           if ( .not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
+           if ((.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0) .and. writing) cycle
+           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+           io_err=io_DIPOLES(X,ID)
+         enddo
        enddo
        !
      endif
@@ -379,15 +378,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          if (l_par_RT) then
            !
 #if defined _RT
-           DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-           DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            if (l_real_time.and.n_spin>1) then
-             DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+             DIP_spin(:,:,:,ik_mem,i_sp_pol)= DIP_spin(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            endif
 #endif
 #if defined _SC || defined _RT
            if (l_sc_run.or.l_real_time) then
-             P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+             P_square(:,:,ik_mem,i_sp_pol)= P_square(:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            endif
 #endif
            !

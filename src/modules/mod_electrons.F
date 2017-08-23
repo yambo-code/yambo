@@ -73,7 +73,6 @@ module electrons
    !
    ! QP corrections
    !
-   integer,    allocatable :: QP_corrected(:,:,:)  
    real(SP),   allocatable :: E(:,:,:)         
    real(SP),   allocatable :: Eo(:,:,:)        
    real(SP),   allocatable :: f(:,:,:)         
@@ -184,13 +183,6 @@ module electrons
          YAMBO_ALLOC(Eo%Z,(BOUNDS(2),Eo%nk,n_sp_pol))
          Eo%Z(:BOUNDS(2),:,:)=Ei%Z(:BOUNDS(2),:,:)
        endif
-       ! %QP_corrected
-       if (allocated(Ei%QP_corrected)) then
-         BOUNDS(1)=size(Ei%QP_corrected,1)
-         BOUNDS(2)=size(Ei%QP_corrected,2)
-         YAMBO_ALLOC(Eo%QP_corrected,(BOUNDS(1),BOUNDS(2),n_sp_pol))
-         Eo%QP_corrected=Ei%QP_corrected
-       endif
      else
        Eo%E(:,:,:)=Ei%E(:,:Eo%nk,:)
      endif
@@ -242,7 +234,6 @@ module electrons
      YAMBO_FREE(E%f)
      YAMBO_FREE(E%fo)
      YAMBO_FREE(E%df)
-     YAMBO_FREE(E%QP_corrected)
      YAMBO_FREE(E%GreenF)
      YAMBO_FREE(E%GreenF_W)
      !

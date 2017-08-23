@@ -1,13 +1,6 @@
-MAGNETIC_objects = 
-#if defined _MAGNETIC
-MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
-                   MAG_pseudo_nl.o MAG_H_pseudo.o
-#endif
-objs =	SC_driver.o SC_start_and_restart.o SC_Energy.o \
-        V_Hartree.o OEP_exact_inversion.o V_real_space_to_H.o V_Mean_Potential.o \
-        SC_bare_Hamiltonian.o SC_add_XC.o \
-        V_qp_basis_to_H.o SC_check_symmetries.o \
-        SC_precondition.o XC_switch.o SC_WF_and_dipole_dimensions.o \
-        $(MAGNETIC_objects) SC_History.o OEP_driver.o OEP_Hole.o \
-	    OEP_iterative.o OEP_app_inversion.o OEP_Weighted_Density.o\
-	    OEP_ApplySigmaX.o OEP_ApplySigmaCSX.o
+objs = SC_driver.o SC_start_and_restart.o SC_Energy.o \
+       OEP_exact_inversion.o V_Mean_Potential.o \
+       SC_add_XC.o SC_precondition.o \
+       SC_History.o OEP_driver.o OEP_Hole.o \
+       OEP_iterative.o OEP_app_inversion.o OEP_Weighted_Density.o\
+       OEP_ApplySigmaX.o OEP_ApplySigmaCSX.o

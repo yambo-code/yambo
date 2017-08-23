@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,7 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
- use matrix_operate,ONLY:mat_c2r,mat_r2c,mat_r2c_ordered
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
@@ -42,7 +40,7 @@ integer function io_X(X,Xw,ID)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
@@ -53,7 +51,8 @@ integer function io_X(X,Xw,ID)
  logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
- real(SP),allocatable::X_disk(:,:,:),W_disk(:,:),RL_vecs_disk(:,:)
+ real(SP),   allocatable :: RL_vecs_disk(:,:)
+ complex(SP),allocatable :: X_on_disk(:,:)
  !
 #if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
@@ -103,21 +102,20 @@ integer function io_X(X,Xw,ID)
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors
    !
-   allocate(RL_vecs_disk(X%ng_db,3))
+   YAMBO_ALLOC(RL_vecs_disk,(X%ng_db,3))
    !
    if (write_is_on(ID)) RL_vecs_disk(:,:)=g_vec(:X%ng_db,:)
    !
    call io_bulk(ID,VAR='X_RL_vecs',VAR_SZ=shape(RL_vecs_disk))
    call io_bulk(ID,R2=RL_vecs_disk)
    !
-   if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.&
-&      allocated(g_vec)) then
-     if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
+   if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.allocated(g_vec)) then
+     YAMBO_ALLOC(X_RLcomp_ig,(X%ng))
      i_err = X_RLcomp_table() 
      if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
      if ( i_err > 0 ) different_db_RL_order=.true.
    endif
-   deallocate(RL_vecs_disk)
+   YAMBO_FREE(RL_vecs_disk)
    !
    ! Close & Menu lower line
    !
@@ -154,10 +152,8 @@ integer function io_X(X,Xw,ID)
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
-   if (io_sec(ID,1)/=1.and.trim(db_desc)/="em1d") io_com(ID)=NONE
-   !
-   if (io_sec(ID,1)==1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=0)
-   if (io_sec(ID,1)/=1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
+   if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
+   call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
    !
    if (X%whoami==4) then
      call io_elemental(ID,UNIT=HA2EV,&
@@ -167,11 +163,11 @@ integer function io_X(X,Xw,ID)
      call io_elemental(ID,&
 &         VAR=" :: Current Q-pt index     :",I0=iq)
      call io_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
+&         VAR=" :: X energy range     [ev]:",R1=Xw%er,WARN=.true.,OP=(/"==","=="/))
      call io_elemental(ID,UNIT=HA2EV,&
 &         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
      call io_elemental(ID,&
-&           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
    endif
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -185,54 +181,34 @@ integer function io_X(X,Xw,ID)
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
    !
-   allocate(X_disk(X%ng_db,X%ng_db,2))
-   !
-   ch="FREQ_sec_iq"//trim(intc(iq))
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/Xw%n_freqs,2/))
-   allocate(W_disk(Xw%n_freqs,2))
-   !
-   if (write_is_on(ID)) then
-     W_disk(:,1)=real(Xw%p(:))
-     W_disk(:,2)=aimag(Xw%p(:))
-   endif
-   !
-   call io_bulk(ID,R2=W_disk)
+   ! Xw%p
    !
    if (read_is_on(ID)) then
-     if (associated(Xw%p)) then
-       deallocate(Xw%p)
-       call mem_est("W-p")
-     endif
-     allocate(Xw%p(Xw%n_freqs))
-     call mem_est("W-p",(/Xw%n_freqs/))
-     Xw%p(:)=cmplx(W_disk(:,1),W_disk(:,2))
+     YAMBO_FREE(Xw%p)
+     YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
-   deallocate(W_disk)
+   ch="FREQ_sec_iq"//trim(intc(iq))
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,Xw%n_freqs/))
+   call io_bulk(ID,C1=Xw%p)
+   !
+   ! X_mat @iq
    !
    ch="X_Q_"//trim(intc(iq))
    !
-   if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng_db,X%ng_db,Xw%n_freqs/))
+   if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    !
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/X%ng_db,X%ng_db,2,Xw%n_freqs/))
+   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+   call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
    !
-   do i1=1,Xw%n_freqs
-     !
-     if (write_is_on(ID)) call mat_c2r(X_mat(:,:,i1),X_disk)
-     !
-     call io_bulk(ID,R3=X_disk,IPOS=(/1,1,1,i1/))
-     !
-     if (read_is_on(ID)) then
-       if (different_db_RL_order)  then
-         call mat_r2c_ordered(X_disk,X_mat(:,:,i1),X_RLcomp_ig)
-       else
-         call mat_r2c(X_disk,X_mat(:,:,i1))
-       endif
-     endif
-     !
-   enddo
-   !
-   deallocate(X_disk)
+   if (read_is_on(ID) .and. different_db_RL_order) then 
+     YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
+     do i1=1,Xw%n_freqs
+       X_on_disk=X_mat(:,:,i1)
+       X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
+     enddo
+     YAMBO_FREE(X_on_disk)
+   endif
    !
  endif
  !

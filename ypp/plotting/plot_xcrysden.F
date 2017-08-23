@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -32,7 +32,7 @@ subroutine plot_xcrysden()
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space...
  !
@@ -130,7 +130,7 @@ subroutine plot_xcrysden()
      call msg(output_string,'','END_DATAGRID_2D')
      call msg(output_string,'','END_BLOCK_DATAGRID_2D')
      !
-     deallocate(v2plot2D)
+     YAMBO_FREE(v2plot2D)
      !
    case(3)
      !
@@ -154,7 +154,7 @@ subroutine plot_xcrysden()
        call live_timing('3D Plot of '//trim(plot_title),nr(3))
      endif
      !
-     allocate(v2plot_xc(nr(1)+1,nr(2)+1,nr(3)+1))
+     YAMBO_ALLOC(v2plot_xc,(nr(1)+1,nr(2)+1,nr(3)+1))
      !
      do i3 = 0, nr(3)-1
        do i2 = 0, nr(2)-1
@@ -189,7 +189,7 @@ subroutine plot_xcrysden()
      enddo
      !
      call live_timing()
-     deallocate(v2plot_xc)
+     YAMBO_FREE(v2plot_xc)
      !
      call msg(output_string,'','END_DATAGRID_3D')
      call msg(output_string,'','END_BLOCK_DATAGRID_3D')

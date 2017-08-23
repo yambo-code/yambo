@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
+subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! 1) The KBE is coded in terms of :
  !
@@ -56,7 +56,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
- use SC,             ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
+ use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc,&
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,&
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,&
@@ -73,8 +73,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
  implicit none
  !
  type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k,q
- real(SP),      intent(in)    :: Time
+ type(bz_samp), intent(in)    :: k
  complex(SP),   intent(in)    :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field), intent(in):: A_input
  !
@@ -132,7 +131,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
    !
  endif
  !
- !
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
@@ -171,11 +169,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      !
      H_nl_sc=cZERO
      !
-     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+     if (n_spinor==1 .and. (eval_DFT.or.eval_HARTREE)) call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
      !
      if (n_spinor==2) then
-       if(eval_HARTREE) call V_real_space_to_H(ik,V_hartree_sc,H_nl_sc,WF,'def')
-       if(eval_DFT)     call V_real_space_to_H(ik,V_xc_sc     ,H_nl_sc,WF,'xc ')
+       if(eval_HARTREE) call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+       if(eval_DFT)     call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
      endif
      !
      if (.not.PAR_IND_WF_k%element_1D(ik).or. .not.HEAD_QP_cpu) cycle
@@ -183,9 +181,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        if (l_RT_RWA) then
          Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1)=&
-&                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1)
+&                                              H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
        else
-         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),1),&
+         call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),&
 &                               Ho_plus_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_RT,1))
        endif
      enddo
@@ -231,7 +229,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k,q,Time)
      call RT_apply_field(ik,H_nl_sc,A_input)
      !
      forall( ib=RT_bands(1):RT_bands(2) , ibp=RT_bands(1):RT_bands(2) , ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2) ) &
-&      Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp,1)
+&      Ho_plus_Sigma(ib,ibp,ik_RT,1)= Ho_plus_Sigma(ib,ibp,ik_RT,1)+H_nl_sc(ib,ibp)
      !  
    enddo
  endif

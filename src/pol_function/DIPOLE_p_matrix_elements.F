@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,7 +25,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
+subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
  !
  use pars,          ONLY:SP,cZERO,cONE,pi
  use wrapper_omp,   ONLY:M_by_V_omp
@@ -37,7 +37,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- integer,       intent(in)  :: ivfft(n_spinor),icfft(n_spinor),ik,wf_dim
+ integer,       intent(in)  :: iv_wf,ic_wf,ik,wf_dim
  complex(SP),   intent(out) :: rho(4)
  ! 
  ! Work Space
@@ -59,22 +59,22 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    do i1=1,3
 !$omp do
      do ig=1,wf_ng
-       wf_xyz(ig,i1)=WF%c(ig,ivfft(i_spinor))*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+       wf_xyz(ig,i1)=WF%c(ig,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
      enddo
 !$omp end do
    enddo
 !$omp end parallel
 #else
    do i1=1,3
-     wf_xyz(:,i1)=WF%c(:,ivfft(i_spinor))*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
+     wf_xyz(:,i1)=WF%c(:,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
    enddo
 #endif
    ! 
    ! GPL_EXCLUDE_START 
    !
-#if defined _SC
+#if defined _SC || defined _RT
    if (wf_dim==4) then
-     wf_xyz(1:wf_ng,4) = WF%c(1:wf_ng,ivfft(i_spinor)) *  & 
+     wf_xyz(1:wf_ng,4) = WF%c(1:wf_ng,i_spinor,iv_wf) *  & 
 &                        ( (Xk%pt(ik,1) + g_vec(1:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                        + (Xk%pt(ik,2) + g_vec(1:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
 &                        + (Xk%pt(ik,3) + g_vec(1:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
@@ -99,7 +99,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,ivfft,icfft,ik,wf_dim,rho)
    ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
    !
    coeff=cmplx(i_spinor-1,0,SP)
-   call M_by_V_omp('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,icfft(i_spinor)),1,coeff,rho(:wf_dim),1)
+   call M_by_V_omp('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,i_spinor,ic_wf),1,coeff,rho(:wf_dim),1)
    !
  enddo
  !

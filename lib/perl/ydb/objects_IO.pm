@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -26,10 +26,10 @@ sub local_uncompress{
  #
  print "\n Uncompresing $ID_in ...\n";
  #
- foreach $file (<$local_dir/output/*gz>,<$local_dir/database/*gz>) {
-  &local_cmd("gunzip -f $file");
+ foreach $file (<$local_dir/outputs/*gz>,<$local_dir/databases/*gz>) {
+  &local_cmd("gunzip -f '$file'");
  }
- foreach $file (<$local_dir/database/*nc>) {
+ foreach $file (<$local_dir/databases/*nc>) {
   my $filename = basename("$file",  ".nc");
   &local_cmd("ncdump < $file > $filename");
  }
@@ -41,21 +41,48 @@ sub get_the_run{
  print "\n Fetching RUN $IRUN_in (ID $ID_in) ...\n";
  #
  &print_the_run($ID_in);
+ if ($see) { 
+  $n_to_remove++;
+  $FILE_to_remove[$n_to_remove]="$local_dir/";
+  if ($input) {
+   $n_to_remove++;
+   $FILE_to_remove[$n_to_remove]="$local_dir/inputs";
+  }
+  if ($output) {
+   $n_to_remove++;
+   $FILE_to_remove[$n_to_remove]="$local_dir/output";
+  }
+ }
  #
  for($ik = 1; $ik < 100; $ik++) {
   if (exists($RUN_in[$IRUN_in][$ik]) and $input){
-    if ($RUN_in[$IRUN_in][$ik] =~ /$input/ or "$input" =~ "all"){
-    &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+   if ($RUN_in[$IRUN_in][$ik] =~ /$input/ or "$input" =~ "all"){
+    if ($see) { 
+     $return_value = system("scp $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+     $return_value = system("vim $local_dir/inputs/$RUN_in[$IRUN_in][$ik]");
+     $n_to_remove++;
+     $FILE_to_remove[$n_to_remove]="$local_dir/inputs/$RUN_in[$IRUN_in][$ik]";
+    }else{
+     &remote_sftp_cmd("get $RUN_dir/inputs/$RUN_in[$IRUN_in][$ik] $local_dir/inputs/");
+    };
    }
   }
-  if (exists($RUN_in[$ID_out][$ik]) and $output){
-    if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
-    &remote_sftp_cmd("get $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
+  if (exists($RUN_out[$IRUN_in][$ik]) and $output){
+   if ($RUN_out[$IRUN_in][$ik] =~ /$output/ or "$output" =~ "all"){
+    if ($see) { 
+     $return_value = system("scp $RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz $local_dir/outputs/");
+     $return_value = system("gunzip -f $local_dir/outputs/$RUN_out[$IRUN_in][$ik].gz");
+     $return_value = system("vim $local_dir/outputs/$RUN_out[$IRUN_in][$ik]");
+     $n_to_remove++;
+     $FILE_to_remove[$n_to_remove]="$local_dir/outputs/$RUN_out[$IRUN_in][$ik]";
+    }else{
+     &remote_sftp_cmd("get '$RUN_dir/outputs/$RUN_out[$IRUN_in][$ik].gz' $local_dir/outputs/");
+    };
    }
   }
   if (exists($RUN_db[$IRUN_in][$ik]) and $database){
     if ($RUN_db[$IRUN_in][$ik] =~ /$database/ or "$database" =~ "all"){
-    &remote_sftp_cmd("get $RUN_dir/databases/$RUN_db[$IRUN_in][$ik].nc.gz $local_dir/databases/");
+    &remote_sftp_cmd("get '$RUN_dir/databases/$RUN_db[$IRUN_in][$ik].nc.gz' $local_dir/databases/");
    }
   }
  }
@@ -103,10 +130,11 @@ sub file_add
 #============
 {
  $file="@_";
- next if ($file =~ m/[.gz]$/);
+ chomp $file;
+ my ($name, $dir, $ext) = fileparse($file, ".gz");
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.gz";
- &local_cmd("gzip -k -f $file");
+ if ( "$ext" ne ".gz") { &local_cmd("gzip -c '$file' > '$file'.gz")};
  &remote_sftp_cmd("put $file.gz $RUN_dir/outputs");
  &add_a_database_line($ID_in,"output","$file");
 }
@@ -121,7 +149,7 @@ sub db_add
  $n_to_remove++;
  $FILE_to_remove[$n_to_remove]="$file.nc";
  &local_cmd("ncdump $file> $file.nc");
- &local_cmd("gzip -k -f $file.nc");
+ &local_cmd("gzip $file.nc");
  &remote_sftp_cmd("put $file.nc.gz $RUN_dir/databases");
  &add_a_database_line($ID_in,"database","$file");
 }

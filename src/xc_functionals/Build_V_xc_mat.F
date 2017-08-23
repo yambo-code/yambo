@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,7 +25,7 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  !
  use pars,           ONLY:SP,cZERO,cI
  use FFT_m,          ONLY:fft_size
- use electrons,      ONLY:n_spin,n_spinor
+ use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
  use xc_functionals, ONLY:magn
  use vec_operate,    ONLY:v_norm
  !
@@ -39,8 +39,7 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  integer     :: ifft
  real(SP)    :: mod_mag,magn_versor(fft_size,3),vxc_plus(fft_size),vxc_minus(fft_size)
  !
- if (n_spin==1) return
- !
+ V_xc_mat=cZERO
  !
  ! V_xc_mat ( 1 , 1 ) = up up
  ! V_xc_mat ( 1 , 2 ) = up dn
@@ -49,9 +48,11 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  !
  ! Magnetization, V_xc + and -
  !
- V_xc_mat=cZERO
- !
- if (n_spinor==1) then
+ if (n_spin==1) then
+   !
+   V_xc_mat(:,1,1)=V_xc(:,1)
+   !
+ else if (n_sp_pol==2) then
    !
    V_xc_mat(:,1,1)= V_xc(:,1)
    V_xc_mat(:,2,2)= V_xc(:,2)
@@ -79,4 +80,3 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  endif
  !
 end subroutine Build_V_xc_mat
-

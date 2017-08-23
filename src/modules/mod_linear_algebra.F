@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,8 @@
 !
 module linear_algebra
  !
- use pars, ONLY:SP
- !
- implicit none
+ use pars,       ONLY:SP,schlen
+#include<memory.h>
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2
@@ -41,7 +40,6 @@ module linear_algebra
  ! Common Work Space
  !
  type LALGEBRA_WS
-   !
    real(SP),    allocatable :: v_real(:)
    real(SP),    allocatable :: vp_real(:)
    complex(SP), allocatable :: v_cmplx(:)
@@ -52,7 +50,6 @@ module linear_algebra
    integer    , allocatable :: vp_int(:)
    integer                  :: i_fail
    integer                  :: dim
-   !
  end type LALGEBRA_WS
  !
  type(LALGEBRA_WS) :: WS
@@ -66,40 +63,18 @@ module linear_algebra
    module procedure heev,geev
  end interface
  !
- interface 
-   !
-   subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
-     !
-     use pars,           ONLY:SP
-     !
-     integer                :: idriver
-     complex(SP)            :: M(:,:)
-     complex(SP),  optional :: B(:,:)
-     complex(SP),  optional :: C(:,:)
-     integer,      optional :: lib_in
-     complex(SP),  optional :: V_left(:,:)
-     complex(SP),  optional :: V_right(:,:)
-     real(SP),     optional :: E_real(:)
-     complex(SP),  optional :: E_cmpl(:)
-     integer,      optional :: SVD_digits 
-     complex(SP),  optional :: det
-     !
-   end subroutine
-   !
- end interface
- !
  contains
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)
      type(LALGEBRA_WS) :: WS
-     if (allocated(WS%v_real))   deallocate(WS%v_real)
-     if (allocated(WS%vp_real))  deallocate(WS%vp_real)
-     if (allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
-     if (allocated(WS%v_cmplx))  deallocate(WS%vp_cmplx)
-     if (allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
-     if (allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
-     if (allocated(WS%v_int))    deallocate(WS%v_int)
-     if (allocated(WS%vp_int))   deallocate(WS%vp_int)
+     YAMBO_FREE(WS%v_real)
+     YAMBO_FREE(WS%vp_real)
+     YAMBO_FREE(WS%v_cmplx)
+     YAMBO_FREE(WS%vp_cmplx)
+     YAMBO_FREE(WS%m1_cmplx)
+     YAMBO_FREE(WS%m2_cmplx)
+     YAMBO_FREE(WS%v_int)
+     YAMBO_FREE(WS%vp_int)
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
@@ -107,6 +82,23 @@ module linear_algebra
      use com,     ONLY:error
      character(*) calling_subr,message_
      call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
+   end subroutine
+   !
+   subroutine MATRIX_transfer_side_crop(I,J,O)
+     !
+     integer :: I(2),J(2),O(2)
+     !
+     O=0
+     !
+     if (I(2)<J(1)) return
+     if (I(1)>J(2)) return
+     !
+     O(1)=I(1)
+     if (I(1)<=J(1)) O(1)=J(1)
+     !
+     O(2)=J(2)
+     if (I(2)<J(2)) O(2)=I(2)
+     !
    end subroutine
    !
    !============================
@@ -198,6 +190,5 @@ module linear_algebra
 #endif
      !
    end subroutine geev
-
    !
 end module linear_algebra

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -69,7 +69,7 @@ subroutine RT_Fluence(i_field)
    !
    T(it)=it*RT_step
    !
-   if ((it-it0)>6*nint(Efield(i_field)%damping/RT_step)) exit
+   if ((it-it0)>6*nint(Efield(i_field)%width/RT_step)) exit
    !
    Field_time=T(it)-Efield(i_field)%t_initial
    !

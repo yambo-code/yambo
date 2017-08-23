@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine k_reduce(k,FORCE_BZ)
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:b,rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  logical      ::FORCE_BZ
  !
@@ -76,11 +76,12 @@ subroutine k_reduce(k,FORCE_BZ)
    k%nibz=k%nibz+1
    if(     FORCE_BZ) call k2bz(k%ptbz(i1,:),k_ibz(k%nibz,:),b)
    if(.not.FORCE_BZ) k_ibz(k%nibz,:)=k%ptbz(i1,:)
+   !
  enddo kloop
  !
  call live_timing()
  !
- allocate(k%pt(k%nibz,3))
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  k%pt(:k%nibz,:)=k_ibz(:k%nibz,:)
  !
 end subroutine

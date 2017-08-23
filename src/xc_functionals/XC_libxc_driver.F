@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -33,7 +33,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use D_lattice,      ONLY:DL_vol, alat
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use SC,             ONLY:rho_n,magn_n
+ use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
@@ -43,7 +43,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::en
  type(bz_samp)::Xk
@@ -134,9 +134,14 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  if (EvaluateDGradient) then 
    !
-   allocate(drho(3,n_spin,fft_size),sigma(n_spin*(n_spin+1)/2,fft_size),drho_cmplx(3,fft_size))
-   allocate(spin_rho_SP_cmplx(fft_size))
-   if (ORDER==1) allocate(vdrho(3,fft_size),vsigma(n_spin*(n_spin+1)/2,fft_size))
+   YAMBO_ALLOC(drho,(3,n_spin,fft_size))
+   YAMBO_ALLOC(sigma,(n_spin*(n_spin+1)/2,fft_size))
+   YAMBO_ALLOC(drho_cmplx,(3,fft_size))
+   YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
+   if (ORDER==1) then
+     YAMBO_ALLOC(vdrho,(3,fft_size))
+     YAMBO_ALLOC(vsigma,(n_spin*(n_spin+1)/2,fft_size))
+   endif
    !
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
@@ -156,8 +161,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      end do
    end do
    !
-   deallocate(spin_rho_SP_cmplx)
-   deallocate(drho_cmplx)
+   YAMBO_FREE(spin_rho_SP_cmplx)
+   YAMBO_FREE(drho_cmplx)
    !
  endif
  !
@@ -220,9 +225,14 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    end if
  enddo
  !
- if (EvaluateDGradient) deallocate(sigma,drho)
- if (EvaluateDGradient.and.(ORDER==1)) deallocate (vdrho,vsigma)
+ if (EvaluateDGradient) then
+   YAMBO_FREE(sigma)
+   YAMBO_FREE(drho)
+ endif
+ if (EvaluateDGradient.and.(ORDER==1)) then
+   YAMBO_FREE(vdrho)
+   YAMBO_FREE(vsigma)
+ endif
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !
 end subroutine XC_libxc_driver
-

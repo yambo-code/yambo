@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,9 @@
 !
 subroutine RT_write_descriptions(file_name)
  !
- use SC,             ONLY:SC_description,n_SC_descriptions
  use RT_control,     ONLY:RT_description,n_RT_descriptions
  use com,            ONLY:msg
+ !
  implicit none
  !
  character(*), intent(in)      :: file_name
@@ -34,9 +34,6 @@ subroutine RT_write_descriptions(file_name)
  !
  integer  :: i_fp
  !
- do i_fp=1,n_SC_descriptions
-   call msg('o '//trim(file_name),'#',trim(SC_description(i_fp)),INDENT=0)
- enddo
  do i_fp=1,n_RT_descriptions
    call msg('o '//trim(file_name),'#',trim(RT_description(i_fp)),INDENT=0)
  enddo

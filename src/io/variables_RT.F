@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,8 +25,7 @@ integer function variables_RT(ID,local_description,what)
  !
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr
- use electrons,      ONLY:BZ_DbGd_tot_nkpts
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
@@ -36,14 +35,14 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
-&                         NE_step_update_treshold,RT_life_extrap_times
+&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,RT_DbGd_nk,&
+&                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq
  !
  implicit none
  !
@@ -115,6 +114,17 @@ integer function variables_RT(ID,local_description,what)
 &  DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
+ ! E-PHOTON_vars
+ !
+ if (ver_is_gt_or_eq(ID,revision=14112)) then
+   call io_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,MENU=0) 
+   i_desc=i_desc+1
+   call io_elemental(ID,L0=l_elphoton_scatt,&
+&     VAR=" [E-PHOTON] Scattering           :", CHECK=.true.,OP=(/"=="/),&
+&     DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
+ !
  if(.not.any((/l_JPSM,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if(any((/l_JPSM,l_G,l_carriers/))) then
@@ -167,7 +177,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! Delta T Update
    !   
-   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=5,MENU=0) 
+   call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
    call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
@@ -180,6 +190,11 @@ integer function variables_RT(ID,local_description,what)
    i_desc=i_desc+1
    call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
+   if (ver_is_gt_or_eq(ID,revision=14112)) then
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   endif
    ! ... for RESTART purposes...
    call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
@@ -255,7 +270,7 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,I0=BZ_DbGd_tot_nkpts,&
+   call io_elemental(ID,I0=RT_DbGd_nk,&
 &    VAR=' [DbGd] Number of k-points       :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
@@ -317,7 +332,7 @@ integer function variables_RT(ID,local_description,what)
 &        DESCRIPTION=local_description(i_desc),UNIT=AU2KWCMm2)
        i_desc=i_desc+1
        call io_elemental(ID,&
-&        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%damping,CHECK=.true.,OP=(/"=="/),&
+&        VAR=" [FIELDs] Damping            [fs]:",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
 &        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
        i_desc=i_desc+1
        call io_elemental(ID,&

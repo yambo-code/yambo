@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -32,8 +32,8 @@ subroutine cutoff_cylinder(q,is_cut)
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error
- 
- implicit none
+ !
+#include<memory.h>
  type(bz_samp) ::q
  logical       ::is_cut(3)
  !
@@ -147,7 +147,10 @@ subroutine cutoff_cylinder(q,is_cut)
       call live_timing(steps=1)
      enddo
    enddo
-   deallocate(iwork,iwork2,work,work2)
+   YAMBO_FREE(iwork)
+   YAMBO_FREE(iwork2)
+   YAMBO_FREE(work)
+   YAMBO_FREE(work2)
    !
    ! infinite
    !
@@ -183,7 +186,8 @@ subroutine cutoff_cylinder(q,is_cut)
        call live_timing(steps=1)
      enddo
    enddo
-   deallocate(iwork,work)
+   YAMBO_FREE(work)
+   YAMBO_FREE(work)
  endif
  !
  ! MPI 2 all

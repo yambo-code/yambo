@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,21 +24,20 @@
 subroutine WF_alloc(WF)
  !
  use pars,          ONLY:cZERO
- use com,           ONLY:error
- use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,QUIET_alloc
- use memory_m,      ONLY:mem_est
+ use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use FFT_m,         ONLY:fft_size
+ use electrons,     ONLY:n_spinor
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
  use interfaces,    ONLY:PARALLEL_live_message
- implicit none
+#include<memory.h>
  !
  type(WAVEs)           :: WF
  !
  ! Work Space
  !
- integer :: err,ik,ib,is,N_total
+ integer :: ik,ib,i_sp_pol,N_total,wf_grid_size
  !
  ! Distributed allocation
  !
@@ -46,35 +45,32 @@ subroutine WF_alloc(WF)
    !
    WF%N=0
    N_total=0
-   do ib=WF%b(1),WF%b(2)
-     do ik=WF%k(1),WF%k(2)
-       do is=WF%spin(1),WF%spin(2)
+   do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
+     do ib=WF%b(1),WF%b(2)
+       do ik=WF%k(1),WF%k(2)
          N_total=N_total+1
-         if (states_to_load(ib,ik,is)) WF%N=WF%N+1
+         if (states_to_load(ib,ik,i_sp_pol)) WF%N=WF%N+1
        enddo
      enddo
    enddo
    !
  else
    !
-   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%spin(2)-WF%spin(1)+1)
+   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%sp_pol(2)-WF%sp_pol(1)+1)
    N_total=WF%N
    !
  endif
  !
- if (WF%space=="R") allocate(WF%c(fft_size,WF%N),stat=err)
- if (WF%space=="G") allocate(WF%c(wf_ng,   WF%N),stat=err)
- if (WF%space=="C") allocate(WF%c(wf_ncx,  WF%N),stat=err)
- if (WF%space=="B") allocate(WF%c(wf_ncx,  WF%N),stat=err)
+ if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='G')  wf_grid_size=wf_ng
+ if (WF%space=='C')  wf_grid_size=wf_ncx
+ if (WF%space=='B')  wf_grid_size=wf_ncx
  !
- if (err/=0) call error(' Error allocating WFs')
- !
- if (WF%space/="B") call mem_est('WF'       ,(/size(WF%c)/),errors=(/err/),quiet=QUIET_alloc)
- if (WF%space=="B") call mem_est('WF_buffer',(/size(WF%c)/),errors=(/err/),quiet=QUIET_alloc)
+ YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- allocate(WF%index(WF%b(2),WF%k(2),WF%spin(2)),stat=err)
+ YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
  WF%index=0

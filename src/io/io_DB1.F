@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,10 +23,9 @@
 !
 integer function io_DB1(E,k,ID)
  !
- use pars,             ONLY:SP,IP
+ use pars,             ONLY:SP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
- use memory_m,         ONLY:mem_est
  use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
@@ -34,10 +33,10 @@ integer function io_DB1(E,k,ID)
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
-&                           qp_states_k,nXkibz,ng_closed
+&                           QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_is_found, &
+ use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_exist, &
 &                           io_elemental, io_status, io_bulk,read_is_on,&
 &                           serial_number,io_serial_number,io_code_revision,&
 &                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
@@ -45,16 +44,17 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
+#if defined _SC || defined _RT
+ use collision_ext,    ONLY:COLL_bands
+ use hamiltonian,      ONLY:H_ref_bands
+#endif
 #if defined _SC
  use SC,               ONLY:SC_bands
- use collision,        ONLY:COLL_bands
- use hamiltonian,      ONLY:IP_h_bands
 #endif
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
- !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: E
  type(bz_samp) :: k
@@ -62,16 +62,12 @@ integer function io_DB1(E,k,ID)
  !
  ! Work Space
  !
- integer :: code_version_local(3),code_revision_local,var_err,MENU
+ integer :: code_version_local(3),code_revision_local,MENU
  !
  io_DB1 =io_connect(desc="db1",type=0,ID=ID)
  if (io_DB1/=0) goto 1
  !
  MENU=1
- !
- var_err= variable_is_found(ID,"EXX_FRACTION")
- !
- if ( read_is_on(ID) .and.  var_err < 0 ) call compatibility_message( )
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -197,19 +193,18 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (var_err==1) then
-     !
-     if (ver_is_gt_or_eq(ID,revision=2962)) then
-         call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
-&                             VAR=' Exact exchange fraction in XC   :')
+   if (ver_is_gt_or_eq(ID,revision=2962)) then
+     if (variable_exist(ID,"EXX_FRACTION")) then
+       call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
+&                           VAR=' Exact exchange fraction in XC   :')
      endif
-     if (ver_is_gt_or_eq(ID,revision=3997)) then
-         call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
-         call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
-&                                VAR=' Exact exchange screening in XC  :')
+   else if (ver_is_gt_or_eq(ID,revision=3997)) then
+     if (variable_exist(ID,"EXX_SCREENING")) then
+       call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
+       call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
+&                              VAR=' Exact exchange screening in XC  :')
      endif
-     !
    endif
    !
    if (ver_is_gt_or_eq(ID,revision=1240).and.ver_is_gt_or_eq(ID,(/3,2,5/))) then
@@ -236,17 +231,19 @@ integer function io_DB1(E,k,ID)
      nXkibz=k%nibz
      QP_nk =k%nibz
      E%nk =k%nibz
-     qp_states_k=(/1,k%nibz/)
+     QP_states_k=(/1,k%nibz/)
      !
      n_bands=E%nb
      wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
+#if defined _SC || defined _RT
+     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
+     if(any(H_ref_bands(:)==0)) H_ref_bands=(/1,E%nb/)
+#endif
 #if defined _SC
      if(any(SC_bands(:)==0)) SC_bands=(/1,E%nb/)
-     if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)
-     if(any(IP_h_bands(:)==0)) IP_h_bands=(/1,E%nb/)
 #endif
 #if defined _RT
      if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
@@ -272,25 +269,20 @@ integer function io_DB1(E,k,ID)
  !
  if (read_is_on(ID)) then
    ! 
-   allocate(E%E(E%nb,E%nk,n_sp_pol),E%f(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-E E-f",(/size(E%E),size(E%f)/),(/SP,SP/))
+   YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
    E%f=0._SP
    !
-   allocate(g_vec(ng_vec,3),k%pt(k%nibz,3))
-   allocate(dl_sop(3,3,nsym),wf_nc_k(k%nibz))
-   allocate(wf_igk(wf_ncx,k%nibz))
-   !
-   call mem_est("g_vec k_pt dl_sop wf_nc_k wf_igk",&
-&               (/size(g_vec),size(k%pt),size(dl_sop),size(wf_nc_k),size(wf_igk)/),&
-&               (/SP,        SP,        SP,           IP,         IP/), quiet=.TRUE. )
+   YAMBO_ALLOC(g_vec,(ng_vec,3))
+   YAMBO_ALLOC(dl_sop,(3,3,nsym))
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
+   YAMBO_ALLOC(wf_nc_k,(k%nibz))
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 
-     allocate(n_atoms_species(n_atomic_species))
-     allocate(Z_species(n_atomic_species))
-     allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
-     call mem_est("n_atoms_species atom_pos Z_species",&
-&                 (/n_atomic_species,size(atom_pos),n_atomic_species/),&
-&                 (/IP,SP,IP/))
+     YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+     YAMBO_ALLOC(Z_species,(n_atomic_species))
+     YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      !
    endif
    !
@@ -357,13 +349,8 @@ integer function io_DB1(E,k,ID)
      !
      live_timing_is_on=.FALSE.
      !
-     if (var_err<0) then
-       call msg("s","No NETCDF support. It is not possible to verify if the present database is compatible")
-       call msg("s","with the current Yambo version. Re-create the DB1 databases with the NETCDF support and try again")
-     else if (var_err==1) then
-       call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
-       call msg("s","Re-create the DB1 databases with a more recent version of the code")
-     endif
+     call msg("s","The present DB1 database is NOT compatible with the current Yambo version." )
+     call msg("s","Re-create the DB1 databases with a more recent version of the code")
      call msg("s"," ")
      !
      call error("I/O failed.")

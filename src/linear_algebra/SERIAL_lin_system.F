@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -29,17 +29,23 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
- !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
  !
  character(64) :: subname="SERIAL_lin_system"
  !
+#if defined _TIMING
+ call timing('SERIAL_lin_system',OPR='start')
+#endif
+ !
  WS%dim=n
- if (allocated(WS%v_int)) deallocate(WS%v_int)
- allocate(WS%v_int(WS%dim))
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(WS%dim))
  !
 #if defined _DOUBLE
  CALL ZGESV(n,nrhs,A,n,WS%v_int,B,n,WS%i_fail)
@@ -50,5 +56,9 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
 #endif
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_lin_system',OPR='stop')
+#endif
  !
 end subroutine

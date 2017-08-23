@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,16 +30,15 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
 #if defined _SC || defined _RT
- use hamiltonian,     ONLY:B_mat_index,IP_h_bands
+ use hamiltonian,     ONLY:B_mat_index,H_ref_bands
 #endif
 #if defined _RT
  use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
  use plasma,          ONLY:EH_gas
  use R_lattice,       ONLY:nkbz
- use collision,       ONLY:GW_NEQ_collisions
+ use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
- !
- implicit none
+#include<memory.h>
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
@@ -58,10 +57,10 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
 #if defined _SC || defined _RT
- logical :: Vl(IP_h_bands(2))
+ logical :: Vl(H_ref_bands(2))
 #endif
  !
- NB=n_bands
+ NB =n_bands
  NBp=n_bands
  NK=nkibz 
  if (present(K_index)) then 
@@ -80,8 +79,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
  if (present(CLEAN_UP)) then
    !
-   if (allocated(states_to_load)) deallocate(states_to_load)
-   allocate(states_to_load(NB,NK,n_spin))
+   YAMBO_FREE(states_to_load)
+   YAMBO_ALLOC(states_to_load,(NB,NK,n_spin))
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.
@@ -134,15 +133,15 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
        !
        Vl=.FALSE. 
        !
-       do i_b=IP_h_bands(1),IP_h_bands(2)
-         do i_bp=IP_h_bands(1),IP_h_bands(2)
-           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,IP_h_bands) ) ) then
+       do i_b=H_ref_bands(1),H_ref_bands(2)
+         do i_bp=H_ref_bands(1),H_ref_bands(2)
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,H_ref_bands) ) ) then
              Vl(i_b )=.TRUE.
              Vl(i_bp)=.TRUE.
            endif
          enddo
        enddo
-       do i_b=IP_h_bands(1),IP_h_bands(2)
+       do i_b=H_ref_bands(1),H_ref_bands(2)
          if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
        enddo
      else

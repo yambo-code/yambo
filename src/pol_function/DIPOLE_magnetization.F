@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,34 +21,32 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_magnetization(Xen,Xk,X)
+subroutine Dipole_magnetization(Xk,X)
  !
  ! This routine returns <sigma> (and <L> todo).
  !
- use pars,                ONLY:SP,schlen,cZERO,cI
+ use pars,                ONLY:cI,SP
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:levels,n_spinor,n_sp_pol
+ use electrons,           ONLY:n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use R_lattice,           ONLY:bz_samp
  use X_m,                 ONLY:X_t,DIP_spin
- use memory_m,            ONLY:mem_est
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
- use com,                 ONLY:error,msg
+ use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
  !
  implicit none
  !
  type(bz_samp), intent(in)    :: Xk
- type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
  !
  ! Work Space
  !
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer                      :: ik,ic_wf(n_spinor),iv_wf(n_spinor),ic,iv,&
+ integer                      :: ik,ic_wf,iv_wf,ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
  !
  ! WF load
@@ -65,55 +63,58 @@ subroutine Dipole_magnetization(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
- if (n_LT_steps>0) call live_timing('Dipoles spin',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
- do ik=1,Xk%nibz
-   !
-   if (n_LT_steps==0) cycle
-   ! 
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-   !
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   ! 
-   do i_sp_pol=1,n_sp_pol
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     !
+     if (n_LT_steps==0) cycle
+     ! 
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     ! 
      do iv=X%ib(1),X%ib_lim(1) 
        do ic=max(iv,X%ib_lim(2)),X%ib(2)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
-         do i_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+i_spinor-1
-           iv_wf(i_spinor)=WF%index(iv,ik,i_spin)
-           ic_wf(i_spinor)=WF%index(ic,ik,i_spin)
-           !
-           if (iv_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (ic_wf(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-           !
-         enddo
+         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ic_wf=WF%index(ic,ik,i_sp_pol)
+         !
+         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
          !
          ! Evaluate <iv_wf| sigma_i |ic_wf>
          !=================================
          !
-         if (n_spinor==2) then
+         if (n_sp_pol==2) then
+           !
+           ! mz
+           !
+           DIP_spin(3,ic,iv,ik_mem,i_sp_pol)=real((-1)**(i_sp_pol-1),SP)*&
+&                                             Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,1,iv_wf))
+           !
+         elseif (n_spinor==2) then
            !
            ! mx
            !
-           DIP_spin(1,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,ic_wf(1)),WF%c(:,iv_wf(2))) &
-&                                            +Vstar_dot_V(fft_size,WF%c(:,ic_wf(2)),WF%c(:,iv_wf(1)))
+           DIP_spin(1,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,2,iv_wf)) &
+&                                            +Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,1,iv_wf))
            !
            ! my
            !
-           DIP_spin(2,ic,iv,ik_mem,i_sp_pol)=-cI*Vstar_dot_V(fft_size,WF%c(:,ic_wf(1)),WF%c(:,iv_wf(2))) &
-&                                            +cI*Vstar_dot_V(fft_size,WF%c(:,ic_wf(2)),WF%c(:,iv_wf(1)))
+           DIP_spin(2,ic,iv,ik_mem,i_sp_pol)=-cI*Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,2,iv_wf)) &
+&                                            +cI*Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,1,iv_wf))
+           !
+           ! mz
+           !
+           DIP_spin(3,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,1,ic_wf),WF%c(:,1,iv_wf)) &
+&                                            -Vstar_dot_V(fft_size,WF%c(:,2,ic_wf),WF%c(:,2,iv_wf))
+           !
          endif
-         !
-         ! mz
-         !
-         DIP_spin(3,ic,iv,ik_mem,i_sp_pol)= Vstar_dot_V(fft_size,WF%c(:,ic_wf(1)),WF%c(:,iv_wf(1))) &
-&                                          -Vstar_dot_V(fft_size,WF%c(:,ic_wf(2)),WF%c(:,iv_wf(2)))
          !
          call live_timing(steps=1)
          !

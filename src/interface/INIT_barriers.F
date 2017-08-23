@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine INIT_barriers()
  !
- use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_kerr,&
+ use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,&
 &                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft
 #if defined _PL
  use drivers,        ONLY:l_photolum
@@ -194,16 +194,5 @@ subroutine INIT_barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
- !
-#if defined _KERR
- if(l_kerr) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
-   ! GPL_INCLUDE_START
-   !on_runlevels='optics bse'
-   ! GPL_INCLUDE_END
-   if(bss_inv.or.bss_tddft) on_runlevels=' '
-   call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
- endif
-#endif
  !
 end subroutine

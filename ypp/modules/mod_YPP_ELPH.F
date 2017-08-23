@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,6 @@ module YPP_ELPH
  ! EL-PH
  !
  logical :: l_gkkp
- logical :: l_gkkp_expand
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,15 +34,15 @@ subroutine INIT_QP_ctl_switch(what)
  call initactivate(1,what//'fnQPdb '//what//'fnQP_N '//what//'fnFdb')
  if (n_sp_pol==1) then
    call initactivate(1,what//'fnQP_E '//what//'fnQP_Z')   
-   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv ')
-   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc ')
+   call initactivate(1,what//'fnQP_Wv_E '//what//'fnQP_Wv '//what//'fnQP_Wv_dos ')
+   call initactivate(1,what//'fnQP_Wc_E '//what//'fnQP_Wc '//what//'fnQP_Wc_dos ')
  else
    call initactivate(1,what//'fnQP_up_E '//what//'fnQP_up_Z')   
-   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv ')
-   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc ')
+   call initactivate(1,what//'fnQP_up_Wv_E '//what//'fnQP_up_Wv '//what//'fnQP_up_Wv_dos ')
+   call initactivate(1,what//'fnQP_up_Wc_E '//what//'fnQP_up_Wc '//what//'fnQP_up_Wc_dos ')
    call initactivate(1,what//'fnQP_dn_E '//what//'fnQP_dn_Z')   
-   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv ')
-   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc ')
+   call initactivate(1,what//'fnQP_dn_Wv_E '//what//'fnQP_dn_Wv '//what//'fnQP_dn_Wv_dos ')
+   call initactivate(1,what//'fnQP_dn_Wc_E '//what//'fnQP_dn_Wc '//what//'fnQP_dn_Wc_dos ')
  endif
  !
 end subroutine

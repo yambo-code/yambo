@@ -1,2 +1,0 @@
-objs = @DLARAN@ cgemv_omp.o dgemv_omp.o sgemv_omp.o zgemv_omp.o cgemm_omp.o zgemm_omp.o
-

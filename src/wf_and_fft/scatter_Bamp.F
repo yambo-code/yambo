@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF
@@ -37,7 +37,7 @@ subroutine scatter_Bamp(isc)
  !
  use pars,           ONLY:cZERO,cONE,DP,SP
  use electrons,      ONLY:n_spinor
- use collision,      ONLY:elemental_collision
+ use collision_el,   ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table

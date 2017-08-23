@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  use pars,          ONLY:SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
@@ -37,10 +36,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
- use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        io_RESPONSE
+&                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind
@@ -59,7 +58,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use SC,            ONLY:it_now,it_to_start
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::E
  type(bz_samp)::Xk,k,q
@@ -72,7 +71,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer                  ::i_qp,i1,i2,i4,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+ integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision)::isc,iscp
@@ -196,11 +195,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(dc(2))
  else
    if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
-   allocate(W_(QP_dSc_steps),dc(QP_dSc_steps),stat=alloc_err)
-   call mem_est("GW-E",(/QP_dSc_steps*2/),errors=(/alloc_err/))
+   allocate(W_(QP_dSc_steps))
+   allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
-     allocate(eet_factor(X%ng,X%ng),stat=alloc_err)
-     call mem_est("EET_factor",(/size(eet_factor)/),(/2*SP/),errors=(/alloc_err/))
+     YAMBO_ALLOC(eet_factor,(X%ng,X%ng))
    endif
  endif
  !
@@ -246,6 +244,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        io_err=io_X(X,Xw,ID)
        !
+       call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
+       !
      endif
      !
      ! Poles and Residuals
@@ -258,18 +258,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
 #if defined _OPENMP
-!$omp parallel do default(shared), private(i1,i2)
+!$omp parallel do default(shared), private(ig1,ig2)
 #endif
-       do i2=1,X%ng
-         do i1=1,X%ng
+       do ig2=1,X%ng
+         do ig1=1,X%ng
            if (l_ppa) then
-             if (real(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2)))<=1._SP) then
-               X_mat(i1,i2,X_range(2))=X%ppaE
+             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+               X_mat(ig1,ig2,X_range(2))=X%ppaE
              else
-               X_mat(i1,i2,X_range(2))=sqrt(X_mat(i1,i2,X_range(1))/X_mat(i1,i2,X_range(2))-1)
+               X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
              endif
            else
-             X_mat(i1,i2,X_range(1))=X_mat(i1,i2,X_range(1))*isc%gamp(i1,i2)
+             X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
            endif
          enddo
        enddo
@@ -465,12 +465,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
          endif
          !
-         forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+real(i4-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
-         do i4=1,QP_dSc_steps
+         do i_w=1,QP_dSc_steps
            !
            sp_dummy = 0.0_SP
            !
@@ -480,12 +480,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               PPA_E= real(X%ppaE/X_mat(ig1,ig2,2))
-               PPA_R=-X_mat(ig1,ig2,1)/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)))
+               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
-&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i4)-E_kmq-PPA_E)+&
-&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i4))-E_kmq+PPA_E))
+&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
+&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                !
                sp_dummy=sp_dummy+ctmp
                !
@@ -495,7 +495,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp end parallel do
 #endif
            !
-           dc(i4) = sp_dummy
+           dc(i_w) = sp_dummy
            !
          enddo
          !
@@ -507,9 +507,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
 #if defined _OPENMP
          pre_factor=0.0_SP
-!$omp parallel do default(shared), private(i1), reduction(+:pre_factor)
-         do i1=1,X%ng
-           pre_factor=pre_factor+isc%rhotw(i1)*local_rhotw(i1)
+!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
+         do ig1=1,X%ng
+           pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
 !$omp end parallel do
 #else
@@ -534,9 +534,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if(l_GW_terminator) then
        !
-       forall (i4=1:QP_dSc_steps) W_(i4)=qp%E_bare(i_qp)+real(i4-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
-       do i4=1,QP_dSc_steps
+       do i_w=1,QP_dSc_steps
          !
          sp_dummy=0.0_SP
          !
@@ -550,7 +550,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
              !
              sp_dummy=sp_dummy +4._SP/spin_occ*pi*PPA_R*eet_factor(ig1,ig2)* &
-&                         QP_ppa_EET_terminator(W_(i4),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
+&                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
 &                                               eet_cutoff0(1),eet_cutoff1(1))
              !
            enddo
@@ -559,7 +559,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 !$omp end parallel do
 #endif
          !
-         QP_Sc(i_qp,i4)=QP_Sc(i_qp,i4)+sp_dummy
+         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+sp_dummy
          !
        enddo
        !
@@ -576,12 +576,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  deallocate(dc)
  if(l_ppa) then
    deallocate(W_)
-   if(l_GW_terminator) then
-       deallocate(eet_factor)
-       call mem_est("EET_factor")
+   if (l_GW_terminator) then
+     YAMBO_FREE(eet_factor)
    endif
  endif
- call mem_est("ISC-GAMP GW-E")
  l_X_alloc=.true.
 #if defined _SC
  l_X_alloc=l_sc_run.and.io_RESPONSE
@@ -592,6 +590,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call timing('GW(ppa)',OPR='stop')
 #endif
  !
+ if (.not.l_sc_run) call WF_free(WF)
+ !
+ call elemental_collision_free(isc)
+ call elemental_collision_free(iscp)
+ !
  ! ALL 2 ALL of QP_Sc
  !
 #if defined _TIMING
@@ -601,10 +604,5 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _TIMING
  call timing('GW(REDUX)',OPR='stop')
 #endif
- !
- if(.not.l_sc_run) call WF_free(WF)
- !
- call elemental_collision_free(isc)
- call elemental_collision_free(iscp)
  !
 end subroutine

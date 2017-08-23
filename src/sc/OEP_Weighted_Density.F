@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -53,7 +53,7 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
      !
      ifft=WF%index(i1,i2,1)
      EWeight = en%e(i1,i2,1)+en%E_Fermi
-     rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(WF%c(:,ifft))**2
+     rho_no_sym(:)=rho_no_sym(:)+en%f(i1,i2,1)*Xk%weights(i2)/EWeight*abs(WF%c(:,1,ifft))**2
    enddo
  enddo
  !

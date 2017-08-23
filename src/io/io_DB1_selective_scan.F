@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,6 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  ! provided with DB1_path
  !
  use pars,             ONLY:lchlen
- use memory_m,         ONLY:mem_est
  use electrons,        ONLY:levels,E_reset
  use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
  use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
@@ -36,7 +35,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP,io_connect,io_disconnect,&
 &                           io_elemental,io_bulk
- implicit none
+#include<memory.h>
  type(levels)  :: E
  type(bz_samp) :: k
  character(*)  :: DB1_path,what
@@ -75,12 +74,16 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
      call E_reset(E)
      !
      if (allocated(g_vec)) then
-       deallocate(g_vec,dl_sop,rl_sop,wf_nc_k,wf_igk)
-       call mem_est("g_vec dl_sop wf_nc_k wf_igk")
+       YAMBO_FREE(g_vec)
+       YAMBO_FREE(dl_sop)
+       YAMBO_FREE(rl_sop)
+       YAMBO_FREE(wf_nc_k)
+       YAMBO_FREE(wf_igk)
      endif
      if (allocated(n_atoms_species)) then
-       deallocate(n_atoms_species,Z_species,atom_pos)
-       call mem_est("n_atoms_species atom_pos Z_species")
+       YAMBO_FREE(n_atoms_species)
+       YAMBO_FREE(Z_species)
+       YAMBO_FREE(atom_pos)
      endif
      !
      ! DB1
@@ -109,7 +112,7 @@ integer function io_DB1_selective_scan(E,k,DB1_path,what)
  if (what/='all') call io_disconnect(ID=ID)
  !
  if (what=='all'.and.io_DB1_selective_scan>=0) then
-   allocate(rl_sop(3,3,nsym))
+   YAMBO_ALLOC(rl_sop,(3,3,nsym))
    forall (i1=1:3,i2=1:3,is=1:nsym) rl_sop(i1,i2,is)=dl_sop(i1,i2,is)*alat(i1)/alat(i2) 
  endif
  !

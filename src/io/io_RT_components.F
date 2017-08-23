@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,12 +27,12 @@ integer function io_RT_components(what,ID)
  !
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt,l_real_time
- use R_lattice,      ONLY:nkibz,nqbz
+ use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,variable_is_found,&
+&                         io_sec,io_bulk,read_is_on,io_fragment, &
+&                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
@@ -41,28 +41,25 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
  use fields,         ONLY:A_vecpot
- use matrix_operate, ONLY:mat_c2r,mat_r2c
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
  !
  ! Work Space
  !
- integer, external     :: variables_SC,variables_RT
+ integer, external     :: variables_RT
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- real(SP), allocatable :: TMP_matrix(:,:,:)
- integer               :: ik,ib,i_spin,i_memory,i_time,db_type,n_cache_steps
+ integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
- real(SP)              :: A_vecpot_disk(3,3,2)
  !
  ! DB kind and name
  !==================
@@ -113,9 +110,6 @@ integer function io_RT_components(what,ID)
    if ( db_type==2 .or. (db_type==-3.and..not.l_real_time) ) then
      !
      io_RT_components=io_header(ID,IMPOSE_SN=(.not.l_carriers),CUTOFF=.true.,T_EL=.true.,FRAG=frag_RT)
-     if (io_RT_components/=0) goto 1
-     !
-     io_RT_components=variables_SC(ID,local_description,trim(what_))
      if (io_RT_components/=0) goto 1
      !
      io_RT_components=variables_RT(ID,local_description,trim(what_))
@@ -182,8 +176,8 @@ integer function io_RT_components(what,ID)
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
-       if(allocated(q_weight_RT)) deallocate(q_weight_RT)
-       allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+       YAMBO_FREE(q_weight_RT)
+       YAMBO_ALLOC(q_weight_RT,(nqbz,elph_branches(1):elph_branches(2),2))
      endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
@@ -223,19 +217,10 @@ integer function io_RT_components(what,ID)
    !
    if (allocated(G_lesser_reference)) then
      !
-     allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
-     !
      i_spin=1
      !
-     do ik=1,RT_nk
-       call io_bulk(ID,VAR="G_lesser_ref_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin)),&
-&                      VAR_SZ=(/RT_nbands,RT_nbands,2/))
-       if (write_is_on(ID)) call mat_c2r(G_lesser_reference(:,:,ik),TMP_matrix)
-       call io_bulk(ID,R3=TMP_matrix)
-       if (read_is_on(ID))  call mat_r2c(TMP_matrix,G_lesser_reference(:,:,ik))
-     enddo
-     !
-     deallocate(TMP_matrix)
+     call io_bulk(ID,VAR="G_lesser_reference",VAR_SZ=(/2,RT_nbands,RT_nbands,RT_nk/))
+     call io_bulk(ID,C3=G_lesser_reference)
      !
      if (read_is_on(ID)) call RT_init_occupation_reference( )
      !
@@ -254,16 +239,9 @@ integer function io_RT_components(what,ID)
    !
    call io_fragment(ID,i_fragment=ik)
    !
-   allocate(TMP_matrix(2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2))
-   !
-   do ib=1,RT_bands(2)-RT_bands(1)+1
-     if (write_is_on(ID)) call mat_c2r(THETA_matrix(:,:,ib,ik),TMP_matrix)
-     call io_bulk(ID,VAR="RT_THETA_B"//trim(intc(ib))//"_K"//trim(intc(ik)),VAR_SZ=(/2*nqbz*ph_modes,RT_bands(2)-RT_bands(1)+1,2/))
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,THETA_matrix(:,:,ib,ik))
-   enddo
-   !
-   deallocate(TMP_matrix)
+   nbands=RT_bands(2)-RT_bands(1)+1
+   call io_bulk(ID,VAR="RT_THETA_K"//trim(intc(ik)),VAR_SZ=(/2,2*nqbz*ph_modes,nbands,nbands/))
+   call io_bulk(ID,C3=THETA_matrix(:,:,:,ik))
    !
  endif
  !
@@ -279,43 +257,20 @@ integer function io_RT_components(what,ID)
    !
    i_spin=1
    !
-   allocate(TMP_matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),2))
-   !
    do i_memory=1,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
      if(i_time<=0) cycle
      !
      call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-&                              "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),&
-&                 VAR_SZ=(/RT_nbands,RT_nbands,2/))
-     !
-     if (write_is_on(ID)) call mat_c2r(dG_lesser(:,:,ik,i_memory),TMP_matrix)
-     call io_bulk(ID,R3=TMP_matrix)
-     if (read_is_on(ID))  call mat_r2c(TMP_matrix,dG_lesser(:,:,ik,i_memory))
+&                        "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),VAR_SZ=(/2,RT_nbands,RT_nbands/))
+     call io_bulk(ID,C2=dG_lesser(:,:,ik,i_memory))
      !
    enddo
    !
-   deallocate(TMP_matrix)
-   !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     if (write_is_on(ID)) then
-       A_vecpot_disk(:,1,1)= real(A_vecpot%vecpot(:),SP)
-       A_vecpot_disk(:,1,2)=aimag(A_vecpot%vecpot(:))
-       A_vecpot_disk(:,2,1)= real(A_vecpot%vecpot_vel(:),SP)
-       A_vecpot_disk(:,2,2)=aimag(A_vecpot%vecpot_vel(:))
-       A_vecpot_disk(:,3,1)= real(A_vecpot%vecpot_acc(:),SP)
-       A_vecpot_disk(:,3,2)=aimag(A_vecpot%vecpot_acc(:))
-     endif
-     !
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/3,3,2/))
-     call io_bulk(ID,R3=A_vecpot_disk)
-     !
-     if (read_is_on(ID)) then 
-       A_vecpot%vecpot(:)    =cmplx(A_vecpot_disk(:,1,1),A_vecpot_disk(:,1,2),SP)
-       A_vecpot%vecpot_vel(:)=cmplx(A_vecpot_disk(:,2,1),A_vecpot_disk(:,2,2),SP)
-       A_vecpot%vecpot_acc(:)=cmplx(A_vecpot_disk(:,3,1),A_vecpot_disk(:,3,2),SP)
-     endif
+     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
    endif
    !
  endif
@@ -370,7 +325,10 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     if (.not.allocated(TYP%Time)) allocate(TYP%Time(NE_steps))
+     if (.not.allocated(TYP%Time)) then
+       YAMBO_ALLOC(TYP%Time,(NE_steps))
+     endif
+     !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))
      !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -24,8 +24,7 @@
 module plasma
  !
  use pars, ONLY :SP
- !
- implicit none
+#include<memory.h>
  !
  ! NOTE: Plasma_tab is on bg (big grid), plasma_tab_m1 points to cg (coarse_grid).
  !       Plasma_grid connects the two
@@ -54,36 +53,31 @@ module plasma
    !
    subroutine PLASMA_alloc(Gas,DIM_)
      !
-     use memory_m,       ONLY:mem_est
      use D_lattice,      ONLY:nsym
      !
      type(plasma_gas) :: Gas
      integer          :: DIM_(3)
      !
-     if(.not.allocated(Gas%N_poles)) allocate(Gas%N_poles(DIM_(1)))
+     YAMBO_ALLOC(Gas%N_poles,(DIM_(1)))
      !
      if(.not.allocated(Gas%tab).and.Gas%max_N_poles>0) then       
-       allocate(Gas%tab(Gas%max_N_poles,DIM_(2),2))
-       call mem_est("PLASMA_tab")
+       YAMBO_ALLOC(Gas%tab,(Gas%max_N_poles,DIM_(2),2))
      endif
      !
      if(.not.allocated(Gas%tab_m1)) then
-       allocate(Gas%tab_m1(DIM_(3),nsym,DIM_(2)))
-       call mem_est("PLASMA_tab_m1")
+       YAMBO_ALLOC(Gas%tab_m1,(DIM_(3),nsym,DIM_(2)))
      endif
      !
    end subroutine
    !
    subroutine PLASMA_free(Gas)
-     use memory_m,       ONLY:mem_est
      !
      type(plasma_gas) :: Gas
      !
-     if(allocated(Gas%N_poles)) deallocate(Gas%N_poles)
-     if(allocated(Gas%tab))     deallocate(Gas%tab)
-     if(allocated(Gas%tab_m1))  deallocate(Gas%tab_m1)
-     if(allocated(Gas%grid))    deallocate(Gas%grid)
-     call mem_est("PLASMA_tab PLASMA_tab_m1 PLASMA_grid")
+     YAMBO_FREE(Gas%N_poles)
+     YAMBO_FREE(Gas%tab)
+     YAMBO_FREE(Gas%tab_m1)
+     YAMBO_FREE(Gas%grid)
      !
    end subroutine
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,8 +42,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
- !
- implicit none
+#include<memory.h>
  !
  type(levels)::Xe,E
  !
@@ -52,7 +51,9 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  real(SP) :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
- if (.not.associated(E%f)) allocate(E%f(E%nb,E%nk,n_sp_pol))
+  if (.not.allocated(E%f)) then
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+ endif
  !
  E%E_Fermi=Xe%E_Fermi
  E%E_VBM =Xe%E_VBM
@@ -68,7 +69,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (associated(E%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+   if (allocated(E%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
    return
  endif
  !
@@ -90,7 +91,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (associated(Xe%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+ if (allocated(Xe%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')
@@ -110,7 +111,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
          enddo
        enddo 
      enddo
-     if (associated(E%E_DbGd)) then
+     if (allocated(E%E_DbGd)) then
        do i1=1,BZ_DbGd_nbands
          do i2=1,BZ_DbGd_tot_nkpts
            do is=1,n_sp_pol

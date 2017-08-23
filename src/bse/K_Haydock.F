@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -23,11 +23,9 @@
 !
 subroutine K_Haydock(iq,W)
  !
-#if defined _BLUEGENE || _PGI
- use ieee_arithmetic
-#endif
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use com,            ONLY:error
+ use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,iw_ref,global_gauge
  use R_lattice,      ONLY:q_norm
@@ -55,7 +53,7 @@ subroutine K_Haydock(iq,W)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp)  ::W
  integer       ::iq
@@ -135,23 +133,24 @@ subroutine K_Haydock(iq,W)
  !
  !
  if (use_cpl_scheme) then
-   allocate(Cf(Max_iterations+1))
+   YAMBO_ALLOC(Cf,(Max_iterations+1))
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   if(l_kerr) allocate(Cf_kerr(Max_iterations+1))
+   YAMBO_ALLOC(Cf_kerr,(Max_iterations+1))
 #endif
    !
    ! GPL_EXCLUDE_END
    !
  end if
  !
- allocate(Vn(BS_nT_grps),Vnp1(BS_nT_grps),Vnm1(BS_nT_grps))
+ allocate(Vn(BS_nT_grps))
+ allocate(Vnp1(BS_nT_grps))
+ allocate(Vnm1(BS_nT_grps))
  call BS_HAYVEC_alloc(Vn)
  call BS_HAYVEC_alloc(Vnm1)
  call BS_HAYVEC_alloc(Vnp1)
- !
  !
  ! Haydock Coefficients and restart vector on disk
  !=================================================
@@ -448,11 +447,7 @@ subroutine K_Haydock(iq,W)
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN
-#if defined _BLUEGENE || _PGI
-     if( ieee_is_nan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
-#else
-     if( isnan(Bf(it+1)) ) call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
-#endif
+     if (NAN(Bf(it+1)))  call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
      !
      !|Vm> =|Vm+1> / B(n+1)
      !
@@ -570,12 +565,12 @@ subroutine K_Haydock(iq,W)
  if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
    if (allocated(V0)) deallocate(V0)
-   if (allocated(Cf)) deallocate(Cf)
+   YAMBO_FREE(Cf)
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   if (allocated(Cf_kerr)) deallocate(Cf_kerr)
+   YAMBO_FREE(Cf_kerr)
 #endif
    !
    ! GPL_EXCLUDE_END

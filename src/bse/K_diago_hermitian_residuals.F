@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -48,7 +48,6 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  type(PP_indexes)     ::px
  integer              ::i_eh
  complex(SP)          ::tmp_res(BS_H_dim)
- !
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_H_dim/))

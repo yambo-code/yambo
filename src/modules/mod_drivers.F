@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,102 +25,101 @@ module drivers
  !
  ! Generic  Drivers
  !
- logical :: list_dbs
- logical :: infile_editing
- logical :: Finite_Tel
+ logical :: list_dbs             =.FALSE.
+ logical :: infile_editing       =.FALSE.
+ logical :: Finite_Tel           =.FALSE.
  !
  ! Specific Drivers
  !
- logical :: l_setup     ! Initial setup
- logical :: l_rim       ! Random Integration Method
- logical :: l_col_cut   ! Coloumb potential cutoff
- logical :: l_acfdt     ! Total Energy
+ logical :: l_setup              =.FALSE.
+ logical :: l_rim                =.FALSE.
+ logical :: l_col_cut            =.FALSE.
+ logical :: l_acfdt              =.FALSE.
  !
  ! Real Time 
  !
- logical :: l_photolum 
- logical :: l_real_time 
- logical :: l_sc_run
- logical :: l_rt_carriers_in_use
- logical :: l_sc_magnetic
- logical :: l_eval_collisions
- logical :: l_use_collisions
+ logical :: l_photolum           =.FALSE.
+ logical :: l_real_time          =.FALSE.
+ logical :: l_sc_run             =.FALSE.
+ logical :: l_rt_carriers_in_use =.FALSE.
+ logical :: l_sc_magnetic        =.FALSE.
+ logical :: l_eval_collisions    =.FALSE.
+ logical :: l_use_collisions     =.FALSE.
  !
  ! The self-energy correlation "kind"
  !
- logical :: l_elphoton_corr
- logical :: l_elel_corr
- logical :: l_elph_corr
+ logical :: l_elphoton_corr      =.FALSE.
+ logical :: l_elel_corr          =.FALSE.
+ logical :: l_elph_corr          =.FALSE.
  !
  ! The non-eq. self-energy scattering "kind"
  !
- logical :: l_elphoton_scatt
- logical :: l_elel_scatt
- logical :: l_elph_scatt
+ logical :: l_elphoton_scatt     =.FALSE.
+ logical :: l_elel_scatt         =.FALSE.
+ logical :: l_elph_scatt         =.FALSE.
  !
  ! Electron-Phonon specific flags 
  !
- logical :: l_elph_Hamiltonian
+ logical :: l_elph_Hamiltonian   =.FALSE.
  !
  ! Real Axis non SC Self-energies
  !
- logical :: l_HF_and_locXC   ! HF + local XC
- logical :: l_life    ! GoWo lifetims
- logical :: l_gw0     ! GWo main logical
- logical :: l_ppa     ! PPA
- logical :: l_cohsex  ! COHSEX
+ logical :: l_HF_and_locXC       =.FALSE.
+ logical :: l_life               =.FALSE.
+ logical :: l_gw0                =.FALSE.
+ logical :: l_ppa                =.FALSE.
+ logical :: l_cohsex             =.FALSE.
  !
  ! The optical runlevels ...
  !
- logical :: l_optics
- logical :: l_chi
- logical :: l_em1d
- logical :: l_em1s
- logical :: l_bse
- logical :: l_bsk
- logical :: l_bss
- !
- logical :: l_kerr
- logical :: l_anomalous_Hall
+ logical :: l_optics             =.FALSE.
+ logical :: l_chi                =.FALSE.
+ logical :: l_em1d               =.FALSE.
+ logical :: l_em1s               =.FALSE.
+ logical :: l_bse                =.FALSE.
+ logical :: l_bsk                =.FALSE.
+ logical :: l_bss                =.FALSE.
+ logical :: l_kerr               =.FALSE.
+ logical :: l_anomalous_Hall     =.FALSE.
  !
  ! ... and the kernel
  !
- logical :: l_rpa_IP
- logical :: l_td_hartree
- logical :: l_tddft
- logical :: l_alda_fxc
- logical :: l_bs_fxc
- logical :: l_lrc_fxc
- logical :: l_td_hf
- logical :: l_W_eh
- logical :: l_W_eh_diag
- logical :: l_W_eh_cpl
+ logical :: l_rpa_IP             =.FALSE.
+ logical :: l_td_hartree         =.FALSE.
+ logical :: l_tddft              =.FALSE.
+ logical :: l_alda_fxc           =.FALSE.
+ logical :: l_bs_fxc             =.FALSE.
+ logical :: l_lrc_fxc            =.FALSE.
+ logical :: l_td_hf              =.FALSE.
+ logical :: l_W_eh               =.FALSE.
+ logical :: l_W_eh_diag          =.FALSE.
+ logical :: l_W_eh_cpl           =.FALSE.
  !
  ! XC kinds (Potential)
  !
- logical :: l_sc_exx
- logical :: l_sc_srpa
- logical :: l_sc_ip
- logical :: l_sc_hartree
- logical :: l_sc_fock
- logical :: l_sc_coh
- logical :: l_sc_sex
- logical :: l_sc_is_libDFT
+ logical :: l_sc_exx             =.FALSE.
+ logical :: l_sc_srpa            =.FALSE.
+ logical :: l_sc_ip              =.FALSE.
+ logical :: l_sc_hartree         =.FALSE.
+ logical :: l_sc_fock            =.FALSE.
+ logical :: l_sc_coh             =.FALSE.
+ logical :: l_sc_sex             =.FALSE.
+ logical :: l_sc_is_libDFT       =.FALSE.
  !
  ! OEP approximations
  !
- logical :: l_oep_exact
- logical :: l_oep_kli
- logical :: l_oep_ceda
- logical :: l_oep_slater
+ logical :: l_oep_exact          =.FALSE.
+ logical :: l_oep_kli            =.FALSE.
+ logical :: l_oep_ceda           =.FALSE.
+ logical :: l_oep_slater         =.FALSE.
  !
  ! Collisions
  !
- logical :: l_use_Hxc_collisions
- logical :: l_use_COH_collisions
+ logical :: l_use_Hxc_collisions =.FALSE.
+ logical :: l_use_COH_collisions =.FALSE.
  !
  ! TESTING
  !
- logical :: l_slk_test
+ logical :: l_slk_test           =.FALSE.
  !
 end module drivers

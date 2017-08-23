@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,20 +23,19 @@
 !
 subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  !
- use pars,           ONLY:LP,cZERO,rZERO
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:cZERO,rZERO
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
  use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
- use collision,      ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
+ use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
 &                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
 #if defined _QED
  use QP_m,           ONLY:QP_QED_ng
- use collision,      ONLY:P_COLL_element
+ use collision_ext,  ONLY:P_COLL_element
 #endif
  !
- implicit none
+#include<memory.h>
  !
  character(*)             :: what,elements,actions
  integer                  :: I
@@ -169,7 +168,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
      do J=COLL_range(1),COLL_range(2)
        !
        ! Here I assign to each collision element an index corresponding to the REAL collision
-       ! associated. This is because J runs on the parallel components and not on the real ones.
+       ! allocated. This is because J runs on the parallel components and not on the real ones.
        !
        do K=1,COLL_grp%N
          if (COLL_grp%PAR_map(K)==J) COLL(J)%I=K
@@ -177,71 +176,51 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
        !
        if (l_alloc.and.(l_v3.or.l_all)) then
          if(l_real) then
-           allocate(COLL(J)%v3_r(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+           YAMBO_ALLOC(COLL(J)%v3_r,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3_r=rZERO
            mem_size(1)=mem_size(1)+size(COLL(J)%v3_r)
          endif
          if(l_complex) then
-           allocate(COLL(J)%v3_c(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+           YAMBO_ALLOC(COLL(J)%v3_c,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
            COLL(J)%v3_c=cZERO
            mem_size(2)=mem_size(2)+size(COLL(J)%v3_c)
          endif
          COLL_grp%D=D
        endif
        if (l_clean.and.(l_v3.or.l_all)) then
-         if (l_real   .and.associated(COLL(J)%v3_r)) deallocate(COLL(J)%v3_r)
-         if (l_complex.and.associated(COLL(J)%v3_c)) deallocate(COLL(J)%v3_c)
+         if (l_real   .and.allocated(COLL(J)%v3_r)) then
+           YAMBO_FREE(COLL(J)%v3_r)
+         endif
+         if (l_complex.and.allocated(COLL(J)%v3_c)) then
+            YAMBO_FREE(COLL(J)%v3_c)
+         endif
        endif
        if (l_alloc.and.(l_v1.or.l_all)) then
          if(l_real) then
-           allocate(COLL(J)%v_r(COLL(J)%N))
+           YAMBO_ALLOC(COLL(J)%v_r,(COLL(J)%N))
            COLL(J)%v_r=rZERO
            mem_size(3)=mem_size(3)+size(COLL(J)%v_r)
          endif
          if(l_complex) then
-           allocate(COLL(J)%v_c(COLL(J)%N))
+           YAMBO_ALLOC(COLL(J)%v_c,(COLL(J)%N))
            COLL(J)%v_c=cZERO
            mem_size(4)=mem_size(4)+size(COLL(J)%v_c)
          endif
        endif
        if (l_clean.and.(l_v1.or.l_all)) then
-         if (associated(COLL(J)%v_c)) deallocate(COLL(J)%v_c)
-         if (associated(COLL(J)%v_r)) deallocate(COLL(J)%v_r )
+         YAMBO_FREE(COLL(J)%v_c)
+         YAMBO_FREE(COLL(J)%v_r)
        endif
        if (l_alloc.and.(l_table.or.l_all)) then
-         allocate(COLL(J)%table(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
+         YAMBO_ALLOC(COLL(J)%table,(D(1,1):D(1,2),D(2,1):D(2,2),D(3,1):D(3,2)))
          COLL(J)%table=0
          COLL_grp%D=D
          mem_size(5)=mem_size(5)+size(COLL(J)%table)
        endif
        if (l_clean.and.(l_table.or.l_all)) then
-         if (associated(COLL(J)%table)) deallocate(COLL(J)%table)
+         YAMBO_FREE(COLL(J)%table)
        endif
      enddo
-     !
-     if (l_alloc) then
-       if(l_v3.or.l_all) then
-         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3r",  (/mem_size(1)/))
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3c",  (/mem_size(2)/))
-       endif
-       if (l_v1.or.l_all) then
-         if (l_real  )  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vr",   (/mem_size(3)/))
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vc",   (/mem_size(4)/))
-       endif
-       if (l_table.or.l_all)  call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_table",(/mem_size(5)/),(/LP/))
-     endif
-     !
-     if (l_clean) then
-       if (l_v3.or.l_all) then
-         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3r")
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_v3c")
-       endif
-       if (l_v1.or.l_all) then
-         if (l_real   ) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vr")
-         if (l_complex) call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_vc")
-       endif
-       if (l_table.or.l_all)   call mem_est("COLLISIONS_"//trim(COLL_grp%name)//"_table")
-     endif
      !
    end subroutine
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -29,13 +29,12 @@ subroutine RT_X_response(en,k,q)
 &                         Probe_path,Pump_path,N_probes
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  use fields,         ONLY:Efield
  use com,            ONLY:jobstr,error
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: en
  type(bz_samp) :: k,q
@@ -132,8 +131,7 @@ subroutine RT_X_response(en,k,q)
  !
  ! CLEAN
  !
- if (allocated(RT_P_t)) deallocate(RT_P_t)
- if (allocated(RT_J_t)) deallocate(RT_J_t)
- call mem_est("RT_P_t RT_J_t")
+ YAMBO_FREE(RT_P_t)
+ YAMBO_FREE(RT_J_t)
  !
 end subroutine

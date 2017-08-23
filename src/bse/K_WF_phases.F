@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,7 +41,6 @@ subroutine K_WF_phases(Xk)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP,cZERO
- use memory_m,      ONLY:mem_est
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:nsym
  use R_lattice,     ONLY:bz_samp
@@ -50,7 +49,7 @@ subroutine K_WF_phases(Xk)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
  use electrons,     ONLY:n_sp_pol,n_spinor
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -64,8 +63,7 @@ subroutine K_WF_phases(Xk)
  call section('=','Wave-Function Phases')
  !
  if (.not.allocated(WF_phase)) then
-   allocate(WF_phase(Xk%nibz,nsym,BS_bands(1):BS_bands(2),n_sp_pol))
-   call mem_est("WF_phase",(/size(WF_phase)/),(/2*SP/))
+   YAMBO_ALLOC(WF_phase,(Xk%nibz,nsym,BS_bands(1):BS_bands(2),n_sp_pol))
  endif
  WF_phase=cZERO
  !

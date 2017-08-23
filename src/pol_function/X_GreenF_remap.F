@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,11 +26,9 @@ subroutine X_GreenF_remap(bands,E,W)
  use pars,          ONLY:SP,pi
  use units,         ONLY:HA2EV
  use LIVE_t,        ONLY:live_timing
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels,n_sp_pol,E_reset
  use frequency,     ONLY:w_samp,W_reset
- use memory_m,      ONLY:mem_est
- !
- implicit none
+#include<memory.h>
  integer      :: bands(2)
  type(w_samp) :: W
  type(levels) :: E
@@ -49,7 +47,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Resets
  !
  call W_reset(W_A)
- nullify(E_map%GreenF)
+ call E_reset(E_map)
  !
  ! New energy range where the convolution is defined
  !
@@ -88,7 +86,7 @@ subroutine X_GreenF_remap(bands,E,W)
  call FREQUENCIES_setup(W_A)
  W_A%p=real(W_A%p)
  !
- allocate(E_map%GreenF(bands(2),E%nk,n_sp_pol,W_A%n_freqs))
+ YAMBO_ALLOC(E_map%GreenF,(bands(2),E%nk,n_sp_pol,W_A%n_freqs))
  E_map%GreenF=(0.,0.)
  !
  call live_timing('GF remapping',(bands(2)-bands(1)+1)*E%nk)
@@ -136,13 +134,11 @@ subroutine X_GreenF_remap(bands,E,W)
  ! Note that the spectral function of the Green Functions defined here have 
  ! an integral equal to (Z*pi)
  !
- nullify(E%GreenF,E%GreenF_W)
- call mem_est("E-GreenF E-GreenF_W")
+ YAMBO_FREE(E%GreenF)
+ YAMBO_FREE(E%GreenF_W)
  E%GreenF_n_E_steps=W_A%n_freqs
- allocate(E%GreenF(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- call mem_est("E-GreenF",(/size(E%GreenF)/))
- allocate(E%GreenF_W(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
- call mem_est("E-GreenF_W",(/size(E%GreenF_W)/))
+ YAMBO_ALLOC(E%GreenF,(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
+ YAMBO_ALLOC(E%GreenF_W,(bands(2),E%nk,n_sp_pol,E%GreenF_n_E_steps))
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk
      do i_spin=1,n_sp_pol
@@ -157,6 +153,7 @@ subroutine X_GreenF_remap(bands,E,W)
  ! CLEAN
  !
  call W_reset(W_A)
- nullify(E_map%GreenF)
+ YAMBO_FREE(E_map%GreenF)
+ call E_reset(E_map)
  !
 end subroutine

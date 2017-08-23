@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -35,7 +35,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
 &                              i_space_inv,sop_inv,inv_index,symmetry_group_table
  !
- implicit none
+#include<memory.h>
  !
  integer, intent(out)   :: old_nsym
  real(SP),intent(out)   :: old_dl_sop(3,3,nsym)
@@ -242,12 +242,12 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      enddo
    endif
    !
-   allocate(dl_sop_tmp(3,3,nsym))
+   YAMBO_ALLOC(dl_sop_tmp,(3,3,nsym))
    dl_sop_tmp(1:3,1:3,1:nsym)=dl_sop(1:3,1:3,1:nsym)
-   deallocate(dl_sop)
-   allocate(dl_sop(3,3,nsym))
+   YAMBO_FREE(dl_sop)
+   YAMBO_ALLOC(dl_sop,(3,3,nsym))
    dl_sop=dl_sop_tmp
-   deallocate(dl_sop_tmp)
+   YAMBO_FREE(dl_sop_tmp)
    !
  !*********************
  ! Expand Symmetries
@@ -267,8 +267,10 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        call msg('s','T-rev is now a symmetry of the system')
      endif
      !
-     deallocate(dl_sop,rl_sop)
-     allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
+     YAMBO_FREE(dl_sop)
+     YAMBO_FREE(rl_sop)
+     YAMBO_ALLOC(dl_sop,(3,3,nsym))
+     YAMBO_ALLOC(rl_sop,(3,3,nsym))
      dl_sop(1:3,1:3,1:nsym/2)=old_dl_sop(1:3,1:3,1:nsym/2)
      do is=nsym/2+1,nsym
        dl_sop(1:3,1:3,is)=-old_dl_sop(1:3,1:3,is-nsym/2)
@@ -317,15 +319,17 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        nsym=2*nsym
        call msg('s','Magnetic symmetries are now included in the symm group')
        !
-       allocate(dl_sop_tmp(3,3,nsym/2))
+       YAMBO_ALLOC(dl_sop_tmp,(3,3,nsym/2))
        dl_sop_tmp(1:3,1:3,1:nsym/2)=dl_sop(1:3,1:3,1:nsym/2)
-       deallocate(dl_sop,rl_sop)
-       allocate(dl_sop(3,3,nsym),rl_sop(3,3,nsym))
+       YAMBO_FREE(dl_sop)
+       YAMBO_FREE(rl_sop)
+       YAMBO_ALLOC(dl_sop,(3,3,nsym))
+       YAMBO_ALLOC(rl_sop,(3,3,nsym))
        dl_sop(1:3,1:3,1:nsym/2)=dl_sop_tmp(1:3,1:3,1:nsym/2)
        do is=nsym/2+1,nsym
          dl_sop(1:3,1:3,is)=matmul(dl_sop_tmp(1:3,1:3,is-nsym/2),-symm_to_check(1:3,1:3,1))
        enddo
-       deallocate(dl_sop_tmp)
+       YAMBO_FREE(dl_sop_tmp)
        !
      endif
      !

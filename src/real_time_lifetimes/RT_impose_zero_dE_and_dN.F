@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,10 +23,8 @@
 !
 subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_kind)
  !
-#if defined _BLUEGENE || _PGI
- use ieee_arithmetic
-#endif
  use pars,           ONLY:SP,DP
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
@@ -46,14 +44,15 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  ! Work Space
  !
- real(DP), parameter :: cut_off=0.1_SP  ! 1 = 100%
- !
- integer      :: i1,ib,ik,ik_rim,iE_rim,iref
- real(DP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,prefactor(2),&
+ integer      :: ib,ik,ik_rim,iE_rim,iref
+ real(DP)     :: f_E,f_H,df,k_weight,En,Hole_fac,Elec_fac,&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
-&                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,prefactor_to_use,GAMMA_h,GAMMA_e
- !
+&                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,GAMMA_h,GAMMA_e,tiny_or_not
  logical      :: l_energy,l_n_electrons,l_n_carriers
+ !
+ ! Prefactors
+ real(DP)     :: prefactor_v(2),prefactor_c(2),& ! 1->e, 2->h
+&                prefactor_to_use(2)
  !
  if(index(Scatt_kind,'elel')/=0) then
    l_energy      =l_RT_impose_E
@@ -61,10 +60,16 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
    l_n_carriers  =.false.
  endif
  !
- if(index(Scatt_kind,'elph')/=0.or.index(Scatt_kind,'radiative')/=0) then
+ if(index(Scatt_kind,'elph')/=0) then
    l_energy      =.false.
    l_n_electrons =l_RT_impose_N_dN
-   l_n_carriers  =l_RT_impose_N_dN
+   l_n_carriers  =l_RT_impose_N_dN .and. (E%E_ind_gap(1)>0.1/HA2EV)
+ endif
+ !
+ if(index(Scatt_kind,'radiative')/=0) then
+   l_energy      =.false.
+   l_n_electrons =l_RT_impose_N_dN
+   l_n_carriers  =.false.
  endif
  !
  if (trim(Scatt_kind)=="elel" )     iref=1
@@ -147,48 +152,44 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  dN_e=dN_dT_e_v+dN_dT_e_c
  dN_h=dN_dT_h_v+dN_dT_h_c
  !
- prefactor=0._SP
+ prefactor_v=0._SP
+ prefactor_c=0._SP
  !
  ! Electrons number and Energy
  !
- if (l_energy.and.l_n_electrons.and..not.l_n_carriers) then
-   prefactor(1)=( dE_c*(dN_e-dN_h)-dN_c*(dE_e-dE_h) )/(dE_c*dN_v-dE_v*dN_c)
-   prefactor(2)=( dN_v*(dE_e-dE_h)-dE_v*(dN_e-dN_h) )/(dE_c*dN_v-dE_v*dN_c)
+ tiny_or_not=dE_c*dN_v-dE_v*dN_c
+ if (l_energy.and.l_n_electrons.and..not.l_n_carriers.and.abs(tiny_or_not)>epsilon(1._DP)) then
+   prefactor_v(1)=( dE_c*(dN_e-dN_h)-dN_c*(dE_e-dE_h) )/tiny_or_not
+   prefactor_c(1)=( dN_v*(dE_e-dE_h)-dE_v*(dN_e-dN_h) )/tiny_or_not
+   prefactor_v(2)=prefactor_v(1)
+   prefactor_c(2)=prefactor_c(1)
  endif
  !
  ! Electrons and carriers number
  !
  if (l_n_carriers.and.l_n_electrons.and..not.l_energy) then
-   prefactor(1)= (dN_dT_e_v-dN_dT_h_v)/dN_v
-   prefactor(2)= (dN_dT_e_c-dN_dT_h_c)/dN_c
+   call EVAL_the_fraction(prefactor_v,dN_dT_e_v,dN_dT_h_v)
+   call EVAL_the_fraction(prefactor_c,dN_dT_e_c,dN_dT_h_c)
+   !
+   ! Fall back in case any of dN_dT_e_v,dN_dT_h_v, dN_dT_e_c,dN_dT_h_c are zero
+   !
+   if (any((/prefactor_v==-1._DP/).or.any((/prefactor_v==-1._DP/)))) then
+     l_n_carriers=.FALSE.
+   endif
  endif
  !
  ! Electrons number only
  !
  if(.not.l_energy.and..not.l_n_carriers.and.l_n_electrons) then
-   prefactor(1)=(dN_e-dN_h)/(dN_e+dN_h)
-   prefactor(2)=prefactor(1)
+   call EVAL_the_fraction(prefactor_v,dN_e,dN_h)
+   if (any((/prefactor_v==-1._DP/).or.any((/prefactor_v==-1._DP/)))) then
+     prefactor_v=0._DP
+   endif
+   prefactor_c=prefactor_v
  endif
  !
- ! Pre-factors transfer to internal variables and application
- ! to the lifetimes
- !============================================================
- !
- do i1=1,2
-   !
-#if defined _BLUEGENE || _PGI
-   if( ieee_is_nan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._DP ) then
-     prefactor(i1)=0._DP
-   endif
-#else
-   if( isnan(prefactor(i1)) .or. prefactor(i1)==prefactor(i1)+1._DP ) then
-     prefactor(i1)=0._DP
-   endif
-#endif
-   !
-   if ( abs(prefactor(i1))>cut_off ) prefactor(i1)=prefactor(i1)/abs(prefactor(i1))*cut_off
-   !
- enddo
+ ! Pre-factors are now transferred to internal variables and applied to the lifetimes
+ !====================================================================================
  !
  do ib=RT_bands(1),RT_bands(2)
    do ik=1,k%nibz
@@ -199,14 +200,14 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        if(.not.l_RT_uses_E_DbGd) En=real(E%E(ib,ik,1)         ,DP)
        if(     l_RT_uses_E_DbGd) En=real(E%E_DbGd(ib,iE_rim,1),DP)
        !
-       if (En<=0._DP) prefactor_to_use=prefactor(1)
-       if (En> 0._DP) prefactor_to_use=prefactor(2)
-       !
-       GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)
        GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)+real(REF_lifetime(ib,ik_rim,iref+1),DP)
+       GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)
        !
-       GAMMA_h=GAMMA_h*(1._DP+prefactor_to_use)
-       GAMMA_e=GAMMA_e*(1._DP-prefactor_to_use)
+       if (En<=0._DP) prefactor_to_use=prefactor_v
+       if (En> 0._DP) prefactor_to_use=prefactor_c
+       !
+       GAMMA_e=GAMMA_e*(1._DP-prefactor_to_use(1))
+       GAMMA_h=GAMMA_h*(1._DP+prefactor_to_use(2))
        !
        if (l_initial_equilibrium) then
          REF_lifetime(ib,ik_rim,iref  )= real(GAMMA_h,SP)
@@ -223,9 +224,28 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  ! Save values for RT_output
  !===========================
  !
- if(trim(Scatt_kind)=="elel" )     EE_prefactor    =real(prefactor,SP)
- if(trim(Scatt_kind)=="elph1")     EP_prefactor    =real(prefactor,SP)
- if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=real(prefactor,SP)
- if(trim(Scatt_kind)=="radiative") RAD_prefactor   =real(prefactor,SP)
+ do iref=1,2
+   prefactor_to_use(iref)=(prefactor_v(iref)+prefactor_c(iref))/2.
+ enddo
+ if(trim(Scatt_kind)=="elel" )     EE_prefactor    =real( prefactor_to_use, SP)
+ if(trim(Scatt_kind)=="elph1")     EP_prefactor    =real( prefactor_to_use, SP)
+ if(trim(Scatt_kind)=="elph2")     EP_abs_prefactor=real( prefactor_to_use, SP)
+ if(trim(Scatt_kind)=="radiative") RAD_prefactor   =real( prefactor_to_use, SP)
  !
+ contains
+   !
+   subroutine EVAL_the_fraction(P,x,y)
+     !
+     ! Eval the solution of: 
+     !
+     !  x*P(1)+y*P(2)=x-y
+     !
+     real(DP) :: x,y,P(2)
+     if (abs(x)>epsilon(1._DP).and.abs(y)>epsilon(1._DP)) then
+       P=(x-y)/(x+y)
+     else
+       P=-1._DP
+     endif     
+   end subroutine
+   !
 end subroutine RT_impose_zero_dE_and_dN

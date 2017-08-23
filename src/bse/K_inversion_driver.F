@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -26,19 +26,24 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BS_mat,BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data
- use BS,             ONLY:BS_H_dim
- use memory_m,       ONLY:mem_est
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
+&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         K_slk,K_inv_slk
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local,myid
+&                         PAR_COM_SLK_INDEX_local
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
+ use SLK_m,          ONLY:BLACS_structure_in_use
+#if defined _SCALAPACK
+ use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
+ use interfaces,     ONLY:MATRIX_transfer
+#endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -49,16 +54,16 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
- use PHOTOLUM,       ONLY:BS_PL_free,PL
+ use PHOTOLUM,       ONLY:BSS_PL_free,PL
 #endif
  !
  ! GPL_EXCLUDE_END
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp) :: W
  integer      :: iq
@@ -70,7 +75,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! ... dummies
  !
  type(PP_indexes)  :: PAR_IND_freqs
- integer           :: i1,i2,iw
+ integer           :: i1,i2,iw,PAR_IND_FREQ_ID
  logical, external :: stop_now
  real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
@@ -97,9 +102,18 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    call section('+','Inversion solver')
  endif
  !
+#if defined _SCALAPACK
+ !
+ ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+ !=========================
+ call BS_Blocks_symmetrize_K()
+ !
+#endif
+ !
  ! Restart database
  !==================
  call K_inversion_restart(iq,W)
+ !
  completed=count(K_INV_EPS%err/=0)==0
 #if defined _PL
  completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
@@ -120,9 +134,46 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  endif
 #endif
  !
- ! Kernel Loading 
- !================
- call K_stored_in_a_BIG_matrix(iq)
+#if defined _SCALAPACK
+ !
+ ! SLK matrix initialization before the Kernel loading
+ !
+ call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ !
+ if ( SLK_ORTHO%coordinate(1) /= -1 ) BLACS_structure_in_use=.TRUE.
+ !
+#endif
+ !
+ ! Kernel and/or BSS components loading
+ !======================================
+ call K_components_folded_in_serial_arrays(iq,"INV")
+ !
+ if (BLACS_structure_in_use) then
+   !
+#if defined _SCALAPACK
+   !
+   call msg('rs','[LA] BLACS matrix filling')
+   !
+   ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
+   !============================
+   !
+   call MATRIX_transfer("fill_the_SLK", K_slk, BS_blk )
+   !
+   ! Diagonal removal
+   !==================
+   call K_diagonal(iq,"rm_OCC DIAG")
+   !
+   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
+   !
+#endif
+   !
+ else
+   !
+   ! Diagonal removal
+   !==================
+   call K_diagonal(iq,"rm_E rm_OCC DIAG")
+   !
+ endif
  !
  ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================
@@ -140,8 +191,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- call mem_est("Lo",(/size(Lo)/))
+ YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
  call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
@@ -152,19 +202,22 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! Perturbative Inversion
  !========================
  call PP_indexes_reset(PAR_IND_freqs)
- call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/))
+ PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
  !
  if (PERTURBATIVE) then
    !
-   call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(myid+1))
+   call PARALLEL_index(PAR_IND_freqs,(/W%n_freqs/),COMM=PAR_COM_SLK_INDEX_local)
+   call PARALLEL_live_message('Perturbative Inversion Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+&                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
+   call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
    call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
-   call PP_redux_wait(K_INV_EPS%err)
-   call PP_redux_wait(Epsilon_ii(:,2))
+   call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
-   call PP_redux_wait(K_INV_PL%err)
-   call PP_redux_wait(PL(:,2))
+   call PP_redux_wait(K_INV_PL%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #endif
    !
    ! I/O [after pert inversion]
@@ -248,26 +301,26 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
  !
  BSS_n_descs=BSS_n_descs+1
- ratio=real(nw_conv)/real(W%n_freqs)*100._SP
+ ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
  BSS_description(BSS_n_descs)='    |Converged frequencies [o/o]:'//trim(real2ch(ratio))
  !
  call K_output_file(iq,"Inversion")
  !
  ! CLEAN
  !
+ call LOCAL_clean()
+ !
  contains 
    !
    subroutine do_it_FULL(TYP)
      !
      type(K_Inversion_data) :: TYP
-     integer                :: PAR_IND_FREQ_ID
      !
      ! Then loop on the groups performing full inversion
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     PAR_IND_FREQ_ID=PAR_COM_SLK_INDEX_local%CPU_id+1
      call PARALLEL_index(PAR_IND_freqs,(/TYP%n_full_inv_freqs/),COMM=PAR_COM_SLK_INDEX_local)
-     call PARALLEL_live_message('['//TYP%what//'] Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
+     call PARALLEL_live_message('['//TYP%what//'] Exact Inversion Frequencies',LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID),&
 &                               TOTAL=TYP%n_full_inv_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
      call live_timing('['//TYP%what//'] Exact inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
      !
@@ -362,15 +415,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine LOCAL_clean
-     call BS_mat_free( )
 #if defined _PL
-     call BS_PL_free( )
+     call BSS_PL_free( )
 #endif
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     call BS_KERR_free( )
+     call BSS_KERR_free( )
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -379,9 +431,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _PL
      call LOCAL_TYP_clean(K_INV_PL)
 #endif
+     !
      call PP_indexes_reset(PAR_IND_freqs)
-     deallocate(Lo)
-     call mem_est("Lo")
+     YAMBO_FREE(Lo)
+     !
+#if defined _SCALAPACK
+     call SLK_matrix_reset(K_slk)
+     call SLK_matrix_reset(K_inv_slk)
+     BLACS_structure_in_use=.FALSE.    
+#endif
      !
 #if defined _TIMING
      call timing('Inversion Solver',OPR='stop')

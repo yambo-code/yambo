@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ sub add_a_database_line
 {
  $local_id=@_[0];
  $file= $DB_file;
- $filename = basename("@_[2]");
+ if (@_[2]) {$filename = basename("@_[2]")};
  $old = $file;
  $new1 = "$file.tmp1.$$";
  $new2 = "$file.tmp2.$$";
@@ -37,6 +37,18 @@ sub add_a_database_line
  open(NEW1, "> $new1")       or die "can't open $new1: $!";
  open(NEW2, "> $new2")       or die "can't open $new2: $!";
  open(NEW3, "> $new3")       or die "can't open $new3: $!";
+ if ( "@_[1]" =~ "description"){
+  $local_description_file="$HOME/.ydb/${local_id}_description";
+  for($ik = 1; $ik < 100; $ik++) {
+   if (exists($RUN_description[$IRUN_in][$ik])){
+    $return_value = system("echo '$RUN_description[$IRUN_in][$ik]' >> $local_description_file"); 
+   }
+  }
+  $return_value = system("vim $local_description_file"); 
+  &remote_sftp_cmd("put $local_description_file $path/$RUN_material[$IRUN_in]/$local_id/description");
+  $n_to_remove++;
+  $FILE_to_remove[$n_to_remove]="$local_description_file";
+ }
  while (<OLD>) {
   @line = split(' ',$_);
   if ( $line[0] < $local_id) {
@@ -49,29 +61,51 @@ sub add_a_database_line
   }
   $replace_it="no";
   if ( "@line" eq "$new_line" ){ $replace_it = "yes" };
+  if ( "$line[1]" =~ "date" and "@_[1]" =~ "date"){ $replace_it = "yes"};
+  if ( "$line[1]" =~ "father" and "@_[1]" =~ "father"){ $replace_it = "yes"};
   if ( "$line[1]" =~ "material" and "@_[1]" =~ "material"){ $replace_it = "yes"};
-  if ( "$line[1]" =~ "description" and "@_[1]" =~ "description"){ $replace_it = "yes"};
+  #
+  if ( "$line[1]" =~ "running" and "@_[1]" =~ "running"){ 
+   $replace_it = "yes";
+   &remote_ssh_cmd("echo $running > $path/$RUN_material[$IRUN_in]/$local_id/running");
+  }
+  #
+  if ( "$line[1]" =~ "description" and "@_[1]" =~ "description"){ 
+   open(DESC_file,"<","$local_description_file");
+   @DESC=<DESC_file>;
+   $ik=0;
+   foreach $desc_line (@DESC) {
+    $ik++;
+    chomp($desc_line);
+    if (length($desc_line) > 0 ) {
+      if ($ik eq 1) { $new_line = "$local_id @_[1] $desc_line"};
+      if ($ik >  1) { $new_line = "${new_line}NEWLINE$desc_line"};
+    }
+   }
+   close(DESC_file);
+   $replace_it = "yes";
+  }
   if ( "@_[1]" =~ "tag"){
    if ("$line[1]" =~ "tag" and !$input and !$output and !$database) {$replace_it = "yes"};
    if ("$line[1]" eq "output" and $output) {
     if ("$line[2]" eq "$output") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/outputs/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/outputs/$line[2].tags'");
     }
    }
    if ("$line[1]" eq "input" and $input) {
     if ("$line[2]" eq "$input") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/inputs/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/inputs/$line[2].tags'");
     }
    }
    if ("$line[1]" eq "database" and $database) {
     if ("$line[2]" eq "$database") { 
      $new_line = "$line[0] $line[1] $line[2] $user_tags";
      $replace_it = "yes";
-     &remote_ssh_cmd("echo $user_tags > $path/$RUN_material[$IRUN_in]/$local_id/databases/$line[2].tags");
+     &remote_ssh_cmd("echo $user_tags > '$path/$RUN_material[$IRUN_in]/$local_id/databases/$line[2].tags'");
     }
    }
   };
@@ -95,8 +129,7 @@ sub add_a_database_line
  unlink $new3;
  #
  if ("@_[1]" =~ "material")   { &remote_sftp_cmd("rename $path/$RUN_material[$IRUN_in] $path/$material"); }
- if ("@_[1]" =~ "description"){ &remote_ssh_cmd("echo $description > $path/$RUN_material[$IRUN_in]/description"); }
- if ("@_[1]" =~ "tag"){ &remote_ssh_cmd("echo $filename > $path/$RUN_material[$IRUN_in]/tags"); }
+ if ("@_[1]" =~ "tag"){ &remote_ssh_cmd("echo $filename > $path/$RUN_material[$IRUN_in]/$local_id/tags"); }
 }
 sub elemental_add
 {

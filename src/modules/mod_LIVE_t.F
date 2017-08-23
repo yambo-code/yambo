@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -57,10 +57,6 @@ module LIVE_t
  !
  logical           :: log_line_to_dump
  character(lchlen) :: log_line
- !
- ! Definition of a time short enough to mess up I/O and MPI communications
- !
- real(SP), parameter :: SHORT_time= 60. ! seconds
  !
  contains
    !
@@ -210,7 +206,7 @@ module LIVE_t
      character(schlen):: lfmt_,rfmt_,sfmt_
      logical          :: add_cput,add_CPU_id
      !
-     if (.not.write_to_log) return
+     if (.not.write_to_log.and.index(message,"[ERROR]")==0) return
      !
      if (.not.log_as_a_file) lfmt_="r"
      if (log_as_a_file) lfmt_="n"

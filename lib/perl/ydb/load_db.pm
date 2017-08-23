@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ sub load_db
 {
 open(DB,"<","$DB_file");
 $runs=0;
+$N_fathers=0;
 while(<DB>) { 
  @element = split(' ',$_);
  if ($element[1] eq "father")    { 
@@ -36,10 +37,31 @@ while(<DB>) {
   $runs++;
  }
  $ID[$runs]=$element[0];
+ if ($element[1] eq "running")     { $RUN_run[$runs]=$element[2] } ;
  if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
- if ($element[1] eq "father")      { $RUN_father[$runs]=$element[2] } ;
+ if ($element[1] eq "father")      { 
+  $RUN_father[$runs]=$element[2];
+  $F_found="no";
+  for($if_here = 1; $if_here <= $N_fathers; $if_here++) {
+    if ("$element[2]" =~ "$father[$if_here]") {$F_found="yes"};
+  } 
+  if ("$F_found" eq "no") {
+   $N_fathers++;
+   $father[$N_fathers]=$element[2];
+  }
+ }
  if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
- if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
+ if ($element[1] eq "description") { 
+  $desc_line  = substr $_, index($_,"description")+length("description")+1 ; 
+  chomp($desc_line);
+  @DESCs = split(/NEWLINE/,$desc_line);
+  $id=0;
+  foreach $single_desc (@DESCs) {
+   chomp($single_desc);
+   $id++;
+   $RUN_description[$runs][$id]=$single_desc;
+  }
+ }
  if ($element[1] eq "tag")         { 
   for($ik = 2; $ik < 100; $ik++) {
    if ($element[$ik]){

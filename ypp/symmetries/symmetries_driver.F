@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -35,7 +35,7 @@ subroutine symmetries_driver(E,Xk)
  use stderr,              ONLY:intc
  use interfaces,          ONLY:WF_load
  !
- implicit none
+#include<memory.h>
  !
  type(levels),intent(in)     :: E
  type(bz_samp),intent(inout) :: Xk
@@ -71,15 +71,16 @@ subroutine symmetries_driver(E,Xk)
  ! Magnetization must be considered to derive syms if n_spinor==2
  if(n_spinor==2) then
    call WF_load(WF,0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
-   allocate(magn(fft_size,3))
+   YAMBO_ALLOC(magn,(fft_size,3))
    call el_magnetization(E,Xk,magn)
    call msg('s','Total magnetization (x,y,z) [Bohr_magneton] :',real(Total_magn(:),SP))
-   deallocate(magn)
+   YAMBO_FREE(magn)
    call WF_free(WF)
  endif
  !
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.false.)
+ YAMBO_FREE(Xk%pt)
  call k_reduce(Xk,.false.)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
@@ -98,15 +99,17 @@ subroutine symmetries_driver(E,Xk)
  call bz_samp_duplicate(Xk,Xk_save)
  !
  old_nkpt=Xk%nibz
- deallocate(Xk%pt)
+ YAMBO_FREE(Xk%pt)
  call k_reduce(Xk,.false.)
  call msg('s',trim(intc(old_nkpt))//' k-points have been expanded/reduced to ...'//trim(intc(Xk%nibz)))
  !
- deallocate(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
- nullify(Xk%sstar,Xk%star,Xk%nstar,Xk%weights)
+ YAMBO_FREE(Xk%sstar)
+ YAMBO_FREE(Xk%star)
+ YAMBO_FREE(Xk%nstar)
+ YAMBO_FREE(Xk%weights)
  call k_expand(Xk)
  !
- allocate(kpoints_map(2,Xk%nibz))
+ YAMBO_ALLOC(kpoints_map,(2,Xk%nibz))
  call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
  !
  ! Energies and Wave-functions
@@ -118,6 +121,6 @@ subroutine symmetries_driver(E,Xk)
  ! CLEAN
  !=======
  call bz_samp_reset(Xk_save)
- deallocate(kpoints_map)
+ YAMBO_FREE(kpoints_map)
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  use pars,          ONLY:SP,pi
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:nqbz,bz_samp,nXkibz
  use BS,            ONLY:BS_res_K_exchange,BS_n_g_exch,&
@@ -40,7 +39,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:FXC,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
- implicit none
+#include<memory.h>
  type(bz_samp) ::Xk
  type(w_samp)  ::W
  integer       ::iq
@@ -48,7 +47,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! WorkSpace 
  !
- integer    :: ik1,ik2,O_x_dim,icv1,icv2,alloc_err(2)
+ integer    :: ik1,ik2,O_x_dim,icv1,icv2
  complex(SP):: Co,Hrx
 #if defined _DOUBLE
  complex(SP):: zdotc
@@ -85,22 +84,19 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Exchange oscillators
  !
- allocate(O1x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim),stat=alloc_err(1))
- allocate(O2x(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim),stat=alloc_err(2))
- call mem_est('O1x O2x',(/size(O1x),size(O2x)/),errors=alloc_err)
+ YAMBO_ALLOC(O1x,(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
+ YAMBO_ALLOC(O2x,(max(BS_n_g_exch,FXC_n_g_corr),O_x_dim))
  !
  ! Kernel 2 FXC
  !
- allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
+ YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+ YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_nT_at_k)
- call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
  FXC_K_diagonal=0._SP
  FXC=(0._SP,0._SP)
  !
  ! Memory usage estimation  in BS K 2 Fxc procedure
  !
- call mem_est("BS_K_2_FXC",(/2*6*FXC_n_g_corr*O_x_dim+2*FXC_n_g_corr**2+2*O_x_dim/),(/SP/))
- call mem_est('BS_mat',(/O_x_dim**2/))
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X_static,ID)
@@ -115,7 +111,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
      !if (ik1/=ik2) call K_exchange(.true.,iq,ik1,Xk,O1x,O_x_dim)
      if (ik1==ik2) O1x=O2x
      !
-     allocate(BS_mat(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
+     YAMBO_ALLOC(BS_mat,(BS_nT_at_k(ik1),BS_nT_at_k(ik2)))
      !
      ACTION=RD
      if (ik1==1.and.ik2==nXkibz) ACTION=RD_CL
@@ -142,7 +138,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
 &                         O2x(:FXC_n_g_corr,:),O_x_dim,W,X_static)
      !
      call live_timing(steps=1)
-     deallocate(BS_mat)
+     YAMBO_FREE(BS_mat)
    enddo
  enddo
  call live_timing
@@ -150,12 +146,10 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  ! CLEAN
  !
  call PP_redux_wait
- deallocate(O1x,O2x)
- call mem_est('O1x O2x')
- call mem_est("BS_K_2_FXC")
- call mem_est('BS_mat')
+ YAMBO_FREE(O1x)
+ YAMBO_FREE(O2x)
  call WF_free(WF)
- deallocate(FXC_K_diagonal,FXC)
- call mem_est("FXC_K_diagonal FXC")
+ YAMBO_FREE(FXC_K_diagonal)
+ YAMBO_FREE(FXC)
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,22 +23,19 @@
 !
 integer function io_RIM(ID)
  !
- use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
- implicit none
+&                         io_elemental,io_status,io_bulk,read_is_on
+#include <memory.h>
  integer :: ID
  ! 
  ! Work Space
  !
  real(SP)            ::RL_vol_disk
- real(SP),allocatable::RIM_qpg_disk(:,:)
- integer             ::RIM_ng_disk,i1
- character(schlen)   ::VAR_name
+ integer             ::RIM_ng_disk
  !
  io_RIM=io_connect(desc="RIM",type=2,ID=ID)
  !
@@ -77,26 +74,12 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   allocate(RIM_qpg_disk(RIM_ng_disk,RIM_ng_disk))
-   !
    if (read_is_on(ID)) then
-     allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
-     call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
+     YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    endif
    !
-   do i1=1,nqibz 
-     !
-     if (write_is_on(ID)) RIM_qpg_disk=RIM_qpg(i1,:,:)
-     !
-     write (VAR_name,'(a,i4.4)') 'RIM_q_',i1
-     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(RIM_qpg_disk))
-     call io_bulk(ID,R2=RIM_qpg_disk)
-     !
-     if (read_is_on(ID)) RIM_qpg(i1,:,:)=RIM_qpg_disk(:RIM_ng,:RIM_ng)
-     !
-   enddo
-   !
-   deallocate(RIM_qpg_disk)
+   call io_bulk(ID,VAR="RIM_qpg",VAR_SZ=(/shape(RIM_qpg)/))
+   call io_bulk(ID,R3=RIM_qpg)
    !
  endif
  !

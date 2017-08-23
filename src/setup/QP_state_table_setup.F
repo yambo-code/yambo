@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,19 +35,21 @@ subroutine QP_state_table_setup(en)
  ! Out:  QP_table(1:QP_n_states,:) = (n,n`,ikibz)
  !       QP_state
  !
- use pars,          ONLY:SP,IP
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions
- use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
-#if defined _SC
- use SC,            ONLY:SC_bands,l_SC_diagonal,SC_potential
+#if defined _SC || defined _RT
+ use hamiltonian,   ONLY:H_ref_bands,H_potential
  use drivers,       ONLY:l_elel_scatt
 #endif
+#if defined _SC
+ use SC,            ONLY:l_SC_diagonal
+#endif
  !
- implicit none
+#include<memory.h>
  type(levels)::en
  !
  ! Work Space
@@ -68,8 +70,8 @@ subroutine QP_state_table_setup(en)
    k_rng_lines=1
    icheck=1
    do while(icheck/=0)
-     if (allocated(QP_i_limits)) deallocate(QP_i_limits)
-     allocate(QP_i_limits(k_rng_lines,4))
+     YAMBO_FREE(QP_i_limits)
+     YAMBO_ALLOC(QP_i_limits,(k_rng_lines,4))
      QP_i_limits=0
      call parser('QPkrange',QP_i_limits)
      icheck=sum(QP_i_limits(k_rng_lines,:))
@@ -87,8 +89,8 @@ subroutine QP_state_table_setup(en)
    e_rng_lines=1
    rcheck=1._SP
    do while(rcheck>0._SP)
-     if (allocated(QP_r_limits)) deallocate(QP_r_limits)
-     allocate(QP_r_limits(e_rng_lines,4))
+     YAMBO_FREE(QP_r_limits)
+     YAMBO_ALLOC(QP_r_limits,(e_rng_lines,4))
      QP_r_limits(e_rng_lines,3:4)=(/0._SP,-1._SP/)
      call parser('QPerange',QP_r_limits)
      rcheck=QP_r_limits(e_rng_lines,4)-QP_r_limits(e_rng_lines,3)
@@ -119,7 +121,7 @@ subroutine QP_state_table_setup(en)
      QP_k_nb=0
      QP_e_nb=0
      if (k_rng_lines>0) QP_k_nb=maxval(QP_i_limits(:,3:4))
-     if (associated(en%E)) then
+     if (allocated(en%E)) then
        do i1=1,e_rng_lines
          do ik=int(QP_r_limits(i1,1)),int(QP_r_limits(i1,2)),1
            do ib=1,en%nb
@@ -132,12 +134,12 @@ subroutine QP_state_table_setup(en)
      !
      ! QP_state setup
      !
-     allocate(QP_state(QP_nb,QP_nk))
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state(:,:)=.false.
      do i1=1,k_rng_lines
        QP_state(QP_i_limits(i1,3):QP_i_limits(i1,4),QP_i_limits(i1,1):QP_i_limits(i1,2))=.true.
      enddo
-     if (associated(en%E)) then
+     if (allocated(en%E)) then
        do i1=1,e_rng_lines
          do ik=int(QP_r_limits(i1,1)),int(QP_r_limits(i1,2)),1
            do ib=1,en%nb
@@ -150,14 +152,14 @@ subroutine QP_state_table_setup(en)
      !
    else
      !
-     if (.not.associated(en%E)) return
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/),(/IP/))
+     if (.not.allocated(en%E)) return
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state(:,:)=.true.
      !
    endif
    !
-   deallocate(QP_i_limits,QP_r_limits)
+   YAMBO_FREE(QP_i_limits)
+   YAMBO_FREE(QP_r_limits)
    !
  endif
  !
@@ -176,11 +178,9 @@ subroutine QP_state_table_setup(en)
  SC_bands_mixed=1
  !
  Mixing=.FALSE.
-#if defined _SC
+#if defined _SC || defined _RT
  Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
- if (l_eval_collisions) then
-   Mixing=l_elel_scatt.or.trim(SC_potential)=="HARTREE+FOCK".or.trim(SC_potential)=="COHSEX"
- endif
+ if (l_eval_collisions) Mixing=l_elel_scatt.or.trim(H_potential)=="HARTREE+FOCK".or.trim(H_potential)=="COHSEX"
 #endif
  !
  if (Mixing) then
@@ -210,8 +210,7 @@ subroutine QP_state_table_setup(en)
  QP_n_states=QP_n_states*n_sp_pol
  !
  if (.not.allocated(QP_table)) then
-   allocate(QP_table(QP_n_states,3+n_sp_pol-1))
-   call mem_est("QP_table",(/QP_n_states*(3+n_sp_pol-1)/),(/IP/))
+   YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1))
    QP_table=0
  endif
  !
@@ -227,11 +226,11 @@ subroutine QP_state_table_setup(en)
          !
          if (i2+i3>QP_nb.or.i2+i3<1) cycle
          !
+#if defined _SC || defined _RT
+         if ((l_sc_run.or.l_real_time) .and. (i2<H_ref_bands(1)) ) cycle
+#endif
 #if defined _SC
-         if (l_sc_run.or.l_real_time) then
-           if (i2<SC_bands(1)) cycle
-           if (l_SC_diagonal.and.i3/=0) cycle
-         endif
+         if (l_sc_run .and. (l_SC_diagonal.and.i3/=0) ) cycle
 #endif
          !
          QP_n_states=QP_n_states+1

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,13 +23,12 @@
 !
 module debug
  !
- use pars,    ONLY:schlen
+ use pars,    ONLY:schlen,n_debugs_max
  use com,     ONLY:msg,secnm
  use stderr,  ONLY:intc
  !
  implicit none
  !
- integer, parameter:: n_debugs_max=100
  character(schlen) :: debug_name(n_debugs_max) 
  integer           :: debug_point(n_debugs_max)
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,17 +45,20 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:i_time_rev
  use wave_func,     ONLY:WF
- use SC,            ONLY:SC_potential,SC_kind
- use global_XC,     ONLY:SE_GW_NEQ,SE_GW_QED
- use collision,     ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_have_HARTREE,&
+ use hamiltonian,   ONLY:H_potential,H_kind
+ use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
+ use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_have_HARTREE,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,io_COLLISIONS
- use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- !
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use COLL_interfaces,ONLY:io_COLLISIONS
+ use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(levels)  :: E
@@ -68,6 +71,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  integer       :: ID,i_kind,IO_err
  character(20) :: PAR_ch,FREE_ch
  !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='start')
+#endif
+ !
  call section('*','Extended collisions')
  !=======================================
  !
@@ -75,11 +82,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  l_use_collisions=.TRUE.
  !
- COLLISIONS_have_HARTREE=index(SC_potential,"HARTREE")>0
+ COLLISIONS_have_HARTREE=index(H_potential,"HARTREE")>0
  !
- l_use_Hxc_collisions  =(index(SC_potential,"HARTREE")>0.or.index(SC_potential,"FOCK")>0.or.index(SC_potential,"SEX")>0.or.&
-&                        trim(SC_potential)=="default")
- l_use_COH_collisions  =index(SC_potential,"COH")>0
+ l_use_Hxc_collisions  =(index(H_potential,"HARTREE")>0.or.index(H_potential,"FOCK")>0.or.index(H_potential,"SEX")>0.or.&
+&                        trim(H_potential)=="default")
+ l_use_COH_collisions  =index(H_potential,"COH")>0
  !
  ! Check for the Time Reversal Symmetry
  !
@@ -93,7 +100,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! Naming 
  !========
- call COLLISIONS_naming( SC_kind , "HXC" )
+ call COLLISIONS_naming( H_kind , "HXC" )
  !
  ! Initial Setup
  !===============
@@ -131,7 +138,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
    !
-   call section('+',trim(SC_potential)//' (e-e correlation)')
+   call section('+',trim(H_potential)//' (e-e correlation)')
    !=========================================================
    !
    if(l_use_Hxc_collisions) call CHECK_and_ALLOC(HXC_collisions)
@@ -239,6 +246,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
  !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='stop')
+#endif
+ !
  contains
    !
    subroutine CHECK_and_ALLOC(COLL)
@@ -254,6 +265,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !
+     ! In case io_Colls is /=0 all CPU have to sincronize before starting
+     ! to compute the collisions and write a new header
+     !
+     call PP_redux_wait()
+     !
      if (IO_err==0) return
      !
      if (io_COLLs) then
@@ -261,7 +277,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
-       if (COLL%kind==SE_GW_NEQ.or.COLL%kind==SE_GW_QED) then
+       if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
        else
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)

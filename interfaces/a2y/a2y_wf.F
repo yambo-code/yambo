@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
+subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp,KSS_file_name)
  !
  ! Schematic I/O in outkss.F90:
  !
@@ -51,7 +51,7 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  ! end do ! spin
  ! close(unit=ntkss)
  !
- use pars,                  ONLY:SP,DP
+ use pars,                  ONLY:SP,DP,cZERO
  use electrons,             ONLY:n_bands,n_spin,n_spinor,n_sp_pol
  use D_lattice,             ONLY:n_atomic_species
  use pseudo,                ONLY:pp_n_l_times_proj_max,PP_alloc_abinit,pp_kbs,  &
@@ -60,15 +60,16 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  use wave_func,             ONLY:wf_ncx,wf_nc_k,wf_nb_io,wf_nb_io_groups,wf_igk
  use defs_datatypes,        ONLY:hdr_type, wffile_type
  use mod_com2y,             ONLY:artificial_spin_pol,ng_vec_abinit
+ !
  implicit none
  !
- integer        :: ikibz,ib_grp
+ integer        :: ikibz,i_sp_pol,ib_grp
  character(*)   :: KSS_file_name
- real(SP)       :: wf_disk(2,wf_nb_io,wf_ncx,n_spin)
+ complex(SP)    :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
  ! 
  ! Workspace ...
  ! 
- integer            :: i1,i2,nb_to_read,number_of_records_each_k
+ integer            :: i1,i2,nb_to_read
  !
  ! ... abinit
  !
@@ -79,24 +80,8 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
  complex(DP)        :: wf_disk_DP(ng_vec_abinit,n_spinor)
  integer            :: fform,i_spin,i_spinor
  !
- ! Number of records for each k-point
  !
- !
- ! GPL_EXCLUDE_START
- !
- number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+n_bands
- !
- ! GPL_EXCLUDE_END
- !
- !
- ! GPL_INCLUDE_START
- !
- !number_of_records_each_k=n_atomic_species*pp_n_l_times_proj_max*2+1+wf_nb_io
- !
- ! GPL_INCLUDE_END
- !
- !
- if (ikibz==1.and.ib_grp==1) then
+ if ((i_sp_pol==1.or.artificial_spin_pol).and.ikibz==1.and.ib_grp==1) then
    open(unit=11,file=KSS_file_name,form='unformatted')
    wff%unwff=11
    wff%accesswff=0
@@ -126,75 +111,35 @@ subroutine a2y_wf(wf_disk,ikibz,ib_grp,KSS_file_name)
    !
  endif
  !
- wf_disk=0._SP
+ wf_disk=cZERO
  pp_kb=0._SP
  pp_kbd=0._SP
  !
- do i_spin=1,n_sp_pol
+ if (ib_grp==1) then
+   do i1=1,n_atomic_species
+     do i2=1,pp_n_l_times_proj_max
+       read(11) pp_kb_kdb_disk
+       pp_kb(:ng_vec_abinit,i1,i2,i_sp_pol)=pp_kb_kdb_disk
+       read(11) pp_kb_kdb_disk
+       pp_kbd(:ng_vec_abinit,i1,i2,i_sp_pol)=pp_kb_kdb_disk
+     enddo
+   enddo   
+ endif
+ if (ib_grp==1) read(11) ! line with the energies
+ !
+ ! Read all bands or only the remaining in the last block
+ !
+ nb_to_read=wf_nb_io
+ if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
+ !
+ do i1=1,nb_to_read
    !
-   if (i_spin==2.and.artificial_spin_pol) then
-     pp_kb(:,:,:,2) = pp_kb(:,:,:,1) 
-     pp_kbd(:,:,:,2)= pp_kbd(:,:,:,1)
-     wf_disk(:,:,:,2)=wf_disk(:,:,:,1)
-     cycle
-   endif
-   ! 
-   if (ib_grp==1) then
-     do i1=1,n_atomic_species
-       do i2=1,pp_n_l_times_proj_max
-         read(11) pp_kb_kdb_disk
-         pp_kb(:ng_vec_abinit,i1,i2,i_spin)=pp_kb_kdb_disk
-         read(11) pp_kb_kdb_disk
-         pp_kbd(:ng_vec_abinit,i1,i2,i_spin)=pp_kb_kdb_disk
-       enddo
-     enddo   
-   endif
-   if (ib_grp==1) read(11) ! line with the energies
+   read(11) wf_disk_DP(:,:)
    !
-   ! Read all bands or only the remaining in the last block
-   !
-   nb_to_read=wf_nb_io
-   if (ib_grp*wf_nb_io>n_bands) nb_to_read=n_bands-wf_nb_io*(ib_grp-1) 
-   !
-   do i1=1,nb_to_read
-     !
-     read(11) (wf_disk_DP(:,i_spinor),i_spinor=1,n_spinor)
-     !
-     wf_disk(1,i1,:,i_spin)=real(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),1))
-     wf_disk(2,i1,:,i_spin)=aimag(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),1))
-     !
-     if (n_spinor==2) then
-       wf_disk(1,i1,:,2)=real(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),2))
-       wf_disk(2,i1,:,2)=aimag(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),2))
-     endif
-   enddo
-   !
-   if (n_sp_pol==2.and..not.artificial_spin_pol) then
-     ! 
-     ! Abinit uses a different ordering of the k-points/spins.
-     ! This makes the I/O complicate.
-     !
-     if (i_spin==1) then
-       !
-       ! After the UP spin I must read enough records in order to reach the
-       ! DN block.
-       !
-       do i1=1,number_of_records_each_k*(nkibz-1)
-         read (11)
-       enddo
-     else 
-       !
-       ! After the DN spin I must go back to the end of the spin UP block.
-       !
-       do i1=1,number_of_records_each_k*nkibz
-         backspace (11)
-       enddo
-     endif
-     !
-   endif
+   wf_disk(:,:,i1)= cmplx(wf_disk_DP(wf_igk(:wf_nc_k(ikibz),ikibz),:),kind=SP)
    !
  enddo
  ! 
- if (ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
+ if ((i_sp_pol==2.or.artificial_spin_pol).and.ikibz==nkibz.and.ib_grp==wf_nb_io_groups) close(11)
  !
 end subroutine

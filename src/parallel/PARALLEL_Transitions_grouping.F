@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,15 +23,14 @@
 !
 subroutine PARALLEL_Transitions_grouping(Xk)
  !
- use pars,          ONLY:IP,SP
+ use pars,          ONLY:SP
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
 &                        PAR_COM_Xk_ibz_INDEX
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nXkibz,bz_samp
  use vec_operate,   ONLY:sort
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  !
@@ -49,8 +48,8 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU
  !
- allocate(BS_T_grp_1st_el(n_GRP),GRP_data(n_GRP),GRP_index(n_GRP))
- call mem_est("BS_T_grp_1st_el",(/n_GRP/),(/IP/))
+ YAMBO_ALLOC(BS_T_grp_1st_el,(n_GRP))
+ allocate(GRP_data(n_GRP),GRP_index(n_GRP))
  !
  ! Here PAR_BS_nT_grps is the number of groups without taking into account the k-parallelization.
  ! This is done to define properly the BS_T_grp_1st_el array
@@ -102,9 +101,9 @@ subroutine PARALLEL_Transitions_grouping(Xk)
  !
  ! Groups index
  !
- allocate(PAR_IND_T_groups%element_1D(BS_nT_grps))
- allocate(PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%n_CPU))
- allocate(PAR_BS_T_grps_index(BS_nT_grps))
+ YAMBO_ALLOC(PAR_IND_T_groups%element_1D,(BS_nT_grps))
+ YAMBO_ALLOC(PAR_IND_T_groups%n_of_elements,(PAR_COM_eh_INDEX%n_CPU))
+ YAMBO_ALLOC(PAR_BS_T_grps_index,(BS_nT_grps))
  !
  PAR_IND_T_groups%element_1D=.FALSE.
  PAR_IND_T_groups%n_of_elements=0

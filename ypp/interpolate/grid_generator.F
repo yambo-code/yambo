@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,10 +26,9 @@ subroutine grid_generator(USER_k,units,grid_dim)
  ! Generate an uniform k-point grid k[grid_dim(:)] in the BZ
  !
  use pars,           ONLY:SP,schlen
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use R_lattice,      ONLY:bz_samp
  use com,            ONLY:error,msg
  use vec_operate,    ONLY:c2a,v_is_zero
- use memory_m,       ONLY:mem_est
  use zeros,          ONLY:zero_dfl
  implicit none
  !
@@ -50,14 +49,12 @@ subroutine grid_generator(USER_k,units,grid_dim)
  !
  ! Clean
  !
- if (associated(USER_k%ptbz)) then
+ if (allocated(USER_k%ptbz)) then
    deallocate(USER_k%ptbz)
-   call mem_est(trim(ch))
  endif
  !
  USER_k%nbz=product(grid_dim)
  allocate(USER_k%ptbz(USER_k%nbz,3))
- call mem_est(trim(ch),(/USER_k%nbz*3/),(/SP/))
  !
  ic=1
  do i1=1,grid_dim(1)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,18 +24,20 @@
 integer function io_QP_and_GF(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk,read_is_on,&
 &                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
-&                         db_alat,variable_is_found,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
- use global_XC,      ONLY:QP_DB_kind,SE_GoWo,SE_GWo,SE_GoWo_PPA,SE_GWo_PPA,SE_COHSEX,SE_NONE,&
-&                         SE_POLARON,SE_GW_QED
+&                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
+ use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
+&                         QP_SE_POLARON,QP_SE_GW_QED
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
  integer     ::ID
@@ -49,12 +51,15 @@ integer function io_QP_and_GF(what,qp,ID)
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
  !
- if (what=="QP".or.what=="G") then
+ if (what=="QP".or.what=="G".or.(index(what,"QP_merged")>0.and.write_is_on(ID))) then
    io_QP_and_GF=io_connect(desc=what,type=2,ID=ID)
  else
    io_QP_and_GF=io_connect(desc=what,type=-3,ID=ID)
  endif
- if (io_QP_and_GF/=0) goto 1
+ if (io_QP_and_GF/=0) then
+   call io_disconnect(ID=ID)
+   return
+ endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    ! 
@@ -62,7 +67,7 @@ integer function io_QP_and_GF(what,qp,ID)
    ! used to apply QP corrections. In this case QP_DB_kind must be 
    ! present to be transferred in the energy type by mod_qp_ctl
    !
-   if (variable_is_found(ID,"QP_DB_kind")==1.or.write_is_on(ID)) then
+   if (variable_exist(ID,"QP_DB_kind").or.write_is_on(ID)) then
      call io_elemental(ID,VAR="QP_DB_kind",VAR_SZ=1,MENU=0)
      call io_elemental(ID,DB_I0=QP_DB_kind_disk,I0=QP_DB_kind)
      if(io_mode(ID)==VERIFY) then
@@ -72,7 +77,7 @@ integer function io_QP_and_GF(what,qp,ID)
         endif
      endif
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   else if (variable_is_found(ID,"QP_DB_kind")< 0.and.read_is_on(ID)) then
+   else if (.not.variable_exist(ID,"QP_DB_kind").and.read_is_on(ID)) then
      QP_DB_kind=0
      io_QP_and_GF=IO_INCOMPATIBLE_VAR
      return
@@ -80,20 +85,24 @@ integer function io_QP_and_GF(what,qp,ID)
    !
  endif
  !
+#if defined _TIMING
+ call timing('io_QP_and_GF',OPR='start')
+#endif
+ !
  ! QP_DB_kind points to the "type" of self-energy. This is used
  ! to report about XC kind of the components of the self-energy here
  ! and it is also later transfered to the G/X .. global kinds in mod_qp_ctl.
  !
  select case (QP_DB_kind)
-   case(0,SE_NONE)
+   case(0,QP_SE_NONE)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,CUTOFF=.true.)
-   case(SE_COHSEX)
+   case(QP_SE_COHSEX)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G_WF Xs",CUTOFF=.true.)
-   case(SE_GoWo_PPA,SE_GWo_PPA)
+   case(QP_SE_GoWo_PPA,QP_SE_GWo_PPA)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xp",CUTOFF=.true.)
-   case(SE_GoWo,SE_GWo)
+   case(QP_SE_GoWo,QP_SE_GWo)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G Xd",CUTOFF=.true.)
-   case(SE_POLARON,SE_GW_QED)
+   case(QP_SE_POLARON,QP_SE_GW_QED)
      io_QP_and_GF=io_header(ID,T_EL=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
@@ -114,7 +123,7 @@ integer function io_QP_and_GF(what,qp,ID)
    ! Though the GF's parameters are already stored in the QP_descriptions
    ! I need them on-the-fly to, eventually, rebuild the Green's function
    !
-   call io_elemental(ID,VAR="SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)
+   call io_elemental(ID,VAR="QP_SE_OPERATOR_PARAMETERS",VAR_SZ=7,MENU=0)
    call io_elemental(ID,I0=qp%GreenF_n_steps)
    call io_elemental(ID,R1=QP_G_er) ! <- This is, actually, not needed as the
                                     !    full frequency dependence is stored in sec 3
@@ -168,14 +177,14 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    ! So to be here in VERIFY mode you MUST have allocated and defined the qp%table 
    !
-   allocate(qp_table_disk(qp_n_states_disk,3+n_sp_pol-1))
+   YAMBO_ALLOC(qp_table_disk,(qp_n_states_disk,3+n_sp_pol-1))
    !
    if (write_is_on(ID)) qp_table_disk=qp%table
    !
    call io_bulk(ID,VAR="QP_table",VAR_SZ=(/qp_n_states_disk,3+n_sp_pol-1/))
    call io_bulk(ID,I2=qp_table_disk)
    !
-   if (io_mode(ID)==VERIFY.and.associated(qp%table)) then
+   if (io_mode(ID)==VERIFY.and.allocated(qp%table)) then
      do i1=1,qp%n_states
        i_found=-1
        do i2=1,qp_n_states_disk
@@ -188,11 +197,11 @@ integer function io_QP_and_GF(what,qp,ID)
    endif
    !
    if (io_mode(ID)==DUMP) then
-     allocate(qp%table(qp_n_states_disk,3+n_sp_pol-1))
+     YAMBO_ALLOC(qp%table,(qp_n_states_disk,3+n_sp_pol-1))
      qp%table=qp_table_disk
    endif
    !
-   deallocate(qp_table_disk)
+   YAMBO_FREE(qp_table_disk)
    !
    io_QP_and_GF=io_status(ID)
    if (.not.DB_is_OK(ID)) goto 1
@@ -207,8 +216,12 @@ integer function io_QP_and_GF(what,qp,ID)
    !
    call io_bulk(ID,VAR="QP_kpts",VAR_SZ=(/qp%nk,3/))
    !
-   if (.not.associated(qp%k))  allocate(qp%k(qp%nk,3))
-   if (.not.associated(qp%wk)) allocate(qp%wk(qp%nk ))
+   if (.not.allocated(qp%k)) then
+     YAMBO_ALLOC(qp%k,(qp%nk,3))
+   endif
+   if (.not.allocated(qp%wk)) then
+     YAMBO_ALLOC(qp%wk,(qp%nk))
+   endif
    !
    call io_bulk(ID,R2=qp%k)
    !
@@ -222,81 +235,66 @@ integer function io_QP_and_GF(what,qp,ID)
      enddo
    endif
    !
-   if (index(what,".QP")/=0.or.what=="QP") then
+   if (index(what,".QP")/=0.or.what=="QP".or.index(what,"QP_merged")/=0) then
      !
-     ! QP corrections 
+     ! QP corrections ...
      !
-     allocate(qp_DATA_disk(3,qp%n_states,2))
-     !  
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(1,i1,1)=real(qp%E(i1))
-         qp_DATA_disk(1,i1,2)=aimag(qp%E(i1))
-         qp_DATA_disk(2,i1,1)=qp%E_bare(i1)
-         qp_DATA_disk(2,i1,2)=0._SP
-         qp_DATA_disk(3,i1,1)=real(qp%Z(i1))
-         qp_DATA_disk(3,i1,2)=aimag(qp%Z(i1))
-       enddo
+     if (read_is_on(ID).and..not.allocated(qp%E)) then
+       YAMBO_ALLOC(qp%Z,(qp%n_states))
+       YAMBO_ALLOC(qp%E,(qp%n_states))
+       YAMBO_ALLOC(qp%E_bare,(qp%n_states))
      endif
      !
-     call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+     ! ...back Compatibility!
      !
-     call io_bulk(ID,R3=qp_DATA_disk)
-     !
-     if (read_is_on(ID)) then
-       allocate(qp%Z(qp%n_states),qp%E(qp%n_states),qp%E_bare(qp%n_states))
-       call mem_est("qp_Z qp_E qp_E_bare",(/qp%n_states,qp%n_states,qp%n_states/))
-       do i1=1,qp%n_states
-         qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
-         qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
-         qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
-       enddo
+     if (variable_exist(ID,"QP_E_Eo_Z")) then
+        !
+       allocate(qp_DATA_disk(3,qp%n_states,2))
+       !
+       call io_bulk(ID,VAR="QP_E_Eo_Z",VAR_SZ=(/3,qp%n_states,2/))
+       call io_bulk(ID,R3=qp_DATA_disk)
+       !
+       if (read_is_on(ID)) then
+         do i1=1,qp%n_states
+           qp%E(i1) =cmplx(qp_DATA_disk(1,i1,1),qp_DATA_disk(1,i1,2),SP)
+           qp%E_bare(i1)=qp_DATA_disk(2,i1,1)
+           qp%Z(i1) =cmplx(qp_DATA_disk(3,i1,1),qp_DATA_disk(3,i1,2),SP)
+         enddo
+       endif
+       !
+     else
+       !
+       call io_bulk(ID,VAR="QP_E",VAR_SZ=(/2,qp%n_states/))
+       call io_bulk(ID,C1=qp%E)
+       !
+       call io_bulk(ID,VAR="QP_Eo",VAR_SZ=(/qp%n_states/))
+       call io_bulk(ID,R1=qp%E_bare)
+       !
+       call io_bulk(ID,VAR="QP_Z",VAR_SZ=(/2,qp%n_states/))
+       call io_bulk(ID,C1=qp%Z)
+       !
      endif
-     !
-     deallocate(qp_DATA_disk)
      !
    endif
    !
    if (index(what,".G")/=0.or.what=="G") then
      !
-     allocate(qp_DATA_disk(qp%n_states,qp%GreenF_n_steps,6))
-     !
      ! Real axis Self Energy & Green Function 
      !=========================================
-     !
-     if (write_is_on(ID)) then
-       do i1=1,qp%n_states
-         qp_DATA_disk(i1,:,1)=real(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,2)=aimag(qp%S_total(i1,:))
-         qp_DATA_disk(i1,:,3)=real(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,4)=aimag(qp%GreenF(i1,:))
-         qp_DATA_disk(i1,:,5)=real(qp%GreenF_W(i1,:))
-         qp_DATA_disk(i1,:,6)=aimag(qp%GreenF_W(i1,:))
-       enddo
-     endif
-     !
-     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,1:2))
-     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,3:4))
-     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/qp%n_states,qp%GreenF_n_steps,2/))
-     call io_bulk(ID,R3=qp_DATA_disk(:,:,5:6))
-     !
      if (read_is_on(ID)) then
-       allocate(qp%S_total(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_S_total",(/size(qp%S_total)/))
-       allocate(qp%GreenF(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
-       allocate(qp%GreenF_W(qp%n_states,qp%GreenF_n_steps))
-       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
-       do i1=1,qp%n_states
-         qp%S_total(i1,:) =cmplx(qp_DATA_disk(i1,:,1),qp_DATA_disk(i1,:,2),SP)
-         qp%GreenF(i1,:)  =cmplx(qp_DATA_disk(i1,:,3),qp_DATA_disk(i1,:,4),SP)
-         qp%GreenF_W(i1,:)=cmplx(qp_DATA_disk(i1,:,5),qp_DATA_disk(i1,:,6),SP)
-       enddo
+       YAMBO_ALLOC(qp%S_total,(qp%n_states,qp%GreenF_n_steps))
+       YAMBO_ALLOC(qp%GreenF,(qp%n_states,qp%GreenF_n_steps))
+       YAMBO_ALLOC(qp%GreenF_W,(qp%n_states,qp%GreenF_n_steps))
      endif
      !
-     deallocate(qp_DATA_disk)
+     call io_bulk(ID,VAR="SE_Operator",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%S_total)
+     !
+     call io_bulk(ID,VAR="Green_Functions",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF)
+     !
+     call io_bulk(ID,VAR="Green_Functions_Energies",VAR_SZ=(/2,qp%n_states,qp%GreenF_n_steps/))
+     call io_bulk(ID,C2=qp%GreenF_W)
      !
    endif
    !
@@ -306,5 +304,9 @@ integer function io_QP_and_GF(what,qp,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_QP_and_GF',OPR='stop')
+#endif
  !
 end function

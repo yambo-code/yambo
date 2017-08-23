@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -34,10 +34,10 @@ subroutine c2y_db1(en,k,file_name_)
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
  use vec_operate,           ONLY: cross_product
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
- use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW,XC_LDA_X,XC_FACTOR
+ use xc_functionals,        ONLY: XC_EXCHANGE_CORRELATION,XC_LDA_C_PW
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor
- implicit none
+#include<memory.h>
  character(*)                   :: file_name_
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  
@@ -50,8 +50,8 @@ subroutine c2y_db1(en,k,file_name_)
  REAL(DP)                       :: rdum,adum(3,3)
  REAL(DP), allocatable          :: atom_pos_dp(:,:,:)
  real(SP)                       :: cp(3)
- integer                        :: i1, ik, i2, i3, inel,i_spin,ig,ngm
- logical                        :: ldum,l_exist
+ integer                        :: i1, ik, i2, i3, inel,i_spin,ig
+ logical                        :: ldum
  integer                        :: int_sop(3,3,1) ! Symmetries in RLU
  !
  !
@@ -95,14 +95,16 @@ subroutine c2y_db1(en,k,file_name_)
  call msg('s',":: Atom's information ...")
  read(11) irecord
  read(11) n_atomic_species    ! Number of atomic species 
- allocate(n_atoms_species(n_atomic_species),Z_species(n_atomic_species))
+ YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+ YAMBO_ALLOC(Z_species,(n_atomic_species))
  read(11) (n_atoms_species(i1),i1=1,n_atomic_species),(zel(i1),i1=1,n_atomic_species)
  do i1=1,n_atomic_species
    call assign_z_spec(zel(i1),Z_species(i1))
  enddo
  !atoms per species
  n_atoms_species_max=maxval(n_atoms_species)
- allocate(atom_pos(3,n_atoms_species_max,n_atomic_species),atom_pos_dp(3,n_atoms_species_max,n_atomic_species))
+ YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
+ YAMBO_ALLOC(atom_pos_dp,(3,n_atoms_species_max,n_atomic_species))
  !
  !     ==  Section  4: Atomic coordinates                              ==
  !
@@ -115,7 +117,7 @@ subroutine c2y_db1(en,k,file_name_)
    enddo
  enddo
  atom_pos = atom_pos_dp
- deallocate(atom_pos_dp)
+ YAMBO_FREE(atom_pos_dp)
 !
 !      ==  Section  5: Atomic velocities (Skipped)                     ==
 !
@@ -227,7 +229,7 @@ subroutine c2y_db1(en,k,file_name_)
 !C     ==  Section 21: K-Points                                        ==
 !
 !     If only gamma, in cpmd it looks nkpt=0 ! Now set to gamma, then look how to read the k-sampling
- allocate(k%pt(k%nibz,3))
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  k%pt = 0.
  read(11) irecord
  irecord = abs(irecord)
@@ -253,12 +255,13 @@ subroutine c2y_db1(en,k,file_name_)
    call msg('s',':: Energies...')
    read(11) rdum
    i_spin = 1 
-   allocate(rstr(en%nb),en%E(en%nb,k%nibz,n_spin))
+   YAMBO_ALLOC(rstr,(en%nb))
+   YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_spin))
    do ik=1,k%nibz
      read (11)  (rstr(i1),i1=1,en%nb) 
      en%E(:,ik,i_spin)=rstr(:)
    enddo
-   deallocate (rstr)
+   YAMBO_FREE(rstr)
  else
    write(*,'(A)') 'C2Y: ERROR ! CANNOT read EIGENVALUES'
    stop
@@ -280,14 +283,13 @@ subroutine c2y_db1(en,k,file_name_)
  !===================
  !
  call warning ('GGA not supported: switching to LDA PW')
- GS_xc_FUNCTIONAL=XC_LDA_X*XC_FACTOR+XC_LDA_C_PW
+ GS_xc_FUNCTIONAL=XC_LDA_C_PW
  GS_xc_KIND=XC_EXCHANGE_CORRELATION
  !
  ! Spin assignement, for the moment only spin-unpolarized
  !
  n_spinor=1
  n_sp_pol=1
- call warning ('ONLY NON SPIN RESOLVED supported')
  !
  n_spin=max(n_sp_pol,n_spinor)
  !
@@ -310,35 +312,37 @@ subroutine c2y_db1(en,k,file_name_)
  ! Here for the moment I read Gvec from external file (fort.40), next decide if 
  ! is better to rebuild the Gvec table from scratch. Anyway the time-reversal is not
  ! included. I re-build it here below.  
- inquire(file='gvec.dat',exist=l_exist)
- if (.not.l_exist)  call error(' [CPMD] gvec.dat not found: write it from SUBROUTINE GVECTOR in rggen.F (IRI1,IRI2,IRI3)')
- open (unit=40,file='gvec.dat', status='old')
- read (40,*) ngm
+ open (unit=40,file='fort.40', status='old')
+ read (40,*) ng_vec
  !
+ ! ng_vec = wf_ng
  !
  ! time-reversal
  !
  ! ALLOCATION
  !
- ng_vec      = 2*(ngm -1) + 1
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec,3))
- allocate(rel_gvec(3,ngm))
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(g_vec,(ng_vec,3))
+ YAMBO_ALLOC(rel_gvec,(3,wf_ng))
  ig=1
  read(40,*) (rel_gvec(i2,ig),i2=1,3)
- do ig=2,ngm
+ do i1= 1,(wf_ng-1)/2
+   ig=2*i1
    read(40,*) (rel_gvec(i2,ig),i2=1,3)
-   g_vec(2*ig-2,:)=matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
-   g_vec(2*ig-1,:)=-matmul(transpose(b),rel_gvec(:,ig))*alat(:)/2./pi
+   ig=ig+1
+   rel_gvec(:,ig)=-rel_gvec(:,ig-1)
  enddo
  close(40)
- !
+ do i1=1,wf_ng
+   g_vec(i1,:)=matmul(transpose(b),rel_gvec(:,i1))*alat(:)/2./pi
+ enddo
  wf_nc_k=wf_ng
  wf_ncx=maxval(wf_nc_k)
  wf_ng=wf_ncx
- allocate(wf_igk(wf_ncx,k%nibz))
+ YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
  forall(i1=1:wf_ng) wf_igk(i1,:)=i1
  !
- deallocate(rel_gvec)
+ YAMBO_FREE(rel_gvec)
  !
  !
  call msg('l','done')

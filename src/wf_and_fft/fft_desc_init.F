@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team 
+!        Copyright (C) 2000-2017 the YAMBO team 
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -26,7 +26,7 @@ subroutine fft_desc_init(n,iGo_max,dfft)
  ! init dffts as required by the QE FFT lib
  !
  use pars,       ONLY:DP,pi
- use parallel_m, ONLY:INTRA_CHAIN,n_chains
+ use parallel_m, ONLY:mpi_comm_world
  use fft_types,  ONLY:fft_dlay_descriptor,fft_dlay_deallocate
  use fft_scalar, ONLY:good_fft_dimension
  use stick_set,  ONLY:pstickset
@@ -96,8 +96,11 @@ subroutine fft_desc_init(n,iGo_max,dfft)
  !
  ! set up fft descriptors, including parallel stuff: sticks, planes, etc.
  !
+#ifndef _USE_3D_FFT
+ call error(" [FFT] QE FFT must be used with USE_3D_FFT")
+#endif
  CALL pstickset( .FALSE., bg, gcutm, gkcut, gcutm, &
-                 dfftp_dum, dfft, ngw, ngm, ngs, 0, 0, 1, INTRA_CHAIN(n_chains)%COMM, 1 )
+                 dfftp_dum, dfft, ngw, ngm, ngs, 0, 0, 1, mpi_comm_world, 1 )
  !
  return
 end subroutine fft_desc_init

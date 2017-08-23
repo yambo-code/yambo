@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -24,7 +24,7 @@
 subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:n_spin,n_spinor
+ use electrons,     ONLY:n_sp_pol,n_spinor
  use wave_func,     ONLY:WF,wf_ng
  use R_lattice,     ONLY:bz_samp,g_rot
  use D_lattice,     ONLY:idt_index,spin_sop,i_time_rev,nsym
@@ -33,11 +33,11 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
  !
  integer,       intent(in)  :: ikbz,b_to_load(2)
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(out) :: WF_k_out(wf_ng,b_to_load(1):b_to_load(2),n_spin)
+ complex(SP),   intent(out) :: WF_k_out(wf_ng,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
  !
  ! Work space
  !
- integer :: ik,is,i_spin,ib,iwf,ig
+ integer :: ik,is,i_sp_pol,ib,iwf,ig
  !
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
@@ -46,10 +46,10 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
  !
  if(is==idt_index) then
    !  
-   do ib=b_to_load(1),b_to_load(2)
-     do i_spin=1,n_spin
-       iwf=WF%index(ib,ik,i_spin)
-       WF_k_out(:,ib,i_spin)=WF%c(:,iwf)
+   do i_sp_pol=1,n_sp_pol
+     do ib=b_to_load(1),b_to_load(2)
+       iwf=WF%index(ib,ik,i_sp_pol)
+       WF_k_out(:,:,ib,i_sp_pol)=WF%c(:,:,iwf)
      enddo
    enddo
    !
@@ -57,14 +57,13 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
    !
    WF_k_out=cZERO
    !
-   do ib=b_to_load(1),b_to_load(2)
-     do i_spin=1,n_spin
-       iwf=WF%index(ib,ik,i_spin)
-       WF_k_out(g_rot(is,:wf_ng),ib,i_spin)=WF%c(:wf_ng,iwf)
+   do i_sp_pol=1,n_sp_pol
+     do ib=b_to_load(1),b_to_load(2)
+       iwf=WF%index(ib,ik,i_sp_pol)
+       WF_k_out(g_rot(is,:wf_ng),:,ib,i_sp_pol)=WF%c(:wf_ng,:,iwf)
+       if(n_spinor==2) forall(ig=1:wf_ng) &
+&        WF_k_out(ig,:,ib,i_sp_pol)=matmul(spin_sop(:,:,is),WF_k_out(ig,:,ib,i_sp_pol))
      enddo
-     !
-     if(n_spinor==2) &
-&      forall(ig=1:wf_ng) WF_k_out(ig,ib,:)=matmul(spin_sop(:,:,is),WF_k_out(ig,ib,:))
      !
    enddo
    !

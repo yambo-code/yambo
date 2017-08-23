@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -51,6 +51,23 @@ module functions
  end interface
  !
  contains
+   !
+   logical function infinity(E)
+     use pars, ONLY: infinity_dfl
+     real(SP)     :: E
+     infinity= E > infinity_dfl
+   end function infinity
+   !
+   logical function NAN(E)
+#if defined(_XLF) || defined(_PGI)
+     use ieee_arithmetic
+     real(SP) :: E
+     NAN= ieee_is_nan(E)
+#else
+     real(SP) :: E
+     NAN= isnan(E)
+#endif
+   end function NAN
    !
    real(SP) function theta_function(T,step,order)
      !

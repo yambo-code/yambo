@@ -1,8 +1,8 @@
 #if defined _SC || defined _RT || defined _QED
-COMMON_objects = mod_hamiltonian.o
+COMMON_objects = mod_hamiltonian.o mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o
 #endif
-#if defined _SC || defined _QED
-SC_objects       = mod_plasma.o mod_SC.o
+#if defined _SC
+SC_objects       = mod_SC.o
 #endif
 #if defined _RT
 RT_objects       = mod_real_time.o mod_fields.o mod_RT_control.o mod_RT_interfaces.o
@@ -17,21 +17,18 @@ KERR_objects = mod_KERR.o
 PL_objects = mod_PHOTOLUM.o
 #endif
 #if defined _ELPH 
-ELPH_objects = mod_ELPH.o
+ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 #endif
-#if defined _SCALAPACK 
-SLK_objects = mod_SLK.o
-#endif
-objs = mod_pars.o mod_units.o  mod_stderr.o mod_openmp.o mod_parallel.o $(SLK_objects) \
-       mod_wrapper.o mod_wrapper_omp.o mod_drivers.o  mod_FFT.o\
-       mod_LIVE_t.o  mod_logo.o  mod_cutoff_ws.o \
-       mod_com.o mod_timing.o mod_memory.o  mod_R_lattice.o mod_electrons.o mod_wave_func.o \
+objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_SLK.o  \
+       mod_linear_algebra.o mod_wrapper.o mod_wrapper_omp.o mod_drivers.o mod_FFT.o\
+       mod_LIVE_t.o  mod_logo.o mod_cutoff_ws.o\
+       mod_com.o mod_timing.o mod_R_lattice.o mod_electrons.o mod_wave_func.o \
        mod_xc_functionals.o mod_global_XC.o \
-       mod_linear_algebra.o mod_matrix_operate.o mod_D_lattice.o mod_frequency.o \
+       mod_matrix_operate.o mod_D_lattice.o mod_frequency.o \
        mod_vec_operate.o mod_X.o \
        mod_functions.o  mod_zeros.o mod_pseudo.o \
-       mod_QP.o mod_collision.o \
+       mod_QP.o mod_collision_el.o \
        mod_BS.o mod_BS_solvers.o mod_QP_CTL.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
-       mod_IO.o $(ELPH_objects) mod_X_output.o \
+       mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \
        $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
        mod_debug.o mod_interfaces.o SET_logicals.o SET_defaults.o $(PL_objects)

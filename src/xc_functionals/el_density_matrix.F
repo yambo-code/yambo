@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -63,9 +63,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          !
          f_occ=en%f(ib1,ik,1)
          !
+         i_wf1=WF%index(ib1,ik,i_sp_pol)
          do i_spinor=1,n_spinor         
-           i_wf1=WF%index(ib1,ik,i_sp_pol+i_spinor-1)
-           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_wf1))**2)
+           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*Xk%weights(ik)*abs(WF%c(:,i_spinor,i_wf1))**2)
          enddo
          !
        enddo
@@ -101,10 +101,10 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          enddo
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
          !
+         i_wf1=WF%index(ib1,ik,i_sp_pol)
+         i_wf2=WF%index(ib2,ik,i_sp_pol)
          do i_spinor=1,n_spinor
-           i_wf1=WF%index(ib1,ik,i_sp_pol+i_spinor-1)
-           i_wf2=WF%index(ib2,ik,i_sp_pol+i_spinor-1)
-           rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,i_wf1)*conjg(WF%c(:,i_wf2)),SP)
+           rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,i_spinor,i_wf1)*conjg(WF%c(:,i_spinor,i_wf2)),SP)
          enddo
          !
        enddo

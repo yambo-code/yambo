@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,7 +30,7 @@ subroutine Dipole_kb_pwscf_comp(ik,Xk,kbv)
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
- use vec_operate,   ONLY:iku_v_norm,v_norm,c2a
+ use vec_operate,   ONLY:v_norm,c2a
  use wave_func,     ONLY:wf_ng,wf_igk,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_n_l_max,pp_n_l_times_proj_max,pp_table, &

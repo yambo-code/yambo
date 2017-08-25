@@ -58,7 +58,14 @@ CFGFILES = config/setup config/Makefile config/report  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
-CORE     = yambo ypp a2y p2y e2y c2y
+ifeq ($(do_p2y),yes)
+  p2y   = p2y
+endif
+ifeq ($(do_e2y),yes)
+  e2y   = e2y
+endif
+INTERFCS = a2y c2y $(p2y) $(e2y)
+CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
 PH_PROJ  = yambo_ph ypp_ph 
@@ -124,10 +131,14 @@ YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control s
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
 
+.PHONY: interfaces
+
 nothing: 
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
+interfaces:
+	for target in $(INTERFCS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 core:      
 	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 ph-project:
@@ -223,26 +234,21 @@ yambo_qed: libs
 #
 # Interfaces #
 #
-a2y: libs
+interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+a2y: interfcs
 	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
-c2y: libs
-	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+c2y: interfcs
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
-p2y: libs
-	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
-	@+if test "$(do_p2y)" = yes ; then \
-	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="-D@PW_CPP@"; $(mkx) ; \
-	fi
-e2y: libs
-	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
-	@+if test "$(do_e2y)" = yes ; then \
-	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ; \
-	fi
+ifeq ($(do_p2y),yes)
+p2y: interfcs
+	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="-D@PW_CPP@"; $(mkx) ;
+endif
+ifeq ($(do_e2y),yes)
+e2y: interfcs
+	@+X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ;
+endif
 #
 # YPP #
 #

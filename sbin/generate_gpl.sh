@@ -5,14 +5,14 @@ if [ $1 = "-h" ] ; then
  exit 0
 fi
 
-BASE="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project/branches/4.1"
+BASE="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project/master"
 PREV="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.1"
 TARGET="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/master"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
 #
 #PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
-PJ="KERR ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
+PJ="KERR ELPH YPP_ELPH RT YPP_RT FFTW FFTSG SCALAPACK OPENMP MPI" 
 
 echo 
 echo  "FROM DEV: $BASE"

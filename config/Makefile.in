@@ -68,10 +68,10 @@ INTERFCS = a2y c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PH_PROJ  = yambo_ph ypp_ph 
+PH_PROJ  = yambo_ph ypp_ph
 SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
 RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
-KERR_PROJ= yambo_kerr 
+KERR_PROJ= yambo_kerr
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
@@ -310,17 +310,14 @@ distclean: clean_all remove_ext_libs
 #
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo  " [all projects] all";\
- echo  " [project-related suite] project (core, rt-project,...)";echo;\
- for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
- for target in $(PH_PROJ); do echo " [ph-project] $$target" ; done;echo;\
- for target in $(SC_PROJ); do echo " [sc-project] $$target" ; done;echo;\
- for target in $(RT_PROJ); do echo " [rt-project] $$target" ; done;echo;\
+ echo " [all projects] all";\
+ echo " [project-related suite] project (core, rt-project, ...)";      echo;\
+ for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
+ for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
+ for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
- for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
- for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
- for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
+ for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
+ for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo
 endef
 #
 # SRC's and LIB's (needing the locks)

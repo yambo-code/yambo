@@ -768,13 +768,14 @@ CONTAINS
       !      
       INTEGER   :: i,j
       LOGICAL   :: lfound
+      LOGICAL   :: noncolin,domag
       CHARACTER(256) :: t_rev_str,str
 
       !
       ierr=0
       !
       invsym_=.false.
-      trevsym_=.false.
+      trevsym_=.true.
       !
       !
       CALL iotk_scan_begin( iunit, "atomic_structure",ATTR=attr, IERR=ierr )
@@ -838,8 +839,17 @@ CONTAINS
       CALL iotk_scan_end( iunit, "symmetries", IERR=ierr )
       IF (ierr/=0) RETURN
       !
-      ! XXXX is this right ???
-      IF (any(t_rev_(:)==1)) trevsym_=.true.
+      CALL iotk_scan_begin( iunit, "magnetization", IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL qexsd_scan_logical( iunit, "noncolin", noncolin, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL qexsd_scan_logical( iunit, "do_magnetization", domag, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_end( iunit, "magnetization", IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      ! XXX to be checked
+      trevsym_=.not.(noncolin.and.domag)
       !
       !
       IF ( PRESENT(nsym) )        nsym          = nsym_
@@ -1072,8 +1082,70 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_xc( dft, lda_plus_u, Hubbard_lmax, Hubbard_l, &
-                              nsp, Hubbard_U, Hubbard_alpha, ierr )
+    SUBROUTINE qexsd_read_xc( dft, dft_is_hybrid, dft_is_hubbard, dft_is_vdW, ierr)
+      !------------------------------------------------------------------------
+      !
+      CHARACTER(LEN=*), OPTIONAL, INTENT(OUT) :: dft
+      LOGICAL,          OPTIONAL, INTENT(OUT) :: dft_is_hybrid, dft_is_hubbard, dft_is_vdW
+      INTEGER,                    INTENT(OUT) :: ierr
+      !
+      LOGICAL :: lfound
+      ierr = 0
+      !
+      !
+      CALL iotk_scan_begin( iunit, "dft", IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+      !
+      IF (PRESENT(dft)) THEN
+         CALL iotk_scan_dat( iunit, "functional", dft, IERR=ierr )
+         IF ( ierr/=0 ) RETURN
+      ENDIF
+      !
+      IF (PRESENT(dft_is_hybrid)) THEN
+         dft_is_hybrid=.false.
+         CALL iotk_scan_begin( iunit, "hybrid", LFOUND=lfound, IERR=ierr )
+         IF ( ierr/=0 ) RETURN
+         !
+         IF ( lfound ) THEN
+            dft_is_hybrid=.true.
+            CALL iotk_scan_end( iunit, "hybrid", IERR=ierr )
+            IF ( ierr/=0 ) RETURN
+         ENDIF
+      ENDIF
+      !
+      IF (PRESENT(dft_is_hubbard)) THEN
+         dft_is_hubbard=.false.
+         CALL iotk_scan_begin( iunit, "dftU", LFOUND=lfound, IERR=ierr )
+         IF ( ierr/=0 ) RETURN
+         !
+         IF ( lfound ) THEN
+            dft_is_hubbard=.true.
+            CALL iotk_scan_end( iunit, "dftU", IERR=ierr )
+            IF ( ierr/=0 ) RETURN
+         ENDIF
+      ENDIF
+      !
+      IF (PRESENT(dft_is_vdW)) THEN
+         dft_is_vdW=.false.
+         CALL iotk_scan_begin( iunit, "vdW", LFOUND=lfound, IERR=ierr )
+         IF ( ierr/=0 ) RETURN
+         !
+         IF ( lfound ) THEN
+            dft_is_vdW=.true.
+            CALL iotk_scan_end( iunit, "vdW", IERR=ierr )
+            IF ( ierr/=0 ) RETURN
+         ENDIF
+      ENDIF
+      !
+      CALL iotk_scan_end( iunit, "dft", IERR=ierr )
+      IF ( ierr/=0 ) RETURN
+      !
+    END SUBROUTINE qexsd_read_xc
+    !
+    !
+    !------------------------------------------------------------------------
+    SUBROUTINE qexsd_read_hubbard( lda_plus_u, Hubbard_lmax, Hubbard_l, &
+                                   nsp, Hubbard_U, Hubbard_alpha, ierr )
       !------------------------------------------------------------------------
       !
       CHARACTER(LEN=*), OPTIONAL, INTENT(OUT) :: dft
@@ -1094,15 +1166,13 @@ CONTAINS
       ierr = 0
       !
       !
-      CALL iotk_scan_begin( iunit, "EXCHANGE_CORRELATION", IERR=ierr )
+      CALL iotk_scan_begin( iunit, "dft", IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
-      CALL iotk_scan_dat( iunit, "DFT", dft_, IERR=ierr )
+      CALL iotk_scan_begin( iunit, "dftU", LFOUND=lfound, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
-      CALL iotk_scan_dat( iunit, "LDA_PLUS_U_CALCULATION", lda_plus_u_, FOUND=lfound, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      IF ( .NOT. lfound ) lda_plus_u_=.FALSE.
+      lda_plus_u_=lfound
       !
       IF ( lda_plus_u_ ) THEN
          !
@@ -1148,7 +1218,7 @@ CONTAINS
          !
       ENDIF 
 
-    END SUBROUTINE qexsd_read_xc
+    END SUBROUTINE qexsd_read_hubbard
     !
     !
     SUBROUTINE qexsd_read_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &

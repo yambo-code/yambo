@@ -37,10 +37,8 @@ integer function io_ELPH(ID,what)
  use electrons,      ONLY:E_reset
  use R_lattice,      ONLY:nkbz,nqibz,q_pt
  use D_lattice,      ONLY:n_atoms_species
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
@@ -48,16 +46,15 @@ integer function io_ELPH(ID,what)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer      ::ID
  character(*) ::what
  !
  !Work Space
  !
- integer                ::iq,im,ik,i1,i2,ierr,iq_mem
+ integer                ::iq,ik,ierr,iq_mem
  real(SP)               ::v(3)
- real(SP), allocatable  ::elph_gkkp_disk(:,:,:),pol_vec_disk(:,:,:,:)
  character(schlen)      ::db_name
  !
 #if defined _TIMING
@@ -70,6 +67,7 @@ integer function io_ELPH(ID,what)
    db_name='elph_gkkp_expanded'
    elph_grids_are_expanded=.TRUE.
  endif
+ !
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_ELPH/=0) goto 1
@@ -125,10 +123,8 @@ integer function io_ELPH(ID,what)
    ! ... allocation
    !
    if (read_is_on(ID).and..not.allocated(ph_qpt)) then
-     allocate(ph_qpt(elph_nDBs,3))
-     call mem_est("ph_qpt",(/size(ph_qpt)/),(/SP/))
-     allocate(ph_kpt_bz(elph_nk_bz,3))
-     call mem_est("ph_kpt_bz",(/size(ph_kpt_bz)/),(/SP/))
+     YAMBO_ALLOC(ph_qpt,(elph_nDBs,3))
+     YAMBO_ALLOC(ph_kpt_bz,(elph_nk_bz,3))
      ph_kpt_bz=0._SP
    endif
    !
@@ -220,29 +216,11 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID,R1=ph_freqs_sq(iq,:))
  !
- allocate(pol_vec_disk(ph_modes,sum(n_atoms_species),2,3))
- !
  ! Polarization vectors
  ! 
- if (write_is_on(ID)) then
-   call mat_c2r(pol_vector(:,:,1),pol_vec_disk(:,:,:,1))
-   call mat_c2r(pol_vector(:,:,2),pol_vec_disk(:,:,:,2))
-   call mat_c2r(pol_vector(:,:,3),pol_vec_disk(:,:,:,3))
- endif
- !
- call io_bulk(ID,VAR="POLARIZATION_VECTORS_REAL",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
- call io_bulk(ID,R3=pol_vec_disk(:,:,1,:))
- call io_bulk(ID,VAR="POLARIZATION_VECTORS_IMAG",VAR_SZ=(/ph_modes,sum(n_atoms_species),3/))
- call io_bulk(ID,R3=pol_vec_disk(:,:,2,:))
+ call io_bulk(ID,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,sum(n_atoms_species),3/))
+ call io_bulk(ID,C3=pol_vector)
  ! 
- if (read_is_on(ID)) then
-   call mat_r2c(pol_vec_disk(:,:,:,1),pol_vector(:,:,1))
-   call mat_r2c(pol_vec_disk(:,:,:,2),pol_vector(:,:,2))
-   call mat_r2c(pol_vec_disk(:,:,:,3),pol_vector(:,:,3))
- endif
- !
- deallocate(pol_vec_disk)
- !
  if (what=='no_gkkp') goto 1
  ! 
  ! Ek+q (to be used when  elph_use_q_grid=.FALSE.)
@@ -254,51 +232,19 @@ integer function io_ELPH(ID,what)
    call E_reset(E_k_p_q)
    E_k_p_q%nb=elph_nb
    E_k_p_q%nk=nkbz
-   allocate(E_k_p_q%E(elph_nb,nkbz,1))
+   YAMBO_ALLOC(E_k_p_q%E,(elph_nb,nkbz,1))
    E_k_p_q%E=E_k_plus_q
  endif
  ! 
  ! ELPH_gkkp 
  !
- allocate(elph_gkkp_disk(elph_nb*elph_nb,ph_modes,2))
+ call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
+ call io_bulk(ID,C4=elph_gkkp)
  !
- call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),&
-&                VAR_SZ=(/elph_nb*elph_nb,ph_modes,2,nkbz/) )
- !
- do ik=1,nkbz
-   ! 
-   ! WRITE
-   ! 
-   if (write_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)=real(elph_gkkp(ik,im,i1,i2))
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)=aimag(elph_gkkp(ik,im,i1,i2))
-   endif
-   ! 
-   call io_bulk(ID,R3=elph_gkkp_disk,IPOS=(/1,1,1,ik/))
-   ! 
-   ! READ 
-   ! 
-   if (read_is_on(ID)) then
-     forall(im=1:ph_modes,i1=1:elph_nb,i2=1:elph_nb) &
-&          elph_gkkp(ik,im,i1,i2)=elph_gkkp_disk((i1-1)*elph_nb+i2,im,1)+&
-&                   (0._SP,1._SP)*elph_gkkp_disk((i1-1)*elph_nb+i2,im,2)
-   endif
-   !
- enddo
- !
- deallocate(elph_gkkp_disk)
- ! 
  ! ELPH_DW 
  !
  call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- !
- do ik=1,nkbz
-   ! 
-   call io_bulk(ID,R3=elph_DW(ik,:,:,:),IPOS=(/1,1,1,ik/))
-   ! 
- enddo
+ call io_bulk(ID,R4=elph_DW)
  !
 1 call io_disconnect(ID=ID)
  !

@@ -11,18 +11,19 @@
 *.f90
 *.s
 *.sw*
+
+# source #
+##########
 config.status
 config/report
 config/setup
-#
 driver/codever.h
 driver/editor.h
-#
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
-#
+include/c_defs.h
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
@@ -37,11 +38,10 @@ lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
-ext_libs
-#
+lib/hdf5/hdf5*
 compile.sh
 sbin/make_makefile.sh
-sbin/objects_debug.sh
+sbin/objects_store.sh
 src/wf_and_fft/sgfft.F
 bin/*
 

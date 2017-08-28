@@ -25,7 +25,7 @@ subroutine ps_convert(rvar,ivar,v_name)
  !
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:AS2AUT,AU2VMm1,FS2AUT,HA2GHZ,HA2THZ,kWCMm22AU,&
-&                Tesla2AU,DEG2RAD,HA2EV,PS2AUT
+&                Tesla2AU,DEG2RAD,HA2EV,PS2AUT,Megabyte,Gigabyte,Kilobyte
  use it_m,  ONLY:nflines,flines,ni1v,ni2v,ni3v,nr1v,nr2v,nc1v,&
 &                nr3v,i1vars,i2vars,i3vars,r1vars,r2vars,r3vars,c1vars,&
 &                Bfield_unit,Efield_unit,Time_unit,I_unit,Angle_unit
@@ -102,6 +102,12 @@ subroutine ps_convert(rvar,ivar,v_name)
    else if (index(v_line,'eV')/=0.or.index(v_line,'ev')/=0) then
      call Gclose(ivar,'feV')
      call set_itp_unit('eV',1)
+   else if (index(v_line,'Gb')/=0) then
+     ivar=ivar*Gigabyte/Kilobyte
+     call set_itp_unit('Gb',1)
+   else if (index(v_line,'Mb')/=0) then
+     ivar=ivar*Megabyte/Kilobyte
+     call set_itp_unit('Mb',1)
    endif
    return
    !

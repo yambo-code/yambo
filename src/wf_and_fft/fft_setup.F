@@ -23,8 +23,7 @@
 !
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
- use pars,           ONLY:SP,pi,IP
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP,pi
  use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
@@ -34,7 +33,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
- implicit none
+#include<memory.h>
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
 #if defined _FFTQE
@@ -50,11 +49,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
-     call mem_est('FFT_g_tab')
-     deallocate(fft_g_table)
+     YAMBO_FREE(fft_g_table)
    endif
-   allocate(fft_g_table(max(iG_max,wf_ng),iGo_max))
-   call mem_est('FFT_g_tab',(/size(fft_g_table)/),(/IP/))
+   YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
  endif
  !
  ! SIZE estimation
@@ -96,14 +93,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    !
    if (allocated(fft_rot_r)) then
-     deallocate(fft_rot_r)
-     call mem_est('FFT_rot')
+     YAMBO_FREE(fft_rot_r)
    endif
-   allocate(fft_rot_r(fft_size,nsym))
-   call mem_est('FFT_rot',(/size(fft_rot_r)/),(/IP/))
+   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
    !
-   if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
-   allocate(fft_rot_r_inv(fft_size))
+   YAMBO_FREE(fft_rot_r_inv)
+   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
 
    !
    !Remember

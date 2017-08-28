@@ -14,8 +14,8 @@
 #
 ############################################################################
 #
-#PRECISIONS = single double complex complex16
-PRECISIONS = single complex 
+PRECISIONS = single double complex complex16
+#PRECISIONS = single complex 
 #
 #  C preprocessor definitions:  set CDEFS to one of the following:
 #

@@ -26,7 +26,6 @@ integer function variables_RT(ID,local_description,what)
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
- use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
@@ -36,7 +35,7 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
+&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,RT_DbGd_nk,&
 &                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
@@ -271,7 +270,7 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,I0=BZ_DbGd_tot_nkpts,&
+   call io_elemental(ID,I0=RT_DbGd_nk,&
 &    VAR=' [DbGd] Number of k-points       :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1

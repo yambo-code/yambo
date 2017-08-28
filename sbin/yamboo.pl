@@ -144,6 +144,7 @@ $END_EXCLUDE_TAG   = "GPL_EXCLUDE_END";
 $START_INCLUDE_TAG = "GPL_INCLUDE_START";
 $END_INCLUDE_TAG   = "GPL_INCLUDE_END";
 $SVN_DIR = ".svn";
+$GIT_DIR = ".git";
 $GPL_OBJECTS_FILE = ".objects_gpl";
 $OBJECTS_FILE = ".objects";
 $GPL_FILE_SUFFIX = "_gpl";
@@ -154,6 +155,7 @@ find sub {
    return unless -d $_ ;
    $directory_name = $File::Find::name; 
    if ($directory_name =~ m/$SVN_DIR/){ return; }  
+   if ($directory_name =~ m/$GIT_DIR/){ return; }  
    foreach my $dir (@exclude_dirs_list) {
       if ($directory_name =~ m/$dir/){ return; }  
    }
@@ -458,7 +460,7 @@ sub get_source_from_object_list{
 }
 #---------------------------------------------------------------------#
 # This will get all the filenames in the directory 
-# excluding subdirectories (e.g. .svn),
+# excluding subdirectories (e.g. .svn, .git),
 # and binary files (in case some are left over)
 #---------------------------------------------------------------------#
 sub get_filenames_in_directory{
@@ -467,7 +469,8 @@ sub get_filenames_in_directory{
   opendir(DIR, $directory_name) or die "Cannot opendir : $!";
   my @Names = readdir(DIR);
   foreach $name (@Names) {
-#   if ($name =~ /^\.\.?$|$SVN_DIR/){ next; }
+#    if ($name =~ /^\.\.?$|$SVN_DIR/){ next; }
+#    if ($name =~ /^\.\.?$|$GIT_DIR/){ next; }
     if (not -f $directory_name.$name ){ next; }
     if (not -T $directory_name.$name ){ next; }
     push(@RealNames, $name); 

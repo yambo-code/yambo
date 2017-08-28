@@ -78,7 +78,8 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
        call netcdf_call(nf_error,ID,VAR=VAR)
        if(any((/var_dim(:)/=var_dim_db(:)/))) &
 &        call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
-       call warning(' Owriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+       call warning(' Overwriting variable '//trim(VAR)//' in file '//trim(io_file(ID)))
+       deallocate(var_dim_db)
      endif
      if (nf_error/=NF90_NOERR) nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)

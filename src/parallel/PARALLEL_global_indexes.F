@@ -34,7 +34,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  use drivers,       ONLY:l_elphoton_corr,l_life
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- implicit none
+#include<memory.h>
  !
  type(levels)               ::E
  type(bz_samp)              ::Xk,q

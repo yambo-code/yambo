@@ -33,14 +33,12 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !  integer,     pointer  :: IO_status(:) => null()
  ! end type
  !
- use pars,          ONLY:IP
- use memory_m,      ONLY:mem_est
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use R_lattice,     ONLY:nXkibz
  use electrons,     ONLY:n_sp_pol
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
- implicit none
+#include<memory.h>
  !
  character(*)           :: what
  type(COLLISIONS_group) :: COLL
@@ -70,11 +68,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !
  if (trim(what)=="clean") then
    !
-   if (associated(COLL%IO_status)) then
-     deallocate(COLL%IO_status)
-     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status")
-     deallocate(COLL%state)
-     call mem_est("COLLISIONS_"//trim(COLL%name)//"_state")
+   if (allocated(COLL%IO_status)) then
+     YAMBO_FREE(COLL%IO_status)
+     YAMBO_FREE(COLL%state)
      COLL%N=0
    endif
    !
@@ -82,11 +78,10 @@ subroutine COLLISIONS_basic_operations( what, COLL )
    !
  endif
  !
- if (associated(COLL%state)) then
+ if (allocated(COLL%state)) then
    !
-   if (io_COLLs) then
-     allocate(COLL%IO_status(COLL%N))
-     call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+   if (io_COLLs.and..not.allocated(COLL%IO_status)) then
+     YAMBO_ALLOC(COLL%IO_status,(COLL%N))
    endif
    !
  else
@@ -129,11 +124,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
      !
      if (i_c==1) then
        if (io_COLLs) then
-         allocate(COLL%IO_status(COLL%N))
-         call mem_est("COLLISIONS_"//trim(COLL%name)//"_IO_status",(/COLL%N/),(/IP/))
+         YAMBO_ALLOC(COLL%IO_status,(COLL%N))
        endif
-       allocate(COLL%state(COLL%N,4))
-       call mem_est("COLLISIONS_"//trim(COLL%name)//"_state",(/COLL%N,4/),(/IP/))
+       YAMBO_ALLOC(COLL%state,(COLL%N,4))
      endif
      !
    enddo

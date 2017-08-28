@@ -29,9 +29,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  !
  use pars,           ONLY:SP,cZERO
  use frequency,      ONLY:w_samp,W_reset
- use memory_m,       ONLY:mem_est
- !
- implicit none
+#include<memory.h>
  !
  type(w_samp), intent(in)   :: W1
  type(w_samp), intent(inout):: W2
@@ -44,7 +42,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  real(SP)    :: r(3)
  !
  call W_reset(W_new)
- allocate(W_new%p(W1%n_freqs+W2%n_freqs))
+ YAMBO_ALLOC(W_new%p,(W1%n_freqs+W2%n_freqs))
  W_new%p            =cZERO
  W_new%n_freqs      =W2%n_freqs
  do iw2=1,W2%n_freqs
@@ -74,10 +72,17 @@ subroutine FREQUENCIES_merge(W1,W2,table)
      !
      r=(/real(W_new%p(iw2)),real(W1%p(iw1)),real(W_new%p(iw2+1))/)
      !
-     ! o=N  
+     ! N=o  
      !
      if (abs(r(1)-r(2))<1.E-5) then
        table(iw2)=iw1
+       exit W2_loop 
+     endif
+     !
+     ! o=N  
+     !
+     if (abs(r(3)-r(2))<1.E-5) then
+       table(iw2+1)=iw1
        exit W2_loop 
      endif
      !
@@ -96,8 +101,7 @@ subroutine FREQUENCIES_merge(W1,W2,table)
  W2%n_freqs=W_new%n_freqs
  W2%damp_reference=W_new%damp_reference
  W2%per_memstps=W_new%per_memstps
- allocate(W2%p(W2%n_freqs))
- call mem_est("W-p",(/W2%n_freqs/))
+ YAMBO_ALLOC(W2%p,(W2%n_freqs))
  W2%p=W_new%p(:W_new%n_freqs)
  W2%er=(/real(W2%p(1)) ,real(W2%p(W2%n_freqs))/)
  W2%dr=(/aimag(W2%p(1)),aimag(W2%p(W2%n_freqs))/)

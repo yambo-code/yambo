@@ -61,8 +61,8 @@ module UNITS
  real(SP), parameter :: BO2ANG    =0.52917721_SP        ! BOHR = AU2ANG Angstroms
  real(SP), parameter :: DEG2RAD   =pi/180.0_SP          ! DEGREE = DEG2RAD radiants
  !
- ! Energies
- !==========
+ ! Energies & Temperatures
+ !=========================
  !
  real(SP), parameter :: HA2EV     =27.2113834_SP        ! HA  = HA2EV eV
  real(SP), parameter :: HA2KEL    =11604.5077_SP*HA2EV  ! HA  = HA2KEL K

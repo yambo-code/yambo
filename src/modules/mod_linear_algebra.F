@@ -23,9 +23,8 @@
 !
 module linear_algebra
  !
- use pars, ONLY:SP
- !
- implicit none
+ use pars,       ONLY:SP,schlen
+#include<memory.h>
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2
@@ -41,7 +40,6 @@ module linear_algebra
  ! Common Work Space
  !
  type LALGEBRA_WS
-   !
    real(SP),    allocatable :: v_real(:)
    real(SP),    allocatable :: vp_real(:)
    complex(SP), allocatable :: v_cmplx(:)
@@ -52,7 +50,6 @@ module linear_algebra
    integer    , allocatable :: vp_int(:)
    integer                  :: i_fail
    integer                  :: dim
-   !
  end type LALGEBRA_WS
  !
  type(LALGEBRA_WS) :: WS
@@ -70,14 +67,14 @@ module linear_algebra
    !
    subroutine LINEAR_ALGEBRA_WS_clean_up(WS)
      type(LALGEBRA_WS) :: WS
-     if (allocated(WS%v_real))   deallocate(WS%v_real)
-     if (allocated(WS%vp_real))  deallocate(WS%vp_real)
-     if (allocated(WS%v_cmplx))  deallocate(WS%v_cmplx)
-     if (allocated(WS%v_cmplx))  deallocate(WS%vp_cmplx)
-     if (allocated(WS%m1_cmplx)) deallocate(WS%m1_cmplx)
-     if (allocated(WS%m2_cmplx)) deallocate(WS%m2_cmplx)
-     if (allocated(WS%v_int))    deallocate(WS%v_int)
-     if (allocated(WS%vp_int))   deallocate(WS%vp_int)
+     YAMBO_FREE(WS%v_real)
+     YAMBO_FREE(WS%vp_real)
+     YAMBO_FREE(WS%v_cmplx)
+     YAMBO_FREE(WS%vp_cmplx)
+     YAMBO_FREE(WS%m1_cmplx)
+     YAMBO_FREE(WS%m2_cmplx)
+     YAMBO_FREE(WS%v_int)
+     YAMBO_FREE(WS%vp_int)
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)

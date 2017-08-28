@@ -148,15 +148,15 @@ ACX_FCSETUP()
 #
 acx_save_fcflags="$FCFLAGS"
 FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
-
+#
 # ============================================================================
 #
 # OpenMP
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-def_openmp=" "
 OPENMPLIBS=" "
+def_openmp=" "
 if test x"$enable_open_mp" = "xyes"; then 
   OPENMPLIBS="$OMPFLAGS"; 
   def_openmp="-D_OPENMP"
@@ -211,8 +211,8 @@ AC_LANG_POP(Fortran 77)
 # ============================================================================
 # MPI
 m4_include([config/mpi.m4])
-
 # 
+# ============================================================================
 #  Libs
 #
 m4_include([config/blas.m4])
@@ -255,9 +255,10 @@ ACX_LIBXC
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
+AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
-                 src/wf_and_fft/sgfft.F 
-                 sbin/make_makefile.sh sbin/objects_debug.sh 
+                 src/wf_and_fft/sgfft.F
+                 sbin/make_makefile.sh sbin/objects_store.sh 
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #
 AC_OUTPUT

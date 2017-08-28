@@ -29,11 +29,14 @@ AC_DEFUN([ACX_REPORT],
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
-DEBUG_check="-"
-if test "$enable_debug" = "yes" ; then DEBUG_check="X"; fi
+KEEP_OBJS_check="-"
+if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
 TIME_profile_check="-"
 if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
+#
+MEM_profile_check="-"
+if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
 # - PARALLEL SUPPORT -
 # 
@@ -166,8 +169,9 @@ if test "$mpibuild" = "yes" ; then
 fi
 #
 AC_SUBST(DP_check)
-AC_SUBST(DEBUG_check)
+AC_SUBST(KEEP_OBJS_check)
 AC_SUBST(TIME_profile_check)
+AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)

@@ -26,14 +26,13 @@ subroutine RT_X_qssin
  use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
- use memory_m,       ONLY:mem_est
  use com,            ONLY:error
  use RT_control,     ONLY:RT_output
  use fields,         ONLY:Efield,small_a
  use functions,      ONLY:theta_function
  use LIVE_t,         ONLY:live_timing
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -62,7 +61,7 @@ subroutine RT_X_qssin
  RT_conf%W_n_steps=(RT_conf%W_range(2))/W_step    ! and I define the number of freq step
  RT_conf%W_n_steps= 2*RT_conf%W_n_steps           ! as a consequence
  !
- allocate(E_t(RT_conf%T_n_steps))
+ YAMBO_ALLOC(E_t,(RT_conf%T_n_steps))
  do i_t=1,RT_conf%T_n_steps
    Field_time=(i_t-1)*RT_conf%delta_T-Efield(i_Probe)%t_initial
    A_of_t =small_a(Field_time,Efield(i_Probe),0)
@@ -76,10 +75,9 @@ subroutine RT_X_qssin
      call error(' Circular polarization not yet implemented')
    end select
  enddo
- allocate(freqs(RT_conf%W_n_steps))
- allocate(E_m(RT_conf%W_n_steps),E_p(RT_conf%W_n_steps))
- call mem_est("E_m E_p",&
-      &(/size(E_m),size(E_p)/),(/2*DP,2*DP/))
+ YAMBO_ALLOC(freqs,(RT_conf%W_n_steps))
+ YAMBO_ALLOC(E_m,(RT_conf%W_n_steps))
+ YAMBO_ALLOC(E_p,(RT_conf%W_n_steps))
  !
  ! Field: FFT
  !
@@ -115,8 +113,10 @@ subroutine RT_X_qssin
  !
  ! Field: Deallocation
  !
- deallocate(E_p,E_m,E_t,freqs)
- call mem_est("E_m E_p E_t freqs")
+ YAMBO_FREE(E_p)
+ YAMBO_FREE(E_m)
+ YAMBO_FREE(E_t)
+ YAMBO_FREE(freqs)
  !
  ! Polarization: FT at 0 and twice the field frequency
  !

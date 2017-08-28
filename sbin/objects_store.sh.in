@@ -31,8 +31,8 @@ if test `find . -name '__*' | wc -l` -ge 1 ; then
  for file in __*
  do
   if test `find . -name '*.o' | wc -l` -ge 1 ; then
-   if test ! -d .debug$file; then mkdir .debug$file; fi
-   mv *.o .debug"$file"/
+   if test ! -d .objects$file; then mkdir .objects$file; fi
+   mv *.o .objects"$file"/
   fi
   rm -f $file
  done
@@ -42,10 +42,10 @@ fi
 #
 touch "$target"
 #
-# If the TARGET debug dir exists just copy the objects from there
+# If the TARGET objects dir exists just copy the objects from there
 #
-if test -d .debug$target; then
- if test `find .debug$target/ -name '*.o' | wc -l` -ge 1 ; then
-  mv .debug$target/*.o .
+if test -d .objects$target; then
+ if test `find .objects$target/ -name '*.o' | wc -l` -ge 1 ; then
+  mv .objects$target/*.o .
  fi
 fi

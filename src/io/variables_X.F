@@ -23,7 +23,7 @@
 !
 integer function variables_X(ID,local_description,X)
  !
- use pars,          ONLY:schlen,lchlen,SP,cI
+ use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on

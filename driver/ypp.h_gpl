@@ -60,13 +60,14 @@
   {"electrons","s","Electrons [(w)ave,(d)ensity,(m)ag,do(s),(b)ands]",0,0,1,0,0}, 
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
-  {"fixsyms", "n","Remove symmetries not consistent with an external perturbation",0,0,0,0,0}, 
+  {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0},
+  {"fixsave", "z","Convert wave--functions to new format",0,0,0,0,0},
+#if defined _YPP_RT
+  {"RealTime","t","TD-polarization [(X)response]",0,0,1,0,0}, 
+#endif
 #if defined _YPP_ELPH
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
   {"gkkp"  , "g","gkkp databases",0,0,0,0,0}, 
-#endif
-#if defined _YPP_SURF
-  {"surf", "a","Surface spectroscopy postprocessor [opt=ras,reels,loc,trans]",0,0,1,0,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

@@ -239,14 +239,10 @@ subroutine RT_driver(E,X,k,q)
  call RT_output(what="open carr therm energy magn")
  call RT_output(what="open BGR")
  !
- ! GPL_EXCLUDE_END
- !
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
-   if(l_RT_induced_field) call RT_output(what="open tot ind")
+   if (l_RT_induced_field) call RT_output(what="open tot ind")
  endif
- !
- ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)     call RT_output('open EPlife')
  if (l_elel_scatt)     call RT_output('open EElife')

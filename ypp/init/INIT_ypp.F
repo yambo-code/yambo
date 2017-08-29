@@ -484,7 +484,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    l_flag=l_RT_occupations.or.l_RT_abs
-   if (l_flag)      call INIT_RT_ctl_switch('G')
+   if (l_flag)      call init_RT_ctl_switch('G')
    l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !

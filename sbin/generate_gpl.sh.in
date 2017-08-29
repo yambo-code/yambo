@@ -5,9 +5,9 @@ if [ $1 = "-h" ] ; then
  exit 0
 fi
 
-BASE="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project/master"
-PREV="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.1"
-TARGET="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/master"
+BASE="@abs_top_srcdir@/../max-release"
+PREV="/home/marini/Yambo/sources/git/gpl"
+TARGET="@abs_top_srcdir@/../max-release-GPL"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
 #
@@ -26,10 +26,6 @@ cd $TARGET
 if [ $ACTION = "update" ] ; then
  rm -fr *
  cp -R $BASE/*  .
- #find . -name .objects_gpl | grep -v git | gawk '{print "cpp -P " $0 " > A ; mv A " $0 }' > CPP.batch
- #chmod u+x CPP.batch
- #rm -f CPP.batch 
- #./sbin/yamboo.pl -p="KERR SURF YPP_SURF ELPH YPP_ELPH"
  ./sbin/yamboo.pl -p="$PJ"
  chmod u+x delete.batch
  ./delete.batch

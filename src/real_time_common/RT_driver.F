@@ -232,19 +232,14 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  !
+ call RT_output(what="open curr pol")
+ !
  ! GPL_EXCLUDE_START
  !
- call RT_output(what="open carr therm energy curr pol magn")
+ call RT_output(what="open carr therm energy magn")
  call RT_output(what="open BGR")
  !
  ! GPL_EXCLUDE_END
- !
- !
- ! GPL_INCLUDE_START
- !
- !call RT_output(what="open curr pol")
- !
- ! GPL_INCLUDE_END
  !
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
@@ -302,7 +297,6 @@ subroutine RT_driver(E,X,k,q)
    !
    ! GPL_EXCLUDE_START
    !
-   !
    ! Update Bose Temp and Phonons distribution
    !===========================================
    !if (l_Debye_TBose_update) then
@@ -347,24 +341,14 @@ subroutine RT_driver(E,X,k,q)
    ! OUTPUT(s)
    !###########
    !
+   call RT_output('curr pol',TIME=NE_time*AUT2FS)
+   !
    ! GPL_EXCLUDE_START
    !
    call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
+   call RT_output('magn therm',TIME=NE_time*AUT2FS)
    call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   !
-   ! GPL_INCLUDE_START
-   !
-   !call RT_output('curr pol',TIME=NE_time*AUT2FS)
-   !
-   ! GPL_INCLUDE_END
-   !
-   !
-   ! GPL_EXCLUDE_START
    !
    ! Mean Carrier Lifetimes
    !========================

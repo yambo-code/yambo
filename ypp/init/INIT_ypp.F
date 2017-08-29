@@ -478,12 +478,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
-   !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then
    !
+   ! GPL_EXCLUDE_START
+   !
    l_flag=l_RT_occupations.or.l_RT_abs
-   if (l_flag)      call init_RT_ctl_switch('G')
+   if (l_flag)      call INIT_RT_ctl_switch('G')
    l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
@@ -493,6 +494,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_bands)  call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    !

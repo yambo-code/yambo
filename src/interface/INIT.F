@@ -597,9 +597,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                  'DrudeW','EhEngy','LongDr'/))
    !
    call INIT_QP_ctl_switch('X')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
    !
  endif
@@ -635,10 +641,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse) then
    !
    call INIT_QP_ctl_switch('K')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    call INIT_RT_ctl_switch('K')
    call INIT_RT_ctl_switch('R')
 #endif
+   !
+   ! GPL_EXCLUDE_END
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
 #if defined _KERR
@@ -684,9 +695,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s) then
    call INIT_QP_ctl_switch('X')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
    call initactivate(1,'XTermKind')
@@ -697,9 +714,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
@@ -716,9 +739,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_acfdt) then
    call INIT_QP_ctl_switch('X')
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    call initactivate(1,'ShiftedPaths')
    call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
@@ -748,10 +777,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      call INIT_QP_ctl_switch('X')
      call INIT_QP_ctl_switch('G')
+     !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
      call INIT_RT_ctl_switch('X')
      call INIT_RT_ctl_switch('G')
 #endif
+     !
+     ! GPL_EXCLUDE_END
+     !
      call initactivate(1,'BoseCut ShiftedPaths')
      !
      if (l_gw0) then
@@ -864,13 +899,21 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_real_time) then
    call INIT_QP_ctl_switch('G')
+   !
+   ! GPL_EXCLUDE_START
+   !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep dTupdateTime dTupdateJump dTupdateTresh dT_MAX NEsteps NETime COHsteps DipoleEtresh')
+   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField SaveGhistory')
+   call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
-   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField IOtime SaveGhistory')
+   !
+   ! GPL_EXCLUDE_END
+   !
+   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime PhLifeTime RTehEny ScattTresh') 
+   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
+   call initactivate(1,'IOtime')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
    ! or parsed from the input file in INIT_load.F

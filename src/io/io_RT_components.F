@@ -171,11 +171,11 @@ integer function io_RT_components(what,ID)
  ! === no K no Time ===
  !#####################
  !
+ ! GPL_EXCLUDE_START
+ !
  ! REFERENCE Lifetimes and Green function
  !========================================
  if ( l_REF ) then
-   !
-   ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
    !
@@ -221,8 +221,6 @@ integer function io_RT_components(what,ID)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
    if (allocated(G_lesser_reference)) then
      !
      i_spin=1
@@ -239,8 +237,6 @@ integer function io_RT_components(what,ID)
  ! === K-dependent ===
  !####################
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! ELPH Kernel THETA Matrix 
@@ -256,8 +252,6 @@ integer function io_RT_components(what,ID)
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! lesser Green Function
  !=======================
@@ -289,8 +283,6 @@ integer function io_RT_components(what,ID)
  !
  ! === Time-dependent ===
  !#######################
- !
- ! GPL_EXCLUDE_START
  !
  ! Carrier components
  !====================

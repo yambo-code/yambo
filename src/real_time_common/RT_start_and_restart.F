@@ -140,6 +140,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  rho_reference=rho_n
  if(n_spin>1) magn_reference=magn_n
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
  !
@@ -164,11 +166,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  RESTART = (io_G ==0).and.(io_REF==0)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
- !
- ! GPL_EXCLUDE_END
  !
  ! Starting point 
  !================
@@ -184,8 +182,6 @@ subroutine RT_start_and_restart(E,k,q,X)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
-   ! GPL_EXCLUDE_START
-   !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
@@ -194,32 +190,22 @@ subroutine RT_start_and_restart(E,k,q,X)
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
    NE_i_time=nint(NE_time/RT_step)+1
    !
-   ! GPL_EXCLUDE_START
-   !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
-   !
-   ! GPL_EXCLUDE_END
    !
    do ik=1,RT_nk
      !
      call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
-     ! GPL_EXCLUDE_START
-     !
      if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
      ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
      !
@@ -231,23 +217,15 @@ subroutine RT_start_and_restart(E,k,q,X)
      !
    enddo
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Define RT_E/H_occupations_reference
    !
    call RT_init_occupation_reference( )
-   !
-   ! GPL_EXCLUDE_END
    !
    ! To be used in the first part of the RT_driver main loop
    !
    i_MEM_collision = i_MEM_now
    !
-   ! GPL_EXCLUDE_START
-   !
    if(.not.l_RT_CCA_Kernel) call RT_ELPH_zeroing()
-   !
-   ! GPL_EXCLUDE_END
    !
    NE_i_start_time=NE_i_time
    !
@@ -258,8 +236,6 @@ subroutine RT_start_and_restart(E,k,q,X)
      if(n_spin>1) call el_magnetization_matrix(G_lesser_reference,E,k,magn_reference,1)
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
    nt=RT_Lifetimes_evaluation_plan( )
@@ -269,30 +245,16 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call RT_set_occupations()
    !
-   ! GPL_EXCLUDE_END
-   !
    call msg( 'nr','---RESTART report---')
    !
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
    !
-   ! GPL_EXCLUDE_START
-   !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
    call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   !
-   ! GPL_INCLUDE_START
-   !
-   !call msg('r',  'T between I/O of J,P          [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
-   !call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
-   !
-   ! GPL_INCLUDE_END
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
    OUTPUT_RT_IO_t%INTERVAL_steps = nint(OUTPUT_RT_IO_t%INTERVAL_time/RT_step)
@@ -305,6 +267,15 @@ subroutine RT_start_and_restart(E,k,q,X)
    NE_time=0._SP
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START 
+ !
+ !NE_time=0._SP
+ !
+ ! GPL_INCLUDE_END 
+ !
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !

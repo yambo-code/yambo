@@ -49,6 +49,7 @@
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
@@ -75,7 +76,7 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
-  {"negf",   "q","Real-time dynamic [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf",   "q","Real-time dynamics ",0,0,1,0,0}, 
 #endif
 #if defined _ELPH 
   {"corrtp", "c","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    

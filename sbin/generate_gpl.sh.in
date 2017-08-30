@@ -8,10 +8,10 @@ fi
 BASE="@abs_top_srcdir@/../max-release"
 PREV="/home/marini/Yambo/sources/git/gpl"
 TARGET="@abs_top_srcdir@/../max-release-GPL"
+WORK="/tmp/YAMBO"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi
 #
-#PJ="KERR SURF YPP_SURF ELPH YPP_ELPH FFTW FFTSG OPENMP MPI" 
 PJ="KERR ELPH YPP_ELPH RT YPP_RT FFTW FFTSG SCALAPACK OPENMP MPI" 
 
 echo 
@@ -21,15 +21,21 @@ echo  "TARGET  : $TARGET"
 echo  "ACTION  : $ACTION"
 #sleep 3s
 
-cd $TARGET
-
 if [ $ACTION = "update" ] ; then
+ mkdir -p $WORK
+ cd $WORK
  rm -fr *
  cp -R $BASE/*  .
  ./sbin/yamboo.pl -p="$PJ"
  chmod u+x delete.batch
  ./delete.batch
  rm -f delete.batch 
+fi
+
+cd $TARGET
+if [ $ACTION = "update" ] ; then
+ rsync --update -raz --progress  $WORK .
+ #cp -uR $WORK/*  .
  find . -name git | xargs rm -fr
  diff -r . $PREV | \
    grep "Only in" | \

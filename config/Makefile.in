@@ -313,6 +313,7 @@ define make_message
  echo " [all projects] all";\
  echo " [project-related suite] project (core, rt-project, ...)";      echo;\
  for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
+ for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\

@@ -140,10 +140,12 @@ subroutine RT_start_and_restart(E,k,q,X)
  rho_reference=rho_n
  if(n_spin>1) magn_reference=magn_n
  !
- ! GPL_EXCLUDE_START
- !
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
+ !
+ RESTART=.FALSE.
+ !
+ ! GPL_EXCLUDE_START
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
@@ -262,20 +264,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
- else
-   !
-   NE_time=0._SP
-   !
  endif
  !
  ! GPL_EXCLUDE_END
  !
- ! GPL_INCLUDE_START 
- !
- !NE_time=0._SP
- !
- ! GPL_INCLUDE_END 
- !
+ if (.not.RESTART) NE_time=0._SP
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
@@ -336,10 +329,13 @@ subroutine RT_start_and_restart(E,k,q,X)
    RT_eh_en(2)=RT_eh_en(2)+E%E_CBm
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Retarded Green Functions matrix
  ! ===============================
+ !
+ N_Gr_descs=1
+ Gr_description(1)=' [Gr] Retarded Green`s function  : none'
+ !
+ ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
@@ -360,17 +356,6 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
    !
- else
- !
- ! GPL_EXCLUDE_END
- !
-   !
-   N_Gr_descs=1
-   Gr_description(1)=' [Gr] Retarded Green`s function  : none'
-   !
- !
- ! GPL_EXCLUDE_START
- !
  endif
  !
  ! GPL_EXCLUDE_END

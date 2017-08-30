@@ -76,9 +76,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _YPP_RT
  integer    :: ik_RT
 #endif
- integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
-! complex(SP):: WF_der(fft_size,n_spinor,3)
+ complex(SP):: WF_der(fft_size,n_spinor,3)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
 #if defined _TIMING && defined _RT
@@ -130,33 +130,34 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        endif
 #endif
        !
-       do i_spinor=1,n_spinor
-         !
-         if (size(WF%index,3)<i_spinor)  cycle
-         !
-         i_wf=WF%index(ib,ik,i_sp_pol+i_spinor-1)
-         !
-         if (i_wf==0) then
-           if (.not.warn_done) call warning('Not enough states to calculate rho')
-           warn_done=.true.
-           cycle
-         endif
-         !
-         if (l_rho) rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_wf))**2
-         !
-         ! Davide: to be fixed after merge with devel-wf-io
-         !
-         !if (l_J) then
-         !  !
-         !  call eval_Gradient(WF%c(:,ifft),WF_der,n_spinor,"wave")
-         !  !
-         !  do i_r=1,fft_size
-         !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_wf)*WF_der(i_r,:))
-         !  enddo
-         !  !
-         !endif
-         !
-       enddo
+       i_wf=WF%index(ib,ik,i_sp_pol)
+       !
+       if (i_wf==0) then
+         if (.not.warn_done) call warning('Not enough states to calculate rho')
+         warn_done=.true.
+         cycle
+       endif
+       !
+       !
+       if (l_rho) then
+         do i_spinor=1,n_spinor
+           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
+         enddo
+       endif
+       !
+       !if (l_J) then
+       !  !
+       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+       !  !
+       !  do i_dir=1,3
+       !    do i_spinor=1,n_spinor
+       !      do i_r=1,fft_size
+       !        J_no_sym(i_r,i_dir)=J_no_sym(i_r,i_dir)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(i_r,i_spinor,i_dir))
+       !      enddo
+       !    enddo
+       !  enddo
+       !  !
+       !endif
        !
      enddo
    enddo

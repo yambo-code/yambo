@@ -50,7 +50,7 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  !
  ! Work Space
  !
- integer    :: i_spinor,j_spinor,ib,ibp,ifft,ifftp
+ integer    :: i_spinor,j_spinor,ib,ibp,i_wf,ip_wf
  complex(SP):: c_ws(fft_size,n_spinor),c_ws_x(fft_size,n_spinor),c_ws_y(fft_size,n_spinor),c_ws_z(fft_size,n_spinor)
  !
 #if defined _RT
@@ -69,18 +69,17 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
    if (.not.HEAD_QP_cpu) cycle
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
    !
-   ! <ifft|V|ifftp>
+   ! <i_wf|V|ip_wf>
    !
-   ! x
-   do i_spinor=1,n_spinor
-     ifftp = WF%index(ibp,ik,i_spinor)
+   ip_wf = WF%index(ibp,ik,1)
+   !
+   do j_spinor=1,n_spinor
      ! x
-     c_ws_x(:,i_spinor)= V_grad(:,2)*WF_z(:,ifftp)-V_grad(:,3)*WF_y(:,ifftp)
+     c_ws_x(:,i_spinor)= V_grad(:,2)*WF_z(:,i_spinor,ip_wf)-V_grad(:,3)*WF_y(:,i_spinor,ip_wf)
      ! y
-     c_ws_y(:,i_spinor)=-V_grad(:,1)*WF_z(:,ifftp)+V_grad(:,3)*WF_x(:,ifftp)
+     c_ws_y(:,i_spinor)=-V_grad(:,1)*WF_z(:,i_spinor,ip_wf)+V_grad(:,3)*WF_x(:,i_spinor,ip_wf)
      ! z
-     c_ws_z(:,i_spinor)= V_grad(:,1)*WF_y(:,ifftp)-V_grad(:,2)*WF_x(:,ifftp)
-     !
+     c_ws_z(:,i_spinor)= V_grad(:,1)*WF_y(:,i_spinor,ip_wf)-V_grad(:,2)*WF_x(:,i_spinor,ip_wf)
    enddo
    !
    do j_spinor=1,n_spinor
@@ -89,10 +88,8 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
 &                     +sigma_z(j_spinor,1)*c_ws_z(:,1)+sigma_z(j_spinor,2)*c_ws_z(:,2)
    enddo
    !
-   do i_spinor=1,n_spinor
-     ifft = WF%index(ib,ik,i_spinor)
-     H(ib,ibp) = H(ib,ibp)+0.25_SP*Vstar_dot_V(fft_size,WF%c(:,ifft),c_ws(:,i_spinor))
-   enddo
+   i_wf = WF%index(ib,ik,1)
+   H(ib,ibp) = 0.25_SP*Vstar_dot_V(fft_size*n_spinor,WF%c(:,:,i_wf),c_ws(:,:))
    !
    if(ib==ibp) H(ib,ib) = real(H(ib,ib ),SP)
    if(ib/=ibp) H(ibp,ib)=conjg(H(ib,ibp)   )

@@ -61,7 +61,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
    do ik = 1,k%nibz
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+E%E_Fermi
      ifft=WF%index(iv1,ik,1)
-     f(:)=conjg(WF%c(:,ifft))*U_x(ik,iv1,:)
+     f(:)=conjg(WF%c(:,1,ifft))*U_x(ik,iv1,:)
      Vslt_DP = Vslt_DP + E%f(iv1,ik,1)*real(f,DP)*k%weights(ik)/EWeight
    end do
  end do

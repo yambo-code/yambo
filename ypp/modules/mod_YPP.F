@@ -195,6 +195,10 @@ module YPP
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  !
+ ! Convert wave--functions
+ !
+ logical     :: l_fix_save
+ !
  interface
    !
    subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)

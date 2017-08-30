@@ -120,7 +120,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    call timing('RT integrator',OPR='stop')
 #endif
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
+   !
+   ! GPL_EXCLUDE_START
+   !
    call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! since nothing explicitely depends on time
+   !
+   ! GPL_EXCLUDE_END
+   !
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
@@ -133,9 +139,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  call RT_build_dG_new()
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Occupations @ T+dT
  !
  call RT_update_occ(dG_new)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Fields @ T+dT
  !
@@ -188,7 +198,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
          RT_delta0_occupations(ib,ik)=aimag(G_inonly(ib,ib,ik))
          !
        enddo
-       !
      enddo
      !
 #if defined _TIMING

@@ -24,7 +24,7 @@
 subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -322,7 +322,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
- l_flag=.not.l_sort
+ l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
@@ -337,6 +337,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ l_fix_save  =runlevel_is_on('fixsave')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -442,6 +443,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
+ if (l_fix_save) infile_editing=.false.
  !
 #if defined _YPP_RT
  !             
@@ -529,7 +531,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand GkkpConvert")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

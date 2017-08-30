@@ -187,7 +187,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp))/sqrt(2._SP*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !

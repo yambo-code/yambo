@@ -125,6 +125,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
          iB_ref=-1
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)==0) cycle
            iB_ref=iB_p
            exit
@@ -143,8 +144,9 @@ subroutine K_correlation_collisions(iB,Xk,q)
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          iB_ref=-1
-         do iB_p=iB,iB,-1
+         do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)==0) cycle
            iB_ref=iB_p
            exit
@@ -167,6 +169,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
          iB_ref=-1
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)==0) cycle
            iB_ref=iB_p
            exit
@@ -187,6 +190,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
          iB_ref=-1
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)==0) cycle
            iB_ref=iB_p
            exit

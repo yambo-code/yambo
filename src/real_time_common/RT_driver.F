@@ -130,7 +130,12 @@ subroutine RT_driver(E,X,k,q)
  !===========================
  !
  call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Core initialization
  !
@@ -200,6 +205,8 @@ subroutine RT_driver(E,X,k,q)
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Reference lifetimes and/or G_lesser
  !=====================================
  !
@@ -218,12 +225,16 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
  ! Initialize output files
  !==========================
+ !
+ ! GPL_EXCLUDE_END
  !
  call RT_output_and_IO_driver('initialize',E,k,OBSERVABLES)
  !
@@ -266,9 +277,13 @@ subroutine RT_driver(E,X,k,q)
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Calculate all relaxation and dissipation terms
    !===============================================
    call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Write DBs and output
    !=====================
@@ -323,10 +338,16 @@ subroutine RT_driver(E,X,k,q)
      call RT_free()
      call RT_free_control()
      call WF_free(WF)
+     !
+     ! GPL_EXCLUDE_START
+     !
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     !
+     ! GPL_EXCLUDE_END
+     !
+     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      call set_real_printed_length()
    end subroutine
    !

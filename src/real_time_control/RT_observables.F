@@ -66,6 +66,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
    return
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  NCarr =OBSERVABLES( 1: 2)
  TFit  =OBSERVABLES( 3: 4)
  EfFit =OBSERVABLES( 5: 6)
@@ -92,6 +94,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_BGR(en,k,BGR)
  !
  OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

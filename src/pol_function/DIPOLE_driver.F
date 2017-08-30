@@ -29,14 +29,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! DIP_iR=i<r>
  ! DIP_P = <v>   (should be called DIP_V ... )
  !
- ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
+ !
+ ! GPL_EXCLUDE_START 
+ !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
  ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
  ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
+ !
+ ! GPL_EXCLUDE_END 
  !
  ! PARALLEL structure: The dipoles are based on a "derived" structure. 
  !                     K-points are driven by these communicators and indexes:
@@ -308,14 +313,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        if (reading) IO_ACTION=OP_RD_CL
        if (writing) IO_ACTION=OP_APP_WR_CL
        !
-       do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
-         if ((writing.and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0).or.reading) then
-           do i_sp_pol=1,n_sp_pol
-             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-             io_err=io_DIPOLES(X,ID)
-          enddo
-         endif
+       do i_sp_pol=1,n_sp_pol
+         do ik=1,Xk%nibz
+           if ( .not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
+           if ((.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0) .and. writing) cycle
+           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+           io_err=io_DIPOLES(X,ID)
+         enddo
        enddo
        !
      endif

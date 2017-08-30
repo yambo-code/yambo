@@ -75,6 +75,8 @@ subroutine RT_databases_IO(E)
      io_JPSM=io_RT_components('JPSM',ID(4))
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if (io_CARRIERs) then
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
@@ -82,6 +84,8 @@ subroutine RT_databases_IO(E)
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
      io_carr=io_RT_components('carriers',ID(6))
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -102,10 +106,14 @@ subroutine RT_databases_IO(E)
    call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
+   ! GPL_EXCLUDE_START
+   !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
    do ik = 1, RT_nk
      !
@@ -117,6 +125,8 @@ subroutine RT_databases_IO(E)
      !
      call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
+     ! GPL_EXCLUDE_START
      !
 #if defined _ELPH
      !
@@ -138,6 +148,8 @@ subroutine RT_databases_IO(E)
      endif
      !
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
    enddo
    !

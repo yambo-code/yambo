@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -41,47 +41,42 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  implicit none
  !
- integer     :: ik,i_sp_pol,wf_size,ig
+ integer     :: i_sp_pol,ik,wf_size
  type(WAVEs) :: WFo
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf(n_spinor),i_wfp(n_spinor),i_spin,i_spinor
+ integer     :: ib,ibp,i_wf,i_wfp,i_spinor
  complex(SP) :: WS_wf(wf_size,n_spinor,H_ref_bands(1):H_ref_bands(2))
  !
-   WS_wf=cZERO
+ WS_wf=cZERO
+ !
+ do ib = H_ref_bands(1),H_ref_bands(2)
    !
-   do ib = H_ref_bands(1),H_ref_bands(2)
-     !
-     do i_spinor=1,n_spinor
-       i_spin=i_sp_pol+i_spinor-1
-       i_wf(i_spinor) = WFo%index(ib,ik,i_spin)
-     enddo
-     !
-     if (any(i_wf(:)==0)) cycle
-     !
-     do ibp = H_ref_bands(1),H_ref_bands(2)
-       !
-       do i_spinor=1,n_spinor
-         i_spin=i_sp_pol+i_spinor-1
-         i_wfp(i_spinor) = WFo%index(ibp,ik,i_spin)
-         !
-         if (i_wfp(i_spinor)==0) cycle
-         !
-         call V_by_V_plus_V_omp(wf_size,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,i_wfp(i_spinor)),WS_wf(:,i_spinor,ib))
-         !
-       enddo
+   i_wf = WFo%index(ib,ik,i_sp_pol)
+   if (i_wf==0) cycle
+   !
+   do ibp = H_ref_bands(1),H_ref_bands(2)
+     i_wfp = WFo%index(ibp,ik,i_sp_pol)
+     if (i_wfp==0) cycle
+     !call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,:,i_wfp),WS_wf(:,:,ib))
+     WS_wf(:,:,ib)=WS_wf(:,:,ib)+SC_R(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
+   end do
+   !
+ enddo
+ !
+ do ib = H_ref_bands(1),H_ref_bands(2)
+   !
+   i_wf = WFo%index(ib,ik,i_sp_pol)
+   !
+   !$omp parallel do default(shared), private(ig,i_spinor)
+   do i_spinor=1,n_spinor
+     do ig=1,wf_size
+       WF%c(ig,i_spinor,i_wf)=WS_wf(ig,i_spinor,ib)
      enddo
    enddo
+   !$omp end parallel do
    !
-   do ib=H_ref_bands(1),H_ref_bands(2)
-     do i_spinor=1,n_spinor
-       i_spin=i_sp_pol+i_spinor-1
-       i_wf(i_spinor) = WF%index(ib,ik,i_spin)
-       do ig=1,wf_size
-         WF%c(ig,i_wf(i_spinor))=WS_wf(ig,i_spinor,ib)
-       enddo
-     enddo
-   enddo
+ enddo
  !
 end subroutine

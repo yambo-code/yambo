@@ -26,6 +26,7 @@ subroutine WF_alloc(WF)
  use pars,          ONLY:cZERO
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
  use FFT_m,         ONLY:fft_size
+ use electrons,     ONLY:n_spinor
  use interfaces,    ONLY:PARALLEL_live_message
  !
 #include<memory.h>
@@ -34,7 +35,7 @@ subroutine WF_alloc(WF)
  !
  ! Work Space
  !
- integer :: ik,ib,is,N_total,wf_grid_size
+ integer :: ik,ib,i_sp_pol,N_total,wf_grid_size
  !
  ! Distributed allocation
  !
@@ -42,18 +43,18 @@ subroutine WF_alloc(WF)
    !
    WF%N=0
    N_total=0
-   do ib=WF%b(1),WF%b(2)
-     do ik=WF%k(1),WF%k(2)
-       do is=WF%spin(1),WF%spin(2)
+   do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
+     do ib=WF%b(1),WF%b(2)
+       do ik=WF%k(1),WF%k(2)
          N_total=N_total+1
-         if (states_to_load(ib,ik,is)) WF%N=WF%N+1
+         if (states_to_load(ib,ik,i_sp_pol)) WF%N=WF%N+1
        enddo
      enddo
    enddo
    !
  else
    !
-   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%spin(2)-WF%spin(1)+1)
+   WF%N=(WF%b(2)-WF%b(1)+1)*(WF%k(2)-WF%k(1)+1)*(WF%sp_pol(2)-WF%sp_pol(1)+1)
    N_total=WF%N
    !
  endif
@@ -63,11 +64,11 @@ subroutine WF_alloc(WF)
  if (WF%space=='C')  wf_grid_size=wf_ncx
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
- YAMBO_ALLOC(WF%c,(wf_grid_size,WF%N))
+ YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%spin(2)))
+ YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
  WF%index=0

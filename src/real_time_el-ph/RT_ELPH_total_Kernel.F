@@ -115,11 +115,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
-       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
+       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(il,i_n,i_n,(i_gkkp-1)*PAR_Xk_nibz+ik_mem)
        if(Gkkp_sq(i_n,i_n)<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        do i_np=RT_bands(1),RT_bands(2)
          if(i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
+         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(il,i_n,i_n,(i_gkkp-1)*PAR_Xk_nibz+ik_mem)
          if(Gkkp_sq(i_n,i_np)<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
        enddo 
      enddo

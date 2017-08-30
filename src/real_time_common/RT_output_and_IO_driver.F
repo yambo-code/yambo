@@ -52,7 +52,11 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    OBSERVABLES=0._SP
    !
    call RT_output(what="initialize")
-   call RT_output(what="open carr curr pol magn")
+   call RT_output(what="open curr pol")
+   !
+   ! GPL_EXCLUDE_START
+   !
+   call RT_output(what="open carr magn")
    if(eval_energy)  call RT_output(what="open energy")
    if(eval_entropy) call RT_output(what="open therm")
    if(l_update_QP_Energies) call RT_output(what="open BGR")
@@ -65,7 +69,11 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if (l_elphoton_scatt) call RT_output('open RADlife')
    if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
    !
+   ! GPL_EXCLUDE_END
+   !
  case('write')
+   !
+   ! GPL_EXCLUDE_START
    !
    NCarr =OBSERVABLES( 1: 2)
    TFit  =OBSERVABLES( 3: 4)
@@ -76,6 +84,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    EnEntr=OBSERVABLES(18:20)
    BGR   =OBSERVABLES(21:22)
    !
+   ! GPL_EXCLUDE_END
+   !
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
    call RT_databases_IO(E)
@@ -84,7 +94,11 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! OUTPUT(s)
    !###########
-   call RT_output('curr pol magn',TIME=NE_time*AUT2FS)
+   call RT_output('curr pol',TIME=NE_time*AUT2FS)
+   !
+   ! GPL_EXCLUDE_START
+   !
+   call RT_output('magn',TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)
@@ -99,6 +113,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
      if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
      if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Field(s)
    !==========

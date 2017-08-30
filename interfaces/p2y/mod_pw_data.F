@@ -52,6 +52,7 @@ module pw_data
 
 ! Spin
   logical                    :: lspinorb_
+  logical                    :: noncolin_
   integer                    :: n_spin_pw_
 
 ! Bandstructure
@@ -63,12 +64,14 @@ module pw_data
 ! Smearing parameters
   logical                    :: lgauss_
   integer                    :: ngauss_
+  character(256)             :: smearing_type_    ! XSD: alternative to ngauss_
   character(256)             :: degauss_units_
   real(dp)                   :: degauss_
 
 ! igk grids
-  integer                    :: npwk_
-  integer, allocatable       :: index_(:), igk_(:,:), pw_npwk_(:)
+  integer                    :: npwk_, nfft_(3)
+  integer, allocatable       :: index_(:), igkv_(:,:), pw_npwk_(:)
+  integer, allocatable       :: fft2igv_(:)
   integer, allocatable       :: pw_igk_(:,:)
 
 ! Wavefunctions

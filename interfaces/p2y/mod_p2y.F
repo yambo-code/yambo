@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, AF
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -30,7 +30,7 @@ module P2Y
  use qexsd_module
 #endif
  use pw_data
- use pars,                  ONLY : lchlen,SP, DP
+ use pars,                  ONLY : lchlen,SP,DP
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
@@ -128,22 +128,28 @@ contains
    call msg('s',trim(lch))
    call qexml_init(pw_unit,rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
+   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
 
 #elif defined _P2Y_V32
 
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
+   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
     
 #elif defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_init(pw_unit) 
    call qexml_openfile( index_filename, "read", .false., ierr)
+   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
     
 #elif defined _P2Y_QEXSD 
 
    call qexsd_init_schema(pw_unit) 
    call qexsd_openfile( index_filename, "read", .false., ierr)
+   if (ierr/=0) call errore('qexsd_openfile','opening '//trim(index_filename),10)
+   !
    call qexsd_open_output(ierr)
+   if (ierr/=0) call errore('qexsd_open_output','opening output tag',10)
     
 #endif
    !
@@ -213,7 +219,10 @@ contains
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
 #elif defined _P2Y_QEXSD
-!   XXX
+   !
+   call qexsd_read_band_structure(nbnd=nbnd_, num_k_points=num_k_points_, nspin=n_spin_pw_, &
+&                                 nelec=nelec_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem (dims I)',ABS(ierr))
 
 #endif
 
@@ -243,14 +252,14 @@ contains
    !
 #elif defined _P2Y_QEXSD
    !
-   call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
-   call qexsd_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
-   call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem',ABS(ierr))
    call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
    if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
+   call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+   call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem I',ABS(ierr))
+   call qexsd_read_spin(lspinorb=l_spin_orbit, noncolin=noncolin_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
    !
 #endif
 
@@ -296,12 +305,19 @@ contains
    !
    call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
 &                               degauss_units=degauss_units_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_occ','fmt problem',ABS(ierr))  
+   if (ierr/=0) call errore('qexml_read_occ','IOTK problem',ABS(ierr))  
    !
    if (lgauss_) input_GS_Tel=300._SP/HA2KEL
    !
 #elif defined _P2Y_QEXSD
-!   XXXX
+   !
+   call qexsd_read_band_structure(have_smearing=lgauss_,smearing_type=smearing_type_,&
+&                                 degauss=degauss_,ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem II',ABS(ierr))  
+   !
+   degauss_units_="Hartree"
+   !
+   if (lgauss_) input_GS_Tel=300._SP/HA2KEL
 #endif
    !
    return
@@ -485,15 +501,13 @@ contains
 &                           s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
    if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
    !
-   ! convert to RLU
+   ! convert to integers
    !
    do i1 = 1, nsym_
-     rmat1=matmul(transpose(b),rsym_(:,:,i1))
-     rmat2=matmul(rmat1,a)/(2.0_SP*pi) 
-     isym_(:,:,i1) = nint(rmat2)
+     isym_(:,:,i1) = nint(rsym_(:,:,i1))
    enddo
    !
-   ! XXX t_rev & trevsym  need to be defined
+   ! XXX t_rev & trevsym  need to be checked/defined
    !
 #endif
    !
@@ -532,7 +546,12 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
+   if (ierr/=0) call errore('qexml_read_bz','IOTK error',ABS(ierr))
+
+#elif defined _P2Y_QEXSD
+
+   call qexsd_read_band_structure(vkpt=xk_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_band_structure','fmt error (KPT)',ABS(ierr))
 
 #endif
    !
@@ -577,11 +596,14 @@ contains
  !
  subroutine get_R_vectors
    ! 
-   use pars,        only : pi
-   use R_lattice,   ONLY:b, ng_vec, g_vec
-   use D_lattice,   ONLY:alat
+   use pars,        only: pi
+   use R_lattice,   ONLY: b, ng_vec, g_vec
+   use D_lattice,   ONLY: alat
 #include<memory.h>
    !
+! XXX
+!integer :: i
+! XXXX
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
 
 #if defined _P2Y_EXPORT
@@ -598,8 +620,14 @@ contains
 #elif defined _P2Y_QEXSD
 
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
-   call qexsd_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_planewaves','fmt error',ABS(ierr))
+   call qexsd_read_planewaves(ecutwfc=ecutwfc_, igv=igv_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt error II',ABS(ierr))
+
+!! XXXX
+!WRITE(1000,"(a)") "IGV"
+!do i = 1, ngm_
+!  WRITE(1000,"(i5,3x,3i5)") i, igv_(:,i)
+!enddo
 
 #endif
    !
@@ -690,11 +718,44 @@ contains
    YAMBO_ALLOC(index_,(npwx_))
    do ik = 1, k%nibz
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
-     if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
+     if (ierr/=0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
+     !
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
    YAMBO_FREE(index_)
+     
+#elif defined _P2Y_QEXSD
+
+   YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
+   YAMBO_ALLOC(index_,(npwx_))
+   YAMBO_ALLOC(igkv_,(3,npwx_))
+   !
+   if (.not.allocated(igv_)) call errore('qexsd_read_gk','igv_ not alloc',10)
+   !
+   call qexsd_fft2igv_map(ngm_, igv_, nfft_, dims_only=.TRUE.)
+   YAMBO_ALLOC(fft2igv_,(product(nfft_)))
+   call qexsd_fft2igv_map(ngm_, igv_, nfft_, fft2igv_)
+   !
+   if (n_spin_pw_/=1.and.n_spin_pw_/=2.and.n_spin_pw_/=4) &
+&            call errore('qexsd_read_gk','invalid n_spin_pw_',10)
+   !
+   !
+   do ik = 1, k%nibz
+     !
+     call qexsd_read_gk(ik, n_spin_pw_, npwk=npwk_, igkv=igkv_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_gk','fmt error',ABS(ierr))
+     !
+     call qexsd_igk_map( nfft_, fft2igv_, npwk_, igkv_, index_ )
+     !
+     pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
+     wf_nc_k(ik) = npwk_
+     !
+   enddo
+   !
+   YAMBO_FREE(index_)
+   YAMBO_FREE(igkv_)
+   YAMBO_FREE(fft2igv_)
      
 #endif
 
@@ -777,19 +838,24 @@ contains
      do ik_ = 1,k%nibz
        do ispin_ = 1, n_sp_pol
          call qexml_read_bands(ik=ik_,ispin=ispin_,eig=eigb_, ierr=ierr)
-         if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
+         if (ierr/=0) call errore('qexml_read_bands','IOTK error 2',ABS(ierr))
          en%E(:,ik_,ispin_) = eigb_( 1:en%nb )
        enddo
      enddo
    case(1)
      do ik_ = 1,k%nibz
         call qexml_read_bands(ik=ik_,eig=eigb_, ierr=ierr)
-        if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
+        if (ierr/=0) call errore('qexml_read_bands','IOTK error 1',ABS(ierr))
         en%E(:,ik_,1) = eigb_( 1:en%nb )
      enddo
    end select
    YAMBO_FREE(eigb_)
 
+#elif defined _P2Y_QEXSD
+
+   call qexsd_read_band_structure(eig=en%E(:,:,:),ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_band_structure','fmt error',ABS(ierr))
+   
 #endif
     
  end subroutine get_energies
@@ -799,21 +865,26 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
-   use com,        ONLY : warning,error
+   use com,            ONLY: warning,error
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING      
-   use mod_xc2y, ONLY: XC_yamboID,  XC_yamboID2kind
+   use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 
 #if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
+   !
    if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 
 #elif defined _P2Y_QEXSD
 
-   call qexsd_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
+   call qexsd_read_xc(dft=pw_dft, dft_is_hubbard=pw_lda_plus_u, &
+&                                 dft_is_hybrid=pw_exx_is_active, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
+   !
    if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
@@ -821,18 +892,26 @@ contains
 #endif
 
 #if defined _P2Y_V50
-   call qexml_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
-&                      exx_is_active=pw_exx_is_active,ierr=ierr)
+   call qexml_read_exx(exx_fraction=pw_exx_fraction, &
+&                      screening_parameter=pw_screening_parameter, & 
+&                      exx_is_active=pw_exx_is_active, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_exx','IOTK error',abs(ierr))
+   !
    if (pw_exx_is_active) then 
       GS_exx_FRACTION = pw_exx_fraction
       GS_exx_SCREENING= pw_screening_parameter
    endif
+
 #elif defined _P2Y_QEXSD
-   call qexsd_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
-&                      exx_is_active=pw_exx_is_active,ierr=ierr)
-   if (pw_exx_is_active) then 
+
+   if (pw_exx_is_active) then
+      !
+      call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
+&                         screening_parameter=pw_screening_parameter, ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
       GS_exx_FRACTION = pw_exx_fraction
       GS_exx_SCREENING= pw_screening_parameter
+      !
    endif
 #endif
 

@@ -86,12 +86,11 @@ MODULE qexsd_module
   PUBLIC :: qexsd_init_schema, qexsd_openfile, qexsd_closefile
   PUBLIC :: qexsd_open_output, qexsd_close_output
   !
-  PUBLIC :: qexsd_read_header, qexsd_read_cell, qexsd_read_ions,      &
-            qexsd_read_symmetry, &
-            qexsd_read_planewaves, qexsd_read_spin, qexsd_read_xc,    &
-            qexsd_read_occ, qexsd_read_bz, &
-            qexsd_read_bands, qexsd_read_bands_info,qexsd_read_exx,   &
-            qexsd_read_gk, qexsd_read_wfc
+  PUBLIC :: qexsd_read_header, qexsd_read_cell, qexsd_read_ions, &
+            qexsd_read_symmetry, qexsd_read_planewaves, qexsd_read_spin, &
+            qexsd_read_hubbard, qexsd_read_bands_info, &
+            qexsd_read_band_structure, qexsd_read_xc, qexsd_read_exx, &
+            qexsd_read_gk, qexsd_read_wfc, qexsd_igk_map, qexsd_fft2igv_map
 
 CONTAINS
 
@@ -161,13 +160,17 @@ CONTAINS
           CALL iotk_open_read ( iunit, FILE = TRIM(filename), IERR=ierr )
           IF ( ierr/=0 ) RETURN
           !
-          CALL qexsd_read_header( FORMAT_VERSION=qexsd_current_version, IERR=ierr )
-          IF ( ierr/=0 ) qexsd_current_version = TRIM( qexsd_default_version )
+          !CALL qexsd_read_header( FORMAT_VERSION=qexsd_current_version, IERR=ierr )
+          !IF ( ierr/=0 ) CALL errore( 'qexsd_read_header', 'reading QEXSD version', 1 )
+          !IF ( ierr/=0 ) qexsd_current_version = TRIM( qexsd_default_version )
           !
-          CALL qexsd_read_header( CREATOR_VERSION=qe_current_version, IERR=ierr )
-          IF ( ierr/=0 ) CALL errore( 'Read QE version', &
-                         ' variables QE_current_version not present', 1 )
+          !CALL qexsd_read_header( CREATOR_VERSION=qe_current_version, IERR=ierr )
+          !IF ( ierr/=0 ) CALL errore( 'qexsd_read_header', 'reading QE version', 1 )
           !IF ( ierr/=0 ) pwscf_current_version = TRIM( pwscf_default_version )
+          !
+          CALL qexsd_read_header( FORMAT_VERSION=qexsd_current_version, &
+                                  CREATOR_VERSION=qe_current_version, IERR=ierr )
+          IF ( ierr/=0 ) CALL errore( 'qexsd_read_header', 'reading QE/QEXSD version', 1 )
           !
       CASE DEFAULT
           ierr = 1
@@ -476,7 +479,7 @@ CONTAINS
       !
       IF ( PRESENT( ipol ) ) THEN
          !      
-         filename = TRIM(filename) // updw(ipol)
+         filename = updw(ipol) // TRIM(filename) 
          !
       END IF
       !
@@ -563,6 +566,7 @@ CONTAINS
       !
       CALL iotk_scan_end( iunit, "general_info", IERR=ierr )
       IF (ierr/=0) RETURN
+      !
       !
       IF ( PRESENT(creator_name) )     creator_name    = TRIM(creator_name_)
       IF ( PRESENT(creator_version) )  creator_version = TRIM(creator_version_)
@@ -771,12 +775,10 @@ CONTAINS
       LOGICAL   :: noncolin,domag
       CHARACTER(256) :: t_rev_str,str
 
-      !
       ierr=0
       !
       invsym_=.false.
       trevsym_=.true.
-      !
       !
       CALL iotk_scan_begin( iunit, "atomic_structure",ATTR=attr, IERR=ierr )
       IF (ierr/=0) RETURN
@@ -887,156 +889,121 @@ CONTAINS
       CHARACTER(*), OPTIONAL, INTENT(OUT) :: cutoff_units
       INTEGER,                INTENT(OUT) :: ierr
       !
-      INTEGER        :: npwx_, nr1_, nr2_, nr3_, ngm_, &
-                        nr1s_, nr2s_, nr3s_, ngms_
       INTEGER        :: iunit_aux
-      REAL(dbl)      :: ecutwfc_, ecutrho_
-      CHARACTER(256) :: cutoff_units_,str,filename
-      LOGICAL        :: gamma_only_
-      !
+      CHARACTER(256) :: filename
       
       ierr = 0
       !
-      CALL iotk_scan_begin( iunit, "basis_set", IERR=ierr )
-      IF (ierr/=0) RETURN
+      call iotk_scan_begin( iunit, "basis_set", IERR=ierr )
+      if (ierr/=0) return
       !
-      cutoff_units_="Rydberg"
+      if (present(cutoff_units)) cutoff_units="Hartree"
       !
-      CALL qexsd_scan_logical(iunit, "gamma_only", gamma_only_,IERR=ierr)
-      IF (ierr/=0) RETURN
+      if (present(gamma_only)) then
+         call qexsd_scan_logical(iunit, "gamma_only", gamma_only,IERR=ierr)
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_scan_dat( iunit, "ecutwfc", ecutwfc_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_dat( iunit, "ecutrho", ecutrho_ , IERR=ierr )
-      IF (ierr/=0) RETURN
+      if (present(ecutwfc)) then
+         call iotk_scan_dat( iunit, "ecutwfc", ecutwfc, IERR=ierr )
+         if (ierr/=0) return
+      endif
+      if (present(ecutrho)) then
+         call iotk_scan_dat( iunit, "ecutrho", ecutrho, IERR=ierr )
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_scan_dat( iunit, "fft_grid", str, ATTR=attr, IERR=ierr )
-      IF (ierr/=0) RETURN
+      if (present(nr1).or.present(nr2).or.present(nr3)) then 
+         !
+         call iotk_scan_empty( iunit, "fft_grid", ATTR=attr, IERR=ierr )
+         if (ierr/=0) return
+         !
+         if (present(nr1)) then
+            call iotk_scan_attr( attr, "nr1", nr1, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         if (present(nr2)) then
+            call iotk_scan_attr( attr, "nr2", nr2, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         if (present(nr3)) then
+            call iotk_scan_attr( attr, "nr3", nr3, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         !
+      endif
       !
-      CALL iotk_scan_attr( attr, "nr1", nr1_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr( attr, "nr2", nr2_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr( attr, "nr3", nr3_, IERR=ierr )
-      IF (ierr/=0) RETURN
+      if (present(nr1s).or.present(nr2s).or.present(nr3s)) then 
+         !
+         call iotk_scan_empty( iunit, "fft_smooth", ATTR=attr, IERR=ierr )
+         if (ierr/=0) return
+         !
+         if (present(nr1s)) then
+            call iotk_scan_attr( attr, "nr1", nr1s, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         if (present(nr2s)) then
+            call iotk_scan_attr( attr, "nr2", nr2s, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         if (present(nr3s)) then
+            call iotk_scan_attr( attr, "nr3", nr3s, IERR=ierr )
+            if (ierr/=0) return
+         endif
+         !
+      endif
       !
-      CALL iotk_scan_dat( iunit, "fft_smooth", str, ATTR=attr, IERR=ierr )
-      IF (ierr/=0) RETURN
+      if (present(ngm)) then
+         call iotk_scan_dat( iunit, "ngm", ngm, IERR=ierr )
+         if (ierr/=0) return
+      endif
+      if (present(ngms)) then
+         call iotk_scan_dat( iunit, "ngms", ngms, IERR=ierr )
+         if (ierr/=0) return
+      endif
+      if (present(npwx)) then
+         call iotk_scan_dat( iunit, "npwx", npwx, IERR=ierr )
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_scan_attr( attr, "nr1", nr1s_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr( attr, "nr2", nr2s_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr( attr, "nr3", nr3s_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat( iunit, "ngm", ngm_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_dat( iunit, "ngms", ngms_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_dat( iunit, "npwx", npwx_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      IF ( PRESENT( igv ) ) THEN
+      if ( present( igv ) ) THEN
           !
-          CALL iotk_free_unit(iunit_aux)
+          call qexsd_read_rhog( igv=igv, ierr=ierr )
+          if (ierr/=0) return
           !
-          filename = TRIM( datadir_in ) // '/gvectors.dat'
-          CALL iotk_open_read(iunit_aux, file=filename, IERR=ierr)
-          IF (ierr/=0) RETURN
-          !
-          CALL iotk_scan_begin( iunit_aux, "G-VECTORS", IERR=ierr )
-          IF (ierr/=0) RETURN
-          !
-          CALL iotk_scan_dat( iunit_aux, "g", igv(1:3,1:ngm_), IERR=ierr )
-          IF (ierr/=0) RETURN
-          !
-          CALL iotk_scan_end( iunit_aux, "G-VECTORS", IERR=ierr )          
-          IF (ierr/=0) RETURN
-          !
-          CALL iotk_close_read(iunit_aux, IERR=ierr)
-          IF (ierr/=0) RETURN
-      ENDIF
+      endif
       !
-      CALL iotk_scan_end( iunit, "basis_set", IERR=ierr )
-      IF (ierr/=0) RETURN
+      call iotk_scan_end( iunit, "basis_set", IERR=ierr )
+      if (ierr/=0) return
       !
-      !
-      IF ( PRESENT( ecutwfc ) )           ecutwfc      = ecutwfc_
-      IF ( PRESENT( ecutrho ) )           ecutrho      = ecutrho_
-      IF ( PRESENT( npwx ) )              npwx         = npwx_
-      IF ( PRESENT( gamma_only ) )        gamma_only   = gamma_only_
-      IF ( PRESENT( nr1 ) )               nr1          = nr1_
-      IF ( PRESENT( nr2 ) )               nr2          = nr2_
-      IF ( PRESENT( nr3 ) )               nr3          = nr3_
-      IF ( PRESENT( ngm ) )               ngm          = ngm_
-      IF ( PRESENT( nr1s ) )              nr1s         = nr1s_
-      IF ( PRESENT( nr2s ) )              nr2s         = nr2s_
-      IF ( PRESENT( nr3s ) )              nr3s         = nr3s_
-      IF ( PRESENT( ngms ) )              ngms         = ngms_
-      IF ( PRESENT( cutoff_units ) )      cutoff_units = TRIM( cutoff_units_ )
       !
     END SUBROUTINE qexsd_read_planewaves
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_gk( ik, npwk, npwkx, xk, k_units, index, igk, ierr )
+    SUBROUTINE qexsd_read_gk( ik, nspin, npwk, xk, igkv, ierr )
       !------------------------------------------------------------------------
       !
-      INTEGER,                INTENT(IN)  :: ik
-      INTEGER,      OPTIONAL, INTENT(OUT) :: npwk, npwkx
+      INTEGER,                INTENT(IN)  :: ik, nspin
+      INTEGER,      OPTIONAL, INTENT(OUT) :: npwk
       REAL(dbl),    OPTIONAL, INTENT(OUT) :: xk(3)
-      CHARACTER(*), OPTIONAL, INTENT(OUT) :: k_units
-      INTEGER,      OPTIONAL, INTENT(OUT) :: igk(:,:), index(:)
+      INTEGER,      OPTIONAL, INTENT(OUT) :: igkv(:,:)
       INTEGER,                INTENT(OUT) :: ierr
       !
-      CHARACTER(256) :: filename, k_units_
-      INTEGER   :: npwk_, npwkx_
+      INTEGER   :: npwk_
       REAL(dbl) :: xk_(3)
-      INTEGER   :: iunaux
-      !
 
       ierr = 0
       !
-      CALL iotk_free_unit( iunaux )
-      filename = qexsd_wfc_filename( datadir_in, 'gkvectors', ik )
+      if (present( igkv )) then
+         call qexsd_read_wfc(1,1, ik, 1, nspin, XK=xk_, IGKV=igkv, NPWK=npwk_, IERR=ierr)
+      else
+         call qexsd_read_wfc(1,1, ik, 1, nspin, XK=xk_, NPWK=npwk_, IERR=ierr)
+      endif
+      if (ierr/=0) return
       !
-      CALL iotk_open_read ( iunaux, FILE = TRIM(filename), IERR=ierr )
-      IF (ierr/=0)  RETURN
-      !
-      CALL iotk_scan_dat( iunaux, 'NUMBER_OF_GK-VECTORS', npwk_, IERR=ierr)
-      IF (ierr/=0)  RETURN
-      !
-      CALL iotk_scan_dat( iunaux, 'MAX_NUMBER_OF_GK-VECTORS', npwkx_, IERR=ierr)
-      IF (ierr/=0)  RETURN
-      !
-      CALL iotk_scan_dat( iunaux, 'K-POINT_COORDS', xk_, ATTR=attr, IERR=ierr)
-      IF (ierr/=0)  RETURN
-      CALL iotk_scan_attr( attr, 'UNITS', k_units_, IERR=ierr)
-      IF (ierr/=0)  RETURN
-      !
-      IF ( PRESENT( index ) ) THEN
-          !
-          CALL iotk_scan_dat( iunaux, 'INDEX', index(1:npwk_), IERR=ierr)
-          IF (ierr/=0)  RETURN
-          !
-      ENDIF
-      !
-      IF ( PRESENT( igk ) ) THEN
-          !
-          CALL iotk_scan_dat( iunaux, 'GRID', igk(1:3, 1:npwk_), IERR=ierr)
-          IF (ierr/=0)  RETURN
-          !
-      ENDIF
-      !
-      CALL iotk_close_read ( iunaux, IERR=ierr )
-      IF (ierr/=0)  RETURN
-      !
-      !
-      IF ( PRESENT( npwk ) )       npwk    = npwk_
-      IF ( PRESENT( npwkx ) )      npwkx   = npwkx_
-      IF ( PRESENT( xk ) )         xk(1:3) = xk_(1:3)
-      IF ( PRESENT( k_units ) )    k_units = TRIM(k_units_)
+      if ( present( npwk ) )       npwk    = npwk_
+      if ( present( xk ) )         xk(1:3) = xk_(1:3)
       !
     END SUBROUTINE qexsd_read_gk
     !
@@ -1051,7 +1018,6 @@ CONTAINS
       !
       LOGICAL   :: lsda_, noncolin_, lspinorb_
       INTEGER   :: npol_
-      ! 
      
       ierr = 0
       !
@@ -1090,8 +1056,8 @@ CONTAINS
       INTEGER,                    INTENT(OUT) :: ierr
       !
       LOGICAL :: lfound
+
       ierr = 0
-      !
       !
       CALL iotk_scan_begin( iunit, "dft", IERR=ierr )
       IF ( ierr/=0 ) RETURN
@@ -1103,7 +1069,7 @@ CONTAINS
       !
       IF (PRESENT(dft_is_hybrid)) THEN
          dft_is_hybrid=.false.
-         CALL iotk_scan_begin( iunit, "hybrid", LFOUND=lfound, IERR=ierr )
+         CALL iotk_scan_begin( iunit, "hybrid", FOUND=lfound, IERR=ierr )
          IF ( ierr/=0 ) RETURN
          !
          IF ( lfound ) THEN
@@ -1115,7 +1081,7 @@ CONTAINS
       !
       IF (PRESENT(dft_is_hubbard)) THEN
          dft_is_hubbard=.false.
-         CALL iotk_scan_begin( iunit, "dftU", LFOUND=lfound, IERR=ierr )
+         CALL iotk_scan_begin( iunit, "dftU", FOUND=lfound, IERR=ierr )
          IF ( ierr/=0 ) RETURN
          !
          IF ( lfound ) THEN
@@ -1127,7 +1093,7 @@ CONTAINS
       !
       IF (PRESENT(dft_is_vdW)) THEN
          dft_is_vdW=.false.
-         CALL iotk_scan_begin( iunit, "vdW", LFOUND=lfound, IERR=ierr )
+         CALL iotk_scan_begin( iunit, "vdW", FOUND=lfound, IERR=ierr )
          IF ( ierr/=0 ) RETURN
          !
          IF ( lfound ) THEN
@@ -1144,16 +1110,17 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_hubbard( lda_plus_u, Hubbard_lmax, Hubbard_l, &
-                                   nsp, Hubbard_U, Hubbard_alpha, ierr )
+    SUBROUTINE qexsd_read_hubbard( dft, lda_plus_u, &
+!                                   Hubbard_lmax, Hubbard_l, nsp, Hubbard_U, Hubbard_alpha, &
+                                   ierr )
       !------------------------------------------------------------------------
       !
       CHARACTER(LEN=*), OPTIONAL, INTENT(OUT) :: dft
       LOGICAL,          OPTIONAL, INTENT(OUT) :: lda_plus_u
-      INTEGER,          OPTIONAL, INTENT(OUT) :: Hubbard_lmax
-      INTEGER,          OPTIONAL, INTENT(OUT) :: Hubbard_l(:)
-      INTEGER,          OPTIONAL, INTENT(OUT) :: nsp
-      REAL(dbl),        OPTIONAL, INTENT(OUT) :: Hubbard_U(:), Hubbard_alpha(:)
+!      INTEGER,          OPTIONAL, INTENT(OUT) :: Hubbard_lmax
+!      INTEGER,          OPTIONAL, INTENT(OUT) :: Hubbard_l(:)
+!      INTEGER,          OPTIONAL, INTENT(OUT) :: nsp
+!      REAL(dbl),        OPTIONAL, INTENT(OUT) :: Hubbard_U(:), Hubbard_alpha(:)
       INTEGER,                    INTENT(OUT) :: ierr
       !
       CHARACTER(256) :: dft_
@@ -1162,625 +1129,903 @@ CONTAINS
       INTEGER,    ALLOCATABLE :: Hubbard_l_(:)
       REAL(dbl),  ALLOCATABLE :: Hubbard_U_(:)
       REAL(dbl),  ALLOCATABLE :: Hubbard_alpha_(:)
-      ! 
+
       ierr = 0
-      !
       !
       CALL iotk_scan_begin( iunit, "dft", IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
-      CALL iotk_scan_begin( iunit, "dftU", LFOUND=lfound, IERR=ierr )
+      CALL iotk_scan_begin( iunit, "dftU", FOUND=lfound, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
       lda_plus_u_=lfound
+!      !
+!      IF ( lda_plus_u_ ) THEN
+!         !
+!         CALL iotk_scan_dat( iunit, "NUMBER_OF_SPECIES", nsp_, IERR=ierr )
+!         IF ( ierr/=0 ) RETURN
+!         !
+!         CALL iotk_scan_dat( iunit, "HUBBARD_LMAX", Hubbard_lmax_, IERR=ierr )
+!         IF ( ierr/=0 ) RETURN
+!         !
+!         ALLOCATE( Hubbard_l_(nsp_) )
+!         ALLOCATE( Hubbard_U_(nsp_) )
+!         ALLOCATE( Hubbard_alpha_(nsp_) )
+!         !
+!         CALL iotk_scan_dat( iunit, "HUBBARD_L", Hubbard_l_, IERR=ierr )
+!         IF ( ierr/=0 ) RETURN
+!         !
+!         CALL iotk_scan_dat( iunit, "HUBBARD_U", Hubbard_U_, IERR=ierr )
+!         IF ( ierr/=0 ) RETURN
+!         !
+!         CALL iotk_scan_dat( iunit, "HUBBARD_ALPHA", Hubbard_alpha_, IERR=ierr )
+!         IF ( ierr/=0 ) RETURN
+!         !
+!      ENDIF
       !
       IF ( lda_plus_u_ ) THEN
-         !
-         CALL iotk_scan_dat( iunit, "NUMBER_OF_SPECIES", nsp_, IERR=ierr )
+         CALL iotk_scan_end( iunit, "dftU", IERR=ierr )
          IF ( ierr/=0 ) RETURN
-         !
-         CALL iotk_scan_dat( iunit, "HUBBARD_LMAX", Hubbard_lmax_, IERR=ierr )
-         IF ( ierr/=0 ) RETURN
-         !
-         ALLOCATE( Hubbard_l_(nsp_) )
-         ALLOCATE( Hubbard_U_(nsp_) )
-         ALLOCATE( Hubbard_alpha_(nsp_) )
-         !
-         CALL iotk_scan_dat( iunit, "HUBBARD_L", Hubbard_l_, IERR=ierr )
-         IF ( ierr/=0 ) RETURN
-         !
-         CALL iotk_scan_dat( iunit, "HUBBARD_U", Hubbard_U_, IERR=ierr )
-         IF ( ierr/=0 ) RETURN
-         !
-         CALL iotk_scan_dat( iunit, "HUBBARD_ALPHA", Hubbard_alpha_, IERR=ierr )
-         IF ( ierr/=0 ) RETURN
-         !
       ENDIF
       !
-      CALL iotk_scan_end( iunit, "EXCHANGE_CORRELATION", IERR=ierr )
+      CALL iotk_scan_end( iunit, "dft", IERR=ierr )
       IF ( ierr/=0 ) RETURN
       !
       !
       IF ( PRESENT( dft ) )           dft           = dft_
       IF ( PRESENT( lda_plus_u ) )    lda_plus_u    = lda_plus_u_
       !
-      IF ( lda_plus_u_ )  THEN
-         !
-         IF ( PRESENT( nsp ) )             nsp                   = nsp_
-         IF ( PRESENT( Hubbard_lmax ) )    Hubbard_lmax          = Hubbard_lmax_
-         IF ( PRESENT( Hubbard_l ) )       Hubbard_l(1:Hubbard_lmax_)   = Hubbard_l_(:)
-         IF ( PRESENT( Hubbard_U ) )       Hubbard_U(1:nsp_)     = Hubbard_U_(1:nsp_)
-         IF ( PRESENT( Hubbard_alpha ) )   Hubbard_alpha(1:nsp_) = Hubbard_alpha_(1:nsp_)
-         !
-         DEALLOCATE( Hubbard_l_ )
-         DEALLOCATE( Hubbard_U_ )
-         DEALLOCATE( Hubbard_alpha_ )
-         !
-      ENDIF 
+!      IF ( lda_plus_u_ )  THEN
+!         !
+!         IF ( PRESENT( nsp ) )             nsp                   = nsp_
+!         IF ( PRESENT( Hubbard_lmax ) )    Hubbard_lmax          = Hubbard_lmax_
+!         IF ( PRESENT( Hubbard_l ) )       Hubbard_l(1:Hubbard_lmax_)   = Hubbard_l_(:)
+!         IF ( PRESENT( Hubbard_U ) )       Hubbard_U(1:nsp_)     = Hubbard_U_(1:nsp_)
+!         IF ( PRESENT( Hubbard_alpha ) )   Hubbard_alpha(1:nsp_) = Hubbard_alpha_(1:nsp_)
+!         !
+!         DEALLOCATE( Hubbard_l_ )
+!         DEALLOCATE( Hubbard_U_ )
+!         DEALLOCATE( Hubbard_alpha_ )
+!         !
+!      ENDIF 
 
     END SUBROUTINE qexsd_read_hubbard
     !
     !
-    SUBROUTINE qexsd_read_exx( x_gamma_extrapolation, nqx1, nqx2, nqx3, &
-                          exxdiv_treatment, yukawa, ecutvcut, exx_fraction, &
-                          screening_parameter, exx_is_active, ierr )
-      !------------------------------------------------------------------------
-      !
-      LOGICAL,                     INTENT(OUT) :: exx_is_active
-      REAL(dbl),                    INTENT(OUT) :: exx_fraction
-      INTEGER,                     INTENT(OUT) :: ierr
-      LOGICAL,           OPTIONAL, INTENT(OUT) :: x_gamma_extrapolation
-      INTEGER,           OPTIONAL, INTENT(OUT) :: nqx1, nqx2, nqx3
-      CHARACTER(LEN=*),  OPTIONAL, INTENT(OUT) :: exxdiv_treatment
-      REAL(dbl),          OPTIONAL, INTENT(OUT) :: yukawa, ecutvcut
-      REAL(dbl),          OPTIONAL, INTENT(OUT) :: screening_parameter
-
-      CALL iotk_scan_begin(iunit, "EXACT_EXCHANGE", IERR=ierr)
-      IF ( ierr/=0 ) RETURN
-      ! call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
-      call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-       call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
-      call iotk_scan_dat(iunit, "exx_is_active", exx_is_active, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_end(iunit, "EXACT_EXCHANGE", IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-    END SUBROUTINE qexsd_read_exx 
-    !
-    !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_occ( lgauss, ngauss, degauss, degauss_units, &
-                               ltetra, ntetra, tetra, tfixed_occ,      &
-                               nstates_up, nstates_dw, input_occ, ierr )
+    SUBROUTINE qexsd_read_exx( exx_is_active, nqx1, nqx2, nqx3, ecutfock, exx_fraction, &
+                          screening_parameter, exxdiv_treatment, x_gamma_extrapolation, ecutvcut, ierr)
       !------------------------------------------------------------------------
+      implicit none
       !
-      LOGICAL,      OPTIONAL, INTENT(OUT) :: lgauss, ltetra, tfixed_occ
-      INTEGER,      OPTIONAL, INTENT(OUT) :: ngauss, ntetra
-      INTEGER,      OPTIONAL, INTENT(OUT) :: tetra(:,:)
-      INTEGER,      OPTIONAL, INTENT(OUT) :: nstates_up, nstates_dw
-      REAL(dbl),    OPTIONAL, INTENT(OUT) :: degauss, input_occ(:,:)
-      CHARACTER(*), OPTIONAL, INTENT(OUT) :: degauss_units
-      INTEGER,                INTENT(OUT) :: ierr
+      logical,           optional, intent(out) :: exx_is_active
+      integer,           optional, intent(out) :: nqx1, nqx2, nqx3
+      real(dbl),         optional, intent(out) :: ecutfock
+      real(dbl),         optional, intent(out) :: exx_fraction
+      real(dbl),         optional, intent(out) :: screening_parameter
+      character(len=*),  optional, intent(out) :: exxdiv_treatment
+      logical,           optional, intent(out) :: x_gamma_extrapolation
+      real(dbl),         optional, intent(out) :: ecutvcut
+      integer,                     intent(out) :: ierr
       !
-      LOGICAL        :: lgauss_, ltetra_, tfixed_occ_
-      INTEGER        :: ngauss_, ntetra_, nstates_up_, nstates_dw_
-      LOGICAL        :: lsda_
-      REAL(dbl)      :: degauss_
-      CHARACTER(256) :: degauss_units_
-      INTEGER,  ALLOCATABLE :: tetra_(:,:)
-      INTEGER :: i
-      LOGICAL :: lfound
-      !
-      ierr = 0 
-      !
-      CALL iotk_scan_begin( iunit, "OCCUPATIONS", IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat( iunit, "SMEARING_METHOD", lgauss_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( lgauss_ ) THEN
-         !
-         CALL iotk_scan_dat( iunit, "SMEARING_TYPE", ngauss_, IERR=ierr )
-         IF (ierr/=0) RETURN
-         !
-         CALL iotk_scan_dat( iunit, "SMEARING_PARAMETER", degauss_ , &
-                                     ATTR=attr, IERR=ierr )
-         IF (ierr/=0) RETURN
-         !
-         CALL iotk_scan_attr( ATTR, "UNITS", degauss_units_ , IERR=ierr )
-         IF (ierr/=0) RETURN
-         !
-      ELSE
-         !
-         ngauss_=0
-         degauss_=0.0
-         degauss_units_=" "
-         !
-      ENDIF
-      !
-      CALL iotk_scan_dat( iunit, "TETRAHEDRON_METHOD", ltetra_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( ltetra_ ) THEN
-         !
-         CALL iotk_scan_dat( iunit, "NUMBER_OF_TETRAHEDRA", ntetra_, IERR=ierr )
-         IF (ierr/=0) RETURN
-         !
-         ALLOCATE( tetra_(4, ntetra_) )
-         !
-         DO i = 1, ntetra_
-            !
-            CALL iotk_scan_dat( iunit, "TETRAHEDRON"//iotk_index(i), &
-                                        tetra_(1:4,i), IERR=ierr )
-            IF (ierr/=0) RETURN
-            !
-         ENDDO
-         !
-      ELSE
-         ntetra_ = 0
-      ENDIF
-      !
-      CALL iotk_scan_dat( iunit, "FIXED_OCCUPATIONS", tfixed_occ_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( tfixed_occ_  .AND. ( PRESENT( input_occ ) .OR. &
-                                PRESENT(nstates_up)  .OR. PRESENT(nstates_dw) ) ) THEN
-         !
-         CALL iotk_scan_empty( iunit, "INFO", ATTR=attr, IERR=ierr)
-         IF (ierr /=0 ) RETURN
-         !
-         CALL iotk_scan_attr( attr, "lsda", lsda_, IERR=ierr )
-         IF (ierr /=0 ) RETURN
-         !
-            !
-            ! current version
-            !
-            CALL iotk_scan_attr( attr, "nstates_up", nstates_up_, IERR=ierr )
-            IF (ierr /=0 ) RETURN
-            CALL iotk_scan_attr( attr, "nstates_dw", nstates_dw_, IERR=ierr )
-            IF (ierr /=0 ) RETURN
-            !
-         ! 
-         IF ( PRESENT( input_occ ) ) THEN
-            !
-            CALL iotk_scan_dat( iunit, "INPUT_OCC_UP", input_occ(1:nstates_up_,1), IERR=ierr )
-            IF (ierr/=0) RETURN
-            !
-            IF ( lsda_  ) THEN
-               !
-               CALL iotk_scan_dat( iunit, "INPUT_OCC_DOWN", input_occ(1:nstates_dw_,2), IERR=ierr )
-               IF (ierr/=0) RETURN
-               !
-            ENDIF
-            !
-         ENDIF
-         !
-      ELSE
-         nstates_up_=0
-         nstates_dw_=0
-      ENDIF
-      !
-      CALL iotk_scan_end( iunit, "OCCUPATIONS", IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( PRESENT( lgauss ))           lgauss      = lgauss_
-      IF ( PRESENT( ltetra ))           ltetra      = ltetra_
-      IF ( PRESENT( tfixed_occ ))       tfixed_occ  = tfixed_occ_
-      IF ( PRESENT( ngauss ))           ngauss      = ngauss_
-      IF ( PRESENT( degauss_units ))    degauss_units  = TRIM(degauss_units_)
-      IF ( PRESENT( degauss ))          degauss     = degauss_
-      IF ( PRESENT( ntetra ))           ntetra      = ntetra_
-      IF ( PRESENT( nstates_up ))       nstates_up  = nstates_up_
-      IF ( PRESENT( nstates_dw ))       nstates_dw  = nstates_dw_
-      !
-      IF ( ltetra_ ) THEN
-         !
-         IF ( PRESENT( tetra ) )         tetra(1:4, 1:ntetra_)  = tetra_
-         !
-         DEALLOCATE( tetra_ )
-         !
-      ENDIF
-
-    END SUBROUTINE qexsd_read_occ
-    !
-    !
-    !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_bz( num_k_points, xk, wk, k1, k2, k3, nk1, nk2, nk3, &
-                              k_units, ierr )
-      !------------------------------------------------------------------------
-      !
-      INTEGER,       OPTIONAL, INTENT(OUT) :: num_k_points, k1, k2, k3, nk1, nk2, nk3
-      REAL(dbl),     OPTIONAL, INTENT(OUT) :: xk(:,:), wk(:)
-      CHARACTER(*),  OPTIONAL, INTENT(OUT) :: k_units
-      INTEGER,                 INTENT(OUT) :: ierr
-      !
-      INTEGER                :: num_k_points_, k1_, k2_, k3_, nk1_, nk2_, nk3_
-      CHARACTER(256)         :: k_units_
-      REAL(dbl), ALLOCATABLE :: xk_(:,:), wk_(:)
-      !
-      INTEGER :: ik
-      !
+      logical :: lfound
 
       ierr = 0
       !
-      CALL iotk_scan_begin( iunit, "BRILLOUIN_ZONE", IERR=ierr )
-      IF ( ierr/=0 ) RETURN
+      call iotk_scan_begin(iunit, "hybrid", FOUND=lfound, IERR=ierr)
+      if ( ierr/=0 ) return
       !
-      CALL iotk_scan_dat( iunit, "NUMBER_OF_K-POINTS", num_k_points_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
+      if (present(exx_is_active)) exx_is_active=lfound
       !
-      !
-      CALL iotk_scan_empty( iunit, "UNITS_FOR_K-POINTS", ATTR=attr, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_attr( attr, "UNITS", k_units_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      !
-      CALL iotk_scan_empty( iunit, "MONKHORST_PACK_GRID", ATTR=attr, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      !
-      CALL iotk_scan_attr( attr, "nk1", nk1_, IERR=ierr  )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_attr( attr, "nk2", nk2_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_attr( attr, "nk3", nk3_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      !
-      !
-      CALL iotk_scan_empty( iunit, "MONKHORST_PACK_OFFSET", ATTR=attr, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      !
-      CALL iotk_scan_attr( attr, "k1", k1_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_attr( attr, "k2", k2_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      CALL iotk_scan_attr( attr, "k3", k3_, IERR=ierr )
-      IF ( ierr/=0 ) RETURN
-      !
-      !
-      ALLOCATE( xk_( 3, num_k_points_ ) )
-      ALLOCATE( wk_(    num_k_points_ ) )
-      !
-      DO ik = 1, num_k_points_
+      if (present(nqx1) .or. present(nqx2) .or. present(nqx3)) then
          !
-         CALL iotk_scan_empty( iunit, "K-POINT" // TRIM( iotk_index(ik) ), &
-                               ATTR=attr, IERR=ierr )
-         IF ( ierr/=0 ) RETURN
+         call iotk_scan_begin(iunit,"qpoint_grid",ATTR=attr,IERR=ierr)
+         if ( ierr/=0 ) return
          !
-         CALL iotk_scan_attr( attr, "XYZ", xk_(:,ik), IERR=ierr )
-         IF ( ierr/=0 ) RETURN
-         !            
-         CALL iotk_scan_attr( attr, "WEIGHT", wk_(ik), IERR=ierr )
-         IF ( ierr/=0 ) RETURN
+         if (present(nqx1)) call iotk_scan_attr(attr, "nqx1", nqx1, IERR=ierr )
+         if ( ierr/=0 ) return
+         if (present(nqx2)) call iotk_scan_attr(attr, "nqx2", nqx2, IERR=ierr )
+         if ( ierr/=0 ) return
+         if (present(nqx3)) call iotk_scan_attr(attr, "nqx3", nqx3, IERR=ierr )
+         if ( ierr/=0 ) return
          !
-      END DO
+         call iotk_scan_end(iunit,"qpoint_grid",IERR=ierr)
+         if ( ierr/=0 ) return
+      endiF
       !
-      CALL iotk_scan_end( iunit, "BRILLOUIN_ZONE", IERR=ierr )
-      IF ( ierr/=0 ) RETURN
+      if (present(ecutfock)) then
+         call iotk_scan_dat(iunit, "ecutfock", ecutfock, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
       !
+      if (present(exx_fraction)) then
+         call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
       !
-      IF ( PRESENT( num_k_points ) )       num_k_points  = num_k_points_
-      IF ( PRESENT( nk1 ) )                nk1           = nk1_
-      IF ( PRESENT( nk2 ) )                nk2           = nk2_
-      IF ( PRESENT( nk3 ) )                nk3           = nk3_
-      IF ( PRESENT( k1 ) )                 k1            =  k1_
-      IF ( PRESENT( k2 ) )                 k2            =  k2_
-      IF ( PRESENT( k3 ) )                 k3            =  k3_
-      IF ( PRESENT( k_units ) )            k_units       =  TRIM(k_units_)
-      IF ( PRESENT( xk ) )                 xk(1:3,1:num_k_points_) = xk_(:,:)
-      IF ( PRESENT( wk ) )                 wk(1:num_k_points_)     = wk_(:)
+      if (present(screening_parameter)) then
+         call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
       !
-      DEALLOCATE( xk_ )
-      DEALLOCATE( wk_ )
+      if (present(exxdiv_treatment)) then
+         call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
       !
-    END SUBROUTINE qexsd_read_bz
+      if (present(x_gamma_extrapolation)) then
+         call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
+      !
+      if (present(ecutvcut)) then
+         call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
+      !
+      if (lfound) then
+         call iotk_scan_end(iunit, "hybrid", IERR=ierr )
+         if ( ierr/=0 ) return
+      endif
+      !
+    end subroutine qexsd_read_exx 
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_bands_info( nbnd, num_k_points, nspin, noncolin, natomwfc, & 
-                                      nelec, ef, energy_units, k_units, ierr )
+    subroutine qexsd_read_bands_info( nbnd, tot_charge, tot_mag, have_smearing, smearing_type, degauss, &
+&                                     occupations_type, have_spin_occ, ierr )
       !------------------------------------------------------------------------
       !
-      INTEGER,      OPTIONAL, INTENT(OUT) :: nbnd, num_k_points, nspin, natomwfc
-      LOGICAL,      OPTIONAL, INTENT(OUT) :: noncolin
-      REAL(dbl),    OPTIONAL, INTENT(OUT) :: ef, nelec
-      CHARACTER(*), OPTIONAL, INTENT(OUT) :: energy_units, k_units
-      INTEGER,                INTENT(OUT) :: ierr
+      integer,      optional, intent(out) :: nbnd
+      real(dbl),    optional, intent(out) :: tot_charge, tot_mag
+      logical,      optional, intent(out) :: have_smearing
+      character(*), optional, intent(out) :: smearing_type
+      real(dbl),    optional, intent(out) :: degauss
+      character(*), optional, intent(out) :: occupations_type
+      logical,      optional, intent(out) :: have_spin_occ
+      integer,                intent(out) :: ierr
       !
-      INTEGER        :: nbnd_, num_k_points_, nspin_, natomwfc_
-      LOGICAL        :: noncolin_,two_ef_, found
-      REAL(dbl)      :: ef_, nelec_
-      CHARACTER(256) :: energy_units_, k_units_
-
-      ierr = 0
-      !
-      !
-      CALL iotk_scan_begin( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NUMBER_OF_BANDS", nbnd_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NUMBER_OF_K-POINTS", num_k_points_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NUMBER_OF_SPIN_COMPONENTS", nspin_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NON-COLINEAR_CALCULATION", noncolin_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NUMBER_OF_ATOMIC_WFC", natomwfc_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat  ( iunit, "NUMBER_OF_ELECTRONS", nelec_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_empty( iunit, "UNITS_FOR_K-POINTS", ATTR = attr, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr ( attr,   "UNITS", k_units_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_empty( iunit, "UNITS_FOR_ENERGIES", ATTR = attr, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr ( attr,   "UNITS", energy_units_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_dat( iunit, "TWO_FERMI_ENERGIES", two_ef_, FOUND = found)
-      !
-      IF ( two_ef_ .and. found ) THEN
-        CALL errore('qexsd_read_bands_info',&
-&         ' TWO_FERMI_ENERGIES=.true. Action: run pwscf without fixed_magnetization.',1)
-      ELSE
-        CALL iotk_scan_dat( iunit, "FERMI_ENERGY", ef_, IERR=ierr )
-        IF (ierr/=0) RETURN
-      ENDIF
-      !
-      CALL iotk_scan_end( iunit, "BAND_STRUCTURE_INFO", IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( PRESENT( nbnd ) )             nbnd           = nbnd_
-      IF ( PRESENT( num_k_points ) )     num_k_points   = num_k_points_
-      IF ( PRESENT( nspin ) )            nspin          = nspin_
-      IF ( PRESENT( noncolin ) )         noncolin       = noncolin_
-      IF ( PRESENT( natomwfc ) )         natomwfc       = natomwfc_
-      IF ( PRESENT( ef ) )               ef             = ef_
-      IF ( PRESENT( nelec ) )            nelec          = nelec_
-      IF ( PRESENT( energy_units ) )     energy_units   = TRIM( energy_units_ )
-      IF ( PRESENT( k_units ) )          k_units        = TRIM( k_units_ )
-      !
-    END SUBROUTINE qexsd_read_bands_info
-    !
-    !
-    !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_bands( ik, ispin, nbnd, eig, energy_units, occ, ef, ierr )
-      !------------------------------------------------------------------------
-      !
-      INTEGER,                INTENT(IN)  :: ik
-      INTEGER,      OPTIONAL, INTENT(IN)  :: ispin
-      INTEGER,      OPTIONAL, INTENT(OUT) :: nbnd
-      REAL(dbl),    OPTIONAL, INTENT(OUT) :: eig(:)
-      CHARACTER(*), OPTIONAL, INTENT(OUT) :: energy_units
-      REAL(dbl),    OPTIONAL, INTENT(OUT) :: occ(:)
-      REAL(dbl),    OPTIONAL, INTENT(OUT) :: ef
-      INTEGER,                INTENT(OUT) :: ierr
-      !
-      INTEGER        :: iunaux
-      INTEGER        :: nbnd_
-      CHARACTER(256) :: energy_units_
-      CHARACTER(256) :: filename
-      REAL(dbl), ALLOCATABLE :: occ_(:), eig_(:)
-      !
+      logical :: lfound
       
       ierr = 0
       !
+      call iotk_scan_begin( iunit, "bands", IERR=ierr )
+      if (ierr/=0) return
       !
-      ! read the main data
+      if (present(nbnd)) then
+         call iotk_scan_dat( iunit, "nbnd", nbnd, IERR=ierr)
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_free_unit( iunaux )
-      !
-      IF ( PRESENT( ispin) ) THEN
+      call iotk_scan_begin( iunit, "smearing", FOUND=lfound, IERR=ierr )
+      if (ierr/=0) return
+      ! 
+      if (present(have_smearing)) have_smearing=lfound
+      ! 
+      if (lfound) then
+         if (present(smearing_type)) then
+            call iotk_scan_dat( iunit, "smearing", smearing_type, IERR=ierr)
+            if (ierr/=0) return
+         endif
          !
-         filename= TRIM( qexsd_wfc_filename( datadir_in, 'eigenval', &
-                                             ik, ispin, EXTENSION="xml") ) 
+         if (present(degauss)) then
+            call iotk_scan_dat( iunit, "degauss", degauss, IERR=ierr)
+           if (ierr/=0) return
+         endif
          !
-      ELSE
-         !
-         filename= TRIM( qexsd_wfc_filename( datadir_in, 'eigenval', &
-                                             ik, EXTENSION="xml") ) 
-         !
-      ENDIF
+         if (lfound) then
+            call iotk_scan_end( iunit, "smearing", IERR=ierr )
+            if (ierr/=0) return
+         endif
+      else
+         if (present(smearing_type)) smearing_type=" "
+         if (present(degauss))       degauss=0.0
+      endif
       !
+      if (present(tot_charge)) then
+         call iotk_scan_dat( iunit, "tot_charge", tot_charge, IERR=ierr)
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_open_read ( iunaux, FILE = TRIM(filename), IERR=ierr )
-      IF (ierr/=0)  RETURN
+      if (present(tot_mag)) then
+         call iotk_scan_dat( iunit, "tot_magnetization", tot_mag, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) tot_mag=0.0
+      endif
       !
-      CALL iotk_scan_empty( iunaux, "INFO", ATTR = attr, IERR=ierr )
-      IF (ierr/=0)  RETURN
-      CALL iotk_scan_attr( attr, "nbnd", nbnd_, IERR=ierr )
-      IF (ierr/=0)  RETURN
+      if (present(occupations_type)) then
+         call iotk_scan_dat( iunit, "occupations", occupations_type, IERR=ierr)
+         if (ierr/=0) return
+      endif
       !
-      CALL iotk_scan_empty( iunaux, "UNITS_FOR_ENERGIES", ATTR = attr, IERR=ierr )
-      IF (ierr/=0)  RETURN
-      CALL iotk_scan_attr( attr, "UNITS", energy_units_, IERR=ierr )
-      IF (ierr/=0)  RETURN
+      if (present(have_spin_occ)) then
+         call iotk_scan_dat( iunit, "spin", have_spin_occ, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) have_spin_occ=.FALSE.
+      endif
       !
-      IF ( PRESENT( ef )) THEN
-         !
-         CALL iotk_scan_dat( iunaux, "FERMI_ENERGY", ef, IERR=ierr )
-         IF (ierr/=0)  RETURN
-         !
-      ENDIF
+      call iotk_scan_end( iunit, "bands", IERR=ierr )
+      IF (ierr/=0) return
       !
-      !
-      ! Allocations
-      !
-      ALLOCATE(  eig_ ( nbnd_ ) )
-      ALLOCATE(  occ_ ( nbnd_ ) )
-      !
-      CALL iotk_scan_dat( iunaux, "EIGENVALUES", eig_(:), IERR=ierr)
-      IF (ierr/=0)  RETURN
-      !
-      CALL iotk_scan_dat( iunaux, "OCCUPATIONS", occ_(:), IERR=ierr)
-      IF (ierr/=0)  RETURN
-      !
-      CALL iotk_close_read ( iunaux, IERR=ierr )
-      IF (ierr/=0)  RETURN
-      !
-      !
-      IF ( PRESENT( nbnd ) )             nbnd             = nbnd_
-      IF ( PRESENT( energy_units ) )     energy_units     = TRIM( energy_units_ )
-      IF ( PRESENT( occ ) )              occ  (1:nbnd_ )  = occ_(:)
-      IF ( PRESENT( eig ) )              eig  (1:nbnd_ )  = eig_(:)
-      !
-      DEALLOCATE( occ_ )
-      DEALLOCATE( eig_ )
-      !
-    END SUBROUTINE qexsd_read_bands
+    end subroutine qexsd_read_bands_info
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_read_wfc( ibnds, ibnde, ik, ispin, ipol, igk, ngw, igwx, &
-                               wf, wf_kindip, ierr )
+    SUBROUTINE qexsd_read_band_structure( nspin, lsda, noncolin, spinorbit, nbnd, nbnd_up, nbnd_dw, &
+                                          nelec, natomwfc, fermi_energy, homo_energy, fermi_energy_updw, &
+                                          occupations_type, have_spin_occ, have_smearing, smearing_type, degauss, &
+                                          num_k_points, nk, sk, vkpt, wk, eig, occ, npwk, ierr )
       !------------------------------------------------------------------------
       !
-      ! read wfc from IBNDS to IBNDE, for kpt IK and spin ISPIN
-      ! WF is the wfc on its proper k+g grid, while WF_KINDIP is the same wfc
-      ! but on a truncated rho grid (k-point indipendent)
+      integer,      optional, intent(out) :: nbnd, num_k_points, nspin, natomwfc, nbnd_up, nbnd_dw
+      integer,      optional, intent(out) :: nk(3), sk(3)
+      logical,      optional, intent(out) :: noncolin, lsda, spinorbit, have_spin_occ, have_smearing
+      real(dbl),    optional, intent(out) :: fermi_energy, homo_energy, fermi_energy_updw(2), nelec, degauss
+      real(dbl),    optional, intent(out) :: vkpt(:,:), wk(:), eig(:,:,:), occ(:,:,:)
+      integer,      optional, intent(out) :: npwk(:)
+      character(len=*), optional, intent(out) :: occupations_type, smearing_type 
+      integer,                intent(out) :: ierr
       !
-      INTEGER,                 INTENT(IN)  :: ibnds, ibnde, ik
-      INTEGER,       OPTIONAL, INTENT(IN)  :: ispin, ipol
-      INTEGER,       OPTIONAL, INTENT(IN)  :: igk(:)
-      INTEGER,       OPTIONAL, INTENT(OUT) :: ngw, igwx
-      COMPLEX(dbl),  OPTIONAL, INTENT(OUT) :: wf(:,:), wf_kindip(:,:)
-      INTEGER,                 INTENT(OUT) :: ierr
-      !
-      INTEGER :: iunaux
-      INTEGER :: ngw_, igwx_, ig, ib, lindex
-      COMPLEX(dbl),  ALLOCATABLE :: wf_(:)
-      CHARACTER(256)             :: filename
-      !
+      integer :: nbnd_, nkpts_, nspin_, ik, ndim
+      logical :: lsda_, noncolin_, lfound
+      real(dbl) :: rvec(3)
+      real(dbl), allocatable :: eig_(:), occ_(:)
+      character(256) :: chval
+ 
       ierr = 0
       !
-      ! few check
+      call iotk_scan_begin( iunit, "band_structure", IERR=ierr )
+      if (ierr/=0) return
       !
-      IF ( PRESENT( ispin ) .AND. PRESENT( ipol )  ) THEN
+      call iotk_scan_dat( iunit, "lsda", lsda_, IERR=ierr)
+      if (ierr/=0) return
+      call iotk_scan_dat( iunit, "noncolin", noncolin_, IERR=ierr)
+      if (ierr/=0) return
+      !
+      if (present(lsda))     lsda=lsda_
+      if (present(noncolin)) noncolin=noncolin_
+      !
+      nspin_=1
+      if (lsda_.and..not.noncolin_) nspin_=2
+      !
+      if (present(nspin)) then
+         nspin=nspin_
+         if (noncolin_) nspin=4    ! back compatibility
+      endif
+      !
+      if (present(spinorbit)) then
+         call iotk_scan_dat( iunit, "spinorbit", spinorbit, IERR=ierr)
+         if (ierr/=0) return
+      endif
+      !
+      call iotk_scan_dat( iunit, "nbnd", nbnd_, IERR=ierr)
+      if (ierr/=0) return
+      if (nspin_==2) nbnd_=nbnd_/2
+      if (present(nbnd)) nbnd=nbnd_
+      !
+      if (present(nbnd_up)) then
+         call iotk_scan_dat( iunit, "nbnd_up", nbnd_up, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) nbnd_up=-1
+      endif
+      !
+      if (present(nbnd_dw)) then
+         call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) nbnd_dw=-1
+      endif
+      !
+      if (present(nelec)) then
+         call iotk_scan_dat( iunit, "nelec", nelec, IERR=ierr)
+         if (ierr/=0) return
+      endif
+      !
+      if (present(natomwfc)) then
+         call iotk_scan_dat( iunit, "num_of_atomic_wfc", natomwfc, IERR=ierr)
+         if (ierr/=0) return
+      endif
+      !
+      if (present(fermi_energy)) then
+         call iotk_scan_dat( iunit, "fermi_energy", fermi_energy, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) fermi_energy=-100000
+      endif
+      !
+      if (present(homo_energy)) then
+         call iotk_scan_dat( iunit, "highestOccupiedLevel", homo_energy, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) homo_energy=-100000
+      endif
+      !
+      if (present(fermi_energy_updw)) then
+         call iotk_scan_dat( iunit, "two_fermi_energies", fermi_energy_updw, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) fermi_energy_updw=-100000
+      endif
+      !
+      if (present(nk) .or. present(sk)) then
          !
-         ierr = 1
-         RETURN
+         call iotk_scan_begin(iunit,"starting_k_points",IERR=ierr)
+         if (ierr/=0) return
+         call iotk_scan_dat(iunit,"monkhorst_pack",chval,ATTR=attr,IERR=ierr)
+         if (ierr/=0) return
          !
+         if (present(nk)) then
+            nk(:)=0
+            call iotk_scan_attr(attr,"nk1",nk(1),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+            call iotk_scan_attr(attr,"nk2",nk(2),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+            call iotk_scan_attr(attr,"nk3",nk(3),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+         endif
+         !
+         if (present(sk)) then
+            sk(:)=0
+            call iotk_scan_attr(attr,"k1",sk(1),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+            call iotk_scan_attr(attr,"k2",sk(2),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+            call iotk_scan_attr(attr,"k3",sk(3),FOUND=lfound,IERR=ierr)
+            if (ierr/=0) return
+         endif
+         !
+         call iotk_scan_end(iunit,"starting_k_points",IERR=ierr)
+         if (ierr/=0) return
+         !
+      endif
+      !
+      call iotk_scan_dat( iunit, "nks", nkpts_, IERR=ierr)
+      if (ierr/=0) return
+      if (present(num_k_points)) num_k_points=nkpts_
+      !
+      if (present(occupations_type)) then
+         call iotk_scan_dat( iunit, "occupations_kind", occupations_type, IERR=ierr)
+         if (ierr/=0) return
+      endif
+      !
+      if (present(have_spin_occ)) then
+         call iotk_scan_dat( iunit, "spin", have_spin_occ, FOUND=lfound, IERR=ierr)
+         if (ierr/=0) return
+         if (.not.lfound) have_spin_occ=.FALSE.
+      endif
+      !
+      call iotk_scan_dat( iunit, "smearing", chval, ATTR=attr, FOUND=lfound, IERR=ierr )
+      if (ierr/=0) return
+      ! 
+      if (present(have_smearing)) have_smearing=lfound
+      if (present(smearing_type)) then
+         if (lfound) then
+            smearing_type=trim(chval)
+         else
+            smearing_type=" "
+         endif
+      endif
+      if (present(degauss)) then
+         if (lfound) then
+            call iotk_scan_attr( attr, "degauss", degauss, IERR=ierr)
+            if (ierr/=0) return
+         else
+            degauss=0.0
+         endif
+      endif
+      !
+      !
+      if (present(vkpt).or.present(eig).or.present(occ).or.present(npwk)) then
+         !
+         ndim = nspin_ * nbnd_ 
+         allocate(occ_(ndim),eig_(ndim))
+         !
+         do ik = 1, nkpts_
+            !
+            call iotk_scan_begin(iunit,"ks_energies",IERR=ierr)
+            if (ierr/=0) return
+            !
+            if (present(vkpt).or.present(wk)) then
+               call iotk_scan_dat( iunit, "k_point", rvec, ATTR=attr, IERR=ierr)
+               if (ierr/=0) return
+            endif
+            if (present(vkpt)) vkpt(1:3,ik) = rvec 
+            if (present(wk)) then
+               call iotk_scan_attr( attr, "weight", wk(ik), IERR=ierr)
+               if (ierr/=0) return
+            endif
+            !
+            if (present(npwk)) then
+               call iotk_scan_dat( iunit, "npw", npwk(ik), IERR=ierr)
+               if (ierr/=0) return
+            endif
+            !
+            if (present(eig)) then
+               call iotk_scan_dat( iunit, "eigenvalues", eig_, IERR=ierr)
+               if (ierr/=0) return
+               !
+               eig(:,ik,1) = eig_(1:nbnd_)
+               if (nspin_==2) then
+                 eig(:,ik,2) = eig_(nbnd_+1:2*nbnd_)
+               endif
+               !
+            endif
+            !
+            if (present(occ)) then
+               call iotk_scan_dat( iunit, "occupations", occ_, IERR=ierr)
+               if (ierr/=0) return
+               !
+               occ(:,ik,1) = occ_(1:nbnd_)
+               if (nspin_==2) then
+                 occ(:,ik,2) = occ_(nbnd_+1:2*nbnd_)
+               endif
+               !
+            endif
+            !
+            call iotk_scan_end(iunit,"ks_energies",IERR=ierr)
+            if (ierr/=0) return
+            !
+         enddo
+         !
+         deallocate(occ_,eig_)
+         !
+      endif
+      !
+      !
+      call iotk_scan_end( iunit, "band_structure", IERR=ierr )
+      if (ierr/=0) return
+      !
+    end subroutine qexsd_read_band_structure
+    !
+    !
+    !------------------------------------------------------------------------
+    subroutine qexsd_fft2igv_map( ngm, igv, nfft, fft2igv, dims_only)
+      !------------------------------------------------------------------------
+      !
+      ! defines the fft2igv map
+      !
+      integer,           intent(in)  :: ngm
+      integer,           intent(in)  :: igv(3,ngm)
+      integer,           intent(inout):: nfft(3)
+      integer, optional, intent(out) :: fft2igv(:)
+      logical, optional, intent(in)  :: dims_only
+      !
+      integer :: i, ig, nx,ny,nz, npoint
+      integer :: gv_min, gv_max
+      logical :: dims_only_
+
+      do i = 1, 3
+        gv_min=minval(igv(i,:))
+        gv_max=maxval(igv(i,:))
+        nfft(i)=gv_max-gv_min+1
+      enddo
+
+      dims_only_=.false.
+      if (present(dims_only)) dims_only_=dims_only
+      !
+      if (dims_only_) return
+      if (.not.present(fft2igv)) return
+    
+!$omp parallel do default(shared), private(ig,nx,ny,nz,npoint)
+      do ig = 1, ngm
+        !
+        nx=-100000
+        ny=-100000
+        nz=-100000
+        !
+        if ( igv(1,ig) >= 0 ) nx = igv(1,ig) + 1
+        if ( igv(1,ig) <  0 ) nx = igv(1,ig) + 1 + nfft(1)
+        if ( igv(2,ig) >= 0 ) ny = igv(2,ig) + 1
+        if ( igv(2,ig) <  0 ) ny = igv(2,ig) + 1 + nfft(2)
+        if ( igv(3,ig) >= 0 ) nz = igv(3,ig) + 1
+        if ( igv(3,ig) <  0 ) nz = igv(3,ig) + 1 + nfft(3)
+        !
+        npoint = nx + (ny-1)*nfft(1) + (nz-1)*nfft(1)*nfft(2)
+        !
+        fft2igv(npoint) = ig
+        !
+      enddo
+!$omp end parallel do
+      !
+    end subroutine qexsd_fft2igv_map
+    !
+    !
+    !------------------------------------------------------------------------
+    subroutine qexsd_igk_map( nfft, fft2igv, npwk, igkv, igk_map )
+      !------------------------------------------------------------------------
+      !
+      ! needs to fft2igv map
+      !
+      integer,      intent(in)  :: nfft(3), npwk
+      integer,      intent(in)  :: fft2igv(:)
+      integer,      intent(in)  :: igkv(3,npwk)
+      integer,      intent(out) :: igk_map(npwk)
+      !
+      integer :: ig, nx,ny,nz, npoint
+
+!$omp parallel do default(shared), private(ig,nx,ny,nz,npoint)
+      do ig = 1, npwk
+        !
+        nx=-100000
+        ny=-100000
+        nz=-100000
+        !
+        if ( igkv(1,ig) >= 0 ) nx = igkv(1,ig) + 1
+        if ( igkv(1,ig) <  0 ) nx = igkv(1,ig) + 1 + nfft(1)
+        if ( igkv(2,ig) >= 0 ) ny = igkv(2,ig) + 1
+        if ( igkv(2,ig) <  0 ) ny = igkv(2,ig) + 1 + nfft(2)
+        if ( igkv(3,ig) >= 0 ) nz = igkv(3,ig) + 1
+        if ( igkv(3,ig) <  0 ) nz = igkv(3,ig) + 1 + nfft(3)
+        !
+        npoint = nx + (ny-1)*nfft(1) + (nz-1)*nfft(1)*nfft(2)
+        !
+        igk_map(ig) = fft2igv(npoint)
+        !
+      enddo
+!$omp end parallel do
+      !
+    end subroutine qexsd_igk_map
+    !
+!
+! Copyright (C) 2016-2017 Quantum ESPRESSO Foundation 
+! This file is distributed under the terms of the
+! GNU General Public License. See the file `License'
+! in the root directory of the present distribution,
+! or http://www.gnu.org/copyleft/gpl.txt .
+!
+!----------------------------------------------
+  !
+  ! ... subroutines used to read and write binary data produced by QE
+  ! ... Author: Paolo Giannozzi, based on previous work by Carlo Cavazzoni
+  ! ...         modified and adapted to yambo by A. Ferretti (2017)
+  !
+    !------------------------------------------------------------------------
+    SUBROUTINE qexsd_read_wfc( ibnds, ibnde, ik, ispin, nspin, ipol, xk, wfc, &
+                               gamma_only, ngw, igkv, npwk, ierr )
+      !
+      !! "filename.*" (* = dat if fortran binary, * = hdf5 if HDF5),
+      !! ierr return 0 if everything is ok, /= 0 if not
+      !! read one spinor component at the time
+      !------------------------------------------------------------------------
+      !
+      USE pars,        ONLY : DP
+      !
+#if defined (_HDF5)
+      USE  qeh5_base_module
+#endif
+
+      implicit none
+      !
+      integer,               intent(in)    :: ibnds, ibnde, ik
+      integer,               intent(in)    :: ispin, nspin
+      integer,     optional, intent(in)    :: ipol
+      integer,     optional, intent(out)   :: ngw, npwk
+      complex(DP), optional, intent(out)   :: wfc(:,:)
+      real(DP),    optional, intent(out)   :: xk(3)
+      integer,     optional, intent(out)   :: igkv(:,:)
+      logical,     optional, intent(out)   :: gamma_only
+      integer,               intent(out)   :: ierr
+      !
+      complex(DP), allocatable :: wtmp(:)
+      integer            :: igwx_, nbnd_, npol_, ik_, ispin_, ngw_
+      integer            :: iuni, j, jj, igwx, npwx
+      real(DP)           :: xk_(3), scalef, b1(3), b2(3), b3(3)
+      logical            :: gamma_only_
+      character(256)     :: filename
+#if defined(_HDF5)
+      type(qeh5_file)    :: h5file
+      type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
+      character(len=8)   :: char_buf 
+#endif  
+
+      !
+      ! defs
+      !
+      ierr=0
+      !
+      if (present(igkv)) then
+         igwx = size(igkv,2) 
+      else if (present(wfc)) then
+         igwx = size(wfc,1) 
+      else
+         ierr=71
+         return
+      endif
+
+      !
+      ! set filename
+      !
+      call iotk_free_unit( iuni )
+      !
+      if (nspin==2) then
+         filename=trim( qexsd_wfc_filename(datadir_in,"wfc",ik, IPOL=ispin, EXTENSION=" ") )
+      else
+         filename=trim( qexsd_wfc_filename(datadir_in,"wfc",ik, EXTENSION=" ") )
+      endif
+      !
+#if defined(_HDF5)
+      call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)
+#else
+      open(iuni, file=trim(filename)//'dat', form='unformatted', status='old', iostat=ierr)
+#endif
+      if ( ierr /= 0 ) return
+
+      !
+#if defined(_HDF5)
+      CALL qeh5_read_attribute (h5file%id, "ik", ik_)
+      CALL qeh5_read_attribute (h5file%id, "xk",xk_, RANK =1, DIMENSIONS = [3])
+      CALL qeh5_read_attribute (h5file%id, "ispin", ispin_)
+      CALL qeh5_read_attribute (h5file%id, "gamma_only", char_buf, MAXLEN = len(char_buf) )
+      IF (TRIM(char_buf) =='.TRUE.' .OR. TRIM(char_buf)=='.true.') THEN 
+         gamma_only_ = .TRUE. 
+      ELSE 
+         gamma_only_ = .FALSE.
+      END IF
+      call qeh5_read_attribute (h5file%id, "ngw", ngw_)
+      call qeh5_read_attribute (h5file%id, "nbnd",nbnd_)
+      call qeh5_read_attribute (h5file%id, "npol",npol_)
+      call qeh5_read_attribute (h5file%id, "igwx",igwx_)
+#else
+      read (iuni,iostat=ierr) ik_, xk_, ispin_, gamma_only_, scalef
+      if (ierr/=0) return
+      read (iuni,iostat=ierr) ngw_, igwx_, npol_, nbnd_
+      if (ierr/=0) return
+#endif
+      !
+      ierr=20
+      if (igwx_>igwx) return
+      ierr=0
+      !
+      if (present(ngw))        ngw=ngw_
+      if (present(npwk))       npwk=igwx_
+      if (present(gamma_only)) gamma_only=gamma_only_
+      if (present(xk))         xk=xk_
+      !
+#if defined(_HDF5)
+      !
+      if (present(igkv)) then
+         !
+         CALL qeh5_open_dataset(h5file, h5dset_mill, ACTION='read', NAME='MillerIndices')
+         !
+         if ( h5dset_mill%filespace%dims(2) > igwx ) then
+             ierr= 10 ; return
+         endif
+         !
+         CALL qeh5_read_dataset(igkv, h5dset_mill) 
+         CALL qeh5_close(h5dset_mill) 
+      endif
+      !
+#else
+      !
+      ! skip b1,b2,b3
+      !
+      read (iuni,iostat=ierr) b1, b2, b3
+      if (ierr/=0) return
+      !
+      if (present(igkv)) then
+         read (iuni,iostat=ierr) igkv(1:3,1:igwx_)
+         if (ierr/=0) return
+      else
+         read (iuni,iostat=ierr) jj
+         if (ierr/=0) return
+      endif
+      !
+#endif
+      if (present(igkv)) then
+         if ( igwx > igwx_ ) igkv(1:3,igwx_+1:igwx) = 0
+      endif
+
+      !
+      ! wfc readin
+      !
+      if ( PRESENT(wfc) ) then
+         !
+         !npwx = SIZE( wfc, 1 ) / npol_
+         !npwx = igwx
+         !
+         if (npol_ >2 .and. .not. present(ipol) ) then
+            ierr=71 ; return
+         endif
+         !
+         allocate( wtmp(npol_*igwx) )
+         !
+#if defined(_HDF5) 
+         CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION = 'read', NAME = 'evc')
+         CALL qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol_*igwx_], MODE = 'm') 
+#endif
+         !
+         ! few size checks
+         !
+         if ( ibnde-ibnds+1 > size(wfc,2) .or. ibnds < 1 .or. ibnde > nbnd_ ) then
+            ierr=80 ; return
+         endif
+         !
+         ! actual read
+         !
+         do jj = ibnds, ibnde
+            !
+            j = jj-ibnds+1 
+            !
+#if defined(_HDF5)
+            !         
+            call qeh5_set_file_hyperslab (h5dset_wfc, OFFSET = [0,j-1], COUNT = [2*npol_*igwx_,1] )
+            call qeh5_read_dataset (wtmp, h5dset_wfc )  
+#else
+            read (iuni,iostat=ierr) wtmp(1:npol_*igwx_) 
+            if (ierr/=0) return
+#endif
+            IF ( igwx > igwx_ ) wtmp((npol_*igwx_+1):npol_*igwx) = 0.0_DP
+            !
+            if ( npol_ == 2 ) then
+               !wfc(1:npwx,       j) = wtmp(1:igwx_  )
+               !wfc(npwx+1:2*npwx,j) = wtmp(igwx_+1:2*igwx_)
+               wfc(1:igwx_,j) = wtmp( (ipol-1)*igwx_+1 : ipol*igwx_)
+            else
+               wfc(:,j) = wtmp
+            endif
+            !
+         enddo
+         !
+         deallocate(wtmp)
+         !
+#if defined(_HDF5)
+         CALL qeh5_close(h5dset_wfc) 
+         CALL qeh5_close(h5file)
+#endif
+         ! 
       ENDIF
       !
+#if !defined(_HDF5)
+      CLOSE ( UNIT = iuni, STATUS = 'keep' )
+#endif
       !
-      ! read the main data
-      !
-      CALL iotk_free_unit( iunaux )
-      !
-      IF ( PRESENT( ispin ) ) THEN
-         !
-         filename = TRIM( qexsd_wfc_filename( datadir_in, 'evc', ik, ispin ) ) 
-         !
-      ELSEIF ( PRESENT( ipol )  ) THEN
-         !
-         filename = TRIM( qexsd_wfc_filename( datadir_in, 'evc', ik, ipol ) ) 
-         !
-      ELSE
-         !
-         filename = TRIM( qexsd_wfc_filename( datadir_in, 'evc', ik ) ) 
-         !
-      ENDIF
-      !
-      CALL iotk_open_read ( iunaux, FILE = TRIM(filename), IERR=ierr )
-      IF (ierr/=0)  RETURN
-      !
-      !
-      CALL iotk_scan_empty( iunaux, "INFO", ATTR=attr, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      CALL iotk_scan_attr( attr, "ngw",  ngw_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      CALL iotk_scan_attr( attr, "igwx", igwx_, IERR=ierr )
-      IF (ierr/=0) RETURN
-      !
-      !
-      IF ( PRESENT( wf )  )  THEN
-          !
-          lindex = 0
-          !
-          DO ib = ibnds, ibnde
-              !
-              lindex = lindex + 1
-              !
-              CALL iotk_scan_dat( iunaux, "evc"//TRIM(iotk_index(ib)), &
-                                  wf( 1:igwx_, lindex ), IERR=ierr )
-              IF (ierr/=0) RETURN
-              !
-          ENDDO
-          !
-      ENDIF
-      !
-      IF ( PRESENT( wf_kindip )  )  THEN
-          !
-          ALLOCATE( wf_(igwx_ ), STAT=ierr )
-          IF (ierr/=0) RETURN
-          !
-          IF ( .NOT. PRESENT( igk ) ) THEN
-              ierr = 3
-              RETURN
-          ENDIF
-          !
-          IF ( MAXVAL( igk( 1: igwx_ ) ) > SIZE( wf_kindip, 1)  ) THEN
-              ierr = 4
-              RETURN
-          ENDIF
-          !
-          !
-          lindex = 0
-          !
-          DO ib = ibnds, ibnde
-              !
-              lindex = lindex + 1
-              !
-              CALL iotk_scan_dat( iunaux, "evc"//TRIM(iotk_index( ib ) ), &
-                                           wf_(1:igwx_), IERR=ierr )
-              IF (ierr/=0) RETURN
-              !
-              ! use the igk map to do the transformation
-              !
-              wf_kindip(:, lindex) = 0.0_dbl
-              !
-              DO ig = 1, igwx_
-                  !
-                  wf_kindip( igk( ig ), lindex ) = wf_( ig )
-                  !
-              ENDDO
-              !
-          ENDDO
-          !
-          DEALLOCATE( wf_, STAT=ierr )
-          IF (ierr/=0) RETURN
-          !
-      ENDIF
-      !
-      CALL iotk_close_read ( iunaux, IERR=ierr )
-      IF (ierr/=0)  RETURN
-      !
-      !
-      IF ( PRESENT( ngw ) )     ngw    = ngw_
-      IF ( PRESENT( igwx ) )    igwx   = igwx_
+      RETURN
       !
     END SUBROUTINE qexsd_read_wfc
     !
+    !
+    !------------------------------------------------------------------------
+    subroutine qexsd_read_rhog ( igv, rho, ierr )
+      !------------------------------------------------------------------------
+      !! Read and distribute rho(G) from file  'charge-density.*' 
+      !! (* = dat if fortran binary, * = hdf5 if HDF5)
+      !
+      use pars,        ONLY : DP
+#if defined (_HDF5) 
+      use qeh5_base_module
+#endif
+      implicit none
+      !
+      !! g-vector components
+      integer,     optional, intent(inout) :: igv(:,:)
+      !! read up to nspin components
+      complex(DP), optional, intent(inout) :: rho(:,:)
+      integer,               intent(out)   :: ierr
+      !
+      complex(DP), allocatable :: rho_g(:)
+      complex(DP)         :: rhoup, rhodw
+      real(DP)            :: b1(3), b2(3), b3(3)
+      integer             :: nspin, nspin_, ngm_g, isup, isdw
+      integer             :: iun, ns, ig
+      integer             :: mill_dum
+      logical             :: gamma_only
+      character(len=320)  :: filename
+      character(len=15)   :: subname="qexsd_read_rhog"
+      !
+#if defined _HDF5
+      type( qeh5_file)    :: h5file
+      type( qeh5_dataset) :: h5dset_mill, h5dset_rho_g
+      character(len=10)   :: tempchar, datasets(2) = ['rhotot_g  ', 'rhodiff_g ']
+      
+      filename = trim( datadir_in ) // '/charge-density.hdf5'
+#else 
+      filename = trim( datadir_in ) // '/charge-density.dat'
+#endif 
+      !
+      ngm_g=0
+      nspin=0
+      if ( present( igv) ) then
+         ngm_g  = size(igv, 2)
+      else if ( present( rho ) ) then
+         ngm_g  = size(rho, 1)
+         nspin  = size(rho, 2)
+      else 
+         ierr=2
+         return
+      endif
+      !
+      call iotk_free_unit(iun)
+      ierr = 0
+      !
+#if defined (_HDF5) 
+      call qeh5_openfile(h5file, trim(filename), ACTION='read', error=ierr)
+      if ( ierr /= 0 ) return
+      !
+      call qeh5_read_attribute (h5file%id, "gamma_only", tempchar, MAXLEN=len(tempchar)  )
+      call qeh5_read_attribute (h5file%id, "ngm_g", ngm_g ) 
+      call qeh5_read_attribute (h5file%id, "nspin", nspin_)  
+      !
+      select case (trim(tempchar) )  
+         case ('.true.', '.TRUE.' ) 
+             gamma_only = .TRUE.
+         case default
+             gamma_only = .FALSE.
+      end select    
+#else
+      open (iun, file=trim(filename), form='unformatted', status='old', iostat=ierr )
+      if ( ierr /= 0 ) return
+      ! 
+      read (iun, iostat=ierr) gamma_only, ngm_g, nspin_
+      if ( ierr /= 0 ) return
+      read (iun, iostat=ierr) b1, b2, b3
+      if ( ierr /= 0 ) return
+#endif
+      !
+      if ( nspin > nspin_ ) then
+         ierr=71
+         return
+      endif
+
+      !
+      ! read record containing G-vector indices
+      !
+#if defined(_HDF5)
+      if ( present(igv) ) then
+         call qeh5_open_dataset ( h5file, h5dset_mill, NAME="MillerIndices" , ACTION='read', ERROR=ierr)
+         call qeh5_read_dataset( igv, h5dset_mill )
+         call qeh5_close( h5dset_mill)
+      endif
+#else
+      if ( present(igv)) then
+         read (iun, iostat=ierr) igv(1:3,1:ngm_g)
+      else
+         read (iun, iostat=ierr) mill_dum
+      endif
+#endif
+      if ( ierr /= 0 ) return
+
+      !
+      ! ... now read the G-vector components
+      ! ... of the charge density (one spin at the time to save memory)
+      !
+      if ( present(rho) ) then
+         !
+         allocate( rho_g( ngm_g ) )
+         !
+         do ns = 1, nspin
+            !
+#if defined(_HDF5)
+            call qeh5_open_dataset( h5file, h5dset_rho_g, NAME=datasets(ns), ACTION='read', ERROR=ierr) 
+            call qeh5_read_dataset ( rho_g , h5dset_rho_g )
+            call qeh5_close ( h5dset_rho_g )  
+#else 
+            read (iun, iostat=ierr) rho_g(1:ngm_g)
+#endif
+            if ( ierr /= 0 ) return
+            !
+            rho(1:ngm_g,ns) = rho_g(1:ngm_g)
+            !
+            ! Workaround for LSDA, while waiting for much-needed harmonization:
+            ! if file contains rhotot=up+dw and rhodif=up-dw (nspin_=2), and
+            ! if we want rhoup and rho down (nspin=2), convert 
+            ! 
+            if ( nspin_ == 2 .and. nspin == 2 .and. ns == 2 ) then
+               do ig = 1, ngm_g
+                  rhoup = (rho(ig,ns-1) + rho_g(ig)) / 2.0_dp
+                  rhodw = (rho(ig,ns-1) - rho_g(ig)) / 2.0_dp
+                  rho(ig,ns-1)= rhoup
+                  rho(ig,ns  )= rhodw
+               enddo
+            endif
+         enddo
+         !
+         deallocate(rho_g)
+         !
+      endif
+      !
+#if !defined(_HDF5)
+      close (iun, status ='keep' )
+#endif
+      !
+      return
+      !
+    END SUBROUTINE qexsd_read_rhog
+
 end module qexsd_module
 

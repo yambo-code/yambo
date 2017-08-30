@@ -18,7 +18,7 @@ objs = pw_errore.o mod_pw_data.o qexml_v3.2.o \
 
 #elif defined _P2Y_V40 || defined _P2Y_V50 || defined _P2Y_QEXSD
 
-objs_qexsd = qexsd_p2y.o
+objs_qexsd = qexsd_p2y.o qeh5_module.o
 
 objs = pw_errore.o mod_pw_data.o qexml.o $(objs_qexsd) \
        mod_p2y.o numrec_kinds.o mod_numerical.o \
@@ -29,4 +29,3 @@ objs = pw_errore.o mod_pw_data.o qexml.o $(objs_qexsd) \
 
 #endif
 
-###objs_qexsd = qes_types.o qes_libs.o qes_module.o

@@ -191,7 +191,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
  !
-#if defined _P2Y_V50
+#if defined _P2Y_V50 || defined _P2Y_QEXSD
  call msg('s','== DB3 (PseudoPotential) ... ')
  call PP_PWscf_driver(k)
  if(verboseIO) then
@@ -200,7 +200,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
 #else
- call msg('s','Vnl support only with PWscf v5.0 or later.')
+ call msg('s','Vnl support only with QE v5.0 or later.')
 #endif
  !
  call PARALLEL_wait()

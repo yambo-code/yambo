@@ -82,7 +82,6 @@ subroutine p2y_db1(en,k)
  !
  call msg('s','K-points mesh...')
  !
-STOP "culo"
  call get_k_points(k)
  !
  call msg('l',' done')

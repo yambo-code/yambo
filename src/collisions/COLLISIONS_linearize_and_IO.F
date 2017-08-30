@@ -45,17 +45,15 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
- ! GPL_EXCLUDE_START
- !
  if (i_coll==0) then
+   ! GPL_EXCLUDE_START
    if(io_COLLs.and.master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
+   ! GPL_EXCLUDE_END
    return
  endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='start')

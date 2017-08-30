@@ -94,8 +94,16 @@ subroutine RT_driver(E,X,k,q)
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
+ ! GPL_EXCLUDE_START
+ !
  call section('*',trim(RT_potential)//' Real-Time Dynamics')
  call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !call section('*','Real-Time BSE')
+ ! GPL_INCLUDE_END
  !
  call section('+','Initialization')
  !#################################
@@ -195,11 +203,11 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Collisions
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
- !
- ! GPL_EXCLUDE_START
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================

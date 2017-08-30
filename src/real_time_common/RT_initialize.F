@@ -310,8 +310,6 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -327,8 +325,6 @@ subroutine RT_initialize(E,k,q)
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !

@@ -57,11 +57,6 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-#if defined _RT
-  {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
-  {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(d)ef,(ip)",0,0,0,0,0},
-  {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
-#endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
   {"bss",    "y","BSE solver [opt=h/d/(p/f)i]",0,0,1,0,0},                      
@@ -76,7 +71,7 @@
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _RT
-  {"negf",   "q","Real-time dynamics ",0,0,1,0,0}, 
+  {"tdBSE", "q","Real-time Bethe-Salpter Equation ",0,0,0,0,0}, 
 #endif
 #if defined _ELPH 
   {"corrtp", "c","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    

@@ -82,6 +82,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  l_use_collisions=.TRUE.
  !
+ ! GPL_EXCLUDE_START
+ !
  COLLISIONS_have_HARTREE=index(H_potential,"HARTREE")>0
  !
  l_use_Hxc_collisions  =(index(H_potential,"HARTREE")>0.or.index(H_potential,"FOCK")>0.or.index(H_potential,"SEX")>0.or.&
@@ -93,6 +95,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if ( (l_use_Hxc_collisions.or.l_elel_scatt) .and. (i_time_rev==1) ) then
    call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !
+ !H_potential="HARTREE+SEX"
+ !COLLISIONS_have_HARTREE=.TRUE.
+ !l_use_Hxc_collisions   =.TRUE.
+ !l_use_COH_collisions   =.FALSE.
+ !
+ ! GPL_INCLUDE_END
  !
  ! Switch 
  !========
@@ -153,10 +166,15 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2),i_kind)
      !
+     ! GPL_EXCLUDE_START
+     !
      ! COHSEX clean
      !--------------
+     !
      if (io_COLLs.and.l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
      if (io_COLLs.and.l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH","v3 table","clean",1)
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -225,6 +243,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  call WF_free(WF)
  !
+ FREE_ch="v3"
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (io_COLLs) then
    !
    if (.not.l_real_time.and..not.l_sc_run) then
@@ -235,13 +257,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      call COLLISIONS_basic_operations( "clean",    HXC_collisions )
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
-     !
-     ! GPL_EXCLUDE_START
-     !
      call COLLISIONS_basic_operations( "clean",      P_collisions )
      call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -249,11 +266,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    FREE_ch="all"
    !
- else
-   !
-   FREE_ch="v3"
-   !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
@@ -277,12 +292,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      IO_err=-1
      !
+     ! GPL_EXCLUDE_START
+     !
      if (io_COLLs) then
        COLL%IO_status=-1
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        IO_err=io_COLLISIONS(ID,COLL)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
+     !
+     ! GPL_EXCLUDE_END
      !
      ! In case io_Colls is /=0 all CPU have to sincronize before starting
      ! to compute the collisions and write a new header

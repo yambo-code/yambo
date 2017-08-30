@@ -158,6 +158,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
+ ! GPL_INCLUDE_START
+ call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
+ ! GPL_INCLUDE_END
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
@@ -599,7 +602,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_mirror_bands( )
  !
+ ! GPL_EXCLUDE_START
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
+ ! GPL_EXCLUDE_END
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif

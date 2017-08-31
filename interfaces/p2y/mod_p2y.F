@@ -751,8 +751,13 @@ contains
 
 #elif defined _P2Y_QEXSD
 
-   call qexsd_read_band_structure(eig=en%E(:,:,:),ierr=ierr)
+   YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
+   !
+   call qexsd_read_band_structure(eig=eig_s_,ierr=ierr)
    if (ierr/=0) call errore('qexsd_read_band_structure','fmt error',ABS(ierr))
+   !
+   en%E(:,:,:)=eig_s_(:,:,:)
+   YAMBO_FREE(eig_s_)
    
 #endif
     

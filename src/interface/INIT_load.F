@@ -501,6 +501,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  !
  ! RT ctl 
@@ -511,8 +513,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_RT_ctl_load(defs,4)
  !
 #endif
- !
- ! GPL_EXCLUDE_START
  !
  ! F_xc
  !

@@ -40,6 +40,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -47,6 +50,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  !
 #include<memory.h>
  !
@@ -64,9 +70,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call section('*','Response Functions in Transition space')
  !=========================================================
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Joint DOS
  !===========

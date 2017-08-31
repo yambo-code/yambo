@@ -69,10 +69,12 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
- call parser('RAD_prefactor',        RAD_magnification)
- call parser('BGR',                  l_BGR)
+ ! GPL_EXCLUDE_START
+ !
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('RAD_prefactor',        RAD_magnification)
+ call parser('BGR',                  l_BGR)
  call parser('RTskipImposeN',        l_skip_it)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)
@@ -84,6 +86,8 @@ subroutine RT_initialize(E,k,q)
  call parser('SaveGhistory',         SAVE_G_history)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+ !
+ ! GPL_EXCLUDE_END
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
@@ -139,6 +143,8 @@ subroutine RT_initialize(E,k,q)
  call section('=','Dephasing matrix setup')
  !
  call RT_Dephasing_Matrix(E) 
+ !
+ ! GPL_EXCLUDE_START
  !
  if (.not.RT_is_statically_dephased) then
    !
@@ -196,12 +202,19 @@ subroutine RT_initialize(E,k,q)
    if (RT_MAX_step<1.E-5) RT_MAX_step=100.*RT_step
    !
  else
-   !
+ !
+ ! GPL_EXCLUDE_END
+ !
    ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
    !=========================
    IO_JPSM_cache_steps=JPC_RT_IO_t%INTERVAL_steps
    !
+ !
+ ! GPL_EXCLUDE_START
+ !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! External fields checks
  !========================
@@ -270,6 +283,8 @@ subroutine RT_initialize(E,k,q)
  !====================
  RT_nk=RT_k_grid(E,k,q)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
@@ -295,6 +310,8 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -311,6 +328,8 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !
  if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
@@ -319,6 +338,8 @@ subroutine RT_initialize(E,k,q)
  !====================================================================
  !
  call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! LOG
  ! ===
@@ -329,6 +350,9 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time*AUT2FS)
  call msg( 'r', 'Basic time step        [fs]:',RT_step*AUT2FS)
+ !
+ ! GPL_EXCLUDE_START
+ !
  call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
  call msg( 'r', '           steps           :',NE_steps)
  !
@@ -352,20 +376,28 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  call msg( 'nr','---Flags (if any)---')
  !
  call msg( 'r','Hxc approximation          :',trim(RT_potential))
+ !
+ ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
  if (l_elphoton_scatt)    call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
  if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
  !
+ ! GPL_EXCLUDE_END
+ !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '          I/O of   GFs [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '               outputs [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
+ !
+ ! GPL_EXCLUDE_START
  !
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
@@ -392,6 +424,8 @@ subroutine RT_initialize(E,k,q)
      call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
    endif
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')

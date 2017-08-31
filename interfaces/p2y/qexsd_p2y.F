@@ -21,6 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _P2Y_QEXSD_HDF5
+#   define _QE_HDF5
+#endif
+!
 !----------------------------------------------------------------------------
 MODULE qexsd_module
   !----------------------------------------------------------------------------
@@ -1686,7 +1690,7 @@ CONTAINS
       !
       USE pars,        ONLY : DP
       !
-#if defined (_HDF5)
+#if defined (_QE_HDF5)
       USE  qeh5_base_module
 #endif
 
@@ -1708,7 +1712,7 @@ CONTAINS
       real(DP)           :: xk_(3), scalef, b1(3), b2(3), b3(3)
       logical            :: gamma_only_
       character(256)     :: filename
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
       type(qeh5_file)    :: h5file
       type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
       character(len=8)   :: char_buf 
@@ -1739,7 +1743,7 @@ CONTAINS
          filename=trim( qexsd_wfc_filename(datadir_in,"wfc",ik, EXTENSION=" ") )
       endif
       !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
       call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)
 #else
       open(iuni, file=trim(filename)//'dat', form='unformatted', status='old', iostat=ierr)
@@ -1747,7 +1751,7 @@ CONTAINS
       if ( ierr /= 0 ) return
 
       !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
       CALL qeh5_read_attribute (h5file%id, "ik", ik_)
       CALL qeh5_read_attribute (h5file%id, "xk",xk_, RANK =1, DIMENSIONS = [3])
       CALL qeh5_read_attribute (h5file%id, "ispin", ispin_)
@@ -1777,7 +1781,7 @@ CONTAINS
       if (present(gamma_only)) gamma_only=gamma_only_
       if (present(xk))         xk=xk_
       !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
       !
       if (present(igkv)) then
          !
@@ -1825,7 +1829,7 @@ CONTAINS
          !
          allocate( wtmp(npol_*igwx) )
          !
-#if defined(_HDF5) 
+#if defined(_QE_HDF5) 
          CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION = 'read', NAME = 'evc')
          CALL qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol_*igwx_], MODE = 'm') 
 #endif
@@ -1842,7 +1846,7 @@ CONTAINS
             !
             j = jj-ibnds+1 
             !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
             !         
             call qeh5_set_file_hyperslab (h5dset_wfc, OFFSET = [0,j-1], COUNT = [2*npol_*igwx_,1] )
             call qeh5_read_dataset (wtmp, h5dset_wfc )  
@@ -1864,14 +1868,14 @@ CONTAINS
          !
          deallocate(wtmp)
          !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
          CALL qeh5_close(h5dset_wfc) 
          CALL qeh5_close(h5file)
 #endif
          ! 
       ENDIF
       !
-#if !defined(_HDF5)
+#if !defined(_QE_HDF5)
       CLOSE ( UNIT = iuni, STATUS = 'keep' )
 #endif
       !
@@ -1887,7 +1891,7 @@ CONTAINS
       !! (* = dat if fortran binary, * = hdf5 if HDF5)
       !
       use pars,        ONLY : DP
-#if defined (_HDF5) 
+#if defined (_QE_HDF5) 
       use qeh5_base_module
 #endif
       implicit none
@@ -1908,7 +1912,7 @@ CONTAINS
       character(len=320)  :: filename
       character(len=15)   :: subname="qexsd_read_rhog"
       !
-#if defined _HDF5
+#if defined _QE_HDF5
       type( qeh5_file)    :: h5file
       type( qeh5_dataset) :: h5dset_mill, h5dset_rho_g
       character(len=10)   :: tempchar, datasets(2) = ['rhotot_g  ', 'rhodiff_g ']
@@ -1933,7 +1937,7 @@ CONTAINS
       call iotk_free_unit(iun)
       ierr = 0
       !
-#if defined (_HDF5) 
+#if defined (_QE_HDF5) 
       call qeh5_openfile(h5file, trim(filename), ACTION='read', error=ierr)
       if ( ierr /= 0 ) return
       !
@@ -1956,16 +1960,11 @@ CONTAINS
       read (iun, iostat=ierr) b1, b2, b3
       if ( ierr /= 0 ) return
 #endif
-      !
-      if ( nspin > nspin_ ) then
-         ierr=71
-         return
-      endif
 
       !
       ! read record containing G-vector indices
       !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
       if ( present(igv) ) then
          call qeh5_open_dataset ( h5file, h5dset_mill, NAME="MillerIndices" , ACTION='read', ERROR=ierr)
          call qeh5_read_dataset( igv, h5dset_mill )
@@ -1986,11 +1985,15 @@ CONTAINS
       !
       if ( present(rho) ) then
          !
+         if ( nspin > nspin_ ) then
+            ierr=71; return
+         endif
+         !
          allocate( rho_g( ngm_g ) )
          !
          do ns = 1, nspin
             !
-#if defined(_HDF5)
+#if defined(_QE_HDF5)
             call qeh5_open_dataset( h5file, h5dset_rho_g, NAME=datasets(ns), ACTION='read', ERROR=ierr) 
             call qeh5_read_dataset ( rho_g , h5dset_rho_g )
             call qeh5_close ( h5dset_rho_g )  
@@ -2019,7 +2022,7 @@ CONTAINS
          !
       endif
       !
-#if !defined(_HDF5)
+#if !defined(_QE_HDF5)
       close (iun, status ='keep' )
 #endif
       !

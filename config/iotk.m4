@@ -127,40 +127,34 @@ AC_SUBST(IOTK_LIBS)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0> <qexsd>],[32]))
+ [Format version for PW 2 YAMBO : <export> <qexml> <qexsd>],[32]))
+# [Format version for PW 2 YAMBO : <export> <qexml> <qexsd> <qexsd-hdf5>],[32]))
 
 AC_MSG_CHECKING([for p2y version])
 
-PW_VER="5.0"
-PW_CPP="_P2Y_V50"
+PW_VER="qexml"
+PW_CPP="-D_P2Y_QEXML"
 if test "$compile_p2y" = "yes"; then
  if test "$with_p2y_version" = "export"; then
   PW_VER="export"
-  PW_CPP="_P2Y_EXPORT"
+  PW_CPP="-D_P2Y_EXPORT"
  fi
- if test "$with_p2y_version" = "3.1"; then
-  PW_VER="3.1"
-  PW_CPP="_P2Y_V31"
- fi
- if test "$with_p2y_version" = "3.1.1"; then
-  PW_VER="3.1.1"
-  PW_CPP="_P2Y_V311"
- fi
- if test "$with_p2y_version" = "3.2"; then
-  PW_VER="3.2"
-  PW_CPP="_P2Y_V32"
- fi
- if test "$with_p2y_version" = "4.0"; then
-  PW_VER="4.0"
-  PW_CPP="_P2Y_V40"
- fi
- if test "$with_p2y_version" = "5.0"; then
-  PW_VER="5.0"
-  PW_CPP="_P2Y_V50"
+ if test "$with_p2y_version" = "qexml" || test "$with_p2y_version" = "QEXML" ; then
+  PW_VER="qexml"
+  PW_CPP="-D_P2Y_QEXML"
  fi
  if test "$with_p2y_version" = "qexsd" || test "$with_p2y_version" = "QEXSD" ; then
-  PW_VER="6.0"
-  PW_CPP="_P2Y_QEXSD"
+  PW_VER="qexsd"
+  PW_CPP="-D_P2Y_QEXSD"
+ fi
+ if test "$with_p2y_version" = "qexsd-hdf5" || test "$with_p2y_version" = "QEXSD-HDF5" ; then
+#  if test "x$hdf5" = "xyes" ; then
+#    PW_VER="qexsd-hdf5"
+#    PW_CPP="-D_P2Y_QEXSD -D_P2Y_QEXSD_HDF5"
+#  else
+    PW_VER="qexsd"
+    PW_CPP="-D_P2Y_QEXSD"
+#  fi
  fi
 fi
 

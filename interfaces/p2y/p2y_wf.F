@@ -64,24 +64,9 @@
  call set_band_block
 
  !---------------------------------------------------------------------*
- !    PW 3.1 and 3.1.1
+ !    PW > 4.x
  !---------------------------------------------------------------------*
-#if defined _P2Y_V31  || defined _P2Y_V311
-
- do i_spinor = 1, n_spinor
-     ispin=i_sp_pol+i_spinor-1
-     call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=ispin, &
-&       npwk=npwk, igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-     if(ierr.ne.0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
-     !
-     call sort_wf_disk
-     !
- enddo
-
- !---------------------------------------------------------------------*
- !    PW 3.2 and later
- !---------------------------------------------------------------------*
-#elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
+#if defined _P2Y_QEXML
 
  do i_spinor = 1, n_spinor
 
@@ -146,10 +131,6 @@
     call sort_wf_disk()
     !
  enddo
- !
- ! XXX skip this for the moment
- ! igk = wf_igk(1:npwk,ikibz)
- ! XXX
  !
  YAMBO_FREE(igkv_)
 

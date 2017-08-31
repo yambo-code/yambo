@@ -71,32 +71,15 @@ contains
 
    index_filename = 'index.xml'
 
-#elif defined _P2Y_V31
+#elif defined _P2Y_QEXML
 
    index_filename = 'data-file.xml'
-   pwversion = 31 
-   write(lch,'(a,i3,a)') '== PWscf v.',pwversion,' generated data =='
+   write(lch,'(a)') '== PWscf > v5.x generated data (QEXML fmt) =='
 
-#elif defined _P2Y_V311
+#elif defined _P2Y_QEXSD_HDF5
 
-   index_filename = 'data-file.xml'
-   pwversion = 311
-   write(lch,'(a,i3,a)') '== PWscf v.',pwversion,' generated data =='
-
-#elif defined _P2Y_V32
-
-   index_filename = 'data-file.xml'
-   write(lch,'(a)') '== PWscf v.3.2 generated data =='
-
-#elif defined _P2Y_V40 
-
-   index_filename = 'data-file.xml'
-   write(lch,'(a)') '== PWscf v.4.x generated data =='
-
-#elif defined _P2Y_V50 
-
-   index_filename = 'data-file.xml'
-   write(lch,'(a)') '== PWscf v.5.x generated data =='
+   index_filename = 'data-file-schema.xml'
+   write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
 
 #elif defined _P2Y_QEXSD
 
@@ -123,20 +106,7 @@ contains
    call msg('s','== pw_export generated data ==')
    call pw_openindex(pw_unit,index_filename) ! open index.xml file
     
-#elif defined _P2Y_V31  || defined _P2Y_V311
-
-   call msg('s',trim(lch))
-   call qexml_init(pw_unit,rhounit_,.true.) ! sets unit numbers
-   call qexml_openfile( index_filename, "read", .false., ierr)
-   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
-
-#elif defined _P2Y_V32
-
-   call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
-   call qexml_openfile( index_filename, "read", .false., ierr)
-   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
-    
-#elif defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_init(pw_unit) 
    call qexml_openfile( index_filename, "read", .false., ierr)
@@ -165,7 +135,7 @@ contains
 
    call pw_closeindex(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_closefile("read",ierr)
 
@@ -203,17 +173,7 @@ contains
 
    call pw_dimensions(pw_unit)
     
-#elif defined _P2Y_V31 || defined _P2Y_V311
-
-   call qexml_read_bands(nbnd=nbnd_, num_k_points=num_k_points_, &
-&                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
-
-#elif defined _P2Y_V32
-
-   call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
-&                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
-
-#elif defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
@@ -239,7 +199,7 @@ contains
    nelec_=0
    nsp_=0
    !
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
    !
    call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
    if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
@@ -301,7 +261,7 @@ contains
    !
    input_GS_Tel = 0.d0
    !
-#if defined _P2Y_V40 || defined _P2Y_V50
+#if defined _P2Y_QEXML
    !
    call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
 &                               degauss_units=degauss_units_, ierr=ierr)
@@ -364,7 +324,7 @@ contains
 
    YAMBO_FREE(atom_type_,species_type_)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    tau_units = 1.0_DP
    allocate(atm_(n_atomic_species))
@@ -433,7 +393,7 @@ contains
 
    call pw_cell(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
    if (ierr/=0) call errore('qexml_read_cell','fmt problem',ABS(ierr))
@@ -489,7 +449,7 @@ contains
    trevsym_=.true.
    t_rev_=0
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
 &                           s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
@@ -507,7 +467,7 @@ contains
      isym_(:,:,i1) = nint(rsym_(:,:,i1))
    enddo
    !
-   ! XXX t_rev & trevsym  need to be checked/defined
+   ! XXX t_rev & trevsym  need to be checked in qexsd_p2y.F
    !
 #endif
    !
@@ -539,11 +499,12 @@ contains
    type(bz_samp) :: k
    !
    YAMBO_ALLOC(xk_,(3,k%nibz))
+
 #if defined _P2Y_EXPORT
 
    call pw_kpoints(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    call qexml_read_bz(xk=xk_, ierr=ierr)
    if (ierr/=0) call errore('qexml_read_bz','IOTK error',ABS(ierr))
@@ -601,9 +562,6 @@ contains
    use D_lattice,   ONLY: alat
 #include<memory.h>
    !
-! XXX
-!integer :: i
-! XXXX
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
 
 #if defined _P2Y_EXPORT
@@ -611,7 +569,7 @@ contains
    YAMBO_ALLOC(igv_,(3,ng_vec))
    call pw_gvectors(pw_unit)
 
-#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
@@ -622,12 +580,6 @@ contains
    allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexsd_read_planewaves(ecutwfc=ecutwfc_, igv=igv_, ierr=ierr)
    if (ierr/=0) call errore('qexsd_read_planewaves','fmt error II',ABS(ierr))
-
-!! XXXX
-!WRITE(1000,"(a)") "IGV"
-!do i = 1, ngm_
-!  WRITE(1000,"(i5,3x,3i5)") i, igv_(:,i)
-!enddo
 
 #endif
    !
@@ -675,44 +627,7 @@ contains
    wf_nc_k(:) = pw_npwk_(:)
    YAMBO_FREE(pw_npwk_)
 
-#elif defined _P2Y_V31  || defined _P2Y_V311 
-
-   YAMBO_ALLOC(pw_igk_,(ngm_,k%nibz))
-   YAMBO_ALLOC(index_,(ngm_)) ! avoid allocate(index_,(wf_ncx)) in case of v3.1 bug
-   do ik = 1, k%nibz
-     !
-     pw_igk_(1:ngm_, ik)= 0
-     wf_nc_k(ik) =0
-     !
-     ! Print verbose wfc read message
-     !
-     if(verboseIO.and.(any( (/1,2,k%nibz/)-ik.eq.0 ) &
-&                      .or.mod(ik,k%nibz/4).eq.0)) then
-       write(lch,'(" :: K-point:",i5,"/",i5)' ) ik,k%nibz
-       call msg('s',trim(lch))
-     endif
-
-     call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
-     if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
-  
-!    if(npwk_.gt.wf_ncx) then
-!      call msg('s','PWscf v3.1 contains a bug for parallel jobs.')
-!      call msg('s','The tag <MAX_NPW> is incorrect      :',wf_ncx)
-!      call msg('s','as it is less than npwk for some k  :',npwk_)
-!      call msg('s','Action: fix MAX_NPW in data-file.xml manually,')
-!      call msg('s','or use pw_export, 3.1.1 or 3.2 instead.')
-!      call error('MAX_NPW < gkvectors size. See report file for details.')
-!    endif
-     pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
-     wf_nc_k(ik) = npwk_
-   enddo
-   YAMBO_FREE(index_)
-!
-! This is a correct definition of wf_ncx only if gamma_only = .false.
-!
-!  wf_ncx = maxval(wf_nc_k)  
-
-#elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
    YAMBO_ALLOC(index_,(npwx_))
@@ -813,24 +728,7 @@ contains
     
    en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )/2.0_DP ! pw_export in Hartree
     
-#elif defined _P2Y_V31 || defined _P2Y_V311
-
-   select case(n_sp_pol)
-   case(1)
-     YAMBO_ALLOC(eig_,(en%nb,k%nibz))
-     call qexml_read_bands(eig=eig_, ierr=ierr)
-     if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
-     en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
-     YAMBO_FREE(eig_)
-   case(2)
-     YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
-     call qexml_read_bands(eig_s=eig_s_, ierr=ierr)
-     if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
-     en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
-     YAMBO_FREE(eig_s_)
-   end select
-
-#elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
+#elif defined _P2Y_QEXML
 
    YAMBO_ALLOC(eigb_,(en%nb))
    select case(n_sp_pol)
@@ -870,7 +768,7 @@ contains
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+#if defined _P2Y_QEXML
 
    call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
    if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
@@ -891,15 +789,17 @@ contains
 
 #endif
 
-#if defined _P2Y_V50
+#if defined _P2Y_QEXML
    call qexml_read_exx(exx_fraction=pw_exx_fraction, &
 &                      screening_parameter=pw_screening_parameter, & 
 &                      exx_is_active=pw_exx_is_active, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_exx','IOTK error',abs(ierr))
+   !if (ierr/=0) call errore('qexml_read_exx','IOTK error',abs(ierr))
    !
-   if (pw_exx_is_active) then 
-      GS_exx_FRACTION = pw_exx_fraction
-      GS_exx_SCREENING= pw_screening_parameter
+   if (ierr==0) then
+      if (pw_exx_is_active) then 
+         GS_exx_FRACTION = pw_exx_fraction
+         GS_exx_SCREENING= pw_screening_parameter
+      endif
    endif
 
 #elif defined _P2Y_QEXSD

@@ -86,16 +86,12 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  write_to_report=.FALSE.
  !
-#if defined _P2Y_V31
- lch='P(W) 2 Y(ambo) Ver(s). 3.1 '
-#elif defined _P2Y_V311
- lch='P(W) 2 Y(ambo) Ver(s). 3.1.1'
-#elif defined _P2Y_V32
- lch='P(W) 2 Y(ambo) Ver. 3.2'
-#elif defined _P2Y_V40
- lch='P(W) 2 Y(ambo) Ver. 4.0'
-#elif defined _P2Y_V50
- lch='P(W) 2 Y(ambo) Ver. 5.0'
+#if defined _P2Y_EXPORT
+ lch='P(W) 2 Y(ambo) - pw_export version'
+#elif defined _P2Y_QEXML
+ lch='P(W) 2 Y(ambo) - QEXML version'
+#elif defined _P2Y_QEXSD_HDF5
+ lch='P(W) 2 Y(ambo) - QEXSD-HDF5 version'
 #elif defined _P2Y_QEXSD
  lch='P(W) 2 Y(ambo) - QEXSD version'
 #else
@@ -191,7 +187,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
  !
-#if defined _P2Y_V50 || defined _P2Y_QEXSD
+#if defined _P2Y_QEXML || defined _P2Y_QEXSD
  call msg('s','== DB3 (PseudoPotential) ... ')
  call PP_PWscf_driver(k)
  if(verboseIO) then

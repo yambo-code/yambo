@@ -4,19 +4,7 @@ objs = pw_errore.o mod_pw_data.o mod_pw_export.o \
        mod_p2y.o \
        p2y_db1.o p2y_wf.o p2y_i.o 
 
-#elif defined _P2Y_V31 || defined _P2Y_V311
-
-objs = pw_errore.o mod_pw_data.o qexml_v3.1.o  \
-       mod_p2y.o \
-       p2y_db1.o p2y_wf.o p2y_i.o
-
-#elif defined _P2Y_V32
-
-objs = pw_errore.o mod_pw_data.o qexml_v3.2.o \
-       mod_p2y.o \
-       p2y_db1.o p2y_wf.o p2y_i.o
-
-#elif defined _P2Y_V40 || defined _P2Y_V50 || defined _P2Y_QEXSD
+#elif defined _P2Y_QEXML || defined _P2Y_QEXSD
 
 objs_qexsd = qexsd_p2y.o qeh5_module.o
 

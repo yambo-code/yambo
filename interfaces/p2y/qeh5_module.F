@@ -5,6 +5,9 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
+#if defined _P2Y_QEXSD_HDF5
+#   define _QE_HDF5
+#endif
 ! 
 !------------------------------------------------------
 MODULE qeh5_base_module
@@ -18,8 +21,9 @@ MODULE qeh5_base_module
   ! last revision June 2017
   ! 
   ! 
-#if defined(__HDF5)
+#if defined(_QE_HDF5)
   USE pars,   ONLY: DP
+  USE h5d
   USE hdf5 
   USE ISO_C_BINDING
   IMPLICIT NONE 
@@ -70,7 +74,8 @@ MODULE qeh5_base_module
 
 
   INTERFACE qeh5_read_dataset
-     MODULE PROCEDURE qeh5_read_real, qeh5_read_complex, qeh5_read_integer
+     MODULE PROCEDURE qeh5_read_real, qeh5_read_complex, &
+                      qeh5_read_integer, qeh5_read_integer_2
   END INTERFACE 
 
 
@@ -461,6 +466,30 @@ END SUBROUTINE finalize_hdf5
     CALL H5Dread_f( h5_dataset%id, H5T_NATIVE_INTEGER , ptr, ierr, mem_hid, file_hid, H5P_DEFAULT_F )
     !IF ( ierr /=0)  CALL errore( 'qeh5_read_dataset', 'error reading '//TRIM(h5_descriptor%filename), ierr)
   END SUBROUTINE  qeh5_read_integer
+
+  !-----------------------------------------------------------
+  SUBROUTINE qeh5_read_integer_2 ( integer_data, h5_dataset)
+    !---------------------------------------------------------
+    IMPLICIT NONE
+    INTEGER,  TARGET, INTENT(INOUT)                  :: integer_data(:,:)
+    TYPE (qeh5_dataset),INTENT(IN)                   :: h5_dataset
+    INTEGER(HID_T)                                   :: mem_hid, file_hid
+    !
+    TYPE(C_PTR)                                      :: ptr
+    INTEGER                                          :: ierr
+    INTEGER(HSIZE_T)                                 :: dims(2)
+    LOGICAL                                          :: is_valid
+    ptr = C_LOC(integer_data)
+    !
+    file_hid = H5S_ALL_F
+    mem_hid  = H5S_ALL_F
+    dims(1)=size(integer_data,1)
+    dims(2)=size(integer_data,2)
+    IF (ALLOCATED(h5_dataset%filespace%offset)) file_hid = h5_dataset%filespace%id
+    IF ( h5_dataset%memspace_ispresent ) mem_hid = h5_dataset%memspace%id
+    CALL H5Dread_f( h5_dataset%id, H5T_NATIVE_INTEGER , integer_data, dims, ierr, mem_hid, file_hid, H5P_DEFAULT_F )
+  END SUBROUTINE  qeh5_read_integer_2
+
 
   !--------------------------------------------------------
   SUBROUTINE qeh5_write_real( real_data, h5_dataset ) 
@@ -904,8 +933,9 @@ END SUBROUTINE finalize_hdf5
      CALL H5Aopen_by_name_f( loc_id, '.', trim(attribute), attr_id, ierr) 
      CALL H5Aget_type_f( attr_id, data_type, ierr) 
      CALL H5Tget_size_f( data_type, text_length, ierr) 
-     IF ( text_length > maxlen*1_HSIZE_T) &
-                        CALL infomsg (TRIM (attribute) // ' text too long will be truncated on reading') 
+     ! AF
+     !IF ( text_length > maxlen*1_HSIZE_T) &
+     !                   CALL infomsg (TRIM (attribute) // ' text too long will be truncated on reading') 
      CALL H5Aread_f( attr_id, data_type, buf, ierr )
      DO I = 1, maxlen
         IF (i > text_length) EXIT 

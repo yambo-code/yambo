@@ -333,13 +333,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      DIP_iR=cZERO
      DIP_P=cZERO
      !
+     ! GPL_EXCLUDE_START 
+     !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
 #endif
-
      !
 #if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time) then
@@ -347,6 +348,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        P_square=cZERO
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
    end subroutine DIPOLES_alloc
    !

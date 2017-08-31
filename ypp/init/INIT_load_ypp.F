@@ -145,6 +145,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  !
  ! RT DBs create
@@ -176,16 +178,23 @@ subroutine ypp_INIT_load(defs)
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
  call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
  call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Wannier interface
  !

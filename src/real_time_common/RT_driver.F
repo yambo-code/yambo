@@ -295,11 +295,11 @@ subroutine RT_driver(E,X,k,q)
    ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
-   !
-   ! GPL_EXCLUDE_START
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================

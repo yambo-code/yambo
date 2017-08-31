@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH
+! Authors (see AUTHORS file for details): CH, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,14 +23,12 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use wave_func,           ONLY : wf_nc_k, wf_igk, wf_ng
  use P2Y,                 ONLY : pw_init, pw_close 
  use LOGO,                ONLY : pickup_a_random
- use pars,                ONLY : SP,lchlen,DP
- use memory_m,            ONLY : mem_est
+ use pars,                ONLY : SP,lchlen
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
  use parallel_m,          ONLY : ncpu,myid,PARALLEL_wait
- use electrons,           ONLY : levels,E_reset,n_bands, n_spin
+ use electrons,           ONLY : levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY : wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY : io_control,OP_WR_CL,NONE,OP_APP_WR_CL,serial_number,OP_RD_CL,DUMP
@@ -38,8 +36,15 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
  use interfaces,          ONLY : PARALLEL_live_message
+#if !defined _P2Y_EXPORT
+ use qexml_module
+#endif
+#if defined _MEM_CHECK 
+ use memory,              ONLY : MEM_manager
+#endif
  !
- implicit none
+#include<memory.h>
+ !
  type(levels)                 :: en
  type(bz_samp)                :: k
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -52,9 +57,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen)     :: lch
- integer               :: ID,io_err,ik, ib_grp
+ integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer, external     :: io_DB1
- real(SP), allocatable :: wf_disk(:,:,:,:)
+ complex(SP), allocatable :: wf_disk(:,:,:)
  !
  ! Presets
  !
@@ -65,6 +70,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! LOGO
  !
@@ -79,17 +87,11 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  write_to_report=.FALSE.
  !
 #if defined _P2Y_EXPORT
- lch='P(W) 2 Y(ambo) - pw_export.x version'
-#elif defined _P2Y_V31
- lch='P(W) 2 Y(ambo) Ver(s). 3.1 '
-#elif defined _P2Y_V311
- lch='P(W) 2 Y(ambo) Ver(s). 3.1.1'
-#elif defined _P2Y_V32
- lch='P(W) 2 Y(ambo) Ver. 3.2'
-#elif defined _P2Y_V40
- lch='P(W) 2 Y(ambo) Ver. 4.0'
-#elif defined _P2Y_V50
- lch='P(W) 2 Y(ambo) Ver. 5.0'
+ lch='P(W) 2 Y(ambo) - pw_export version'
+#elif defined _P2Y_QEXML
+ lch='P(W) 2 Y(ambo) - QEXML version'
+#elif defined _P2Y_QEXSD_HDF5
+ lch='P(W) 2 Y(ambo) - QEXSD-HDF5 version'
 #elif defined _P2Y_QEXSD
  lch='P(W) 2 Y(ambo) - QEXSD version'
 #else
@@ -139,44 +141,45 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  wf_nb_io_groups=1
  wf_nb_io=n_bands
-#if !defined _P2Y_EXPORT
  call WF_splitter()
-#endif
  !
  ! Make db2 database
  !             
  call msg('s','== DB2 (wavefunctions)  ... ')
  !
- allocate(wf_disk(2,wf_nb_io,wf_ncx,n_spin))
- call mem_est("wf_disk",(/size(wf_disk)/),(/SP/))
+ YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
  !
- do ik=1,nkibz
+ do i_sp_pol=1,n_sp_pol
    !
-   ! Print verbose wfc read message
-   !
-   if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ).or.mod(ik,max(k%nibz/4,1)).eq.0)) then
-     write(lch,'(" :: K-point:",i5,"/",i5," Spinors ",i1)') ik,nkibz,n_spin
-     call msg('s',trim(lch))
-   endif
-   ! 
-   do ib_grp=1,wf_nb_io_groups
-      !
-      ! Read a single wfc component from disk
-      !
-      call p2y_wf(wf_disk,ik,ib_grp)
-      !
-      ! Write the standard wf header
-      !
-      if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-      if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID)
-      io_err=io_WF(ID,wf=wf_disk)
-      !
+   do ik=1,nkibz
+     !
+     ifrag=ik+(i_sp_pol-1)*nkibz
+     !
+     ! Print verbose wfc read message
+     !
+     if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ).or.mod(ik,max(k%nibz/4,1)).eq.0)) then
+       write(lch,'(" :: K-point:",i5,"/",i5," Spin pol ",i1)') ik,nkibz,n_sp_pol
+       call msg('s',trim(lch))
+     endif
+     ! 
+     do ib_grp=1,wf_nb_io_groups
+        !
+        ! Read a single wfc component from disk
+        !
+        call p2y_wf(wf_disk,i_sp_pol,ik,ib_grp)
+        !
+        ! Write the standard wf header
+        !
+        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
+        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+        io_err=io_WF(ID,wf_disk)
+        !
+     enddo
+     !
    enddo
-   !
  enddo
  !
- deallocate(wf_disk)
- call mem_est("wf_disk")
+ YAMBO_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
@@ -184,7 +187,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
  !
-#if defined _P2Y_V50
+#if defined _P2Y_QEXML || defined _P2Y_QEXSD
  call msg('s','== DB3 (PseudoPotential) ... ')
  call PP_PWscf_driver(k)
  if(verboseIO) then
@@ -193,12 +196,20 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
 #else
- call msg('s','Vnl support only with PWscf v5.0 or later.')
+ call msg('s','Vnl support only with QE v5.0 or later.')
 #endif
  !
  call PARALLEL_wait()
  !
  call pw_close
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')

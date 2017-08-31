@@ -40,6 +40,11 @@ MODULE qexsd_module
   ! from the QE package (involving contributions from P. Delugas et al).
   !
   USE iotk_module
+  !
+#if defined (_QE_HDF5)
+  USE qeh5_base_module
+#endif
+  !
   IMPLICIT NONE
   !
   PRIVATE
@@ -135,6 +140,9 @@ CONTAINS
           datadir_out  = TRIM(dir_out)
       ENDIF
       !
+#if defined (_QE_HDF5)
+      call initialize_hdf5()
+#endif
       !    
     END SUBROUTINE qexsd_init_schema
     !
@@ -228,6 +236,10 @@ CONTAINS
       CASE DEFAULT
           ierr = 2
       END SELECT
+      !
+#if defined (_QE_HDF5)
+      call finalize_hdf5()
+#endif
       !
     END SUBROUTINE qexsd_closefile
     !
@@ -1690,10 +1702,6 @@ CONTAINS
       !
       USE pars,        ONLY : DP
       !
-#if defined (_QE_HDF5)
-      USE  qeh5_base_module
-#endif
-
       implicit none
       !
       integer,               intent(in)    :: ibnds, ibnde, ik
@@ -1745,10 +1753,11 @@ CONTAINS
       !
 #if defined(_QE_HDF5)
       call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)
+      if ( ierr /= 0 ) return
 #else
       open(iuni, file=trim(filename)//'dat', form='unformatted', status='old', iostat=ierr)
-#endif
       if ( ierr /= 0 ) return
+#endif
 
       !
 #if defined(_QE_HDF5)
@@ -1785,7 +1794,8 @@ CONTAINS
       !
       if (present(igkv)) then
          !
-         CALL qeh5_open_dataset(h5file, h5dset_mill, ACTION='read', NAME='MillerIndices')
+         CALL qeh5_open_dataset(h5file, h5dset_mill, ACTION='read', NAME='MillerIndices', error=ierr)
+         if (ierr/=0) return
          !
          if ( h5dset_mill%filespace%dims(2) > igwx ) then
              ierr= 10 ; return
@@ -1830,7 +1840,8 @@ CONTAINS
          allocate( wtmp(npol_*igwx) )
          !
 #if defined(_QE_HDF5) 
-         CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION = 'read', NAME = 'evc')
+         CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION='read', NAME='evc', error=ierr)
+         if (ierr/=0) return
          CALL qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol_*igwx_], MODE = 'm') 
 #endif
          !
@@ -1891,9 +1902,6 @@ CONTAINS
       !! (* = dat if fortran binary, * = hdf5 if HDF5)
       !
       use pars,        ONLY : DP
-#if defined (_QE_HDF5) 
-      use qeh5_base_module
-#endif
       implicit none
       !
       !! g-vector components

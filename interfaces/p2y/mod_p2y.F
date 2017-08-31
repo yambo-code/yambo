@@ -27,6 +27,7 @@ module P2Y
  use pw_export
 #else 
  use qexml_module
+ use qexsd_module
 #endif
  use pw_data
  use pars,                  ONLY : lchlen,SP, DP
@@ -34,7 +35,7 @@ module P2Y
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
  ! 
-#include<memory.h>
+ implicit none
  !
  character(lchlen) :: index_filename
  !
@@ -85,17 +86,22 @@ contains
 #elif defined _P2Y_V32
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.3.2 generated data =='
+   write(lch,'(a)') '== PWscf v.3.2 generated data =='
 
 #elif defined _P2Y_V40 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.4.x generated data =='
+   write(lch,'(a)') '== PWscf v.4.x generated data =='
 
 #elif defined _P2Y_V50 
 
    index_filename = 'data-file.xml'
-   write(lch,'(a,i3,a)') '== PWscf v.5.0 generated data =='
+   write(lch,'(a)') '== PWscf v.5.x generated data =='
+
+#elif defined _P2Y_QEXSD
+
+   index_filename = 'data-file-schema.xml'
+   write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
 
 #endif
 
@@ -111,6 +117,7 @@ contains
    ! Open XML index files and units
    !
    pw_unit = 10
+   rhounit_ = 12
 #if defined _P2Y_EXPORT
     
    call msg('s','== pw_export generated data ==')
@@ -119,27 +126,26 @@ contains
 #elif defined _P2Y_V31  || defined _P2Y_V311
 
    call msg('s',trim(lch))
-   rhounit_ = 12
    call qexml_init(pw_unit,rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
 
 #elif defined _P2Y_V32
 
-   rhounit_ = 12
    call qexml_init(pw_unit,"./", rhounit_,.true.) ! sets unit numbers
    call qexml_openfile( index_filename, "read", .false., ierr)
     
 #elif defined _P2Y_V40 || defined _P2Y_V50
 
-   rhounit_ = 12
    call qexml_init(pw_unit) 
    call qexml_openfile( index_filename, "read", .false., ierr)
     
+#elif defined _P2Y_QEXSD 
+
+   call qexsd_init_schema(pw_unit) 
+   call qexsd_openfile( index_filename, "read", .false., ierr)
+   call qexsd_open_output(ierr)
+    
 #endif
-   !
-   !  qexml_init(_,_,.true.)               : rho file is binary
-   !  qexml_openfile(_,"read"/"write",_,_) : read only from existing files
-   !  qexml_openfile(_,_,.false.,_)        : data-file.xml is not binary
    !
  end subroutine pw_init
  !
@@ -151,11 +157,16 @@ contains
    !
 #if defined _P2Y_EXPORT
 
-   call pw_closeindex(pw_unit) ! close index.xml file
+   call pw_closeindex(pw_unit)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   call qexml_closefile("read",ierr) ! close index.xml file
+   call qexml_closefile("read",ierr)
+
+#elif defined _P2Y_QEXSD
+
+   call qexsd_close_output(ierr)
+   call qexsd_closefile("read",ierr)
 
 #endif
    return
@@ -201,6 +212,9 @@ contains
    call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
 &                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
 
+#elif defined _P2Y_QEXSD
+!   XXX
+
 #endif
 
    if (ierr.ne.0) then
@@ -211,21 +225,37 @@ contains
      call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
    endif
 
-#if defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
-
-   call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
-   call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_spin','IOTK error',ABS(ierr))
-   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
-   call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_ions','IOTK error',ABS(ierr))
+#if defined _P2Y_EXPORT
+   ! data not read
+   nelec_=0
+   nsp_=0
    !
+#elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
+   !
+   call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+   call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_spin','fmt problem',ABS(ierr))
+   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_planewaves','fmt problem',ABS(ierr))
+   call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))
+   !
+#elif defined _P2Y_QEXSD
+   !
+   call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+   call qexsd_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
+   call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem',ABS(ierr))
+   call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))
+   !
+#endif
+
    default_nel = nelec_
    n_atomic_species = nsp_     
-
-#endif
 
    k%nibz      = num_k_points_
    en%nb       = nbnd_
@@ -266,10 +296,12 @@ contains
    !
    call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
 &                               degauss_units=degauss_units_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_occ','IOTK error',ABS(ierr))  
+   if (ierr/=0) call errore('qexml_read_occ','fmt problem',ABS(ierr))  
    !
    if (lgauss_) input_GS_Tel=300._SP/HA2KEL
    !
+#elif defined _P2Y_QEXSD
+!   XXXX
 #endif
    !
    return
@@ -282,27 +314,25 @@ contains
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                        atom_pos, Z_species,atomic_number
-   ! 
-#include<memory.h>
    !
    ! Work Space
    !
    real(DP)                       :: tau_units
    real(SP)                       :: z
    integer                        :: i1,i2,u
-   !
-   YAMBO_ALLOC(ityp_,(nat_))
-   YAMBO_ALLOC(tau_,(3,nat_))
+
+   allocate( ityp_(nat_) )
+   allocate( tau_(3,nat_) )  
 
 #if defined _P2Y_EXPORT
 
-   YAMBO_ALLOC(atom_type_,(nat_))
-   YAMBO_ALLOC(species_type_,(nat_))
+   allocate(atom_type_ ( nat_), stat=ierr)
+   allocate(species_type_ ( nat_), stat=ierr) 
 
    call pw_atoms(pw_unit)
 
    n_atomic_species = nsp_     ! n_atom_species only read here
-   allocate(atm_(n_atomic_species))
+   allocate( atm_(n_atomic_species)) 
    atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
    do i1=1, nat_
      ityp_(i1) = -1
@@ -313,38 +343,53 @@ contains
      enddo
    enddo
    tau_units = alat_
-
-   YAMBO_FREE(atom_type_,species_type_)
+   deallocate(atom_type_,species_type_)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    tau_units = 1.0_DP
-   allocate(atm_(n_atomic_species))
-   allocate(psfile(n_atomic_species))
-   YAMBO_ALLOC(nmesh,(n_atomic_species))
-   YAMBO_ALLOC(nbeta,(n_atomic_species))
+   allocate( atm_(n_atomic_species))
+   allocate( psfile (n_atomic_species))
+   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   !
    call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
+   
+#elif defined _P2Y_QEXSD
+
+   tau_units = 1.0_DP
+   allocate( atm_(n_atomic_species))
+   allocate( psfile (n_atomic_species))
+   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
+   !
+   call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_ions','fmt problem',ABS(ierr))  
+   
+#endif
+
+#ifndef _P2Y_EXPORT
+   !
    ! Check USPP/NC pseudopotential
    do i1 =1,n_atomic_species
      call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
    enddo
-
+   !
 #endif
 
-   YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+   allocate(n_atoms_species(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
    n_atoms_species_max = maxval(n_atoms_species)
-   YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
+   allocate(atom_pos(3,n_atoms_species_max,n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
    enddo
 
-   YAMBO_ALLOC(Z_species,(n_atomic_species))
+   allocate(Z_species(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
@@ -371,8 +416,13 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_cell','IOTK error',ABS(ierr))
+   if (ierr/=0) call errore('qexml_read_cell','fmt problem',ABS(ierr))
     
+#elif defined _P2Y_QEXSD
+
+   call qexsd_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_cell','fmt problem',ABS(ierr))
+
 #endif
 
    a(1,:) = a1_(:) ! assumes always atomic units
@@ -401,11 +451,15 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_symmetries
+   use pars
    use mod_com2y,  ONLY : symmetries_check_and_load
    use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
+   use D_lattice,  ONLY : a
+   use R_lattice,  ONLY : b
 
    real(DP) :: trasl_(3,48)
+   real     :: rmat1(3,3),rmat2(3,3)
 
    trasl_=0._SP
 
@@ -418,9 +472,25 @@ contains
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
    call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
-&                                         s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_symmetry','IOTK error',ABS(ierr))
+&                           s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
 
+#elif defined _P2Y_QEXSD
+   !
+   call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
+&                           s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+   !
+   ! convert to RLU
+   !
+   do i1 = 1, nsym_
+     rmat1=matmul(transpose(b),rsym_(:,:,i1))
+     rmat2=matmul(rmat1,a)/(2.0_SP*pi) 
+     isym_(:,:,i1) = nint(rmat2)
+   enddo
+   !
+   ! XXX t_rev & trevsym  need to be defined
+   !
 #endif
    !
    do i1=1,nsym_
@@ -442,15 +512,14 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_k_points(k)
-   ! 
+   !
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
    use vec_operate, ONLY:v_is_zero
    use com,         ONLY:warning
-#include<memory.h>
    type(bz_samp) :: k
    !
-   YAMBO_ALLOC(xk_,(3,k%nibz))
+   allocate(xk_(3, k%nibz))
 #if defined _P2Y_EXPORT
 
    call pw_kpoints(pw_unit)
@@ -465,10 +534,11 @@ contains
    ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
    ! PW cart tpiba/cart au/cart alat/RLU units
    !
-   YAMBO_ALLOC(k%pt,(k%nibz,3))
+   allocate(k%pt(k%nibz,3))
    do i1=1,k%nibz
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
+!  deallocate(xk_)
 
 #if defined _P2Y_EXPORT
  
@@ -502,24 +572,28 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_R_vectors
-   ! 
    use pars,        only : pi
    use R_lattice,   ONLY:b, ng_vec, g_vec
    use D_lattice,   ONLY:alat
-#include<memory.h>
    !
-   YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
+   allocate(g_vec(ng_vec,3)) ! The YAMBO array
 
 #if defined _P2Y_EXPORT
 
-   YAMBO_ALLOC(igv_,(3,ng_vec))
+   allocate(igv_(3,ng_vec))    
    call pw_gvectors(pw_unit)
 
 #elif defined _P2Y_V31 || defined _P2Y_V32 || defined _P2Y_V311 || defined _P2Y_V40 || defined _P2Y_V50
 
-   YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
+   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
    call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
-   if (ierr.ne.0) call errore('qexml_read_planewaves','IOTK error',ABS(ierr))
+   if (ierr/=0) call errore('qexml_read_planewaves','fmt error',ABS(ierr))
+
+#elif defined _P2Y_QEXSD
+
+   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
+   call qexsd_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
+   if (ierr/=0) call errore('qexsd_read_planewaves','fmt error',ABS(ierr))
 
 #endif
    !
@@ -541,6 +615,8 @@ contains
      enddo
      !
    endif
+
+!  deallocate(igv_)
    !
  end subroutine get_R_vectors
  !
@@ -557,20 +633,20 @@ contains
    type(bz_samp) :: k
    integer i1,ik
    !
-   YAMBO_ALLOC(wf_nc_k,(k%nibz))
+   allocate( wf_nc_k(k%nibz) )
 
 #if defined _P2Y_EXPORT
 
-   YAMBO_ALLOC(pw_igk_,(wf_ncx,k%nibz))
-   YAMBO_ALLOC(pw_npwk_,(k%nibz))
+   allocate( pw_igk_(wf_ncx, k%nibz))
+   allocate( pw_npwk_(k%nibz) )
    call pw_igkindex(pw_unit)
    wf_nc_k(:) = pw_npwk_(:)
-   YAMBO_FREE(pw_npwk_)
+   deallocate(pw_npwk_)
 
 #elif defined _P2Y_V31  || defined _P2Y_V311 
 
-   YAMBO_ALLOC(pw_igk_,(ngm_,k%nibz))
-   YAMBO_ALLOC(index_,(ngm_)) ! avoid allocate(index_,(wf_ncx)) in case of v3.1 bug
+   allocate( pw_igk_(ngm_, k%nibz))
+   allocate(index_(ngm_))     ! avoid allocate(index_(wf_ncx)) in case of v3.1 bug
    do ik = 1, k%nibz
      !
      pw_igk_(1:ngm_, ik)= 0
@@ -598,7 +674,7 @@ contains
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
-   YAMBO_FREE(index_)
+   deallocate(index_)
 !
 ! This is a correct definition of wf_ncx only if gamma_only = .false.
 !
@@ -606,19 +682,19 @@ contains
 
 #elif defined _P2Y_V32 || defined _P2Y_V40 || defined _P2Y_V50
 
-   YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
-   YAMBO_ALLOC(index_,(npwx_))
+   allocate( pw_igk_(npwx_, k%nibz))
+   allocate( index_(npwx_) )     
    do ik = 1, k%nibz
      call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
      pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
      wf_nc_k(ik) = npwk_
    enddo
-   YAMBO_FREE(index_)
+   deallocate(index_)
      
 #endif
 
-   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz)) ! this will be incorrect for parallel 3.1
+   allocate( wf_igk(wf_ncx, k%nibz) )  ! this will be incorrect for parallel 3.1
    wf_igk(:,:)=-1 ! for checking
 
    if(gamma_only_) then
@@ -638,7 +714,7 @@ contains
        wf_igk(1:wf_nc_k(i1),i1)= pw_igk_(1:wf_nc_k(i1),i1) 
      enddo   
    endif
-   YAMBO_FREE(pw_igk_)
+   deallocate(pw_igk_)
 
    wf_ng = maxval(wf_igk)
    !
@@ -662,11 +738,11 @@ contains
    integer      :: ik_,ispin_
    type(levels) :: en
    !
-   YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_sp_pol))
+   allocate( en%E(en%nb, k%nibz, n_sp_pol) )
 
 #if defined _P2Y_EXPORT
 
-   YAMBO_ALLOC(eig_,(en%nb,k%nibz))
+   allocate(eig_(en%nb, k%nibz))
 
    call pw_eigenvalues(pw_unit)
     
@@ -676,22 +752,22 @@ contains
 
    select case(n_sp_pol)
    case(1)
-     YAMBO_ALLOC(eig_,(en%nb,k%nibz))
+     allocate(eig_(en%nb, k%nibz))
      call qexml_read_bands(eig=eig_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )
-     YAMBO_FREE(eig_)
+     deallocate(eig_)
    case(2)
-     YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
+     allocate(eig_s_(en%nb, k%nibz,n_sp_pol))
      call qexml_read_bands(eig_s=eig_s_, ierr=ierr)
      if (ierr.ne.0) call errore('qexml_read_bands','IOTK error',ABS(ierr))
      en%E(:,:,:) = eig_s_( 1:en%nb, 1:k%nibz, 1:n_sp_pol )
-     YAMBO_FREE(eig_s_)
+     deallocate(eig_s_)
    end select
 
 #elif defined _P2Y_V32  || defined _P2Y_V40 || defined _P2Y_V50
 
-   YAMBO_ALLOC(eigb_,(en%nb))
+   allocate(eigb_(en%nb))
    select case(n_sp_pol)
    case(2)
      do ik_ = 1,k%nibz
@@ -708,7 +784,7 @@ contains
         en%E(:,ik_,1) = eigb_( 1:en%nb )
      enddo
    end select
-   YAMBO_FREE(eigb_)
+   deallocate(eigb_)
 
 #endif
     
@@ -729,6 +805,7 @@ contains
    GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
    GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
 #endif
+
 #if defined _P2Y_V50
    call qexml_read_exx(exx_fraction=pw_exx_fraction, screening_parameter=pw_screening_parameter,& 
 &                      exx_is_active=pw_exx_is_active,ierr=ierr)

@@ -45,7 +45,8 @@ MODULE qexml_module
   !
   ! internal data to be set
   !
-  CHARACTER(256)   :: datadir_in, datadir_out
+  CHARACTER(256)   :: datadir_in = " "
+  CHARACTER(256)   :: datadir_out = " "
   INTEGER          :: iunit, ounit
   !
   ! vars to manage back compatibility

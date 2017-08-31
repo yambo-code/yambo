@@ -127,8 +127,7 @@ AC_SUBST(IOTK_LIBS)
 # check for p2y versions
 #
 AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Format version for PW 2 YAMBO : <export> <qexml> <qexsd>],[32]))
-# [Format version for PW 2 YAMBO : <export> <qexml> <qexsd> <qexsd-hdf5>],[32]))
+ [Format version for PW 2 YAMBO : <export> <qexml> <qexsd> <qexsd-hdf5>],[32]))
 
 AC_MSG_CHECKING([for p2y version])
 
@@ -148,13 +147,13 @@ if test "$compile_p2y" = "yes"; then
   PW_CPP="-D_P2Y_QEXSD"
  fi
  if test "$with_p2y_version" = "qexsd-hdf5" || test "$with_p2y_version" = "QEXSD-HDF5" ; then
-#  if test "x$hdf5" = "xyes" ; then
-#    PW_VER="qexsd-hdf5"
-#    PW_CPP="-D_P2Y_QEXSD -D_P2Y_QEXSD_HDF5"
-#  else
+  if test "x$hdf5" = "xyes" ; then
+    PW_VER="qexsd-hdf5"
+    PW_CPP="-D_P2Y_QEXSD -D_P2Y_QEXSD_HDF5"
+  else
     PW_VER="qexsd"
     PW_CPP="-D_P2Y_QEXSD"
-#  fi
+  fi
  fi
 fi
 

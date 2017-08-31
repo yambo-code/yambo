@@ -631,12 +631,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      name='Field'//trim(intc(i_field))
      !
+     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+     ! GPL_EXCLUDE_END
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
+     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
      call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
@@ -651,9 +654,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &            Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
+     ! GPL_EXCLUDE_END
      !
      if (initmode==4) then
-       call parser(trim(name)//'_kind',is_def)
+       call parser(trim(name)//'_Int',is_def)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then

@@ -53,7 +53,6 @@
 #if defined _OPENMP
   {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
 #endif
-  {"nompi", "N","Skip MPI initialization",0,0,0,0,0}, 
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom]",0,0,1,0,0}, 
   {"QPDBs",  "q","(g)enerate-modify/(m)erge quasi-particle databases",0,0,1,0,0}, 
   {"wannier","w","Wannier 90 interface",0,0,0,0,0}, 

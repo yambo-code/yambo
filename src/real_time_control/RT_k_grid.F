@@ -56,8 +56,13 @@ integer function RT_k_grid(E,k,q)
  !
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
- !
+ ! 
+ ! GPL_EXCLUDE_START
  l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !l_RT_uses_E_DbGd=.FALSE.
+ ! GPL_INCLUDE_END
  !
  if (.not.allocated(DbGd_ibz_coo)) then
    YAMBO_ALLOC(DbGd_ibz_coo,(k%nibz,2))
@@ -90,6 +95,8 @@ integer function RT_k_grid(E,k,q)
    return
    !
  endif
+ !
+ ! GPL_EXCLUDE_START
  !
  ! DbGd support
  !=============
@@ -176,5 +183,7 @@ integer function RT_k_grid(E,k,q)
    enddo
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end function RT_k_grid

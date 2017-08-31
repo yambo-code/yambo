@@ -1073,10 +1073,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      integer     ::i1
      character(6)::field
      field='Field'//trim(intc(i1))
+     !GPL_EXCLUDE_START
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_MaxFreq')
      call initactivate(1,field//'_DFreq')
+     !GPL_EXCLUDE_END
      call initactivate(1,field//'_Int')
+     !GPL_EXCLUDE_START
      call initactivate(1,field//'_Width')
      call initactivate(1,field//'_FWHM')
      call initactivate(1,field//'_kind')
@@ -1084,6 +1087,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,field//'_Dir')
      call initactivate(1,field//'_Dir_circ')
      call initactivate(1,field//'_Tstart')
+     !GPL_EXCLUDE_END
    end subroutine
    !
 #endif

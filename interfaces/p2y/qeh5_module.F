@@ -483,8 +483,8 @@ END SUBROUTINE finalize_hdf5
     !
     file_hid = H5S_ALL_F
     mem_hid  = H5S_ALL_F
-    dims(1)=size(integer_data,1)
-    dims(2)=size(integer_data,2)
+    dims(1)=1_HSIZE_T*size(integer_data,1)
+    dims(2)=1_HSIZE_T*size(integer_data,2)
     IF (ALLOCATED(h5_dataset%filespace%offset)) file_hid = h5_dataset%filespace%id
     IF ( h5_dataset%memspace_ispresent ) mem_hid = h5_dataset%memspace%id
     CALL H5Dread_f( h5_dataset%id, H5T_NATIVE_INTEGER , integer_data, dims, ierr, mem_hid, file_hid, H5P_DEFAULT_F )

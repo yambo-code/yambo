@@ -51,7 +51,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Work Space
  !
  integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,ik_store,io_REF
+&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,iq_mem,io_REF
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
  real(SP)            ::gkkp_average(ph_modes)
@@ -90,7 +90,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  ! Allocation
  !============
  !
- YAMBO_ALLOC(elph_gkkp_expanded_sq,(ph_modes,elph_nb,elph_nb,PAR_Xk_nibz*PAR_nQ))
+ YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
@@ -124,8 +124,8 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
-     ik_mem  =PAR_Xk_ibz_index(ik)
-     ik_store=(PAR_Q_index(iq)-1)*PAR_Xk_nibz+ik_mem
+     ik_mem = PAR_Xk_ibz_index(ik)
+     iq_mem = PAR_Q_index(iq)
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -134,7 +134,7 @@ subroutine RT_ELPH_initialize(E,k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded_sq(:,i_n,i_np,ik_store)=abs(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))**2
+         elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=abs(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))**2
          !
        enddo
      enddo
@@ -156,8 +156,8 @@ subroutine RT_ELPH_initialize(E,k,q)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
-               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(:,i_n,i_np,ik_store)
-               if (i2==2) elph_gkkp_expanded_sq(:,i_n,i_np,ik_store)=gkkp_average(:)/real(n_of_el(1,i1))
+               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
+               if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(1,i1))
              enddo
            enddo
          enddo
@@ -167,8 +167,8 @@ subroutine RT_ELPH_initialize(E,k,q)
            do i2=1,2
              if (i2==1) gkkp_average=0._SP
              do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
-               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(:,i_n,i_np,ik_store)
-               if (i2==2) elph_gkkp_expanded_sq(:,i_n,i_np,ik_store)=gkkp_average(:)/real(n_of_el(2,i1))
+               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
+               if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(2,i1))
              enddo
            enddo
          enddo
@@ -176,7 +176,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        !
      endif
      !
-     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(elph_gkkp_expanded_sq(:,:,:,ik_store))
+     MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(sqrt(elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)))
      !
    enddo
    !

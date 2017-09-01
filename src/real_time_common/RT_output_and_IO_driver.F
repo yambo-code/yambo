@@ -39,11 +39,11 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  character(*)           :: what
  type(levels)           :: E
  type(bz_samp)          :: k
- real(SP), intent(inout):: OBSERVABLES(22)
+ real(SP), intent(inout):: OBSERVABLES(23)
  !
  ! Workspace
  !
- real(SP) :: NCarr(2),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
  !
  select case(trim(what))
    !
@@ -75,14 +75,14 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
-   NCarr =OBSERVABLES( 1: 2)
-   TFit  =OBSERVABLES( 3: 4)
-   EfFit =OBSERVABLES( 5: 6)
-   Ener  =OBSERVABLES( 7:11)
-   Entr  =OBSERVABLES(12:14)
-   TEntr =OBSERVABLES(15:17)
-   EnEntr=OBSERVABLES(18:20)
-   BGR   =OBSERVABLES(21:22)
+   NCarr =OBSERVABLES( 1: 3)
+   TFit  =OBSERVABLES( 4: 5)
+   EfFit =OBSERVABLES( 6: 7)
+   Ener  =OBSERVABLES( 8:12)
+   Entr  =OBSERVABLES(13:15)
+   TEntr =OBSERVABLES(16:18)
+   EnEntr=OBSERVABLES(19:21)
+   BGR   =OBSERVABLES(22:23)
    !
    ! GPL_EXCLUDE_END
    !

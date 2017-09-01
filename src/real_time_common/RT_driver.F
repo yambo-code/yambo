@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: OBSERVABLES(22)
+ real(SP)          :: OBSERVABLES(23)
  !
  integer, external :: io_RT_components
  !

@@ -46,7 +46,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! Work Space
  !
- integer     :: ib,ibp,i_wf,i_wfp,i_spinor
+ integer     :: ib,ibp,i_wf,i_wfp,i_spinor,ig
  complex(SP) :: WS_wf(wf_size,n_spinor,H_ref_bands(1):H_ref_bands(2))
  !
  WS_wf=cZERO

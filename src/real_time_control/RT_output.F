@@ -140,15 +140,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'carriers'
  short_file_name(next_file)=trim(append_ch)//'carriers'
- n_headings(next_file)=3
- headings(next_file,2)="dN(Holes)"
- headings(next_file,3)="dN(Elecs)"
+ n_headings(next_file)=4
+ headings(next_file,2)="dNH - dNE"
+ headings(next_file,3)="dN(Holes)"
+ headings(next_file,4)="dN(Elecs)"
  if (l_elel_scatt.or.l_elph_scatt) then 
    n_headings(next_file)=n_headings(next_file)+4
-   headings(next_file,4)="T(hol) [K]"
-   headings(next_file,5)="T(el)  [K]"
-   headings(next_file,6)="Ef(h) [eV]"
-   headings(next_file,7)="Ef(e) [eV]"
+   headings(next_file,5)="T(hol) [K]"
+   headings(next_file,6)="T(el)  [K]"
+   headings(next_file,7)="Ef(h) [eV]"
+   headings(next_file,8)="Ef(e) [eV]"
  endif
  next_file=next_file+1
  !
@@ -548,8 +549,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        if(     l_use_Hxc_collisions) data_to_dump(2:5) = VALUES(1:4)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)
      case('carriers')
-       data_to_dump(2:3) = VALUES(1:2)
-       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(4:7) = VALUES(3:6)
+       data_to_dump(2:4) = VALUES(1:3)
+       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:8) = VALUES(4:7)
      case('thermodynamics')
        data_to_dump(2: 4) = VALUES(1:3)*HA2EV
        data_to_dump(5: 7) = VALUES(4:6)*HA2EV/HA2KEL

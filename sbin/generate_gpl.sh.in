@@ -19,7 +19,6 @@ echo  "FROM DEV: $BASE"
 echo  "PREV GPL: $PREV"
 echo  "TARGET  : $TARGET"
 echo  "ACTION  : $ACTION"
-#sleep 3s
 
 if [ $ACTION = "update" ] ; then
  mkdir -p $WORK
@@ -34,8 +33,7 @@ fi
 
 cd $TARGET
 if [ $ACTION = "update" ] ; then
- rsync --update -raz --progress  $WORK .
- #cp -uR $WORK/*  .
+ rsync --update -raz --progress  $WORK"/" $TARGET"/"
  find . -name git | xargs rm -fr
  diff -r . $PREV | \
    grep "Only in" | \

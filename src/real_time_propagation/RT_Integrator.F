@@ -96,6 +96,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  dG_tmp(:,:,:,1)=dG_old
  A_tmp(1)       =A_old
  !
+ integrator_step=1
+ !
  do i_step=1,Integrator_nsteps
    !
    if (a_tableau(i_step)==0._SP) cycle 
@@ -113,6 +115,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    ! Fields @ T+dt2
    !
    call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
+   !
+   integrator_step=integrator_step+1
    !
    ! Recalculate H and S using G(t+dt1) 
    !

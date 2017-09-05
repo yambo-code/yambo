@@ -27,6 +27,14 @@ module interfaces
  !
  interface
    !
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     type(levels)  ::E
+     type(bz_samp) ::K
+     character(*), OPTIONAL ::mode,OBJ
+   end subroutine
+   !
    subroutine MATRIX_transfer( mode, M_slk, M_bse, M )
      !
      use SLK_m, ONLY:SLK_matrix
@@ -78,7 +86,8 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
-   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,l_DbGd,WF_fac)
+   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,&
+&                                  USE_the_DbGd,USE_Eo,WF_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -89,7 +98,8 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,dos_broadening
      integer,       intent(in)  :: dos_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,       intent(in)  :: l_DbGd
+     logical,  optional, intent(in) :: USE_Eo
+     logical,  optional, intent(in) :: USE_the_DbGd
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
@@ -120,12 +130,12 @@ module interfaces
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,&
+&                     sp_pol_to_load,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
      type(WAVEs)           :: WF
-     integer,     optional :: spins_to_load(2)
+     integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
      character(*),optional :: title
      logical     ,optional :: impose_free_and_alloc
@@ -180,8 +190,8 @@ module interfaces
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
-     real(SP), optional :: E_g_dir(n_sp_pol,2) ! min - max
-     real(SP), optional :: E_g_ind(n_sp_pol,2) ! min - max
+     real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+     real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
@@ -200,18 +210,20 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+&                                              COMM_A2A_3,COMM_A2A_4)
      use parallel_m,    ONLY:MPI_comm
      integer                 :: n_elements
-     character(*)            :: ROLE(:)
      type(MPI_comm)          :: COMM_index_1
      type(MPI_comm),optional :: COMM_index_2
      type(MPI_comm),optional :: COMM_index_3
      type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_index_5
      type(MPI_comm),optional :: COMM_A2A_1
      type(MPI_comm),optional :: COMM_A2A_2
      type(MPI_comm),optional :: COMM_A2A_3
+     type(MPI_comm),optional :: COMM_A2A_4
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
@@ -225,6 +237,19 @@ module interfaces
      logical,       optional::NO_EMPTIES
      logical,       optional::MASK(:)
    end subroutine
+   !
+   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP)
+     use pars, ONLY:SP
+     use QP_m, ONLY:QP_t
+     implicit none
+     integer              :: N,N_qp
+     type(QP_t)           :: DBs(N)
+     logical              :: plan(N,3)
+     type(QP_t),  optional:: qp(N_qp)
+     character(*),optional:: OP(N)
+     real(SP)    ,optional:: PRE_FAC(N)
+     integer     ,optional:: MAP(N)
+   end subroutine QP_DBs_merge
    !
  end interface
  !

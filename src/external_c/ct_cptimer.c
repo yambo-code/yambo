@@ -6,23 +6,7 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC_(name,NAME) name
-#endif
-
-#if defined(_WIN32)
-#include <windows.h>
-#include <sys/time.h>
-#include <stdint.h>
-#else
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
-#include <unistd.h>
-
-/* #include "c_defs.h"  */
+#include "c_defs.h"
 
 double F90_FUNC_(qe_cclock,QE_CCLOCK)()
 

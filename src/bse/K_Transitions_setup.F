@@ -42,8 +42,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !  real(SP)   , allocatable      :: W(size)
  !end type BS_T_group
  !
- use pars,         ONLY:SP,IP
- use memory_m,     ONLY:mem_est
+ use pars,         ONLY:SP
  use com,          ONLY:warning,error
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
@@ -58,13 +57,18 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 #if defined _PL
  use drivers,      ONLY:l_photolum
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
  !
- implicit none
+ ! GPL_EXCLUDE_END
+ !
+#include<memory.h>
  !
  type(levels) :: Ken
  type(bz_samp):: Xk
@@ -80,12 +84,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 #if defined _PL
  real(SP):: f_eh_PL(2)
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  logical :: FORCE_EQ_trans
  !
  call parser('ForceEqTrans',FORCE_EQ_trans)
  ! 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (FILL_the_groups) then
    !
@@ -98,24 +107,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    n_loops=2
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
-   allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
+   YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
    if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
-     allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
    !
  else
    !
-   allocate(BS_nT_at_k(Xk%nibz))
-   call mem_est("BS_nT_at_k",(/Xk%nibz/),(/IP/))
+   YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz))
    BS_nT_at_k=0
    n_loops=1
    !
  endif 
  !
- allocate(i_T_at_k(Xk%nibz))
+ YAMBO_ALLOC(i_T_at_k,(Xk%nibz))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -200,12 +208,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
-             if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
+             if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
              ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
              ! Presently there is the abs value here and a minus in K_IP.F
              !
-             if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
+             if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
              ! GPL_EXCLUDE_START
              !
@@ -244,7 +252,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! CLEAN UP
  !
- deallocate(i_T_at_k)
+ YAMBO_FREE(i_T_at_k)
  !
  contains
    !
@@ -253,8 +261,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      T_is_ok=.TRUE.
      !
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
-     if(     associated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
-     if(.not.associated(Ken%Eo)) Eo_eh= E_eh
+     if(     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
+     if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
@@ -285,8 +293,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
-     if (l_rt_carriers_in_use.and.associated(Ken%fo)) then
+     if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
        if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
        if (.not.FORCE_EQ_trans) f_eh_REF=(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
        if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp)-Ken%f (ic,ik ,i_sp))/spin_occ
@@ -295,6 +305,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
        if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
@@ -316,6 +328,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
      !
      ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
@@ -325,17 +339,28 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
 #endif
      !
+     ! GPL_EXCLUDE_END
+     !
+     !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
      if (.not.l_rt_carriers_in_use) then
 #endif
+       !
+       ! GPL_EXCLUDE_END
        !
        ! If I've included in valence states that are almost empty
        ! or in conduction states that are almost full, those are neglected
        if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
        !
+       ! GPL_EXCLUDE_START
+       !
 #if defined _RT
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

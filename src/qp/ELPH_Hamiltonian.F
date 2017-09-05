@@ -39,7 +39,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use QP_m,          ONLY:QP_G_damp
  use parser_m,      ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q
@@ -97,10 +97,14 @@ subroutine ELPH_Hamiltonian(en,k,q)
  H_size=No_PH_basis_size*(nqbz*(elph_branches(2)-elph_branches(1)+1)+1)
  call msg('rsn','[ElPh Ham] Hamiltonian size is:',H_size)
  !
- allocate(elph_Ham_Table(H_size,3),elph_Mat(H_size,H_size),elph_E(H_size),&
-&         mean_u(n_atoms,3,H_size),num_of_ph(nqbz,Ph_branches,H_size)) 
- allocate(top_residual(H_size),top_ph_residual(nqbz,Ph_branches,H_size))
- allocate(mean_u_sq(n_atoms,3,H_size))
+ YAMBO_ALLOC(elph_Ham_Table,(H_size,3))
+ YAMBO_ALLOC(elph_Mat,(H_size,H_size))
+ YAMBO_ALLOC(elph_E,(H_size))
+ YAMBO_ALLOC(mean_u,(n_atoms,3,H_size))
+ YAMBO_ALLOC(num_of_ph,(nqbz,Ph_branches,H_size))
+ YAMBO_ALLOC(top_residual,(H_size))
+ YAMBO_ALLOC(top_ph_residual,(nqbz,Ph_branches,H_size))
+ YAMBO_ALLOC(mean_u_sq,(n_atoms,3,H_size))
  top_residual=.FALSE.
  elph_Mat=(0._SP,0._SP)
  elph_Ham_Table=0
@@ -183,7 +187,7 @@ subroutine ELPH_Hamiltonian(en,k,q)
        ik_bz_gkkp=k%k_table(ok_ibz,sop_tab(sop_inv(iq_s-nsym/2),ok_s))
      endif
      !
-     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(ik_bz_gkkp,il,ibp_gkkp,ib_gkkp))/sqrt(2.*ph_E)
+     elph_Mat(iH,iHp)=q_weight*conjg(elph_gkkp(il,ibp_gkkp,ib_gkkp,ik_bz_gkkp))/sqrt(2._SP*ph_E)
      !
      elph_Mat(iHp,iH)=conjg( elph_Mat(iH,iHp) )
      !
@@ -449,13 +453,13 @@ subroutine ELPH_Hamiltonian(en,k,q)
 1 continue
  !
  call elph_global_free( )
- if (allocated(elph_Ham_Table)) deallocate(elph_Ham_Table)
- if (allocated(elph_Mat))       deallocate(elph_Mat)
- if (allocated(elph_E))         deallocate(elph_E)
- if (allocated(mean_u))         deallocate(mean_u)
- if (allocated(top_residual))   deallocate(top_residual)
- if (allocated(num_of_ph))      deallocate(num_of_ph)
- if (allocated(top_ph_residual))deallocate(top_ph_residual)
- if (allocated(mean_u_sq))      deallocate(mean_u_sq)
+ YAMBO_FREE(elph_Ham_Table)
+ YAMBO_FREE(elph_Mat)
+ YAMBO_FREE(elph_E)
+ YAMBO_FREE(mean_u)
+ YAMBO_FREE(top_residual)
+ YAMBO_FREE(num_of_ph)
+ YAMBO_FREE(top_ph_residual)
+ YAMBO_FREE(mean_u_sq)
  !
 end subroutine

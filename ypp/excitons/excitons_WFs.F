@@ -23,8 +23,7 @@
 !
 subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
- use pars,          ONLY:SP,cZERO,cONE,cI,pi
- use memory_m,      ONLY:mem_est
+ use pars,          ONLY:SP,cZERO,cI,pi
  use R_lattice,     ONLY:bz_samp
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
@@ -39,29 +38,27 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
 &                        BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_bands
  use interfaces,    ONLY:PARALLEL_index,WF_load
- use FFT_m,         ONLY:fft_size
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)     :: Xk
- integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda,n_bands,ierr
+ integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
  ! 
  ! Workspace
  !
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
-&                     n_lambda_deg, ir_elec_uc, ir_hole_uc
- real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3), k_pt(3)
- complex(SP)       :: wf_,wf_vc(BS_H_dim)
+&                     n_lambda_deg
+ real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3)
+ complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
- complex(SP),allocatable :: WF_symm(:,:,:,:), phases(:,:)
- integer,  allocatable   :: rindex(:)
- real(SP), allocatable   :: r_cell_cc(:,:)
+ integer,  allocatable :: rindex(:)
+ real(SP), allocatable :: r_cell_cc(:,:)
  !
  call section('+','Excitonic Wave Function')
  !
@@ -125,13 +122,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  ! Allocation
  !
- n_bands = BS_bands(2)-BS_bands(1)+1
- allocate(v2plot(nr_tot),stat=ierr)
- call mem_est('v2plot ',(/nr_tot/),(/SP/),(/ierr/))
- allocate(phases(nr_tot,Xk%nbz),stat=ierr)
- call mem_est('phases',(/nr_tot,Xk%nbz/),(/SP/),(/ierr/))
- allocate(WF_symm(fft_size,n_spinor,n_bands,Xk%nbz),stat=ierr)
- call mem_est('WF_symm',(/fft_size,n_spinor,n_bands,Xk%nibz/),(/SP/),(/ierr/))
+ YAMBO_ALLOC(v2plot,(nr_tot))
  !
  ! Par Proc
  !
@@ -154,46 +145,10 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
 &                                   trim(intc(BS_E_degs(j_lambda)))//' -> '//&
 &                                   trim(intc(BS_E_degs(j_lambda)+n_lambda_deg-1)))
    !
+   call live_timing('ExcWF@'//trim(intc(j_lambda)),px%n_of_elements(myid+1))  
    !
    v2plot  =0._SP
    wf_vc   =cZERO
-   !
-   !
-   ! Apply symmetry transformations to WFs
-   !
-   call live_timing('SymWFs ',n_bands)
-   do iv = BS_bands(1),BS_bands(2) !loop over number of bands
-     ic = iv-BS_bands(1)+1
-     do ikbz = 1,Xk%nbz !loop over kpoints
-       !
-       ikibz = Xk%sstar(ikbz,1)
-       is    = Xk%sstar(ikbz,2)
-       !
-       !here we set the value of the spin to one since the rountine retieves the two spins
-       call WF_apply_symm((/iv,ikibz,is,1/),WF_symm(:,:,ic,ikbz))
-       !   
-     enddo
-     call live_timing(steps=1)
-   enddo
-   !
-   ! this takes a looong time, we calculate it once and store it
-   !
-   if (l_free_hole) then   
-     phases(:,:) = cONE
-   else
-     call live_timing('Phases ',Xk%nbz)
-     do ikbz = 1,Xk%nbz !loop over kpoints
-       k_pt(:) = Xk%ptbz(ikbz,:)/alat(:)
-       do ir=1,nr_tot     
-         r_eh(:) = r_cell_cc(:,ir)-r_hole(:)
-         k_dot_r = dot_product(r_eh(:),k_pt(:))*2._SP*pi
-         phases(ir,ikbz) = exp(cI*k_dot_r)
-       enddo
-       call live_timing(steps=1)
-     enddo
-   endif
-   !
-   call live_timing('ExcWF@'//trim(intc(j_lambda)),nr_tot)
    !
    do ir=1,nr_tot
      !
@@ -202,22 +157,29 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
      if (l_free_hole) then
        r_eh(:)=0._SP
        ir_hole=ir
+     else
+       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
      endif
-     !
-     ir_elec_uc = rindex(ir)
-     ir_hole_uc = rindex(ir_hole)
      !
      do neh = 1,BS_H_dim
        !
        ikbz  = BSS_eh_table(neh,1)
-       iv    = BSS_eh_table(neh,2)-BS_bands(1)+1
-       ic    = BSS_eh_table(neh,3)-BS_bands(1)+1
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_spin= spin(BSS_eh_table(neh,:))
        !
-       wf_vc(neh)   =              conjg(WF_symm(ir_hole_uc,1,iv,ikbz))*WF_symm(ir_elec_uc,1,ic,ikbz)
-       if(n_spinor==2) then
-         wf_vc(neh) = wf_vc(neh) + conjg(WF_symm(ir_hole_uc,2,iv,ikbz))*WF_symm(ir_elec_uc,2,ic,ikbz)
-       endif
-       wf_vc(neh) = wf_vc(neh)*phases(ir,ikbz)
+       ikibz = Xk%sstar(ikbz,1)
+       is    = Xk%sstar(ikbz,2)
+       !
+       k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
+       !
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikibz,is,i_spin/))
+       WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
+       !
+       wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
+       if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
+       !
+       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
        ! 
      enddo  !Matrix elements
      !
@@ -261,9 +223,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  call PP_indexes_reset(px)
  !
- deallocate(v2plot)
- deallocate(r_cell_cc,rindex)
- deallocate(WF_symm)
+ YAMBO_FREE(v2plot)
+ YAMBO_FREE(r_cell_cc)
+ YAMBO_FREE(rindex)
  !
  call WF_free(WF)
  !
@@ -272,7 +234,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    subroutine expand_grid()
      !
      use FFT_m,       ONLY:fft_size
-     implicit none
+#include<memory.h>
      ! 
      ! Work Space
      !
@@ -295,7 +257,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
      enddo
      !
      nr_tot = fft_size*ncell(1)*ncell(2)*ncell(3)
-     allocate ( r_cell_cc(3,nr_tot), rindex(nr_tot) )
+     YAMBO_ALLOC(r_cell_cc,(3,nr_tot))
+     YAMBO_ALLOC(rindex,(nr_tot))
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
      call msg('s',':: Extended grid :',nr)

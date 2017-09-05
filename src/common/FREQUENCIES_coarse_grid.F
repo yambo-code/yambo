@@ -43,13 +43,11 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  ! bare_grid_N(icg)       ! Tells how many poles are linked to the POLE of the
  !                        ! non degenerate new grid (icg)
  !
- use pars,        ONLY:SP,IP,schlen
+ use pars,        ONLY:SP,schlen
  use com,         ONLY:msg
  use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
- use memory_m,    ONLY:mem_est
- !
- implicit none
+#include<memory.h>
  !
  character(*),intent(in) :: title
  integer,intent(in)      :: npts
@@ -74,7 +72,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  real(SP),allocatable:: in_sorted(:)
  !
  if(npts==0) then
-   allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
+   YAMBO_ALLOC(ordered_grid_index,(npts))
+   YAMBO_ALLOC(coarse_grid_index,(npts))
+   YAMBO_ALLOC(bare_grid_N,(npts))
+   YAMBO_ALLOC(coarse_grid_Pt,(npts))
    coarse_grid_N=0
    return
  endif   
@@ -85,8 +86,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    ! the response function is calculated using an external set of
    ! k-points/bands.
    !
-   allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(npts),coarse_grid_Pt(npts))
-   call mem_est("RGi CGi BGn CGp",(/npts,npts,npts,npts/),(/IP,IP,IP,SP/))
+   YAMBO_ALLOC(ordered_grid_index,(npts))
+   YAMBO_ALLOC(coarse_grid_index,(npts))
+   YAMBO_ALLOC(bare_grid_N,(npts))
+   YAMBO_ALLOC(coarse_grid_Pt,(npts))
    coarse_grid_N=npts
    bare_grid_N=1
    coarse_grid_Pt=bg_pt
@@ -95,10 +98,12 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    return
  endif
  !
- allocate(bg_diffs(npts-1),bg_sorted(npts),bg_sorted_x(npts))
+ YAMBO_ALLOC(bg_diffs,(npts-1))
+ YAMBO_ALLOC(bg_sorted,(npts))
+ YAMBO_ALLOC(bg_sorted_x,(npts))
  bg_sorted=bg_pt
  !
- allocate(in_sorted(npts))
+ YAMBO_ALLOC(in_sorted,(npts))
  in_sorted=0.0_SP
  !
  call sort(bg_sorted,indx=bg_sorted_x)
@@ -154,8 +159,10 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  enddo
  coarse_grid_N=i_cg
  !
- allocate(ordered_grid_index(npts),coarse_grid_index(npts),bare_grid_N(coarse_grid_N),coarse_grid_Pt(coarse_grid_N))
- call mem_est("RGi CGi BGn CGp",(/npts,npts,coarse_grid_N,coarse_grid_N/),(/IP,IP,IP,SP/))
+ YAMBO_ALLOC(ordered_grid_index,(npts))
+ YAMBO_ALLOC(coarse_grid_index,(npts))
+ YAMBO_ALLOC(bare_grid_N,(coarse_grid_N))
+ YAMBO_ALLOC(coarse_grid_Pt,(coarse_grid_N))
  !
  ordered_grid_index=ipos(:,2)
  !
@@ -173,7 +180,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  coarse_grid_Pt(coarse_grid_N)=coarse_grid_Pt(coarse_grid_N)/real(bare_grid_N(coarse_grid_N))
  !
  i_bg=0
- allocate(i_vec(npts))
+ YAMBO_ALLOC(i_vec,(npts))
  do i_cg=1,coarse_grid_N
    do i_bg_loc=1,bare_grid_N(i_cg)
      i_bg=i_bg+1
@@ -181,14 +188,16 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
    enddo
  enddo
  forall(i_bg=1:npts) coarse_grid_index(i_bg)=i_vec( ordered_grid_index(i_bg) )
- deallocate(i_vec)
+ YAMBO_FREE(i_vec)
  !
  if(.not.trim(title)=='COLL') then
    write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
    call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100._SP)/))
  endif
  !
- deallocate(bg_diffs,bg_sorted,bg_sorted_x)
- deallocate(in_sorted)
+ YAMBO_FREE(bg_diffs)
+ YAMBO_FREE(bg_sorted)
+ YAMBO_FREE(bg_sorted_x)
+ YAMBO_FREE(in_sorted)
  !
 end subroutine

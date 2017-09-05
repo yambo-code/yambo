@@ -2,7 +2,7 @@ SLK_objs =
 #if defined _SCALAPACK
 SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o PARALLEL_inversion.o \
            PARALLEL_HERMITIAN_diagonalization.o PARALLEL_lin_system.o PARALLEL_M_by_M.o PARALLEL_M_by_V.o \
-           SLK_tools.o
+           SLK_tools.o 
 #endif
 #if defined _SLEPC
 SLEPC_objs = MATRIX_slepc.o 

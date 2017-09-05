@@ -24,7 +24,7 @@
 module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
- implicit none
+#include<memory.h>
  !
  ! K lattice
  !
@@ -51,14 +51,14 @@ module R_lattice
  character(schlen)    :: q_source="User defined / from ndb.kindx."
  type bz_samp
    integer           :: nibz,nbz
-   integer,  pointer :: nstar(:)     => null()  ! n° of points in the star
-   integer,  pointer :: star(:,:)    => null()  ! ik,ikstar --> is     is sends ik in ikstar
-   integer,  pointer :: sstar(:,:)   => null()  ! ik_bz     --> ik,is  is sends ik in ikbz
-   integer,  pointer :: s_table(:,:) => null()  ! ik,is     --> sym@k_bz  revers of sstar(2)
-   integer,  pointer :: k_table(:,:) => null()  ! ik,is     --> ik_bz     revers of sstar(1)
-   real(SP), pointer :: pt(:,:)      => null()
-   real(SP), pointer :: ptbz(:,:)    => null()
-   real(SP), pointer :: weights(:)   => null()
+   integer,  allocatable :: nstar(:)      ! n° of points in the star
+   integer,  allocatable :: star(:,:)     ! ik,ikstar --> is     is sends ik in ikstar
+   integer,  allocatable :: sstar(:,:)    ! ik_bz     --> ik,is  is sends ik in ikbz
+   integer,  allocatable :: s_table(:,:)  ! ik,is     --> sym@k_bz  revers of sstar(2)
+   integer,  allocatable :: k_table(:,:)  ! ik,is     --> ik_bz     revers of sstar(1)
+   real(SP), allocatable :: pt(:,:)      
+   real(SP), allocatable :: ptbz(:,:)    
+   real(SP), allocatable :: weights(:)   
    character(6)      :: description
    character(1)      :: units
  end type bz_samp
@@ -80,7 +80,7 @@ module R_lattice
  !
  ! Q/K-tables (scattering geometry)
  !
- integer  :: qp_states_k(2)
+ integer  :: QP_states_k(2)
  logical  :: bse_scattering
  logical  :: coll_scattering
  integer, allocatable :: qindx_X(:,:,:)
@@ -154,45 +154,27 @@ module R_lattice
  contains
    !
    subroutine qindx_alloc()
-     use memory_m, ONLY:mem_est
-     integer :: err(4)
-     err=0
      !
-     allocate(qindx_X(nqibz,nXkbz,2),stat=err(1))
-     call mem_est("qindx_X",(/size(qindx_X)/),(/IP/),(/err(1)/))
+     YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
      if (.not.Xk_grid_is_uniform) return
      !
-     allocate(qindx_S(qp_states_k(2),nqbz,2),stat=err(3))
-     call mem_est("qindx_S",(/size(qindx_S)/),(/IP/),(/err(3)/))
+     YAMBO_ALLOC(qindx_S,(QP_states_k(2),nqbz,2))
      !     
      if (bse_scattering) then
-       allocate(qindx_B(nXkbz,nXkbz,2),stat=err(2))
-       call mem_est("qindx_B",(/size(qindx_B)/),(/IP/),(/err(2)/))
+       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
      endif
      !
      if (coll_scattering) then
-       allocate(qindx_C(nXkbz,nXkbz,2),stat=err(4))
-       call mem_est("qindx_C",(/size(qindx_C)/),(/IP/),(/err(4)/))
+       YAMBO_ALLOC(qindx_C,(nXkbz,nXkbz,2))
      endif
      !
    end subroutine
    !
    subroutine qindx_free()
-     use memory_m, ONLY:mem_est
-     deallocate(qindx_X)
-     call mem_est("qindx_X")
-     if (allocated(qindx_B)) then
-       deallocate(qindx_B)
-       call mem_est("qindx_B")
-     endif
-     if (allocated(qindx_S)) then
-       deallocate(qindx_S)
-       call mem_est("qindx_S")
-     endif
-     if (allocated(qindx_C)) then
-       deallocate(qindx_C)
-       call mem_est("qindx_C")
-     endif
+     YAMBO_FREE(qindx_X)
+     YAMBO_FREE(qindx_B)
+     YAMBO_FREE(qindx_S)
+     YAMBO_FREE(qindx_C)
    end subroutine qindx_free
    !
    subroutine bz_samp_reset(k)
@@ -202,15 +184,14 @@ module R_lattice
      k%units=' '
      k%description=' '
      !
-     if(associated(k%s_table))  deallocate(k%s_table)
-     if(associated(k%k_table))  deallocate(k%k_table)
-     if(associated(k%nstar))    deallocate(k%nstar)
-     if(associated(k%star))     deallocate(k%star)
-     if(associated(k%sstar))    deallocate(k%sstar)
-     if(associated(k%pt))       deallocate(k%pt)
-     if(associated(k%ptbz))     deallocate(k%ptbz)
-     if(associated(k%weights))  deallocate(k%weights)
-     nullify(k%nstar,k%star,k%sstar,k%pt,k%ptbz,k%weights,k%s_table,k%k_table)
+     YAMBO_FREE(k%s_table)
+     YAMBO_FREE(k%k_table)
+     YAMBO_FREE(k%nstar)
+     YAMBO_FREE(k%star)
+     YAMBO_FREE(k%sstar)
+     YAMBO_FREE(k%pt)
+     YAMBO_FREE(k%ptbz)
+     YAMBO_FREE(k%weights)
      !
    end subroutine bz_samp_reset
    !
@@ -221,26 +202,26 @@ module R_lattice
      BZo%nbz   = BZi%nbz
      BZo%units = BZi%units
      BZo%description = BZi%description
-     allocate( BZo%pt(BZo%nibz,3) )
+     YAMBO_ALLOC(BZo%pt,(BZo%nibz,3))
      BZo%pt(:,:) = BZi%pt(:,:)
-     if (associated( BZi%nstar )) then
-       allocate( BZo%nstar(BZo%nibz) ) 
+     if (allocated( BZi%nstar )) then
+       YAMBO_ALLOC(BZo%nstar,(BZo%nibz))
        BZo%nstar=BZi%nstar
      endif
-     if (associated( BZi%weights )) then
-       allocate( BZo%weights(BZo%nibz) ) 
+     if (allocated( BZi%weights )) then
+       YAMBO_ALLOC(BZo%weights,(BZo%nibz))
        BZo%weights=BZi%weights
      endif
-     if (associated( BZi%star )) then
-       allocate( BZo%star(BZo%nibz, size(BZi%star,2) ) ) 
+     if (allocated( BZi%star )) then
+       YAMBO_ALLOC(BZo%star,(BZo%nibz,size(BZi%star,2)))
        BZo%star=BZi%star
      endif
-     if (associated( BZi%sstar )) then
-       allocate( BZo%sstar(BZo%nbz,2) ) 
+     if (allocated( BZi%sstar )) then
+       YAMBO_ALLOC(BZo%sstar,(BZo%nbz,2))
        BZo%sstar=BZi%sstar
      endif
-     if (associated( BZi%ptbz )) then
-       allocate( BZo%ptbz(BZo%nbz,3) ) 
+     if (allocated( BZi%ptbz )) then
+       YAMBO_ALLOC(BZo%ptbz,(BZo%nbz,3))
        BZo%ptbz=BZi%ptbz
      endif
    return

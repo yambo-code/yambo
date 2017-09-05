@@ -37,7 +37,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use RT_control,     ONLY:RT_apply
  use real_time,      ONLY:l_RT_CCA_Kernel,RT_carriers,RT_bands
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: kpt
  type(levels)  :: En
@@ -58,9 +58,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  if (n_spinor==2) then
    k_range    =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
    bands_range=(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
-   allocate(spin_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),2))
+   YAMBO_ALLOC(spin_factors,(bands_range(1):bands_range(2),k_range(1):k_range(2),2))
    call electrons_spin_factors(k_range,bands_range,spin_factors)
-   allocate(magn_factors(bands_range(1):bands_range(2),k_range(1):k_range(2),3))
+   YAMBO_ALLOC(magn_factors,(bands_range(1):bands_range(2),k_range(1):k_range(2),3))
    call electrons_magn_factors(k_range,bands_range,magn_factors)
  endif
  !
@@ -172,26 +172,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
  enddo
  !
- if (n_spinor==2) deallocate(spin_factors,magn_factors)
- !
- !
- ! Sum_{ib,ik} f_{ik,ib}(it)
- !
- !output_fname='YPP-RT_occupations_ALL'
- !call of_open_close(trim(output_fname),'ot')
- !titles(1)='T[fs]'
- !titles(2)='Elec.'
- !titles(3)='Holes'
- !titles(4)='Tot. Occ. [OMEGA^-1]'
- !call msg('o '//trim(output_fname),'#')
- !call msg('o '//trim(output_fname),'#',titles(:4),INDENT=0,USE_TABS=.TRUE.)
- !call msg('o '//trim(output_fname),'#')
- !do i_T=1,n_T_steps
- !  io_Time=min(OCC_T_range(1)+(i_T-1)*OCC_deltaT,OCC_T_range(2))
- !  data_to_plot(:4)=(/io_TIME/FS2AUT,RT_occupations_sum(:,i_T)/)  !/(DL_vol*BO2ANG**3*1.E-24)/)
- !  call msg('o '//trim(output_fname),'',data_to_plot(:4),INDENT=-2,USE_TABS=.true.)
- !enddo
- !call of_open_close(trim(output_fname))
+ YAMBO_FREE(spin_factors)
+ YAMBO_FREE(magn_factors)
  !
  call set_real_printed_length()
  !

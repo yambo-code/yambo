@@ -1,1 +1,3 @@
-objs =
+objs = RT_current_AND_polarization.o RT_output.o RT_databases_IO.o \
+       RT_observables.o RT_average_operator.o \
+       RT_k_grid.o RT_update_TIME_CONF_descriptions.o

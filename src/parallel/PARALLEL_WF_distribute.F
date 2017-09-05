@@ -38,8 +38,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use R_lattice,       ONLY:nkbz
  use collision_ext,   ONLY:GW_NEQ_collisions
 #endif
- !
- implicit none
+#include<memory.h>
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
@@ -61,7 +60,7 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  logical :: Vl(H_ref_bands(2))
 #endif
  !
- NB=n_bands
+ NB =n_bands
  NBp=n_bands
  NK=nkibz 
  if (present(K_index)) then 
@@ -80,8 +79,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
  if (present(CLEAN_UP)) then
    !
-   if (allocated(states_to_load)) deallocate(states_to_load)
-   allocate(states_to_load(NB,NK,n_spin))
+   YAMBO_FREE(states_to_load)
+   YAMBO_ALLOC(states_to_load,(NB,NK,n_spin))
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.

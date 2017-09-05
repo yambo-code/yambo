@@ -136,35 +136,6 @@ subroutine YPP_SET_defaults()
  !
 #endif
  !
-#if defined _YPP_SURF
- !
- ! RAS & REELS
- !
- call ras_presets
- xdata = 'o.eps_q001-rpa_00'
- ydata = 'o.eps_q001-rpa_00'
- zdata = 'o.eps_q001-rpa_00'
- sshift = 0.0           ! surface shift
- datatype = 'eps23'
- d_cellin = 1.0
- !
- ! Localization
- !
- normdir = 3
- lowerlim = 0
- upperlim = 1
- ngloc = 0
- loc_bands = (/ 1, n_bands /)
- loc_kpts  = (/ 1, nkibz /)
- ! 
- ! Transition analysis
- ! 
- Ecv_min = 0._SP
- Ecv_max = -1._SP/HA2EV
- idir = 1
- !
-#endif
- !
  ! Wannier interface
  !
  l_wannier=.FALSE.

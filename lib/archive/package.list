@@ -3,6 +3,7 @@
 #
 keep_iotk=no
 keep_netcdf=no
+keep_netcdff=no
 keep_etsf_io=no
 keep_libxc=no
 keep_lapack=no
@@ -10,12 +11,15 @@ keep_blacs=no
 keep_scalapack=no
 keep_petsc=no
 keep_slepc=no
-keep_slatec=yes
+keep_fftw=no
+keep_fftqe=no
 #
 # tarball names
 #
 tarball_iotk=iotk-y1.2.1.tar.gz
-tarball_netcdf=netcdf-y4.1.3_v2.tar.gz
+tarball_netcdf=netcdf-4.4.1.1.tar.gz
+tarball_netcdff=netcdf-fortran-4.4.4.tar.gz
+tarball_hdf5=hdf5-1.8.18.tar.gz
 tarball_etsf_io=etsf_io-1.0.4.tar.gz
 tarball_libxc=libxc-2.2.3.tar.gz
 tarball_lapack=lapack-3.6.1.tar.gz
@@ -23,12 +27,15 @@ tarball_blacs=blacs.tar.gz
 tarball_scalapack=scalapack-2.0.2.tar.gz
 tarball_petsc=petsc-3.7.4.tar.gz
 tarball_slepc=slepc-3.7.3.tar.gz
-tarball_slatec=slatec.tar.gz
+tarball_fftw=fftw-3.3.6-pl1.tar.gz
+tarball_fftqe=fftqe.tar.gz
 #
 # package names
 #
 pkgname_iotk=iotk
-pkgname_netcdf=netcdf-y4.1.3
+pkgname_netcdf=netcdf-4.4.1.1
+pkgname_netcdff=netcdf-fortran-4.4.4
+pkgname_hdf5=hdf5-1.8.18
 pkgname_etsf_io=etsf_io-1.0.4
 pkgname_libxc=libxc-2.2.3
 pkgname_lapack=lapack-3.6.1
@@ -36,18 +43,20 @@ pkgname_blacs=blacs
 pkgname_scalapack=scalapack-2.0.2
 pkgname_petsc=petsc-3.7.4
 pkgname_slepc=slepc-3.7.3
-pkgname_slatec=slatec
+pkgname_fftw=fftw-3.3.6-pl1
+pkgname_fftqe=fftqe
 #
 # URL's
 #
-url_netcdf=http://qe-forge.org/gf/download/frsrelease/229/1050/$(tarball_netcdf)
-url_libxc=http://qe-forge.org/gf/download/frsrelease/228/1051/$(tarball_libxc)
-url_iotk=http://qe-forge.org/gf/download/frsrelease/230/1052/$(tarball_iotk)
-url_etsf_io=http://qe-forge.org/gf/download/frsrelease/231/1053/$(tarball_etsf)
-url_lapack=http://qe-forge.org/gf/download/frsrelease/232/1054/$(tarball_lapack)
-url_blacs=http://qe-forge.org/gf/download/frsrelease/233/1058/$(tarball_blacs)
-url_scalapack=http://qe-forge.org/gf/download/frsrelease/234/1056/$(tarball_scalapack)
-url_slatec=http://qe-forge.org/gf/download/frsrelease/235/1057/$(tarball_slatec)
-url_petsc=http://qe-forge.org/gf/download/frsrelease/236/1059/$(tarball_petsc)
-url_slepc=http://qe-forge.org/gf/download/frsrelease/237/1060/$(tarball_slepc)
-
+url_netcdf=https://github.com/yambo-code/yambo/files/855476/$(tarball_netcdf)
+url_netcdff=https://github.com/yambo-code/yambo/files/855477/$(tarball_netcdff)
+url_hdf5=https://github.com/yambo-code/yambo/files/838459/$(tarball_hdf5)
+url_libxc=https://github.com/yambo-code/yambo/files/783150/$(tarball_libxc)
+url_iotk=https://github.com/yambo-code/yambo/files/783147/$(tarball_iotk)
+url_etsf_io=https://github.com/yambo-code/yambo/files/845218/$(tarball_etsf)
+url_lapack=https://github.com/yambo-code/yambo/files/783151/$(tarball_lapack)
+url_blacs=https://github.com/yambo-code/yambo/files/783152/$(tarball_blacs)
+url_scalapack=https://github.com/yambo-code/yambo/files/783153/$(tarball_scalapack)
+url_petsc=https://github.com/yambo-code/yambo/files/783154/$(tarball_petsc)
+url_fftw=https://github.com/yambo-code/yambo/files/838458/$(tarball_fftw)
+url_fftqe=https://github.com/yambo-code/yambo/files/844070/$(tarball_fftqe)

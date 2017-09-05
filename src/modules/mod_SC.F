@@ -24,7 +24,7 @@
 module SC
  !
  use pars,            ONLY:SP,schlen,lchlen
- implicit none
+#include<memory.h>
  !
  integer           :: SC_bands(2)
  integer           :: it_to_start
@@ -100,14 +100,10 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use pars,           ONLY:SP
-     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
-     use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:magn,V_xc
+     use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
      !
      implicit none
      !
@@ -118,12 +114,10 @@ module SC
      call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
-       allocate(QP_Sc(QP_n_states,1))
-       call mem_est("QP_Sc",(/QP_n_states/))
+       YAMBO_ALLOC(QP_Sc,(QP_n_states,1))
      endif
      !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/))
+     YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
      !
    end subroutine
    !
@@ -131,7 +125,6 @@ module SC
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !
@@ -144,13 +137,8 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     if (allocated(QP_Sc)) then
-       deallocate(QP_Sc)
-       call mem_est("QP_Sc")
-     endif
-     !
-     deallocate(SC_R)
-     call mem_est("SC_R")
+     YAMBO_FREE(QP_Sc)
+     YAMBO_FREE(SC_R)
      !
    end subroutine
    !

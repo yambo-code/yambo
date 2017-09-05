@@ -43,7 +43,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
  use real_time,      ONLY:I_relax_static,elph_gkkp_expanded,l_RT_CCA_Kernel,RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
  use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
@@ -59,7 +59,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  integer               :: i_s,i_map(-1:1),il,i_gkkp
  real(SP)              :: ph_freq,N_q(2)
- real(SP)              :: max_gkkp
  real(SP), parameter   :: cutoff=0.005
  !
  complex(SP)           :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
@@ -87,8 +86,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  S_mat_eq=cZero
  S_mat_out_of_eq=cZero
  S_mat_sum=cZero
- !
- max_gkkp=maxval(abs(elph_gkkp_expanded))
  !
  do iqbz=1,q%nbz
    !
@@ -119,13 +116,13 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      Gkkp=cZERO
      do i_n=RT_bands(1),RT_bands(2)
        i_n_m=i_n-RT_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
-       if(abs(Gkkp(i_n_m,i_n_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_n_m)=cZERO
+       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded(il,i_n,i_n,(i_gkkp-1)*PAR_Xk_nibz+ik_mem)
+       if(abs(Gkkp(i_n_m,i_n_m))<MAX_gkkp*cutoff) Gkkp(i_n_m,i_n_m)=cZERO
        do i_np=RT_bands(1),RT_bands(2)
          if(i_n==i_np) cycle
          i_np_m=i_np-RT_bands(1)+1
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
-         if(abs(Gkkp(i_n_m,i_np_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_np_m)=cZERO
+         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded(il,i_np,i_n,(i_gkkp-1)*PAR_Xk_nibz+ik_mem)
+         if(abs(Gkkp(i_n_m,i_np_m))<MAX_gkkp*cutoff) Gkkp(i_n_m,i_np_m)=cZERO
        enddo 
      enddo
      !

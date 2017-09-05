@@ -100,7 +100,7 @@ subroutine section(mode,name)
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu,DP))
    if (all((/len_trim(min_time)>0,len_trim(max_time)>0,len_trim(average_time)>0/))) then
-     write (ch,'(6a)') 'CpuTiming [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
    call ct(INIT_SEC=.true.)

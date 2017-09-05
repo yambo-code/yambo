@@ -23,26 +23,21 @@
 !
 subroutine WF_free(WF)
  !
- use wave_func,ONLY:WAVEs,QUIET_free
- use memory_m, ONLY:mem_est
+ use wave_func,ONLY:WAVEs
  use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                    fft_rot_r,fft_rot_r_inv,fft_multiplier
+&                   fft_rot_r,fft_rot_r_inv,fft_multiplier
 #if defined _FFTW
  use FFT_m,    ONLY:fftw_plan
 #endif
+#include<memory.h>
+ !
  type(WAVEs)      ::WF
  !
- if (.not.associated(WF%c)) return
+ if (.not.allocated(WF%c)) return
  !
- deallocate(WF%c)
- if (WF%space/="B") call mem_est('WF'       ,quiet=QUIET_free)
- if (WF%space=="B") call mem_est('WF_buffer',quiet=QUIET_free)
- nullify(WF%c)
- !
- if (associated(WF%state)) then
-   deallocate(WF%state)
-   nullify(WF%state)
- endif 
+ YAMBO_FREE(WF%c)
+ YAMBO_FREE(WF%state)
+ YAMBO_FREE(WF%index)
  !
  if (WF%space=="R") then
    fft_size=0
@@ -50,8 +45,9 @@ subroutine WF_free(WF)
    fft_dim_loaded=0
    fft_multiplier=1
    if (allocated(fft_g_table)) then
-     deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-     call mem_est('FFT_g_tab FFT_rot')
+     YAMBO_FREE(fft_g_table)
+     YAMBO_FREE(fft_rot_r)
+     YAMBO_FREE(fft_rot_r_inv)
    endif
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
@@ -60,7 +56,7 @@ subroutine WF_free(WF)
  endif
  WF%k=0
  WF%b=0
- WF%spin=0
+ WF%sp_pol=0
  WF%space=' '
  WF%to_load=.TRUE.
  !

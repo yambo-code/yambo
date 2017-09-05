@@ -27,7 +27,7 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
+ use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
@@ -43,11 +43,11 @@ subroutine K_diago_driver(iq,W)
  !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use drivers,        ONLY:l_photolum
- use PHOTOLUM,       ONLY:BS_PL_free
+ use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -56,7 +56,7 @@ subroutine K_diago_driver(iq,W)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp)  :: W
  integer       :: iq
@@ -111,36 +111,28 @@ subroutine K_diago_driver(iq,W)
  !
  ! Allocation (BS_R and BS_E)
  !===========================
- call local_alloc(1)
+ call local_alloc("E")
  !
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
- ! Kernel loading
- !================
- if(io_err<0) call K_components_folded_in_serial_arrays(iq)
+ ! Kernel and/or BSS components loading
+ !======================================
+ if (io_err<0) call K_components_folded_in_serial_arrays(iq,"DIAGO")
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
  ! Allocation (BS_E_real or BS_V)
  !===============================
- call local_alloc(2)
+ call local_alloc("V")
  !
  ! Initialize the output file 
  !============================
  call K_output_file(iq,"open Diago")
  !
  if (io_err<0) then
-   !
-#if defined _SCALAPACK
-   !
-   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
-   !=========================
-   call BS_Blocks_symmetrize_K()
-   !
-#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
@@ -242,16 +234,15 @@ subroutine K_diago_driver(iq,W)
  !
  ! CLEAN
  !=======
- call BS_mat_free( )
  call local_free( )
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _PL
- call BS_PL_free( )
+ call BSS_PL_free( )
 #endif
 #if defined _KERR
- call BS_KERR_free( )
+ call BSS_KERR_free( )
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -262,42 +253,43 @@ subroutine K_diago_driver(iq,W)
  !
  contains
    !
-   subroutine local_alloc(ii)
+   subroutine local_alloc(what)
      !
-     integer  :: ii
+     character  :: what
      !
-     select case(ii)
-     case(1)
+     select case(what)
+     case("E")
        !
-       allocate(BS_E(BS_H_dim))
+       YAMBO_ALLOC(BS_E,(BS_H_dim))
        if(E_SOC_nbands/=0) then
-         allocate(BS_corrections(2/n_sp_pol,BS_H_dim))
-         allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+         YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BS_H_dim))
+         YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        endif
-       allocate(BS_R_left(BS_H_dim))
-       allocate(BS_R_right(BS_H_dim))
+       YAMBO_ALLOC(BS_R_left,(BS_H_dim))
+       YAMBO_ALLOC(BS_R_right,(BS_H_dim))
        !
        ! GPL_EXCLUDE_START
        !
 #if defined _KERR
-       if (l_kerr) allocate(BS_R_right_kerr(BS_H_dim))
+       YAMBO_ALLOC_P(BS_R_right_kerr,(BS_H_dim))
 #endif
 #if defined _PL
-       if (l_photolum) allocate(BS_R_PL(2,BS_H_dim))
+       YAMBO_ALLOC_P(BS_R_PL,(2,BS_H_dim))
 #endif
        !
        ! GPL_EXCLUDE_END
        !
-     case(2)
+     case("V")
        !
        if(K_is_not_hermitian) then
-         allocate(BS_V_left(BS_H_dim,BS_H_dim))
-         allocate(BS_V_right(BS_H_dim,BS_H_dim))
-         allocate(BS_overlap(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC(BS_V_left,(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC(BS_V_right,(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BS_H_dim))
        else
-         allocate(BS_E_real(BS_H_dim))
-         if(BSS_perturbative_width.and..not.allocated(BS_corrections)) &
-&          allocate(BS_corrections(1,BS_H_dim))
+         YAMBO_ALLOC(BS_E_real,(BS_H_dim))
+         if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
+           YAMBO_ALLOC(BS_corrections,(1,BS_H_dim))
+         endif
        endif
        !
      end select
@@ -306,33 +298,25 @@ subroutine K_diago_driver(iq,W)
    !
    subroutine local_free()
      !
-     if(allocated(BS_E))            deallocate(BS_E)
-     if(allocated(BS_E_real))       deallocate(BS_E_real)
-     if(allocated(BS_corrections))  deallocate(BS_corrections)
-     if(allocated(BS_R_right))      deallocate(BS_R_right)
-     if(allocated(BS_R_left))       deallocate(BS_R_left)
-     if(allocated(BS_V_right))      deallocate(BS_V_right)
-     if(allocated(BS_V_left))       deallocate(BS_V_left)
-     if(associated(BS_overlap)) then
-       deallocate(BS_overlap)
-       nullify(BS_overlap)
-     endif
-     if(associated(BS_E_SOC_corr)) then
-       deallocate(BS_E_SOC_corr)
-       nullify(BS_E_SOC_corr)
-     endif
+     YAMBO_FREE(BS_E)
+     YAMBO_FREE(BS_E_real)
+     YAMBO_FREE(BS_corrections)
+     YAMBO_FREE(BS_R_right)
+     YAMBO_FREE(BS_R_left)
+     YAMBO_FREE(BS_V_right)
+     YAMBO_FREE(BS_V_left)
+     YAMBO_FREE_P(BS_overlap)
+     YAMBO_FREE_P(BS_E_SOC_corr)
 #if defined _KERR
-     if(associated(BS_R_right_kerr)) then
-       deallocate(BS_R_right_kerr)
-       nullify(BS_R_right_kerr)
-     endif
+     YAMBO_FREE_P(BS_R_right_kerr)
 #endif
 #if defined _PL
-     if(associated(BS_R_PL)) then
-       deallocate(BS_R_PL)
-       nullify(BS_R_PL)
-     endif
+     YAMBO_FREE_P(BS_R_PL)
 #endif
+     !
+     ! BS_mat must be cleaned as it contains the eigenvectors. 
+     !
+     YAMBO_FREE(BS_mat)
      !
    end subroutine local_free
    !

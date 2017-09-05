@@ -4,52 +4,66 @@
 # - GENERAL CONFIGURATIONS -
 # 
 # [SYS] @build_os@@@build_cpu@
-# [SRC] @srcdir_path@
+# [SRC] @abs_top_srcdir@
+# [TGT] @prefix@
 # [BIN] @exec_prefix@/bin
-# [@DP_str@] Double precision
-# [@Red_str@] Redundant compilation  
-# [@TIME_profile_str@] Run-Time timing profile 
+# [LIB] @extlibs_path@
+#
+# [EDITOR] @editor@
+# [ MAKE ] @MAKE@
+#
+# [@DP_check@] Double precision
+# [@KEEP_OBJS_check@] Keep object files
+# [@TIME_profile_check@] Run-Time timing profile 
+# [@MEM_profile_check@] Run-Time memory profile 
+#
 # 
 # - PARALLEL SUPPORT -
 #
-# [@MPI_str@] MPI
-# [@OPENMP_str@] OpenMP
-# [@BGQ_str@] Blue-Gene specific procedures
+# [@MPI_check@] MPI
+# [@OPENMP_check@] OpenMP
 # 
-# - LIBRARIES (E=external library; I=internal library; -=not used;) -
+# - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
-#  I/O
-# [ @PW_str@ ] IOTK   : @IOTK_LIBS@ (QE @PW_VER@)
-# [ @ETSF_str@ ] ETSF_IO: @ETSF_LIBS@
-# [ @NETCDF_str@ ] NETCDF : @NETCDF_LIBS@ @NETCDF_LF_str@
-# [ @HDF5_str@ ] HDF5   : @HDF5_LIBS@ @HDF5_support@
+#  I/O LIBS
 #
-#  MATH 
-# [ @FFT_str@ ] FFT      : @FFT_LIBS@ @FFT_DESCRIPTION@
-# [ @BLAS_str@ ] BLAS     : @BLAS_LIBS@
-# [ @LAPACK_str@ ] LAPACK   : @LAPACK_LIBS@
-# [ @BLACS_str@ ] BLACS    : @BLACS_LIBS@
-# [ @SLK_str@ ] SCALAPACK: @SCALAPACK_LIBS@ 
-# [ @PET_str@ ] PETSC    : @PETSC_LIBS@ 
-# [ @SLE_str@ ] SLEPC    : @SLEPC_LIBS@ 
+# [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
+#                 @IOTK_INCS@
+# [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
+#                 @ETSF_INCS@
+# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @NETCDF_info@
+#                 @NETCDFF_INCS@ @NETCDF_INCS@
+# [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@
+#                 @HDF5_INCS@
 #
-#  OTHER
-# [ @LIBXC_str@ ] LibXC          : @LIBS_LIBXC@
-# [ @MPI_LIB_str@ ] MPI linking lib: @MPILIBS@
-# [ @MPI_LIB_str@ ] MPI root       : @MPIROOT@
+#  MATH LIBS
 #
-# - COMPILERS, MAKE and EDITOR -
+# [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
+#                   @FFT_INCS@
+# [@BLAS_str@] BLAS      : @BLAS_LIBS@ @BLAS_info@
+# [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
+# [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
+# [@BLACS_str@] BLACS     : @BLACS_LIBS@
+# [@PET_str@] PETSC     : @PETSC_LIBS@ 
+#                   @PETSC_INCS@ 
+# [@SLE_str@] SLEPC     : @SLEPC_LIBS@ 
+#                   @SLEPC_INCS@ 
 #
-# [ CPP ] @C_AS_CPP@ @C_AS_CPP_FLAGS@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dslepc@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
-# [ FPP ] @FPP@ @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
-# [  C  ] @CC@ @CFLAGS@
-# [MPICC] @PCC@ @PCCFLAGS@
-# [ F90 ] @F90@ @FCFLAGS@ @OPENMPLIBS@
-# [MPIF ] @PF90@ @PF90FLAGS@ @OPENMPLIBS@
+#  OTHER LIBS
+#
+# [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
+#                   @LIBXC_INCS@
+# [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
+#                   @MPI_INCS@
+#
+# - COMPILERS (FC kind= @FCKIND@) -
+#
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ CC  ] @CC@ @CFLAGS@
+# [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
+# [ FCUF] @FCUFLAGS@
 # [ F77 ] @F77@ @FFLAGS@
+# [ F77U] @FUFLAGS@
 # [Cmain] @FCMFLAG@
-# [NoOpt] @UFFLAGS@
-#
-# [ MAKE ] @MAKE@
-# [EDITOR] @editor@
 #

@@ -26,7 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
@@ -37,7 +37,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
-&                        QP_dSc_delta,QP_G_Zoom_treshold
+&                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
@@ -92,21 +92,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K
 #endif
-#if defined _SURF
- use bulkeps,              ONLY:init_bulk
- use eels_kinematics,      ONLY:init_kinematics
- use eels_detector,        ONLY:init_detector
- use optcut,               ONLY:init_cutoff
- use surface_geometry,     ONLY:init_surface
- use model_loss_function,  ONLY:init_loss_function
- use convolute,            ONLY:init_convolute
- use ras_module,           ONLY:locfac, loctype
-#endif
 #if defined _SCALAPACK
- use SLK_m,                ONLY:SLK_test_H_dim
+ use SLK_m,         ONLY:SLK_test_H_dim
 #endif
 #if defined _PL
- use PHOTOLUM,             ONLY:PL_weights
+ use PHOTOLUM,      ONLY:PL_weights
+#endif
+#if defined _MEM_CHECK
+ use memory,        ONLY:MEM_treshold
 #endif
  !
  implicit none
@@ -175,11 +168,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _MAGNETIC
  call it('r',defs,'magnetic','[R] Magnetic fields')
 #endif
-#if defined _SURF
- call it('r',defs,'sursp',  '[R] Surface Spectroscopy ')
- call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ')
- call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
-#endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
 #endif
@@ -240,11 +228,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! I/O
  !
  call it(defs,'DBsIOoff', &
-& '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
-& DBs_IO_control_string,verb_level=V_io)
+&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
+&             DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
-& '[IO] Space-separated list of +DB to be FRAG and -DB NOT to be FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
-& DBs_FRAG_control_string,verb_level=V_io)
+&             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
+&             DBs_FRAG_control_string,verb_level=V_io)
  !
  ! S_xc
  !
@@ -268,12 +256,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.)
- call it(defs,'GEnSteps', '[GW] G_gw energy steps',QP_Sc_steps)
- call it(defs,'GEnRnge',  '[GW] G_gw energy range (centered in the bare energy)',QP_G_er,E_unit)
-! call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', &
- call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', &
-&                          GW_terminator_Kind,verb_level=V_qp)
- call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")',GW_terminator_E,E_unit,verb_level=V_qp)
+ call it(defs,'GEnSteps', '[GW] Green`s Function (GF) energy steps',QP_Sc_steps)
+ call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
+ call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
+&        GF_energy_range_mode,verb_level=V_qp)
+ call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze)', GW_terminator_Kind,verb_level=V_qp)
+ call it(defs,'GTermEn',  '[GW] GW terminator energy (only for kind="BG")', GW_terminator_E,E_unit,verb_level=V_qp)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  !
@@ -503,19 +491,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'B_radius',      '[MAG] Magnetic flux radius',MAG_radius,verb_level=V_sc)
 #endif
  !
-#if defined _SURF
+#if defined _MEM_CHECK
  !
- ! Surface spectroscopy
+ ! Memory
  !
- call init_bulk(defs)
- call init_surface(defs)
- call init_cutoff(defs)
- call init_kinematics(defs)
- call init_loss_function(defs)
- call init_detector(defs)
- call init_convolute(defs)
- call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
- call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
+ call it(defs,'MEM_tresh',     '[MEMORY] Treshold on traced memory allocations/deallocations',MEM_treshold,verb_level=V_general,&
+&                                                                                             unit=MEM_unit(1))
+ !
 #endif
  !
  ! QP ctl 
@@ -523,6 +505,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_QP_ctl_load(defs,1)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _RT
  !
@@ -534,8 +518,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_RT_ctl_load(defs,4)
  !
 #endif
- !
- ! GPL_EXCLUDE_START
  !
  ! F_xc
  !
@@ -688,9 +670,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _MPI 
    !
    subroutine CPU_structure_load()
-     use parallel_m, ONLY:n_CPU_str_max,CPU_structure
+     use parallel_m, ONLY:n_CPU_str_max,CPU_structure,PARALLEL_default_mode
      integer           :: i_s
      character(schlen) :: name,possible_fields
+     !
+     call it(defs,"PAR_def_mode",'[PARALLEL] Default distribution mode ("balanced"/"memory"/"workload")',&
+&            PARALLEL_default_mode,verb_level=V_parallel)
      !
      do i_s=1,n_CPU_str_max 
        !

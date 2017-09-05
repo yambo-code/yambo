@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -69,10 +69,9 @@ else
 fi
 #
 AC_SUBST(PETSC_LIBS)
+AC_SUBST(PETSC_INCS)
 AC_SUBST(SLEPC_LIBS)
-AC_SUBST(dslepc)
-AC_SUBST(slepc_idir)
-AC_SUBST(petsc_idir)
+AC_SUBST(SLEPC_INCS)
 AC_SUBST(enable_slepc)
 AC_SUBST(compile_slepc)
 AC_SUBST(compile_petsc)

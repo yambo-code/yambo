@@ -7,28 +7,28 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libnetcdf.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
 PACKAGE=$(pkgname_netcdf)
 TARBALL=$(tarball_netcdf)
 
 #
 # redefinitions
 #
-INSTALL_DIR=$(libdir)/netcdf/tmp
-AUXFLAGS=--prefix=$(INSTALL_DIR) \
-         --without-pic --enable-static --enable-shared=no \
-         --disable-netcdf-4 --disable-dap --disable-cxx
-
+AUXFLAGS=--prefix=$(LIBPATH) \
+         --without-pic --enable-static --disable-shared \
+         --disable-dap  $(netcdf_opt)
 
 #
 # MAIN target
 #
-all: package-ready-stamp
+all: $(LIBRARY)
 
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	test -d $(INSTALL_DIR) || mkdir $(INSTALL_DIR)
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
@@ -39,44 +39,31 @@ configure-stamp: uncompress-stamp
 	      CFLAGS="$(cflags)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
-	      FC="$(f90)" \
-	      FCFLAGS="$(f77flags)" \
-	      FFLAGS="$(f77flags)" \
-	      CPPFLAGS="$(netcdf_aux)" \
-	      F90="$(f90)" \
-	      F77="$(f77)" \
-	      INSTALL_DIR="$(INSTALL_DIR)" ); \
+	      FC="$(fc)" \
+	      FCFLAGS="$(fcflags)" \
+	      FFLAGS="$(fflags)" \
+	      CPPFLAGS="$(netcdf_flag) $(ihdf5)" \
+	      LIBS="$(lhdf5)" \
+	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp
 
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) ; $(make) install ) ; fi
-	#
-	if test -d ./bin      ; then rm -rf ./bin      ; fi
-	if test -d ./lib      ; then rm -rf ./lib      ; fi
-	if test -d ./include  ; then rm -rf ./include  ; fi
-	#
-	mv $(INSTALL_DIR)/lib .
-	mv $(INSTALL_DIR)/bin .
-	if test -d $(PACKAGE)/f90/ ; then \
-            cp $(PACKAGE)/f90/*.mod $(INSTALL_DIR)/include ; fi
-	mv $(INSTALL_DIR)/include .
-	#
-	mv ./lib/*.a $(libdir) 
-	mv ./bin/*  $(exec_prefix)
-	mv ./include/*.mod $(includedir)
-	mv ./include/* $(includedir)
-	#
+	( cd $(PACKAGE);  $(make) ) ; fi
 	touch package-ready-stamp
-	
 
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make) install ; \
+	cp $(LIBPATH)/bin/* $(exec_prefix) ); fi
+	chmod u+x $(LIBPATH)/lib/*netcdf*.a
 #
 # cleaning
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf ./bin ./lib ./include  package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 

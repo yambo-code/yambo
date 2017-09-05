@@ -30,7 +30,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  use electrons, ONLY:levels,spin,n_sp_pol
  use QP_m,      ONLY:QP_t,QP_Vxc,QP_Sc,QP_dSc,QP_Vnl_xc,QP_table,&
 &                    QP_solver,QP_n_states,l_extended_output,Vxc_kind,&
-&                    QP_Sc_steps,use_GreenF_to_eval_QP,Vnlxc_kind,&
+&                    use_GreenF_to_eval_QP,Vnlxc_kind,&
 &                    report_Vnlxc,report_Sc,report_dSc,QP_G_amplitude_integral,&
 &                    QP_states_simmetrize,QP_G_info,Time_of
  use stderr,    ONLY:set_real_printed_length
@@ -38,7 +38,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  type(QP_t)   ::qp
  type(levels) ::en
  integer      ::QPdb_read_err
- character(2) ::what
+ character(*) ::what
  !
  ! Work Space
  !
@@ -147,7 +147,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (trim(QP_solver)=='g') call msg('o '//what,'# GW [Green`s Function Solver]')
    if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
-   if (what=="qp".or.what=="hf") call msg('o '//what,'#')
+   if (index(what,"qp")>0) call msg('o '//what,'#')
+   !
    do i1=2,qp%n_descs
      call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
    enddo
@@ -156,7 +157,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    call msg('o '//what,'#',titles(titles_order(:ntitles)),INDENT=0,USE_TABS=.TRUE.)
    call msg('o '//what,'#')
    !
-   if (what=="qp") then
+   if (index(what,"qp")>0) then
      qp%k=0.
    endif
    !
@@ -167,7 +168,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      qp_k  =QP_table(i1,3)
      qp_isp=spin(QP_table(i1,:))
      !
-     if (what=="qp") then
+     if (index(what,"qp")>0) then
        !
        if (.not.l_life) then
            if (report_Sc) values(2)=real(QP_Sc(i1,1))*HA2EV
@@ -223,7 +224,6 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      !
    enddo
    !
-   !
    call of_open_close(file_name)
    !
  else if (trim(QP_solver)=='g') then
@@ -234,19 +234,21 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    !
    do  i1=1,QP_n_states
      !
-     if(spin(QP_table(i1,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s1'
-     if(spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
-     if(n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
+     if (spin(QP_table(i1,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s1'
+     if (spin(QP_table(i1,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3),'_s2'
+     if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i1,1),'_k_',QP_table(i1,3)
      call of_open_close(G_Sc_name,'ot')
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')
      do i2=2,qp%n_descs
        call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
      enddo
-     call msg('o G_Sc','#')
-     call msg('o G_Sc','# Spectral function at this point integrates to:',QP_G_amplitude_integral(i1),&
-&             INDENT=0)
-     call msg('o G_Sc','#')
+     if (allocated(QP_G_amplitude_integral)) then
+       call msg('o G_Sc','#')
+       call msg('o G_Sc','# Spectral function at this point integrates to:',QP_G_amplitude_integral(i1),&
+&               INDENT=0)
+       call msg('o G_Sc','#')
+     endif
      titles(1)='Energy'
      titles(2:3)=(/' Re[G] ','|Im(G)|'/)
      titles(4)=    'Re(S_tot)'
@@ -257,7 +259,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        call msg('o G_Sc','#',titles(:5),INDENT=0,USE_TABS=.TRUE.)
      endif
      call msg('o G_Sc','#')
-     do i2=1,QP_Sc_steps
+     do i2=1,qp%GreenF_n_steps
        values=0._SP
        values(1)  =real(qp%GreenF_W(i1,i2))*HA2EV
        values(2:3)=(/real(qp%GreenF(i1,i2)),aimag(qp%GreenF(i1,i2))/)/HA2EV

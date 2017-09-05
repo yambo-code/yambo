@@ -67,11 +67,6 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    !
  enddo
  !
- !do ir = 1, n_elements
- !  if(role_cpu(ir)==1) cycle
- !  nchains_group(2)=nchains_group(2)+1
- !enddo
- !
  ! I need to define: ID,chain_order,my_chain=ID(1+i_chain),n_CPU
  !
  ID=0

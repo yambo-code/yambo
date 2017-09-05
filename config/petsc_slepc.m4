@@ -33,10 +33,10 @@ AC_ARG_WITH(petsc_include,
         [AC_HELP_STRING([--with-petsc-include=<incs>], [Use PETSc includes <incs>],[32])])
 #
 PETSC_LIBS=""
+PETSC_INCS="$with_petsc_include"
 SLEPC_LIBS=""
+SLEPC_INCS="$with_slepc_include"
 dslepc=""
-petsc_idir="$with_petsc_include"
-slepc_idir="$with_slepc_include"
 enable_slepc="no"
 enable_petsc="no"
 compile_petsc="no"

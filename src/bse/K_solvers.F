@@ -30,6 +30,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
  use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
+#if defined _SLEPC
+ use BS_solvers,     ONLY:run_Slepc
+#endif
  use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,BS_blks_free
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -58,7 +61,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- logical           ::run_Haydock,run_Diago,run_inversion,run_Slepc
  logical           ::stop_Haydock
  !
  ! Check first if the BS database has been calculated/loaded in K.F
@@ -82,10 +84,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  run_Diago     = index(BSS_mode,'d')/=0
  run_Haydock   = index(BSS_mode,'h')/=0
+ run_inversion = index(BSS_mode,'i')/=0
 #if defined _SLEPC
  run_Slepc     = index(BSS_mode,'s')/=0
 #endif
- run_inversion = index(BSS_mode,'i')/=0
  !
 #if defined _PL
  !

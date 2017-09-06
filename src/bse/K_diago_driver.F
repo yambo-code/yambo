@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W)
  use pars,           ONLY:SP
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat_free,BS_mat,BSS_n_eig
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec

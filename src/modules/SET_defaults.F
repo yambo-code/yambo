@@ -69,8 +69,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL,&
-&                     BSS_slepc_extraction, BSS_slepc_ncv
+&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+#if defined _SLEPC
+ use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_target_E, Slepc_shell
+#endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode
@@ -440,10 +442,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  l_drude=.false.
  BS_K_dim=0
  BSS_mode=' '
- BSS_slepc_extraction='ritz'
- BSS_slepc_ncv=0
  BSS_inversion_mode='pf'
- BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
@@ -460,6 +459,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ !
+#if defined _SLEPC
+ BSS_slepc_extraction='ritz'
+ BSS_slepc_ncv=0
+ BSS_n_freqs=100
+ BSS_target_E=0
+ Slepc_shell=.TRUE.
+#endif
  !
  ! TDDFT
  !

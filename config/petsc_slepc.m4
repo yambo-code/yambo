@@ -36,7 +36,7 @@ PETSC_LIBS=""
 PETSC_INCS="$with_petsc_include"
 SLEPC_LIBS=""
 SLEPC_INCS="$with_slepc_include"
-dslepc=""
+def_slepc=""
 enable_slepc="no"
 enable_petsc="no"
 compile_petsc="no"
@@ -59,12 +59,12 @@ esac
 if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_SLEPC"
+  def_slepc="-D_SLEPC"
 else 
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_SLEPC"
+  def_slepc="-D_SLEPC"
  fi
 fi
 #
@@ -72,6 +72,7 @@ AC_SUBST(PETSC_LIBS)
 AC_SUBST(PETSC_INCS)
 AC_SUBST(SLEPC_LIBS)
 AC_SUBST(SLEPC_INCS)
+AC_SUBST(def_slepc)
 AC_SUBST(enable_slepc)
 AC_SUBST(compile_slepc)
 AC_SUBST(compile_petsc)

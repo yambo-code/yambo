@@ -49,9 +49,10 @@ module BS_solvers
    type(Haydock_vector), allocatable :: Vo(:)
    !
  end type Slepc_vector
-#endif
  !
  type(Slepc_vector) :: Slepc_v
+ !
+#endif
  !
  integer, allocatable :: Haydock_parallel_group_comm(:)
  !
@@ -81,6 +82,9 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
+#if defined _SLEPC
+ logical  :: run_Slepc=.FALSE.
+#endif
  !
  ! Solvers (Diago)
  !=========
@@ -188,16 +192,7 @@ module BS_solvers
      !
    end subroutine
    !
-   subroutine BS_mat_alloc( )
-     use pars,      ONLY:cZERO
-     use memory_m,  ONLY:mem_est
-     allocate(BS_mat(BS_H_dim,BS_H_dim))
-     call mem_est('BS_mat',(/size(BS_mat)/))
-     BS_mat    = cZERO
-     call BS_mat_alloc_BSS()
-   end subroutine
-   !
-   subroutine BS_mat_alloc_BSS( )
+   subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
      use electrons, ONLY:E_SOC_nbands
@@ -225,7 +220,6 @@ module BS_solvers
        YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
        BSS_eh_Z = cZERO
      endif
-
      if (E_SOC_nbands/=0) then
        YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO

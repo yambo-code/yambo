@@ -689,6 +689,7 @@ BLACS_LIBS
 compile_petsc
 compile_slepc
 enable_slepc
+def_slepc
 SLEPC_INCS
 SLEPC_LIBS
 PETSC_INCS
@@ -10934,10 +10935,10 @@ fi
 
 #
 PETSC_LIBS=""
+PETSC_INCS="$with_petsc_include"
 SLEPC_LIBS=""
-dslepc=""
-petsc_idir="$with_petsc_include"
-slepc_idir="$with_slepc_include"
+SLEPC_INCS="$with_slepc_include"
+def_slepc=""
 enable_slepc="no"
 enable_petsc="no"
 compile_petsc="no"
@@ -10960,15 +10961,16 @@ esac
 if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_SLEPC"
+  def_slepc="-D_SLEPC"
 else
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
   enable_slepc="yes"
   enable_petsc="yes"
-  dslepc="-D_SLEPC"
+  def_slepc="-D_SLEPC"
  fi
 fi
 #
+
 
 
 

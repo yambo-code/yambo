@@ -41,7 +41,7 @@ subroutine K_slepc_driver(iq,W)
  use pars,           ONLY:SP,cZERO,cONE,DP
  use BS,             ONLY:BS_K_coupling,BS_H_dim
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BS_mat_free,BS_mat,BSS_n_eig,BSS_target_E, &
+&                         BS_mat,BSS_n_eig,BSS_target_E, &
 &                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell, &
 &                         BSS_slepc_extraction, BSS_slepc_ncv
  use electrons,      ONLY:E_SOC_nbands
@@ -258,7 +258,6 @@ subroutine K_slepc_driver(iq,W)
  ! CLEAN
  !=======
  call PetscFinalize(ierr)
- call BS_mat_free( )
  YAMBO_DEALLOCATE_A(BS_E)
  YAMBO_DEALLOCATE_A(BS_E_real)
  YAMBO_DEALLOCATE_A(BS_corrections)
@@ -288,7 +287,7 @@ subroutine fill_eh_dipoles()
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_mat_alloc_BSS
+&                         BSS_eh_E_SOC_corr,BSS_perturbative_width
  use com,            ONLY:error,msg
  !
  implicit none
@@ -378,7 +377,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BS_mat_alloc_BSS
+&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BSS_alloc
  use com,            ONLY:error,msg
  !
  implicit none
@@ -403,7 +402,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
  call MatSetUp(slepc_mat,ierr)
  ! 
- call BS_mat_alloc_BSS()
+ call BSS_alloc()
  !
  call fill_eh_dipoles()
  ! 
@@ -469,6 +468,10 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
 end subroutine K_stored_in_a_slepc_matrix
 
+
+
+
+
 subroutine K_shell_matrix(iq,slepc_mat)
  !
  ! Create a PETSC ShellMatrix and define the matrix-vector product
@@ -476,7 +479,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
- use BS_solvers,     ONLY:BS_mat_alloc_BSS,Slepc_v,BS_HAYVEC_alloc
+ use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc,BSS_alloc
  !REMOVE
  use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
  use parallel_m,    ONLY : PAR_IND_T_Haydock, myid
@@ -513,28 +516,6 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! TODO: In the future it should be done acording to the BS parallelization
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
- !get local number of rows
- !
- !do i_B=1,n_BS_blks
-   !
- !  i_Tk  =BS_blk(i_B)%iT_k
- !  i_Tp  =BS_blk(i_B)%iT_p
-   !
- !  write(*,*) myid, i_Tk, i_Tp
-   !
- !enddo
- !
- !call exit(0)
- !
- !write(*,*) '----'
- !write(*,*) myid, n_BS_blks, BS_nT_grps
- !write(*,*)
- !do i_g=1,BS_nT_grps
- !  if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
- !  write(*,*) myid, sum(BS_T_grp(:i_g-1)%size), BS_T_grp(i_g)%size, i_g, PAR_IND_T_Haydock%element_1D(i_g)
- !enddo
- !
- ! 
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,0,slepc_mat,ierr)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
@@ -544,10 +525,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
  !
  ! Allocate BS stuff
  !
- call BS_mat_alloc_BSS()
+ call BSS_alloc()
  call fill_eh_dipoles()
- !
- ! make the diagonal of the matrix real
  ! 
  do i_B=1,n_BS_blks
    !
@@ -556,7 +535,9 @@ subroutine K_shell_matrix(iq,slepc_mat)
    !
    if (i_Tk==i_Tp) then
      do i_r=1,BS_blk(i_B)%size(1)
+       ! make the diagonal of the matrix real
        BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+       ! make the matrix hermitian
        do i_c=i_r,BS_blk(i_B)%size(2)
          BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
        enddo
@@ -567,6 +548,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
  enddo
  !
 end subroutine K_shell_matrix
+
+
 
 subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !

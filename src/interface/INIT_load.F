@@ -772,6 +772,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      use parser_m,       ONLY:parser
      logical :: is_def(3)
      integer :: bands_(2)
+     !
+     if(initmode/=4) return
+     !
      call parser('SCbands',  is_def(1))
      call parser('RTbands',  is_def(2))
      call parser('COLLbands',is_def(3))

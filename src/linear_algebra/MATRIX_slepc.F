@@ -80,7 +80,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   ! Non hermitian not implemented yet!
   !
   if (present(V_left)) then
-    call error( 'Diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet' )
+    call error( 'diagonalisation of non-hermitian matrices with SLEPC is not implemented in yambo yet' )
     call exit(0)
   endif
   !
@@ -94,25 +94,22 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   !     Create the eigensolver and display info
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  call msg( 'rs', 'Creating eigensolver' )
   !Create eigensolver context
   call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
   
-  call msg( 'rs', 'Set monitor' )
   !Set monitor
   !call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
   
-  call msg( 'rs', 'Set operators' )
   !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
   call EPSSetProblemType(eps,EPS_HEP,ierr)
 
   if (present(target_energy)) then
-    call msg( 'rs', 'Target energy:', target_energy )
+    call msg( 'rs', 'criterion: target energy ', target_energy )
     call EPSSetTarget(eps,target_energy,ierr)
     call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
   else
-    call msg( 'rs', 'Smaller eigenvalues' )
+    call msg( 'rs', 'criterion: smaller eigenvalues' )
     call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
   endif
 
@@ -133,9 +130,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
     else if (extraction == 'refined_harmonic')  then
         extr = EPS_REFINED_HARMONIC
     endif
-    call msg( 'rs', 'Extraction method: ', extraction )
+    call msg( 'rs', 'extraction method: ', extraction )
   else
-    call msg( 'rs', 'Extraction method: ritz' )
+    call msg( 'rs', 'extraction method: ritz' )
     extr = EPS_RITZ
   endif
   call EPSSetExtraction(eps, extr, ierr)
@@ -158,9 +155,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
-  call msg( 'rs', 'Number of iterations of the method:', its )
+  call msg( 'rs', 'number of iterations of the method: ', its )
   call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
-  call msg( 'rs', 'nev: ', nev)
+  call msg( 'rs', 'number of eigenvalues: ', nev)
   call msg( 'rs', 'ncv: ', ncv)
   call msg( 'rs', 'mpd: ', mpd)
 
@@ -168,10 +165,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   call EPSGetType(eps,tname,ierr)
   call EPSGetTolerances(eps,tol,maxit,ierr)
 
-  call msg( 'rs', 'Solution method: ', tname )
-  call msg( 'rs', 'Number of requested eigenvalues:', nev )
-  call msg( 'rs', 'Stopping condition Tolerance:', tol)
-  call msg( 'rs', 'Stopping contition Max iterations:', maxit )
+  call msg( 'rs', 'solution method: ', tname )
+  call msg( 'rs', 'number of requested eigenvalues: ', nev )
+  call msg( 'rs', 'stopping condition tolerance: ', tol)
+  call msg( 'rs', 'stopping contition max iterations: ', maxit )
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Display solution and clean up
@@ -179,7 +176,8 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
 
   !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
-  call msg( 'rs', 'Number of converged eigenpairs:', nconv)
+  call msg( 'rs', 'number of converged eigenpairs: ', nconv)
+  call msg( 'rs', '')
   if ( nconv < n_eig ) then
     n_eig = nconv
   endif

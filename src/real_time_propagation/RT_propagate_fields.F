@@ -156,7 +156,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
  ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
  ! F(t) = \int I(t) dt
  !
- if(Integrator_step==Integrator_nsteps+1) then
+ if(Integrator_step==Integrator_nsteps) then
    A_new%intensity=(abs(A_new%vecpot_vel(1))**2+abs(A_new%vecpot_vel(2))**2+abs(A_new%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
    A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
    A_ext%intensity=(abs(A_ext%vecpot_vel(1))**2+abs(A_ext%vecpot_vel(2))**2+abs(A_ext%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi

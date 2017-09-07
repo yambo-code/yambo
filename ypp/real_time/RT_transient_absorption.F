@@ -34,7 +34,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use drivers,         ONLY:l_kerr
  use KERR,            ONLY:DIP_projected_r90
 #endif
- use RT_control,      ONLY:RT_output,RT_apply
+ use RT_control,      ONLY:RT_output,RT_apply,JPC_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
  use X_m,             ONLY:Epsilon_ii
@@ -45,7 +45,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
  use parser_m,        ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(X_t)         :: Xbsk
  type(levels)      :: Xen
@@ -76,7 +76,7 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Setup of Time-range & Report
  !
- call RT_time_configuration_setup("CARRIERS")
+ call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
  !
  ! I need to compute the dipoles, however they rely on the parallel structure
  ! I would need a structure defined for ypp 
@@ -86,7 +86,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call parser('IncludeIP'   ,l_include_IP)
  !
  Xbsk%ib=BS_bands
- allocate(q_norm(1),bare_qpg(1,1))
+ YAMBO_ALLOC(q_norm,(1))
+ YAMBO_ALLOC(bare_qpg,(1,1))
  !
  call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"Response_G_space_Zero_Momentum",X=Xbsk)
@@ -94,11 +95,16 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  io_DIP=.FALSE.
  call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
  !
- deallocate(q_norm,bare_qpg)
+ YAMBO_FREE(q_norm)
+ YAMBO_FREE(bare_qpg)
  !
- allocate(Epsilon_ii(RT_conf%W_n_steps,2))
- if(l_TR_reflec) allocate(X_reflectance(RT_conf%W_n_steps,2))
- if(l_TR_transm) allocate(X_absorption_coeff(RT_conf%W_n_steps,2))
+ YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
+ if(l_TR_reflec) then
+   YAMBO_ALLOC(X_reflectance,(RT_conf%W_n_steps,2))
+ endif
+ if(l_TR_transm) then
+   YAMBO_ALLOC(X_absorption_coeff,(RT_conf%W_n_steps,2))
+ endif
  !
  ! Frequency setup
  !
@@ -226,7 +232,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    endif
    !
    deallocate(Xen%df)
-   nullify(Xen%df)
    !
    Epsilon_ii(:,1)=1._SP+Epsilon_ii(:,1)*Co
    Epsilon_ii(:,2)=      Epsilon_ii(:,2)*Co
@@ -289,9 +294,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
  enddo
  !
- deallocate(Epsilon_ii)
- if(allocated(X_reflectance))       deallocate(X_reflectance)
- if(allocated(X_absorption_coeff))  deallocate(X_absorption_coeff)
+ YAMBO_FREE(Epsilon_ii)
+ YAMBO_FREE(X_reflectance)
+ YAMBO_FREE(X_absorption_coeff)
  !
  call live_timing()
  !

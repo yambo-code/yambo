@@ -39,9 +39,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
  use com,            ONLY:msg
- use QP_m,           ONLY:QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref,QP_ctl_Wc,QP_ctl_Wv
+ use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
- use fft_m,      ONLY:fft_size
  use R_lattice,      ONLY:bz_samp,nXkibz
  use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
@@ -53,7 +52,7 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
- use fields,         ONLY:A_vecpot,A_ext
+ use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use X_m,            ONLY:X_t
@@ -62,7 +61,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
@@ -70,9 +69,16 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_DbGd,ik_E_DbGd,COM_,ib,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
- integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
+ integer, external :: io_RT_components
+ !
+ ! GPL_EXCLUDE_START
+ !
+ integer, external :: RT_Lifetimes_evaluation_plan
+ !
+ ! GPL_EXCLUDE_END
+ !
  logical :: RESTART
  !
  ! Initialize the Gf and potentials
@@ -81,8 +87,13 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! 
  ! G_lesser occupations and reference
  !====================================
- call RT_set_G_lesser() 
+ call RT_set_G_lesser()
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_set_occupations()
+ !
+ ! GPL_EXCLUDE_END
  !
  if(.not.l_RT_is_WFfree) then
    !
@@ -115,6 +126,8 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
  !
+ ! GPL_EXCLUDE_START
+ !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_JPSM=io_RT_components('JPSM',ID(4))
@@ -135,6 +148,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! To restart from RT only the G_lesser is necessary (latest and reference)
  !
  RESTART = (io_G ==0).and.(io_REF==0)
+ !
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
  ! Starting point 
@@ -204,6 +218,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Update occupations after loading from DB 
    !==========================================
+   !
    call RT_set_occupations()
    !
    call msg( 'nr','---RESTART report---')
@@ -211,6 +226,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
    call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
@@ -222,14 +238,26 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
+ else
+   !
+   NE_time=0._SP
+   !
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !
+ !NE_time=0._SP
+ !
+ ! GPL_INCLUDE_END
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) call RT_propagate_fields(E,A_vecpot,NE_time,RT_step)
+ if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
  !
  call msg('r','')
  !
@@ -250,6 +278,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    RT_eh_en(2)=RT_eh_en(2)+E%E_CBm
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Retarded Green Functions matrix
  ! ===============================
  !
@@ -261,21 +291,33 @@ subroutine RT_start_and_restart(E,k,q,X)
    N_Gr_descs=5
    !
    Gr_description(1)=' [Gr] Retarded Green`s function  : '//trim(Gr_kind)
-   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wc_E_ref(3,1)*HA2EV))
+   Gr_description(2)=' [Gr] Damping (c) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wc_E_ref*HA2EV))
    Gr_description(3)=' [Gr] Damping (c) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_Wc(3,1,1)))//' '//&
-&                    trim(real2ch(QP_ctl_Wc(3,2,1)))//' '//trim(real2ch(QP_ctl_Wc(3,3,1)))
-   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_Wv_E_ref(3,1)*HA2EV))
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wc(3)))
+   Gr_description(4)=' [Gr] Damping (v) Energy ref [eV]: '//trim(real2ch(QP_ctl_user(3,1)%Wv_E_ref*HA2EV))
    Gr_description(5)=' [Gr] Damping (v) [eV,adim,eV^-1]: '//&
-&                    trim(real2ch(QP_ctl_Wv(3,1,1)))//' '//&
-&                    trim(real2ch(QP_ctl_Wv(3,2,1)))//' '//trim(real2ch(QP_ctl_Wv(3,3,1)))
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(1)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
+&                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
    !
  else
+ !
+ ! GPL_EXCLUDE_END
+ !
    !
    N_Gr_descs=1
    Gr_description(1)=' [Gr] Retarded Green`s function  : none'
    !
+ !
+ ! GPL_EXCLUDE_START
+ !
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ call PP_redux_wait()
  !
  contains
    !
@@ -299,6 +341,8 @@ subroutine RT_start_and_restart(E,k,q,X)
        !
      endif
      !
+     ! GPL_EXCLUDE_START
+     !
      ! Set to zero occupations
      !
      RT_E_occupations          =rzero
@@ -307,6 +351,8 @@ subroutine RT_start_and_restart(E,k,q,X)
      RT_H_occupations_reference=rzero
      RT_delta0_occupations     =rzero
      RT_delta_occupations      =rzero
+     !
+     ! GPL_EXCLUDE_END
      !
      ! Set to zero current and fields
      !
@@ -317,6 +363,9 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    subroutine RT_set_G_lesser()
      !
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     real(SP):: Energy,f_occ,f_occ_ref,Width
+     !
      ! Defined from occupations %f
      ! In case RT_apply has been used the reference is
      ! defined from the %fo occupations
@@ -325,29 +374,50 @@ subroutine RT_start_and_restart(E,k,q,X)
        do ik=1,k%nibz
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+           !
            if (l_RT_uses_E_DbGd) then
-             !if (associated(E%W))  RT_E_and_k%W(ib,ik_RT_DbGd,1) =abs(E%W_DbGd(ib,ik_E_DbGd,1))
-             if (associated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1) =abs(E%W(ib,ik,1))
-             RT_E_and_k%En(ib,ik_RT_DbGd,1)=E%E_DbGd(ib,ik_E_DbGd,1)
-             !RT_E_and_k%kpt(:,ik_RT_DbGd)=k%pt(ik,:)
-             G_lesser(ib,ib,ik_RT_DbGd,1) =cI*E%f_DbGd(ib,ik_E_DbGd,1)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik_RT_DbGd) =cI*(E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1))
+             !
+             if (allocated(E%W))  E%W_DbGd(ib,ik_E_DbGd,1)     = abs(E%W(ib,ik,1))
+             !
+             Energy    = E%E_DbGd(ib,ik_E_DbGd,1)
+             f_occ     = E%f_DbGd(ib,ik_E_DbGd,1)
+             f_occ_ref = f_occ
+             Width     = 0._SP
+             if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
+             if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
            else
-             G_lesser(ib,ib,ik,1) =cI*E%f(ib,ik,1)
-             if (associated(E%W))  RT_E_and_k%W(ib,ik,1) =abs(E%W(ib,ik,1))
-             RT_E_and_k%En(ib,ik,1)=E%E(ib,ik,1)
-             !RT_E_and_k%kpt(:,ik)=k%pt(ik,:)
-             if (associated(E%fo)) G_lesser_reference(ib,ib,ik) =cI*E%fo(ib,ik,1)
+             Energy    = E%E(ib,ik,1)
+             f_occ     = E%f(ib,ik,1)
+             f_occ_ref = f_occ
+             Width     = 0._SP
+             if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
+             if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            endif
+           !
+           RT_E_and_k%En(ib,ik_RT_DbGd,1) = Energy
+           RT_E_and_k%W(ib,ik_RT_DbGd,1)  = Width 
+           !RT_E_and_k%kpt(:,ik_RT_DbGd)  = k%pt(ik,:)
+           !
+           G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
+           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
+           dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
+           !
          enddo
        enddo
      enddo
-     if (.not.(associated(E%fo))) G_lesser_reference=G_lesser(:,:,:,1)
-     dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser
-   ! 
+   !
+   ! GPL_EXCLUDE_START
+   !
    subroutine RT_set_occupations()
+     !
+     use functions,  ONLY:Fermi_fnc
+     use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
+&                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
+     !
+     real(SP):: En
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -355,10 +425,29 @@ subroutine RT_start_and_restart(E,k,q,X)
        RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
        RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
        RT_delta0_occupations(ib,:)     =         aimag(dG_lesser(ib,ib,:,1))
+       RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
        RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta0_occupations(ib,:)
        RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta0_occupations(ib,:)
      enddo
      !
+     ! RTA infinity ditributions
+     !
+     if (l_RT_relax_time_approx) then
+       do ib=RT_bands(1),RT_bands(2)
+         do ik=1,k%nibz
+           do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+             ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+             if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
+             if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
+             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
+             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
+           enddo
+         enddo
+       enddo
+     endif
+     !
    end subroutine RT_set_occupations
+   !
+   ! GPL_EXCLUDE_END
    !
 end subroutine RT_start_and_restart

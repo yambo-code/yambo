@@ -128,10 +128,10 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  if(n_sp_pol==1) E%E_ind_gap(1)  =E_g_ind_(1,1)
  if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
- !
+ ! 
  ! [2] Direct Gaps (min/max)
  !
- if(all(Nbf_==Nbm_)) then
+ if (all(Nbf_==Nbm_)) then
    E_g_dir_(1,:)=(/100._SP,-100._SP/)
    do ik=1,E%nk
      do i_sp_pol=1,n_sp_pol
@@ -151,7 +151,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    enddo
  endif
  !
- if(n_sp_pol==2.and.any(Nbf_==Nbm_)) then
+ if (n_sp_pol==2.and.any(Nbf_==Nbm_)) then
    do i_sp_pol=1,n_sp_pol
      !
      if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
@@ -172,20 +172,30 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  ! i.e. equal to the Fermi level, so that stretching corrections
  ! are applied properly
  !
- if(any(Nbf_/=Nbm_)) then
+ if (any(Nbf_/=Nbm_)) then
    E%E_VBM=0._SP
    E%E_CBm=0._SP
  endif
  !
- if(n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
- if(n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
+ if (n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
+ if (n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !
  ! From Shadow variables to optional variables
  !
- if (present(I_dir)) I_dir=I_dir_
- if (present(E_g_dir)) E_g_dir=E_g_dir_
- if (present(E_g_ind)) E_g_ind=E_g_ind_
- if (present(Nbf)) Nbf=Nbf_
- if (present(Nbm)) Nbm=Nbm_
+ if (present(I_dir)) then
+   I_dir=I_dir_
+ endif
+ if (present(E_g_dir)) then
+   E_g_dir=E_g_dir_
+ endif
+ if (present(E_g_ind)) then
+   E_g_ind=E_g_ind_
+ endif
+ if (present(Nbf)) then
+   Nbf=Nbf_
+ endif
+ if (present(Nbm)) then
+   Nbm=Nbm_
+ endif
  !
 end subroutine

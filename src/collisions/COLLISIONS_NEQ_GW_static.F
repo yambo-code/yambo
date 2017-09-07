@@ -26,7 +26,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! NEQ GW collisions 
  !
  use pars,          ONLY:SP,rZERO
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
@@ -50,7 +49,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  !
- implicit none
+#include<memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -62,7 +61,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  integer                  ::i_coll1,i_coll2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
 &                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,PAR_NC_local,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_sp,i_kmq_G0,&
-&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,&
+&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,PAR_nPLASMA_local,PAR_nPLASMA_step,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_coll1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
@@ -112,8 +111,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !------------
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
- allocate(EM1s(X%ng,X%ng),stat=alloc_err)
- call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
+ YAMBO_ALLOC(EM1s,(X%ng,X%ng))
  !
  call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
@@ -121,10 +119,19 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=GW_NEQ_collisions%PAR_N
- if (associated(GW_NEQ_collisions%IO_status)) then
-   PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
+ if (allocated(GW_NEQ_collisions%IO_status)) then
+   PAR_NC_local=0
+   do i_coll1=1,GW_NEQ_collisions%N
+     if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll1)) cycle
+     if (GW_NEQ_collisions%IO_status(i_coll1)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
- call live_timing("Collisions",PAR_NC_local*PAR_nQ)
+ !
+ PAR_nPLASMA_step =max(1,count(PAR_IND_Plasma%element_1D(:))/100)
+ PAR_nPLASMA_local=count(PAR_IND_Plasma%element_1D(:))/PAR_nPLASMA_step
+ !
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ*PAR_nPLASMA_local)
  !
  ! Write Database Header 
  !
@@ -279,11 +286,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
            !
          endif
          !
+         if ( mod(count(PAR_IND_Plasma%element_1D(:i_J)),PAR_nPLASMA_step)==0 ) call live_timing(steps=1)
+         !
        enddo
        !
      enddo
-     !
-     call live_timing(steps=1)
      !
    enddo 
    !
@@ -308,8 +315,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- deallocate(EM1s)
- call mem_est("EM1s")
+ YAMBO_FREE(EM1s)
  call X_alloc('X')
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)

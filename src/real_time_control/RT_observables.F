@@ -33,7 +33,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -43,11 +43,11 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),   intent(inout) :: OBSERVABLES(22)
+ real(SP),   intent(inout) :: OBSERVABLES(23)
  !
  ! Workspace
  !
- real(SP) :: NCarr(2),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
  real(SP) :: E_IP
  !
 #if defined _TIMING
@@ -57,7 +57,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Current, Polarization and Magnetization
  !==========================================
  ! (evaluated also in RT_integrator when and induced field is included)
- call RT_current_AND_polarization(k,en,dG_lesser,A_vecpot)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
  if (.not. RT_do_it('OUT') ) then
 #if defined _TIMING
@@ -66,14 +66,16 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
    return
  endif
  !
- NCarr =OBSERVABLES( 1: 2)
- TFit  =OBSERVABLES( 3: 4)
- EfFit =OBSERVABLES( 5: 6)
- Ener  =OBSERVABLES( 7:11)
- Entr  =OBSERVABLES(12:14)
- TEntr =OBSERVABLES(15:17)
- EnEntr=OBSERVABLES(18:20)
- BGR   =OBSERVABLES(21:22)
+ ! GPL_EXCLUDE_START
+ !
+ NCarr =OBSERVABLES( 1: 3)
+ TFit  =OBSERVABLES( 4: 5)
+ EfFit =OBSERVABLES( 6: 7)
+ Ener  =OBSERVABLES( 8:12)
+ Entr  =OBSERVABLES(13:15)
+ TEntr =OBSERVABLES(16:18)
+ EnEntr=OBSERVABLES(19:21)
+ BGR   =OBSERVABLES(22:23)
  !
  ! Carriers
  !==========
@@ -92,6 +94,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_BGR(en,k,BGR)
  !
  OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

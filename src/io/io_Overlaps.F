@@ -22,18 +22,19 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_Overlaps(X,ID)
-
  !
- use pars,          ONLY:SP,schlen
+ use pars,          ONLY:schlen
  use X_m,           ONLY:X_t,X_alloc,DIP_S
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz,nXkbz
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+&                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
  !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  type(X_t)   ::X
  integer     ::ID
@@ -48,6 +49,10 @@ integer function io_Overlaps(X,ID)
    io_Overlaps=IO_NOT_ALLOWED
    goto 1
  endif
+ !
+#if defined _TIMING
+ call timing('io_Overlaps',OPR='start')
+#endif
  !
  io_Overlaps=io_connect(desc='Overlaps',type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
@@ -103,5 +108,9 @@ integer function io_Overlaps(X,ID)
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_Overlaps',OPR='stop')
+#endif
  !
 end function

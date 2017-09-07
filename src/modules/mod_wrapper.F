@@ -29,7 +29,7 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP
+ use pars,   ONLY:SP,cI
  !
  implicit none
  !
@@ -50,6 +50,7 @@ module wrapper
  public :: V_dot_V
  public :: real_V_dot_V
  public :: M_by_V
+ public :: FADEVA
  !
  contains
    !
@@ -58,6 +59,18 @@ module wrapper
    !===================
    !
    subroutine mm_cgemm(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     !
+     ! CGEMM  performs one of the matrix-matrix operations
+     !
+     !    C := alpha*op( A )*op( B ) + beta*C,
+     !
+     ! where  op( X ) is one of
+     !
+     !    op( X ) = X   or   op( X ) = X**T   or   op( X ) = X**H,
+     !
+     ! alpha and beta are scalars, and A, B and C are matrices, with op( A )
+     ! an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
+     !
      complex(SP), intent(in)  :: ALPHA,BETA
      integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
      character,   intent(in)  :: TRANSA,TRANSB
@@ -232,5 +245,26 @@ module wrapper
 #endif
      !
    end function V_dot_V
+   !
+   complex(SP) function FADEVA(Z)
+     !
+     complex(SP), intent(in) :: Z
+     real(SP)    :: rW(2),rZ(2)
+     integer     :: istatus
+     !
+     istatus=0
+     rZ=(/real(Z,SP),aimag(Z)/)
+     !
+     ! Compute rW=w(-z)
+     !=================
+#if defined _DOUBLE
+     call zwofz(rZ,rW,istatus)
+#else
+     call cwofz(rZ,rW,istatus)
+#endif
+     !
+     FADEVA=cmplx(rW(1),rW(2),SP)
+     !
+   end function
    !
 end module

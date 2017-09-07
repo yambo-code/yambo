@@ -13,8 +13,9 @@
 # [ MAKE ] @MAKE@
 #
 # [@DP_check@] Double precision
-# [@DEBUG_check@] Enable Debug compilation
+# [@KEEP_OBJS_check@] Keep object files
 # [@TIME_profile_check@] Run-Time timing profile 
+# [@MEM_profile_check@] Run-Time memory profile 
 #
 # 
 # - PARALLEL SUPPORT -
@@ -39,7 +40,7 @@
 #
 # [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
 #                   @FFT_INCS@
-# [@BLAS_str@] BLAS      : @BLAS_LIBS@
+# [@BLAS_str@] BLAS      : @BLAS_LIBS@ @BLAS_info@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@
@@ -65,5 +66,4 @@
 # [ F77 ] @F77@ @FFLAGS@
 # [ F77U] @FUFLAGS@
 # [Cmain] @FCMFLAG@
-#
 #

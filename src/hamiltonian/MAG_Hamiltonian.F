@@ -53,11 +53,9 @@ subroutine MAG_Hamiltonian()
  ! Ax =  0              Ay=  MAG_B x        Az=0    
  ! *******************************************************************************************
  !
- !
  use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
  use hamiltonian,    ONLY:Hzero
- use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use R_lattice,      ONLY:nkibz
@@ -71,7 +69,7 @@ subroutine MAG_Hamiltonian()
  use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
  !
- implicit none
+#include<memory.h>
  !
  ! Parallelization indexes
  !
@@ -79,13 +77,13 @@ subroutine MAG_Hamiltonian()
  !
  ! Dummies
  !
- integer    :: ir,i_sp_pol,i_wf(n_spin),j_wf(n_spin),ik,ib,ibp,i_spinor,j_spinor,i_spin
+ integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_spinor,j_spinor
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
  !
  ! Allocs
  !
  real(SP),    allocatable :: r_cell_cc(:,:)
- complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:)
+ complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:,:)
  real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),H_paramagn_z(:),&
 &                            H_diamagn(:) 
  !
@@ -130,14 +128,14 @@ subroutine MAG_Hamiltonian()
    if(n_sp_pol==2) then
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,1,1)= 0.5*MAG_B/SPEED_OF_LIGHT
-       H_pauli(ir,2,1)=-0.5*MAG_B/SPEED_OF_LIGHT
+       H_pauli(ir,1,1,1)= 0.5*MAG_B/SPEED_OF_LIGHT
+       H_pauli(ir,1,1,2)=-0.5*MAG_B/SPEED_OF_LIGHT
      enddo 
    else if(n_spinor==2) then
      ! Pauli matrices
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
-       H_pauli(ir,:,:)=Bx*sigma_x+By*sigma_y+Bz*sigma_z
+       H_pauli(ir,:,:,1)=Bx*sigma_x+By*sigma_y+Bz*sigma_z
      enddo 
      H_pauli=0.5*H_pauli/SPEED_OF_LIGHT
    endif
@@ -181,12 +179,13 @@ subroutine MAG_Hamiltonian()
        !
        if (.not.px%element_2D(ik,ib)) cycle
        !
+       i_wf=WF%index(ib ,ik,i_sp_pol)
+       !
        do ibp=1,SC_bands(2)
          !
+         ip_wf=WF%index(ibp,ik,i_sp_pol)
+         !
          do j_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+j_spinor-1
-           j_wf(j_spinor)=WF%index(ibp,ik,i_spin)
            !
            ! Matrix Elements
            !=================
@@ -198,22 +197,20 @@ subroutine MAG_Hamiltonian()
            !
            H_tmp=cZERO
            !
+           if (MAG_landau) then
+             if(H_magn_x_on) H_tmp(:,j_spinor,j_spinor)= H_paramagn_x(:)*wf_x(:,j_spinor,ip_wf)
+             if(H_magn_y_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_y(:)*wf_y(:,j_spinor,ip_wf)
+             if(H_magn_z_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_z(:)*wf_z(:,j_spinor,ip_wf)
+             H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%c(:,j_spinor,ip_wf)
+           endif
+           !
            do i_spinor=1,n_spinor
              !
-             i_spin=i_sp_pol+i_spinor-1
-             i_wf(i_spinor)=WF%index(ib ,ik,i_spin)
-             !
-             if (MAG_landau.and.i_spinor==j_spinor) then
-               if(H_magn_x_on) H_tmp(:,j_spinor,j_spinor)= H_paramagn_x(:)*wf_x(:,j_wf(j_spinor))
-               if(H_magn_y_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_y(:)*wf_y(:,j_wf(j_spinor))
-               if(H_magn_z_on) H_tmp(:,j_spinor,j_spinor)= H_tmp(:,j_spinor,j_spinor)+H_paramagn_z(:)*wf_z(:,j_wf(j_spinor))
-               H_tmp(:,j_spinor,j_spinor)=H_tmp(:,j_spinor,j_spinor)+H_diamagn(:)*WF%c(:,j_wf(j_spinor))
-             endif
-             !
-             if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor)+H_pauli(:,i_spin,j_spinor)*WF%c(:,j_wf(j_spinor))
+             if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor) &
+             &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%c(:,j_spinor,ip_wf)
              !
              Hzero(ib,ibp,ik,i_sp_pol)= Hzero(ib,ibp,ik,i_sp_pol)+&
-&              Vstar_dot_V(fft_size,WF%c(:,i_wf(i_spinor)),H_tmp(:,i_spinor,j_spinor))
+&              Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
          enddo
@@ -246,28 +243,29 @@ subroutine MAG_Hamiltonian()
      integer :: level
      select case(level)
        case(0)
-         allocate(r_cell_cc(fft_size,3))
-         call mem_est("r_cell_cc",(/fft_size*3/))
+         YAMBO_ALLOC(r_cell_cc,(fft_size,3))
          if (MAG_landau) then
-           if(H_magn_x_on) allocate(H_paramagn_x(fft_size))
-           if(H_magn_y_on) allocate(H_paramagn_y(fft_size))
-           if(H_magn_z_on) allocate(H_paramagn_z(fft_size))
-           call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y",(/fft_size,fft_size,fft_size/))
-           allocate(H_diamagn(fft_size))
-           call mem_est("H_diamagn",(/fft_size/))
+           if(H_magn_x_on) then
+             YAMBO_ALLOC(H_paramagn_x,(fft_size))
+           endif
+           if(H_magn_y_on) then
+             YAMBO_ALLOC(H_paramagn_y,(fft_size))
+           endif
+           if(H_magn_z_on) then
+             YAMBO_ALLOC(H_paramagn_z,(fft_size))
+           endif
+           YAMBO_ALLOC(H_diamagn,(fft_size))
            if(H_magn_x_on) H_paramagn_x=0._SP
            if(H_magn_y_on) H_paramagn_y=0._SP
            if(H_magn_z_on) H_paramagn_z=0._SP
            H_diamagn=0._SP
          endif
          if (MAG_pauli) then
-           allocate(H_pauli(fft_size,n_spin,n_spinor))
-           call mem_est("H_pauli",(/size(H_pauli)/))
+           YAMBO_ALLOC(H_pauli,(fft_size,n_spin,n_spinor,n_sp_pol))
            H_pauli=cZERO
          endif
        case(1)
-         allocate(H_tmp(fft_size,n_spinor,n_spinor))
-         call mem_est("H_tmp",(/size(H_tmp)/))
+         YAMBO_ALLOC(H_tmp,(fft_size,n_spinor,n_spinor))
          H_tmp = cZERO
      end select
    end subroutine
@@ -276,20 +274,24 @@ subroutine MAG_Hamiltonian()
      integer :: level
      select case(level)
        case(1)
-         deallocate(r_cell_cc)
-         call mem_est("r_cell_cc")
+         YAMBO_FREE(r_cell_cc)
        case(2)
          if (MAG_landau) then
-           if(H_magn_x_on) deallocate(H_paramagn_x)
-           if(H_magn_y_on) deallocate(H_paramagn_y)
-           if(H_magn_z_on) deallocate(H_paramagn_z)
-           deallocate(H_diamagn)
+           if(H_magn_x_on) then
+             YAMBO_FREE(H_paramagn_x)
+           endif
+           if(H_magn_y_on) then
+             YAMBO_FREE(H_paramagn_y)
+           endif
+           if(H_magn_z_on) then
+             YAMBO_FREE(H_paramagn_z)
+           endif
+           YAMBO_FREE(H_diamagn)
          endif
-         if (MAG_pauli)  deallocate(H_pauli)
-         deallocate(H_tmp)
-         call mem_est("H_paramagn_x H_paramagn_y H_paramagn_y")
-         call mem_est("H_pauli H_diamagn")
-         call mem_est("H_tmp")
+         if (MAG_pauli)  then
+           YAMBO_FREE(H_pauli)
+         endif
+         YAMBO_FREE(H_tmp)
      end select
   end subroutine
   !

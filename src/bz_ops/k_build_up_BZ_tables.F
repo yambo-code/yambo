@@ -30,14 +30,13 @@ subroutine k_build_up_BZ_tables(k)
  !  R k_ibz = S k_ibz with S=k%s_table(k,R)  
  !  R k_ibz = k_bz    with k_bz=k%k_table(k,R)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:c2a,rlu_v_is_zero
  use D_lattice,      ONLY:nsym
- use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k
  !
  ! Work Space
@@ -48,25 +47,20 @@ subroutine k_build_up_BZ_tables(k)
  !
  s_table_is_ok=.FALSE.
  k_table_is_ok=.FALSE.
- if (associated(k%s_table)) then
+ if (allocated(k%s_table)) then
    if (size(k%s_table)==k%nibz*nsym) s_table_is_ok=.TRUE.
  endif
- if (associated(k%k_table)) then
+ if (allocated(k%k_table)) then
    if (size(k%k_table)==k%nibz*nsym) k_table_is_ok=.TRUE.
  endif
- if (.not.k_table_is_ok.and.associated(k%k_table)) then
-   deallocate(k%k_table)
-   call mem_est("k_k_table")
+ if (.not.k_table_is_ok) then
+   YAMBO_FREE(k%k_table)
+   YAMBO_ALLOC(k%k_table,(k%nibz,nsym))
  endif
- if (.not.s_table_is_ok.and.associated(k%s_table)) then
-   deallocate(k%s_table)
-   call mem_est("k_s_table")
+ if (.not.s_table_is_ok) then
+   YAMBO_FREE(k%s_table)
+   YAMBO_ALLOC(k%s_table,(k%nibz,nsym))
  endif
- !
- allocate(k%s_table(k%nibz,nsym))
- call mem_est("k_s_table",(/size(k%s_table)/),(/IP/))
- allocate(k%k_table(k%nibz,nsym))
- call mem_est("k_k_table",(/size(k%k_table)/),(/IP/))
  !
  call k_ibz2bz(k,'a',.false.)
  k%s_table=0

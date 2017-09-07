@@ -56,7 +56,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
- !
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  implicit none
  !
  type(levels)  :: E
@@ -68,6 +70,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  integer       :: ID,i_kind,IO_err
  character(20) :: PAR_ch,FREE_ch
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='start')
+#endif
  !
  call section('*','Extended collisions')
  !=======================================
@@ -100,8 +106,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !===============
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
  if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
+ !
+ ! GPL_EXCLUDE_END
  !
  ! PARALLEL Setup
  !================
@@ -150,6 +161,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    endif
    !
  endif
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _QED
  !
@@ -205,6 +218,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! CLEAN
  !=======
  !
@@ -220,8 +235,13 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      call COLLISIONS_basic_operations( "clean",    HXC_collisions )
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
+     !
+     ! GPL_EXCLUDE_START
+     !
      call COLLISIONS_basic_operations( "clean",      P_collisions )
      call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -237,8 +257,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
+ !
+ ! GPL_EXCLUDE_END
+ !
+#if defined _TIMING
+ call timing('COLLISIONS_eval',OPR='stop')
+#endif
  !
  contains
    !

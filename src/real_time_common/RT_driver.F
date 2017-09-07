@@ -48,16 +48,16 @@ subroutine RT_driver(E,X,k,q)
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_update_QP_Energies
  use plasma,          ONLY:PLASMA_free,EH_gas
- use memory_m,        ONLY:mem_est
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_vecpot
+ use fields,          ONLY:A_tot
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,&
+&                          PP_redux_wait
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
- implicit none
+#include<memory.h>
  !
  ! Notice that E is never changed!
  !
@@ -70,7 +70,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: OBSERVABLES(22)
+ real(SP)          :: OBSERVABLES(23)
  !
  integer, external :: io_RT_components
  !
@@ -129,8 +129,13 @@ subroutine RT_driver(E,X,k,q)
  ! QP & carriers corrections 
  !===========================
  !
- call QP_apply(RT_bands,E,k,     "G",msg_fmt='s')
+ call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Core initialization
  !
@@ -176,12 +181,12 @@ subroutine RT_driver(E,X,k,q)
    !
    call WF_free(WF)
    !
-   deallocate(rho_n,rho_reference)
-   call mem_est("rho_reference rho")
+   YAMBO_FREE(rho_n)
+   YAMBO_FREE(rho_reference)
    !
    if(n_spin>1) then
-     deallocate(magn_n,magn_reference)
-     call mem_est("magn_reference magn")
+     YAMBO_FREE(magn_n)
+     YAMBO_FREE(magn_reference)
    endif
    !
  endif
@@ -199,6 +204,8 @@ subroutine RT_driver(E,X,k,q)
  ! Collisions
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
+ !
+ ! GPL_EXCLUDE_START
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
@@ -218,12 +225,16 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
  !
  ! Initialize output files
  !==========================
+ !
+ ! GPL_EXCLUDE_END
  !
  call RT_output_and_IO_driver('initialize',E,k,OBSERVABLES)
  !
@@ -264,11 +275,15 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k,q,NE_time)
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   !
+   ! GPL_EXCLUDE_START
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
    call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Write DBs and output
    !=====================
@@ -285,13 +300,15 @@ subroutine RT_driver(E,X,k,q)
    ! I (eventually) stop after all actions at the time just calculated in the previous step of the loop
    !=======================
    !
+   call PP_redux_wait()
+   !
    l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
    !
    if (l_Dynamics_is_over) cycle
    !
    ! Integration
    !=============
-   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_vecpot,RT_dyn_step,E,k,q,NE_time)
+   call RT_Integrator(dG_lesser(:,:,:,i_MEM_next),dG_lesser(:,:,:,i_MEM_now),A_tot,A_tot,RT_dyn_step,E,k,q,NE_time)
    !
    ! G_lesser update
    !=================
@@ -321,10 +338,16 @@ subroutine RT_driver(E,X,k,q)
      call RT_free()
      call RT_free_control()
      call WF_free(WF)
+     !
+     ! GPL_EXCLUDE_START
+     !
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     !
+     ! GPL_EXCLUDE_END
+     !
+     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      call set_real_printed_length()
    end subroutine
    !

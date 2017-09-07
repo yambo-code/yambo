@@ -36,7 +36,7 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
  !
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
- real(SP),      intent(out):: Ncarr(2)
+ real(SP),      intent(out):: Ncarr(3)
  real(SP),    intent(inout):: Tfit(2),EfFit(2)
  !
  ! Workspace
@@ -88,8 +88,10 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
          if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta0_occupations(ib,ik_RT)
        endif
      enddo
-     Ncarr=Ncarr+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
+     Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
    enddo
  enddo
+ !
+ Ncarr(1)=Ncarr(2)-Ncarr(3)
  !
 end subroutine RT_carriers_number_and_temperature

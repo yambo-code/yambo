@@ -29,16 +29,16 @@ subroutine build_spin_sop()
 &                         sigma_0,sigma_x,sigma_y,sigma_z
  use electrons,      ONLY:n_spinor
  !
- implicit none
+#include<memory.h>
  !
  complex(SP)    ::t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !
- if(allocated(spin_sop)) deallocate(spin_sop)
+ YAMBO_FREE(spin_sop)
  !
- allocate(spin_sop(n_spinor,n_spinor,nsym))
+ YAMBO_ALLOC(spin_sop,(n_spinor,n_spinor,nsym))
  !
  if(n_spinor==1) then
    spin_sop(1,1,:)=cONE

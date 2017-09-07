@@ -85,7 +85,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
    !
    ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
-   ! Its low field expansion however gives <nk|iA*[x,V(r,r')]|n'k>, which is included in DIP_J
+   ! Its low field expansion however gives <nk|iA*[x,V(r,r')]|n'k>, which is included in DIP_P
    !
  else  
    !
@@ -109,7 +109,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        Jspinor(:,:,:)=DIP_P_spinor(:,:,:,i1,i1,PAR_Xk_ibz_index(ik))
        do i_spinor=1,n_spinor
          do j_spinor=1,n_spinor
-           ExJs(:,i_spinor,j_spinor)=cross_product(E_vec_pot,Jspinor(:,i_spinor,j_spinor))
+           ExJs(:,i_spinor,j_spinor)=cross_product(conjg(E_vec_pot),Jspinor(:,i_spinor,j_spinor))
          enddo
        enddo
        sigma_dot_ExJs=sum(sigma_x*ExJS(1,:,:))+ &

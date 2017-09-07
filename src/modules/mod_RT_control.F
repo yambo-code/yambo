@@ -26,8 +26,7 @@ module RT_control
  use pars,       ONLY:SP,lchlen,schlen
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics
- !
- implicit none
+#include<memory.h>
  !
  integer                  :: n_RT_descriptions = 0
  character(lchlen)        :: RT_description(100)
@@ -60,7 +59,8 @@ module RT_control
  !
  real(SP), allocatable    :: J_cache(:,:)
  real(SP), allocatable    :: P_cache(:,:)
- real(SP), allocatable    :: M_cache(:,:)
+ real(SP), allocatable    :: Ms_cache(:,:)
+ real(SP), allocatable    :: Ml_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -111,67 +111,43 @@ module RT_control
      !
      use pars,           ONLY:rZERO
      use real_time,      ONLY:NE_steps
-     use memory_m,       ONLY:mem_est
      use electrons,      ONLY:n_spin
      !
      if(l_NE_dynamics) then
        !
-       allocate(J_cache(6,IO_JPSM_cache_steps))
-       call mem_est('Current_Cache',(/size(J_cache)/),(/SP/))
+       YAMBO_ALLOC(J_cache,(6,IO_JPSM_cache_steps))
        J_cache=rZERO
-       allocate(P_cache(6,IO_JPSM_cache_steps))
-       call mem_est('Polarization_Cache',(/size(P_cache)/),(/SP/))
+       YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
        P_cache=rZERO
        if(n_spin>1) then
-         allocate(M_cache(6,IO_JPSM_cache_steps))
-         call mem_est('Magnetization_Cache',(/size(M_cache)/),(/SP/))
-         M_cache=rZERO
+         YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
+         Ms_cache=rZERO
+         YAMBO_ALLOC(Ml_cache,(6,IO_JPSM_cache_steps))
+         Ml_cache=rZERO
        endif
        !
      endif
      !
-     if (allocated(JPC_RT_IO_t%Time)) deallocate(JPC_RT_IO_t%Time)
+     YAMBO_FREE(JPC_RT_IO_t%Time)
      !
-     allocate(JPC_RT_IO_t%Time(NE_steps))
-     call mem_est('JPC_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
      JPC_RT_IO_t%Time=rZERO
      !
-     if(allocated(GF_RT_IO_t%Time)) deallocate(GF_RT_IO_t%Time)
+     YAMBO_FREE(GF_RT_IO_t%Time)
      !
-     allocate(GF_RT_IO_t%Time(NE_steps))
-     call mem_est('GF_RT_IO_t_Time',(/NE_steps/),(/SP/))
+     YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
      GF_RT_IO_t%Time=rZERO
      !
    end subroutine RT_alloc_control
    !
    subroutine RT_free_control
      !
-     use memory_m,       ONLY:mem_est
-     !
-     if(allocated(J_cache)) then
-       deallocate(J_cache)
-       call mem_est('Current_Cache')
-     endif
-     !
-     if(allocated(P_cache)) then
-       deallocate(P_cache)
-       call mem_est('Polarization_Cache')
-     endif
-     !
-     if(allocated(M_cache)) then
-       deallocate(M_cache)
-       call mem_est('Magnetization_Cache')
-     endif
-     !
-     if(allocated(JPC_RT_IO_t%Time)) then
-       deallocate(JPC_RT_IO_t%Time)
-       call mem_est('JPC_RT_IO_t_Time')
-     endif
-     !
-     if(allocated(GF_RT_IO_t%Time)) then
-       deallocate(GF_RT_IO_t%Time)
-       call mem_est('GF_RT_IO_t_Time')
-     endif
+     YAMBO_FREE(J_cache)
+     YAMBO_FREE(P_cache)
+     YAMBO_FREE(Ms_cache)
+     YAMBO_FREE(Ml_cache)
+     YAMBO_FREE(JPC_RT_IO_t%Time)
+     YAMBO_FREE(GF_RT_IO_t%Time)
      !
    end subroutine RT_free_control
    !

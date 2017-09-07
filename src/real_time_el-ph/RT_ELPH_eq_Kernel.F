@@ -51,9 +51,8 @@ subroutine RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat)
      !
      do i_e=RT_bands(1),RT_bands(2)
        !
-       OCCUPATIONS = (N_q(i_map(-i_s))*(1._SP-E%f(i_e ,ik_m_q,1))*E%f(i_np,ik    ,1)  -&
-&                     N_q(i_map( i_s))*(1._SP-E%f(i_np,ik    ,1))*E%f(i_e ,ik_m_q,1))/ &
-&                    spin_occ/spin_occ
+       OCCUPATIONS = (N_q(i_map(-i_s))*(1._SP-E%f(i_e ,ik_m_q,1)/spin_occ)*E%f(i_np,ik    ,1)  -&
+&                     N_q(i_map( i_s))*(1._SP-E%f(i_np,ik    ,1)/spin_occ)*E%f(i_e ,ik_m_q,1))/spin_occ
        DELTA       = E%E(i_e,ik_m_q,1)-E%E(i_np,ik,1)
        GAMMA_      = abs(E%W(i_e,ik_m_q,1))+abs(E%W(i_np,ik,1))
        !

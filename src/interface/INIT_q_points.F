@@ -29,14 +29,13 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  ! 2. reads the q-points from the e-p DB's 
  !
  use pars,        ONLY:SP,schlen,DP
- use memory_m,    ONLY:mem_est
  use it_m,        ONLY:nflines,flines,infile,infile_verbosity,V_kpt,V_all
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,bz_samp_reset,q_source
 #if defined _ELPH
  use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded
 #endif
  use vec_operate, ONLY:c2a
- implicit none
+#include<memory.h>
  !
  logical :: l_WRITE
  integer :: io_QINDX_err
@@ -72,8 +71,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
        if (i1==2) q_pt(nqibz,:)=-real(q_pt_db,SP)
      enddo
      if (i1==1.and..not.allocated(q_pt)) then
-       allocate(q_pt(nqibz,3))
-       call mem_est("q_pt",(/nqibz*3/),(/SP/))  
+       YAMBO_ALLOC(q_pt,(nqibz,3))
      endif
    enddo
    return
@@ -81,8 +79,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  else if (allocated(ph_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
    q_source="Electron-Phonon databases"
    nqibz=elph_nDBs
-   allocate(q_pt(nqibz,3))
-   call mem_est("q_pt",(/nqibz*3/),(/SP/))  
+   YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(ph_qpt(:,:),SP)
    return
 #endif
@@ -91,9 +88,8 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
    call init_parse_K_list(q,'QptCoord')
    nqibz=q%nibz
    if (nqibz>0)  then
-     allocate(q_pt(nqibz,3))
+     YAMBO_ALLOC(q_pt,(nqibz,3))
      q_pt=q%pt
-     call mem_est("q_pt",(/nqibz*3/),(/SP/))  
    endif
    call bz_samp_reset(q)
    return
@@ -123,7 +119,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
      real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
-     write (db_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
+     write (db_name,'(a,i6.6)') 'SAVE/s.dbph_',iabs(i_q)
      io_err=io_connect(desc=trim(db_name),type=-2,ID=ID)
      get_e_p_q_point=io_err
      !

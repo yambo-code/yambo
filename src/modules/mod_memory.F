@@ -21,133 +21,299 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module memory_m
+module memory
  !
- use pars,       ONLY:SP,lchlen,schlen
- use stderr,     ONLY:string_split
- use openmp,     ONLY:master_thread
+ use pars,          ONLY:SP,schlen,IP,DP,LP,N_MEM_max,N_MEM_SAVE_max,&
+&                        N_MEM_shelf_max,N_MEM_LIBs_max,N_MEM_max_element_components
+ use openmp,        ONLY:master_thread
+ use iso_c_binding, ONLY:c_int
  !
  implicit none
  !
- integer, parameter :: max_mem_elements=100000
- integer, parameter :: preset_kind=2*SP
- character(schlen), private  :: mem_element(max_mem_elements)
- integer          , private  :: element_loaded
- real(SP)         , private  :: mem_element_size(max_mem_elements)
- real(SP)         :: mem_sum
+ integer :: MEM_err                  = 0
+ integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
+ integer             :: MAX_MEM_bytes = 0
+ integer             :: TOT_MEM_bytes
+ integer             :: TOT_MEM_bytes_SAVE =  0
+ integer             :: MEM_treshold       =  1  ! Mb*1000=Kb
+ integer             :: MEM_SAVE_treshold  =  10 ! "
+ integer             :: MEM_jump_treshold  =  100! "
+ !
+ integer :: N_MEM_elements           = 0
+ type MEM_element
+   !
+   ! Total...
+   character(schlen) :: shelf
+   integer           :: use  
+   !
+   ! Specific...
+   integer           :: N
+   character(schlen) :: name(N_MEM_max_element_components)
+   character(schlen) :: desc(N_MEM_max_element_components)
+   integer           :: kind(N_MEM_max_element_components)
+   integer           :: size(N_MEM_max_element_components)
+   logical           :: composed(N_MEM_max_element_components)
+   !
+ end type MEM_element
+ type(MEM_element) :: MEMs(N_MEM_max)
+ !
+ integer :: N_MEM_SAVE_elements = 0
+ type(MEM_element) :: LARGE_MEMs(N_MEM_SAVE_max)
+ !
+ ! Library
+ !
+ integer :: N_MEM_shelf       = 0
+ integer :: N_MEM_LIBs        = 0
+ !
+ type MEM_lib_element
+   character(schlen) :: name
+   integer           :: shelf
+ end type MEM_lib_element
+ !
+ character(schlen)     :: MEM_shelf(N_MEM_shelf_max)
+ type(MEM_lib_element) :: MEM_LIBs(N_MEM_LIBs_max)
+ !
+ interface MEM_dri
+   module procedure MEM_clean,MEM_error,&
+#ifndef _DOUBLE
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
+&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_cd3,MEM_rd3,MEM_lp3,&
+&                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,MEM_cd4,&
+&                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5,&
+&                                           MEM_c6,       MEM_cd6
+#else
+&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_lp1,&
+&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,&
+&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_lp3,&
+&                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,&
+&                             MEM_i5,MEM_r5,MEM_c5,               &
+&                                           MEM_c6
+#endif
+ end interface MEM_dri
+ !
+ interface  
+   !
+   subroutine MEM_manager(what,Sz,Kn,REPORT)
+     character(*)         :: what
+     integer,optional     :: Sz
+     integer,optional     :: Kn
+     character(*),optional:: REPORT
+   end subroutine 
+   !
+ end interface
  !
  contains
    !
-   subroutine mem_reset()
-     mem_element=' '
-     mem_element_size=0._SP
-     element_loaded=0
-     mem_sum=0._SP
+   subroutine MEM_element_init(MEM_element_to_init,size_)
+     integer,           intent(in)  :: size_
+     type(MEM_element), intent(out) :: MEM_element_to_init(size_)
+     integer                        :: i1
+     do i1=1,size_
+       MEM_element_to_init(i1)%shelf      = " "
+       MEM_element_to_init(i1)%use        = 0
+       MEM_element_to_init(i1)%N          = 0
+       MEM_element_to_init(i1)%name(:)    = " "
+       MEM_element_to_init(i1)%desc(:)    = " "
+       MEM_element_to_init(i1)%kind(:)    = 0
+       MEM_element_to_init(i1)%size(:)    = 0
+       MEM_element_to_init(i1)%composed(:)= .false.
+     enddo
    end subroutine
    !
-   subroutine mem_est(what,elements_size,elements_kind,errors,quiet,overall_report)
-     use drivers,      ONLY:infile_editing
-     use com,          ONLY:msg,error,warning
-     use units,        ONLY:Gigabyte
-     character(*)         :: what
-     integer,optional     :: elements_size(:)
-     integer,optional     :: elements_kind(:)
-     integer,optional     :: errors(:)
-     logical,optional     :: quiet,overall_report
-     ! 
-     ! Work Space
-     !
-     integer :: i1,i2,local_kind
-     logical :: loading,stdout_report
-     real(SP):: mem_moved,mem_element_size_change(max_mem_elements)
-     real(SP),parameter :: mem_tresh=0.01_SP  ! ( in Gb. CAREFUL! mem_tresh must be >0)
-     character(lchlen)  ::ch(2)
-     character(schlen)  ::input_name(10),action
-     !
-     if (.not.master_thread) return
-     !
-     mem_element_size_change=0._SP
-     !
-     loading=present(elements_size)
-     !
-     ! Split what in input_names
-     !
-     call string_split(what,input_name)
-     !
-     mem_moved=0._SP
-     ch(1)=""
-     if (loading) then
-       action="Alloc"
-       do i1=1,10
-         if (len_trim(input_name(i1))==0) cycle
-         do i2=1,max_mem_elements
-           if (trim(mem_element(i2))=="") exit
-           if (trim(mem_element(i2))==trim(input_name(i1))) exit
-         enddo
-         if (i2==element_loaded+1) element_loaded=element_loaded+1
-         !
-         if (i2>max_mem_elements) call error(" Too many elements in memory!! ")
-         !
-         mem_element(i2)=trim(input_name(i1))
-         local_kind=preset_kind
-         if (present(elements_kind)) local_kind=elements_kind(i1)
-         mem_element_size(i2)=mem_element_size(i2)+real(elements_size(i1),SP)*real(local_kind,SP)/Gigabyte
-         mem_element_size_change(i2)=mem_element_size_change(i2)+real(elements_size(i1),SP)*real(local_kind,SP)/Gigabyte
-         if (present(errors)) then
-           if (errors(i1)/=0) then
-             write (ch(1),'(3a,f10.5,a)') 'Mem All. failed. Element ',trim(mem_element(i2)),&
-&                                         ' require ',mem_element_size(i2), ' [Gb]'
-             call error(trim(ch(1)))
-           endif
-         endif
-         mem_sum=mem_sum+mem_element_size_change(i2)
-         mem_moved=mem_moved+mem_element_size_change(i2)
-         write (ch(2),'(3a)') trim(ch(1))," ",trim(mem_element(i2))
-         ch(1)=ch(2)
-       enddo
-     else if (.not.present(overall_report)) then
-       action="Free"
-       do i1=1,10
-         if (len_trim(input_name(i1))==0) cycle
-         do i2=1,max_mem_elements
-           if(trim(mem_element(i2))==trim(input_name(i1))) then
-              write (ch(2),'(3a)') trim(ch(1))," ",trim(mem_element(i2))
-              ch(1)=ch(2)
-              mem_element(i2)=""
-              mem_sum=mem_sum-mem_element_size(i2)
-              mem_moved=mem_moved+mem_element_size(i2)
-              mem_element_size(i2)=0
-           endif
-         enddo
-       enddo
+   character(schlen) function mem_string(MEM)
+     use units,        ONLY:Kilobyte,Megabyte,Gigabyte
+     use stderr,       ONLY:intc
+     integer :: MEM !in Bytes
+     if (MEM<Kilobyte) then
+       mem_string=trim(intc(MEM))//"b"
+     else if (MEM<Megabyte) then
+       mem_string=trim(intc(int(real(MEM)/Kilobyte)))//"Kb"
+     else if (MEM<Gigabyte) then
+       mem_string=trim(intc(int(real(MEM)/Megabyte)))//"Mb"
+     else
+       mem_string=trim(intc(int(real(MEM)/Gigabyte)))//"Gb"
      endif
-     !
-     !  Overall Report
-     !
-     !   character(schlen)  :: mem_element(max_mem_elements)
-     !   real(SP)           :: mem_element_size(max_mem_elements)
-     !
-     if (present(overall_report).and.element_loaded>0) then
-       do i1=1,element_loaded
-         if (len_trim(mem_element(i1))==0) cycle
-         write (ch(1),'(4a,t70,f15.5)') "[MEM@",trim(what),"] ",&
-&              trim(mem_element(i1)),mem_element_size(i1)
-         call msg("r",trim(ch(1)))
-       enddo
-     endif
-     !
-     if(mem_moved.lt.0.0_SP.or.mem_sum.lt.0.0_SP) then
-       mem_moved=0._SP
-       mem_sum  =0._SP
-     endif
-     !
-     stdout_report=mem_moved>mem_tresh.and..not.infile_editing
-     if (stdout_report.and.present(quiet)) stdout_report=.not.quiet
-     if (.not.stdout_report) return
-     !
-     write (ch(2),'(a,f6.3,4a,f6.3,a)') "[M ",mem_sum," Gb] ",trim(action),trim(ch(1))," (",mem_moved,")"
-     call msg('s',trim(ch(2)))
-     !
+   end function
+   !
+   subroutine MEM_element_copy(M1,M2)
+     type(MEM_element) :: M1,M2
+     M2%shelf      = M1%shelf
+     M2%use        = M1%use
+     M2%N          = M1%N
+     M2%name       = M1%name
+     M2%desc       = M1%desc
+     M2%kind       = M1%kind
+     M2%size       = M1%size
+     M2%composed   = M1%composed
    end subroutine
-   !  
-end module memory_m
+   !
+   subroutine MEM_error(name)
+     character(*)::name
+     call MEM_manager(name)
+   end subroutine
+   subroutine MEM_clean(name,N)
+     character(*)::name
+     integer     ::N
+     call MEM_manager(name,Sz=N)
+   end subroutine
+   subroutine MEM_i1(name,i)
+     character(*)::name
+     integer     ::i(:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
+   end subroutine
+   subroutine MEM_lp1(name,i)
+     character(*)::name
+     integer(LP) ::i(:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
+   end subroutine
+   subroutine MEM_i2(name,i)
+     character(*)::name
+     integer     ::i(:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1)))
+   end subroutine
+   subroutine MEM_i3(name,i)
+     character(*)::name
+     integer     ::i(:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_i4(name,i)
+     character(*)::name
+     integer     ::i(:,:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1)))
+   end subroutine
+   subroutine MEM_lp3(name,i)
+     character(*)::name
+     integer(LP) ::i(:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_i5(name,i)
+     character(*)::name
+     integer     ::i(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_r1(name,r)
+     character(*)::name
+     real(SP)    ::r(:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r))
+   end subroutine
+   subroutine MEM_r2(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1)))
+   end subroutine
+#ifndef _DOUBLE
+   subroutine MEM_rd1(name,r)
+     character(*)::name
+     real(DP)    ::r(:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r))
+   end subroutine
+   subroutine MEM_rd2(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1)))
+   end subroutine
+   subroutine MEM_rd3(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1)))
+   end subroutine
+#endif
+   subroutine MEM_r3(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1)))
+   end subroutine
+   subroutine MEM_r4(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1,1)))
+   end subroutine
+   subroutine MEM_r5(name,r)
+     character(*)::name
+     real(SP)    ::r(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_c1(name,c)
+     character(*)::name
+     complex(SP) ::c(:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+   end subroutine
+   subroutine MEM_c2(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_c3(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_c4(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_c5(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_c6(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+   end subroutine
+#ifndef _DOUBLE
+   subroutine MEM_cd1(name,c)
+     character(*)::name
+     complex(DP) ::c(:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+   end subroutine
+   subroutine MEM_cd2(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_cd3(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_cd4(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd5(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd6(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+   end subroutine
+#endif
+   subroutine MEM_l1(name,l)
+     character(*)::name
+     logical     ::l(:)
+     call MEM_manager(name,Sz=size(l),Kn=kind(l(1)))
+   end subroutine
+   subroutine MEM_l2(name,l)
+     character(*)::name
+     logical     ::l(:,:)
+     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1)))
+   end subroutine
+   subroutine MEM_l3(name,l)
+     character(*)::name
+     logical     ::l(:,:,:)
+     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1,1)))
+   end subroutine
+   subroutine MEM_l4(name,l)
+     character(*)::name
+     logical     ::l(:,:,:,:)
+     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1,1,1)))
+   end subroutine
+end module memory

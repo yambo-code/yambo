@@ -42,10 +42,11 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:I_relax_static,elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ !use real_time,      ONLY:I_relax_static,elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -57,9 +58,10 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il,i_gkkp
+ integer               :: i_s,i_map(-1:1),il
  real(SP)              :: ph_freq,N_q(2)
- real(SP), parameter   :: cutoff=2.5E-5
+ real(SP), parameter   :: cutoff= 5.E-3
+ !real(SP), parameter   :: cutoff=25.E-6
  !
  real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
@@ -70,9 +72,9 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  logical :: l_skip_ABS
  !
  ! ... band index ...
- integer               :: i_n,i_np,i_m
+ integer               :: i_n,i_np
  ! ... BZ index ...
- integer               :: iqbz,ik_m_q,ik_mem
+ integer               :: iqbz,ik_m_q,ik_mem,iq_mem
  !
  ik_mem=PAR_Xk_ibz_index(ik)
  !
@@ -92,7 +94,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    !
-   i_gkkp=PAR_Q_index(iqbz)
+   iq_mem=PAR_Q_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -114,12 +116,12 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
-       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
-       if(Gkkp_sq(i_n,i_n)<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
+       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
+       if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        do i_np=RT_bands(1),RT_bands(2)
          if(i_n==i_np) cycle
-         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
-         if(Gkkp_sq(i_n,i_np)<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
+         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
+         if(sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
        enddo 
      enddo
      !
@@ -164,14 +166,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Kernel composition
  !====================
  !
- if (.not.l_RT_CCA_Kernel) then
-   !
-   do i_n=RT_bands(1),RT_bands(2)
-     do i_np=RT_bands(1),RT_bands(2)
-       I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
-     enddo 
-   enddo
-   !
- endif
+ !if (.not.l_RT_CCA_Kernel) then
+ !  !
+ !  do i_n=RT_bands(1),RT_bands(2)
+ !    do i_np=RT_bands(1),RT_bands(2)
+ !      I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
+ !    enddo 
+ !  enddo
+ !  !
+ !endif
  !
 end subroutine RT_ELPH_total_kernel

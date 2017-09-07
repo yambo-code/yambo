@@ -33,9 +33,9 @@ subroutine V_Hartree(rho,vhr)
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
 #if defined _TIMING
- use timing_m,       ONLY:timing
+ use timing_m,      ONLY:timing
 #endif
- !
+ ! 
  implicit none
  !
  real(SP) :: rho(fft_size)

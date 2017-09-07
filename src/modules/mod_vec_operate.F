@@ -37,6 +37,22 @@ module vec_operate
  !
  contains
    ! 
+   integer function min_index(N,v)
+     !
+     integer,  intent(in) :: N
+     real(SP), intent(in) :: v(N)
+     !
+     real(SP) :: v_min
+     integer  :: i_v
+     !
+     v_min=minval(v)
+     min_index=0
+     do i_v=1,N
+       if (abs(v(i_v)-v_min)<1.E-5) min_index=i_v
+     enddo
+     !
+   end function min_index
+   ! 
    function normalize_v(v,zero_norm_)
      !
      real(SP), intent(in) :: v(3)
@@ -116,9 +132,9 @@ module vec_operate
    function c_cross_product(a,b)
      complex(SP), intent(in) :: a(3),b(3)
      complex(SP)             :: c_cross_product(3)
-     c_cross_product(1) = a(2) * b(3) - a(3) * b(2)
-     c_cross_product(2) = a(3) * b(1) - a(1) * b(3)
-     c_cross_product(3) = a(1) * b(2) - a(2) * b(1)
+     c_cross_product(1) = conjg(a(2)) * b(3) - conjg(a(3)) * b(2)
+     c_cross_product(2) = conjg(a(3)) * b(1) - conjg(a(1)) * b(3)
+     c_cross_product(3) = conjg(a(1)) * b(2) - conjg(a(2)) * b(1)
    end function c_cross_product
    !
    pure logical function v_is_zero(v,zero_)

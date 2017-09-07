@@ -23,10 +23,9 @@
 !
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
@@ -35,12 +34,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 &                         BSS_uses_DbGd,BSS_q0,BSS_eval_JDOS
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSE_mode,BS_Blocks_and_Transitions_free
+&                         BSE_mode,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -49,7 +51,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use com,            ONLY:error
 #endif
  !
- implicit none
+ ! GPL_EXCLUDE_END
+ !
+ !
+#include<memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -65,9 +70,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call section('*','Response Functions in Transition space')
  !=========================================================
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Joint DOS
  !===========
@@ -76,6 +85,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Copatibility with old inputs
  !==============================
  if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
+ !
+ l_BSE_minimize_memory=(Xk%nbz==1)
  !
  ! Tranferred momentum. Only Gamma now
  !=====================================
@@ -211,7 +222,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 3. The SOLVER
  ! =================
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  ! GPL_EXCLUDE_START
  !
@@ -226,10 +237,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
    !
    ! If the kernel contains QP corrections I have to equally correct Xen
    !
-   if (associated(Ken%QP_corrected)) then
-     allocate(Xen%QP_corrected(Xen%nb,Xen%nk,n_sp_pol),Xen%Eo(Xen%nb,Xen%nk,n_sp_pol))
-     call mem_est("E-QP_corrected E-Eo",(/size(Xen%QP_corrected),size(Xen%Eo)/),(/IP,SP/))
-     Xen%QP_corrected=Ken%QP_corrected
+   if (allocated(Ken%Eo)) then
+     YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
      Xen%Eo=Xen%E
      Xen%E =Ken%E
    endif

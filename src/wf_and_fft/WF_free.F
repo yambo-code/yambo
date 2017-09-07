@@ -24,9 +24,8 @@
 subroutine WF_free(WF,keep_fft)
  !
  use wave_func,ONLY:WAVEs,QUIET_free
- use memory_m, ONLY:mem_est
  !
- implicit none
+#include<memory.h>
  !
  type(WAVEs)       :: WF
  logical, optional :: keep_fft 
@@ -38,23 +37,17 @@ subroutine WF_free(WF,keep_fft)
  keep_fft_=.false.
  if (present(keep_fft)) keep_fft_=keep_fft
  !
- if (.not.associated(WF%c)) return
+ if (.not.allocated(WF%c)) return
  !
- deallocate(WF%c)
- if (WF%space/="B") call mem_est('WF'       ,quiet=QUIET_free)
- if (WF%space=="B") call mem_est('WF_buffer',quiet=QUIET_free)
- nullify(WF%c)
- !
- if (associated(WF%state)) then
-   deallocate(WF%state)
-   nullify(WF%state)
- endif 
+ YAMBO_FREE(WF%c)
+ YAMBO_FREE(WF%state)
+ YAMBO_FREE(WF%index)
  !
  if(.not.keep_fft_.and.WF%space=="R") call fft_free()
  !
  WF%k=0
  WF%b=0
- WF%spin=0
+ WF%sp_pol=0
  WF%space=' '
  WF%to_load=.TRUE.
  !

@@ -17,12 +17,9 @@
  02111-1307, USA.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <c_defs.h>
 #include <ctype.h>
 #include <math.h>
-
 #include "parser.h"
 #include "symbols.h"
 

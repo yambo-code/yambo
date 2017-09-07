@@ -31,23 +31,23 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
-&                         io_sec,io_bulk,read_is_on,write_is_on,io_fragment, &
+&                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
- use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  !
  integer,      intent(in) :: ID
  character(*), intent(in) :: what
@@ -58,7 +58,7 @@ integer function io_RT_components(what,ID)
  character(lchlen)     :: local_description(100),db_name
  character(schlen)     :: what_
  !
- integer               :: nbands,ik,ib,i_spin,i_memory,i_time,db_type
+ integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
  !
  ! DB kind and name
@@ -117,6 +117,8 @@ integer function io_RT_components(what,ID)
      !
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if (l_THETA) then
      call io_bulk(ID,VAR="Q_weight",VAR_SZ=(/nqbz/))
      call io_bulk(ID,R1=q_weight_RT(:,1,1))
@@ -157,6 +159,8 @@ integer function io_RT_components(what,ID)
    if ((l_JPSM.or.l_carriers).and.(db_type==2.or..not.l_real_time)) call LOCAL_IO(JPC_RT_IO_t)
    if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
    !
+   ! GPL_EXCLUDE_END
+   !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
    !
@@ -171,13 +175,15 @@ integer function io_RT_components(what,ID)
  !========================================
  if ( l_REF ) then
    !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _ELPH
    !
    if (l_elph_scatt) then
      !
      if (read_is_on(ID)) then
-       if(allocated(q_weight_RT)) deallocate(q_weight_RT)
-       allocate(q_weight_RT(nqbz,elph_branches(1):elph_branches(2),2))
+       YAMBO_FREE(q_weight_RT)
+       YAMBO_ALLOC(q_weight_RT,(nqbz,elph_branches(1):elph_branches(2),2))
      endif
      !
      call io_bulk(ID,VAR="Q_WEIGHT",VAR_SZ=(/nqbz,elph_branches(2)-elph_branches(1)+1,2/))
@@ -215,6 +221,8 @@ integer function io_RT_components(what,ID)
      !
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    if (allocated(G_lesser_reference)) then
      !
      i_spin=1
@@ -231,6 +239,8 @@ integer function io_RT_components(what,ID)
  ! === K-dependent ===
  !####################
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _ELPH
  !
  ! ELPH Kernel THETA Matrix 
@@ -246,6 +256,8 @@ integer function io_RT_components(what,ID)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! lesser Green Function
  !=======================
@@ -269,14 +281,16 @@ integer function io_RT_components(what,ID)
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
-     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
+     call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
    !
  endif
  !
  ! === Time-dependent ===
  !#######################
+ !
+ ! GPL_EXCLUDE_START
  !
  ! Carrier components
  !====================
@@ -286,6 +300,8 @@ integer function io_RT_components(what,ID)
    if (read_is_on(ID)) call RT_carriers_object(RT_carriers,WHAT="dump")
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Current and Polarization
  !==========================
@@ -302,8 +318,11 @@ integer function io_RT_components(what,ID)
    call io_bulk(ID,R2=P_cache)
    !
    if(n_spin>1) then
-     call io_bulk(ID,VAR="Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-     call io_bulk(ID,R2=M_cache)
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ms_cache)
+     !
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ml_cache)
    endif
    !
  endif       
@@ -313,6 +332,8 @@ integer function io_RT_components(what,ID)
 #if defined _TIMING
  call timing('io_RT_components',OPR='stop')
 #endif
+ !
+ ! GPL_EXCLUDE_START
  !
  contains
    !
@@ -325,10 +346,16 @@ integer function io_RT_components(what,ID)
      call io_elemental(ID,I0=TYP%last_point)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
      !
-     if (.not.allocated(TYP%Time)) allocate(TYP%Time(NE_steps))
+     if (.not.allocated(TYP%Time)) then
+       YAMBO_ALLOC(TYP%Time,(NE_steps))
+     endif
+     !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))
      !
    end subroutine
    !
+ !
+ ! GPL_EXCLUDE_END
+ !
 end function

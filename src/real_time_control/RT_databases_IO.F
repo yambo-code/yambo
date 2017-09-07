@@ -25,7 +25,7 @@ subroutine RT_databases_IO(E)
  !
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
- use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,M_cache,JPC_RT_IO_t,&
+ use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,&
 &                         GF_RT_IO_t,IO_JPSM_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
@@ -52,8 +52,10 @@ subroutine RT_databases_IO(E)
      P_cache(2*i_c-1,i_time)= real(  RT_P(i_c)  )
      P_cache(2*i_c  ,i_time)=aimag(  RT_P(i_c)  )
      if(n_spin>1) then
-       M_cache(2*i_c-1,i_time)= real(RT_magn(i_c) )
-       M_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c) )
+       Ms_cache(2*i_c-1,i_time)= real(RT_magn(i_c,1) )
+       Ms_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,1) )
+       Ml_cache(2*i_c-1,i_time)= real(RT_magn(i_c,2) )
+       Ml_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,2) )
      endif
    enddo
  endif
@@ -73,6 +75,8 @@ subroutine RT_databases_IO(E)
      io_JPSM=io_RT_components('JPSM',ID(4))
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if (io_CARRIERs) then
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
@@ -80,6 +84,8 @@ subroutine RT_databases_IO(E)
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))
      io_carr=io_RT_components('carriers',ID(6))
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
  endif
  !
@@ -100,10 +106,14 @@ subroutine RT_databases_IO(E)
    call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
+   ! GPL_EXCLUDE_START
+   !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
+   !
+   ! GPL_EXCLUDE_END
    !
    do ik = 1, RT_nk
      !
@@ -115,6 +125,8 @@ subroutine RT_databases_IO(E)
      !
      call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
+     ! GPL_EXCLUDE_START
      !
 #if defined _ELPH
      !
@@ -136,6 +148,8 @@ subroutine RT_databases_IO(E)
      endif
      !
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
    enddo
    !

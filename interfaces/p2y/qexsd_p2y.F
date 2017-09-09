@@ -92,7 +92,7 @@ MODULE qexsd_module
   !
   PUBLIC :: qe_current_version
   !
-  PUBLIC :: qexsd_init_schema, qexsd_openfile, qexsd_closefile
+  PUBLIC :: qexsd_init, qexsd_openfile, qexsd_closefile
   PUBLIC :: qexsd_open_output, qexsd_close_output
   !
   PUBLIC :: qexsd_read_header, qexsd_read_cell, qexsd_read_ions, &
@@ -100,6 +100,7 @@ MODULE qexsd_module
             qexsd_read_hubbard, qexsd_read_bands_info, &
             qexsd_read_band_structure, qexsd_read_xc, qexsd_read_exx, &
             qexsd_read_gk, qexsd_read_wfc, qexsd_igk_map, qexsd_fft2igv_map
+  PUBLIC :: fmt_is_qexsd, fmt_is_qexsd_hdf5
 
 CONTAINS
 
@@ -109,7 +110,7 @@ CONTAINS
 !-------------------------------------------
 !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_init_schema( unit_in, unit_out, dir, dir_in, dir_out )
+    SUBROUTINE qexsd_init( unit_in, unit_out, dir, dir_in, dir_out )
       !------------------------------------------------------------------------
       !    
       ! just init module data
@@ -144,7 +145,7 @@ CONTAINS
       call initialize_hdf5()
 #endif
       !    
-    END SUBROUTINE qexsd_init_schema
+    END SUBROUTINE qexsd_init
     !
     !
     !------------------------------------------------------------------------
@@ -1678,6 +1679,88 @@ CONTAINS
       !
     end subroutine qexsd_igk_map
     !
+    !
+    logical function fmt_is_qexsd(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename
+       logical :: lfound
+       integer :: ierr, iun
+
+       fmt_is_qexsd=.false.
+       call iotk_free_unit(iun)
+       !
+       if (.not. fmt_is_qexsd_xml(dirname)) return
+       !
+       filename=trim(dirname)//"/wfc1.dat"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/wfcup1.dat"
+          inquire(file=filename, exist=lfound)
+       endif
+       if (.not.lfound) return
+       !
+       fmt_is_qexsd=.true.
+       return
+    end function
+    !
+    logical function fmt_is_qexsd_hdf5(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename
+       logical :: lfound
+       integer :: ierr, iun
+
+       fmt_is_qexsd_hdf5=.false.
+       call iotk_free_unit(iun)
+       !
+       if (.not. fmt_is_qexsd_xml(dirname)) return
+       !
+       filename=trim(dirname)//"/wfc1.hdf5"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/wfcup1.hdf5"
+          inquire(file=filename, exist=lfound)
+       endif
+       if (.not.lfound) return
+       !
+       fmt_is_qexsd_hdf5=.true.
+       return
+    end function
+    !
+    logical function fmt_is_qexsd_xml(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename, fmt_name
+       logical :: lfound
+       integer :: ierr, iun
+
+       fmt_is_qexsd_xml=.false.
+       call iotk_free_unit(iun)
+       !
+       call qexsd_init(unit_in=iun,dir=dirname)
+       !
+       filename=trim(dirname)//"/data-file-schema.xml"
+       call qexsd_openfile(filename,"read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       call qexsd_read_header(format_name=fmt_name,IERR=ierr)
+       if (ierr/=0) return
+       !
+       if (trim(fmt_name)/="QEXSD") return 
+       !
+       call qexsd_closefile("read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       fmt_is_qexsd_xml=.true.
+       return
+    end function 
+    
 !
 ! Copyright (C) 2016-2017 Quantum ESPRESSO Foundation 
 ! This file is distributed under the terms of the

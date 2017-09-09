@@ -23,12 +23,9 @@
 !
 module P2Y
  !
-#if defined _P2Y_EXPORT
- use pw_export
-#else 
+ use pw_export_module
  use qexml_module
  use qexsd_module
-#endif
  use pw_data
  use pars,                  ONLY : lchlen,SP,DP
  use electrons,             ONLY : levels
@@ -38,6 +35,7 @@ module P2Y
 #include<memory.h>
  !
  character(lchlen) :: index_filename
+ character(lchlen) :: dftdata_fmt
  !
  integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -64,64 +62,83 @@ contains
    integer           :: rhounit_ 
    character(lchlen) :: lch
    logical           :: lexist
+
    !
-   ! index filenames
+   ! data fmt detection
    !
-#if defined _P2Y_EXPORT
-
-   index_filename = 'index.xml'
-
-#elif defined _P2Y_QEXML
-
-   index_filename = 'data-file.xml'
-   write(lch,'(a)') '== PWscf > v5.x generated data (QEXML fmt) =='
-
-#elif defined _P2Y_QEXSD_HDF5
-
-   index_filename = 'data-file-schema.xml'
-   write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
-
-#elif defined _P2Y_QEXSD
-
-   index_filename = 'data-file-schema.xml'
-   write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
-
-#endif
-
-   if (trim(inf).ne."p2y.in") index_filename = inf
-
-   call msg('s','Index file set to ',trim(index_filename))
-   inquire(file=trim(index_filename),exist=lexist)
-   if(.not.lexist) then
-     call msg('s','Index file not found! Check p2y version...')
-     stop ' '
-   endif
+   call p2y_get_dftdata_fmt(dftdata_fmt)
    !
-   ! Open XML index files and units
+   select case(trim(dftdata_fmt))
+   case("pw_export","qexml","qexsd","qexsd-hdf5")
+      !
+      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      !
+   case default
+      call errore("p2y_get_dftdata_fmt"," Unable to find valid QE DFT data",1)
+   end select
+      
+   !
+   ! settings
    !
    pw_unit = 10
    rhounit_ = 12
-#if defined _P2Y_EXPORT
-    
-   call msg('s','== pw_export generated data ==')
-   call pw_openindex(pw_unit,index_filename) ! open index.xml file
-    
-#elif defined _P2Y_QEXML
-
-   call qexml_init(pw_unit) 
-   call qexml_openfile( index_filename, "read", .false., ierr)
-   if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
-    
-#elif defined _P2Y_QEXSD 
-
-   call qexsd_init_schema(pw_unit) 
-   call qexsd_openfile( index_filename, "read", .false., ierr)
-   if (ierr/=0) call errore('qexsd_openfile','opening '//trim(index_filename),10)
    !
-   call qexsd_open_output(ierr)
-   if (ierr/=0) call errore('qexsd_open_output','opening output tag',10)
-    
-#endif
+   select case (trim(dftdata_fmt))
+   case("pw_export")
+      !
+      index_filename = 'index.xml'
+      write(lch,'(a)') '== pw_export generated data =='
+      !
+   case("qexml")   
+      !
+      index_filename = 'data-file.xml'
+      write(lch,'(a)') '== PWscf > v5.x generated data (QEXML fmt) =='
+      !
+   case("qexsd-hdf5")   
+      !
+      index_filename = 'data-file-schema.xml'
+      write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
+      !
+   case ("qexsd")
+      !
+      index_filename = 'data-file-schema.xml'
+      write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
+      !
+   case default
+      call errore("p2y_settings"," Invalid dftdata fmt "//trim(dftdata_fmt),2)
+   end select
+   !
+   call msg('s',lch)
+   !
+   ! check again for file existence ?
+   
+   !
+   ! file opening
+   !
+   select case (trim(dftdata_fmt))
+   case("pw_export")
+      ! 
+      call pw_openindex(pw_unit,index_filename,ierr=ierr) 
+      if (ierr/=0) call errore('qexpt_openfile','opening '//trim(index_filename),10)
+      !
+   case("qexml")
+      !
+      call qexml_init(pw_unit) 
+      call qexml_openfile( index_filename, "read", .false., ierr)
+      if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
+      !
+   case("qexsd","qexsd-hdf5")
+      !
+      call qexsd_init(pw_unit) 
+      call qexsd_openfile( index_filename, "read", .false., ierr)
+      if (ierr/=0) call errore('qexsd_openfile','opening '//trim(index_filename),10)
+      !
+      call qexsd_open_output(ierr)
+      if (ierr/=0) call errore('qexsd_open_output','opening output tag',10)
+      !
+   case default
+      call errore("datafile_openread"," Invalid dftdata fmt "//trim(dftdata_fmt),3)
+   end select
    !
  end subroutine pw_init
  !
@@ -821,5 +838,34 @@ contains
 #endif
 
  end subroutine get_xc
+ !
+ subroutine p2y_get_dftdata_fmt(dftdata_fmt)
+    implicit none
+    character(len=*) :: dftdata_fmt
+
+    dftdata_fmt="unknown"
+    !
+    if ( fmt_is_qexml(dirname="./") ) then
+      !
+      dftdata_fmt="qexml"
+      !
+    elseif ( fmt_is_qexsd(dirname="./") ) then
+      !
+      dftdata_fmt="qexsd"
+      !
+#if defined _QE_HDF5
+    elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
+      !
+      dftdata_fmt="qexsd-hdf5"
+      !
+#endif
+    elseif ( fmt_is_pwexport(dirname="./") ) then
+      !
+      dftdata_fmt="pw_export"
+      !
+    endif
+    return 
+    !
+ end subroutine
  !
 end module p2y

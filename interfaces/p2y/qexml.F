@@ -86,6 +86,7 @@ MODULE qexml_module
             qexml_read_bands, qexml_read_bands_info,qexml_read_exx,   &
             qexml_read_gk, qexml_read_wfc, qexml_read_rho,            &
             read_pseudo_header, read_pseudo_data
+   PUBLIC :: fmt_is_qexml
 
 CONTAINS
 
@@ -3014,6 +3015,44 @@ CONTAINS
       IF ( PRESENT( nr3 ) )     nr3 = nr3_
       !
     END SUBROUTINE qexml_read_rho
+
+    logical function fmt_is_qexml(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename, fmt_name
+       logical :: lfound
+       integer :: ierr, iun
+
+       fmt_is_qexml=.false.
+       call iotk_free_unit(iun)
+       !
+       call qexml_init(unit_in=iun,dir=dirname)
+       !
+       filename=trim(dirname)//"/data-file-schema.xml"
+       call qexml_openfile(filename,"read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       call qexml_read_header(format_name=fmt_name,IERR=ierr)
+       if (ierr/=0) return
+       !
+       if (trim(fmt_name)/="QEXML") return
+       !
+       call qexml_closefile("read",IERR=ierr)
+       if (ierr/=0) return
+       !
+       filename=trim(dirname)//"/K00001/evc.dat"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/K00001/evc1.dat"
+          inquire(file=filename, exist=lfound)
+       endif
+       if (.not.lfound) return
+       !
+       fmt_is_qexml=.true.
+       return
+    end function
 
 subroutine read_pseudo_header(iunaux,z,psfile,nmesh,nbeta,psp_has_so) 
   use pars,   ONLY:SP

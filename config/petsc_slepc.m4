@@ -60,9 +60,9 @@ if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
   enable_slepc="yes" ;
   enable_petsc="yes" ;
   def_slepc="-D_SLEPC" ;
-  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc" ;
+  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc -ldl" ;
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc -lpetsc" ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
 else 
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then

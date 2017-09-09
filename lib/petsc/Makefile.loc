@@ -19,6 +19,7 @@ TARBALL=$(tarball_petsc)
 PETSC_ARCH=yambo_single_complex
 AUXFLAGS=--prefix=$(LIBPATH) \
          --PETSC_ARCH=${PETSC_ARCH} \
+         --with-ssl=0 \
 	     --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=0 \

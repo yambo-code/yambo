@@ -31,8 +31,10 @@ module P2Y
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
+ use parallel_m,            ONLY : myid,PP_bcast   
  ! 
 #include<memory.h>
+ 
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
@@ -140,6 +142,9 @@ contains
       call errore("datafile_openread"," Invalid dftdata fmt "//trim(dftdata_fmt),3)
    end select
    !
+! XXX
+STOP
+   return
  end subroutine pw_init
  !
  !---------------------------------------------------------------------*
@@ -845,27 +850,32 @@ contains
 
     dftdata_fmt="unknown"
     !
-    if ( fmt_is_qexml(dirname="./") ) then
+    if (myid==0) then
       !
-      dftdata_fmt="qexml"
-      !
-    elseif ( fmt_is_qexsd(dirname="./") ) then
-      !
-      dftdata_fmt="qexsd"
-      !
+      if ( fmt_is_qexml(dirname="./") ) then
+        !
+        dftdata_fmt="qexml"
+        !
+      elseif ( fmt_is_qexsd(dirname="./") ) then
+        !
+        dftdata_fmt="qexsd"
+        !
 #if defined _QE_HDF5
-    elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
-      !
-      dftdata_fmt="qexsd-hdf5"
-      !
+      elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
+        !
+        dftdata_fmt="qexsd-hdf5"
+        !
 #endif
-    elseif ( fmt_is_pwexport(dirname="./") ) then
-      !
-      dftdata_fmt="pw_export"
-      !
+      elseif ( fmt_is_pwexport(dirname="./") ) then
+        !
+        dftdata_fmt="pw_export"
+        !
+      endif
     endif
+    !  
+    call PP_bcast(dftdata_fmt,0)
     return 
     !
- end subroutine
+ end subroutine p2y_get_dftdata_fmt
  !
 end module p2y

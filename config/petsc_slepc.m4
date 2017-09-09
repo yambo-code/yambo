@@ -57,9 +57,13 @@ case $with_slepc_libs in
 esac
 #
 if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
-  enable_slepc="yes"
-  enable_petsc="yes"
-  def_slepc="-D_SLEPC"
+  enable_slepc="yes" ;
+  enable_petsc="yes" ;
+  def_slepc="-D_SLEPC" ;
+  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc" ;
+  PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
+  SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
 else 
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
   enable_slepc="yes"
@@ -73,8 +77,11 @@ AC_SUBST(PETSC_INCS)
 AC_SUBST(SLEPC_LIBS)
 AC_SUBST(SLEPC_INCS)
 AC_SUBST(def_slepc)
+AC_SUBST(enable_petsc)
 AC_SUBST(enable_slepc)
-AC_SUBST(compile_slepc)
 AC_SUBST(compile_petsc)
+AC_SUBST(compile_slepc)
+AC_SUBST(internal_petsc)
+AC_SUBST(internal_slepc)
 #
 ])

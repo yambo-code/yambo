@@ -686,9 +686,12 @@ def_scalapack
 enable_scalapack
 SCALAPACK_LIBS
 BLACS_LIBS
-compile_petsc
+internal_slepc
+internal_petsc
 compile_slepc
+compile_petsc
 enable_slepc
+enable_petsc
 def_slepc
 SLEPC_INCS
 SLEPC_LIBS
@@ -10959,9 +10962,13 @@ case $with_slepc_libs in
 esac
 #
 if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
-  enable_slepc="yes"
-  enable_petsc="yes"
-  def_slepc="-D_SLEPC"
+  enable_slepc="yes" ;
+  enable_petsc="yes" ;
+  def_slepc="-D_SLEPC" ;
+  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc" ;
+  PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
+  SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
 else
  if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
   enable_slepc="yes"
@@ -10970,6 +10977,9 @@ else
  fi
 fi
 #
+
+
+
 
 
 

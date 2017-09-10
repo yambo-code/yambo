@@ -3029,7 +3029,7 @@ CONTAINS
        !
        call qexml_init(unit_in=iun,dir=dirname)
        !
-       filename=trim(dirname)//"/data-file-schema.xml"
+       filename=trim(dirname)//"/data-file.xml"
        call qexml_openfile(filename,"read",IERR=ierr)
        if (ierr/=0) return
        !

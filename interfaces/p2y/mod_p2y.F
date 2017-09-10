@@ -76,7 +76,7 @@ contains
       call msg('s','detected QE data format: ',trim(dftdata_fmt))
       !
    case default
-      call errore("p2y_get_dftdata_fmt"," Unable to find valid QE DFT data",1)
+      call errore("p2y_init"," Unable to find valid QE DFT data",1)
    end select
       
    !
@@ -101,19 +101,22 @@ contains
       index_filename = 'data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
       !
+#if ! defined _QE_HDF5
+      call errore('p2y_init','p2y compiled without QE-HDF5 support',10)
+#endif
    case ("qexsd")
       !
       index_filename = 'data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
       !
    case default
-      call errore("p2y_settings"," Invalid dftdata fmt "//trim(dftdata_fmt),2)
+      call errore("p2y_init"," Invalid dftdata fmt "//trim(dftdata_fmt),2)
    end select
    !
    call msg('s',lch)
    !
    ! check again for file existence ?
-   
+
    !
    ! file opening
    !
@@ -121,29 +124,27 @@ contains
    case("pw_export")
       ! 
       call pw_openindex(pw_unit,index_filename,ierr=ierr) 
-      if (ierr/=0) call errore('qexpt_openfile','opening '//trim(index_filename),10)
+      if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexml")
       !
       call qexml_init(pw_unit) 
       call qexml_openfile( index_filename, "read", .false., ierr)
-      if (ierr/=0) call errore('qexml_openfile','opening '//trim(index_filename),10)
+      if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexsd","qexsd-hdf5")
       !
       call qexsd_init(pw_unit) 
       call qexsd_openfile( index_filename, "read", .false., ierr)
-      if (ierr/=0) call errore('qexsd_openfile','opening '//trim(index_filename),10)
+      if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
       call qexsd_open_output(ierr)
-      if (ierr/=0) call errore('qexsd_open_output','opening output tag',10)
+      if (ierr/=0) call errore('p2y_init','opening output tag',10)
       !
    case default
-      call errore("datafile_openread"," Invalid dftdata fmt "//trim(dftdata_fmt),3)
+      call errore("p2y_init"," Invalid dftdata fmt II "//trim(dftdata_fmt),3)
    end select
    !
-! XXX
-STOP
    return
  end subroutine pw_init
  !
@@ -860,12 +861,10 @@ STOP
         !
         dftdata_fmt="qexsd"
         !
-#if defined _QE_HDF5
       elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
         !
         dftdata_fmt="qexsd-hdf5"
         !
-#endif
       elseif ( fmt_is_pwexport(dirname="./") ) then
         !
         dftdata_fmt="pw_export"

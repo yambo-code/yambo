@@ -1686,10 +1686,9 @@ CONTAINS
        !
        character(256) :: filename
        logical :: lfound
-       integer :: ierr, iun
+       integer :: ierr
 
        fmt_is_qexsd=.false.
-       call iotk_free_unit(iun)
        !
        if (.not. fmt_is_qexsd_xml(dirname)) return
        !
@@ -1712,10 +1711,9 @@ CONTAINS
        !
        character(256) :: filename
        logical :: lfound
-       integer :: ierr, iun
+       integer :: ierr
 
        fmt_is_qexsd_hdf5=.false.
-       call iotk_free_unit(iun)
        !
        if (.not. fmt_is_qexsd_xml(dirname)) return
        !
@@ -1743,18 +1741,18 @@ CONTAINS
        fmt_is_qexsd_xml=.false.
        call iotk_free_unit(iun)
        !
-       call qexsd_init(unit_in=iun,dir=dirname)
+       iunit=iun
        !
        filename=trim(dirname)//"/data-file-schema.xml"
-       call qexsd_openfile(filename,"read",IERR=ierr)
-       if (ierr/=0) return
+       call iotk_open_read ( iunit, FILE=TRIM(filename), IERR=ierr )
+       if ( ierr/=0 ) return
        !
        call qexsd_read_header(format_name=fmt_name,IERR=ierr)
        if (ierr/=0) return
        !
        if (trim(fmt_name)/="QEXSD") return 
        !
-       call qexsd_closefile("read",IERR=ierr)
+       call iotk_close_read( iunit, IERR=ierr)
        if (ierr/=0) return
        !
        fmt_is_qexsd_xml=.true.

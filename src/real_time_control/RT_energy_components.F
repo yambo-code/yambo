@@ -140,7 +140,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
    !         - If V_rt contains only the Hartree term, this is twice the dE_h_sc
    !         - If V_rt contains also the xc-term, this is not well defined ...
    !
-   call RT_average_operator(O_VALUE=dE_hxc_sc,O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(O_VALUE=dE_hxc_sc,O_MATRIX=RT_Vnl_xc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !

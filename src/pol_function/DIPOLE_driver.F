@@ -104,7 +104,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer           :: ik,i_sp_pol
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
 #if defined _SC || defined  _RT
- logical           :: l_evaluating_em1s
+ logical           :: l_evaluating_em1s,l_real_time_magn_dipoles
 #endif
  !
  ! I/O
@@ -200,9 +200,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1)   call DIPOLE_orbital_magnetization(Xen,Xk,X)
+   l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.l_evaluating_em1s)
    !
-   if (l_real_time.and.n_spin>1)   call DIPOLE_spin_magnetization(Xk,X)
+   if (l_real_time_magn_dipoles)   call DIPOLE_orbital_magnetization(Xen,Xk,X)
+   !
+   if (l_real_time_magn_dipoles)   call DIPOLE_spin_magnetization(Xk,X)
 #endif
    !
    call DIPOLES_ppredux_and_symmetrize()

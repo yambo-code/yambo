@@ -354,9 +354,11 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (open_files.and..not.file_already_opened(next_file)) &
 &     file_name(next_file)=trim(append_ch)//'magnetization'
    short_file_name(next_file)=trim(append_ch)//'magnetization'
-   n_headings(next_file)=10
+   n_headings(next_file)=4
+   !n_headings(next_file)=10
    headings(next_file,1)='T [fs]'
-   headings(next_file,2:10)=(/"Ms_x","Ms_y","Ms_z","Ml_x","Ml_y","Ml_z","Mi_x","Mi_y","Mi_z"/)
+   headings(next_file,2:4)=(/"Ms_x","Ms_y","Ms_z"/)
+   !headings(next_file,2:10)=(/"Ms_x","Ms_y","Ms_z","Ml_x","Ml_y","Ml_z","Mi_x","Mi_y","Mi_z"/)
    next_file=next_file+1
  endif
  !
@@ -488,12 +490,12 @@ subroutine RT_output(what,VALUES,TIME,E)
        call msg('o '//trim(short_file_name(i_f)),'#')
        tmp_ch="Equilibrium spin      magnetization is "//&
 &             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
-       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
-       tmp_ch="Equilibrium orbital   magnetization is "//&
-&             trim(real2ch(Orbital_magn(1)))//", "//trim(real2ch(Orbital_magn(2)))//", "//trim(real2ch(Orbital_magn(3)))//". "
-       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
-       tmp_ch="Equilibrium itinerant magnetization is "//&
-&             trim(real2ch(Itinerant_magn(1)))//", "//trim(real2ch(Itinerant_magn(2)))//", "//trim(real2ch(Itinerant_magn(3)))//". "
+!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+!       tmp_ch="Equilibrium orbital   magnetization is "//&
+!&             trim(real2ch(Orbital_magn(1)))//", "//trim(real2ch(Orbital_magn(2)))//", "//trim(real2ch(Orbital_magn(3)))//". "
+!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+!       tmp_ch="Equilibrium itinerant magnetization is "//&
+!&             trim(real2ch(Itinerant_magn(1)))//", "//trim(real2ch(Itinerant_magn(2)))//", "//trim(real2ch(Itinerant_magn(3)))//". "
        call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
      endif
      !
@@ -528,8 +530,8 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) =real(RT_P)
      case('magnetization')
        data_to_dump(2: 4) = real(RT_magn(:,1))
-       data_to_dump(5: 7) = real(RT_magn(:,2))
-       data_to_dump(8:10) = real(RT_magn(:,3))
+       !data_to_dump(5: 7) = real(RT_magn(:,2))
+       !data_to_dump(8:10) = real(RT_magn(:,3))
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

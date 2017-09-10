@@ -145,11 +145,9 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,3)="dN(Holes)"
  headings(next_file,4)="dN(Elecs)"
  if (l_elel_scatt.or.l_elph_scatt) then 
-   n_headings(next_file)=n_headings(next_file)+4
+   n_headings(next_file)=n_headings(next_file)+2
    headings(next_file,5)="T(hol) [K]"
    headings(next_file,6)="T(el)  [K]"
-   headings(next_file,7)="Ef(h) [eV]"
-   headings(next_file,8)="Ef(e) [eV]"
  endif
  next_file=next_file+1
  !
@@ -550,7 +548,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)
      case('carriers')
        data_to_dump(2:4) = VALUES(1:3)
-       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:8) = VALUES(4:7)
+       if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:6) = VALUES(4:5)
      case('thermodynamics')
        data_to_dump(2: 4) = VALUES(1:3)*HA2EV
        data_to_dump(5: 7) = VALUES(4:6)*HA2EV/HA2KEL

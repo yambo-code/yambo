@@ -25,7 +25,7 @@ subroutine REPORT_Occupations(what,E)
  !
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
- use D_lattice,     ONLY:Tel,T_holes,T_elecs,Bose_Temp,DL_vol
+ use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
@@ -62,8 +62,7 @@ subroutine REPORT_Occupations(what,E)
  !
  call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
  call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
- if(T_elecs==T_holes) call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
- if(T_elecs/=T_holes) call msg('r',trim(title)//'Holes / Elecs Temp  [K]: ',(/T_holes*HA2KEL,T_elecs*HA2KEL/))
+ call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',trim(title)//'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  call msg('r',trim(title)//'Finite Temperature mode: ',Finite_Tel)
  call msg('r',trim(title)//'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))

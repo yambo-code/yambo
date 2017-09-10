@@ -101,7 +101,7 @@ contains
       index_filename = 'data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
       !
-#if ! defined _QE_HDF5
+#if !defined _P2Y_QEXSD_HDF5
       call errore('p2y_init','p2y compiled without QE-HDF5 support',10)
 #endif
    case ("qexsd")
@@ -154,20 +154,24 @@ contains
  !
  subroutine pw_close
    !
-#if defined _P2Y_EXPORT
-
-   call pw_closeindex(pw_unit)
-
-#elif defined _P2Y_QEXML
-
-   call qexml_closefile("read",ierr)
-
-#elif defined _P2Y_QEXSD
-
-   call qexsd_close_output(ierr)
-   call qexsd_closefile("read",ierr)
-
-#endif
+   select case(trim(dftdata_fmt))
+   case("pw_export")
+      !
+      call pw_closeindex(pw_unit)
+      !
+   case("qexml")
+      !
+      call qexml_closefile("read",ierr)
+      !
+   case("qexsd","qexsd-hdf5")
+      !
+      call qexsd_close_output(ierr)
+      call qexsd_closefile("read",ierr)
+      !
+   case default
+      call errore("pw_close"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
+   !
    return
  end subroutine pw_close
 
@@ -192,60 +196,53 @@ contains
    ! Call the version dependent routines
    !
    gamma_only_ = .false.
-#if defined _P2Y_EXPORT
-
-   call pw_dimensions(pw_unit)
-    
-#elif defined _P2Y_QEXML
-
-   call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
-&                        nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
-
-#elif defined _P2Y_QEXSD
    !
-   call qexsd_read_band_structure(nbnd=nbnd_, num_k_points=num_k_points_, nspin=n_spin_pw_, &
-&                                 nelec=nelec_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem (dims I)',ABS(ierr))
+   select case(trim(dftdata_fmt))
+   case ("pw_export")
+     !
+     call pw_dimensions(pw_unit)
+     !   
+     ! data not read
+     nelec_=0
+     nsp_=0
+     !
+   case ("qexml")
+     !
+     call qexml_read_bands_info(nbnd=nbnd_, num_k_points=num_k_points_, &
+&                               nspin=n_spin_pw_, nelec=nelec_, ierr=ierr)
+     if (ierr/=0) call errore('qexml_read_bands_info','fmt problem (dims I)',ABS(ierr))
+     !
+     call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
+     if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+     call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
+     if (ierr/=0) call errore('qexml_read_spin','fmt problem',ABS(ierr))
+     call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+     if (ierr/=0) call errore('qexml_read_planewaves','fmt problem',ABS(ierr))
+     call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+     if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))
+     !
+   case ("qexsd","qexsd-hdf5")
+     !
+     call qexsd_read_band_structure(nbnd=nbnd_, num_k_points=num_k_points_, nspin=n_spin_pw_, &
+&                                   nelec=nelec_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem (dims I)',ABS(ierr))
+     !
+     call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
+     call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+     call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem I',ABS(ierr))
+     call qexsd_read_spin(lspinorb=l_spin_orbit, noncolin=noncolin_, ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
+     !
+   case default
+     call errore("pw_dimensions"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
 
-#endif
-
-   if (ierr.ne.0) then
-     live_timing_is_on=.FALSE.
-     call msg('ms','Error reading data: most likely you are using an incompatible')
-     call msg('s','version of p2y with your data.')
-     call msg('s','Action: Compile a compatible version of p2y.')
-     call errore('qexml_read_bands.','IOTK error:',ABS(ierr)) 
-   endif
-
-#if defined _P2Y_EXPORT
-   ! data not read
-   nelec_=0
-   nsp_=0
    !
-#elif defined _P2Y_QEXML
+   ! other settings
    !
-   call qexml_read_symmetry(nsym=nsym_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
-   call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_spin','fmt problem',ABS(ierr))
-   call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_planewaves','fmt problem',ABS(ierr))
-   call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))
-   !
-#elif defined _P2Y_QEXSD
-   !
-   call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
-   call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
-   call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem I',ABS(ierr))
-   call qexsd_read_spin(lspinorb=l_spin_orbit, noncolin=noncolin_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
-   !
-#endif
-
    default_nel = nelec_
    n_atomic_species = nsp_     
 
@@ -284,24 +281,26 @@ contains
    !
    input_GS_Tel = 0.d0
    !
-#if defined _P2Y_QEXML
-   !
-   call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
+   select case(trim(dftdata_fmt))
+   case ("qexml")
+     !
+     call qexml_read_occ(lgauss=lgauss_,ngauss=ngauss_,degauss=degauss_,&
 &                               degauss_units=degauss_units_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_occ','IOTK problem',ABS(ierr))  
-   !
-   if (lgauss_) input_GS_Tel=300._SP/HA2KEL
-   !
-#elif defined _P2Y_QEXSD
-   !
-   call qexsd_read_band_structure(have_smearing=lgauss_,smearing_type=smearing_type_,&
-&                                 degauss=degauss_,ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem II',ABS(ierr))  
-   !
-   degauss_units_="Hartree"
-   !
-   if (lgauss_) input_GS_Tel=300._SP/HA2KEL
-#endif
+     if (ierr/=0) call errore('qexml_read_occ','IOTK problem',ABS(ierr))  
+     !
+     if (lgauss_) input_GS_Tel=300._SP/HA2KEL
+     !
+   case ("qexsd","qexsd-hdf5")
+     !
+     call qexsd_read_band_structure(have_smearing=lgauss_,smearing_type=smearing_type_,&
+&                                   degauss=degauss_,ierr=ierr)
+     if (ierr/=0) call errore('qexsd_read_band_structure','fmt problem II',ABS(ierr))  
+     !
+     degauss_units_="Hartree"
+     !
+     if (lgauss_) input_GS_Tel=300._SP/HA2KEL
+     !
+   end select
    !
    return
  end subroutine get_dimensions
@@ -325,60 +324,65 @@ contains
    YAMBO_ALLOC(ityp_,(nat_))
    YAMBO_ALLOC(tau_,(3,nat_))
 
-#if defined _P2Y_EXPORT
+   select case(trim(dftdata_fmt))
+   case("pw_export")
+      !
+      allocate(atom_type_(nat_))
+      allocate(species_type_(nat_))
+      !
+      call pw_atoms(pw_unit)
+      !
+      n_atomic_species = nsp_     ! n_atom_species only read here
+      allocate(atm_(n_atomic_species))
+      atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
+      do i1=1, nat_
+         ityp_(i1) = -1
+         do i2=1,n_atomic_species
+            if(trim(atom_type_(i1))==trim(atm_(i2))) then
+              ityp_(i1) = i2
+            endif
+         enddo
+      enddo
+      tau_units = alat_
+      !
+      deallocate(atom_type_)
+      deallocate(species_type_)
+      !
+   case("qexml")
+      !
+      tau_units = 1.0_DP
+      allocate(atm_(n_atomic_species))
+      allocate(psfile(n_atomic_species))
+      YAMBO_ALLOC(nmesh,(n_atomic_species))
+      YAMBO_ALLOC(nbeta,(n_atomic_species))
+      !
+      call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
+      !
+   case("qexsd","qexsd-hdf5")
+      !
+      tau_units = 1.0_DP
+      allocate(atm_(n_atomic_species))
+      allocate(psfile(n_atomic_species))
+      YAMBO_ALLOC(nmesh,(n_atomic_species))
+      YAMBO_ALLOC(nbeta,(n_atomic_species))
+      !
+      call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_ions','fmt problem II',ABS(ierr))
+      !
+   case default
+     call errore("get_atoms"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
 
-   YAMBO_ALLOC(atom_type_,(nat_))
-   YAMBO_ALLOC(species_type_,(nat_))
-
-   call pw_atoms(pw_unit)
-
-   n_atomic_species = nsp_     ! n_atom_species only read here
-   allocate(atm_(n_atomic_species))
-   atm_(1:n_atomic_species) = species_type_(1:n_atomic_species)
-   do i1=1, nat_
-     ityp_(i1) = -1
-     do i2=1,n_atomic_species
-       if(trim(atom_type_(i1))==trim(atm_(i2))) then
-         ityp_(i1) = i2
-       endif
-     enddo
-   enddo
-   tau_units = alat_
-
-   YAMBO_FREE(atom_type_,species_type_)
-
-#elif defined _P2Y_QEXML
-
-   tau_units = 1.0_DP
-   allocate(atm_(n_atomic_species))
-   allocate(psfile(n_atomic_species))
-   YAMBO_ALLOC(nmesh,(n_atomic_species))
-   YAMBO_ALLOC(nbeta,(n_atomic_species))
+   if (trim(dftdata_fmt) /= "pw_export") then
+      !
+      ! Check USPP/NC pseudopotential
+      do i1 =1,n_atomic_species
+        call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
+      enddo
+      !
+   endif
    !
-   call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
-   
-#elif defined _P2Y_QEXSD
-
-   tau_units = 1.0_DP
-   allocate( atm_(n_atomic_species))
-   allocate( psfile (n_atomic_species))
-   allocate( nmesh (n_atomic_species), nbeta (n_atomic_species))
-   !
-   call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_ions','fmt problem II',ABS(ierr))
-   
-#endif
-
-#ifndef _P2Y_EXPORT
-   !
-   ! Check USPP/NC pseudopotential
-   do i1 =1,n_atomic_species
-     call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
-   enddo
-   !
-#endif
-
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
@@ -391,12 +395,12 @@ contains
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
    enddo
-
+   !
    YAMBO_ALLOC(Z_species,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
    enddo
-
+   !
    return
  end subroutine get_atoms
  !
@@ -412,22 +416,25 @@ contains
    use vec_operate,           ONLY : cross_product
    real(SP) :: cp(3)
     
-#if defined _P2Y_EXPORT
-
-   call pw_cell(pw_unit)
-
-#elif defined _P2Y_QEXML
-
-   call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_cell','fmt problem',ABS(ierr))
-    
-#elif defined _P2Y_QEXSD
-
-   call qexsd_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_cell','fmt problem',ABS(ierr))
-
-#endif
-
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      call pw_cell(pw_unit)
+      !
+   case ("qexml")
+      !
+      call qexml_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_cell','fmt problem',ABS(ierr))
+      ! 
+   case ("qexsd","qexsd-hdf5")
+      !
+      call qexsd_read_cell(alat=alat_, a1=a1_, a2=a2_, a3=a3_,ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_cell','fmt problem',ABS(ierr))
+      !
+   case default
+     call errore("get_cell"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
+   !
    a(1,:) = a1_(:) ! assumes always atomic units
    a(2,:) = a2_(:)
    a(3,:) = a3_(:)
@@ -445,7 +452,7 @@ contains
    b(1,:)=cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
    b(2,:)=cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
    b(3,:)=cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
-
+   !
    return
  end subroutine get_cell
  !
@@ -466,33 +473,38 @@ contains
 
    trasl_=0._SP
 
-#if defined _P2Y_EXPORT
-
-   call pw_symmetry(pw_unit)
-   trevsym_=.true.
-   t_rev_=0
-
-#elif defined _P2Y_QEXML
-
-   call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
-&                           s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
-
-#elif defined _P2Y_QEXSD
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      call pw_symmetry(pw_unit)
+      trevsym_=.true.
+      t_rev_=0
+      !
+   case ("qexml")
+      !
+      call qexml_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
+&                              s=isym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      !
+   case ("qexsd","qexsd-hdf5")
+      !
+      call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
+&                              s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      !
+      ! convert to integers
+      !
+      do i1 = 1, nsym_
+         isym_(:,:,i1) = nint(rsym_(:,:,i1))
+      enddo
+      !
+      ! definition of t_rev & trevsym  need to be further checked in qexsd_p2y.F
+      !
+   case default
+     call errore("get_symmetries"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
    !
-   call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
-&                           s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
-   !
-   ! convert to integers
-   !
-   do i1 = 1, nsym_
-     isym_(:,:,i1) = nint(rsym_(:,:,i1))
-   enddo
-   !
-   ! XXX t_rev & trevsym  need to be checked in qexsd_p2y.F
-   !
-#endif
+   ! postporoc
    !
    do i1=1,nsym_
      if (.not.v_is_zero(real(trasl_(:,i1),SP)) ) then 
@@ -523,21 +535,25 @@ contains
    !
    YAMBO_ALLOC(xk_,(3,k%nibz))
 
-#if defined _P2Y_EXPORT
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      call pw_kpoints(pw_unit)
+      !
+   case ("qexml")
+      !
+      call qexml_read_bz(xk=xk_, ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_bz','IOTK error',ABS(ierr))
+      !
+   case ("qexsd","qexsd-hdf5")
+      !
+      call qexsd_read_band_structure(vkpt=xk_, ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_band_structure','fmt error (KPT)',ABS(ierr))
+      !
+   case default
+     call errore("get_k_points"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
 
-   call pw_kpoints(pw_unit)
-
-#elif defined _P2Y_QEXML
-
-   call qexml_read_bz(xk=xk_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_bz','IOTK error',ABS(ierr))
-
-#elif defined _P2Y_QEXSD
-
-   call qexsd_read_band_structure(vkpt=xk_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_band_structure','fmt error (KPT)',ABS(ierr))
-
-#endif
    !
    ! PW k in units of [cart, tpiba] -> units of [cart, 2*pi/alat(:)]
    ! PW cart tpiba/cart au/cart alat/RLU units
@@ -546,15 +562,14 @@ contains
    do i1=1,k%nibz
      k%pt(i1,:)=xk_(:,i1) * alat(:)/alat_ 
    enddo
-
-#if defined _P2Y_EXPORT
- 
-   if(k%nibz==1.and.v_is_zero(k%pt(1,:))) then
-     call warning(' GAMMA_ONLY calculations are not supported in pw_export. ')
+   !
+   if (trim(dftdata_fmt)=="pw_export") then
+     ! 
+     if(k%nibz==1.and.v_is_zero(k%pt(1,:))) then
+        call warning(' GAMMA_ONLY calculations are not supported in pw_export. ')
+     endif
+     !
    endif
-   
-#endif
-
    !
    return
  end subroutine get_k_points
@@ -566,10 +581,10 @@ contains
  subroutine get_more
    use electrons,             ONLY : default_nel
    !
-#if defined _P2Y_EXPORT
-   call pw_other(pw_unit)
-   default_nel = nelec_ 
-#endif
+   if (trim(dftdata_fmt)=="pw_export") then
+     call pw_other(pw_unit)
+     default_nel = nelec_ 
+   endif
    !
    return
  end subroutine get_more
@@ -586,25 +601,29 @@ contains
 #include<memory.h>
    !
    YAMBO_ALLOC(g_vec,(ng_vec,3)) ! The YAMBO array
-
-#if defined _P2Y_EXPORT
-
-   YAMBO_ALLOC(igv_,(3,ng_vec))
-   call pw_gvectors(pw_unit)
-
-#elif defined _P2Y_QEXML
-
-   YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
-   call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_planewaves','fmt error',ABS(ierr))
-
-#elif defined _P2Y_QEXSD
-
-   allocate(igv_(3,ngm_))    ! The PWscf array (ngm = ng_vec if not gamma_only)
-   call qexsd_read_planewaves(ecutwfc=ecutwfc_, igv=igv_, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_planewaves','fmt error II',ABS(ierr))
-
-#endif
+   !
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      YAMBO_ALLOC(igv_,(3,ng_vec))
+      call pw_gvectors(pw_unit)
+      !
+   case ("qexml")
+      !
+      YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
+      call qexml_read_planewaves(ecutwfc=ecutwfc_,igv=igv_, ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_planewaves','fmt error',ABS(ierr))
+      !
+   case ("qexsd","qexsd-hdf5")
+      !
+      YAMBO_ALLOC(igv_,(3,ngm_)) ! The PWscf array (ngm = ng_vec if not gamma_only)
+      call qexsd_read_planewaves(ecutwfc=ecutwfc_, igv=igv_, ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_planewaves','fmt error II',ABS(ierr))
+      !
+   case default
+     call errore("get_R_vectors"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
+   
    !
    ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
    ! b(:,:) is in a.u.
@@ -626,6 +645,7 @@ contains
    endif
    !
  end subroutine get_R_vectors
+
  !
  !---------------------------------------------------------------------*
  !    Read IGK arrays                                                  *
@@ -642,62 +662,64 @@ contains
    !
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
 
-#if defined _P2Y_EXPORT
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      YAMBO_ALLOC(pw_igk_,(wf_ncx,k%nibz))
+      YAMBO_ALLOC(pw_npwk_,(k%nibz))
+      call pw_igkindex(pw_unit)
+      wf_nc_k(:) = pw_npwk_(:)
+      YAMBO_FREE(pw_npwk_)
+      !
+   case ("qexml")
+      !
+      YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
+      YAMBO_ALLOC(index_,(npwx_))
+      do ik = 1, k%nibz
+        call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
+        if (ierr/=0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
+        !
+        pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
+        wf_nc_k(ik) = npwk_
+      enddo
+      YAMBO_FREE(index_)
+      ! 
+   case ("qexsd","qexsd-hdf5")
+      !
+      YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
+      YAMBO_ALLOC(index_,(npwx_))
+      YAMBO_ALLOC(igkv_,(3,npwx_))
+      !
+      if (.not.allocated(igv_)) call errore('qexsd_read_gk','igv_ not alloc',10)
+      !
+      call qexsd_fft2igv_map(ngm_, igv_, nfft_, dims_only=.TRUE.)
+      YAMBO_ALLOC(fft2igv_,(product(nfft_)))
+      call qexsd_fft2igv_map(ngm_, igv_, nfft_, fft2igv_)
+      !
+      if (n_spin_pw_/=1.and.n_spin_pw_/=2.and.n_spin_pw_/=4) &
+&               call errore('qexsd_read_gk','invalid n_spin_pw_',10)
+      !
+      do ik = 1, k%nibz
+        !
+        call qexsd_read_gk(ik, n_spin_pw_, npwk=npwk_, igkv=igkv_, ierr=ierr)
+        if (ierr/=0) call errore('qexsd_read_gk','fmt error',ABS(ierr))
+        !
+        call qexsd_igk_map( nfft_, fft2igv_, npwk_, igkv_, index_ )
+        !
+        pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
+        wf_nc_k(ik) = npwk_
+        !
+      enddo
+      !
+      YAMBO_FREE(index_)
+      YAMBO_FREE(igkv_)
+      YAMBO_FREE(fft2igv_)
+      ! 
+   case default
+     call errore("get_igk"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
 
-   YAMBO_ALLOC(pw_igk_,(wf_ncx,k%nibz))
-   YAMBO_ALLOC(pw_npwk_,(k%nibz))
-   call pw_igkindex(pw_unit)
-   wf_nc_k(:) = pw_npwk_(:)
-   YAMBO_FREE(pw_npwk_)
-
-#elif defined _P2Y_QEXML
-
-   YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
-   YAMBO_ALLOC(index_,(npwx_))
-   do ik = 1, k%nibz
-     call qexml_read_gk(ik, npwk=npwk_, index=index_, ierr=ierr)
-     if (ierr/=0) call errore('qexml_read_gk','IOTK error',ABS(ierr))
-     !
-     pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
-     wf_nc_k(ik) = npwk_
-   enddo
-   YAMBO_FREE(index_)
-     
-#elif defined _P2Y_QEXSD
-
-   YAMBO_ALLOC(pw_igk_,(npwx_,k%nibz))
-   YAMBO_ALLOC(index_,(npwx_))
-   YAMBO_ALLOC(igkv_,(3,npwx_))
-   !
-   if (.not.allocated(igv_)) call errore('qexsd_read_gk','igv_ not alloc',10)
-   !
-   call qexsd_fft2igv_map(ngm_, igv_, nfft_, dims_only=.TRUE.)
-   YAMBO_ALLOC(fft2igv_,(product(nfft_)))
-   call qexsd_fft2igv_map(ngm_, igv_, nfft_, fft2igv_)
-   !
-   if (n_spin_pw_/=1.and.n_spin_pw_/=2.and.n_spin_pw_/=4) &
-&            call errore('qexsd_read_gk','invalid n_spin_pw_',10)
-   !
-   !
-   do ik = 1, k%nibz
-     !
-     call qexsd_read_gk(ik, n_spin_pw_, npwk=npwk_, igkv=igkv_, ierr=ierr)
-     if (ierr/=0) call errore('qexsd_read_gk','fmt error',ABS(ierr))
-     !
-     call qexsd_igk_map( nfft_, fft2igv_, npwk_, igkv_, index_ )
-     !
-     pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
-     wf_nc_k(ik) = npwk_
-     !
-   enddo
-   !
-   YAMBO_FREE(index_)
-   YAMBO_FREE(igkv_)
-   YAMBO_FREE(fft2igv_)
-     
-#endif
-
-   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz)) ! this will be incorrect for parallel 3.1
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    wf_igk(:,:)=-1 ! for checking
 
    if(gamma_only_) then
@@ -723,10 +745,10 @@ contains
    !
    ! Inportant check on wf_ncx.
    !
-   if(maxval(wf_nc_k).ne.wf_ncx) then
-     call error('maxval(wf_nc_k).ne.wf_ncx ! Check MAX_NPW/MAX_NUMBER_GK_VECTORS ')
+   if(maxval(wf_nc_k)/=wf_ncx) then
+     call error('maxval(wf_nc_k) /= wf_ncx ! Check MAX_NPW/MAX_NUMBER_GK_VECTORS ')
    endif
-   if(any(wf_nc_k.eq.0)) call error('At least one npw(k) = 0!')
+   if(any(wf_nc_k==0)) call error('At least one npw(k) = 0!')
     
  end subroutine get_IGK
  !
@@ -743,47 +765,50 @@ contains
    !
    YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_sp_pol))
 
-#if defined _P2Y_EXPORT
-
-   YAMBO_ALLOC(eig_,(en%nb,k%nibz))
-
-   call pw_eigenvalues(pw_unit)
-    
-   en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )/2.0_DP ! pw_export in Hartree
-    
-#elif defined _P2Y_QEXML
-
-   YAMBO_ALLOC(eigb_,(en%nb))
-   select case(n_sp_pol)
-   case(2)
-     do ik_ = 1,k%nibz
-       do ispin_ = 1, n_sp_pol
-         call qexml_read_bands(ik=ik_,ispin=ispin_,eig=eigb_, ierr=ierr)
-         if (ierr/=0) call errore('qexml_read_bands','IOTK error 2',ABS(ierr))
-         en%E(:,ik_,ispin_) = eigb_( 1:en%nb )
-       enddo
-     enddo
-   case(1)
-     do ik_ = 1,k%nibz
-        call qexml_read_bands(ik=ik_,eig=eigb_, ierr=ierr)
-        if (ierr/=0) call errore('qexml_read_bands','IOTK error 1',ABS(ierr))
-        en%E(:,ik_,1) = eigb_( 1:en%nb )
-     enddo
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      YAMBO_ALLOC(eig_,(en%nb,k%nibz))
+      call pw_eigenvalues(pw_unit)
+      !
+      ! pw_export in Hartree
+      en%E(:,:,1) = eig_( 1:en%nb, 1:k%nibz )/2.0_DP
+      ! 
+   case ("qexml")
+      ! 
+      YAMBO_ALLOC(eigb_,(en%nb))
+      select case(n_sp_pol)
+      case(2)
+        do ik_ = 1,k%nibz
+          do ispin_ = 1, n_sp_pol
+            call qexml_read_bands(ik=ik_,ispin=ispin_,eig=eigb_, ierr=ierr)
+            if (ierr/=0) call errore('qexml_read_bands','IOTK error 2',ABS(ierr))
+            en%E(:,ik_,ispin_) = eigb_( 1:en%nb )
+          enddo
+        enddo
+      case(1)
+        do ik_ = 1,k%nibz
+           call qexml_read_bands(ik=ik_,eig=eigb_, ierr=ierr)
+           if (ierr/=0) call errore('qexml_read_bands','IOTK error 1',ABS(ierr))
+           en%E(:,ik_,1) = eigb_( 1:en%nb )
+        enddo
+      end select
+      YAMBO_FREE(eigb_)
+      !
+   case ("qexsd","qexsd-hdf5")
+      ! 
+      YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
+      !
+      call qexsd_read_band_structure(eig=eig_s_,ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_band_structure','fmt error',ABS(ierr))
+      !
+      en%E(:,:,:)=eig_s_(:,:,:)
+      YAMBO_FREE(eig_s_)
+      !
+   case default
+     call errore("get_energies"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
    end select
-   YAMBO_FREE(eigb_)
-
-#elif defined _P2Y_QEXSD
-
-   YAMBO_ALLOC(eig_s_,(en%nb,k%nibz,n_sp_pol))
-   !
-   call qexsd_read_band_structure(eig=eig_s_,ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_band_structure','fmt error',ABS(ierr))
-   !
-   en%E(:,:,:)=eig_s_(:,:,:)
-   YAMBO_FREE(eig_s_)
-   
-#endif
-    
+   !  
  end subroutine get_energies
  !
  !---------------------------------------------------------------------*
@@ -796,52 +821,53 @@ contains
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 
-#if defined _P2Y_QEXML
-
-   call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
-   if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
-   !
-   if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
-   GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-   GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
-
-#elif defined _P2Y_QEXSD
-
-   call qexsd_read_xc(dft=pw_dft, dft_is_hubbard=pw_lda_plus_u, &
-&                                 dft_is_hybrid=pw_exx_is_active, ierr=ierr)
-   if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
-   !
-   if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
-   GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-   GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
-
-#endif
-
-#if defined _P2Y_QEXML
-   call qexml_read_exx(exx_fraction=pw_exx_fraction, &
-&                      screening_parameter=pw_screening_parameter, & 
-&                      exx_is_active=pw_exx_is_active, ierr=ierr)
-   !if (ierr/=0) call errore('qexml_read_exx','IOTK error',abs(ierr))
-   !
-   if (ierr==0) then
-      if (pw_exx_is_active) then 
+   select case (trim(dftdata_fmt))
+   case ("pw_export")
+      !
+      ! doing nothing here (for the moment)
+      !
+   case ("qexml")
+      !
+      call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
+      !
+      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
+      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      !
+      call qexml_read_exx(exx_fraction=pw_exx_fraction, &
+&                         screening_parameter=pw_screening_parameter, & 
+&                         exx_is_active=pw_exx_is_active, ierr=ierr)
+      if (ierr==0) then
+         if (pw_exx_is_active) then 
+            GS_exx_FRACTION = pw_exx_fraction
+            GS_exx_SCREENING= pw_screening_parameter
+         endif
+      endif
+      !
+   case ("qexsd","qexsd-hdf5")
+      !
+      call qexsd_read_xc(dft=pw_dft, dft_is_hubbard=pw_lda_plus_u, &
+&                        dft_is_hybrid=pw_exx_is_active, ierr=ierr)
+      if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
+      !
+      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
+      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      !
+      if (pw_exx_is_active) then
+         !
+         call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
+&                            screening_parameter=pw_screening_parameter, ierr=ierr)
+         if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
          GS_exx_FRACTION = pw_exx_fraction
          GS_exx_SCREENING= pw_screening_parameter
+         !
       endif
-   endif
-
-#elif defined _P2Y_QEXSD
-
-   if (pw_exx_is_active) then
       !
-      call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
-&                         screening_parameter=pw_screening_parameter, ierr=ierr)
-      if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
-      GS_exx_FRACTION = pw_exx_fraction
-      GS_exx_SCREENING= pw_screening_parameter
-      !
-   endif
-#endif
+   case default
+     call errore("get_xc"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
+   end select
 
  end subroutine get_xc
  !

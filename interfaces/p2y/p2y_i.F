@@ -23,7 +23,7 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use P2Y,                 ONLY : pw_init, pw_close 
+ use P2Y,                 ONLY : pw_init, pw_close, dftdata_fmt
  use LOGO,                ONLY : pickup_a_random
  use pars,                ONLY : SP,lchlen
  use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
@@ -36,9 +36,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use mod_wf2y,            ONLY : wf_splitter
  use stderr,              ONLY : intc
  use interfaces,          ONLY : PARALLEL_live_message
-#if !defined _P2Y_EXPORT
  use qexml_module
-#endif
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
 #endif
@@ -86,17 +84,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  write_to_report=.FALSE.
  !
-#if defined _P2Y_EXPORT
- lch='P(W) 2 Y(ambo) - pw_export version'
-#elif defined _P2Y_QEXML
- lch='P(W) 2 Y(ambo) - QEXML version'
-#elif defined _P2Y_QEXSD_HDF5
- lch='P(W) 2 Y(ambo) - QEXSD-HDF5 version'
-#elif defined _P2Y_QEXSD
- lch='P(W) 2 Y(ambo) - QEXSD version'
-#else
- call error('Unknown version of P2Y. Stopping.')
-#endif
+ lch='P(W) 2 Y(ambo) - multi-fmt version'
  !
  if (ncpu>1) lch=trim(lch)//' @ '//trim(intc(ncpu))//' CPUs'
  !
@@ -157,7 +145,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      !
      ! Print verbose wfc read message
      !
-     if(verboseIO.and.(any( (/1,2,nkibz/)-ik.eq.0 ).or.mod(ik,max(k%nibz/4,1)).eq.0)) then
+     if(verboseIO.and.(any( (/1,2,nkibz/)-ik==0 ).or.mod(ik,max(k%nibz/4,1))==0)) then
        write(lch,'(" :: K-point:",i5,"/",i5," Spin pol ",i1)') ik,nkibz,n_sp_pol
        call msg('s',trim(lch))
      endif
@@ -187,17 +175,18 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l',' done ==')
  endif
  !
-#if defined _P2Y_QEXML || defined _P2Y_QEXSD
- call msg('s','== DB3 (PseudoPotential) ... ')
- call PP_PWscf_driver(k)
- if(verboseIO) then
-   call msg('s','== DB3 (PseudoPotential) ... done ==')
+ if (trim(dftdata_fmt) /= "pw_export") then
+   !
+   call msg('s','== DB3 (PseudoPotential) ... ')
+   call PP_PWscf_driver(k)
+   if(verboseIO) then
+     call msg('s','== DB3 (PseudoPotential) ... done ==')
+   else
+     call msg('l',' done ==')
+   endif
  else
-   call msg('l',' done ==')
+   call msg('s','Vnl support only with QE v5.0 or later (QEXML, QEXSD).')
  endif
-#else
- call msg('s','Vnl support only with QE v5.0 or later.')
-#endif
  !
  call PARALLEL_wait()
  !

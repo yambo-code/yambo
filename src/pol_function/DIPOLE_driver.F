@@ -29,14 +29,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! DIP_iR=i<r>
  ! DIP_P = <v>   (should be called DIP_V ... )
  !
- ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
+ !
+ ! GPL_EXCLUDE_START 
+ !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
  ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
  ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
+ !
+ ! GPL_EXCLUDE_END 
  !
  ! PARALLEL structure: The dipoles are based on a "derived" structure. 
  !                     K-points are driven by these communicators and indexes:

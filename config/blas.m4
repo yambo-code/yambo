@@ -9,6 +9,7 @@ acx_blas_ok=no
 
 AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
 AC_ARG_ENABLE(int_linalg,   AC_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
+AC_ARG_ENABLE(openmp_int_linalg,   AC_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
@@ -142,10 +143,24 @@ if test "$internal_blas" = "yes"; then
   fi
 fi
 
+BLAS_info=""
+def_openmp_int_linalg=""
+if test x"$enable_openmp_int_linalg" = "xyes" ; then
+  if test x"$enable_openmp_int_linalg" = "xyes" ; then
+    BLAS_info="(With some operations internally OpenMP distributed)"
+    def_openmp_int_linalg="-D_OPENMP_INT_LINALG"
+  else
+    enable_openmp_int_linalg="no"
+  fi
+fi
+
 AC_SUBST(internal_blas)
-AC_SUBST(enabl_int_linalg)
+AC_SUBST(enable_int_linalg)
+AC_SUBST(enable_openmp_int_linalg)
+AC_SUBST(def_openmp_int_linalg)
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)
+AC_SUBST(BLAS_info)
 
 ])dnl ACX_BLAS
 

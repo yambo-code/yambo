@@ -146,7 +146,12 @@ subroutine RT_driver(E,X,k,q)
  !===========================
  !
  call QP_apply(RT_bands,E,k,     "G",msg_fmt='rs')
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Core initialization
  !
@@ -194,6 +199,8 @@ subroutine RT_driver(E,X,k,q)
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Reference lifetimes and/or G_lesser
  !=====================================
  !
@@ -214,6 +221,8 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
  if (.not.l_elph_scatt.and..not.l_elel_scatt) call qindx_free()
@@ -222,16 +231,34 @@ subroutine RT_driver(E,X,k,q)
  !==========================
  !
  call RT_output(what="initialize")
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_output(what="open carr therm energy curr pol magn")
  call RT_output(what="open BGR")
+ !
+ ! GPL_EXCLUDE_END
+ !
+ !
+ ! GPL_INCLUDE_START
+ !
+ !call RT_output(what="open curr pol")
+ !
+ ! GPL_INCLUDE_END
+ !
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
    if(l_RT_induced_field) call RT_output(what="open tot ind")
  endif
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_elph_scatt)     call RT_output('open EPlife')
  if (l_elel_scatt)     call RT_output('open EElife')
  if (l_elphoton_scatt) call RT_output('open RADlife')
  if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Loop on time
  !==============
@@ -273,6 +300,9 @@ subroutine RT_driver(E,X,k,q)
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
    !
+   ! GPL_EXCLUDE_START
+   !
+   !
    ! Update Bose Temp and Phonons distribution
    !===========================================
    !if (l_Debye_TBose_update) then
@@ -289,6 +319,8 @@ subroutine RT_driver(E,X,k,q)
    !=======================================
    call RT_BGR(dG_lesser(:,:,:,i_MEM_collision),E,k)
    !
+   ! GPL_EXCLUDE_END
+   !
    ! COLLISIONS@NE_time
    !####################
    !
@@ -296,9 +328,13 @@ subroutine RT_driver(E,X,k,q)
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_vecpot,E,k)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Calculate all relaxation and dissipation terms
    !===============================================
    call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Write DBs
    !===========
@@ -310,10 +346,25 @@ subroutine RT_driver(E,X,k,q)
    !
    ! OUTPUT(s)
    !###########
+   !
+   ! GPL_EXCLUDE_START
+   !
    call RT_output('BGR',TIME=NE_time*AUT2FS)
    call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
    call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
+   !
+   ! GPL_EXCLUDE_END
+   !
+   !
+   ! GPL_INCLUDE_START
+   !
+   !call RT_output('curr pol',TIME=NE_time*AUT2FS)
+   !
+   ! GPL_INCLUDE_END
+   !
+   !
+   ! GPL_EXCLUDE_START
    !
    ! Mean Carrier Lifetimes
    !========================
@@ -335,8 +386,12 @@ subroutine RT_driver(E,X,k,q)
      endif
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    ! T -> T+dT step 
    !################
+   !
+   ! GPL_EXCLUDE_START
    !
    ! New steps & times ...
    !=======================
@@ -346,6 +401,8 @@ subroutine RT_driver(E,X,k,q)
    l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
    !
    if (l_Update_Time_Step) call RT_time_step_update( )
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !
@@ -395,10 +452,16 @@ subroutine RT_driver(E,X,k,q)
      call RT_free()
      call RT_free_control()
      call WF_free(WF)
+     !
+     ! GPL_EXCLUDE_START
+     !
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
-     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
+     !
+     ! GPL_EXCLUDE_END
+     !
+     if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
      call set_real_printed_length()
    end subroutine
    !

@@ -216,17 +216,17 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_fix_save) call WF_format_converter(en,k,q)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
  if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_RealTime) call RT_driver(en,k,q)
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  l_flag=l_excitons
 #if defined _YPP_RT

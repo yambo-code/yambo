@@ -17,7 +17,7 @@ TARBALL=$(tarball_hdf5)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --enable-fortran --disable-shared --enable-static --without-pic $(hdf5_opt)
+         --enable-fortran --enable-fortran2003 --disable-shared --enable-static --without-pic $(hdf5_opt)
 
 
 #

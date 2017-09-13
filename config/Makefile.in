@@ -2,7 +2,7 @@
 #        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -58,17 +58,24 @@ CFGFILES = config/setup config/Makefile config/report  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
            include/c_defs.h
-CORE     = yambo interfaces ypp
+ifeq ($(do_p2y),yes)
+  p2y   = p2y
+endif
+ifeq ($(do_e2y),yes)
+  e2y   = e2y
+endif
+INTERFCS = a2y c2y $(p2y) $(e2y)
+CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
-PH_PROJ  = yambo_ph ypp_ph 
+PH_PROJ  = yambo_ph ypp_ph
 SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
 RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
-KERR_PROJ= yambo_kerr 
+KERR_PROJ= yambo_kerr
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
 EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
-INTERFCS = a2y p2y e2y c2y
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -124,12 +131,16 @@ YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control s
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
 
+.PHONY: interfaces
+
 nothing: 
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
+interfaces:
+	for target in $(INTERFCS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 core:      
-	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 ph-project:
 	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project:
@@ -139,12 +150,7 @@ rt-project:
 kerr-project:
 	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: 
-	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" && test ! "$$target" = "interfaces" ; then echo "$$target build failed"; break;fi ; done
-	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-	for target in $(TESTS)   ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(ALL) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
@@ -228,17 +234,21 @@ yambo_qed: libs
 #
 # Interfaces #
 #
-interfaces: libs
+interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+a2y: interfcs
 	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+c2y: interfcs
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
-	@+if test "$(do_p2y)" = yes ; then \
-	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="-D@PW_CPP@"; $(mkx) ; \
-	fi
-	@+if test "$(do_e2y)" = yes ; then \
-	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ; \
-	fi
+ifeq ($(do_p2y),yes)
+p2y: interfcs
+	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
+endif
+ifeq ($(do_e2y),yes)
+e2y: interfcs
+	@+X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ;
+endif
 #
 # YPP #
 #
@@ -300,17 +310,15 @@ distclean: clean_all remove_ext_libs
 #
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo  " [all projects] all";\
- echo  " [project-related suite] project (core, rt-project,...)";echo;\
- for target in $(CORE); do echo  " [core] $$target" ; done;echo;\
- for target in $(PH_PROJ); do echo " [ph-project] $$target" ; done;echo;\
- for target in $(SC_PROJ); do echo " [sc-project] $$target" ; done;echo;\
- for target in $(RT_PROJ); do echo " [rt-project] $$target" ; done;echo;\
+ echo " [all projects] all";\
+ echo " [project-related suite] project (core, rt-project, ...)";      echo;\
+ for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
+ for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
+ for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
+ for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
- for target in $(BROKEN); do echo " [broken] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [utils] $$target" ; done;echo
- for target in $(TESTS); do echo  " [tests] $$target" ; done;echo
- for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
+ for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
+ for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo
 endef
 #
 # SRC's and LIB's (needing the locks)
@@ -496,7 +504,6 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
  cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef

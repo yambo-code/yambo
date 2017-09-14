@@ -149,8 +149,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      ! [Vnl,r]
      !
      if (io_KB_pwscf_err==0) then
-       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
@@ -269,9 +269,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
        enddo    ! conduction band loop
      enddo      ! valence    band loop
      ! 
-   enddo        ! sp_pol loop
-   ! 
- enddo          ! k-points
+   enddo        ! k-points loop
+ enddo          ! sp_pol   loop
  !
  call live_timing()
  !

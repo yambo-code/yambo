@@ -123,9 +123,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_MAGNETIC
  if (.not.flag) flag=any((/l_angular_momentum,l_position/))
 #endif
+ !GPL_EXCLUDE_START
 #if defined _YPP_RT
  if (.not.flag) flag=l_RT_bands
 #endif
+ !GPL_EXCLUDE_END
 #if defined _YPP_SC
  if (.not.flag) flag=l_mean_potential
 #endif

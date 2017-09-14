@@ -64,9 +64,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call section('*','Response Functions in Transition space')
  !=========================================================
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Joint DOS
  !===========

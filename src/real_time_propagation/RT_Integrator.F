@@ -87,7 +87,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    call timing('RT integrator',OPR='stop')
 #endif
    call RT_Hamiltonian(dG1,A_out,E,k)
+   !
+   ! GPL_EXCLUDE_START
+   !
    call RT_relaxation(dG1,E,k,q,Time+T_step/2._SP,.false.)
+   !
+   ! GPL_EXCLUDE_END
+   !
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
@@ -114,7 +120,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
    call timing('RT integrator',OPR='stop')
 #endif
    call RT_Hamiltonian(dG1,A_out,E,k)
+   !
+   ! GPL_EXCLUDE_START
+   !
    call RT_relaxation(dG1,E,k,q,Time+T_step,.false.)
+   !
+   ! GPL_EXCLUDE_END
+   !
 #if defined _TIMING
    call timing('RT integrator',OPR='start')
 #endif
@@ -227,11 +239,15 @@ subroutine RT_Integrator(dG_new,dG_old,A_out,A_in,T_step,E,k,q,Time)
          !
        endif
        !
+       ! GPL_EXCLUDE_START
+       !
        ! Carriers relaxation step:
        !
        ! G(T0+dt) = G(T0) - i dt * Sigma_relax(T)
        !
        call RT_Scattering_step(dG_out(:,:,ik),ik,dT)
+       !
+       ! GPL_EXCLUDE_END
        !
      enddo
      !

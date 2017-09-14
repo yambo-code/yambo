@@ -121,10 +121,14 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _SC || defined _RT
  l_eval_DIP_P2=l_sc_run.or.l_real_time
  if(l_eval_DIP_P2) wf_dim=4
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'
  if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P and iR (T):'
@@ -243,6 +247,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
          endif
          !
+         ! GPL_EXCLUDE_START
+         !
          !======
          ! <P^2>
          !======
@@ -255,6 +261,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
            endif
          endif
+         !
+         ! GPL_EXCLUDE_END
          !
          call live_timing(steps=1)
          !

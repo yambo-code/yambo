@@ -25,7 +25,7 @@ integer function io_KB_pwscf(ID)
  !
  use pars,             ONLY:SP
  use stderr,           ONLY:intc
- use R_lattice,        ONLY:nXkibz
+ use R_lattice,        ONLY:nkibz
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
@@ -51,11 +51,11 @@ integer function io_KB_pwscf(ID)
 #endif
  !
  ifrag=maxval(io_sec(ID,:))-1
- if(ifrag<=nXkibz) then
+ if(ifrag<=nkibz) then
    ik=ifrag
    i_sp_pol=1
  else
-   ik=ifrag-nXkibz
+   ik=ifrag-nkibz
    i_sp_pol=2
  endif
  !

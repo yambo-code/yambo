@@ -25,8 +25,7 @@ module KERR
  !
  use drivers, ONLY:l_kerr
  use pars,    ONLY:SP
- !
- implicit none
+#include<memory.h>
  !
  complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
@@ -38,7 +37,6 @@ module KERR
    subroutine KERR_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -50,16 +48,13 @@ module KERR
        select case(what)
        case('DIP_projected')
          if (allocated(DIP_projected_r90)) return
-         allocate(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         YAMBO_ALLOC(DIP_projected_r90,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
        end select
      else
        select case(what)
        case('DIP_projected')
-         if (.not.allocated(DIP_projected_r90)) return
-         deallocate(DIP_projected_r90)
+         YAMBO_FREE(DIP_projected_r90)
        end select
-       call mem_est(what)
      endif
    end subroutine
    !

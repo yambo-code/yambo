@@ -39,15 +39,20 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
+#if defined _YPP_RT
+ use pars,           ONLY:cZERO
+ use YPP_real_time,  ONLY:l_RT_bands
+#endif
 #if defined _YPP_ELPH
  use YPP_ELPH,       ONLY:elph_residual_treshold
+ use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
  use com,            ONLY:jobstr,file_exists
  use R_lattice,      ONLY:nkibz
 #endif
  use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::Xk,Xq
  type(levels)  ::Xen
@@ -55,7 +60,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! Work Space
  !
  real(SP), allocatable :: el_den(:),el_cur(:,:)
- integer               :: i_qp,ik,ib,ibp,ir,i_wf,i_wfp,i_spin,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
+ integer               :: i_qp,ik,i_sp_pol,ib,ibp,ir,i_wf,mag_i_dir,nb_to_load(2),nkpt_to_load(2),ik_ref
  logical               :: flag
  character(lchlen)     :: ch_ws(2)
 #if defined _YPP_ELPH
@@ -131,9 +136,12 @@ subroutine electrons_driver(Xk,Xen,Xq)
    !
    call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
-   allocate(v2plot(fft_size))
+   YAMBO_ALLOC(v2plot,(fft_size))
 #if defined _YPP_ELPH
-   if (l_polaronic_wf) allocate( v2plot_c(fft_size), wf_rot(fft_size) )
+   if (l_polaronic_wf) then
+     YAMBO_ALLOC(v2plot_c,(fft_size))
+     YAMBO_ALLOC(wf_rot,(fft_size))
+   endif
 #endif
  endif
  !
@@ -187,28 +195,27 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      ib    =QP_table(i_qp,1)
      ik    =QP_table(i_qp,3)
-     i_spin=spin(QP_table(i_qp,:))
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
      i_qp=i_qp+1
      !
      !
-       i_wf=WF%index(ib,ik,i_spin)
-       if (n_spinor==2) i_wfp=WF%index(ib,ik,2)
+       i_wf=WF%index(ib,ik,i_sp_pol)
      !
-       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,i_wf)*conjg( WF%c(ir,i_wf) ) )
-       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,i_wfp)*conjg( WF%c(ir,i_wfp) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,1,i_wf)*conjg( WF%c(ir,1,i_wf) ) )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,2,i_wf)*conjg( WF%c(ir,2,i_wf) ) )
      !
      ibp=ib+1
      if (ib==Xen%nb) ibp=ib
-     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_spin)-Xen%E(ibp,ik,i_spin))<deg_energy) then
+     if (ib/=Xen%nb.and.abs(Xen%E(ib,ik,i_sp_pol)-Xen%E(ibp,ik,i_sp_pol))<deg_energy) then
        cycle
      else
        !
        if (n_sp_pol==2) then
-         if (i_spin==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
-         if (i_spin==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
-         if (i_spin==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
-         if (i_spin==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
+         if (i_sp_pol==1) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_UP_'//trim(intc(plot_dim))
+         if (i_sp_pol==2) ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_DN_'//trim(intc(plot_dim))
+         if (i_sp_pol==1) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' UP'
+         if (i_sp_pol==2) plot_title='k '//trim(intc(ik))//' b '//trim(intc(ib))//' DN'
        else
          ch_ws(1)=trim(ch_ws(2))//'_k'//trim(intc(ik))//'_b'//trim(intc(ib))//'_'//trim(intc(plot_dim)) 
        endif
@@ -245,7 +252,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
    if (mag_dir=='Z'.or.mag_dir=='z') mag_i_dir=3
    if (mag_i_dir<0) goto 1
    !
-   allocate(magn(fft_size,3))
+   YAMBO_ALLOC(magn,(fft_size,3))
    !
    call section('*','Single Particle Magnetization along '//mag_dir)
    !
@@ -276,10 +283,10 @@ subroutine electrons_driver(Xk,Xen,Xq)
      !
      call section('*','Spin Polarized densities')
      !
-     do i_spin=1,2
+     do i_sp_pol=1,2
        !
        ! rho DN
-       if (i_spin==1) then
+       if (i_sp_pol==1) then
          v2plot=(el_den(:)-magn(:,3))/2.
          ch_ws(1)='density_DN_'//trim(intc(plot_dim))
        else
@@ -300,8 +307,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
          call msg('o density_UP density_DN',"#")
        endif
        !
-       if (i_spin==1) plot_title='den DN'
-       if (i_spin==2) plot_title='den UP'
+       if (i_sp_pol==1) plot_title='den DN'
+       if (i_sp_pol==2) plot_title='den UP'
        call plot_check_and_launch(.false.)
        !
        call of_open_close(trim(output_fname))
@@ -316,13 +323,14 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 1 continue
  call WF_free(WF)
- if (allocated(v2plot))     deallocate(v2plot)
- if (allocated(QP_table))   deallocate(QP_table,QP_state)
- if (allocated(magn))       deallocate(magn)
- if (allocated(el_den))     deallocate(el_den)
- if (allocated(el_cur))     deallocate(el_cur)
+ YAMBO_FREE(v2plot)
+ YAMBO_FREE(QP_table)
+ YAMBO_FREE(QP_state)
+ YAMBO_FREE(magn)
+ YAMBO_FREE(el_den)
+ YAMBO_FREE(el_cur)
 #if defined _YPP_ELPH 
- if (allocated(v2plot_c))   deallocate(v2plot_c)
+ YAMBO_FREE(v2plot_c)
 #endif
  plot_title=' '
  !

@@ -45,7 +45,7 @@ subroutine K_Haydock(iq,W)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp)  ::W
  integer       ::iq
@@ -100,16 +100,17 @@ subroutine K_Haydock(iq,W)
  !
  !
  if (use_cpl_scheme) then
-   allocate(Cf(Max_iterations+1))
+   YAMBO_ALLOC(Cf,(Max_iterations+1))
    !
    !
  end if
  !
- allocate(Vn(BS_nT_grps),Vnp1(BS_nT_grps),Vnm1(BS_nT_grps))
+ allocate(Vn(BS_nT_grps))
+ allocate(Vnp1(BS_nT_grps))
+ allocate(Vnm1(BS_nT_grps))
  call BS_HAYVEC_alloc(Vn)
  call BS_HAYVEC_alloc(Vnm1)
  call BS_HAYVEC_alloc(Vnp1)
- !
  !
  ! Haydock Coefficients and restart vector on disk
  !=================================================
@@ -418,7 +419,7 @@ subroutine K_Haydock(iq,W)
  if (use_cpl_scheme)  then
    call BS_HAYVEC_free(V0)
    if (allocated(V0)) deallocate(V0)
-   if (allocated(Cf)) deallocate(Cf)
+   YAMBO_FREE(Cf)
    !
    !
  end if

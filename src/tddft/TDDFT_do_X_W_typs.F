@@ -25,9 +25,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! Prepare X and wv types for a TDDFT calculation
  !
- use pars,          ONLY:SP
  use drivers,       ONLY:l_bss,l_tddft,l_bs_fxc,l_alda_fxc,l_lrc_fxc
- use memory_m,      ONLY:mem_est
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
@@ -37,7 +35,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
- implicit none
+#include<memory.h>
  type(X_t)   :: X
  type(w_samp):: wv
  integer     :: iq

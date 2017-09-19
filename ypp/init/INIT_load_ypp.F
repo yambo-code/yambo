@@ -30,6 +30,13 @@ subroutine ypp_INIT_load(defs)
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:lpfac
  use YPP
+#if defined _YPP_RT
+ use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
+&                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
+&                               n_regions,Eh_pumped_pair_BZ_width
+ use real_time,            ONLY:RT_bands
+ use stderr,               ONLY:intc
+#endif
 #if defined _YPP_ELPH
  use YPP_ELPH
 #endif
@@ -77,6 +84,15 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  !
+ call it('r',defs,'fixsave', '[R] Convert WFs to new format')
+ !
+#if defined _YPP_RT
+ !
+ call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
+ call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ !
+#endif
+ !
  !
  ! Temperatures
  !
@@ -99,6 +115,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ !
  !
  ! Wannier interface
  !
@@ -157,6 +174,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
+ call it('f',defs,'GkkpConvert','Convert the gkkp to new I/O format')
  !
 #endif
  !
@@ -186,5 +204,23 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries')
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
+ call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ !
+ !
+#if defined _YPP_RT
+ !
+ ! RT Post-Processing
+ !
+ call it(defs,'Xorder','Max order of the response functions',X_order)
+ call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
+ call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
+ call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
+ call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
+ call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
+ call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+ call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ !
+ !
+#endif
  !
 end subroutine

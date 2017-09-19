@@ -29,8 +29,16 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  use electrons,       ONLY:n_spin,n_bands
  use R_lattice,       ONLY:nkibz
  use QP_m,            ONLY:QP_n_states,QP_table
- !
- implicit none
+#if defined _SC || defined _RT
+ use hamiltonian,     ONLY:B_mat_index,H_ref_bands
+#endif
+#if defined _RT
+ use parallel_m,      ONLY:PAR_IND_Q,PAR_Q_index
+ use plasma,          ONLY:EH_gas
+ use R_lattice,       ONLY:nkbz
+ use collision_ext,   ONLY:GW_NEQ_collisions
+#endif
+#include<memory.h>
  !
  type(PP_indexes), optional    :: K_index
  type(PP_indexes), optional    :: B_index
@@ -43,10 +51,16 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
  ! Work Space
  !
+#if defined _RT
+ integer :: i_J,i_J_bg,iqbz,i_q_mem,i_coll
+#endif
  integer :: i_k,i_b,i_bp,i_qp,NB,NK,NBp
  logical :: condition
+#if defined _SC || defined _RT
+ logical :: Vl(H_ref_bands(2))
+#endif
  !
- NB=n_bands
+ NB =n_bands
  NBp=n_bands
  NK=nkibz 
  if (present(K_index)) then 
@@ -65,8 +79,8 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
  !
  if (present(CLEAN_UP)) then
    !
-   if (allocated(states_to_load)) deallocate(states_to_load)
-   allocate(states_to_load(NB,NK,n_spin))
+   YAMBO_FREE(states_to_load)
+   YAMBO_ALLOC(states_to_load,(NB,NK,n_spin))
    !
    states_to_load=CLEAN_UP
    if (ncpu==1) states_to_load=.TRUE.
@@ -111,6 +125,33 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    enddo
  endif
  !
+#if defined _SC || defined _RT
+ if (present(K_index).and.present(Bm_index)) then
+   do i_k=1,NK
+     !
+     if (K_index%element_1D(i_k)) then
+       !
+       Vl=.FALSE. 
+       !
+       do i_b=H_ref_bands(1),H_ref_bands(2)
+         do i_bp=H_ref_bands(1),H_ref_bands(2)
+           if (Bm_index%element_1D( B_mat_index(i_b,i_bp,H_ref_bands) ) ) then
+             Vl(i_b )=.TRUE.
+             Vl(i_bp)=.TRUE.
+           endif
+         enddo
+       enddo
+       do i_b=H_ref_bands(1),H_ref_bands(2)
+         if (.not.Vl(i_b)) states_to_load(i_b,i_k,:)=.FALSE.
+       enddo
+     else
+       states_to_load(:,i_k,:)=.FALSE.
+     endif
+     !
+   enddo
+   !
+ endif
+#endif
  !
  if (present(QP_index)) then
    !
@@ -129,5 +170,38 @@ subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
    !
  endif
  !
+#if defined _RT
+ !
+ if (present(PLASMA_index)) then
+   ! 
+   do iqbz=1,nkbz
+     !
+     if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
+     i_q_mem=PAR_Q_index(iqbz)
+     !
+     do i_J=1,EH_gas%N_poles(iqbz)
+       !
+       if (.not.PLASMA_index%element_1D(i_J)) cycle
+       !
+       do i_J_bg=EH_gas%grid(i_J,i_q_mem,1),EH_gas%grid(i_J,i_q_mem,2)
+         !
+         i_coll=EH_gas%tab(i_J_bg,i_q_mem,1)
+         !
+         i_b  = GW_NEQ_collisions%state(i_coll,1)
+         i_bp = GW_NEQ_collisions%state(i_coll,2)
+         i_k  = GW_NEQ_collisions%state(i_coll,3)
+         !
+         states_to_load(i_b ,i_k,:)=.TRUE.
+         states_to_load(i_bp,i_k,:)=.TRUE.
+         !
+       enddo
+       !
+     enddo
+     !
+   enddo
+   !
+ endif
+ !
+#endif
  !
 end subroutine

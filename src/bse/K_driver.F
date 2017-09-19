@@ -23,10 +23,9 @@
 !
 subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use memory_m,       ONLY:mem_est
  use stderr,         ONLY:string_remove
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
@@ -44,8 +43,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
+#if defined _RT
+ use drivers,        ONLY:l_rt_carriers_in_use
+ use com,            ONLY:error
+#endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q
@@ -174,7 +177,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! 3. The SOLVER
  ! =================
- if (l_bss) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+ if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
  !
  !
  ! CLEAN (Blocks)

@@ -23,11 +23,10 @@
 !
 subroutine excitons_driver(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,IP,pi
+ use pars,          ONLY:SP,pi
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:error
  use stderr,        ONLY:intc
- use memory_m,      ONLY:mem_est
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
@@ -39,8 +38,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
+#if defined _YPP_RT
+ use YPP_real_time, ONLY:l_RT_abs
+#endif
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
@@ -105,19 +107,25 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #if defined _YPP_ELPH
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp
 #endif
+#if defined _YPP_RT
+ l_flag=l_flag .or. l_RT_abs
+#endif
  !
  if(.not.l_flag) return
  !
- allocate (lambda_s(n_lambda)) 
+ YAMBO_ALLOC(lambda_s,(n_lambda))
  n_lambda = get_lambda()
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- allocate(BS_R_right(BS_H_dim),BS_R_left(BS_H_dim),BS_E(BS_H_dim))
- call mem_est('BS_R_E',(/2*BS_H_dim/))
+ YAMBO_ALLOC(BS_R_right,(BS_H_dim))
+ YAMBO_ALLOC(BS_R_left,(BS_H_dim))
+ YAMBO_ALLOC(BS_E,(BS_H_dim))
  iq=BS_q(1)
  !
- if(E_SOC_nbands/=0) allocate(BS_E_SOC_corr(2/n_sp_pol,BS_H_dim))
+ if(E_SOC_nbands/=0) then
+   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
+ endif
  !
  ! Here I read energies and residuum
  !
@@ -142,7 +150,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
 &               ' Re-run yambo using the WRbsWF flag in the input file.')
    !
-   allocate(BS_E_degs(BS_H_dim))
+   YAMBO_ALLOC(BS_E_degs,(BS_H_dim))
    !
    ! Sort energies to find degenerate states
    !========================================
@@ -150,9 +158,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    ! Loading tables and eigenvectors
    !
-   allocate(BSS_eh_table(BS_H_dim,3+n_sp_pol-1),BS_mat(BS_H_dim,BS_H_dim))
-   call mem_est("BSS_eh_table",(/(3+n_sp_pol-1)*BS_H_dim/),(/IP/))
-   call mem_est('BS_mat',(/BS_H_dim**2/))
+   YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
+   YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
    io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
@@ -190,15 +197,16 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! CLEAN
  !
- deallocate(BS_R_left,BS_R_right,BS_E,lambda_s)
- call mem_est('BS_R_E')
+ YAMBO_FREE(BS_R_left)
+ YAMBO_FREE(BS_R_right)
+ YAMBO_FREE(BS_E)
+ YAMBO_FREE(lambda_s)
  if(.not.l_sort) then
-   deallocate(BSS_eh_table,BS_mat)
-   call mem_est('BSS_eh_table BS_mat')
+   YAMBO_FREE(BSS_eh_table)
+   YAMBO_FREE(BS_mat)
  endif
  if(associated(BS_E_SOC_corr)) then
-   deallocate(BS_E_SOC_corr)
-   nullify(BS_E_SOC_corr)
+   YAMBO_FREE_P(BS_E_SOC_corr)
  endif
  !
  contains

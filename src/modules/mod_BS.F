@@ -23,11 +23,9 @@
 !
 module BS
  !
- use pars,       ONLY:IP,SP,schlen,lchlen
- use collision,  ONLY:elemental_collision
- use memory_m,   ONLY:mem_est
- !
- implicit none
+ use pars,          ONLY:IP,SP,schlen,lchlen
+ use collision_el,  ONLY:elemental_collision
+#include<memory.h>
  !
  ! Modes and logicals
  !====================
@@ -56,7 +54,6 @@ module BS
  !
  ! Live Timing
  !=============
- integer     :: BS_LiveTiming_prefactor = 1
  integer(IP) :: BS_LiveTiming_steps     = 0
  !
  ! Transition Controls
@@ -111,12 +108,13 @@ module BS
  ! Blocks ...
  !============
  type BS_block
-   integer                       :: ik         ! ik index (IBZ)
-   integer                       :: ip         ! ip index (ik -> ip transition) (IBZ)
-   integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
-   integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
-   integer                       :: size(2)    ! rows x columns
-   character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+   integer                       :: ik            ! ik index (IBZ)
+   integer                       :: ip            ! ip index (ik -> ip transition) (IBZ)
+   integer                       :: iT_k          ! Index (among n_BS_T_grps) of the cv transitions @ k
+   integer                       :: iT_p          ! Index (among n_BS_T_grps) of the cv transitions @ p
+   integer                       :: size(2)       ! rows x columns
+   integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
+   character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
    !
    ! Matrix Block
    !--------------
@@ -160,48 +158,42 @@ module BS
      !
      use pars,       ONLY:IP
      use stderr,     ONLY:intc
-     use memory_m,   ONLY:mem_est
      !
      logical :: EXCHANGE,CORRELATION
      integer :: iG,iB
      !
      if (EXCHANGE) then
-       allocate(BS_T_grp(iG)%O_x(BS_n_g_exch,BS_T_grp(iG)%size))
-       if(iG==1) call mem_est("BS_T_group_X_oscillators",(/BS_n_g_exch*sum(BS_T_grp(:)%size)/))
+       YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
      endif
      !
      if (CORRELATION) then
-       allocate(BS_blk(iB)%O_c(O_ng,BS_blk(iB)%N_oscillators))
+       YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
      endif
      !
    end subroutine
    !
-   subroutine BS_oscillators_free(iG,iB)
+   subroutine BS_oscillators_free(iG_ref,iB_ref)
      use stderr,     ONLY:intc
-     use memory_m,   ONLY:mem_est
-     integer :: iG,iB
-     integer :: i_g,i_b,ik_loop,ip_loop,ik_now,ip_now
-     if (iG==BS_nT_grps) call mem_est("BS_T_group_X_oscillators")
-     do i_g=iG,1,-1
-       if (.not.allocated(BS_T_grp(i_g)%O_x)) exit
-       if (     allocated(BS_T_grp(i_g)%O_x)) deallocate(BS_T_grp(i_g)%O_x)
+     integer :: iG_ref,iB_ref
+     integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
+     do iG=iG_ref,1,-1
+       YAMBO_FREE(BS_T_grp(iG)%O_x)
      enddo
-     if(iB==0) return
-     ik_now=BS_blk(iB)%ik
-     ip_now=BS_blk(iB)%ip
-     if(iB==n_BS_blks) then
+     if(iB_ref==0) return
+     ik_now=BS_blk(iB_ref)%ik
+     ip_now=BS_blk(iB_ref)%ip
+     if(iB_ref==n_BS_blks) then
        ik_now=0
        ip_now=0
      endif
-     do i_b=iB,1,-1
-       ik_loop=BS_blk(i_b)%ik
-       ip_loop=BS_blk(i_b)%ip
+     do iB=iB_ref,1,-1
+       ik_loop=BS_blk(iB)%ik
+       ip_loop=BS_blk(iB)%ip
+       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
-       if (.not.allocated(BS_blk(i_b)%O_c)) exit
-       if (     allocated(BS_blk(i_b)%O_c)) then
-         deallocate(BS_blk(i_b)%O_c)
-         deallocate(BS_blk(i_b)%O_table)
-       endif
+       if (.not.allocated(BS_blk(iB)%O_c)) exit
+       YAMBO_FREE(BS_blk(iB)%O_c)
+       YAMBO_FREE(BS_blk(iB)%O_table)
      enddo
      !
    end subroutine
@@ -211,108 +203,86 @@ module BS
      use pars,       ONLY:IP
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
-     use memory_m,   ONLY:mem_est
      use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
      integer      :: iT,nT
      type(levels) :: E
      !
      if(iT==0) then
-       nT=sum(BS_T_grp(:)%size)
-       call mem_est("BS_T_grp_dipoles_R_N",(/nT/))
-       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N",(/nT/))
-       if(l_kerr) then
-         call mem_est("BS_T_grp_dipoles_KERR_R_N",(/nT/))
-         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_KERR_A_N",(/nT/))
-       endif
-       if(l_photolum) then
-         call mem_est("BS_T_grp_dipoles_PL_R_N",(/4*nT/))
-         if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N",(/4*nT/))
-         call mem_est("BS_T_grp_f_PL",(/2*nT/),(/SP/))
-       endif
-       call mem_est("BS_T_grp_table_N",(/nT/),(/IP/))
-       call mem_est("BS_T_grp_E_N",(/nT/),(/SP/))
-       call mem_est("BS_T_grp_f_N",(/2*nT/),(/SP/))
-       if (associated(E%Z)) call mem_est("BS_T_grp_Z_N",(/nT/))
-       if (associated(E%W)) call mem_est("BS_T_grp_W_N",(/nT/),(/SP/))
        return
      endif
      !
      nT=BS_T_grp(iT)%size
      !
-     allocate(BS_T_grp(iT)%dipoles_R(nT))
-     if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
      if(l_kerr) then
-       allocate(BS_T_grp(iT)%dipoles_R_kerr(nT))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_kerr(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
      endif
      if(l_photolum) then
-       allocate(BS_T_grp(iT)%dipoles_R_PL(nT,3))
-       if (BS_K_coupling) allocate(BS_T_grp(iT)%dipoles_A_PL(nT,3))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
-     allocate(BS_T_grp(iT)%table(nT,4))
-     allocate(BS_T_grp(iT)%E(nT))
-     allocate(BS_T_grp(iT)%f(nT))
-     allocate(BS_T_grp(iT)%f_RES(nT))
-     if(l_photolum) allocate(BS_T_grp(iT)%f_PL(2,nT))
-     if (associated(E%Z)) allocate(BS_T_grp(iT)%Z(nT))
-     if (associated(E%W)) allocate(BS_T_grp(iT)%W(nT))
-     if (E_SOC_nbands/=0) allocate(BS_T_grp(iT)%E_SOC_corr(2/n_sp_pol,nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
+     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
+     if (allocated(E%Z)) then
+       YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
+     endif
+     if (allocated(E%W)) then
+       YAMBO_ALLOC(BS_T_grp(iT)%W,(nT))
+     endif
+     if (E_SOC_nbands/=0) then
+       YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
+     endif
      !
+   end subroutine
+   !
+   subroutine BS_blks_free()
+     integer :: iB
+     do iB=1,n_BS_blks
+       YAMBO_FREE(BS_blk(iB)%mat)
+     enddo
    end subroutine
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use memory_m,   ONLY:mem_est
      use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      use electrons,  ONLY:E_SOC_nbands
-     integer :: i_g
+     integer :: iT
      !
-     if (allocated(BS_nT_at_k))          deallocate(BS_nT_at_k)
-     if (allocated(PAR_BS_T_grps_index)) deallocate(PAR_BS_T_grps_index)
-     if (allocated(BS_T_grp_1st_el))     deallocate(BS_T_grp_1st_el)  
-     call mem_est("BS_nT_at_k PAR_BS_T_grps_index BS_T_grp_1st_el")
+     YAMBO_FREE(BS_nT_at_k)
+     YAMBO_FREE(PAR_BS_T_grps_index)
+     YAMBO_FREE(BS_T_grp_1st_el)
      !
-     do i_g=1,BS_nT_grps
+     do iT=1,BS_nT_grps
        !
-       if (.not.allocated(BS_T_grp(i_g)%table)) cycle
+       if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
-       deallocate(BS_T_grp(i_g)%dipoles_R)
-       if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A)
-       if(l_kerr) then
-         deallocate(BS_T_grp(i_g)%dipoles_R_kerr)
-         if (BS_K_coupling) deallocate(BS_T_grp(i_g)%dipoles_A_kerr)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
+       if (l_kerr) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
        endif
-       deallocate(BS_T_grp(i_g)%table)
-       deallocate(BS_T_grp(i_g)%E)
-       deallocate(BS_T_grp(i_g)%f)
-       deallocate(BS_T_grp(i_g)%f_RES)
-       if (allocated(BS_T_grp(i_g)%f_PL)) deallocate(BS_T_grp(i_g)%f_PL)
-       if (allocated(BS_T_grp(i_g)%Z))    deallocate(BS_T_grp(i_g)%Z)
-       if (allocated(BS_T_grp(i_g)%W))    deallocate(BS_T_grp(i_g)%W)
-       if (E_SOC_nbands/=0)               deallocate(BS_T_grp(i_g)%E_SOC_corr)
+       YAMBO_FREE(BS_T_grp(iT)%table)
+       YAMBO_FREE(BS_T_grp(iT)%E)
+       YAMBO_FREE(BS_T_grp(iT)%f)
+       YAMBO_FREE(BS_T_grp(iT)%f_RES)
+       YAMBO_FREE(BS_T_grp(iT)%f_PL)
+       YAMBO_FREE(BS_T_grp(iT)%Z)
+       YAMBO_FREE(BS_T_grp(iT)%W)
+       YAMBO_FREE(BS_T_grp(iT)%E_SOC_corr)
        !
      enddo
-     !
-     call mem_est("BS_T_grp_dipoles_R_N")
-     call mem_est("BS_T_grp_dipoles_A_N")
-     if(l_photolum) then
-       call mem_est("BS_T_grp_dipoles_PL_R_N BS_T_grp_f_PL")
-       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_PL_A_N")
-     endif
-     if(l_kerr) then
-       call mem_est("BS_T_grp_dipoles_R_N")
-       if (BS_K_coupling) call mem_est("BS_T_grp_dipoles_A_N")
-     endif
-     call mem_est("BS_T_grp_table_N")
-     call mem_est("BS_T_grp_E_N")
-     call mem_est("BS_T_grp_f_N")
-     call mem_est("BS_T_grp_Z_N")
-     call mem_est("BS_T_grp_W_N")
      !
    end subroutine
    !
    function BS_Block_size(i_block)
+     !
      integer              :: i_block
      integer(IP)          :: BS_Block_size
      !
@@ -322,12 +292,14 @@ module BS
        BS_Block_size=BS_blk(i_block)%size(1)*BS_blk(i_block)%size(2)
      endif
      !
-     BS_Block_size=BS_Block_size/BS_LiveTiming_prefactor
-     !
    end function BS_Block_size
    !
    subroutine BS_Blocks_symmetrize_K()
+     !
+     ! Symmetrize the DIAGONAL blocks only (i_Tk=i_Tp)
+     !
      integer :: i_B,i_Tk,i_Tp,i_r,i_c
+     !
      do i_B=1,n_BS_blks
        !
        i_Tk  =BS_blk(i_B)%iT_k
@@ -336,15 +308,19 @@ module BS
        ! Resonant part (mode ==R) is hermitian
        ! Coupling part (mode ==A) is symmetric
        !
-       if (.not.(i_Tk.eq.i_Tp)) cycle
-       if (BS_blk(i_B)%mode=="R") then
-         forall(i_r=1:BS_blk(i_B)%size(1),&
-&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-       else
-         forall(i_r=1:BS_blk(i_B)%size(1),&
-&             i_c=1:BS_blk(i_B)%size(2),i_r.lt.i_c) BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
-       end if
-     end do
+       if (i_Tk/=i_Tp) cycle
+       !
+       do i_r=1,BS_blk(i_B)%size(1)
+         do i_c=i_r+1,BS_blk(i_B)%size(2)
+           if (BS_blk(i_B)%mode=="R") then
+             BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
+           else
+             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+           endif
+         enddo
+       enddo
+       !
+     enddo
      !
    end subroutine BS_Blocks_symmetrize_K
    !

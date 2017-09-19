@@ -34,12 +34,18 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
+#if defined _MEM_CHECK 
+ use memory,              ONLY:MEM_manager
+#endif
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
-&                              l_QP_DBs_create_and_modify,l_QP_DBs_merge,l_excitons,l_wannier
+&                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
+#if defined _YPP_RT
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
+#endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
 #endif
  !
  implicit none
@@ -81,6 +87,9 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  call E_reset(Xen)
  call E_reset(Ken)
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! Switch off report file support
  !
@@ -99,6 +108,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    call mk_dir(more_io_path)
    call mk_dir(com_path)
  endif
+ !
+#if defined _MEM_CHECK
+ call MEM_treshold_estimate( )
+#endif
  !
  ! WF
  !
@@ -188,18 +201,27 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
- if (l_QP_DBs_create_and_modify)  call QP_DBs_setup(en,k)
+ if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
- if (l_QP_DBs_merge)  call QP_DBs_merge(en,k)
+ if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( en )
  !
  if (l_wannier) call WANNIER_driver(k,en)
- !   =========
  !
  if (l_fix_syms) call symmetries_driver(en,k)
- !  ==========
  !
+ if (l_fix_save) call WF_format_converter(en,k,q)
+ !
+#if defined _YPP_RT
+ !
+ !
+ if (l_RealTime) call RT_driver(en,k,q)
+ !
+#endif
  !
  l_flag=l_excitons
+#if defined _YPP_RT
+ l_flag=l_flag.or.l_RT_abs
+#endif
  if (l_flag) call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
@@ -221,10 +243,20 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #endif
  !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call section('*','Memory Overview')
+ !
+ call MEM_manager("",REPORT="final")
+ !
+#endif
  !
  ! END
  !
  call ypp_finalize(" ")
+ !
  return
  !
 contains

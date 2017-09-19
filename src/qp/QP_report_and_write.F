@@ -24,14 +24,14 @@
 subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  use drivers,       ONLY:l_elph_corr,l_elel_corr,l_life,l_cohsex
- use units,         ONLY:HA2EV,HBAR_eVfs
+ use units,         ONLY:HA2EV
  use pars,          ONLY:SP,schlen,lchlen
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use QP_m,          ONLY:QP_t,QP_dSc,QP_Sc,QP_Vnl_xc,QP_Vxc,QP_table,&
 &                        QP_n_states,QP_dSc_steps,use_GreenF_to_eval_QP,On_Mass_Shell_approx,&
 &                        QP_solver,report_Vnlxc,report_Sc,report_dSc,Vxc_kind,Vnlxc_kind,&
-&                        l_QP_Expand,QP_reset
+&                        l_QP_Expand,QP_reset,Time_of
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -181,7 +181,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(4)=aimag(qp%E(iqp))*HA2EV/1.E-3
      shadow(5)=0._SP
      !
-     if (abs(shadow(4))>0._SP) shadow(5)=HBAR_eVfs/abs(aimag(qp%E(iqp)))/HA2EV
+     if (abs(shadow(4))>0._SP) shadow(5)=Time_of(abs(aimag(qp%E(iqp))),"fs")
      !
      shadow_string(2)=' Re(Z)='
      shadow_fmt(2)   ='(a,f4.2)'
@@ -251,8 +251,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   if (.not.associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
-   if (     associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
+   if (.not.allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
+   if (     allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
  endif
  !
  call QP_reset(qp_expanded)

@@ -24,10 +24,10 @@
 subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
-&                         l_QP_DBs_merge,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
+&                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
  use pars,           ONLY:pi,SP,schlen
@@ -42,6 +42,18 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+#if defined _YPP_RT || defined _YPP_SC
+ use QP_m,           ONLY:QP_nb
+ use electrons,      ONLY:levels,E_reset
+ use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+#endif
+#if defined _YPP_RT 
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
+ use stderr,         ONLY:intc
+ use real_time,      ONLY:RT_bands
+#endif
 #if defined _YPP_ELPH
  use YPP_ELPH
 #endif
@@ -60,11 +72,18 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer          ::i1,i2
  character(schlen)::rstr_piece(60) 
  !
+#if defined _YPP_RT
+ integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
+ integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+#endif
  integer, external::parse_character_arrays
  !
  ! What is running ?
  !
  what_is_running='YPP'
+#if defined _YPP_RT
+ what_is_running='YPP_RT'
+#endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
@@ -81,6 +100,20 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !===========
  !
  !
+#if defined _YPP_RT
+ !
+ ! 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+ io_RT_JPSM_err=io_RT_components('JPSM' ,ID)
+ if (io_RT_JPSM_err==0) QP_nb=RT_bands(2)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_pwscf_err=io_KB_pwscf(ID)
+ ! 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_KB_abinit_err=io_KB_abinit(ID)
+ !
+#endif
  !
  ! Defaults->Defs + Initialization
  !
@@ -138,9 +171,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'QPDBs') then
      call initactivate(1,'QPDBs')
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-     l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+     l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
      if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-     if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+     if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
    endif
    !
 #if defined _YPP_ELPH
@@ -181,6 +214,16 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
    endif
    !
+#if defined _YPP_RT
+   !
+   !
+   if ( trim(rstr_piece(i1)) == 'RealTime') then
+     !
+     l_RT_X           =trim(rstr_piece(i1+1))=='X'
+     !
+     !
+   endif
+#endif
    !    
    if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
      if (l_amplitude)      call initactivate(1,'amplitude')
@@ -201,9 +244,18 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'electrons') then
      if (l_bands)          call initactivate(1,'bnds')
    endif
+#if defined _YPP_RT
+   !
+   !
+   if ( trim(rstr_piece(i1)) == 'RealTime') then
+     if (l_RT_X)           call initactivate(1,'RT_X')
+     !
+     !
+   endif
+#endif
  enddo
  !
- l_flag=.not.l_sort
+ l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
@@ -218,15 +270,27 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ l_fix_save  =runlevel_is_on('fixsave')
 #if defined _YPP_ELPH
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
 #endif
+#if defined _YPP_RT
+ !
+ l_RealTime         = runlevel_is_on('RealTime')
+ !
+ l_RT_X             = runlevel_is_on('RT_X')
+ !
+ !
+#endif
  l_excitons =runlevel_is_on('excitons')
  l_electrons=runlevel_is_on('electrons')
  l_plot=any((/runlevel_is_on('wavefunction'),runlevel_is_on('magnetization'),&
 &             runlevel_is_on('density'),runlevel_is_on('current')/))
+#if defined _YPP_RT
+ l_plot=l_plot .or. runlevel_is_on('RTdeltaRho')
+#endif
  l_free_hole=runlevel_is_on('freehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
@@ -261,7 +325,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
- l_QP_DBs_merge = runlevel_is_on('QPDB_merge')
+ l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
  !
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
@@ -270,6 +334,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"RmAllSymm RmTimeRev")
  
  !
+ if (l_fix_save) infile_editing=.false.
  !
  !
  if (l_map_kpts) call initactivate(1,"BZ_DbGd_nkpts SkipCheck noBZExpand NoWeights")
@@ -280,6 +345,24 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands PrtOccOnly")
  endif
+#if defined _YPP_RT
+ if (l_RT_DBs)    then
+   call initactivate(1,'RTpumpNel RTBands')
+   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
+   if (l_RTpump_kspace) then
+     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
+     do i1=1,n_regions
+       call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
+     enddo
+   endif
+ endif
+ if (l_RealTime) then
+   !
+   !
+   if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
+   !
+ endif
+#endif
  !
  !
  if (l_plot) then
@@ -308,11 +391,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand GkkpConvert")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
- !
  !
  ! Check for existing QP control fields to be proposed in the new input files
  !
@@ -325,7 +407,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
  l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH
@@ -337,6 +419,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
+ !
+ !
  if (l_flag) call USER_vector_handle("BKpts")
  !
  if (l_bz_grids) then

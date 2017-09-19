@@ -29,6 +29,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
+ !
+ !
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:E_k_p_q,elph_nb
@@ -42,10 +44,9 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  ! Work Space
  !
+ !
  logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
- !
- call section('*','External corrections')
  !
  ! 1) Screening
  ! ==============
@@ -57,7 +58,8 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if( l_em1s  )                      X_kind=2
  if( l_dynamical .and.      l_ppa ) X_kind=3
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
- if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='s')
+ if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs')
+ !
  !
  ! 2) BSE
  ! ========
@@ -68,16 +70,18 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  if (l_alda_fxc) bands_to_correct=(/1,BS_bands(2)/)
  !
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
- if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='s')
+ if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs')
+ !
  !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
- if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='s')
+ if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs')
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
- if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='s')
+ if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs')
 #endif
+ !
  !
  call section('r',' ')
  !

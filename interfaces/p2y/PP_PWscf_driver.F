@@ -38,7 +38,6 @@ subroutine PP_PWscf_driver(k)
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
  use com,                   ONLY:msg,warning
  use LIVE_t,                ONLY:live_timing
- use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index
  implicit none
@@ -181,10 +180,10 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  !
  ! Allocate and fill a single pseudo
  !
- use pars,     ONLY:SP
+ use pars,         only:SP
  use pw_pseudo_module
- use qexml_module
- use pw_data, only : ecutwfc_
+ use qexml_module, only: read_pseudo_data
+ use pw_data,      only: ecutwfc_
  implicit none
  type(pw_pseudo), intent(out) :: pseudo
  integer, intent(inout)       :: nbeta, nmesh

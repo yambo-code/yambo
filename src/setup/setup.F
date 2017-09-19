@@ -38,8 +38,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use IO_m,           ONLY:REP,DUMP,NONE
  use vec_operate,    ONLY:cross_product,c2a
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
+ use interfaces,     ONLY:OCCUPATIONS_Fermi
+#include <memory.h>
  !
- implicit none
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
  !
@@ -102,15 +103,18 @@ subroutine setup(en,Xen,Ken,k,Xk)
  b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
- call c2a(b,b(1,:),rv,'kc2i')
+ rv=b(1,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B1 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(1,1)))//' '//trim(real2ch(b(1,2)))//' '//trim(real2ch(b(1,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(2,:),rv,'kc2i')
+ rv=b(2,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B2 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(2,1)))//' '//trim(real2ch(b(2,2)))//' '//trim(real2ch(b(2,3)))
  call msg('r',dumb_ch1)
- call c2a(b,b(3,:),rv,'kc2i')
+ rv=b(3,:)
+ call c2a(b_in=b,v_in=rv,mode='kc2i')
  dumb_ch1='B3 ='//trim(real2ch(rv(1)))//' '//trim(real2ch(rv(2)))//' '//trim(real2ch(rv(3)))//'     '//&
 &                 trim(real2ch(b(3,1)))//' '//trim(real2ch(b(3,2)))//' '//trim(real2ch(b(3,3)))
  call msg('rn',dumb_ch1)
@@ -133,7 +137,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call build_spin_sop()
  !
- allocate(rl_sop(3,3,nsym))
+ YAMBO_ALLOC(rl_sop,(3,3,nsym))
+ !
  do is=1,nsym
    forall (i2=1:3,i3=1:3) rl_sop(i2,i3,is)=dl_sop(i2,i3,is)*alat(i2)/alat(i3)
    if (is<=nsym/(1+i_time_rev))&
@@ -151,13 +156,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if(.not.mag_syms) inv_index=nsym/2+1
      if(mag_syms) then
        do is=1,nsym
-         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+         if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
        enddo
      endif
    case(0)
      call msg('nr','[SYMs] K-space Time-reversal not included')
      do is=1,nsym
-       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1.,0.,0.,0.,-1.,0.,0.,0.,-1./)) ) inv_index=is
+       if ( all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/-1,0,0,0,-1,0,0,0,-1/)) ) inv_index=is
      enddo
  end select
  !
@@ -165,7 +170,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  idt_index=-1
  do is=1,nsym
-   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1.,0.,0.,0.,1.,0.,0.,0.,1./)) ) idt_index=is
+   if (all(nint(reshape(dl_sop(:,:,is),(/9/)))==(/1,0,0,0,1,0,0,0,1/)) ) idt_index=is
  enddo
  !
  !
@@ -176,7 +181,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
    if (i_space_inv==1) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is a symmetry')
    if (i_space_inv==0) call msg('r','[SYMs] Spatial inversion '//trim(intc(inv_index))//' is NOT a symmetry')
  else
+#if !defined _RT
    call warning('Spatial Inversion not found among the given symmetry list')
+#endif
  endif
  !
  ! Symmetries Multiplication Table
@@ -198,7 +205,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
@@ -208,7 +215,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    dumb_ch1=' '
    do i2=i1,max(i1-3,1),-1
      dumb_ch2=trim(dumb_ch1)//' [S'//trim(intc(i2))//']:'//trim(intc(ng_in_shell(i2)))//&
-&             '('//trim(real2ch(E_of_shell(i2)*1000.))//')'
+&             '('//trim(real2ch(E_of_shell(i2)*1000._SP))//')'
      dumb_ch1=dumb_ch2
    enddo
    call msg('r',trim(dumb_ch2))
@@ -234,7 +241,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    !
  endif
  !
- if (BZ_DbGd_nbands>0.and.associated(en%E_DbGd)) then
+ if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
    !
    call section('=','Double K-grid')
    !=======================================
@@ -278,13 +285,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (input_Tel_is_negative) then
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk,1)
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,mode="OCCUPATIONS")
    nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
    call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
- call OCCUPATIONS_Fermi(Xen,Xk,2)
+ call OCCUPATIONS_Fermi(Xen,Xk,OBJ="X")
  call OCCUPATIONS_Extend(Xen,en)
  !
  if (input_Tel_is_negative) then

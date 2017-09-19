@@ -35,6 +35,9 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  use vec_operate,    ONLY:sort
  use electrons,      ONLY:n_sp_pol
  use R_lattice,      ONLY:k_the_nearest
+#if defined _RT
+ use R_lattice,      ONLY:nkibz
+#endif
  !
  implicit none
  !
@@ -43,7 +46,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  real(SP),           intent(in) :: k_pti(Nki,3),k_pto(Nko,3),wki(Nki),wko(Nko)
  real(SP),           intent(in) :: Vali(Nstates,N_int)
  real(SP),           intent(out):: Valo(Nb(1):Nb(2),Nko,n_sp_pol,N_int)
- character(3),       intent(in) :: what
+ character(*),       intent(in) :: what
  logical,            intent(in) :: l_rescale
  !
  ! Work Space
@@ -55,7 +58,13 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  !
  write_message=.true.
  !
+#if defined _RT
+ write_message=Nko==nkibz
+#endif
  !
+#if defined _YPP_RT
+ write_message=(what=="RT0")
+#endif
  !
  nk_exact=0
  nk_interpolated=0
@@ -79,7 +88,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
    !
    ! Transfer OR interpolate
    !
-   ! First I check if there is an exact correposndance
+   ! First I check if there is an exact correspondance
    ! between k_pto and k_pti. This exists when i_err==0
    !
    ik_near(1)=k_the_nearest(k_pto(iko,:),k_pti,Nki,ROTATE_k_ref=.TRUE.,i_err=i_err)
@@ -89,7 +98,8 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
      if (done) nk_exact=nk_exact+1
    else
      call val_transfer()
-     if (done) nk_interpolated=nk_interpolated+1
+     if (done)     nk_interpolated=nk_interpolated+1
+     if (i_err==0) nk_exact=nk_exact+1
    endif
    !
  enddo
@@ -112,8 +122,8 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  if(write_message) then
    call msg('nrs','['//trim(what)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
    if (nk_interpolated>0) then
-     call msg('sr','[Interpolate] Nighbours         :',n_neigh)
-     call msg('sr','[Interpolate] Kpts covered [o/o]:',real(nk_interpolated)/real(Nko)*100._SP)
+     call msg('sr','['//what//'] Nighbours         :',n_neigh)
+     call msg('sr','['//what//'] Kpts covered [o/o]:',real(nk_interpolated)/real(Nko)*100._SP)
    endif
  endif
  !

@@ -29,14 +29,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! DIP_iR=i<r>
  ! DIP_P = <v>   (should be called DIP_V ... )
  !
- ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
- ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
- ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
- !                              and then <v> as <r>*DeltaE
- ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
- !                              takes into account the phases. symmetries not yet implemented 
- !                              and then <v> as <r>*DeltaE
+ !
  !
  ! PARALLEL structure: The dipoles are based on a "derived" structure. 
  !                     K-points are driven by these communicators and indexes:
@@ -59,13 +54,24 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator,X_terminator_Kind
+&                         l_X_terminator
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
+#if defined _RT || defined _SC
+ use drivers,        ONLY:l_real_time,l_sc_run
+ use com,            ONLY:secnm
+#endif
+#if defined _RT
+ use X_m,            ONLY:DIP_spin
+ use electrons,      ONLY:n_spin
+#endif
+#if defined _SC || defined _RT
+ use X_m,            ONLY:P_square
+#endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -81,6 +87,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer           :: ik,i_sp_pol
  logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
+#if defined _SC || defined  _RT
+ logical           :: l_evaluating_em1s
+#endif
  !
  ! I/O
  !
@@ -107,6 +116,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    Dipole_approach='G-space v'
  endif
  !
+#if defined _SC || defined _RT
+ force_v_g_space_approach=force_v_g_space_approach.or.l_sc_run.or.l_real_time
+#endif
  force_v_g_space_approach=force_v_g_space_approach.and.(.not.use_g_space_approach)
  use_dipole_transverse   =force_v_g_space_approach.or.       use_g_space_approach
  idir_not_done           =.true.
@@ -122,6 +134,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  Dipole_bands_ordered=.true.
  !
+#if defined _SC  || defined _RT
+ l_evaluating_em1s=index(secnm,"Dielectric")/=0
+ if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
+#endif
  !
  ! Set up band limits
  !
@@ -172,6 +188,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call timing('Dipoles',OPR='stop')
 #endif
  !
+#if defined _SC || defined _RT
+ if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
+#endif
  !
  ! Warn about missing [Vnl,r] commutator
  !
@@ -188,6 +207,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  call X_alloc('DIP_iR') 
  call X_alloc('DIP_P')
+ !
  !
  contains
    !
@@ -243,16 +263,16 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (io_err==0) then
        !
-       if(reading) IO_ACTION=OP_RD_CL
-       if(writing) IO_ACTION=OP_APP_WR_CL
+       if (reading) IO_ACTION=OP_RD_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
-       do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
-         do i_sp_pol=1,n_sp_pol
+       do i_sp_pol=1,n_sp_pol
+         do ik=1,Xk%nibz
+           if ( .not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
+           if ((.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0) .and. writing) cycle
            call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
            io_err=io_DIPOLES(X,ID)
-        enddo
+         enddo
        enddo
        !
      endif
@@ -266,53 +286,66 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      DIP_iR=cZERO
      DIP_P=cZERO
      !
-
-     !
      !
    end subroutine DIPOLES_alloc
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
-    !
-    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
-    !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
-    !
-    do ik=1,Xk%nibz
-      !
-      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-      !
-      ik_mem=PAR_DIPk_ibz_index(ik)
-      ! 
-      do i_sp_pol=1,n_sp_pol
-        !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        !
-        !
-        !
-      enddo
-      !
-      ! Symmetrization 
-      !================
-      ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
-      !
-      do i_sp_pol=1,n_sp_pol
-        do iv=X%ib(1),X%ib_lim(1)
-          if(iv>=X%ib_lim(2)) then
-            DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
-            DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-          endif
-          do ic=iv+1,X%ib(2)
-            if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
-              DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
-              DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
-            endif
-          enddo
-        enddo
-      enddo
-      !
-    enddo
-    !
+     !
+     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
+     !
+     integer  :: ic,iv,i_sp_pol,ik,ik_mem
+     !
+     do ik=1,Xk%nibz
+       !
+       if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+       !
+       ik_mem=PAR_DIPk_ibz_index(ik)
+       ! 
+       do i_sp_pol=1,n_sp_pol
+         !
+         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
+         !
+         if (l_par_RT) then
+           !
+#if defined _RT
+           DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           !
+           !
+#endif
+           !
+           !
+         endif
+         !
+       enddo
+       !
+       ! Symmetrization 
+       !================
+       ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
+       !
+       do i_sp_pol=1,n_sp_pol
+         do iv=X%ib(1),X%ib_lim(1)
+           if(iv>=X%ib_lim(2)) then
+             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
+             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             !
+             !
+           endif
+           do ic=iv+1,X%ib(2)
+             if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
+               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
+               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+               !
+               !
+             endif
+           enddo
+         enddo
+       enddo
+       !
+     enddo
+     !
    end subroutine DIPOLES_ppredux_and_symmetrize
    !
 end subroutine

@@ -1,0 +1,4 @@
+objs = RT_Integrator.o RT_MEMORY_index.o \
+       RT_build_I1_and_I2.o RT_build_U1_and_U2.o RT_EULEREXP_step.o RT_EULER_step.o \
+       RT_Dephasing_step.o \
+       RT_propagate_fields.o RT_apply_RWA.o RT_Ext_fields.o 

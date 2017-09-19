@@ -42,21 +42,21 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !  real(SP)   , allocatable      :: W(size)
  !end type BS_T_group
  !
- use pars,         ONLY:SP,IP
- use memory_m,     ONLY:mem_est
+ use pars,         ONLY:SP
  use com,          ONLY:warning,error
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
  use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
- use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_all,PAR_IND_T_ordered,PAR_IND_T_groups,&
+ use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  !
- implicit none
+ !
+#include<memory.h>
  !
  type(levels) :: Ken
  type(bz_samp):: Xk
@@ -70,6 +70,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
  !
+ !
  if (FILL_the_groups) then
    !
    call section('+','Transition Groups build-up')
@@ -81,24 +82,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    n_loops=2
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
    !
-   allocate(PAR_IND_WF_b_and_k%element_2D(BS_bands(2),Xk%nibz))
+   YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
    if (index(BSS_mode,'h')/=0) then
-     allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
    !
  else
    !
-   allocate(BS_nT_at_k(Xk%nibz))
-   call mem_est("BS_nT_at_k",(/Xk%nibz/),(/IP/))
+   YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz))
    BS_nT_at_k=0
    n_loops=1
    !
  endif 
  !
- allocate(i_T_at_k(Xk%nibz))
+ YAMBO_ALLOC(i_T_at_k,(Xk%nibz))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -145,9 +145,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
 &                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
              !
-             if (BS_k_coupling) l_grp_to_grp=l_grp_to_grp .or. any( PAR_IND_T_all%element_2D(i_T_group_now,:) ) &
-&                                                         .or. any( PAR_IND_T_all%element_2D(:,i_T_group_now))
-             !
              if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
              !
              if (i_T_group_now/=i_T_group_last) then
@@ -181,12 +178,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
              !
-             if (associated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
+             if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
              ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
              ! Presently there is the abs value here and a minus in K_IP.F
              !
-             if (associated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
+             if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
              !
            enddo ! spin
@@ -220,7 +217,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! CLEAN UP
  !
- deallocate(i_T_at_k)
+ YAMBO_FREE(i_T_at_k)
  !
  contains
    !
@@ -229,8 +226,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      T_is_ok=.TRUE.
      !
      E_eh= Ken%E(ic,ik ,i_sp)-Ken%E(iv,ikp,i_sp)
-     if(     associated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
-     if(.not.associated(Ken%Eo)) Eo_eh= E_eh
+     if(     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
+     if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
@@ -257,7 +254,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! f_eh<0 transitions are included in the anti-resonant part
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
-     !
      !
        !
        ! If I've included in valence states that are almost empty

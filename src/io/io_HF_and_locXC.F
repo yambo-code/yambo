@@ -23,7 +23,7 @@
 !
 integer function io_HF_and_locXC(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
@@ -34,14 +34,13 @@ integer function io_HF_and_locXC(ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
- implicit none
+#include<memory.h>
  integer :: ID
  !
  ! Work Space
  !
- integer           :: QP_table_disk(2+n_sp_pol),&
-&                     QP_n_states_disk,bands(2),i1,i2,i_found,var_sz
- real(SP)          :: Sx(2),Vxc(2)
+ integer           :: QP_table_disk(3+n_sp_pol-1,1),QP_nb_disk,QP_nk_disk,&
+&                     QP_n_states_disk,bands(2),i1,i2,i_found
  character(schlen) :: QP_xc_FUNCTIONAL
  !
  if (.not.io_HF) then
@@ -71,8 +70,8 @@ integer function io_HF_and_locXC(ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=8,MENU=0)
    !
-   call io_elemental(ID,I0=QP_nb,CHECK=.true.,OP=(/"<="/))
-   call io_elemental(ID,I0=QP_nk,CHECK=.true.,OP=(/"<="/))
+   call io_elemental(ID,I0=QP_nb,      DB_I0=QP_nb_disk,CHECK=.true.,OP=(/"<="/))
+   call io_elemental(ID,I0=QP_nk,      DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_n_states,DB_I0=QP_n_states_disk,&
 &       VAR=' Total number of QP states       :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=QP_ng_Sx,&
@@ -109,41 +108,50 @@ integer function io_HF_and_locXC(ID)
    !
  endif
  !
- i_found=0
  if (any((/io_sec(ID,:)==2/))) then
-   if (io_mode(ID)==DUMP) then
-     if (allocated(QP_state)) deallocate(QP_state)
-     allocate(QP_state(Qp_nb,QP_nk))
-     QP_state=.false.
-   endif
-   !  
-   var_sz=(6+n_sp_pol)*QP_n_states_disk
-   call io_bulk(ID,VAR="Sx_Vxc",VAR_SZ=(/var_sz/))
-   do i1=1,QP_n_states_disk
-     if (write_is_on(ID)) then
-       QP_table_disk=QP_table(i1,:)
-       Sx=(/real(QP_Vnl_xc(i1)),aimag(QP_Vnl_xc(i1))/)
-       Vxc=(/real(QP_Vxc(i1)),aimag(QP_Vxc(i1))/)
-     endif
-     call io_bulk(ID,I1=QP_table_disk)
-     call io_bulk(ID,R1=Sx)
-     call io_bulk(ID,R1=Vxc)
-     if (read_is_on(ID)) then
-       if (io_mode(ID)==DUMP) then
-         QP_state(QP_table_disk(1),QP_table_disk(3))=.true. 
-       else
-         do i2=1,QP_n_states
-           if (all((/QP_table_disk==QP_table(i2,:)/))) then
-             QP_Vnl_xc(i2)=cmplx(Sx(1),Sx(2),SP)
-             QP_Vxc(i2)=cmplx(Vxc(1),Vxc(2),SP)
-             i_found=i_found+1
-           endif
-         enddo
-       endif
-     endif
-   enddo
    !
-   if (read_is_on(ID).and.i_found/=QP_n_states) io_status(ID)=IO_INCOMPATIBLE_VAR
+   ! QP_table
+   !
+   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/3+n_sp_pol-1,QP_n_states_disk/))
+   !
+   if(write_is_on(ID)) then
+     do i1=1,QP_n_states_disk
+       QP_table_disk(:,1)=QP_table(i1,:)
+       call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
+     enddo
+   endif
+   !
+   if (read_is_on(ID)) then
+     if(io_mode(ID)==DUMP) then
+       YAMBO_FREE(QP_state)
+       YAMBO_ALLOC(QP_state,(QP_nb_disk,QP_nk_disk))
+       QP_state=.false.
+       do i1=1,QP_n_states_disk
+         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
+         QP_state(QP_table_disk(1,1),QP_table_disk(3,1))=.true.
+       enddo
+     else
+       i_found=0
+       do i1=1,QP_n_states_disk
+         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
+         do i2=1,QP_n_states
+           if (.not.all((/QP_table_disk(:,1)==QP_table(i2,:)/))) cycle
+           i_found=i_found+1
+         enddo
+       enddo
+       if (i_found/=QP_n_states) io_status(ID)=IO_INCOMPATIBLE_VAR
+     endif
+   endif
+   !
+   io_HF_and_locXC=io_status(ID)
+   if (io_HF_and_locXC/=0) goto 1
+   !  
+   call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
+   call io_bulk(ID,C1=QP_Vnl_xc)
+   !
+   call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
+   call io_bulk(ID,C1=QP_Vxc)
+   !
    io_HF_and_locXC=io_status(ID)
    if (io_HF_and_locXC/=0) goto 1
    !

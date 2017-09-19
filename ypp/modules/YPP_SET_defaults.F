@@ -28,6 +28,10 @@ subroutine YPP_SET_defaults()
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:lpfac,interpls,max_interpls
  use electrons,      ONLY:n_bands
+#if defined _YPP_RT
+ use YPP_real_time
+ use fields,         ONLY:n_ext_fields
+#endif
 #if defined _YPP_ELPH
  use YPP_ELPH
  use ELPH,           ONLY:gsqF_energy_steps
@@ -44,9 +48,29 @@ subroutine YPP_SET_defaults()
  dos_E_steps=500
  WF_ref=0
  !
- !
  ! RT OCCUPATIONS
  !
+#if defined _YPP_RT
+ !
+ l_RealTime=.FALSE.
+ l_RT_DBs  =.FALSE.
+ !
+ ! Absorption, occupations, lifetimes, density
+ !
+ l_RT_X           =.FALSE.
+ l_RT_abs         =.FALSE.
+ l_RT_occupations =.FALSE.
+ l_RT_lifetimes   =.FALSE.
+ l_RT_density     =.FALSE.
+ !
+ ! PP kind
+ !
+ l_RT_time  =.FALSE.
+ l_RT_energy=.FALSE.
+ l_RT_2D_dos=.FALSE.
+ l_RT_bands =.FALSE.
+ !
+#endif
  !
  ! BANDS
  !
@@ -54,6 +78,9 @@ subroutine YPP_SET_defaults()
  l_bands=.false.
  lpfac=20._SP
  interp_grid = (/-1, -1, -1/)
+#if defined _YPP_RT
+ Nel_fac=1._SP
+#endif
  !
  ! Interpolation
  !
@@ -104,7 +131,6 @@ subroutine YPP_SET_defaults()
  gsqF_energy_steps=1
  !
 #endif
- !
  !
  ! Wannier interface
  !

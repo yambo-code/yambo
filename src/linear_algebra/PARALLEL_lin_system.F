@@ -28,11 +28,13 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer           :: n,nrhs
  type(POOL_group)  :: POOL
@@ -41,34 +43,30 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  complex(SP)       :: B(n,nrhs)
  !
  character(64) :: subname="PARALLEL_lin_system"
- logical :: do_SLK
  !
  B=0.0_SP
  !
- do_SLK=.TRUE.
- if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
+ if (ORTHO%coordinate(1)==-1) return
  !
- if ( do_SLK ) then
-   ! better estimate of the dimensions to be included
-   if (allocated(WS%v_int)) deallocate(WS%v_int)
-   allocate(WS%v_int(n+A_slk%nrows))
-   !
-#if defined _DOUBLE
-   CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
-#else
-   CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='start')
 #endif
-   !
-   ! gather the solution
-   !
-   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=B_slk%blc(:B_SLK%nrows_used,:B_SLK%ncols_used)
-   !
- endif
  !
- call PP_redux_wait(B,COMM=POOL%INTRA_comm)
+ ! better estimate of the dimensions to be included
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(n+A_slk%nrows))
+ !
+#if defined _DOUBLE
+ CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
+#else
+ CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
+#endif
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='stop')
+#endif
+ !
 end subroutine

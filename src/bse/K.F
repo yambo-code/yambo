@@ -27,7 +27,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
  use LOGO,         ONLY:pickup_a_random
- use memory_m,     ONLY:mem_est
  use drivers,      ONLY:l_bs_fxc,l_col_cut,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
@@ -40,15 +39,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
- use BS_solvers,   ONLY:BSS_q0,BS_mat_free
+ use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,l_BSE_minimize_memory
- use collision,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,l_BSE_minimize_memory
+ use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message
@@ -62,7 +61,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #endif
  !
  !
- implicit none
+#include<memory.h>
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
  type(X_t)     ::X
@@ -77,7 +76,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,alloc_err,&
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -188,7 +187,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call deliver_IO_error_message(io_X_err,'PP/Em1s')
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
-     call BS_mat_free()
+     call BS_blks_free()
      !
      !
    endif
@@ -210,8 +209,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Allocation
    !-----------
-   allocate(FXC_K_diagonal(BS_K_dim),FXC(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
-   call mem_est("FXC_K_diagonal FXC",(/BS_K_dim,size(FXC)/),(/SP,2*SP/))
+   YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+   YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
    FXC=cZERO
    !
@@ -251,13 +250,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !========================
  call WF_spatial_inversion(Ken,Xk)
  !
- ! BSE-based Fxc
- !===============
- !
  ! ALDA
  !======
  if (BS_K_is_ALDA) then
-   allocate(F_xc(fft_size,n_spin,n_spin))
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
  endif
  !
@@ -281,13 +277,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! when the TR is applied
    !
    if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     allocate(BS_W(BS_n_g_W,i_g1,2*q%nibz),stat=alloc_err)
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,2*q%nibz))
    else
-     allocate(BS_W(BS_n_g_W,i_g1,q%nibz),stat=alloc_err)
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,q%nibz))
    endif
-   call mem_est('BS_W',(/size(BS_W)/),errors=(/alloc_err/))
    !
-   allocate(isc%gamp(i_g1,BS_n_g_W))
+   YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -325,7 +320,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
-   deallocate(isc%gamp)
+   YAMBO_FREE(isc%gamp)
    !
    if (.not.l_td_hf) call X_alloc('X')
    !
@@ -350,11 +345,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Allocations
  !-------------
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   allocate(Ovv(BS_n_g_W),Occ(BS_n_g_W),O_times_W(BS_n_g_W))
-   call mem_est('O_RES_WS',(/3*BS_n_g_W/))
+   YAMBO_ALLOC(Ovv,(BS_n_g_W))
+   YAMBO_ALLOC(Occ,(BS_n_g_W))
+   YAMBO_ALLOC(O_times_W,(BS_n_g_W))
    if (BS_cpl_K_corr) then
-     allocate(Ovc(BS_n_g_W),Ocv(BS_n_g_W))
-     call mem_est('O_CPL_WS',(/2*BS_n_g_W/))
+     YAMBO_ALLOC(Ovc,(BS_n_g_W))
+     YAMBO_ALLOC(Ocv,(BS_n_g_W))
    endif
  endif
  !
@@ -624,13 +620,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call BS_oscillators_free(BS_nT_grps,0)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   deallocate(WF_phase)
-   call mem_est("WF_phase")
-   deallocate(Ovv,Occ,O_times_W)
-   call mem_est("O_RES_WS")
+   YAMBO_FREE(WF_phase)
+   YAMBO_FREE(Ovv)
+   YAMBO_FREE(O_times_W)
+   YAMBO_FREE(Occ)
    if (BS_cpl_K_corr) then
-     deallocate(Ovc,Ocv)
-     call mem_est("O_CPL_WS")
+     YAMBO_FREE(Ovc)
+     YAMBO_FREE(Ocv)
    endif
  endif
  !
@@ -638,11 +634,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    !
  else if (BS_K_is_ALDA) then
-   deallocate(F_xc)
+   YAMBO_FREE(F_xc)
  endif
  !
 1 continue
  !
+ YAMBO_FREE(BS_W)
  call WF_free(WF)
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)

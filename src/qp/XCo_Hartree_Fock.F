@@ -34,7 +34,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
- use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _TIMING
@@ -45,7 +45,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  !
- implicit none
+#include<memory.h>
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  character(*),optional ::mode
@@ -112,7 +112,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
  call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
- allocate(local_rhotw(QP_ng_Sx))
+ YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
  isc%qs    =1
  !
  call scatter_Gamp(isc,'x')
@@ -207,7 +207,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
- deallocate(local_rhotw)
+ YAMBO_FREE(local_rhotw)
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')

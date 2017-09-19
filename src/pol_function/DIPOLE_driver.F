@@ -29,14 +29,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! DIP_iR=i<r>
  ! DIP_P = <v>   (should be called DIP_V ... )
  !
- ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
+ !
+ ! GPL_EXCLUDE_START 
+ !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
  ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
  ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
+ !
+ ! GPL_EXCLUDE_END 
  !
  ! PARALLEL structure: The dipoles are based on a "derived" structure. 
  !                     K-points are driven by these communicators and indexes:
@@ -194,9 +199,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
    !
+   ! GPL_EXCLUDE_START 
+   !
 #if defined _RT
    if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xk,X)
 #endif
+   !
+   ! GPL_EXCLUDE_END 
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
@@ -240,12 +249,17 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #else
  call X_alloc('DIP_P')
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
 #endif
 #if defined _SC || defined _RT
  call X_alloc('P_square') 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  contains
    !
@@ -324,13 +338,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      DIP_iR=cZERO
      DIP_P=cZERO
      !
+     ! GPL_EXCLUDE_START 
+     !
 #if defined _RT
      if (l_real_time.and.n_spin>1) then
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
      endif
 #endif
-
      !
 #if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time) then
@@ -338,6 +353,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        P_square=cZERO
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
    end subroutine DIPOLES_alloc
    !
@@ -358,6 +375,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          !
+         ! GPL_EXCLUDE_START
+         !
 #if defined _RT
          !
          if (l_real_time.and.n_spin>1) then
@@ -375,20 +394,33 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          endif
 #endif
          !
+         ! GPL_EXCLUDE_END
+         !
          if (l_par_RT) then
            !
 #if defined _RT
            DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           !
+           ! GPL_EXCLUDE_START
+           !
            if (l_real_time.and.n_spin>1) then
              DIP_spin(:,:,:,ik_mem,i_sp_pol)= DIP_spin(:,:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            endif
+           !
+           ! GPL_EXCLUDE_END
+           !
 #endif
+           !
+           ! GPL_EXCLUDE_START
+           !
 #if defined _SC || defined _RT
            if (l_sc_run.or.l_real_time) then
              P_square(:,:,ik_mem,i_sp_pol)= P_square(:,:,ik_mem,i_sp_pol)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
            endif
 #endif
+           !
+           ! GPL_EXCLUDE_END
            !
          endif
          !
@@ -403,6 +435,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            if(iv>=X%ib_lim(2)) then
              DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
              DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             !
+             ! GPL_EXCLUDE_START
+             !
 #if defined _RT
              if (l_real_time.and.n_spin>1) then
                DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
@@ -413,11 +448,17 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
                P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
              endif
 #endif
+             !
+             ! GPL_EXCLUDE_END
+             !
            endif
            do ic=iv+1,X%ib(2)
              if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
                DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
                DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+               !
+               ! GPL_EXCLUDE_START
+               !
 #if defined _RT
                if (l_real_time.and.n_spin>1) then
                  DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
@@ -428,6 +469,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
                  P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
                endif
 #endif
+               !
+               ! GPL_EXCLUDE_END
+               !
              endif
            enddo
          enddo

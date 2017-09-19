@@ -161,6 +161,8 @@ EOF
 if ( "$argv[1]" != "save" ) then
   $awk -f ss.awk ./config/version.m4
   mv NEW ./config/version.m4
+  $awk -f ss.awk ./config/version.m4_gpl
+  mv NEW ./config/version.m4_gpl
   $awk -f ss.awk configure
   mv NEW configure
   chmod a+x configure

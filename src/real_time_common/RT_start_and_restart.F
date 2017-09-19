@@ -74,7 +74,14 @@ subroutine RT_start_and_restart(E,k,q,X)
  integer :: i_sp_pol,ik,ik_RT_DbGd,ik_FineGd,COM_,ib,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  complex(SP):: M_tmp(RT_bands(2),RT_bands(2))
- integer, external :: io_RT_components,RT_Lifetimes_evaluation_plan
+ integer, external :: io_RT_components
+ !
+ ! GPL_EXCLUDE_START
+ !
+ integer, external :: RT_Lifetimes_evaluation_plan
+ !
+ ! GPL_EXCLUDE_END
+ !
  logical :: RESTART
  !
  ! Initialize the Gf and potentials
@@ -83,8 +90,13 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! 
  ! G_lesser occupations and reference
  !====================================
- call RT_set_G_lesser() 
+ call RT_set_G_lesser()
+ !
+ ! GPL_EXCLUDE_START
+ !
  call RT_set_occupations()
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Build Ho and save initial energies 
  !====================================
@@ -131,6 +143,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Perform a first I/O to check which DBs are present. 
  !=====================================================
  !
+ RESTART=.FALSE.
+ !
+ ! GPL_EXCLUDE_START
+ !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
  io_JPSM=io_RT_components('JPSM',ID(4))
@@ -151,6 +167,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! To restart from RT only the G_lesser is necessary (latest and reference)
  !
  RESTART = (io_G ==0).and.(io_REF==0)
+ !
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !
  ! Starting point 
@@ -227,6 +244,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Update occupations after loading from DB 
    !==========================================
+   !
    call RT_set_occupations()
    !
    call msg( 'nr','---RESTART report---')
@@ -234,6 +252,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    call msg('s','[RESTART] Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Number of steps done    [o/o]:',real(NE_i_time)/real(NE_steps)*100._SP)
    call msg('r',  'Time step                     [fs]:',RT_dyn_step*AUT2FS)
+   !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
    call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
@@ -245,11 +264,11 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call msg('r',  '               outputs        [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
    !
- else
-   !
-   NE_time=0._SP
-   !
  endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+ if (.not.RESTART) NE_time=0._SP
  !
  if (l_NE_dynamics) NE_i_time=NE_i_start_time
  !
@@ -308,6 +327,11 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! Retarded Green Functions matrix
  ! ===============================
  !
+ N_Gr_descs=1
+ Gr_description(1)=' [Gr] Retarded Green`s function  : none'
+ !
+ ! GPL_EXCLUDE_START
+ !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
    call k_build_up_BZ_tables(q)
@@ -327,12 +351,9 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(2)))//' '//&
 &                    trim(real2ch(QP_ctl_user(3,1)%Wv(3)))
    !
- else
-   !
-   N_Gr_descs=1
-   Gr_description(1)=' [Gr] Retarded Green`s function  : none'
-   !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  contains
    !
@@ -349,6 +370,9 @@ subroutine RT_start_and_restart(E,k,q,X)
      XC0               =cZERO
      !
      rho_reference     =rZERO
+     !
+     ! GPL_EXCLUDE_START
+     !
      if(n_spin>1) magn_reference    =rZERO
      !
      ! Set to zero occupations
@@ -359,6 +383,8 @@ subroutine RT_start_and_restart(E,k,q,X)
      RT_H_occupations_reference=rzero
      RT_delta0_occupations     =rzero
      RT_delta_occupations      =rzero
+     !
+     ! GPL_EXCLUDE_END
      !
      ! Set to zero current and fields
      !
@@ -400,7 +426,9 @@ subroutine RT_start_and_restart(E,k,q,X)
      dG_lesser(:,:,:,1)= G_lesser(:,:,:,1)-G_lesser_reference
      !
    end subroutine RT_set_G_lesser
-   ! 
+   !
+   ! GPL_EXCLUDE_START
+   !
    subroutine RT_set_occupations()
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
@@ -414,5 +442,7 @@ subroutine RT_start_and_restart(E,k,q,X)
      enddo
      !
    end subroutine RT_set_occupations
+   !
+   ! GPL_EXCLUDE_END
    !
 end subroutine RT_start_and_restart

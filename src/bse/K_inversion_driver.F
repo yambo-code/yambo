@@ -128,11 +128,15 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
    call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
  endif
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _SCALAPACK
  !

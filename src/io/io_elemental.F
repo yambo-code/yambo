@@ -108,9 +108,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
      !
-     ! GPL_EXCLUDE_START
-     !
-     !
      ! GPL_EXCLUDE_END
      !
      ! GPL_INCLUDE_START

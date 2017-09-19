@@ -98,9 +98,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
-#if defined _YPP_RT
- what_is_running='YPP_RT'
-#endif
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
@@ -125,9 +122,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
  io_RT_G_err=io_RT_components('G' ,ID)
  if (io_RT_G_err==0) QP_nb=RT_bands(2)
+ !
+ ! GPL_EXCLUDE_END
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_RT_JPSM_err=io_RT_components('JPSM' ,ID)
@@ -256,15 +257,23 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    endif
    !
 #if defined _YPP_RT
+   !
+   ! GPL_EXCLUDE_START
+   !
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
      l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      !
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
+     !
+     ! GPL_EXCLUDE_START
+     !
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
      !
      l_RT_occupations =index(rstr_piece(i1+1),'o')>0
@@ -275,6 +284,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_time        =trim(rstr_piece(i1+2))=='t'
      l_RT_energy      =trim(rstr_piece(i1+2))=='e'
      l_RT_2D_dos      =trim(rstr_piece(i1+2))=='d'
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
 #endif
@@ -303,13 +314,22 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_bands)          call initactivate(1,'bnds')
    endif
 #if defined _YPP_RT
+   !
+   ! GPL_EXCLUDE_START
+   !
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
      if (l_RTpump_manual) call initactivate(1,'Select_manual')
    endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      if (l_RT_X)           call initactivate(1,'RT_X')
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (l_RT_abs)         call initactivate(1,'RTabs')
      if (l_RT_occupations) call initactivate(1,'RToccupations')
      if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
@@ -318,6 +338,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RT_time)        call initactivate(1,'RTtime')
      if (l_RT_energy)      call initactivate(1,'RTenergy')
      if (l_RT_2D_dos)      call initactivate(1,'RTdos')
+     !
+     ! GPL_EXCLUDE_END
+     !
    endif
 #endif
  enddo
@@ -353,13 +376,17 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  !
  l_RealTime         = runlevel_is_on('RealTime')
+ !
+ l_RT_X             = runlevel_is_on('RT_X')
+ !
+ ! GPL_EXCLUDE_START
+ !
  l_RT_DBs           = runlevel_is_on('RTDBs')
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
  l_RTpump_manual    = runlevel_is_on('Select_manual')
  !
- l_RT_X             = runlevel_is_on('RT_X')
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
@@ -369,6 +396,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RT_time          = runlevel_is_on('RTtime')
  l_RT_energy        = runlevel_is_on('RTenergy')
  l_RT_2D_dos        = runlevel_is_on('RTdos')
+ !
+ ! GPL_EXCLUDE_END
  !
 #endif
 #if defined _YPP_MAGNETIC
@@ -439,11 +468,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_INCLUDE_END
  !
+ if (l_fix_save) infile_editing=.false.
  !
  ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
- if (l_fix_save) infile_editing=.false.
  !
 #if defined _YPP_RT
  !             
@@ -478,9 +507,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
-   !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then
+   !
+   ! GPL_EXCLUDE_START
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
@@ -494,6 +524,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_bands)       call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
@@ -560,20 +592,32 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (.not.l_init_QP) l_init_QP=l_angular_momentum.or.l_position
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  if (.not.l_init_QP) l_init_QP=l_RT_occupations.or.l_RT_lifetimes
  if (     l_init_QP) call INIT_QP(.FALSE.,infile_verbosity==V_real_time)
  if (l_RT_DBs)  call RT_DBs_initialize()
 #else
+ ! GPL_EXCLUDE_END
  if (l_init_QP) call INIT_QP(.FALSE.,.FALSE.)
+ ! GPL_EXCLUDE_START
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_bands
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (l_flag) call USER_vector_handle("BKpts")
  !
  if (l_bz_grids) then

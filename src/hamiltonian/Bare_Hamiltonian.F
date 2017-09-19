@@ -154,6 +154,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
  enddo
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  !
  ! Save the reference xc and Hartree potentials 
@@ -165,6 +167,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  YAMBO_FREE(QP_Vxc)
  !

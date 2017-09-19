@@ -122,12 +122,16 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _SC
  l_eval_DIP_P2=l_sc_run
 #endif
 #if defined _RT
  l_eval_DIP_P2=l_real_time
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_eval_DIP_P)                    live_t_string='Dipoles: P (T):'
  if (l_eval_DIP_P .and.l_eval_DIP_iR) live_t_string='Dipoles: P and iR (T):'
@@ -148,8 +152,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
      ! [Vnl,r]
      !
      if (io_KB_pwscf_err==0) then
-       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
+       if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+       if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
        io_KB_pwscf_err=io_KB_pwscf(ID)
      endif
      !
@@ -255,6 +259,8 @@ subroutine Dipole_transverse(Xen,Xk,X)
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
          endif
          !
+         ! GPL_EXCLUDE_START
+         !
          !======
          ! <P^2>
          !======
@@ -268,14 +274,15 @@ subroutine Dipole_transverse(Xen,Xk,X)
            endif
          endif
          !
+         ! GPL_EXCLUDE_END
+         !
          call live_timing(steps=1)
          !
        enddo    ! conduction band loop
      enddo      ! valence    band loop
      ! 
-   enddo        ! sp_pol loop
-   ! 
- enddo          ! k-points
+   enddo        ! k-points loop
+ enddo          ! sp_pol   loop
  !
  call live_timing()
  !

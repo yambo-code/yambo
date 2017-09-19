@@ -89,6 +89,8 @@ subroutine RT_databases_IO(E)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! G_lesser and THETA
  !====================
  if (io_GF.and.RT_do_it('G')) then
@@ -106,14 +108,10 @@ subroutine RT_databases_IO(E)
    call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
-   ! GPL_EXCLUDE_START
-   !
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
    do ik = 1, RT_nk
      !
@@ -125,8 +123,6 @@ subroutine RT_databases_IO(E)
      !
      call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
-     !
-     ! GPL_EXCLUDE_START
      !
 #if defined _ELPH
      !
@@ -149,10 +145,10 @@ subroutine RT_databases_IO(E)
      !
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    enddo
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine RT_databases_IO

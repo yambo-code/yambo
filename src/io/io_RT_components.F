@@ -146,6 +146,8 @@ integer function io_RT_components(what,ID)
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_input_output")
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    if (l_G) then
      call io_elemental(ID,VAR="Save_G_history",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,L0=SAVE_G_history)
@@ -157,9 +159,8 @@ integer function io_RT_components(what,ID)
    ! I/O time points
    !
    if ((l_JPSM.or.l_carriers).and.(db_type==2.or..not.l_real_time)) call LOCAL_IO(JPC_RT_IO_t)
-   if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
    !
-   ! GPL_EXCLUDE_END
+   if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
    !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
@@ -171,11 +172,11 @@ integer function io_RT_components(what,ID)
  ! === no K no Time ===
  !#####################
  !
+ ! GPL_EXCLUDE_START
+ !
  ! REFERENCE Lifetimes and Green function
  !========================================
  if ( l_REF ) then
-   !
-   ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
    !
@@ -221,8 +222,6 @@ integer function io_RT_components(what,ID)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
    if (allocated(G_lesser_reference)) then
      !
      i_spin=1
@@ -239,8 +238,6 @@ integer function io_RT_components(what,ID)
  ! === K-dependent ===
  !####################
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! ELPH Kernel THETA Matrix 
@@ -256,8 +253,6 @@ integer function io_RT_components(what,ID)
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! lesser Green Function
  !=======================
@@ -289,8 +284,6 @@ integer function io_RT_components(what,ID)
  !
  ! === Time-dependent ===
  !#######################
- !
- ! GPL_EXCLUDE_START
  !
  ! Carrier components
  !====================
@@ -333,8 +326,6 @@ integer function io_RT_components(what,ID)
  call timing('io_RT_components',OPR='stop')
 #endif
  !
- ! GPL_EXCLUDE_START
- !
  contains
    !
    subroutine LOCAL_IO(TYP)
@@ -355,7 +346,4 @@ integer function io_RT_components(what,ID)
      !
    end subroutine
    !
- !
- ! GPL_EXCLUDE_END
- !
 end function

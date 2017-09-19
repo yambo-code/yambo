@@ -65,7 +65,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC,NE_time
  use fields,         ONLY:gauge_field,Efield,n_ext_fields
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,myid,PAR_COM_Xk_ibz_INDEX
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
 #if defined _TIMING
@@ -240,9 +240,13 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  ! The Energies (only) update
  !==========================
  if (l_update_QP_Energies) then
+   !
+   RT_E_and_k%En(ib,ik_RT,1)=rZERO
+   !
    do ik=1,nXkibz 
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     !if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_CPU)) cycle
+     if (.not. PAR_IND_WF_k%element_1D(ik) ) cycle
      !
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
@@ -256,6 +260,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        enddo
      enddo
    enddo
+   call PP_redux_wait(RT_E_and_k%En,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
 #if defined _TIMING

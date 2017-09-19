@@ -95,20 +95,23 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
+#if defined _YPP_RT
+ !
+ call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
+ call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ !
+#endif
+ !
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
  !
- ! runlevels
- !
  call it('r',defs,'RTDBs',        '[R] Real-Time databases')
- call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  !
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
  !
- call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
@@ -141,6 +144,8 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
  !
@@ -175,16 +180,23 @@ subroutine ypp_INIT_load(defs)
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
  call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
  call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Wannier interface
  !
@@ -291,38 +303,43 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries')
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
+ call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ !
  ! GPL_EXCLUDE_START
  !
  call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
- call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _YPP_RT
  !
- ! Post-Processing
+ ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
- call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
- call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
- !
  call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+ call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
- call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
-#endif
- !
  ! GPL_EXCLUDE_END
+ !
+#endif
  !
 end subroutine

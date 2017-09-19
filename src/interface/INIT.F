@@ -442,6 +442,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (io_SC_E_err==0.and.io_SC_V_err/=0) io_SC_E_err=-1
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! COLLISIONS 
  !
 #if defined _SC || defined _RT
@@ -458,6 +460,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (list_dbs) then
    call msg('s','')
@@ -850,8 +854,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
- !
 #if defined _SC || defined _RT
  !
  ! Collisions
@@ -867,11 +869,26 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'QpntsRXs')
    !
    if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate( 1,'EXXCut EXXRLvcs ALLGexx')
+   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
    if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
    !
  endif
  !
+#endif
+ !
+ ! GPL_EXCLUDE_END
+ !
+#if defined _RT
+ !
+ ! GPL_INCLUDE_START
+ !
+ !if (l_real_time) then
+ !  !
+ !  call initactivate(1,'HARRLvcs ALLGHAR FFTGvecs CORRLvcs ALLGexx')
+ !  !
+ !endif
+ !
+ ! GPL_INCLUDE_END
  !
 #endif
  !
@@ -1058,10 +1075,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      integer     ::i1
      character(6)::field
      field='Field'//trim(intc(i1))
+     !GPL_EXCLUDE_START
      call initactivate(1,field//'_Freq')
      call initactivate(1,field//'_MaxFreq')
      call initactivate(1,field//'_DFreq')
+     !GPL_EXCLUDE_END
      call initactivate(1,field//'_Int')
+     !GPL_EXCLUDE_START
      call initactivate(1,field//'_Width')
      call initactivate(1,field//'_FWHM')
      call initactivate(1,field//'_kind')
@@ -1069,6 +1089,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,field//'_Dir')
      call initactivate(1,field//'_Dir_circ')
      call initactivate(1,field//'_Tstart')
+     !GPL_EXCLUDE_END
    end subroutine
    !
 #endif
@@ -1144,10 +1165,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_slk_test =runlevel_is_on('slktest')
 #endif
 #if defined _RT
+       !
+       ! GPL_EXCLUDE_START
        l_real_time=runlevel_is_on('negf')
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
+       ! GPL_EXCLUDE_END
+       ! GPL_INCLUDE_START
+       l_real_time=runlevel_is_on('negf').or.runlevel_is_on('tdBSE')
+       ! GPL_INCLUDE_END
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
@@ -1634,6 +1661,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
 #endif
          !
+         ! GPL_EXCLUDE_START
+         !
 #if defined _RT
          !
          ! NEGF
@@ -1665,6 +1694,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            !
          endif
 #endif
+         !
+         ! GPL_EXCLUDE_END
          !
 #if defined _MAGNETIC
          if ( trim(rstr_piece(i1)) == 'magnetic' )  then
@@ -1704,6 +1735,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
 #if defined _RT 
          !
+         ! GPL_EXCLUDE_START
+         !
          ! RT
          !
          if ( trim(rstr_piece(i1)) == 'negf' ) then
@@ -1733,9 +1766,20 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (.not.l_elph_scatt.and..not.l_elel_scatt.and..not.l_elphoton_scatt) l_elph_scatt=.true.
          endif
          !
+         ! GPL_EXCLUDE_END
+         !
+         ! GPL_INCLUDE_START
+         !if ( trim(rstr_piece(i1)) == 'tdBSE' ) then
+         !  n_ext_fields=1
+         !  call initactivate(1,'collisions')
+         !endif
+         ! GPL_INCLUDE_END
+         !
 #endif
          !
 #if defined _SC || defined _RT 
+         !
+         ! GPL_EXCLUDE_START
          !
          ! COLLISIONS
          !
@@ -1743,6 +1787,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if ( l_elel_scatt.or.trim(H_potential)=='COH+SEX'.or.&
 &               trim(H_potential)=='COH'.or.trim(H_potential)=='SEX' ) call initactivate(1,'em1s')
          endif
+         !
+         ! GPL_EXCLUDE_END
          !
 #endif
          !

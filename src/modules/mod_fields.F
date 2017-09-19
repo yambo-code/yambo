@@ -293,6 +293,10 @@ module fields
      E%ef_pol       ='none'
      E%versor       =(/1._SP,0._SP,0._SP/)
      E%versor_circ  =(/0._SP,1._SP,0._SP/)
+     !GPL_INCLUDE_START
+     E%ef_name      ='DELTA'
+     E%ef_pol       ='linear'
+     !GPL_INCLUDE_END
    end subroutine
    !
    subroutine A_vecpot_reset(A)

@@ -56,7 +56,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Current, Polarization and Magnetization
  !==========================================
- ! (evaluated also in RT_integrator when and induced field is included)
+ ! (evaluated also in RT_integrator when an induced field is included)
  call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
  if (.not. RT_do_it('OUT') ) then

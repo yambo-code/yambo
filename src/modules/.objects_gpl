@@ -7,7 +7,7 @@ RT_objects       = mod_real_time.o mod_fields.o mod_RT_control.o mod_RT_interfac
 #if defined _KERR 
 KERR_objects = mod_KERR.o
 #endif
-#if defined _ELPH 
+#if defined _ELPH || defined _RT
 ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 #endif
 objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_SLK.o  \

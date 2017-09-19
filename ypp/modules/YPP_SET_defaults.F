@@ -48,7 +48,6 @@ subroutine YPP_SET_defaults()
  dos_E_steps=500
  WF_ref=0
  !
- !
  ! RT OCCUPATIONS
  !
 #if defined _YPP_RT

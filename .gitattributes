@@ -1,3 +1,4 @@
-configure           merge=keepTheirs
-include/version.inc merge=keepTheirs
-config/version.m4   merge=keepTheirs
+configure             merge=keepTheirs
+include/version.inc   merge=keepTheirs
+config/version.m4     merge=keepTheirs
+config/version.m4_gpl merge=keepTheirs

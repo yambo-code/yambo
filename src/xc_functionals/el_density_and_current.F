@@ -120,6 +120,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _RT
        if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
 #endif
+!GPL_EXCLUDE_START
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
@@ -129,6 +130,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
 #endif
+!GPL_EXCLUDE_END
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
        !

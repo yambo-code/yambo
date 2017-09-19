@@ -169,7 +169,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    subroutine RT_update_occ(G_inonly)
      !
-     use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_INDEX
+     use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_INDEX,HEAD_k_CPU
      use real_time,      ONLY:RT_all2ibz
      !
      complex(SP), intent(in) :: G_inonly(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -187,7 +187,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
+       !if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
+       !if (.not.(PAR_IND_WF_k%element_1D(RT_all2ibz(ik)).and.HEAD_k_CPU)) cycle
        !
        do ib=RT_bands(1),RT_bands(2)
          !
@@ -205,13 +206,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      enddo
      !
 #if defined _TIMING
-   call timing('RT int. redux',OPR='start')
+     !call timing('RT int. redux',OPR='start')
 #endif
-     call PP_redux_wait(RT_E_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_H_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     call PP_redux_wait(RT_delta0_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !call PP_redux_wait(RT_E_occupations)
+     !call PP_redux_wait(RT_H_occupations)
+     !call PP_redux_wait(RT_delta0_occupations)
 #if defined _TIMING
-   call timing('RT int. redux',OPR='stop')
+     !call timing('RT int. redux',OPR='stop')
 #endif
      !
    end subroutine RT_update_occ
@@ -227,7 +228,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
+       !if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
        !
      do i_step=1,Integrator_nsteps
        if (a_tableau(i_step)==0._SP) cycle 

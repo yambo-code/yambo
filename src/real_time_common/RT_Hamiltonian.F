@@ -50,7 +50,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !    TD-LDA      ==>  \Sigma^Hxc=V^H+V^xc
  !    TD-SEX      ==>  \Sigma^Hxc=V^H+\Simga^{SEX} (only strategy 2a available)
  !
- use pars,           ONLY:SP,cONE,cZERO
+ use pars,           ONLY:SP,cONE,cZERO,rZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
  use units,          ONLY:SPEED_OF_LIGHT
@@ -65,7 +65,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC,NE_time
  use fields,         ONLY:gauge_field,Efield,n_ext_fields
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,myid,PAR_COM_Xk_ibz_INDEX
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
 #if defined _TIMING
@@ -158,7 +158,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
-   !if (HEAD_k_CPU) then
+   if (HEAD_k_CPU) then
      do ik=1,nXkibz 
        H_nl_sc=cZERO
        if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
@@ -170,7 +170,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        endif
        forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
      enddo
-   !endif
+   endif
    !
    if(allocated(V_scf_grad)) deallocate(V_scf_grad)
    !
@@ -185,21 +185,21 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
-   !if(HEAD_k_cpu) then
+   if(HEAD_k_cpu) then
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
          Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
        enddo
      enddo
-   !endif
+   endif
    !
  endif
  !
  ! The External Field
  !====================
- !if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
- if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
+ if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
+ !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
    !
    do ik=1,nXkibz 
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -214,8 +214,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The bare Hamiltonian
  !=========================
- !if ((.not.l_RT_RWA).and.HEAD_k_CPU) then
- if (.not.l_RT_RWA) then
+ if ((.not.l_RT_RWA).and.HEAD_k_CPU) then
+ !if (.not.l_RT_RWA) then
    !
    do ik=1,nXkibz
      !
@@ -235,14 +235,18 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! All2All
  !=========
- !call PP_redux_wait(Ho_plus_Sigma)
+ call PP_redux_wait(Ho_plus_Sigma)
  !
  ! The Energies (only) update
  !==========================
  if (l_update_QP_Energies) then
+   !
+   RT_E_and_k%En(ib,ik_RT,1)=rZERO
+   !
    do ik=1,nXkibz 
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_CPU)) cycle
+     !if (.not. PAR_IND_WF_k%element_1D(ik) ) cycle
      !
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
@@ -256,6 +260,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
        enddo
      enddo
    enddo
+   call PP_redux_wait(RT_E_and_k%En) !,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
 #if defined _TIMING

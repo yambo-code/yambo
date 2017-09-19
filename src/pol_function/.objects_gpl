@@ -1,9 +1,3 @@
-
-
-
-#if defined _RT
-RT_objects = DIPOLE_magnetization.o
-#endif
 #if defined _ELPH
 ELPH_objects = X_GreenF_remap.o
 #endif
@@ -13,5 +7,5 @@ objs = OPTICS_driver.o OPTICS_eels.o DIPOLE_build_parallelization_mask.o \
        DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o DIPOLE_p_matrix_elements.o \
        DIPOLE_transverse.o \
        X_drude.o X_pre_setup.o X_eh_setup.o X_dielectric_matrix.o X_irredux.o X_irredux_residuals.o X_redux.o \
-       $(ELPH_objects) $(RT_objects) \
+       $(ELPH_objects) \
        X_delta_part.o X_GreenF_analytical.o O_select_q_and_G.o

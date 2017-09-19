@@ -244,7 +244,7 @@ c2y: interfcs
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
 p2y: interfcs
-	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="-D@PW_CPP@"; $(mkx) ;
+	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
 endif
 ifeq ($(do_e2y),yes)
 e2y: interfcs
@@ -314,6 +314,7 @@ define make_message
  echo " [all projects] all";\
  echo " [project-related suite] project (core, rt-project, ...)";      echo;\
  for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
+ for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\

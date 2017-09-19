@@ -50,7 +50,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !    TD-LDA      ==>  \Sigma^Hxc=V^H+V^xc
  !    TD-SEX      ==>  \Sigma^Hxc=V^H+\Simga^{SEX} (only strategy 2a available)
  !
- use pars,           ONLY:SP,cONE,cZERO
+ use pars,           ONLY:SP,cONE,cZERO,rZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
  use units,          ONLY:SPEED_OF_LIGHT

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_transverse(Xen,Xk,X)
+subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  ! This routine returns <iR> and <P^2>.
  !
@@ -57,6 +57,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
+ logical,       intent(in)    :: l_real_time_magn_dipoles
  !
  ! Work Space
  !
@@ -224,7 +225,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
            endif
            !
 #if defined _RT
-           if (l_real_time .and. n_spinor>1) then
+           if (l_real_time_magn_dipoles) then
              if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
              if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
                if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=cZERO

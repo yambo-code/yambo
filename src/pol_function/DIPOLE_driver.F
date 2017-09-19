@@ -201,7 +201,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! GPL_EXCLUDE_END 
    !
-   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
+   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
    !
    ! GPL_EXCLUDE_START 
    !

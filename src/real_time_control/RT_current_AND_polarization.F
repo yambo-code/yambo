@@ -79,7 +79,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  RT_P    =RT_P/DL_vol
  !
- ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
+ ! GPL_EXCLUDE_START
+ !
+ ! B': Polarization as an integral of the current (to be fixed, it is not stable anyway)
  !
  !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_dyn_step
  !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
@@ -93,5 +95,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! D : Orbital magentization (to be coded)
  !
  !call RT_average_operator(V_VALUE=RT_magn,PV_MATRIX=DIP_L,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine RT_current_AND_polarization

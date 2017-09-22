@@ -200,8 +200,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  if (driver_now) call XCo_driver(en,k,Xk,q)
  if (driver_now) call mem_manager_report
  !
- ! EXTENDED COLLISIONS (HF & COHSEX)
- !===================================
+ ! EXTENDED COLLISIONS 
+ !=====================
  !
  driver_now=l_eval_collisions
  !

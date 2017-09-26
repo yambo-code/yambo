@@ -96,7 +96,7 @@ case $target in
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   lib*)
-   linclude="$linclude \$(netcdf_idir) \$(ipetsc) \$(islepc)"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc)"
     ;;
 esac
 

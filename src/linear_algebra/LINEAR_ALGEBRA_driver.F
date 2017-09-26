@@ -26,7 +26,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
  !
  use pars,          ONLY:SP,cONE,cZERO
  use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
+&                        LINEAR_ALGEBRA_WS_clean_up,LINEAR_ALGEBRA_error
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
  use SLK_m,         ONLY:SLK_matrix
@@ -165,7 +165,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
 &                        B,size(B,1),cZERO,C,size(C,1))
    endif
    !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
+   if(present(det)) det=det_
    !
  endif
  !
@@ -233,8 +233,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right
        call MATRIX_transfer( "transfer_from_the_SLK",  C_slk, M=C )
        !
      endif
-     !
-     call LINEAR_ALGEBRA_WS_clean_up(WS) 
      !
      if (INIT) then
        if (.not.present(M_slk)) call SLK_matrix_reset(M_loc_slk)

@@ -29,7 +29,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  !
  use pars,           ONLY:SP
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
+&                         LINEAR_ALGEBRA_WS_clean_up
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -42,7 +43,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  type(SLK_matrix)  :: A_slk, B_slk
  complex(SP)       :: B(n,nrhs)
  !
- character(64) :: subname="PARALLEL_lin_system"
+ character(64)     :: subname="PARALLEL_lin_system"
+ type(LALGEBRA_WS) :: WS
  !
  B=0.0_SP
  !
@@ -64,6 +66,8 @@ subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
  CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
 #endif
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
 #if defined _TIMING
  call timing('PARALLEL_lin_system',OPR='stop')

@@ -24,18 +24,21 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
+&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
- integer     :: n
- complex(SP) :: M(n,n),det
- logical     :: eval_det
- integer     :: i_loop !ws
+ integer           :: n
+ complex(SP)       :: M(n,n),det
+ logical           :: eval_det
+ !
+ !ws
+ integer           :: i_loop 
+ type(LALGEBRA_WS) :: WS
  !
 #if defined _TIMING
  call timing('SERIAL_inversion',OPR='start')

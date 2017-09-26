@@ -52,8 +52,6 @@ module linear_algebra
    integer                  :: dim
  end type LALGEBRA_WS
  !
- type(LALGEBRA_WS) :: WS
- !
  public :: LU_factorization
  public :: LU_inversion
  public :: SV_decomposition

@@ -30,7 +30,8 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use SLK_m,          ONLY:SLK_ORTHO
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
+&                         LINEAR_ALGEBRA_WS_clean_up
  use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
@@ -41,7 +42,8 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  integer           :: n,nrhs
  type(PAR_matrix)  :: A, B
  !
- character(64) :: subname="PARALLEL_lin_system"
+ character(64)     :: subname="PARALLEL_lin_system"
+ type(LALGEBRA_WS) :: WS
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
@@ -62,6 +64,8 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
 & ( n, nrhs, A%blc(:,:,A%I), 1, 1, A%desc, WS%v_int, B%blc(:,:,B%I), 1, 1, B%desc, WS%i_fail)
  !
  if (WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GESV')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS) 
  ! 
 #if defined _TIMING
  call timing('PARALLEL_lin_system',OPR='stop')

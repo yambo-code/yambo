@@ -35,7 +35,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
@@ -47,10 +47,11 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  type(PAR_matrix)  :: M,V
  real(SP)          :: E(N)
  !
- character(64) :: subname="PARALLEL_HERMITIAN_diagonalization"
- integer :: lwork,lrwork
- real(SP):: rvar
- complex(SP) :: cvar
+ character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
+ integer           :: lwork,lrwork
+ real(SP)          :: rvar
+ complex(SP)       :: cvar
+ type(LALGEBRA_WS) :: WS
  !
  E=0.0_SP
  !
@@ -88,7 +89,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  if (SLK_ORTHO%task/=0) E=0.0_SP
  !
  call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
- ! 
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ !
 #if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
 #endif

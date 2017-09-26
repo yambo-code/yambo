@@ -33,7 +33,8 @@ subroutine PARALLEL_inversion(M,N)
  ! perform the inversion by using scalapack
  !
  use SLK_m,          ONLY:SLK_ORTHO
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
+&                         LINEAR_ALGEBRA_WS_clean_up
  use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
@@ -44,7 +45,8 @@ subroutine PARALLEL_inversion(M,N)
  integer           :: N
  type(PAR_matrix)  :: M
  !
- character(64) :: subname="PARALLEL_inversion"
+ character(64)     :: subname="PARALLEL_inversion"
+ type(LALGEBRA_WS) :: WS
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
@@ -79,6 +81,8 @@ subroutine PARALLEL_inversion(M,N)
 & ( N, M%blc(:,:,M%I),1, 1, M%desc,WS%v_int, WS%v_cmplx, M%lwork, WS%vp_int, M%liwork, M%info )
  !
  if ( M%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GETRI')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
 #if defined _TIMING
  call timing('PARALLEL_inversion',OPR='stop')

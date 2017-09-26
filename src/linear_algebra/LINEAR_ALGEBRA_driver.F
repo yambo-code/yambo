@@ -40,8 +40,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  ! * MAT_MUL: M_slk/M + B_slk/B => C_slk/C 
  !
  use pars,          ONLY:SP,cONE,cZERO
- use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS
+ use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
  use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
@@ -200,8 +199,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
      !
    endif
    !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
-   !
  endif
  !
 #endif
@@ -276,8 +273,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
 &                          B,size(B,1),cZERO,C,size(C,1))
      endif
    endif
-   !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
  endif
  !

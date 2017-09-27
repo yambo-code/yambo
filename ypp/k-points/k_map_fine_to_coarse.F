@@ -138,11 +138,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !
  call parser('SkipCheck',l_skip_check)
+ !GPL_EXCLUDE_START
  call parser('noBZExpand',l_flag)
  !
  DbGd_is_symmetry_expanded=.not.l_flag
+ !GPL_EXCLUDE_END
+ !
  !GPL_INCLUDE_START
- !DbGd_is_symmetry_expanded=.FALSE.
+ !DbGd_is_symmetry_expanded=.TRUE.
  !GPL_INCLUDE_END
  !
  call section('*','BZ Double Grid DB(s)')
@@ -237,7 +240,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  BZ_ASSOCIATED_nkpts=Xk%nbz
  !
- !GPL_EXCLUDE_START
  if (DbGd_is_symmetry_expanded) then
    !
    call section('+','BZ Double Grid K-points expansion ...')
@@ -252,8 +254,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
    !
  endif
- !GPL_EXCLUDE_END
  !
+ !GPL_EXCLUDE_START
  if (.not.DbGd_is_symmetry_expanded) then
    !
    call section('+','BZ Double Grid K-points summary ...')
@@ -267,6 +269,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    call msg('l','using '//trim(intc(BZ_DbGd_nkpts))//' k-points for a total of '//trim(intc(BZ_DbGd_tot_nkpts))//' k-points')
    !
  endif
+ !GPL_EXCLUDE_END
  !
  ! Xk (IBZ->BZ)
  !
@@ -296,17 +299,17 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      cycle
    endif
    !
-   !GPL_EXCLUDE_START
    if (DbGd_is_symmetry_expanded) then
      ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
      TMP_map(i1,1)=ik_near
    endif
-   !GPL_EXCLUDE_END
+   !GPL_EXCLUDE_START
    if (.not.DbGd_is_symmetry_expanded) then
      ik_near_ibz = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
      TMP_map(i1,1)=ik_near_ibz
      TMP_map(i1,2)=is_near
    endif
+   !GPL_EXCLUDE_END
    !
    call live_timing(steps=1)
    !
@@ -351,16 +354,16 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    endif
    BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
    !
-   !GPL_EXCLUDE_START
    if (DbGd_is_symmetry_expanded) then
      BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=DbGd_k(i_db_merge)%sstar(i1,1)
      BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),2)=i1
    endif
-   !GPL_EXCLUDE_END
+   !GPL_EXCLUDE_START
    if (.not.DbGd_is_symmetry_expanded) then
      BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map(i1,2)
      BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=i1+1
    endif
+   !GPL_EXCLUDE_END
    !
  enddo
  !
@@ -376,7 +379,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
  !
- !GPL_EXCLUDE_START
  if (DbGd_is_symmetry_expanded) then
    !
    YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_nkpts,3))
@@ -386,8 +388,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%ptbz(:,:)
    !
  endif 
- !GPL_EXCLUDE_END
  !
+ !GPL_EXCLUDE_START
  if (.not.DbGd_is_symmetry_expanded) then
    !
    YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nkpts,3))
@@ -415,6 +417,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    call live_timing()
    !
  endif
+ !GPL_EXCLUDE_END
  !
  ! Final I/O
  !

@@ -146,12 +146,14 @@ cat << EOF > ss.awk
 {
  gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
       "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
+ gsub("based on r.$use_rev_old h.$hash_old","based on r.$use_rev_new h.$hash_new",\$0)
  #version
  gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
  gsub("SSUBVERSION=\"$subver_old\"","SSUBVERSION=\"$subver_new\""   ,\$0)
  gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
  #revision
  gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
+ gsub("BASE_REV=\"$use_rev_old\"" ,"BASE_REV=\"$use_rev_new\"" ,\$0)
  gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)
  print \$0 > "NEW"
 }

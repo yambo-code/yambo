@@ -258,7 +258,7 @@ ACX_REPORT()
 AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh
+                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #
 AC_OUTPUT

@@ -88,7 +88,7 @@ module wrapper_omp
      character,   intent(in)  :: TRANSA,TRANSB
      !
      !
-#if defined _OPENMP 
+#if defined _OPENMP_INT_LINALG
      call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)
 #else
      call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)

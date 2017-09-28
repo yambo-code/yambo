@@ -32,14 +32,15 @@ subroutine SERIAL_diagonalization(n,M,E,V_left,V_right)
  !  where V_left(j)**H denotes the conjugate transpose of V_left(j).
  !
  use pars,          ONLY:SP
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,M_eigenvalues,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,M_eigenvalues,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
 #include<memory.h>
  !
- integer     :: n
- complex(SP) :: M(n,n),E(n),V_left(n,n),V_right(n,n)
+ integer           :: n
+ complex(SP)       :: M(n,n),E(n),V_left(n,n),V_right(n,n)
+ type(LALGEBRA_WS) :: WS
  !
  allocate(WS%v_cmplx(1))
  YAMBO_ALLOC(WS%v_real,(2*n))

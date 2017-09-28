@@ -80,10 +80,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 #if defined _RT
  use X_m,            ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
- use electrons,      ONLY:n_spin,n_spinor
+ use electrons,      ONLY:n_spinor
 #endif
 #if defined _SC || defined _RT
  use X_m,            ONLY:P_square
+ use electrons,      ONLY:n_spin
 #endif
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
@@ -102,10 +103,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer           :: ik,i_sp_pol
- logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
+ logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3),&
+&                     l_real_time_magn_dipoles
 #if defined _SC || defined  _RT
  real(SP)          :: par_factor
- logical           :: l_evaluating_em1s,l_real_time_magn_dipoles
+ logical           :: l_evaluating_em1s
 #endif
  !
  ! I/O
@@ -150,6 +152,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
  Dipole_bands_ordered=.true.
+ l_real_time_magn_dipoles=.false.
  !
 #if defined _SC  || defined _RT
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
@@ -275,7 +278,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_IO(read_or_write)
      !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu,PAR_COM_RL_INDEX
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -287,7 +290,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (.not.io_DIP) return 
      !
      reading=trim(read_or_write)=="read"
-     writing=trim(read_or_write)=="write"
+     writing=trim(read_or_write)=="write".and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0.and.&
+&                                             PAR_COM_RL_INDEX%CPU_id==0
      !
      ID=0
      write_header  =(     master_cpu.and.writing)
@@ -328,16 +332,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        if (reading) IO_ACTION=OP_RD_CL
        if (writing) IO_ACTION=OP_APP_WR_CL
        !
-       do i_sp_pol=1,n_sp_pol
-         do ik=1,Xk%nibz
-           if ( .not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-           if ((.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0) .and. writing) cycle
-           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID)
-         enddo
+       do ik=1,Xk%nibz
+         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
+         if (writing.or.reading) then
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+             io_err=io_DIPOLES(X,ID)
+          enddo
+         endif
        enddo
        !
      endif
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
      !
    end subroutine DIPOLES_IO
    !
@@ -376,7 +383,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
      !
-     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
+     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup,PAR_COM_DIPOLES
      !
      integer  :: ic,iv,i_sp_pol,ik,ik_mem
      !

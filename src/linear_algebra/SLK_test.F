@@ -161,7 +161,7 @@ end subroutine SLK_test
  use SLK_m,      ONLY:SLK_COM_A2A
  use com,        ONLY:msg
  !
-#include<memory.h>
+ implicit none
  !
  integer           :: ndim,iseed(8)
  complex(SP)       :: Amat(ndim,ndim)
@@ -255,7 +255,7 @@ end subroutine inverse_check
  use pars,       ONLY:SP
  use com,        ONLY:error,msg
  use parallel_m, ONLY:mpi_comm_world
-#include<memory.h>
+ implicit none
  !
  integer     :: ndim1,ndim2
  character(*):: label
@@ -286,7 +286,7 @@ end subroutine matrix_check
  !=====================================================
  use pars,       ONLY:SP
  use parallel_m, ONLY:myid
-#include<memory.h>
+ implicit none
  !
  integer     :: ndim1,ndim2
  character(*):: filename

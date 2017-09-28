@@ -20,39 +20,34 @@
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine K_inversion_do_it_SLK(Lo,what)
+!    
+subroutine PARALLEL_PAR_to_PAR_comms_init()
  !
- ! 1./(Lo^{-1}-M) (using SLK procedures)
- !
- use pars,           ONLY:SP
- use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:K_slk,K_inv_slk
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver
- use linear_algebra, ONLY:INV
+ use parallel_m,    ONLY:COMM_reset,PAR_COM_SLK_INDEX_local
+ use matrix,        ONLY:N_PAR_to_PAR_comms,PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_SAVE_NAME,&
+&                        N_MAX_PAR_to_PAR_comms
  !
  implicit none
  !
- character  ,intent(in) ::what ! "r","a"
- complex(SP),intent(in) ::Lo(BS_H_dim)
+ integer :: i_comm
  !
- ! Work Space
+ ! PAR to PAR communicators
  !
- integer     ::i_r,borders(2)
- !
- if (what=="r") K_inv_slk%blc=-K_slk%blc
- if (what=="a") K_inv_slk%blc=-conjg(K_slk%blc)
- ! 
- borders=(/max(K_slk%rows(1),K_slk%cols(1)),min(K_slk%rows(2),K_slk%cols(2))/)
- !
- if (borders(1)<borders(2)) then
-   do i_r=borders(1),borders(2)
-     !
-     K_inv_slk%blc(i_r,i_r,1)=K_inv_slk%blc(i_r,i_r,1)+1._SP/Lo(i_r)
-     !
-   enddo
+ if (allocated(PAR_to_PAR_comm_SAVE_NAME)) then
+   deallocate(PAR_to_PAR_comm_SAVE_NAME)
+   do i_comm=1,N_MAX_PAR_to_PAR_comms
+     call COMM_reset(PAR_to_PAR_comm_SAVE(i_comm))
+   enddo  
+   deallocate(PAR_to_PAR_comm_SAVE)
  endif
  !
- call LINEAR_ALGEBRA_driver(INV,M_slk=K_inv_slk)
+ N_MAX_PAR_to_PAR_comms=PAR_COM_SLK_INDEX_local%n_CPU*5
+ !                                                    |_ are the potential transfer structures
+ !                                                       3  in X_redux, 1 in X_dielectric_matrix, 1 in BSE
+ !
+ allocate(PAR_to_PAR_comm_SAVE(N_MAX_PAR_to_PAR_comms))
+ allocate(PAR_to_PAR_comm_SAVE_NAME(N_MAX_PAR_to_PAR_comms))
+ PAR_to_PAR_comm_SAVE_NAME=" "
+ N_PAR_to_PAR_comms=0
  !
 end subroutine

@@ -23,53 +23,218 @@
 #
 AC_DEFUN([AC_PETSC_SLEPC_SETUP],[
 #
-AC_ARG_WITH(petsc_libs,
-        [AC_HELP_STRING([--with-petsc-libs=<libs>], [Use PETSC libraries <libs> or leave empty to use internal lib],[32])])
-AC_ARG_WITH(slepc_libs,
-        [AC_HELP_STRING([--with-slepc-libs=<libs>], [Use SLEPC libraries <libs> or leave empty to use internal lib],[32])])
-AC_ARG_WITH(slepc_include,
-        [AC_HELP_STRING([--with-slepc-include=<incs>], [Use SLEPc includes <incs>],[33])])
-AC_ARG_WITH(petsc_include,
-        [AC_HELP_STRING([--with-petsc-include=<incs>], [Use PETSc includes <incs>],[32])])
+AC_ARG_WITH(slepc_libs,AC_HELP_STRING([--with-slepc-libs=<libs>],
+            [Use Slepc libraries <libs>],[32]))
+AC_ARG_WITH(slepc_path, AC_HELP_STRING([--with-slepc-path=<path>],
+            [Path to the Slepc install directory],[32]),[],[])
+AC_ARG_WITH(slepc_libdir,AC_HELP_STRING([--with-slepc-libdir=<path>],
+            [Path to the Slepc lib directory],[32]))
+AC_ARG_WITH(slepc_includedir,AC_HELP_STRING([--with-slepc-includedir=<path>],
+            [Path to the Slepc include directory],[32]))
 #
-PETSC_LIBS=""
-PETSC_INCS="$with_petsc_include"
-SLEPC_LIBS=""
-SLEPC_INCS="$with_slepc_include"
+AC_ARG_WITH(petsc_libs,AC_HELP_STRING([--with-petsc-libs=<libs>],
+            [Use Petsc libraries <libs>],[32]))
+AC_ARG_WITH(petsc_path, AC_HELP_STRING([--with-petsc-path=<path>],
+            [Path to the Petsc install directory],[32]),[],[])
+AC_ARG_WITH(petsc_libdir,AC_HELP_STRING([--with-petsc-libdir=<path>],
+            [Path to the Petsc lib directory],[32]))
+AC_ARG_WITH(petsc_includedir,AC_HELP_STRING([--with-petsc-includedir=<path>],
+            [Path to the Petsc include directory],[32]))
+
+#
 def_slepc=""
+petsc="no"
+slepc="no"
 enable_slepc="no"
 enable_petsc="no"
+internal_petsc="no"
+internal_slepc="no"
 compile_petsc="no"
 compile_slepc="no"
 #
-case $with_petsc_libs in
-        yes ) compile_petsc="yes";;
-        no) acx_petsc_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) PETSC_LIBS="$with_petsc_libs" ;;
-        *) PETSC_LIBS="$with_petsc_libs" ;;
-esac
+# Other libs
 #
-case $with_slepc_libs in
-        yes ) compile_slepc="yes";;
-        no) acx_slepc_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o) SLEPC_LIBS="$with_slepc_libs" ;;
-        *)  PETSC_LIBS="$with_petsc_libs" ;;
-esac
+AC_LANG_PUSH(C)
+AC_CHECK_LIB(dl, dlopen,  [use_libdl="yes";  ],[use_libdl="no";  ],[])
+AC_LANG_POP(C)
 #
-if test "$compile_petsc" = "yes" &&  test "$compile_slepc" = "yes"  ; then
-  enable_slepc="yes" ;
-  enable_petsc="yes" ;
-  def_slepc="-D_SLEPC" ;
-  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc -ldl" ;
+# PETSC global options
+#
+if test -d "$with_petsc_libdir"      ; then enable_petsc="yes" ; fi
+if test -d "$with_petsc_path"        ; then enable_petsc="yes" ; fi
+if test   x"$with_petsc_libs" != "x" ; then enable_petsc="yes" ; fi
+#
+# Set PETSC LIBS and FLAGS from INPUT
+#
+if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_petsc_libs" != "x" ; then
+  #
+  # external petsc
+  #
+  if   test   x"$with_petsc_libs" != "x" ; then  AC_MSG_CHECKING([for Petsc using $with_petsc_libs]) ;
+  elif test -d "$with_petsc_libdir"      ; then  AC_MSG_CHECKING([for Petsc in $with_petsc_libdir]) ;
+  elif test -d "$with_petsc_path"        ; then  AC_MSG_CHECKING([for Petsc in $with_petsc_path]) ;
+  fi
+  #
+  if test -d "$with_petsc_path" ; then 
+      try_libdir="$with_petsc_path/lib" ;
+      try_incdir="$with_petsc_path/include" ;
+  fi
+  #
+  if test -d "$with_petsc_libdir"     ; then try_libdir="$with_petsc_libdir" ; fi
+  if test -d "$with_petsc_includedir" ; then try_incdir="$with_petsc_includedir" ; fi
+  #
+  try_PETSC_INCS="$IFLAG$try_incdir" ;
+  try_PETSC_LIBS="-L$try_libdir -lpetsc" ;
+  #
+  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+  #
+  if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
+  #
+  if test -z "$try_PETSC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
+  if test -z "$try_PETSC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+  #
+  AC_LANG([Fortran])
+  #
+  save_fcflags="$FCFLAGS" ;
+  save_libs="$LIBS" ;
+  #
+  FCFLAGS="$try_PETSC_INCS $save_fcflags";
+  LIBS="$try_PETSC_LIBS $save_libs";
+  #
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
+     inplicit none
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscmat.h>
+     Mat                         :: A]),
+       [petsc=yes], [petsc=no]);
+  #
+  if test "x$petsc" = "xyes"; then
+    AC_MSG_RESULT([yes]) ;
+    PETSC_INCS="$try_PETSC_INCS" ;
+    PETSC_LIBS="$try_PETSC_LIBS" ;
+  else
+    AC_MSG_RESULT([no]) ;
+    #
+  fi
+  # 
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  # 
+fi
+#
+if test "x$enable_petsc" = "xyes" && test "x$petsc"="no" ; then
+  #
+  # internal petsc
+  #
+  AC_MSG_CHECKING([for internal Petsc library])
+  #
+  internal_petsc="yes"
+  #
+  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc" ;
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc -lpetsc" ;
+  #
+  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+  #
+  petsc=yes
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libpetsc.a" ; then
+    compile_petsc="no" ;
+    AC_MSG_RESULT([already compiled]) ;
+  else
+    compile_petsc="yes" ;
+    AC_MSG_RESULT([to be compiled]) ;
+  fi
+  #
+fi
+#
+
+#
+# SLEPC global options
+#
+if test -d "$with_slepc_libdir"      ; then enable_slepc="yes" ; fi
+if test -d "$with_slepc_path"        ; then enable_slepc="yes" ; fi
+if test   x"$with_slepc_libs" != "x" ; then enable_slepc="yes" ; fi
+#
+# Set SLEPC LIBS and FLAGS from INPUT
+#
+if test compile_petsc="no" && enable_petsc="yes" ; then
+if test -d "$with_slepc_path" || test -d "$with_slepc_libdir" || test "x$with_slepc_libs" != "x" ; then
+  #
+  # external slepc
+  #
+  if   test   x"$with_slepc_libs" != "x" ; then  AC_MSG_CHECKING([for Slepc using $with_slepc_libs]) ;
+  elif test -d "$with_slepc_libdir"      ; then  AC_MSG_CHECKING([for Slepc in $with_slepc_libdir]) ;
+  elif test -d "$with_slepc_path"        ; then  AC_MSG_CHECKING([for Slepc in $with_slepc_path]) ;
+  fi
+  #
+  if test -d "$with_slepc_path" ; then 
+      try_libdir="$with_slepc_path/lib" ;
+      try_incdir="$with_slepc_path/include" ;
+  fi
+  #
+  if test -d "$with_slepc_libdir"     ; then try_libdir="$with_slepc_libdir" ; fi
+  if test -d "$with_slepc_includedir" ; then try_incdir="$with_slepc_includedir" ; fi
+  #
+  try_SLEPC_INCS="$IFLAG$try_incdir" ;
+  try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
+  #
+  if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
+  #
+  if test -z "$try_SLEPC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
+  if test -z "$try_SLEPC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+  #
+  AC_LANG([Fortran])
+  #
+  save_fcflags="$FCFLAGS" ;
+  save_libs="$LIBS" ;
+  #
+  FCFLAGS="$try_SLEPC_INCS PETSC_INCS $save_fcflags";
+  LIBS="$try_SLEPC_LIBS PETSC_LIBS $save_libs";
+  #
+  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
+     inplicit none
+#include <petsc/finclude/petscsys.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#include <petsc/finclude/petscmat.h>
+     EPS         :: eps
+     Mat         :: A]),
+       [slepc=yes], [slepc=no]);
+  #
+  if test "x$slepc" = "xyes"; then
+    AC_MSG_RESULT([yes]) ;
+    SLEPC_INCS="$try_SLEPC_INCS" ;
+    SLEPC_LIBS="$try_SLEPC_LIBS" ;
+  else
+    AC_MSG_RESULT([no]) ;
+    #
+  fi
+  # 
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  # 
+fi
+#
+if test "x$enable_slepc" = "xyes" && test "x$slepc"="no" && test "x$enable_petsc" = "xyes" ; then
+  #
+  # internal slepc
+  #
+  AC_MSG_CHECKING([for internal Slepc library])
+  #
+  internal_slepc="yes"
+  #
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-else 
- if ! test "x$PETSC_LIBS" = "x" &&  ! test "x$SLEPC_LIBS" = "x" ; then
-  enable_slepc="yes"
-  enable_petsc="yes"
-  def_slepc="-D_SLEPC"
- fi
+  #
+  slepc=yes
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libslepc.a" ; then
+    compile_slepc="no" ;
+    AC_MSG_RESULT([already compiled]) ;
+  else
+    compile_slepc="yes" ;
+    AC_MSG_RESULT([to be compiled]) ;
+  fi
+  #
+fi
 fi
 #
 AC_SUBST(PETSC_LIBS)

@@ -44,9 +44,9 @@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@
-# [@PET_str@] PETSC     : @PETSC_LIBS@ 
+# [@PETSC_str@] PETSC     : @PETSC_LIBS@ 
 #                   @PETSC_INCS@ 
-# [@SLE_str@] SLEPC     : @SLEPC_LIBS@ 
+# [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
 #
 #  OTHER LIBS

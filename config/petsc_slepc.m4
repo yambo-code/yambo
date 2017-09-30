@@ -23,6 +23,8 @@
 #
 AC_DEFUN([AC_PETSC_SLEPC_SETUP],[
 #
+AC_ARG_ENABLE(slepc_linalg,   AC_HELP_STRING([--enable-slepc-linalg],         [Use Slepc for linear algebra. Default is no]))
+#
 AC_ARG_WITH(slepc_libs,AC_HELP_STRING([--with-slepc-libs=<libs>],
             [Use Slepc libraries <libs>],[32]))
 AC_ARG_WITH(slepc_path, AC_HELP_STRING([--with-slepc-path=<path>],
@@ -58,6 +60,11 @@ AC_LANG_PUSH(C)
 AC_CHECK_LIB(dl, dlopen,  [use_libdl="yes";  ],[use_libdl="no";  ],[])
 AC_LANG_POP(C)
 #
+if test x"$enable_slepc_linalg" = "xyes"; then
+  enable_petsc="yes";
+  enable_slepc="yes";
+fi
+#
 # PETSC global options
 #
 if test  x"$with_petsc_libdir" != "x" ; then enable_petsc="yes" ; fi
@@ -66,7 +73,7 @@ if test  x"$with_petsc_libs"   != "x" ; then enable_petsc="yes" ; fi
 #
 # Set PETSC LIBS and FLAGS from INPUT
 #
-if test x"$enable_petsc" = "xyes"  ; then
+if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_petsc_libs" != "x" ; then
   #
   # external petsc
   #
@@ -156,8 +163,8 @@ if test x"$with_slepc_libs"   != "x" ; then enable_slepc="yes" ; fi
 #
 # Set SLEPC LIBS and FLAGS from INPUT
 #
-if test compile_petsc="no" && enable_petsc="yes" ; then
-if test x"$enable_slepc" = "xyes"  ; then
+if test "x$compile_petsc" = "xno" && test "x$enable_petsc" = "xyes" ; then
+if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_slepc_libs" != "x" ; then
   #
   # external slepc
   #
@@ -209,6 +216,7 @@ if test x"$enable_slepc" = "xyes"  ; then
   LIBS="$save_libs" ;
   # 
 fi
+fi
 #
 if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_petsc" = "xyes" ; then
   #
@@ -230,7 +238,6 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
     AC_MSG_RESULT([to be compiled]) ;
   fi
   #
-fi
 fi
 #
 AC_SUBST(PETSC_LIBS)

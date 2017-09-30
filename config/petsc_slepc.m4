@@ -60,13 +60,13 @@ AC_LANG_POP(C)
 #
 # PETSC global options
 #
-if test -d "$with_petsc_libdir"      ; then enable_petsc="yes" ; fi
-if test -d "$with_petsc_path"        ; then enable_petsc="yes" ; fi
-if test   x"$with_petsc_libs" != "x" ; then enable_petsc="yes" ; fi
+if test  x"$with_petsc_libdir" != "x" ; then enable_petsc="yes" ; fi
+if test  x"$with_petsc_path"   != "x" ; then enable_petsc="yes" ; fi
+if test  x"$with_petsc_libs"   != "x" ; then enable_petsc="yes" ; fi
 #
 # Set PETSC LIBS and FLAGS from INPUT
 #
-if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_petsc_libs" != "x" ; then
+if test x"$enable_petsc" = "xyes"  ; then
   #
   # external petsc
   #
@@ -86,7 +86,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   try_PETSC_INCS="$IFLAG$try_incdir" ;
   try_PETSC_LIBS="-L$try_libdir -lpetsc" ;
   #
-  if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
+  if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
   #
@@ -102,10 +102,10 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   LIBS="$try_PETSC_LIBS $save_libs";
   #
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-     inplicit none
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscmat.h>
-     Mat                         :: A]),
+     use petscsys
+     use petscvec
+     use petscmat
+     implicit none]),
        [petsc=yes], [petsc=no]);
   #
   if test "x$petsc" = "xyes"; then
@@ -122,7 +122,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   # 
 fi
 #
-if test "x$enable_petsc" = "xyes" && test "x$petsc"="no" ; then
+if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   # internal petsc
   #
@@ -150,14 +150,14 @@ fi
 #
 # SLEPC global options
 #
-if test -d "$with_slepc_libdir"      ; then enable_slepc="yes" ; fi
-if test -d "$with_slepc_path"        ; then enable_slepc="yes" ; fi
-if test   x"$with_slepc_libs" != "x" ; then enable_slepc="yes" ; fi
+if test x"$with_slepc_libdir" != "x" ; then enable_slepc="yes" ; fi
+if test x"$with_slepc_path"   != "x" ; then enable_slepc="yes" ; fi
+if test x"$with_slepc_libs"   != "x" ; then enable_slepc="yes" ; fi
 #
 # Set SLEPC LIBS and FLAGS from INPUT
 #
 if test compile_petsc="no" && enable_petsc="yes" ; then
-if test -d "$with_slepc_path" || test -d "$with_slepc_libdir" || test "x$with_slepc_libs" != "x" ; then
+if test x"$enable_slepc" = "xyes"  ; then
   #
   # external slepc
   #
@@ -187,17 +187,13 @@ if test -d "$with_slepc_path" || test -d "$with_slepc_libdir" || test "x$with_sl
   save_fcflags="$FCFLAGS" ;
   save_libs="$LIBS" ;
   #
-  FCFLAGS="$try_SLEPC_INCS PETSC_INCS $save_fcflags";
-  LIBS="$try_SLEPC_LIBS PETSC_LIBS $save_libs";
+  FCFLAGS="$try_SLEPC_INCS $PETSC_INCS $save_fcflags";
+  LIBS="$try_SLEPC_LIBS $PETSC_LIBS $save_libs";
   #
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-     inplicit none
-#include <petsc/finclude/petscsys.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
-#include <petsc/finclude/petscmat.h>
-     EPS         :: eps
-     Mat         :: A]),
+     use petscvec
+     use slepcsys
+     implicit none]),
        [slepc=yes], [slepc=no]);
   #
   if test "x$slepc" = "xyes"; then
@@ -214,7 +210,7 @@ if test -d "$with_slepc_path" || test -d "$with_slepc_libdir" || test "x$with_sl
   # 
 fi
 #
-if test "x$enable_slepc" = "xyes" && test "x$slepc"="no" && test "x$enable_petsc" = "xyes" ; then
+if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_petsc" = "xyes" ; then
   #
   # internal slepc
   #

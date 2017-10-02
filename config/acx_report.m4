@@ -143,7 +143,7 @@ PETSC_str=" - "
 if test "$internal_petsc" = "yes" ; then
   if test "$compile_petsc" = "yes" ; then PETSC_str=" Ic"; fi
   if test "$compile_petsc" = "no"  ; then PETSC_str=" If"; fi
-else
+elif test "$enable_petsc" = "yes" ; then
   PETSC_str=" E "
 fi
 
@@ -152,7 +152,7 @@ SLEPC_str=" - "
 if test "$internal_slepc" = "yes" ; then
   if test "$compile_slepc" = "yes" ; then SLEPC_str=" Ic"; fi
   if test "$compile_slepc" = "no"  ; then SLEPC_str=" If"; fi
-else
+elif test "$enable_slepc" = "yes" ; then
   SLEPC_str=" E "
 fi
 

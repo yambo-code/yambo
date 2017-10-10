@@ -61,7 +61,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
  if (i_COMM_found==0) then
    call COMM_reset(COMM)
    COMM%my_CHAIN=myid
-   if (I_do_SND.or.I_do_RCV) COMM%my_CHAIN=-1
+   if (I_do_SND.or.I_do_RCV) COMM%my_CHAIN=TRANSFER_world%n_CPU+1
    if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,COMM,myid)
    if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,COMM)
    if (i_COMM_free>0) then

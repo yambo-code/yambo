@@ -119,6 +119,8 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
     AC_MSG_RESULT([yes]) ;
     PETSC_INCS="$try_PETSC_INCS" ;
     PETSC_LIBS="$try_PETSC_LIBS" ;
+    compile_petsc="no";
+    internal_petsc="yes";
   else
     AC_MSG_RESULT([no]) ;
     #
@@ -207,6 +209,8 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
     AC_MSG_RESULT([yes]) ;
     SLEPC_INCS="$try_SLEPC_INCS" ;
     SLEPC_LIBS="$try_SLEPC_LIBS" ;
+    compile_slepc="no";
+    internal_slepc="yes";
   else
     AC_MSG_RESULT([no]) ;
     #

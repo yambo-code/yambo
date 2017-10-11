@@ -27,7 +27,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
  use pars,           ONLY:SP
  use matrix,         ONLY:I_do_RCV,I_do_SND,TRANSFER_world,N_PAR_to_PAR_comms,&
 &                         PAR_to_PAR_comm_SAVE,PAR_to_PAR_comm_NAME,PAR_to_PAR_comm_SAVE_NAME,N_MAX_PAR_to_PAR_comms
- use parallel_m,     ONLY:PP_redux_wait,myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm
+ use parallel_m,     ONLY:PP_redux_wait,myid,COMM_reset,CREATE_the_COMM,COMM_copy,MPI_comm,ncpu
  !
  implicit none
  !
@@ -61,7 +61,7 @@ subroutine MATRIX_PAR_to_from_PAR( BLC_s, ROWS_s, COLS_s,&
  if (i_COMM_found==0) then
    call COMM_reset(COMM)
    COMM%my_CHAIN=myid
-   if (I_do_SND.or.I_do_RCV) COMM%my_CHAIN=TRANSFER_world%n_CPU+1
+   if (I_do_SND.or.I_do_RCV) COMM%my_CHAIN=ncpu+1
    if (TRANSFER_world%n_CPU >1) call CREATE_the_COMM(TRANSFER_world%COMM,COMM,myid)
    if (TRANSFER_world%n_CPU==1) call COMM_copy(TRANSFER_world,COMM)
    if (i_COMM_free>0) then

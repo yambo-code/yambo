@@ -41,6 +41,7 @@ m4_include([config/acx_cpp.m4])
 m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_get_fc_kind.m4])
+m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 

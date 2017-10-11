@@ -67,6 +67,7 @@ fi
 if test "$mpibuild" = "yes"; then
   #
   def_mpi="-D_MPI"
+  ACX_GET_MPI_KIND()
   #
 else
   #

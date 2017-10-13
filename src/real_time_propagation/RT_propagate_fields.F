@@ -55,7 +55,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
  type(bz_samp),        intent(in) :: k 
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
- type(gauge_field),   intent(out) :: A_inp
+ type(gauge_field),    intent(in) :: A_inp
  type(gauge_field),   intent(out) :: A_new
  complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !

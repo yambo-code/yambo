@@ -65,7 +65,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC,NE_time
  use fields,         ONLY:gauge_field,Efield,n_ext_fields
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,master_cpu,myid,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu,master_cpu,myid,PAR_COM_Xk_ibz_INDEX
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
 #if defined _TIMING
@@ -109,7 +109,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !=============================================================
  !
  if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') ) then
-   !
    !
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
@@ -158,7 +157,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
-   if (HEAD_k_CPU) then
+   if (HEAD_QP_cpu) then
      do ik=1,nXkibz 
        H_nl_sc=cZERO
        if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
@@ -185,7 +184,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
-   if(HEAD_k_cpu) then
+   if(HEAD_QP_cpu.and.HEAD_k_cpu) then
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
        do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
@@ -198,8 +197,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The External Field
  !====================
- if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
+ !if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
  !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
+ if (l_NE_with_fields.and.HEAD_k_cpu) then
+ !if (l_NE_with_fields) then
    !
    do ik=1,nXkibz 
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -214,7 +215,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The bare Hamiltonian
  !=========================
- if ((.not.l_RT_RWA).and.HEAD_k_CPU) then
+ if ((.not.l_RT_RWA).and.HEAD_k_cpu.and.HEAD_QP_cpu) then
  !if (.not.l_RT_RWA) then
    !
    do ik=1,nXkibz

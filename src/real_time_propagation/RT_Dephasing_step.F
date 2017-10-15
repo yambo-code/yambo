@@ -49,6 +49,6 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  ! dG = dG * (1 - dT i*Sigma)
  !============================
- if (.not.l_RT_exp)  dG_out(:,:) = dG_out(:,:) * (1._SP - deltaT*RT_Deph_Matrix(:,:,RT_all2ibz(ik)))
+ if (.not.l_RT_EXP)  dG_out(:,:) = dG_out(:,:) * (1._SP - deltaT*RT_Deph_Matrix(:,:,RT_all2ibz(ik)))
  !
 end subroutine RT_Dephasing_step

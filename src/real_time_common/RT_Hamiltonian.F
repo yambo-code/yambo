@@ -197,8 +197,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The External Field
  !====================
- if (l_NE_with_fields.and.HEAD_k_cpu.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
- !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
+ if (l_NE_with_fields.and.HEAD_k_cpu) then
+ !if (l_NE_with_fields) then
    !
    do ik=1,nXkibz 
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle

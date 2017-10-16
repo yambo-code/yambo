@@ -23,7 +23,7 @@
 !
 subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
- use pars,         ONLY:lchlen,schlen
+ use pars,         ONLY:lchlen,schlen,IP
  use drivers,      ONLY:infile_editing
  use com,          ONLY:msg,warning,secnm,error,repfile
  use openmp,       ONLY:master_thread
@@ -49,6 +49,11 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  character(lchlen) :: msg_
  character(schlen) :: SHELF,TRUNK
  integer, external :: MEM_LIB_finder,MEM_shelf_finder,MEM_save_finder,MEM_component_finder
+ !
+ ! Setup
+ !=======
+ MEM_SAVE_treshold=10 *MEM_treshold
+ MEM_jump_treshold=100*MEM_treshold
  !
  ! Error Message
  !===============
@@ -238,7 +243,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    call msg("s",trim(msg_))
  endif
  !#2
- deliver_a_msg=(TOT_MEM_bytes-TOT_MEM_bytes_SAVE)>int(MEM_jump_treshold*Megabyte/Kilobyte).and.adding
+ deliver_a_msg=int((TOT_MEM_bytes-TOT_MEM_bytes_SAVE)/Megabyte)>int(MEM_jump_treshold/10.).and.adding
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY] In use: "

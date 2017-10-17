@@ -186,7 +186,8 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
   try_SLEPC_INCS="$IFLAG$try_incdir" ;
   try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
   #
-  if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
+  # HM 17/10/17: this line can lead the SLEPC_LIBS = "yes"
+  #if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
   #
   if test -z "$try_SLEPC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
   if test -z "$try_SLEPC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
@@ -211,6 +212,7 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
     SLEPC_LIBS="$try_SLEPC_LIBS" ;
     compile_slepc="no";
     internal_slepc="yes";
+    def_slepc="-D_SLEPC";
   else
     AC_MSG_RESULT([no]) ;
     #
@@ -228,9 +230,9 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   AC_MSG_CHECKING([for internal Slepc library])
   #
-  internal_slepc="yes"
+  internal_slepc="yes";
   #
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc -lslepc -lpetsc " ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
   #
   slepc=yes
@@ -241,6 +243,7 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
     compile_slepc="yes" ;
     AC_MSG_RESULT([to be compiled]) ;
   fi
+  def_slepc="-D_SLEPC";
   #
 fi
 #

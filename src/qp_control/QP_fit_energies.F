@@ -79,6 +79,7 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
    Nqpc=0
    do i1=1,qp%n_states
      if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))<=1.E-5_SP) cycle
+     if (spin(qp%table(i1,:))/=i_spin) cycle
      Nqpc=Nqpc+1
      Dy(Nqpc)=real(qp%E(i1)-Ec)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
@@ -99,6 +100,7 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
    Nqpv=0
    do i1=1,qp%n_states
      if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2).or.real(qp%E_bare(i1))>1.E-5) cycle
+     if (spin(qp%table(i1,:))/=i_spin) cycle
      Nqpv=Nqpv+1
      Dy(Nqpv)=real(qp%E(i1)-Ev)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
@@ -116,7 +118,12 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
    !
    QP_action(i_ACTION)%CTL(i_spin)%db_scissor=(Ec-Eoc)-(Ev-Eov)
    QP_action(i_ACTION)%CTL(i_spin)%fit_scissor=TCc(1)-TCv(1)
-   QP_action(i_ACTION)%CTL(i_spin)%E=(/TCc(1)+Ec-Eoc,TCc(2),TCv(1)+Ev-Eov,TCv(2)/)
+   !
+   ! here we set TCc(2)*Eoc and TCv(2)*Eov to take into account
+   ! the xo offset when evaluating the fit function. 
+   ! See QP_eval_the_FIT.F for further details
+   !
+   QP_action(i_ACTION)%CTL(i_spin)%E=(/TCc(1)+Ec-TCc(2)*Eoc,TCc(2),TCv(1)+Ev-TCv(2)*Eov,TCv(2)/)
    !
  enddo
  !

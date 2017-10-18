@@ -61,8 +61,9 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
    QP_eval_the_FIT=QP_action(i_ACTION)%CTL(i_spin)%E(iref+1) 
    !
    ! Stretching correction
-   if (.not.is_valence) E_ref=E%E_CBm
-   if (     is_valence) E_ref=E%E_VBM
+   ! E_ref is taken into account in QP_fit_energies for each spin channel 
+   !
+   E_ref=0.0_SP
    M_factor=(QP_action(i_ACTION)%CTL(i_spin)%E(iref+2)-1._SP) 
    QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)
  endif

@@ -32,12 +32,12 @@ module memory
  !
  integer :: MEM_err                  = 0
  integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
- integer             :: MAX_MEM_bytes = 0
- integer             :: TOT_MEM_bytes
- integer             :: TOT_MEM_bytes_SAVE =  0
- integer             :: MEM_treshold       =  1  ! Mb*1000=Kb
- integer             :: MEM_SAVE_treshold  =  10 ! "
- integer             :: MEM_jump_treshold  =  100! "
+ integer(IP)         :: MAX_MEM_bytes = 0
+ integer(IP)         :: TOT_MEM_bytes
+ integer(IP)         :: TOT_MEM_bytes_SAVE =  0
+ integer(IP)         :: MEM_treshold       =  1  ! Mb*1000=Kb
+ integer(IP)         :: MEM_SAVE_treshold  =  10 ! "
+ integer(IP)         :: MEM_jump_treshold  =  100! "
  !
  integer :: N_MEM_elements           = 0
  type MEM_element

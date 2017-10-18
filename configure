@@ -2744,7 +2744,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="3"
 SPATCHLEVEL="0"
-SREVISION="14895"
+SREVISION="14896"
 SHASH="3d86166"
 
 
@@ -8696,8 +8696,12 @@ int main()
  return 0;
 }
 EOF_
-(eval $MPICC -o conftest.x conftest.c )
-MPIKIND=`./conftest.x|head -n 1`
+(eval $MPICC -o conftest.x conftest.c >& conftest.err )
+if test -e "conftest.x"; then
+  MPIKIND=`./conftest.x|head -n 1`
+else
+  MPIKIND="undefined"
+fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for MPI version" >&5
 $as_echo_n "checking for MPI version... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MPIKIND" >&5

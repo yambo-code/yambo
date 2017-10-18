@@ -23,7 +23,7 @@
 #
 AC_DEFUN([AC_PETSC_SLEPC_SETUP],[
 #
-AC_ARG_ENABLE(slepc_linalg,   AC_HELP_STRING([--enable-slepc-linalg],         [Use Slepc for linear algebra. Default is no]))
+AC_ARG_ENABLE(slepc_linalg,   AC_HELP_STRING([--enable-slepc-linalg],         [Enable suport for the diagonalization of BSE using SLEPC. Default is no]))
 #
 AC_ARG_WITH(slepc_libs,AC_HELP_STRING([--with-slepc-libs=<libs>],
             [Use Slepc libraries <libs>],[32]))

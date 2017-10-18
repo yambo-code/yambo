@@ -67,6 +67,14 @@ fi
 #
 # PETSC global options
 #
+if test  x"$with_petsc_libs" = "xyes" ; then
+  enable_petsc="yes" ;
+  with_petsc_libs="";
+elif test  x"$with_petsc_libs" = "xno" ; then
+  enable_petsc="no" ;
+  with_petsc_libs="";
+fi
+#
 if test  x"$with_petsc_libdir" != "x" ; then enable_petsc="yes" ; fi
 if test  x"$with_petsc_path"   != "x" ; then enable_petsc="yes" ; fi
 if test  x"$with_petsc_libs"   != "x" ; then enable_petsc="yes" ; fi
@@ -159,6 +167,15 @@ fi
 #
 # SLEPC global options
 #
+#
+if test  x"$with_slepc_libs" = "xyes" ; then
+  enable_slepc="yes" ;
+  with_slepc_libs="";
+elif test  x"$with_slepc_libs" = "xno" ; then
+  enable_slepc="no" ;
+  with_slepc_libs="";
+fi
+#
 if test x"$with_slepc_libdir" != "x" ; then enable_slepc="yes" ; fi
 if test x"$with_slepc_path"   != "x" ; then enable_slepc="yes" ; fi
 if test x"$with_slepc_libs"   != "x" ; then enable_slepc="yes" ; fi
@@ -186,8 +203,7 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
   try_SLEPC_INCS="$IFLAG$try_incdir" ;
   try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
   #
-  # HM 17/10/17: this line can lead the SLEPC_LIBS = "yes"
-  #if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
+  if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
   #
   if test -z "$try_SLEPC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
   if test -z "$try_SLEPC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
@@ -211,7 +227,7 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
     SLEPC_INCS="$try_SLEPC_INCS" ;
     SLEPC_LIBS="$try_SLEPC_LIBS" ;
     compile_slepc="no";
-    internal_slepc="yes";
+    internal_slepc="no";
     def_slepc="-D_SLEPC";
   else
     AC_MSG_RESULT([no]) ;
@@ -232,7 +248,7 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lpetsc -lslepc -lpetsc " ;
+  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lslepc" ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
   #
   slepc=yes

@@ -128,7 +128,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
     PETSC_INCS="$try_PETSC_INCS" ;
     PETSC_LIBS="$try_PETSC_LIBS" ;
     compile_petsc="no";
-    internal_petsc="yes";
+    internal_petsc="no";
   else
     AC_MSG_RESULT([no]) ;
     #

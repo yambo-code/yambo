@@ -31,10 +31,10 @@ module memory
  implicit none
  !
  integer :: MEM_err                  = 0
- integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
- integer(IP)         :: MAX_MEM_bytes = 0
- integer(IP)         :: TOT_MEM_bytes
- integer(IP)         :: TOT_MEM_bytes_SAVE =  0
+ integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT 
+ integer(IP)         :: MAX_MEM_Kb      = 0
+ integer(IP)         :: TOT_MEM_Kb
+ integer(IP)         :: TOT_MEM_Kb_SAVE =  0
  integer(IP)         :: MEM_treshold       =  1  ! Mb*1000=Kb
  integer(IP)         :: MEM_SAVE_treshold  =  10 ! "
  integer(IP)         :: MEM_jump_treshold  =  100! "
@@ -104,17 +104,14 @@ module memory
  contains
    !
    character(schlen) function mem_string(MEM)
-     use units,        ONLY:Kilobyte,Megabyte,Gigabyte
-     use stderr,       ONLY:intc
-     integer :: MEM !in Bytes
-     if (MEM<Kilobyte) then
-       mem_string=trim(intc(MEM))//"b"
-     else if (MEM<Megabyte) then
-       mem_string=trim(intc(int(real(MEM)/Kilobyte)))//"Kb"
-     else if (MEM<Gigabyte) then
-       mem_string=trim(intc(int(real(MEM)/Megabyte)))//"Mb"
+     use stderr,       ONLY:intc,real2ch
+     integer :: MEM !in Kb
+     if (MEM<1000) then
+       mem_string=trim(real2ch(real(MEM)))//"Kb"
+     else if (MEM<1000000) then
+       mem_string=trim(real2ch(real(MEM)/1000))//"Mb"
      else
-       mem_string=trim(intc(int(real(MEM)/Gigabyte)))//"Gb"
+       mem_string=trim(real2ch(real(MEM)/1000000))//"Gb"
      endif
    end function
    !

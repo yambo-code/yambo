@@ -816,7 +816,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -871,10 +870,12 @@ enable_3d_fft
 with_fftsg_fac
 enable_slepc_linalg
 with_slepc_libs
+with_slepc_incs
 with_slepc_path
 with_slepc_libdir
 with_slepc_includedir
 with_petsc_libs
+with_petsc_incs
 with_petsc_path
 with_petsc_libdir
 with_petsc_includedir
@@ -968,7 +969,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1221,15 +1221,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1367,7 +1358,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1520,7 +1511,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1604,11 +1594,13 @@ Optional Packages:
   --with-fft-includedir=<path>  Path to the FFT include directory
   --with-fftsg-fac=<val>        Change default Goedecker FFT cache factor
   --with-slepc-libs=<libs>      Use Slepc libraries <libs>
+  --with-slepc-incs=<incs>      Use Slepc includes <incs>
   --with-slepc-path=<path>      Path to the Slepc install directory
   --with-slepc-libdir=<path>    Path to the Slepc lib directory
   --with-slepc-includedir=<path>
                                 Path to the Slepc include directory
   --with-petsc-libs=<libs>      Use Petsc libraries <libs>
+  --with-petsc-incs=<incs>      Use Petsc includes <incs>
   --with-petsc-path=<path>      Path to the Petsc install directory
   --with-petsc-libdir=<path>    Path to the Petsc lib directory
   --with-petsc-includedir=<path>
@@ -10948,6 +10940,12 @@ if test "${with_slepc_libs+set}" = set; then :
 fi
 
 
+# Check whether --with-slepc_incs was given.
+if test "${with_slepc_incs+set}" = set; then :
+  withval=$with_slepc_incs;
+fi
+
+
 # Check whether --with-slepc_path was given.
 if test "${with_slepc_path+set}" = set; then :
   withval=$with_slepc_path;
@@ -10970,6 +10968,12 @@ fi
 # Check whether --with-petsc_libs was given.
 if test "${with_petsc_libs+set}" = set; then :
   withval=$with_petsc_libs;
+fi
+
+
+# Check whether --with-petsc_incs was given.
+if test "${with_petsc_incs+set}" = set; then :
+  withval=$with_petsc_incs;
 fi
 
 
@@ -11121,6 +11125,7 @@ $as_echo_n "checking for Petsc in $with_petsc_path... " >&6; } ;
   if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
+  if test x"$with_petsc_incs" != "x" ; then try_PETSC_INCS="$with_petsc_incs" ; fi
   #
   if test -z "$try_PETSC_LIBS" ; then as_fn_error $? "No libs specified" "$LINENO" 5 ; fi
   if test -z "$try_PETSC_INCS" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
@@ -11140,10 +11145,10 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   cat > conftest.$ac_ext <<_ACEOF
       program main
 
-     use petscsys
-     use petscvec
-     use petscmat
-     implicit none
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
       end
 _ACEOF
 if ac_fn_fc_try_compile "$LINENO"; then :
@@ -11242,6 +11247,7 @@ $as_echo_n "checking for Slepc in $with_slepc_path... " >&6; } ;
   try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
   #
   if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
+  if test x"$with_slepc_incs" != "x" ; then  try_SLEPC_INCS="$with_slepc_incs" ; fi
   #
   if test -z "$try_SLEPC_LIBS" ; then as_fn_error $? "No libs specified" "$LINENO" 5 ; fi
   if test -z "$try_SLEPC_INCS" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
@@ -11261,9 +11267,8 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   cat > conftest.$ac_ext <<_ACEOF
       program main
 
-     use petscvec
-     use slepcsys
-     implicit none
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
       end
 _ACEOF
 if ac_fn_fc_try_compile "$LINENO"; then :

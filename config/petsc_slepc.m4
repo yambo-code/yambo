@@ -27,6 +27,8 @@ AC_ARG_ENABLE(slepc_linalg,   AC_HELP_STRING([--enable-slepc-linalg],         [E
 #
 AC_ARG_WITH(slepc_libs,AC_HELP_STRING([--with-slepc-libs=<libs>],
             [Use Slepc libraries <libs>],[32]))
+AC_ARG_WITH(slepc_incs,AC_HELP_STRING([--with-slepc-incs=<incs>],
+            [Use Slepc includes <incs>],[32]))
 AC_ARG_WITH(slepc_path, AC_HELP_STRING([--with-slepc-path=<path>],
             [Path to the Slepc install directory],[32]),[],[])
 AC_ARG_WITH(slepc_libdir,AC_HELP_STRING([--with-slepc-libdir=<path>],
@@ -36,6 +38,8 @@ AC_ARG_WITH(slepc_includedir,AC_HELP_STRING([--with-slepc-includedir=<path>],
 #
 AC_ARG_WITH(petsc_libs,AC_HELP_STRING([--with-petsc-libs=<libs>],
             [Use Petsc libraries <libs>],[32]))
+AC_ARG_WITH(petsc_incs,AC_HELP_STRING([--with-petsc-incs=<incs>],
+            [Use Petsc includes <incs>],[32]))
 AC_ARG_WITH(petsc_path, AC_HELP_STRING([--with-petsc-path=<path>],
             [Path to the Petsc install directory],[32]),[],[])
 AC_ARG_WITH(petsc_libdir,AC_HELP_STRING([--with-petsc-libdir=<path>],
@@ -104,6 +108,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
   #
   if test x"$with_petsc_libs" != "x" ; then try_PETSC_LIBS="$with_petsc_libs" ; fi
+  if test x"$with_petsc_incs" != "x" ; then try_PETSC_INCS="$with_petsc_incs" ; fi
   #
   if test -z "$try_PETSC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
   if test -z "$try_PETSC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
@@ -117,10 +122,10 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   LIBS="$try_PETSC_LIBS $save_libs";
   #
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-     use petscsys
-     use petscvec
-     use petscmat
-     implicit none]),
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>]),
        [petsc=yes], [petsc=no]);
   #
   if test "x$petsc" = "xyes"; then
@@ -204,6 +209,7 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
   try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
   #
   if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
+  if test x"$with_slepc_incs" != "x" ; then  try_SLEPC_INCS="$with_slepc_incs" ; fi
   #
   if test -z "$try_SLEPC_LIBS" ; then AC_MSG_ERROR([No libs specified]) ; fi
   if test -z "$try_SLEPC_INCS" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
@@ -217,9 +223,8 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
   LIBS="$try_SLEPC_LIBS $PETSC_LIBS $save_libs";
   #
   AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-     use petscvec
-     use slepcsys
-     implicit none]),
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>]),
        [slepc=yes], [slepc=no]);
   #
   if test "x$slepc" = "xyes"; then

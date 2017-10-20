@@ -71,7 +71,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
 #if defined _SLEPC
- use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_target_E, Slepc_shell
+ use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
@@ -463,6 +463,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _SLEPC
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
+ BSS_slepc_tol=1E-6_SP
  BSS_n_freqs=100
  BSS_target_E=0
  Slepc_shell=.TRUE.

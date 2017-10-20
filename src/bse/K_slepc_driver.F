@@ -43,7 +43,7 @@ subroutine K_slepc_driver(iq,W)
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat,BSS_n_eig,BSS_target_E, &
 &                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell, &
-&                         BSS_slepc_extraction, BSS_slepc_ncv
+&                         BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
@@ -197,21 +197,17 @@ subroutine K_slepc_driver(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     if (BSS_target_E==0) then
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E, V_right=BS_V_right,V_left=BS_V_left,extraction=BSS_slepc_extraction)
-     else
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E, V_right=BS_V_right,V_left=BS_V_left,&
- &                         target_energy=BSS_target_E, extraction=BSS_slepc_extraction, slepc_ncv=BSS_slepc_ncv)
-     endif
+     call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E,&
+&                      V_right=BS_V_right,V_left=BS_V_left,&
+&                      target_energy=BSS_target_E, extraction=BSS_slepc_extraction,&
+&                      slepc_ncv=BSS_slepc_ncv,slepc_tol=BSS_slepc_tol)
      !
    else
      !
-     if (BSS_target_E==0) then
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat, extraction=BSS_slepc_extraction)
-     else
-         call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real, V_right=BS_mat,&
-                           target_energy=BSS_target_E, extraction=BSS_slepc_extraction, slepc_ncv=BSS_slepc_ncv )
-     endif
+     call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real,&
+&                      V_right=BS_mat,&
+&                      target_energy=BSS_target_E, extraction=BSS_slepc_extraction,&
+&                      slepc_ncv=BSS_slepc_ncv,slepc_tol=BSS_slepc_tol)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !

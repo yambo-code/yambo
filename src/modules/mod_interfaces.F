@@ -104,7 +104,8 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC
-   subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction,slepc_ncv)
+   subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,&
+&                          extraction,slepc_ncv,slepc_tol)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>

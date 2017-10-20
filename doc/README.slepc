@@ -46,6 +46,10 @@ In general the bigger the better. But it uses more memory.
 The menaing of this value is described in:
 http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetDimensions.html
 
+BSSSlepcTol
+Tolerance for the iterative solver
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetTolerances.html
+
 More variables can be added for better control of the library.
 After getting the eigenvalues and eigenstates you can use ypp normally (of course less states are present).
 

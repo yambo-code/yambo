@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extraction,slepc_ncv)
+subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
+&                       target_energy,extraction,slepc_ncv,slepc_tol)
   !
   ! 10/06/2016 HM
   ! Use slepc to obtain the first few eigenpairs of a large matrix
@@ -49,6 +50,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   complex(SP),  optional      :: E_cmpl(:)     ! complex eigenvalues
   real(SP),     optional      :: E_real(:)     ! real eigenvalues
   real(SP),     optional      :: target_energy ! energy near where to find the eigenvalues
+  real(SP),     optional      :: slepc_tol     ! tolerance of the iterative solver
   character(schlen), optional :: extraction    ! extraction method for the eigenvalues
   integer,optional            :: slepc_ncv     ! dimension of the subspace
   ! 
@@ -104,7 +106,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
   call EPSSetProblemType(eps,EPS_HEP,ierr)
 
-  if (present(target_energy)) then
+  if (target_energy .ne. 0) then
     call msg( 'rs', 'criterion: target energy ', target_energy )
     call EPSSetTarget(eps,target_energy,ierr)
     call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
@@ -148,7 +150,20 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
     ncv = PETSC_DECIDE
   endif 
   call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
-  
+
+  call EPSSetTolerances(eps,slepc_tol,PETSC_DECIDE, ierr)
+
+  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  !     Optional: Get some information from the solver and display it
+  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  call EPSGetType(eps,tname,ierr)
+  call EPSGetTolerances(eps,tol,maxit,ierr)
+
+  call msg( 'rs', 'solution method: ', tname )
+  call msg( 'rs', 'number of requested eigenvalues: ', nev )
+  call msg( 'rs', 'stopping condition tolerance: ', tol)
+  call msg( 'rs', 'stopping contition max iterations: ', maxit )
+ 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,20 +175,10 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
   call msg( 'rs', 'ncv: ', ncv)
   call msg( 'rs', 'mpd: ', mpd)
 
-  !Optional: Get some information from the solver and display it
-  call EPSGetType(eps,tname,ierr)
-  call EPSGetTolerances(eps,tol,maxit,ierr)
-
-  call msg( 'rs', 'solution method: ', tname )
-  call msg( 'rs', 'number of requested eigenvalues: ', nev )
-  call msg( 'rs', 'stopping condition tolerance: ', tol)
-  call msg( 'rs', 'stopping contition max iterations: ', maxit )
-
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Display solution and clean up
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  !Get number of converged eigenpairs
   call EPSGetConverged(eps,nconv,ierr)
   call msg( 'rs', 'number of converged eigenpairs: ', nconv)
   call msg( 'rs', '')

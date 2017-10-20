@@ -101,6 +101,7 @@ module BS_solvers
  !=========
  character(schlen):: BSS_slepc_extraction !choose slepc eigenvalue extraction method (ritz,harmonic)
  integer          :: BSS_slepc_ncv        !dimension of the subspace
+ real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
  real(SP)         :: BSS_target_E         !find eigenvalues close to this energy
  logical          :: Slepc_shell          !use a shell matrix for slepc
 #endif

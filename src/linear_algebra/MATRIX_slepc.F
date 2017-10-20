@@ -142,13 +142,12 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,extra
 
   !Set solver parameters at runtime
   nev = n_eig
-  if (present(slepc_ncv)) then
+  if ( (present(slepc_ncv)) .and. (slepc_ncv.ne.0) ) then
     ncv = slepc_ncv
   else
-    ncv = PETSC_DEFAULT_integer
+    ncv = PETSC_DECIDE
   endif 
-  !call EPSSetDimensions(eps,nev,ncv,mpd,ierr)
-  call EPSSetDimensions(eps,nev,ncv,PETSC_DEFAULT_INTEGER,ierr)
+  call EPSSetDimensions(eps,nev,ncv,PETSC_DECIDE,ierr)
   
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem

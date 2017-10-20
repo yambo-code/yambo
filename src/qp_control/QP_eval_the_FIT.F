@@ -55,17 +55,20 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_spin,Energy,bands,E,k,what)
  !========
  if (what=='E') then
    !
-   if (is_valence) iref=2
+   E_ref=QP_action(i_ACTION)%CTL(i_spin)%E_E_ref(1)
+   if (is_valence) then
+     iref=2
+     E_ref=QP_action(i_ACTION)%CTL(i_spin)%E_E_ref(2)
+   endif
    !
-   ! Scissor correction
+   ! Scissor 
    QP_eval_the_FIT=QP_action(i_ACTION)%CTL(i_spin)%E(iref+1) 
    !
-   ! Stretching correction
-   ! E_ref is taken into account in QP_fit_energies for each spin channel 
+   ! Stretching 
    !
-   E_ref=0.0_SP
    M_factor=(QP_action(i_ACTION)%CTL(i_spin)%E(iref+2)-1._SP) 
    QP_eval_the_FIT=QP_eval_the_FIT+M_factor*(Energy-E_ref)
+   !
  endif
  !
  ! Lifetimes

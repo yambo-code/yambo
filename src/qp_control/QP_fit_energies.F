@@ -42,7 +42,7 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
  ! Work Space
  !
  integer  :: i1,Nqpc,Nqpv,fit_order,i_spin
- real(SP) :: Eoc,Eov,Ec,Ev,EPS,Dy(qp%n_states),Dx(qp%n_states),Tt_def(2),TCv(2),TCc(2)
+ real(SP) :: Eoc,Eov,Ec,Ev,EPS,Dy(qp%n_states),Dx(qp%n_states),M_def(2),M_val(2),M_con(2)
  !
  ! Loop on spin polarizations
  !
@@ -59,18 +59,21 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
      if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2)) cycle
      if (spin(qp%table(i1,:))/=i_spin) cycle
      if (real(qp%E_bare(i1))<=1.E-5_SP) then
-       Eov=max(Eov,real(qp%E_bare(i1),SP))
-       Ev=max(Ev ,real(qp%E(i1),SP)) 
+       if (real(qp%E_bare(i1),SP)>Eov) then
+         Eov=real(qp%E_bare(i1),SP)
+         Ev =real(qp%E(i1),SP)
+       endif
      else
-       Eoc=min(Eoc,real(qp%E_bare(i1),SP))
-       Ec=min(Ec,real(qp%E(i1),SP)) 
+       if (real(qp%E_bare(i1),SP)<Eoc) then
+         Eoc=real(qp%E_bare(i1),SP)
+         Ec =real(qp%E(i1),SP) 
+       endif
      endif
    enddo
    !
-   Tt_def(1)=0._SP
-   Tt_def(2)=1._SP
-   TCv=Tt_def
-   TCc=Tt_def
+   M_def=(/0._SP,1._SP/)
+   M_val=M_def
+   M_con=M_def
    !
    ! E>0 (conduction)
    !
@@ -85,10 +88,10 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
      Dx(Nqpc)=real(qp%E_bare(i1)-Eoc)
    enddo
    if (Nqpc>1) then
-     call POL_LK_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,TCc,EPS,0._SP)
+     call POL_LK_fit(Nqpc,Dx(:Nqpc),Dy(:Nqpc),fit_order,M_con,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [c] reduced to 0')
-       TCc(2)=Tt_def(2)
+       M_con(2)=M_def(2)
      endif
      QP_action(i_ACTION)%CTL(i_spin)%E_err(1)=EPS
    endif
@@ -106,24 +109,21 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
      Dx(Nqpv)=real(qp%E_bare(i1)-Eov)
    enddo
    if (Nqpv>1) then
-     call POL_LK_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,TCv,EPS,0._SP)
+     call POL_LK_fit(Nqpv,Dx(:Nqpv),Dy(:Nqpv),fit_order,M_val,EPS,0._SP)
      if (fit_order==0) then
        call warning(' Fit order on energies [v] reduced to 0')
-       TCv(2)=Tt_def(2)
+       M_val(2)=M_def(2)
      endif
      QP_action(i_ACTION)%CTL(i_spin)%E_err(2)=EPS
    endif
    !
    ! Storing
    !
-   QP_action(i_ACTION)%CTL(i_spin)%db_scissor=(Ec-Eoc)-(Ev-Eov)
-   QP_action(i_ACTION)%CTL(i_spin)%fit_scissor=TCc(1)-TCv(1)
-   !
-   ! here we set TCc(2)*Eoc and TCv(2)*Eov to take into account
-   ! the xo offset when evaluating the fit function. 
-   ! See QP_eval_the_FIT.F for further details
-   !
-   QP_action(i_ACTION)%CTL(i_spin)%E=(/TCc(1)+Ec-TCc(2)*Eoc,TCc(2),TCv(1)+Ev-TCv(2)*Eov,TCv(2)/)
+   QP_action(i_ACTION)%CTL(i_spin)%E_E_ref    =(/Eoc,Eov/)
+   QP_action(i_ACTION)%CTL(i_spin)%db_scissor =(Ec-Eoc)-(Ev-Eov)
+   QP_action(i_ACTION)%CTL(i_spin)%fit_scissor=(Ec+M_con(1)-Eoc)-(Ev+M_val(1)-Eov)
+   QP_action(i_ACTION)%CTL(i_spin)%E(1:2)     =(/M_con(1)+Ec-Eoc,M_con(2)/)
+   QP_action(i_ACTION)%CTL(i_spin)%E(3:4)     =(/M_val(1)+Ev-Eov,M_val(2)/)
    !
  enddo
  !

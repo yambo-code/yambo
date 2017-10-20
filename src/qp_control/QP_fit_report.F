@@ -93,7 +93,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (fit_scissor/=0._SP) then
-     call msg(' r',' Additional GAP corr. (FIT)[ev]:',fit_scissor*HA2EV)
+     call msg(' r','             (FIT, actual) [ev]:',fit_scissor*HA2EV)
    endif
    !
    if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then

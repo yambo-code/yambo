@@ -75,20 +75,32 @@ module QP_CTL_m
  !===================
  type QP_ctl_t
    !
-   ! Convention is first c then v
-   !
    integer    :: interp_neigh
    real(SP)   :: db_scissor
    real(SP)   :: fit_scissor
+   !
+   ! Convention is first (1:N) c then v (N+1:2N)
+   !
+   ! Energies...
    real(SP)   :: E(4)
-   real(SP)   :: W(6)
-   real(SP)   :: W_dos(2)
-   real(SP)   :: W_E_ref(2)
+   real(SP)   :: E_E_ref(2)
    real(SP)   :: E_err(2)
+   !
+   ! Widths...
+   ! ...polynomial fit
+   real(SP)   :: W(6)
+   real(SP)   :: W_E_ref(2)
    real(SP)   :: W_err(2)
+   ! ...DOS
+   real(SP)   :: W_dos(2)
    real(SP)   :: W_dos_err(2)
+   !
+   ! ...Z's
    complex(SP):: Z
+   !
+   ! ...DB (only the name)
    character(schlen):: db
+   !
  end type
  !
  ! "ACTION" type (can be a fit/interpolation/QP/...)

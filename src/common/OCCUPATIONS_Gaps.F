@@ -1,4 +1,4 @@
-!
+
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -41,8 +41,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  integer :: ib,ik,i_sp_pol,j_sp_pol,i_sp_ref,j_sp_ref
  !
  real(SP):: E_g_dir_old
- real(SP):: E_vb_min(n_sp_pol),E_vb_max(n_sp_pol)
- real(SP):: E_cb_min(n_sp_pol),E_cb_max(n_sp_pol)
+ real(SP):: E_vb_min(2),E_vb_max(2)
+ real(SP):: E_cb_min(2),E_cb_max(2)
  real(SP):: r_nk
  real(SP), parameter ::tresh=epsilon(1._SP)
  ! 
@@ -103,8 +103,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
    E_cb_max(i_sp_pol)=minval(E%E(Nbf_(i_sp_pol)+1,:,i_sp_pol))
  enddo
  !
- E%E_VBM=maxval(E_vb_max)
- E%E_CBm=minval(E_cb_min)
+ E%E_VBM=E_vb_max
+ E%E_CBm=E_cb_min
  !
  ! [1] Indirect Gaps (min/max)
  !
@@ -172,30 +172,22 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  ! i.e. equal to the Fermi level, so that stretching corrections
  ! are applied properly
  !
- if (any(Nbf_/=Nbm_)) then
-   E%E_VBM=0._SP
-   E%E_CBm=0._SP
- endif
+ do i_sp_pol=1,n_sp_pol
+   if(Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) then
+     E%E_VBM(i_sp_pol)=0._SP
+     E%E_CBm(i_sp_pol)=0._SP
+   endif
+ enddo
  !
  if (n_sp_pol==1) E%E_dir_gap(1)=E_g_dir_(1,1)
  if (n_sp_pol==2) E%E_dir_gap(1:2)=E_g_dir_(2:3,1)
  !
  ! From Shadow variables to optional variables
  !
- if (present(I_dir)) then
-   I_dir=I_dir_
- endif
- if (present(E_g_dir)) then
-   E_g_dir=E_g_dir_
- endif
- if (present(E_g_ind)) then
-   E_g_ind=E_g_ind_
- endif
- if (present(Nbf)) then
-   Nbf=Nbf_
- endif
- if (present(Nbm)) then
-   Nbm=Nbm_
- endif
+ if (present(I_dir))   I_dir=I_dir_
+ if (present(E_g_dir)) E_g_dir=E_g_dir_
+ if (present(E_g_ind)) E_g_ind=E_g_ind_
+ if (present(Nbf))     Nbf=Nbf_
+ if (present(Nbm))     Nbm=Nbm_
  !
 end subroutine

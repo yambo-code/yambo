@@ -59,15 +59,11 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
      if (qp%table(i1,1)<bands(1).or.qp%table(i1,1)>bands(2)) cycle
      if (spin(qp%table(i1,:))/=i_spin) cycle
      if (real(qp%E_bare(i1))<=1.E-5_SP) then
-       if (real(qp%E_bare(i1),SP)>Eov) then
-         Eov=real(qp%E_bare(i1),SP)
-         Ev =real(qp%E(i1),SP)
-       endif
+       Eov=max(Eov,real(qp%E_bare(i1),SP))
+       Ev =max(Ev, real(qp%E(i1),SP))
      else
-       if (real(qp%E_bare(i1),SP)<Eoc) then
-         Eoc=real(qp%E_bare(i1),SP)
-         Ec =real(qp%E(i1),SP) 
-       endif
+       Eoc=min(Eoc,real(qp%E_bare(i1),SP))
+       Ec =min(Ec, real(qp%E(i1),SP))
      endif
    enddo
    !
@@ -119,7 +115,6 @@ subroutine QP_fit_energies(i_ACTION,bands,qp)
    !
    ! Storing
    !
-   QP_action(i_ACTION)%CTL(i_spin)%E_E_ref    =(/Eoc,Eov/)
    QP_action(i_ACTION)%CTL(i_spin)%db_scissor =(Ec-Eoc)-(Ev-Eov)
    QP_action(i_ACTION)%CTL(i_spin)%fit_scissor=(Ec+M_con(1)-Eoc)-(Ev+M_val(1)-Eov)
    QP_action(i_ACTION)%CTL(i_spin)%E(1:2)     =(/M_con(1)+Ec-Eoc,M_con(2)/)

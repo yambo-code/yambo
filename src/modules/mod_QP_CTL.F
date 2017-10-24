@@ -83,7 +83,6 @@ module QP_CTL_m
    !
    ! Energies...
    real(SP)   :: E(4)
-   real(SP)   :: E_E_ref(2)
    real(SP)   :: E_err(2)
    !
    ! Widths...

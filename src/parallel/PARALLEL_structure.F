@@ -80,9 +80,11 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="b" ) PHASE_space=PAR_n_bands(2)-PAR_n_bands(1)+1
        if (trim(ROLE(i_order))=="c" ) PHASE_space=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
-       if (PARALLEL_CPU_used(i_structure)>PHASE_space) USER_structure_is_ok=.FALSE.
-       USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
-&                         trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
+       if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
+         USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
+&                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
+         call error('USER parallel structure does not fit the current run parameters: '//trim(USER_structure_msg))
+       endif
        ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
      endif
    enddo
@@ -141,12 +143,6 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
- !
- ! USER conf is ok?
- !
- if (USER_structure_is_ok) return
- !
- call error('USER parallel structure does not fit the current run parameters: '//trim(USER_structure_msg))
  !
 #endif
  !

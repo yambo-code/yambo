@@ -1110,6 +1110,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,what//"_ROLEs")
      if (what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
      if (what=="BS")              call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
+     if (what=="SE".and.l_sc_run)                              call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
      if (what=="SLK")             call initactivate(1,what//"_nCPU_LinAlg_INV")

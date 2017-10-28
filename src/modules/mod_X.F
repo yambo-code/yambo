@@ -25,6 +25,7 @@ module X_m
  !
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
+ use matrix,         ONLY:PAR_matrix
  !
 #include <memory.h>
  !
@@ -72,7 +73,7 @@ module X_m
  real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
- complex(SP), allocatable :: X_mat(:,:,:)
+ integer :: X_ng = 0
  integer :: current_iq
  integer :: iw_ref
  integer :: X_DbGd_nkpts
@@ -94,6 +95,15 @@ module X_m
  !
  integer          :: n_X_descs
  character(lchlen):: X_description(100)
+ !
+ ! PARALLEL distribution
+ !
+ type(PAR_matrix), allocatable :: X_par(:)
+ type(PAR_matrix)              :: X_par_lower_triangle
+ logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
+ integer                       :: X_rows(2) = 0
+ integer                       :: X_cols(2) = 0
+ complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp

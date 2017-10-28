@@ -30,8 +30,10 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,COMM_copy,PAR_INDEX_copy,&
-&                        PAR_Q_range,PAR_build_index
+ use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
+ ! SLK
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,PAR_build_index
+ !
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_DIPk_bz_A2A,PAR_COM_Xk_bz_A2A, &
@@ -61,14 +63,26 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum") then
    !=========================================================================================
    !
-   CALL PARALLEL_structure(4,(/"q","k","c","v"/))
+   CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
-&                                          COMM_index_2=PAR_COM_Xk_bz_INDEX,&
-&                                          COMM_index_3=PAR_COM_CON_INDEX_X(X_type),&
-&                                          COMM_index_4=PAR_COM_VAL_INDEX_X(X_type),&
+   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,&
+&                                          COMM_index_3=PAR_COM_Xk_bz_INDEX,&
+&                                          COMM_index_4=PAR_COM_CON_INDEX_X(X_type),&
+&                                          COMM_index_5=PAR_COM_VAL_INDEX_X(X_type),&
 &                                          COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                          COMM_A2A_2=PAR_COM_Xk_bz_A2A)
+&                                          COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
+   !
+   ! COMMs setup
+   !
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
+   !
+   ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
+   ! It is rather an additional level of parallelization.
+   !
+   if (PAR_COM_RL_INDEX%n_CPU>1) call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    !
    ! K-points 
    !

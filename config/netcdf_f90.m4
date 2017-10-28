@@ -301,7 +301,7 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_OPT="--enable-netcdf-4";
     NETCDF_VER="v4";
     #
-    HDF5_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5 -lz -lm -ldl" ;
+    HDF5_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ;
     HDF5_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
     NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
     NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;

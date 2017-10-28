@@ -36,6 +36,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
  ! DIMENSIONS 
  use parallel_m,    ONLY:PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_c_bands,PAR_n_v_bands
+ ! WORLDS
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,COMM_copy
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
@@ -76,6 +78,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  else
    call PARALLEL_global_reset(ENVIRONMENT,X_type)
  endif
+ !
+ !========
+ ! WORLDS
+ !========
+ call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+ call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
+ !
  !==========
  ! Logicals
  !==========
@@ -151,7 +160,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  !
  !==========================================================================================================
- if (ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_T_space".or.&
+ if ( ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_T_space".or.&
 &    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !

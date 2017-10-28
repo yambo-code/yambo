@@ -25,8 +25,8 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  !
  use pars,           ONLY:SP,cZERO
  use wrapper,        ONLY:M_by_M
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,SV_decomposition,&
-&                         LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,SV_decomposition,&
+&                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -35,8 +35,11 @@ subroutine SERIAL_SVD_inversion(n,M,SVD_digits)
  integer     :: n
  complex(SP) :: M(n,n)
  integer     :: SVD_digits 
- integer     :: i_loop !ws
- real(SP)    :: SV_min !ws
+ !
+ !ws
+ integer           :: i_loop 
+ real(SP)          :: SV_min
+ type(LALGEBRA_WS) :: WS
  !
 #if defined _TIMING
  call timing('SERIAL_SVD_inversion',OPR='start')

@@ -334,6 +334,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
+ if (iq==1.and.io_DIP) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_spin')
+   call DIP_alloc('P_square') 
+   call DIP_alloc('DIP_projected')
+ endif
+ !
 #if defined _OPENMP
 !$omp end parallel
 #endif
@@ -421,15 +429,5 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !$omp end do
  !$omp end parallel
 #endif
- !
- ! CLEAN
- !
- if (iq==1.and.io_DIP) then
-   call DIP_alloc('DIP_iR')
-   call DIP_alloc('DIP_P')
-   call DIP_alloc('DIP_spin')
-   call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_projected')
- endif
  !
 end subroutine

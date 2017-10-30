@@ -28,7 +28,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -37,7 +37,9 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
  !
- character(64) :: subname="SERIAL_lin_system"
+ !ws
+ character(64)     :: subname="SERIAL_lin_system"
+ type(LALGEBRA_WS) :: WS
  !
 #if defined _TIMING
  call timing('SERIAL_lin_system',OPR='start')

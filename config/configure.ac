@@ -41,6 +41,7 @@ m4_include([config/acx_cpp.m4])
 m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_get_fc_kind.m4])
+m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 
@@ -155,8 +156,8 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
-def_openmp=" "
 OPENMPLIBS=" "
+def_openmp=" "
 if test x"$enable_open_mp" = "xyes"; then 
   OPENMPLIBS="$OMPFLAGS"; 
   def_openmp="-D_OPENMP"
@@ -240,11 +241,11 @@ AC_PETSC_SLEPC_SETUP
 # SCALAPACK/BLACS
 AC_SLK_SETUP
 # ============================================================================
-# IOTK library 
-AC_HAVE_IOTK
-# ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90
+# ============================================================================
+# IOTK library 
+AC_HAVE_IOTK
 # ============================================================================
 # ETSF_IO
 AC_HAVE_ETSF_IO
@@ -258,7 +259,7 @@ ACX_REPORT()
 AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh 
+                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #
 AC_OUTPUT

@@ -112,12 +112,18 @@ integer function io_DIPOLES(X,ID)
  if (read_is_on(ID)) then
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
    call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   !
+   ! GPL_EXCLUDE_START
+   !
 #if defined _RT
    if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
 #if defined _SC || defined _RT
    if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
 #endif
+   !
+   ! GPL_EXCLUDE_END
+   !
  endif
  !
  ! Manage OP_IF_START_and_RD_CL_IF_END
@@ -139,6 +145,8 @@ integer function io_DIPOLES(X,ID)
  write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_P(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _RT
  if (l_real_time.and.n_spin>1) then
@@ -163,6 +171,8 @@ integer function io_DIPOLES(X,ID)
    !
  endif
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 1 call io_disconnect(ID=ID)
  !

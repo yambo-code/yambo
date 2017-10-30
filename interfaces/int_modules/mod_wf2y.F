@@ -38,7 +38,7 @@ module mod_wf2y
      !
      ! Work Space
      !
-     real(SP),parameter :: max_wf_block_size=100._SP ! MB
+     real(SP),parameter :: max_wf_block_size=1000._SP ! MB
      real(SP) :: array_sz
      !
      wf_nb_io_groups=1

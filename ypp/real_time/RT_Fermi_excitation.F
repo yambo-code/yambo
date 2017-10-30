@@ -35,7 +35,7 @@ subroutine RT_Fermi_excitation(E,k)
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_reagions,Eh_pumped_pair_deltaE,  &
 &                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,n_regions,   &
-&                         l_RTpump_energy,l_RTpump_kspace
+&                         l_RTpump_Fermi
  !
  implicit none
  !
@@ -53,8 +53,8 @@ subroutine RT_Fermi_excitation(E,k)
    ib     = RT_carriers%table(i_RT,1)
    ik     = RT_carriers%table(i_RT,2)
    !
-   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-mu_hole),T_hole)
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc(  E%E(ib,ik,i_sp_pol)-mu_elec ,T_elec)
+   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-h_mu),T_hole)
+   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc(  E%E(ib,ik,i_sp_pol)-e_mu ,T_elec)
    !
    if(E%E(ib,ik,i_sp_pol)> 0._SP) delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weight()
    !

@@ -224,6 +224,10 @@ subroutine YPP_SET_defaults()
  Eh_pumped_pair_BZ_reagions=-1.0_SP
  Eh_pumped_Nel=1._SP
  !
+ !FERMI FUNCTION PUMP
+ e_mu=0._SP
+ h_mu=0._SP
+ !
 #endif
  !
  ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT

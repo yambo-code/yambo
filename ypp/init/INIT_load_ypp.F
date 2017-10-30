@@ -118,6 +118,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
  !
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')
@@ -174,6 +175,10 @@ subroutine ypp_INIT_load(defs)
    call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Region in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
    if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
  enddo
+ !
+ ! FP: Maybe the chemical potentials should be made Temperature-dependent
+ call it(defs,'e_mu', '[RT] Electron chemical potential',e_mu,unit=E_unit)
+ call it(defs,'h_mu', '[RT] Hole chemical potential',h_mu,unit=E_unit)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

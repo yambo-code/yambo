@@ -53,7 +53,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,l_RTpump_Fermi,n_regions
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
@@ -311,6 +311,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
      if (l_RTpump_manual) call initactivate(1,'Select_manual')
+     if (l_RTpump_Fermi)  call initactivate(1,'Select_Fermi')
    endif
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      if (l_RT_X)           call initactivate(1,'RT_X')
@@ -361,6 +362,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
  l_RTpump_manual    = runlevel_is_on('Select_manual')
+ l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
  l_RT_X             = runlevel_is_on('RT_X')
  l_RT_abs           = runlevel_is_on('RTabs')
@@ -482,6 +484,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
+   if (l_RTpump_Fermi) call initactivate(1, 'e_mu h_mu')
    !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then

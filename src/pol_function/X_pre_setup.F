@@ -23,7 +23,7 @@
 !
 subroutine X_pre_setup(Xen,Xk,X)
  !
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode 
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode,X_ng
  use electrons,     ONLY:levels
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
  use com,           ONLY:error
@@ -101,5 +101,9 @@ subroutine X_pre_setup(Xen,Xk,X)
  X_use_lin_sys=.true.
  if (trim(Chi_linalg_mode)=="inversion") X_use_lin_sys=.false.
  if (trim(Chi_linalg_mode)=="lin_sys"  ) X_use_lin_sys=.true.
+ !
+ ! Copy of X dimension for Parallel default environment solver
+ !
+ X_ng=X%ng
  !
 end subroutine

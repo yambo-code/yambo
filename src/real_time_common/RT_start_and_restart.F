@@ -320,8 +320,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    RT_eh_en(2)=maxval(RT_E_and_k%En(RT_bands(1):RT_bands(2),:)) 
  else
    ! Case B: was defined in input
-   RT_eh_en(1)=RT_eh_en(1)+E%E_VBM
-   RT_eh_en(2)=RT_eh_en(2)+E%E_CBm
+   RT_eh_en(1)=RT_eh_en(1)+E%E_VBM(1)
+   RT_eh_en(2)=RT_eh_en(2)+E%E_CBm(1)
  endif
  !
  ! Retarded Green Functions matrix

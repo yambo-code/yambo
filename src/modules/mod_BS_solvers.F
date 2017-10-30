@@ -25,7 +25,7 @@ module BS_solvers
  !
  use pars,           ONLY:SP,schlen,lchlen
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
- use SLK_m,      ONLY:SLK_matrix
+ use matrix,         ONLY:PAR_matrix
 #include <memory.h>
  !
  ! Epsilon factor
@@ -44,7 +44,7 @@ module BS_solvers
  !
  ! SCALAPACK shadow matrix
  !=========================
- type(SLK_matrix), SAVE:: K_slk
+ type(PAR_matrix), SAVE:: K_slk
  !
  ! Solvers (General)
  !=========
@@ -83,7 +83,7 @@ module BS_solvers
  character(schlen)     :: BSS_inversion_mode
  logical               :: BSS_uses_partial_diago
  logical               :: K_diago_in_BS_mat
- type(SLK_matrix),SAVE :: K_inv_slk
+ type(PAR_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
    character(3)             :: what
@@ -142,29 +142,6 @@ module BS_solvers
  !
  contains
    !
-   subroutine BS_duplicate_K_structure(label,BLKs_in,BLKs_out)
-     !
-     use BS,        ONLY:n_BS_blks
-     character(*)   :: label
-     type(BS_block) :: BLKs_in(:),BLKs_out(:)
-     integer        :: i_B
-     !
-     do i_B=1,n_BS_blks
-       !
-       YAMBO_ALLOC(BLKs_out(i_B)%mat,(BLKS_in(i_B)%size(1),BLKS_in(i_B)%size(2)))
-       !
-       BLKs_out(i_B)%ik         =BLKS_in(i_B)%ik
-       BLKs_out(i_B)%ip         =BLKS_in(i_B)%ip
-       BLKs_out(i_B)%iT_k       =BLKS_in(i_B)%iT_k
-       BLKs_out(i_B)%iT_p       =BLKS_in(i_B)%iT_p
-       BLKs_out(i_B)%size       =BLKS_in(i_B)%size
-       BLKs_out(i_B)%mode       =BLKS_in(i_B)%mode
-       BLKs_out(i_B)%coordinate =BLKS_in(i_B)%coordinate
-       !
-     enddo
-     !
-   end subroutine
-   !
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
@@ -208,6 +185,13 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
+   end subroutine
+   !
+   subroutine BS_blks_free()
+     integer :: iB
+     do iB=1,n_BS_blks
+       YAMBO_FREE(BS_blk(iB)%mat)
+     enddo
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)

@@ -17,8 +17,8 @@ TARBALL=$(tarball_etsf_io)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --with-netcdf-incs="$(inetcdf) $(ihdf5)" \
-         --with-netcdf-libs="$(lnetcdf) $(lhdf5)" 
+         --with-netcdf-incs="$(inetcdff) $(inetcdf) $(ihdf5)" \
+         --with-netcdf-libs="$(lnetcdff) $(lnetcdf) $(lhdf5)" 
 
 #
 # MAIN target

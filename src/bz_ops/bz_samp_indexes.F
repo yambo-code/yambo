@@ -286,7 +286,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_C(ikbz,iqbz,1)=okbz
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
- do ikbz=1,Xk%nbz
+ do ikbz=1,k%nbz
    !
    ikibz=k%sstar(ikbz,1)
    iks  =k%sstar(ikbz,2)
@@ -470,7 +470,7 @@ subroutine bz_samp_indexes(k,Xk,q)
        k_pt=k%pt
        q_sstar=q%sstar
        q_norm(1)=q0_def_norm
-       do i1=1,q%nibz
+       do i1=2,q%nibz
          q_norm(i1)=iku_v_norm(q_pt(i1,:))
        enddo
        smallest_q_norm=minval(q_norm(2:))

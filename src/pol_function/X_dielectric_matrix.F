@@ -25,25 +25,26 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,X_mat,self_detect_E_range,X_poles,X_is_integrated,&
-&                        l_X_terminator,X_terminator_Kind,Chi_linalg_mode,X_use_lin_sys
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_integrated,&
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_nq,PAR_Q_index, &
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
-&                        PARALLEL_WF_index,WF_load
+&                        PARALLEL_WF_index,WF_load,MATRIX_transfer
  use QP_m,          ONLY:QP_n_W_freqs_redux
+ use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
  !
@@ -55,7 +56,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,iq_mem,X_range(2),X_n_freqs,io_X_done(nqibz)
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X
  character(1)         :: sec_mode
@@ -64,12 +65,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  self_detect_E_range=.false.
  !
- X_use_lin_sys=.false.
- if (trim(Chi_linalg_mode)=="lin_sys") X_use_lin_sys=.true.
- !
  l_X_terminator = X_terminator_Kind/='none'
- if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') &
-&   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+ if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
+   call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
+ endif
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -85,29 +84,28 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  X_dielectric_matrix=-1
  !
- if (.not.APPEND_NO_VERIFY) then
-   if (X%whoami==2) then
-     call section(sec_mode,'Static Dielectric Matrix')
-     Xw%n_freqs=1
-     X_n_freqs =1
-   else if (X%whoami==3) then
-     call section(sec_mode,'Dynamical Dielectric Matrix')
-     if (l_gw0) self_detect_E_range=.true.
-   else if (X%whoami==4) then
-     call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
-     Xw%n_freqs=2
-     X_n_freqs =2
-     Xw%er=(/epsilon(1._SP),0._SP/)
-     Xw%dr=(/0._SP,X%ppaE/)
-     X%ordering='R'
-   endif
+ if (X%whoami==2) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Static Dielectric Matrix')
+   Xw%n_freqs    =1
+   X_MEM_n_freqs =1
+ else if (X%whoami==3) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamical Dielectric Matrix')
+   if (l_gw0) self_detect_E_range=.true.
+   !
+   ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
+   ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
+   !
+   X_MEM_n_freqs             = Xw%n_freqs
+   if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
+   !
+ else if (X%whoami==4) then
+   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
+   Xw%n_freqs    =2
+   X_MEM_n_freqs =2
+   Xw%er=(/epsilon(1._SP),0._SP/)
+   Xw%dr=(/0._SP,X%ppaE/)
+   X%ordering='R'
  endif
- !
- ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
- ! Note that in lifetimes calculations it is QP_n_W_freqs_redux=MAX(all q-dependent frequencies)
- !
- X_n_freqs             = Xw%n_freqs
- if (l_life) X_n_freqs = QP_n_W_freqs_redux
  !
  call X_pre_setup(Xen,Xk,X)
  !
@@ -125,9 +123,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
  ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
  !
- if (l_life.and.X%iq(1)>1) then
-   call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_Q_INDEX%COMM)
- endif
+ if (l_life .and. X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_X_WORLD%COMM)
  !
  if (io_RESPONSE) then
    !
@@ -141,7 +137,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! In the next lines Yambo will VERIFY the em1d database
        ! to check if this iq has been already done. 
        ! When self_detect_E_range=.TRUE. however the Xw%er setup is
-       ! done only in X_irredux and the VERIFY fails. This is why the procedure
+       ! done only in X_os and the VERIFY fails. This is why the procedure
        ! must be repeated here:
        !
        if (self_detect_E_range) then
@@ -173,9 +169,20 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.,X=X)
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X) 
  endif
+ call X_half_mat_check(Xen,Xk,Xw)
+ !
  if (.not.allocated(X_mat)) then
-   if (     io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-   if (.not.io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,X_n_freqs*PAR_nq/))
+   !
+   if (io_RESPONSE) then
+     allocate(X_par(1))
+     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+   else
+     allocate(X_par(PAR_nq))
+     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
+   endif
+   !
+   X_mat=cZERO
+   !
  endif
  !
  ! WF distribution 
@@ -210,7 +217,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
      !
-     call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+     call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
@@ -219,25 +226,43 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   iq_mem=PAR_Q_index(iq)
-   X_range               =(/1,Xw%n_freqs/)
-   if (.not.io_RESPONSE) X_range=(/X_n_freqs*(iq_mem-1)+1,X_n_freqs*(iq_mem-1)+Xw%n_freqs/)
+   ! Allocation
    !
-   call X_irredux(X_mat(:,:,X_range(1):X_range(2)),iq,Xen,Xk,Xw,X)  
+   iq_mem=PAR_Q_index(iq)
+   if (io_RESPONSE) iq_mem=1
+   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+   !
+   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
-   if (X%whoami/=1) call X_redux(iq,X,Xw,X_range)
+   if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
-   call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
+   ! PAR => SER for I/O
+   !
+   do iw=1,Xw%n_freqs
+     !
+     X_par(iq_mem)%I=iw
+     !
+     if (io_RESPONSE) then
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_X_WORLD,&
+&                                              COMM_name="X_dielectric")
+     else
+       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),&
+&                           COMM=PAR_COM_X_WORLD,COMM_name="X_dielectric")
+     endif
+     !
+   enddo
+   !
+   call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus
    !
    X%ng_db=X%ng
    !
-   if (iq==1) call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
+   if (iq==1) call io_control(ACTION=OP_WR_CL,    COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -250,15 +275,26 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call FREQUENCIES_reset(Xw,"all")
    endif
    !
+   ! CLEAN (2)
+   !
+   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   YAMBO_FREE(X_par_lower_triangle%blc)
+   call MATRIX_reset(X_par_lower_triangle)
+   !
  enddo
  !
  X_is_integrated=.false.
  l_X_terminator=.false.
  !
- ! CLEAN (2)
+ ! CLEAN (3)
  !
- if (io_RESPONSE) call X_alloc('X')
- !
+ if (io_RESPONSE) then
+   YAMBO_FREE(X_mat)
+   deallocate(X_par)
+ endif
+ if (allocated(FXC)) then
+   YAMBO_FREE(FXC)
+ endif
  call X_alloc('DIP_projected')
 #if defined _PL
  if (l_photolum) call X_alloc('DIP_P')

@@ -76,6 +76,11 @@ module YPP_real_time
  real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
  integer     :: n_regions
  !
+ ! Fermi function pump
+ ! 
+ real(SP) :: e_mu             ! chemical potential for electrons
+ real(SP) :: h_mu             ! chemical potential for holes
+ !
  ! (RT) optics
  !
  logical  :: Use_FFT

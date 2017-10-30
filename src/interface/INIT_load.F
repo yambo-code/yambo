@@ -164,6 +164,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
+ ! GPL_INCLUDE_START
+ call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
+ ! GPL_INCLUDE_END
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
@@ -550,6 +553,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_QP_ctl_load(defs,2)
  call INIT_QP_ctl_load(defs,3)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  !
  ! RT ctl 
@@ -560,8 +565,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_RT_ctl_load(defs,4)
  !
 #endif
- !
- ! GPL_EXCLUDE_START
  !
  ! F_xc
  !
@@ -656,7 +659,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_mirror_bands( )
  !
+ ! GPL_EXCLUDE_START
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
+ ! GPL_EXCLUDE_END
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
@@ -683,12 +688,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      name='Field'//trim(intc(i_field))
      !
+     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
+     ! GPL_EXCLUDE_END
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
+     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
      call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
@@ -703,9 +711,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &            Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
+     ! GPL_EXCLUDE_END
      !
      if (initmode==4) then
-       call parser(trim(name)//'_kind',is_def)
+       call parser(trim(name)//'_Int',is_def)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
@@ -731,13 +740,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      do i_s=1,n_CPU_str_max 
        !
-       if (i_s==1) possible_fields='(k,c,v)'   ! X_q_0
-       if (i_s==2) possible_fields='(q,k,c,v)' ! X_finite_q
-       if (i_s==3) possible_fields='(q,k,c,v)' ! X_all_q
-       if (i_s==4) possible_fields='(k,eh,t)'  ! BS
-       if (i_s==5) possible_fields='(q,qp,b)'  ! SE
-       if (i_s==6) possible_fields='(k,b,q,qp)'! RT
-       if (i_s==7) possible_fields='(p,d) '    ! SLK
+       if (i_s==1) possible_fields='(g,k,c,v)'   ! X_q_0
+       if (i_s==2) possible_fields='(q,g,k,c,v)' ! X_finite_q
+       if (i_s==3) possible_fields='(q,g,k,c,v)' ! X_all_q
+       if (i_s==4) possible_fields='(k,eh,t)'    ! BS
+       if (i_s==5) possible_fields='(q,qp,b)'    ! SE
+       if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
+       if (i_s==7) possible_fields='(p,d) '      ! SLK
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"
@@ -829,6 +838,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      use parser_m,       ONLY:parser
      logical :: is_def(4)
      integer :: bands_(2)
+     !
+     if(initmode/=4) return
+     !
      call parser('SCbands',  is_def(1))
      call parser('RTbands',  is_def(2))
      call parser('COLLbands',is_def(3))

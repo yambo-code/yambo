@@ -163,8 +163,6 @@ subroutine QP_state_table_setup(en)
    !
  endif
  !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
  ! Band Mixing
  !=============
  !
@@ -193,16 +191,12 @@ subroutine QP_state_table_setup(en)
    if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)
    if (SC_bands_mixed==0) SC_bands_mixed=1
    !
-   ! Recalculated SC_band_mixing
+   ! Recalculated SC/RT band mixing
    !
    SC_band_mixing=float(SC_bands_mixed)*100._SP/float(QP_nb)
    bands_mixed=SC_bands_mixed
+   !
  endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
- ! GPL_INCLUDE_START SC_IGNORE
- !bands_mixed=1
- ! GPL_INCLUDE_END SC_IGNORE
  !
  ! QP_table allocation
  !

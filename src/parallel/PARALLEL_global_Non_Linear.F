@@ -44,7 +44,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index, &
 &                        PAR_G_bands_index,PAR_QP_index,PAR_G_bands_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nFreqs,PAR_DIPk_nibz,PAR_nG_bands,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_n_freqs,PAR_DIPk_nibz,PAR_nG_bands,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_G_b_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID,PAR_IND_WF_k_ID,&
 &                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
@@ -89,13 +89,13 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    call PARALLEL_index(PAR_IND_freqs,(/n_frequencies/),COMM=PAR_COM_freqs_INDEX)
    PAR_IND_freqs_ID=PAR_COM_freqs_INDEX%CPU_id
-   PAR_nFreqs      =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ID+1)
+   PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ID+1)
    call PARALLEL_live_message("Freqs",ENVIRONMENT=ENVIRONMENT,         &
 &                             LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1), &
 &                             TOTAL=n_frequencies,NCPU=PAR_COM_freqs_INDEX%n_CPU)
    !
    allocate(PAR_freqs_index(n_frequencies)) 
-   call PAR_build_index(PAR_IND_freqs,n_frequencies,PAR_freqs_index,PAR_nFreqs)
+   call PAR_build_index(PAR_IND_freqs,n_frequencies,PAR_freqs_index,PAR_n_freqs)
    !
    ! K-points
    !

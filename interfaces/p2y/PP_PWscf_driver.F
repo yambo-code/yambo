@@ -180,10 +180,10 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  !
  ! Allocate and fill a single pseudo
  !
- use pars,     ONLY:SP
+ use pars,         only:SP
  use pw_pseudo_module
- use qexml_module
- use pw_data, only : ecutwfc_
+ use qexml_module, only: read_pseudo_data
+ use pw_data,      only: ecutwfc_
  implicit none
  type(pw_pseudo), intent(out) :: pseudo
  integer, intent(inout)       :: nbeta, nmesh

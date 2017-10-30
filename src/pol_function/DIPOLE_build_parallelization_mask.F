@@ -68,6 +68,6 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
    enddo
  enddo
  !
- n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ID+1)
+ n_LT_steps=n_LT_steps*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ID+1)*n_sp_pol
  !
 end subroutine

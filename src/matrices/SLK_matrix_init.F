@@ -28,59 +28,54 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine SLK_matrix_init(ORTHO, POOL, M_slk, N )
+subroutine SLK_matrix_init(M_slk, N, N_blocks)
  !
- use pars,           ONLY:SP
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix,SLK_matrix_reset
- use parallel_m,     ONLY:ncpu,linear_algebra_is_parallel
+ use SLK_m,          ONLY:SLK_ORTHO
+ use matrix,         ONLY:PAR_matrix
+#include<memory.h>
  !
- implicit none
- !
- integer           :: N
- type(ORTHO_group) :: ORTHO
- type(POOL_group)  :: POOL
- type(SLK_matrix)  :: M_slk
+ integer           :: N,N_blocks
+ type(PAR_matrix)  :: M_slk
  !
  ! Work Space
  !
- integer   :: lld,N_blcs,nprow,npcol,myrow,mycol
+ integer   :: lld,SLK_block_size,nprow,npcol,myrow,mycol
  !
  ! init global blacs grid
  !
- if (ncpu==1.or..not.linear_algebra_is_parallel) then
-   ORTHO%coordinate(1)=-1
-   return
- endif
+ call BLACS_GRIDINFO( SLK_ORTHO%ortho_cntx, SLK_ORTHO%grid(1), SLK_ORTHO%grid(2), SLK_ORTHO%coordinate(1), SLK_ORTHO%coordinate(2) )
  !
- call BLACS_GRIDINFO( ORTHO%ortho_cntx, ORTHO%grid(1), ORTHO%grid(2), ORTHO%coordinate(1), ORTHO%coordinate(2) )
- !
- nprow=ORTHO%grid(1)
- npcol=ORTHO%grid(2)
- myrow=ORTHO%coordinate(1)
- mycol=ORTHO%coordinate(2)
+ nprow=SLK_ORTHO%grid(1)
+ npcol=SLK_ORTHO%grid(2)
+ myrow=SLK_ORTHO%coordinate(1)
+ mycol=SLK_ORTHO%coordinate(2)
  !
  ! spectator tasks
  ! only MPI tasks in the grid need to go ahead
  !
- if (ORTHO%coordinate(1) == -1) return
+ if (SLK_ORTHO%coordinate(1) == -1) return
  !
  ! distribute the matrix on the process grid
  ! Initialize the array descriptors for the matrices A and B
  !
- N_blcs = int(N/nprow)
- if (N_blcs*nprow < N ) N_blcs=N_blcs+1
+ SLK_block_size                               = int(N/nprow)
+ if (SLK_block_size*nprow < N ) SLK_block_size=SLK_block_size+1
  !
- lld = N_blcs
+ lld = SLK_block_size
  !
- call DESCINIT( M_slk%desc, N, N, N_blcs, N_blcs, 0, 0, ORTHO%ortho_cntx, lld, M_slk%info )
+ call DESCINIT( M_slk%desc, N, N, SLK_block_size, SLK_block_size, 0, 0, SLK_ORTHO%ortho_cntx, lld, M_slk%info )
  !
- call SLK_matrix_reset(M_slk,N_blcs,N_blcs)
- !
- M_slk%rows       = (/myrow*N_blcs+1,min(myrow*N_blcs+N_blcs,N)/)
- M_slk%cols       = (/mycol*N_blcs+1,min(mycol*N_blcs+N_blcs,N)/)
- M_slk%nrows_used = M_slk%rows(2)-M_slk%rows(1)+1
- M_slk%ncols_used = M_slk%cols(2)-M_slk%cols(1)+1
+ M_slk%rows       = (/myrow*SLK_block_size+1,min(myrow*SLK_block_size+SLK_block_size,N)/)
+ M_slk%cols       = (/mycol*SLK_block_size+1,min(mycol*SLK_block_size+SLK_block_size,N)/)
+ M_slk%nrows      = M_slk%rows(2)-M_slk%rows(1)+1
+ M_slk%ncols      = M_slk%cols(2)-M_slk%cols(1)+1
+ M_slk%BLCrows    = (/M_slk%rows(1),M_slk%rows(1)+SLK_block_size-1/)
+ M_slk%BLCcols    = (/M_slk%cols(1),M_slk%cols(1)+SLK_block_size-1/)
+ M_slk%BLCnrows   = SLK_block_size
+ M_slk%BLCncols   = SLK_block_size  
  M_slk%N          = N
- M_slk%blc        = 0.0_SP
+ M_slk%I          = 1
+ M_slk%Nb         = N_blocks
+ M_slk%kind       = "SLK"
  !
 end subroutine 

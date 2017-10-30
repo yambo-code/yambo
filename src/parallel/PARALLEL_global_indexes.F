@@ -23,16 +23,12 @@
 !
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
  !
- use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,MPI_comm,COMM_copy,PAR_n_c_bands,PAR_n_v_bands,&
-&                        PAR_X_ib,PAR_X_iq
- ! LOGICALS
- use parallel_m,    ONLY:l_par_X_T,l_par_X_G_q0,l_par_RT,l_par_NL,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q
- ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
- ! IND
- use parallel_m,    ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_WORLD
- ! ID's
- use parallel_m,    ONLY:PAR_IND_CON_BANDS_X_ID,PAR_IND_VAL_BANDS_X_ID
+ use parallel_m,    ONLY:COMM_copy,PAR_X_ib,PAR_X_iq,PAR_n_c_bands,PAR_n_v_bands,&
+&                        PAR_COM_CON_INDEX,PAR_IND_CON_BANDS_X,PAR_IND_CON_BANDS_X_ID,&
+&                        PAR_COM_VAL_INDEX,PAR_IND_VAL_BANDS_X,PAR_IND_VAL_BANDS_X_ID,&
+&                        PAR_COM_WORLD,PAR_COM_DIPOLES,PAR_COM_X_WORLD,PAR_COM_DIPOLES_k_subgroup,&
+&                        PAR_COM_X_WORLD_RL_resolved,l_par_RT,l_par_SE,l_par_X_G_all_q,l_par_X_G_finite_q,&
+&                        l_par_X_G_q0,l_par_X_T,l_par_SC,l_par_NL
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use X_m,           ONLY:X_t,l_X_terminator
  use drivers,       ONLY:l_life,l_elphoton_corr
@@ -139,8 +135,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
 #endif
  !
  !==========================================================================================================
- if (ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
-&    ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space".or.&
+ if ( ENVIRONMENT=="Response_G_space_Zero_Momentum".or.ENVIRONMENT=="Response_G_space_Finite_Momentum".or.&
+&     ENVIRONMENT=="Response_G_space".or.ENVIRONMENT=="Response_T_space".or.&
 &    (ENVIRONMENT=="Self_Energy".and.l_life.and.l_elphoton_corr) ) then
    !========================================================================================================
    !
@@ -186,6 +182,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
    subroutine DIPOLE_COMMUNICATORS_default( )
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPOLES_k_subgroup)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD)
+     call COMM_copy(PAR_COM_WORLD,PAR_COM_X_WORLD_RL_resolved)
    end subroutine
    !
 end subroutine

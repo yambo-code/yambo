@@ -71,6 +71,8 @@ subroutine RT_databases_IO( )
      io_JPSM=io_RT_components('JPSM',ID(4))
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    if (io_CARRIERs) then
      call RT_carriers_object(RT_carriers,WHAT='fill')
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
@@ -79,7 +81,11 @@ subroutine RT_databases_IO( )
      io_carr=io_RT_components('carriers',ID(6))
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
  endif
+ !
+ ! GPL_EXCLUDE_START
  !
  ! G_lesser and THETA
  !====================
@@ -138,5 +144,7 @@ subroutine RT_databases_IO( )
    enddo
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end subroutine RT_databases_IO

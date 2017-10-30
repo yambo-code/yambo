@@ -25,6 +25,7 @@ include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
 include/c_defs.h
+include/system/*
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
@@ -40,9 +41,11 @@ lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
 lib/hdf5/hdf5*
+lib/external/*
 compile.sh
 sbin/make_makefile.sh
 sbin/objects_store.sh
+sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
 

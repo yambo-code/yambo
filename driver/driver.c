@@ -398,14 +398,15 @@ static void load_environments(char *file_name)
     if (!pch) {
       /* get the first token */
       token=strtok(str," ");
-      var=token;
       /* walk through other tokens */
       if ( token != NULL ) 
       {
         token = strtok(NULL," ");
+        var=token;
+        token = strtok(NULL," ");
         value=token;
+        /* printf( " %s %s %s \n", var, value, token ); */
       }
-      /* printf( " %s %s \n", var, value );*/
       setenv(var,value,1);
     }
   }
@@ -418,8 +419,8 @@ static void load_environments(char *file_name)
   fputs("setenv YAMBO_X_q_0_CPU 1.1.1.1\n",fp);
   fputs("setenv YAMBO_X_finite_q_CPU 1.1.1.1.1\n",fp);
   fputs("setenv YAMBO_X_all_q_CPU 1.1.1.1.1\n",fp);
-  fputs("setenv YAMBO_BS_CPU 1.1.1.1\n",fp);
-  fputs("setenv YAMBO_SE_CPU 1.1.1.1\n",fp);
+  fputs("setenv YAMBO_BS_CPU 1.1.1\n",fp);
+  fputs("setenv YAMBO_SE_CPU 1.1.1\n",fp);
   fputs("setenv YAMBO_RT_CPU 1.1.1.1\n",fp);
   fputs("# Scalapack section (leave unchanged if you wish)\n",fp);
   fputs("setenv YAMBO_X_q_0_nCPU_LinAlg_INV 1\n",fp);
@@ -431,8 +432,8 @@ static void load_environments(char *file_name)
   fputs("setenv YAMBO_X_q_0_ROLEs g.k.c.v\n",fp);
   fputs("setenv YAMBO_X_finite_q_ROLEs q.g.k.c.v\n",fp);
   fputs("setenv YAMBO_X_all_q_ROLEs q.g.k.c.v\n",fp);
-  fputs("setenv YAMBO_BS_ROLEs g.k.eh.t\n",fp);
-  fputs("setenv YAMBO_SE_ROLEs q.g.qp.b\n",fp);
+  fputs("setenv YAMBO_BS_ROLEs k.eh.t\n",fp);
+  fputs("setenv YAMBO_SE_ROLEs q.qp.b\n",fp);
   fputs("setenv YAMBO_RT_ROLEs k.b.q.qp\n",fp);
   fclose(fp);
   strcpy(edit_line,editor);

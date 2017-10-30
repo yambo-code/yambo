@@ -266,6 +266,9 @@ module parallel_m
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
+ ! ... Freqs
+ integer            :: PAR_IND_FREQ_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -282,8 +285,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- integer             :: PAR_nRL
- integer,allocatable :: PAR_RL_index(:)
+ type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
@@ -312,6 +315,8 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
@@ -342,10 +347,12 @@ module parallel_m
  integer            :: PAR_n_bands(2)   = 0
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
- integer            :: PAR_n_freqs      = 0
+ integer            :: PAR_n_G_vectors  = 0
  !
  ! ... and derived variables
  !==========================
+ integer            :: PAR_nRL
+ integer,allocatable:: PAR_RL_index(:)
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
@@ -369,8 +376,8 @@ module parallel_m
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
- integer            :: PAR_nFreqs
- integer,allocatable:: PAR_freqs_index(:)
+ integer            :: PAR_n_freqs 
+ integer,allocatable:: PAR_FREQS_index(:)
  !
  ! WorkSpace
  !

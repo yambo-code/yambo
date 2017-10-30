@@ -27,7 +27,7 @@ module interfaces
  !
  interface
    !
-   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -35,40 +35,56 @@ module interfaces
      character(*), OPTIONAL ::mode,OBJ
    end subroutine
    !
-   subroutine MATRIX_transfer( mode, M_slk, M_bse, M )
+   subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
+     use matrix,         ONLY:PAR_matrix
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
+     integer         , optional :: INDEX_in
+   end subroutine
+   !
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
      !
-     use SLK_m, ONLY:SLK_matrix
-     use pars,  ONLY:SP
-     use BS,    ONLY:BS_block
+     use parallel_m,     ONLY:MPI_comm
+     use matrix,         ONLY:PAR_matrix
+     use BS,             ONLY:BS_block
+     use pars,           ONLY:SP
      !
-     character(*)     :: mode
-     type(SLK_matrix) :: M_slk
-     type(BS_block), optional :: M_bse(:)
-     complex(SP),    optional :: M(:,:)
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix), optional :: M_out
+     type(BS_block),   optional :: M_bse(:)
+     integer,          optional :: INDEX_in
+     integer,          optional :: INDEX_out
+     complex(SP),      optional :: M(:,:)
+     logical,          optional :: SND
+     logical,          optional :: RCV
+     type(MPI_comm),   optional :: COMM
+     character(*),     optional :: COMM_name
      !
    end subroutine
    !
-   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,C,V_left,V_right,E_real,&
-&                                   E_cmpl,SVD_digits,det,V_slk)
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,B_slk,C,C_slk,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det)
      !
-     use SLK_m,          ONLY:SLK_matrix
+     use matrix,         ONLY:PAR_matrix
      use pars,           ONLY:SP
      use BS,             ONLY:BS_block
      !
      integer                    :: idriver
      integer,          optional :: lib_in
      complex(SP),      optional :: M(:,:)
-     type(SLK_matrix), optional :: M_slk
+     type(PAR_matrix), optional :: M_slk
      type(BS_block),   optional :: M_bse(:)
      complex(SP),      optional :: B(:,:)
+     type(PAR_matrix), optional :: B_slk
      complex(SP),      optional :: C(:,:)
+     type(PAR_matrix), optional :: C_slk
      complex(SP),      optional :: V_left(:,:)
      complex(SP),      optional :: V_right(:,:)
      real(SP),         optional :: E_real(:)
      complex(SP),      optional :: E_cmpl(:)
      integer,          optional :: SVD_digits 
      complex(SP),      optional :: det
-     type(SLK_matrix), optional :: V_slk
      !
    end subroutine
    !

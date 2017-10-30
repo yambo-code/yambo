@@ -32,10 +32,12 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
 #endif
 #include<memory.h>
  !
- integer     :: n
- complex(SP) :: M(n,n),det
- logical     :: eval_det
- integer     :: i_loop !ws
+ integer           :: n
+ complex(SP)       :: M(n,n),det
+ logical           :: eval_det
+ !
+ !ws
+ integer           :: i_loop 
  type(LALGEBRA_WS) :: WS
  !
 #if defined _TIMING

@@ -21,6 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!
+! Modify this function to write finite-q dipoles
+! 
+! write (VAR_name,'(3(a,i4.4))') 'DIP_iR_k_',ik,'_spin_',i_sp_pol
+! The new VAR name will incorporate the q-vector index
+! DIP_iR_k_##_q_##_spin_##
+
 integer function io_DIPOLES(X,ID)
  !
  use pars,          ONLY:schlen

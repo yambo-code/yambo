@@ -41,9 +41,18 @@ subroutine RT_Fermi_excitation(E,k)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
+ type                      :: fermi_energy(2) 
  !
  ! Work Space
  !
+ !
+ ! I use same variable to define the chemical potential
+ ! check spin-occupation
+ fermi_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
+ fermi_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
+ ! Check if we can correlate a density of carriers with the electron and hole
+ ! fermi energy
+ ! 
  !
  delta_Nel=0._SP
  RT_carriers%delta_f=0._SP
@@ -53,8 +62,8 @@ subroutine RT_Fermi_excitation(E,k)
    ib     = RT_carriers%table(i_RT,1)
    ik     = RT_carriers%table(i_RT,2)
    !
-   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-h_mu),T_hole)
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc(  E%E(ib,ik,i_sp_pol)-e_mu ,T_elec)
+   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-fermi_energy(1)),T_hole)
+   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-fermi_energy(2)),T_elec)
    !
    if(E%E(ib,ik,i_sp_pol)> 0._SP) delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weight()
    !

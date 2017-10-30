@@ -245,7 +245,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! TDDFT xc-kernel Setup
  !======================
  if (l_bs_fxc) then
-   !  
+   !
+   ! if calculation is finite-q, then remove the if in order to call for any q  
    if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
    !
    ! Allocation
@@ -636,6 +637,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        endif
        !
+       ! We have to add a new mode in addition to resonant and coupling for finiteq, where the kernel is recomputed in the antiresonant case
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !

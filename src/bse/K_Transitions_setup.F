@@ -70,6 +70,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
 #include<memory.h>
  !
+ ! For finite q we have to put a loop over q-indices
+ !
  type(levels) :: Ken
  type(bz_samp):: Xk
  integer      :: iq
@@ -229,6 +231,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  enddo ! loop
  !
  BS_H_dim=BS_K_dim
+ !
  if (BS_K_coupling) BS_H_dim=2*BS_K_dim
  !
  if (.not.FILL_the_groups) then

@@ -195,6 +195,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
+   ! Here set up a new logical for finite-q dipoles
+   !if (use_finiteq)                call DIPOLE_real_space_finiteq(Xen,Xk,Xq,X,idir_not_done)
+   !
    ! GPL_EXCLUDE_END 
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)

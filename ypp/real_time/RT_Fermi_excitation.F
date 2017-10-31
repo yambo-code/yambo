@@ -30,6 +30,7 @@ subroutine RT_Fermi_excitation(E,k)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
+ use functions,      ONLY:Fermi_fnc
  use vec_operate,    ONLY:v_is_zero,c2a
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
  use YPP_real_time,  ONLY:mu_elec,mu_hole,T_elec,T_hole,l_RTpump_Fermi
@@ -38,7 +39,8 @@ subroutine RT_Fermi_excitation(E,k)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
- real(SP) :: delta_Nel 
+ integer  :: i_RT,ib,ik,i_sp_pol
+ real(SP) :: delta_Nel,delta_Nho 
  !
  ! Work Space
  !
@@ -56,20 +58,28 @@ subroutine RT_Fermi_excitation(E,k)
  ! 
  !
  delta_Nel=0._SP
+ delta_Nho=0._SP
  RT_carriers%delta_f=0._SP
  !
  do i_RT=1,RT_carriers%nstates
    !
-   ib     = RT_carriers%table(i_RT,1)
-   ik     = RT_carriers%table(i_RT,2)
+   ib       = RT_carriers%table(i_RT,1)
+   ik       = RT_carriers%table(i_RT,2)
+   i_sp_pol = RT_carriers%table(i_RT,3)
    !
-   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-mu_hole),T_hole)
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-mu_elec),T_elec)
+   if(E%E(ib,ik,i_sp_pol)<=0._SP) then
+     RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-mu_hole),T_hole)
+     delta_Nho=delta_Nho+RT_carriers%delta_f(i_RT)*k%weights(ik)
+   endif
    !
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weight()
+   if(E%E(ib,ik,i_sp_pol)> 0._SP) then
+     RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-mu_elec),T_elec)
+     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weights(ik)
+   endif
    !
  enddo
  !
- call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+ call msg('sr','[RT] Pumped electrons number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+ call msg('sr','[RT] Pumped holes number and density [none,cm-3]:',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
  !
 end subroutine RT_Fermi_excitation

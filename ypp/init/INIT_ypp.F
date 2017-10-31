@@ -476,15 +476,15 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then
-   call initactivate(1,'RTpumpNel RTBands')
-   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
+   call initactivate(1,'RTBands')
+   if (l_RTpump_energy) call initactivate(1,'RTpumpNel RTpumpEhEn RTpumpEhWd')
    if (l_RTpump_kspace) then
-     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
+     call initactivate(1,'RTpumpNel RTpumpDE RTpumpEhWd RTpumpBZWd')
      do i1=1,n_regions
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
-   if (l_RTpump_Fermi) call initactivate(1, 'mu_elec mu_hole T_elec T_hole')
+   if (l_RTpump_Fermi) call initactivate(1, 'RTmu_elec RTmu_hole RTtemp_elec RTtemp_hole')
    !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then

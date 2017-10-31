@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS AM
+! Authors (see AUTHORS file for details): DS AM FP AMS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,24 +32,25 @@ subroutine RT_Fermi_excitation(E,k)
  use com,            ONLY:msg
  use vec_operate,    ONLY:v_is_zero,c2a
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
-&                         Eh_pumped_pair_BZ_reagions,Eh_pumped_pair_deltaE,  &
-&                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,n_regions,   &
-&                         l_RTpump_Fermi
+ use YPP_real_time,  ONLY:mu_elec,mu_hole,T_elec,T_hole,l_RTpump_Fermi
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
- type                      :: fermi_energy(2) 
+ real(SP) :: delta_Nel 
  !
  ! Work Space
  !
+ ! What I want is:
+ ! [i] Select arbitrarily chemical potentials for holes and electrons 
+ ! [ii] Put some checks to for the carrier density in conduction and valence
+ ! [iii] Put some fictitious temperature for holes and electrons to model the Fermi distribution
  !
  ! I use same variable to define the chemical potential
  ! check spin-occupation
- fermi_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
- fermi_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
+ ! fermi_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
+ ! fermi_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
  ! Check if we can correlate a density of carriers with the electron and hole
  ! fermi energy
  ! 
@@ -62,8 +63,8 @@ subroutine RT_Fermi_excitation(E,k)
    ib     = RT_carriers%table(i_RT,1)
    ik     = RT_carriers%table(i_RT,2)
    !
-   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-fermi_energy(1)),T_hole)
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-fermi_energy(2)),T_elec)
+   if(E%E(ib,ik,i_sp_pol)<=0._SP) RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-mu_hole),T_hole)
+   if(E%E(ib,ik,i_sp_pol)> 0._SP) RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-mu_elec),T_elec)
    !
    if(E%E(ib,ik,i_sp_pol)> 0._SP) delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weight()
    !

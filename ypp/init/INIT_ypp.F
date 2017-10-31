@@ -484,7 +484,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
-   if (l_RTpump_Fermi) call initactivate(1, 'e_mu h_mu')
+   if (l_RTpump_Fermi) call initactivate(1, 'mu_elec mu_hole T_elec T_hole')
    !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then

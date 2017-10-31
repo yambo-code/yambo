@@ -176,9 +176,11 @@ subroutine ypp_INIT_load(defs)
    if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
  enddo
  !
- ! FP: Maybe the chemical potentials should be made Temperature-dependent
- call it(defs,'e_mu', '[RT] Electron chemical potential',e_mu,unit=E_unit)
- call it(defs,'h_mu', '[RT] Hole chemical potential',h_mu,unit=E_unit)
+ ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
+ call it(defs,'mu_elec', '[RT] Electron chemical potential',mu_elec,unit=E_unit)
+ call it(defs,'mu_hole', '[RT] Hole chemical potential',mu_hole,unit=E_unit)
+ call it(defs,'T_elec', '[RT] Carrier (electron) effective temperature',T_elec,unit=E_unit)
+ call it(defs,'T_hole', '[RT] Carrier (hole) effective temperature',T_hole,unit=E_unit)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

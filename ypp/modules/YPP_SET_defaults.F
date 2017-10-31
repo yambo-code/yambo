@@ -225,8 +225,10 @@ subroutine YPP_SET_defaults()
  Eh_pumped_Nel=1._SP
  !
  !FERMI FUNCTION PUMP
- e_mu=0._SP
- h_mu=0._SP
+ mu_elec=0.1_SP
+ mu_hole=-0.1_SP
+ T_elec=0._SP
+ T_hole=0._SP
  !
 #endif
  !

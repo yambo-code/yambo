@@ -227,8 +227,8 @@ subroutine YPP_SET_defaults()
  !FERMI FUNCTION PUMP
  mu_elec=0.1_SP/HA2EV
  mu_hole=-0.1_SP/HA2EV
- T_elec=0._SP
- T_hole=0._SP
+ T_elec=0._SP/HA2EV
+ T_hole=0._SP/HA2EV
  !
 #endif
  !

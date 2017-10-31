@@ -39,7 +39,7 @@ subroutine RT_Fermi_excitation(E,k)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
- integer  :: i_RT,ib,ik,i_sp_pol
+ integer  :: i_RT,ib,ik
  real(SP) :: delta_Nel,delta_Nho 
  !
  ! Work Space
@@ -65,15 +65,15 @@ subroutine RT_Fermi_excitation(E,k)
    !
    ib       = RT_carriers%table(i_RT,1)
    ik       = RT_carriers%table(i_RT,2)
-   i_sp_pol = RT_carriers%table(i_RT,3)
+   !i_sp_pol = RT_carriers%table(i_RT,)
    !
-   if(E%E(ib,ik,i_sp_pol)<=0._SP) then
-     RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,i_sp_pol)-mu_hole),T_hole)
+   if(E%E(ib,ik,1)<=E%E_VBM) then
+     RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-(mu_hole+E%E_VBM)),T_hole)
      delta_Nho=delta_Nho+RT_carriers%delta_f(i_RT)*k%weights(ik)
    endif
    !
-   if(E%E(ib,ik,i_sp_pol)> 0._SP) then
-     RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,i_sp_pol)-mu_elec),T_elec)
+   if(E%E(ib,ik,1)>=E%E_CBm) then
+     RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,1)-(mu_elec+E%E_CBm)),T_elec)
      delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weights(ik)
    endif
    !

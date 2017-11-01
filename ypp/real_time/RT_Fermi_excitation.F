@@ -33,53 +33,46 @@ subroutine RT_Fermi_excitation(E,k)
  use functions,      ONLY:Fermi_fnc
  use vec_operate,    ONLY:v_is_zero,c2a
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPP_real_time,  ONLY:mu_elec,mu_hole,T_elec,T_hole,l_RTpump_Fermi
+ use YPP_real_time,  ONLY:Eh_mu,Eh_temp,l_RTpump_Fermi
  !
  implicit none
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
  integer  :: i_RT,ib,ik
- real(SP) :: delta_Nel,delta_Nho 
+ real(SP) :: mu_elec,mu_hole,delta_Nel,delta_Nho 
  !
  ! Work Space
  !
  ! What I want is:
- ! [i] Select arbitrarily chemical potentials for holes and electrons 
- ! [ii] Put some checks to for the carrier density in conduction and valence
+ ! [i]   Select arbitrarily chemical potentials for holes and electrons 
+ ! [ii]  Put some checks to for the carrier density in conduction and valence
  ! [iii] Put some fictitious temperature for holes and electrons to model the Fermi distribution
- !
- ! I use same variable to define the chemical potential
- ! check spin-occupation
- ! fermi_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
- ! fermi_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
- ! Check if we can correlate a density of carriers with the electron and hole
- ! fermi energy
- ! 
  !
  delta_Nel=0._SP
  delta_Nho=0._SP
  RT_carriers%delta_f=0._SP
+ mu_hole=Eh_mu(1)+E%E_VBM
+ mu_elec=Eh_mu(2)+E%E_CBm
  !
  do i_RT=1,RT_carriers%nstates
    !
    ib       = RT_carriers%table(i_RT,1)
    ik       = RT_carriers%table(i_RT,2)
-   !i_sp_pol = RT_carriers%table(i_RT,)
    !
    if(E%E(ib,ik,1)<=E%E_VBM) then
-     RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-(mu_hole+E%E_VBM)),T_hole)
+     RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-mu_hole),Eh_temp(1))
      delta_Nho=delta_Nho+RT_carriers%delta_f(i_RT)*k%weights(ik)
    endif
    !
    if(E%E(ib,ik,1)>=E%E_CBm) then
-     RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,1)-(mu_elec+E%E_CBm)),T_elec)
+     RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,1)-mu_elec),Eh_temp(2))
      delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weights(ik)
    endif
    !
  enddo
  !
  call msg('sr','[RT] Pumped electrons number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
- call msg('sr','[RT] Pumped holes number and density [none,cm-3]:',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+ call msg('sr','[RT] Pumped holes     number and density [none,cm-3]:',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
  !
 end subroutine RT_Fermi_excitation

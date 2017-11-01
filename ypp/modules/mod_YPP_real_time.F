@@ -78,10 +78,8 @@ module YPP_real_time
  !
  ! Fermi function pump
  ! 
- real(SP) :: mu_elec             ! chemical potential for electrons
- real(SP) :: mu_hole             ! chemical potential for holes
- real(SP) :: T_elec              ! effective temperature for electrons
- real(SP) :: T_hole              ! effective temperature for holes
+ real(SP) :: Eh_mu(2)            ! chemical potential for holes, electrons
+ real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
  !
  ! (RT) optics
  !

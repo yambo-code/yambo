@@ -177,10 +177,8 @@ subroutine ypp_INIT_load(defs)
  enddo
  !
  ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
- call it(defs,'RTmu_elec', '[RT] Electron chemical potential',mu_elec,unit=E_unit)
- call it(defs,'RTmu_hole', '[RT] Hole chemical potential',mu_hole,unit=E_unit)
- call it(defs,'RTtemp_elec', '[RT] Carrier (electron) effective temperature',T_elec,unit=E_unit)
- call it(defs,'RTtemp_hole', '[RT] Carrier (hole) effective temperature',T_hole,unit=E_unit)
+ call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
+ call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

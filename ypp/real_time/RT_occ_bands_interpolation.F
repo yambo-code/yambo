@@ -38,7 +38,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation, &
 &                         electrons_bands_interpolate
  !
- implicit none
+#include<memory.h>
  !
  integer,       intent(in) :: n_T_steps
  type(bz_samp), intent(in) :: kpt
@@ -49,7 +49,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(bz_samp)         :: k_bands
  type(levels)          :: E_bands
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
+ type(bz_samp)         :: USER_k,CIRCUIT_k,INTERP_k
  real(SP), pointer     :: bands_interpolated(:,:,:) => null()
  !
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
@@ -82,9 +82,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
  if(n_spinor>1 .and. BANDS_steps> 0) then
-   allocate(spin_interpolated(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
-   allocate(magn_interpolated(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
-   call electrons_spin_and_magn_interpolate(En,kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
+   YAMBO_ALLOC(spin_interpolated,(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
+   YAMBO_ALLOC(magn_interpolated,(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
+   call electrons_spin_and_magn_interpolate(kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
  endif
  !
  ! Perform the occupations interpolation
@@ -98,9 +98,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
  !
- allocate(variable_to_fit(RT_bands(1):RT_bands(2),1:n_sp_pol,RT_carriers%nk))
+ YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),1:n_sp_pol,RT_carriers%nk))
  !
- allocate(fit_on_circuit(RT_bands(1):RT_bands(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
+ YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
  !
  do i_T=1,n_T_steps
    !
@@ -130,8 +130,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)=    RT_carriers%delta_f(i_RT)
-       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)=sum(RT_carriers%GAMMA_bare(i_RT,:))
+       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%delta_f(i_RT)
+       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%NEQ_Lifetime(i_RT) 
        !
      enddo
      !
@@ -159,7 +159,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,&
 &                                       RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%GAMMA_bare,fit_on_circuit(:,:,:,i_T),message,.false.)
+&                                       RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
      endif
      !
    endif
@@ -187,7 +187,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  call RT_carriers_object(RT_carriers,WHAT='free')
  !
- deallocate(variable_to_fit)
+ YAMBO_FREE(variable_to_fit)
  !
  ! Output: bands on circuit
  !==========================
@@ -207,7 +207,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_REF_LIFE_bands"
+   if (l_RT_lifetimes  ) file_name_rt="YPP-RT_NEQ_LIFE_bands_iT"//intc(i_T)
    if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
    !
    call of_open_close(file_name_rt,'ot')
@@ -248,10 +248,12 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
  enddo
  !
- deallocate(fit_on_circuit)
+ YAMBO_FREE(fit_on_circuit)
  !
- deallocate(bands_interpolated)
- nullify(bands_interpolated)
- if(n_spinor==2) deallocate(spin_interpolated,magn_interpolated)
+ YAMBO_FREE_P(bands_interpolated)
+ if(n_spinor==2) then
+   YAMBO_FREE(spin_interpolated)
+   YAMBO_FREE(magn_interpolated)
+ endif
  !
 end subroutine RT_occ_bands_interpolation

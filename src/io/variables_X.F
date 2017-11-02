@@ -23,7 +23,7 @@
 !
 integer function variables_X(ID,local_description,X)
  !
- use pars,          ONLY:schlen,lchlen,SP,cI
+ use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
@@ -37,7 +37,6 @@ integer function variables_X(ID,local_description,X)
  !
  integer             ::i_local_desc,sec_size
  logical             ::local_long_gauge
- real(SP)            ::Wd_disk(2)
  character(schlen)   ::X_label
  !
  i_local_desc=0
@@ -84,13 +83,11 @@ integer function variables_X(ID,local_description,X)
    ! DRUDE
    !
    call io_elemental(ID,VAR=trim(X_label)//"DRUDE",VAR_SZ=2,MENU=0)
-   Wd_disk=(/real(X%Wd),aimag(X%Wd)/)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,UNIT=HA2EV,&
-&     VAR=" X Drude frequency      :",R1=Wd_disk,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR=" X Drude frequency      :",C0=X%Wd,CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   X%Wd=Wd_disk(1)+cI*Wd_disk(2)
    !
  endif
  !

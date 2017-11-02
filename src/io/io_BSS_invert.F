@@ -30,13 +30,20 @@ integer function io_BSS_invert(iq,W,ID)
  use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on
- implicit none
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
+#include<memory.h>
  integer      :: iq
  type(w_samp) :: W
  !
  ! Work Space
  !
  integer     :: ID
+ !
+#if defined _TIMING
+ call timing('io_BSS_invert',OPR='start')
+#endif
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -98,36 +105,40 @@ integer function io_BSS_invert(iq,W,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if (read_is_on(ID).and..not.associated(W%p)) then
-     allocate(W%p(K_INV_EPS%n_freqs))
+   if (read_is_on(ID).and..not.allocated(W%p)) then
+     YAMBO_ALLOC(W%p,(K_INV_EPS%n_freqs))
      W%n_freqs=K_INV_EPS%n_freqs
    endif
    !
    call io_bulk(ID,'FREQs',VAR_SZ=(/2,K_INV_EPS%n_freqs/))
-   call io_bulk(ID,C1=W%p(:K_INV_EPS%n_freqs))
+   call io_bulk(ID,C1=W%p)
    !
  endif
  !
  if (any((/io_sec(ID,:)==3/))) then
    !
    call io_bulk(ID,'EPS_INV_ERRs',VAR_SZ=(/K_INV_EPS%n_freqs/))
-   call io_bulk(ID,I1=K_INV_EPS%err(:K_INV_EPS%n_freqs))
+   call io_bulk(ID,I1=K_INV_EPS%err)
    !
    call io_bulk(ID,'EPSILON',VAR_SZ=(/2,K_INV_EPS%n_freqs,3/))
-   call io_bulk(ID,C2=K_INV_EPS%spectra(:K_INV_EPS%n_freqs,:))
+   call io_bulk(ID,C2=K_INV_EPS%spectra)
    !
  endif
  !
  if (any((/io_sec(ID,:)==4/))) then
    !
    call io_bulk(ID,'PL_INV_ERRs',VAR_SZ=(/K_INV_PL%n_freqs/))
-   call io_bulk(ID,I1=K_INV_PL%err(:K_INV_PL%n_freqs))
+   call io_bulk(ID,I1=K_INV_PL%err)
    !
    call io_bulk(ID,'PL',VAR_SZ=(/2,K_INV_PL%n_freqs,2/))
-   call io_bulk(ID,C2=K_INV_PL%spectra(:K_INV_PL%n_freqs,:))
+   call io_bulk(ID,C2=K_INV_PL%spectra)
    !
  endif
  !
 1 call io_disconnect(ID)
+ !
+#if defined _TIMING
+ call timing('io_BSS_invert',OPR='stop')
+#endif
  !
 end function

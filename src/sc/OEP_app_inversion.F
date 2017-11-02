@@ -40,22 +40,20 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
- use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
- use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use linear_algebra,  ONLY:INV
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,            ONLY:QP_ng_Sx
- use memory_m,        ONLY:mem_est
  use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_oep_kli,l_oep_ceda
- use memory_m,        ONLY:mem_est
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
+ use interfaces,      ONLY:PARALLEL_index,LINEAR_ALGEBRA_driver 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  !
  ! I/O
  !
- implicit none
+#include<memory.h>
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)
  complex(SP), intent(in) :: U(nkibz,n_met_bands,fft_size)
@@ -77,8 +75,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! allocation
  ! 
- allocate(W_tmp(fft_size))
- allocate(rho_xc(QP_ng_Sx-1),Ko(QP_ng_Sx-1,QP_ng_Sx-1))
+ YAMBO_ALLOC(W_tmp,(fft_size))
+ YAMBO_ALLOC(rho_xc,(QP_ng_Sx-1))
+ YAMBO_ALLOC(Ko,(QP_ng_Sx-1,QP_ng_Sx-1))
  !
  !FT the Hole potential 
  !
@@ -91,7 +90,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
 #endif
  rho_xc = (0._SP,0._SP)
  rho_xc(1:QP_ng_Sx-1) = W_tmp(fft_g_table(2:QP_ng_Sx,1))/real(fft_size,SP)
- deallocate(W_tmp)
+ YAMBO_FREE(W_tmp)
  ! 
  ! Calculate Ko(G,G') and rho_xc
  !     =>1 - initialize vars/dim
@@ -107,8 +106,11 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  call PP_indexes_reset(px)
  !
  call elemental_collision_alloc(isc,TITLE="OEP_SigmaCSX",NG=QP_ng_Sx)
- allocate(rhotw_sum(QP_ng_Sx-1),rhotw_sum_TR(QP_ng_Sx-1),rhotw_prd(QP_ng_Sx,QP_ng_Sx))
- allocate(rhotw_ds(fft_size),rhotw_rs(QP_ng_Sx))
+ YAMBO_ALLOC(rhotw_sum,(QP_ng_Sx-1))
+ YAMBO_ALLOC(rhotw_sum_TR,(QP_ng_Sx-1))
+ YAMBO_ALLOC(rhotw_prd,(QP_ng_Sx,QP_ng_Sx))
+ YAMBO_ALLOC(rhotw_ds,(fft_size))
+ YAMBO_ALLOC(rhotw_rs,(QP_ng_Sx))
  !
  call PARALLEL_index(px,(/nkibz,E%nbf/))
  call PP_redux_wait
@@ -128,7 +130,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
        rhotw_sum_TR = (0._SP,0._SP)
        Prefactor = 1.0_SP
        if (iv1.ne.iv2) Prefactor = 2.0_SP
-       SigmaXC = dot_product(WF%c(:,ifft),U(ik,iv2,:)) 
+       SigmaXC = dot_product(WF%c(:,1,ifft),U(ik,iv2,:)) 
        do i1 = 1,k%nstar(ik)
          is  = k%star(ik,i1)
          l_is_TR = is>nsym/(i_time_rev+1)
@@ -137,8 +139,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
          isc%qs = (/1,1,1/)
          call scatter_Bamp(isc)
          !
-         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),ifft))*WF%c(fft_rot_r(:,is),offt)/EWeight
-         rhotw_ds(:)=WF%c(fft_rot_r(:,is),ifft)*conjg(WF%c(fft_rot_r(:,is),offt))/EWeight
+         !rhotw_ds(:)=conjg(WF%c(fft_rot_r(:,is),1,ifft))*WF%c(fft_rot_r(:,is),1,offt)/EWeight
+         rhotw_ds(:)=WF%c(fft_rot_r(:,is),1,ifft)*conjg(WF%c(fft_rot_r(:,is),1,offt))/EWeight
          !
          rhotw_ds = rhotw_ds/(rho*real(fft_size,SP)) 
          rhotw_rs = cZERO
@@ -185,20 +187,25 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
    Ko(ig1,1:QP_ng_Sx-1) = Ko(ig1,1:QP_ng_Sx-1) - rhotw_prd(ig1+1,2:QP_ng_Sx)/float(nkbz)
  end do
  !
- deallocate(rhotw_sum,rhotw_sum_TR,rhotw_prd,rhotw_ds,rhotw_rs)
+ YAMBO_FREE(rhotw_sum)
+ YAMBO_FREE(rhotw_sum_TR)
+ YAMBO_FREE(rhotw_prd)
+ YAMBO_FREE(rhotw_ds)
+ YAMBO_FREE(rhotw_rs)
  !
  ! Calculate Vkli (RL) 
  !
- allocate(Vkli_RL(QP_ng_Sx-1))
- call LINEAR_ALGEBRA_driver(INV,Ko)
+ YAMBO_ALLOC(Vkli_RL,(QP_ng_Sx-1))
+ call LINEAR_ALGEBRA_driver(INV,M=Ko)
  ! 
  Vkli_RL=matmul(Ko,rho_xc)
  !
- deallocate(rho_xc,Ko)
+ YAMBO_FREE(rho_xc)
+ YAMBO_FREE(Ko)
  !
  ! Calculate Vkli (DL)
  !
- allocate(Vx_dp(fft_size))
+ YAMBO_ALLOC(Vx_dp,(fft_size))
  Vx_dp = (0._DP,0._DP)
  Vx_dp(fft_g_table(2:QP_ng_Sx,1))= Vkli_RL(1:QP_ng_Sx-1)
 #if defined _FFTW
@@ -212,7 +219,8 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  !
  ! CLEAN
  !
- deallocate(Vkli_RL,Vx_dp)
+ YAMBO_FREE(Vkli_RL)
+ YAMBO_FREE(Vx_dp)
  call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !

@@ -21,17 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo,K)
+integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
  !
  use pars,           ONLY:SP,rZERO
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
- use BS_solvers,     ONLY:K_INV_PL
+ use BS_solvers,     ONLY:K_INV_PL,BS_mat,K_slk
  !
  implicit none
  !
  integer,    intent(in)  ::n,Lo_dim,n_loop
  real(SP),   intent(in)  ::C
- complex(SP),intent(in)  ::D(n,3),Lo(n,Lo_dim),K(n,n)
+ complex(SP),intent(in)  ::D(n,3),Lo(n,Lo_dim)
  real(SP)   ,intent(out) ::f
  !
  ! Work Space
@@ -70,13 +70,25 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo,K)
    !
    do ic=1,3
      !
-     call M_by_V_omp('n',n,K,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
+     if (K_slk%kind=="SLK") then
+#if defined _SCALAPACK
+       call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
+#endif
+     else
+       call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
+     endif
      CUMULATIVE(:,1,ic)=CUMULATIVE(:,1,ic)+conjg(Lo(:,1))*R_x_D_n(:,1,ic)
      WK=Lo(:,1+n_loop)*CUMULATIVE(:,1,ic)
      f=f+C*Vstar_dot_V_omp(n,CUMULATIVE(:,1,ic),WK)
      !
      if (n_loop==2) then
-       call M_by_V_omp('n',n,K,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
+       if (K_slk%kind=="SLK") then
+#if defined _SCALAPACK
+         call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
+#endif
+       else
+         call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
+       endif
        CUMULATIVE(:,2,ic)=CUMULATIVE(:,2,ic)+Lo(:,2)*R_x_D_n(:,2,ic)
        WK=Lo(:,2+n_loop)*CUMULATIVE(:,2,ic)
        f=f+C*Vstar_dot_V_omp(n,CUMULATIVE(:,2,ic),WK)

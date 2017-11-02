@@ -25,7 +25,6 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
- use memory_m,            ONLY:mem_est
  use com,                 ONLY:core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
@@ -33,7 +32,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
@@ -84,7 +83,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  en_sc%nb=SC_bands(2)
  en_sc%nk=k_save%nibz
- allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
+ YAMBO_ALLOC(en_sc%E,(en_sc%nb,en_sc%nk,n_sp_pol))
  !
  nkibz=k_save%nibz
  !
@@ -101,8 +100,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  !  Wave-function
  !
- allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
- call mem_est("SC_R",(/size(SC_R)/))
+ YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
  !
  nkibz=k_save%nibz
  !
@@ -111,7 +109,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
  do ik=1,k_save%nibz
-   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
@@ -122,29 +120,26 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  !
  do ik=1,k_save%nibz
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
  do ik=k_save%nibz+1,k%nibz
    SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
- deallocate(SC_R)
- call mem_est("SC_R")
+ YAMBO_FREE(SC_R)
  !
  ! Copy the potential
  !
  call XC_switch()
  if(.not.l_sc_V_is_local) then
    !
-   allocate(H_nl_sc(SC_bands(2),SC_bands(2),n_sp_pol))
-   call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+   YAMBO_ALLOC(H_nl_sc,(SC_bands(2),SC_bands(2)))
    !
-   allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
-   call mem_est("full_H",(/size(full_H)/))
+   YAMBO_ALLOC(full_H,(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
    !
    nkibz=k_save%nibz
    !
@@ -152,10 +147,12 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
    io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=1,k_save%nibz
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k_save%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
-     full_H(:,:,ik,:)=H_nl_sc(:,:,:)
+     full_H(:,:,ik,i_sp_pol)=H_nl_sc(:,:)
+   enddo
    enddo
    !
    nkibz=k%nibz
@@ -164,23 +161,25 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID)
    io_SC_V_err=io_SC_components('V',en_sc,ID)
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=1,k_save%nibz
-     H_nl_sc(:,:,:)=full_H(:,:,ik,:)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     H_nl_sc(:,:)=full_H(:,:,ik,i_sp_pol)
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
    enddo
+   enddo
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=k_save%nibz+1,k%nibz
-     H_nl_sc(:,:,:)=full_H(:,:,kpoints_map(1,ik),:)
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1/),ID=ID)
+     H_nl_sc(:,:)=full_H(:,:,kpoints_map(1,ik),i_sp_pol)
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
      io_SC_V_err=io_SC_components('V',en_sc,ID)
    enddo    
+   enddo    
    !
-   deallocate(H_nl_sc)
-   call mem_est("H_nl_sc")
+   YAMBO_FREE(H_nl_sc)
    !
-   deallocate(full_H)
-   call mem_est("full_H")
+   YAMBO_FREE(full_H)
    !
  endif
  !

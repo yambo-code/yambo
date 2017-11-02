@@ -48,7 +48,6 @@ subroutine YPP_SET_defaults()
  dos_E_steps=500
  WF_ref=0
  !
- !
  ! RT OCCUPATIONS
  !
 #if defined _YPP_RT
@@ -133,35 +132,6 @@ subroutine YPP_SET_defaults()
  ph_freqs_file='none'
  ph_modes_file='none'
  gsqF_energy_steps=1
- !
-#endif
- !
-#if defined _YPP_SURF
- !
- ! RAS & REELS
- !
- call ras_presets
- xdata = 'o.eps_q001-rpa_00'
- ydata = 'o.eps_q001-rpa_00'
- zdata = 'o.eps_q001-rpa_00'
- sshift = 0.0           ! surface shift
- datatype = 'eps23'
- d_cellin = 1.0
- !
- ! Localization
- !
- normdir = 3
- lowerlim = 0
- upperlim = 1
- ngloc = 0
- loc_bands = (/ 1, n_bands /)
- loc_kpts  = (/ 1, nkibz /)
- ! 
- ! Transition analysis
- ! 
- Ecv_min = 0._SP
- Ecv_max = -1._SP/HA2EV
- idir = 1
  !
 #endif
  !

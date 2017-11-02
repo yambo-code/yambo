@@ -143,6 +143,7 @@ $START_EXCLUDE_TAG = "GPL_EXCLUDE_START";
 $END_EXCLUDE_TAG   = "GPL_EXCLUDE_END";
 $START_INCLUDE_TAG = "GPL_INCLUDE_START";
 $END_INCLUDE_TAG   = "GPL_INCLUDE_END";
+$SVN_DIR = ".svn";
 $GIT_DIR = ".git";
 $GPL_OBJECTS_FILE = ".objects_gpl";
 $OBJECTS_FILE = ".objects";
@@ -153,6 +154,7 @@ $GPL_FILE_SUFFIX = "_gpl";
 find sub {
    return unless -d $_ ;
    $directory_name = $File::Find::name; 
+   if ($directory_name =~ m/$SVN_DIR/){ return; }  
    if ($directory_name =~ m/$GIT_DIR/){ return; }  
    foreach my $dir (@exclude_dirs_list) {
       if ($directory_name =~ m/$dir/){ return; }  
@@ -398,7 +400,7 @@ if($number_selected_projects){
 }
 else { &io("yambo GPL only created successfully.\n") }
 #
-# Delete project only directories (check if GIT still works)
+# Delete project only directories (check if SVN still works)
 #
 &io("\n Remaining user tasks:\n");
 foreach $directory (@directories_for_deletion) {
@@ -407,12 +409,12 @@ foreach $directory (@directories_for_deletion) {
 }
 &io(" ---> Manually preprocess: $manual_preprocess_files \n");
 #
-# Create a batchfile for deleting git entries for deleting files.
+# Create a batchfile for deleting svn entries for deleting files.
 #
-&io(" ---> Run batchfiles for deleting git entries: gitdelete.batch and delete.batch \n");
-open(BATCH, ">", "gitdelete.batch") or die "Error opening batch\n";
-print BATCH (" git delete --force ");
-print BATCH join("\n git delete --force ",@delete_list);
+&io(" ---> Run batchfiles for deleting svn entries: svndelete.batch and delete.batch \n");
+open(BATCH, ">", "svndelete.batch") or die "Error opening batch\n";
+print BATCH (" svn delete --force ");
+print BATCH join("\n svn delete --force ",@delete_list);
 close(BATCH);
 open(BATCH, ">", "delete.batch") or die "Error opening batch\n";
 print BATCH (" rm -fr ");
@@ -458,7 +460,7 @@ sub get_source_from_object_list{
 }
 #---------------------------------------------------------------------#
 # This will get all the filenames in the directory 
-# excluding subdirectories (e.g. .git),
+# excluding subdirectories (e.g. .svn, .git),
 # and binary files (in case some are left over)
 #---------------------------------------------------------------------#
 sub get_filenames_in_directory{
@@ -467,7 +469,8 @@ sub get_filenames_in_directory{
   opendir(DIR, $directory_name) or die "Cannot opendir : $!";
   my @Names = readdir(DIR);
   foreach $name (@Names) {
-#   if ($name =~ /^\.\.?$|$GIT_DIR/){ next; }
+#    if ($name =~ /^\.\.?$|$SVN_DIR/){ next; }
+#    if ($name =~ /^\.\.?$|$GIT_DIR/){ next; }
     if (not -f $directory_name.$name ){ next; }
     if (not -T $directory_name.$name ){ next; }
     push(@RealNames, $name); 

@@ -24,17 +24,27 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
+&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
- integer     :: n
- complex(SP) :: M(n,n),det
- logical     :: eval_det
- integer     :: i_loop !ws
+ integer           :: n
+ complex(SP)       :: M(n,n),det
+ logical           :: eval_det
  !
- allocate(WS%v_int(n))
+ !ws
+ integer           :: i_loop 
+ type(LALGEBRA_WS) :: WS
+ !
+#if defined _TIMING
+ call timing('SERIAL_inversion',OPR='start')
+#endif
+ !
+ YAMBO_ALLOC(WS%v_int,(n))
  !
  call LU_factorization(n,M,WS%v_int,WS%i_fail)
  !
@@ -55,11 +65,15 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,-1,WS%i_fail)
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
+ YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+#if defined _TIMING
+ call timing('SERIAL_inversion',OPR='stop')
+#endif
  !
 end subroutine

@@ -52,12 +52,19 @@ module functions
  !
  contains
    !
+   logical function infinity(E)
+     use pars, ONLY: infinity_dfl
+     real(SP)     :: E
+     infinity= E > infinity_dfl
+   end function infinity
+   !
    logical function NAN(E)
-     real(SP) :: E
-#if defined _BLUEGENE || _PGI
+#if defined(_XLF) || defined(_PGI)
      use ieee_arithmetic
+     real(SP) :: E
      NAN= ieee_is_nan(E)
 #else
+     real(SP) :: E
      NAN= isnan(E)
 #endif
    end function NAN

@@ -33,6 +33,22 @@ module vec_operate
  !
  contains
    ! 
+   integer function min_index(N,v)
+     !
+     integer,  intent(in) :: N
+     real(SP), intent(in) :: v(N)
+     !
+     real(SP) :: v_min
+     integer  :: i_v
+     !
+     v_min=minval(v)
+     min_index=0
+     do i_v=1,N
+       if (abs(v(i_v)-v_min)<1.E-5) min_index=i_v
+     enddo
+     !
+   end function min_index
+   ! 
    function normalize_v(v,zero_norm_)
      !
      real(SP), intent(in) :: v(3)
@@ -183,7 +199,7 @@ module vec_operate
      ! Scale factor if input vector is in iku
      !
      if (index(mode,'r')/=0) n(:)=alat(:)
-     if (index(mode,'k')/=0) n(:)=2.*pi/alat(:)
+     if (index(mode,'k')/=0) n(:)=2._SP*pi/alat(:)
      !
      ! u is rlu or cc (no iku)
      !
@@ -191,7 +207,7 @@ module vec_operate
      if (index(mode,'i2')/=0) u(:)=v_in(:)*n(:) ! iku -> cc
      !
      ! i2c/c2i
-     mat=reshape((/1.,0.,0.,0.,1.,0.,0.,0.,1./),(/3,3/))
+     mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
      !
      ! a2c/a2i
      if (index(mode,'a2c')/=0.or.index(mode,'a2i')/=0) mat=transpose(a_here)

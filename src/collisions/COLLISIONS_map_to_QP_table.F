@@ -23,14 +23,12 @@
 !
 subroutine COLLISIONS_map_to_QP_table(what,COLL)
  !
- use pars,          ONLY:IP
- use collision,     ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use QP_m,          ONLY:QP_nk,QP_nb,QP_table,QP_n_states
  use electrons,     ONLY:n_sp_pol
  use R_lattice,     ONLY:nXkibz
- use memory_m,      ONLY:mem_est
  !
- implicit none                                              
+#include<memory.h>
  !
  character(*)                            :: what
  type(COLLISIONS_group),   intent(inout) :: COLL
@@ -42,8 +40,7 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  if (what=="fill") then
    if (allocated(QP_table)) return
    QP_n_states=COLL%N
-   allocate(QP_table(QP_n_states,3+n_sp_pol-1))
-   call mem_est("QP_table",(/QP_n_states*(3+n_sp_pol-1)/),(/IP/))
+   YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1))
    QP_table=0
    QP_nb=COLL_bands(2)
    QP_nk=nXkibz
@@ -54,8 +51,7 @@ subroutine COLLISIONS_map_to_QP_table(what,COLL)
  endif
  !
  if (what=="clean") then
-   deallocate(QP_table)
-   call mem_est("QP_table")
+   YAMBO_FREE(QP_table)
    QP_nb=0
    QP_nk=0
    QP_n_states=0

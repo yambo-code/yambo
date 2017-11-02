@@ -26,17 +26,16 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! NEQ GW collisions 
  !
  use pars,          ONLY:SP,rZERO
- use memory_m,      ONLY:mem_est
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:error
  use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
 &                        PAR_IND_Q,PAR_Q_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
- use collision,     ONLY:elemental_collision,elemental_collision_free,COLLISIONS_parallel_SC_structure,&
-&                        GW_NEQ_COLL_element,COLL_bands,&
-&                        elemental_collision_alloc,GW_NEQ_collisions
+&                        PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
+&                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
  use plasma,        ONLY:EH_gas
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -50,8 +49,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol
  use wrapper,       ONLY:M_by_V
  !
- implicit none
- !
+#include<memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -113,8 +111,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !------------
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
- allocate(EM1s(X%ng,X%ng),stat=alloc_err)
- call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
+ YAMBO_ALLOC(EM1s,(X%ng,X%ng))
  !
  call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="NEQ_GW")
@@ -122,10 +119,19 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=GW_NEQ_collisions%PAR_N
- if (associated(GW_NEQ_collisions%IO_status)) then
-   PAR_NC_local=count(GW_NEQ_collisions%IO_status==-1)
+ if (allocated(GW_NEQ_collisions%IO_status)) then
+   PAR_NC_local=0
+   do i_coll1=1,GW_NEQ_collisions%N
+     if (.not.GW_NEQ_collisions%PAR_IND%element_1D(i_coll1)) cycle
+     if (GW_NEQ_collisions%IO_status(i_coll1)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  call live_timing("Collisions",PAR_NC_local*PAR_nQ)
+ !
+ ! Write Database Header 
+ !
+ if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,GW_NEQ_collisions,GW_NEQ_COLL_element)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -287,7 +293,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
      else
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif
@@ -305,8 +311,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- deallocate(EM1s)
- call mem_est("EM1s")
+ YAMBO_FREE(EM1s)
  call X_alloc('X')
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)

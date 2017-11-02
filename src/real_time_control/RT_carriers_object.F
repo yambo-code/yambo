@@ -91,12 +91,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if(l_RT_uses_E_DbGd) then
          RT%E_bare(i_RT)=E%E_DbGd(i_b,i_k_DbGd,i_spin)
-         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
-         if(     associated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
        else
          RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
-         if(.not.associated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
-         if(     associated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
+         if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
+         if(     allocated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
        endif
        !
      enddo
@@ -136,7 +136,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        ! Lifetimes
        !
-       if (what=="fill".and.allocated(REF_lifetime)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
+       if (what=="fill".and.(l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt)) RT%GAMMA_bare(i_RT,:)=REF_lifetime(i_b,i_k_RT,:)
        !
        if(l_elphoton_scatt) then
          if (what=="fill") then
@@ -198,7 +198,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
            RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
            if(RT%E_bare(i_RT)> 0._SP) then
              if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
-             if(  abs(df_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(     df_occ)
+             if(  abs(df_occ)>0._SP)  RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(     df_occ)
            else if(RT%E_bare(i_RT)<=0._SP) then
              if((1._SP-f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(1._SP-f_occ)
              if(  abs(df_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(    -df_occ)
@@ -220,7 +220,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%f_bare)
      !
-     if (associated(RT%GAMMA_bare)) then
+     if (allocated(RT%GAMMA_bare)) then
        call io_bulk(DB_id,VAR="RT_carriers_GAMMA_bare",VAR_SZ=(/RT%nstates,8/))
        call io_bulk(DB_id,R2=RT%GAMMA_bare)
      endif

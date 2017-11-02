@@ -39,7 +39,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::kpt
  type(levels)  ::En
@@ -81,8 +81,8 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  dos_norm=1._SP/DL_vol
  !
  if (n_spinor==2) then
-   allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
-   call electrons_spin_factors(kpt,(/1,kpt%nibz/),RT_carriers%nb,spin_factors)
+   YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
  endif 
  !
  ! Parallel setup and live_timing
@@ -160,6 +160,6 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  call live_timing()
  !
- if (n_spinor==2) deallocate(spin_factors)
+ YAMBO_FREE(spin_factors)
  !
 end subroutine RT_occ_2D_dos_plot

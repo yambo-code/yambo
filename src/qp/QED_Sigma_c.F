@@ -32,11 +32,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use QP_m,                ONLY:QP_t,QP_n_G_bands,QP_Sc,QP_QED_ng,QP_nb,QP_states_simmetrize,&
 &                              QP_dSc,QP_time_order_sign,QP_table,QP_n_states
  use IO_m,                ONLY:io_COLLs
- use collision,           ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
-&                              elemental_collision_copy,P_COLL_element,COLL_bands,P_collisions
+ use collision_el,        ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,&
+&                              elemental_collision_copy
+ use collision_ext,       ONLY:P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute,&
-&                              SCATTERING_GW_kinematics
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
  use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -47,7 +48,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  use timing_m,            ONLY:timing
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)              ::E
  type(bz_samp)             ::k,q
@@ -91,7 +92,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  call k_ibz2bz(q,'i',.TRUE.)
  !
- allocate(q_weight_power_1(nqbz),q_weight_power_2(nqbz))
+ YAMBO_ALLOC(q_weight_power_1,(nqbz))
+ YAMBO_ALLOC(q_weight_power_2,(nqbz))
  call rim_spherical(nqbz,q%ptbz,q_weight_power_1,(3.*RL_vol/nqbz/4./pi)**(1./3.),1,.FALSE.)
  call rim_spherical(nqbz,q%ptbz,q_weight_power_2,(3.*RL_vol/nqbz/4./pi)**(1./3.),2,.FALSE.)
  !
@@ -256,7 +258,8 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !
  ! Clean-UP
  !
- if (allocated(q_weight_power_1)) deallocate(q_weight_power_1,q_weight_power_2)
+ YAMBO_FREE(q_weight_power_1)
+ YAMBO_FREE(q_weight_power_2)
  !
  if (l_use_collisions) then
    !

@@ -27,19 +27,65 @@ module interfaces
  !
  interface
    !
-   subroutine SCATTERING_GW_kinematics(i_q_bz,i_m,I,k,q,TABLE,E,N,G0,Ek,Ekmq,E_diff)
-     use pars,                ONLY:SP
-     use electrons,           ONLY:levels
-     use R_lattice,           ONLY:bz_samp
-     use QP_m,                ONLY:QP_table
-     use collision,           ONLY:elemental_collision
-     integer,       intent(in) ::i_q_bz,i_m
-     integer,       intent(in) ::TABLE(:)
-     type(elemental_collision) ::I
-     type(bz_samp)             ::k,q
-     type(levels),  OPTIONAL   ::E
-     integer,       OPTIONAL   ::N,G0
-     real(SP),      OPTIONAL   ::Ek,Ekmq,E_diff
+  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     type(levels)  ::E
+     type(bz_samp) ::K
+     character(*), OPTIONAL ::mode,OBJ
+   end subroutine
+   !
+   subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
+     use matrix,         ONLY:PAR_matrix
+     character(*)               :: operation
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix)           :: M_out
+     integer         , optional :: INDEX_in
+   end subroutine
+   !
+   subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
+     !
+     use parallel_m,     ONLY:MPI_comm
+     use matrix,         ONLY:PAR_matrix
+     use BS,             ONLY:BS_block
+     use pars,           ONLY:SP
+     !
+     type(PAR_matrix), optional :: M_in
+     type(PAR_matrix), optional :: M_out
+     type(BS_block),   optional :: M_bse(:)
+     integer,          optional :: INDEX_in
+     integer,          optional :: INDEX_out
+     complex(SP),      optional :: M(:,:)
+     logical,          optional :: SND
+     logical,          optional :: RCV
+     type(MPI_comm),   optional :: COMM
+     character(*),     optional :: COMM_name
+     !
+   end subroutine
+   !
+   subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,M,M_slk,M_bse,B,B_slk,C,C_slk,V_left,V_right,E_real,&
+&                                   E_cmpl,SVD_digits,det)
+     !
+     use matrix,         ONLY:PAR_matrix
+     use pars,           ONLY:SP
+     use BS,             ONLY:BS_block
+     !
+     integer                    :: idriver
+     integer,          optional :: lib_in
+     complex(SP),      optional :: M(:,:)
+     type(PAR_matrix), optional :: M_slk
+     type(BS_block),   optional :: M_bse(:)
+     complex(SP),      optional :: B(:,:)
+     type(PAR_matrix), optional :: B_slk
+     complex(SP),      optional :: C(:,:)
+     type(PAR_matrix), optional :: C_slk
+     complex(SP),      optional :: V_left(:,:)
+     complex(SP),      optional :: V_right(:,:)
+     real(SP),         optional :: E_real(:)
+     complex(SP),      optional :: E_cmpl(:)
+     integer,          optional :: SVD_digits 
+     complex(SP),      optional :: det
+     !
    end subroutine
    !
    subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
@@ -56,7 +102,8 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
-   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,l_DbGd,WF_fac)
+   subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,&
+&                                  USE_the_DbGd,USE_Eo,WF_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -67,17 +114,10 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,dos_broadening
      integer,       intent(in)  :: dos_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,       intent(in)  :: l_DbGd
+     logical,  optional, intent(in) :: USE_Eo
+     logical,  optional, intent(in) :: USE_the_DbGd
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
-   !
-   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
-     use collision,  ONLY:COLLISIONS_element,COLLISIONS_group
-     integer, intent(inout)             ::ID
-     type(COLLISIONS_group)             ::COLL_grp
-     type(COLLISIONS_element), optional ::COLL_element
-     integer, intent(in)     , optional ::i_coll
-   end function
    !
    integer function eval_G_minus_G(iG,iGo,COMM)
      use parallel_m,      ONLY:MPI_comm
@@ -87,12 +127,12 @@ module interfaces
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     spins_to_load,space,title,impose_free_and_alloc,&
+&                     sp_pol_to_load,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
      type(WAVEs)           :: WF
-     integer,     optional :: spins_to_load(2)
+     integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
      character(*),optional :: title
      logical     ,optional :: impose_free_and_alloc
@@ -147,8 +187,8 @@ module interfaces
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
      type(levels)       :: E
-     real(SP), optional :: E_g_dir(n_sp_pol,2) ! min - max
-     real(SP), optional :: E_g_ind(n_sp_pol,2) ! min - max
+     real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
+     real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
      integer , optional :: N_f(n_sp_pol)
      integer , optional :: N_m(n_sp_pol)
      integer , optional :: I_dir(2)
@@ -167,18 +207,20 @@ module interfaces
      real(SP),    pointer     :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,ROLE,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_A2A_1,COMM_A2A_2,COMM_A2A_3)
+   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
+&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
+&                                              COMM_A2A_3,COMM_A2A_4)
      use parallel_m,    ONLY:MPI_comm
      integer                 :: n_elements
-     character(*)            :: ROLE(:)
      type(MPI_comm)          :: COMM_index_1
      type(MPI_comm),optional :: COMM_index_2
      type(MPI_comm),optional :: COMM_index_3
      type(MPI_comm),optional :: COMM_index_4
+     type(MPI_comm),optional :: COMM_index_5
      type(MPI_comm),optional :: COMM_A2A_1
      type(MPI_comm),optional :: COMM_A2A_2
      type(MPI_comm),optional :: COMM_A2A_3
+     type(MPI_comm),optional :: COMM_A2A_4
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
@@ -192,6 +234,19 @@ module interfaces
      logical,       optional::NO_EMPTIES
      logical,       optional::MASK(:)
    end subroutine
+   !
+   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP)
+     use pars, ONLY:SP
+     use QP_m, ONLY:QP_t
+     implicit none
+     integer              :: N,N_qp
+     type(QP_t)           :: DBs(N)
+     logical              :: plan(N,3)
+     type(QP_t),  optional:: qp(N_qp)
+     character(*),optional:: OP(N)
+     real(SP)    ,optional:: PRE_FAC(N)
+     integer     ,optional:: MAP(N)
+   end subroutine QP_DBs_merge
    !
  end interface
  !

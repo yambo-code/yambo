@@ -29,10 +29,9 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
  use plasma,        ONLY:EH_gas
  use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
- use memory_m,      ONLY:mem_est
- use collision,     ONLY:GW_NEQ_collisions
+ use collision_ext, ONLY:GW_NEQ_collisions
  !
- implicit none
+#include<memory.h>
  !
  integer          :: iqbz,N
  type(levels)     :: E 
@@ -97,7 +96,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  if (iqbz>0 ) then
    !
    if (i_q_mem==1) then
-     allocate(EH_gas%grid(Coarse_grid_N,PAR_nQ,2))
+     YAMBO_ALLOC(EH_gas%grid,(Coarse_grid_N,PAR_nQ,2))
      EH_gas%grid=-1
      EH_gas%N_poles=0
      l_reallocate=.false.
@@ -110,22 +109,22 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
    !
    if (l_reallocate) then
      !
-     allocate(local_grid(EH_gas%max_N_poles,iqbz-1,2))
+     YAMBO_ALLOC(local_grid,(EH_gas%max_N_poles,iqbz-1,2))
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
        local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
-     deallocate(EH_gas%grid)
+     YAMBO_FREE(EH_gas%grid)
      !
-     allocate(EH_gas%grid(EH_gas%max_N_poles,q%nbz,2))
+     YAMBO_ALLOC(EH_gas%grid,(EH_gas%max_N_poles,q%nbz,2))
      EH_gas%grid=-1
      do iqbz_local=1,iqbz-1
        if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
        i_q_mem_local=PAR_Q_index(iqbz_local)
        EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
-     deallocate(local_grid)
+     YAMBO_FREE(local_grid)
      !
    endif
    !
@@ -134,8 +133,10 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
      EH_gas%grid(i_cg,i_q_mem,:)=(/n_poles+1,n_poles+bare_grid_N(i_cg)/)
    enddo
    !
-   deallocate(ordered_grid_index,coarse_grid_index,bare_grid_N,coarse_grid_Pt)
-   call mem_est("RGi CGi BGn CGp")
+   YAMBO_FREE(ordered_grid_index)
+   YAMBO_FREE(coarse_grid_index)
+   YAMBO_FREE(bare_grid_N)
+   YAMBO_FREE(coarse_grid_Pt)
    !
  endif
  !

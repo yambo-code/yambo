@@ -51,8 +51,8 @@ subroutine el_magnetization(en,Xk,magn)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,i_wf_up,i_wf_dn
- real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ(n_sp_pol)
+ integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
+ real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
  magn=0._SP
  cv=0._SP
@@ -61,53 +61,61 @@ subroutine el_magnetization(en,Xk,magn)
  !
  if (n_spin==1) return
  !
- do ik=1,Xk%nibz
-   do ib=1,en%nbm
-     !
-     if (associated(PAR_IND_WF_linear%element_2D)) then
-       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-     endif
-     !
-     if (size(WF%index,1)<ib)        cycle
-     if (size(WF%index,2)<ik)        cycle
-     !
-     i_wf_up=WF%index(ib,ik,1)
-     i_wf_dn=WF%index(ib,ik,2)
-     !
-     if (i_wf_up==0 .or. i_wf_dn==0) cycle
-     !
-     f_occ=en%f(ib,ik,:)
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     do ib=1,en%nbm
+       !
+       if (allocated(PAR_IND_WF_linear%element_2D)) then
+         if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       endif
+       !
+       if (size(WF%index)<ib)        cycle
+       if (size(WF%index)<ik)        cycle
+       if (size(WF%index)<i_sp_pol)  cycle
+       !
+       i_wf =WF%index(ib,ik,i_sp_pol)
+       !
+       if (i_wf==0) cycle
+       !
+       f_occ=en%f(ib,ik,i_sp_pol)
 #if defined _RT
-     if(l_real_time.and.associated(en%fo)) f_occ=en%fo(ib,ik,:)
+       if(l_real_time.and.allocated(en%fo)) f_occ=en%fo(ib,ik,i_sp_pol)
 #endif
-     !
-     if (n_spinor==2) then
        !
-       ! mx
+       if (n_sp_pol==2) then
+         !
+         ! mz
+         !
+         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))
+         !
+       else if(n_spinor==2) then
+         !
+         !
+         ! mx
+         !
+         cv(:,1)=cv(:,1)+Xk%weights(ik)*f_occ*(&
+&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
+&                   +real(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+         !
+         ! my
+         !
+         cv(:,2)=cv(:,2)+Xk%weights(ik)*f_occ*(&
+&                   +aimag(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
+&                   -aimag(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+         !
+         ! mz
+         !
+         cv(:,3)=cv(:,3)+Xk%weights(ik)*f_occ*(&
+&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))&
+&                   -real(conjg(WF%c(:,2,i_wf))*WF%c(:,2,i_wf)) )
+         !
+       endif
        !
-       cv(:,1)=cv(:,1)+Xk%weights(ik)*(&
-&              f_occ(1)*real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
-&             +f_occ(1)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
-       !
-       ! my
-       !
-       cv(:,2)=cv(:,2)+Xk%weights(ik)*(&
-&              f_occ(1)*aimag(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_dn))&
-&             -f_occ(1)*aimag(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_up)) )
-     endif
-     !
-     ! mz
-     !
-     cv(:,3)=cv(:,3)+Xk%weights(ik)*(&
-&            f_occ(1)       *real(conjg(WF%c(:,i_wf_up))*WF%c(:,i_wf_up))&
-&           -f_occ(n_sp_pol)*real(conjg(WF%c(:,i_wf_dn))*WF%c(:,i_wf_dn)) )
-     !
+     enddo
    enddo
-   !
-   !
  enddo
  !
- if (associated(PAR_IND_WF_linear%element_2D)) then
+ if (allocated(PAR_IND_WF_linear%element_2D)) then
    call PP_redux_wait(cv,COMM=PAR_COM_density%COMM)
  endif
  ! 

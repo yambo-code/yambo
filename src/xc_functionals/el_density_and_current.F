@@ -74,7 +74,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r
- real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(3,fft_size)
 ! complex(SP):: WF_der(3,fft_size)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
@@ -111,8 +111,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !
        f_occ=E%f(ib,ik,i_sp_pol)
 #if defined _RT
-       if(l_real_time.and.associated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
+       if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
 #endif
+!GPL_EXCLUDE_START
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
@@ -122,32 +123,34 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
 #endif
+!GPL_EXCLUDE_END
        !
-       do i_spinor=1,n_spinor
-         !
-         if (size(WF%index,3)<i_spinor)  cycle
-         !
-         i_wf=WF%index(ib,ik,i_sp_pol+i_spinor-1)
-         !
-         if (i_wf==0) then
-           if (.not.warn_done) call warning('Not enough states to calculate rho')
-           warn_done=.true.
-           cycle
-         endif
-         !
-         if (l_rho) rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_wf))**2
-         !
-         !if (l_J) then
-         !  !
-         !  call eval_Gradient(WF%c(:,ifft),WF_der,"wave")
-         !  !
-         !  do i_r=1,fft_size
-         !    J_no_sym(i_r,:)=J_no_sym(i_r,:)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_wf)*WF_der(i_r,:))
-         !  enddo
-         !  !
-         !endif
-         !
-       enddo
+       i_wf=WF%index(ib,ik,i_sp_pol)
+       !
+       if (i_wf==0) then
+         if (.not.warn_done) call warning('Not enough states to calculate rho')
+         warn_done=.true.
+         cycle
+       endif
+       !
+       !
+       if (l_rho) then
+         do i_spinor=1,n_spinor
+           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
+         enddo
+       endif
+       !
+       !if (l_J) then
+       !  !
+       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,"wave")
+       !  !
+       !  do i_spinor=1,n_spinor
+       !    do i_r=1,fft_size
+       !      J_no_sym(:,i_r)=J_no_sym(:,i_r)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(:,i_r,i_spinor))
+       !    enddo
+       !  enddo
+       !  !
+       !endif
        !
      enddo
    enddo
@@ -173,7 +176,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  !if (l_J) then
  !  do i_symm=1,rho_syms
- !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
+ !    J(:,:)=J(:,:)+real(J_no_sym(:,fft_rot_r(:,i_symm)),SP)/real(nsym,SP)
  !  enddo
  !endif
  ! 

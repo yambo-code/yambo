@@ -24,10 +24,10 @@
 subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
-&                         l_QP_DBs_merge,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
+&                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
  use pars,           ONLY:pi,SP,schlen
@@ -98,12 +98,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
 #endif
-#if defined _YPP_SURF
- what_is_running='YPP_SURF'
-#endif
-#if defined _YPP_RT
- what_is_running='YPP_RT'
-#endif
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
@@ -128,9 +122,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
  io_RT_G_err=io_RT_components('G' ,ID)
  if (io_RT_G_err==0) QP_nb=RT_bands(2)
+ !
+ ! GPL_EXCLUDE_END
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
  io_RT_JPSM_err=io_RT_components('JPSM' ,ID)
@@ -205,9 +203,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'QPDBs') then
      call initactivate(1,'QPDBs')
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
-     l_QP_DBs_merge            =trim(rstr_piece(i1+1))=='m'
+     l_QP_DBs_manipulate            =trim(rstr_piece(i1+1))=='m'
      if (l_QP_DBs_create_and_modify) call initactivate(1,'QPDB_edit')
-     if (l_QP_DBs_merge)             call initactivate(1,'QPDB_merge')
+     if (l_QP_DBs_manipulate)        call initactivate(1,'QPDB_merge')
    endif
    !
 #if defined _YPP_ELPH
@@ -259,6 +257,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    endif
    !
 #if defined _YPP_RT
+   !
+   ! GPL_EXCLUDE_START
+   !
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
@@ -266,9 +267,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      !
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
+     !
+     ! GPL_EXCLUDE_START
+     !
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
      !
      l_RT_occupations =index(rstr_piece(i1+1),'o')>0
@@ -279,6 +285,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_time        =trim(rstr_piece(i1+2))=='t'
      l_RT_energy      =trim(rstr_piece(i1+2))=='e'
      l_RT_2D_dos      =trim(rstr_piece(i1+2))=='d'
+     !
+     ! GPL_EXCLUDE_END
      !
    endif
 #endif
@@ -307,14 +315,23 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_bands)          call initactivate(1,'bnds')
    endif
 #if defined _YPP_RT
+   !
+   ! GPL_EXCLUDE_START
+   !
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
      if (l_RTpump_manual) call initactivate(1,'Select_manual')
      if (l_RTpump_Fermi)  call initactivate(1,'Select_Fermi')
    endif
+   !
+   ! GPL_EXCLUDE_END
+   !
    if ( trim(rstr_piece(i1)) == 'RealTime') then
      if (l_RT_X)           call initactivate(1,'RT_X')
+     !
+     ! GPL_EXCLUDE_START
+     !
      if (l_RT_abs)         call initactivate(1,'RTabs')
      if (l_RT_occupations) call initactivate(1,'RToccupations')
      if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
@@ -323,11 +340,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RT_time)        call initactivate(1,'RTtime')
      if (l_RT_energy)      call initactivate(1,'RTenergy')
      if (l_RT_2D_dos)      call initactivate(1,'RTdos')
+     !
+     ! GPL_EXCLUDE_END
+     !
    endif
 #endif
  enddo
  !
- l_flag=.not.l_sort
+ l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
@@ -342,6 +362,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
+ l_fix_save  =runlevel_is_on('fixsave')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -357,6 +378,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT
  !
  l_RealTime         = runlevel_is_on('RealTime')
+ !
+ l_RT_X             = runlevel_is_on('RT_X')
+ !
+ ! GPL_EXCLUDE_START
+ !
  l_RT_DBs           = runlevel_is_on('RTDBs')
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
@@ -364,7 +390,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RTpump_manual    = runlevel_is_on('Select_manual')
  l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
- l_RT_X             = runlevel_is_on('RT_X')
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
@@ -374,6 +399,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RT_time          = runlevel_is_on('RTtime')
  l_RT_energy        = runlevel_is_on('RTenergy')
  l_RT_2D_dos        = runlevel_is_on('RTdos')
+ !
+ ! GPL_EXCLUDE_END
  !
 #endif
 #if defined _YPP_MAGNETIC
@@ -424,7 +451,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
  !
  l_QP_DBs_create_and_modify = runlevel_is_on('QPDB_edit')
- l_QP_DBs_merge = runlevel_is_on('QPDB_merge')
+ l_QP_DBs_manipulate = runlevel_is_on('QPDB_merge')
  !
  ! GPL_EXCLUDE_START
  !
@@ -444,14 +471,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_INCLUDE_END
  !
+ if (l_fix_save) infile_editing=.false.
  !
  ! GPL_EXCLUDE_START
  !
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
- !
- if(l_QP_DBs_merge) call initactivate(1,"Z_input")
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
@@ -489,6 +515,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  if (l_RealTime) then
    !
+   ! GPL_EXCLUDE_START
+   !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
    l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
@@ -500,6 +528,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_bands)  call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
    if (l_RT_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   !
+   ! GPL_EXCLUDE_END
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
    !
@@ -537,32 +567,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp.and..not.l_excitons)   call initactivate(1,"DBsPATH PHfreqF PHmodeF GkkpExpand GkkpConvert")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
-#endif
- !
-#if defined _YPP_SURF
- !
- lsurf =runlevel_is_on('surf')
- lras  =runlevel_is_on('ras')
- lreels=runlevel_is_on('reels')
- lloc  =runlevel_is_on('loc')
- ltrans=runlevel_is_on('trans')
- if(lsurf) then
-   if (lras) call initactivate(1,"XData YData "//&
-&       " BulkFile BulkForm BlkShift BlkBroad "//&
-&       " DataType SrfShift d_cell")
-   if (lreels) call initactivate(1,"XData YData ZData"//&
-&       " q0x q0y"//&
-&       " BulkFile BulkForm BlkShift BlkBroad Layers"//&
-&       " DataType SrfShift d_cell "//&
-&       " E0 Theta0 Thetap Phi DetAngle "//&
-&       " LossForm ImpactFt DetIntMd NumIntPt GausConv")
-   if(lloc) call initactivate(1,"NormDir LowerLim UpperLim NGLoc LbndRnge KptRange WrtLocDB")
-   if(ltrans) call initactivate(1,"EcvMin EcvMax qdir")
- endif
- !
 #endif
  !
  ! Check for existing QP control fields to be proposed in the new input files
@@ -576,7 +583,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call PP_redux_wait
  endif
  !
- if (l_QP_DBs_create_and_modify.or.l_QP_DBs_merge) call QP_DBs_initialize()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
  l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
 #if defined _YPP_ELPH
@@ -589,20 +596,32 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (.not.l_init_QP) l_init_QP=l_angular_momentum.or.l_position
 #endif
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  if (.not.l_init_QP) l_init_QP=l_RT_occupations.or.l_RT_lifetimes
  if (     l_init_QP) call INIT_QP(.FALSE.,infile_verbosity==V_real_time)
  if (l_RT_DBs)  call RT_DBs_initialize()
 #else
+ ! GPL_EXCLUDE_END
  if (l_init_QP) call INIT_QP(.FALSE.,.FALSE.)
+ ! GPL_EXCLUDE_START
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Check and fill all possible vectorial USER fields
  !
  l_flag=l_bands
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_bands
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  if (l_flag) call USER_vector_handle("BKpts")
  !
  if (l_bz_grids) then

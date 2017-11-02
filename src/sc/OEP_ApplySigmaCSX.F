@@ -45,8 +45,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use R_lattice,       ONLY:bz_samp,g_rot,qindx_S,nkibz,G_m_G
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
- use collision,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
- use memory_m,        ONLY:mem_est
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
  use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:PARALLEL_index
  use wave_func,       ONLY:WF
@@ -59,7 +58,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  ! I/O
  !
- implicit none
+#include<memory.h>
  complex(SP),intent(inout)  :: U_csx(nkibz,n_met_bands,fft_size)
  type(levels), intent(in)   :: E
  type(bz_samp), intent(in)  :: k,q
@@ -70,8 +69,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !
  type(elemental_collision) ::isc
  type(PP_indexes)          ::px
- integer          ::iv1,iv2,ir,ig1,ig2,i1,i2,ik,iq,ifft,offt,os,is,iGo
- integer          ::io_err,alloc_err,ID,iqs,iqibz
+ integer          ::iv1,iv2,i1,i2,ik,iq,ifft,offt,os,is,iGo
+ integer          ::io_err,ID,iqs,iqibz
  character(schlen)::ch
  logical          ::lostr, PPaR_is_TR_rotated     
  complex(DP),allocatable  ::u(:),rhotw_rs(:),u_rs(:),local_u(:),Vcoh(:),Vcoh_rs(:)
@@ -92,11 +91,15 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  !
  call X_alloc('X',(/X%ng,X%ng,1/))
- allocate(PPaR_ws(X%ng,X%ng),PPaR(X%ng,X%ng),stat=alloc_err)
- call mem_est("PPaR",(/2*size(PPaR_ws)/),errors=(/alloc_err/))
+ YAMBO_ALLOC(PPaR_ws,(X%ng,X%ng))
+ YAMBO_ALLOC(PPaR,(X%ng,X%ng))
  !
  call elemental_collision_alloc(isc,TITLE="OEP_SigmaCSX",NG=X%ng,NG_GAMP=(/X%ng,X%ng/))
- allocate(local_u(fft_size),u(X%ng),u_rs(fft_size),rhotw_rs(fft_size),Vcoh(X%ng),stat=alloc_err)
+ YAMBO_ALLOC(local_u,(fft_size))
+ YAMBO_ALLOC(u,(X%ng))
+ YAMBO_ALLOC(u_rs,(fft_size))
+ YAMBO_ALLOC(rhotw_rs,(fft_size))
+ YAMBO_ALLOC(Vcoh,(X%ng))
  !
  isc%qs=1
  !call scatterGamp(isc,'c') !???
@@ -171,8 +174,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
          ifft=WF%index(iv1,ik,1)
          offt=WF%index(iv2,isc%os(2),1)
          rhotw_rs(:)=E%f(iv2,isc%os(2),1)/spin_occ
-         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(1:fft_size,os),offt))
-         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(1:fft_size,os),offt)
+         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(1:fft_size,os),1,offt))
+         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(1:fft_size,os),1,offt)
          local_u(:) =  u_rs(fft_rot_r(:,iqs))*rhotw_rs(:)
          U_csx(ik,iv1,:) = U_csx(ik,iv1,:)-local_u(:)
           call live_timing(steps=1)
@@ -181,11 +184,14 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
      end do
    end do
  end do
- deallocate(local_u,u,u_rs,rhotw_rs)
+ YAMBO_FREE(local_u)
+ YAMBO_FREE(u)
+ YAMBO_FREE(u_rs)
+ YAMBO_FREE(rhotw_rs)
  !
  ! COH applied to the WF: FFT,then multiply by WFs and add to SX
  !
-!  allocate(Vcoh_rs(fft_size))
+ YAMBO_ALLOC(Vcoh_rs,(fft_size))
 !  Vcoh_rs(fft_g_table(1:,1))=Vcoh(1:) 
 ! #if defined _FFTW
 !  fftw_plan=0
@@ -201,7 +207,8 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
 !  end do
  !
  call live_timing()
-! deallocate(Vcoh,Vcoh_rs)
+ YAMBO_FREE(Vcoh)
+ YAMBO_FREE(Vcoh_rs)
  call elemental_collision_free(isc)
  call PP_indexes_reset(px)
  !

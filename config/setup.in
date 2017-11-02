@@ -1,64 +1,71 @@
 @SET_MAKE@
-#====================================
+#========================================================
 #        @PACKAGE_STRING@ setup
-#====================================
+#========================================================
 #
 # Main setup
 #
 package_string    = @PACKAGE_STRING@
 cpu         = @build_cpu@
 os          = @build_os@
-debug       = @enable_debug@
+keep_objs   = @enable_keep_objects@
 make        = @MAKE@
 ar          = @AR@
 arflags     = @AR_FLAGS@
 cc          = @CC@
-cflags      = @CFLAGS@
-pcc         = @PCC@
-pccflags    = @PCCFLAGS@
-cpp         = @C_AS_CPP@
-cppflags    = @C_AS_CPP_FLAGS@ 
+cflags      = @CFLAGS@ 
+cpp         = @CPP@
+cppflags    = @CPPFLAGS_yambo@ 
 fpp         = @FPP@
-f90         = @F90@
-f90flags    = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
-f90uflags   = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
+fc          = @FC@
+fc_kind     = @FCKIND@
+fcflags     = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
+fcuflags    = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f90suffix   = @F90SUFFIX@
-pf90        = @PF90@
-pf90flags   = @PF90FLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f77         = @F77@
-f77flags    = @FFLAGS@
-f77uflags   = @UFFLAGS@
+fflags      = @FFLAGS@
+fuflags     = @FUFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
+shell       = @SHELL@
 #
 # Paths
 #
 prefix      = @prefix@
 exec_prefix = @exec_prefix@/bin
-topdir      = @abs_top_srcdir@
-srcdir      = @srcdir_path@
-libdir      = @srcdir_path@/lib
-libpath     = -L@srcdir_path@/lib @LDFLAGS@
-includedir  = @srcdir_path@/include
+libs_prefix = @extlibs_path@
+srcdir      = @abs_top_srcdir@
+prefix      = @prefix@
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
+sysinclude  = @prefix@/include/system
 lblas       = @BLAS_LIBS@
 llapack     = @LAPACK_LIBS@
 lblacs      = @BLACS_LIBS@
 lscalapack  = @SCALAPACK_LIBS@
-lmpi        = @MPILIBS@
+lmpi        = @MPI_LIBS@
+impi        = @MPI_INCS@
+mpidir      = @MPI_PATH@
 lopenmp     = @OPENMPLIBS@
-lnetcdf     = @NCLIBS@
-netcdf_aux  = @NCFLAGS@ 
-netcdf_idir = @netcdf_idir@
-llibxc      = @LIBS_LIBXC@
-lfftqe      = @FFTQELIBS@
-lfft	    = @FFT_LIBS@
-liotk	    = @IOTK_LIBS@
-iotk_idir   = @iotk_idir@
-letsf	    = @ETSF_LIBS@
-etsf_idir   = @etsf_idir@
+lnetcdf     = @NETCDF_LIBS@
+inetcdf     = @NETCDF_INCS@
+lnetcdff    = @NETCDFF_LIBS@
+inetcdff    = @NETCDFF_INCS@
+netcdf_opt  = @NETCDF_OPT@
+netcdf_ver  = @NETCDF_VER@
+netcdf_flag = @NETCDFFLAGS@
+lhdf5       = @HDF5_LIBS@
+ihdf5       = @HDF5_INCS@
+hdf5_opt    = @HDF5_OPT@
+llibxc      = @LIBXC_LIBS@
+ilibxc      = @LIBXC_INCS@
+lfft        = @FFT_LIBS@
+ifft        = @FFT_INCS@
+liotk       = @IOTK_LIBS@
+iiotk       = @IOTK_INCS@
+letsf       = @ETSF_LIBS@
+ietsf       = @ETSF_INCS@
 #
 # VPATH
 #
 VPATH = $$topdir
-#
-#
 #

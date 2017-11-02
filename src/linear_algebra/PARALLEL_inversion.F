@@ -28,67 +28,64 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_inversion(ORTHO,POOL,M_slk,N,M)
+subroutine PARALLEL_inversion(M,N)
  !
  ! perform the inversion by using scalapack
  !
- use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,myid
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use SLK_m,          ONLY:SLK_ORTHO
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
+&                         LINEAR_ALGEBRA_WS_clean_up
+ use matrix,         ONLY:PAR_matrix
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer           :: N
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: M_slk
- complex(SP)       :: M(N,N)
+ type(PAR_matrix)  :: M
  !
- character(64) :: subname="PARALLEL_inversion"
- logical :: do_SLK
+ character(64)     :: subname="PARALLEL_inversion"
+ type(LALGEBRA_WS) :: WS
  !
- ! spectator tasks
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
- M=0.0_SP
- !
- do_SLK=.TRUE.
- if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
- !
- if ( do_SLK ) then
-   !
-   ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
-   ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
-   !
-   M_slk%lwork  = M_slk%nrows*M_slk%nrows
-   M_slk%liwork = M_slk%nrows+M_slk%nrows
-   !
-   allocate( WS%v_cmplx(M_slk%lwork) )
-   allocate( WS%vp_int(M_slk%liwork) ) 
-   allocate( WS%v_int(N+M_slk%nrows) )
-   !
-#if defined _DOUBLE
-   CALL PZGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
-   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRF')
-   !
-   CALL PZGETRI( N, M_slk%blc, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
-   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PZGETRI')
-#else
-   CALL PCGETRF( N, N, M_slk%blc, 1, 1, M_slk%desc, WS%v_int, M_slk%info )
-   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRF')
-   !
-   CALL PCGETRI( N, M_slk%blc, 1, 1, M_slk%desc,WS%v_int, WS%v_cmplx, M_slk%lwork, WS%vp_int, M_slk%liwork, M_slk%info )
-   if ( M_slk%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing PCGETRI')
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='start')
 #endif
-   !
-   ! gather the inverse matrix
-   !
-   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=M_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)
-   !
- endif
  !
- call PP_redux_wait(M,COMM=POOL%INTRA_comm)
+ ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
+ ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
+ !
+ M%lwork  = M%BLCnrows*M%BLCnrows
+ M%liwork = M%BLCnrows+M%BLCnrows
+ !
+ YAMBO_ALLOC(WS%v_cmplx,(M%lwork))
+ YAMBO_ALLOC(WS%vp_int,(M%liwork))
+ YAMBO_ALLOC(WS%v_int,(N+M%nrows))
+ !
+#if defined _DOUBLE
+ CALL PZGETRF&
+#else
+ CALL PCGETRF&
+#endif
+& ( N, N, M%blc(:,:,M%I), 1, 1, M%desc, WS%v_int, M%info )
+ !
+ if ( M%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GETRF')
+ !
+#if defined _DOUBLE
+ CALL PZGETRI&
+#else
+ CALL PCGETRI&
+#endif
+& ( N, M%blc(:,:,M%I),1, 1, M%desc,WS%v_int, WS%v_cmplx, M%lwork, WS%vp_int, M%liwork, M%info )
+ !
+ if ( M%info /= 0 ) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GETRI')
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_inversion',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_inversion

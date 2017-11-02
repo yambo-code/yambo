@@ -24,16 +24,15 @@
 subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO
- use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
-&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BS_mat,&
-&                         BSS_n_descs,BSS_description,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_add_antiresonant
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
+&                         BSS_n_descs,BSS_description,BSS_eh_W,&
+&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -48,7 +47,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp),  intent(in)  :: W
  type(levels),  intent(in)  :: E
@@ -56,17 +55,15 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  integer,       intent(in)  :: iq,Lo_dim,Lo_n_loop
  complex(SP),   intent(out) :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
+ ! Work Space
+ !
  type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
- !
- logical          :: K_diago_in_BS_mat
- integer          :: i_res,i_cpl,i_Lo_trans,i3,i4,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
+ integer          :: i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual
 #if defined _PL
  complex(SP)      :: SF(W%n_freqs,2)
 #endif
- !
- complex(SP), allocatable :: BS_mat_diagonal(:)
  !
 #if defined _PL
  !
@@ -79,55 +76,12 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  Epsilon_ii(:,3:4) = cZERO
  !
- call parser('BSSInvKdiag',K_diago_in_BS_mat)
- !
- if (.not.K_diago_in_BS_mat) allocate(BS_mat_diagonal(BS_K_dim))
- !
- do i_res=1,BS_K_dim
-   i_cpl=i_res+BS_K_dim
-   !
-   ! I need to remove energies and width from the diagonal of the BS_mat
-   ! These are now embodied in the Green's function.
-   !
-   if (.not.allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i_res)
-   if (     allocated(BSS_eh_Z)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
-   !
-   BS_mat(i_res,i_res)=BS_mat(i_res,i_res)-E_plus_W
-   if (index(BSE_mode,'coupling')>0) BS_mat(i_cpl,i_cpl)= BS_mat(i_cpl,i_cpl)+conjg(E_plus_W)
-   !
-   do i3=1,BS_K_dim
-     i4=i3+BS_K_dim
-     !
-     ! I need to remove the occupation factors from the kernel
-     ! These are now embodied in the Green's function
-     !
-     BS_mat(i3,i_res)=BS_mat(i3,i_res)/sqrt(BSS_eh_f(i3))/sqrt(BSS_eh_f(i_res))
-     if (index(BSE_mode,'coupling')>0) then
-       BS_mat(i_res,i4)= BS_mat(i_res,i4)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))/cI
-       BS_mat(i_cpl,i3)= BS_mat(i_cpl,i3)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))/cI
-       BS_mat(i_cpl,i4)=-BS_mat(i_cpl,i4)/sqrt(BSS_eh_f(i_res))/sqrt(BSS_eh_f(i3))
-     endif
-   enddo
-   !
-   if (.not.K_diago_in_BS_mat) then
-     !
-     ! I store the diagonal of the kernel only in BS_mat_diagonal to be inserted in Lo
-     !
-     BS_mat_diagonal(i_res)=BS_mat(i_res,i_res)
-     !
-     BS_mat(i_res,i_res)=cZERO
-     if (index(BSE_mode,'coupling')>0) BS_mat(i_cpl,i_cpl)= cZERO
-     !
-   endif
-   !
- enddo
- !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range
  ! to be easily convoluted
  !
- if (associated(E%GreenF)) then
+ if (allocated(E%GreenF)) then
    call X_GreenF_remap(BS_bands,E,W)
    BSS_uses_GreenF=.TRUE.
  endif
@@ -136,7 +90,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
- !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BS_K_dim/))
  !
@@ -193,11 +146,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
      !
      if(i_loop==2) then
-       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
-       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_mat_diagonal(i_res)*BSS_eh_f(i_res)
+       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
+       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
      endif
      !
-     if ( .not.associated(E%GreenF) ) then
+     if ( .not.allocated(E%GreenF) ) then
        !
        ! Analytical GFs
        !================
@@ -282,7 +235,9 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
    !
  enddo
  !
- if(.not.K_diago_in_BS_mat) deallocate(BS_mat_diagonal)
+ if(.not.K_diago_in_BS_mat) then
+   YAMBO_FREE(BS_diagonal)
+ endif
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '

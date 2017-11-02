@@ -23,22 +23,25 @@
 !
 integer function io_COL_CUT(ID)
  !
- use pars,           ONLY:SP
  use wave_func,      ONLY:wf_ng
- use matrix_operate, ONLY:mat_c2r,mat_r2c
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,CUTOFF_plus_RIM,&
 &                         cyl_ph_radius,box_length,cyl_length,cut_geometry,&
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on
- implicit none
+&                         io_elemental,io_status,io_bulk
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  integer :: ID
  ! 
  ! Work Space
  !
- real(SP),allocatable::bare_qpg_disk(:,:,:)
- integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ncx
+ integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_db
  !
+#if defined _TIMING
+ call timing('io_COL_CUT',OPR='start')
+#endif
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
  if (io_COL_CUT/=0) goto 1
@@ -65,7 +68,7 @@ integer function io_COL_CUT(ID)
 &       VAR=' Sphere/Cylinder radius      [au]:',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,R0=cyl_length,&
 &       VAR=' Cylinder length             [au]:',CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ncx,&
+   call io_elemental(ID,I0=wf_ng,DB_I0=wf_ng_db,&
 &       VAR=' RL components                   :',CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,I0=ng_closed,&
 &       VAR=' RL components used in the sum   :',CHECK=.true.,OP=(/"=="/))
@@ -88,20 +91,16 @@ integer function io_COL_CUT(ID)
  endif
  !
  if (any((/io_sec(ID,:)==2/))) then
-   ! 
-   allocate(bare_qpg_disk(nqibz,wf_ncx,2))
-   ! 
-   if (write_is_on(ID)) call mat_c2r(bare_qpg,bare_qpg_disk)
    !
-   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=shape(bare_qpg_disk))
-   call io_bulk(ID,R3=bare_qpg_disk)
-   !   
-   if (read_is_on(ID)) call mat_r2c(bare_qpg_disk,bare_qpg)
-   !
-   deallocate(bare_qpg_disk)
+   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng_db/))
+   call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
    !
  endif
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_COL_CUT',OPR='stop')
+#endif
  !
 end function

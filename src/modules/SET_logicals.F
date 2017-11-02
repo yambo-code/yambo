@@ -23,7 +23,7 @@
 !
 subroutine SET_logicals()
  !
- use pars,       ONLY:schlen
+ use pars,       ONLY:schlen,n_max_DB_IO_off_fields
  use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
@@ -39,8 +39,7 @@ subroutine SET_logicals()
  ! Work Space
  !
  integer            ::i_ch
- integer, parameter ::n_max=20
- character(schlen)  ::ch_piece(n_max)
+ character(schlen)  ::ch_piece(n_max_DB_IO_off_fields)
  !
  ! Parallel Master & CPU log
  !===========================
@@ -69,6 +68,9 @@ subroutine SET_logicals()
  io_SCREEN  =.FALSE.
  io_HF      =.TRUE.
  io_COLLs   =.TRUE.
+ !GPL_INCLUDE_START
+ !io_COLLs   =.FALSE.
+ !GPL_INCLUDE_END
  io_GF      =.TRUE.
  io_J       =.TRUE.
  io_CARRIERs=.TRUE.
@@ -78,7 +80,7 @@ subroutine SET_logicals()
  ch_piece=' '
  call string_split(DBs_IO_control_string,ch_piece)
  !
- do i_ch=1,n_max
+ do i_ch=1,n_max_DB_IO_off_fields
    if (str_check(4,(/"DIP","dip","ALL","all"/),ch_piece(i_ch)) ) io_DIP     =.FALSE.
    if (str_check(4,(/"X  ","x  ","ALL","all"/),ch_piece(i_ch)) ) io_RESPONSE=.FALSE.
    if (str_check(4,(/"W  ","w  ","ALL","all"/),ch_piece(i_ch)) ) io_SCREEN  =.FALSE.
@@ -113,7 +115,7 @@ subroutine SET_logicals()
  ch_piece=' '
  call string_split(DBs_FRAG_control_string,ch_piece)
  !
- do i_ch=1,n_max
+ do i_ch=1,n_max_DB_IO_off_fields
    !
    if (str_check(4,(/"+DIP","+dip","+ALL","+all"/),ch_piece(i_ch)) ) frag_DIP     =.TRUE.
    if (str_check(4,(/"+X  ","+x  ","+ALL","+all"/),ch_piece(i_ch)) ) frag_RESPONSE=.TRUE.

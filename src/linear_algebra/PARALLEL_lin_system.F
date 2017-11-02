@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AF, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,54 +21,54 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_lin_system(ORTHO,POOL,A_slk,B_slk,n,nrhs,B)
+subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  !  Solve the linear system
+ !
  !                   A X = B
+ !
  !  where A is a n-x-n matrix and B is n-x-nrhs
  !
- use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use SLK_m,          ONLY:SLK_ORTHO
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
+&                         LINEAR_ALGEBRA_WS_clean_up
+ use matrix,         ONLY:PAR_matrix
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
  integer           :: n,nrhs
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: A_slk, B_slk
- complex(SP)       :: B(n,nrhs)
+ type(PAR_matrix)  :: A, B
  !
- character(64) :: subname="PARALLEL_lin_system"
- logical :: do_SLK
+ character(64)     :: subname="PARALLEL_lin_system"
+ type(LALGEBRA_WS) :: WS
  !
- B=0.0_SP
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
- do_SLK=.TRUE.
- if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
- !
- if ( do_SLK ) then
-   ! better estimate of the dimensions to be included
-   if (allocated(WS%v_int)) deallocate(WS%v_int)
-   allocate(WS%v_int(n+A_slk%nrows))
-   !
-#if defined _DOUBLE
-   CALL PZGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZGESV')
-#else
-   CALL PCGESV( n, nrhs, A_slk%blc, 1, 1, A_slk%desc, WS%v_int, B_slk%blc, 1, 1, B_slk%desc, WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCGESV')
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='start')
 #endif
-   !
-   ! gather the solution
-   !
-   B(B_slk%rows(1):B_slk%rows(2),B_slk%cols(1):B_slk%cols(2))=B_slk%blc(:B_SLK%nrows_used,:B_SLK%ncols_used)
-   !
- endif
  !
- call PP_redux_wait(B,COMM=POOL%INTRA_comm)
+ ! better estimate of the dimensions to be included
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
+ YAMBO_FREE(WS%v_int)
+ YAMBO_ALLOC(WS%v_int,(n+A%nrows))
+ !
+#if defined _DOUBLE
+ CALL PZGESV&
+#else
+ CALL PCGESV&
+#endif
+& ( n, nrhs, A%blc(:,:,A%I), 1, 1, A%desc, WS%v_int, B%blc(:,:,B%I), 1, 1, B%desc, WS%i_fail)
+ !
+ if (WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)GESV')
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS) 
  ! 
+#if defined _TIMING
+ call timing('PARALLEL_lin_system',OPR='stop')
+#endif
+ !
 end subroutine

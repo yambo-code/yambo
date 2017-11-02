@@ -28,81 +28,73 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, n, M, E)
+subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,myid
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use parallel_m,     ONLY:PP_redux_wait
+ use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use matrix,         ONLY:PAR_matrix
  !
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  !
- integer           :: n
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: M_slk,EIGEN_slk
- complex(SP)       :: M(n,n)
- real(SP)          :: E(n)
+ integer           :: N
+ type(PAR_matrix)  :: M,V
+ real(SP)          :: E(N)
  !
- character(64) :: subname="PARALLEL_HERMITIAN_diagonalization"
- logical :: do_SLK
- integer :: lwork,lrwork
- real(SP):: rvar
- complex(SP) :: cvar
-
+ character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
+ integer           :: lwork,lrwork
+ real(SP)          :: rvar
+ complex(SP)       :: cvar
+ type(LALGEBRA_WS) :: WS
  !
- ! spectator tasks
- !
- M=0.0_SP
  E=0.0_SP
  !
- do_SLK=.TRUE.
- if (ORTHO%coordinate(1)==-1) do_SLK=.FALSE.
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
- if ( do_SLK ) then
-   !
-   lwork=-1
-   lrwork=-1
-   !
-#if defined _DOUBLE
-   call PZHEEV('V','U',n,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-               cvar,lwork,rvar,lrwork,WS%i_fail)
-#else
-   call PCHEEV('V','U',n,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-               cvar,lwork,rvar,lrwork,WS%i_fail)
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
 #endif
-   !
-   !lwork=nint(real(cvar))
-   !lrwork=nint(rvar)
-   ! AF: better estimates should be used
-   lwork=2*n**2
-   lrwork=2*n + 2*n-2
-   allocate(WS%v_cmplx(lwork))
-   allocate(WS%v_real(lrwork))
-   !
+ !
+ lwork=-1
+ lrwork=-1
+ !
 #if defined _DOUBLE
-   call PZHEEV('V','U',n,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-               WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZHEEV')
+ call PZHEEV&
 #else
-   call PCHEEV('V','U',n,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-               WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
-   if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCHEEV')
+ call PCHEEV&
 #endif
-   !
-   ! gather eigenvalues and eigenvectors
-   !
-   if (ORTHO%task/=0) E=0.0_SP
-   M(M_slk%rows(1):M_slk%rows(2),M_slk%cols(1):M_slk%cols(2))=EIGEN_slk%blc(:M_slk%nrows_used,:M_slk%ncols_used)
-   !
- endif
+&  ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,cvar,lwork,rvar,lrwork,WS%i_fail)
  !
- call PP_redux_wait(M,COMM=POOL%INTRA_comm)
- call PP_redux_wait(E,COMM=POOL%INTRA_comm)
+ ! AF: A better estimates should be used
+ lwork=2*n**2
+ lrwork=2*n + 2*n-2
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ YAMBO_ALLOC(WS%v_real,(lrwork))
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS)
- ! 
+#if defined _DOUBLE
+ call PZHEEV&
+#else
+ call PCHEEV&
+#endif
+& ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
+ !
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)HEEV')
+ !
+ if (SLK_ORTHO%task/=0) E=0.0_SP
+ !
+ call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ !
+#if defined _TIMING
+ call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
+#endif
+ !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

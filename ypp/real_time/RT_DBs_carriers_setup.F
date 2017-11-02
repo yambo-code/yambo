@@ -28,7 +28,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:JPC_RT_IO_t
- use real_time,     ONLY:RT_carriers,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,NE_i_time,RT_nk
+ use real_time,     ONLY:RT_carriers,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,NE_i_time,RT_nk,l_RT_CCA_Kernel
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
  !
  implicit none
@@ -41,11 +41,14 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  integer           :: io_RT_err,ID
  integer, external :: io_RT_components,RT_k_grid
  !
+ call section('*','Manual carriers excitation')
+ !
+ NE_i_time   =1
+ !
  l_elel_scatt    =.true.
  l_elph_scatt    =.true.
  l_elphoton_scatt=.true.
- !
- NE_i_time   =1
+ l_RT_CCA_Kernel =.true.
  !
  RT_nk=RT_k_grid(en,kpt,qpt)
  !

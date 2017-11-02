@@ -57,15 +57,8 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  ! Serial (LK) case (altough this does not mean serial job)
  if (Ncpu_lin_algebra==1) then  
    !
-   if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
-     call SLK_communicators( PAR_COM_NULL, PAR_COM_Q_A2A, 1)
-   else if (ENVIRONMENT=="Response_T_space") then
-     call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
-   endif
-   !
-   linear_algebra_is_parallel=.FALSE.
-   !
-   call msg('s','[LA] SERIAL linear algebra')
+   call SERIAL_fallback()
+   call PARALLEL_PAR_to_PAR_comms_init()
    !
    return
    !
@@ -83,7 +76,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
    !
    call SLK_communicators( SLK_COM_A2A(1), SLK_COM_INDEX(1), Ncpu_in )
    !
- else if (ENVIRONMENT=="Response_T_space") then
+ else if (ENVIRONMENT=="Response_T_space".or.ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !
    call SLK_communicators( PAR_COM_WORLD, PAR_COM_NULL, Ncpu_in )
    !
@@ -96,7 +89,11 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  Ncpu_lin_algebra=min(Ncpu_lin_algebra,PAR_COM_SLK%n_CPU)
  ! 
  if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
- if (.not.linear_algebra_is_parallel) return
+ if (.not.linear_algebra_is_parallel) then
+   call SERIAL_fallback( )
+   call PARALLEL_PAR_to_PAR_comms_init()
+   return
+ endif
  !
  ! init SLK
  !
@@ -121,4 +118,24 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  endif
 #endif
  !
+ ! PAR to PAR comms init
+ !
+ call PARALLEL_PAR_to_PAR_comms_init()
+ !
+ contains
+   !
+   subroutine SERIAL_fallback
+     !
+     if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
+       call SLK_communicators( PAR_COM_NULL, PAR_COM_Q_A2A, 1)
+     else if (ENVIRONMENT=="Response_T_space".or.ENVIRONMENT=="Response_G_space_Zero_Momentum") then
+       call SLK_communicators( PAR_COM_NULL, PAR_COM_WORLD, 1)
+     endif
+     !
+     linear_algebra_is_parallel=.FALSE.
+     !
+     call msg('s','[LA] SERIAL linear algebra')
+     !
+   end subroutine
+   !
 end subroutine

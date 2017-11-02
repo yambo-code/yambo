@@ -32,6 +32,7 @@ sbin/yambo_versions_update.tcsh r
 git add configure
 git add include/version.inc
 git add config/version.m4
+git add config/version.m4_gpl
 EOF
 chmod +x .git/hooks/pre-commit
 #

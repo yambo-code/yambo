@@ -31,7 +31,7 @@ subroutine scatter_Gamp(isc,mode)
  !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
- use collision,     ONLY:elemental_collision
+ use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  implicit none

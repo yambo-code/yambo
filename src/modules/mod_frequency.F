@@ -25,7 +25,7 @@ module frequency
  !
  use pars,  ONLY:SP
  use units, ONLY:HA2EV
- implicit none
+#include<memory.h>
  !
  ! Bare 2 Coarse grid
  !
@@ -52,36 +52,32 @@ module frequency
    real(SP)     :: damp_reference
    real(SP)     :: dr(2)
    real(SP)     :: per_memstps
-   complex(SP),pointer :: p(:) => null() 
+   complex(SP),allocatable :: p(:)
  end type w_samp
  !
  contains
    !
    subroutine W_duplicate(Wi,Wo)
-     use memory_m, ONLY:mem_est
      type(w_samp):: Wi,Wo
      Wo%n_freqs=Wi%n_freqs
      Wo%per_memstps=Wi%per_memstps
      Wo%er=Wi%er
      Wo%dr=Wi%dr
      Wo%damp_reference=Wi%damp_reference
-     if (associated(Wi%p)) then
-       allocate(Wo%p(Wo%n_freqs))
-       call mem_est("W-p",(/Wo%n_freqs/))
+     if (allocated(Wi%p)) then
+       YAMBO_ALLOC(Wo%p,(Wo%n_freqs))
        Wo%p=Wi%p
      endif
    end subroutine W_duplicate
    !
    subroutine W_reset(W)
-     use memory_m, ONLY:mem_est
      type(w_samp)::W
      W%n_freqs=100
      W%per_memstps=100._SP
      W%er=(/0._SP,10._SP/)/HA2EV
      W%dr=(/0.1_SP,0.1_SP/)/HA2EV
      W%damp_reference=0._SP
-     nullify(W%p)
-     call mem_est("W-p")
+     YAMBO_FREE(W%p)
    end subroutine W_reset
    !
 end module frequency

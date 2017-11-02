@@ -43,10 +43,10 @@ integer function RT_k_grid(E,k,q)
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk
  use R_lattice,      ONLY:bz_samp
  !
- implicit none
+#include<memory.h>
  !
  type(levels), intent(in) :: E
  type(bz_samp),intent(in) :: k
@@ -56,14 +56,19 @@ integer function RT_k_grid(E,k,q)
  !
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
- !
+ ! 
+ ! GPL_EXCLUDE_START
  l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !l_RT_uses_E_DbGd=.FALSE.
+ ! GPL_INCLUDE_END
  !
  if (.not.allocated(DbGd_ibz_coo)) then
-   allocate(DbGd_ibz_coo(k%nibz,2))
-   allocate(DbGd_bz_coo(k%nbz,2))
-   allocate(RT_ibz_coo(k%nibz,2))
-   allocate(RT_Nk_ibz(k%nibz))
+   YAMBO_ALLOC(DbGd_ibz_coo,(k%nibz,2))
+   YAMBO_ALLOC(DbGd_bz_coo,(k%nbz,2))
+   YAMBO_ALLOC(RT_ibz_coo,(k%nibz,2))
+   YAMBO_ALLOC(RT_Nk_ibz,(k%nibz))
  endif
  !
  ! No DbGd, trivial definitions
@@ -74,10 +79,10 @@ integer function RT_k_grid(E,k,q)
    !
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
-   allocate(RT_all2ibz(k%nibz))
+   YAMBO_ALLOC(RT_all2ibz,(k%nibz))
    if(l_elel_scatt) then
-     allocate(DbGd_EE_scatt_table(k%nibz,q%nbz))
-     allocate(DbGd_EE_Nk_table(k%nibz,k%nibz))
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(k%nibz,q%nbz))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(k%nibz,k%nibz))
      DbGd_EE_scatt_table=.true.
      DbGd_EE_Nk_table=1
    endif
@@ -91,8 +96,12 @@ integer function RT_k_grid(E,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! DbGd support
  !=============
+ !
+ RT_DbGd_nk=BZ_DbGd_tot_nkpts
  !
  RT_k_grid=0
  !
@@ -106,7 +115,7 @@ integer function RT_k_grid(E,k,q)
  do ik=1,k%nbz
    DbGd_bz_coo(ik,:)=(/sum(BZ_DbGd_nkpt(:ik-1))+1,sum(BZ_DbGd_nkpt(:ik))/)
  enddo
- allocate(RT_all2ibz(RT_k_grid))
+ YAMBO_ALLOC(RT_all2ibz,(RT_k_grid))
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_all2ibz(ik_rim)=ik
@@ -116,8 +125,8 @@ integer function RT_k_grid(E,k,q)
  if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
-     allocate(DbGd_EE_scatt_table(RT_k_grid,RT_k_grid))
-     allocate(DbGd_EE_Nk_table(RT_k_grid,k%nibz))
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_k_grid,RT_k_grid))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(RT_k_grid,k%nibz))
    endif
    !
    l_check=.false.
@@ -174,5 +183,7 @@ integer function RT_k_grid(E,k,q)
    enddo
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end function RT_k_grid

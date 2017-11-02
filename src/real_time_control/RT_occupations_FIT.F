@@ -30,6 +30,9 @@ subroutine RT_occupations_FIT(T_fit,Ef_fit,Occ_bk)
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_carriers
  use functions,      ONLY:Fermi_fnc_fit
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -39,6 +42,10 @@ subroutine RT_occupations_FIT(T_fit,Ef_fit,Occ_bk)
  real(SP) :: Occ_rt(RT_carriers%nstates)
  integer  :: nfit,i_RT,ib,ik_RT
  real(SP) :: err_fit(4)
+ !
+#if defined _TIMING
+ call timing('RT occupations fit',OPR='start')
+#endif
  !
  do i_RT=1,RT_carriers%nstates
    ib   =RT_carriers%table(i_RT,1)
@@ -56,6 +63,10 @@ subroutine RT_occupations_FIT(T_fit,Ef_fit,Occ_bk)
    T_fit(2) =-T_fit(2)
    Ef_fit(2)=0._SP
  endif
+ !
+#if defined _TIMING
+ call timing('RT occupations fit',OPR='stop')
+#endif
  !
  return
  !

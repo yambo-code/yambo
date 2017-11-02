@@ -1,0 +1,56 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=liblapack.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_lapack)
+TARBALL=$(tarball_lapack)
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	cat $(prefix)/config/setup $(srcdir)/lib/lapack/make.inc_lib > make.inc ; \
+	cp  $(srcdir)/lib/lapack/Makefile.lib  Makefile );  \
+	fi
+	touch configure-stamp
+	
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE); $(make) ) ; fi
+	#
+	touch package-ready-stamp
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; \
+	chmod +x $(LIBPATH)/lib/*lapack*.a ; \
+	chmod +x $(LIBPATH)/lib/*blas*.a ) ; \
+	fi
+
+#
+# cleaning
+#
+clean:
+	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp
+
+clean_all: 
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf uncompress-stamp
+

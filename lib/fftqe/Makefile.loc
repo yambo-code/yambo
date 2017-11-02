@@ -1,0 +1,32 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libfftqe.a
+PACKAGE=$(pkgname_fftqe)
+TARBALL=$(tarball_fftqe)
+#
+# MAIN target
+#
+all: uncompress-stamp
+#
+uncompress-stamp:
+	( cd ../archive ; if ! test -e $(TARBALL) ; then \
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
+	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
+	cp $(prefix)/lib/fftqe/*.F $(srcdir)/lib/fftqe/
+	cp $(prefix)/lib/fftqe/*.h $(srcdir)/lib/fftqe/
+	touch uncompress-stamp
+#
+# cleaning
+#
+clean:
+	@- rm -rf *.o package-ready-stamp 
+
+clean_all: 
+	@- rm -rf uncompress-stamp
+	@- rm -rf *.o *.F *.h *.c

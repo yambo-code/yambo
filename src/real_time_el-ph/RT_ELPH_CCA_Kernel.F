@@ -89,6 +89,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp,l_skip_ABS)
      !
      pre_factor=abs(Gkkp(i_np,i_n))**2/real(RT_Nk_ibz(ik_m_q))
      !
+     if( pre_factor==0._SP ) cycle
+     !
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
        if (RT_occupations_locked(i_n_shift,ik_rim)) cycle

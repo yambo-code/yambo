@@ -27,8 +27,10 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
-&                        io_bulk,io_status,io_sec,io_header,&
-&                        read_is_on,write_is_on
+&                        io_bulk,io_status,io_sec,io_header
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -50,15 +52,10 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  ! Work Space
  !
  integer  :: it_on_disk
- real(SP) :: V_dummy(BS_H_dim,2), Cf_dummy(it+1,2)
  !
- ! GPL_EXCLUDE_START
- !
-#if defined _KERR
- real(SP) :: Cf_dummy_kerr(it+1,2)
+#if defined _TIMING
+ call timing('io_BSS_Haydock',OPR='start')
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
@@ -96,19 +93,13 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
    !
    ! Vnm1
    !
-   if (write_is_on(ID)) V_dummy(:,1)=real(Vnm1)
-   if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnm1)
-   call io_bulk(ID,'Vnm1',VAR_SZ=(/BS_H_dim,2/))
-   call io_bulk(ID,R2=V_dummy)
-   if (read_is_on(ID)) Vnm1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+   call io_bulk(ID,'Vnm1',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,C1=Vnm1)
    !
    ! Vn 
    !
-   if (write_is_on(ID)) V_dummy(:,1)=real(Vn)
-   if (write_is_on(ID)) V_dummy(:,2)=aimag(Vn)
-   call io_bulk(ID,'Vn',VAR_SZ=(/BS_H_dim,2/))
-   call io_bulk(ID,R2=V_dummy)
-   if (read_is_on(ID)) Vn(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+   call io_bulk(ID,'Vn',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,C1=Vn)
    !
    ! Af,Bf
    !
@@ -120,22 +111,16 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
    ! Cf optional
    !
    if (present(Cf)) then 
-     if (write_is_on(ID)) Cf_dummy(:,1)=real(Cf)
-     if (write_is_on(ID)) Cf_dummy(:,2)=aimag(Cf)
-     call io_bulk(ID,'C_factors',VAR_SZ=(/it+1,2/))
-     call io_bulk(ID,R2=Cf_dummy)
-     if (read_is_on(ID)) Cf(:)=Cf_dummy(:,1)+(0._SP,1._SP)*Cf_dummy(:,2)
+     call io_bulk(ID,'C_factors',VAR_SZ=(/2,it+1/))
+     call io_bulk(ID,C1=Cf)
    endif
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
    if(present(Cf_kerr).and.l_kerr) then
-     if (write_is_on(ID)) Cf_dummy_kerr(:,1)=real(Cf_kerr)
-     if (write_is_on(ID)) Cf_dummy_kerr(:,2)=aimag(Cf_kerr)
-     call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/it+1,2/))
-     call io_bulk(ID,R2=Cf_dummy_kerr)
-     if (read_is_on(ID)) Cf_kerr(:)=Cf_dummy_kerr(:,1)+(0._SP,1._SP)*Cf_dummy_kerr(:,2)
+     call io_bulk(ID,'C_factors_kerr',VAR_SZ=(/2,it+1/))
+     call io_bulk(ID,C1=Cf_kerr)
    endif
 #endif
    !
@@ -145,15 +130,16 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
    ! Vnp1 - optional
    !
    if (present(Vnp1)) then
-     if (write_is_on(ID)) V_dummy(:,1)=real(Vnp1)
-     if (write_is_on(ID)) V_dummy(:,2)=aimag(Vnp1) 
-     call io_bulk(ID,'Vnp1',VAR_SZ=(/BS_H_dim,2/))
-     call io_bulk(ID,R2=V_dummy)
-     if (read_is_on(ID)) Vnp1(:)=V_dummy(:,1)+(0._SP,1._SP)*V_dummy(:,2)
+     call io_bulk(ID,'Vnp1',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,C1=Vnp1)
    endif
    !
  end if
  !
 1 call io_disconnect(ID=ID)
+ !
+#if defined _TIMING
+ call timing('io_BSS_Haydock',OPR='stop')
+#endif
  !
 end function

@@ -1,1 +1,1 @@
-objs = QP_DBs_setup.o QP_DBs_merge.o 
+objs = QP_DBs_create_and_modify.o QP_DBs_manipulate.o 

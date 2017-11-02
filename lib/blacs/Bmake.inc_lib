@@ -49,9 +49,9 @@
 
 #  Name and location of the MPI library.
 #  -------------------------------------
-   MPIdir = $(mpidir)
-   MPILIBdir = $(MPIdir)/lib
-   MPIINCdir = $(MPIdir)/include
+#   MPIdir = $(mpidir)
+   MPILIBdir = $(mpildir)
+   MPIINCdir = $(mpiidir)
 
 #  -------------------------------------
 #  All libraries required by the tester.

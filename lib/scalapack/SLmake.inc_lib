@@ -60,4 +60,4 @@ SCALAPACKLIB  = libscalapack.a
 
 BLASLIB       = $(lblas)
 LAPACKLIB     = $(llapack) 
-LIBS          =
+LIBS          = $(LAPACKLIB) $(BLASLIB)

@@ -273,9 +273,13 @@ subroutine RT_initialize(E,k,q)
  !
  l_NE_dynamics= l_NE_with_fields .or. l_rt_carriers_in_use
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Check on the PROBE/PUMP frequencies
  !====================================
  call RT_Field_Commensurable_Frequencies()
+ !
+ ! GPL_EXCLUDE_END
  !
  if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
@@ -310,8 +314,6 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -327,8 +329,6 @@ subroutine RT_initialize(E,k,q)
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !

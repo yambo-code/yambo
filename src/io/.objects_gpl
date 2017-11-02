@@ -1,7 +1,3 @@
-COMMON_objects = 
-#if defined _RT
-COMMON_objects =  io_COLLISIONS.o
-#endif
 RT_objects = 
 #if defined _RT
 RT_objects = io_RT_components.o variables_RT.o
@@ -19,4 +15,4 @@ objs = ver_is_gt_or_eq.o IO_and_Messaging_switch.o io_fragment.o \
        io_BSS_diago.o  io_BSS_Haydock.o io_BSS_invert.o \
        io_elemental.o io_bulk.o io_header.o io_Double_Grid.o \
        io_COL_CUT.o    io_DB1_selective_scan.o variables_BS.o variables_X.o variables_DIPOLES.o \
-       io_out_of_date.o $(COMMON_objects) $(RT_objects)
+       io_out_of_date.o $(RT_objects)

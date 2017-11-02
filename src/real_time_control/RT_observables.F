@@ -205,8 +205,6 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Electrons and holes temperatures
  !
  if ( (l_elel_scatt.or.l_elph_scatt)) then
@@ -273,8 +271,6 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  dE_h   = dE_h   +dE_h_sc
  dE_xc  = dE_xc  +dE_xc_sc
  dE_hxc = dE_hxc +dE_hxc_sc
- !
- ! GPL_EXCLUDE_END
  !
  ! Transfer the shadow variables
  !

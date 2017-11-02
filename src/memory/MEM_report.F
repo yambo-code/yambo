@@ -24,7 +24,7 @@
 subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
- use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
+ use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold
  use units,        ONLY:Kilobyte
  use com,          ONLY:msg
@@ -75,7 +75,7 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
- WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_bytes))
+ WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb))
  call msg("nr",msg_(1:len_trim(msg_)))
  !
  contains

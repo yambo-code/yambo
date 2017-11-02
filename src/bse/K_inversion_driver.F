@@ -37,12 +37,12 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
- use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
+ use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
- use SLK_m,          ONLY:BLACS_structure_in_use
+ use matrix,         ONLY:MATRIX_reset
 #if defined _SCALAPACK
- use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
  use interfaces,     ONLY:MATRIX_transfer
+ use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -106,7 +106,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Symmetrize the K blocks (to be eventually sent to the BLACS)
  !=========================
- call BS_Blocks_symmetrize_K()
+ if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
  !
 #endif
  !
@@ -128,19 +128,23 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
    call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
  endif
 #endif
  !
-#if defined _SCALAPACK
+ ! GPL_EXCLUDE_END
  !
+#if defined _SCALAPACK
+ ! 
  ! SLK matrix initialization before the Kernel loading
  !
- call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ call MATRIX_init( "SLK", K_slk, BS_H_dim, 1 )
  !
- if ( SLK_ORTHO%coordinate(1) /= -1 ) BLACS_structure_in_use=.TRUE.
+ YAMBO_ALLOC(K_slk%blc,(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
  !
 #endif
  !
@@ -148,7 +152,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !======================================
  call K_components_folded_in_serial_arrays(iq,"INV")
  !
- if (BLACS_structure_in_use) then
+ if (K_slk%kind=="SLK") then
    !
 #if defined _SCALAPACK
    !
@@ -157,13 +161,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call MATRIX_transfer("fill_the_SLK", K_slk, BS_blk )
+   call MATRIX_transfer(M_out=K_slk, M_bse= BS_blk )
    !
    ! Diagonal removal
    !==================
    call K_diagonal(iq,"rm_OCC DIAG")
    !
-   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call MATRIX_duplicate( "none", M_in=K_slk, M_out=K_inv_slk )
    !
 #endif
    !
@@ -436,9 +440,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      YAMBO_FREE(Lo)
      !
 #if defined _SCALAPACK
-     call SLK_matrix_reset(K_slk)
-     call SLK_matrix_reset(K_inv_slk)
-     BLACS_structure_in_use=.FALSE.    
+     YAMBO_FREE(K_slk%blc)
+     call MATRIX_reset(K_slk)
+     !
+     ! Here I call MATRIX_duplicate instead of a simple YAMBO_FREE to keep the correct naming 
+     ! to be used in the memory module
+     !
+     call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif
      !
 #if defined _TIMING

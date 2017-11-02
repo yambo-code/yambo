@@ -2,6 +2,7 @@
 # Package List
 #
 include ./package.list
+WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
      $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
@@ -57,7 +58,7 @@ clean_all:
 #
 define getsrc
 if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
-wget -O $$TARBALL $$URL ; \
+wget $(WGETFLAGS) -O $$TARBALL $$URL ; \
 elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
 curl -L --progress-bar -o $$TARBALL $$URL ; \
 fi ; \

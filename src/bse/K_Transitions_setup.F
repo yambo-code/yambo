@@ -339,11 +339,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      !
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
-     !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _RT
      if (.not.l_rt_carriers_in_use) then
 #endif

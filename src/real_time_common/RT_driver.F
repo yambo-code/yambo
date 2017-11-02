@@ -94,8 +94,16 @@ subroutine RT_driver(E,X,k,q)
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
+ ! GPL_EXCLUDE_START
+ !
  call section('*',trim(RT_potential)//' Real-Time Dynamics')
  call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
+ !
+ ! GPL_EXCLUDE_END
+ !
+ ! GPL_INCLUDE_START
+ !call section('*','Real-Time BSE')
+ ! GPL_INCLUDE_END
  !
  call section('+','Initialization')
  !#################################
@@ -195,11 +203,11 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Collisions
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
- !
- ! GPL_EXCLUDE_START
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
@@ -232,26 +240,17 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_output(what="initialize")
  !
+ call RT_output(what="open curr pol")
+ !
  ! GPL_EXCLUDE_START
  !
- call RT_output(what="open carr therm energy curr pol magn")
+ call RT_output(what="open carr therm energy magn")
  call RT_output(what="open BGR")
- !
- ! GPL_EXCLUDE_END
- !
- !
- ! GPL_INCLUDE_START
- !
- !call RT_output(what="open curr pol")
- !
- ! GPL_INCLUDE_END
  !
  if (l_NE_with_fields) then
    call RT_output(what="open ext")
-   if(l_RT_induced_field) call RT_output(what="open tot ind")
+   if (l_RT_induced_field) call RT_output(what="open tot ind")
  endif
- !
- ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)     call RT_output('open EPlife')
  if (l_elel_scatt)     call RT_output('open EElife')
@@ -296,12 +295,11 @@ subroutine RT_driver(E,X,k,q)
    ! (evaluated also in RT_integrator when and induced field is included)
    call RT_current_AND_polarization(k,E,dG_lesser(:,:,:,i_MEM_collision),A_vecpot)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),on_the_fly_operators)
-   !
-   ! GPL_EXCLUDE_START
-   !
    !
    ! Update Bose Temp and Phonons distribution
    !===========================================
@@ -347,24 +345,14 @@ subroutine RT_driver(E,X,k,q)
    ! OUTPUT(s)
    !###########
    !
+   call RT_output('curr pol',TIME=NE_time*AUT2FS)
+   !
    ! GPL_EXCLUDE_START
    !
    call RT_output('BGR',TIME=NE_time*AUT2FS)
-   call RT_output('curr pol magn therm',TIME=NE_time*AUT2FS)
+   call RT_output('magn therm',TIME=NE_time*AUT2FS)
    call RT_output('energy',VALUES=on_the_fly_operators(1:5 ),TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=on_the_fly_operators(6:10),TIME=NE_time*AUT2FS)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   !
-   ! GPL_INCLUDE_START
-   !
-   !call RT_output('curr pol',TIME=NE_time*AUT2FS)
-   !
-   ! GPL_INCLUDE_END
-   !
-   !
-   ! GPL_EXCLUDE_START
    !
    ! Mean Carrier Lifetimes
    !========================

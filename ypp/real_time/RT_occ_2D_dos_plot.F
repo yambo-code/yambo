@@ -134,7 +134,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
    do i_E=1,dos_E_steps
      dos_E=dos_E_range(1)+real(i_E,SP)*delta_E
      !
-     if(dos_E>En%E_VBM+dos_broadening .and. dos_E<En%E_CBm-dos_broadening) then
+     if(dos_E>En%E_VBM(1)+dos_broadening .and. dos_E<En%E_CBm(1)-dos_broadening) then
        if(l_separate_eh) then
          call RT_output("space 2D_occ_dos")
        endif

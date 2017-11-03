@@ -126,7 +126,9 @@ AC_LANG_CASE([Fortran],
 #
 #
 mpibuild="no"
-if test "$acx_mpi_ok" = "yes"; then  mpibuild="yes"; fi
+if test "$acx_mpi_ok" = "yes"; then  
+ mpibuild="yes"; 
+fi
 
 #
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:

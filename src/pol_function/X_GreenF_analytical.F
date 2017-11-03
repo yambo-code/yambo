@@ -142,6 +142,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  allocate( nkpt_DbGd_scatt(low_ik:upp_ik) )
  YAMBO_ALLOC(use_kpt_DbGd,(low_ikp:upp_ikp,low_ik:upp_ik))
  !
+ if(.not.allocated(Xk%ptbz)) call k_ibz2bz(Xk,'i',.true.)
+ !
  call define_use_kpt()
  !
  ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply

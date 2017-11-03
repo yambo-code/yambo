@@ -107,11 +107,11 @@ module memory
      use stderr,       ONLY:intc,real2ch
      integer :: MEM !in Kb
      if (MEM<1000) then
-       mem_string=trim(real2ch(real(MEM)))//"Kb"
+       mem_string=trim(real2ch(real(MEM,SP)))//"Kb"
      else if (MEM<1000000) then
-       mem_string=trim(real2ch(real(MEM)/1000))//"Mb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000))//"Mb"
      else
-       mem_string=trim(real2ch(real(MEM)/1000000))//"Gb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000000))//"Gb"
      endif
    end function
    !

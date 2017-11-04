@@ -138,16 +138,22 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_str=" If"; fi
 fi
 #
-PET_str=" - "
-if test "$enable_petsc"  = "yes" ; 
- then PET_str=" E "; 
- if test "$compile_petsc" = "yes" ; then PET_str=" I "; fi
-fi
 #
-SLE_str=" - "
-if test "$enable_slepc"  = "yes" ; 
- then SLE_str=" E "; 
- if test "$compile_slepc" = "yes" ; then SLE_str=" I "; fi
+PETSC_str=" - "
+if test "$internal_petsc" = "yes" ; then
+  if test "$compile_petsc" = "yes" ; then PETSC_str=" Ic"; fi
+  if test "$compile_petsc" = "no"  ; then PETSC_str=" If"; fi
+elif test "$enable_petsc" = "yes" ; then
+  PETSC_str=" E "
+fi
+
+#
+SLEPC_str=" - "
+if test "$internal_slepc" = "yes" ; then
+  if test "$compile_slepc" = "yes" ; then SLEPC_str=" Ic"; fi
+  if test "$compile_slepc" = "no"  ; then SLEPC_str=" If"; fi
+elif test "$enable_slepc" = "yes" ; then
+  SLEPC_str=" E "
 fi
 
 #
@@ -156,6 +162,7 @@ if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_str=" Ic"; fi
   if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
+
 #
 MPI_str=" - ";
 MPI_info=""
@@ -188,8 +195,8 @@ AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(BLACS_str)
 AC_SUBST(SLK_str)
-AC_SUBST(PET_str)
-AC_SUBST(SLE_str)
+AC_SUBST(PETSC_str)
+AC_SUBST(SLEPC_str)
 #
 AC_SUBST(LIBXC_str)
 AC_SUBST(MPI_str)

@@ -71,13 +71,13 @@ linclude="-I\$(includedir) -I\$(sysinclude)"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
-llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \$(islepc)"
 #
 case $target in
   yambo*)
-   llibs="$llibs -lslatec -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
    llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
-   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
    llibs="-lint_modules $llibs -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
@@ -94,6 +94,9 @@ case $target in
   ypp*)
    llibs="$llibs -llocal -lslatec \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft)"
+    ;;
+  lib*)
+   linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc)"
     ;;
 esac
 

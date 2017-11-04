@@ -39,6 +39,20 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
+#if defined _SLEPC
+ !
+ ! Slepc
+ !==========
+ type Slepc_vector
+   !
+   type(Haydock_vector), allocatable :: Vi(:)
+   type(Haydock_vector), allocatable :: Vo(:)
+   !
+ end type Slepc_vector
+ !
+ type(Slepc_vector) :: Slepc_v
+ !
+#endif
  !
  integer, allocatable :: Haydock_parallel_group_comm(:)
  !
@@ -53,6 +67,7 @@ module BS_solvers
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
+ integer  :: BSS_n_eig            !number of eigenvalues to find
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -67,6 +82,9 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
+#if defined _SLEPC
+ logical  :: run_Slepc=.FALSE.
+#endif
  !
  ! Solvers (Diago)
  !=========
@@ -77,6 +95,16 @@ module BS_solvers
  logical  :: Haydock_terminator
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
+#if defined _SLEPC
+ !
+ ! Solvers (Slepc)
+ !=========
+ character(schlen):: BSS_slepc_extraction !choose slepc eigenvalue extraction method (ritz,harmonic)
+ integer          :: BSS_slepc_ncv        !dimension of the subspace
+ real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
+ real(SP)         :: BSS_target_E         !find eigenvalues close to this energy
+ logical          :: Slepc_shell          !use a shell matrix for slepc
+#endif
  !
  ! Solvers (Inversion)
  !=========
@@ -121,9 +149,9 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
-     integer             :: iq,ID,BS_H_dim
+     integer             :: iq,ID,BS_H_dim,BSS_n_eig
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
      real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer :: bsR_kerr(:)

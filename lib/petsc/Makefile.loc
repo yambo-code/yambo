@@ -17,11 +17,13 @@ TARBALL=$(tarball_petsc)
 # redefinitions
 #
 PETSC_ARCH=yambo_single_complex
-AUXFLAGS=--prefix=$(PATHLIB) \
+AUXFLAGS=--prefix=$(LIBPATH) \
          --PETSC_ARCH=${PETSC_ARCH} \
+         --with-ssl=0 \
+	     --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=0 \
-         --with-blas-lapack-lib="$(lblas) $(llapack)" \
+         --with-blas-lapack-lib="$(llapack) $(lblas)" \
          --with-scalar-type="complex" \
          --with-precision="single"
 
@@ -37,11 +39,13 @@ uncompress-stamp:
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then
+	if test -d $(PACKAGE) ; then \
 	  cd $(PACKAGE);  \
+	  unset PETSC_DIR; \
+	  unset PETSC_ARCH; \
 	  ./configure $(AUXFLAGS) \
 	  --with-cc=$(cc) \
-	  --with-fc=$(fc) 
+	  --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
 	
@@ -53,7 +57,7 @@ package-ready-stamp: uncompress-stamp configure-stamp
 
 $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) install ) ; fi
+	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install ) ; fi
 	#
 	chmod u+x $(LIBPATH)/lib/*petsc*.a
 

@@ -74,7 +74,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Joint DOS
  !===========
- BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.l_rpa_IP
+ BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  !
  ! Copatibility with old inputs
  !==============================

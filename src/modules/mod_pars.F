@@ -111,9 +111,6 @@ module pars
  complex(SP), parameter :: cI   =(0._SP,1._SP)
  complex(SP), parameter :: cONE =(1._SP,0._SP)
  complex(SP), parameter :: cZERO=(0._SP,0._SP)
- complex(DP), parameter :: cI_DP   =(0._DP,1._DP)
- complex(DP), parameter :: cONE_DP =(1._DP,0._DP)
- complex(DP), parameter :: cZERO_DP=(0._DP,0._DP)
  !
  complex(DP), parameter :: cI_DP   =(0._DP,1._DP)
  complex(SP), parameter :: cONE_DP =(1._DP,0._DP)

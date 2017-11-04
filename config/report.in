@@ -44,9 +44,9 @@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@
-# [@PET_str@] PETSC     : @PETSC_LIBS@ 
+# [@PETSC_str@] PETSC     : @PETSC_LIBS@ 
 #                   @PETSC_INCS@ 
-# [@SLE_str@] SLEPC     : @SLEPC_LIBS@ 
+# [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
 #
 #  OTHER LIBS
@@ -56,10 +56,13 @@
 # [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
 #
-# - COMPILERS (FC kind= @FCKIND@ ; MPI kind= @MPIKIND@) -
+# - COMPILERS
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# FC kind = @FCKIND@ 
+# MPI kind= @MPIKIND@
+#
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
 # [ FCUF] @FCUFLAGS@

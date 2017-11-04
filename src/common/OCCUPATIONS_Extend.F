@@ -77,8 +77,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  ! find a range for the E_Fermi that keeps the
  ! two grids with the same character
  !
- Ef_test=Xe%E_VBM+Ef_step
- do while(Ef_test<Xe%E_CBm)
+ Ef_test=maxval(Xe%E_VBM(:n_sp_pol))+Ef_step
+ do while(Ef_test<minval(Xe%E_CBm(:n_sp_pol)))
    call f_build(Ef_test)
    call OCCUPATIONS_Gaps(E)
    if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then

@@ -37,8 +37,12 @@ int main()
  return 0;
 }
 EOF_
-(eval $MPICC -o conftest.x conftest.c )
-MPIKIND=`./conftest.x|head -n 1`
+(eval $MPICC -o conftest.x conftest.c >& conftest.err )
+if test -e "conftest.x"; then
+  MPIKIND=`./conftest.x|head -n 1`
+else
+  MPIKIND="undefined"
+fi
 AC_MSG_CHECKING([for MPI version])
 AC_MSG_RESULT([$MPIKIND])
 AC_SUBST(MPIKIND)

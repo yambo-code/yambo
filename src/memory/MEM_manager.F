@@ -23,15 +23,15 @@
 !
 subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
- use pars,         ONLY:lchlen,schlen,IP
+ use pars,         ONLY:lchlen,schlen,IP,DP
  use drivers,      ONLY:infile_editing
  use com,          ONLY:msg,warning,secnm,error,repfile
  use openmp,       ONLY:master_thread
  use units,        ONLY:Kilobyte,Megabyte
- use memory,       ONLY:TOT_MEM_bytes,TOT_MEM_kilobytes_MEMSTAT,MEM_element_copy,&
+ use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,MEM_element_copy,&
 &                       MEM_err,MEM_treshold,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
-&                       MEM_SAVE_treshold,MAX_MEM_bytes,TOT_MEM_bytes_SAVE,MEMs,&
+&                       MEM_SAVE_treshold,MAX_MEM_Kb,TOT_MEM_Kb_SAVE,MEMs,&
 &                       N_MEM_max_element_components,MEM_jump_treshold
  use LIVE_t,       ONLY:what_is_running
  !
@@ -45,7 +45,8 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  ! Work Space
  !
  logical :: adding,deliver_a_msg,just_started
- integer :: i_mem,i_el,MEM_now_kb,MEM_now_b,i_SAVE,i_COMPONENT,i_LIB,i_SHELF
+ real(DP):: LARGE_wk
+ integer :: i_mem,i_el,MEM_now_Kb,i_SAVE,i_COMPONENT,i_LIB,i_SHELF
  character(lchlen) :: msg_
  character(schlen) :: SHELF,TRUNK
  integer, external :: MEM_LIB_finder,MEM_shelf_finder,MEM_save_finder,MEM_component_finder
@@ -131,14 +132,14 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !.......................
  if (adding) then
    !
-   MEM_now_b=Sz*Kn
-   MEM_now_kb=int(real(MEM_now_b)/Kilobyte)
+   LARGE_wk=real(Sz,DP)*real(Kn,DP)/Kilobyte
+   MEM_now_Kb=int(LARGE_wk)
    !
-   if (MEM_now_kb==0) MEM_now_kb=1
+   if (MEM_now_Kb==0) MEM_now_Kb=1
    !
-   TOT_MEM_bytes=TOT_MEM_bytes+MEM_now_b
+   TOT_MEM_Kb=TOT_MEM_Kb+MEM_now_Kb
    !
-   if (TOT_MEM_bytes>MAX_MEM_bytes) MAX_MEM_bytes=TOT_MEM_bytes
+   if (TOT_MEM_Kb>MAX_MEM_Kb) MAX_MEM_Kb=TOT_MEM_Kb
    !
    if (i_SHELF==0) then
      if (N_MEM_elements<N_MEM_SAVE_max) then
@@ -147,10 +148,10 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
        call error("Max Number of MEM elements reached.")
      endif
      MEMs(N_MEM_elements)%shelf=SHELF
-     MEMs(N_MEM_elements)%use =MEM_now_kb
+     MEMs(N_MEM_elements)%use =MEM_now_Kb
      i_SHELF=N_MEM_elements
    else
-     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_kb
+     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_Kb
    endif
    !
    if (i_COMPONENT==0) then
@@ -190,13 +191,13 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    !
    if (i_SHELF/=0.and.i_COMPONENT/=0) then
      !
-     MEM_now_b=Sz*MEMs(i_SHELF)%kind(i_COMPONENT)
-     TOT_MEM_bytes=TOT_MEM_bytes-MEM_now_b
-     MEM_now_kb=int(real(MEM_now_b)/Kilobyte)
+     LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
+     MEM_now_Kb=int(LARGE_wk)
+     TOT_MEM_Kb=TOT_MEM_Kb-MEM_now_Kb
      !
-     if (MEM_now_kb==0) MEM_now_kb=1
+     if (MEM_now_Kb==0) MEM_now_Kb=1
      !
-     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_kb
+     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_Kb
      MEMs(i_SHELF)%size(i_COMPONENT) = MEMs(i_SHELF)%size(i_COMPONENT)-Sz
      !
      if ( MEMs(i_SHELF)%use <= 0 ) then
@@ -231,26 +232,30 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  ! Messages
  !==========
  !#1
- deliver_a_msg=MEM_now_kb>MEM_treshold
+ deliver_a_msg=MEM_now_Kb>MEM_treshold
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY]"
    if (     adding) msg_=trim(msg_)//" Alloc "//what
    if (.not.adding) msg_=trim(msg_)//" Free "//what
-   msg_=trim(msg_)//"("//trim(mem_string(MEM_now_b))//")"
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (traced)"
-   msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_kilobytes_MEMSTAT*int(Kilobyte)))//" (memstat)"
+   msg_=trim(msg_)//"("//trim(mem_string(MEM_now_Kb))//")"
+   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb))//" (traced)"
+   if (TOT_MEM_Kb_MEMSTAT>0) then
+     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT))//" (memstat)"
+   endif
    call msg("s",trim(msg_))
  endif
  !#2
- deliver_a_msg=int((TOT_MEM_bytes-TOT_MEM_bytes_SAVE)/Megabyte)>int(MEM_jump_treshold/10.).and.adding
+ deliver_a_msg=int((TOT_MEM_Kb-TOT_MEM_Kb_SAVE)/1000)>int(MEM_jump_treshold/10.).and.adding
  if (deliver_a_msg) then
    call MEM_STAT_update( )
    msg_="[MEMORY] In use: "
-   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_bytes))//" (traced)"
-   msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_kilobytes_MEMSTAT*int(Kilobyte)))//" (memstat)"
+   msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb))//" (traced)"
+   if (TOT_MEM_Kb_MEMSTAT>0) then
+     msg_=trim(msg_)//" "//trim(mem_string(TOT_MEM_Kb_MEMSTAT))//" (memstat)"
+   endif
    call msg("s",trim(msg_))
-   TOT_MEM_bytes_SAVE=TOT_MEM_bytes
+   TOT_MEM_Kb_SAVE=TOT_MEM_Kb
  endif
  !
 #endif

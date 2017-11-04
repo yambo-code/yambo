@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use BS,            ONLY:BS_identifier,BS_K_dim
@@ -36,8 +36,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  implicit none
  !
- integer              :: iq,ID,BS_H_dim
- complex(SP)          :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
+ integer              :: iq,ID,BS_H_dim,BSS_n_eig
+ complex(SP)          :: bsE(BSS_n_eig),bsRl(BS_H_dim),bsRr(BS_H_dim)
  real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:,:)
  complex(SP),pointer  :: bsR_kerr(:)
  !
@@ -62,9 +62,9 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    io_BSS_diago=io_header(ID,XC_KIND="K_E force")
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+     call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    else
-     call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=1)
+     call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
    endif
    !
    call io_elemental(ID,VAR=&
@@ -73,6 +73,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
 &       " Excitonic eigenstates included  :",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+   call io_elemental(ID,VAR=&
+&       " Number of eigenstates included  :",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return
@@ -85,7 +87,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'BS_Energies',VAR_SZ=(/2,BSS_n_eig/))
    call io_bulk(ID,C1=bsE)
    !
    if(E_SOC_nbands/=0) then
@@ -131,7 +133,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    ! Eigenstates (resonant only matrix)
    !
-   call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BS_H_dim/))
+   call io_bulk(ID,'BS_EIGENSTATES',VAR_SZ=(/2,BS_H_dim,BSS_n_eig/))
    call io_bulk(ID,C2=BS_mat,IPOS=(/1,1,1/))
    !
  endif

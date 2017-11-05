@@ -119,6 +119,26 @@ module interfaces
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
+#if defined _SLEPC
+   subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,&
+&                          extraction,slepc_ncv,slepc_tol)
+     !
+     use pars,           ONLY:SP,schlen
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscmat.h>
+     !
+     Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     complex(SP),  optional      :: V_right(:,:) ! right eigenvalues
+     complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
+     complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
+     real(SP),     optional      :: E_real(:)    ! real eigenvalues
+     real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     character(schlen), optional :: extraction   ! extraction method for the eigenvalues
+     integer,optional            :: slepc_ncv    ! dimension of the subspace
+     !
+   end subroutine
+#endif
+   !
    integer function eval_G_minus_G(iG,iGo,COMM)
      use parallel_m,      ONLY:MPI_comm
      implicit none

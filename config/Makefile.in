@@ -26,9 +26,10 @@ os          = @build_os@
 mpi         = @def_mpi@
 netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
+slepc       = @def_slepc@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -138,19 +139,19 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 interfaces:
-	for target in $(INTERFCS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 core:      
-	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 ph-project:
-	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project:
-	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rt-project:
-	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
-	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(KERR_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: 
-	for target in $(ALL) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
@@ -433,7 +434,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name 'make.dep' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \

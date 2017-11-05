@@ -268,8 +268,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    endif
  else
    ! Case B: was defined in input
-   RT_eh_en(1)=RT_eh_en(1)+E%E_VBM
-   RT_eh_en(2)=RT_eh_en(2)+E%E_CBm
+   RT_eh_en(1)=RT_eh_en(1)+E%E_VBM(1)
+   RT_eh_en(2)=RT_eh_en(2)+E%E_CBm(1)
  endif
  !
  ! Retarded Green Functions matrix
@@ -425,8 +425,8 @@ subroutine RT_start_and_restart(E,k,q,X)
              ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
              if (     l_RT_uses_E_DbGd) En=E%E_DbGd(ib,ik_E_DbGd,1)
              if (.not.l_RT_uses_E_DbGd) En=E%E(ib,ik,1)
-             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
-             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
+             RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
+             RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ
            enddo
          enddo
        enddo

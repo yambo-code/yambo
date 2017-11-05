@@ -60,6 +60,9 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
+ do i_sp_pol=1,n_sp_pol
+   call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
+ enddo
  call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
  call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
  if(T_elecs==T_holes) call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))

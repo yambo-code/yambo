@@ -24,6 +24,7 @@
 integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
+ use com,              ONLY:error
  use electrons,        ONLY:n_sp_pol,n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
@@ -56,10 +57,12 @@ integer function io_WF(ID,wf)
    case(2)
      ifrag=io_sec(ID,1)-1
      ib_grp=io_sec(ID,2)
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (1)")
    case(3)
      ifrag=io_sec(ID,2)-1
      ib_grp=io_sec(ID,3)
      head_io=1
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (2)")
  end select
  !
  if(ifrag<=nkibz) then

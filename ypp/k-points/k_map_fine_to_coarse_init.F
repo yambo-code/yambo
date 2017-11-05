@@ -197,11 +197,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
    call msg('l','passed @ Double Grid k-point #'//trim(intc(ik_ref))) 
  else 
    call msg('l','failed') 
-   if (l_skip_check) then
-     call warning(" A consistent X grid k-point was not found among the Double Grid list")
-   else
-     call error(" A consistent X grid k-point was not found among the Double Grid list")
-   endif
+   if (     l_skip_check) call warning(" A consistent X grid k-point was not found among the Double Grid list")
+   if (.not.l_skip_check) call   error(" A consistent X grid k-point was not found among the Double Grid list")
  endif
  !
 end subroutine

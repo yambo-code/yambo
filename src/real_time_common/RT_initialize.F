@@ -417,9 +417,10 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Double Grid---')
  call msg( 'r', 'Double Grid support          :',l_RT_uses_E_FineGd)
  if (l_RT_uses_E_FineGd) then
-   call msg( 'r', 'K-points        (Fine grid):',k%nibz)
-   call msg( 'r', 'K-points      (Coarse grid):',k%nibz_FineGd)
-   call msg( 'r', '                    (Total):',RT_nk)
+   call msg( 'r', 'K-pts  (Coarse grid IBZ/BZ):',(/k%nibz,k%nbz/))
+   call msg( 'r', 'K-pts    (Fine grid IBZ/BZ):',(/k%nibz_FineGd,k%nbz_FineGd/))
+   call msg( 'r', 'K-pts       (Common IBZ/BZ):',(/k%nibz_duplicate,k%nbz_duplicate/))
+   call msg( 'r', 'K-pts  (Real-time IBZ only):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)
      call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))

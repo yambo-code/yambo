@@ -52,8 +52,9 @@ subroutine K_slepc_driver(iq,W)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use timing_m,       ONLY:timing
-#include <memory.h>
  ! 
+#include<memory.h>
+ !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -136,13 +137,13 @@ subroutine K_slepc_driver(iq,W)
  ! Allocation (BS_R and BS_E)
  !===========================
  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
- allocate( BS_E(BSS_n_eig) )
+ YAMBO_ALLOC(BS_E,(BSS_n_eig))
  if(E_SOC_nbands/=0) then
-   YAMBO_ALLOC( BS_corrections, (2,BS_H_dim) )
-   YAMBO_ALLOC_P( BS_E_SOC_corr, (2,BS_H_dim) )
+   YAMBO_ALLOC(BS_corrections,(2,BS_H_dim))
+   YAMBO_ALLOC_P(BS_E_SOC_corr,(2,BS_H_dim))
  endif
- YAMBO_ALLOC( BS_R_left, (BS_H_dim) )
- YAMBO_ALLOC( BS_R_right, (BS_H_dim) )
+ YAMBO_ALLOC(BS_R_left,(BS_H_dim))
+ YAMBO_ALLOC(BS_R_right,(BS_H_dim))
  !
  ! Diagonalization DB (IN)
  !========================
@@ -174,13 +175,13 @@ subroutine K_slepc_driver(iq,W)
  ! Allocation (BS_E_real or BS_V)
  !===============================
  if(K_is_not_hermitian) then
-   YAMBO_ALLOC( BS_V_left, (BS_H_dim,BSS_n_eig) )
-   YAMBO_ALLOC( BS_V_right, (BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
+   YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
  else
-   YAMBO_ALLOC( BS_mat, (BS_H_dim,BSS_n_eig) )
-   YAMBO_ALLOC( BS_E_real, (BSS_n_eig) )
+   YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+   YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
    if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
-     YAMBO_ALLOC( BS_corrections, (1,BS_H_dim) )
+     YAMBO_ALLOC(BS_corrections,(1,BS_H_dim))
    endif
  endif
  !
@@ -259,10 +260,7 @@ subroutine K_slepc_driver(iq,W)
  YAMBO_FREE(BS_V_right)
  YAMBO_FREE(BS_V_left)
  YAMBO_FREE(BS_mat)
- if(associated(BS_E_SOC_corr)) then
-   deallocate(BS_E_SOC_corr)
-   nullify(BS_E_SOC_corr)
- endif
+ YAMBO_FREE_P(BS_E_SOC_corr)
  !
  call timing('Slepc Solver',OPR='stop')
  !
@@ -468,12 +466,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
  use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc,BSS_alloc
- !REMOVE
- use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_blk,n_BS_blks,BS_H_dim
- use parallel_m,    ONLY : PAR_IND_T_Haydock, myid
- !REMOVE
  !
-#include <memory.h>
+#include<memory.h>
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>

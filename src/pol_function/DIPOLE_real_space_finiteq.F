@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
+subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
  ! We need to add Xq for the q-vector variable
  !
  use drivers,            ONLY:l_sc_run
@@ -37,12 +37,13 @@ subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use BS,                 ONLY:BS_q
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  !
- type(bz_samp), intent(in)    :: Xq
+ !type(bz_samp), intent(in)    :: Xq
  !
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(in)    :: X
@@ -50,11 +51,15 @@ subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
  !
  ! Work space
  !
- integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
-&                                ic_wf,iv_wf,idir,n_LT_steps
+ integer                      :: iq,ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
+&                                ic_wf,iv_wf,idir,n_LT_steps,start_iq,last_iq
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ ! Provisional
+ start_iq = BS_q(1)
+ last_iq  = BS_q(2)
+ !write(*,*)q%k_table
  !
  call load_cc(.false.,.true.)
  !
@@ -70,7 +75,9 @@ subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !
  do i_sp_pol=1,n_sp_pol
-   !
+ ! We have to add a do iq=1,Xq%nibz
+ do iq=start_iq,last_iq
+   write(*,*)iq
    do ik=1,Xk%nibz 
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
@@ -88,8 +95,10 @@ subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
-         ! Now we have vk and ck+q, we must find the index of k(ik)+q(iq)
-         ! Add potential call to bz_samp_indexes.F in bz_ops/
+         ! Here we will get vk-q and ck, we must find the index of k(ik)-q(iq)
+         ! ---> Add potential call to bz_samp_indexes.F in bz_ops/
+         !      Check what is done in the case of the em1s
+         !call bz_samp_indexes( ,Xk, )
          iv_wf=WF%index(iv,ik,i_sp_pol)
          ic_wf=WF%index(ic,ik,i_sp_pol)
          !
@@ -142,7 +151,9 @@ subroutine DIPOLE_real_space_finiteq(Xein,Xk,X,idir_todo)
        enddo
      endif
      !
-   enddo 
+   enddo
+   !
+ enddo 
    !
  enddo
  !

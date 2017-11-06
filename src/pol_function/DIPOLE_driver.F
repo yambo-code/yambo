@@ -74,6 +74,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
+ use BS,             ONLY:BS_q
 #if defined _RT || defined _SC
  use drivers,        ONLY:l_real_time,l_sc_run
  use com,            ONLY:secnm
@@ -193,7 +194,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
-   if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+   !if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+   !
+   if (BS_q(1).ne.1.or.BS_q(2).ne.1) call DIPOLE_real_space_finiteq(Xen,Xk,X,idir_not_done)
    !
    ! Here set up a new logical for finite-q dipoles
    !if (use_finiteq)                call DIPOLE_real_space_finiteq(Xen,Xk,Xq,X,idir_not_done)

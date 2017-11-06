@@ -55,7 +55,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,global_gauge
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PP_redux_wait
@@ -120,6 +120,10 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    call PP_redux_wait(HARTREE0)
    call PP_redux_wait(XC0)
+   !
+   ! Pseudo potential terms needed for velocity gauge
+   !==================================================
+   if (trim(global_gauge)=="velocity") call RT_H_pseudo(E,k)
    !
  endif
  !

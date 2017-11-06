@@ -85,7 +85,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
    !
    ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
-   ! Its low field expansion however gives <nk|iA*[x,V(r,r')]|n'k>, which is included in DIP_P
+   ! Its low field expansion however gives <nk|iA*[\hat{x},V(r,r')]|n'k>, which is included in DIP_P
    !
  else  
    !

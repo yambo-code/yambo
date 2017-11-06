@@ -322,7 +322,8 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy)
+ l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP")         &
+&                 .and. (.not.eval_energy) .and. (.not.trim(global_gauge)=="velocity")
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !

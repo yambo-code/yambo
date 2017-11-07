@@ -48,7 +48,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use matrix_operate,ONLY:mat_transpose
 #if defined _TIMING
  use timing_m,      ONLY:timing

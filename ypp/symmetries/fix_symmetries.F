@@ -29,7 +29,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  use matrix_operate,      ONLY:m3det
  use stderr,              ONLY:intc,set_real_printed_length
  use YPP,                 ONLY:E_field,B_theta,B_psi,B_field
- use electrons,           ONLY:n_spinor,Total_magn
+ use electrons,           ONLY:n_spinor,Spin_magn
  use R_lattice,           ONLY:rl_sop
  use vec_operate,         ONLY:v_norm
  use D_lattice,           ONLY:nsym,dl_sop,i_time_rev,alat,mag_syms,&
@@ -67,7 +67,7 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
  has_magnetization=.FALSE.
  if (any(E_field/=0.)) use_E_field=.TRUE.
  if (B_field/=0.)      use_B_field=.TRUE.
- if (any(Total_magn>1.E-3).and.n_spinor==2)  has_magnetization=.TRUE.
+ if (any(Spin_magn>1.E-3).and.n_spinor==2)  has_magnetization=.TRUE.
  !
  call parser('ExpandSymm',Expand_syms)
  !
@@ -217,9 +217,9 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
        !
        if(has_magnetization.and.n_spinor==2.and..not.reject_symmetry) then
          symm_M_factor=0
-         v1(:) = matmul( dl_sop(:,:,is), Total_magn )
-         if(all( abs(v1(:)-Total_magn(:))<epsilon(1.)) ) symm_M_factor=+1
-         if(all( abs(v1(:)+Total_magn(:))<epsilon(1.)) ) symm_M_factor=-1
+         v1(:) = matmul( dl_sop(:,:,is), Spin_magn )
+         if(all( abs(v1(:)-Spin_magn(:))<epsilon(1.)) ) symm_M_factor=+1
+         if(all( abs(v1(:)+Spin_magn(:))<epsilon(1.)) ) symm_M_factor=-1
          reject_symmetry=(symm_M_factor==0)
          if(.not.reject_symmetry) then
            ! We check what happens in the plane perpendicular to M: 
@@ -288,17 +288,17 @@ subroutine fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_k
      !
      ! I check if a (simple) inversion in the plane
      ! perperndicular to the magnetization exists
-     if(all(abs(Total_magn(1:2))<1.E-5)) then
+     if(all(abs(Spin_magn(1:2))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
        n_syms_to_check=2
      endif
-     if(all(abs(Total_magn(2:3))<1.E-5)) then
+     if(all(abs(Spin_magn(2:3))<1.E-5)) then
        symm_to_check(:,:,1)=reshape((/ 1.,0.,0.,0.,-1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
        n_syms_to_check=2
      endif
-     if(abs(Total_magn(1))<1.E-5.and.abs(Total_magn(3))<1.E-5) then
+     if(abs(Spin_magn(1))<1.E-5.and.abs(Spin_magn(3))<1.E-5) then
        symm_to_check(:,:,1)=reshape((/-1.,0.,0.,0., 1.,0.,0.,0., 1./),(/3,3/))
        symm_to_check(:,:,2)=reshape((/ 1.,0.,0.,0., 1.,0.,0.,0.,-1./),(/3,3/))
        n_syms_to_check=2

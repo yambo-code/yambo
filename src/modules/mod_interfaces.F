@@ -160,6 +160,12 @@ module interfaces
      logical     ,optional :: keep_states_to_load
    end subroutine
    !
+   subroutine WF_free(WF,keep_fft)
+     use wave_func,       ONLY:WAVEs
+     type(WAVEs)           :: WF
+     logical     ,optional :: keep_fft
+   end subroutine
+   !
    subroutine PARALLEL_WF_index(COMM)
      use parallel_m,      ONLY:MPI_comm
      type(MPI_comm), optional :: COMM

@@ -927,9 +927,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField SaveGhistory')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField UpdateSOC SaveGhistory')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
+&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !

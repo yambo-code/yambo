@@ -38,9 +38,9 @@ integer function io_RT_components(what,ID)
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
- use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -276,8 +276,8 @@ integer function io_RT_components(what,ID)
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
-     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
+     call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
    !
  endif
@@ -311,8 +311,11 @@ integer function io_RT_components(what,ID)
    call io_bulk(ID,R2=P_cache)
    !
    if(n_spin>1) then
-     call io_bulk(ID,VAR="Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-     call io_bulk(ID,R2=M_cache)
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ms_cache)
+     !
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ml_cache)
    endif
    !
  endif       

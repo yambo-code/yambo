@@ -77,7 +77,8 @@ module fields
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
-&                        trim(E_field%ef_name) == 'QSSIN' /)) .and. &
+&                        trim(E_field%ef_name) == 'QSSIN' ,&
+&                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
 &                        trim(E_field%ef_pol)  == 'circular' /))
    end function
@@ -184,6 +185,7 @@ module fields
          cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
          cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
+         !
          ! W    =FADEVA function
          ! W(-z)=exp(-z^2)*(1-  erf (i*z))
          !      =exp(-z^2)*(1-i*erfi( z ))
@@ -196,6 +198,17 @@ module fields
          if (order==0 .and. trim(global_gauge)=="length" ) f_t(i_field)=cZERO
          if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
          if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
+         !
+       case('QSFIELD')
+         WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
+         EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
+         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
+         !
+         if (order==0 ) f_t(i_field)=      sin(WT_i)                              *EXPf
+         if (order==1 ) f_t(i_field)=( W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
+         if (order==2 ) f_t(i_field)=(-W_0*sin(WT_i)-sin(WT_i)/sigma**2-W_0*(T_i-T_0)*sin(WT_i)/sigma**2 &
+&                                     -(T_i-T_0)*(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)/sigma**2)*EXPf
          !
        case('PULSE')
          f_t(i_field)= 0._SP
@@ -249,6 +262,8 @@ module fields
        case('GAUSS')
          iErr=-1
        case('QSSIN')
+         iErr=-1
+       case('QSFIELD')
          iErr=-1
        case('PULSE')
          iErr=-1

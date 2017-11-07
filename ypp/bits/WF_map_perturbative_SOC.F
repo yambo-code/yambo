@@ -34,7 +34,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use vec_operate,         ONLY:degeneration_finder,sort,iku_v_norm,k2bz,c2a
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
  use LIVE_t,              ONLY:live_timing

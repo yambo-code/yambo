@@ -33,14 +33,14 @@ subroutine SC_start_and_restart(X,E)
  use R_lattice,      ONLY:nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
-&                         WF_G_max,WF_Go_indx,E_bare,l_sc_V_is_local,           &
+&                         WF_G_max,WF_Go_indx,E_reference,l_sc_V_is_local,      &
 &                         H_QP_table_setup
  use SC,             ONLY:SC_potential,SC_kind,SC_xc_functional,SC_perturbation,&
 &                         l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,       &
 &                         SC_iterations,SC_preconditioning,                     &
 &                         l_oep_iterative,rho_convergence,E_convergence,        &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
-&                         SC_fft_size,E_bare_Ef,l_oep_EWeight,SC_cycle_mixing,  &
+&                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,  &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
@@ -100,13 +100,6 @@ subroutine SC_start_and_restart(X,E)
  !============
  !
  if (trim(SC_potential)/='none'.and.trim(SC_potential)/='default') call section('*','Self-Consistent '//trim(SC_potential))
- !
- ! Reference energies & Fermi Level
- !==================================
- !
- YAMBO_ALLOC(E_bare,(SC_bands(2),nkibz,n_sp_pol))
- E_bare=E%E(:SC_bands(2),:,:)
- E_bare_Ef=E%E_Fermi
  !
  ! Perform a first I/O to check which DBs are present. In this VERIFY call
  !=====================

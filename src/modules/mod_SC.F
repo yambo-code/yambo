@@ -36,7 +36,6 @@ module SC
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
  integer           :: n_SC_descriptions = 0
- real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
@@ -74,9 +73,8 @@ module SC
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
  !
- ! Rotation matrices and xc potential
+ ! xc potential
  !
- complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
  !
  interface
@@ -109,15 +107,13 @@ module SC
      !
      type(levels) :: E
      !
-     call H_alloc(E)
+     call H_alloc(E,.true.,.true.)
      !
      call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        YAMBO_ALLOC(QP_Sc,(QP_n_states,1))
      endif
-     !
-     YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
      !
    end subroutine
    !
@@ -138,7 +134,6 @@ module SC
      call DIP_alloc('P_square')
      !
      YAMBO_FREE(QP_Sc)
-     YAMBO_FREE(SC_R)
      !
    end subroutine
    !

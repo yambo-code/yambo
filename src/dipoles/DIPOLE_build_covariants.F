@@ -28,7 +28,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P

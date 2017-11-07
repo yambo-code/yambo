@@ -37,11 +37,12 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ !
  implicit none
  !
  integer                 :: ik,i_sp_pol
  complex(SP),intent(in)  :: V(QP_n_states)
- complex(SP),intent(out) :: H(QP_nb,QP_nb)
+ complex(SP),intent(out) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
  !

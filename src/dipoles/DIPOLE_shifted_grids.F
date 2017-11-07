@@ -36,7 +36,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                               PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                               PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
- use interfaces,          ONLY: WF_load
+ use interfaces,          ONLY: WF_load,WF_free
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: l_X_terminator
  use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,num_shifted_grids

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat)
+subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp_sq,S_mat)
  !  
  use pars,           ONLY:SP,cI,pi,cZERO
  use electrons,      ONLY:levels,spin_occ
@@ -34,8 +34,8 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  type(levels),  intent(in)  :: E
  integer,       intent(in)  :: ik,iqbz,il,i_map(-1:1),ik_m_q
  real(SP),      intent(in)  :: ph_freq,N_q(2)
- complex(SP),   intent(in)  :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP),   intent(out) :: S_mat(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ real(SP),      intent(in)  :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP),   intent(out) :: S_mat(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Work Space ...
  !
@@ -43,11 +43,12 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  real(SP)              :: DELTA_T
  !
  complex(SP)           :: DELTA_matrix
- complex(SP)           :: M1(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: M2(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: M3(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: G_k(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: G_kmq(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ complex(SP)           :: M1(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: M2(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: M3(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: G_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: G_kmq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: Gkkp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP)           :: Xi_eta,Xi_np
  complex(SP), external :: RT_G_retarded_time
  !
@@ -56,7 +57,7 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  ! Time step
  !===========
  DELTA_T=RT_step
- if (trim(Integrator_name)=="RK2") DELTA_T=RT_step/2.
+ if (trim(Integrator_name)=="RK2") DELTA_T=RT_step/2._SP
  !
  ! Dimensions
  !============
@@ -65,6 +66,7 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
  !
  G_k(:,:)  =G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik,i_MEM_collision)/spin_occ
  G_kmq(:,:)=G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),ik_m_q,i_MEM_collision)/spin_occ
+ Gkkp=sqrt(Gkkp_sq)
  !
  call M_by_M('n','n',B_dim,G_kmq,Gkkp,M1)
  !
@@ -76,13 +78,13 @@ subroutine RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S
    !
    i_theta=THETA_matrix_index(iqbz,il,i_map(i_s))
    !
-   do i_e=1,B_dim
+   do i_e=RT_bands(1),RT_bands(2)
      !
-     Xi_eta=RT_G_retarded_time("Lorentzian",E,i_e+RT_bands(1)-1,ik_m_q,0.,DELTA_T)
+     Xi_eta=RT_G_retarded_time("Lorentzian",E,i_e,ik_m_q,0.,DELTA_T)
      !
-     do i_np=1,B_dim
+     do i_np=RT_bands(1),RT_bands(2)
        !
-       Xi_np=RT_G_retarded_time("Lorentzian",E,i_np+RT_bands(1)-1,ik    ,0.,DELTA_T)
+       Xi_np=RT_G_retarded_time("Lorentzian",E,i_np,ik    ,0.,DELTA_T)
        !
        DELTA_matrix=-cI*exp(cI*i_s*ph_freq*DELTA_T)*&
 &                   ( ( N_q(i_map(-i_s))-N_q(i_map(i_s)) )*cI*M3(i_e,i_np) +&

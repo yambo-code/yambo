@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_magnetization(Xen,Xk,dip)
+subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  !
- ! This routine returns <sigma> (and <L> todo).
+ ! This routine returns <sigma>
  !
  use pars,                ONLY:cI,SP
  use drivers,             ONLY:l_sc_run
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
@@ -65,9 +65,10 @@ subroutine Dipole_magnetization(Xen,Xk,dip)
  ! Main loop over k in IBZ
  !
  do i_sp_pol=1,n_sp_pol
+   !
+   if (n_LT_steps==0) cycle
+   !
    do ik=1,Xk%nibz
-     !
-     if (n_LT_steps==0) cycle
      ! 
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
      !
@@ -132,4 +133,4 @@ subroutine Dipole_magnetization(Xen,Xk,dip)
  !
  call live_timing()
  !
-end subroutine Dipole_magnetization
+end subroutine Dipole_spin_magnetization

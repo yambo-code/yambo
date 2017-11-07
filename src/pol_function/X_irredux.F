@@ -53,7 +53,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
 #endif
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use D_lattice,     ONLY:i_space_inv

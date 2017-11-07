@@ -46,7 +46,9 @@ module DIPOLES
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  type DIPOLE_t
@@ -70,7 +72,7 @@ module DIPOLES
    !
    subroutine DIP_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol
+     use electrons, ONLY:n_sp_pol,n_spinor
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
@@ -95,10 +97,18 @@ module DIPOLES
          if (allocated(DIP_S)) return
          YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
+       case('DIP_orbital')
+         if (allocated(DIP_orbital)) return
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
+         DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
          YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
+       case('DIP_P_spinor')
+         if (allocated(DIP_P_spinor).or.n_spinor==1) return
+         YAMBO_ALLOC(DIP_P_spinor,(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)))
+         DIP_P_spinor=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
@@ -120,9 +130,15 @@ module DIPOLES
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          YAMBO_FREE(DIP_S)
+       case('DIP_orbital')
+         if (.not.allocated(DIP_orbital)) return
+         YAMBO_FREE(DIP_orbital)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
          YAMBO_FREE(DIP_spin)
+       case('DIP_P_spinor')
+         if (.not.allocated(DIP_P_spinor)) return
+         YAMBO_FREE(DIP_P_spinor)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
          YAMBO_FREE(DIP_projected)

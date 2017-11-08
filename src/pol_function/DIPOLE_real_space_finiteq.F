@@ -31,7 +31,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
  use interfaces,         ONLY:WF_load
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
- use R_lattice,          ONLY:bz_samp
+ use R_lattice,          ONLY:qindx_X,bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
  use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach,l_X_terminator
  use com,                ONLY:error
@@ -52,7 +52,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
  ! Work space
  !
  integer                      :: iq,ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
-&                                ic_wf,iv_wf,idir,n_LT_steps,start_iq,last_iq
+&                                ic_wf,iv_wf,idir,n_LT_steps,start_iq,last_iq,okbz,ok
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
@@ -96,10 +96,13 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
          ! Here we will get vk-q and ck, we must find the index of k(ik)-q(iq)
-         ! ---> Add potential call to bz_samp_indexes.F in bz_ops/
-         !      Check what is done in the case of the em1s
-         !call bz_samp_indexes( ,Xk, )
-         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ! TO CHECK:
+         !   Xk%sstar(ik) --> gives the index of ik in the full bz list ?
+         !   Xk%star(okbz) --> gives the index of okbz in the irreducible bz list ?
+         okbz = qindx_X(iq,Xk%sstar(ik,1),1)
+         ok   = Xk%star(okbz,1)
+         !
+         iv_wf=WF%index(iv,ok,i_sp_pol)
          ic_wf=WF%index(ic,ik,i_sp_pol)
          !
          if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
@@ -113,6 +116,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
              if(.not.idir_todo(idir)) cycle
              !
              ! Check with Davide how to define the finite q for the dipoles --> x_cc by the corresponding finite-q expression 
+             ! Actually here it might be ok, we have <ck|r|vk-q>. The problem is what to do with the (q+G)* in front of it (wrt efield/BS_q)
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
 &                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
 &                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )

@@ -194,7 +194,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
-   !if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+   if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
    if (BS_q(1).ne.1.or.BS_q(2).ne.1) call DIPOLE_real_space_finiteq(Xen,Xk,X,idir_not_done)
    !

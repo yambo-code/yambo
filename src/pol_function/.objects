@@ -2,7 +2,7 @@
 SC_objects = DIPOLE_rotate.o
 #endif
 #if defined _RT
-RT_objects = DIPOLE_magnetization.o
+RT_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o
 #endif
 #if defined _ELPH
 ELPH_objects = X_GreenF_remap.o

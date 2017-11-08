@@ -130,7 +130,7 @@ module nl_optics
      use pars,           ONLY:SP
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
-     use hamiltonian,    ONLY:H_alloc,E_bare
+     use hamiltonian,    ONLY:H_alloc
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc,RT_bands
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
@@ -141,7 +141,7 @@ module nl_optics
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en)
+     call H_alloc(en,.true.,.false.)
      !
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(I_relax,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),en%nbf,QP_nk,n_sp_pol))
@@ -161,9 +161,6 @@ module nl_optics
      !
      ! Reference energies
      !
-     YAMBO_ALLOC(E_bare,(1:RT_bands(2),QP_nk,n_sp_pol))
-     E_bare=en%E(:RT_bands(2),:,:)
-     !
      YAMBO_ALLOC(E_full,(1:RT_bands(2),QP_nk,n_sp_pol))
      !
      if(l_use_DIPOLES) then
@@ -181,7 +178,7 @@ module nl_optics
    
    subroutine NL_free
      !
-     use hamiltonian,    ONLY:H_free,E_bare
+     use hamiltonian,    ONLY:H_free
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
      use drivers,        ONLY:l_use_Hxc_collisions
@@ -201,8 +198,6 @@ module nl_optics
      if(allocated(full_rho)) then
        YAMBO_FREE(full_rho)
      endif
-     !
-     YAMBO_FREE(E_bare)
      !
      if(allocated(E_full)) then
        YAMBO_FREE(E_full)

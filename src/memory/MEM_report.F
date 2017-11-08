@@ -55,14 +55,14 @@ subroutine MEM_report( REPORT )
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem),"Unallocated components:")
+     call plot_the_element(MEMs(i_mem),"Not deallocated components:")
      !
    enddo
    !
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !

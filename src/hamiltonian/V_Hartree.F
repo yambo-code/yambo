@@ -35,7 +35,9 @@ subroutine V_Hartree(rho,vhr)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ ! 
  implicit none
+ !
  integer  :: ig
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
@@ -62,20 +64,17 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(rhog,fft_dim,-1)
 #endif
  !
-!$omp parallel do default(shared), private(ig)
+ !$omp parallel do default(shared), private(ig)
  do ig=2,wf_ng
-   vhg(ig)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(ig,1))))/bare_qpg(1,ig)**2.
+   vhg(ig)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(ig,1))))/bare_qpg(1,ig)**2
  enddo
-!$omp end parallel do
-!
-! vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))/bare_qpg(1,2:wf_ng)**2
-!
+ !$omp end parallel do
  !
-!$omp parallel do default(shared), private(ig)
+ !$omp parallel do default(shared), private(ig)
  do ig=1,wf_ng
    vhtmp(fft_g_table(ig,1))=vhg(ig)
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  !
  ! FFT call: vhr in direct space
  !

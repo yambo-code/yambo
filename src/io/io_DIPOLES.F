@@ -33,7 +33,9 @@ integer function io_DIPOLES(X,ID)
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
- use X_m,           ONLY:DIP_spin
+ use X_m,           ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
+ use electrons,     ONLY:n_spinor
+ use com,           ONLY:secnm
 #endif
 #if defined _SC || defined _RT
  use X_m,           ONLY:P_square
@@ -50,8 +52,11 @@ integer function io_DIPOLES(X,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,&
-&           DIP_size(4),DIP_ipos(4),P2_size(3),P2_ipos(3)
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4)
+#if defined _RT || defined _SC
+ logical :: l_real_time_magn_dipoles
+ integer :: P2_size(3),P2_ipos(3),Pspinor_size(6),Pspinor_ipos(6)
+#endif
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -70,7 +75,8 @@ integer function io_DIPOLES(X,ID)
  if (l_sc_run)    io_extension(ID)='dip_iR_P_and_P2'
 #endif
 #if defined _RT
- if (l_real_time) io_extension(ID)='dip_iR_P_spin_and_P2'
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.index(secnm,"Dielectric")/=0)
+ if (l_real_time_magn_dipoles) io_extension(ID)='dip_iR_P_spin_and_P2'
 #endif
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
@@ -101,14 +107,24 @@ integer function io_DIPOLES(X,ID)
  !
  ! Reading size and position
  !
- P2_size(1)=2
- P2_ipos(1)=1
- !
  DIP_size=(/2,3,X%db_ib(2)-X%db_ib_lim(2)+1,X%db_ib_lim(1)-X%db_ib(1)+1/)
  DIP_ipos=(/1,1,X%ib_lim(2)-X%db_ib_lim(2)+1,X%ib(1)-X%db_ib(1)+1/)
  !
+#if defined _RT
+ Pspinor_size(1:4)=(/2,3,n_spinor,n_spinor/)
+ Pspinor_ipos(1:4)=(/1,1,1,1/)
+ !
+ Pspinor_size(5:6)=DIP_size(3:4)
+ Pspinor_ipos(5:6)=DIP_ipos(3:4)
+#endif
+ !
+#if defined _RT || defined _SC
+ P2_size(1)=2
+ P2_ipos(1)=1
+ !
  P2_size(2:3)=DIP_size(3:4)
  P2_ipos(2:3)=DIP_ipos(3:4)
+#endif
  !
  if (read_is_on(ID)) then
    call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
@@ -117,7 +133,11 @@ integer function io_DIPOLES(X,ID)
    ! GPL_EXCLUDE_START
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   if (l_real_time_magn_dipoles) then
+     call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     if (n_spinor==2) call X_alloc('DIP_P_spinor',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+   endif
 #endif
 #if defined _SC || defined _RT
    if (l_sc_run.or.l_real_time)  call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
@@ -150,15 +170,38 @@ integer function io_DIPOLES(X,ID)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- if (l_real_time.and.n_spin>1) then
+ if (l_real_time_magn_dipoles) then
    !
-   ! Spin
+   ! Itinerant magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_itinerant_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),IPOS=DIP_ipos)
+   !
+   ! Orbital magnetization
+   !
+   write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
+   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+   call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
+   !
+   ! Spin magntization
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
    call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
    !
+   if (n_spinor==2) then
+     !
+     ! P_Spinor
+     !
+     write (VAR_name,'(a,i4.4)') 'DIP_P_spinor_k_',ik
+     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=Pspinor_size)
+     call io_bulk(ID,C5=DIP_P_spinor(:,:,:,:,:,ik_mem),IPOS=Pspinor_ipos)
+     !
+   endif
+   !
  endif
+ !
 #endif
  !
 #if defined _SC || defined _RT

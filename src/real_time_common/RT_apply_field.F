@@ -26,22 +26,33 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  ! This subroutine add the vector potential to the Hamiltonian
  !
  use pars,           ONLY:SP,cI
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,global_gauge
- use real_time,      ONLY:RT_bands
+ use X_m,            ONLY:DIP_iR,DIP_P,DIP_P_spinor,global_gauge
+ use real_time,      ONLY:RT_bands,l_update_SOC
+ use vec_operate,    ONLY:cross_product
+ use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
+ !
  integer,           intent(in) :: ik,i_sp_pol
- complex(SP),    intent(inout) :: H_nl_sc(RT_bands(2),RT_bands(2))
+ complex(SP),    intent(inout) :: H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  type(gauge_field), intent(in) :: A_input
  ! 
  ! Work Space
  !
- integer     :: i1,i2
- complex(SP) :: A_dot_J,E_dot_P,A_vec_pot(3),E_vec_pot(3),POL(3),CURR(3)
+ integer     :: i1,i2,i_spinor,j_spinor
+ complex(SP) :: A_dot_J,E_dot_P,ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
+&               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
+ !
+#if defined _TIMING
+ call timing('RT Apply Field',OPR='start')
+#endif
  !
  if(trim(global_gauge)=='velocity') then
    !
@@ -55,8 +66,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=RT_bands(1),RT_bands(2)
-     CURR(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
-     A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
+     Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
+     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
    enddo
    !
@@ -65,8 +76,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
-       CURR(:)=-DIP_P(1:3,i1,i2,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
-       A_dot_J=sum(A_vec_pot(1:3)*CURR(1:3)) 
+       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
+       A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      A_dot_J
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
        !
@@ -74,6 +85,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
    !
    ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
+   ! Its low field expansion however gives <nk|iA*[x,V(r,r')]|n'k>, which is included in DIP_P
    !
  else  
    !
@@ -88,7 +100,27 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
      E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P,SP)
+     !
+     if(l_update_SOC.and.n_spinor==2) then
+       !
+       ! Updte of SOC interaction, i.e. last term in 
+       ! Eq.(1) JCTC 11, 4870 (2015)
+       !
+       Jspinor(:,:,:)=DIP_P_spinor(:,:,:,i1,i1,PAR_Xk_ibz_index(ik))
+       do i_spinor=1,n_spinor
+         do j_spinor=1,n_spinor
+           ExJs(:,i_spinor,j_spinor)=cross_product(conjg(E_vec_pot),Jspinor(:,i_spinor,j_spinor))
+         enddo
+       enddo
+       sigma_dot_ExJs=sum(sigma_x*ExJS(1,:,:))+ &
+&                     sum(sigma_y*ExJS(2,:,:))+ &
+&                     sum(sigma_z*ExJS(3,:,:))
+       H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-0.25_SP*real(sigma_dot_ExJs)
+     endif
+     !
    enddo
+   !
+   ! Inter-band terms
    !
    do i1=RT_bands(1),RT_bands(2)
      do i2=i1+1,RT_bands(2)
@@ -100,8 +132,26 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      E_dot_P
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(E_dot_P)
        !
+       if(l_update_SOC.and.n_spinor==2) then
+         Jspinor(:,:,:)=DIP_P_spinor(:,:,:,i2,i1,PAR_Xk_ibz_index(ik))
+         do i_spinor=1,n_spinor
+           do j_spinor=1,n_spinor
+             ExJs(:,i_spinor,j_spinor)=cross_product(E_vec_pot,Jspinor(:,i_spinor,j_spinor))
+           enddo
+         enddo
+         sigma_dot_ExJs=sum(sigma_x(:,:)*ExJs(1,:,:))+ &
+&                       sum(sigma_y(:,:)*ExJs(2,:,:))+ &
+&                       sum(sigma_z(:,:)*ExJs(3,:,:))
+         H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      sigma_dot_ExJs
+         H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(sigma_dot_ExJs)
+       endif
+       !
      enddo
    enddo
  endif
+ !
+#if defined _TIMING
+ call timing('RT Apply Field',OPR='stop')
+#endif
  !
 end subroutine RT_apply_field

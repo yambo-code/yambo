@@ -29,7 +29,6 @@ integer function io_NL(ID)
 &                        NL_correlation,NL_er,NL_correlation,n_frequencies
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step
  use RT_control,    ONLY:JPC_RT_IO_t
- use matrix_operate,ONLY:mat_r2c,mat_c2r
  use fields,        ONLY:Efield
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&

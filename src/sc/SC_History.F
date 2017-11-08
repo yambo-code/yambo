@@ -30,6 +30,7 @@ subroutine SC_History(it,E)
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ !
  implicit none
  !
  integer      :: it

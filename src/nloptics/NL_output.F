@@ -25,7 +25,7 @@ subroutine NL_output(i_time,i_freq)
  !
  use pars,         ONLY:SP,schlen
  use units,        ONLY:FS2AUT,HA2EV,SPEED_OF_LIGHT
- use fields,       ONLY:A_vecpot,A_ext
+ use fields,       ONLY:A_tot,A_ext
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step,l_RT_induced_field,RT_P
@@ -95,7 +95,7 @@ subroutine NL_output(i_time,i_freq)
  !
  data_to_dump(2,2:4) =real(RT_P(1:3))
  !
- data_to_dump(3,2:4) =-real(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT
+ data_to_dump(3,2:4) =-real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT
  !
  do i_f=1,n_files
    call msg('o '//trim(file_name(i_f)),'',data_to_dump(i_f,1:n_headings(i_f)),USE_TABS=.TRUE.)

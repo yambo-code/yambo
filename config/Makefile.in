@@ -26,9 +26,10 @@ os          = @build_os@
 mpi         = @def_mpi@
 netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
+slepc       = @def_slepc@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -80,10 +81,10 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BR
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser xc_functionals communicate common io \
-               interface stop_and_restart wf_and_fft 
-BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser xc_functionals communicate common io \
-               interface stop_and_restart wf_and_fft 
+BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser communicate common io \
+               xc_functionals interface stop_and_restart wf_and_fft 
+BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser communicate common io \
+               xc_functionals interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
                tddft pol_function qp acfdt bse
@@ -196,6 +197,7 @@ ext-libs:
 #
 int-libs:
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 #
 # All libs #
@@ -454,7 +456,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name 'make.dep' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \

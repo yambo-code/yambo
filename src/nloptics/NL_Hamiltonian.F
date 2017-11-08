@@ -36,7 +36,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use hamiltonian,    ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:X_t
- use fields,         ONLY:A_ext,A_vecpot,Efield
+ use fields,         ONLY:A_ext,A_tot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_field,rho_reference,&
 &                         Ho_plus_Sigma,RT_P,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
  use wave_func,      ONLY:WF
@@ -46,7 +46,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 &                         SEX,HF,NL_bands
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
- use IO_m,           ONLY:IO_and_Messaging_switch
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -86,8 +85,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Reconstruct the full density
    !
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1,MUTE="-report -log -io_in -io_out",unMUTE=master_cpu)
-   call IO_and_Messaging_switch("+report +log +io_in +io_out")
+   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
    V_xc_sc=V_xc-V_xc_0
    !
  else
@@ -120,7 +118,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  call RT_Ext_fields(A_ext,Time)
  !
- A_vecpot=A_ext
+ A_tot=A_ext
  !
  E_ext=-A_ext%vecpot_vel/SPEED_OF_LIGHT
  !
@@ -152,7 +150,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
     E_ks=E_vec_pot
     !
-    A_vecpot%vecpot_vel=-E_vec_pot*SPEED_OF_LIGHT
+    A_tot%vecpot_vel=-E_vec_pot*SPEED_OF_LIGHT
     !
  endif
  !
@@ -202,13 +200,13 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    if(l_use_DIPOLES) then
      !    
-     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_vecpot)
+     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
      !
    else
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     call  Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,H_nl_sc)
+     call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !
    endif                                                         
    !

@@ -91,6 +91,8 @@ module YPP_real_time
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
  !
+ character(3) :: RT_p_format   
+ !
  ! (RT) carriers
  !
  real(SP),allocatable     :: delta_f(:,:,:)

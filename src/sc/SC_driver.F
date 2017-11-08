@@ -31,17 +31,17 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
-&                         rho_convergence,magn_convergence,SC_R,H_rotate,it_now,      &
+&                         rho_convergence,magn_convergence,H_rotate,it_now,           &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
-&                         V_hartree_sc,Ho,V_xc_sc,E_bare,l_sc_XC_is_local,            &
-&                         H_QP_table_setup
+&                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
+&                         H_QP_table_setup,SC_R
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,PARALLEL_WF_distribute,PARALLEL_WF_index,&
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index,&
 &                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
@@ -55,7 +55,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
- use electrons,      ONLY:Total_magn
+ use electrons,      ONLY:Spin_magn
 #if defined _ELECTRIC
  use fields,         ONLY:A_vecpot,Efield
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
@@ -200,8 +200,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call msg('r','')
  !
- !  Ho (kinetic + potential)
- !===========================
+ !  Hzero (kinetic + potential)
+ !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
  ! Reference wavefunctions
@@ -361,7 +361,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
-       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2),-1)
+       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
        ! 
        ! I/O [H_nl_sc]
        !
@@ -394,9 +394,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !
      call PP_redux_wait(H_nl_sc)
      !
-     ! Add Ho
+     ! Add Hzero
      !
-     H_nl_sc = H_nl_sc + Ho(:,:,ik,i_sp_pol)
+     H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
      !
      ! Diagonalize H_nl_sc 
      !=====================
@@ -525,7 +525,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      if (n_spin==2) then
        if(n_sp_pol==2) dumb_ch=trim(dumb_ch)//'  Mz  [muB] :'
        if(n_spinor==2) dumb_ch=trim(dumb_ch)//'  |M| [muB] :'
-       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Total_magn(:))))//' :'
+       dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(v_norm(Spin_magn(:))))//' :'
      endif
      if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//' Acc.  E(ev)  -  rho(%)'
      dumb_ch2=trim(dumb_ch2)//'    '//trim(real2ch(E_convergence*HA2EV)) &
@@ -634,7 +634,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call SC_report()
  !
- YAMBO_FREE(E_bare)
  if (l_SC_cycle.or.l_NSC_shot) then
    call WF_free(WF)
    call WF_free(WFo)
@@ -676,7 +675,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      endif
      !
      if (l_SC_nl_mix) then
-       YAMBO_ALLOC(H_nl_nm1,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
+       YAMBO_ALLOC(H_nl_nm1,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
        H_nl_nm1=cZERO
      endif
      !
@@ -743,12 +742,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    subroutine SC_report()
      !     
      ! Before all the DFT energies are shifted the V_xc_sc
-     ! must be shifted of max(Ev)-max(E_bare_v)
+     ! must be shifted of max(Ev)-max(E_reference_v)
      ! for more details see A. Fleszar PRB 64, 245204
      !
      if (l_SC_cycle) then
        do i_sp_pol=1,n_sp_pol
-         V_xc_sc_shift(i_sp_pol )= maxval(E_bare(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
+         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
          if (l_sc_V_is_local) then
            V_xc_sc(:,i_sp_pol)=V_xc_sc(:,i_sp_pol)+V_xc_sc_shift(i_sp_pol)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))
@@ -762,7 +761,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! Check for degenrate bands in the bare energies
          !
-         call degeneration_finder(E_bare(:,ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
+         call degeneration_finder(E_reference%E(:SC_bands(2),ik,i_sp_pol),SC_bands(2),first_el,n_of_el,n_deg_grp,0.0001/HA2EV)
          !
          do ib=1,SC_bands(2)
            !
@@ -800,7 +799,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
          !
          ! end do SC_bands(2)
          !
-         dE(:,ik,i_sp_pol)=E%E(:SC_bands(2),ik,i_sp_pol)-E_bare(:,ik,i_sp_pol)
+         dE(:,ik,i_sp_pol)=E%E(:SC_bands(2),ik,i_sp_pol)-E_reference%E(:SC_bands(2),ik,i_sp_pol)
          !
        enddo
        !
@@ -810,14 +809,14 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
      !====================
      if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
      !
-     dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_bare(:,:,:)
+     dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_reference%E(:SC_bands(2),:,:)
      !
      call msg('r',' ')
      !
      do ik=1,k%nibz
        call REPORT_Energies(E%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E  ',.TRUE.)
        call REPORT_Energies(E%f(:SC_bands(2),:,:)/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'occ',.FALSE.)
-       call REPORT_Energies(E_bare,k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
+       call REPORT_Energies(E_reference%E(:SC_bands(2),:,:),k,Xk,SC_bands(2),(/ik,ik/),'E_o',.FALSE.)
        call REPORT_Energies(dE,k,Xk,SC_bands(2),(/ik,ik/),'d_E',.FALSE.)
        call REPORT_Energies(spread,k,Xk,SC_bands(2),(/ik,ik/),'Spr',.FALSE.)
        call REPORT_Energies(max_overlap/HA2EV,k,Xk,SC_bands(2),(/ik,ik/),'MxO',.FALSE.)

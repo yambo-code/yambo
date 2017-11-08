@@ -540,19 +540,20 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
-   if (l_flag)      call initactivate(1,"OCCgroup")
-   if (l_RT_density)call initactivate(1,"LoadGhistory")
-   if (l_RT_bands)  call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
-   if (l_RT_2D_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+   if (l_flag)           call initactivate(1,"OCCgroup")
+   if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
+   if (l_RT_density)     call initactivate(1,"LoadGhistory")
+   if (l_RT_bands)       call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
+   if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP")
+   if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
  endif
 #endif

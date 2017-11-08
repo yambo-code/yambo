@@ -58,6 +58,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _YPP_RT
  use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -73,10 +76,14 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _YPP_RT
  integer    :: ik_RT
 #endif
- integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r
- real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(3,fft_size)
-! complex(SP):: WF_der(3,fft_size)
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
+ real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ complex(SP):: WF_der(fft_size,n_spinor,3)
  logical    :: warn_done,l_si,l_rho !,l_J
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_density',OPR='start')
+#endif
  !
  ! Basic Setups
  !
@@ -142,11 +149,13 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !
        !if (l_J) then
        !  !
-       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,"wave")
+       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
        !  !
-       !  do i_spinor=1,n_spinor
-       !    do i_r=1,fft_size
-       !      J_no_sym(:,i_r)=J_no_sym(:,i_r)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(:,i_r,i_spinor))
+       !  do i_dir=1,3
+       !    do i_spinor=1,n_spinor
+       !      do i_r=1,fft_size
+       !        J_no_sym(i_r,i_dir)=J_no_sym(i_r,i_dir)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(i_r,i_spinor,i_dir))
+       !      enddo
        !    enddo
        !  enddo
        !  !
@@ -176,8 +185,12 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  !if (l_J) then
  !  do i_symm=1,rho_syms
- !    J(:,:)=J(:,:)+real(J_no_sym(:,fft_rot_r(:,i_symm)),SP)/real(nsym,SP)
+ !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
  !  enddo
  !endif
+ !
+#if defined _TIMING && defined _RT
+ call timing('el_density',OPR='stop')
+#endif
  ! 
 end subroutine

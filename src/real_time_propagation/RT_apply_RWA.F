@@ -53,7 +53,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
      !
      if (RT_is_statically_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
      !
-     deltaE=RT_E_and_k%En(i_n,ik)-RT_E_and_k%En(i_np,ik)
+     deltaE=RT_E_and_k%En(i_n,ik,1)-RT_E_and_k%En(i_np,ik,1)
      !
      if (l_RT_EXP) then
        !

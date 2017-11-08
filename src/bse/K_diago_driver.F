@@ -29,7 +29,7 @@ subroutine K_diago_driver(iq,W)
  use pars,           ONLY:SP
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_pert_soc,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -94,6 +94,7 @@ subroutine K_diago_driver(iq,W)
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
 #endif
+ BSS_n_eig = BS_H_dim
  !  
  ! Sectioning
  !============
@@ -115,7 +116,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel and/or BSS components loading
  !======================================
@@ -238,7 +239,7 @@ subroutine K_diago_driver(iq,W)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
    !
  endif
  !

@@ -161,11 +161,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        if (.not. l_RT_uses_E_FineGd) then
          !
-         if(RT_E_and_k%En(i_np,ik_m_q)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q)>RT_eh_en(2)) cycle
-         if(RT_E_and_k%En(i_n ,ik    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik    )>RT_eh_en(2)) cycle
+         if(RT_E_and_k%En(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+         if(RT_E_and_k%En(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik    ,1)>RT_eh_en(2)) cycle
          !
-         DELTA_E=RT_E_and_k%En(i_np,ik_m_q)-RT_E_and_k%En(i_n,ik)
-         DELTA_W=RT_E_and_k%W(i_np,ik_m_q) +RT_E_and_k%W(i_n,ik)
+         DELTA_E=RT_E_and_k%En(i_np,ik_m_q,1)-RT_E_and_k%En(i_n,ik,1)
+         DELTA_W=RT_E_and_k%W(i_np,ik_m_q,1) +RT_E_and_k%W(i_n,ik,1)
          !
        endif
        !
@@ -190,11 +190,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if (l_RT_uses_E_FineGd) then
              !
-             if(RT_E_and_k%En(i_np,ik_m_q_rim)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q_rim)>RT_eh_en(2)) cycle
-             if(RT_E_and_k%En(i_n ,ik_rim    )<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik_rim    )>RT_eh_en(2)) cycle
+             if(RT_E_and_k%En(i_np,ik_m_q_rim,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q_rim,1)>RT_eh_en(2)) cycle
+             if(RT_E_and_k%En(i_n ,ik_rim    ,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik_rim    ,1)>RT_eh_en(2)) cycle
              !
-             DELTA_E=RT_E_and_k%En(i_np,ik_m_q_rim)-RT_E_and_k%En(i_n,ik_rim)
-             DELTA_W=RT_E_and_k%W(i_np,ik_m_q_rim) +RT_E_and_k%W(i_n,ik_rim)
+             DELTA_E=RT_E_and_k%En(i_np,ik_m_q_rim,1)-RT_E_and_k%En(i_n,ik_rim,1)
+             DELTA_W=RT_E_and_k%W(i_np,ik_m_q_rim,1) +RT_E_and_k%W(i_n,ik_rim,1)
              !
            endif
            !

@@ -23,7 +23,7 @@
 !
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                    &             R0,R1,R2,R3,R4,R5,&
-                   &             C0,C1,C2,C3,C4,   &
+                   &             C0,C1,C2,C3,C4,C5,&
                    &             L0,L1,L2,L3,L4,   &
                    &                            IPOS)
  !
@@ -41,7 +41,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  integer,     optional :: VAR_SZ(:),IPOS(:)
  integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
  real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
- complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:)
+ complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
  !
  ! These types can be used instead of logical that 
  ! are not supported by NetCdf
@@ -50,7 +50,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! 
  ! Work Space
  !
- real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:)
+ real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:)
  integer, allocatable :: var_dim(:),ipos_loc(:),isize_loc(:)
  integer              :: j1,dims,dims_db
  integer, allocatable :: var_dim_db(:)
@@ -110,6 +110,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
  if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
  if (               present(I5).or.present(R5).or.present(C4)) dims=5
+ if (                                             present(C5)) dims=6
  !
  if(dims>0) then
    allocate(ipos_loc(dims),isize_loc(dims))
@@ -256,6 +257,13 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
    RC4 => linkC2R(C4,isize_loc)
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC4, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC4, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(C5)) then
+   isize_loc=(/2,size(C5,1),size(C5,2),size(C5,3),size(C5,4),size(C5,5)/)
+   RC5 => linkC2R(C5,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC5, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC5, ipos_loc, isize_loc)
  endif
  !
  call netcdf_call(nf_error,ID)

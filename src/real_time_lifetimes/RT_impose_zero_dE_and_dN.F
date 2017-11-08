@@ -115,7 +115,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
        Hole_fac=real(Hole_lifetime(ib,ik_rim)    ,DP)*f_H-real(REF_lifetime(ib,ik_rim,iref  ),DP)*df
        Elec_fac=real(Electron_lifetime(ib,ik_rim),DP)*f_E+real(REF_lifetime(ib,ik_rim,iref+1),DP)*df
        !
-       En=real(RT_E_and_k%En(ib,ik_rim),DP)
+       En=real(RT_E_and_k%En(ib,ik_rim,1),DP)
        !
        if (En<=0._DP) then
          !
@@ -193,7 +193,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
        !
-       En=real(RT_E_and_k%En(ib,ik_rim),DP)
+       En=real(RT_E_and_k%En(ib,ik_rim,1),DP)
        !
        GAMMA_e=real(Electron_lifetime(ib,ik_rim),DP)+real(REF_lifetime(ib,ik_rim,iref+1),DP)
        GAMMA_h=real(Hole_lifetime(ib,ik_rim)    ,DP)+real(REF_lifetime(ib,ik_rim,iref)  ,DP)

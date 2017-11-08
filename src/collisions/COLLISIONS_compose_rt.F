@@ -31,11 +31,11 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_FineGd,RT_bands
- !
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ !
  implicit none
  !
  complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -84,15 +84,13 @@ subroutine COLLISIONS_compose_rt(dG_in)
    !
    i_comp=1
    !
-   i_k_RT=RT_ibz_coo(i_k,1)
-   !
    do i_kmq=1,nXkibz
      !
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
          if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
-           RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin) &
+           RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
 &                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
            i_comp=i_comp+1
          endif
@@ -101,10 +99,6 @@ subroutine COLLISIONS_compose_rt(dG_in)
      enddo
      !
    enddo
-   !
-   if(.not.l_RT_uses_E_FineGd) cycle
-   !
-   RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1)+1:RT_ibz_coo(i_k,2),i_spin)=RT_Vnl_xc(i_n,i_m,i_k_RT,i_spin)
    !
  enddo
  !
@@ -117,8 +111,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
    i_n       =HXC_collisions%state(i_coll,1)
    i_m       =HXC_collisions%state(i_coll,2)
    !
-   RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=real(RT_Vnl_xc(i_n,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
-   RT_Vnl_xc(i_m,i_n,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:)=conjg(RT_Vnl_xc(i_n,i_m,RT_ibz_coo(i_k,1):RT_ibz_coo(i_k,2),:))
+   RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
+   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
    !
  enddo
  !

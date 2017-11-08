@@ -28,7 +28,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:RT_carriers
+ use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
  !
 #include<memory.h>
@@ -48,7 +48,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  character(schlen)     :: title
  logical               :: l_DbGd
  !
- l_DbGd=K%nibz_FineGd>0
+ l_DbGd=K%nibz_FineGd>0     .and. .not.l_RT_abs_yambo
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -141,7 +141,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     integer      :: ik,i_carr,nb_max
     real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
     !
-    l_renormalize=.not.l_real_time
+    l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
     if (NK/=E%nk) K_weights=K%weights_FineGd
     if (NK==E%nk) K_weights=K%weights

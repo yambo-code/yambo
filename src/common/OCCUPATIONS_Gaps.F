@@ -134,7 +134,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  if(n_sp_pol==1) E%E_ind_gap(1)  =E_g_ind_(1,1)
  if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
- !
+ ! 
  ! [2] Direct Gaps (min/max)
  !
  if (all(Nbf_==Nbm_)) then

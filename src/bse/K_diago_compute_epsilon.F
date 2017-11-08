@@ -33,7 +33,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_H_dim,BS_pert_soc
- use BS_solvers,     ONLY:BSS_add_antiresonant,Co_factor
+ use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !
@@ -114,7 +114,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  call live_timing('BSK     epsilon',px%n_of_elements(myid+1))
 #endif
  !
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    !
    if (.not.px%element_1D(i1)) cycle
    !

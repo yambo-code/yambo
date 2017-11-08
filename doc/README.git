@@ -68,7 +68,7 @@ After you can also use te “git mergetool” command.
 
 Checkout a branch:
 ===================
->git worktree add ~/Yambo/yambo/branches/BRANCH BRANCH
+>git worktree add ~/Yambo/yambo/branches/BRANCH origin/BRANCH
 
 Create a new branch:
 ===================

@@ -27,6 +27,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use pars,           ONLY:SP,schlen,rZERO
+ use parser_m,       ONLY:parser
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
  use D_lattice,      ONLY:Bose_Temp
@@ -47,9 +48,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  ! Work Space
  !
  integer, parameter    :: fit_dim=1000,N_max_files=16
- integer               :: n_groups=1,i_g,i_g_ep=0,i_g_ee=0,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
+ integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit
  integer               :: E_sort_index(RT_carriers%nstates)
- logical               :: l_ep_lifetimes
+ logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP),allocatable  :: spin_factors(:,:,:)
  !
@@ -81,15 +82,19 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    real(SP), allocatable :: Ef(:,:)
  end type Load_and_Fit
  !
- type(Load_and_Fit)    :: DATA_grp(8) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio, neq
+ type(Load_and_Fit)    :: DATA_grp(9) ! CARRIERS, spin-up/down,e-e, e-e-ratio, e-p, e-p-ratio, e-photon neq
  !
  !... metallic bands precision
  filled_tresh=1.E-7
+ !
+ call parser('IncludeEQocc',l_sum_equilibrium)
+ call parser('SkipFermiFIT',l_skip_fit)
  !
  ! Allocate GROUPs!
  !==================
  !
  call Load_and_Fit_alloc(DATA_grp(1),1,"CARRIERS")
+ n_groups=1
  !
  if (n_spinor==2) then
    call Load_and_Fit_alloc(DATA_grp(2),1,"spin-up")
@@ -99,6 +104,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    n_groups=3
  endif
  !
+ i_g_ee=0
  if (l_elel_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-e")
@@ -106,11 +112,14 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-e-ratio")
  endif
+ !
  if (l_elphoton_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-photon")
  endif
+ !
  l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
+ i_g_ep=0
  if (l_ep_lifetimes) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),4,"e-p")
@@ -141,14 +150,16 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !============
      DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
      !
+     if(l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
+     !
      ! Spin occupations
      !==================
      if (n_spinor==2) then
        ib=RT_carriers%table(i_RT,1)
        ik_ibz=RT_carriers%table(i_RT,2)
        ik=RT_carriers%table(i_RT,3)
-       DATA_grp(2)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,1)
-       DATA_grp(3)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)*spin_factors(ib,ik_ibz,2)
+       DATA_grp(2)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)*spin_factors(ib,ik_ibz,1)
+       DATA_grp(3)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)*spin_factors(ib,ik_ibz,2)
      endif
      !
      ! Lifetimes
@@ -188,30 +199,34 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  ! Fit the GROUPs!
  !=================
- call live_timing('Data fitting (Temperature and Fermi Level)',n_T_steps)
- !
- do i_T=1,n_T_steps
+ if (.not.l_skip_fit) then
+   !
+   call live_timing('Data fitting (Temperature and Fermi Level)',n_T_steps)
+   !
+   do i_T=1,n_T_steps
+     !
+     do i_g=1,n_groups
+       !
+       if (DATA_grp(i_g)%fittable) call FIT_me(DATA_grp(i_g))
+       !
+     enddo 
+     !
+     call live_timing(steps=1)
+     !
+   enddo
+   !
+   call live_timing( )
+   !
+   ! ... report ...
    !
    do i_g=1,n_groups
-     !
-     if (DATA_grp(i_g)%fittable) call FIT_me(DATA_grp(i_g))
-     !
-   enddo 
+     if (DATA_grp(i_g)%fittable) then
+       call  msg('s',":: Fit success ("//trim(DATA_grp(i_g)%kind)//"):"//trim(intc(DATA_grp(i_g)%n_fit_ok(1)))//&
+&                    "(h) -- "//trim(intc(DATA_grp(i_g)%n_fit_ok(2)))//"(e)")
+     endif
+   enddo
    !
-   call live_timing(steps=1)
-   !
- enddo
- !
- call live_timing( )
- !
- ! ... report ...
- !
- do i_g=1,n_groups
-   if (DATA_grp(i_g)%fittable) then
-     call  msg('s',":: Fit success ("//trim(DATA_grp(i_g)%kind)//"):"//trim(intc(DATA_grp(i_g)%n_fit_ok(1)))//&
-&                  "(h) -- "//trim(intc(DATA_grp(i_g)%n_fit_ok(2)))//"(e)")
-   endif
- enddo
+ endif
  !
  ! Re-ordering
  !=============
@@ -241,41 +256,45 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  ! Fitted temperatures & Fermi Levels
  !------------------------------------
- Ef_and_T_fname(1)='YPP-RT_Temperatures'
- Ef_and_T_fname(2)='YPP-RT_E_Fermi'
- ! 
- do i_f=1,2
-   if (i_f==1) ch_dummy='T'
-   if (i_f==2) ch_dummy='Ef'
-   call of_open_close(trim(Ef_and_T_fname(i_f)),'ot')
-   call RT_write_descriptions(trim(Ef_and_T_fname(i_f)))
-   n_titles =1
-   titles(1)='Time [fs]'
-   do i_g=1,n_groups
-     if (.not.DATA_grp(i_g)%fittable) cycle
-     titles(n_titles+1)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(1))
-     titles(n_titles+2)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(2))
-     n_titles=n_titles+2
-   enddo
-   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
-   if (i_f==1) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted temperatures [K]')
-   if (i_f==2) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted Fermi Levels [eV]')
-   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
-   call msg('o '//trim(Ef_and_T_fname(i_f)),'#',(/titles(1:n_titles)/),INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
-   do i_T=1,n_T_steps
+ if (.not.l_skip_fit) then
+   !
+   Ef_and_T_fname(1)='YPP-RT_Temperatures'
+   Ef_and_T_fname(2)='YPP-RT_E_Fermi'
+   ! 
+   do i_f=1,2
+     if (i_f==1) ch_dummy='T'
+     if (i_f==2) ch_dummy='Ef'
+     call of_open_close(trim(Ef_and_T_fname(i_f)),'ot')
+     call RT_write_descriptions(trim(Ef_and_T_fname(i_f)))
      n_titles =1
+     titles(1)='Time [fs]'
      do i_g=1,n_groups
        if (.not.DATA_grp(i_g)%fittable) cycle
-       o_data(1)                                = RT_time(i_T)*AUT2FS
-       if (i_f==1) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%T(:,i_T)*HA2KEL
-       if (i_f==2) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%Ef(:,i_T)*HA2EV
+       titles(n_titles+1)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(1))
+       titles(n_titles+2)=trim(ch_dummy)//trim(DATA_grp(i_g)%FIT_title(2))
        n_titles=n_titles+2
      enddo
-     call msg('o '//trim(Ef_and_T_fname(i_f)),'',(/o_data(1:n_titles)/),INDENT=-2,USE_TABS=.true.)
+     call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+     if (i_f==1) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted temperatures [K]')
+     if (i_f==2) call msg('o '//trim(Ef_and_T_fname(i_f)),'# Fitted Fermi Levels [eV]')
+     call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+     call msg('o '//trim(Ef_and_T_fname(i_f)),'#',(/titles(1:n_titles)/),INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(Ef_and_T_fname(i_f)),'#')
+     do i_T=1,n_T_steps
+       n_titles =1
+       do i_g=1,n_groups
+         if (.not.DATA_grp(i_g)%fittable) cycle
+         o_data(1)                                = RT_time(i_T)*AUT2FS
+         if (i_f==1) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%T(:,i_T)*HA2KEL
+         if (i_f==2) o_data(n_titles+1:n_titles+2)= DATA_grp(i_g)%Ef(:,i_T)*HA2EV
+         n_titles=n_titles+2
+       enddo
+       call msg('o '//trim(Ef_and_T_fname(i_f)),'',(/o_data(1:n_titles)/),INDENT=-2,USE_TABS=.true.)
+     enddo
+     call of_open_close(trim(Ef_and_T_fname(i_f)))
    enddo
-   call of_open_close(trim(Ef_and_T_fname(i_f)))
- enddo
+   !
+ endif
  !
  ! Distributions and fits
  !------------------------
@@ -290,20 +309,24 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  !
  !... Fit related info
  data_ch(1,1,:)=' Time [fs]'
- data_ch(1,2,1)=' T(h) [K]'
- data_ch(1,2,2)=' T(e) [K]'
- data_ch(1,3,:)=' Ef   [eV]'
- data_ch(1,4,:)=' Avg error'
- data_ch(1,5,:)=' Max error'
+ if (.not.l_skip_fit) then
+   data_ch(1,2,1)=' T(h) [K]'
+   data_ch(1,2,2)=' T(e) [K]'
+   data_ch(1,3,:)=' Ef   [eV]'
+   data_ch(1,4,:)=' Avg error'
+   data_ch(1,5,:)=' Max error'
+ endif
  do i_T=1,n_T_steps
    titles(i_T+1)=' @'//trim(real2ch( RT_time(i_T)*AUT2FS ))
    data_ch(i_T+1,1,:)= trim(real2ch( RT_time(i_T)*AUT2FS ))
-   do i_fit=1,2
-     data_ch(i_T+1,2,i_fit)=   trim(real2ch( DATA_grp(1)%T(i_fit,i_T)*HA2KEL ))
-     data_ch(i_T+1,3,i_fit)=   trim(real2ch( DATA_grp(1)%Ef(i_fit,i_T)*HA2EV ))
-     data_ch(i_T+1,4,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit,i_T) ))
-     data_ch(i_T+1,5,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit+2,i_T) ))
-   enddo
+   if (.not.l_skip_fit) then
+     do i_fit=1,2
+       data_ch(i_T+1,2,i_fit)=   trim(real2ch( DATA_grp(1)%T(i_fit,i_T)*HA2KEL ))
+       data_ch(i_T+1,3,i_fit)=   trim(real2ch( DATA_grp(1)%Ef(i_fit,i_T)*HA2EV ))
+       data_ch(i_T+1,4,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit,i_T) ))
+       data_ch(i_T+1,5,i_fit)=   trim(real2ch( DATA_grp(1)%err_fit(i_fit+2,i_T) ))
+     enddo
+   endif
  enddo
  !
  ! ... PLOTs
@@ -313,7 +336,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    !
    call PLOT_the_GROUP( DATA_grp(i_g) , .FALSE. )
    !
-   if (DATA_grp(i_g)%fittable) then
+   if (DATA_grp(i_g)%fittable .and. .not.l_skip_fit) then
      !
      call PLOT_the_GROUP( DATA_grp(i_g), .TRUE. )
      !

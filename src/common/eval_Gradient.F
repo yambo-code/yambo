@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_Gradient(f,f_gradient,f_type)
+subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! The gradient of a periodic function f(r):
  ! 
@@ -31,7 +31,7 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  !
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
- use pars,          ONLY:SP,DP,cI
+ use pars,          ONLY:SP,DP,cI,cZERO
  use com,           ONLY:error
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
@@ -41,13 +41,15 @@ subroutine eval_Gradient(f,f_gradient,f_type)
  use wave_func,     ONLY:wf_ng
  !
 #include<memory.h>
- complex(SP),      intent(in) ::f(fft_size)
- complex(SP),      intent(out)::f_gradient(3,fft_size)
- character(len=*), intent(in) ::f_type       ! either "wave" or "density"
+ !
+ integer,          intent(in) ::spinor_size
+ complex(SP),      intent(in) ::f(fft_size,spinor_size)
+ complex(SP),      intent(out)::f_gradient(fft_size,spinor_size,3)
+ character(len=*), intent(in) ::f_type       ! "wave", "density" or "potential"
  !
  ! Work Space 
  !
- integer :: ng_,ic,ig
+ integer :: ng_,ic,ig,i_spinor
  complex(DP), allocatable :: Vr(:), V3g(:,:)
  !
  select case( trim(f_type) )
@@ -55,15 +57,22 @@ subroutine eval_Gradient(f,f_gradient,f_type)
    ng_=min(wf_ng,size(fft_g_table,1))
  case( "density")
    ng_=min(ng_vec,size(fft_g_table,1))
+ case( "potential")
+   ng_=min(ng_vec,size(fft_g_table,1))
  case default
    call error(' [FFT] unknown f_type when computing gradient')
  end select
  !
  YAMBO_ALLOC(Vr,(fft_size))
- YAMBO_ALLOC(V3g,(3,ng_))
- V3g(:,:) = (0._SP,0._SP)
- Vr=f
+ YAMBO_ALLOC(V3g,(ng_,3))
+ V3g(:,:) = cZERO
  !
+ f_gradient = cZERO
+ !
+ do i_spinor=1,spinor_size
+   !
+   Vr=cmplx(f(:,i_spinor),kind=DP)
+   !
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
@@ -71,12 +80,12 @@ subroutine eval_Gradient(f,f_gradient,f_type)
 #else
  call fft_3d(Vr,fft_dim,-1)
 #endif
- !
- forall (ic=1:3,ig=1:ng_) V3g(ic,ig)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
- !
- do ic = 1,3
-   Vr = (0._SP,0._SP)
-   Vr(fft_g_table(1:ng_,1)) = V3g(ic,1:ng_)
+   !
+   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
+   !
+   do ic = 1,3
+     Vr = cZERO
+     Vr(fft_g_table(1:ng_,1)) = V3g(1:ng_,ic)
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
@@ -84,7 +93,9 @@ subroutine eval_Gradient(f,f_gradient,f_type)
 #else
    call fft_3d(Vr,fft_dim,1)
 #endif
-   f_gradient(ic,:) = Vr(:)
+     f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=SP)
+   enddo
+   !
  enddo
  !
  YAMBO_FREE(Vr)

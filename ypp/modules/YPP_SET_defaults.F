@@ -198,6 +198,9 @@ subroutine YPP_SET_defaults()
  Eh_mu   =(/-0.001_SP/HA2EV,0.001_SP/HA2EV/)
  Eh_temp =(/0._SP/HA2EV,0._SP/HA2EV/)
  h_mu_autotune_thr = 0._SP
+ !TR abs
+ !
+ RT_p_format="3col" 
  !
 #endif
  !

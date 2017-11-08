@@ -35,6 +35,7 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,&
 &                        XCo_Hartree_Fock,QP_t,QP_nb,QP_nk,QP_reset,&
 &                        report_Vnlxc,report_Sc,report_dSc
+ use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
 #if defined _SC

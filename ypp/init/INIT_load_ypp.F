@@ -33,7 +33,7 @@ subroutine ypp_INIT_load(defs)
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp
+&                               n_regions,Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -169,6 +169,7 @@ subroutine ypp_INIT_load(defs)
  ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
  call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
  call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
+ call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

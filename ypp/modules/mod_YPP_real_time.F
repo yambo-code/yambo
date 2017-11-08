@@ -73,9 +73,10 @@ module YPP_real_time
  integer     :: n_regions
  !
  ! Fermi function pump
- ! 
+ !
  real(SP) :: Eh_mu(2)            ! chemical potential for holes, electrons
  real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
+ real(SP) :: h_mu_autotune_thr   ! threshold for matching number of pumped holes / electrons
  !
  ! (RT) optics
  !

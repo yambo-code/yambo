@@ -11,6 +11,7 @@
 *.f90
 *.s
 *.sw*
+*dSYM
 
 # source #
 ##########
@@ -88,3 +89,4 @@ ehthumbs.db
 Thumbs.db
 myconfig*
 nohup.out
+autom4te.cache

@@ -109,7 +109,7 @@ subroutine NL_driver(en,k)
     RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
  endif
  !
- call RT_time_configuration_setup('POLARIZATION')
+ call RT_time_configuration_setup('POLARIZATION',JPC_RT_IO_t)
  !
  ! Check if total simulation time is long enough for analysis  
  !

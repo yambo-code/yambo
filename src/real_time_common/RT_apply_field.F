@@ -77,7 +77,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
-       Jtot(:)=-DIP_P(1:3,i1,i2,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
+       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      A_dot_J
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)

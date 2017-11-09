@@ -52,7 +52,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
- call load_cc(.false.,.true.)
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/))
  !
  ! WF load
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 

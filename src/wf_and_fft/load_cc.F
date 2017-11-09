@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_cc(manage_zero,center_cc)
+subroutine load_cc(manage_zero,x_zero_point)
  !
  ! manage_zero:
  !  - false --> no action
@@ -34,13 +34,14 @@ subroutine load_cc(manage_zero,center_cc)
  !
  use pars,        ONLY:SP
  use FFT_m,       ONLY:fft_size,fft_dim
- use D_lattice,   ONLY:x_cc,a,x_zero_point
+ use D_lattice,   ONLY:x_cc,a
  !
 #include<memory.h>
  !
  ! input variable
  !
- logical    :: manage_zero,center_cc
+ logical    :: manage_zero
+ real(SP)   :: x_zero_point(3),x_jump(3)
  !
  ! work space
  !
@@ -51,8 +52,7 @@ subroutine load_cc(manage_zero,center_cc)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3))
  !
- ! Not implemented. Option to set the jump elsewhere
- x_zero_point=0._SP
+ x_jump=(/a(1,1)/2._SP,a(1,1)/2._SP,a(1,1)/2._SP/)+x_zero_point
  !
  do ir1 = 0, fft_dim(1)-1         ! x 
    rir1=real(ir1,SP)/real(fft_dim(1),SP)
@@ -66,10 +66,6 @@ subroutine load_cc(manage_zero,center_cc)
        ! Definition: x_i=a1_i+a_2i+a3_i     i=x,y,z       in cartesian coordinates
        tmp_x(:) = a(1,:)*rir1 + a(2,:)*rir2 + a(3,:)*rir3
        !
-       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
-       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
-       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
-       !
        ! Correclty compute x1, x2 and x3 with respect to cartesian axis
        ! They are saw-like and the jumps are always at the axis parallel to the vectors
        ! which defines the supercell and which cross at the center of the supercell
@@ -77,18 +73,22 @@ subroutine load_cc(manage_zero,center_cc)
        !
        x_cc(ir,:)=tmp_x(:)
        !
-       if(.not.center_cc) cycle
-       !
-       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
-       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
-       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
+       !tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
+       !tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
+       !tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
+       tmp_border(1)=x_jump(1)   +a(2,1)*rir2 +a(3,1)*rir3
+       tmp_border(2)=a(1,2)*rir1 +x_jump(2)   +a(3,2)*rir3
+       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +x_jump(3)
        !
        do i_dir=1,3
-         if (tmp_x(i_dir)>tmp_border(i_dir)) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)
+         if (tmp_x(i_dir)>  tmp_border(i_dir)                ) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)
+         if (tmp_x(i_dir)<=(tmp_border(i_dir)-a(i_dir,i_dir))) x_cc(ir,:)=x_cc(ir,:)+a(i_dir,:)
        enddo
        !
+       if(.not.manage_zero) cycle
+       !
        do i_dir=1,3
-         if(manage_zero .and. abs(x_cc(ir,i_dir))<10*epsilon(1._SP)) then
+         if(abs(x_cc(ir,i_dir))<10*epsilon(1._SP)) then
            if(x_cc(ir,i_dir)>=0._SP) x_cc(ir,i_dir)= 10*epsilon(1._SP)
            if(x_cc(ir,i_dir)< 0._SP) x_cc(ir,i_dir)=-10*epsilon(1._SP)
          endif

@@ -49,7 +49,7 @@ subroutine MAG_pseudo_nl(kbv)
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
- call load_cc(.true.,.true.)
+ call load_cc(.true.,(/0._SP,0._SP,0._SP/))
  !
  i1=0
  !

@@ -123,7 +123,7 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    ! Pseudo potential terms needed for velocity gauge
    !==================================================
-   if (trim(global_gauge)=="velocity") call RT_H_pseudo(E,k)
+   if (trim(global_gauge)=="velocity") call RT_H_pseudo(k,E)
    !
  endif
  !

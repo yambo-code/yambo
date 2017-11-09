@@ -111,7 +111,7 @@ subroutine MAG_common_build_A(build)
  endif
  !
  YAMBO_FREE(x_cc)
- call load_cc(.false.,.true.)
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/))
  !
  ! A(r) Build-Up
  ! Ax , Ay , Az   

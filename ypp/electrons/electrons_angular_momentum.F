@@ -74,7 +74,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! 
  ! Build the vector potential
  call MAG_common_build_A(.true.)
- call load_cc(.false.,.true.)
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/))
  ! 
  ! Choose which are the directions you are interested in
  angular_dir(:)=.false.

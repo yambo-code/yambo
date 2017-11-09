@@ -56,7 +56,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  ! Dummyes
  integer                  :: ifft,ib,ik,i_spin
  character(schlen)        :: titles(6)
- real(SP)                 :: tmp_var
+ real(SP)                 :: tmp_var,x_zero(3)
  complex(SP),allocatable  :: wf_tmp_2d(:,:,:),rperp_tmp_2d(:,:,:),rperp_med_2d(:,:,:)
  complex(SP),allocatable  :: r_tmp(:),theta_tmp(:),psi_tmp(:)
  complex(SP),allocatable  :: x_tmp(:,:)
@@ -65,8 +65,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  if(.not.any((/l_cartesian,l_cylindrical,l_spherical/)) ) return
  !
- if(power<0) call load_cc(.true.,.true.)
- if(power>0) call load_cc(.false.,.true.)
+ x_zero=(/0._SP,0._SP,0._SP/)
+ if(power<0) call load_cc(.true. ,x_zero)
+ if(power>0) call load_cc(.false.,x_zero)
  call logical_init()
  call local_alloc()
  !

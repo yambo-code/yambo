@@ -144,7 +144,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  NB_to_map=SOC_bands_to_map(2)-SOC_bands_to_map(1)+1
  YAMBO_ALLOC(E_vec,(NB_to_map*n_sp_pol))
  !
- call load_cc(.false.,.false.)
+ call load_cc(.false.,(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/))
  !
 1 continue
  !

@@ -23,7 +23,7 @@
 !
 subroutine RT_H_pseudo(Xk,Xen)
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,cI
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
@@ -80,11 +80,11 @@ subroutine RT_H_pseudo(Xk,Xen)
  H_pseudo_order1=cZERO
  H_pseudo_order2=cZERO
  !
- call live_timing('MAG-pseudo',Xk%nibz)        
+ call live_timing('RT-pseudo',Xk%nibz)        
  !
  do ik=1,Xk%nibz
    !
-   call WF_load(WF,0,1,(/1,H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+   !call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
    !
    if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
@@ -106,6 +106,10 @@ subroutine RT_H_pseudo(Xk,Xen)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      ! 
      call RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
+     !
+     !write(*,*) kbv_r0(1:10,1,1)
+     !write(*,*) kbv_r1(1:10,:,1,1)
+     !write(*,*) kbv_r2(1:10,:,:,1,1)
      !
      do i1=1,pp_kbv_dim
        !     
@@ -131,16 +135,20 @@ subroutine RT_H_pseudo(Xk,Xen)
            !
          enddo
          !
+         !write(*,*) '0',ik,ib,kbv_ks_space0(ib)
+         !write(*,*) '1',ik,ib,kbv_ks_space1(1:2,ib)
+         !write(*,*) '2',ik,ib,kbv_ks_space2(1:2,1:2,ib)
+         !
          do ibp=H_ref_bands(1),ib
            !
-           H_pseudo_tmp_order1(:,ibp,ib)=conjg(kbv_ks_space1(:,ibp))*kbv_ks_space0(ib)+ &
-&                                          conjg(kbv_ks_space0(ibp))*kbv_ks_space1(:,ib)
+           H_pseudo_tmp_order1(:,ibp,ib)= -(conjg(kbv_ks_space1(:,ibp))*kbv_ks_space0(ib)  &
+&                                            +conjg(kbv_ks_space0(ibp))*kbv_ks_space1(:,ib) )
            if(ib/=ibp) H_pseudo_tmp_order1(:,ib,ibp)=conjg(H_pseudo_tmp_order1(:,ibp,ib))
            !
            do i_dir=1,3
-             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=conjg(kbv_ks_space2(:,i_dir,ibp))*kbv_ks_space0(ib)+ &
-&                                                 2._SP*conjg(kbv_ks_space1(:,ibp))*kbv_ks_space1(i_dir,ib)+ &
-&                                                 conjg(kbv_ks_space0(ibp))*kbv_ks_space2(:,i_dir,ib)
+             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=cI**2/2._SP*( conjg(kbv_ks_space2(:,i_dir,ibp))*kbv_ks_space0(ib)  &
+&                                                       -2._SP*conjg(kbv_ks_space1(:,ibp))*kbv_ks_space1(i_dir,ib)  &
+&                                                         +conjg(kbv_ks_space0(ibp))*kbv_ks_space2(:,i_dir,ib)      )
            enddo
            if(ib/=ibp) H_pseudo_tmp_order2(:,:,ib,ibp)=conjg(H_pseudo_tmp_order2(:,:,ibp,ib))
            !
@@ -156,7 +164,7 @@ subroutine RT_H_pseudo(Xk,Xen)
    !
    call live_timing(steps=1)
    !
-   call WF_free(WF)
+   !call WF_free(WF)
    !
  enddo  ! ik
  !

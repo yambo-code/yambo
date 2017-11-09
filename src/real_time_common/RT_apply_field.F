@@ -25,12 +25,12 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  !
  ! This subroutine add the vector potential to the Hamiltonian
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:n_sp_pol,n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,DIP_P_spinor,global_gauge
- use real_time,      ONLY:RT_bands,l_update_SOC
+ use real_time,      ONLY:RT_bands,l_update_SOC,H_pseudo_order1,H_pseudo_order2
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -47,7 +47,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: A_dot_J,E_dot_P,ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
+ complex(SP) :: A_dot_J,Vnl_A,Vnl_A_A,E_dot_P,&
+&               ExJs(3,n_spinor,n_spinor),A_A_vec_pot_tens(3,3),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
 #if defined _TIMING
@@ -60,15 +61,23 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !================
    !
    A_vec_pot=A_input%vecpot/SPEED_OF_LIGHT ! Gaussian units
+   do i1=1,3
+     A_A_vec_pot_tens(:,i1)=A_vec_pot(:)*A_vec_pot(i1)
+   enddo
+   !
+   Vnl_A  =cZERO
+   Vnl_A_A=cZERO
    !
    ! Add the vector potential to the singular part of the Self-Energy
    ! in case of complex Efield puts the correct Hermitian matrix
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=RT_bands(1),RT_bands(2)
-     Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
-     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
+     Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
+     Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i1,ik,i_sp_pol))
+     !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i1,ik,i_sp_pol))
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J+Vnl_A+Vnl_A_A,SP)
    enddo
    !
    do i1=RT_bands(1),RT_bands(2)
@@ -76,10 +85,12 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
        !     
-       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
+       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) ! the off-diagonal diamagnetic term is zero
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      A_dot_J
-       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
+       Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i2,ik,i_sp_pol))
+       !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i2,ik,i_sp_pol))
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J+Vnl_A+Vnl_A_A)
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J+Vnl_A+Vnl_A_A)
        !
      enddo
    enddo
@@ -97,7 +108,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! Intraband terms
    !
    do i1=RT_bands(1),RT_bands(2)
-     POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
+     POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
      E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P,SP)
      !
@@ -127,7 +138,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
-       POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
+       POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
        E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      E_dot_P
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(E_dot_P)

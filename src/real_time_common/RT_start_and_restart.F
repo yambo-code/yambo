@@ -69,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,ik_RT_DbGd,ik_FineGd,ib,COM_,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -304,6 +304,8 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    subroutine RT_initialize_local()
      !
+     implicit none
+     !
      G_lesser          =cZERO
      G_lesser_reference=cZERO
      dG_lesser         =cZERO
@@ -344,7 +346,9 @@ subroutine RT_start_and_restart(E,k,q,X)
    !
    subroutine RT_set_G_lesser()
      !
-     integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
+     implicit none
+     !
+     integer :: ik_RT_DbGd,ik_FineGd,ib
      real(SP):: Energy,f_occ,f_occ_ref,Width,kpt(3)
      !
      ! Defined from occupations %f
@@ -358,7 +362,7 @@ subroutine RT_start_and_restart(E,k,q,X)
            ik_FineGd=ik_RT_DbGd-ik
            if (ik_RT_DbGd/=RT_ibz_coo(ik,1)) then
              !
-             if (allocated(E%W))  E%W_FineGd(ib,ik_E_FineGd,1)     = abs(E%W(ib,ik,1))
+             if (allocated(E%W))  E%W_FineGd(ib,ik_FineGd,1)     = abs(E%W(ib,ik,1))
              !
              kpt       = k%pt_FineGd(ik_FineGd,:)
              Energy    = E%E_FineGd(ib,ik_FineGd,1)
@@ -399,8 +403,10 @@ subroutine RT_start_and_restart(E,k,q,X)
      use real_time,  ONLY:l_RT_relax_time_approx,RT_RTA_chem,RT_RTA_temp, &
 &                         RT_RTA_E_occ_infty,RT_RTA_H_occ_infty
      !
+     implicit none
+     !
      real(SP):: En
-     integer :: ik,ik_RT_DbGd,ik_E_FineGd,ib
+     integer :: ik_RT_DbGd,ik_FineGd,ib
      !
      ! Occupations are defined from G_lesser and G_lesser_reference
      !
@@ -419,8 +425,8 @@ subroutine RT_start_and_restart(E,k,q,X)
        do ib=RT_bands(1),RT_bands(2)
          do ik=1,k%nibz
            do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-             ik_E_FineGd=ik_RT_DbGd-ik
-             if (     l_RT_uses_E_FineGd) En=E%E_FineGd(ib,ik_E_FineGd,1)
+             ik_FineGd=ik_RT_DbGd-ik
+             if (     l_RT_uses_E_FineGd) En=E%E_FineGd(ib,ik_FineGd,1)
              if (.not.l_RT_uses_E_FineGd) En=E%E(ib,ik,1)
              RT_RTA_E_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(  En-E%E_CBm(1)-RT_RTA_chem(1) ,RT_RTA_temp(1))*spin_occ
              RT_RTA_H_occ_infty(ib,ik_RT_DbGd)= Fermi_fnc(-(En-E%E_VBM(1)-RT_RTA_chem(2)),RT_RTA_temp(2))*spin_occ

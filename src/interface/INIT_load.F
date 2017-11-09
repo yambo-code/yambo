@@ -80,7 +80,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        NE_MEM_treshold,NE_time_step_update_jump_SAVE,          &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step
+&                        RT_MAX_step,RT_RTA_temp,RT_RTA_chem
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -424,8 +424,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'dT_MAX',      '[RT] Maximum value for the time-dependent dT',  RT_MAX_step ,verb_level=V_real_time,unit=Time_unit(1))
- call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/RK2/HEUN" "EXP" "RWA") ',&
-&                            Integrator_name)
+ call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
+&              Integrator_name)
  !
  IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
  call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
@@ -435,20 +435,27 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
+ call it('f',defs,'RTEvalEnergt',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
+ call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
+ call it('f',defs,'UpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
  !
  ! Scattering
  !
  call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
  call it(defs,'LifeExtrapSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                                  RT_life_extrap_times_SAVE,unit=Time_unit(1))
+ call it('f',defs,'RelaxTimeApprox',    '[RT] Skipped Lifetimes are extrapolated',Verb_level=V_real_time)
+ call it(defs,'RTAtemp',   '[RT] Temperatures for relaxation time approximation',&
+&              RT_RTA_temp,unit=T_unit,Verb_level=V_real_time)
+ call it(defs,'RTAchem',   '[RT] Chemical potentials for relaxation time approximation',&
+&              RT_RTA_chem,unit=E_unit,Verb_level=V_real_time)
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
  ! 
- ! BGR
+ ! Update QP Energies
  !
- call it('f',defs,'BGR',     '[RT] Evaluate the Band-Gap Renormalization consistent with the applied potential',&
-&                            verb_level=V_real_time)
+ call it('f',defs,'RTupdateEqp', '[RT] Update QP energies on the fly',verb_level=V_real_time)
  !
  ! EE scattering
  !

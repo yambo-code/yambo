@@ -55,7 +55,9 @@ module electrons
  ! Average magnetization density
  !
  logical                  :: eval_magn
- real(SP)                 :: Total_magn(3)
+ real(SP)                 :: Spin_magn(3)
+ real(SP)                 :: Orbital_magn(3)
+ real(SP)                 :: Itinerant_magn(3)
  !
  type levels
    integer         :: nb

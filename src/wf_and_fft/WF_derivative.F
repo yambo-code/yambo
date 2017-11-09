@@ -27,7 +27,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  is the periodic part of the derivative
  !
  use pars,           ONLY:SP,DP,pi,cZERO
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
  use electrons,      ONLY:n_sp_pol,n_spinor
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
@@ -36,6 +36,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
+ use parallel_m,     ONLY:PAR_IND_WF_linear
 #if defined _MAGNETIC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
@@ -53,14 +54,14 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
- integer :: i1,i_wf,i_spin,i_spinor,ib,ik
+ integer :: i1,i_wf,i_sp_pol,i_spinor,ib,ik
  !
  ! wf_load could change bands_to_load(:) if it founds an SC-database 
  bands_to_load(:)=derivative_bands(:)
  !
  ! Wavefunctions in G space 
  !==========================
- call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
@@ -85,10 +86,13 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  fftw_plan = 0
 #endif
  !
- do i_spin=1,n_sp_pol
+ do i_sp_pol=1,n_sp_pol
    do ik=derivative_kpt(1),derivative_kpt(2)
      do ib=bands_to_load(1),bands_to_load(2)
-       i_wf=WF%index(ib,ik,i_spin)
+       !
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       !
+       i_wf=WF%index(ib,ik,i_sp_pol)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

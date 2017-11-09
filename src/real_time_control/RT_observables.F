@@ -21,32 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
+subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! This subroutine compute the variation of the energy and its different components,
  ! the number of electrons injected in conduction and holes in valence,
  ! and finally the variation in entropy and the associated temperature
  ! which is compared with the temperature from the fits
  !
- use pars,           ONLY:SP,cZERO
- use units,          ONLY:HA2EV,HA2KEL
- use drivers,        ONLY:l_sc_is_libDFT,l_elel_scatt,l_elph_scatt,l_use_Hxc_collisions,l_sc_hartree
- use QP_m,           ONLY:QP_nk
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:P_square
- use hamiltonian,    ONLY:V_hartree_sc,Ho
+ use electrons,      ONLY:levels
+ use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
- use rt_interfaces,  ONLY:RT_average_operator
- use real_time,      ONLY:RT_Tfit_occupations,RT_Efit_occupations,RT_nk,RT_Nk_ibz,RT_ibz_coo,&
-&                         XC0,HARTREE0,DbGd_ibz_coo,l_RT_uses_E_DbGd,REF_V_hartree_sc,       &
-&                         RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations,          &
-&                         RT_H_occupations,G_lesser_reference,RT_Vnl_xc,RT_bands,            &
-&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics
- use electrons,      ONLY:levels,n_sp_pol,spin_occ
- use xc_functionals, ONLY:E_xc,XC_potential_driver
- use global_XC,      ONLY:WF_kind,WF_xc_functional
- use parallel_m,     ONLY:PAR_Xk_nibz,master_cpu
- use RT_interfaces,  ONLY:RT_average_operator
+ use fields,         ONLY:A_tot
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -56,228 +43,59 @@ subroutine RT_Observables(en,k,dG_lesser,on_the_fly_operators)
  type(levels),  intent(in) :: en
  type(bz_samp), intent(in) :: k
  complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),      intent(out):: on_the_fly_operators(10)
+ real(SP),   intent(inout) :: OBSERVABLES(23)
  !
- ! WorkSpace
+ ! Workspace
  !
- integer     :: ib1,ib2,ik,ik_RT,ik_E,i1,i2
- real(SP)    :: Energy(2),dS_tot(3),S_e,S_h,N_carriers(2),N_err,VALUE_tmp(5),one_over_T
- complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),        &
-&               G_full_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
-&               G_full_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),      &
-&               dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
-&               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),   &
-&               dE_tot(3),dE_kin(3),dE_ion(3),dE_h(3),dE_xc(3),dE_hxc(3),             &
-&               dE_h_sc(3),E_xc_sc(3),E_xc_ref(3),dE_xc_sc(3),dE_hxc_sc(3),           &
-&               Ho_limited(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol)
- !
- if (.not. RT_do_it('OUT') ) return
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
+ real(SP) :: E_IP
  !
 #if defined _TIMING
  call timing('RT observables',OPR='start')
 #endif
  !
+ ! Current, Polarization and Magnetization
+ !==========================================
+ ! (evaluated also in RT_integrator when an induced field is included)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
- dG_lesser_h=cZERO
- dG_lesser_e=cZERO
- !
- do ik=1,en%nk
-   do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     if (l_RT_uses_E_DbGd) ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-     do ib1=RT_bands(1),RT_bands(2)
-       do ib2=RT_bands(1),RT_bands(2)
-         if (l_RT_uses_E_DbGd) then
-           Energy(1)=en%E_DbGd(ib1,ik_E,1)
-           Energy(2)=en%E_DbGd(ib2,ik_E,1)
-         else
-           Energy(1)=en%E(ib1,ik,1)
-           Energy(2)=en%E(ib2,ik,1)
-         endif
-         if ( Energy(1)<=0._SP .and. Energy(2)<=0._SP ) dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-         if ( Energy(1)> 0._SP .and. Energy(2)> 0._SP ) dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-       enddo
-     enddo
-   enddo
- enddo
- !
- G_full=dG_lesser+G_lesser_reference
- !
- G_full_h=dG_lesser_h+G_lesser_reference
- G_full_e=dG_lesser_e
- !
- dE_tot    =cZERO
- dE_kin    =cZERO
- dE_ion    =cZERO
- !
- dE_h      =cZERO
- dE_xc     =cZERO
- dE_hxc    =cZERO
- !
- E_xc_ref  =cZERO
- E_xc_sc   =cZERO
- dE_h_sc   =cZERO
- dE_xc_sc  =cZERO
- dE_hxc_sc =cZERO
- !
- ! Non-interacting energy variation
- !
- ! d_Ho = \delta\eps_{nmk} - V_Hxc[\rho_eq]
- !
- Ho_limited=Ho(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),:,:)
- call RT_average_operator(O_VALUE=dE_ion(1),O_MATRIX=Ho_limited,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_ion(2),O_MATRIX=Ho_limited,G=dG_lesser_h,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_ion(3),O_MATRIX=Ho_limited,G=dG_lesser_e,en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
- !
- ! Non-interacting kinetc energy variation
- !
- ! dE_Kin = - i Tr { P^2 dG^<}/2  
- !
- call RT_average_operator(O_VALUE=dE_kin(1),O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- call RT_average_operator(O_VALUE=dE_kin(2),O_MATRIX=P_square/2._SP,G=dG_lesser_h,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- call RT_average_operator(O_VALUE=dE_kin(3),O_MATRIX=P_square/2._SP,G=dG_lesser_e,en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- !
- ! dE_ion = dE_tot(IP) - dEkin
- !
- dE_ion = dE_ion - dE_kin
- !
- ! Non-interacting Hartree energy variation
- !
- call RT_average_operator(O_VALUE=dE_h(1),O_MATRIX=HARTREE0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_h(2),O_MATRIX=HARTREE0,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_h(3),O_MATRIX=HARTREE0,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
- !
- ! Non-interacting xc energy variation
- !
- call RT_average_operator(O_VALUE=dE_xc(1),O_MATRIX=XC0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_xc(2),O_MATRIX=XC0,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
- call RT_average_operator(O_VALUE=dE_xc(3),O_MATRIX=XC0,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
- !
- ! Sum of Hartree plus xc energy
- !
- dE_hxc=dE_h+dE_xc
- !
- dE_tot=dE_kin+dE_ion+dE_hxc
- !
- if (.not.l_use_Hxc_collisions) then
-   !
-   if (l_sc_hartree) then
-     !
-     ! Hartree potential Energy:
-     !
-     !  E_h[rho]=1/2 <V_h[rho]rho>= 1/2 int rho(r)rho(r')/|r-r'|
-     !
-     ! dE_h[rho]=E_h[rho]-E_h[rho0]
-     !          =1/2*[ 2*(int rho0(r)rho(r')/|r-r'|) + (int drho(r)drho(r')/|r-r'|) ]
-     ! 
-     ! The first term is already computed at the IP level. Thus it only remains the second term
-     ! Remember that V_hartree_sc is constructed starting from drho
-     !
-     call RT_average_operator(O_VALUE=dE_h_sc(1),O_REAL=V_hartree_sc/2._SP,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h_sc(2),O_REAL=V_hartree_sc/2._SP,G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=dE_h_sc(3),O_REAL=V_hartree_sc/2._SP,G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-     !
-   endif
-   !
-   if (l_sc_is_libDFT) then
-     !
-     ! Exc Energy from dE_xc[rho_n] energy density ... to be fixed, E_xc_ref is wrong
-     !
-     call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0,MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
-     !
-     call RT_average_operator(O_VALUE=E_xc_ref(1),O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=E_xc_sc(1), O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
-     !
-     dE_xc_sc = (E_xc_sc-E_xc_ref)-dE_xc
-     !
-   endif
-   !
-   ! Here I would need the Galitskii Migdal equation for the XC self energy in MBPT
-   !
- else
-   !
-   ! Davide: This is int V_rt(r)*drho(r)
-   !         - If V_rt contains only the Hartree term, this is twice the dE_h_sc
-   !         - If V_rt contains also the xc-term, this is not well defined ...
-   !
-   call RT_average_operator(O_VALUE=dE_hxc_sc(1),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
-   call RT_average_operator(O_VALUE=dE_hxc_sc(2),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_h,en=en,k=k,nK_mem=k%nibz)
-   call RT_average_operator(O_VALUE=dE_hxc_sc(3),O_MATRIX=RT_Vnl_xc(:,:,RT_ibz_coo(:,1),:),G=dG_lesser_e,en=en,k=k,nK_mem=k%nibz)
-   !
+ if (.not. RT_do_it('OUT') ) then
+#if defined _TIMING
+ call timing('RT observables',OPR='stop')
+#endif
+   return
  endif
  !
- ! Electrons and holes temperatures
+ ! GPL_EXCLUDE_START
  !
- if ( (l_elel_scatt.or.l_elph_scatt)) then
-   !
-   call RT_occupations_FIT(RT_Tfit_occupations,RT_Efit_occupations,RT_E_occupations)
-   !
-   if (abs(RT_Tfit_occupations(1))>50000._SP/HA2KEL) RT_Tfit_occupations(1)=0._SP
-   if (abs(RT_Tfit_occupations(2))>50000._SP/HA2KEL) RT_Tfit_occupations(2)=0._SP
-   !
- endif
+ NCarr =OBSERVABLES( 1: 3)
+ TFit  =OBSERVABLES( 4: 5)
+ EfFit =OBSERVABLES( 6: 7)
+ Ener  =OBSERVABLES( 8:12)
+ Entr  =OBSERVABLES(13:15)
+ TEntr =OBSERVABLES(16:18)
+ EnEntr=OBSERVABLES(19:21)
+ BGR   =OBSERVABLES(22:23)
  !
- ! Number of Holes     in the valence    band
- ! Number of Electrons in the conduction band
+ ! Carriers
+ !==========
+ call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
+ !
+ ! Energy
+ !==========
+ call RT_energy_components(en,k,dG_lesser,Ener,E_IP,'tot')
+ !
  ! Entropy
+ !==========
+ call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
- dS_tot     = 0._SP
- N_carriers = 0._SP
+ ! BGR
+ !==========
+ call RT_BGR(en,k,BGR)
  !
- do ik=1,en%nk
-   do ib1=RT_bands(1),RT_bands(2)
-     VALUE_tmp=0._SP
-     do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       if (l_RT_uses_E_DbGd) then
-         ik_E=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-         Energy(1)=en%E_DbGd(ib1,ik_E,1)
-       else
-         Energy(1)=en%E(ib1,ik,1)
-       endif
-       S_h=0._SP
-       S_e=0._SP
-       if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
-       if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
-       VALUE_tmp(3)=VALUE_tmp(3)+S_e+S_h
-       if ( Energy(1)<=0._SP ) then
-         VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib1,ik_RT)
-         VALUE_tmp(4)=VALUE_tmp(4)+S_h
-       endif
-       if ( Energy(1)> 0._SP ) then
-         VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib1,ik_RT)
-         VALUE_tmp(5)=VALUE_tmp(5)+S_e
-       endif
-     enddo
-     N_carriers(1:2)=N_carriers(1:2)+VALUE_tmp(1:2)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
-     dS_tot(1:3)    =dS_tot(1:3)    +VALUE_tmp(3:5)*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
-   enddo
- enddo
+ OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
  !
- N_err=N_carriers(1)-N_carriers(2)
- !
- ! Temperature derived from Entropy
- !
- do i1=1,3
-   if (.not.abs(real(dE_tot(i1),SP)-RT_E_thermodynamics(i1))>0._SP) cycle
-   one_over_T=(dS_tot(i1)-RT_S_thermodynamics(i1))/(real(dE_tot(i1),SP)-RT_E_thermodynamics(i1))
-   if (abs(one_over_T)<1._SP/(50000._SP*HA2KEL)) cycle
-   RT_T_thermodynamics(i1)=1._SP/one_over_T
- enddo
- !
- RT_E_thermodynamics=real(dE_tot,SP)
- RT_S_thermodynamics=dS_tot
- !
- dE_tot = dE_tot+dE_h_sc+dE_xc_sc+dE_hxc_sc
- !
- dE_h   = dE_h   +dE_h_sc
- dE_xc  = dE_xc  +dE_xc_sc
- dE_hxc = dE_hxc +dE_hxc_sc
- !
- ! Transfer the shadow variables
- !
- if(.not.l_use_Hxc_collisions) on_the_fly_operators(1:5)=real((/dE_kin(1),dE_ion(1),dE_h(1),  dE_xc(1),dE_tot(1)/))*HA2EV
- if(     l_use_Hxc_collisions) on_the_fly_operators(1:4)=real((/dE_kin(1),dE_ion(1),    dE_hxc(1),     dE_tot(1)/))*HA2EV
- on_the_fly_operators(6:8)=(/N_err,N_carriers(1),N_carriers(2)/)
- on_the_fly_operators(9:10)=RT_Tfit_occupations(:)*HA2KEL
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('RT observables',OPR='stop')

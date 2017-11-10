@@ -158,13 +158,13 @@ subroutine RT_H_pseudo(Xk,Xen)
      enddo   ! i1
      !
      ! DEBUG <
-     !do ib=H_ref_bands(1),H_ref_bands(2)
-     !  iwf=WF%index(ib,ik,i_sp_pol)
-     !  do ibp=ib,H_ref_bands(2)
-     !    iwfp=WF%index(ibp,ik,i_sp_pol)
-     !    write(201,*) iwfp,iwf,H_pseudo_order1(:,ibp,ib,ik,i_sp_pol)
-     !  enddo   ! ibp
-     !enddo   ! ib
+     do ib=H_ref_bands(1),H_ref_bands(2)
+       iwf=WF%index(ib,ik,i_sp_pol)
+       do ibp=ib,H_ref_bands(2)
+         iwfp=WF%index(ibp,ik,i_sp_pol)
+         write(201,*) iwfp,iwf,H_pseudo_order1(:,ibp,ib,ik,i_sp_pol)
+       enddo   ! ibp
+     enddo   ! ib
      ! DEBUG >
      !
    enddo   ! i_sp_pol

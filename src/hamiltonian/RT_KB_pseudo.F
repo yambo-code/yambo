@@ -24,7 +24,6 @@
 subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
  !
  use pars,          ONLY:SP,DP,cZERO,cI
- use units,         ONLY:SPEED_OF_LIGHT
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
@@ -43,12 +42,6 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
  ! Work Space
  !
  complex(DP)             :: kbv_DP(fft_size)
- complex(SP)             :: gauge_factor(fft_size)
- real(SP)                :: int_A_dl(fft_size),r_atom_pos(fft_size),r_x(fft_size)
- real(SP)                :: cos_delta_phi(fft_size),sin_delta_phi(fft_size)
- real(SP)                :: Phi_over_Phio,atom_pos_alat(3)
- !
- ! Dummies
  integer                 :: i1,is,ia,il,im,i_pp,pp_spin,i_spinor,i_dir,j_dir
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
@@ -62,10 +55,8 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
      !
-     call c2a(v_in=atom_pos(:,ia,is),v_out=atom_pos_alat,mode='rc2a')
-     !
-     !call load_cc(.false.,atom_pos_alat)
-     call load_cc(.false.,(/0._SP,0._SP,0._SP/))
+     call load_cc(.false.,atom_pos(:,ia,is))
+     !call load_cc(.false.,(/0._SP,0._SP,0._SP/))
      ! 
      do i_pp = 1, pp_n_l_times_proj_max
        il = pp_table(1,is,i_pp)
@@ -94,20 +85,20 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
            kbv_r0(:,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
            !
            do i_dir=1,3
-             kbv_DP=(0._DP,0._DP)
-             kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(conjg(kbv(1:wf_ng,i1,1+i_dir,i_spinor)),kind=DP)
-             !
-             ! Here I need to fourier tranform kbv(G,i1,1+i_dir)
-#if defined _FFTW
-             fftw_plan = 0
-             call fft_3d(kbv_DP,fft_dim,+1,fftw_plan)
-#else
-             call fft_3d(kbv_DP,fft_dim,+1)
-#endif
-             kbv_r1(:,i_dir,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
-             !kbv_r1(:,i_dir,i1,i_spinor)=-cI*kbv_DP(:)*x_cc(:,i_dir)
+!             kbv_DP=(0._DP,0._DP)
+!             kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(conjg(kbv(1:wf_ng,i1,1+i_dir,i_spinor)),kind=DP)
+!             !
+!             ! Here I need to fourier tranform kbv(G,i1,1+i_dir)
+!#if defined _FFTW
+!             fftw_plan = 0
+!             call fft_3d(kbv_DP,fft_dim,+1,fftw_plan)
+!#else
+!             call fft_3d(kbv_DP,fft_dim,+1)
+!#endif
+!             kbv_r1(:,i_dir,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
+             kbv_r1(:,i_dir,i1,i_spinor)=-cI*kbv_r0(:,i1,i_spinor)*x_cc(:,i_dir)
              !do j_dir=1,3
-             !  kbv_r2(:,j_dir,i_dir,i1,i_spinor)=kbv_DP(:)*x_cc(:,i_dir)*x_cc(:,j_dir)
+             !  kbv_r2(:,j_dir,i_dir,i1,i_spinor)=-kbv_r0(:,i1,i_spinor)*x_cc(:,i_dir)*x_cc(:,j_dir)
              !enddo
            enddo
            !       

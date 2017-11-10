@@ -66,17 +66,17 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
      !
      !call load_cc(.false.,atom_pos_alat)
      call load_cc(.false.,(/0._SP,0._SP,0._SP/))
-     !
-     do i_spinor=1,n_spinor
-       ! 
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         if(il==0) cycle
-         pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
-         if(pp_spin==0) cycle
-         if(pp_spin>1)  cycle
+     ! 
+     do i_pp = 1, pp_n_l_times_proj_max
+       il = pp_table(1,is,i_pp)
+       if(il==0) cycle
+       pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
+       if(pp_spin==0) cycle
+       if(pp_spin>1)  cycle
+       !
+       do im = 1,2*(il-1)+1
          !
-         do im = 1,2*(il-1)+1
+         do i_spinor=1,n_spinor
            !
            i1=i1+2-i_spinor
            !
@@ -106,14 +106,14 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
 #endif
              kbv_r1(:,i_dir,i1,i_spinor)=cmplx(kbv_DP(:),kind=SP)
              !kbv_r1(:,i_dir,i1,i_spinor)=-cI*kbv_DP(:)*x_cc(:,i_dir)
-             do j_dir=1,3
-               kbv_r2(:,j_dir,i_dir,i1,i_spinor)=kbv_DP(:)*x_cc(:,i_dir)*x_cc(:,j_dir)
-             enddo
+             !do j_dir=1,3
+             !  kbv_r2(:,j_dir,i_dir,i1,i_spinor)=kbv_DP(:)*x_cc(:,i_dir)*x_cc(:,j_dir)
+             !enddo
            enddo
            !       
-         enddo   ! im
-       enddo   ! i_pp
-     enddo   ! i_spinor
+         enddo   ! i_spinor
+       enddo   ! im
+     enddo   ! i_pp
      !
      YAMBO_FREE(x_cc)
      !

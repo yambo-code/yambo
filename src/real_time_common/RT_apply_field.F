@@ -30,7 +30,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_iR,DIP_P,DIP_P_spinor,global_gauge
- use real_time,      ONLY:RT_bands,l_update_SOC,H_pseudo_order1,H_pseudo_order2
+ use real_time,      ONLY:RT_bands,l_update_SOC,H_pseudo_order1,H_pseudo_order2, &
+&                         l_velocity_gauge_corr
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -75,8 +76,10 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    do i1=RT_bands(1),RT_bands(2)
      Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
-     Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i1,ik,i_sp_pol))
-     !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i1,ik,i_sp_pol))
+     if(l_velocity_gauge_corr) then
+       Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i1,ik,i_sp_pol))
+       !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i1,ik,i_sp_pol))
+     endif
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J+Vnl_A+Vnl_A_A,SP)
    enddo
    !
@@ -87,8 +90,10 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !     
        Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) ! the off-diagonal diamagnetic term is zero
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-       Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i2,ik,i_sp_pol))
-       !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i2,ik,i_sp_pol))
+       if(l_velocity_gauge_corr) then
+         Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i2,ik,i_sp_pol))
+        !Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i2,ik,i_sp_pol))
+       endif
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J+Vnl_A+Vnl_A_A)
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J+Vnl_A+Vnl_A_A)
        !

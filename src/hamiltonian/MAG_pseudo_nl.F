@@ -77,14 +77,14 @@ subroutine MAG_pseudo_nl(kbv)
        gauge_factor(:)=gauge_factor(:)*cmplx(  cos_delta_phi(:) , sin_delta_phi(:)   )**Phi_over_Phio
      endif
      !
-     do i_spinor=1,n_spinor
-       ! 
-       do i_pp = 1, pp_n_l_times_proj_max
-         il = pp_table(1,is,i_pp)
-         pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
-         if(pp_spin>1) cycle
+     do i_pp = 1, pp_n_l_times_proj_max
+       il = pp_table(1,is,i_pp)
+       pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
+       if(pp_spin>1) cycle
+       !
+       do im = 1,2*(il-1)+1
          !
-         do im = 1,2*(il-1)+1
+         do i_spinor=1,n_spinor
            !
            i1=i1+2-i_spinor
            !
@@ -102,9 +102,9 @@ subroutine MAG_pseudo_nl(kbv)
            old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))
            new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*gauge_factor(:)
            !       
-         enddo   ! im
-       enddo   ! i_pp
-     enddo   ! i_spinor
+         enddo   ! i_spinor
+       enddo   ! im
+     enddo   ! i_pp
    enddo   ! ia
  enddo  ! is
  !

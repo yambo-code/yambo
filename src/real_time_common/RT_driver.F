@@ -28,7 +28,7 @@ subroutine RT_driver(E,X,k,q)
  use stderr,         ONLY:set_real_printed_length
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
- use X_m,            ONLY:X_t,global_gauge
+ use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
@@ -46,7 +46,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_update_QP_Energies
+&                         l_update_QP_Energies,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot
@@ -186,7 +186,7 @@ subroutine RT_driver(E,X,k,q)
  ! Collisions => No need of WFs and Density
  !
  if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. &
-&    (eval_energy.or.trim(global_gauge)=="velocity") ) then
+&    (eval_energy.or.l_velocity_gauge_corr) ) then
    !
    call WF_free(WF)
    !

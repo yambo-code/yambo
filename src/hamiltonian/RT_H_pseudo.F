@@ -47,7 +47,7 @@ subroutine RT_H_pseudo(Xk,Xen)
  type(X_t)     :: X
  !
  complex(SP),allocatable :: kbv_r0(:,:,:),kbv_r1(:,:,:,:),kbv_r2(:,:,:,:,:)
- complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space0(:),kbv_ks_space1(:,:),kbv_ks_space2(:,:,:)
+ complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space0(:,:),kbv_ks_space1(:,:,:),kbv_ks_space2(:,:,:,:)
  complex(SP)             :: H_pseudo_tmp_order1(3,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
 &                           H_pseudo_tmp_order2(3,3,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
@@ -73,9 +73,9 @@ subroutine RT_H_pseudo(Xk,Xen)
  YAMBO_ALLOC(kbv_r0,(fft_size,pp_kbv_dim,n_spinor))
  YAMBO_ALLOC(kbv_r1,(fft_size,3,pp_kbv_dim,n_spinor))
  YAMBO_ALLOC(kbv_r2,(fft_size,3,3,pp_kbv_dim,n_spinor))
- YAMBO_ALLOC(kbv_ks_space0,(H_ref_bands(1):H_ref_bands(2)))
- YAMBO_ALLOC(kbv_ks_space1,(3,H_ref_bands(1):H_ref_bands(2)))
- YAMBO_ALLOC(kbv_ks_space2,(3,3,H_ref_bands(1):H_ref_bands(2)))
+ YAMBO_ALLOC(kbv_ks_space0,(H_ref_bands(1):H_ref_bands(2),n_spinor))
+ YAMBO_ALLOC(kbv_ks_space1,(3,H_ref_bands(1):H_ref_bands(2),n_spinor))
+ YAMBO_ALLOC(kbv_ks_space2,(3,3,H_ref_bands(1):H_ref_bands(2),n_spinor))
  !
  H_pseudo_order1=cZERO
  H_pseudo_order2=cZERO
@@ -123,14 +123,13 @@ subroutine RT_H_pseudo(Xk,Xen)
          !
          do i_spinor=1,n_spinor
            !
-           kbv_ks_space0(ib)=kbv_ks_space0(ib)+V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r0(:,i1,i_spinor))
+           kbv_ks_space0(ib,i_spinor)=V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r0(:,i1,i_spinor))
            do i_dir=1,3
-             kbv_ks_space1(i_dir,ib)=kbv_ks_space1(i_dir,ib)+ &
-&              V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r1(:,i_dir,i1,i_spinor))
-             do j_dir=1,3
-               kbv_ks_space2(j_dir,i_dir,ib)=kbv_ks_space2(j_dir,i_dir,ib)+ &
-&                V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r2(:,j_dir,i_dir,i1,i_spinor))
-             enddo
+             kbv_ks_space1(i_dir,ib,i_spinor)=V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r1(:,i_dir,i1,i_spinor))
+             !do j_dir=1,3
+             !  kbv_ks_space2(j_dir,i_dir,ib,i_spinor)= &
+&            !    V_dot_V(fft_size,WF%c(:,i_spinor,iwf),kbv_r2(:,j_dir,i_dir,i1,i_spinor))
+             !enddo
            enddo
            !
          enddo
@@ -141,16 +140,16 @@ subroutine RT_H_pseudo(Xk,Xen)
          !
          do ibp=H_ref_bands(1),ib
            !
-           H_pseudo_tmp_order1(:,ibp,ib)= -(conjg(kbv_ks_space1(:,ibp))*kbv_ks_space0(ib)  &
-&                                            +conjg(kbv_ks_space0(ibp))*kbv_ks_space1(:,ib) )
+           H_pseudo_tmp_order1(:,ibp,ib)= -(conjg(kbv_ks_space1(:,ibp,1))*kbv_ks_space0(ib,1)  &
+&                                            +conjg(kbv_ks_space0(ibp,1))*kbv_ks_space1(:,ib,1) )
            if(ib/=ibp) H_pseudo_tmp_order1(:,ib,ibp)=conjg(H_pseudo_tmp_order1(:,ibp,ib))
            !
-           do i_dir=1,3
-             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=cI**2/2._SP*( conjg(kbv_ks_space2(:,i_dir,ibp))*kbv_ks_space0(ib)  &
-&                                                       -2._SP*conjg(kbv_ks_space1(:,ibp))*kbv_ks_space1(i_dir,ib)  &
-&                                                         +conjg(kbv_ks_space0(ibp))*kbv_ks_space2(:,i_dir,ib)      )
-           enddo
-           if(ib/=ibp) H_pseudo_tmp_order2(:,:,ib,ibp)=conjg(H_pseudo_tmp_order2(:,:,ibp,ib))
+!           do i_dir=1,3
+!             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=cI**2/2._SP*( conjg(kbv_ks_space2(:,i_dir,ibp))*kbv_ks_space0(ib)  &
+!&                                                       -2._SP*conjg(kbv_ks_space1(:,ibp))*kbv_ks_space1(i_dir,ib)  &
+!&                                                         +conjg(kbv_ks_space0(ibp))*kbv_ks_space2(:,i_dir,ib)      )
+!           enddo
+!           if(ib/=ibp) H_pseudo_tmp_order2(:,:,ib,ibp)=conjg(H_pseudo_tmp_order2(:,:,ibp,ib))
            !
          enddo   ! ibp
        enddo   ! ib

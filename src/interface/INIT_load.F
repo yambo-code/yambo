@@ -475,13 +475,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
    call Afield(i_field)
  enddo
  !
- ! OLD / EXPERIMENTAL
- !
- ! 1 - Induced Field
- !
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ call it('f',defs,'VelGaugeCorr','[RT] Correct the non local term of the pseudo with the vector potential',verb_level=V_real_time)
  !
- ! 2 - Other
+ ! OLD / EXPERIMENTAL
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))

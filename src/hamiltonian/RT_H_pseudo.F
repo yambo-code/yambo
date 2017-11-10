@@ -138,7 +138,7 @@ subroutine RT_H_pseudo(Xk,Xen)
            if(ib/=ibp) H_pseudo_tmp_order1(:,ib,ibp)=conjg(H_pseudo_tmp_order1(:,ibp,ib))
            !
            do i_dir=1,3
-             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=-2._SP*conjg( conjg(kbv_ks_space2(:,i_dir,ibp,1))*kbv_ks_space0(ib,1)  &
+             H_pseudo_tmp_order2(:,i_dir,ibp,ib)=-0.5_SP*conjg( conjg(kbv_ks_space2(:,i_dir,ibp,1))*kbv_ks_space0(ib,1)  &
 &                                                       -2._SP*conjg(kbv_ks_space1(:,ibp,1))*kbv_ks_space1(i_dir,ib,1)  &
 &                                                         +conjg(kbv_ks_space0(ibp,1))*kbv_ks_space2(:,i_dir,ib,1)      )
            enddo

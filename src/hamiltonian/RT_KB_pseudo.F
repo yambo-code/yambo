@@ -96,7 +96,7 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
 !             call fft_3d(kbv_DP,fft_dim,+1)
 !#endif
 !             kbv_r1(:,i_dir,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
-             kbv_r1(:,i_dir,i1,i_spinor)=-cI*kbv_r0(:,i1,i_spinor)*x_cc(:,i_dir)
+             kbv_r1(:,i_dir,i1,i_spinor)=cI*kbv_r0(:,i1,i_spinor)*x_cc(:,i_dir)
              do j_dir=1,3
                kbv_r2(:,j_dir,i_dir,i1,i_spinor)=-kbv_r0(:,i1,i_spinor)*x_cc(:,i_dir)*x_cc(:,j_dir)
              enddo

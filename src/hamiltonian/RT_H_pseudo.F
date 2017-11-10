@@ -52,7 +52,7 @@ subroutine RT_H_pseudo(Xk,Xen)
 &                           H_pseudo_tmp_order2(3,3,H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,i_dir,j_dir
+ integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,iwfp,i_dir,j_dir
  !
  ! I / O
  integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
@@ -107,10 +107,6 @@ subroutine RT_H_pseudo(Xk,Xen)
      ! 
      call RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
      !
-     !write(*,*) kbv_r0(1:10,1,1)
-     !write(*,*) kbv_r1(1:10,:,1,1)
-     !write(*,*) kbv_r2(1:10,:,:,1,1)
-     !
      do i1=1,pp_kbv_dim
        !     
        kbv_ks_space0=cZERO
@@ -134,14 +130,11 @@ subroutine RT_H_pseudo(Xk,Xen)
            !
          enddo
          !
-         !write(*,*) '0',ik,ib,kbv_ks_space0(ib)
-         !write(*,*) '1',ik,ib,kbv_ks_space1(1:2,ib)
-         !write(*,*) '2',ik,ib,kbv_ks_space2(1:2,1:2,ib)
-         !
          do ibp=H_ref_bands(1),ib
            !
-           H_pseudo_tmp_order1(:,ibp,ib)= -(conjg(kbv_ks_space1(:,ibp,1))*kbv_ks_space0(ib,1)  &
-&                                            +conjg(kbv_ks_space0(ibp,1))*kbv_ks_space1(:,ib,1) )
+           iwfp=WF%index(ibp,ik,i_sp_pol)
+           H_pseudo_tmp_order1(:,ibp,ib)= -conjg(conjg(kbv_ks_space1(:,ibp,1))*kbv_ks_space0(ib,1)  &
+&                                                +conjg(kbv_ks_space0(ibp,1))*kbv_ks_space1(:,ib,1) )
            if(ib/=ibp) H_pseudo_tmp_order1(:,ib,ibp)=conjg(H_pseudo_tmp_order1(:,ibp,ib))
            !
 !           do i_dir=1,3
@@ -151,13 +144,28 @@ subroutine RT_H_pseudo(Xk,Xen)
 !           enddo
 !           if(ib/=ibp) H_pseudo_tmp_order2(:,:,ib,ibp)=conjg(H_pseudo_tmp_order2(:,:,ibp,ib))
            !
+           ! DEBUG <
+           !if( .not. H_pseudo_tmp_order1(1,ibp,ib)==cZERO ) &
+           !&    write(200,*) i1,iwfp,iwf,H_pseudo_tmp_order1(:,ibp,ib)
+           ! DEBUG
+           !
          enddo   ! ibp
        enddo   ! ib
-       !
+       !    
        H_pseudo_order1(:,:,:,ik,i_sp_pol)  =H_pseudo_order1(:,:,:,ik,i_sp_pol)  +H_pseudo_tmp_order1(:,:,:)
-       H_pseudo_order2(:,:,:,:,ik,i_sp_pol)=H_pseudo_order2(:,:,:,:,ik,i_sp_pol)+H_pseudo_tmp_order2(:,:,:,:)
+       !H_pseudo_order2(:,:,:,:,ik,i_sp_pol)=H_pseudo_order2(:,:,:,:,ik,i_sp_pol)+H_pseudo_tmp_order2(:,:,:,:)
        !
      enddo   ! i1
+     !
+     ! DEBUG <
+     !do ib=H_ref_bands(1),H_ref_bands(2)
+     !  iwf=WF%index(ib,ik,i_sp_pol)
+     !  do ibp=ib,H_ref_bands(2)
+     !    iwfp=WF%index(ibp,ik,i_sp_pol)
+     !    write(201,*) iwfp,iwf,H_pseudo_order1(:,ibp,ib,ik,i_sp_pol)
+     !  enddo   ! ibp
+     !enddo   ! ib
+     ! DEBUG >
      !
    enddo   ! i_sp_pol
    !

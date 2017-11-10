@@ -81,30 +81,30 @@ subroutine RT_KB_pseudo(kbv,kbv_r0,kbv_r1,kbv_r2)
            i1=i1+2-i_spinor
            !
            kbv_DP=(0._DP,0._DP)
-           kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(kbv(1:wf_ng,i1,1,i_spinor)*fft_norm,kind=DP)
+           kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(conjg(kbv(1:wf_ng,i1,1,i_spinor)),kind=DP)
            !
            ! Here I need to fourier tranform kbv(G,i1,1)
 #if defined _FFTW
            fftw_plan = 0
-           call fft_3d(kbv_DP,fft_dim,1,fftw_plan)
+           call fft_3d(kbv_DP,fft_dim,+1,fftw_plan)
 #else
-           call fft_3d(kbv_DP,fft_dim,1)
+           call fft_3d(kbv_DP,fft_dim,+1)
 #endif
            !
-           kbv_r0(:,i1,i_spinor)=cmplx(kbv_DP(:),kind=SP)
+           kbv_r0(:,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
            !
            do i_dir=1,3
              kbv_DP=(0._DP,0._DP)
-             kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(kbv(1:wf_ng,i1,1+i_dir,i_spinor)*fft_norm,kind=DP)
+             kbv_DP(fft_g_table(1:wf_ng,1))=cmplx(conjg(kbv(1:wf_ng,i1,1+i_dir,i_spinor)),kind=DP)
              !
              ! Here I need to fourier tranform kbv(G,i1,1+i_dir)
 #if defined _FFTW
              fftw_plan = 0
-             call fft_3d(kbv_DP,fft_dim,1,fftw_plan)
+             call fft_3d(kbv_DP,fft_dim,+1,fftw_plan)
 #else
-             call fft_3d(kbv_DP,fft_dim,1)
+             call fft_3d(kbv_DP,fft_dim,+1)
 #endif
-             kbv_r1(:,i_dir,i1,i_spinor)=cmplx(kbv_DP(:),kind=SP)
+             kbv_r1(:,i_dir,i1,i_spinor)=cmplx(conjg(kbv_DP(:)),kind=SP)*fft_norm
              !kbv_r1(:,i_dir,i1,i_spinor)=-cI*kbv_DP(:)*x_cc(:,i_dir)
              !do j_dir=1,3
              !  kbv_r2(:,j_dir,i_dir,i1,i_spinor)=kbv_DP(:)*x_cc(:,i_dir)*x_cc(:,j_dir)

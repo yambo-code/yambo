@@ -218,11 +218,12 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
            !
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            !
-           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
-           if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
-           endif
+           DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
+           !if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
+           !if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
+           !  if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           !  if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
+           !endif
            !
 #if defined _RT
            if (l_real_time_magn_dipoles) then

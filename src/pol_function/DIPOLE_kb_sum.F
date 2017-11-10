@@ -41,7 +41,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)
+ complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)!,tmp(3)
  !
  drho=cZERO
  !
@@ -64,9 +64,15 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
        !
      enddo
      !
+     !write(100,*) i1,iv_wf,ic_wf,drho(:,i1,1) 
+     !
    enddo
  enddo
 !$omp end parallel do
+ !
+ !DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
+ !forall(i1=1:3) tmp(i1)=sum(drho(i1,:,:))
+ !write(101,*) iv_wf,ic_wf,tmp 
  !
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(i1,:,:))
  !

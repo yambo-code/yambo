@@ -57,11 +57,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 #if defined _PL
  use drivers,      ONLY:l_photolum
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  use parser_m,     ONLY:parser
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  !
@@ -79,12 +84,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 #if defined _PL
  real(SP):: f_eh_PL(2)
 #endif
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  logical :: FORCE_EQ_trans
  !
  call parser('ForceEqTrans',FORCE_EQ_trans)
  ! 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (FILL_the_groups) then
    !
@@ -100,7 +110,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
-   if (index(BSS_mode,'h')/=0) then
+   if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
      YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
@@ -187,7 +197,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
              PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
              !
-             if (index(BSS_mode,'h')/=0) PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+                PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             endif
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
@@ -281,6 +293,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
      if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
        if (     FORCE_EQ_trans) f_eh_REF=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
@@ -291,6 +305,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
        if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp)-Ken%fo(ic,ik ,i_sp))/spin_occ
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
@@ -312,6 +328,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! f_eh=0 transitions give no contribution to absorption and are not considered
      if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
      !
+     ! GPL_EXCLUDE_START
+     !
 #if defined _RT
      !
      ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
@@ -325,13 +343,19 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      if (.not.l_rt_carriers_in_use) then
 #endif
        !
+       ! GPL_EXCLUDE_END
+       !
        ! If I've included in valence states that are almost empty
        ! or in conduction states that are almost full, those are neglected
        if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) T_is_ok=.FALSE.
        !
+       ! GPL_EXCLUDE_START
+       !
 #if defined _RT
      endif
 #endif
+     !
+     ! GPL_EXCLUDE_END
      !
      if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
 &              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) T_is_ok=.FALSE.

@@ -33,8 +33,8 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  use parallel_m,     ONLY:master_cpu
  use xc_functionals, ONLY:V_xc,E_xc,XC_potential_driver,magn
  use FFT_m,          ONLY:fft_size
- use hamiltonian,    ONLY:l_sc_V_is_local,V_hartree_sc
- use SC,             ONLY:SC_kind,SC_xc_functional,E_bare_Ef
+ use hamiltonian,    ONLY:l_sc_V_is_local,V_hartree_sc,E_reference
+ use SC,             ONLY:SC_kind,SC_xc_functional
  !
  implicit none
  !
@@ -54,10 +54,8 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  if (.not.l_sc_is_libDFT .and. .not.l_sc_hartree .and. .not.l_sc_V_is_local) return
  !
  call V_Hartree(rho,V_hartree_sc)                           ! V_Hartree
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1,&
-&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! V_xc
- call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0,& 
-&                         MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)  ! E_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,1)   ! V_xc
+ call XC_potential_driver(E,k,SC_kind,SC_xc_functional,0)   ! E_xc
  !
  ! Hartree & XC
  !
@@ -69,7 +67,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  ! Fermi level contribution to E_total
  !
- E_total=(E%E_Fermi+E_bare_Ef)*nel
+ E_total=(E%E_Fermi+E_reference%E_Fermi)*nel
  !
  ! Bands energy
  !

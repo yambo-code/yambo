@@ -1,7 +1,8 @@
 #
 # storing options
 #
-keep_iotk=no
+#keep_iotk=no
+keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
 keep_etsf_io=no
@@ -16,7 +17,8 @@ keep_fftqe=no
 #
 # tarball names
 #
-tarball_iotk=iotk-y1.2.1.tar.gz
+#tarball_iotk=iotk-y1.2.1.tar.gz
+tarball_iotk=iotk-y1.2.2tar.gz
 tarball_netcdf=netcdf-4.4.1.1.tar.gz
 tarball_netcdff=netcdf-fortran-4.4.4.tar.gz
 tarball_hdf5=hdf5-1.8.18.tar.gz
@@ -58,5 +60,6 @@ url_lapack=https://github.com/yambo-code/yambo/files/783151/$(tarball_lapack)
 url_blacs=https://github.com/yambo-code/yambo/files/783152/$(tarball_blacs)
 url_scalapack=https://github.com/yambo-code/yambo/files/783153/$(tarball_scalapack)
 url_petsc=https://github.com/yambo-code/yambo/files/783154/$(tarball_petsc)
+url_slepc=https://github.com/yambo-code/yambo/files/789647/$(tarball_slepc)
 url_fftw=https://github.com/yambo-code/yambo/files/838458/$(tarball_fftw)
 url_fftqe=https://github.com/yambo-code/yambo/files/844070/$(tarball_fftqe)

@@ -109,23 +109,7 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    return
  endif
  !
- ! Splitting + SPIN support still not implemented (see a2y_wf.F for more details)
- ! Davide: barrier removed. I do not see any reason for keeping it
- !
- !
- ! GPL_EXCLUDE_START
- !
  call WF_splitter()
- !
- ! GPL_EXCLUDE_END
- !
- !
- ! GPL_INCLUDE_START
- !
- !if(n_spin==1) call WF_splitter()
- !
- ! GPL_INCLUDE_END
- !
  !
  call msg('s','Writing WFs and (eventually) nlPP ...')
  !

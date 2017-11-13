@@ -70,6 +70,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+#if defined _SLEPC
+ use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
+#endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode
@@ -82,6 +85,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
+ use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _KERR
  use drivers,    ONLY:l_kerr,l_anomalous_Hall
@@ -105,12 +109,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
+&                     RT_Efit_lifetimes,                                                  &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
+&                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
@@ -167,6 +170,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TIMING
  call timing_allocate(nclockx)
 #endif
+ !
+ call MEM_element_init(MEMs,N_MEM_max)
+ call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
  !
  ! ZEROs 
  !
@@ -440,7 +446,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
@@ -457,6 +462,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ !
+#if defined _SLEPC
+ BSS_slepc_extraction='ritz'
+ BSS_slepc_ncv=0
+ BSS_slepc_tol=1E-6_SP
+ BSS_n_freqs=100
+ BSS_target_E=0
+ Slepc_shell=.TRUE.
+#endif
  !
  ! TDDFT
  !
@@ -546,11 +560,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    call Efield_reset(Efield(i1))
  enddo
  !
- call A_vecpot_reset(A_vecpot)
- call A_vecpot_reset(A_vecpot_previous)
+ call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  call A_vecpot_reset(A_ind)
- call A_vecpot_reset(A_ind_previous)
  !
  ! RT dynamics 
  !
@@ -590,11 +602,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Nfitted_lifetimes=0
  RT_Tfit_lifetimes=0._SP
  RT_Efit_lifetimes=0._SP
- RT_Tfit_occupations=0._SP
- RT_Efit_occupations=0._SP
- RT_T_thermodynamics=0._SP
- RT_E_thermodynamics=0._SP
- RT_S_thermodynamics=0._SP
  RAD_prefactor=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP

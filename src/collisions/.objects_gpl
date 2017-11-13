@@ -1,0 +1,8 @@
+RT_objs =
+#if defined _RT
+RT_objs = COLLISIONS_compose_rt.o
+#endif
+objs= COLLISIONS_basic_operations.o \
+      COLLISIONS_alloc_and_free.o COLLISIONS_eval.o \
+      COLLISIONS_linearize_and_IO.o COLLISIONS_map_to_QP_table.o \
+      COLLISIONS_HXC.o $(RT_objs)

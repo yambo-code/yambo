@@ -28,14 +28,13 @@ subroutine RT_output(what,VALUES,TIME,E)
  use com,            ONLY:msg,of_open_close
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
- use fields,         ONLY:A_vecpot,A_ind,A_ext
- use electrons,      ONLY:n_spin,Total_magn
+ use fields,         ONLY:A_tot,A_ind,A_ext
+ use electrons,      ONLY:n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
-&                         EE_prefactor,EP_prefactor,EP_abs_prefactor,BGR,RAD_prefactor,    &
-&                         RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,     &
+&                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
@@ -64,10 +63,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  open_files=index(what,'open')>0
  add_space=index(what,'space')>0
  initialize=index(what,'initialize')>0
- !
- ! FALL back till BGR procedure is not fixed 
- !
- if (index(what,'BGR')>0) return
  !
  if (.not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
@@ -146,13 +141,13 @@ subroutine RT_output(what,VALUES,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'carriers'
  short_file_name(next_file)=trim(append_ch)//'carriers'
  n_headings(next_file)=4
- headings(next_file,2)="dN"
+ headings(next_file,2)="dNH - dNE"
  headings(next_file,3)="dN(Holes)"
  headings(next_file,4)="dN(Elecs)"
  if (l_elel_scatt.or.l_elph_scatt) then 
    n_headings(next_file)=n_headings(next_file)+2
-   headings(next_file,5)="T(hol) [K]" 
-   headings(next_file,6)="T(el)  [K]" 
+   headings(next_file,5)="T(hol) [K]"
+   headings(next_file,6)="T(el)  [K]"
  endif
  next_file=next_file+1
  !
@@ -251,18 +246,11 @@ subroutine RT_output(what,VALUES,TIME,E)
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'BGR'
  short_file_name(next_file)=trim(append_ch)//'BGR'
- n_headings(next_file)=6
- headings(next_file,2:3)=(/"Dir Gap","Ind Gap"/)
- headings(next_file,4  )=  "H+XC"  
- if (l_sc_sex) headings(next_file,4)="H+XC+SEX"
- if (l_sc_fock ) headings(next_file,4)="H+XC+HF"
- headings(next_file,5:6)=(/"Hartree","XC(DFT)"/)
- if (l_sc_sex) headings(next_file,7)=" SEX  "
- if (l_sc_fock ) headings(next_file,7)="  HF  "
- if (l_sc_sex.or.l_sc_fock) n_headings(next_file)=7
+ n_headings(next_file)=3
+ headings(next_file,2:3)=(/"DGap [meV]","IGap [meV]"/)
  next_file=next_file+1
  !
- headings(1:next_file-1,1)="Time[fs]"
+ headings(1:next_file-1,1)="Time[fs]  "
  !
  ! ... energy resolved ...
  !
@@ -367,8 +355,10 @@ subroutine RT_output(what,VALUES,TIME,E)
 &     file_name(next_file)=trim(append_ch)//'magnetization'
    short_file_name(next_file)=trim(append_ch)//'magnetization'
    n_headings(next_file)=4
+   !n_headings(next_file)=10
    headings(next_file,1)='T [fs]'
-   headings(next_file,2:4)=(/"M_x","M_y","M_z"/)
+   headings(next_file,2:4)=(/"Ms_x","Ms_y","Ms_z"/)
+   !headings(next_file,2:10)=(/"Ms_x","Ms_y","Ms_z","Ml_x","Ml_y","Ml_z","Mi_x","Mi_y","Mi_z"/)
    next_file=next_file+1
  endif
  !
@@ -391,7 +381,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    next_file=next_file+1
  enddo
  !
- extension_ch='residual'
+ extension_ch='trans_residual'
  if (open_files.and..not.file_already_opened(next_file)) then
    file_name(next_file)=trim(append_ch)//trim(extension_ch)
  endif
@@ -498,8 +488,14 @@ subroutine RT_output(what,VALUES,TIME,E)
      !
      if (n_spin>1.and.trim(short_file_name(i_f))=="magnetization") then
        call msg('o '//trim(short_file_name(i_f)),'#')
-       tmp_ch="Equilibrium magnetization is "//trim(real2ch(Total_magn(1)))//", "&
-&             //trim(real2ch(Total_magn(2)))//", "//trim(real2ch(Total_magn(3)))//". "
+       tmp_ch="Equilibrium spin      magnetization is "//&
+&             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
+!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+!       tmp_ch="Equilibrium orbital   magnetization is "//&
+!&             trim(real2ch(Orbital_magn(1)))//", "//trim(real2ch(Orbital_magn(2)))//", "//trim(real2ch(Orbital_magn(3)))//". "
+!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
+!       tmp_ch="Equilibrium itinerant magnetization is "//&
+!&             trim(real2ch(Itinerant_magn(1)))//", "//trim(real2ch(Itinerant_magn(2)))//", "//trim(real2ch(Itinerant_magn(3)))//". "
        call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
      endif
      !
@@ -533,10 +529,12 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
      case('magnetization')
-       data_to_dump(2:4) = real(RT_magn(:))
+       data_to_dump(2: 4) = real(RT_magn(:,1))
+       !data_to_dump(5: 7) = real(RT_magn(:,2))
+       !data_to_dump(8:10) = real(RT_magn(:,3))
      case('total_field')
-       data_to_dump(2:4) = -real(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
-       data_to_dump(5:7) =-aimag(A_vecpot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
+       data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('external_field')
        data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
@@ -546,10 +544,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('BGR')
-       data_to_dump(2:3) = BGR(1:2)*HA2EV
-       data_to_dump(5:7) = BGR(3:5)*HA2EV
-       data_to_dump(4)   = (BGR(3)+BGR(4))*HA2EV
-       if (l_sc_sex.or.l_sc_fock) data_to_dump(4)   = (BGR(3)+BGR(4)+BGR(5))*HA2EV
+       data_to_dump(2:3) = VALUES(1:2)*HA2EV*1000._SP
      case('energy')
        if(     l_use_Hxc_collisions) data_to_dump(2:5) = VALUES(1:4)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)
@@ -557,9 +552,9 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) = VALUES(1:3)
        if(l_elel_scatt.or.l_elph_scatt) data_to_dump(5:6) = VALUES(4:5)
      case('thermodynamics')
-       data_to_dump(2: 4) = RT_E_thermodynamics*HA2EV
-       data_to_dump(5: 7) = RT_S_thermodynamics*HA2EV/HA2KEL
-       data_to_dump(8:10) = RT_T_thermodynamics*HA2KEL
+       data_to_dump(2: 4) = VALUES(1:3)*HA2EV
+       data_to_dump(5: 7) = VALUES(4:6)*HA2EV/HA2KEL
+       data_to_dump(8:10) = VALUES(7:9)*HA2KEL
      case('YPP-eps_along_E','YPP-eels_along_E','YPP-E_frequency', &
 &         'YPP-SHG_qssin','YPP-eps_x','YPP-eps_y','YPP-eps_z',&
 &         'YPP-X_probe_order_0_x','YPP-X_probe_order_1_x','YPP-X_probe_order_2_x','YPP-X_probe_order_3_x',&

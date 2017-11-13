@@ -48,7 +48,6 @@ subroutine YPP_SET_defaults()
  dos_E_steps=500
  WF_ref=0
  !
- !
  ! RT OCCUPATIONS
  !
 #if defined _YPP_RT
@@ -194,6 +193,10 @@ subroutine YPP_SET_defaults()
  Eh_pumped_pair_BZ_width=0.1_SP
  Eh_pumped_pair_BZ_reagions=-1.0_SP
  Eh_pumped_Nel=1._SP
+ !
+ !TR abs
+ !
+ RT_p_format="3col" 
  !
 #endif
  !

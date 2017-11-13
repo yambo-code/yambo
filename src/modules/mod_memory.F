@@ -31,23 +31,23 @@ module memory
  implicit none
  !
  integer :: MEM_err                  = 0
- integer(kind=c_int) :: TOT_MEM_kilobytes_MEMSTAT 
- integer             :: MAX_MEM_bytes = 0
- integer             :: TOT_MEM_bytes
- integer             :: TOT_MEM_bytes_SAVE =  0
- integer             :: MEM_treshold       =  1  ! Mb*1000=Kb
- integer             :: MEM_SAVE_treshold  =  10 ! "
- integer             :: MEM_jump_treshold  =  100! "
+ integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT 
+ integer(IP)         :: MAX_MEM_Kb      = 0
+ integer(IP)         :: TOT_MEM_Kb
+ integer(IP)         :: TOT_MEM_Kb_SAVE =  0
+ integer(IP)         :: MEM_treshold       =  1  ! Mb*1000=Kb
+ integer(IP)         :: MEM_SAVE_treshold  =  10 ! "
+ integer(IP)         :: MEM_jump_treshold  =  100! "
  !
  integer :: N_MEM_elements           = 0
  type MEM_element
    !
    ! Total...
-   character(schlen) :: shelf   = " "
-   integer           :: use     =0  
+   character(schlen) :: shelf
+   integer           :: use  
    !
    ! Specific...
-   integer           :: N       =0
+   integer           :: N
    character(schlen) :: name(N_MEM_max_element_components)
    character(schlen) :: desc(N_MEM_max_element_components)
    integer           :: kind(N_MEM_max_element_components)
@@ -80,13 +80,15 @@ module memory
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
 &                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_cd3,MEM_rd3,MEM_lp3,&
 &                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,MEM_cd4,&
-&                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5
+&                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5,&
+&                                           MEM_c6,       MEM_cd6
 #else
 &                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_lp1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,&
 &                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_lp3,&
 &                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,&
-&                             MEM_i5,MEM_r5,MEM_c5
+&                             MEM_i5,MEM_r5,MEM_c5,               &
+&                                           MEM_c6
 #endif
  end interface MEM_dri
  !
@@ -103,18 +105,31 @@ module memory
  !
  contains
    !
+   subroutine MEM_element_init(MEM_element_to_init,size_)
+     integer,           intent(in)  :: size_
+     type(MEM_element), intent(out) :: MEM_element_to_init(size_)
+     integer                        :: i1
+     do i1=1,size_
+       MEM_element_to_init(i1)%shelf      = " "
+       MEM_element_to_init(i1)%use        = 0
+       MEM_element_to_init(i1)%N          = 0
+       MEM_element_to_init(i1)%name(:)    = " "
+       MEM_element_to_init(i1)%desc(:)    = " "
+       MEM_element_to_init(i1)%kind(:)    = 0
+       MEM_element_to_init(i1)%size(:)    = 0
+       MEM_element_to_init(i1)%composed(:)= .false.
+     enddo
+   end subroutine
+   !
    character(schlen) function mem_string(MEM)
-     use units,        ONLY:Kilobyte,Megabyte,Gigabyte
-     use stderr,       ONLY:intc
-     integer :: MEM !in Bytes
-     if (MEM<Kilobyte) then
-       mem_string=trim(intc(MEM))//"b"
-     else if (MEM<Megabyte) then
-       mem_string=trim(intc(int(real(MEM)/Kilobyte)))//"Kb"
-     else if (MEM<Gigabyte) then
-       mem_string=trim(intc(int(real(MEM)/Megabyte)))//"Mb"
+     use stderr,       ONLY:intc,real2ch
+     integer :: MEM !in Kb
+     if (MEM<1000) then
+       mem_string=trim(real2ch(real(MEM,SP)))//"Kb"
+     else if (MEM<1000000) then
+       mem_string=trim(real2ch(real(MEM,SP)/1000))//"Mb"
      else
-       mem_string=trim(intc(int(real(MEM)/Gigabyte)))//"Gb"
+       mem_string=trim(real2ch(real(MEM,SP)/1000000))//"Gb"
      endif
    end function
    !
@@ -241,6 +256,11 @@ module memory
      complex(SP) ::c(:,:,:,:,:)
      call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
    end subroutine
+   subroutine MEM_c6(name,c)
+     character(*)::name
+     complex(SP) ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+   end subroutine
 #ifndef _DOUBLE
    subroutine MEM_cd1(name,c)
      character(*)::name
@@ -266,6 +286,11 @@ module memory
      character(*)::name
      complex(DP) ::c(:,:,:,:,:)
      call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd6(name,c)
+     character(*)::name
+     complex(DP) ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
    end subroutine
 #endif
    subroutine MEM_l1(name,l)

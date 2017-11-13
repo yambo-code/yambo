@@ -439,6 +439,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  call it('f',defs,'UpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
+
+ call it('f',defs,'RTEqScatt',     '[RT] Include Gamma0f0 term in scattering',Verb_level=V_real_time)
+ call it('f',defs,'RTImpForMet',   '[RT] Impose structure optimized for metals',Verb_level=V_real_time)
+ call it('f',defs,'RTzeroTempRef', '[RT] Use zero temperature Fermi districution as reference',Verb_level=V_real_time)
  !
  ! Scattering
  !

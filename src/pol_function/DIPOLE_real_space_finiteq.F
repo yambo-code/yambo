@@ -78,7 +78,8 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
  ! We have to add a do iq=1,Xq%nibz
  do iq=start_iq,last_iq
    write(*,*)iq
-   do ik=1,Xk%nibz 
+   do ik=1,Xk%nibz !It has to be changed to go to the FULL BZ (X_eh_setup.F, check how it's done in G-space)
+     ! Call WF_Apply_symmetry to rotate wfcs, then I can directly compute the integral
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
      !
@@ -116,7 +117,6 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
              if(.not.idir_todo(idir)) cycle
              !
              ! Check with Davide how to define the finite q for the dipoles --> x_cc by the corresponding finite-q expression 
-             ! Actually here it might be ok, we have <ck|r|vk-q>. The problem is what to do with the (q+G)* in front of it (wrt efield/BS_q)
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
 &                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
 &                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
@@ -160,7 +160,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
  enddo 
    !
  enddo
- !
+ ! STORE IN DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
  call live_timing()
  !
  YAMBO_FREE(x_cc)

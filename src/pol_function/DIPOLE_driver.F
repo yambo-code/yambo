@@ -22,6 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine Dipole_driver(Xen,Xk,X,field_dir)
+ !Dipole_driver(Xen,Xk,X,field_dir,iq)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -196,7 +197,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
-   if (BS_q(1).ne.1.or.BS_q(2).ne.1) call DIPOLE_real_space_finiteq(Xen,Xk,X,idir_not_done)
+   !if (BS_q(1).ne.1.or.BS_q(2).ne.1) call DIPOLE_real_space_finiteq(Xen,Xk,X,idir_not_done)
+   if (BS_q(1)/=1) then
    !
    ! Here set up a new logical for finite-q dipoles
    !if (use_finiteq)                call DIPOLE_real_space_finiteq(Xen,Xk,Xq,X,idir_not_done)
@@ -245,7 +247,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Finally project the dipoles along q
  !=====================================
- call DIPOLE_project_along_q(Xk,X,field_dir)
+ call DIPOLE_project_along_q(Xk,X,field_dir) !Do not call this at finite q
  !
  ! Clean up
  !

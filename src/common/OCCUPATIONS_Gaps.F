@@ -173,8 +173,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  do i_sp_pol=1,n_sp_pol
    if(Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) then
-     E%E_VBM(i_sp_pol)=0._SP
-     E%E_CBm(i_sp_pol)=0._SP
+     E%E_VBM(i_sp_pol)=E%E_Fermi
+     E%E_CBm(i_sp_pol)=E%E_Fermi
    endif
  enddo
  !

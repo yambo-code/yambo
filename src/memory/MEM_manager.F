@@ -237,7 +237,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
    call MEM_STAT_update( )
    msg_="[MEMORY]"
    if (     adding) msg_=trim(msg_)//" Alloc "//what
-   if (.not.adding) msg_=trim(msg_)//" Free "//what
+   if (.not.adding) msg_=trim(msg_)//"  Free "//what
    msg_=trim(msg_)//"("//trim(mem_string(MEM_now_Kb))//")"
    msg_=trim(msg_)//" TOTAL: "//trim(mem_string(TOT_MEM_Kb))//" (traced)"
    if (TOT_MEM_Kb_MEMSTAT>0) then

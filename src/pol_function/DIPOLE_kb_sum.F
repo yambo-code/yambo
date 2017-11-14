@@ -71,8 +71,8 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
 !$omp end parallel do
  !
  !DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
- forall(i1=1:3) tmp(i1)=sum(drho(i1,:,:))
- write(101,*) iv_wf,ic_wf,tmp 
+ !forall(i1=1:3) tmp(i1)=sum(drho(i1,:,:))
+ !write(101,*) iv_wf,ic_wf,tmp 
  !
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(i1,:,:))
  !

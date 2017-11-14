@@ -40,8 +40,6 @@ subroutine grid_generator(USER_k,units,grid_dim)
  !
  integer  :: i1,i2,i3,ic
  character(schlen) :: ch
- real(SP), allocatable :: k_bz(:,:)
- logical :: found
  !
  if(any(grid_dim(:)<1)) call error("Wrong grid dimension")
  !
@@ -82,47 +80,8 @@ subroutine grid_generator(USER_k,units,grid_dim)
   call k_ibz2bz(USER_k,'d',.TRUE.)
   call k_ibz2bz(USER_k,'a',.TRUE.)
   !
-  ! Map in the positive BZ between [0,1)
-  !
-  where(USER_k%ptbz(:,:)<-zero_dfl)
-    USER_k%ptbz(:,:)=1._SP+USER_k%ptbz(:,:)
-  end where
-  !
-  ! Reorder in such a way to have the IBZ point at the beginning
-  ! of the list
-  !
-  allocate(k_bz(USER_k%nbz,3))
-  !
-  k_bz=USER_k%ptbz
-  !
-  do ic=1,USER_k%nibz ! Copy the IBZ points in the BZ list
-    call c2a(v_in=USER_k%pt(ic,:),v_out=USER_k%ptbz(ic,:),mode="ki2a")
-    USER_k%ptbz(ic,1:3)=USER_k%ptbz(ic,1:3)-nint(USER_k%ptbz(ic,1:3))     
-    where(USER_k%ptbz(ic,:)<-zero_dfl)
-      USER_k%ptbz(ic,:)=1._SP+USER_k%ptbz(ic,:)
-    end where
-  enddo  
-  !
-  ! Add the remaining points
-  !
-  ic=USER_k%nibz+1
-  do i1=1,USER_k%nbz 
-    found=.false.
-    i2=1
-    do while(.not.found.and.i2<=USER_k%nibz)
-      if(v_is_zero(USER_k%ptbz(i2,:)-k_bz(i1,:))) found=.true.
-      i2=i2+1
-    enddo
-    !
-    if(.not.found) then
-     USER_k%ptbz(ic,:)=k_bz(i1,:)
-     ic=ic+1
-    endif
-  enddo
-  !
   do ic=1,USER_k%nbz
     call c2a(v_in=USER_k%ptbz(ic,:),mode="ka2"//units)
   enddo
- 
   !
 end subroutine grid_generator

@@ -96,12 +96,14 @@ module nl_optics
  !
  logical :: eval_COLLISIONS
  logical :: eval_dG
+ logical :: eval_OVERLAPS
  !
  ! Non-linear spectra parameters
  !
  real(SP) :: NL_er(2)
  real(SP) :: NL_estep
  integer  :: NL_bands(2)
+ integer  :: NL_nbands
  integer  :: n_frequencies
  integer  :: n_freqs_todo
  !
@@ -131,7 +133,7 @@ module nl_optics
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use hamiltonian,    ONLY:H_alloc
-     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc,RT_bands
+     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
@@ -143,9 +145,9 @@ module nl_optics
      !
      call H_alloc(en,.true.,.false.)
      !
-     YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
-     YAMBO_ALLOC(I_relax,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),en%nbf,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(V_bands,(1:RT_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(V_bands,(1:NL_bands(2),en%nbf,QP_nk,n_sp_pol))
      !
      YAMBO_ALLOC(rho_reference,(fft_size))
      YAMBO_ALLOC(full_rho,(fft_size))
@@ -155,16 +157,16 @@ module nl_optics
      endif          
      !
      if(l_use_Hxc_collisions) then
-       YAMBO_ALLOC(dG,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk))
-       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk,n_sp_pol))
+       YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
+       YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
      endif          
      !
      ! Reference energies
      !
-     YAMBO_ALLOC(E_full,(1:RT_bands(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))
      !
      if(l_use_DIPOLES) then
-       YAMBO_ALLOC(DIP_bz,(3,RT_bands(2),RT_bands(2),nXkbz,n_sp_pol))
+       YAMBO_ALLOC(DIP_bz,(3,NL_bands(2),NL_bands(2),nXkbz,n_sp_pol))
      else
        call  ELECTRIC_alloc(en)
      endif

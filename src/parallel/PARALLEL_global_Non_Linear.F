@@ -152,7 +152,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                      COMM=PAR_COM_WF_b_INDEX,CONSECUTIVE=.TRUE.)
    ! Non evolved bands loaded by all
    !
-   PAR_IND_WF_b%element_1D(:max(NL_bands(1)-1,1))=.TRUE.
+   if(NL_bands(1)>1) PAR_IND_WF_b%element_1D(:NL_bands(1)-1)=.TRUE.
    !
    do ib1=NL_bands(1),NL_bands(2)
      do ib2=ib1,NL_bands(2)
@@ -180,6 +180,8 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
      ib1 = QP_table(i_qp,1)
      ib2 = QP_table(i_qp,2)
      i_k = QP_table(i_qp,3)
+     if (ib1<NL_bands(1)) cycle
+     if (ib2<NL_bands(1)) cycle
      if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
      if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,NL_bands) ) ) cycle
      PAR_nQP=PAR_nQP+1

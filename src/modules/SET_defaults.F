@@ -109,7 +109,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,                                                  &
+&                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
@@ -570,6 +570,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! RT dynamics 
  !
  l_RT_CCA_Kernel=.FALSE.
+ l_update_SOC=.FALSE.
  !
  ! RT current 
  !

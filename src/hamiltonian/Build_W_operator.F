@@ -31,33 +31,33 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  use electrons,      ONLY:levels,n_sp_pol
  use electric,       ONLY:Sm1_plus,Sm1_minus,l_force_SndOrd
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:RT_bands
+ use nl_optics,      ONLY:NL_bands,NL_nbands
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field
  use X_m,            ONLY:DIP_S
- use wrapper,        ONLY:M_by_V
+ use wrapper_omp,    ONLY:M_by_M_omp
  !
  implicit none
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: V_bands(RT_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)      :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
- complex(SP),  intent(inout)   :: H_nl_sc(RT_bands(2),RT_bands(2),n_sp_pol)
+ complex(SP),  intent(inout)   :: H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_sp_pol)
  !
  ! Work Space
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,id_red,ikm
  integer :: ikm_ibz,ikp_ibz,ikbz,istep,max_step
- complex(SP) :: Wk(3,RT_bands(2),RT_bands(2))
- complex(SP) :: Wop(RT_bands(2),RT_bands(2),2)
- complex(SP) :: tmp_Vp(RT_bands(2),en%nbf),tmp_Vm(RT_bands(2),en%nbf)
- complex(SP) :: delta_tV_bnd(en%nbf,RT_bands(2))
+ complex(SP) :: Wk(3,NL_bands(2),NL_bands(2))
+ complex(SP) :: Wop(NL_bands(2),NL_bands(2),2)
+ complex(SP) :: tmp_Vp(NL_bands(2),en%nbf),tmp_Vm(NL_bands(2),en%nbf)
+ complex(SP) :: delta_tV_bnd(en%nbf,NL_bands(2))
  complex(SP) :: E_vec_pot(3)
  !
  ! This subroutine works only without symmetries to be generalized
@@ -116,24 +116,20 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        ! ===========================================
        ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
        ! 
-!$omp parallel do default(shared), private(im)
-       do im=1,en%nbf
-         !
-         call M_by_V('N',RT_bands(2),RT_bands(2),cONE,  &
-&           DIP_S(1:RT_bands(2),1:RT_bands(2),id_red+(istep-1)*3,ikbz,i_sp),RT_bands(2), &
-&           V_bands(1:RT_bands(2),im,ikp_ibz,i_sp),1,cZERO,tmp_Vp(:,im),1)          
-         call M_by_V('C',RT_bands(2),RT_bands(2),cONE,  &
-&           DIP_S(1:RT_bands(2),1:RT_bands(2),id_red+(istep-1)*3,ikm ,i_sp),RT_bands(2), &
-&           V_bands(1:RT_bands(2),im,ikm_ibz,i_sp),1,cZERO,tmp_Vm(:,im),1)
-       enddo
-!$omp end parallel do
+       call M_by_M_omp('N','N',NL_nbands,en%nbf,NL_bands(2),cONE,  &
+&        DIP_S(NL_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),NL_nbands, &
+&        V_bands(:,:,ikp_ibz,i_sp),NL_bands(2),cZERO,tmp_Vp(NL_bands(1):,:),NL_nbands)
+       !
+       call M_by_M_omp('C','N',NL_nbands,en%nbf,NL_bands(2),cONE,  &
+&           DIP_S(:,NL_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),NL_bands(2), &
+&           V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,tmp_Vm(NL_bands(1):,:),NL_nbands)
        !
        ! Build \tilde V(k+delta) - \tilde V(k-delta)
        ! ===========================================
        ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
        ! 
        do im=1,en%nbf 
-         forall(i2=RT_bands(1):RT_bands(2),iv1=1:en%nbf)
+         forall(i2=NL_bands(1):NL_bands(2),iv1=1:en%nbf)
            delta_tV_bnd(iv1,i2)=delta_tV_bnd(iv1,i2)+Sm1_plus (im,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,im) &
 &                                                   -Sm1_minus(im,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,im)
          end forall
@@ -144,14 +140,14 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
 !$omp parallel do default(shared), private(i2,i1)
-       do i2=RT_bands(1),RT_bands(2)
-         do i1=RT_bands(1),RT_bands(2)
+       do i2=NL_bands(1),NL_bands(2)
+         do i1=NL_bands(1),NL_bands(2)
            Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf,ik,i_sp))*delta_tV_bnd(1:en%nbf,i1))
          enddo
        enddo
 !$omp end parallel do
        !
-       Wop(RT_bands(1):,RT_bands(1):,istep)=Wop(RT_bands(1):,RT_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+       Wop(NL_bands(1):,NL_bands(1):,istep)=Wop(NL_bands(1):,NL_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
        !
      enddo
      !
@@ -159,7 +155,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      !
      ! <\phi_i | e^{iGr} | \phi_j >
      !
-     Wop(RT_bands(1):,RT_bands(1):,:)=cZERO !DIP_S(RT_bands(1):,RT_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
+     Wop(NL_bands(1):,NL_bands(1):,:)=cZERO !DIP_S(NL_bands(1):,NL_bands(1):,id_red,ik,i_sp)*cI/(4._SP*pi)   
      !
    endif    
    !
@@ -171,7 +167,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      ! Eq. 96 of PRB 63, 155107(2001)
      !
      do id=1,3
-       Wk(id,RT_bands(1):,RT_bands(1):)=Wk(id,RT_bands(1):,RT_bands(1):)+Wop(RT_bands(1):,RT_bands(1):,1)*a(id_red,id)
+       Wk(id,NL_bands(1):,NL_bands(1):)=Wk(id,NL_bands(1):,NL_bands(1):)+Wop(NL_bands(1):,NL_bands(1):,1)*a(id_red,id)
      enddo
      !
    else
@@ -180,8 +176,8 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      ! Eq. 97 of PRB 63, 155107(2001)
      !
      do id=1,3
-       Wk(id,RT_bands(1):,RT_bands(1):)=Wk(id,RT_bands(1):,RT_bands(1):)+&
-&               (4._SP*Wop(RT_bands(1):,RT_bands(1):,1)-Wop(RT_bands(1):,RT_bands(1):,2))/3._SP*a(id_red,id)
+       Wk(id,NL_bands(1):,NL_bands(1):)=Wk(id,NL_bands(1):,NL_bands(1):)+&
+&               (4._SP*Wop(NL_bands(1):,NL_bands(1):,1)-Wop(NL_bands(1):,NL_bands(1):,2))/3._SP*a(id_red,id)
      enddo
 
    endif
@@ -191,14 +187,14 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  ! Make an Hermitian operator
  !
  do id=1,3
-   Wk(id,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))=(Wk(id,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)) &
-&                                               +hermitian(Wk(id,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))))
+   Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))=(Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)) &
+&                                               +hermitian(Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))))
  enddo
  !
  do id=1,3
-   H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),i_sp)= &
-&  H_nl_sc(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),i_sp)-  &
-&      E_vec_pot(id)*Wk(id,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+   H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i_sp)= &
+&  H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i_sp)-  &
+&      E_vec_pot(id)*Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
  enddo
  !
 end subroutine Build_W_operator

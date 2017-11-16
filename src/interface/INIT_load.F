@@ -873,7 +873,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _SC || defined _RT || defined _QED || defined _NL
      if (is_def(3)) bands_=COLL_bands
 #endif
-#if defined _RT || defined _QED
+#if defined _RT || defined _QED || defined _NL
      if (is_def(4)) bands_=NL_bands
 #endif
      !

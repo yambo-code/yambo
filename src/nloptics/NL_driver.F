@@ -31,7 +31,7 @@ subroutine NL_driver(E,X,k,q)
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,Dipole_approach,X_alloc
  use wave_func,      ONLY:WF,wf_ng
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
@@ -40,7 +40,7 @@ subroutine NL_driver(E,X,k,q)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,&
-&                         HF,SEX,NL_bands
+&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -66,8 +66,10 @@ subroutine NL_driver(E,X,k,q)
  ! In Non-Linear NL_bands always equal to SC_bands
  ! ==============================================
  !
+ NL_nbands=NL_bands(2)-NL_bands(1)+1
+ !
  RT_bands =NL_bands
- RT_nbands=RT_bands(2)-RT_bands(1)+1
+ RT_nbands=NL_nbands
  !
  call section('+','Initialization')
  !#################################
@@ -100,6 +102,7 @@ subroutine NL_driver(E,X,k,q)
  ! =======================
  NL_bands1_save=NL_bands(1)
  NL_bands(1)   =1
+ eval_OVERLAPS =.true.
  X(1)%ib       =(/1,NL_bands(2)/)
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
@@ -116,6 +119,7 @@ subroutine NL_driver(E,X,k,q)
  Dipole_approach='Covariant' 
  if(l_use_DIPOLES .or. load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
+ eval_OVERLAPS =.false.
  NL_bands(1)=NL_bands1_save
  !
  ! Free memory: qindx_* and unused DIPOLES

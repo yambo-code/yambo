@@ -574,7 +574,7 @@ end subroutine NL_Integrator
      !
      use wrapper,        ONLY:M_by_M,M_by_V
      use pars,           ONLY:SP,cI,cZERO,cONE
-     use nl_optics,      ONLY:NL_bands
+     use nl_optics,      ONLY:NL_bands,NL_nbands
      !
      implicit none
      !
@@ -590,10 +590,8 @@ end subroutine NL_Integrator
      complex(SP)   :: Hp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      complex(SP)   :: Hm(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      complex(SP)   :: tmp_det
-     integer       :: i1,ib,NL_nbands
+     integer       :: i1,ib
      logical       :: l_use_inv,l_use_lin
-     !
-     NL_nbands=(NL_bands(2)-NL_bands(1)+1)
      !
      l_use_inv=.false.
      l_use_lin=.true.
@@ -609,7 +607,7 @@ end subroutine NL_Integrator
        Hp=Hp+cI*dT/2._SP*(H_in+I_in(:,:,ib))
        !
        if (l_use_inv) then
-         ! 
+         !
          call SERIAL_inversion(NL_nbands,Hp,tmp_det,.false.)
          call M_by_M('n','n',NL_nbands,Hm,Hp,Hm)
          !

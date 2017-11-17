@@ -56,7 +56,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" b","qp"," k"," q"/))
    case("Non_Linear") 
-     call GIMME_a_parallel_proposal(3,(/" w"," k"," b"/))
+     call GIMME_a_parallel_proposal(4,(/" b"," k"," q"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu
@@ -135,7 +135,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
        if (trim(ch)=="q" ) VALS(i_f)=PAR_Q_range(2)-PAR_Q_range(1)+1
        if (trim(ch)=="qp") VALS(i_f)=PAR_QP_range
        if (trim(ch)=="eh") VALS(i_f)=PAR_EH_range
-       if (trim(ch)=="W ") VALS(i_f)=PAR_n_freqs
+       if (trim(ch)=="w ") VALS(i_f)=PAR_n_freqs
      enddo
      !
      VALS_sorted=VALS

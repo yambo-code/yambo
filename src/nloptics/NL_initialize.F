@@ -141,6 +141,10 @@ subroutine NL_initialize(E,k,q)
     case('IPA')
         Correlation=IPA
         RT_potential='IP'
+    case('RPA')
+        Correlation=HARTREE
+        RT_potential='HARTREE'
+        eval_HARTREE =.true.
     case('HARTREE')
         Correlation=HARTREE
         RT_potential='HARTREE'
@@ -164,7 +168,7 @@ subroutine NL_initialize(E,k,q)
         eval_HARTREE =.true.
     case('SEX')
         Correlation    =SEX
-        RT_potential   ='COHSEX'
+        RT_potential   ='HARTREE+SEX'
         eval_HARTREE   =.true.
         eval_dG        =.true.
         eval_COLLISIONS=.true.
@@ -172,7 +176,7 @@ subroutine NL_initialize(E,k,q)
         l_sc_sex       =.true.
     case('HF')
         Correlation=HF
-        RT_potential   ='HARTREE-FOCK'
+        RT_potential   ='HARTREE+FOCK'
         eval_HARTREE   =.true.
         eval_dG        =.true.
         eval_COLLISIONS=.true.

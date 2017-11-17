@@ -231,7 +231,7 @@ contains
      !
      n_headings=7
      !
-     headings(1)="# E [eV]"
+     headings(1)=" E [eV]"
      headings(2:7)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
 &                              'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
      !
@@ -248,8 +248,8 @@ contains
        enddo
        !
        call msg('o '//trim(X_file_name),'#')
-       !
-       call msg('o '//trim(X_file_name),'',headings(1:n_headings),USE_TABS=.TRUE.)
+       call msg('o '//trim(X_file_name),'#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o '//trim(X_file_name),'#')
        !
        do i_fp=1,n_frequencies
          !

@@ -68,7 +68,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use com,            ONLY:secnm
 #endif
 #if defined _RT
- use X_m,            ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
+ use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,      ONLY:n_spinor
 #endif
 #if defined _SC || defined _RT
@@ -109,7 +109,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  l_real_time_magn_dipoles=.false.
 #if defined _SC  || defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.l_evaluating_em1s)
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif
  !
  ! Setup logicals 
@@ -223,9 +223,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  call DIP_alloc('DIP_P')
 #if defined _RT
  if (l_real_time_magn_dipoles) then
-   call X_alloc('DIP_orbital')
-   call X_alloc('DIP_spin')
-   if(n_spinor==2) call X_alloc('DIP_P_spinor')
+   call DIP_alloc('DIP_orbital')
+   call DIP_alloc('DIP_spin')
+   if(n_spinor==2) call DIP_alloc('DIP_P_spinor')
  endif
 #endif
 #if defined _SC || defined _RT

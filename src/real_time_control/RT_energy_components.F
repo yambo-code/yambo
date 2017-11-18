@@ -24,7 +24,7 @@
 subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  use pars,           ONLY:SP,cZERO
- use X_m,            ONLY:P_square
+ use DIPOLES,        ONLY:P_square
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
  use hamiltonian,    ONLY:V_hartree_sc,Hzero

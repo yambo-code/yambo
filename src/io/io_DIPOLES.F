@@ -73,7 +73,7 @@ integer function io_DIPOLES(Dip,ID)
  if (l_sc_run)    io_extension(ID)='dip_iR_P_and_P2'
 #endif
 #if defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.index(secnm,"Dielectric")/=0)
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1
  if (l_real_time_magn_dipoles) io_extension(ID)='dip_iR_P_spin_and_P2'
 #endif
  !
@@ -134,7 +134,7 @@ integer function io_DIPOLES(Dip,ID)
    if (l_real_time_magn_dipoles) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-     if (n_spinor==2) call X_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+     if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
    endif
 #endif
 #if defined _SC || defined _RT

@@ -104,7 +104,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  rv=cross_product(a(2,:),a(3,:))
  DL_vol=abs(dot_product(a(1,:),rv))
  call msg('r','DL volume [au]:',DL_vol)
- RL_vol=(2._SP*pi)**3._SP/DL_vol
+ RL_vol=(2._SP*pi)**3/DL_vol
  !
  ! RL unit vectors 
  !

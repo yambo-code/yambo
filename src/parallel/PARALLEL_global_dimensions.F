@@ -133,7 +133,10 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #endif
  endif
 #if defined _RT
- if (ENVIRONMENT=="Real_Time"                       ) PAR_n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
+ if (ENVIRONMENT=="Real_Time"                       ) then
+   PAR_n_bands=(/1,(RT_bands(2)-RT_bands(1)+1)**2/)
+   PAR_QP_range=QP_n_states
+ endif
 #endif
  !
  ! QP states

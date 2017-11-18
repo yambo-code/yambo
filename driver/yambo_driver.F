@@ -87,9 +87,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Presets
  !
- ncpu     =np
- myid     =pid
- infile   =inf
+ ncpu         = np
+ myid         = pid
+ infile       = inf
+ yambo_driver = 0
+ iinf         = 0 
  !
  call SET_defaults(instr,ind,od,js,com_dir)
  call it_reset(1)
@@ -107,12 +109,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! INPUT FILE PARSING
  !====================
  !
- yambo_driver=0
+ iinf=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
  !
  ! iinf=0 => No error message from driver.c 
- !
- iinf=0 
- iinf=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.false.,.false.)
  !
  if (iinf/=0) return
  !
@@ -133,6 +132,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
+ !==============
  !
  call bz_samp_indexes(k,Xk,q) 
  !
@@ -158,8 +158,8 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! Logicals for \eps^-1
  !======================
  !
- l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_gw0.and.l_elel_corr.and..not.l_cohsex) .or. l_life
- l_sta_X = l_em1s .or. (l_bse.and..not.l_ppa)
+ l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa
+ l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
  if ( l_real_time .or. l_sc_run) i_X_kind=1
  if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
@@ -169,9 +169,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
- ! DS, 2017/08/22 sc_run case to be fixed
- !
- driver_now= l_sta_X.or.l_dyn_X.or.l_optics.or.l_life.or.l_dipoles.or.l_real_time !.or.l_sc_run
+ driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
  if (driver_now) call mem_manager_report
@@ -292,6 +290,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+ !
 #endif
  !
 #if defined _MEM_CHECK 

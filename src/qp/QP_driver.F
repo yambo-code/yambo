@@ -331,7 +331,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    ! Radiative Lifetimes (Using <p>)
    !=================================
    !
-   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X)
+   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif
    !

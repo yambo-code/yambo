@@ -80,7 +80,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
@@ -120,12 +120,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  call SC_start_and_restart(X,E)
  !
- ! DIPOLES
+ ! Dipoles
  !=========
- ! put dipoles I/O here
- !if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
- !if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
- if ((l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0) ) stop
+ !
+ if ((l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0) ) then
+   call DIPOLE_dimensions(E,Dip,SC_bands,(/0._SP,0._SP,0._SP/))
+   call DIPOLE_IO(k,E,Dip,'read ',io_DIP_err)
+ endif
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !

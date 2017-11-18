@@ -339,8 +339,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_spin')
+   call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
    call DIP_alloc('DIP_projected')
+   call DIP_alloc('DIP_P_spinor')
  endif
  !
  if (l_rpa_IP) then

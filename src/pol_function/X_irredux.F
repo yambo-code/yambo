@@ -338,8 +338,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_spin')
+   call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
    call DIP_alloc('DIP_projected')
+   call DIP_alloc('DIP_P_spinor')
  endif
  !
 #if defined _OPENMP

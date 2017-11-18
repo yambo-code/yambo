@@ -84,7 +84,6 @@ module DIPOLES
      !
      if (present(d)) then
        select case(what)
-       case('X')
        case('DIP_iR')
          if (allocated(DIP_iR)) return
          YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
@@ -120,7 +119,6 @@ module DIPOLES
        end select
      else
        select case(what)
-       case('X')
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
          YAMBO_FREE(DIP_iR)

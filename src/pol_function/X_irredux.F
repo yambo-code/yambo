@@ -276,7 +276,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #endif
        !
        X_rows  = (/X_par%rows(1),min(ig_col,X_par%rows(2))/)
-       !X_rows  = (/X_par%rows(1),ig_col/)
        X_nrows = X_rows(2)-X_rows(1)+1
        !
        ! ----    ----
@@ -292,7 +291,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        if (.not.X_FILL_UP_matrix_only) then
          !
          X_rows  = (/X_par%rows(1),min(ig_col-1,X_par%rows(2))/)
-         !X_rows  = (/X_par%rows(1),ig_col-1/)
          X_nrows = X_rows(2)-X_rows(1)+1
          !
          ig_row_transp = ig_col
@@ -400,19 +398,18 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  do ig_col=X_par%cols(1),X_par%cols(2)
    ig_row_transp=ig_col
    if (X_FILL_UP_matrix_only) then
-     do ig_row=ig_col+1,X_par%rows(2)
+     do ig_row=max(ig_col+1,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
        if (i_space_inv==1) X_par%blc(ig_row,ig_col,:)=      X_par%blc(ig_row_transp,ig_col_transp,:)
        if (i_space_inv==0) X_par%blc(ig_row,ig_col,:)=conjg(X_par%blc(ig_row_transp,ig_col_transp,:))
      enddo
    else if (PAR_COM_RL_INDEX%n_CPU>1) then
-     !do ig_row=X_par%rows(1),min(ig_col-1,X_par%rows(2))
      do ig_row=max(ig_col,X_par%rows(1)),X_par%rows(2)
        ig_col_transp=ig_row
        ! FILL THE UPPER PART OF X_par_lower
        X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,:)=X_par%blc(ig_row_transp,ig_col_transp,:)
        ! FILL THE LOWER PART OF X_par
-       X_par%blc(ig_row,ig_col,:)               =X_par_lower_triangle%blc(ig_row,ig_col,:)
+       X_par%blc(ig_row,ig_col,:)                             =X_par_lower_triangle%blc(ig_row,ig_col,:)
      enddo
    endif
  enddo

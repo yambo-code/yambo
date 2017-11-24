@@ -53,7 +53,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
 #endif
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
- use interfaces,    ONLY:WF_load,WF_free
+ use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use D_lattice,     ONLY:i_space_inv
@@ -79,7 +79,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig1,ig2,iw,n_poles,i_cg,i_bg,mutexid,ngrho,X_cols(2)
+ integer                  :: ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
+&                            X_cols_transp(2),X_rows(2),X_nrows
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -209,10 +210,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! OpenMP setup
  !==============
  !
-#if defined _OPENMP
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig1, iw, mutexid,X_cols)
-#endif
+!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_row,ig_col_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)
  !
@@ -225,9 +224,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! MAIN LOOP
  !===========
  !
-#if defined _OPENMP
 !$omp do
-#endif
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -241,13 +238,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
    if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
-#if defined _OPENMP
      !$omp critical
-#endif
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
-#if defined _OPENMP
      !$omp end critical
-#endif
      call live_timing(steps=1)
      cycle
    endif
@@ -276,25 +269,29 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !===========================================================
    do iw=1,Xw%n_freqs
      !
-     do ig1=X_par%rows(1),X_par%rows(2)
+     do ig_col=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
-       call OPENMP_compute_mutex(ig1,mutexid)
+       call OPENMP_compute_mutex(ig_col,mutexid)
        call omp_set_lock(omp_locks(mutexid))
 #endif
        !
-       X_cols=(/ig1,X_par%cols(2)/)
+       X_rows  = (/X_par%rows(1),min(ig_col,X_par%rows(2))/)
+       X_nrows = X_rows(2)-X_rows(1)+1
        !
        ! ----    ----
        ! -xxx    -xxx
        ! ---- => ----
        ! ----    ----
        !
-       call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),Xo_res(ig1,X_cols(1):X_cols(2)),&
-&                         X_par%blc(ig1,X_cols(1):X_cols(2),iw))
+       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig_col),X_par%blc(X_rows(1):X_rows(2),ig_col,iw))
        !
        if (.not.X_FILL_UP_matrix_only) then
          !
-         X_cols(1)=ig1+1
+         X_rows  = (/X_par%rows(1),min(ig_col-1,X_par%rows(2))/)
+         X_nrows = X_rows(2)-X_rows(1)+1
+         !
+         ig_row_transp = ig_col
+         X_cols_transp = X_rows
          !
          ! ----    ----
          ! -xxx    ----
@@ -302,13 +299,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          ! ----    -x--
          !
          if (PAR_COM_RL_INDEX%n_CPU>1) then
-           call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
-&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par_lower_triangle%blc(X_cols(1):X_cols(2),ig1,iw))
+           call V_by_V_plus_V(X_nrows,GreenF(iw),&
+&                             conjg(Xo_res(X_rows(1):X_rows(2),ig_col)),&
+&                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          else
-           call V_by_V_plus_V(X_cols(2)-X_cols(1)+1,GreenF(iw),&
-&                             conjg(Xo_res(ig1,X_cols(1):X_cols(2))),&
-&                             X_par%blc(X_cols(1):X_cols(2),ig1,iw))
+           call V_by_V_plus_V(X_nrows,GreenF(iw),&
+&                             conjg(Xo_res(X_rows(1):X_rows(2),ig_col)),&
+&                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
        endif
 #if defined _OPENMP
@@ -322,18 +319,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
  enddo 
  !
-#if defined _OPENMP
 !$omp end do
-#endif
  !
  ! CLEAN
  !=======
  YAMBO_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
-#if defined _OPENMP
 !$omp end parallel
-#endif
  !
  !
  if(coarse_grid_N>0) call live_timing()
@@ -397,26 +390,27 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! "o" = calculated
  ! "x" = to be filled now
  !
-#if defined _OPENMP
- !$omp parallel default(shared), private(ig2,ig1)
+ !$omp parallel default(shared), private(ig_col,ig_row,ig_row_transp,ig_col_transp)
  !$omp do
-#endif
- do ig1=X_par%rows(1),X_par%rows(2)
+ do ig_col=X_par%cols(1),X_par%cols(2)
+   ig_row_transp=ig_col
    if (X_FILL_UP_matrix_only) then
-     do ig2=X_par%cols(1),ig1-1
-       if (i_space_inv==1) X_par%blc(ig1,ig2,:)=X_par%blc(ig2,ig1,:)
-       if (i_space_inv==0) X_par%blc(ig1,ig2,:)=conjg(X_par%blc(ig2,ig1,:))
+     do ig_row=max(ig_col+1,X_par%rows(1)),X_par%rows(2)
+       ig_col_transp=ig_row
+       if (i_space_inv==1) X_par%blc(ig_row,ig_col,:)=      X_par%blc(ig_row_transp,ig_col_transp,:)
+       if (i_space_inv==0) X_par%blc(ig_row,ig_col,:)=conjg(X_par%blc(ig_row_transp,ig_col_transp,:))
      enddo
    else if (PAR_COM_RL_INDEX%n_CPU>1) then
-     do ig2=X_par%cols(1),ig1
-       X_par_lower_triangle%blc(ig2,ig1,:)=X_par%blc(ig2,ig1,:)
-       X_par%blc(ig1,ig2,:)               =X_par_lower_triangle%blc(ig1,ig2,:)
+     do ig_row=max(ig_col,X_par%rows(1)),X_par%rows(2)
+       ig_col_transp=ig_row
+       ! FILL THE UPPER PART OF X_par_lower
+       X_par_lower_triangle%blc(ig_row_transp,ig_col_transp,:)=X_par%blc(ig_row_transp,ig_col_transp,:)
+       ! FILL THE LOWER PART OF X_par
+       X_par%blc(ig_row,ig_col,:)                             =X_par_lower_triangle%blc(ig_row,ig_col,:)
      enddo
    endif
  enddo
-#if defined _OPENMP
  !$omp end do
  !$omp end parallel
-#endif
  !
 end subroutine

@@ -60,45 +60,29 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    N=size(M,1)
  endif
  !
- M_in_kind  ="NAN"
- if (present(M_in)) then
-   M_in_kind=M_in%kind
- else if (present(M_bse)) then
-   M_in_kind="BSE"
- endif
- if (l_MAT_ARRAY.and.present(M_out)) then
-   M_in_kind="SER"
- endif
+ M_in_kind = "NAN"
+ if (present(M_in) )                 M_in_kind = M_in%kind
+ if (present(M_bse))                 M_in_kind = "BSE"
+ if (l_MAT_ARRAY.and.present(M_out)) M_in_kind = "SER"
  !
- M_out_kind="NAN"
- if (present(M_out)) then
-   M_out_kind=M_out%kind
- endif
- if (l_MAT_ARRAY.and.present(M_in)) then
-   M_out_kind="SER"
- endif
+ M_out_kind = "NAN"
+ if (present(M_out))                 M_out_kind = M_out%kind
+ if (l_MAT_ARRAY.and.present(M_in))  M_out_kind = "SER"
  !
  if (M_in_kind=="NAN".or.M_out_kind=="NAN") return
  !
  ! INDEXes
  !
- if (present(M_in).and.present(INDEX_in)) then
-   M_in%I=INDEX_in
- endif
- if (present(M_out).and.present(INDEX_out)) then
-   M_out%I=INDEX_out
- endif
+ if (present(M_in) .and.present(INDEX_in) ) M_in%I =INDEX_in
+ if (present(M_out).and.present(INDEX_out)) M_out%I=INDEX_out
  !
  ! Local SND/RCV
  !
  I_do_SND=.TRUE.
- if (present(SND)) then
-   I_do_SND=SND
- endif
+ if (present(SND)) I_do_SND=SND
+ !
  I_do_RCV=.TRUE.
- if (present(RCV)) then
-   I_do_RCV=RCV
- endif
+ if (present(RCV)) I_do_RCV=RCV
  !
  ! PAR 2 PAR COMM
  !

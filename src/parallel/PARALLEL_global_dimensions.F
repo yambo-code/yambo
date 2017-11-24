@@ -84,6 +84,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-------------
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) PAR_n_G_vectors= X_ng
  if (ENVIRONMENT=="Response_G_space"                ) PAR_n_G_vectors= X_ng
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_G_vectors= X_ng
  !
  ! Q-pts
  !-------

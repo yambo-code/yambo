@@ -211,7 +211,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !==============
  !
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg, Drude_pole,GreenF, i_bg, Xo_res, Xo_scatt, ig_row, iw, mutexid,X_rows,X_nrows)
+!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_row,ig_col_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)
  !
@@ -284,9 +284,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        ! ----    ----
        !
        call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows(1):X_rows(2),ig_col),X_par%blc(X_rows(1):X_rows(2),ig_col,iw))
-       !
-!       X_par%blc(X_rows(1):X_rows(2),ig_col,iw)=&
-!&         X_par%blc(X_rows(1):X_rows(2),ig_col,iw)+Xo_res(X_rows(1):X_rows(2),ig_col)*GreenF(iw)
        !
        if (.not.X_FILL_UP_matrix_only) then
          !
@@ -393,7 +390,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! "o" = calculated
  ! "x" = to be filled now
  !
- !$omp parallel default(shared), private(ig_col,ig_row)
+ !$omp parallel default(shared), private(ig_col,ig_row,ig_row_transp,ig_col_transp)
  !$omp do
  do ig_col=X_par%cols(1),X_par%cols(2)
    ig_row_transp=ig_col

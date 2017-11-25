@@ -211,7 +211,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !==============
  !
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_row,ig_col_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
+!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,ig_row_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)
  !
@@ -248,11 +248,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
-   if( allocated(Xen%GreenF) ) then
-     call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
-   else
-     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
-   endif
+   if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   if(.not.allocated(Xen%GreenF)) call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
 #else
    !
    ! GPL_EXCLUDE_END

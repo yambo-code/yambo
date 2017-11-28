@@ -169,7 +169,7 @@ subroutine NL_driver(en,k)
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
                 &                                                   Divide_by_Field(Efield(i_Probe),i_order)
          else 
-           Susceptibility(i_order,i_f,:)=4._SP*pi*X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
+           Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if
          !
        enddo

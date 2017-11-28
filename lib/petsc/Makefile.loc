@@ -17,7 +17,7 @@ TARBALL=$(tarball_petsc)
 # redefinitions
 #
 PETSC_ARCH=yambo_single_complex
-AUXFLAGS=--prefix=$(PATHLIB) \
+AUXFLAGS=--prefix=$(LIBPATH) \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-cxx=0 \
          --with-shared-libraries=0 \
@@ -37,15 +37,17 @@ uncompress-stamp:
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then
+	if test -d $(PACKAGE) ; then \
 	  cd $(PACKAGE);  \
 	  ./configure $(AUXFLAGS) \
 	  --with-cc=$(cc) \
-	  --with-fc=$(fc) 
+	  --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
+
 	
 package-ready-stamp: uncompress-stamp configure-stamp
+	echo PREFIX= $LIBPATH
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
 	#
@@ -64,7 +66,7 @@ clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp
 
-clean_all: 
+clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
 

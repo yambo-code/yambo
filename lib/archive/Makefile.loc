@@ -5,7 +5,7 @@ include ./package.list
 WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
-     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
+     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_slepc) $(tarball_fftw) $(tarball_fftqe)
 
 #
 $(tarball_iotk): 
@@ -28,6 +28,8 @@ $(tarball_scalapack):
 	@+TARBALL="$(tarball_scalapack)"; URL="$(url_scalapack)"; LIB="SCALAPACK"; $(getsrc)
 $(tarball_petsc):
 	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
+$(tarball_slepc):
+	@+TARBALL="$(tarball_slepc)"    ; URL="$(url_slepc)"    ; LIB="SLEPC"; $(getsrc)
 $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
 $(tarball_fftqe):

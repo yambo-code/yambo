@@ -467,7 +467,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc,BSS_alloc
  !
-#include<memory.h>
+#include <memory.h>
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>

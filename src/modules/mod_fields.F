@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,8 +23,8 @@
 !
 module fields
  !
- use pars, ONLY:SP,schlen,lchlen,pi
- use units,ONLY:HA2EV,FS2AUT,HBAR_eVfs
+ use pars, ONLY:SP,DP,schlen,lchlen,pi,n_ext_fields_max
+ use units,ONLY:FS2AUT
  !
  implicit none
  !
@@ -33,13 +33,15 @@ module fields
  type ext_field
    character(schlen) :: ef_name
    character(schlen) :: ef_pol
+   real(SP) :: To
    real(SP) :: t_initial
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
    integer  :: t_final_indx      ! time index of extern field switch off (computed in RT_Fluence)
    integer  :: n_frequencies
    real(SP) :: frequency(2)
-   real(SP) :: damping
+   real(SP) :: width
+   real(SP) :: FWHM
    real(SP) :: fluence = 0._SP
    real(SP) :: intensity
    real(SP) :: amplitude
@@ -48,8 +50,7 @@ module fields
    real(SP) :: versor_circ(3)
  end type ext_field
  !
- integer, parameter  :: n_ext_fields_max=4
- integer             :: n_ext_fields    =0
+ integer               :: n_ext_fields    =0
  type(ext_field), save :: Efield(n_ext_fields_max)
  !
  ! Vector potential
@@ -62,11 +63,9 @@ module fields
    real(SP)    :: intensity
  end type gauge_field
  !
- type(gauge_field) :: A_vecpot
- type(gauge_field) :: A_vecpot_previous
+ type(gauge_field) :: A_tot    ! This is either the total or the externa field
  type(gauge_field) :: A_ext
  type(gauge_field) :: A_ind
- type(gauge_field) :: A_ind_previous
  !
  contains
    !
@@ -78,16 +77,18 @@ module fields
 &                        trim(E_field%ef_name) == 'DELTA' ,& 
 &                        trim(E_field%ef_name) == 'GAUSS' ,& 
 &                        trim(E_field%ef_name) == 'PULSE' ,& 
-&                        trim(E_field%ef_name) == 'QSSIN' /)) .and. &
+&                        trim(E_field%ef_name) == 'QSSIN' ,&
+&                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
 &                        trim(E_field%ef_pol)  == 'circular' /))
    end function
    !
    real(SP) function EtoT(E,T)
+     use QP_m,       ONLY:Time_of
      real(SP), optional ::T
      real(SP), optional ::E
-     if (present(T)) EtoT=2._SP*pi*HBAR_eVfs/(T*HA2EV)*FS2AUT
-     if (present(E)) EtoT=2._SP*pi*HBAR_eVfs/(E*HA2EV)*FS2AUT
+     if (present(T)) EtoT=2._SP*pi*Time_of(T,"fs")*FS2AUT
+     if (present(E)) EtoT=2._SP*pi*Time_of(E,"fs")*FS2AUT
    end function
    !
    real(SP) function field_frequency(E_field,i_f)
@@ -111,7 +112,10 @@ module fields
      !
      ! Note that A is evolved using A''(t) starting from A(0) and A'(0). 
      !
-     use pars,      ONLY:cI,cZERO,pi
+     use X_m,       ONLY:global_gauge
+     use pars,      ONLY:cI,cONE,cZERO,pi
+     use wrapper,   ONLY:FADEVA
+     !
      type(ext_field)   ::E_field
      !
      real(SP)          ::T_i
@@ -121,12 +125,12 @@ module fields
      !
      integer           ::i_fr,i_field,n_fields
      real(SP)          ::T_0,W_0,W_i,sigma,WT_i,EXPf,fr_shift(2)
-     complex(SP)       ::f_t(2),f_tmp(3)
+     complex(SP)       ::f_t(2),cZ,cS
      !
      small_a=cZERO
      !
      W_0=E_field%frequency(1)
-     sigma=E_field%damping
+     sigma=E_field%width
      T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
      f_t=cZERO
      fr_shift(1)=0._SP
@@ -178,17 +182,41 @@ module fields
        case('QSSIN')
          WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
          EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
-         if (order==0 ) f_t(i_field)=0._SP
+         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
+         !
+         !
+         ! W    =FADEVA function
+         ! W(-z)=exp(-z^2)*(1-  erf (i*z))
+         !      =exp(-z^2)*(1-i*erfi( z ))
+         !
+         ! ERFI(z)=i*(exp(z^2)*W(-z)-1)
+         !
+         if (order==0 .and. trim(global_gauge)=="velocity" ) f_t(i_field)=-sqrt(pi/2._SP)*sigma/2._SP*         &
+&                                      cI*( (exp(      cZ **2-      cS )*FADEVA(-      cZ )-exp(-      cS )) + &
+&                                           (exp(conjg(cZ)**2-conjg(cS))*FADEVA(-conjg(cZ))-exp(-conjg(cS))) )
+         if (order==0 .and. trim(global_gauge)=="length" ) f_t(i_field)=cZERO
          if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
          if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
-         ! 
+         !
+       case('QSFIELD')
+         WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
+         EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
+         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
+         !
+         if (order==0 ) f_t(i_field)=      sin(WT_i)                              *EXPf
+         if (order==1 ) f_t(i_field)=( W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
+         if (order==2 ) f_t(i_field)=(-W_0*sin(WT_i)-sin(WT_i)/sigma**2-W_0*(T_i-T_0)*sin(WT_i)/sigma**2 &
+&                                     -(T_i-T_0)*(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)/sigma**2)*EXPf
+         !
        case('PULSE')
          f_t(i_field)= 0._SP
          if(abs((T_i-T_0))< sigma) then
            WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
            if (order==0 ) f_t(i_field)= 0._SP
            if (order==1 ) f_t(i_field)=       (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4      *cos(WT_i)
-           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4+                &
+           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4                 &
 &                                      +2._SP*(T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)   /sigma**4 )    *cos(WT_i) &
 &                                      -      (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4  *W_0*sin(WT_i)
          endif
@@ -235,6 +263,8 @@ module fields
          iErr=-1
        case('QSSIN')
          iErr=-1
+       case('QSFIELD')
+         iErr=-1
        case('PULSE')
          iErr=-1
        end select
@@ -253,7 +283,7 @@ module fields
      E2%frequency=E1%frequency  
      E2%n_frequencies=E1%n_frequencies  
      E2%W_step=E1%W_step  
-     E2%damping=E1%damping  
+     E2%width=E1%width  
      E2%intensity=E1%intensity  
      E2%amplitude=E1%amplitude  
      E2%versor=E1%versor
@@ -273,15 +303,19 @@ module fields
      E%n_frequencies=1
      E%W_step       =0._SP
      E%intensity    =0._SP
-     E%damping      =0._SP
+     E%width        =0._SP
      E%ef_name      ='none'
      E%ef_pol       ='none'
      E%versor       =(/1._SP,0._SP,0._SP/)
      E%versor_circ  =(/0._SP,1._SP,0._SP/)
+     !GPL_INCLUDE_START
+     E%ef_name      ='DELTA'
+     E%ef_pol       ='linear'
+     !GPL_INCLUDE_END
    end subroutine
    !
    subroutine A_vecpot_reset(A)
-     type(gauge_field) A
+     type(gauge_field) :: A
      A%vecpot_acc=0._SP
      A%vecpot_vel=0._SP
      A%vecpot    =0._SP
@@ -325,7 +359,7 @@ module fields
          if (order/=0) Divide_by_Field =      (2._SP*cI/Field%amplitude)**order
          if (order==0) Divide_by_Field =  (4._SP,0._SP)/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
-         sigma=Field%damping
+         sigma=Field%width
          T_0=10._SP*sigma
          W_0=Field%frequency(1)
          T = 2._SP*pi/W_0

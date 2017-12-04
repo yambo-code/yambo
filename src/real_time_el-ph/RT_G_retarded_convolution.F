@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -60,7 +60,8 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Etresh,Skind)
      real(SP) :: E1,E2,Etot,Etresh_
      Energy_Condition=.true.
      if ( abs(Etot)>Etresh_ ) Energy_Condition=.false.
-     if (  E2==0            ) return
+     if (  E1==0._SP        ) return
+     if (  E2==0._SP        ) return
      if (  E1/E2   >0._SP   ) Energy_Condition=.false.
    end function
    !

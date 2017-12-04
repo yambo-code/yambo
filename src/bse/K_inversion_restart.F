@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine K_inversion_restart(iq,W)
  use X_m,            ONLY:Epsilon_ii
  use BS_solvers,     ONLY:BSS_dr,BSS_er,BSS_n_freqs,K_Inversion_data,K_INV_EPS
  use IO_m,           ONLY:io_control,NONE,OP_RD_CL,REP,VERIFY
- use parallel_m,     ONLY:ncpu
+ use parallel_m,     ONLY:PAR_COM_SLK_INDEX_local
  use com,            ONLY:msg
  use frequency,      ONLY:w_samp,W_reset
 #if defined _PL
@@ -36,7 +36,7 @@ subroutine K_inversion_restart(iq,W)
  use PHOTOLUM,       ONLY:PL
 #endif
  !
- implicit none
+#include<memory.h>
  !
  integer,             intent(inout) :: iq
  type(w_samp)        ,intent(inout) :: W
@@ -66,7 +66,7 @@ subroutine K_inversion_restart(iq,W)
    !
    W_db%n_freqs=K_INV_EPS%n_freqs
    !
-   allocate(freq_table(W_db%n_freqs+W%n_freqs))
+   YAMBO_ALLOC(freq_table,(W_db%n_freqs+W%n_freqs))
    !
    ! Here I create a new energy array that merges the db to the current energies. 
    !
@@ -81,7 +81,7 @@ subroutine K_inversion_restart(iq,W)
    call elemental_restart(K_INV_PL)
 #endif
    !
-   deallocate(freq_table)
+   YAMBO_FREE(freq_table)
    !
  else
    !
@@ -175,19 +175,19 @@ subroutine K_inversion_restart(iq,W)
      ! De/Allocate Epsilon_ii/PL
      !
      if (TYP%what=="EPS") then
-       deallocate(Epsilon_ii)
-       allocate(Epsilon_ii(BSS_n_freqs,4))
+       YAMBO_FREE(Epsilon_ii)
+       YAMBO_ALLOC(Epsilon_ii,(BSS_n_freqs,4))
        Epsilon_ii(:,1)=W%p(:)
-       Epsilon_ii(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
+       Epsilon_ii(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        Epsilon_ii(:,3)=TYP%spectra(:,2)
        Epsilon_ii(:,4)=TYP%spectra(:,3)
      endif
 #if defined _PL
      if (TYP%what=="PLS") then
-       deallocate(PL)
-       allocate(PL(BSS_n_freqs,3))
+       YAMBO_FREE(PL)
+       YAMBO_ALLOC(PL,(BSS_n_freqs,3))
        PL(:,1)=W%p(:)
-       PL(:,2)=TYP%spectra(:,1)/real(ncpu,SP)
+       PL(:,2)=TYP%spectra(:,1)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
        PL(:,3)=TYP%spectra(:,2)
      endif
 #endif

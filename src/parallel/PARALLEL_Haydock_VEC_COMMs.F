@@ -1,5 +1,4 @@
-!
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -25,25 +24,24 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  !
  ! Set up the mask and communicators for the Haydock part.  
  !
- use BS,          ONLY:BS_nT_grps,n_BS_blks,BS_blk
- use parallel_m,  ONLY:myid,mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
-&                      PAR_COM_T_Haydock,ncpu
- !
- implicit none
+ use BS,          ONLY:BS_nT_grps
+ use parallel_m,  ONLY:mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
+&                      PAR_COM_T_Haydock,CREATE_the_COMM
+#include<memory.h>
  !
  character(*),       intent(in) :: what     
  !
  ! Work Space
  !
- integer :: i_g,i_err,i_b,iT_grp_k,iT_grp_p
- integer :: local_key
+ integer :: i_g,local_key
  !
  select case (what)
    case('assign')
      !
 #if defined _MPI
      !
-     !allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     !YAMBO_ALLOCATE(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
+     !Y_MEM(PAR_IND_T_Haydock%element_1D)
      !
      !PAR_IND_T_Haydock%element_1D = .false.
      !do i_b=1,n_BS_blks
@@ -67,20 +65,18 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        !
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) then
          local_key=-1
-         PAR_COM_T_Haydock(i_g)%my_chain=BS_nT_grps+1
+         PAR_COM_T_Haydock(i_g)%my_CHAIN=BS_nT_grps+1
        else
          !
-         !local_key=myid
          local_key = 1
          if (PAR_IND_T_groups%element_1D(i_g)) local_key = 0
          !
          PAR_COM_T_Haydock(i_g)%n_CPU=PAR_COM_T_Haydock(i_g)%n_CPU+1
-         PAR_COM_T_Haydock(i_g)%my_chain = i_g
+         PAR_COM_T_Haydock(i_g)%my_CHAIN = i_g
          !
        endif
        !
-       call MPI_COMM_SPLIT(mpi_comm_world,PAR_COM_T_Haydock(i_g)%my_chain,local_key,PAR_COM_T_Haydock(i_g)%COMM,i_err)
-       call MPI_COMM_RANK(PAR_COM_T_Haydock(i_g)%COMM,PAR_COM_T_Haydock(i_g)%CPU_id,i_err)
+       call CREATE_the_COMM(mpi_comm_world,PAR_COM_T_Haydock(i_g),local_key)
        !
      enddo
      !
@@ -99,7 +95,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        deallocate(PAR_COM_T_Haydock)
 #endif
        ! This is allocated in K_Transitions setup
-       deallocate(PAR_IND_T_Haydock%element_1D)
+       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,7 +27,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use pars,               ONLY:SP,cI,cZERO
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF
- use interfaces,         ONLY:WF_load
+ use interfaces,         ONLY:WF_load,WF_free
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
@@ -37,7 +37,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use LIVE_t,             ONLY:live_timing
  use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -46,8 +46,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  ! Work space
  !
- integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,ic_min,&
-&                                icfft(n_spinor),ivfft(n_spinor),idir,n_LT_steps
+ integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
+&                                ic_wf,iv_wf,idir,n_LT_steps
  logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
@@ -84,15 +84,13 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
          !
          if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
+         iv_wf=WF%index(iv,ik,i_sp_pol)
+         ic_wf=WF%index(ic,ik,i_sp_pol)
+         !
+         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
+         !
          do i_spinor=1,n_spinor
-           !
-           i_spin=i_sp_pol+i_spinor-1
-           ivfft(i_spinor)=WF%index(iv,ik,i_spin)
-           icfft(i_spinor)=WF%index(ic,ik,i_spin)
-           !
-           if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-           if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-           !
            do idir=1,3
              !
              ! Here I assume that for the non periodic direction id_red==id_cartesian
@@ -100,11 +98,10 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
              if(.not.idir_todo(idir)) cycle
              !
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
-&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,ivfft(i_spinor)), &
-&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,icfft(i_spinor)) )
+&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
+&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
              !
            enddo
-           !
          enddo
          !
          call live_timing(steps=1)
@@ -144,7 +141,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  !
  call live_timing()
  !
- deallocate(x_cc)
+ YAMBO_FREE(x_cc)
  !
  call WF_free(WF)
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
+integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  ! Here I  wante to calculate
  !
@@ -43,14 +43,14 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
  !
  ! R_x_D_n = R_n |D>
  !
- use BS_solvers,     ONLY:K_INV_EPS
+ use BS_solvers,     ONLY:K_INV_EPS,BS_mat,K_slk
  use pars,           ONLY:SP,cZERO,cONE
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  !
  implicit none
  !
  integer,    intent(in)  ::n,m,n_loop
- complex(SP),intent(in)  ::C,D(n),Lo(n,m),K(n,n)
+ complex(SP),intent(in)  ::C,D(n),Lo(n,m)
  complex(SP),intent(out) ::f
  !
  ! Work Space
@@ -77,12 +77,19 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo,K)
  f=fo
  delta_f=0._SP
  !
- if(K_INV_EPS%treshold<0) fo=cONE
+ if (K_INV_EPS%treshold<0) fo=cONE
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   call M_by_V_omp('n',n,K,R_x_D_nm1(:,1),R_x_D_n(:,1))
-   if (n_loop==2) call M_by_V_omp('n',n,conjg(K),R_x_D_nm1(:,2),R_x_D_n(:,2))
+   if (.not.K_slk%kind=="SLK") then
+     call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1),R_x_D_n(:,1))
+     if (n_loop==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
+   else
+#if defined _SCALAPACK
+     call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1),R_x_D_n(:,1))
+     if (n_loop==2) call PARALLEL_M_by_V('C',n,K_slk,R_x_D_nm1(:,2),R_x_D_n(:,2))
+#endif
+   endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)
    delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(:,1))

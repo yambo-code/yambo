@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): CH
@@ -98,10 +98,11 @@ while($line = <VER>) {
   $ID  = substr $line, 13, 1;
   if ( "$ID" =~ "1" ) {$SV = substr $line, 16, 1};
   if ( "$ID" =~ "2" ) {$SS = substr $line, 16, 1};
-  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1};
+  if ( "$ID" =~ "3" ) {$SP = substr $line, 16, 1; last;};
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;
+$Revision++;
 $Hash    =`git rev-parse --short HEAD`;
 $Revision+=10000 ;
 #
@@ -129,4 +130,3 @@ print MSGFILE "Changes:\n";
 print MSGFILE "- \n\n";
 if($patchname) {print MSGFILE "Patch sent by: $patchname\n"};
 close(MSGFILE);
-print "Edit the commit.msg file and commit/patch with -F commit.msg \n";

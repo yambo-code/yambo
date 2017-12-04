@@ -25,11 +25,9 @@ module SLK_m
  !
  use pars,       ONLY: SP
  use parallel_m, ONLY: MPI_comm
- !
- implicit none
+#include<memory.h>
  !
  integer              :: n_pools = 1 ! number of pools
- integer, parameter   :: desc_len= 9
  !
  ! SLK test
  !
@@ -53,7 +51,7 @@ module SLK_m
    INTEGER :: task   = 0         ! task id for the ortho group
    INTEGER :: n_CPU = 1          ! size of the ortho group:
    INTEGER :: leg   = 1          ! the distance in the father communicator
-                                 ! of two neighbour processors in ortho_comm
+   !                             ! of two neighbour processors in ortho_comm
    INTEGER :: COMM  = 0          ! communicator for the ortho group
    INTEGER :: ROW_comm  = 0      ! communicator for the ortho row group
    INTEGER :: COL_comm  = 0      ! communicator for the ortho col group
@@ -64,23 +62,6 @@ module SLK_m
    INTEGER :: world_cntx = -1    ! BLACS context of all processor 
    INTEGER :: ortho_cntx = -1    ! BLACS context for ortho_comm
  end type ORTHO_group
- !_
- ! Common Work Space
- !
- type SLK_matrix 
-   integer :: desc(desc_len)
-   integer :: lwork    = 0
-   integer :: lrwork   = 0
-   integer :: liwork   = 0
-   integer :: info     = 0
-   integer :: rows(2)  = 0
-   integer :: cols(2)  = 0
-   integer :: nrows    = 0
-   integer :: ncols    = 0
-   integer :: nrows_used = 0
-   integer :: ncols_used = 0
-   complex(SP), allocatable :: blc(:,:)
- end type SLK_matrix 
  !
  ! Specific SLK worlds ...
  !========================
@@ -93,34 +74,22 @@ module SLK_m
  !
  contains
    !
-   subroutine SLK_matrix_reset(M_slk,nrows,ncols)
-     type(SLK_matrix)  :: M_slk
-     integer, optional :: nrows, ncols 
-     !
-     if (allocated(M_slk%blc)) deallocate(M_slk%blc)
-     if (present(nrows).and.present(ncols)) then
-       M_slk%nrows    = nrows
-       M_slk%ncols    = ncols
-       allocate(M_slk%blc(nrows,ncols))
-     else
-       M_slk%desc     = 0
-       M_slk%lwork    = 0
-       M_slk%lrwork   = 0
-       M_slk%liwork   = 0
-       M_slk%info     = 0
-       M_slk%rows(2)  = 0
-       M_slk%cols(2)  = 0
-       M_slk%nrows    = 0
-       M_slk%ncols    = 0
-     endif
-   end subroutine
-   !
    subroutine SLK_POOL_clean_up(POOL)
      type(POOL_group) :: POOL
      POOL%CPU_id      = 0
      POOL%ID          = 0
      POOL%n_CPU       = 1
      POOL%INTRA_comm  = 0
+   end subroutine
+   !
+   subroutine SLK_POOL_init(POOL,COMM)
+     use parallel_m, ONLY:myid
+     type(POOL_group) :: POOL
+     type(MPI_comm)   :: COMM
+     POOL%CPU_id      = COMM%CPU_id
+     POOL%n_CPU       = COMM%n_CPU
+     POOL%ID          = myid/POOL%n_CPU
+     POOL%INTRA_comm  = COMM%COMM
    end subroutine
    !
    subroutine SLK_ORTHO_GROUP_clean_up(ORTHO)

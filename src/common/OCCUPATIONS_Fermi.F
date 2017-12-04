@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,47 +21,46 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Fermi(E,K,mode)
+subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  !
- ! Mode = 0 
+ ! Mode = "FERMI" 
  !  Update the Fermi energy
  !  Output : E%E_fermi
  !
- ! Mode = 1 -> Mode 0 +
+ ! Mode =  "OCCUPATIONS" (implies "FERMI")
  !  Define E%f and reports variations in Ef/nbf/nbm
  !  Output : E%nbf,E%nbm
  !  E%E are shifted 
  !
- ! Mode > 1 -> Mode 1 +
- !  Full report of system electronic character
+ ! no Mode  (implies "FERMI" and "OCCUPATIONS")
+ ! Full report of system electronic character
  !
  use pars,          ONLY:SP,DP
- use units,         ONLY:HA2EV,HA2KEL,BO2ANG
+ use units,         ONLY:HA2KEL
  use drivers,       ONLY:Finite_Tel
- use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
+ use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,filled_tresh,&
 &                        BZ_DbGd_nbands,BZ_DbGd_nkpt,n_spinor,n_spin,&
 &                        BZ_DbGd_table
  use R_lattice,     ONLY:bz_samp
- use com,           ONLY:msg,error,warning
+ use com,           ONLY:error,warning
  use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
- implicit none
+#include<memory.h>
  !
- type(levels) ::E
- type(bz_samp)::K
- integer      ::mode
+ type(levels)  ::E
+ type(bz_samp) ::K
+ character(*), OPTIONAL ::mode,OBJ
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),n_total_states,group_size
+ integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
- real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd
+ real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero
  logical :: Fermi_is_converged
- real(SP),parameter :: Tel_step=0.0001/HA2EV
- real(SP),parameter :: nel_diff_zero=1.E-5
+ real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
  !       1        1        1         2      
@@ -119,6 +118,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  ! Start Loop
  ! 
  i_trials=1
+ nel_diff_zero=1.E-5
  Fermi_is_converged=.false.
  !
  ! BUG-fix [Andrea 1/6/2012]: when the system is semiconductive it may happen the
@@ -128,43 +128,74 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  if (BZ_DbGd_nbands>0) Tel=Tel_step
  !
- do while (.not.Fermi_is_converged)
+ FERMI_LOOP: do while (.not.Fermi_is_converged)
    !
-   i_Ef=0
+   i_Ef=(/1,n_total_states/)
    i_trials(1)=i_trials(1)+1 
    !
-   ! Here we define a first approx for the range
-   ! of values where E_fermi should fall in two steps
-   !
-   ! 1. [Rough search] by moving of group_size elements
+   ! 1. [Rough search] by looping of group_size elements
    !
    group_size=max(1,int(n_total_states/500))
    do i1=1,n_total_states,group_size
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
-     i_Ef(1)= (int(i1/group_size)-1)*group_size 
-     if (group_size>1) i_Ef(1)=i_Ef(1)+1
-     if (n_of_el_from_zero(1)>0) i_Ef(2)=i1
-     if (i_Ef(2)/=0) exit
+     if (n_of_el_from_zero(1)<-nel_diff_zero) i_Ef(1)=i1
+     if (n_of_el_from_zero(1)> nel_diff_zero) then
+       i_Ef(2)=i1
+       exit
+     endif
    enddo
    !
-   ! 2. [Finer search] by moving of 1 element
+   i_Ef_fine=i_Ef
    !
-   do i1=i_Ef(1),i_Ef(2),1
-     if(i1==0) cycle
+   if (group_size>1) then
+     !
+     ! 2. [Finer search] by looping of 1 element
+     !
+     do i1=i_Ef(1),i_Ef(2)
+       call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
+       if (n_of_el_from_zero(1)<-nel_diff_zero) i_Ef_fine(1)=i1
+       if (n_of_el_from_zero(1)> nel_diff_zero) then
+         i_Ef_fine(2)=i1
+         exit
+       endif
+     enddo
+     !
+   endif
+   !
+   if (i_Ef_fine(2)==n_total_states) call error('Not enough states to converge the Fermi Level')
+   !
+   ! 3. Is any level in the Ef_fine range ok?
+   !
+   do i1=i_Ef_fine(1),i_Ef_fine(2)
      call ef2nel(Tel,E_sorted(i1),n_of_el_from_zero(1))
-     if ( abs(n_of_el_from_zero(1)) < nel_diff_zero) then
-       if( (E%nk*E%nb*n_sp_pol)>=i1 ) E%E_Fermi= E_sorted(i1)
-       Fermi_is_converged=.true.
-       exit
-     endif
-     if (n_of_el_from_zero(1)>0) then
-       Ef(1)=E_sorted(max(1,i1-1))
-       Ef(2)=E_sorted(i1)
-       exit
+     if (abs(n_of_el_from_zero(1))<nel_diff_zero.and.E_sorted(i1+1)-E_sorted(i1)>Tel_step) then
+       E%E_Fermi=E_sorted(i1)
+       ! To Code!
+       !E%E_Fermi=E_sorted(i1)+E_sorted(i1+1))/2.
+       exit FERMI_LOOP
      endif
    enddo
    !
-   if (Fermi_is_converged) exit
+   ! 4. extend i_Ef_fine to include degenerate states
+   !
+   i_Ef=i_Ef_fine
+   do i1=i_Ef_fine(1)-1,1,-1
+     if (E_sorted(i_Ef_fine(1))-E_sorted(i1)<Tel_step) i_Ef(1)=i1
+     if (E_sorted(i_Ef_fine(1))-E_sorted(i1)>Tel_step) exit
+   enddo
+   do i1=i_Ef_fine(2)+1,n_total_states
+     if (E_sorted(i1)-E_sorted(i_Ef_fine(2))<Tel_step) i_Ef(2)=i1
+     if (E_sorted(i1)-E_sorted(i_Ef_fine(2))>Tel_step) exit
+   enddo
+   if (i_Ef(1)/=i_Ef(2).or.i_Ef(1)/=i_Ef_fine(2)) then
+     Tel=Tel+Tel_step
+     i_Ef(1)=i_Ef(1)-2
+     i_Ef(2)=i_Ef(2)+2
+   endif
+   !
+   ! 5. Use a secant-like procedure to converge to the final Level
+   !
+   Ef=(/E_sorted(i_Ef(1)),E_sorted(i_Ef(2))/)
    !
    call ef2nel(Tel,Ef(1),n_of_el_from_zero(1))
    call ef2nel(Tel,Ef(2),n_of_el_from_zero(2))
@@ -173,36 +204,39 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    if (n_of_el_from_zero(2)<-n_of_el_from_zero(1)) E%E_Fermi=Ef(2)
    !
    i_trials(2)=1
-   do while (i_trials(2)<=100)
+   do while (i_trials(2)<=1000)
      call ef2nel(Tel,E%E_Fermi,n_of_el_from_zero(1))
      if (n_of_el_from_zero(1)<-nel_diff_zero) Ef(1)=E%E_Fermi
      if (n_of_el_from_zero(1)> nel_diff_zero) Ef(2)=E%E_Fermi
      if (abs(n_of_el_from_zero(1))<=nel_diff_zero) then
        Fermi_is_converged=.true.
-       exit
+       exit FERMI_LOOP
      endif
-     if (abs(Ef(1)-Ef(2))<1.E-8) exit
+     if (abs(Ef(1)-Ef(2))<1.E-8) exit FERMI_LOOP
      E%E_Fermi=(Ef(1)+Ef(2))/2.
      i_trials(2)=i_trials(2)+1
    enddo
    !
-   if (Fermi_is_converged) exit
+   if (Fermi_is_converged) exit FERMI_LOOP
    !
    Tel=Tel+Tel_step
-   if (i_trials(1)==100) call error('Impossible to converge the Fermi Level')
+   if (i_trials(1)>100) nel_diff_zero=nel_diff_zero*10.
+   if (i_trials(1)==1000) call error('Impossible to converge the Fermi Level')
    !
- enddo
+ enddo FERMI_LOOP
  !
  ! Mode = 0. Check only for the Fermi energy
  !
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
- if (mode==0) return
+ if (mode=="FERMI") return
  !
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
- if (.not.associated(E%f))          allocate(E%f(E%nb,E%nk,n_sp_pol))
+  if (.not.allocated(E%f)) then  
+   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+ endif
  Efdist=1.E5_SP
  !
  do i1=1,n_total_states
@@ -227,7 +261,7 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
  !
  ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
  !
- if (BZ_DbGd_nbands>0.and.associated(E%E_DbGd)) then
+ if (BZ_DbGd_nbands>0.and.allocated(E%E_DbGd)) then
    ! 
    nel_DbGd=0._SP 
    !
@@ -250,25 +284,18 @@ subroutine OCCUPATIONS_Fermi(E,K,mode)
    !
  endif
  !
- ! Eval Metallic/Filled bands and gaps
+ ! Gaps, VBM/CBM
  !
- call OCCUPATIONS_Gaps(E)
+ if (mode=="OCCUPATIONS") then
+   call OCCUPATIONS_Gaps(E)
+   return
+ endif
  !
-! if (E%nbf==0 ) call error(' Input temperature is too high. Set a lower temperature in the input')
- !
- ! Mode = 1. Define E%f and exits
- !
- if (mode==1) return
- !
- ! Complete Report
- !
- call msg('r',  'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
- call msg('r',  'VBM / CBm          [ev]: ',(/E%E_VBM,E%E_CBm/)*HA2EV)
- call msg('r',  'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
- call msg('r',  'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
- call msg('r',  'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
- !
- call REPORT_Occupations(E)
+ if (present(OBJ)) then
+   call REPORT_Occupations(OBJ,E)
+ else
+   call REPORT_Occupations(" ",E)
+ endif
  !
  contains
    !

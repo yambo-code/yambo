@@ -4,6 +4,3573 @@ Changelog
 %%version%% (unreleased)
 ------------------------
 
+- Version 4.1.2,  Revision 13997,  Hash 4c4f906. [Davide Sangalli]
+
+  MODIFIED *  config/netcdf_f90.m4 config/version.m4 configure include/version.inc
+
+  NEW *  doc/test_hdf5/compile_test_program.sh
+
+  Changes:
+  - configure upgraded to deal with netcdf and netcdff with both lib and include in two separate folders
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.2,  Revision 13999,  Hash a35b6fb. [marini]
+
+  MODIFIED *  config/Makefile.in config/version.m4 configure include/version.inc
+
+  Bugs:
+  - Added ydb.pl to objects configure-created
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 8.1.2,  Revision 13990,  Hash 2718086. [marini]
+
+  MODIFIED *  config/version.m4 configure include/version.inc sbin/ydb.pl.in
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.1,  Revision 13989,  Hash a76c03a. [marini]
+
+  MODIFIED *  ChangeLog config/Makefile.in configure include/version.inc lib/perl/ydb/create_new_run.pm lib/perl/ydb/database.pm lib/perl/ydb/functions.pm lib/perl/ydb/load_db.pm lib/perl/ydb/objects_IO.pm lib/perl/ydb/print_the_run.pm lib/perl/ydb/remove_run.pm sbin/ydb.pl.in
+
+  Bugs:
+  - Fixed Changelog creation in Makefile.
+
+  Changes:
+  - Ydb.pl 2.0 now in working status.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13991,  Hash 37eb2ac. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc modules/mod_parallel.F
+
+  Bugs:
+  - [yambo] Fixed compilation when mpi compilers are not available
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13990,  Hash db10bc3. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc sbin/make_message.pl
+
+  - Fixed make_message.pl
+  - Fixed versions
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Check on FC version fixed. [Andrea Ferretti]
+
+  Version 4.1.1,  Revision 13989,  Hash a76c03a
+
+  MODIFIED *  modified: modified: modified: modified:
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Andrea Ferretti <aferrett@r000u18l02.marconi.cineca.it>
+
+- Version 4.1.1,  Revision 13980,  Hash ccfc028. [marini]
+
+  MODIFIED *  configure include/version.inc lib/perl/ydb/database.pm lib/perl/ydb/remove_run.pm sbin/ydb.pl.in
+
+  Changes:
+  - More on ydb
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13987,  Hash 2301fce. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc ypp/init/INIT_ypp.F
+
+  Changes:
+  - [ypp_rt] Restored FixSyms operation for gpl
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.2,  Revision 13986,  Hash 665669f. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc sbin/git_configure_and_hooks.sh
+
+  Changes:
+  - git_configure_and_hooks.sh updated to run "git add" include/version.m4 on commit
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.2,  Revision 13985,  Hash c9d92e7. [Davide Sangalli]
+
+  MODIFIED *  config/version.m4 configure include/version.inc
+
+  Changes:
+  - Patch level updated
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch '4.1' [Davide Sangalli]
+
+- Version 4.1.1,  Revision 13966,  Hash 8a052c4. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT_load.F
+
+  Changes:
+  - On Mass shell variable restored in input file creation
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13965,  Hash b6be95b. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT_load.F
+
+  Changes:
+  - fixed gpl flags for Gauge variable in init_load
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into 4.1. [Davide Sangalli]
+
+- Version 4.1.1,  Revision 13979,  Hash 53da1aa. [Davide Sangalli]
+
+  MODIFIED *  .gitattributes config/configure.ac configure include/version.inc sbin/yambo_versions_update.tcsh
+
+  NEW *  config/version.m4
+
+  Changes:
+  - [configure] yambo_version is now written in config/version.m4 and not in configure.ac
+                Accordingly it is the config/version.m4 file which is protected on merge and
+                not anymore the config/configure.ac
+                In case errors are done in merging the configure (which is still protected) it is suffiecient
+                to run autoconf to have the proper configure
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.f,  Revision 13976,  Hash 1433dfa. [marini]
+
+  MODIFIED *  config/configure.ac configure driver/ypp_driver.F include/version.inc lib/perl/ydb/create_new_run.pm lib/perl/ydb/database.pm lib/perl/ydb/functions.pm lib/perl/ydb/load_db.pm lib/perl/ydb/objects_IO.pm lib/perl/ydb/print_the_run.pm lib/perl/ydb/remove_run.pm qp/XCo_local.F ypp/init/INIT_ypp.F ypp/symmetries/symmetries_driver.F
+
+  NEW *
+
+  RENAMED *  sbin/ydb.pl -> sbin/ydb.pl.in
+
+  Changes:
+  -  Working on ydb.pl
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.1,  Revision 13977,  Hash 99a8e0a. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_parallel.F
+
+  Bugs:
+  - [yambo] Fixed MPI_close subroutine in case yambo is run in serial with mpirun -np 1
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.f,  Revision 13976,  Hash 1433dfa. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/netcdf_f90.m4 configure include/version.inc
+
+  Bugs:
+  - netcdf_f90.m4 imported from branch/io:
+    Fixed missing "$" and inverted order for library linking and library path definition
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13975,  Hash c43890d. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc io/variables_SC.F ypp/real_time/RT_occ_bands_interpolation.F
+
+  Bugs:
+  - SC_variables erroneously closed with a bottom MENU when also RT_variables are written
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into stabilize-yambo-rt. [Davide Sangalli]
+
+- Version 4.1.1,  Revision 13970,  Hash bba7e68. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc real_time_control/RT_carriers_object.F real_time_lifetimes/RT_Lifetimes_evaluation_plan.F
+
+  Changes:
+  - [yambo_rt] merged with branch stabilize-yambo-rt
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.b,  Revision 13969,  Hash c5337ba. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bz_ops/k_reduce.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] Signifiacant speed up of BZ reduction in case huge kpts grids are used
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'devel-configure' [Andrea Ferretti]
+
+  Conflicts:
+  	config/configure.ac
+  	configure
+  	include/version.inc
+
+- FCCPP -> FPP; configuration process improved. [Andrea Ferretti]
+
+- Configuration and compilation issues fixed. [Andrea Ferretti]
+
+- Merge branch 'master' into devel-configure. [Davide Sangalli]
+
+- Cpp compilation problem further sorted out. [Andrea Ferretti]
+
+- Version 4.1.1,  Revision 13966,  Hash 80f0ca9. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc real_time_lifetimes/RT_Lifetimes_evaluation_plan.F
+
+  Changes:
+  - RT_Lifetimes_evaluation_plan merged from branch devel-rt
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into stabilize-yambo-rt. [Davide Sangalli]
+
+- Interface inconsistency (when using FFTQE) fixed. [Andrea Ferretti]
+
+- Version 4.1.1,  Revision 13962,  Hash 6ff8c66. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Changes:
+  -  Fixed subversion string in configure
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Revert "splitting cpp and fccpp" [Davide Sangalli]
+
+  This reverts commit 8fb9f5f005abfc030119aaab0586e5cf134a8a87.
+
+- Splitting cpp and fccpp. [Andrea Ferretti]
+
+- Version 4.1.0,  Revision 13902,  Hash 97c3a34. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc real_time_control/RT_carriers_object.F
+
+  Bugs:
+  - RT_carriers_object imported from branch devel-rt where the definiton of the
+    NEQ lifetimes in the valence band has been fixed
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13959,  Hash bb9ad93. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/real_time/RT_occ_bands_interpolation.F
+
+  Bugs:
+  - [ypp_rt] Fixed output of occupations fitted on the band structure
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13958,  Hash 4e756ac. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/real_time/RT_occ_energy_plot.F
+
+  Changes:
+  - [ypp_rt] Improved titles in output
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+- Merge branch '4.1' [Davide Sangalli]
+
+- Merge branch '4.1' [Davide Sangalli]
+
+- Version 4.1.0,  Revision 13950,  Hash 8d78aab. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/generate_gpl.sh
+
+  Changes:
+  - Script to generate gpl updated
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.f.0,  Revision 13945,  Hash 8421af6. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_History.F
+
+  Bugs:
+  - [yambo_sc] removed lines which deal with degeneracies in SC_History
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13954,  Hash add4ae9. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_driver.F interface/INIT_load.F
+
+  Changes:
+  - AnHall input variable restored in GPL
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13953,  Hash 97ebbac. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_BS_solvers.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Fixed complation issue with gfortran 4.4.7
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13952,  Hash 80be4d7. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F common/.objects_gpl common/FREQUENCIES_setup.F interface/INIT_load.F
+
+  Changes:
+  -  Updated gpl flags for kerr
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13951,  Hash e2b7a00. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Changes:
+  - yambo patch level updated
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13950,  Hash 8d78aab. [Davide Sangalli]
+
+  MODIFIED *  config/Makefile.in config/Makefile.in_gpl config/configure.ac configure include/version.inc sbin/generate_gpl.sh
+
+  Bugs:
+  - Fixed gpl makefile
+
+  Changes:
+  - updated generate_gpl.sh script
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.f,  Revision 13949,  Hash 15386f5. [Davide Sangalli]
+
+  MODIFIED *  config/Makefile.in config/Makefile.in_gpl config/configure.ac config/report.in configure driver/codever.h.in include/version.inc sbin/generate_gpl.sh sbin/yambo_versions_update.tcsh
+
+  Bugs:
+  - fixe version string
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13948,  Hash ee6955c. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/plotting/plot_gnuplot.F
+
+  Bugs:
+  - [ypp] Fixed 2D plot of excitonic wave--function in gnuplot format
+          (missing deallocate statement)
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.1,  Revision 13947,  Hash a8011a5. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Changes:
+  - Revision number upgraded 4.1.0 --> 4.1.1
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13946,  Hash 89e01f7. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] GF ordering input variable activated when computing static screening
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.f.0,  Revision 13945,  Hash 8421af6. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT_load.F
+
+  Changes:
+  - Fixed typo in input file generation
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13944,  Hash 8b545ac. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc qp/QP_ppa_cohsex.F
+
+  Changes:
+  - [yambo_sc] Cleaning a bit section definition
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Bug fixed, ch (section name) not assigned in _SC. [Daniele]
+
+  Version 4.1.0,  Revision 13943,  Hash 03c379a
+
+  MODIFIED *  config/configure.ac configure include/version.inc qp/QP_ppa_cohsex.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Daniele <daniele.varsano@gmail.com>
+
+- Version 4.1.0,  Revision 13942,  Hash 020adc4. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F sc/SC_add_XC.F sc/SC_start_and_restart.F
+
+  Changes:
+  - Few aesthetic changes
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13941,  Hash f5dde80. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F sc/V_Hartree.F
+
+  Bugs:
+  - [yambo_sc/yambo_rt] Fixed bug in hartree collisions
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13940,  Hash 18a4003. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_driver.F
+
+  Changes:
+  -  few changes to yambo_sc
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+- Merge branch 'devel-configure' [Davide Sangalli]
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Fixed a problem in the makefile that made it recompile the whole
+  project every time. [Henrique Miranda]
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13929,  Hash 2a0e139. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Bugs:
+  - [yambo] Fixed configure. It had been erroneously changed to a previous version
+            braking the linking with the libxc and the compilation outside
+            the yambo source
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2,  Revision 13928,  Hash c15539f. [marini]
+
+  MODIFIED *  config/configure.ac configure driver/ypp.h include/version.inc ypp/init/INIT_load_ypp.F
+
+  Changes:
+  - [YPP_RT] The Probe and Pump key made optional.
+  - [YPP_RT] Command line descriptions updated.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'SLK' [marini]
+
+  Version 9.0.2,  Revision 13924,  Hash c3e8df6
+
+  MODIFIED *  config/configure.ac configure doc/README.git include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_load.F qp/QED_Sigma_c.F sc/SC_History.F sc/SC_driver.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 9.0.2,  Revision 13919,  Hash 301d39d. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_History.F sc/SC_driver.F
+
+  Additions:
+  - Added loop to remove the degeneracies
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.e,  Revision 13918,  Hash 8c3e9e3. [marini]
+
+  MODIFIED *  config/configure.ac configure doc/README.git include/version.inc
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13917,  Hash 689ef79. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_load.F qp/QED_Sigma_c.F
+
+  Bugs:
+  - In QED-assisted collisions
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.0,  Revision 13928,  Hash 35cdfb5. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_driver.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo_sc] Ho add to H_nl_sc moved after PP_redux
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13927,  Hash 9fea01f. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_add_XC.F sc/SC_driver.F sc/SC_start_and_restart.F
+
+  Bugs:
+  - [yambo_sc] Now works properly with collisions. Fixed several problems.
+               Also preconditionig works
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13926,  Hash 4d4dfbc. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F
+
+  Bugs:
+  - [yambo_sc] Fixed buggy definition of COLLISIONS_have_HARTREE logical
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+  Version 4.1.0,  Revision 13720,  Hash ead776a
+
+  MODIFIED *  .gitignore AUTHORS config/Makefile.in config/Makefile.in_gpl config/configure.ac config/etsf_io.m4 config/iotk.m4 config/libxc.m4 configure doc/README.git driver/ypp.h include/version.inc int_modules/mod_com2y.F p2y/qexml_v4.0.F lib/archive/Makefile.loc lib/archive/package.list lib/lapack/.objects lib/netcdf/Makefile.loc sbin/git_configure_and_hooks.sh sbin/make_makefile.sh.in sbin/make_message.pl sbin/yamboo.pl acfdt/acfdt_tot_energy.F bse/.objects bse/.objects_gpl bse/K.F bse/K_Haydock.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_blocks.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_diago_kerr_residual.F bse/K_diago_non_hermitian_residuals.F bse/K_diago_perturbative.F bse/K_dot_product.F bse/K_driver.F bse/K_exchange_collisions.F bse/K_inversion_Lo.F bse/K_kerr_IP.F bse/K_multiply_by_V.F bse/K_output_file.F bse/K_solvers.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F collisions/.objects_gpl collisions/COLLISIONS_HXC.F collisions/COLLISIONS_NEQ_GW_static.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F collisions/PLASMA_build_up.F common/.objects common/.objects_gpl common/FREQUENCIES_coarse_grid.F common/Lorentzian_FT.F common/eval_G_minus_G.F coulomb/cutoff_box.F coulomb/cutoff_driver.F coulomb/rim.F interface/INIT.F interface/INIT_barriers.F interface/INIT_load.F io/.objects_gpl io/IO_and_Messaging_switch.F io/io_BS.F io/io_BSS_Haydock.F io/io_BSS_diago.F io/io_BSS_invert.F io/io_BS_Fxc.F io/io_COLLISIONS.F io/io_DIPOLES.F io/io_bulk.F linear_algebra/.objects linear_algebra/SLK_ORTHO_group.F linear_algebra/SLK_ORTHO_init.F linear_algebra/SLK_test.F linear_algebra/SLK_tools.F modules/.objects modules/.objects_gpl modules/SET_defaults.F modules/mod_BS.F modules/mod_D_lattice.F modules/mod_LIVE_t.F modules/mod_PHOTOLUM.F modules/mod_QP.F modules/mod_RT_control.F modules/mod_SLK.F modules/mod_TDDFT.F modules/mod_X.F modules/mod_X_output.F modules/mod_collision.F modules/mod_com.F modules/mod_frequency.F modules/mod_interfaces.F modules/mod_matrix_operate.F modules/mod_openmp.F modules/mod_parallel.F modules/mod_real_time.F modules/mod_vec_operate.F modules/mod_wrapper.F parallel/.objects parallel/PARALLEL_Haydock_VEC_COMMs.F parallel/PARALLEL_assign_chains_and_COMMs.F parallel/PARALLEL_collisions.F parallel/PARALLEL_defaults.F parallel/PARALLEL_get_user_structure.F parallel/PARALLEL_global_indexes.F parallel/PARALLEL_structure.F parser/ps_convert.F pol_function/.objects pol_function/.objects_gpl pol_function/Build_Overlaps_Det_EQ.F pol_function/DIPOLE_build_covariants.F pol_function/DIPOLE_build_parallelization_mask.F pol_function/DIPOLE_driver.F pol_function/DIPOLE_shifted_grids.F pol_function/DIPOLE_transverse.F pol_function/DIPOLE_x_real_space.F pol_function/O_eels.F pol_function/X_GreenF_analytical.F pol_function/X_GreenF_convoluted.F pol_function/X_drude.F pol_function/X_eh_setup.F pol_function/X_em1.F pol_function/X_os.F pol_function/X_os_residuals.F pol_function/X_pre_setup.F pol_function/X_s.F qp/ELPH_Hamiltonian.F qp/QED_Sigma_c.F qp/QP_driver.F qp/QP_life_transitions.F qp/QP_load_SC_xc.F qp/QP_ppa_cohsex.F qp/XCo_Hartree_Fock.F qp/XCo_local.F qp_control/.objects_gpl real_time_common/RT_initialize.F real_time_control/RT_carriers_object.F real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F real_time_propagation/RT_time_step_update.F sc/OEP_app_inversion.F sc/OEP_exact_inversion.F sc/SC_WF_and_dipole_dimensions.F sc/SC_driver.F setup/G_shells_finder.F setup/PARALLEL_and_IO_Setup.F setup/QP_state_table_setup.F setup/build_spin_sop.F setup/setup.F tddft/TDDFT_ALDA_G_space.F tddft/TDDFT_BSK_2_FXC.F tddft/TDDFT_BSK_disk_2_FXC.F tddft/TDDFT_do_X_W_typs.F wf_and_fft/.objects_gpl wf_and_fft/WF_apply_symm.F wf_and_fft/WF_load.F wf_and_fft/WF_rotate.F wf_and_fft/WF_shift_kpoint.F wf_and_fft/WF_spatial_inversion.F wf_and_fft/fft_3d_fftw.F wf_and_fft/scatter_Bamp.F wf_and_fft/scatter_Gamp.F xc_functionals/.objects_gpl xc_functionals/XC_libxc_driver.F xc_functionals/XC_potential_driver.F ypp/bits/WANNIER_driver.F ypp/bits/WF_map_perturbative_SOC.F ypp/electrons/.objects_gpl ypp/elph/ELPH_atomic_amplitude.F ypp/elph/ELPH_excitonic_gkkp.F ypp/elph/ELPH_general_gFsq.F ypp/excitons/excitons_WFs.F ypp/excitons/excitons_amplitudes.F ypp/excitons/excitons_collinear.F ypp/excitons/excitons_driver.F ypp/excitons/excitons_non_collinear.F ypp/excitons/excitons_sort_and_report.F ypp/excitons/excitons_spin.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/modules/YPP_SET_defaults.F ypp/modules/mod_YPP.F ypp/ras/ras_ypp.F ypp/real_time/RT_coefficients_Inversion.F ypp/real_time/RT_occ_energy_plot.F ypp/real_time/RT_occ_time_plot.F ypp/real_time/RT_time_configuration_setup.F ypp/symmetries/.objects_gpl ypp/symmetries/fix_WFs_and_E.F ypp/symmetries/fix_symmetries.F
+
+  NEW *  lib/lapack/cgesv.f lib/lapack/zgesv.f bse/EPS_via_perturbative_inversion.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F bse/PL_via_perturbative_inversion.F common/FREQUENCIES_merge.F linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/PARALLEL_HERMITIAN_diagonalization.F linear_algebra/PARALLEL_diagonalization.F linear_algebra/PARALLEL_distribute.F linear_algebra/PARALLEL_inversion.F linear_algebra/PARALLEL_lin_system.F linear_algebra/PARALLEL_mat_mul.F linear_algebra/SERIAL_HERMITIAN_diagonalization.F linear_algebra/SERIAL_SVD_inversion.F linear_algebra/SERIAL_diagonalization.F linear_algebra/SERIAL_inversion.F linear_algebra/SERIAL_lin_system.F linear_algebra/SLK_setup.F linear_algebra/sample_pchegvx_call.f modules/mod_BS_solvers.F modules/mod_linear_algebra.F parallel/PARALLEL_assign_LA_COMMs.F parallel/SLK_communicators.F
+
+  DELETED *  bse/K_inversion.F linear_algebra/MATRIX_driver.F linear_algebra/MATRIX_resolvant_via_perturbative_inversion.F linear_algebra/SLK_test_util.F parallel/PARALLEL_assign_LIN_ALGEBRA_COMMs.F
+
+  RENAMED *  linear_algebra/MATRIX_resolvant_via_exact_inversion.F -> bse/K_inversion_do_it_full.F parallel/PARALLEL_build_up_child_chains.F -> parallel/PARALLEL_build_up_child_INTER_chains.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13923,  Hash cad94e9. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc parallel/PARALLEL_assign_LA_COMMs.F
+
+  Bugs:
+  - [yambo] Fixed compilation when SLK are not linked
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'devel-configure' [Davide Sangalli]
+
+- Merge branch 'master' into devel-configure. [Davide Sangalli]
+
+- Version 4.1.0,  Revision 13902,  Hash 97c3a34. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K.F bse/K_exchange_collisions.F collisions/COLLISIONS_HXC.F collisions/COLLISIONS_NEQ_GW_static.F common/eval_G_minus_G.F coulomb/cutoff_box.F modules/mod_matrix_operate.F pol_function/X_os.F pol_function/X_os_residuals.F pol_function/X_s.F qp/QP_ppa_cohsex.F qp/XCo_Hartree_Fock.F qp/XCo_local.F setup/G_shells_finder.F wf_and_fft/WF_rotate.F wf_and_fft/WF_spatial_inversion.F wf_and_fft/fft_3d_fftw.F wf_and_fft/scatter_Gamp.F
+
+  Bugs:
+  - [yambo] Fixed wrong precompiler instruction in WF_spatial_inversion
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] All $omp directives moved inside "#if defined _OPENMP - #endif"
+            precompile instructions.
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Fixed compilation issue in the projects. [Henrique Miranda]
+
+- Version 4.1.0,  Revision 13844,  Hash f092c2b. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh sbin/make_message.pl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - git hooks: make_message is run only on standard commits, not on commit message
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13902,  Hash 97c3a34. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K.F bse/K_exchange_collisions.F collisions/COLLISIONS_HXC.F collisions/COLLISIONS_NEQ_GW_static.F common/eval_G_minus_G.F coulomb/cutoff_box.F modules/mod_matrix_operate.F pol_function/X_os.F pol_function/X_os_residuals.F pol_function/X_s.F qp/QP_ppa_cohsex.F qp/XCo_Hartree_Fock.F qp/XCo_local.F setup/G_shells_finder.F wf_and_fft/WF_rotate.F wf_and_fft/WF_spatial_inversion.F wf_and_fft/fft_3d_fftw.F wf_and_fft/scatter_Gamp.F
+
+  Bugs:
+  - [yambo] Fixed wrong precompiler instruction in WF_spatial_inversion
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] All $omp directives moved inside "#if defined _OPENMP - #endif"
+            precompile instructions.
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into SLK. [marini]
+
+  Version 4.0.2,  Revision 13901,  Hash b612cfa
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_perturbative.F bse/K_kerr_IP.F interface/INIT.F io/io_BSS_diago.F modules/mod_BS.F modules/mod_BS_solvers.F modules/mod_vec_operate.F ypp/bits/WF_map_perturbative_SOC.F ypp/excitons/excitons_driver.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/modules/YPP_SET_defaults.F ypp/modules/mod_YPP.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3699. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Bugs:
+  - Fixed small bug in git_configure_and_hooks.sh
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.0,  Revision 13901,  Hash b3d1f55. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_QP.F ypp/qp/QP_DBs_merge.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp] reverted changes for QP DBs merge
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.6,  Revision 13900,  Hash 923846d. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/bits/WF_map_perturbative_SOC.F
+
+  Bugs:
+  - [ypp] Fixed message on minimum overlap in perturbative soc mapping
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13899,  Hash 4ecb28f. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_diago_compute_epsilon.F bse/K_diago_perturbative.F
+
+  Bugs:
+  - [yambo] Fixed compilation issue
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] small change in perturbative SOC coding
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into devel-ypp. [Davide Sangalli]
+
+- Version 4.1.0,  Revision 13850,  Hash 9df61e6. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_perturbative.F bse/K_kerr_IP.F interface/INIT.F io/io_BSS_diago.F modules/mod_BS.F modules/mod_BS_solvers.F ypp/bits/WF_map_perturbative_SOC.F ypp/excitons/excitons_driver.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo/ypp] Perturbative SOC now works also with magnetic materials
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version change. [Daniele Varsano]
+
+  Version 4.1.0,  Revision 10000,  Hash fa68b18
+
+  MODIFIED *  modified: modified: modified:
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Daniele Varsano <varsano@hydra.(none)>
+
+- Merge branch 'devel-ypp' of ssh://qeforge.qe-forge.org/gitroot/yambo-
+  git into devel-ypp. [Daniele Varsano]
+
+- Version 4.1.0,  Revision 13849,  Hash 84d441a. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/bits/WF_map_perturbative_SOC.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - live_timing messages in WF_map_perturbative_SOC
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'devel-perturbative-soc' into devel-ypp. [Davide
+  Sangalli]
+
+- Version 4.1.0,  Revision 13845,  Hash 6ee96c3. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/bits/WF_map_perturbative_SOC.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/modules/YPP_SET_defaults.F ypp/modules/mod_YPP.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp] Perturbative SOC mapping improved
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13844,  Hash f092c2b. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_vec_operate.F ypp/bits/WF_map_perturbative_SOC.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/modules/YPP_SET_defaults.F ypp/modules/mod_YPP.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp] mapping of perturbative soc interfaces upgraded
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into devel-ypp. [Davide Sangalli]
+
+  Version 4.1.0,  Revision 13735,  Hash 2cddc45
+
+  MODIFIED *  .gitignore config/Makefile.in_gpl config/configure.ac configure doc/README.git include/version.inc int_modules/mod_com2y.F acfdt/acfdt_tot_energy.F bse/.objects bse/.objects_gpl bse/K.F bse/K_Haydock.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_blocks.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_diago_kerr_residual.F bse/K_diago_non_hermitian_residuals.F bse/K_diago_perturbative.F bse/K_dot_product.F bse/K_driver.F bse/K_inversion_Lo.F bse/K_kerr_IP.F bse/K_multiply_by_V.F bse/K_output_file.F bse/K_solvers.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F collisions/COLLISIONS_HXC.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_compose_sc.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F collisions/PLASMA_build_up.F common/.objects common/.objects_gpl common/FREQUENCIES_coarse_grid.F common/Lorentzian_FT.F common/eval_G_minus_G.F interface/INIT.F interface/INIT_barriers.F interface/INIT_load.F io/io_BS.F io/io_BSS_Haydock.F io/io_BSS_diago.F io/io_BSS_invert.F io/io_BS_Fxc.F io/io_COLLISIONS.F io/io_DIPOLES.F io/io_SC_components.F io/io_bulk.F io/variables_SC.F linear_algebra/.objects modules/.objects modules/.objects_gpl modules/SET_defaults.F modules/mod_BS.F modules/mod_D_lattice.F modules/mod_PHOTOLUM.F modules/mod_QP.F modules/mod_SC.F modules/mod_SLK.F modules/mod_TDDFT.F modules/mod_X.F modules/mod_X_output.F modules/mod_collision.F modules/mod_com.F modules/mod_drivers.F modules/mod_frequency.F modules/mod_global_XC.F modules/mod_interfaces.F modules/mod_real_time.F modules/mod_wrapper.F parallel/PARALLEL_collisions.F parallel/PARALLEL_defaults.F parallel/PARALLEL_global_indexes.F pol_function/.objects pol_function/DIPOLE_build_covariants.F pol_function/DIPOLE_build_parallelization_mask.F pol_function/DIPOLE_driver.F pol_function/DIPOLE_shifted_grids.F pol_function/DIPOLE_transverse.F pol_function/DIPOLE_x_real_space.F pol_function/O_eels.F pol_function/X_GreenF_analytical.F pol_function/X_GreenF_convoluted.F pol_function/X_drude.F pol_function/X_eh_setup.F pol_function/X_em1.F pol_function/X_os.F pol_function/X_os_residuals.F pol_function/X_pre_setup.F qp/QED_Sigma_c.F qp/QP_life_transitions.F qp/QP_of.F qp/QP_ppa_cohsex.F real_time_common/RT_driver.F real_time_common/RT_initialize.F real_time_propagation/RT_time_step_update.F sc/SC_Energy.F sc/SC_WF_and_dipole_dimensions.F sc/SC_add_XC.F sc/SC_driver.F sc/SC_start_and_restart.F sc/XC_switch.F setup/QP_state_table_setup.F setup/build_spin_sop.F setup/setup.F tddft/TDDFT_BSK_2_FXC.F tddft/TDDFT_BSK_disk_2_FXC.F tddft/TDDFT_do_X_W_typs.F wf_and_fft/WF_load.F wf_and_fft/scatter_Bamp.F xc_functionals/XC_libxc_driver.F ypp/bits/WANNIER_driver.F ypp/elph/ELPH_excitonic_gkkp.F ypp/elph/ELPH_general_gFsq.F ypp/excitons/excitons_WFs.F ypp/excitons/excitons_amplitudes.F ypp/excitons/excitons_collinear.F ypp/excitons/excitons_driver.F ypp/excitons/excitons_non_collinear.F ypp/excitons/excitons_sort_and_report.F ypp/excitons/excitons_spin.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/modules/mod_YPP.F ypp/ras/ras_ypp.F ypp/symmetries/fix_SC_DBs.F ypp/symmetries/fix_WFs_and_E.F ypp/symmetries/fix_symmetries.F
+
+  NEW *  bse/EPS_via_perturbative_inversion.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F bse/PL_via_perturbative_inversion.F common/FREQUENCIES_merge.F modules/mod_BS_solvers.F
+
+  DELETED *  bse/K_inversion.F linear_algebra/MATRIX_resolvant_via_perturbative_inversion.F stop_and_restart/.objects_gpl
+
+  RENAMED *  linear_algebra/MATRIX_resolvant_via_exact_inversion.F -> bse/K_inversion_do_it_full.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 10000,  Hash 2cddc45. [Daniele Varsano]
+
+  MODIFIED *  modified: modified: modified: modified: modified:
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Daniele Varsano <varsano@hydra.(none)>
+
+- A devel branch for ypp. For the moment some changes allowing merging
+  of QP DBs. [Daniele Varsano]
+
+  Version 4.d.0,  Revision 13734,  Hash 6b2e0d3
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_QP.F ypp/qp/QP_DBs_merge.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Daniele Varsano <daniele@gagarin.local>
+
+- Version c.0.2,  Revision 13900,  Hash 9f11dcb. [marini]
+
+  MODIFIED *  config/Makefile.in config/configure.ac configure include/version.inc sbin/make_makefile.sh.in parallel/PARALLEL_global_indexes.F parallel/SLK_communicators.F
+
+  Changes:
+  - Clean-up
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13899,  Hash 6f60187. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F io/io_BS.F parallel/PARALLEL_collisions.F parallel/PARALLEL_global_indexes.F qp/XCo_Hartree_Fock.F qp/XCo_local.F wf_and_fft/WF_apply_symm.F wf_and_fft/WF_load.F xc_functionals/XC_potential_driver.F
+
+  Bugs:
+  - [RT/SC] Parallelization of local + non-local collisions now works using a "fake" q-loop.
+  - Parallelization of local potentials after a HF calculation with CPU with zero-weight fixed.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13898,  Hash b9a5a30. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_driver.F bse/K_inversion_restart.F
+
+  Bugs:
+  - [SLK] Bug in BS invertion restart fixed.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13897,  Hash 0e5f43a. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/X_s.F
+
+  Bugs:
+  - Bug in the PP_redux call of X_mat fixed to respect the SLK parallelization.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13896,  Hash 469bee0. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_parallel.F parallel/PARALLEL_assign_LA_COMMs.F parallel/SLK_communicators.F
+
+  Bugs:
+  - Wrong default of SLK comms and CPU's
+  - Wrong initialization of frequency distribution in the case of serial LA.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into SLK. [marini]
+
+  Version 4.0.2,  Revision 13894,  Hash 3539bb3
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3699. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Bugs:
+  - Fixed small bug in git_configure_and_hooks.sh
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.0,  Revision 13893,  Hash 59ddc9a. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_driver.F modules/mod_parallel.F parallel/.objects parallel/PARALLEL_Haydock_VEC_COMMs.F parallel/PARALLEL_assign_LA_COMMs.F parallel/PARALLEL_assign_chains_and_COMMs.F parallel/PARALLEL_global_indexes.F parallel/PARALLEL_structure.F pol_function/X_s.F
+
+  NEW *  parallel/SLK_communicators.F
+
+  RENAMED *  parallel/PARALLEL_build_up_child_chains.F -> parallel/PARALLEL_build_up_child_INTER_chains.F
+
+  Additions:
+  - Created common functions and subroutine to create chain indexed and new communicators.
+
+  Changes:
+  - SLK communicators deeply revised. Added PAR_COM_SLK_INDEX_local/global so to create intra macro-SLK-groups parallelization.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.0,  Revision 13892,  Hash b85ec7b. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_driver.F bse/K_inversion_engine.F parallel/PARALLEL_assign_LA_COMMs.F
+
+  Bugs:
+  - Fixed bug in communicators for ITERATIVE and EXACT inversion when using SLK. Now code works usig MPI_WORLD and/or mixed SLK/serial conf.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.0,  Revision 13891,  Hash bcf06a9. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_do_it_full.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_solvers.F interface/INIT.F interface/INIT_load.F linear_algebra/LINEAR_ALGEBRA_driver.F modules/SET_defaults.F modules/mod_SLK.F modules/mod_linear_algebra.F modules/mod_parallel.F parallel/PARALLEL_assign_LA_COMMs.F parallel/PARALLEL_global_indexes.F pol_function/X_s.F
+
+  Additions:
+  - Added specific INV/DIAGO cpu's in INIT
+
+  Changes:
+  - SLK messages moved from the LA driver to the PARALLEL LA comms initialization.
+  - PARALLEL LA comms initialization for BS solvers moved out of global index to handle differently INV and DIAGO.
+  - Removed unused variables.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.6,  Revision 13889,  Hash 5f31c64. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/LINEAR_ALGEBRA_driver.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.1.6,  Revision 13889,  Hash 5f31c64. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT.F
+
+  Bugs:
+  - [yambo] input files generation:
+            _nCPU_diago and _nCPU_invert replaced by _nCPU_LiAlg in INIT.F
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13888,  Hash 70ce74d. [marini]
+
+  MODIFIED *  AUTHORS config/Makefile.in config/configure.ac configure include/version.inc lib/lapack/.objects bse/K_inversion_do_it_full.F bse/K_inversion_driver.F bse/K_inversion_engine.F interface/INIT_load.F linear_algebra/LINEAR_ALGEBRA_driver.F modules/mod_LIVE_t.F modules/mod_SLK.F modules/mod_linear_algebra.F modules/mod_parallel.F parallel/.objects parallel/PARALLEL_global_indexes.F pol_function/X_os_residuals.F pol_function/X_s.F
+
+  NEW *  lib/lapack/cgesv.f lib/lapack/zgesv.f
+
+  RENAMED *  parallel/PARALLEL_assign_LIN_ALGEBRA_COMMs.F -> parallel/PARALLEL_assign_LA_COMMs.F
+
+  Additions:
+  - Missing lapack routines added.
+
+  Changes:
+  - AUTHORS list updated.
+  - Added intra SLK world comm and used to distribute the frequencies.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Bug fixed when compiling without SLK. [Andrea Ferretti]
+
+- Merge branch 'master' into SLK. [Andrea Ferretti]
+
+- Version 4.1.0,  Revision 13879,  Hash 51669ca. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure doc/README.git include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - README.git: info for creating a tag inserted
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Default of ChiLinAlgMod changed to "lin_sys" (always faster than
+  inversion) [Andrea Ferretti]
+
+- X_s: inversion + multiplication now uses parallel linear algebra for
+  both operations. [Andrea Ferretti]
+
+- Dual setup (inv & diago) for parallel linear algebra removed. related
+  input vars renamed. [Andrea Ferretti]
+
+- Initialization of parallel linear algebra moved upstream wrt
+  LINAR_ALGEBRA_driver.F . Deadlock in X_s with q-pools removed (a check
+  ensured serial algebra, removed) [Andrea Ferretti]
+
+- Eval_G_minus_G made MPI parallel in selected calls. [Andrea Ferretti]
+
+- Function eval_G_minus_G equipped with an optional  MPI_comm in input
+  and added to interfaces. [Andrea Ferretti]
+
+- Merge branch 'master' into stabilize-yambo-sc. [marini]
+
+  Version 4.0.2  Hash 3718
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+4.0.4 (2016-10-16)
+------------------
+
+- MODIFIED *  config/configure.ac configure include/version.inc
+  modules/mod_logo.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  - Fixed yambo compilation
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- MODIFIED *  sbin/make_message.pl.in sbin/yambo_versions_update.tcsh
+  bse/K_Transitions_setup.F parallel/PARALLEL_index.F. [Davide Sangalli]
+
+  NEW *  .gitattributes .gitignore
+
+  DELETED *
+
+  Bugs:
+  - [yambo] fix for bug 266 imported from master
+  Additions:
+  -
+  Changes:
+  - [yambo] git scripts / conf files imported from master
+
+  Patch sent by: Davide
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  config/configure.ac configure include/version.inc modules/mod_memory.F xc_functionals/eval_Gradient.F
+
+  Bugs:
+  - [yambo] Two bug fixes by AndreaF imported from the trunk
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5560 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  config/configure.ac configure include/version.inc wf_and_fft/scatter_Bamp_using_the_gradient.F xc_functionals/XC_libxc_driver.F xc_functionals/el_density_and_current.F xc_functionals/eval_Gradient.F
+
+  Bugs:
+  - [yambo] Bug in eval gradient by AndreaF imported from trunk
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5537 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  config/configure.ac configure include/version.inc pol_function/DIPOLE_driver.F pol_function/DIPOLE_kb_Ylm.F qp_control/Nearest_level_interpolation.F qp_control/QP_apply_DB_interpolation.F qp_control/QP_apply_global_stretch.F bse/K_inversion.F
+
+  Bugs: [different Bug fixes imported from trunk]
+  - [yambo] BSE loading ndb.QP and interpolation (three different bugs)
+  - [yambo] DIPOLE_kb_Ylm: Ylm are now correctly computed along the z axis (one bug)
+  - [yambo] Dipole_driver: in parallel runs where only few CPUs compute the dipoles Vnl flag is correctly loaded (one bug)
+  - [yambo] K_inversion.F: out of bounds in px (one bug)
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5510 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  config/configure.ac configure include/version.inc qp/QP_ppa_cohsex.F
+
+  Bugs:
+  - [yambo] Bug fix in PPA sigma terminator by Andrea F. imported in branch 4.0
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5497 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Bug fixes: 1)  in DIPOLE_driver io_err not inizialized. When DBsIOoff=
+  "DIP" sometimes it avoded the calculation of dipoles and consequently
+  crashed when projecting 2) ariable WehCpl not present in the last
+  revisions, but needed to activate eh interaction in the coupling.
+  [Daniele Varsano]
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5484 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  config/configure.ac configure include/version.inc real_time/RT_ELPH_initialize.F
+
+  Bugs:
+  - [yambo_rt] bug-fix imported from trunk
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5439 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Added gpl-tags and gloabal change of Copyright headers in 4.0 branch.
+  [Andrea Marini]
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5427 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- Version 4.0.2. [Davide Sangalli]
+
+  *  3.4/config/configure.ac 3.4/config/etsf_io.m4 3.4/configure 3.4/include/version.inc 3.4/e2y/e2y_wf_components.F 4.0/config/configure.ac 4.0/config/etsf_io.m4 4.0/configure 4.0/include/version.inc 4.0/e2y/e2y_wf_components.F
+
+  Bugs:
+  - [e2y] Small bug-fixed
+  Additions:
+  -
+  Changes:
+  - [e2y] config.report improved
+  Patch sent by: Davide
+
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5424 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- LRC bug fixed also in branches 3.4 and 4.0. [Davide Sangalli]
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5352 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+- REPOSITORY reorganization based on decisions taken at the Meeting.
+  [Andrea Marini]
+
+  git-svn-id: svn+ssh://qeforge.qe-forge.org/svnroot/yambo-devel/branches/4.0@5277 76a4dfbf-5f1f-0410-a543-a0282073b526
+
+4.1.0 (2016-08-31)
+------------------
+
+- Version 4.1.0,  Revision 13878,  Hash 635a8ca. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_driver.F pol_function/X_s.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - code cleaning
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13877,  Hash 9309b03. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Fixed compilation of GPL
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13876,  Hash 1cb4da7. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_parallel.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] add extra check on array size to PP_redux_wait interface
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 0.1.0,  Revision 13875,  Hash 0b17200. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc parallel/PARALLEL_global_indexes.F
+
+  Bugs:
+  - [yambo] Present implementation of linear algebra does not work if pool are not uniform
+            Switced off by default in that case
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13874,  Hash 4d409c3. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/X_os.F pol_function/X_s.F
+
+  Bugs:
+  - [yambo] Fixed bug in parallelization over frequencies.
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge remote-tracking branch 'origin/master' into SLK. [Andrea
+  Ferretti]
+
+  Conflicts:
+  	src/linear_algebra/LINEAR_ALGEBRA_driver.F
+
+- Version 4.1.0,  Revision 13870,  Hash c74ee2d. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/PARALLEL_distribute.F linear_algebra/PARALLEL_inversion.F modules/mod_SLK.F modules/mod_parallel.F
+
+  Bugs:
+  - [yambo] Fixed bounds mismatch in linear algebra inversion.
+            Fix to be extended to diago
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.d.0,  Revision 13869,  Hash e526bda. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_kerr_IP.F
+
+  Bugs:
+  -  [yambo_kerr] fixed bug in yambo_kerr parallelization
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'SLK' of ssh://qeforge.qe-forge.org/gitroot/yambo-git
+  into SLK. [Andrea Ferretti]
+
+- Merge remote-tracking branch 'origin/master' into SLK. [Andrea
+  Ferretti]
+
+  Conflicts:
+  	config/configure.ac
+  	configure
+  	include/version.inc
+  	src/interface/INIT_load.F
+  	src/modules/SET_defaults.F
+  	src/pol_function/X_em1.F
+
+- Version 4.1.0,  Revision 13843,  Hash ba998c6. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc setup/build_spin_sop.F ypp/init/INIT_load_ypp.F ypp/init/INIT_ypp.F ypp/symmetries/fix_WFs_and_E.F ypp/symmetries/fix_symmetries.F
+
+  Bugs:
+  - [ypp] Symmetries too, fixed small bug for case n_sp_pol=2
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp] Symmetries too extended to remove also spatial inversion if needed
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13842,  Hash 134f0e5. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/DIPOLE_build_covariants.F
+
+  Bugs:
+  - [yambo] Fixed bug in covariant dipoles
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13841,  Hash 11bfc01. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_driver.F interface/INIT_load.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] updated GPL flags
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13840,  Hash 9cbec73. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F
+
+  Bugs:
+  - [yambo] fixed bug introduced in BSE while restoring Drude term
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13839,  Hash 2b4af39. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F modules/SET_defaults.F pol_function/X_drude.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] Drude term in BSE restored
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13838,  Hash 6edc50d. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/DIPOLE_build_parallelization_mask.F pol_function/DIPOLE_shifted_grids.F pol_function/DIPOLE_x_real_space.F
+
+  Bugs:
+  - [yambo] Fixed bug in DIPOLE_build_parallelization_mask.F
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] adapted DIPOLE_shifted_grids.F and DIPOLE_x_real_space.F to X_term inmplementation of dipoles
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13837,  Hash 12477dd. [Davide Sangalli]
+
+  MODIFIED *  config/Makefile.in_gpl config/configure.ac configure include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - c2y removed from gpl Makefile
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13815,  Hash d0d5900. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc common/.objects_gpl modules/.objects_gpl
+
+  NEW *  bse/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] .objects_gpl files upgraded after merge with devel-daddy
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13814,  Hash 7a90142. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F
+
+  Bugs:
+  - [yambo_rt] workaround to bug recently introduced in collisions deallocation
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into devel-Xterm sync with latest master
+  changes. [Andrea Ferretti]
+
+- Openmp bug (possibly) showing up when Xo+Drude is used, fixed. [Andrea
+  Ferretti]
+
+- Version 4.1.0,  Revision 13813,  Hash e27d56e. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc io/io_bulk.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - call to ncvpt/ncvgt replaced by more modern calls to nf_put_vara/nf_get_vara
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Bug fixed showing up when using Xo+Drude, also without terminators.
+  [Andrea Ferretti]
+
+- Bug fixed in the openmp implementation when Drude term is in use.
+  [Andrea Ferretti]
+
+- Cleanup of unused vars. [Andrea Ferretti]
+
+- Merge branch 'master' into devel-Xterm. RPA+Drude and COHSEX+Drude not
+  working according to the test-suite. [Andrea Ferretti]
+
+  Conflicts:
+  	.gitignore
+  	config/configure.ac
+  	configure
+  	include/version.inc
+  	src/pol_function/X_GreenF_analytical.F
+  	src/pol_function/X_em1.F
+
+- Version 4.1.0,  Revision 13812,  Hash 856f0c2. [Davide Sangalli]
+
+  MODIFIED *  .gitignore config/configure.ac configure include/version.inc bse/K_diago_compute_epsilon.F bse/K_diago_kerr_residual.F bse/K_driver.F bse/K_kerr_IP.F io/io_DIPOLES.F
+
+  Bugs:
+  - [yambo_kerr] fixed compilation
+  - [yambo] bse, fixed compatibility with old BSE_mode="causal" inputs
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Changes from Ivan merged in. General cleanup. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/SET_defaults.F pol_function/DIPOLE_transverse.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- X_term_E_offset renamed to X_term_E. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_X.F pol_function/X_GreenF_analytical.F pol_function/X_eh_setup.F pol_function/X_os.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Comments added. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/X_os_residuals.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Cleanup and default changes. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/SET_defaults.F pol_function/DIPOLE_transverse.F pol_function/X_GreenF_analytical.F pol_function/X_os_residuals.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Version updates. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/SET_defaults.F pol_function/DIPOLE_transverse.F pol_function/X_GreenF_analytical.F pol_function/X_os_residuals.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- MODIFIED *  config/configure.ac configure include/version.inc
+  wf_and_fft/scatter_Bamp.F modules/SET_defaults.F
+  pol_function/DIPOLE_transverse.F pol_function/X_GreenF_analytical.F
+  pol_function/X_os_residuals.F. [Andrea Ferretti]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Omp syntax fixed. [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F modules/SET_defaults.F pol_function/DIPOLE_transverse.F pol_function/X_GreenF_analytical.F pol_function/X_os_residuals.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Cleanup of the XTerm implementation (most of debug comments removed)
+  [Andrea Ferretti]
+
+  MODIFIED *  config/configure.ac configure include/version.inc common/FREQUENCIES_coarse_grid.F interface/INIT_load.F io/io_DIPOLES.F parallel/PARALLEL_global_indexes.F pol_function/DIPOLE_build_parallelization_mask.F pol_function/DIPOLE_driver.F pol_function/DIPOLE_project_along_q.F pol_function/DIPOLE_transverse.F pol_function/X_GreenF_analytical.F pol_function/X_GreenF_convoluted.F pol_function/X_eh_setup.F pol_function/X_em1.F pol_function/X_os.F pol_function/X_os_residuals.F pol_function/X_pre_setup.F pol_function/X_s.F qp/QP_ppa_cohsex.F
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by:  Andrea Ferretti <andrea.ferretti@unimore.it>
+
+- Further implementation step for Xterm: a number of bugs have been
+  fixed, version still not fully working and including debug comments.
+  [Ivan Marri]
+
+- Final implementation of the X terminator: not yet working, debug lines
+  still present. [Ivan Marri]
+
+- Configure updated. [Andrea Ferretti]
+
+- Cleanup. [Andrea Ferretti]
+
+- Module var renamed. [Andrea Ferretti]
+
+- Initial implementation of X_terminator (IM) [Andrea Ferretti]
+
+- Initial changes required by the implementation of X_term. [Andrea
+  Ferretti]
+
+- Safe default for lin algebra implemented (ncpu==0 => serial lapack
+  instead of scalapack) [Andrea Ferretti]
+
+- Parallel linear algebra further implemented. [Andrea Ferretti]
+
+- Small changes. [Andrea Ferretti]
+
+- Further implementation of parallel linear algebra. Few (harmless) bugs
+  fixed. [Andrea Ferretti]
+
+- Implementation of Xo->X using parallel linear algebra completed.
+  Formulation using linear system solution implemented. [Andrea
+  Ferretti]
+
+- Bug fixed in the call to lapack and scalapack routines for linear
+  system solving. [Andrea Ferretti]
+
+- Parallel linear algebra further implemented; linera system solution
+  added. [Andrea Ferretti]
+
+- Few inconsistencies fixed to have SLK working with X_s.F in a GW calc.
+  [Andrea Ferretti]
+
+- BRS terminator commented out of the input documentation. [Andrea
+  Ferretti]
+
+- Compilation fixed. [Andrea Ferretti]
+
+- Compilation without -D_SCALAPACK fixed. [Andrea Ferretti]
+
+- Log info added to LINEAR_ALGEBRA_driver.F; msg removed from X_os.
+  [Andrea Ferretti]
+
+- Invertion -> Inversion typos fixed. [Andrea Ferretti]
+
+- Timing added to LINEAR_ALGEBRA_driver.F. [Andrea Ferretti]
+
+- Merge branch 'devel-daddy' into SLK. [Davide Sangalli]
+
+  Version 4.1.0,  Revision 13807,  Hash 94560eb
+
+  MODIFIED *  .gitignore config/Makefile.in config/Makefile.in_gpl config/configure.ac configure driver/ypp.h include/version.inc sbin/yamboo.pl bse/K.F bse/K_Haydock.F bse/K_diago_driver.F bse/K_inversion_driver.F collisions/.objects_gpl collisions/COLLISIONS_HXC.F common/.objects_gpl io/.objects_gpl modules/mod_X.F modules/mod_real_time.F pol_function/.objects_gpl pol_function/DIPOLE_driver.F qp_control/.objects_gpl real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F wf_and_fft/.objects_gpl xc_functionals/.objects_gpl ypp/electrons/.objects_gpl ypp/init/INIT_ypp.F ypp/real_time/RT_occ_energy_plot.F ypp/symmetries/.objects_gpl
+
+  DELETED *  sbin/git_config.sh
+
+  RENAMED *  sbin/git_hooks.sh -> sbin/git_configure_and_hooks.sh
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'master' into devel-daddy. [Davide Sangalli]
+
+  Version 4.1.0,  Revision 13797,  Hash 27b9ed7
+
+  MODIFIED *  .gitignore config/Makefile.in config/Makefile.in_gpl config/configure.ac configure driver/ypp.h include/version.inc sbin/yamboo.pl bse/K.F bse/K_Haydock.F bse/K_diago_driver.F bse/K_inversion_driver.F collisions/.objects_gpl collisions/COLLISIONS_HXC.F common/.objects_gpl io/.objects_gpl modules/mod_X.F modules/mod_real_time.F pol_function/.objects_gpl pol_function/DIPOLE_driver.F qp_control/.objects_gpl real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F wf_and_fft/.objects_gpl xc_functionals/.objects_gpl ypp/electrons/.objects_gpl ypp/init/INIT_ypp.F ypp/real_time/RT_occ_energy_plot.F ypp/symmetries/.objects_gpl
+
+  DELETED *  sbin/git_config.sh
+
+  RENAMED *  sbin/git_hooks.sh -> sbin/git_configure_and_hooks.sh
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Fixed Haydock in GPL. [Davide Sangalli]
+
+  Version 4.1.0,  Revision 13735,  Hash dfa17f3
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_Haydock.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.d.0,  Revision 13734,  Hash 6b2e0d3. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  DELETED *  stop_and_restart/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] stop and start folder restored in gpl
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13733,  Hash 8a407d2. [Davide Sangalli]
+
+  MODIFIED *  .gitignore config/configure.ac configure include/version.inc collisions/.objects_gpl
+
+  NEW *  stop_and_restart/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] working on GPL, removed unused folders/files
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13732,  Hash 5790bcd. [Davide Sangalli]
+
+  MODIFIED *  config/Makefile.in_gpl config/configure.ac configure include/version.inc bse/K.F bse/K_diago_driver.F bse/K_inversion.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo_kerr] Working on GPL, also yambo_kerr compiles
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13731,  Hash 11d5f56. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/electrons/.objects_gpl ypp/symmetries/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp] Changes for GPL. Also ypp compiles.
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.1.0,  Revision 13730,  Hash ec6147b. [Davide Sangalli]
+
+  MODIFIED *  config/Makefile.in config/Makefile.in_gpl config/configure.ac configure include/version.inc sbin/yamboo.pl bse/.objects_gpl common/.objects_gpl io/.objects_gpl pol_function/.objects_gpl qp_control/.objects_gpl wf_and_fft/.objects_gpl xc_functionals/.objects_gpl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo] Changes needed for next GPL release. yambo gpl now compiles
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge branch 'stabilize-yambo-rt' [Davide Sangalli]
+
+- Version 4.0.e,  Revision 13727,  Hash 33328ed. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F
+
+  Bugs:
+  - [yambo_rt] fixed out of bounds error in COLLISIONS_HXC
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.3,  Revision 13682,  Hash 22eee78. [Davide Sangalli]
+
+  MODIFIED *  .gitignore config/Makefile.in config/configure.ac config/etsf_io.m4 config/iotk.m4 config/libxc.m4 configure doc/README.git driver/yambo.h include/version.inc lib/archive/Makefile.loc lib/archive/package.list lib/netcdf/Makefile.loc sbin/git_configure_and_hooks.sh sbin/make_makefile.sh.in sbin/make_message.pl sbin/moduledep.sh bse/.objects bse/K.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_driver.F bse/K_inversion.F bse/K_output_file.F bse/K_solvers.F bse/K_stored_in_a_BIG_matrix.F collisions/COLLISIONS_HXC.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F collisions/COLLISIONS_map_to_QP_table.F collisions/COLLISIONS_momentum.F collisions/SCATTERING_GW_kinematics.F collisions/SCATTERING_QED_transverse_matrix.F communicate/section.F coulomb/cutoff_driver.F coulomb/rim.F interface/INIT.F interface/INIT_barriers.F interface/INIT_load.F io/IO_and_Messaging_switch.F io/io_COLLISIONS.F modules/.objects modules/SET_defaults.F modules/mod_BS.F modules/mod_X_output.F modules/mod_drivers.F modules/mod_interfaces.F modules/mod_parallel.F parallel/PARALLEL_collisions.F parallel/PARALLEL_global_indexes.F pol_function/DIPOLE_driver.F pol_function/DIPOLE_transverse.F pol_function/X_em1.F qp/QED_Sigma_c.F qp/QP_of.F sc/SC_check_symmetries.F sc/XC_switch.F wf_and_fft/WF_load.F
+
+  NEW *  lib/perl/ydb/create_new_run.pm lib/perl/ydb/database.pm lib/perl/ydb/functions.pm lib/perl/ydb/load_db.pm lib/perl/ydb/objects_IO.pm lib/perl/ydb/print_the_run.pm lib/perl/ydb/remove_run.pm sbin/ydb.pl bse/PL_diago_residual.F modules/mod_PHOTOLUM.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - merged with branch "master"
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3681. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure driver/ypp.h include/version.inc ypp/init/INIT_ypp.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp_rt] control of lifetimes and occupations plot is almost identical
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3680. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/real_time/RT_occ_energy_plot.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [ypp_rt] Fixed output units of lifetimes as a function of energy
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.7.2  Hash 3679. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_X.F modules/mod_real_time.F pol_function/DIPOLE_driver.F real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - removed eta circ implementation
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- E-P init variables re-activated in _RT runs. [marini]
+
+  Version 4.0.7  Hash 3678
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3677. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc real_time_control/RT_carriers_object.F
+
+  Bugs:
+  - [yambo_rt] Fixed bug in the calculation of the NEQ lifetimes
+               This was only affecting ypp_rt which plots the NEQ lifetimes
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2,  Revision 13806,  Hash a7dc66a. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/SLK_setup.F parallel/.objects parallel/PARALLEL_assign_LIN_ALGEBRA_COMMs.F
+
+  DELETED *  parallel/SLK_communicators_init.F
+
+  Changes:
+  - SLK_communicators_init moved inside PARALLEL_assign_LIN_ALGEBRA_COMMs which drives the COMMs assignement.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13805,  Hash 88e00ea. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/.objects linear_algebra/SLK_test.F modules/SET_defaults.F modules/mod_parallel.F parallel/.objects parallel/PARALLEL_assign_LIN_ALGEBRA_COMMs.F parallel/PARALLEL_get_user_structure.F parallel/PARALLEL_global_indexes.F setup/PARALLEL_and_IO_Setup.F
+
+  RENAMED *  linear_algebra/SLK_communicators_init.F -> parallel/SLK_communicators_init.F
+
+  Changes:
+  - [SLK] Final connection between the SLK driver and the main parallel driver created. SLK test passed. Xem1 no. To be tested.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13804,  Hash c38434c. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/.objects linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/PARALLEL_diagonalization.F linear_algebra/PARALLEL_inversion.F linear_algebra/PARALLEL_startup.F linear_algebra/SLK_setup.F linear_algebra/SLK_test.F modules/mod_SLK.F
+
+  NEW *  linear_algebra/SLK_communicators_init.F
+
+  Bugs:
+  - In configure.ac for the copying of .h files when srcdir and topdir were different.
+
+  Additions:
+  - [SLK] Added bridge between external communicators and internal INV/DIAGO comms.
+
+  Changes:
+  - [SLK] Matrix distribution components moved in a dedicated type (also to be called twice in the case of diagonalization).
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13803,  Hash 9c65490. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/PARALLEL_diagonalization.F linear_algebra/PARALLEL_inversion.F linear_algebra/PARALLEL_startup.F modules/mod_SLK.F modules/mod_linear_algebra.F
+
+  NEW *  linear_algebra/sample_pchegvx_call.f
+
+  DELETED *  SLK_tools.F
+
+  Additions:
+  - SLK example for diagonalization to use as a test
+
+  Changes:
+  - Finalized the PARALLEL_startup. Still to be properly fragmented in view of diagonalization needs.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13802,  Hash 1497545. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/.objects linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/PARALLEL_inversion.F linear_algebra/SERIAL_HERMITIAN_diagonalization.F linear_algebra/SERIAL_SVD_inversion.F linear_algebra/SERIAL_diagonalization.F linear_algebra/SERIAL_inversion.F linear_algebra/SLK_setup.F linear_algebra/SLK_test.F linear_algebra/SLK_tools.F modules/mod_SLK.F modules/mod_linear_algebra.F modules/mod_wrapper.F
+
+  NEW *  SLK_tools.F linear_algebra/PARALLEL_diagonalization.F linear_algebra/PARALLEL_startup.F
+
+  DELETED *  linear_algebra/SLK_test_util.F
+
+  Additions:
+  - Extracted common SLK procedures to PARALLEL_startup.F
+  - Preparing PARALLEL_diagonalization
+  - Added common SLK workspace in SLK module
+
+  Changes:
+  - Linear Algebra interfaces moved from mod_wrapper to mod_linear_algebra
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13801,  Hash 30d8f8f. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/.objects linear_algebra/SLK_test.F
+
+  NEW *  linear_algebra/PARALLEL_inversion.F
+
+  Changes:
+  - PARALLEL inversion procedure extracted from SLK_test.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13800,  Hash c078b95. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc linear_algebra/.objects linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/SLK_ORTHO_init.F linear_algebra/SLK_test.F modules/mod_SLK.F modules/mod_linear_algebra.F pol_function/X_s.F
+
+  NEW *  linear_algebra/SLK_setup.F
+
+  Additions:
+  - Added first SLK actions in LINEAR_ALGEBRA_driver
+
+  Changes:
+  - Setup of SLK procedures moved from SLK_test.F to SLK_setup.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13799,  Hash e34d27d. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F interface/INIT.F linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/SERIAL_HERMITIAN_diagonalization.F linear_algebra/SERIAL_SVD_inversion.F linear_algebra/SERIAL_diagonalization.F linear_algebra/SERIAL_inversion.F modules/mod_linear_algebra.F
+
+  Bugs:
+  - Fixed a bug for resonant and "causal" BSE inversions.
+
+  Additions:
+  - Added  Linear Algebra common workspace
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13798,  Hash 94f5395. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc p2y/qexml_v4.0.F acfdt/acfdt_tot_energy.F bse/K_diago_driver.F bse/K_diago_non_hermitian_residuals.F bse/K_inversion_do_it_full.F linear_algebra/.objects modules/mod_linear_algebra.F pol_function/Build_Overlaps_Det_EQ.F pol_function/X_s.F qp/ELPH_Hamiltonian.F qp/QP_load_SC_xc.F sc/OEP_app_inversion.F sc/OEP_exact_inversion.F sc/SC_driver.F ypp/elph/ELPH_atomic_amplitude.F ypp/real_time/RT_coefficients_Inversion.F
+
+  NEW *  linear_algebra/LINEAR_ALGEBRA_driver.F linear_algebra/SERIAL_HERMITIAN_diagonalization.F linear_algebra/SERIAL_SVD_inversion.F linear_algebra/SERIAL_diagonalization.F linear_algebra/SERIAL_inversion.F
+
+  DELETED *  linear_algebra/MATRIX_driver.F
+
+  Changes:
+  - MATRIX_driver => LINEAR_ALGEBRA_driver and splitted in specific routines
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13797,  Hash 27b9ed7. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc p2y/qexml_v4.0.F acfdt/acfdt_tot_energy.F bse/K_diago_driver.F bse/K_diago_non_hermitian_residuals.F bse/K_inversion_do_it_full.F linear_algebra/MATRIX_driver.F modules/.objects modules/mod_interfaces.F modules/mod_matrix_operate.F pol_function/Build_Overlaps_Det_EQ.F pol_function/X_s.F qp/ELPH_Hamiltonian.F qp/QP_load_SC_xc.F sc/OEP_app_inversion.F sc/OEP_exact_inversion.F sc/SC_driver.F ypp/elph/ELPH_atomic_amplitude.F ypp/real_time/RT_coefficients_Inversion.F
+
+  NEW *  modules/mod_linear_algebra.F
+
+  Changes:
+  - Linear Algebra operations moved in a new module.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13796,  Hash c5ed05f. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_stored_in_a_BIG_matrix.F
+
+  Bugs:
+  - [PL] Parallel implementation bugs fixed
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13795,  Hash bd6dd3c. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_restart.F
+
+  Bugs:
+  - Fixed erroneous order of restart and Lo call
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13794,  Hash db7840b. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_restart.F io/io_BSS_invert.F modules/mod_com.F ypp/elph/ELPH_excitonic_gkkp.F ypp/elph/ELPH_general_gFsq.F
+
+  Bugs:
+  - Few  compilation issues solved.
+
+  Changes:
+  - Trying to fix BS inv restart. Little luck up to now.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.3,  Revision 13793,  Hash 813bd30. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_engine.F
+
+  Bugs:
+  - Bug fix in PL with cpl
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13792,  Hash 0ab8fb3. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_restart.F io/io_BSS_invert.F modules/mod_PHOTOLUM.F
+
+  Bugs:
+  - Combined EPS & PL BS inversion restart fixed
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13791,  Hash 0d5ab8c. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F io/io_BSS_invert.F
+
+  Bugs:
+  - Fixed several bugs via the splitting of the K_inversion_driver routine
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13790,  Hash dfd6ed3. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F bse/K_output_file.F modules/SET_defaults.F modules/mod_BS_solvers.F modules/mod_X_output.F
+
+  Additions:
+  - Added BS Inversion I/O for PL
+
+  Changes:
+  - Splitted K_inversion_driver in blocks to be used independently by PL and EPS
+  - Removed 4th column in PL
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+  Version 4.0.2,  Revision 13775,  Hash d108806
+
+  MODIFIED *  config/configure.ac configure include/version.inc io/IO_and_Messaging_switch.F ypp/init/INIT_load_ypp.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3699. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Bugs:
+  - Fixed small bug in git_configure_and_hooks.sh
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.3,  Revision 13711,  Hash 45aecc0. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/init/INIT_load_ypp.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - DOSErange and DOSESteps are always activated when creating the DOS.
+    -V gen is not needed anymore
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.3,  Revision 13710,  Hash 2c40480. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc io/IO_and_Messaging_switch.F
+
+  Bugs:
+  - [ypp_rt] fixed bug in ypp. "if defined _YPP" did not work properly
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge remote-tracking branch 'origin/master' into devel-configure.
+  [Davide Sangalli]
+
+- Merge remote-tracking branch 'origin/master' into devel-configure.
+  [Davide Sangalli]
+
+- Timing added to src/coulomb/ drivers. [Andrea Ferretti]
+
+- Merge branch 'devel-libxc' gitignore updated. [Andrea Ferretti]
+
+- Myconfig* added. [Andrea Ferretti]
+
+- Configure updated. [Andrea Ferretti]
+
+- Internal libxc updated to v2.2.3. [Andrea Ferretti]
+
+- Bug fixed when compiling with scalapack (_SCALAPACK) [Andrea Ferretti]
+
+- Version 4.0.3  Revision 3701 Hash 8053669. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/iotk.m4 configure include/version.inc lib/archive/Makefile.loc sbin/make_message.pl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Fixed few problems in configure
+  - Patch level upgraded to last gpl release
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3700. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Forgot tu run autoconf in previoius commit
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3699. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/etsf_io.m4 config/libxc.m4 configure lib/archive/Makefile.loc lib/netcdf/Makefile.loc sbin/git_configure_and_hooks.sh
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - default for download of libraries moved from wget to curl
+  - fixed few problems in configure
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2,  Revision 13774,  Hash 2fa1c11. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/.objects bse/K.F bse/K_Haydock.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_diago_non_hermitian_residuals.F bse/K_diago_perturbative.F bse/K_dot_product.F bse/K_driver.F bse/K_inversion_Lo.F bse/K_inversion_do_it_full.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F bse/K_multiply_by_V.F bse/K_output_file.F bse/K_solvers.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F bse/PL_via_perturbative_inversion.F interface/INIT.F interface/INIT_barriers.F interface/INIT_load.F io/io_BS.F io/io_BSS_Haydock.F io/io_BSS_diago.F io/io_BSS_invert.F io/io_BS_Fxc.F modules/.objects modules/SET_defaults.F modules/mod_BS.F modules/mod_PHOTOLUM.F pol_function/X_GreenF_analytical.F tddft/TDDFT_BSK_2_FXC.F tddft/TDDFT_BSK_disk_2_FXC.F tddft/TDDFT_do_X_W_typs.F ypp/excitons/excitons_WFs.F ypp/excitons/excitons_amplitudes.F ypp/excitons/excitons_collinear.F ypp/excitons/excitons_driver.F ypp/excitons/excitons_non_collinear.F ypp/excitons/excitons_sort_and_report.F ypp/excitons/excitons_spin.F ypp/modules/mod_YPP.F
+
+  NEW *  modules/mod_BS_solvers.F
+
+  RENAMED *  bse/MATRIX_resolvant_via_perturbative_inversion.F -> bse/EPS_via_perturbative_inversion.F
+
+  Additions:
+  - Added K_inversion types to handle independently EPS and PL (I/O included)
+
+  Changes:
+  - mod_BS splitted in a new mod_BS (smaller) + mod_BS_solvers
+  - Coded a simplified PL in Inversion. Internal Lo defined analitically. To be checked.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13773,  Hash 25910fe. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/.objects bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_stored_in_a_BIG_matrix.F bse/MATRIX_resolvant_via_perturbative_inversion.F bse/PL_diago_residual.F
+
+  NEW *  bse/PL_via_perturbative_inversion.F
+
+  Bugs:
+  - BS kernel diagonal erronously used in Inversion solver
+
+  Additions:
+  - Perturbative invertion solver for PL implemented. Results ok. To be finalized.
+
+  Changes:
+  - Parallel instructions added for PL. To be tested.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13772,  Hash 91ad1d4. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc int_modules/mod_com2y.F bse/.objects bse/K_inversion_engine.F modules/mod_D_lattice.F setup/setup.F
+
+  RENAMED *  bse/K_invertion_do_it_full.F -> bse/K_inversion_do_it_full.F
+
+  Changes:
+  - Invertion => Inversion
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13771,  Hash 3ea22d7. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/PL_diago_residual.F ypp/excitons/excitons_driver.F
+
+  Bugs:
+  - Fixed bug in PL residual with CPL BSE. Still *slightly* different from Inversion.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13770,  Hash f476c7b. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F
+
+  Bugs:
+  - Bug fixed in Lo definition for PL (K_inversion_Lo.F)
+
+  Changes:
+  - Removed fake IP mode in K_stored_in_a_BIG_matrix.F
+  - PL_diago_residuals.F re-written in a more human-readable way. Still bug prevents diago and invertion WITH
+    coupling to give the same results.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13769,  Hash 82ec4fe. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_non_hermitian_residuals.F bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_solvers.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F io/io_BSS_diago.F modules/mod_BS.F modules/mod_PHOTOLUM.F modules/mod_interfaces.F pol_function/X_em1.F
+
+  Bugs:
+  - [PL] Fixed definition of L_o lesser occupations for the anti-resonant part.
+  - [PL] Inversion still not working! Internally consistent but different results if compared to diago!
+
+  Additions:
+  - [PL] diago coded also including coupling.
+  - [PL] Added res/anti-res specific residuals.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13768,  Hash 8a83a90. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/.objects bse/K_Haydock.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_diago_kerr_residual.F bse/K_diago_non_hermitian_residuals.F bse/K_driver.F bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_kerr_IP.F bse/K_stored_in_a_BIG_matrix.F bse/PL_diago_residual.F interface/INIT.F interface/INIT_load.F modules/SET_defaults.F modules/mod_BS.F modules/mod_PHOTOLUM.F modules/mod_QP.F modules/mod_wrapper.F pol_function/X_GreenF_analytical.F ypp/ras/ras_ypp.F
+
+  DELETED *  bse/MATRIX_resolvant_via_exact_inversion.F
+
+  Bugs:
+  - Inversion with coupling not working.
+  - Fixed few PL bugs. Not IP inversion and diago are ok. Still different the antiresonant contribution.
+
+  Changes:
+  - MATRIX_resolvant_via_exact_inversion merged in K_inversion_engine.
+  - BS_anti_res renamed in BSS_add_antiresonant and merged with Inversion logical.
+  - BS_mode "causal" replaced with "retarded" but left for input file back compatibility
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13767,  Hash 937b172. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/.objects bse/K_IP.F bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_engine.F common/.objects linear_algebra/.objects modules/mod_PHOTOLUM.F pol_function/.objects pol_function/X_GreenF_analytical.F pol_function/X_os.F
+
+  NEW *  bse/K_invertion_do_it_full.F
+
+  RENAMED *  linear_algebra/MATRIX_resolvant_via_exact_inversion.F -> bse/MATRIX_resolvant_via_exact_inversion.F linear_algebra/MATRIX_resolvant_via_perturbative_inversion.F -> bse/MATRIX_resolvant_via_perturbative_inversion.F
+
+  Bugs:
+  - Fixed some bugs in IP PL evaluation via diagonalization.
+
+  Additions:
+  - IP PL coded in K_inversion_Lo. Same results of diagonalization (without DbGd).
+  - Added evaluation of spectral function in X_GreenF_analytical.F.
+
+  Changes:
+  - MATRIX_resolvant_via_exact_inversion.F and MATRIX_resolvant_via_perturbative_inversion.F moved from linear_algebra to bse.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13766,  Hash 868d926. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_blocks.F bse/K_driver.F bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_output_file.F bse/K_solvers.F common/Lorentzian_FT.F io/io_BSS_invert.F linear_algebra/MATRIX_resolvant_via_exact_inversion.F modules/mod_PHOTOLUM.F
+
+  Additions:
+  - PL, IP level in inversion coded. Found potential problem in diago (missing occupation prefactors).
+
+  Changes:
+  - Added Hartree term to PL kernel.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 3.0.2,  Revision 13765,  Hash 6f17e36. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_eval.F
+
+  Bugs:
+  -  Bug in on-the-fly de/allocation of collisions fixed
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13764,  Hash 666da72. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_Lo.F bse/K_inversion_driver.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_eval.F io/io_DIPOLES.F pol_function/DIPOLE_driver.F
+
+  Bugs:
+  - When collisions were calculated and used in the same run (regardless of the IO) the %state was erronously cleaned-up causing
+    seg-fault in parallelization
+  - ETA_circ was not allocated in io_DIPOLES
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 3.0.2,  Revision 13763,  Hash 7f1ff30. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc acfdt/acfdt_tot_energy.F bse/K_driver.F bse/K_inversion_driver.F bse/K_inversion_restart.F bse/K_output_file.F bse/K_stored_in_a_BIG_matrix.F common/Lorentzian_FT.F interface/INIT.F interface/INIT_load.F io/io_BSS_invert.F io/io_BS_Fxc.F modules/SET_defaults.F modules/mod_BS.F modules/mod_TDDFT.F modules/mod_X.F modules/mod_X_output.F pol_function/O_eels.F pol_function/X_GreenF_convoluted.F pol_function/X_em1.F pol_function/X_pre_setup.F tddft/TDDFT_BSK_2_FXC.F tddft/TDDFT_do_X_W_typs.F
+
+  Changes:
+  - Format of GF changed to be consistent with the literature. Now it is:
+    'Green`s function (T)ordered,(R)etarded,(r)senant,(a)ntiresonant [T, R, r, Ta, Ra]'
+  - FXC_is_causal => FXC_is_retarded
+  - BSS_INV_eps_pl => BSS_INV_eps
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13762,  Hash f257942. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc io/io_BSS_invert.F
+
+  Changes:
+  - NECTDF var names changed in io_BSS_invert
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13761,  Hash 4d4c0bc. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_driver.F bse/K_inversion_engine.F bse/K_output_file.F bse/K_solvers.F
+
+  Bugs:
+  - Fixed wrong use of BSS jdos logical. Now JDOS is calculated only with diagonalization. Invertion to be coded/tested.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.7.2,  Revision 13760,  Hash 522397c. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F common/FREQUENCIES_merge.F
+
+  Bugs:
+  - Several bugs in parallelization fixed.
+
+  Changes:
+  - FREQUENCIES_merge.F rewritten from scratch.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13759,  Hash 3ce905c. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/K_inversion_Lo.F bse/K_inversion_driver.F bse/K_inversion_engine.F bse/K_inversion_restart.F bse/K_solvers.F common/FREQUENCIES_merge.F io/io_BSS_invert.F modules/mod_BS.F modules/mod_SLK.F
+
+  Changes:
+  - Deep re-moduling of Inversion solver still under construction.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2,  Revision 13758,  Hash be09864. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/.objects bse/K_output_file.F bse/K_solvers.F common/.objects common/.objects_gpl io/io_BSS_invert.F linear_algebra/MATRIX_resolvant_via_exact_inversion.F modules/mod_BS.F modules/mod_frequency.F
+
+  NEW *  bse/K_inversion_engine.F bse/K_inversion_restart.F common/FREQUENCIES_merge.F
+
+  DELETED *  bse/.objects_gpl
+
+  RENAMED *  bse/K_inversion.F -> bse/K_inversion_driver.F
+
+  Bugs:
+  - Merging of Inversion restarter was never working. Partially working now.
+
+  Changes:
+  - K_inversion splitted in components.
+  - W_merge moved out of mod_frequency.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.f,  Revision 13757,  Hash fa3eff8. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_IP.F bse/PL_diago_residual.F common/eval_G_minus_G.F interface/INIT.F interface/INIT_load.F modules/mod_PHOTOLUM.F
+
+  Bugs:
+  - Fixed bug on configure that was erronously finding different src and workdir paths.
+
+  Additions:
+  - Added PL weights to select specific components of the emitted radiation
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- E-P init variables re-activated in _RT runs. [marini]
+
+  Version 4.0.7  Hash 3678
+
+  MODIFIED *  config/configure.ac configure include/version.inc interface/INIT.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3699. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Bugs:
+  - Fixed small bug in git_configure_and_hooks.sh
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge remote-tracking branch 'origin/master' into devel-configure.
+  [Davide Sangalli]
+
+- Version 4.0.3,  Revision 13753,  Hash 091ef4b. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/make_message.pl
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.3  Revision 3701 Hash 8053669. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/iotk.m4 configure include/version.inc lib/archive/Makefile.loc sbin/make_message.pl
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Fixed few problems in configure
+  - Patch level upgraded to last gpl release
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Timing added to src/coulomb/ drivers. [Andrea Ferretti]
+
+- Myconfig* added. [Andrea Ferretti]
+
+- Configure updated. [Andrea Ferretti]
+
+- Version 4.0.2  Hash 3677. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc real_time_control/RT_carriers_object.F
+
+  Bugs:
+  - [yambo_rt] Fixed bug in the calculation of the NEQ lifetimes
+               This was only affecting ypp_rt which plots the NEQ lifetimes
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3700. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Forgot tu run autoconf in previoius commit
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3699. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/etsf_io.m4 config/libxc.m4 configure lib/archive/Makefile.loc lib/netcdf/Makefile.loc sbin/git_configure_and_hooks.sh
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - default for download of libraries moved from wget to curl
+  - fixed few problems in configure
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Internal libxc updated to v2.2.3. [Andrea Ferretti]
+
+- Bug fixed when compiling with scalapack (_SCALAPACK) [Andrea Ferretti]
+
+- Merge branch 'devel-daddy' of ssh://qeforge.qe-forge.org/gitroot
+  /yambo-git into devel-daddy. [pmelo1089]
+
+- Merge remote-tracking branch 'origin/stabilize-yambo-rt' into devel-
+  daddy. [marini]
+
+  Version 4.0.2  Hash 3730
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_X.F modules/mod_real_time.F pol_function/DIPOLE_driver.F real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F ypp/init/INIT_ypp.F ypp/real_time/RT_occ_time_plot.F ypp/real_time/RT_time_configuration_setup.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3676. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc ypp/real_time/RT_occ_time_plot.F
+
+  Bugs:
+  - [ypp_rt] fixed output of lifetimes
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3675. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_RT_control.F
+
+  Bugs:
+  - [yambo_rt] fixed bug 274
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3674. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc parser/ps_convert.F
+
+  Bugs:
+  - Bug [#272] clean fix
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3673. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc parser/ps_convert.F
+
+  Bugs:
+  - [yambo] Fixed bug#272
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3672. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc pol_function/DIPOLE_driver.F
+
+  Bugs:
+  - Fixed diagonal components of the ETA_circ term
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.c.2  Hash 3671. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/mod_X.F modules/mod_real_time.F pol_function/DIPOLE_driver.F real_time_control/RT_current_AND_polarization.F real_time_control/RT_output.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - [yambo_rt] Coded equation 4 of PRB 77, 235406 (2008)
+    to compute the factor eta, which is proportianl to the kerr signal,
+    on the fly in yambo_rt simulations
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Merge remote-tracking branch 'origin/master' into stabilize-yambo-rt.
+  [Davide Sangalli]
+
+- Merge branch 'master' into stabilize-yambo-rt. [Davide Sangalli]
+
+- Version 4.0.2  Hash 3629. [Davide Sangalli]
+
+  MODIFIED *  ypp/real_time/RT_time_configuration_setup.F
+
+  Bugs:
+  - [ypp_rt] fixed post-processing of occupations in case only a speific time-step exist
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by: Davide
+
+- Version 4.0.2  Hash 3628. [Davide Sangalli]
+
+  MODIFIED *  real_time_control/RT_output.F ypp/init/INIT_ypp.F
+
+  Bugs:
+  - Fixed two bugs related to output files creation in ypp and yambo_rt
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by: Davide
+
+- Version 4.0.f  Hash 3729. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc parallel/PARALLEL_global_indexes.F
+
+  Bugs:
+  - Bug fixed in the definition of EH_range for cases where there are block with 0 size.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3728. [marini]
+
+  ** Missing informations to previous commit **
+
+  Bugs:
+  - Fixed bug in PARALLEL_defaults.F
+  - Missing magn allocation in COLLISIONS_HXC.F
+
+  Additions:
+  - Added MAX dT during an adaptative time step evolution
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3727. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc bse/K_diago_compute_epsilon.F collisions/COLLISIONS_HXC.F interface/INIT.F interface/INIT_load.F modules/mod_RT_control.F modules/mod_real_time.F parallel/PARALLEL_defaults.F qp/QED_Sigma_c.F real_time_common/RT_initialize.F real_time_propagation/RT_time_step_update.F xc_functionals/XC_libxc_driver.F
+
+  Bugs:
+  - [PL] Missing ALL2ALL of PL
+  - [QED] Missong ALL2ALL of QP_dSC
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3726. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F interface/INIT.F io/io_COLLISIONS.F modules/mod_collision.F parallel/PARALLEL_collisions.F parser/ps_convert.F real_time_common/RT_initialize.F setup/QP_state_table_setup.F
+
+  Bugs:
+  - Several bugs introduced by the SC collisions structure fixed
+  - Bug [#272] clean fix
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3725. [marini]
+
+  MODIFIED *  .gitignore config/Makefile.in config/configure.ac config/iotk.m4 config/libxc.m4 config/netcdf_f90.m4 config/setup.in configure include/version.inc sbin/make_makefile.sh.in sbin/make_message.pl bse/K_IP.F collisions/SCATTERING_QED_transverse_matrix.F sc/SC_check_symmetries.F wf_and_fft/WF_alloc.F wf_and_fft/WF_free.F ypp/real_time/RT_time_configuration_setup.F
+
+  Bunch of files not merged by git. Merging done by hand.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+  Version 4.0.2  Hash 3723
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_hooks.sh pol_function/X_em1.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3699. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/git_configure_and_hooks.sh pol_function/X_em1.F
+
+  Bugs:
+  - Fixed small bug in git_configure_and_hooks.sh
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Merge branch 'stabilize-yambo-sc' into devel-daddy. [marini]
+
+  Version 4.0.2  Hash 3702
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_compose_sc.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F interface/INIT.F interface/INIT_load.F io/io_COLLISIONS.F io/io_SC_components.F io/variables_SC.F modules/SET_defaults.F modules/mod_QP.F modules/mod_SC.F modules/mod_collision.F modules/mod_drivers.F modules/mod_global_XC.F modules/mod_real_time.F qp/QP_of.F qp/QP_ppa_cohsex.F real_time_common/RT_driver.F sc/SC_Energy.F sc/SC_WF_and_dipole_dimensions.F sc/SC_add_XC.F sc/SC_driver.F sc/SC_start_and_restart.F sc/XC_switch.F wf_and_fft/WF_load.F ypp/symmetries/fix_SC_DBs.F
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3717. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sc/SC_start_and_restart.F
+
+  Changes:
+  - Preconditioning switched-off in the presence of Hartree-compatbile collisions
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.c.2  Hash 3716. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc qp/QP_of.F sc/XC_switch.F
+
+  Additions:
+  - Added COHSEX Potential as COH+SEX
+  - Minor change in the .hf output file
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3715. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_compose_sc.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F interface/INIT.F interface/INIT_load.F modules/SET_defaults.F modules/mod_SC.F modules/mod_collision.F sc/SC_WF_and_dipole_dimensions.F sc/SC_driver.F sc/SC_start_and_restart.F
+
+  Bugs:
+  - Several bugs fixed in order to calculate and use the collisions in the same run of the sc cycle.
+  - Deeply revised the COLLISION_naming procedure.
+
+  Additions:
+  - Coded external control of preconditioning (none, simple, thomas-fermi)
+
+  Changes:
+  - Coded potential use of ALL possible collisions/potential combinations. Tests under construction.
+  - Removed COH/SEX empty bands input variable
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3714. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F collisions/COLLISIONS_compose_sc.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_linearize_and_IO.F collisions/COLLISIONS_load.F interface/INIT.F interface/INIT_load.F io/io_SC_components.F io/variables_SC.F modules/SET_defaults.F modules/mod_SC.F modules/mod_drivers.F modules/mod_real_time.F qp/QP_ppa_cohsex.F real_time_common/RT_driver.F sc/SC_Energy.F sc/SC_add_XC.F sc/SC_driver.F sc/SC_start_and_restart.F sc/XC_switch.F wf_and_fft/WF_load.F ypp/symmetries/fix_SC_DBs.F
+
+  Bugs:
+  - Fixed several bugs in _SC procedures. Now FOCK, SEX and COH works with and w/o collisions.
+    Still HARTREE to test and on-the-fly collisions to fix.
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3713. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F
+
+  Changes:
+  - Small clean-up
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3712. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc wf_and_fft/WF_load.F
+
+  Bugs:
+  - Bug fix in WF_load. Wrong initialization and use of the free_and_alloc logical
+
+  Patch sent by:  marini <andrea.marini@cnr.it>
+
+- Version 4.0.2  Hash 3709. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F
+
+  Changes:
+  - Fixed erroneous stop
+
+  Patch sent by: Andrea
+
+- Version 4.0.2  Hash 3710. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_load.F io/io_COLLISIONS.F
+
+  Bugs:
+  - Fixed IO collisions problems. Still getting error on sc_cohsex without
+    collisions.
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3709. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F interface/INIT.F interface/INIT_load.F modules/mod_QP.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - Created new input variable CORRlvcs which controls the number of G-vectors in the
+    non local correlation of the collisions. Before this was forsed to be equal to
+    EXXRlvcs. Now exchange and correlation can have two different cut--off.
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3708. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc modules/SET_defaults.F sc/XC_switch.F
+
+  *** code still to test ***
+
+  Changes:
+  - Small errors left from merge.
+
+  Patch sent by: Andrea
+
+- Merge branch 'master' into stabilize-yambo-sc. [marini]
+
+- Merged with devel-daddy. [marini]
+
+- Merge branch 'master' into stabilize-yambo-sc. [marini]
+
+- Merged with master Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Missing error calls added. [marini]
+
+- First part of merge with master. [marini]
+
+- Fixed few bugs related to splitting of potential in HARTREE SEX and
+  COH part Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com>
+  [Davide Sangalli]
+
+- Merge branch 'master' into stabilize-yambo-sc. [Davide Sangalli]
+
+- Added support for COH+SEX+HARTREE collisions. [marini]
+
+- MODIFIED *  doc/README.git collisions/COLLISIONS_HXC.F
+  collisions/COLLISIONS_compose_sc.F collisions/COLLISIONS_eval.F
+  collisions/COLLISIONS_load.F io/io_COLLISIONS.F io/io_elemental.F
+  io/variables_SC.F modules/SET_defaults.F modules/mod_collision.F
+  modules/mod_global_XC.F pol_function/X_GreenF_convoluted.F
+  pol_function/X_em1.F qp/QED_Radiative_Lifetimes.F sc/SC_add_XC.F
+  sc/SC_driver.F sc/SC_start_and_restart.F sc/XC_switch.F
+  ypp/init/INIT_load_ypp.F ypp/real_time/RT_X_response.F
+  ypp/real_time/RT_density.F. [marini]
+
+  Bugs:
+  - Fixed several bugs introduced by new collision structure (many still to find/fix)
+
+  Changes:
+  - Added support for Hartree-free collisions (for back-compatibility)
+  - Added support for multi-worl potentials (COHSEX=HARTREE+COH+SEX)
+
+  Patch sent by: Andrea
+
+- Merged with origin/devel-daddy. [pmelo1089]
+
+- Solved conflicts after merge. [pmelo1089]
+
+- Merge branch 'devel-daddy' of ssh://qeforge.qe-forge.org/gitroot
+  /yambo-git into devel-daddy. [pmelo1089]
+
+- Version 4.0.2  Hash 3697. [marini]
+
+  MODIFIED *  config/Makefile.in config/configure.ac configure include/version.inc sbin/moduledep.sh collisions/COLLISIONS_momentum.F qp/QED_Sigma_c.F qp/QP_of.F
+
+  Bugs:
+  - In parallel build-up of P_collisions.
+  - In parallel evaluation of Lamb Shift.
+  - In data output for radiative lifetimes.
+
+  Additions:
+  - Added copyright header to moduledep.sh
+
+  Changes:
+  -
+
+  Patch sent by: Andrea
+
+- Version 4.0.2  Hash 3692. [marini]
+
+  MODIFIED *  .gitignore config/configure.ac configure include/version.inc collisions/COLLISIONS_HXC.F collisions/COLLISIONS_alloc_and_free.F collisions/COLLISIONS_basic_operations.F collisions/COLLISIONS_eval.F collisions/COLLISIONS_load.F collisions/COLLISIONS_map_to_QP_table.F collisions/COLLISIONS_momentum.F collisions/SCATTERING_GW_kinematics.F io/io_COLLISIONS.F modules/SET_defaults.F modules/mod_drivers.F modules/mod_interfaces.F modules/mod_parallel.F parallel/PARALLEL_collisions.F parallel/PARALLEL_global_indexes.F qp/QED_Sigma_c.F sc/XC_switch.F
+
+  Merge branch 'master' into devel-daddy
+
+  Bugs:
+  - Fixed several bugs in QED_Sigma.c
+  - Repaired use of P_collisions.
+
+  Additions:
+  - Added constrains in COLLISIONS actions.
+  - Added null SC_potential.
+
+  Patch sent by: Andrea
+
+- Merge branch 'devel-configure' [Davide Sangalli]
+
+- Version 4.0.2  Hash 3664. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac config/iotk.m4 configure include/version.inc
+
+  Bugs:
+  - Fixed error which was preventig yambo to coompile in case srcpath was a relative
+    path instead of an absolute path
+  Additions:
+  -
+
+  Changes:
+  - Fixed configure.ac and iotk.m4
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3664. [Davide Sangalli]
+
+  MODIFIED *  .gitignore config/configure.ac configure include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - make.dep add to .gitignore
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Version 4.0.2  Hash 3663. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - restored git configure lines erroneously erased on git merge with master
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Bug-fix in QED_Sigma_c. [marini]
+
+- Collisions bug corrected by andrea. [pmelo1089]
+
+- New WF_load structure added by Andrea. No need to evaluate separately
+  the G\=0 and G=0 contributions. [pmelo1089]
+
+- Version 4.0.1  Hash 3690. [marini]
+
+  MODIFIED *  qp/QED_Sigma_c.F wf_and_fft/WF_load.F
+
+  Bugs:
+  - Fixed BUG in parallel wf-loading of QED_Sigma_c.
+
+  Changes:
+  - Added double wf-loading in QED_Sigma_c. One for filled and one for empy states. This reduces enormously the computational load.
+
+  Patch sent by: Andrea
+
+- Version 4.0.2  Hash 3689. [marini]
+
+  MODIFIED *  .gitignore config/Makefile.in sbin/make_makefile.sh.in collisions/COLLISIONS_load.F collisions/SCATTERING_QED_transverse_matrix.F qp/QED_Sigma_c.F qp/QP_of.F
+
+  Changes:
+  - QED QP recoded to conside G=0 and G/=0 corrections at once.
+
+  Patch sent by: Andrea
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Version 4.0.2  Hash 3662. [Davide Sangalli]
+
+  MODIFIED *  config/configure.ac configure include/version.inc sbin/make_message.pl
+
+  DELETED *  sbin/git_config.sh
+
+  RENAMED *  sbin/git_hooks.sh -> sbin/git_configure_and_hooks.sh
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - git_hooh.sh and git_config.sh merged into git_configure_and_hooks.sh
+  - new hook "prepare commit message" created
+  - make_message.pl now reports also renamed files
+
+  Patch sent by:  Davide Sangalli <davide.sangalli@gmail.com>
+
+- Test commit. [Davide Sangalli]
+
+- Merged with master Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Merged with origin/master Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Improved Wannier_driver of ypp: -kpoints reading from .nnkp is now
+  more robust (using a subroutine of Wannier90, GPL) -QP corrections
+  computed on a coarser k-mesh can be printed (to be interpolated with
+  Wannier90) -Fixed indeces in .eig to work with the 'exclude_bands'
+  options of Wannier90 TODO: the Wannier90 seedname is currently read
+  from a text file 'seed.dat'. [Antimo Marrazzo]
+
+- Version 4.0.2  Hash 3629. [Davide Sangalli]
+
+  MODIFIED *  sc/SC_check_symmetries.F
+
+  Bugs:
+  - [yambo_sc/yambo_rt] Fixed error message for symmetries removal
+
+  Additions:
+  -
+
+  Changes:
+  -
+
+  Patch sent by: Davide
+
+- Version 4.0.2  Hash 3628. [Davide Sangalli]
+
+  MODIFIED *  wf_and_fft/WF_alloc.F wf_and_fft/WF_free.F
+
+  Bugs:
+  -
+
+  Additions:
+  -
+
+  Changes:
+  - WF_alloc has now two different calls in mem_est, one for WF and one for WF_buffer
+
+  Patch sent by: Davide
+
+- Make all working in parallel. [Henrique Miranda]
+
+- Compilation of the individual projects now working in parallel.
+  Missing to fix make all. [Henrique Miranda]
+
+- Canged the shebang in moduledep.sh to use bash instead. [Henrique
+  Miranda]
+
+- Fixed a problem in the parallel makefile when compiling the
+  interfaces. The recipe generated by moduledep.sh uses only objects
+  needed for the interface. The list of objects needed if generated from
+  .objects with preprocessor directives. [Henrique Miranda]
+
+- Two small changes to the makefile Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Merged Davide changes with parallel makefile. [Henrique Miranda]
+
+- Fixed typo in config/Makefile.in Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Fixed iotk, libxc, sgfft.F compilation and make clean compilation
+  Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com> [Davide
+  Sangalli]
+
+- Parallel compilation working. Try make -jN with N=number of procs.
+  [Henrique Miranda]
+
+- Enabled parallel compilation using moduledep.sh file from Quantum
+  Espresso. [Henrique Miranda]
+
+- Fixed issue with external libraries Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Code compiles from any path, all projects tested, only make clean
+  still to be fixed Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Compilation of yambo and ypp in folder different from source works
+  Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com> [Davide
+  Sangalli]
+
+- Merge branch 'master' into devel-configure. [Davide Sangalli]
+
+- Fixed errors if configure is run outside folder where the source is
+  stored Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com>
+  [Davide Sangalli]
+
+- Yambo_pl project added by andrea. [pmelo1089]
+
+- Yambo_pl removed by merge. [marini]
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Version 4.0.2  Hash 3627. [marini]
+
+  MODIFIED *  .gitignore config/Makefile.in bse/K.F bse/K_Haydock.F bse/K_IP.F bse/K_diago_driver.F bse/K_inversion.F bse/K_output_file.F bse/K_solvers.F interface/INIT_barriers.F modules/mod_KERR.F
+
+  *** Manually merged with devel-daddy ***
+
+  Additions:
+  - Added check on existence of bin folder (not included in git repo).
+  - Added BS_KERR_free( ).
+
+  Changes:
+  - K_output_file changed in order to use more explicit calls.
+
+  Patch sent by: Andrea
+
+- Io_bulk imported from branch io Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Added barrier to write_to_report re-definition when YPP is running.
+  [marini]
+
+- Manually merged with master. [marini]
+
+- Minor fixes after merge. [marini]
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Moved calls to RT_ouput after the definition of the RT descriptions.
+  [marini]
+
+- Version 4.3.2  Hash 3624. [marini]
+
+  MODIFIED *  bse/K_Transitions_setup.F bse/K_inversion.F interface/INIT.F interface/INIT_barriers.F real_time_control/RT_k_grid.F setup/setup.F ypp/excitons/excitons_driver.F
+
+  Bugs:
+  - RT_k_grid was not initialized => out-of-bound error fixed.
+
+  Changes:
+  - Fixed minor errors introduced in previous merge.
+
+  Patch sent by: Andrea
+
+- Version 4.0.2  Hash 3623. [marini]
+
+  MODIFIED *  .gitignore ChangeLog config/Makefile.in config/configure.ac configure doc/README.git driver/driver.c driver/ypp.h sbin/git_hooks.sh bse/K_Haydock.F bse/K_IP.F bse/K_Transitions_setup.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_diago_kerr_residual.F bse/K_diago_non_hermitian_residuals.F bse/K_diago_perturbative.F bse/K_driver.F bse/K_inversion.F bse/K_inversion_Lo.F bse/K_kerr_IP.F bse/K_stored_in_a_BIG_matrix.F common/eval_G_minus_G.F interface/INIT.F interface/INIT_barriers.F interface/INIT_load.F io/io_BSS_diago.F io/io_elemental.F modules/mod_BS.F modules/mod_KERR.F modules/mod_interfaces.F modules/mod_logo.F modules/mod_vec_operate.F modules/mod_wrapper.F pol_function/DIPOLE_driver.F pol_function/DIPOLE_project_along_q.F pol_function/DIPOLE_transverse.F pol_function/X_GreenF_convoluted.F pol_function/X_em1.F qp/QED_Radiative_Lifetimes.F ypp/init/INIT_load_ypp.F ypp/real_time/RT_X_response.F ypp/real_time/RT_density.F
+
+  NEW *  .gitchangelog.rc doc/README.aiida sbin/gitchangelog.py
+
+  DELETED *  driver/ydb.h sbin/svn2cl.pl ydb/.objects ydb/.objects_gpl ydb/YDB_module.F ydb/YDB_scan_file.F ydb/io_YDB.F ydb/ydb_i.F
+
+  *** Merged with devel-daddy keeping out the PL parts ***
+
+  Bugs:
+  - Fixed few minor (but annoying bugs). One related to the length of the LOGO strings and the other relatead to the re-load of
+    partially computed ndb.em1* databases.
+
+  Additions:
+  - Added PL residuals to io_BSS_diago in a way similar to the KERR project.
+
+  Changes:
+  - Removed old ydb. To be soon replaced by a brand new tiny perl script (now in devel-daddy).
+  - Sevaral renamings around. Harmless(?).
+
+  Patch sent by: Andrea
+
+- Merged with master. [marini]
+
+- Removed sbin/make_message.pl from configure. [marini]
+
+- Moved all PL sections in the project and merged point-by-point with
+  the master. [marini]
+
+- Added K_solver barriers for PL. [marini]
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Cleaned up io_COL_CUT comment and added AF suggestion to WF_free.
+  [marini]
+
+- Merge branch 'stabilize-yambo-rt' [marini]
+
+- MODIFIED *  wf_and_fft/WF_alloc.F wf_and_fft/WF_free.F
+  wf_and_fft/WF_load.F ypp/modules/.objects ypp/symmetries/fix_PPs.F
+  ypp/symmetries/fix_WFs_Gshells.F ypp/symmetries/fix_WFs_and_E.F
+  ypp/symmetries/symmetries_driver.F ypp/symmetries/symmetries_driver.F.
+  [Davide Sangalli]
+
+  NEW *  ypp/modules/mod_YPP_symm.F
+
+  DELETED *
+
+  Bugs:
+  - [ypp] Previous fix of bug #269 was not complete.
+          Fix extended to PP rotation
+  - [yambo] Memory leak problem fixed (see bug #270)
+
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+- Fixed bug #269 spot by Alejandro in ypp fixing symmetries feature
+  Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com> [Davide
+  Sangalli]
+
+- MODIFIED *  interface/INIT.F interface/INIT_load.F
+  modules/SET_defaults.F modules/mod_real_time.F
+  real_time_common/RT_initialize.F
+  real_time_control/RT_mean_carrier_lifetimes.F
+  real_time_control/RT_output.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  - [yambo_rt] Fit on the fly of lifetimes ratio activated only if user requests it
+
+  Patch sent by: Davide
+
+- MODIFIED *  collisions/COLLISIONS_HXC.F
+  real_time_control/RT_mean_carrier_lifetimes.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  - [yambo_rt] fixed small bug in the estimate of the number of steps to be done
+               to compute the collisions
+  Additions:
+  -
+  Changes:
+  - [yambo_rt] Mean lifetimes are computed only when output is done.
+               Otherwise the code call Fermi_fnc_fit at each time step significantly
+               slowing down the simulation
+
+  Patch sent by: Davide
+
+- Fixed ypp_rt compilation on etsfmi cluster Signed-off-by: Davide
+  Sangalli <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Merge branch 'master' into stabilize-yambo-rt. [Davide Sangalli]
+
+- MODIFIED *  modules/mod_electrons.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  - [yambo] E_ind_gap was not duplicated in E_duplicate
+
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+- Plot init in RT_density plot add Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- MODIFIED *  modules/mod_RT_control.F real_time_common/RT_initialize.F
+  real_time_common/RT_start_and_restart.F
+  real_time_propagation/RT_time_step_update.F
+  ypp/real_time/RT_occ_energy_plot.F
+  ypp/real_time/RT_time_configuration_setup.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  - [ypp_rt]   fixed problem in RT_occ_energy_plot if n_spinor=2
+  - [yambo_rt] fixed TIME_adjust function, i.e. it correctly gives 0 when it should
+               call to max(TIME_adjust,step) explicitely inserted when needed
+
+  Additions:
+  -
+  Changes:
+  -
+  Patch sent by: Davide
+
+- Fixed RT_occ_energy_plot Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Lifetimes interpolation globally renamed Lifetimes extrapolation
+  Signed-off-by: Davide Sangalli <davide.sangalli@gmail.com> [Davide
+  Sangalli]
+
+- RT_Collisions renamed RT_Hamiltonian, RT_relaxation moved outside the
+  old subroutine RT_Collisions Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- MODIFIED *  io/io_DIPOLES.F io/io_bulk.F modules/mod_IO.F. [Davide
+  Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  - [yambo] Dipoles IO updated to new version with C? call to io_bulk imported from branch io
+
+  Patch sent by: Davide
+
+- Fixed openmp compilation Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- MODIFIED *  bse/K.F interface/INIT.F interface/INIT_load.F
+  wf_and_fft/fft_check_size.F. [Davide Sangalli]
+
+  NEW *
+
+  DELETED *
+
+  Bugs:
+  -
+  Additions:
+  -
+  Changes:
+  - [yambo_rt] ALLG ccan be imposed also in Hartree collisions
+
+  Patch sent by: Davide
+
+- Merge branch 'master' into stabilize-yambo-rt. [Davide Sangalli]
+
+- Error message related to collisions IO fixed Signed-off-by: Davide
+  Sangalli <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Configuration of iotk fixed. [Andrea Ferretti]
+
+- Version 4.0.2  Hash 3629. [marini]
+
+  MODIFIED *  config/configure.ac configure include/version.inc config/configure.ac configure bse/K_IP.F bse/K_diago_compute_epsilon.F bse/K_diago_driver.F bse/K_diago_hermitian_residuals.F bse/K_driver.F bse/K_inversion_Lo.F bse/K_output_file.F bse/PL_diago_residual.F interface/INIT.F interface/INIT_load.F io/io_BSS_diago.F modules/mod_BS.F modules/mod_PHOTOLUM.F modules/mod_X_output.F
+
+  Changes:
+  -  New PL written in terms of the gradient of the Poyinting vector coded.
+  -  Diago support for PL coded (including restart).
+
+  Patch sent by: Andrea
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Further update. [Andrea Ferretti]
+
+- Gitignore updated. [Andrea Ferretti]
+
+- Ndb.cutoff should be written in the -J dir. [Andrea Ferretti]
+
+- Ydb.pl -g (get) option added. [marini]
+
+- Preparing the -get option. [marini]
+
+- Merge branch 'master' into devel-daddy. [marini]
+
+- Removed debug line Signed-off-by: Davide Sangalli
+  <davide.sangalli@gmail.com> [Davide Sangalli]
+
+- Many fixes and new features. Meta-stable version ready to be used.
+  [marini]
+
+- Ydb splitted in modules. [marini]
+
+- Ydb splitted in modules. [marini]
+
+- Old ydb removed and replaced by a single perl script. [marini]
+
+- Version 4.0.2  Hash 3616. [marini]
+
+  MODIFIED *  .gitignore config/Makefile.in sbin/make_message.pl
+
+  NEW *  sbin/make_message.pl sbin/ydb.pl
+
+  Additions:
+  - Added missing make_message.pl file
+  - Started a simple perl version of ydb.
+
+  Patch sent by: Andrea
+
+- Version 4.0.2 Hash ebb6287. [marini]
+
+  MODIFIED *  ChangeLog doc/README.aiida sbin/git_hooks.sh
+
+  NEW *  .gitchangelog.rc sbin/gitchangelog.py
+
+  DELETED *  sbin/make_message.pl.in sbin/svn2cl.pl
+
+  Additions:
+  - sbin/gitchangelog.py to create a git-compliant ChangeLog
+
+  Changes:
+  - More instructions added to README.aiida.
+  - make_message.pl.in replaced with a clean make_message.pl.
+  - Old svn-based svn2cl.pl removed.
+
+  Patch sent by: Andrea
+
 - Readme for Aiida added. [marini]
 
 - Merged with master. [marini]

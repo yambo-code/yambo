@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,6 +30,7 @@ subroutine SC_History(it,E)
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ !
  implicit none
  !
  integer      :: it
@@ -46,7 +47,6 @@ subroutine SC_History(it,E)
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
-   !
    !
    if ( it == 1 ) then
      !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -57,10 +57,6 @@ module LIVE_t
  !
  logical           :: log_line_to_dump
  character(lchlen) :: log_line
- !
- ! Definition of a time short enough to mess up I/O and MPI communications
- !
- real(SP), parameter :: SHORT_time= 60. ! seconds
  !
  contains
    !
@@ -208,9 +204,9 @@ module LIVE_t
      !
      character(lchlen):: lch,fmt_here,message_composed,time_is_now_string 
      character(schlen):: lfmt_,rfmt_,sfmt_
-     logical          :: add_cput,add_cpu_id
+     logical          :: add_cput,add_CPU_id
      !
-     if (.not.write_to_log) return
+     if (.not.write_to_log.and.index(message,"[ERROR]")==0) return
      !
      if (.not.log_as_a_file) lfmt_="r"
      if (log_as_a_file) lfmt_="n"
@@ -229,12 +225,12 @@ module LIVE_t
      !
      ! Update the reference CPUT
      !
-     add_cpu_id=.true.
+     add_CPU_id=.true.
      if (present(CPU_ID)) then
-       add_cpu_id=CPU_ID
+       add_CPU_id=CPU_ID
      endif
      message_composed=trim(message)
-     if (ncpu/=1.and.add_cpu_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
+     if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
      endif
      add_cput=live_timing_is_on.and.master_thread
@@ -335,7 +331,7 @@ module LIVE_t
      ! Work Space
      !
      character(schlen)  :: xtch,etch
-     real(DP),parameter :: rts=5.
+     real(DP),parameter :: rts=5._DP
      real(DP) :: lts
      logical  :: time_report
      !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,6 @@ subroutine col_driver(bare_NG,q)
  !db.RIM file after some important checks and definitions.
  !	
  use pars,          ONLY:SP,schlen,pi
- use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
  use stderr,        ONLY:string_pack,intc,gen_fmt
@@ -58,7 +57,7 @@ subroutine col_driver(bare_NG,q)
 &                        bz_samp,q_norm,cutoff_presets
  use wave_func,     ONLY:wf_ng
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
- implicit none
+#include<memory.h>
  integer       :: bare_NG
  type(bz_samp) :: q
  !
@@ -76,8 +75,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Bare interaction
  !
- allocate(bare_qpg(nqibz,max(bare_NG,wf_ng)))
- call mem_est("bare_qpg",(/size(bare_qpg)/))
+ YAMBO_ALLOC(bare_qpg,(nqibz,max(bare_NG,wf_ng)))
  bare_qpg(1,1)=q_norm(1)
  do ig=2,max(bare_NG,wf_ng)
    bare_qpg(1,ig)=iku_v_norm(g_vec(ig,:))

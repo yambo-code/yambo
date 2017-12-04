@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
  ! Work Space 
  !
  integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is
- complex(SP)   ::elph_gkkp_expanded(k%nbz,ph_modes,elph_nb,elph_nb)
+ complex(SP)   ::elph_gkkp_expanded(ph_modes,elph_nb,elph_nb,k%nbz)
  !
  ! GKKP m.e. rotation. Procedure copied from ELPH_Sigma_c
  !
@@ -68,7 +68,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !                                 -------------------- --
          ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
          !
-         elph_gkkp_expanded(ik_bz,:,ob,ib)=conjg(elph_gkkp(ik_bz_gkkp,:,ib,ob))
+         elph_gkkp_expanded(:,ob,ib,ik_bz)=conjg(elph_gkkp(:,ib,ob,ik_bz_gkkp))
          !
        else
          ! 
@@ -78,7 +78,7 @@ subroutine ELPH_gkkp_expand(iq_bz,iq_s,k)
          !
          ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
          !
-         elph_gkkp_expanded(ik_bz,:,ib,ob)=elph_gkkp(ik_bz_gkkp,:,ib,ob)
+         elph_gkkp_expanded(:,ib,ob,ik_bz)=elph_gkkp(:,ib,ob,ik_bz_gkkp)
          !
        endif
        !

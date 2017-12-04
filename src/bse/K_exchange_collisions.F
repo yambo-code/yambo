@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -97,31 +97,43 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
        call scatter_Bamp(K_EXCH_collision)
        !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1,i_g2)
+#endif
        do i_g1=1,BS_n_g_exch
          if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
          if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
      else
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1,i_g2)
+#endif
        do i_g1=1,BS_n_g_exch
          i_g2=g_rot(sop_inv(i_s),i_g1)
          BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
          if (i_s>nsym/(i_time_rev+1)) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el))
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
      endif
    else
      !
      call scatter_Bamp(K_EXCH_collision)
      !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1)
+#endif
      do i_g1=1,BS_n_g_exch
        if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
        if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
      !
    endif
    !

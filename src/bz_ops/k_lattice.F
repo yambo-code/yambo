@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !  k_grid_b k_grid_dim k_grid k_grid_uc_vol
  !
  use pars,           ONLY:SP,schlen
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:v_norm,v_is_zero,cross_product,&
 &                         c2a,sort,rlu_v_norm
  use com,            ONLY:msg,warning
@@ -37,8 +36,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k,Xk
  integer      ::G_shell
  logical      ::be_verbose
@@ -62,8 +61,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  if (G_shell == 1) then
    !
-   allocate(Xk%pt(Xk%nibz,3))
-   call mem_est("Xk-pt",(/Xk%nibz*3/),(/SP/))
+   YAMBO_ALLOC(Xk%pt,(Xk%nibz,3))
    Xk%pt(:,:)=k%pt(:Xk%nibz,:)
    !
    ! IBZ -> BZ
@@ -91,7 +89,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  ! I extended the k-grid using a certain number of 
  ! RL vectors shells. (passed via G_shell)
  !
- allocate(extended_k_points(nXkbz*N_g_vecs,3))
+ YAMBO_ALLOC(extended_k_points,(nXkbz*N_g_vecs,3))
  N_ext_K_pts=0
  do ig=1,N_g_vecs
    call c2a(b,v_in=g_vec(ig,:),v_out=v1,mode='ki2a')
@@ -101,7 +99,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    enddo
  enddo
  !
- allocate(idist(N_ext_K_pts),order(N_ext_K_pts))
+ YAMBO_ALLOC(idist,(N_ext_K_pts))
+ YAMBO_ALLOC(order,(N_ext_K_pts))
  !
  min_idist=1.E10
  !
@@ -137,7 +136,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    enddo
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
- deallocate(idist)
+ YAMBO_FREE(idist)
  !
  k_grid_dim=0
  k_grid_b=0.
@@ -166,7 +165,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
        ! when a large set of k-points is used
        !
        if (abs(m3det(k_grid_b))/v_norm(k_grid_b(1,:))<1.E-5)then
-         k_grid_b(3,:)=0.
+         k_grid_b(3,:)=0._SP
          cycle
        endif
        k_grid_dim=3
@@ -175,7 +174,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
        exit
     end select
  enddo
- deallocate(order,extended_k_points)
+ YAMBO_FREE(order)
+ YAMBO_FREE(extended_k_points)
  k_grid=0
  k_grid(k_grid_dim+1:)=1
  !
@@ -319,7 +319,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
      real(SP) :: v1(3),v2(3),proj
      proj=0.
      if (v_is_zero(v2,zero_=k_rlu_zero)) return
-     proj=dot_product(v1,v2)/v_norm(v2)**2.
+     proj=dot_product(v1,v2)/v_norm(v2)**2
    end function
    !
 end function

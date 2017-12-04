@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,38 +21,39 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_mean_potential(ik,WFo)
+subroutine V_mean_potential(ik,i_sp_pol,WFo)
  !
  ! Here I implement Eq. 5 of PRL 80, 4265 (1998).
  !
- ! H_nl_sc(n,m,spin) = <n_o,spin| \Sigma |m_o,spin>
+ ! H_nl_sc(n,m) = <n_o| \Sigma |m_o>
  !
  ! SC_R(m,n) =  <m_o|n>
  !
  ! |n_o> is a bare (unpertirbed) state
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use wave_func,      ONLY:WAVEs
  use FFT_m,          ONLY:fft_size
- use SC,             ONLY:SC_R,SC_bands,H_nl_sc,V_mean
+ use hamiltonian,    ONLY:H_nl_sc,SC_R
+ use SC,             ONLY:SC_bands,V_mean
  use wrapper,        ONLY:M_by_M
  implicit none
  !
- integer     :: ik
+ integer     :: ik,i_sp_pol
  type(WAVEs) :: WFo
  !
  ! Work Space
  !
  integer    :: ib,ifft,ir,ibp
- complex(SP):: Sigma_times_R(SC_bands(2),SC_bands(2))
+ complex(SP):: Sigma_times_R(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
- Sigma_Times_R=(0._SP,0._SP)
+ Sigma_Times_R=cZERO
  !
  ! Sigma_times_R(n,m) = \sum _I <n|\Sigma|I> <I|m>
  !                               |        |     |
  !                               bare     bare  SC
  !
- call M_by_M('n','n',SC_bands(2),H_nl_sc(:,:,1),SC_R(:,:,ik,1),Sigma_times_R)
+ call M_by_M('n','n',SC_bands(2)-SC_bands(1)+1,H_nl_sc,SC_R(:,:,ik,i_sp_pol),Sigma_times_R)
  !
  ! V_m(r) = \sum_n <r|n> Sigma_times_R(n,m) /<r|m> * |<r|m>|²
  !
@@ -65,22 +66,22 @@ subroutine V_mean_potential(ik,WFo)
  !
  ! V_m(r) = \sum_n <r|n> Sigma_times_R(n,m) /<r|m> * |<r|m>|²
  !
- do ib=1,SC_bands(2)
+ do ib=SC_bands(1),SC_bands(2)
    !
-   V_mean(:,ib)=(0._SP,0._SP)
+   V_mean(:,ib)=cZERO
    !
-   do ibp=1,SC_bands(2)
+   do ibp=SC_bands(1),SC_bands(2)
      !
      ifft=WFo%index(ibp,ik,1)
      !
-     V_mean(:,ib)=V_mean(:,ib)+WFo%c(:,ifft)*Sigma_times_R(ibp,ib)
+     V_mean(:,ib)=V_mean(:,ib)+WFo%c(:,1,ifft)*Sigma_times_R(ibp,ib)
      !
    enddo
    !
    ifft=WFo%index(ib,ik,1)
    !
    do ir=1,fft_size
-     V_mean(ir,ib)=V_mean(ir,ib)/WFo%c(ir,ifft)
+     V_mean(ir,ib)=V_mean(ir,ib)/WFo%c(ir,1,ifft)
    enddo
    !
  enddo

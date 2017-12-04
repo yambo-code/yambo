@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -23,9 +23,14 @@
 !
 subroutine PARALLEL_structure(n_elements,ROLE)
  !
+ use pars,        ONLY:schlen
+ use stderr,      ONLY:intc
+ use com,         ONLY:error
  use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
-&                      ncpu_chain,mpi_comm_world
+&                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
+ use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
+&                      PAR_EH_range,PAR_n_G_vectors
  !
  implicit none
  !
@@ -34,8 +39,12 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  ! Work Space 
  !
- integer     ::i_err,ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
-&              tmp_comm_inter,tmp_comm_intra,i_structure
+ integer     ::ID(n_elements),i_cpu,i_chain,i_chain_lim(2),chain_now,i_order,&
+&              tmp_comm_inter,tmp_comm_intra,i_structure,PHASE_space
+ logical     ::USER_structure_is_ok
+ character(schlen) ::USER_structure_msg
+ !
+ USER_structure_is_ok=.TRUE.
  !
  if (ncpu==1) then
    INTRA_CHAIN(1)%n_CPU=1
@@ -62,15 +71,25 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    !
    ncpu_chain(i_chain)=1
    do i_structure = 1, PARALLEL_n_structures_active
-     if ( trim(PARALLEL_CPU_role(i_structure)) == trim(ROLE(i_order)) ) ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
+     if ( trim(PARALLEL_CPU_role(i_structure)) == trim(ROLE(i_order)) ) then
+       if (trim(ROLE(i_order))=="g" ) PHASE_space=PAR_n_G_vectors
+       if (trim(ROLE(i_order))=="k" ) PHASE_space=PAR_K_range
+       if (trim(ROLE(i_order))=="q" ) PHASE_space=PAR_Q_range(2)-PAR_Q_range(1)+1
+       if (trim(ROLE(i_order))=="qp") PHASE_space=PAR_QP_range
+       if (trim(ROLE(i_order))=="eh") PHASE_space=PAR_EH_range
+       if (trim(ROLE(i_order))=="b" ) PHASE_space=PAR_n_bands(2)-PAR_n_bands(1)+1
+       if (trim(ROLE(i_order))=="c" ) PHASE_space=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
+       if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+       if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
+         USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
+&                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
+         call error('USER parallel structure does not fit the current run parameters: '//trim(USER_structure_msg))
+       endif
+       ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
+     endif
    enddo
    !
  enddo
- !
- !do ir = 1, n_elements
- !  if(role_cpu(ir)==1) cycle
- !  nchains_group(2)=nchains_group(2)+1
- !enddo
  !
  ! I need to define: ID,chain_order,my_chain=ID(1+i_chain),n_CPU
  !
@@ -105,14 +124,8 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  do i_chain=i_chain_lim(2),i_chain_lim(1),-1
    i_order=i_chain-nchains_group(chain_now)+1
    !
-   call MPI_COMM_SPLIT(tmp_comm_intra,INTRA_CHAIN(i_chain)%my_CHAIN,myid,INTRA_CHAIN(i_chain)%COMM,i_err)
+   call CREATE_the_COMM(tmp_comm_intra,INTRA_CHAIN(i_chain),myid)
    tmp_comm_intra = INTRA_CHAIN(i_chain)%COMM
-   !
-   call MPI_COMM_RANK(INTRA_CHAIN(i_chain)%COMM,INTRA_CHAIN(i_chain)%CPU_id,i_err)
-   !
-   INTER_CHAIN(i_chain)%my_CHAIN=INTRA_CHAIN(i_chain)%my_CHAIN
-   INTER_CHAIN(i_chain)%n_CPU=ncpu/product(ncpu_chain(i_chain_lim(1):i_chain))
-   INTER_CHAIN(i_chain)%chain_order=i_order
    !
  enddo
  !
@@ -122,10 +135,12 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  do i_chain=i_chain_lim(1),i_chain_lim(2)
    !
-   call MPI_COMM_SPLIT(tmp_comm_inter,INTRA_CHAIN(i_chain)%CPU_id,myid,INTER_CHAIN(i_chain)%COMM,i_err)
-   tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
+   INTER_CHAIN(i_chain)%my_CHAIN   =INTRA_CHAIN(i_chain)%CPU_id
+   INTER_CHAIN(i_chain)%n_CPU      =ncpu/product(ncpu_chain(i_chain_lim(1):i_chain))
+   INTER_CHAIN(i_chain)%chain_order=i_order
    !
-   call MPI_COMM_RANK(INTER_CHAIN(i_chain)%COMM,INTER_CHAIN(i_chain)%CPU_id,i_err)
+   call CREATE_the_COMM(tmp_comm_inter,INTER_CHAIN(i_chain),myid)
+   tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
  !

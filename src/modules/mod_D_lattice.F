@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,9 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen
+ use pars,      ONLY:SP,lchlen,cONE,cZERO,cI
  !
- implicit none
+#include<memory.h>
  !
  ! Non periodic directions
  !
@@ -52,6 +52,13 @@ module D_lattice
  complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
+ !
+ ! Pauli matrices
+ !
+ complex(SP), dimension(2,2), parameter :: sigma_0=reshape((/ cONE , cZERO, cZERO, cONE /),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
  !
  ! Cell & atoms
  !
@@ -88,7 +95,6 @@ module D_lattice
      !
      use pars,           ONLY:SP,IP
      use com,            ONLY:error,msg
-     use memory_m,       ONLY:mem_est
      !
      character(*) :: msg_where
      !
@@ -97,12 +103,10 @@ module D_lattice
      integer  :: i1,i2,i3
      real(SP) :: m(3,3)
      !
-     if (allocated(sop_tab)) then
-       deallocate(sop_tab,sop_inv)
-       call mem_est("SYMtable SYMinv")
-     endif
-     allocate(sop_tab(nsym,nsym),sop_inv(nsym))
-     call mem_est("SYMtable SYMinv",(/3*3*nsym,nsym**2+nsym/),(/SP,IP/))
+     YAMBO_FREE(sop_tab)
+     YAMBO_FREE(sop_inv)
+     YAMBO_ALLOC(sop_tab,(nsym,nsym))
+     YAMBO_ALLOC(sop_inv,(nsym))
      sop_tab=0
      sop_inv=0
      do i1=1,nsym

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,18 +24,25 @@
 integer function io_QINDX(Xk,q,io_db)
  !
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
-&                         bse_scattering,qp_states_k,nXkibz,qindx_alloc,&
+&                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
- implicit none
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+#include<memory.h>
  type(bz_samp)::q,Xk
  integer      ::io_db
  !
  ! Work Space
  !
  integer      :: ioScatt
+ !
+#if defined _TIMING
+ call timing('io_QINDX',OPR='start')
+#endif
  !
  io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
@@ -57,7 +64,7 @@ integer function io_QINDX(Xk,q,io_db)
    call io_elemental(io_db,&
 &       VAR=" Polarization last K   :",I0=nXkibz)
    call io_elemental(io_db,&
-&       VAR=" QP states             :",I1=qp_states_k,CHECK=.true.,OP=(/">=","<="/))
+&       VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
    call io_elemental(io_db,&
@@ -85,12 +92,14 @@ integer function io_QINDX(Xk,q,io_db)
  if (any((/io_sec(io_db,:)==2/))) then
    !
    if(ioScatt==0) then
-     if (read_is_on(io_db)) allocate(q%pt(q%nibz,3))
+     if (read_is_on(io_db)) then
+       YAMBO_ALLOC(q%pt,(q%nibz,3))
+     endif
      call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
      call io_bulk(io_db,R2=q%pt)
    else
      if(.not.allocated(q_pt)) then
-       allocate(q_pt(nqibz,3))
+       YAMBO_ALLOC(q_pt,(nqibz,3))
        call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
        call io_bulk(io_db,R2=q_pt)
      endif
@@ -145,5 +154,9 @@ integer function io_QINDX(Xk,q,io_db)
  endif
  !
 1 call io_disconnect(ID=io_db)
+ !
+#if defined _TIMING
+ call timing('io_QINDX',OPR='stop')
+#endif
  !
 end function

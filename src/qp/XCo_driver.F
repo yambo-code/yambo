@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,14 +35,14 @@ subroutine XCo_driver(E,k,Xk,q)
  use QP_m,          ONLY:QP_table,QP_Vxc,QP_Vnl_xc,QP_n_states,Vxc_kind,Vnlxc_kind,&
 &                        XCo_Hartree_Fock,QP_t,QP_nb,QP_nk,QP_reset,&
 &                        report_Vnlxc,report_Sc,report_dSc
- use memory_m,      ONLY:mem_est
+ use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
 #if defined _SC
- use global_XC,     ONLY:WF_kind,SC_FOCK,SC_HARTREE,SC_COHSEX,SC_COH,SC_SEX,SC_EXX,SC_EXXC,SC_SRPA
+ use global_XC,     ONLY:WF_kind,H_SE_FOCK,H_SE_HARTREE,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXX,H_SE_EXXC,H_SE_SRPA
 #endif
  !
- implicit none
+#include<memory.h>
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  !
@@ -74,7 +74,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (l_acfdt)   sec_mode_and_message(1)='p'
  l_local=.true.
 #if defined _SC
- l_local=.not.l_sc_run.and.(WF_kind/=SC_FOCK.and.WF_kind/=SC_FOCK+SC_HARTREE)
+ l_local=.not.l_sc_run.and.(WF_kind/=H_SE_FOCK.and.WF_kind/=H_SE_FOCK+H_SE_HARTREE)
 #endif
  if(l_local) call section(trim(sec_mode_and_message(1)),trim(sec_mode_and_message(2)))
  !
@@ -89,23 +89,20 @@ subroutine XCo_driver(E,k,Xk,q)
  ! Allocation
  !
  if (.not.allocated(QP_Vnl_xc)) then
-   allocate(QP_Vnl_xc(QP_n_states))
-   call mem_est("QP_Vnl_xc",(/QP_n_states/))
+   YAMBO_ALLOC(QP_Vnl_xc,(QP_n_states))
  endif
  if (.not.allocated(QP_Vxc)) then
-   allocate(QP_Vxc(QP_n_states))
-   call mem_est("QP_Vxc",(/QP_n_states/))
+   YAMBO_ALLOC(QP_Vxc,(QP_n_states))
  endif
  if (.not.allocated(QP_Vnl_sex).and.l_screen_hyb) then
-   allocate(QP_Vnl_sex(QP_n_states))
-   call mem_est("QP_Vnl_sex",(/QP_n_states/))
+   YAMBO_ALLOC(QP_Vnl_sex,(QP_n_states))
  endif
  QP_Vnl_xc=cZERO
  QP_Vxc=cZERO
  if (l_screen_hyb) QP_Vnl_sex=cZERO
  !
 #if defined _SC
- if (l_sc_run .and. (WF_kind==SC_FOCK.or.WF_kind==SC_HARTREE+SC_FOCK)) return
+ if (l_sc_run .and. (WF_kind==H_SE_FOCK.or.WF_kind==H_SE_HARTREE+H_SE_FOCK)) return
 #endif
  !
  ! Main DB I/O
@@ -145,7 +142,7 @@ subroutine XCo_driver(E,k,Xk,q)
    ! XCo=EXXC      => QP_Vnl_xc=HF           & QP_Vxc= EXXc
    ! XCo=SRPA      => QP_Vnl_xc=HF-QP_COHSEX & QP_Vxc= SRPA
    !
-   if (WF_kind==SC_COHSEX.or.WF_kind==SC_COH.or.WF_kind==SC_SEX) call QP_load_SC_xc()
+   if (WF_kind==H_SE_COHSEX.or.WF_kind==H_SE_COH.or.WF_kind==H_SE_SEX) call QP_load_SC_xc()
    !
 #endif
    !
@@ -156,16 +153,16 @@ subroutine XCo_driver(E,k,Xk,q)
  if (.not.l_sc_run.and..not.l_real_time) then
    !
 #if defined _SC
-   if( WF_kind/=SC_COHSEX .and. WF_kind/=SC_COH .and. WF_kind/=SC_SEX ) call XCo_local(E,Xk)
+   if( WF_kind/=H_SE_COHSEX .and. WF_kind/=H_SE_COH .and. WF_kind/=H_SE_SEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
-     deallocate(QP_Vnl_sex)
+     YAMBO_FREE(QP_Vnl_sex)
    endif
-# endif
+#endif
    !
  endif
  !
@@ -183,21 +180,20 @@ subroutine XCo_driver(E,k,Xk,q)
        Vxc_kind='LDA'
      elseif  (WF_kind < 200) then
        Vxc_kind='GGA'
-     elseif  (WF_kind == SC_EXX) then
+     elseif  (WF_kind == H_SE_EXX) then
        Vxc_kind='OEP-EXX'
-     elseif  (WF_kind == SC_EXXC) then
+     elseif  (WF_kind == H_SE_EXXC) then
        Vxc_kind='OEP-EXX+C'
-     elseif  (WF_kind == SC_SRPA) then
+     elseif  (WF_kind == H_SE_SRPA) then
        Vxc_kind='OEP-SRPA'
      else
        Vxc_kind='none'
      endif
-     
-     if (WF_kind == SC_COHSEX) then 
+     if (WF_kind == H_SE_COHSEX) then 
        Vnlxc_kind='HF-QP_COHSEX'
-     else if (WF_kind == SC_COH) then 
+     else if (WF_kind == H_SE_COH) then 
        Vnlxc_kind='HF-QP_COH'
-     else if (WF_kind == SC_SEX) then 
+     else if (WF_kind == H_SE_SEX) then 
        Vnlxc_kind='HF-QP_SEX'
      else
        Vnlxc_kind='HF'
@@ -219,7 +215,8 @@ subroutine XCo_driver(E,k,Xk,q)
      report_Vnlxc=.TRUE.
      report_dSc=.FALSE.
      !
-     allocate(qp%E(qp%n_states),qp%E_bare(qp%n_states))
+     YAMBO_ALLOC(qp%E,(qp%n_states))
+     YAMBO_ALLOC(qp%E_bare,(qp%n_states))
      !
      ik=QP_table(1,3)
      call msg('nr','XC '//trim(Vnlxc_kind)//' and '//trim(Vxc_kind)//' [eV] @ K ['//trim(intc(ik))//'] (iku):',k%pt(ik,:))
@@ -274,7 +271,7 @@ subroutine XCo_driver(E,k,Xk,q)
      ! Direct GAP
      !
      call section('+',trim(Vnlxc_kind)//' occupations report')
-     call REPORT_Occupations(E_dummy)
+     call REPORT_Occupations(trim(Vnlxc_kind),E_dummy)
      !
      ! Output 
      !
@@ -286,7 +283,8 @@ subroutine XCo_driver(E,k,Xk,q)
      !
      ! Clean up
      !
-     deallocate(qp%E,qp%E_bare)
+     YAMBO_FREE(qp%E)
+     YAMBO_FREE(qp%E_bare)
      call E_reset(E_dummy)
      call QP_reset(qp)
      !

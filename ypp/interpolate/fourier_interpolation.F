@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -24,12 +24,11 @@
 subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,pi,cI,cZERO,DP
-  use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
+  use interpolate,    ONLY:nshells,lattice_vectors,make_star,int_sop
   use R_lattice,      ONLY:bz_samp
   use D_lattice,      ONLY:nsym
   use vec_operate,    ONLY:c2a
-  use memory_m,       ONLY:mem_est
-  implicit none
+#include<memory.h>
   !
   integer,intent(in)        :: nvalues
   integer,intent(in)        :: Nk
@@ -44,8 +43,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   real(SP) :: star_vec(3,nsym),v(3)
   complex(SP), allocatable :: star(:,:)
   !
-  allocate (star(nshells,Nk))
-  call mem_est("star",(/size(star)/),(/SP/))
+  YAMBO_ALLOC(star,(nshells,Nk))
   !
   ! Make stars
   !
@@ -67,7 +65,6 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
     enddo
   enddo
   !
-  deallocate (star)
-  call mem_est("star")
+  YAMBO_FREE(star)
   !
 end subroutine fourier_interpolation

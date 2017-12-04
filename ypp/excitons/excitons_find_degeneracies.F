@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -27,18 +27,19 @@ subroutine excitons_find_degeneracies(BS_E,BS_E_degs)
  use com,           ONLY:msg
  use vec_operate,   ONLY:sort
  use BS,            ONLY:BS_H_dim
+ use BS_solvers,    ONLY:BSS_n_eig
  use YPP,           ONLY:deg_energy
  !
  implicit none
  !
- complex(SP)   :: BS_E(BS_H_dim)
- integer       :: BS_E_degs(BS_H_dim)
+ complex(SP)   :: BS_E(BSS_n_eig)
+ integer       :: BS_E_degs(BSS_n_eig)
  !
  ! Work space
  !
  integer :: j1,j2
- integer :: S_indx(BS_H_dim)
- real(SP):: v2sort(BS_H_dim)
+ integer :: S_indx(BSS_n_eig)
+ real(SP):: v2sort(BSS_n_eig)
  !
  call msg('s',':: Sorting energies')
  !==================================
@@ -48,13 +49,13 @@ subroutine excitons_find_degeneracies(BS_E,BS_E_degs)
  !
  BS_E_degs=0
  !
- do j1=1,BS_H_dim
+ do j1=1,BSS_n_eig
    !
    if (BS_E_degs(S_indx(j1))>0) cycle
    !
    BS_E_degs(S_indx(j1))=S_indx(j1)
    !
-   do j2=j1+1,BS_H_dim
+   do j2=j1+1,BSS_n_eig
      if ( abs( real(BS_E(S_indx(j1)))-real(BS_E(S_indx(j2))) )>deg_energy) exit
      BS_E_degs(S_indx(j2))=S_indx(j1)
    enddo

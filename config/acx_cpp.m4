@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -23,8 +23,6 @@
 #
 AC_DEFUN([ACX_CPP],
 [
-AC_ARG_VAR(FCCPP,Fortran preprocessor)
-if test -z "$FCCPP" ; then FCCPP="cpp -E -P -ansi"; fi
 #
 case "${CPP}" in
  *icc* )
@@ -71,7 +69,8 @@ case "${CPP}" in
     ;;
 esac
 #
-AC_MSG_NOTICE([testing preprocessor $CPP $CPPFLAGS])
+#
+AC_MSG_NOTICE([testing C-preprocessor $CPP $CPPFLAGS])
 #
 # TESTS
 #=======
@@ -83,7 +82,7 @@ CPP_TESTS_PASSED=yes
 AC_LANG(C)
 #
 acx_C_ok=no
-AC_MSG_CHECKING([if precompiler works on C source])
+AC_MSG_CHECKING([if C precompiler works on C source])
 AC_PREPROC_IFELSE([
  AC_LANG_SOURCE([
  #if defined _C_US
@@ -95,45 +94,16 @@ AC_PREPROC_IFELSE([
  [acx_C_ok=yes],[CPP_TESTS_PASSED=no])
 AC_MSG_RESULT([$acx_C_ok])
 #
-# Fortran Source
-#
-acx_F90_ok=yes
-AC_MSG_CHECKING([if precompiler works on F90 source])
-cat > conftest.F << EOF_
- program conftest
- character (1) :: a
- a="a"
- write (*,'('//a//')') 'hello'
- end program
-EOF_
-# ! Replace "S" with "\" and find the max length of
-(eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX}) 2> conftest.er1
-
-if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`"  ; then 
- eval $CPP $CPPFLAGS conftest.F > conftest.${F90SUFFIX} 
- eval $FC $FCFLAGS -c conftest.${F90SUFFIX} 2> conftest.er2 >&5
- if test -s conftest.er2 ; then 
-  if ! test -n "`grep successful conftest.er2`"  ; then 
-   acx_F90_ok=no ; 
-   CPP_TESTS_PASSED=no;
-  fi
- fi 
-else
- acx_F90_ok=no ; 
- CPP_TESTS_PASSED=no
-fi 
-AC_MSG_RESULT([$acx_F90_ok])
-#
 if test "x$CPP_TESTS_PASSED" = xno ; then
-  AC_MSG_ERROR(Found precompiler problems in processing the F90/C source.);
+  AC_MSG_ERROR(Found C precompiler problems in processing C source.);
 fi
 #
 # AS CPPFLAGS are used (dunno why) in the MPI check of MPICC
-# we need to rename the CPP precompiler in C_AS_CPP
-C_AS_CPP=$CPP
-C_AS_CPP_FLAGS=$CPPFLAGS
+# we need to rename the CPPFLAGS as CPPFLAGS_yambo
+
+CPPFLAGS_yambo=$CPPFLAGS
 CPPFLAGS=""
-AC_SUBST(C_AS_CPP)
-AC_SUBST(C_AS_CPP_FLAGS)
-AC_SUBST(FCCPP)
+#
+AC_SUBST(CPPFLAGS_yambo)
+#
 ])

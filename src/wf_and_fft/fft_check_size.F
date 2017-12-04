@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -77,7 +77,7 @@ subroutine fft_check_size(iGo_max,NG_xc,NG_H)
    else
      NG_H=ng_in_shell(i_shell-1)
      call warning(' Hartree S/K FFT size is too big. NG_H reduced: '//trim(intc(NG_H_save))//' --> '//trim(intc(NG_H)))
-     call warning(' Bigger FFT discarded to avid slow XC S/K computation.')
+     call warning(' Bigger FFT discarded to avoid slow XC S/K computation.')
    endif
    !
  endif

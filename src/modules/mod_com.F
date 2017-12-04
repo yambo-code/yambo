@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,       ONLY:lchlen,SP,schlen
+ use pars,       ONLY:lchlen,SP,schlen,nofs,max_open_ofs,n_max_jobstr
  use stderr,     ONLY:gen_fmt
  !
  implicit none
@@ -43,7 +43,6 @@ module com
  !
  ! JOB strings
  !
- integer, parameter :: n_max_jobstr=10
  integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
  character(lchlen)  :: alt_jobstr(n_max_jobstr)
@@ -56,8 +55,6 @@ module com
  ! 
  ! Output Files/Report File
  !
- integer,parameter  :: nofs=400
- integer,parameter  :: max_open_ofs=400
  integer, parameter :: num_of_alternative_locations=4+2*n_max_jobstr
  character(lchlen)  :: of(nofs)
  character(lchlen)  :: opened_of(max_open_ofs)
@@ -351,7 +348,8 @@ module com
      ch=name
      do while (file_exists(ch))
        i1=i1+1
-       write (ch,'(2a,i2.2)') trim(name),'_',i1
+       if (i1< 99) write (ch,'(2a,i2.2)') trim(name),'_',i1
+       if (i1> 99) write (ch,'(2a,i3.3)') trim(name),'_',i1
      enddo
      name=ch
    end subroutine
@@ -367,7 +365,10 @@ module com
    subroutine error(mesg)
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:string_pack
-     use parallel_m, ONLY:MPI_shutdown
+#if defined _MPI
+     use parallel_m, ONLY:mpi_comm_world,ncpu
+     integer         :: ierr
+#endif
      character(*)    :: mesg
      !
      live_timing_is_on=.FALSE.
@@ -380,7 +381,10 @@ module com
      call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
      !
-     call MPI_shutdown( ) 
+#if defined _MPI
+     if(ncpu>1) call MPI_Abort(mpi_comm_world,ierr,1)
+#endif
+     stop
      !
    end subroutine
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,8 @@
 !
 subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
- use pars,          ONLY:SP,IP,pi,cONE,cZERO
+ use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
@@ -45,10 +44,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
- use global_XC,     ONLY:QP_DB_kind,SE_COHSEX,SE_GoWo_PPA,SE_GoWo,SE_GWo_PPA,SE_GWo,SE_POLARON,SE_GW_QED
+ use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
+&                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED
  use interfaces,    ONLY:eval_G_minus_G
- use parallel_m,    ONLY:PAR_COM_WORLD
- implicit none
+ use parallel_m,    ONLY:PAR_COM_WORLD,PAR_IND_WF_linear
+#include<memory.h>
  !
  type(levels) ::en,Xen
  type(bz_samp)::Xk,k,q
@@ -126,11 +126,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  if (l_ppa) then
    qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
    !
-   QP_DB_kind=SE_GoWo_PPA
+   QP_DB_kind=QP_SE_GoWo_PPA
    !
    ! GPL_EXCLUDE_START
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
    !
@@ -142,7 +142,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    qp%description(2)=' == COHSEX GW =='
    !
-   QP_DB_kind=SE_COHSEX
+   QP_DB_kind=QP_SE_COHSEX
    !
  else
    !
@@ -153,15 +153,15 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
    !
-   QP_DB_kind=SE_GoWo
+   QP_DB_kind=QP_SE_GoWo
    !
-   if (l_elph_corr) QP_DB_kind=SE_POLARON 
+   if (l_elph_corr) QP_DB_kind=QP_SE_POLARON 
    !
-   if (l_elphoton_corr) QP_DB_kind=SE_GW_QED
+   if (l_elphoton_corr) QP_DB_kind=QP_SE_GW_QED
    !
    ! GPL_EXCLUDE_START
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=SE_GWo_PPA
+   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
    !
    ! GPL_EXCLUDE_END
    !
@@ -207,7 +207,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    ! has been added already
    !
    qp%E_bare(i1)=en%E(QP_table(i1,1),QP_table(i1,3),i_spin)
-   if (associated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
+   if (allocated(en%Eo)) qp%E_bare(i1)=en%Eo(QP_table(i1,1),QP_table(i1,3),i_spin)
    !
    qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
    !
@@ -253,8 +253,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
        endif
        !
        if (use_GreenF_Zoom) then
-         allocate(QP_G_zoom_er(QP_n_states,2))
-         call mem_est("QP_G_zoom_er",(/size(QP_G_zoom_er)/),(/SP/))
+         YAMBO_ALLOC(QP_G_zoom_er,(QP_n_states,2))
        else
          QP_G_Zoom_treshold=0._SP
        endif
@@ -278,7 +277,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  call QP_descriptions(qp,X,Xw,.TRUE.)
  !
- call mem_est("QP_Sc",(/size(QP_Sc)/))
  !
  ! Solvers 
  !=========
@@ -352,13 +350,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    !
    subroutine local_alloc()
      !
-     allocate(qp%Z(qp%n_states),qp%E(qp%n_states),&
-&             qp%E_bare(qp%n_states),&
-&             qp%k(qp%nk,3),qp%table(qp%n_states,3+n_sp_pol-1))
+     YAMBO_ALLOC(qp%Z,(qp%n_states))
+     YAMBO_ALLOC(qp%E,(qp%n_states))
+     YAMBO_ALLOC(qp%E_bare,(qp%n_states))
+     YAMBO_ALLOC(qp%k,(qp%nk,3))
+     YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      !
-     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table",&
-&        (/QP_n_states,QP_n_states,QP_n_states,3*qp%nk,QP_n_states*(3+n_sp_pol-1)/),&
-&        (/2*SP,       2*SP,       SP,         SP,           IP/))
      qp%table=QP_table
      qp%E=cZERO
      qp%k=0._SP
@@ -375,65 +372,51 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
      !
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
-     allocate(QP_Sc(QP_n_states,QP_Sc_steps))
-     call mem_est("QP_Sc",(/size(QP_Sc)/))
+     YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
      !
 #if defined _ELPH
      if (l_elph_corr) then
-       allocate(QP_OMS_Fan(QP_n_states))
-       call mem_est("QP_OMS_Fan",(/size(QP_OMS_Fan)/))
-       allocate(QP_DW(QP_n_states))
-       call mem_est("QP_DW",(/size(QP_DW)/))
+       YAMBO_ALLOC(QP_OMS_Fan,(QP_n_states))
+       YAMBO_ALLOC(QP_DW,(QP_n_states))
      endif
 #endif
      !
      if (trim(QP_solver)=='g') then
-       allocate(qp%GreenF(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_GreenF",(/size(qp%GreenF)/))
-       allocate(qp%S_total(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_S_total",(/size(qp%S_total)/))
-       allocate(qp%GreenF_W(QP_n_states,QP_Sc_steps))
-       call mem_est("qp_GreenF_W",(/size(qp%GreenF_W)/))
+       YAMBO_ALLOC(qp%GreenF,(QP_n_states,QP_Sc_steps))
+       YAMBO_ALLOC(qp%S_total,(QP_n_states,QP_Sc_steps))
+       YAMBO_ALLOC(qp%GreenF_W,(QP_n_states,QP_Sc_steps))
        qp%GreenF_n_steps=QP_Sc_steps
-       allocate(QP_G_amplitude_integral(QP_n_states))
-       call mem_est("QP_G_amplitude_integral",(/size(QP_G_amplitude_integral)/))
-       allocate(QP_G_info(QP_n_states,3,2))
-       call mem_est("QP_G_info",(/size(QP_G_info)/))
-     else if (.not.l_life) then
-       allocate(QP_dSc(qp%n_states,QP_dSc_steps-1))
-       call mem_est("QP_dSc",(/size(QP_dSc)/))
+       YAMBO_ALLOC(QP_G_amplitude_integral,(QP_n_states))
+       YAMBO_ALLOC(QP_G_info,(QP_n_states,3,2))
+     else if (.not.l_life.and.QP_dSc_steps>1) then
+       YAMBO_ALLOC(QP_dSc,(qp%n_states,QP_dSc_steps-1))
      endif
      !
    end subroutine
    !
    subroutine local_free()
-     deallocate(qp%Z,qp%E,qp%E_bare,qp%k,qp%table,QP_table,QP_state)
+     YAMBO_FREE(PAR_IND_WF_linear%element_2D)
+     YAMBO_FREE(qp%Z)
+     YAMBO_FREE(qp%E)
+     YAMBO_FREE(qp%E_bare)
+     YAMBO_FREE(qp%k)
+     YAMBO_FREE(qp%table)
+     YAMBO_FREE(QP_table)
+     YAMBO_FREE(QP_state)
 #if defined _ELPH
-     if (allocated(QP_DW))          deallocate(QP_DW)
-     if (allocated(QP_OMS_Fan))     deallocate(QP_OMS_Fan)
+     YAMBO_FREE(QP_DW)
+     YAMBO_FREE(QP_OMS_Fan)
 #endif
-     if (allocated(QP_Sc))          deallocate(QP_Sc)
-     if (allocated(QP_dSc))         deallocate(QP_dSc)
-     if (allocated(QP_Vnl_xc))      deallocate(QP_Vnl_xc,QP_Vxc)
-     if (associated(qp%GreenF)) then
-       deallocate(qp%GreenF)
-       nullify(qp%GreenF)
-     endif
-     if (associated(qp%GreenF_W)) then
-       deallocate(qp%GreenF_W)
-       nullify(qp%GreenF_W)
-     endif
-     if (associated(qp%S_total))  then
-       deallocate(qp%S_total)
-       nullify(qp%S_total)
-     endif
-     if (allocated(QP_G_info)) deallocate(QP_G_info)
-     if (allocated(QP_G_amplitude_integral)) deallocate(QP_G_amplitude_integral)
-     if (allocated(QP_G_zoom_er))  deallocate(QP_G_zoom_er)
-     call mem_est("QP_G_amplitude_integral")
-     call mem_est("QP_Sc QP_dSc qp_GreenF QP_Vnl_xc QP_Vxc qp_GreenF_W QP_G_zoom_er")
-     call mem_est("qp_Z qp_E qp_E_bare qp_K qp_table QP_table QP_state qp_S_total")
-     call mem_est("QP_DW QP_OMS_Fan")
+     YAMBO_FREE(QP_Sc)
+     YAMBO_FREE(QP_dSc)
+     YAMBO_FREE(QP_Vnl_xc)
+     YAMBO_FREE(QP_Vxc)
+     YAMBO_FREE(qp%GreenF)
+     YAMBO_FREE(qp%GreenF_W)
+     YAMBO_FREE(qp%S_total)
+     YAMBO_FREE(QP_G_info)
+     YAMBO_FREE(QP_G_amplitude_integral)
+     YAMBO_FREE(QP_G_zoom_er)
    end subroutine
    !
 end subroutine

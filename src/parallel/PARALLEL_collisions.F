@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,6 +40,23 @@ subroutine PARALLEL_collisions( k, COLL )
  !      | 
  !      .-->-- n',k
  !      
+ ! "SC"="q.qp.b" 
+ !  
+ !   "q"   -> q 
+ !   "qp"  -> QP (k,n,n')  
+ !   "b"   -> m and PAR_IND_Bp_mat (this second is for the COLLISIONS case)
+ !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
  ! "SC"="q.qp.b" 
  !  
  !   "q"   -> q 
@@ -90,6 +107,21 @@ subroutine PARALLEL_collisions( k, COLL )
  !   "q"   -> q (BZ)
  !   "qp"  -> Bp_mat (m,m')
  !
+ ! Local XC
+ !==========
+ !                        _ \ _
+ !                       /  /  \
+ !              G_p{n,m}|       | p
+ !                       \_ _ _/
+ !                          | 
+ !                          | W
+ !                          |
+ !    (n,k)------>----------.---------->----(n',k)
+ !
+ !   "k.b" -> (k,n,n')  
+ !   "q"   -> q_fake (to span the "p= k-q")
+ !   "qp"  -> Bp_mat (m,m')
+ !
  ! e-photon correlation 
  !======================
  !
@@ -111,11 +143,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !.........................................................................
  !
  use interfaces,    ONLY:PARALLEL_live_message
- use collision,     ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
- implicit none
+#include<memory.h>
  !
  type(bz_samp)          :: k
  type(COLLISIONS_group) :: COLL
@@ -126,10 +158,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  if ( COLL%N == 0 ) return
  !
- allocate(COLL%PAR_map(COLL%N),COLL%PAR_IND%element_1D(COLL%N)) 
+ YAMBO_ALLOC(COLL%PAR_map,(COLL%N))
+ YAMBO_ALLOC(COLL%PAR_IND%element_1D,(COLL%N))
  !
- if (.not.associated(PAR_IND_G_k%element_1D) ) then
-   allocate(PAR_IND_G_k%element_1D(k%nibz))
+ if (.not.allocated(PAR_IND_G_k%element_1D) ) then
+   YAMBO_ALLOC(PAR_IND_G_k%element_1D,(k%nibz))
    PAR_IND_G_k%element_1D=.FALSE.
  endif
  COLL%PAR_IND%element_1D=.FALSE.

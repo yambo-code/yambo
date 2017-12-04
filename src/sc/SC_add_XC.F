@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,8 +37,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use SC,             ONLY:V_xc_sc,l_sc_V_is_local,SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         SC_bands,SC_R,H_rotate,l_oep_iterative,l_sc_XC_is_local
+ use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,SC_R
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,&
+&                         SC_bands,H_rotate,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -60,29 +61,29 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  type(QP_t)   :: qp_dummy
  !
- if (.not.l_sc_V_is_local) then
+ ! Fock/SEX/Hartree + COH
+ !=======================
+ !
+ if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
+   !     
+   G_sex=cZERO
+   forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
+   G_coh=cZERO
+   forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_coh(ib,ib,ik)=cI
    !
-   ! Fock/SEX/Hartree + COH
-   !=======================
+   ! Now I build the G_collisions rotating the non interaction one
+   ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
    !
-   if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
-     !     
-     G_sex=cZERO
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
-     G_coh=cZERO
-     forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_coh(ib,ib,ik)=cI
-     !
-     ! Now I build the G_collisions rotating the non interaction one
-     ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
-     !
-     do ik=1,E%nk
-       call H_rotate(SC_R(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
-       call H_rotate(SC_R(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
-     enddo
-     !
-     call COLLISIONS_compose_sc(G_sex,G_coh)
-     !    ==========
-   else
+   do ik=1,E%nk
+     call H_rotate(SC_R(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
+     call H_rotate(SC_R(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
+   enddo
+   !
+   call COLLISIONS_compose_sc(G_sex,G_coh)
+   !
+ else
+   !
+   if (.not.l_sc_V_is_local) then
      !
      call QP_reset(qp_dummy)
      !
@@ -98,40 +99,39 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      !
      call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !
+   else if (l_sc_XC_is_local) then
+     !
+     if (.not.l_oep_iterative) V_xc_sc=0._SP
+     !
+     ! GPL_EXCLUDE_START
+     !
+     ! OEP's
+     !=======
+     !
+     if (l_sc_exx.or.l_sc_srpa) call OEP_driver(X,Xw(2),E,k,q,V_xc_sc)
+     !
+     ! GPL_EXCLUDE_END
+     !
+     ! DFT-like 
+     !==========
+     !
+     if (l_sc_is_libDFT) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1)
+     !
+     if (l_sc_is_libDFT.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
+     if (l_sc_is_libDFT.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
+     !
+     ! Mixing 
+     !========
+     !
+     ! WARNING:
+     ! The mixing of the potential has been eliminated for HF and COHSEX, for
+     ! V_xc_sc case tests are needed.
+     ! 
+     if (iteration>1.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1._SP-SC_cycle_mixing)*V_xc_nm1
+     !
+     V_xc_nm1=V_xc_sc
+     !
    endif
-   !
- else if (l_sc_XC_is_local) then
-   !
-   if (.not.l_oep_iterative) V_xc_sc=0._SP
-   !
-   ! GPL_EXCLUDE_START
-   !
-   ! OEP's
-   !=======
-   !
-   if (l_sc_exx.or.l_sc_srpa) call OEP_driver(X,Xw(2),E,k,q,V_xc_sc)
-   !
-   ! GPL_EXCLUDE_END
-   !
-   ! DFT-like 
-   !==========
-   !
-   if (l_sc_is_libDFT) call XC_potential_driver(E,Xk,SC_kind,SC_xc_functional,1,&
-&                                                  MUTE="+report +log +io_in +io_out",unMUTE=master_cpu)
-   !
-   if (l_sc_is_libDFT.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)
-   if (l_sc_is_libDFT.and.     (l_sc_exx.or.l_sc_srpa)) V_xc_sc(:,:)=V_xc(:,:)+V_xc_sc(:,:)
-   !
-   ! Mixing 
-   !========
-   !
-   ! WARNING:
-   ! The mixing of the potential has been eliminated for HF and COHSEX, for
-   ! V_xc_sc case tests are needed.
-   ! 
-   if (iteration>1.and..not.(l_sc_exx.or.l_sc_srpa)) V_xc_sc = SC_cycle_mixing*V_xc_sc + (1.-SC_cycle_mixing)*V_xc_nm1 
-   !
-   V_xc_nm1=V_xc_sc
    !
  endif
  !

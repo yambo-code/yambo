@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -35,12 +35,11 @@ subroutine eval_GradOperator()
  !
  ! This routine finds C(m,n)
  !
- use pars,      ONLY:SP,DP,cI
+ use pars,      ONLY:DP,cI
  use FFT_m,     ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use D_lattice, ONLY:R_m_R,Grad_R
  use R_lattice, ONLY:ng_vec,g_vec
- use memory_m,  ONLY:mem_est
- implicit none
+#include<memory.h>
  !
  ! Work space
  !
@@ -50,8 +49,7 @@ subroutine eval_GradOperator()
  ! Allocation
  !
  if (.not.allocated(Grad_R)) then 
-   allocate(Grad_R(fft_size,fft_size,3))
-   call mem_est("Grad_R",(/fft_size,fft_size,3/),(/2*SP,2*SP,2*SP/))
+   YAMBO_ALLOC(Grad_R,(fft_size,fft_size,3))
  end if
  Grad_R(:,:,:) = (0._SP,0._SP)
  !

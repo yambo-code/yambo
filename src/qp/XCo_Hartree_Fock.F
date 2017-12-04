@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_QP,&
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
- use collision,     ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
@@ -49,7 +49,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  !
- implicit none
+#include<memory.h>
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  character(*),optional ::mode
@@ -57,7 +57,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !Work Space
  !
  type(elemental_collision)::isc,iscp
- integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands
+ integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch
@@ -116,7 +116,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
  call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
- allocate(local_rhotw(QP_ng_Sx))
+ YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
  isc%qs    =1
  !
  call scatter_Gamp(isc,'x')
@@ -135,8 +135,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- if (n_lt_bands>0) call live_timing(trim(ch),PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&                                   PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands)
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands
+ if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
    !
@@ -195,11 +195,15 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        iscp%rhotw=isc%rhotw
        if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
        !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(ig)
+#endif
        do ig = 1, isc%ngrho
          local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
        enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
        !
        DP_Sx=V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
@@ -217,7 +221,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
- deallocate(local_rhotw)
+ YAMBO_FREE(local_rhotw)
  !
 #if defined _TIMING
  call timing('HF',OPR='stop')

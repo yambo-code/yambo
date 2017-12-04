@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -21,51 +21,75 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cmpl,SVD_digits,det)
+subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
+&                                M,M_slk,&
+&                                M_bse,&
+&                                B,B_slk,&
+&                                C,C_slk,&
+&                                V_left,V_right,E_real,E_cmpl,&
+&                                SVD_digits,det)
+ !
+ ! Operations:
+ !
+ ! * INV:   M_slk/M => M_slk/M
+ !
+ ! * DIAGO: M => M + E_real/E_cmpl + V_left/V_right (SLK external arrays still to implement)
+ !
+ ! * LIN_SYSTEM: M_slk/M + B_slk/B => B_slk/B 
+ !
+ ! * MAT_MUL: M_slk/M + B_slk/B => C_slk/C 
  !
  use pars,          ONLY:SP,cONE,cZERO
- use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK,min_cpu_block_size,&
-&                        LINEAR_ALGEBRA_WS_clean_up,WS,LINEAR_ALGEBRA_error
+ use linear_algebra,ONLY:INV,DIAGO,LIN_SYS,SVD_INV,MAT_MUL,USE_LK,USE_SLK
+ use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use wrapper,       ONLY:M_by_M
- use com,           ONLY:msg
- use parallel_m,    ONLY:linear_algebra_is_parallel
-#if defined _SCALAPACK
- use SLK_m,         ONLY:ORTHO_group,POOL_group,SLK_ORTHO,SLK_POOL,&
-&                        SLK_matrix,SLK_matrix_reset
-#endif
+ use parallel_m,    ONLY:linear_algebra_is_parallel,ncpu
+ use interfaces,    ONLY:MATRIX_transfer
+ use BS,            ONLY:BS_block,BS_H_dim
+ use com,           ONLY:warning
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+#include<memory.h>
  !
- implicit none
- !
- integer                :: idriver
- integer,      optional :: lib_in
- complex(SP)            :: M(:,:)
- complex(SP),  optional :: B(:,:)
- complex(SP),  optional :: C(:,:)
- complex(SP),  optional :: V_left(:,:)
- complex(SP),  optional :: V_right(:,:)
- real(SP),     optional :: E_real(:)
- complex(SP),  optional :: E_cmpl(:)
- integer,      optional :: SVD_digits 
- complex(SP),  optional :: det
+ integer                    :: idriver
+ integer,          optional :: lib_in
+ complex(SP),      optional :: M(:,:)
+ type(PAR_matrix), optional :: M_slk
+ type(BS_block),   optional :: M_bse(:)
+ complex(SP),      optional :: B(:,:)
+ type(PAR_matrix), optional :: B_slk
+ complex(SP),      optional :: C(:,:)
+ type(PAR_matrix), optional :: C_slk
+ complex(SP),      optional :: V_left(:,:)
+ complex(SP),      optional :: V_right(:,:)
+ real(SP),         optional :: E_real(:)
+ complex(SP),      optional :: E_cmpl(:)
+ integer,          optional :: SVD_digits 
+ complex(SP),      optional :: det
  !
  ! Work Spaces ...
  !
  complex(SP)         :: det_
- integer             :: N,lib_in_use,Ncpu_in_use,slk_error
-#if defined _SCALAPACK
- type (SLK_matrix)   :: M_slk,B_slk,C_slk,EIGEN_slk
-#endif
-
+ integer             :: N,lib_in_use
+ type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
+ !
 #if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
 #endif
  !
  ! M dimension
  !
- N=size(M,2)
+ if (present(M_slk)) then
+   N=M_slk%N
+#if defined _SCALAPACK 
+   if (M_slk%kind=="SLK") lib_in_use=USE_SLK
+#endif
+ else if (present(M_bse)) then
+   N=BS_H_dim
+ else if (present(M)) then
+   N=size(M,1)
+ endif
  !
  ! Decide which to use among LK or SLK
  !
@@ -73,7 +97,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
 #if defined _SCALAPACK 
  lib_in_use=USE_SLK
 #endif
- !
  if (present(lib_in)) then
    lib_in_use=lib_in
  endif
@@ -81,71 +104,100 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
  !
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
  !
- if (.not.present(lib_in).and.N/sqrt(real(Ncpu_in_use))<min_cpu_block_size) lib_in_use=USE_LK 
- !
- if (idriver==LIN_SYS.and..not.present(B)) &
-&   call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','B must be present for LIN_SYS')
- if (idriver==MAT_MUL.and.(.not.present(B).or..not.present(C))) &
-&   call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','B,C must be present for MAT_MUL')
- !
 #if defined _SCALAPACK
+ if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
+   !
+   call warning('Parallel non-herm diag not yet implemented. Switching to LK')
+   lib_in_use=USE_LK
+   !
+ endif
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- !
- if (lib_in_use==USE_SLK) then
+ if (lib_in_use==USE_SLK) then 
    !
-   if (idriver==INV) then
+   if (.not.present(M_slk)) then
      !
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
+     call MATRIX_init( "SLK", M_loc, N, 1 )
+     YAMBO_ALLOC(M_loc%blc,(M_loc%BLCrows(1):M_loc%BLCrows(2),M_loc%BLCcols(1):M_loc%BLCcols(2),M_loc%Nb))
      !
-     call msg('s','[LA] PARALLEL inversion (SLK) using grid: ',SLK_ORTHO%grid(1:2))
-     call PARALLEL_inversion( SLK_ORTHO, SLK_POOL, M_slk, N, M )
+     if (present(M_bse)) then
+       call MATRIX_transfer( M_out= M_loc, M_bse=M_bse )
+     else if (present(M)) then
+       call MATRIX_transfer( M_out= M_loc, M=M )
+     endif
      !
-   else if (idriver==DIAGO) then
+   endif
+   !
+   if (idriver==DIAGO) then
      !
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk,     N, M )
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, EIGEN_slk, N, M )
+     call MATRIX_init("SLK",  V_loc, N, 1 )
+     YAMBO_ALLOC(V_loc%blc,(V_loc%BLCrows(1):V_loc%BLCrows(2),V_loc%BLCcols(1):V_loc%BLCcols(2),V_loc%Nb))
      !
-     if (present(E_cmpl)) then
-       !
-       call LINEAR_ALGEBRA_error('LINEAR_ALGEBRA_driver','parallel non-herm diag not yet implemented')
-       !
-       !call msg('s','[LA] PARALLEL diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
-       !call PARALLEL_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_cmpl )
-       !
+     call PARALLEL_HERMITIAN_diagonalization( M_loc, V_loc, N, E_real )
+     !
+     call MATRIX_transfer( M_in = V_loc , M=M )
+     YAMBO_FREE(V_loc%blc)
+     call MATRIX_reset(V_loc)
+     !
+   else if (idriver==INV) then
+     !
+     if (present(M)) then
+       call PARALLEL_inversion( M_loc, N ) 
+       call MATRIX_transfer( M_in = M_loc , M=M )
      else
-       !
-       call msg('s','[LA] PARALLEL Herm. diag (SLK) using grid: ',SLK_ORTHO%grid(1:2))
-       call PARALLEL_HERMITIAN_diagonalization( SLK_ORTHO, SLK_POOL, M_slk, EIGEN_slk, N, M, E_real )
-       !
+       call PARALLEL_inversion( M_slk, N ) 
      endif
      !
    else if (idriver==LIN_SYS) then
      !
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
-     !
-     call msg('s','[LA] PARALLEL linear system solution (SLK) using grid: ',SLK_ORTHO%grid(1:2))
-     call PARALLEL_lin_system( SLK_ORTHO, SLK_POOL, M_slk, B_slk, N, size(B,2), B )
+     if (.not.present(B_slk)) then
+       !
+       call MATRIX_init("SLK",  B_loc, N, 1 )
+       YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       call MATRIX_transfer( M_out = B_loc, M=B )
+       !
+       call PARALLEL_lin_system( M_loc, B_loc, N, N)
+       !
+       call MATRIX_transfer( M_in =  B_loc, M=B )
+       !
+       YAMBO_FREE(B_loc%blc)
+       call MATRIX_reset(B_loc)
+       !
+     else
+       !
+       call PARALLEL_lin_system( M_slk, B_slk, N, N)
+       !
+     endif
      !
    else if (idriver==MAT_MUL) then
-     ! working for square matrices 
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, M_slk, N, M )
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, B_slk, N, B )
-     call PARALLEL_distribute( SLK_ORTHO, SLK_POOL, C_slk, N, C )
      !
-     call msg('s','[LA] PARALLEL matrix multiplication (SLK) using grid: ',SLK_ORTHO%grid(1:2))
-     call PARALLEL_mat_mul( SLK_ORTHO, SLK_POOL, M_slk, B_slk, C_slk, 'N', 'N', size(C,1), size(C,2), size(M,2), C )
+     if (.not.present(B_slk)) then
+       !
+       call MATRIX_init("SLK",  B_loc, N, 1 )
+       YAMBO_ALLOC(B_loc%blc,(B_loc%BLCrows(1):B_loc%BLCrows(2),B_loc%BLCcols(1):B_loc%BLCcols(2),B_loc%Nb))
+       call MATRIX_transfer( M_out =  B_loc, M=B )
+       !
+       call MATRIX_init("SLK",  C_loc, N, 1 )
+       YAMBO_ALLOC(C_loc%blc,(C_loc%BLCrows(1):B_loc%BLCrows(2),C_loc%BLCcols(1):C_loc%BLCcols(2),C_loc%Nb))
+       call MATRIX_transfer( M_out =  C_loc, M=C )
+       !
+       call PARALLEL_M_by_M( M_loc, B_loc, C_loc, 'N', 'N', N, N , N )
+       call MATRIX_transfer( M_in =  C_loc, M=C )
+       !
+       call MATRIX_reset(B_loc)
+       YAMBO_FREE(B_loc%blc)
+       !
+       call MATRIX_reset(C_loc)
+       YAMBO_FREE(C_loc%blc)
+       !
+     else
+       !
+       call PARALLEL_M_by_M( M_slk, B_slk, C_slk, 'N', 'N', N, N , N )
+       !
+     endif
      !
    endif
-   !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
-   !
-   call SLK_matrix_reset(M_slk)
-   call SLK_matrix_reset(B_slk)
-   call SLK_matrix_reset(C_slk)
-   call SLK_matrix_reset(EIGEN_slk)
    !
  endif
  !
@@ -158,15 +210,22 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
    if (idriver==SVD_INV) then
-     call msg('s','[LA] SERIAL SVD inversion (LK)')
-     call SERIAL_SVD_inversion(N,M,SVD_digits)
+     if (present(M_slk)) then
+       call SERIAL_SVD_inversion(N,M_slk%blc(:,:,M_slk%I),SVD_digits)
+     else
+       call SERIAL_SVD_inversion(N,M,SVD_digits)
+     endif
    endif
    !
    ! ###> SERIAL INVERSION 
    !
    if (idriver==INV) then
-     call msg('s','[LA] SERIAL inversion (LK)')
-     call SERIAL_inversion(N,M,det_,present(det))
+     if (present(M_slk)) then
+       call SERIAL_inversion(N,M_slk%blc(:,:,M_slk%I),det_,present(det))
+     else
+       call SERIAL_inversion(N,M,det_,present(det))
+     endif
+     if(present(det)) det=det_
    endif
    !
    ! ###> SERIAL DIAGONALIZATION
@@ -176,13 +235,19 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
      if (present(E_cmpl)) then
        !
        !... non-Hermitian case
-       call msg('s','[LA] SERIAL diagonalization (LK)')
-       call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+       if (present(M_slk)) then
+         call SERIAL_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_cmpl,V_left,V_right)
+       else
+         call SERIAL_diagonalization(N,M,E_cmpl,V_left,V_right)
+       endif
      else
        !
        !... Hermitian case
-       call msg('s','[LA] SERIAL Herm. diagonalization (LK)')
-       call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
+       if (present(M_slk)) then
+         call SERIAL_HERMITIAN_diagonalization(N,M_slk%blc(:,:,M_slk%I),E_real)
+       else
+         call SERIAL_HERMITIAN_diagonalization(N,M,E_real)
+       endif
      endif
      !
    endif
@@ -190,20 +255,24 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-     call msg('s','[LA] SERIAL linear system solution (LK)')
-     call SERIAL_lin_system(N,size(B,2),M,B)
+     if (present(M_slk)) then
+       call SERIAL_lin_system(N,N,M_slk%blc(:,:,M_slk%I),B_slk%blc(:,:,B_slk%I))
+     else
+       call SERIAL_lin_system(N,size(B,2),M,B)
+     endif
    endif
-   !
    !
    ! ####> MAT_MUL
    ! C = M * B
    if (idriver==MAT_MUL) then
-     call msg('s','[LA] SERIAL matrix multiplication (LK)')
-     call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
-&                        B,size(B,1),cZERO,C,size(C,1))
+     if (present(M_slk)) then
+       call M_by_M('N','N',N,N,N,cONE,M_slk%blc(:,:,M_slk%I),N,&
+&                          B_slk%blc(:,:,B_slk%I),N,cZERO,C_slk%blc(:,:,C_slk%I),N)
+     else
+       call M_by_M('N','N',size(C,1),size(C,2),size(M,2),cONE,M,size(M,1),&
+&                          B,size(B,1),cZERO,C,size(C,1))
+     endif
    endif
-   !
-   call LINEAR_ALGEBRA_WS_clean_up(WS) 
    !
  endif
  !
@@ -214,4 +283,3 @@ subroutine LINEAR_ALGEBRA_driver(idriver,M,B,C,lib_in,V_left,V_right,E_real,E_cm
 #endif
  !
 end subroutine
-

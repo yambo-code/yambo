@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ module mod_wf2y
      !
      ! Work Space
      !
-     real(SP),parameter :: max_wf_block_size=100._SP ! MB
+     real(SP),parameter :: max_wf_block_size=1000._SP ! MB
      real(SP) :: array_sz
      !
      wf_nb_io_groups=1

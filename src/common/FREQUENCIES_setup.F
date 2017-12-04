@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -27,10 +27,8 @@ subroutine FREQUENCIES_setup(W)
  !
  use pars,          ONLY:SP,cI
  use frequency,     ONLY:w_samp
- use memory_m,      ONLY:mem_est
  use parser_m,      ONLY:parser
- !
- implicit none
+#include<memory.h>
  !
  type(w_samp):: W 
  ! 
@@ -43,7 +41,7 @@ subroutine FREQUENCIES_setup(W)
  !
  !If %p is associated and consitent with %er/%dr return
  !
- if (associated(W%p)) then
+ if (allocated(W%p)) then
    if (size(W%p)==W%n_freqs.and.&
 &      abs(  real(W%p(1))-W%er(1) )<1.E-5.and.&
 &      abs( aimag(W%p(1))-W%dr(1) )<1.E-5.and.&
@@ -51,18 +49,14 @@ subroutine FREQUENCIES_setup(W)
 &      abs( aimag(W%p(W%n_freqs))-W%dr(2) )<1.E-5) return
  endif
  !
- if (associated(W%p)) then
-   deallocate(W%p)
-   call mem_est("W-p")
- endif
+ YAMBO_FREE(W%p)
  !
  ! First the total/mem steps
  !
  if (W%er(2)==W%er(1)) W%n_freqs=1
  W%n_freqs=nint(W%per_memstps*real(W%n_freqs)/100._SP)
  !
- allocate(W%p(W%n_freqs))
- call mem_est("W-p",(/W%n_freqs/))
+ YAMBO_ALLOC(W%p,(W%n_freqs))
  !
  W%p(1)=cmplx(W%er(1),W%dr(1),SP)
  if (W%n_freqs==1) then
@@ -78,8 +72,6 @@ subroutine FREQUENCIES_setup(W)
  do i1=1,W%n_freqs
    W%p(i1)=real(W%p(i1))+FREQUENCIES_damping(W,real(W%p(i1)))*cI
  enddo
- !
- ! GPL_EXCLUDE_START
  !
  call parser('MetDamp',metallic_damping)
  !
@@ -103,7 +95,5 @@ subroutine FREQUENCIES_setup(W)
    if ( real(W%p(i1))>=0._SP ) W%p(i1)= sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
    if ( real(W%p(i1))< 0._SP ) W%p(i1)=-sqrt(real(W%p(i1))*(real(W%p(i1))+2._SP*aimag(W%p(i1))*cI))
  enddo
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

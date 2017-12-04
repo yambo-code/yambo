@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ subroutine scatter_Gamp(isc,mode)
  !
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
- use collision,     ONLY:elemental_collision
+ use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  implicit none
@@ -79,7 +79,9 @@ subroutine scatter_Gamp(isc,mode)
  !
  ng=shape(isc%gamp)
  !
+#if defined _OPENMP
 !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM)
+#endif
  do i1=1,ng(1)
    do i2=1,ng(2)
      ig1=i1
@@ -148,7 +150,9 @@ subroutine scatter_Gamp(isc,mode)
      !
    enddo
  enddo
+#if defined _OPENMP
 !$omp end parallel do
+#endif
  !
  ! Anisotropy correction
  !

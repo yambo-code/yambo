@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,11 +23,10 @@
 !
 module BS_solvers
  !
- use pars,       ONLY:SP,schlen,lchlen
- use memory_m,   ONLY:mem_est
- use BS,         ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim
- !
- implicit none
+ use pars,           ONLY:SP,schlen,lchlen
+ use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_H_dim,BS_K_dim,BS_block,n_BS_blks,BS_blk
+ use matrix,         ONLY:PAR_matrix
+#include <memory.h>
  !
  ! Epsilon factor
  !==================
@@ -40,8 +39,26 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
+#if defined _SLEPC
+ !
+ ! Slepc
+ !==========
+ type Slepc_vector
+   !
+   type(Haydock_vector), allocatable :: Vi(:)
+   type(Haydock_vector), allocatable :: Vo(:)
+   !
+ end type Slepc_vector
+ !
+ type(Slepc_vector) :: Slepc_v
+ !
+#endif
  !
  integer, allocatable :: Haydock_parallel_group_comm(:)
+ !
+ ! SCALAPACK shadow matrix
+ !=========================
+ type(PAR_matrix), SAVE:: K_slk
  !
  ! Solvers (General)
  !=========
@@ -50,6 +67,7 @@ module BS_solvers
  complex(SP) :: BSS_Wd
  integer  :: BSS_n_descs
  integer  :: BSS_n_freqs
+ integer  :: BSS_n_eig            !number of eigenvalues to find
  real(SP) :: BSS_er(2)
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
@@ -61,6 +79,13 @@ module BS_solvers
  logical  :: BSS_eval_JDOS
  logical  :: BSS_add_antiresonant
  !
+ logical  :: run_Haydock=.FALSE.
+ logical  :: run_inversion=.FALSE.
+ logical  :: run_Diago=.FALSE.
+#if defined _SLEPC
+ logical  :: run_Slepc=.FALSE.
+#endif
+ !
  ! Solvers (Diago)
  !=========
  logical  :: BSS_write_eig_2_db
@@ -70,14 +95,25 @@ module BS_solvers
  logical  :: Haydock_terminator
  real(SP) :: Haydock_treshold
  real(SP) :: Haydock_v0_mod
+#if defined _SLEPC
+ !
+ ! Solvers (Slepc)
+ !=========
+ character(schlen):: BSS_slepc_extraction !choose slepc eigenvalue extraction method (ritz,harmonic)
+ integer          :: BSS_slepc_ncv        !dimension of the subspace
+ real(SP)         :: BSS_slepc_tol        !tolerance for the iterative solver
+ real(SP)         :: BSS_target_E         !find eigenvalues close to this energy
+ logical          :: Slepc_shell          !use a shell matrix for slepc
+#endif
  !
  ! Solvers (Inversion)
  !=========
- character(schlen):: BSS_inversion_mode
- logical  :: BSS_uses_partial_diago
+ character(schlen)     :: BSS_inversion_mode
+ logical               :: BSS_uses_partial_diago
+ logical               :: K_diago_in_BS_mat
+ type(PAR_matrix),SAVE :: K_inv_slk
  !
  type K_Inversion_data
-   !
    character(3)             :: what
    integer                  :: n_freqs = 0
    integer                  :: n_full_inv_freqs = 0
@@ -86,11 +122,10 @@ module BS_solvers
    integer    , allocatable :: err(:)
    integer    , allocatable :: iw_full(:)
    complex(SP), allocatable :: spectra(:,:)
-   !
  end type K_Inversion_data
  !
- type(K_Inversion_data) :: K_INV_EPS
- type(K_Inversion_data) :: K_INV_PL
+ type(K_Inversion_data), save :: K_INV_EPS
+ type(K_Inversion_data), save :: K_INV_PL
  !
  ! Solvers (Temporary (LARGE) arrays to be used in solvers ONLY)
  !=========
@@ -99,8 +134,8 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
+ complex(SP), allocatable :: BS_diagonal(:)
  complex(SP), allocatable :: BS_mat(:,:)
- complex(SP), allocatable :: BS_cpl_mat(:,:)
  complex(SP), allocatable :: BSS_dipoles(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
  !
@@ -114,9 +149,9 @@ module BS_solvers
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
-     integer             :: iq,ID,BS_H_dim
+     integer             :: iq,ID,BS_H_dim,BSS_n_eig
      complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
      real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:,:)
      complex(SP),pointer :: bsR_kerr(:)
@@ -135,22 +170,17 @@ module BS_solvers
  !
  contains
    !
-   subroutine BS_mat_alloc( )
+   subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      use electrons, ONLY:E_SOC_nbands
      integer :: i_g
      logical :: W_is_allocated,Z_is_allocated
-     allocate(BS_mat(BS_H_dim,BS_H_dim))
-     call mem_est('BS_mat',(/size(BS_mat)/))
-     BS_mat    = cZERO
-     allocate(BSS_dipoles(BS_H_dim))
-     call mem_est('BSS_dipoles',(/size(BSS_dipoles)/))
+     YAMBO_ALLOC(BSS_dipoles,(BS_H_dim))
      BSS_dipoles = cZERO
-     allocate(BSS_eh_table(BS_K_dim,3+n_sp_pol-1),BSS_eh_E(BS_K_dim),BSS_eh_f(BS_K_dim))
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f",&
-&                 (/(3+n_sp_pol-1)*BS_K_dim,BS_K_dim,BS_K_dim/),(/IP,SP,SP/))
+     YAMBO_ALLOC(BSS_eh_table,(BS_K_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BSS_eh_E,(BS_K_dim))
+     YAMBO_ALLOC(BSS_eh_f,(BS_K_dim))
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
@@ -161,34 +191,34 @@ module BS_solvers
        if (.not.Z_is_allocated) Z_is_allocated=allocated(BS_T_grp(i_g)%Z)
      enddo
      if (W_is_allocated) then
-       allocate(BSS_eh_W(BS_K_dim))
-       call mem_est("BSS_eh_W",(/BS_K_dim/),(/SP/))
+       YAMBO_ALLOC(BSS_eh_W,(BS_K_dim))
        BSS_eh_W = rZERO
      endif
      if (Z_is_allocated) then
-       allocate(BSS_eh_Z(BS_K_dim))
-       call mem_est("BSS_eh_Z",(/BS_K_dim/))
+       YAMBO_ALLOC(BSS_eh_Z,(BS_K_dim))
        BSS_eh_Z = cZERO
      endif
      if (E_SOC_nbands/=0) then
-       allocate(BSS_eh_E_SOC_corr(2/n_sp_pol,BS_H_dim))
-       call mem_est("BSS_eh_E_SOC_corr",(/2/n_sp_pol*BS_H_dim/),(/SP/))
+       YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
      endif
    end subroutine
    !
-   subroutine BS_mat_free()
-     use memory_m,   ONLY:mem_est
-     if (allocated(BSS_eh_table))      deallocate(BSS_eh_table)
-     if (allocated(BSS_dipoles))       deallocate(BSS_dipoles)
-     if (allocated(BSS_eh_E))          deallocate(BSS_eh_E)
-     if (allocated(BSS_eh_W))          deallocate(BSS_eh_W)
-     if (allocated(BSS_eh_f))          deallocate(BSS_eh_f)
-     if (allocated(BSS_eh_Z))          deallocate(BSS_eh_Z)
-     if (allocated(BSS_eh_E_SOC_corr)) deallocate(BSS_eh_E_SOC_corr)
-     if (allocated(BS_mat))            deallocate(BS_mat)
-     call mem_est("BSS_eh_table BSS_eh_E BSS_eh_f BSS_eh_W")
-     call mem_est("BSS_eh_table BSS_eh_Z BS_mat")
+   subroutine BSS_free()
+     YAMBO_FREE(BSS_eh_table)
+     YAMBO_FREE(BSS_dipoles)
+     YAMBO_FREE(BSS_eh_E)
+     YAMBO_FREE(BSS_eh_W)
+     YAMBO_FREE(BSS_eh_f)
+     YAMBO_FREE(BSS_eh_Z)
+     YAMBO_FREE(BSS_eh_E_SOC_corr)
+   end subroutine
+   !
+   subroutine BS_blks_free()
+     integer :: iB
+     do iB=1,n_BS_blks
+       YAMBO_FREE(BS_blk(iB)%mat)
+     enddo
    end subroutine
    !
    subroutine BS_HAYVEC_alloc(V)
@@ -199,7 +229,7 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size))
      enddo
    end subroutine BS_HAYVEC_alloc
    !
@@ -210,7 +240,7 @@ module BS_solvers
      integer :: i_g
      !
      do i_g=1,BS_nT_grps
-       if (allocated(V(i_g)%fragment)) deallocate(V(i_g)%fragment)
+       YAMBO_FREE(V(i_g)%fragment)
      end do
    end subroutine BS_HAYVEC_free
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,14 +60,13 @@ subroutine k_expand(k)
  ! N.B
  ! rang(ik) = # of symmetries | R_is ik = ik
  !
- use pars,           ONLY:SP,IP
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP
  use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:rl_sop,bz_samp
  use zeros,          ONLY:k_rlu_zero
+#include<memory.h>
  !
- implicit none
  type(bz_samp)::k
  !
  ! Work Space
@@ -76,10 +75,11 @@ subroutine k_expand(k)
  real(SP)        :: v(3),kstar(nsym,3)
  logical         :: k_found
  !
- if (associated(k%sstar)) return
+ if (allocated(k%sstar)) return
  !
- allocate(k%star(k%nibz,nsym),k%nstar(k%nibz),k%weights(k%nibz))
- call mem_est( trim(k%description)//'-star' ,(/k%nibz*(nsym+2)/),(/IP/))
+ YAMBO_ALLOC(k%star,(k%nibz,nsym))
+ YAMBO_ALLOC(k%nstar,(k%nibz))
+ YAMBO_ALLOC(k%weights,(k%nibz))
  !
  k%nstar=0
  k%star=0
@@ -102,7 +102,7 @@ subroutine k_expand(k)
  k%weights(:)=k%weights(:)/sum(k%weights)
  k%nbz=sum(k%nstar(:))
  !
- allocate(k%sstar(k%nbz,2))
+ YAMBO_ALLOC(k%sstar,(k%nbz,2))
  i2=0
  do i1=1,k%nibz
    do is=1,k%nstar(i1)

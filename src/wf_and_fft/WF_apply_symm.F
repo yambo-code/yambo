@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -37,85 +37,77 @@ subroutine WF_apply_symm(isc,WF_symm)
  integer,     intent(in)  :: isc(4)
  complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
  !
- integer     :: i_wf(n_spinor)
+ integer     :: i_wf
 #if defined _OPENMP
- integer     :: i, isp
+ integer     :: ifft, i_spinor
 #endif
  !
- i_wf(1)=WF%index(isc(1),isc(2),isc(4))
+ i_wf=WF%index(isc(1),isc(2),isc(4))
 #if defined _MPI
- if (i_wf(1)==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
-&                           trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
-&                           ' ID:'//trim(intc(myid)))
+ if (i_wf==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
+&                          trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
+&                          ' ID:'//trim(intc(myid)))
 #endif
- if(n_spinor==2)  i_wf(n_spinor)=WF%index(isc(1),isc(2),n_spinor)
  !
 #if defined _OPENMP
  if(isc(3)==idt_index) then
-!$omp parallel default(shared), private(i)
-!$omp do
-   do i = 1, fft_size
-     WF_symm(i,1)=WF%c(i,i_wf(1))
-   enddo
-!$omp end do
-   if(n_spinor==2) then
-!$omp do
-     do i = 1, fft_size
-       WF_symm(i,2)=WF%c(i,i_wf(2))
+!$omp parallel do default(shared), private(ifft,i_spinor)
+   do i_spinor=1,n_spinor
+     do ifft = 1, fft_size
+       WF_symm(ifft,i_spinor)=WF%c(ifft,i_spinor,i_wf)
      enddo
-!$omp end do
-   endif
-!$omp end parallel
+   enddo
+!$omp end parallel do
    return
  endif
  !
  if(n_spinor==1) then
-
-!$omp parallel do default(shared), private(i)
-   do i = 1, fft_size
-     WF_symm(i,1)=WF%c(fft_rot_r(i,isc(3)),i_wf(1))
+ !
+!$omp parallel do default(shared), private(ifft)
+   do ifft = 1, fft_size
+     WF_symm(ifft,1)=WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)
    enddo
 !$omp end parallel do
  endif
  !
  if (n_spinor==2) then
-!$omp parallel default(shared), private(i)
+!$omp parallel default(shared), private(ifft)
 !$omp do
-   do i = 1, fft_size
-     WF_symm(i,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(1))+ &
-                  spin_sop(1,2,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(2))
+   do ifft = 1, fft_size
+     WF_symm(ifft,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)+ &
+                     spin_sop(1,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),2,i_wf)
    enddo
 !$omp end do
 !$omp do
-   do i = 1, fft_size
-     WF_symm(i,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(1))+ &
-                  spin_sop(2,2,isc(3))*WF%c(fft_rot_r(i,isc(3)),i_wf(2))
+   do ifft = 1, fft_size
+     WF_symm(ifft,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)+ &
+                     spin_sop(2,2,isc(3))*WF%c(fft_rot_r(ifft,isc(3)),2,i_wf)
    enddo
 !$omp end do
 !$omp end parallel
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) then
-!$omp parallel do default(shared), private(i,isp)
-   do isp = 1, n_spinor
-     do i = 1, fft_size
-       WF_symm(i,isp)=conjg(WF_symm(i,isp))
+!$omp parallel do default(shared), private(ifft,i_spinor)
+   do i_spinor = 1, n_spinor
+     do ifft = 1, fft_size
+       WF_symm(ifft,i_spinor)=conjg(WF_symm(ifft,i_spinor))
      enddo
    enddo
 !$omp end parallel do
  endif
 #else
  if(isc(3)==idt_index) then
-   WF_symm(:,1)=WF%c(:,i_wf(1))
-   if(n_spinor==2) WF_symm(:,2)=WF%c(:,i_wf(2))
+   WF_symm(:,1)=WF%c(:,1,i_wf)
+   if(n_spinor==2) WF_symm(:,2)=WF%c(:,2,i_wf)
    return
  endif
- if(n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),i_wf(1))
+ if(n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),1,i_wf)
  if (n_spinor==2) then
-   WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(1))+ &
-&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(2))
-   WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(1))+ &
-&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),i_wf(2))
+   WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
+&                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
+   WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
+&                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
  endif
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
 #endif

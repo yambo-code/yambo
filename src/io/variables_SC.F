@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -30,13 +30,14 @@ integer function variables_SC(ID,local_description,what)
  use QP_m,           ONLY:SC_band_mixing,COHSEX_use_empties
  use SC,             ONLY:SC_bands,it_now,SC_potential,SC_kind,SC_perturbation,l_sc_diagonal,&
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
-&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions,l_sc_V_is_local
- use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR
+&                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_description,n_SC_descriptions
+ use hamiltonian,    ONLY:l_sc_V_is_local,H_ref_bands
+ use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR,read_is_on
 #if defined _MAGNETIC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
 #endif
- use global_XC,      ONLY:SC_EXX,SC_FOCK,SC_COHSEX,SC_COH,SC_SEX,SC_EXXC,SC_HARTREE
+ use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
  !
  implicit none
  !
@@ -57,7 +58,6 @@ integer function variables_SC(ID,local_description,what)
  CHECK_=.TRUE.
  MENU_ =0
  if (l_NSC_shot) CHECK_=.FALSE.
- !
  !
  ! ATOMS_STRING
  !
@@ -103,6 +103,7 @@ integer function variables_SC(ID,local_description,what)
  call io_elemental(ID,I1=SC_bands,&
 &     VAR=' [SC] Bands                      :',CHECK=CHECK_,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
+ if (read_is_on(ID)) H_ref_bands=SC_bands
  i_desc=i_desc+1
  call io_elemental(ID,I0=nkibz,&
 &     VAR=' [SC] K-points                   :',CHECK=CHECK_,OP=(/"=="/),&
@@ -112,8 +113,8 @@ integer function variables_SC(ID,local_description,what)
 &     VAR=' [SC] Bands mixing               :',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  !
- if (any(SC_kind_disk==(/SC_EXX,SC_EXXC,SC_FOCK,SC_SEX,SC_COHSEX/)).or.&
-&    any(SC_kind_disk-SC_Hartree==(/SC_EXX,SC_EXXC,SC_FOCK,SC_SEX,SC_COHSEX/))) then
+ if (any(SC_kind_disk==(/H_SE_EXX,H_SE_EXXC,H_SE_FOCK,H_SE_SEX,H_SE_COHSEX/)).or.&
+&    any(SC_kind_disk-H_SE_Hartree==(/H_SE_EXX,H_SE_EXXC,H_SE_FOCK,H_SE_SEX,H_SE_COHSEX/))) then
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    i_desc=i_desc+1
@@ -122,8 +123,8 @@ integer function variables_SC(ID,local_description,what)
 &       DESCRIPTION=local_description(i_desc))
  endif
  !
- if (any(SC_kind_disk==(/SC_COH,SC_SEX,SC_COHSEX/)).or.&
-&    any(SC_kind_disk-SC_Hartree==(/SC_COH,SC_SEX,SC_COHSEX/))) then
+ if (any(SC_kind_disk==(/H_SE_COH,H_SE_SEX,H_SE_COHSEX/)).or.&
+&    any(SC_kind_disk-H_SE_Hartree==(/H_SE_COH,H_SE_SEX,H_SE_COHSEX/))) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
@@ -148,8 +149,8 @@ integer function variables_SC(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
  endif
  !
- if (all(SC_kind_disk/=(/SC_FOCK,SC_COHSEX,SC_COH,SC_SEX/)).or.&
-&    all(SC_kind_disk-SC_HARTREE/=(/SC_FOCK,SC_COHSEX,SC_COH,SC_SEX/)).or.l_MP) then
+ if (all(SC_kind_disk/=(/H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX/)).or.&
+&    all(SC_kind_disk-H_SE_HARTREE/=(/H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX/)).or.l_MP) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTION=local_description(i_desc))         
    i_desc=i_desc+1
@@ -207,7 +208,12 @@ integer function variables_SC(ID,local_description,what)
  endif
  !
 #endif
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ !
+ if (what/="carriers".and.what/="THETA".and.what/="JPSM".and.what/="G".and.what/="REF") then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ else
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  variables_SC=io_status(ID)
  n_SC_descriptions=i_desc

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -23,8 +23,8 @@
 !
 SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_error)
  !
- use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group
- use parallel_m,     ONLY:MPI_comm,myid
+ use SLK_m,          ONLY:n_pools,ORTHO_group,POOL_group,SLK_POOL_init
+ use parallel_m,     ONLY:MPI_comm
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL
  use com,            ONLY:msg
  !
@@ -49,14 +49,11 @@ SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  !
  ! Init pools
  !
- POOL%CPU_id      = COMM%CPU_id
- POOL%n_CPU       = COMM%n_CPU
- POOL%ID          = myid/POOL%n_CPU
- POOL%INTRA_comm  = COMM%COMM
+ call SLK_POOL_init(POOL,COMM)
  !
  ! Init the scalapack grid
  !
- call SLK_ORTHO_init( ORTHO, POOL, min(POOL%n_CPU,ncpu_in_use), POOL%INTRA_comm )
+ call SLK_ORTHO_init( ORTHO, POOL, min(POOL%n_CPU,ncpu_in_use) )
  ! 
  if (ORTHO%grid(1)<=1) then 
    slk_error=-1
@@ -68,7 +65,7 @@ SUBROUTINE SLK_setup( idriver, ncpu_in_use, ORTHO, POOL, COMM, INDEX_comm, slk_e
  if (idriver==LIN_SYS) ch="LinearSystem"
  if (idriver==MAT_MUL) ch="MatrixMult."
  !
- call msg("lr",'[SLK-'//trim(ch)//']  Pools        :',n_pools)
- call msg("lr",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)
+ call msg("lr" ,'[SLK-'//trim(ch)//']  Pools        :',n_pools)
+ call msg("lrn",'[SLK-'//trim(ch)//']  BLACS grid   :',ORTHO%grid)
  !
 END SUBROUTINE SLK_setup

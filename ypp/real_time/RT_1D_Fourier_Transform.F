@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -38,7 +38,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
  !
  ! ft(t) = \int fw(w) exp^(-i w t) 
  !
- use YPP_real_time,  ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_time
  use pars,           ONLY:SP,DP,cI
  use LIVE_t,         ONLY:live_timing
  implicit none
@@ -84,7 +84,7 @@ subroutine RT_1D_Fourier_Transform(mode,title,freqs,fw,nw,ft,nt,USE_FFT,I_sign)
      !
      if (l_live_timing) call live_timing('FT'//title//':',nw)
      do i_w = 1, nw
-       do i_t = 1, RT_conf%T_n_steps-1
+       do i_t = 1, nt-1
          fw(i_w) = fw(i_w)+ft(i_t)*exp(cI*I_sign*freqs(i_w)*RT_time(i_t))*(RT_time(i_t+1)-RT_time(i_t))
        enddo
        if (l_live_timing) call live_timing(steps=1)

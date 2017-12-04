@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(E,A,T,T_step)
+subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -41,23 +41,41 @@ subroutine RT_propagate_fields(E,A,T,T_step)
  ! 
  use pars,           ONLY:SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,nel
+ use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:global_gauge
- use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,&
-&                         l_RT_induced_field,integrator_step,&
-&                         RT_dyn_step,l_RT_EULER
- use fields,         ONLY:gauge_field,A_ind,A_ind_previous,A_ext
+ use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
+&                         l_RT_induced_field,Integrator_step,Integrator_nsteps,&
+&                         RT_bands,RT_nk
+ use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset
  !
  implicit none
  !
  type(levels),         intent(in) :: E
+ type(bz_samp),        intent(in) :: k 
  real(SP),             intent(in) :: T,T_step
- type(gauge_field),   intent(out) :: A
+ type(gauge_field),    intent(in) :: A_old
+ type(gauge_field),    intent(in) :: A_inp
+ type(gauge_field),   intent(out) :: A_new
+ complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ !
+ ! Work space
+ !
+ type(gauge_field) :: A_ind_old
+ type(gauge_field) :: A_ind_new
+ type(gauge_field) :: A_null
  !
  ! Get the analytic form of Ext field @ T
  !----------------------------------------
  !
- call RT_Ext_fields(A_ext,T)
+ if (l_RT_induced_field) then
+   call RT_Ext_fields(A_ext,T)
+   A_ind_old%vecpot    =A_old%vecpot    -A_ext%vecpot
+   A_ind_old%vecpot_vel=A_old%vecpot_vel-A_ext%vecpot_vel
+   A_ind_old%vecpot_acc=A_old%vecpot_acc-A_ext%vecpot_acc
+ endif
+ !
+ call RT_Ext_fields(A_ext,T+T_step)
  !
  ! (See also by Yaban and co. PRB 2012)
  ! The approach which          includes the induced field is also called longitudinal gauge.
@@ -67,6 +85,12 @@ subroutine RT_propagate_fields(E,A,T,T_step)
  ! between transverse and longitudinal excitons/phonons in the literature
  !
  if (l_RT_induced_field) then
+   !
+   ! In the velocity gauge the current depend from the total potential which I do not know yet
+   ! Thus I add A null vector potential here and then update the current later 
+   !
+   call A_vecpot_reset(A_null)
+   call RT_current_AND_polarization(k,E,G_inp,A_null)
    !
    ! OPTION 1: "velocity gauge"
    !
@@ -83,9 +107,13 @@ subroutine RT_propagate_fields(E,A,T,T_step)
    ! Results are almost ok, but, due to numerical errors, derived epsilon and eels are very bad
    !
    if(trim(global_gauge)=="velocity") then
-     A_ind%vecpot_acc =                             real(RT_ind_J)     *4._SP*pi*SPEED_OF_LIGHT
-     A_ind%vecpot_vel = A_ind_previous%vecpot_vel + real(RT_ind_J_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
-     A_ind%vecpot     = A_ind_previous%vecpot     + real(RT_P_prev)    *4._SP*pi*SPEED_OF_LIGHT*T_step
+     A_ind_new%vecpot     = A_ind_old%vecpot     + real(RT_P_prev)    *4._SP*pi*SPEED_OF_LIGHT*T_step
+     A_ind_new%vecpot_vel = A_ind_old%vecpot_vel + real(RT_ind_J_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
+     !
+     ! Update the current replacing the null vector potential with the real one
+     !
+     RT_ind_J=RT_ind_J+(A_ind_new%vecpot(:)+A_ext%vecpot(:))*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+     A_ind_new%vecpot_acc =                        real(RT_ind_J)     *4._SP*pi*SPEED_OF_LIGHT
    endif
    !
    !
@@ -105,20 +133,20 @@ subroutine RT_propagate_fields(E,A,T,T_step)
    ! It works fine
    !
    if(trim(global_gauge)=="length") then
-     A_ind%vecpot_acc =                         real(RT_ind_J) *4._SP*pi*SPEED_OF_LIGHT 
-     A_ind%vecpot_vel =                         real(RT_P)     *4._SP*pi*SPEED_OF_LIGHT
-     A_ind%vecpot     = A_ind_previous%vecpot + real(RT_P_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
+     A_ind_new%vecpot     = A_ind_old%vecpot + real(RT_P_prev)*4._SP*pi*SPEED_OF_LIGHT*T_step
+     A_ind_new%vecpot_vel =                    real(RT_P)     *4._SP*pi*SPEED_OF_LIGHT
+     A_ind_new%vecpot_acc =                    real(RT_ind_J) *4._SP*pi*SPEED_OF_LIGHT 
    endif
    !
-   if (integrator_step==1) A_ind_previous  =A_ind
+   A_ind=A_ind_new
    !
-   A%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
-   A%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
-   A%vecpot    =A_ext%vecpot    +A_ind%vecpot
+   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
+   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
    !
  else
    !
-   A=A_ext
+   A_new=A_ext
    !
  endif
  !
@@ -128,9 +156,9 @@ subroutine RT_propagate_fields(E,A,T,T_step)
  ! I(t) = \frac{c}{8\pi} E^2(t) and E(t)=A_vel(t)/c
  ! F(t) = \int I(t) dt
  !
- if(integrator_step==3.or.l_RT_EULER) then
-   A%intensity=(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
-   A%fluence=A%fluence+A%intensity*RT_dyn_step
+ if(Integrator_step==Integrator_nsteps) then
+   A_new%intensity=(abs(A_new%vecpot_vel(1))**2+abs(A_new%vecpot_vel(2))**2+abs(A_new%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
    A_ext%intensity=(abs(A_ext%vecpot_vel(1))**2+abs(A_ext%vecpot_vel(2))**2+abs(A_ext%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
    A_ext%fluence=A_ext%fluence+A_ext%intensity*RT_dyn_step
  endif

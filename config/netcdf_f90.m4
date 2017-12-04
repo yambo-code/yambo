@@ -1,11 +1,11 @@
 #
-# autoconf macro for detecting NetCDF module file
+
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, AF, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -35,6 +35,15 @@ AC_ARG_WITH(netcdf_libdir,AC_HELP_STRING([--with-netcdf-libdir=<path>],
 AC_ARG_WITH(netcdf_includedir,AC_HELP_STRING([--with-netcdf-includedir=<path>],
             [Path to the NetCDF include directory],[32]))
 #
+AC_ARG_WITH(netcdff_libs,AC_HELP_STRING([--with-netcdff-libs=<libs>],
+            [Use NetCDFF libraries <libs>],[32]))
+AC_ARG_WITH(netcdff_path, AC_HELP_STRING([--with-netcdff-path=<path>],
+            [Path to the NetCDFF install directory],[32]),[],[])
+AC_ARG_WITH(netcdff_libdir,AC_HELP_STRING([--with-netcdff-libdir=<path>],
+            [Path to the NetCDFF lib directory],[32]))
+AC_ARG_WITH(netcdff_includedir,AC_HELP_STRING([--with-netcdff-includedir=<path>],
+            [Path to the NetCDFF include directory],[32]))
+#
 AC_ARG_WITH(hdf5_libs,AC_HELP_STRING([--with-hdf5-libs=<libs>],
             [Use HDF5 libraries <libs>],[32]))
 AC_ARG_WITH(hdf5_path, AC_HELP_STRING([--with-hdf5-path=<path>],
@@ -46,134 +55,176 @@ AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
 #
 # Large Databases Support (LFS)
 #
-AC_ARG_ENABLE(netcdf-LFS, AC_HELP_STRING([--enable-netcdf-LFS],
-             [Activate NetCDF Large File Support. Default is no.]))
+AC_ARG_ENABLE(netcdf-classic, AC_HELP_STRING([--enable-netcdf-classic],
+             [Switch to OLD NetCDF classic. Default is no.]))
 #
 # HDF5 support
 #
 AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
-                                  [Activate the HDF5 support. Default is no.]))
+             [Activate the HDF5 support. Default is no.]))
 #
-netcdf="no"
-netcdf_idir=""
-dnetcdf=""
-NCFLAGS=""
-NCLIBS=""
-IFLAG=""
+#
+# HDF5 data compression
+#
+AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
+             [Activate the HDF5 data compression. Default is no.]))
+#
+enable_netcdf="no"
+enable_hdf5="no"
 compile_netcdf="no"
-enable_hdf5=""
+internal_netcdf="no"
+compile_hdf5="no"
+internal_hdf5="no"
+def_netcdf=""
+NETCDF_OPT="--disable-netcdf-4"
+NETCDF_VER="v3"
+HDF5_OPT=""
+#
+# Other libs
+#
+AC_LANG_PUSH(C)
+AC_CHECK_LIB(z ,   deflate,      [use_libz="yes";   ],[use_libz="no";   ],[])
+AC_CHECK_LIB(sz,   deflate,      [use_libsz="yes";  ],[use_libsz="no";  ],[])
+AC_CHECK_LIB(dl,   dlopen,       [use_libdl="yes";  ],[use_libdl="no";  ],[])
+AC_CHECK_LIB(curl, curl_version, [use_libcurl="yes";],[use_libcurl="no";],[])
+AC_CHECK_LIB(m,    cos,          [use_libm="yes";   ],[use_libm="no";   ],[])
+AC_LANG_POP(C)
 #
 # global options
 #
 #
-if test -d "$with_hdf5_libdir"   ; then enable_hdf5=yes ; fi
-if test -d "$with_hdf5_path"     ; then enable_hdf5=yes ; fi
-if test  x"$with_hdf5_libs"   != "x"    ; then enable_hdf5=yes ; fi
+if test -d "$with_hdf5_libdir"          ; then enable_hdf5=yes ; fi
+if test -d "$with_hdf5_path"            ; then enable_hdf5=yes ; fi
+if test x"$with_hdf5_libs" != "x"       ; then enable_hdf5=yes ; fi
+if test x"$enable_netcdf_hdf5" = "xyes" ; then enable_hdf5=yes ; fi
 #
-if test x"$enable_netcdf_hdf5" = "xyes" ; then 
-   enable_hdf5=yes 
-fi
 #
-# F90 module flag
-#
-IFLAG=$ax_cv_f90_modflag
-if test -z "$IFLAG" ; then IFLAG="-I" ; fi
-#
-# main search
-#
+# Set NETCDF LIBS and FLAGS from INPUT
 #
 if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   #
   # external netcdf
   #
-  if test -d "$with_netcdf_libdir" ; then AC_MSG_CHECKING([for NetCDF in $with_netcdf_libdir]) 
-  elif test -d "$with_netcdf_path" ; then AC_MSG_CHECKING([for NetCDF in $with_netcdf_path]) 
+  if test -d "$with_netcdf_libdir" ; then  AC_MSG_CHECKING([for NetCDF in $with_netcdf_libdir]) ;
+  elif test -d "$with_netcdf_path" ; then  AC_MSG_CHECKING([for NetCDF in $with_netcdf_path]) ;
   fi
   #
   if test -d "$with_netcdf_path" ; then 
-      try_libdir=$with_netcdf_path/lib
-      try_incdir=$with_netcdf_path/include
+      try_libdir="$with_netcdf_path/lib" ;
+      try_incdir="$with_netcdf_path/include" ;
+      tryf_libdir="$with_netcdf_path/lib" ;
+      tryf_incdir="$with_netcdf_path/include" ;
   fi
-  if test -d "$with_netcdf_libdir"     ; then try_libdir=$with_netcdf_libdir ; fi
-  if test -d "$with_netcdf_includedir" ; then try_incdir=$with_netcdf_includedir ; fi
+  if test -d "$with_netcdff_path" ; then 
+      tryf_libdir="$with_netcdff_path/lib" ;
+      tryf_incdir="$with_netcdff_path/include" ;
+  fi
+  #
+  if test -d "$with_netcdf_libdir"     ; then try_libdir="$with_netcdf_libdir" ; fi
+  if test -d "$with_netcdf_includedir" ; then try_incdir="$with_netcdf_includedir" ; fi
+  #
+  if test -d "$with_netcdff_libdir"     ; then tryf_libdir="$with_netcdff_libdir" ; fi
+  if test -d "$with_netcdff_includedir" ; then tryf_incdir="$with_netcdff_includedir" ; fi
   #
   if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
   if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
   #
   AC_LANG([Fortran])
   #
-  save_fcflags="$FCFLAGS"
-  #
-  FCFLAGS="$IFLAG$try_incdir $save_fcflags"
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [use netcdf]),
-     [netcdf=yes
-      if test ! -d include ; then mkdir include ; fi
-      for file in `find "$try_incdir" \( -name '*netcdf*' -o -name '*typesizes*' \) `; do
-        cp $file include/ 
-      done
-      for file in `find "$try_incdir" \( -name '*NETCDF*' -o -name '*TYPESIZES*' \) `; do
-        cp $file include/ 
-      done
-      if test ! -d lib ; then mkdir lib ; fi
-      for file in `find $try_libdir -name '*netcdf*.a'`; do
-        cp $file lib/ 
-      done
-     ], [netcdf=no])
-  FCFLAGS="$save_fcflags"
-  #
-  NCLIBS="-lnetcdf"
-  if test -r $try_libdir/libnetcdff.a ; then
-    NCLIBS="-lnetcdff ${NCLIBS}"
+  try_NETCDF_INCS="$IFLAG$try_incdir" ;
+  if test -d "$tryf_incdir" ; then
+    try_NETCDFF_INCS="$IFLAG$tryf_incdir" ;
   fi
   #
-  if test "x$netcdf" = xyes; then
-    AC_MSG_RESULT([yes])
+  try_NETCDF_LIBS="-L$try_libdir -lnetcdf" ;
+  if test -r $tryf_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$tryf_libdir -lnetcdff" ;
+  elif test -r $try_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_libdir -lnetcdff" ;
   fi
-  if test "x$netcdf" = xno; then
-    AC_MSG_RESULT([no])
-  fi
-  #
-  NETCDF_LIBS="-L$try_libdir $NCLIBS"
   #
 elif test x"$with_netcdf_libs" != "x" ; then
   #
   # directly provided lib
   #
   AC_MSG_CHECKING([for NetCDF Library using $with_netcdf_libs])
-  compile_netcdf="no"
-  if test -d "$with_netcdf_includedir" ; then netcdf_idir="$IFLAG$with_netcdf_includedir" ; fi
-  netcdf=yes
-  NCLIBS="$with_netcdf_libs"
+  if test -d "$with_netcdf_includedir" ; then  try_NETCDF_INCS="$IFLAG$with_netcdf_includedir" ; fi
+  if test -d "$with_netcdff_includedir" ; then try_NETCDFF_INCS="$IFLAG$with_netcdff_includedir" ; fi
+  netcdf="yes";
+  try_NETCDF_LIBS="$with_netcdf_libs" ;
+  try_NETCDFF_LIBS="$with_netcdff_libs" ;
   AC_MSG_RESULT(yes)
   #
-  NETCDF_LIBS=$NCLIBS
-  #
-fi
-if test "x$netcdf" = xno; then
-  #
-  # internal netcdf
-  #
-  AC_MSG_CHECKING([for NetCDF library])
-  # internal netcdf
-  compile_netcdf="yes"
-  if test "x$enable_bluegene" = "xyes" ; then NCFLAGS=-DIBMR2Fortran ; fi
-  # 
-  # the following may change if we use a different version
-  # of the netcdf lib
-  #
-  #NCLIBS="-lnetcdf"
-  NCLIBS="-lnetcdff -lnetcdf"
-  #
-  netcdf=yes
-  AC_MSG_RESULT(Internal)
-  #
-  NETCDF_LIBS=$NCLIBS
-  # 
 fi
 #
-# Large File Support
+# TEST NETCDF LIBS and FLAGS
 #
-if test x"$enable_netcdf_LFS" = "xyes"; then dnetcdf="$dnetcdf -D_64BIT_OFFSET"; fi
+if test x"$enable_hdf5" = "xno"; then
+  #
+  netcdf=no;
+  #
+  if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" || test x"$with_netcdf_libs" != "x"; then
+    #
+    save_fcflags="$FCFLAGS" ;
+    save_libs="$LIBS" ;
+    #
+    FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $save_fcflags";
+    LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $save_libs";
+    #
+     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
+       use netcdf
+       implicit none
+       integer nf_err
+       integer ID
+       nf_err = nf90_create('netcdf_test',nf90_share,ID)]),
+       [netcdf=yes], [netcdf=no]);
+    #
+    if test "x$netcdf" = "xyes"; then
+      AC_MSG_RESULT([yes]) ;
+      NETCDF_INCS="$try_NETCDF_INCS" ;
+      NETCDF_LIBS="$try_NETCDF_LIBS" ;
+      NETCDFF_INCS="$try_NETCDFF_INCS" ;
+      NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
+    else
+      AC_MSG_RESULT([no]) ;
+    fi
+    # 
+    FCFLAGS="$save_fcflags" ;
+    LIBS="$save_libs" ;
+    #
+  fi
+  if test "x$netcdf" = "xno"; then
+    #
+    # internal netcdf
+    #
+    AC_MSG_CHECKING([for internal NetCDF library])
+    #
+    internal_netcdf="yes"
+    # 
+    # the following may change if we use a different version
+    # of the netcdf lib
+    #
+    #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf" ;
+    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
+    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
+    if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
+    #
+    netcdf=yes
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a"; then
+      compile_netcdf="no" ;
+      AC_MSG_RESULT([already compiled]) ;
+    else 
+      compile_netcdf="yes" ;
+      AC_MSG_RESULT([to be compiled]) ;
+    fi
+    #
+  fi
+  #
+fi
 #
 #
 # HDF5 support
@@ -182,18 +233,12 @@ hdf5="no"
 #
 if test x"$enable_hdf5" = "xyes"; then
   #
-  if test x"$compile_netcdf" = "xyes" ; then 
-     AC_MSG_ERROR([HDF5 support and Internal NetCDF not compatible])
-  fi
-  #
-  if   test -d "$with_hdf5_libdir" ; then AC_MSG_CHECKING([for HDF5 in $with_hdf5_libdir]) 
-  elif test -d "$with_hdf5_path" ;   then AC_MSG_CHECKING([for HDF5 in $with_hdf5_path]) 
-  elif test x"$with_hdf5_libs" != "x" ; then AC_MSG_CHECKING([for HDF5 using $with_hdf5_libs])
+  if   test -d "$with_hdf5_libdir"    ; then AC_MSG_CHECKING([for HDF5 in $with_hdf5_libdir]) ;
+  elif test -d "$with_hdf5_path"    ;   then AC_MSG_CHECKING([for HDF5 in $with_hdf5_path]) ;
+  elif test x"$with_hdf5_libs" != "x" ; then AC_MSG_CHECKING([for HDF5 using $with_hdf5_libs]) ;
   fi
   #
   AC_LANG([Fortran])       
-  save_libs="$LIBS"
-  save_fcflags="$FCFLAGS"
   #
   # re-define lib and inc dirs
   #
@@ -204,64 +249,122 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_libdir"     ; then try_libdir=$with_hdf5_libdir ; fi
   if test -d "$with_hdf5_includedir" ; then try_incdir=$with_hdf5_includedir ; fi
   #
-  try_hdf5_flags="-lhdf5_fortran -lhdf5_hl -lhdf5"
+  if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
   #
-  if test -d "$try_libdir" ; then try_hdf5_flags="-L$try_libdir $try_hdf5_flags" ; fi
-  if test x"$with_hdf5_libs" != "x" ; then try_hdf5_flags="$with_hdf5_libs" ; fi
+  if test -d "$try_libdir" ; then try_HDF5_LIBS="-L$try_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
-  HDF5_FLAGS="$try_hdf5_flags"
+  if test -d "$try_incdir" ; then try_HDF5_INCS="$IFLAG$try_incdir" ; fi
   #
-  FCFLAGS_="$netcdf_idir"
-  if test -d "$try_incdir" ; then FCFLAGS_="$netcdf_idir $IFLAG$try_incdir" ; fi
-  FCFLAGS="${IFLAG}./include $FCFLAGS_ $save_fcflags"
+  save_libs="$LIBS" ;
+  save_fcflags="$FCFLAGS" ;
   #
-  for ldflag in "-lcurl -lz" "-lcurl -lsz -lz" "-lsz -lz" "-lz" " "; do
-    LIBS="-L./lib $NCLIBS $HDF5_FLAGS $ldflag"
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-       use hdf5
-       use netcdf
-       implicit none
-       integer cmode
-       cmode = NF90_HDF5
-       cmode = nf90_abort(1)
-       call h5open_f(cmode)]),
-       [hdf5=yes], [hdf5=no])
-    if test "x$hdf5" = xyes; then
-      NCLIBS="$NCLIBS $HDF5_FLAGS $ldflag"
-      netcdf_idir="$FCFLAGS_"
-      AC_MSG_RESULT([yes])
-      #
-      if test x"$with_hdf5_libs" != "x" ; then
-        HDF5_LIBS="$HDF5_FLAGS"
-      else
-        HDF5_LIBS="-L$try_libdir $HDF5_FLAGS"
-      fi
-      #
-      break
+  FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $try_HDF5_INCS $save_fcflags" ;
+  #
+  if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
+  if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
+  if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
+  if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
+  if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
+  #
+  LIBS="$try_HDF5_LIBS"
+  #
+  AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+     use hdf5
+     use netcdf
+     implicit none
+     integer cmode
+     cmode = NF90_HDF5
+     !cmode = nf90_abort(1)
+     call h5open_f(cmode)]),
+     [hdf5=yes], [hdf5=no]);
+  netcdf=$hdf5;
+  if test "x$hdf5" = xyes; then
+    HDF5_LIBS="$try_HDF5_LIBS" ;
+    HDF5_INCS="$try_HDF5_INCS" ;
+    NETCDF_LIBS="$try_NETCDF_LIBS" ;
+    NETCDF_INCS="$try_NETCDF_INCS" ;
+    NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
+    NETCDFF_INCS="$try_NETCDFF_INCS" ;
+    AC_MSG_RESULT([yes]) ;
+  fi
+  #
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  #
+  if test "x$hdf5" = xno; then
+    if   test -d "$with_hdf5_libdir" || test -d "$with_hdf5_path"; then AC_MSG_RESULT([no]) ; fi
+    #
+    AC_MSG_CHECKING([for internal NETCDF+HDF5 library]);
+    internal_hdf5="yes" ;
+    internal_netcdf="yes" ;
+    #
+    NETCDF_OPT="--enable-netcdf-4";
+    NETCDF_VER="v4";
+    #
+    HDF5_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ;
+    HDF5_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
+    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
+    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
+    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    if test "$use_libz"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lz"   ; fi
+    if test "$use_libsz"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -lsz"  ; fi
+    if test "$use_libm"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lm"   ; fi
+    if test "$use_libdl"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -ldl"  ; fi
+    if test "$use_libcurl" = "yes"; then HDF5_LIBS="$HDF5_LIBS -lcurl"; fi
+    #
+    netcdf=yes ;
+    hdf5=yes ;
+    #
+    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
+      compile_netcdf="no" ;
+      compile_hdf5="no" ;
+      AC_MSG_RESULT([already compiled]) ;
+    else  
+      compile_netcdf="yes";
+      compile_hdf5="yes" ;
+      if test "$mpibuild" = "no"  ; then HDF5_OPT="--disable-parallel"; fi ;
+      if test "$mpibuild" = "yes" ; then HDF5_OPT="--enable-parallel" ; fi ;
+      AC_MSG_RESULT([to be compiled]) ;
     fi
-  done
-  FCFLAGS="$save_fcflags"    
-  LIBS="$save_libs"
-  #
-  if test "x$hdf5" = xno; then AC_MSG_RESULT([no]) ; fi
+    #
+  fi
+fi
+#
+# Large File Support
+#
+if test x"$enable_netcdf_classic" = "xyes"; then
+  def_netcdf="-D_NC_CLASSIC";
 fi
 #
 # NETCDF-HDF5 IO
 #
-if test x"$netcdf" = "xyes" && test x"hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
-    dnetcdf="${dnetcdf} -D_HDF5_IO"
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+  def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
-
-AC_SUBST(NCLIBS)
+#
+# HDF5-DATA COMPRESSION
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+fi
+#
 AC_SUBST(NETCDF_LIBS)
+AC_SUBST(NETCDF_INCS)
+AC_SUBST(NETCDF_OPT)
+AC_SUBST(NETCDF_VER)
+AC_SUBST(NETCDFF_LIBS)
+AC_SUBST(NETCDFF_INCS)
 AC_SUBST(HDF5_LIBS)
-AC_SUBST(NCLIBS)
-AC_SUBST(NCFLAGS)
+AC_SUBST(HDF5_INCS)
+AC_SUBST(HDF5_OPT)
 AC_SUBST(netcdf)
-AC_SUBST(netcdf_idir)
-AC_SUBST(dnetcdf)
+AC_SUBST(hdf5)
+AC_SUBST(def_netcdf)
 AC_SUBST(compile_netcdf)
+AC_SUBST(compile_hdf5)
+AC_SUBST(internal_netcdf)
+AC_SUBST(internal_hdf5)
 
 ])
-
-

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -29,15 +29,21 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
+ ! 2017/06/23 DS WARNING
+ !  Running TD-IP simulations this subroutine becomes one of the most time
+ !  consuming one because the dipoles are defined in the IBZ and are expanded at
+ !  each time step. When devel-dipoles will be finally merged inside the master
+ !  this will be avoided by expanding the dipoles once for all
+ !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin
+ use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk
+&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
@@ -51,6 +57,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! Work Space
  !
  !complex(SP)   :: RT_P_tmp(3)
+ complex(SP)   :: RT_M_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -78,19 +85,51 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  RT_P    =RT_P/DL_vol
  !
- ! B': Polarization as an integral of the current (to be fixed, it i not stable anyway)
+ ! GPL_EXCLUDE_START
+ !
+ ! B': Polarization as an integral of the current (to be fixed, it is not stable anyway)
  !
  !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_dyn_step
  !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
  !
  !RT_P=RT_P_tmp
  !
- ! C : Spin magnetization
+ if(n_spin>1) then
+   !
+   ! C : Spin magnetization
+   !
+   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   RT_magn(:,1)=RT_M_tmp
+   !
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Spin_magn=real(RT_M_tmp,SP)
+   endif
+   !
+   ! D : Orbital magentization (local and itinerant contributions)
+   !
+   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
+&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   !
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
+&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+   endif
+   !
+   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
+&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   RT_magn(:,3)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   ! 
+   if(NE_i_time==1) then
+     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
+&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+   endif
+   ! 
+ endif
  !
- if(n_spin>1) call RT_average_operator(V_VALUE=RT_magn,PV_MATRIX=DIP_spin,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
- !
- ! D : Orbital magentization (to be coded)
- !
- !call RT_average_operator(V_VALUE=RT_magn,PV_MATRIX=DIP_L,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ ! GPL_EXCLUDE_END
  !
 end subroutine RT_current_AND_polarization

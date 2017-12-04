@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -35,7 +35,7 @@ subroutine electrons_dos(Xk,Xen)
  use interfaces,     ONLY:PARALLEL_index,el_density_of_states
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen
@@ -61,8 +61,8 @@ subroutine electrons_dos(Xk,Xen)
  endif
  !
  if (n_spinor==2) then
-   allocate(WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2))
-   call electrons_spin_factors(Xk,(/1,Xk%nibz/),dos_bands,WF_fac)
+   YAMBO_ALLOC(WF_fac,(dos_bands(1):dos_bands(2),Xk%nibz,2))
+   call electrons_spin_factors((/1,Xk%nibz/),dos_bands,WF_fac)
  endif
  !
  if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)
@@ -110,8 +110,11 @@ subroutine electrons_dos(Xk,Xen)
    !
    dos_E=dos_E_range(1)+i_E*delta_E
    !
-   if(.not.allocated(WF_fac)) call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),l_DbGd)
-   if(     allocated(WF_fac)) call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),l_DbGd,WF_fac=WF_fac)
+   if(     allocated(WF_fac)) then
+     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
+   else
+     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd)
+   endif
    !
    call live_timing(steps=1)
    !
@@ -119,7 +122,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  call PP_redux_wait(el_dos)
  !
- if (n_spinor==2) deallocate(WF_fac)
+ YAMBO_FREE(WF_fac)
  !
  el_dos_max=max(el_dos_max,maxval(abs(el_dos)))
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,19 +26,15 @@ subroutine bz_interp_setup(Xk)
  ! Code inspired by BolzTraP
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
- use pars,           ONLY:SP,IP,pi,zero_dfl
+ use pars,           ONLY:SP,pi
  use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
- use memory_m,       ONLY:mem_est
  use vec_operate,    ONLY:sort
  use matrix_operate, ONLY:m3inv
  use com,            ONLY:msg
-#if defined _RT
- use real_time,      ONLY:DbGd_BZ_coo
-#endif
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  !
@@ -52,7 +48,7 @@ subroutine bz_interp_setup(Xk)
  logical                   :: add_vec,vec_in_star
  real(SP),  parameter      :: zero=2e-05
  !
- allocate(int_sop(3,3,nsym))
+ YAMBO_ALLOC(int_sop,(3,3,nsym))
  ! 
  metric=matmul(a,transpose(a))
  !
@@ -78,9 +74,10 @@ subroutine bz_interp_setup(Xk)
  !
  nR_max=product(2*R_max+1)
  !
- allocate(all_vec(3,nR_max),all_vec_mod(nR_max),indx(nR_max),tmp_vec(3,nR_max))
- call mem_est("all_vec tmp_vec",(/size(all_vec),size(tmp_vec)/),(/SP,SP/))
- call mem_est("all_vec_mod indx",(/size(all_vec_mod),size(indx)/),(/SP,IP/))
+ YAMBO_ALLOC(all_vec,(3,nR_max))
+ YAMBO_ALLOC(all_vec_mod,(nR_max))
+ YAMBO_ALLOC(indx,(nR_max))
+ YAMBO_ALLOC(tmp_vec,(3,nR_max))
  !
  all_vec    =0._SP
  all_vec_mod=0._SP
@@ -106,13 +103,12 @@ subroutine bz_interp_setup(Xk)
  !
  tmp_vec(:,1:n_vec)=all_vec(:,indx(1:n_vec))
  all_vec(:,1:n_vec)=tmp_vec(:,1:n_vec)
- deallocate(tmp_vec)
- call mem_est("tmp_vec")
+ YAMBO_FREE(tmp_vec)
  !
  ! Find R sheels
  !
- allocate(lattice_vectors(3,n_vec),lattice_vec_mod(n_vec))
- call mem_est("lattice_vectors lattice_vec_mod",(/3*n_vec,n_vec/),(/SP,SP/))
+ YAMBO_ALLOC_P(lattice_vectors,(3,n_vec))
+ YAMBO_ALLOC(lattice_vec_mod,(n_vec))
  !
  istart=1
  iend=1
@@ -154,23 +150,20 @@ subroutine bz_interp_setup(Xk)
    !
  enddo
  !
-! do i1=1,n_vec
-!   write(*,*) 'lvec(',i1,') = ',lattice_vectors(:,i1),' mod ',lattice_vec_mod(i1)
-! enddo
  call msg('sr','[INTERPOLATION] Number of shells: ',nshells)
  !
  all_vec(1:3,1:nshells)=lattice_vectors(1:3,1:nshells)
  !
- deallocate(lattice_vectors,lattice_vec_mod)
- call mem_est("lattice_vectors lattice_vec_mod")
+ YAMBO_FREE_P(lattice_vectors)
+ YAMBO_FREE(lattice_vec_mod)
  !
- allocate(lattice_vectors(3,nshells))
- call mem_est("lattice_vectors",(/3*nshells/),(/SP/))
+ YAMBO_ALLOC_P(lattice_vectors,(3,nshells))
  !
  lattice_vectors(1:3,1:nshells)=all_vec(1:3,1:nshells)
  !
- deallocate(all_vec,all_vec_mod,indx)
- call mem_est("all_vec all_vec_mod indx")
+ YAMBO_FREE(all_vec)
+ YAMBO_FREE(all_vec_mod)
+ YAMBO_FREE(indx)
  !
 end subroutine bz_interp_setup
 

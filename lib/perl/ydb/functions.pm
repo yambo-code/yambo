@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -21,44 +21,61 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-no warnings 'experimental::smartmatch';
+use experimental 'smartmatch';
 #
 sub have_ID
 #===========
 {
- if (exists($RUN_description[@_]))
+ if (exists($RUN_material[@_]))
  {
    return @_
  }
  return 0;
 }
-sub have_material
-#=================
+sub have_father
+#===============
 {
- $irun=0;
- while ($irun<$runs) {
-  $irun++;
-  if ("$RUN_material[$irun]" =~ "$material") {
-   return $irun;
+ $irun_fat=0;
+ while ($irun_fat<$N_fathers) {
+  $irun_fat++;
+  if ("$father[$irun_fat]" =~ @_) {
+   return 1;
   }
  } 
  return 0;
 }
-sub have_run{
- $irun=0;
- while ($irun<$runs) {
-  $n_keys=0;
-  $matches=0;
-  $irun++;
-  for($ik = 1; $ik < 100; $ik++) {
-    if (exists($RUN_key[$irun][$ik])){
-     $n_keys++;
-     if ("$RUN_key[$irun][$ik]" ~~ @keys) {$matches++};
-    }
-  };
-  if ("$RUN_material[$irun]" =~ "$material" and $n_keys eq  $matches){ 
-   return $irun;
+sub have_material
+#=================
+{
+ $irun_mat=0;
+ while ($irun_mat<$runs) {
+  $irun_mat++;
+  if ("$RUN_material[$irun_mat]" =~ @_) {
+   return $irun_mat;
   }
+ } 
+ return 0;
+}
+sub have_run
+#============
+{
+ $i_have_run=0;
+ while ($i_have_run<$runs) 
+ {
+  $n_tags=0;
+  $matches=0;
+  $i_have_run++;
+  if ($user_tags) {
+   for($ik = 1; $ik < 100; $ik++) {
+    if (exists($RUN_tag[$i_have_run][$ik])){
+     $n_tags++;
+     if ( "$RUN_tag[$i_have_run][$ik]" ~~ @tags) {$matches++};
+    }
+   }
+  }
+  if ($material and "$RUN_material[$i_have_run]" =~ "$material" and $n_tags eq  $matches){return $i_have_run;};
+  if ("@_[0]" eq "ID" and $ID[$i_have_run] eq @_[1]) {return $i_have_run;}; 
+  if ("@_[0]" eq "FATHER" and $RUN_father[$i_have_run] eq @_[1]) {return $i_have_run;}; 
  }
  return 0;
 }

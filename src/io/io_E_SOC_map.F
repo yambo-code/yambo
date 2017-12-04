@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,13 +23,11 @@
 !
 integer function io_E_SOC_map(En,kpt,ID)
  !
- use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,E_SOC_table,E_SOC_nbands
  use R_lattice,      ONLY:bz_samp
- use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,file_is_present,write_is_on
- implicit none
+#include<memory.h>
  !
  type(levels) :: En
  type(bz_samp):: kpt
@@ -54,9 +52,8 @@ integer function io_E_SOC_map(En,kpt,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   allocate(En%E_SOC(E_SOC_nbands,kpt%nibz))
-   allocate(E_SOC_table(2,En%nb,kpt%nibz))
-   call mem_est("E_SOC E_SOC_table",(/size(En%E_SOC),size(E_SOC_table)/),(/SP,IP/))
+   YAMBO_ALLOC(En%E_SOC,(E_SOC_nbands,kpt%nibz))
+   YAMBO_ALLOC(E_SOC_table,(2,En%nb,kpt%nibz))
  endif
  !
  ! Eigenvalues

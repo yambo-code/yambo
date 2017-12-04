@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,10 +26,6 @@ module YPP_real_time
  use pars,     ONLY:schlen,SP,DP
  !
  implicit none
- !
- ! RT, merge QP DBs
- !
- real(SP) :: Z_input
  !
  ! RT
  !
@@ -93,6 +89,8 @@ module YPP_real_time
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
+ !
+ character(3) :: RT_p_format   
  !
  ! (RT) carriers
  !

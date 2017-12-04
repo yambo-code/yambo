@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,8 +28,9 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:JPC_RT_IO_t
- use real_time,     ONLY:RT_carriers,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,NE_i_time,RT_nk
- use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace!,l_RTpump_manual
+ use real_time,     ONLY:RT_carriers,NE_i_time,RT_nk,l_elel_scatt,l_elph_scatt,&
+&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free
+ use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace
  !
  implicit none
  !
@@ -41,13 +42,18 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  integer           :: io_RT_err,ID
  integer, external :: io_RT_components,RT_k_grid
  !
- l_elel_scatt    =.true.
- l_elph_scatt    =.true.
- l_elphoton_scatt=.true.
+ call section('*','Manual carriers excitation')
  !
  NE_i_time   =1
  !
+ l_elel_scatt    =.true.
+ l_elph_scatt    =.true.
+ l_elphoton_scatt=.true.
+ l_RT_CCA_Kernel =.true.
+ !
  RT_nk=RT_k_grid(en,kpt,qpt)
+ !
+ call RT_alloc(en)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
@@ -64,5 +70,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  io_RT_err=io_RT_components("carriers",ID)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"free")
+ !
+ call RT_free()
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  use interfaces,          ONLY:PARALLEL_index
  use functions,           ONLY:Fermi_fnc_derivative
  !
- implicit none
+#include<memory.h>
  !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
@@ -89,7 +89,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
    !
    QP_nb=BS_bands(2)
    QP_nk=Xk%nibz
-   allocate(QP_state(QP_nb,QP_nk)) 
+   YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
    QP_state=.FALSE.
    forall( i1=BS_bands(1):BS_bands(2) ) QP_state(i1,:)=.TRUE.
    call QP_state_table_setup(Xen)
@@ -105,16 +105,16 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
    !
  endif
  !
- allocate(QP_table_DB(QP_n_states_DB,3+n_sp_pol-1))
+ YAMBO_ALLOC(QP_table_DB,(QP_n_states_DB,3+n_sp_pol-1))
  QP_table_DB=QP_table
- deallocate(QP_table)
+ YAMBO_FREE(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gFsq')
  !
  if (io_err/=0) return
  !
- allocate(QP_table(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
+ YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
  !
  if (     elph_use_q_grid) nq_loop=q%nbz
  if (.not.elph_use_q_grid) nq_loop=elph_nDBs_used
@@ -144,19 +144,19 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  !
  if (.not.gFsq_is_excitonic) then
    !
-   allocate(state_is_2do(QP_n_states)) 
+   YAMBO_ALLOC(state_is_2do,(QP_n_states))
    call QP_states_simmetrize(en,state_is_2do=state_is_2do)
    !
  endif
  !
- allocate(g_sq_F(QP_n_states,elph_steps,5)) 
+ YAMBO_ALLOC(g_sq_F,(QP_n_states,elph_steps,5))
  !
  g_sq_F=0.
  !
  ! I need to find the QP states that I really need to calculate
  ! considering degeneracies and user defined states
  !
- allocate(QP_table_map(QP_n_states_DB,1))
+ YAMBO_ALLOC(QP_table_map,(QP_n_states_DB,1))
  QP_table_map=-1
  do iqp=1,QP_n_states_DB
    do i1=1,QP_n_states
@@ -252,8 +252,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
    !
    call msg('s',':: Building the correspondance map')
    !
-   deallocate(QP_table_map)
-   allocate(QP_table_map(BS_K_dim,2))
+   YAMBO_FREE(QP_table_map)
+   YAMBO_ALLOC(QP_table_map,(BS_K_dim,2))
    QP_table_map=-1
    !
    do neh = 1,BS_K_dim
@@ -327,8 +327,10 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
  call W_reset(g_sq_F_E)
  call elph_global_free()
  call PP_indexes_reset(px)
- deallocate(QP_table,g_sq_F)
- if (.not.gFsq_is_excitonic) deallocate(state_is_2do)
- deallocate(QP_table_map,QP_table_DB)
+ YAMBO_FREE(QP_table)
+ YAMBO_FREE(g_sq_F)
+ YAMBO_FREE(state_is_2do)
+ YAMBO_FREE(QP_table_map)
+ YAMBO_FREE(QP_table_DB)
  !
 end subroutine

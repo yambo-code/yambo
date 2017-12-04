@@ -29,9 +29,10 @@
 cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
-git add config/configure.ac
 git add configure
 git add include/version.inc
+if [ -e config/version.m4 ]     ; then  git add config/version.m4 ;     fi
+if [ -e config/version.m4_gpl ] ; then  git add config/version.m4_gpl ; fi
 EOF
 chmod +x .git/hooks/pre-commit
 #
@@ -40,10 +41,11 @@ chmod +x .git/hooks/pre-commit
 cat <<EOF > .git/hooks/prepare-commit-msg
 #!/bin/bash
 SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
-./sbin/make_message.pl -p "\$SOB"
 echo " " >> \$1
-cat commit.msg >> \$1
-rm commit.msg
+case "\$2,\$3" in
+  merge,) ;;
+  *) ./sbin/make_message.pl -p "\$SOB"; cat commit.msg >> \$1; rm commit.msg;;
+esac
 EOF
 chmod +x .git/hooks/prepare-commit-msg
 #

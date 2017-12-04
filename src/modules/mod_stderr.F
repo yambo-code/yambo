@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,7 +40,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _BLUEGENE
+#if defined _aix || defined _XLF
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"
@@ -74,9 +74,9 @@ module stderr
        g_format_length=9
      endif
      !
-     of_tabs(1)=2
+     of_tabs(1)=4
      do it=2,30
-       of_tabs(it)=of_tabs(it-1)+2+max(f_format_length,g_format_length)
+       of_tabs(it)=of_tabs(it-1)+4+max(f_format_length,g_format_length)
      enddo
    end subroutine
    !
@@ -181,19 +181,35 @@ module stderr
      !
    end subroutine
    !
-   character(lchlen) function string_remove(string_in,what)
+   character(lchlen) function string_remove(string_in,what,replace)
      !
-     character(*)     :: string_in
-     character(*)     :: what
+     character(*)           :: string_in
+     character(*)           :: what
+     character(*), optional :: replace
      !
      ! Work Space
      !
-     integer          :: i_pos
+     integer          :: i_pos,i_s
+     character(lchlen):: string_tmp
      !
      string_remove=string_in
+     !
      i_pos=index(string_in,what)
+     !
      if (i_pos==0) return
-     write (string_remove,'(2a)') string_in(:i_pos-1),string_in(i_pos+len(what):)
+     !
+     string_tmp=string_in
+     !
+     do i_s=1,len_trim(string_in)
+       if (present(replace)) then
+         string_remove=string_tmp(:i_pos-1)//replace//string_tmp(i_pos+len(what):)
+       else
+         string_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
+       endif
+       string_tmp=string_remove
+       i_pos=index(string_tmp,what)
+       if (i_pos==0) return
+     enddo
      !
    end function
    !
@@ -259,6 +275,20 @@ module stderr
      write(real2ch,'('//trim(fmt_)//')') r
      !
    end function real2ch
+   !
+   character(schlen) function complex2ch(c)
+     !
+     complex(SP), intent(in) :: c
+     real(SP)                :: r(2)
+     character(schlen)       :: fmt_(2)
+     !
+     r(1)=real(c)
+     r(2)=aimag(c)
+     fmt_(1)=gen_fmt(r_v=(/r(1)/))
+     fmt_(2)=gen_fmt(r_v=(/r(2)/))
+     write(complex2ch,'('//trim(fmt_(1))//','//trim(fmt_(2))//')') r
+     !
+   end function complex2ch
    !
    character(schlen) function gen_fmt(i_v,r_v)
      integer ,optional :: i_v(:)

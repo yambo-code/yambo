@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -23,54 +23,58 @@
 #
 sub create_new_run{
  #
- if ($ID_in and &have_ID($ID_in) == 1)
- {
-  if ($description) {&add_a_database_line($ID_in,"description","$description")};
-  if ($keys) {
-   foreach $key (@keys) {
-     &add_a_database_line($ID_in,"key","$key")
-   }
-  };
-  return
- }
- #
  # New ID
- $ID = $runs+1;
+ $ID_here = $runs+1;
+ $id_father=$ID_here;
  #
- $test=&have_run();
- if ($test ne 0 ) {
-  die "\n Found matching run with ID $test\n\n";
-  return;
- };
+ $run_ref=0;
+ if ($ID_in) {
+  $run_ref=&have_run("ID",$ID_in);
+ }else{
+  if ($IF_in) {
+   $run_ref=&have_run("ID",$IF_in);
+   $id_father=$IF_in;
+  }
+ }
  #
  print "\n\n Creating RUN...";
  #
  #############################
- print "\n ID\t\t:$ID\n";
- if (&have_material() eq 0) {&remote_cmd("mkdir $path/$material")};
- &remote_cmd("mkdir $path/$material/$ID");
- &remote_cmd("mkdir $path/$material/$ID/inputs");
- &remote_cmd("mkdir $path/$material/$ID/outputs");
- &remote_cmd("mkdir $path/$material/$ID/databases");
- $RUN_dir="$path/$material/$ID";
- $database_line[0]="$ID material $material";
- $database_line[1]="$ID date $date";
- $database_line[2]="$ID description";
- if ($description) {$database_line[2]="$ID description $description"};
- $ic=2;
- foreach $key (@keys) {
+ print "\n ID\t\t:$ID_here\n";
+ #
+ if ($run_ref>0){
+  $material_here=$RUN_material[$run_ref];
+ }else{
+  if (!$material) {die " A material must be provided\n"};
+  $material_here=$material;
+ }
+ if (!$quiet) {
+  if (&have_material("$material_here") eq 0) {&remote_ssh_cmd("mkdir -p $path/$material_here")};
+  &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here");
+  &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/inputs");
+  &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/outputs");
+  &remote_ssh_cmd("mkdir -p $path/$material_here/$ID_here/databases");
+ }
+ $RUN_dir="$path/$material_here/$ID_here";
+ if ($running) {$database_line[0]="$ID_here running $running"};
+ $database_line[0]="$ID_here father $id_father";
+ $database_line[1]="$ID_here material $material_here";
+ $database_line[2]="$ID_here date $date";
+ $database_line[3]="$ID_here description";
+ if ($description) {$database_line[2]="$ID_here description $description"};
+ $ic=3;
+ foreach $tag (@tags) {
   $ic++;
-  $database_line[$ic]="$ID key $key";
+  $database_line[$ic]="$ID_here tag $tag";
  };
  foreach $line (@database_line) {
-  print DB "$line\n";
+  if (!$quiet) {print DB "$line\n"};
+  if ( $quiet) {print "$line\n"};
  }
- if ($description) {
-  $local_description_file="$HOME/.ydb/${ID}_description";
-  open(LOCAL_DESC,'>',$local_description_file) or die;
-  print LOCAL_DESC "$description";
-  close(LOCAL_DESC);
-  &remote_cmd("put $local_description_file $RUN_dir/description");
+ if ($description and !$quiet) {
+  $local_description_file="$HOME/.ydb/${ID_here}_description";
+  $return_value = system("vim $local_description_file"); 
+  &remote_sftp_cmd("put $local_description_file $RUN_dir/description");
   $n_to_remove++;
   $FILE_to_remove[$n_to_remove]="$local_description_file";
  }

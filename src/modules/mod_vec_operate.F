@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,27 @@ module vec_operate
    module procedure r_sort,i_sort
  end interface
  !
+ interface cross_product
+   module procedure r_cross_product,c_cross_product
+ end interface
+ !
  contains
+   ! 
+   integer function min_index(N,v)
+     !
+     integer,  intent(in) :: N
+     real(SP), intent(in) :: v(N)
+     !
+     real(SP) :: v_min
+     integer  :: i_v
+     !
+     v_min=minval(v)
+     min_index=0
+     do i_v=1,N
+       if (abs(v(i_v)-v_min)<1.E-5) min_index=i_v
+     enddo
+     !
+   end function min_index
    ! 
    function normalize_v(v,zero_norm_)
      !
@@ -101,13 +121,21 @@ module vec_operate
      !
    end function rlu_v_norm
    !
-   function cross_product(a,b)
+   function r_cross_product(a,b)
      real(SP), intent(in) :: a(3),b(3)
-     real(SP)             :: cross_product(3)
-     cross_product(1) = a(2) * b(3) - a(3) * b(2)
-     cross_product(2) = a(3) * b(1) - a(1) * b(3)
-     cross_product(3) = a(1) * b(2) - a(2) * b(1)
-   end function cross_product
+     real(SP)             :: r_cross_product(3)
+     r_cross_product(1) = a(2) * b(3) - a(3) * b(2)
+     r_cross_product(2) = a(3) * b(1) - a(1) * b(3)
+     r_cross_product(3) = a(1) * b(2) - a(2) * b(1)
+   end function r_cross_product
+   !
+   function c_cross_product(a,b)
+     complex(SP), intent(in) :: a(3),b(3)
+     complex(SP)             :: c_cross_product(3)
+     c_cross_product(1) = conjg(a(2)) * b(3) - conjg(a(3)) * b(2)
+     c_cross_product(2) = conjg(a(3)) * b(1) - conjg(a(1)) * b(3)
+     c_cross_product(3) = conjg(a(1)) * b(2) - conjg(a(2)) * b(1)
+   end function c_cross_product
    !
    pure logical function v_is_zero(v,zero_)
      real(SP), intent(in) :: v(3)
@@ -183,7 +211,7 @@ module vec_operate
      ! Scale factor if input vector is in iku
      !
      if (index(mode,'r')/=0) n(:)=alat(:)
-     if (index(mode,'k')/=0) n(:)=2.*pi/alat(:)
+     if (index(mode,'k')/=0) n(:)=2._SP*pi/alat(:)
      !
      ! u is rlu or cc (no iku)
      !
@@ -191,7 +219,7 @@ module vec_operate
      if (index(mode,'i2')/=0) u(:)=v_in(:)*n(:) ! iku -> cc
      !
      ! i2c/c2i
-     mat=reshape((/1.,0.,0.,0.,1.,0.,0.,0.,1./),(/3,3/))
+     mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
      !
      ! a2c/a2i
      if (index(mode,'a2c')/=0.or.index(mode,'a2i')/=0) mat=transpose(a_here)

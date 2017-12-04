@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,22 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_spin_and_magn_interpolate(Xen,Xk,CIRCUIT_k,BANDS_range,spin_output,magn_output)
+subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_output,magn_output)
  !
- use pars,           ONLY:SP,schlen
- use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,n_spinor
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,of_open_close,error,warning
- use vec_operate,    ONLY:c2a,v_norm,iku_v_norm
- use parser_m,       ONLY:parser
- use stderr,         ONLY:intc
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
- use QP_CTL_m,       ONLY:QP_apply
+ use pars,           ONLY:SP
+ use electrons,      ONLY:n_spinor
+ use R_lattice,      ONLY:bz_samp
  !
  implicit none
  !
- type(levels),  intent(in)  :: Xen
  type(bz_samp), intent(in)  :: Xk
  integer      , intent(in)  :: BANDS_range(2)
  type(bz_samp), intent(in)  :: CIRCUIT_k
@@ -52,9 +44,9 @@ subroutine electrons_spin_and_magn_interpolate(Xen,Xk,CIRCUIT_k,BANDS_range,spin
 &            tmp_factor_in((BANDS_range(2)-BANDS_range(1)+1)*Xk%nibz,5),      &
 &            tmp_factor_out(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz)
  !
- call electrons_spin_factors(Xk,(/1,Xk%nibz/),BANDS_range,spin_fac)
+ call electrons_spin_factors((/1,Xk%nibz/),BANDS_range,spin_fac)
  !
- call electrons_magn_factors(Xk,(/1,Xk%nibz/),BANDS_range,magn_fac)
+ call electrons_magn_factors((/1,Xk%nibz/),BANDS_range,magn_fac)
  !
  n_states=(BANDS_range(2)-BANDS_range(1)+1)*Xk%nibz
  tmp_table=0

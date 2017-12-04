@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
- implicit none
+#include<memory.h>
  type(w_samp) ::W
  integer      ::ik1,ik2,O_x_dim,iq
  complex(SP)  ::O1x(FXC_n_g_corr,O_x_dim),O2x(FXC_n_g_corr,O_x_dim)
@@ -101,9 +101,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
    endif
  endif
  !
- allocate(conjg_O1x_qpg(FXC_n_g_corr,BS_nT_at_k(ik1)))
- allocate(O2x_qpg(BS_nT_at_k(ik2),FXC_n_g_corr))
- allocate(blk_Eo(2,O_x_dim))
+ YAMBO_ALLOC(conjg_O1x_qpg,(FXC_n_g_corr,BS_nT_at_k(ik1)))
+ YAMBO_ALLOC(O2x_qpg,(BS_nT_at_k(ik2),FXC_n_g_corr))
+ YAMBO_ALLOC(blk_Eo,(2,O_x_dim))
  !
  forall(i1=1:FXC_n_g_corr) conjg_O1x_qpg(i1,:BS_nT_at_k(ik1))=conjg(O1x(i1,:BS_nT_at_k(ik1)))*bare_qpg(iq,i1)
  forall(i2=1:FXC_n_g_corr) O2x_qpg(:BS_nT_at_k(ik2),i2)=O2x(i2,:BS_nT_at_k(ik2))*bare_qpg(iq,i2)
@@ -154,8 +154,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Residuals
  !
- allocate(left_R(FXC_n_g_corr,BS_nT_at_k(ik2)))
- allocate(right_R(BS_nT_at_k(ik1),FXC_n_g_corr))
+ YAMBO_ALLOC(left_R,(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ YAMBO_ALLOC(right_R,(BS_nT_at_k(ik1),FXC_n_g_corr))
  left_R=(0._SP,0._SP)
  right_R=(0._SP,0._SP)
  !
@@ -181,8 +181,9 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! Fxc
  !
- allocate(wk1(BS_nT_at_k(ik1),FXC_n_g_corr),wk2(FXC_n_g_corr,BS_nT_at_k(ik2)),&
-&         FXC_temp(FXC_n_g_corr,FXC_n_g_corr))
+ YAMBO_ALLOC(wk1,(BS_nT_at_k(ik1),FXC_n_g_corr))
+ YAMBO_ALLOC(wk2,(FXC_n_g_corr,BS_nT_at_k(ik2)))
+ YAMBO_ALLOC(FXC_temp,(FXC_n_g_corr,FXC_n_g_corr))
  !
  COM_MODE=NONE
  if (ik1==1.and.ik2==1) COM_MODE=REP
@@ -258,7 +259,13 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! CLEAN
  !
- deallocate(conjg_O1x_qpg,O2x_qpg,blk_Eo,left_R,right_R,wk1,wk2,FXC_temp)
+ YAMBO_FREE(conjg_O1x_qpg)
+ YAMBO_FREE(blk_Eo)
+ YAMBO_FREE(left_R)
+ YAMBO_FREE(right_R)
+ YAMBO_FREE(wk1)
+ YAMBO_FREE(wk2)
+ YAMBO_FREE(FXC_temp)
  ! 
  contains
    !

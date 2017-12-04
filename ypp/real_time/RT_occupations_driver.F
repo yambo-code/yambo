@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -29,7 +29,7 @@ subroutine RT_occupations_driver(kpt,En)
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_conf
- use RT_control,     ONLY:RT_apply
+ use RT_control,     ONLY:RT_apply,JPC_RT_IO_t
  use real_time,      ONLY:RT_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_lifetimes,l_RT_2D_dos
  !
@@ -38,8 +38,8 @@ subroutine RT_occupations_driver(kpt,En)
  type(bz_samp) :: kpt
  type(levels)  :: En
  !
- call section('+','Real-Time occupations')
- !============================================
+ call section('+','Real-Time components (Occupations, Lifetimes,...)')
+ !=====================================================================
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
@@ -47,7 +47,7 @@ subroutine RT_occupations_driver(kpt,En)
  !
  if (.not.l_rt_carriers_in_use) return
  !
- call RT_time_configuration_setup("CARRIERS")
+ call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
  !
  ! Additional QP corrections
  !===========================
@@ -57,7 +57,7 @@ subroutine RT_occupations_driver(kpt,En)
  !
  ! Occupations energy plot 
  !=========================
- if (l_RT_energy) call RT_occ_energy_plot(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_energy) call RT_components_energy_plot(En,kpt,RT_conf%T_n_steps)
  !
  ! Occupations time plot 
  !=========================
@@ -69,7 +69,6 @@ subroutine RT_occupations_driver(kpt,En)
  !
  ! Occupations bands fit 
  !=========================
- if (l_RT_lifetimes) RT_conf%T_n_steps=1
  if (l_RT_bands) call RT_occ_bands_interpolation(En,kpt,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

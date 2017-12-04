@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -24,33 +24,66 @@
 sub load_db
 {
 open(DB,"<","$DB_file");
+$runs=0;
+$N_fathers=0;
 while(<DB>) { 
  @element = split(' ',$_);
- if ($element[1] eq "material")    { 
-  $n_keys=0;
+ if ($element[1] eq "father")    { 
+  $ID=0;
+  $n_tags=0;
   $n_outs=0;
   $n_dbs=0;
   $n_ins=0;
-  $runs=$element[0];
-  $RUN_material[$runs]=$element[2];
+  $runs++;
+ }
+ $ID[$runs]=$element[0];
+ if ($element[1] eq "running")     { $RUN_run[$runs]=$element[2] } ;
+ if ($element[1] eq "material")    { $RUN_material[$runs]=$element[2] } ;
+ if ($element[1] eq "father")      { 
+  $RUN_father[$runs]=$element[2];
+  $F_found="no";
+  for($if_here = 1; $if_here <= $N_fathers; $if_here++) {
+    if ("$element[2]" =~ "$father[$if_here]") {$F_found="yes"};
+  } 
+  if ("$F_found" eq "no") {
+   $N_fathers++;
+   $father[$N_fathers]=$element[2];
+  }
  }
  if ($element[1] eq "date")        { $RUN_date[$runs]=$element[2] } ;
- if ($element[1] eq "description") { $RUN_description[$runs]=$element[2] } ;
- if ($element[1] eq "key")         { 
-   $n_keys++;
-   $RUN_key[$runs][$n_keys]=$element[2];
- } ;
+ if ($element[1] eq "description") { 
+  $desc_line  = substr $_, index($_,"description")+length("description")+1 ; 
+  chomp($desc_line);
+  @DESCs = split(/NEWLINE/,$desc_line);
+  $id=0;
+  foreach $single_desc (@DESCs) {
+   chomp($single_desc);
+   $id++;
+   $RUN_description[$runs][$id]=$single_desc;
+  }
+ }
+ if ($element[1] eq "tag")         { 
+  for($ik = 2; $ik < 100; $ik++) {
+   if ($element[$ik]){
+     $n_tags++;
+     $RUN_tag[$runs][$n_tags]=$element[$ik];
+   }
+  };
+ };
  if ($element[1] eq "output")         { 
    $n_outs++;
    $RUN_out[$runs][$n_outs]=$element[2];
+   if ($element[3]) {$RUN_out_tag[$runs][$n_outs]=$element[3]};
  } ;
  if ($element[1] eq "input")         { 
    $n_ins++;
    $RUN_in[$runs][$n_ins]=$element[2];
+   if ($element[3]) {$RUN_in_tag[$runs][$n_ins]=$element[3]};
  } ;
  if ($element[1] eq "database")         { 
    $n_dbs++;
    $RUN_db[$runs][$n_dbs]=$element[2];
+   if ($element[3]) {$RUN_db_tag[$runs][$n_dbs]=$element[3]};
  } ;
 };
 close(DB);

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,lchlen,schlen
+ use pars,       ONLY:SP,lchlen,schlen,max_io_units,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
@@ -91,10 +91,21 @@ module IO_m
  integer, parameter:: IO_NO_DATABASE=-1,IO_INCOMPATIBLE_VAR=-2,IO_GENERIC_ERROR=-3,&
 &                     IO_NO_BINDING_ERROR=-4,IO_NO_ERROR=0,IO_OUTDATED_DB=-5,IO_NOT_ALLOWED=-6
  !
+ ! I/O create / read / write modes
+ !
+ integer, parameter:: IO_WRITE_MODE =ior(nf90_share,nf90_write)
+ integer, parameter:: IO_READ_MODE  =               nf90_nowrite
+ !
+#if defined _NC_CLASSIC
+ integer, parameter:: IO_CREATE_MODE=    nf90_share
+#elif defined _HDF5_IO
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+#else
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#endif
+ !
  ! Units
  !
- integer, parameter:: max_io_units=10
- integer, parameter:: max_active_sections=10
  integer :: io_action(max_io_units)
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
@@ -132,7 +143,7 @@ module IO_m
  interface 
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                          DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                          DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                          DESCRIPTION,DO_NOT_DUMP)
      !
      use pars
@@ -141,22 +152,27 @@ module IO_m
      integer,     optional :: VAR_SZ,MENU
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     complex(SP), optional :: C0,DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
      !
    end subroutine
    !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,R0,R1,R2,R3,C0,C1,C2,C3,L1,L3,IPOS)
+   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
+                      &             R0,R1,R2,R3,R4,R5,&
+                      &             C0,C1,C2,C3,C4,C5,&
+                      &             L0,L1,L2,L3,L4,   &
+                      &                            IPOS)
      !
      use pars
      integer      :: ID, error
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:)
-     integer(LP), optional :: L1(:),L3(:,:,:)
+     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
+     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
+     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
    !
@@ -188,8 +204,7 @@ module IO_m
    ! 
    logical function open_is_on(ID)
      !
-     ! Note that an identical IF statement must be defined in 
-     ! io_control.
+     ! Note that an identical IF statement must be defined in io_control.
      !
      integer :: ID
      open_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_WR_CL,&
@@ -247,9 +262,10 @@ module IO_m
      logical          ::file_found
      !
      io_connect=0
+     !
      if ( (read_is_on(ID).and..not.IO_read).or.&
 &         (write_is_on(ID).and..not.IO_write) ) then
-       io_connect=IO_NO_DATABASE
+       io_connect=IO_NOT_ALLOWED
        call io_reset(ID)
        return
      endif
@@ -303,44 +319,21 @@ module IO_m
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
-       CREATE_MODE=nf90_share
-       !
-       ! Setting NF90_64BIT_OFFSET causes netCDF to create a 64-bit 
-       ! offset format file, instead of a netCDF classic format file. 
-       ! The 64-bit offset format imposes far fewer restrictions on very large 
-       ! (i.e. over 2 GB) data files. See Large File Support.
-       !
-       ! http://www.unidata.ucar.edu/software/netcdf/docs/netcdf/Large-File-Support.html
-       ! http://www.unidata.ucar.edu/software/netcdf/faq-lfs.html
-       !
-#if defined _64BIT_OFFSET
-       !
-       if (any((/index(desc,'BS_Q')/=0,index(desc,'BS_diago')/=0,&
-&                index(desc,'db1')/=0,index(desc,'dipoles')/=0, & 
-&                index(desc,'elph')/=0,index(desc,'gops')/=0, & 
-&                index(desc,'kindx')/=0/))) & 
-&                CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
-       !
-#elif defined _HDF5_IO
-       CREATE_MODE=ior(nf90_share,nf90_hdf5)
-#endif
-       !
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
          !
          if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),&
-&                           ior(nf90_write,nf90_share),io_unit(ID)))
+           call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
          else
-           call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
-           call netcdf_call(nf90_enddef(io_unit(ID)))
+           call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
            if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
            if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
          endif
          !
        else
          !
-         call netcdf_call(nf90_create(trim(io_file(ID)),CREATE_MODE,io_unit(ID)))
-         call netcdf_call(nf90_enddef(io_unit(ID)))
+         call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+         call netcdf_call(nf90_enddef(io_unit(ID)),ID)
          !
        endif
        !
@@ -399,7 +392,7 @@ module IO_m
        if (type==-2) then
          open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
        else
-         call netcdf_call(nf90_open(trim(io_file(ID)),nf90_nowrite,io_unit(ID)))
+         call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
        endif
        !
        io_type(ID)=type
@@ -410,8 +403,11 @@ module IO_m
    !
    subroutine io_disconnect(ID,FORCE)
      !
-     integer           :: ID
+     integer           :: ID,NC_ERR
      logical, optional :: FORCE
+     logical           :: I_OPEN
+     !
+     I_OPEN=.FALSE.
      !
      if (present(FORCE)) then
        !
@@ -423,19 +419,15 @@ module IO_m
        !
      endif
      !
-     !
-     if ( (io_type(ID)/=-2.and.file_is_open(io_file(ID),ID)) .or.&
-&         (io_type(ID)==-2.and.file_is_open(io_file(ID)))          ) then
-       !
-       if (io_type(ID)==-2) then
-         close(unit=io_unit(ID))
-       else
-         call netcdf_call(nf90_close(io_unit(ID)))
-       endif
-       !
-       io_unit(ID)=0
-       !
+     if (io_type(ID)==-2) then
+       I_OPEN=PLAIN_file_is_open(IO_file(ID))
+       if (I_OPEN) close(unit=io_unit(ID))
+     else
+       I_OPEN=NETCDF_file_is_open(ID)
+       if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
      endif
+     !
+     if (I_OPEN) io_unit(ID)=0
      !
      if (io_resetable(ID)) call io_reset(ID)
      !
@@ -490,13 +482,13 @@ module IO_m
      endif
      !
      if (read_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
      else  if (write_is_on(ID)) then
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
      endif
      !
    end subroutine
@@ -586,27 +578,39 @@ module IO_m
      !
    end function file_is_present
    !
-   logical function file_is_open(filename,ID)
-     character(*)      :: filename
+   logical function NETCDF_file_is_open(ID)
      integer, optional :: ID
      integer :: NC_ERR
-     file_is_open=.false.
-     if (trim(filename)=='') return
-     if (present(ID)) then
-       NC_ERR=nf90_inquire(io_unit(ID))
-       file_is_open=NC_ERR==NF90_NOERR
-     else
-       inquire(file=filename,opened=file_is_open)
-     endif
-     !
+     NETCDF_file_is_open=.false.
+     if (trim(IO_file(ID))=='') return
+     NC_ERR=nf90_inquire(io_unit(ID))
+     NETCDF_file_is_open=NC_ERR==NF90_NOERR
    end function
    !
-   subroutine netcdf_call(status)
+   logical function PLAIN_file_is_open(filename)
+     character(*) :: filename
+     PLAIN_file_is_open=.FALSE.
+     if (trim(filename)=='') return
+     INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
+   end function
+   !
+   subroutine netcdf_call(status,ID,VAR)
      use com,           ONLY:error
-     integer, intent ( in) :: status
-     character(schlen) :: msg
-     if(status /= nf90_noerr) then
-       write (msg,'(2a)') '[NetCDF] ',trim(nf90_strerror(status))
+     integer,      intent (in)           :: status
+     integer,      intent (in)           :: ID
+     character(*), intent (in), optional :: VAR
+     character(lchlen) :: msg
+     character(schlen) :: VARNAME,FILENAME
+     integer           :: local_error
+     if(status /= NF90_NOERR) then
+       FILENAME=io_file(ID)
+       VARNAME=' NOT DEFINED '
+       if(.not.present(VAR)) then
+         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(local_error/=0) VARNAME=' NOT DEFINED '
+       endif
+       if(present(VAR)) VARNAME=VAR
+       write (msg,'(6a)') ' File ',trim(FILENAME),'; Variable ',trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if
    end subroutine
@@ -618,31 +622,48 @@ module IO_m
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=nf90_noerr) call netcdf_call(&
-&                               nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim))
+     if (dim_found/=nf90_noerr) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
-   integer function variable_is_found(ID,var_name)
-     integer,      intent ( in) :: ID
-     character(*), intent ( in) :: var_name
-     integer :: var_ID ! Work Space
-     variable_is_found=-1
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)==nf90_NoErr) variable_is_found=1  
-     if (nf90_inq_varid(io_unit(ID),var_name,var_ID)/=nf90_NoErr) variable_is_found=0  
+   logical function variable_exist(ID,var_name,var_ID)
+     integer,           intent ( in) :: ID
+     character(*),      intent ( in) :: var_name
+     integer, optional, intent (out) :: var_ID
+     integer                    :: var_check,var_ID_
+     var_check=nf90_inq_varid(io_unit(ID),var_name,var_ID_)
+     if (var_check==NF90_NOERR) variable_exist=.TRUE.
+     if (var_check/=NF90_NOERR) variable_exist=.FALSE.
+     if (present(var_ID)) then
+       if(     variable_exist) var_ID=var_ID_
+       if(.not.variable_exist) var_ID=-1
+     endif
    end function
    !
-   subroutine deliver_IO_error_message(i_err,DB)
+   subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !
-     use com,        ONLY:warning
+     use com,        ONLY:warning,error
      !
-     integer      :: i_err
-     character(*) :: DB
+     integer          :: i_err
+     logical,optional :: STOP_it
+     character(*)     :: DB
+     !
+     ! ws
+     logical          :: STOP_
      !
      if (i_err==0) return
      !
-     if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
-     if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
-     if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')
+     STOP_=.FALSE.
+     if (present(STOP_it)) STOP_=STOP_it
+     !
+     if (STOP_) then
+       if (i_err==IO_NO_DATABASE     ) call error('Missing all or part of '//DB//' DB')
+       if (i_err==IO_INCOMPATIBLE_VAR) call error('Variable not compatible in '//DB//' DB')
+       if (i_err==IO_OUTDATED_DB)      call error('Too old '//DB//' DB')
+     else
+       if (i_err==IO_NO_DATABASE     ) call warning('Missing all or part of '//DB//' DB')
+       if (i_err==IO_INCOMPATIBLE_VAR) call warning('Variable not compatible in '//DB//' DB')
+       if (i_err==IO_OUTDATED_DB)      call warning('Too old '//DB//' DB')
+     endif
      !
    end subroutine
    !

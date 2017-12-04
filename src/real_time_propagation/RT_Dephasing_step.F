@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -43,36 +43,12 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  if (.not.RT_is_statically_dephased) return
  !
- if (l_RT_EXP) then
-   !
-   ! dG = dG * exp( -dT i*Sigma)
-   !=============================
-   !
-   do ib1=RT_bands(1),RT_bands(2)
-     do ib2=ib1+1,RT_bands(2)
-       !
-       dG_out(ib1,ib2) = dG_out(ib1,ib2)*exp(-RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))*deltaT)
-       dG_out(ib2,ib1) = dG_out(ib2,ib1)*exp(-RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik))*deltaT)
-       !
-     enddo
-     !
-   enddo
-   !
- else
-   !
-   ! dG = dG * (1 - dT i*Sigma)
-   !============================
-   !
-   do ib1=RT_bands(1),RT_bands(2)
-     do ib2=ib1+1,RT_bands(2)
-       !
-       dG_out(ib1,ib2) = dG_out(ib1,ib2) * (1._SP - deltaT*RT_Deph_Matrix(ib1,ib2,RT_all2ibz(ik))) 
-       dG_out(ib2,ib1) = dG_out(ib2,ib1) * (1._SP - deltaT*RT_Deph_Matrix(ib2,ib1,RT_all2ibz(ik)))
-       !
-     enddo
-     !
-   enddo
-   !
- endif
+ ! dG = dG * exp( -dT i*Sigma)
+ !=============================
+ if (     l_RT_EXP)  dG_out(:,:) = dG_out(:,:) *  exp(-RT_Deph_Matrix(:,:,RT_all2ibz(ik))*deltaT)
+ !
+ ! dG = dG * (1 - dT i*Sigma)
+ !============================
+ if (.not.l_RT_EXP)  dG_out(:,:) = dG_out(:,:) * (1._SP - deltaT*RT_Deph_Matrix(:,:,RT_all2ibz(ik)))
  !
 end subroutine RT_Dephasing_step

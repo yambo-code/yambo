@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2017 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -40,15 +40,16 @@
   {"lhelp",  "H","Long Help",0,0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0,1},   
   {"infver", "V","Input file verbosity",0,0,1,0,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all,par",0,0,0,0,0},
+  {"DESC",   " ","[opt=RL,kpt,sc,qp,io,gen,resp,all,par]",0,0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0,1},              
   {"idir",   "I","Core I/O directory",0,0,1,0,1},         
   {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
-  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
+  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
@@ -63,7 +64,7 @@
 #endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
+  {"bss",    "y","BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
   {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
@@ -78,12 +79,7 @@
   {"photolum", "u","Photo-Luminescence",0,0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf",   "q","Real-time dynamic [opt=(p)robe or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
-#endif
-#if defined _RT && !defined _QED
-  {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/(a)ll]",0,0,1,0,0},
-#endif
-#if defined _RT && defined _QED 
+  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _QED && !defined _ELPH
@@ -101,7 +97,7 @@
 #if defined _SC | defined _RT
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
   {"scrun",      "s","Self-Consistent Single-Particle Calculations",0,0,0,0,0}, 
 #endif
 #if defined _MAGNETIC 

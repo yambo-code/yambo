@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -22,19 +22,21 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                       DB_R0,R0,R1,DB_R1,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                       DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
  use pars,    ONLY:SP,schlen,lchlen,nf90_SP
+ use pointers,ONLY:linkC2R
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:string_pack,intc,real2ch
+ use stderr,  ONLY:string_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,&
 &                  io_code_version,io_serial_number,io_code_revision,IO_INCOMPATIBLE_VAR
  implicit none
+ !
  integer               :: ID
  integer,parameter     :: MAX_DB_ELEMENTS=100
  character(*),optional :: VAR,OP(:)
@@ -42,6 +44,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
                                ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+ complex(SP), optional :: C0,DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0,CH1(:)
  character(lchlen),optional :: DESCRIPTION
@@ -50,57 +53,52 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  character(lchlen) :: ch
  character(1)      :: msg_where
- integer :: i_db(MAX_DB_ELEMENTS),i_err
- real(SP):: r_db(MAX_DB_ELEMENTS),local_unit
+ character(3)      :: MODE_
+ integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
+ real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
+ complex(SP) :: c_db(MAX_DB_ELEMENTS)
+ real(SP), pointer  :: RC0(:)
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
  logical :: CHECK_,DUMP_
  !
- DUMP_=io_mode(ID)==DUMP
- if (present(DO_NOT_DUMP)) then
-   DUMP_=.not.DO_NOT_DUMP
- endif
+ DUMP_= (io_mode(ID)==DUMP)
+ if (present(DO_NOT_DUMP)) DUMP_=.not.DO_NOT_DUMP
  !
- if  (present(CHECK)) then
-   CHECK_=CHECK
- else
-   CHECK_=.FALSE.
- endif
+ CHECK_=.false.
+ if (present(CHECK)) CHECK_=CHECK
+ !
+ MENU_=1
+ if (present(MENU)) MENU_=MENU
+ !
+ if (write_is_on(ID)) MODE_="[WR"
+ if ( read_is_on(ID)) MODE_="[RD"
  !
  local_unit=1._SP
  if (present(UNIT)) local_unit=UNIT
+ !
  msg_where=""
- if (io_com(ID)==REP) msg_where="r"
+ if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
  !
  if (present(VAR).and.present(VAR_SZ)) then
    io_rec_pos(ID)=1
    if (VAR_SZ>0) then
+     ch=string_pack(MODE_,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
      if (write_is_on(ID)) then
-       call netcdf_call(nf90_redef(io_unit(ID)))
-       if (present(CH0).or.present(CH1)) then
-         call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
-&                         nf90_char,(/netcdf_dim(ID,schlen),&
-&                         netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID)))
-       else
-         if (ver_is_gt_or_eq(ID,revision=723)) then 
-           call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
-&                         nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID)))
+       call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
+       nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
+       if (nf_error/=NF90_NOERR) then
+         if (present(CH0).or.present(CH1) ) then
+           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_char,(/netcdf_dim(ID,schlen),netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID))
          else
-           call netcdf_call(nf90_def_var(io_unit(ID),VAR,&
-&                         nf90_real,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID)))
+           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
          endif
+         call netcdf_call(nf_error,ID,VAR=VAR)
        endif
-       call netcdf_call(nf90_enddef(io_unit(ID))) 
-       ch=string_pack("[WR",trim(io_file(ID)),"]",&
-&                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
+       call netcdf_call(nf_error,ID,VAR=VAR)
+       call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
      else if (read_is_on(ID)) then
-       ch=string_pack("[RD",trim(io_file(ID)),"]",&
-&                     repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
-       call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)))
-     endif
-     if (.not.present(MENU)) call msg(msg_where,trim(ch))
-     if (present(MENU)) then
-       if (MENU==1) call msg(msg_where,trim(ch))
+       call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
      endif
    else
      !
@@ -110,9 +108,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
      !
-     ! GPL_EXCLUDE_START
-     !
-     !
      ! GPL_EXCLUDE_END
      !
      ! GPL_INCLUDE_START
@@ -121,23 +116,20 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 !&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
      ! GPL_INCLUDE_END
      !
-     if (.not.present(MENU)) call msg(msg_where,trim(ch))
-     if (present(MENU)) then
-       if (MENU==1) call msg(msg_where,trim(ch))
-     endif
    endif
+   if (MENU_==1) call msg(msg_where,trim(ch))
    return
  endif
  !
  if (present(I0)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I0,(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),I0,(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(DB_I0)) DB_I0=I0
      if (present(VAR)) call msg(msg_where,VAR,I0)
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     i_db(1),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),i_db(1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (DUMP_)          I0=i_db(1)
      if (present(DB_I0)) DB_I0=i_db(1)
      ch=""
@@ -159,9 +151,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    !
    ! DESCRIPTION
    !
-   if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//intc(I0)
-   endif
+   if (present(DESCRIPTION)) DESCRIPTION=VAR//intc(I0)
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1
    !
@@ -169,13 +159,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  if (present(I1)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     I1,(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),I1,(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(DB_I1)) DB_I1=I1
      if (present(VAR)) call msg(msg_where,VAR,I1)
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     i_db(:size(I1)),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),i_db(:size(I1)),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (DUMP_)          I1=i_db(:size(I1))
      if (present(DB_I1)) DB_I1=i_db(:size(I1))
      ch=""
@@ -207,13 +197,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  if (present(R0)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R0,(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),R0,(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(DB_R0)) DB_R0=R0
      if (present(VAR)) call msg(msg_where,VAR,R0*local_unit)
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     r_db(1),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),r_db(1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (DUMP_)          R0=r_db(1)
      if (present(DB_R0)) DB_R0=r_db(1)
      ch=""
@@ -245,13 +235,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  if (present(R1)) then
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     R1,(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),R1,(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(DB_R1)) DB_R1=R1
      if (present(VAR)) call msg(msg_where,VAR,R1*local_unit)
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     r_db(:size(R1)),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),r_db(:size(R1)),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (DUMP_)          R1=r_db(:size(R1))
      if (present(DB_R1)) DB_R1=r_db(:size(R1))
      ch=""
@@ -285,17 +275,63 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
  !
+ !
+ if (present(C0)) then
+   if (write_is_on(ID)) then
+     RC0 => linkC2R(C0,(/2/))
+     nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC0, (/1/), (/2/))
+     call netcdf_call(nf_error,ID)
+     r_from_c(1,1)=real(C0)
+     r_from_c(2,1)=aimag(C0)
+     if (present(DB_C0)) DB_C0=C0
+     if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+   else if (read_is_on(ID)) then
+     RC0 => linkC2R(c_db(1),(/2/))
+     nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC0, (/1/), (/2/))
+     call netcdf_call(nf_error,ID)
+     r_from_c(1,1)=real(C0)
+     r_from_c(2,1)=aimag(C0)
+     if (DUMP_)          C0=c_db(1)
+     if (present(DB_C0)) DB_C0=c_db(1)
+     ch=""
+     if (io_mode(ID)==VERIFY.and.present(OP)) then
+       i_err=c_verify((/C0/),(/c_db(1)/))
+       if (CHECK_) then
+         if (io_status(ID)==0) io_status(ID)=i_err
+         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+       else if (present(WARN)) then
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+       endif
+     endif
+     if (len_trim(ch)>0) then
+       call msg(msg_where,trim(ch),r_from_c(:,1)*local_unit)
+     else if (present(VAR)) then
+       call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
+     endif
+   endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(complex2ch(C0*local_unit))
+   endif
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+2
+   !
+ endif
+ !
+ !
  if (present(L0)) then
    i_db(1)=0
    if (L0) i_db(1)=1
    if (write_is_on(ID)) then
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     i_db(1),(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),i_db(1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(VAR)) call msg(msg_where,VAR,i_db(1)==1)
      if (present(DB_L0)) DB_L0=i_db(1)==1
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     i_db(2),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),i_db(2),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      ch=""
      if (present(DB_L0)) DB_L0=i_db(2)==1
      if (DUMP_)          L0=i_db(2)==1
@@ -328,13 +364,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  if (present(CH0)) then
    if (write_is_on(ID)) then
      db_ch(1)=CH0
-     call netcdf_call(nf90_put_var(io_unit(ID),io_netcdf_var(ID),&
-&                     db_ch(:1),(/io_rec_pos(ID)/)))
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),db_ch(:1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      if (present(DB_CH0))   DB_CH0=CH0
      if (present(VAR)) call msg(msg_where,VAR,trim(db_ch(1)))
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_get_var(io_unit(ID),io_netcdf_var(ID),&
-&                     db_ch(:1),(/io_rec_pos(ID)/)))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),db_ch(:1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
      ch=""
      if (DUMP_)             CH0=db_ch(1)
      if (present(DB_CH0))   DB_CH0=db_ch(1)
@@ -420,6 +456,41 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
          if (rv1(i1)<rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
        endif
        if (r_verify/=0) return
+     enddo
+   end function
+   !
+   integer function c_verify(cv1,cv2)
+     integer     :: i1
+     complex(SP) :: cv1(:),cv2(:)
+     real(SP)    :: eq_accuracy,acc_fraction
+     c_verify   =0
+     eq_accuracy=1.E-5_SP
+     acc_fraction=0.001_SP
+     !
+     ! Define the accuracy of the comparison
+     !
+     do i1=1,size(cv1)
+       if ( abs(cv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv1(i1))*acc_fraction )
+       if ( abs(cv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv2(i1))*acc_fraction )
+     enddo
+     !
+     do i1=1,size(cv1)
+       if (OP(i1)=="==") then 
+         if (abs(cv1(i1)-cv2(i1))>eq_accuracy) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)=="<") then 
+         if (abs(cv1(i1))>=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)=="<=") then 
+         if (abs(cv1(i1))>abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)==">") then 
+         if (abs(cv1(i1))<=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (OP(i1)==">=") then 
+         if (abs(cv1(i1))<abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
+       endif
+       if (c_verify/=0) return
      enddo
    end function
    !

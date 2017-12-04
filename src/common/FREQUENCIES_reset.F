@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,27 +33,24 @@ subroutine FREQUENCIES_reset(Xw,what)
  ! X_poles_tab(:), rg_index_bg(:), bg_npts(:)
  !
  use frequency,   ONLY:w_samp,bare_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
- use memory_m,    ONLY:mem_est
  use X_m,         ONLY:X_poles_tab
- implicit none
+#include<memory.h>
  !
  type(w_samp)  :: Xw
  character(*)  :: what
  !
  if (what=="points".or.what=="all") then
-   if(associated(Xw%p)) then
-     deallocate(Xw%p)
-     nullify(Xw%p)
-   endif
-   call mem_est("W-p")
+   YAMBO_FREE(Xw%p)
  endif
  !
  if (what=="coarse_grid".or.what=="all") then
-   if (allocated(ordered_grid_index)) deallocate(ordered_grid_index)
+   YAMBO_FREE(ordered_grid_index)
    if (allocated(X_poles_tab)) then
-     deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
+     YAMBO_FREE(X_poles_tab)
+     YAMBO_FREE(bare_grid_N)
+     YAMBO_FREE(coarse_grid_Pt)
+     YAMBO_FREE(coarse_grid_index)
    endif
-   call mem_est("X_poles_tab RGi BGn CGp CGi")      
  endif
  !
 end subroutine

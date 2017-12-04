@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -108,14 +108,14 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
            offt = WF%index(iv2,ik,1)
            DeltaEps = 0._SP
            do ir = 1, fft_size
-             DeltaEps = DeltaEps + conjg(WF%c(ir,offt))*WF%c(ir,ifft)*V_nm1(ir)-&
-&             U(ik,iv2,ir)*conjg(WF%c(ir,ifft))
+             DeltaEps = DeltaEps + conjg(WF%c(ir,1,offt))*WF%c(ir,1,ifft)*V_nm1(ir)-&
+&             U(ik,iv2,ir)*conjg(WF%c(ir,1,ifft))
            end do
            if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
            if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
            &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%E_Fermi))    
            V_resp(:) = V_resp(:) + E%f(iv1,ik,1)*k%weights(ik)*real((DeltaEps)*&
-                &conjg(WF%c(:,ifft))*WF%c(:,offt))/EWeight
+                &conjg(WF%c(:,1,ifft))*WF%c(:,1,offt))/EWeight
          end do
        end do
      end do

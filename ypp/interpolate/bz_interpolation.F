@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,7 +26,7 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,USER_k,ID)
   use R_lattice,   ONLY:bz_samp
   use electrons,   ONLY:levels,n_sp_pol
   use com,         ONLY:error
-  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
+  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
   implicit none
   type(bz_samp), intent(in)              :: USER_k
   real(SP),      intent(out), optional   :: R1D(:,:),R2D(:,:,:)

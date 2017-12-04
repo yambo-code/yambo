@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -40,14 +40,14 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
  use frequency,       ONLY:w_samp,W_reset,bare_grid_N,coarse_grid_Pt,coarse_grid_index,ordered_grid_index
- use linear_algebra,  ONLY:LINEAR_ALGEBRA_driver,INV
- use collision,       ONLY:elemental_collision,elemental_collision_free
- use memory_m,        ONLY:mem_est
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra,  ONLY:INV
+ use collision_el,    ONLY:elemental_collision,elemental_collision_free
  use wave_func,       ONLY:WF
  !
  ! I/O
  !
- implicit none
+#include<memory.h>
  real(SP),intent(out)    :: Voep(fft_size)
  complex(SP),intent(in)  :: W_x(nkibz,n_met_bands,fft_size)
  type(X_t)    :: X
@@ -80,14 +80,14 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! 2:
  call IO_and_Messaging_switch("-report") 
- call X_os(X_mat,1,E,k,Xw,X)
+ call X_irredux(X_mat,1,E,k,Xw,X)
  call IO_and_Messaging_switch("+report")
  ! 3:
- allocate(Xo_inverse(X%ng-1,X%ng-1))
+ YAMBO_ALLOC(Xo_inverse,(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
  call X_alloc('X')
  ! 4:
- call LINEAR_ALGEBRA_driver(INV,Xo_inverse)
+ call LINEAR_ALGEBRA_driver(INV,M=Xo_inverse)
  !
  !
  ! Calculate rho_xc(G) =>  1 - initialize vars/dim
@@ -103,7 +103,10 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! 1:
  call elemental_collision_free(isc)
  isc%ngrho=X%ng
- allocate(rhotw_sum(X%ng),rhotw_sum_TR(X%ng),rho_xc(X%ng),rho_tw_rs(fft_size))
+ YAMBO_ALLOC(rhotw_sum,(X%ng))
+ YAMBO_ALLOC(rhotw_sum_TR,(X%ng))
+ YAMBO_ALLOC(rho_xc,(X%ng))
+ YAMBO_ALLOC(rho_tw_rs,(fft_size))
  !
  rho_xc = (0.,0.)
  !
@@ -113,10 +116,10 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
      do ic = E%nbf+1, X%ib(2)
        ifft=WF%index(iv,ik,1)
        offt=WF%index(ic,ik,1)
-       SigmaXC = dot_product(WF%c(:,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
+       SigmaXC = dot_product(WF%c(:,1,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>
        !
        !rho_tw_rs(:) = conjg(WF%c(:,ifft))*WF%c(:,offt)
-       rho_tw_rs(:) = WF%c(:,ifft)*conjg(WF%c(:,offt))
+       rho_tw_rs(:) = WF%c(:,1,ifft)*conjg(WF%c(:,1,offt))
        !
        ! r -> G transform; 
        ! In order to be compliant with FFTQE -1 should be used in calls to FFT
@@ -155,7 +158,9 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
      end do
    end do
  end do 
- deallocate(rhotw_sum,rhotw_sum_TR,rho_tw_rs)
+ YAMBO_FREE(rhotw_sum)
+ YAMBO_FREE(rhotw_sum_TR)
+ YAMBO_FREE(rho_tw_rs)
  call X_alloc('DIP_projected')
  !
  ! Add c.c. contribution
@@ -165,16 +170,17 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  else if (i_space_inv/=0) then
    rho_xc=rho_xc+conjg(rho_xc)
  endif
- allocate(Voep_RL(X%ng-1))
+ YAMBO_ALLOC(Voep_RL,(X%ng-1))
  !
  ! Calculate Voep_RL
  !
  Voep_RL=matmul(Xo_inverse,rho_xc(2:))
- deallocate(rho_xc,Xo_inverse)
+ YAMBO_FREE(rho_xc)
+ YAMBO_FREE(Xo_inverse)
  !
  ! Calculate Voep (DL)
  !
- allocate(Vx_dp(fft_size))
+ YAMBO_ALLOC(Vx_dp,(fft_size))
  Vx_dp = (0.,0.)
  do ig1=2,X%ng
    Vx_dp(fft_g_table(ig1,1))= Voep_RL(ig1-1)/(DL_vol*float(nkbz)) 
@@ -191,15 +197,18 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! CLEAN
  !
- deallocate(Voep_RL,Vx_dp)
+ YAMBO_FREE(Voep_RL)
+ YAMBO_FREE(Vx_dp)
  call elemental_collision_free(isc)
  call W_reset(Xw)
  !
  ! Reset coarse-grid arrays used in X_os
  !
- if (allocated(ordered_grid_index)) deallocate(ordered_grid_index)
- deallocate(X_poles_tab,bare_grid_N,coarse_grid_Pt,coarse_grid_index)
- call mem_est("X_poles_tab RGi BGn CGp CGi")
+ YAMBO_FREE(ordered_grid_index)
+ YAMBO_FREE(X_poles_tab)
+ YAMBO_FREE(bare_grid_N)
+ YAMBO_FREE(coarse_grid_Pt)
+ YAMBO_FREE(coarse_grid_index)
  current_iq=0
  !
 end subroutine OEP_exact_inversion

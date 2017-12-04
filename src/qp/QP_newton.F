@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2017 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -167,7 +167,6 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw)
      ! Now I need to transfer the calculated QP corrections to the "en" type
      ! and to the qp%Eo array
      !
-     if (associated(en%QP_corrected)) en%QP_corrected=0
      call QP_apply(QP_n_G_bands,en,k,'G',msg_fmt='rs',qp_impose=qp)
      !
    endif

@@ -57,16 +57,20 @@ module YPP
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
- real(SP)     ::dos_broadening ! electrons
- real(SP)     ::dos_E_range(2) ! Energy Range
- integer      ::dos_bands(2)   ! Bands Range
- integer      ::dos_E_steps    ! Energy steps
+ real(SP)     ::DOS_broadening ! electrons
+ real(SP)     ::DOS_E_range(2) ! Energy Range
+ integer      ::DOS_bands(2)   ! Bands Range
+ integer      ::DOS_E_steps    ! Energy steps
  !
  ! BANDS
  !
+ integer               ::BANDS_bands(2)
  integer               ::BANDS_steps
+ character(lchlen)     ::BANDS_QE_file= "none"
+ real(SP), allocatable ::BANDS_Eo(:,:)
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
+ logical               ::BANDS_print_internal_energies
  !
  ! SPIN and SOC
  integer      ::WF_ref(2)

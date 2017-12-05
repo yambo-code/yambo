@@ -46,7 +46,7 @@ subroutine INIT_DephMatrix()
  comment="[RT] Dephasing Matrix"
  !
  nflines_save=nflines
- write (flines(nflines+1),'(a,t30,a)') '%DephMatrix',&
+ write (flines(nflines+1),'(a,t32,a)') '%DephMatrix',&
 &      '# '//trim(comment)//' (bnd1 | bnd2 | kpt | dephasing(fs) |)'
  write (flines(nflines+2),'(3(i3,a),1(f4.1,a))') 1,'|',1,'|',1,'|',-1.,'|'
  flines(nflines+3)='%'

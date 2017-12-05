@@ -30,7 +30,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use electrons,      ONLY:levels
  use QP_m,           ONLY:QP_table,QP_state
  use YPP,            ONLY:l_density,l_mag,v2plot,&
-&                         nr,l_sp_wf,&
+&                         nr,l_sp_wf,DOS_bands,&
 &                         plot_title,l_dos,l_bands,l_current,&
 &                         l_angular_momentum,l_position,l_mean_potential
  use functions,      ONLY:Fermi_fnc_derivative
@@ -44,7 +44,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! Work Space
  !
- integer               :: nb_to_load(2),nkpt_to_load(2)
+ integer       ::NB(2),NK(2)
  !
  ! Doing something?
  !==================
@@ -56,29 +56,34 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !================
  call plot_check_and_launch(.true.)
  !
- ! QP indexes loading
- !====================
+ ! States selector
+ !=================
  !
- nb_to_load=(/1,Xen%nbm/)
- nkpt_to_load=(/1,Xk%nibz/)
+ NB=(/1,Xen%nbm/)
+ NK=(/1,Xk%nibz/)
  !
- if ( any((/l_sp_wf,l_bands,l_angular_momentum,l_position,  l_mean_potential/)) ) then
+ if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then
    !
    call QP_state_table_setup(Xen)
-   nb_to_load   =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
-   nkpt_to_load =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
+   !
+   NB =(/minval(QP_table(:,1)),maxval(QP_table(:,1))/)
+   NK =(/minval(QP_table(:,3)),maxval(QP_table(:,3))/)
+   !
+ else if (l_dos) then
+   !
+   NB=DOS_bands
    !
  endif
  !
  ! WFs
  !=====
- if( .not.any((/l_dos,l_bands,l_angular_momentum,l_position,l_mean_potential/)) ) then
+ if( any((/l_mag,l_density,l_sp_wf,l_current,l_mean_potential,l_angular_momentum,l_position/)) ) then
    !
    call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
    call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   call WF_load(WF,wf_ng,1,nb_to_load,nkpt_to_load,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
+   call WF_load(WF,wf_ng,1,NB,NK,space='R',title='-WF',impose_free_and_alloc=.TRUE.)
    nr=fft_dim
    YAMBO_ALLOC(v2plot,(fft_size))
    !
@@ -95,12 +100,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! BANDS interpolation
  !======================
  !
- if (l_bands) call electrons_bands(Xk,Xen,nb_to_load)
- !
- !  !
- !  if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
- !  !
- !endif
+ if (l_bands) call electrons_bands(Xk,Xen)
  !
  ! WAVEFUNCTIONS 
  !===============
@@ -110,7 +110,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! MAGNETIZATION 
  !===============
  !
- if (l_mag) call electrons_magnetization(nkpt_to_load,nb_to_load)
+ if (l_mag) call electrons_magnetization(Xk,Xen)
  !
  ! GPL_EXCLUDE_START
  !
@@ -118,11 +118,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! Angular momentum 
  !==================
- if (l_angular_momentum) call electrons_angular_momentum(nkpt_to_load,nb_to_load)
+ if (l_angular_momentum) call electrons_angular_momentum(NK,NB)
  !
  ! <Mean> position
  !=================
- if (l_position)         call electrons_position(nkpt_to_load,nb_to_load,1.,'cylindrical','2d')
+ if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
  !
 #endif
  !

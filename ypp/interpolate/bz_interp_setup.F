@@ -27,7 +27,7 @@ subroutine bz_interp_setup(Xk)
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
  use pars,           ONLY:SP,pi
- use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
+ use interpolate,    ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
  use vec_operate,    ONLY:sort
@@ -52,7 +52,7 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
- sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ sphere_radius=(INTERP_shell_factor*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)

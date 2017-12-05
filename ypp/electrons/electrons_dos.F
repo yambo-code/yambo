@@ -27,8 +27,8 @@ subroutine electrons_dos(Xk,Xen)
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands
- use YPP,            ONLY:output_fname,dos_broadening,dos_bands,&
-&                         dos_E_range,dos_E_steps
+ use YPP,            ONLY:output_fname,DOS_broadening,DOS_bands,&
+&                         DOS_E_range,DOS_E_steps
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use LIVE_t,         ONLY:live_timing
@@ -42,7 +42,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(dos_E_steps,n_spin),dos_E,delta_E,el_dos_max
+ real(SP)              :: el_dos(DOS_E_steps,n_spin),dos_E,delta_E,el_dos_max
  real(SP),allocatable  :: WF_fac(:,:,:)
  integer               :: i_E
  character(schlen)     :: titles(4)
@@ -61,16 +61,16 @@ subroutine electrons_dos(Xk,Xen)
  endif
  !
  if (n_spinor==2) then
-   YAMBO_ALLOC(WF_fac,(dos_bands(1):dos_bands(2),Xk%nibz,2))
-   call electrons_spin_factors((/1,Xk%nibz/),dos_bands,WF_fac)
+   YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
+   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
  endif
  !
- if (l_DbGd) dos_bands(2)=min(dos_bands(2),BZ_DbGd_nbands)
+ if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),BZ_DbGd_nbands)
  !
  el_dos_max=0._SP
  !
  call QP_state_table_setup(Xen)
- call QP_apply(dos_bands,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
  !
  ! Output files headers
  !
@@ -89,31 +89,31 @@ subroutine electrons_dos(Xk,Xen)
  endif
  call msg('o dos',"#")
  !
- if (dos_E_range(1)>dos_E_range(2)) then
-   dos_E_range(1)=minval(Xen%E(dos_bands(1):dos_bands(2),:,:))-5._SP*dos_broadening
-   dos_E_range(2)=maxval(Xen%E(dos_bands(1):dos_bands(2),:,:))+5._SP*dos_broadening
+ if (DOS_E_range(1)>DOS_E_range(2)) then
+   DOS_E_range(1)=minval(Xen%E(DOS_bands(1):DOS_bands(2),:,:))-5._SP*DOS_broadening
+   DOS_E_range(2)=maxval(Xen%E(DOS_bands(1):DOS_bands(2),:,:))+5._SP*DOS_broadening
  endif
- delta_E=(dos_E_range(2)-dos_E_range(1))/dos_E_steps
+ delta_E=(DOS_E_range(2)-DOS_E_range(1))/DOS_E_steps
  !
  ! Parallel setup and live_timing
  !================================
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/dos_E_steps/))
+ call PARALLEL_index(px,(/DOS_E_steps/))
  call live_timing('DOS',px%n_of_elements(myid+1))
  !
  el_dos(:,:)=0._SP
  !
- do i_E=1,dos_E_steps
+ do i_E=1,DOS_E_steps
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   dos_E=dos_E_range(1)+i_E*delta_E
+   dos_E=DOS_E_range(1)+i_E*delta_E
    !
    if(     allocated(WF_fac)) then
-     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
+     call el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
    else
-     call el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd)
+     call el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:),USE_the_DbGd=l_DbGd)
    endif
    !
    call live_timing(steps=1)
@@ -130,8 +130,8 @@ subroutine electrons_dos(Xk,Xen)
  !
  l_separate_eh=.true.
  !
- do i_E=1,dos_E_steps
-   dos_E=dos_E_range(1)+i_E*delta_E
+ do i_E=1,DOS_E_steps
+   dos_E=DOS_E_range(1)+i_E*delta_E
    !
    if (n_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1)/),INDENT=-2,USE_TABS=.true.)
    if (n_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:),  &

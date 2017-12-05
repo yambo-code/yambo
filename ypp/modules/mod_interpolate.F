@@ -34,7 +34,7 @@ module interpolate
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP) :: lpfac
+ real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
  !
  ! Interpolation type

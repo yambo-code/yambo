@@ -25,11 +25,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
 &                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
-&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
+&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,SP,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -437,7 +437,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
- if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
+ if (l_bands) then
+   call initactivate(1,"cooIn BANDS_steps BANDS_bands BANDS_built_in")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac NormN NelFac BANDS_QE_file")
+ endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
  !
@@ -581,7 +584,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
- l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
+ l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
@@ -685,19 +688,19 @@ contains
    !
    nflines_save=nflines
    if (field=="GWKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points list'
      n_u_k_pts=n_points
      U_k_pts(:n_u_k_pts,:)=real_v(:n_u_k_pts,:)
    else if (field=="BKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points of the bands circuit'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points of the bands circuit'
      n_u_interp_pts=n_points
      U_interp_pts(:n_u_interp_pts,:)=real_v(:n_u_interp_pts,:)
    else if (field=="Qpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# Q points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# Q points list'
      n_u_q_pts=n_points
      U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
    else if (field=="KShift") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K-grid shifts (max 3)'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K-grid shifts (max 3)'
      U_q_shifts(:n_points,:)=real_v(:n_points,:)
    endif
    !

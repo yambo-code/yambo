@@ -225,7 +225,8 @@ subroutine electrons_bands(Xk,Xen)
        magn_values(1,:)=values(1)
      endif
      do is=1,n_sp_pol
-       delta_Ef=BANDS_Eo%E_Fermi-Xen%E_Fermi
+       delta_Ef=0._SP
+       if (allocated(BANDS_Eo%E)) delta_Ef=BANDS_Eo%E_Fermi-Xen%E_Fermi
        values(1+1:nbands+1)=bands_interpolated(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
        if (allocated(Xen%Eo).and.allocated(BANDS_Eo%E)) then
          values(1+1:nbands+1)=values(1+1:nbands+1)+&

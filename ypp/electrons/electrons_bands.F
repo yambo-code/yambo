@@ -49,7 +49,7 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  !
  integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp,i_f
- real(SP)              :: tmp_k(3)
+ real(SP)              :: tmp_k(3),delta_Ef
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
  character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
@@ -225,14 +225,16 @@ subroutine electrons_bands(Xk,Xen)
        magn_values(1,:)=values(1)
      endif
      do is=1,n_sp_pol
+       delta_Ef=BANDS_Eo%E_Fermi-Xen%E_Fermi
        values(1+1:nbands+1)=bands_interpolated(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
        if (allocated(Xen%Eo).and.allocated(BANDS_Eo%E)) then
-         values(1+1:nbands+1)=values(1+1:nbands+1)+BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
+         values(1+1:nbands+1)=values(1+1:nbands+1)+&
+&                             (BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
        endif
        values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
        if (allocated(BANDS_Eo%E)) then
-         values(1+1:nbands+1)=BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
+         values(1+1:nbands+1)=(BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
        endif
        call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.)
        if(n_spinor==2) then

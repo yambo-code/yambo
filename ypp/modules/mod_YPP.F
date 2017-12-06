@@ -23,9 +23,10 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,DP,lchlen,schlen
- use units,   ONLY:HA2EV
- use QP_m,    ONLY:QP_t
+ use pars,      ONLY:SP,DP,lchlen,schlen
+ use units,     ONLY:HA2EV
+ use QP_m,      ONLY:QP_t
+ use electrons, ONLY:levels
  !
  implicit none
  !
@@ -66,8 +67,8 @@ module YPP
  !
  integer               ::BANDS_bands(2)
  integer               ::BANDS_steps
- character(lchlen)     ::BANDS_QE_file= "none"
- real(SP), allocatable ::BANDS_Eo(:,:)
+ character(lchlen)     ::BANDS_Eo_DB  = "none"
+ type(levels)          ::BANDS_Eo
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies

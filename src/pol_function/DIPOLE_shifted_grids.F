@@ -34,7 +34,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
- use interfaces,          ONLY: WF_load,WF_free
+ use interfaces,          ONLY: WF_load,WF_free,io_DB1_selective_scan
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
 &                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
@@ -85,7 +85,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !I/O and external functions
  !
  integer                      :: io_err(3)
- integer, external            :: io_DB1_selective_scan
  !
  ! saves...
  !
@@ -112,7 +111,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
    !
    call msg('s','loading info from '//trim(grid_paths_vector(iq))//' ')
    !
-   io_err(iq)=io_DB1_selective_scan(E_shift,Xk_shift,trim(grid_paths_vector(iq)),'all')
+   io_err(iq)=io_DB1_selective_scan('all',trim(grid_paths_vector(iq)),E_shift,Xk_shift)
    call set_parms(grid='shifted',command=' define')
    !
    if (io_err(iq)/=0) call error(' Shifted grid not found in folder "'//trim(grid_paths_vector(iq))//'" ')
@@ -244,7 +243,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
      ! not rewritten.
      !
      core_io_path = core_io_path_save
-     io_err(1)=io_DB1_selective_scan(E_shift,Xk_shift,trim(core_io_path),'all')
+     io_err(1)=io_DB1_selective_scan('all',trim(core_io_path),E_shift,Xk_shift)
      !
      call set_parms(grid='  local', command='  reset')
      !

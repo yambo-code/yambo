@@ -186,7 +186,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'BANDS_bands',   'Number of bands',BANDS_bands) 
  call it(defs,'BANDS_steps',   'Number of divisions',BANDS_steps) 
- call it(defs,'BANDS_QE_file', 'QE `bands` output file (alternative to %BKpts)',BANDS_QE_file) 
+ call it(defs,'BANDS_Eo_DB',   'SAVE obtained from the QE `bands` run (alternative to %BKpts)',BANDS_Eo_DB) 
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
  call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)

@@ -439,7 +439,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_bands) then
    call initactivate(1,"cooIn BANDS_steps BANDS_bands BANDS_built_in")
-   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac NormN NelFac BANDS_QE_file")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac NormN NelFac BANDS_Eo_DB")
  endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')

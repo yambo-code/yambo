@@ -26,15 +26,16 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !
  use pars,           ONLY:SP,lchlen,schlen,pi
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
-&                         BANDS_QE_file,alat_used_for_output,BANDS_Eo
+&                         BANDS_Eo_DB,BANDS_Eo
  use electrons,      ONLY:levels,n_sp_pol
+ use D_lattice,      ONLY:alat,a
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use com,            ONLY:msg,error
- use stderr,         ONLY:string_split
+ use units,          ONLY:HA2EV
+ use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
- use units,          ONLY:HA2EV
+ use interfaces,     ONLY:io_DB1_selective_scan,OCCUPATIONS_Fermi
  !
 #include<memory.h>
  !
@@ -47,12 +48,10 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !
  ! Work space
  !
- real(SP)              :: real_ctl,max_dist,v(3)
+ real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3)
  real(SP)              :: bands_input(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz)
  real(SP), allocatable :: distances(:)
- character(lchlen)     :: db_line
- character(schlen)     :: line_piece(10) 
- integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,QE_nb
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,i_err
  integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing
@@ -62,7 +61,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  call bz_samp_reset(USER_K)
  call bz_samp_reset(CIRCUIT_K)
  !
- if (BANDS_steps>0.and.trim(BANDS_QE_file)=="none") then
+ if (BANDS_steps>0.and.trim(BANDS_Eo_DB)=="none") then
    !
    ! Read the kpts from input (extrema from the path)
    ! 
@@ -89,7 +88,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !
  ! Initialization
  !================
- if((BANDS_steps==0.and.USER_K%nibz==0).and.any(INTERP_grid<=0).and.trim(BANDS_QE_file)=="none") then
+ if((BANDS_steps==0.and.USER_K%nibz==0).and.any(INTERP_grid<=0).and.trim(BANDS_Eo_DB)=="none") then
    call error(' Neither KPT path nor KPT grid are defined in input')
  endif
  !
@@ -105,7 +104,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !================================================================= 
  if( BANDS_steps> 0 ) then
    !
-   if (trim(BANDS_QE_file)=="none") then
+   if (trim(BANDS_Eo_DB)=="none") then
      !
      allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
      !
@@ -141,30 +140,21 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
      !
    else 
      !
-     CIRCUIT_K%nibz=0
-     open(unit=99,file=trim(BANDS_QE_file))
-     read(99, '(a)') db_line
-     call string_split(db_line,line_piece)
-     read( line_piece(3),*) QE_nb
-     read( line_piece(5),*) CIRCUIT_K%nibz
-     call msg("s",'QE input file bands/k-point:',(/QE_nb, CIRCUIT_K%nibz/))
-     call msg("s",'QE input file alat    [a.u]:',alat_used_for_output)
-     if (BANDS_range(2)>QE_nb) call error("Too many bands in input")
+     i_err=io_DB1_selective_scan("nk nb alat lattice_vectors",trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_K,db1_a=db_a,db1_alat=db_alat)
+     if (any(alat/=db_alat).or.any(a/=db_a)) call warning("Lattice constants mismatch")
+     call msg("s",'Eo DB bands/k-point:',(/BANDS_Eo%nb, CIRCUIT_K%nibz/))
      YAMBO_ALLOC(CIRCUIT_K%pt,(CIRCUIT_K%nibz,3))
-     YAMBO_ALLOC(BANDS_Eo,(CIRCUIT_K%nibz,QE_nb))
-     coo_out="iku"
-     do ic=1,CIRCUIT_K%nibz
-       READ(99, *) CIRCUIT_K%pt(ic,:)
-       READ(99, *) BANDS_Eo(ic,1:QE_nb)
-       ! alat -> cc
-       CIRCUIT_K%pt(ic,:)=CIRCUIT_K%pt(ic,:)*2.*pi/alat_used_for_output
-       ! cc -> iku
-       call c2a(v_in=CIRCUIT_K%pt(ic,:),mode="kc2i")
-       !
-       BANDS_Eo(ic,1:QE_nb)=BANDS_Eo(ic,1:QE_nb)/HA2EV
-       !
-     enddo
-     close(99)
+     YAMBO_ALLOC(CIRCUIT_K%weights,(CIRCUIT_K%nibz))
+     YAMBO_ALLOC(BANDS_Eo%E,(BANDS_Eo%nb,CIRCUIT_K%nibz,n_sp_pol))
+     i_err=io_DB1_selective_scan('E K',trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_K)
+     if (i_err/=0) call error("Reading the "//trim(BANDS_Eo_DB)//" SAVE database")
+     !
+     CIRCUIT_K%weights=1./real( CIRCUIT_K%nibz )
+     call OCCUPATIONS_Fermi(BANDS_Eo,CIRCUIT_K,mode="FERMI")
+     call msg("s",'Eo Fermi Level [eV]:',BANDS_Eo%E_Fermi*HA2EV)
+     !
+     BANDS_Eo%E=BANDS_Eo%E-BANDS_Eo%E_Fermi
+     !
    endif
  endif
  !
@@ -189,7 +179,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
        !
        ! Interpolate only GW corrections?
        !
-       if (allocated(Xen%Eo).and.trim(BANDS_QE_file)/="none") then
+       if (allocated(Xen%Eo).and.allocated(BANDS_Eo%E)) then
          bands_input(ib,i_sp_pol,ik)=Xen%E(ib,ik,i_sp_pol)-Xen%Eo(ib,ik,i_sp_pol)
        endif
        !

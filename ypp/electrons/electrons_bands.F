@@ -26,7 +26,7 @@ subroutine electrons_bands(Xk,Xen)
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
-&                         BANDS_bands,BANDS_QE_file,BANDS_Eo
+&                         BANDS_bands,BANDS_Eo_DB,BANDS_Eo
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev
@@ -48,21 +48,24 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), pointer     :: bands_interpolated(:,:,:)
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  !
- integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp
+ integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp,i_f
  real(SP)              :: tmp_k(3)
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
- character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
+ character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
  character(schlen), allocatable :: headings(:)
- logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate
+ logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate,BANDS_bare
  !
  call section('*','Interpolation tool')
  !=====================================
  !
  call parser('BANDS_built_in',BANDS_internal)
- if (.not.file_exists(trim(BANDS_QE_file))) BANDS_QE_file="none"
- BANDS_interpolate = BANDS_steps>0.or.trim(BANDS_QE_file)/="none"
- if (trim(BANDS_QE_file)/="none") BANDS_internal=.FALSE.
+ !
+ if (.not.file_exists(trim(BANDS_Eo_DB)//"/SAVE/ns.db1")) BANDS_Eo_DB="none"
+ !
+ BANDS_interpolate = BANDS_steps>0.or.trim(BANDS_Eo_DB)/="none"
+ BANDS_bare        = trim(BANDS_Eo_DB)/="none"
+ if (BANDS_bare)     BANDS_internal=.FALSE.
  DOS_interpolate   = all(INTERP_grid>0)
  !
  if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
@@ -128,21 +131,21 @@ subroutine electrons_bands(Xk,Xen)
    if (n_sp_pol>1.and.is==1) spin_ch="_spin-up"
    if (n_sp_pol>1.and.is==2) spin_ch="_spin-dn"
    !
-   if (BANDS_internal    ) file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
    if (BANDS_interpolate) file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
+   if (BANDS_internal   ) file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
+   if (BANDS_bare       ) file_name_bands(3,is)="bands_bare"//trim(spin_ch)
    if (DOS_interpolate)   file_name_grid(is)   ="grid"//trim(spin_ch)
    !
    call of_open_close(trim(file_name_grid(is)),'ot')
-   call of_open_close(trim(file_name_bands(1,is)),'ot')
-   call of_open_close(trim(file_name_bands(2,is)),'ot')
    !
  enddo
  !
  do is=1,n_sp_pol
-   call msg('o '//trim(file_name_bands(1,is)),"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name_bands(1,is)),"#")
-   call msg('o '//trim(file_name_bands(2,is)),"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name_bands(2,is)),"#")
+   do i_f=1,3
+     call of_open_close(trim(file_name_bands(i_f,is)),'ot')
+     call msg('o '//trim(file_name_bands(i_f,is)),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name_bands(i_f,is)),"#")
+   enddo
  enddo
  !
  if(BANDS_interpolate.and.n_spinor==2) then
@@ -223,11 +226,15 @@ subroutine electrons_bands(Xk,Xen)
      endif
      do is=1,n_sp_pol
        values(1+1:nbands+1)=bands_interpolated(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
-       if (allocated(Xen%Eo).and.trim(BANDS_QE_file)/="none") then
-         values(1+1:nbands+1)=values(1+1:nbands+1)+BANDS_Eo(ik,BANDS_bands(1):BANDS_bands(2))*HA2EV
+       if (allocated(Xen%Eo).and.allocated(BANDS_Eo%E)) then
+         values(1+1:nbands+1)=values(1+1:nbands+1)+BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
        endif
        values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       if (allocated(BANDS_Eo%E)) then
+         values(1+1:nbands+1)=BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
+       endif
+       call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.)
        if(n_spinor==2) then
          do i1=1,2
            spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
@@ -287,8 +294,9 @@ subroutine electrons_bands(Xk,Xen)
  YAMBO_FREE(magn_interpolated)
  !
  do is=1,n_sp_pol
-   call of_open_close(trim(file_name_bands(1,is)))
-   call of_open_close(trim(file_name_bands(2,is)))
+   do i_f=1,3
+     call of_open_close(trim(file_name_bands(i_f,is)))
+   enddo
    call of_open_close(trim(file_name_grid(is)))
  enddo
  !

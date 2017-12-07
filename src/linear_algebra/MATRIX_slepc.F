@@ -35,12 +35,12 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   !
   ! headers
   !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
+#include <petscsys.h>
+#include <petscvec.h>
+#include <petscmat.h>
+#include <petscvec.h90>
+#include <slepcsys.h>
+#include <slepceps.h>
   !
   ! arguments
   !
@@ -235,12 +235,12 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
   use com,           ONLY : error,msg
   implicit none
 
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
+#include <petscsys.h>
+#include <petscvec.h>
+#include <petscmat.h>
+#include <petscvec.h90>
+#include <slepcsys.h>
+#include <slepceps.h>
 
   EPS            eps
   Vec            x

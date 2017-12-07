@@ -79,7 +79,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    USER_K%nibz=USER_K%nibz-1
    call msg("s",'Number of K-points in the circuit :',USER_K%nibz)
    !
-   coo_out="alat"
+   coo_out="iku"
    do ik=1,USER_K%nibz
      call k_transform(USER_K%pt(ik,:),coo_in)
    enddo

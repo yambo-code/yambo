@@ -194,8 +194,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  n_threads_FFT=1
  call msg('s','[X] NESTED openmp parallelism off')
 #  endif
-#endif
  call OPENMP_locks_reset(INIT=.true.,nlocks=16)
+#endif
  !
  ! Timing
  !========

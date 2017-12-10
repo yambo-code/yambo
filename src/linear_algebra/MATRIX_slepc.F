@@ -31,16 +31,17 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   !
   use pars,          ONLY : SP,cONE,cZERO,schlen
   use com,           ONLY : error,msg
+  !
   implicit none
   !
   ! headers
   !
-#include <petscsys.h>
-#include <petscvec.h>
-#include <petscmat.h>
-#include <petscvec.h90>
-#include <slepcsys.h>
-#include <slepceps.h>
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
   !
   ! arguments
   !
@@ -233,14 +234,15 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
   ! Monitor the convergence of the iterative diagonalization
   ! 
   use com,           ONLY : error,msg
+  !
   implicit none
-
-#include <petscsys.h>
-#include <petscvec.h>
-#include <petscmat.h>
-#include <petscvec.h90>
-#include <slepcsys.h>
-#include <slepceps.h>
+  !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
 
   EPS            eps
   Vec            x

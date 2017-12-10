@@ -162,8 +162,8 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
 
   call msg( 'rs', 'solution method: ', tname )
   call msg( 'rs', 'number of requested eigenvalues: ', nev )
-  call msg( 'rs', 'stopping condition tolerance: ', tol)
-  call msg( 'rs', 'stopping contition max iterations: ', maxit )
+  call msg( 'rs', 'stopping condition tolerance: ', real(tol,SP) )
+  call msg( 'rs', 'stopping condition max iterations: ', maxit )
  
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem

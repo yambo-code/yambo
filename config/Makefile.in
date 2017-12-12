@@ -506,7 +506,7 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
+ cd $(bindir) ; rm -f * ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

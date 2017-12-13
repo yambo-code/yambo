@@ -90,8 +90,12 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
-cp $extlibs_path/${FCKIND}/${FC}/bin/* $exec_prefix/bin/
-cp $extlibs_path/${FCKIND}/${FC}/v3/bin/* $exec_prefix/bin/
+for file in $extlibs_path/${FCKIND}/${FC}/bin/*; do
+ cp $file $exec_prefix/bin/
+done
+for bin in $extlibs_path/${FCKIND}/${FC}/v3/bin/*; do
+ cp $bin $exec_prefix/bin/
+done
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

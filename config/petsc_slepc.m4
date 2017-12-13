@@ -168,8 +168,6 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
 fi
 #
-
-#
 # SLEPC global options
 #
 #

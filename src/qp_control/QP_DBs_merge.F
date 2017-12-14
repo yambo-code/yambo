@@ -43,7 +43,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  ! Work Space
  !
  integer      :: i_db,i_db_p,GROUND(n_dbs)
- logical      :: MERGED(n_dbs),SAME_k,SAME_desc,just_COUNT,CONDITION
+ logical      :: MERGED(n_dbs),SAME_states,SAME_desc,just_COUNT,CONDITION
  character(4) :: WHAT
  !
  ! Affinity check
@@ -78,21 +78,21 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      !
      if (MERGED(i_db_p)) cycle
      !
-     SAME_k   =have_same_k(qp2merge(i_db),qp2merge(i_db_p))
-     SAME_desc=have_same_desc(qp2merge(i_db),qp2merge(i_db_p))
+     SAME_states=(have_same_k(qp2merge(i_db),qp2merge(i_db_p)).and.have_same_states(qp2merge(i_db),qp2merge(i_db_p)))
+     SAME_desc  =have_same_desc(qp2merge(i_db),qp2merge(i_db_p))
      !
      ! Merging scheme:
      !
-     !            SAME_k => Merge if different plan
+     !            SAME_states => Merge if different plan
      ! SAME_desc-< 
-     !            .not.SAME_k => add only different kpts
+     !            .not.SAME_states => add only different states
      !
-     !                 SAME_k => add ALL
+     !                 SAME_states => add ALL
      ! .not.SAME_desc <
-     !                 .not.SAME_k => No merge
+     !                 .not.SAME_states => No merge
      !
-     CONDITION= (SAME_desc.and..not.SAME_k) .or. (.not.SAME_desc.and.SAME_k)
-     if (SAME_desc.and.SAME_k) then
+     CONDITION= (SAME_desc.and..not.SAME_states) .or. (.not.SAME_desc.and.SAME_states)
+     if (SAME_desc.and.SAME_states) then
        CONDITION=.FALSE.
        if (.not.all(plan_EWZG(i_db,:).eqv.plan_EWZG(i_db_p,:)).or.OP(i_db)/=OP(i_db_p).or.&
 &          PRE_FAC(i_db)/=PRE_FAC(i_db_p)) CONDITION=.TRUE.
@@ -110,7 +110,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
-&                           SAME_k, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
+&                           SAME_states, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
        endif
      endif
    enddo
@@ -137,6 +137,26 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
        enddo
        if (.not.l_ik_found) have_same_k=.FALSE.
      enddo
+   end function
+   !
+   logical function have_same_states(qp1,qp2)
+     type(QP_t)::qp1,qp2
+     integer iqp1,iqp2,ib1,ib2,ik1,ik2
+     logical l_state_found
+     do iqp1=1,qp1%n_states
+       l_state_found=.FALSE.
+       ib1=qp1%table(iqp1,1)
+       ik1=qp1%table(iqp1,3)
+       do iqp2=1,qp2%n_states
+         ib2=qp2%table(iqp2,1)
+         ik2=qp2%table(iqp2,3)
+         if ( (ib1==ib2).and.(ik1==ik2) ) l_state_found=.TRUE.
+       enddo
+       if (.not.l_state_found) have_same_states=.FALSE.
+     enddo
+     !
+     have_same_states=l_state_found
+     !
    end function
    !
    logical function have_same_desc(qp1,qp2)

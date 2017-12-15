@@ -459,7 +459,12 @@ static void usage(int verbose)
 #else
   char* OMP_string=" ";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s -\n",tool,codever,MPI_string,OMP_string); 
+#if defined _SLEPC
+  char* SLEPC_string="+SLEPC+PETSC";
+#else
+  char* SLEPC_string=" ";
+#endif
+  fprintf(stderr,"\nThis is %s %s - %s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 

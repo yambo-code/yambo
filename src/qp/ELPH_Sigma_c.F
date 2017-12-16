@@ -27,7 +27,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! following the Allen-Cardona formulation (see for example 
  ! PRB 23, 1495 (1981) )
  !
- use pars,          ONLY:SP,schlen,pi,rZERO
+ use pars,          ONLY:SP,schlen,pi,rZERO,cZERO
  use units,         ONLY:HA2EV,HA2THZ
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
@@ -150,7 +150,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    QP_Sc_steps      =Sc_W(1)%n_freqs
    gsqF_energy_steps=Sc_W(1)%n_freqs
    !
-   if (.not.l_elel_corr) QP_Sc=cmplx(0.,0.)  
+   if (.not.l_elel_corr) QP_Sc=cZERO
    !
    call msg('nr', '[GW/El-Ph] gsqF E range  [ev]:',Sc_W(1)%er*HA2EV)
    !
@@ -193,18 +193,18 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! nq_to_sum = | 
  !              \ nqbz             elph_use_q_grid=T
  !
- factor=(3._SP*RL_vol/nq_to_sum/4._SP/pi)**(1._SP/3._SP)
+ factor=(3._SP*RL_vol/4._SP/pi)**(1._SP/3._SP)
  if (elph_use_q_grid) then
    nq_to_sum=q%nbz
    call k_ibz2bz(q,'i',.TRUE.)
    YAMBO_ALLOC(q_weight,(nq_to_sum))
    YAMBO_ALLOC(q_each_cpu,(q%nibz))
-   call rim_spherical(nq_to_sum,q%ptbz,q_weight,factor,2,.TRUE.)
+   call rim_spherical(nq_to_sum,q%ptbz,q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
    nq_to_sum=elph_nDBs_used
    YAMBO_ALLOC(q_weight,(nq_to_sum))
-   call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,factor,2,.TRUE.)
+   call rim_spherical(nq_to_sum,ph_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
  !
  ! Timing steps

@@ -21,30 +21,27 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,&
-&                                      BANDS_range,bands_output)
+subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_bands,INTERP_bands)
  !
- use pars,           ONLY:SP,lchlen,schlen,pi
+ use pars,           ONLY:SP
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
-&                         BANDS_Eo_DB,BANDS_Eo
+&                         BANDS_Eo_DB,BANDS_Eo,USER_k,CIRCUIT_k,INTERP_k,CIRCUIT_made_of_SPECIAL_k
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:alat,a
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use units,          ONLY:HA2EV
  use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
- use interfaces,     ONLY:io_DB1_selective_scan,OCCUPATIONS_Fermi
+ use interfaces,     ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
+ type(levels),  intent(out) :: CIRCUIT_bands,INTERP_bands
  integer      , intent(in)  :: BANDS_range(2)
  integer      , intent(out) :: ID_interp
- type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_k
- real(SP)     , pointer     :: bands_output(:,:,:)
  !
  ! Work space
  !
@@ -58,37 +55,38 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !====================
  !
  real_ctl=0._SP
- call bz_samp_reset(USER_K)
- call bz_samp_reset(CIRCUIT_K)
+ call bz_samp_reset(USER_k)
+ if (.not.CIRCUIT_made_of_SPECIAL_k) call bz_samp_reset(CIRCUIT_k)
  !
- if (BANDS_steps>0.and.trim(BANDS_Eo_DB)=="none") then
+ if (BANDS_steps>0.and.trim(BANDS_Eo_DB)=="none".and..not.CIRCUIT_made_of_SPECIAL_k) then
    !
    ! Read the kpts from input (extrema from the path)
    ! 
-   USER_K%nibz=1
+   USER_k%nbz=1
    !
    kgrid_main_loop: do while(real_ctl/=999._SP)
-     YAMBO_FREE(USER_K%pt)
-     YAMBO_ALLOC(USER_K%pt,(USER_K%nibz,3))
-     USER_K%pt(USER_K%nibz,:)=(/0._SP,0._SP,999._SP/)
-     call parser('BKpts',USER_K%pt)
-     real_ctl=USER_K%pt(USER_K%nibz,3)
-     if (real_ctl/=999._SP) USER_K%nibz=USER_K%nibz+1
+     YAMBO_FREE(USER_k%pt)
+     YAMBO_ALLOC(USER_k%pt,(USER_k%nbz,3))
+     USER_k%pt(USER_k%nbz,:)=(/0._SP,0._SP,999._SP/)
+     call parser('BANDS_kpts',USER_k%pt)
+     real_ctl=USER_k%pt(USER_k%nbz,3)
+     if (real_ctl/=999._SP) USER_k%nbz=USER_k%nbz+1
    enddo kgrid_main_loop
    !
-   USER_K%nibz=USER_K%nibz-1
-   call msg("s",'Number of K-points in the circuit :',USER_K%nibz)
+   USER_k%nbz =USER_k%nbz-1
+   USER_k%nibz=USER_k%nbz
    !
    coo_out="iku"
-   do ik=1,USER_K%nibz
-     call k_transform(USER_K%pt(ik,:),coo_in)
+   do ik=1,USER_k%nbz
+     call k_transform(USER_k%pt(ik,:),coo_in)
    enddo
    !
  endif
  !
  ! Initialization
  !================
- if((BANDS_steps==0.and.USER_K%nibz==0).and.any(INTERP_grid<=0).and.trim(BANDS_Eo_DB)=="none") then
+ if((BANDS_steps==0.and.USER_k%nbz==0).and.any(INTERP_grid<=0).and.trim(BANDS_Eo_DB)=="none"&
+&   .and..not.CIRCUIT_made_of_SPECIAL_k) then
    call error(' Neither KPT path nor KPT grid are defined in input')
  endif
  !
@@ -102,58 +100,55 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  !================================================================= 
- if( BANDS_steps> 0 ) then
+ if( BANDS_steps> 0 .and. .not. CIRCUIT_made_of_SPECIAL_k ) then
    !
    if (trim(BANDS_Eo_DB)=="none") then
      !
-     allocate(distances(USER_K%nibz-1),int_distances(USER_K%nibz-1))
+     allocate(distances(USER_k%nbz-1),int_distances(USER_k%nbz-1))
      !
-     do ik=1,USER_K%nibz-1
-       v=USER_K%pt(ik,:)-USER_K%pt(ik+1,:)
+     do ik=1,USER_k%nbz-1
+       v=USER_k%pt(ik,:)-USER_k%pt(ik+1,:)
        call c2a(v_in=v,mode="ki2c")
        distances(ik)=v_norm(v)
      enddo
      !
      max_dist=maxval(distances)
      !
-     do ik=1,USER_K%nibz-1
+     do ik=1,USER_k%nbz-1
        int_distances(ik)=maxval((/nint(BANDS_steps*distances(ik)/max_dist),1/))
      enddo
-     CIRCUIT_K%nibz=sum(int_distances)+1
+     CIRCUIT_k%nbz =sum(int_distances)+1
+     CIRCUIT_k%nibz=CIRCUIT_k%nbz
      !
-     YAMBO_ALLOC(CIRCUIT_K%pt,(CIRCUIT_K%nibz,3))
-     YAMBO_ALLOC(CIRCUIT_K%weights,(CIRCUIT_K%nibz))
+     call msg("s",'Number of K-points in the circuit :',CIRCUIT_k%nbz)
      !
-     CIRCUIT_K%weights=1._SP/real(CIRCUIT_K%nibz,SP)
+     YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
+     YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
+     !
+     CIRCUIT_k%weights=1._SP/real(CIRCUIT_k%nbz,SP)
      !
      ic=1
-     do ik=1,USER_K%nibz-1
-       v=(USER_K%pt(ik+1,:)-USER_K%pt(ik,:))/int_distances(ik)
+     do ik=1,USER_k%nbz-1
+       v=(USER_k%pt(ik+1,:)-USER_k%pt(ik,:))/int_distances(ik)
        do i1=1,int_distances(ik)
-         CIRCUIT_K%pt(ic,:)= USER_K%pt(ik,:)+(i1-1._SP)*v
+         CIRCUIT_k%pt(ic,:)= USER_k%pt(ik,:)+(i1-1._SP)*v
          ic=ic+1
        enddo
      enddo
-     CIRCUIT_K%pt(CIRCUIT_K%nibz,:)=USER_K%pt(USER_K%nibz,:)
+     CIRCUIT_k%pt(CIRCUIT_k%nbz,:)=USER_k%pt(USER_k%nbz,:)
      !
      deallocate(distances,int_distances)
      !
    else 
      !
-     i_err=io_DB1_selective_scan("nk nb alat lattice_vectors",trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_K,db1_a=db_a,db1_alat=db_alat)
+     i_err=io_DB1_selective_scan("nk nb alat lattice_vectors",trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_k,db1_a=db_a,db1_alat=db_alat)
+     CIRCUIT_k%nbz=CIRCUIT_k%nibz
      if (any(alat/=db_alat).or.any(a/=db_a)) call warning("Lattice constants mismatch")
-     call msg("s",'Eo DB bands/k-point:',(/BANDS_Eo%nb, CIRCUIT_K%nibz/))
-     YAMBO_ALLOC(CIRCUIT_K%pt,(CIRCUIT_K%nibz,3))
-     YAMBO_ALLOC(CIRCUIT_K%weights,(CIRCUIT_K%nibz))
-     YAMBO_ALLOC(BANDS_Eo%E,(BANDS_Eo%nb,CIRCUIT_K%nibz,n_sp_pol))
-     i_err=io_DB1_selective_scan('E K',trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_K)
+     call msg("s",'Eo DB bands/k-point:',(/BANDS_Eo%nb, CIRCUIT_k%nbz/))
+     YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
+     YAMBO_ALLOC(BANDS_Eo%E,(BANDS_Eo%nb,CIRCUIT_k%nbz,n_sp_pol))
+     i_err=io_DB1_selective_scan('E K',trim(BANDS_Eo_DB),BANDS_Eo,CIRCUIT_k)
      if (i_err/=0) call error("Reading the "//trim(BANDS_Eo_DB)//" SAVE database")
-     !
-     CIRCUIT_K%weights=1./real( CIRCUIT_K%nibz )
-     call OCCUPATIONS_Fermi(BANDS_Eo,CIRCUIT_K,mode="FERMI")
-     call msg("s",'Eo Fermi Level [eV]:',BANDS_Eo%E_Fermi*HA2EV)
-     !
-     BANDS_Eo%E=BANDS_Eo%E-BANDS_Eo%E_Fermi
      !
    endif
  endif
@@ -188,6 +183,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
    !
  enddo
  !
+ call section('=',"Interpolation Coefficients")
+ !==============================================
  call eval_interpolation_coeff(R2D=bands_input,k=Xk,Nk=Xk%nibz,ID=ID_interp)
  !
  ! Interpolation
@@ -196,13 +193,15 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
  if (BANDS_steps> 0) then
-   YAMBO_ALLOC_P(bands_output,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nibz))
-   call bz_interpolation(USER_k=CIRCUIT_k,R2D=bands_output,ID=ID_interp)
+   YAMBO_ALLOC(CIRCUIT_bands%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nbz))
+   call bz_interpolation(K=CIRCUIT_k,R2D=CIRCUIT_bands%E,ID=ID_interp)
+   YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
+   CIRCUIT_k%weights=1./real( CIRCUIT_k%nbz )
  endif
  !
  if(all(INTERP_grid>0)) then
-   YAMBO_ALLOC_P(bands_output,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
-   call bz_interpolation(USER_k=INTERP_k,R2D=bands_output,ID=ID_interp)
+   YAMBO_ALLOC(INTERP_bands%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
+   call bz_interpolation(K=INTERP_k,R2D=INTERP_bands%E,ID=ID_interp)
  endif
  !
 end subroutine electrons_bands_interpolate

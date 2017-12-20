@@ -91,7 +91,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! DOS 
  !=====
- if (l_dos)     call electrons_dos(Xk,Xen)
+ if (l_dos)     call electrons_dos(Xk,Xen,"NORMAL")
  !
  ! DENSITY
  !=========

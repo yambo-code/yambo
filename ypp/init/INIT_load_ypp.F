@@ -186,7 +186,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'BANDS_bands',   'Number of bands',BANDS_bands) 
  call it(defs,'BANDS_steps',   'Number of divisions',BANDS_steps) 
- call it(defs,'BANDS_Eo_DB',   'SAVE obtained from the QE `bands` run (alternative to %BKpts)',BANDS_Eo_DB) 
+ call it(defs,'BANDS_Eo_DB',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',BANDS_Eo_DB) 
+ call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
  call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
@@ -213,7 +214,7 @@ subroutine ypp_INIT_load(defs)
  !
  ! GPL_EXCLUDE_START 
  !
- call it(defs,'PtsPath','Series of Points for path generation',PtsPath)
+ call it(defs,'PtsPath','Path points labels (G,M,K,L...)',PtsPath)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
  !
  ! GPL_EXCLUDE_END

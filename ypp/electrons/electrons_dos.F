@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos(Xk,Xen)
+subroutine electrons_dos(Xk,Xen,mode)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
@@ -39,6 +39,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  type(bz_samp) ::Xk
  type(levels)  ::Xen
+ character(*)  ::mode
  !
  ! Work Space
  ! 
@@ -49,7 +50,8 @@ subroutine electrons_dos(Xk,Xen)
  logical               :: l_DbGd,l_separate_eh
  type(PP_indexes)      :: px
  !
- call section('*','Electronic DOS')
+ if (mode=="NORMAL") call section('*','Electronic DOS')
+ if (mode=="INTERP") call section('=','Electronic DOS')
  !
  ! E Double Grid
  !===============
@@ -60,7 +62,7 @@ subroutine electrons_dos(Xk,Xen)
    call OCCUPATIONS_Extend(Xen,Xen)
  endif
  !
- if (n_spinor==2) then
+ if (n_spinor==2.and.mode=="NORMAL") then
    YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
  endif
@@ -69,8 +71,10 @@ subroutine electrons_dos(Xk,Xen)
  !
  el_dos_max=0._SP
  !
- call QP_state_table_setup(Xen)
- call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
+ if (mode=="NORMAL") then
+   call QP_state_table_setup(Xen)
+   call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
+ endif
  !
  ! Output files headers
  !
@@ -139,7 +143,6 @@ subroutine electrons_dos(Xk,Xen)
  enddo
  !
  call live_timing(steps=1)
- !
  !
  call of_open_close(trim(output_fname))
  !

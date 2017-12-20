@@ -69,19 +69,19 @@ module interpolate
      integer,       intent(out)          :: ID
    end subroutine  eval_interpolation_coeff
    !
-   subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,USER_k,ID)
+   subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,K,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
      implicit none
-     type(bz_samp), intent(in)            :: USER_k
+     type(bz_samp), intent(in)            :: K
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
      integer,       intent(in)            :: ID
    end subroutine bz_interpolation
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_output)
+   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_bands,INTERP_bands)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -89,8 +89,8 @@ module interpolate
      type(levels),  intent(in)  :: Xen
      integer      , intent(in)  :: BANDS_range(2)
      integer      , intent(out) :: ID_interp
-     type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
-     real(SP)     , pointer     :: bands_output(:,:,:)
+     type(levels),  intent(out) :: CIRCUIT_bands
+     type(levels),  intent(out), optional  :: INTERP_bands
    end subroutine electrons_bands_interpolate
    !
  end interface  

@@ -32,8 +32,8 @@ subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_out
  type(bz_samp), intent(in)  :: Xk
  integer      , intent(in)  :: BANDS_range(2)
  type(bz_samp), intent(in)  :: CIRCUIT_k
- real(SP)     , intent(out) :: spin_output(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor),&
-&                              magn_output(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3)
+ real(SP)     , intent(out) :: spin_output(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_spinor),&
+&                              magn_output(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,3)
  !
  ! Work space
  !
@@ -42,7 +42,7 @@ subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_out
  real(SP) :: spin_fac(BANDS_range(1):BANDS_range(2),Xk%nibz,n_spinor),        &
 &            magn_fac(BANDS_range(1):BANDS_range(2),Xk%nibz,3),               &
 &            tmp_factor_in((BANDS_range(2)-BANDS_range(1)+1)*Xk%nibz,5),      &
-&            tmp_factor_out(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz)
+&            tmp_factor_out(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz)
  !
  call electrons_spin_factors((/1,Xk%nibz/),BANDS_range,spin_fac)
  !
@@ -64,18 +64,18 @@ subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_out
  ! 
  do i_sp=1,n_spinor
    tmp_factor_out=0._SP
-   call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nibz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
+   call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nbz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
 &                                   Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,i_sp),tmp_factor_out,'SPN',.false.)
-   do ik=1,CIRCUIT_k%nibz
+   do ik=1,CIRCUIT_k%nbz
      spin_output(:,ik,i_sp)=tmp_factor_out(:,ik)
    enddo
  enddo
  !
  do i_dir=1,3
    tmp_factor_out=0._SP
-   call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nibz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
+   call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nbz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
 &                                   Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,2+i_dir),tmp_factor_out,'MAG',.false.)
-   do ik=1,CIRCUIT_k%nibz
+   do ik=1,CIRCUIT_k%nbz
      magn_output(:,ik,i_dir)=tmp_factor_out(:,ik)
    enddo
  enddo

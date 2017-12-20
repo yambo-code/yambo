@@ -33,7 +33,7 @@ subroutine k_grids(en,k,Xk,q)
  use YPP,                 ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
 &                              n_u_k_pts,n_u_q_pts,l_random_grid,&
-&                              U_k_pts,U_q_pts,U_q_shifts
+&                              U_k_pts,U_q_pts,U_q_shifts,USER_k
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
@@ -44,7 +44,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  ! Work Space
  !
- type(bz_samp)::USER_K,Final_K,Q_user
+ type(bz_samp)::FINAL_k,Q_user
  real(SP)     ::real_ctl,v(3),ka(3),q0(3),kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
  integer      ::i1,i2,is,ik,iq
  integer,  allocatable :: int_ctl(:)
@@ -52,9 +52,9 @@ subroutine k_grids(en,k,Xk,q)
  character(schlen)     :: ch
  logical               :: No_Weight,Force_User_points,List_internal_points,Expand_internal_points
  !
- call bz_samp_reset(USER_K)
+ call bz_samp_reset(USER_k)
  call bz_samp_reset(Q_user)
- call bz_samp_reset(Final_K)
+ call bz_samp_reset(FINAL_k)
  !
  call section('*',"BZ grid analyzer/generator") 
  !
@@ -162,59 +162,59 @@ subroutine k_grids(en,k,Xk,q)
    !Input file parsing
    !
    real_ctl=0.
-   USER_K%nibz=1
+   USER_k%nbz=1
    gw_main_loop: do ik=1,n_u_k_pts
      !
-     YAMBO_FREE(USER_K%pt)
-     YAMBO_ALLOC(USER_K%pt,(USER_K%nibz,3))
-     USER_K%pt(USER_K%nibz,:)=U_k_pts(ik,:)
+     YAMBO_FREE(USER_k%pt)
+     YAMBO_ALLOC(USER_k%pt,(USER_k%nbz,3))
+     USER_k%pt(USER_k%nbz,:)=U_k_pts(ik,:)
      !
      ! Transform the user_k_points in iku
      !
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="ka2i")
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_k%pt(USER_k%nbz,:),mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_k%pt(USER_k%nbz,:),mode="ka2i")
      !
      if (real_ctl/=999._SP) then
        !
        do i1=1,Xk%nbz
-         if (v_is_zero(Xk%ptbz(i1,:)-USER_K%pt(USER_K%nibz,:),zero_=k_iku_zero)) then
+         if (v_is_zero(Xk%ptbz(i1,:)-USER_k%pt(USER_k%nbz,:),zero_=k_iku_zero)) then
            call warning(' Point already in the grid')
            exit gw_main_loop
          endif
        enddo
        !
-       USER_K%nibz=USER_K%nibz+1
+       USER_k%nbz=USER_k%nbz+1
        !
      endif
    enddo gw_main_loop
-   USER_K%nibz=USER_K%nibz-1
+   USER_k%nbz=USER_k%nbz-1
    !
-   do i1=1,USER_K%nibz
+   do i1=1,USER_k%nbz
      !      
-     v=USER_K%pt(i1,:)
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="ka2i")
-     USER_K%pt(i1,:)=v      
+     v=USER_k%pt(i1,:)
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_k%pt(i1,:),v_out=v,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_k%pt(i1,:),v_out=v,mode="ka2i")
+     USER_k%pt(i1,:)=v      
      !
    enddo
    !
-   call msg("s",'User K-points :',USER_K%nibz)
+   call msg("s",'User K-points :',USER_k%nbz)
    !
    ! Extended grid
    !
-   YAMBO_ALLOC(Final_K%ptbz,(Xk%nibz+USER_K%nibz*q%nbz,3))
-   Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
-   Final_K%nbz=Xk%nibz
-   do i1=1,USER_K%nibz
+   YAMBO_ALLOC(FINAL_k%ptbz,(Xk%nibz+USER_k%nbz*q%nbz,3))
+   FINAL_k%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
+   FINAL_k%nbz=Xk%nibz
+   do i1=1,USER_k%nbz
      do i2=1,q%nbz
-       Final_K%nbz=Final_K%nbz+1
-       Final_K%ptbz(Final_K%nbz,:)=USER_K%pt(i1,:)-q%ptbz(i2,:)
+       FINAL_k%nbz=FINAL_k%nbz+1
+       FINAL_k%ptbz(FINAL_k%nbz,:)=USER_k%pt(i1,:)-q%ptbz(i2,:)
      enddo
    enddo
    !
-   if (USER_K%nibz>0) call reduce_and_print(Final_K,.TRUE.)
+   if (USER_k%nbz>0) call reduce_and_print(FINAL_k,.TRUE.)
    !
-   call bz_samp_reset(Final_K)
+   call bz_samp_reset(FINAL_k)
    !
  endif
  !
@@ -260,22 +260,22 @@ subroutine k_grids(en,k,Xk,q)
    !
    ! Extended grid
    !
-   YAMBO_ALLOC(Final_K%ptbz,(Xk%nibz+Xk%nbz*Q_user%nibz,3))
-   Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
-   Final_K%nbz=Xk%nibz
+   YAMBO_ALLOC(FINAL_k%ptbz,(Xk%nibz+Xk%nbz*Q_user%nibz,3))
+   FINAL_k%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
+   FINAL_k%nbz=Xk%nibz
    do i1=1,Q_user%nibz
      v=Q_user%pt(i1,:)
      if (trim(coo_in)=="cc")  call c2a(v_in=Q_user%pt(i1,:),v_out=v,mode="kc2i")
      if (trim(coo_in)=="rlu") call c2a(v_in=Q_user%pt(i1,:),v_out=v,mode="ka2i")
      do i2=1,Xk%nbz
-       Final_K%nbz=Final_K%nbz+1
-       Final_K%ptbz(Final_K%nbz,:)=v(:)-Xk%ptbz(i2,:)
+       FINAL_k%nbz=FINAL_k%nbz+1
+       FINAL_k%ptbz(FINAL_k%nbz,:)=v(:)-Xk%ptbz(i2,:)
      enddo
    enddo
    !
-   if (Q_user%nibz>0) call reduce_and_print(Final_K,.FALSE.)
+   if (Q_user%nibz>0) call reduce_and_print(FINAL_k,.FALSE.)
    !
-   call bz_samp_reset(Final_K)
+   call bz_samp_reset(FINAL_k)
    !
  endif
  !
@@ -364,7 +364,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  ! CLEAN
  !
- call bz_samp_reset(USER_K)
+ call bz_samp_reset(USER_k)
  call bz_samp_reset(Q_user)
  call k_ibz2bz(q,'d',.false.)
  call k_ibz2bz(Xk,'d',.false.)
@@ -455,8 +455,8 @@ subroutine k_grids(en,k,Xk,q)
      if (GW_grid) then
        do i1=1,K_grid%nibz
          call c2a(v_in=K_grid%pt(i1,:),v_out=ka,mode='ki2a')
-         do i2=1,USER_K%nibz
-           call c2a(v_in=USER_K%pt(i2,:),v_out=v,mode="ki2a")
+         do i2=1,USER_k%nbz
+           call c2a(v_in=USER_k%pt(i2,:),v_out=v,mode="ki2a")
            do is=1,nsym
              if (rlu_v_is_zero(v(:)-ka(:))) then
                if (int_ctl(i1)/=0) cycle
@@ -470,12 +470,12 @@ subroutine k_grids(en,k,Xk,q)
        int_ctl=0
      endif
      !
-     YAMBO_ALLOC(GWK_table,(USER_K%nibz))
+     YAMBO_ALLOC(GWK_table,(USER_k%nbz))
      !
      live_timing_is_on=.false.
      call msg("s","       ---------- Reduced K-grid ----------")
      GWK_table=0
-     do i2=0,USER_K%nibz
+     do i2=0,USER_k%nbz
        do i1=1,K_grid%nibz
          if (int_ctl(i1)/=i2.and..not.( i2==0.and.int_ctl(i1)/=0.and.i1<nXkibz )) cycle
          if (int_ctl(i1)/=0) then

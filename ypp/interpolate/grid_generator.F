@@ -21,19 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine grid_generator(USER_k,units,grid_dim)
+subroutine grid_generator(K,units,grid_dim)
  !
  ! Generate an uniform k-point grid k[grid_dim(:)] in the BZ
  !
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:error,msg
- use vec_operate,    ONLY:c2a,v_is_zero
- use zeros,          ONLY:zero_dfl
+ use vec_operate,    ONLY:c2a
  implicit none
  !
  integer, intent(in)        :: grid_dim(3)
- type(bz_samp), intent(out) :: USER_k
+ type(bz_samp), intent(out) :: K
  character(1), intent(in)   :: units
  !
  ! Work Space
@@ -43,45 +42,45 @@ subroutine grid_generator(USER_k,units,grid_dim)
  !
  if(any(grid_dim(:)<1)) call error("Wrong grid dimension")
  !
- write (ch,'(2a)') trim(USER_k%description),"-ptbz"
+ write (ch,'(2a)') trim(K%description),"-ptbz"
  !
  ! Clean
  !
- if (allocated(USER_k%ptbz)) then
-   deallocate(USER_k%ptbz)
+ if (allocated(K%ptbz)) then
+   deallocate(K%ptbz)
  endif
  !
- USER_k%nbz=product(grid_dim)
- allocate(USER_k%ptbz(USER_k%nbz,3))
+ K%nbz=product(grid_dim)
+ allocate(K%ptbz(K%nbz,3))
  !
  ic=1
  do i1=1,grid_dim(1)
     do i2=1,grid_dim(2)
       do i3=1,grid_dim(3)
-        USER_k%ptbz(ic,1)=(i1-1._SP)/grid_dim(1)
-        USER_k%ptbz(ic,2)=(i2-1._SP)/grid_dim(2)
-        USER_k%ptbz(ic,3)=(i3-1._SP)/grid_dim(3)
-        USER_k%ptbz(ic,1:3)=USER_k%ptbz(ic,1:3)-nint(USER_k%ptbz(ic,1:3))     
+        K%ptbz(ic,1)=(i1-1._SP)/grid_dim(1)
+        K%ptbz(ic,2)=(i2-1._SP)/grid_dim(2)
+        K%ptbz(ic,3)=(i3-1._SP)/grid_dim(3)
+        K%ptbz(ic,1:3)=K%ptbz(ic,1:3)-nint(K%ptbz(ic,1:3))     
         ic=ic+1
       enddo
     enddo
   enddo
   !
-  do ic=1,USER_k%nbz
-    call c2a(v_in=USER_k%ptbz(ic,:),mode="ka2i")
+  do ic=1,K%nbz
+    call c2a(v_in=K%ptbz(ic,:),mode="ka2i")
   enddo
   !
-  USER_k%units='i'
+  K%units='i'
   !
-  call k_reduce(USER_k,.TRUE.)
-  call msg('s','[INTERPOLATION] Points (IBZ) : ',USER_k%nibz)
-  call k_expand(USER_k)
-  call msg('s','                        (BZ) : ',USER_k%nbz)
-  call k_ibz2bz(USER_k,'d',.TRUE.)
-  call k_ibz2bz(USER_k,'a',.TRUE.)
+  call k_reduce(K,.TRUE.)
+  call msg('s','[GRID_INTERP] Points (IBZ) : ',K%nibz)
+  call k_expand(K)
+  call msg('s','                      (BZ) : ',K%nbz)
+  call k_ibz2bz(K,'d',.TRUE.)
+  call k_ibz2bz(K,'a',.TRUE.)
   !
-  do ic=1,USER_k%nbz
-    call c2a(v_in=USER_k%ptbz(ic,:),mode="ka2"//units)
+  do ic=1,K%nbz
+    call c2a(v_in=K%ptbz(ic,:),mode="ka2"//units)
   enddo
   !
 end subroutine grid_generator

@@ -78,9 +78,9 @@ module YPP
  !
  integer               ::BANDS_bands(2)
  integer               ::BANDS_steps
- character(lchlen)     ::BANDS_Eo_DB  = "none"
+ character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
- type(levels)          ::BANDS_Eo
+ type(levels)          ::CIRCUIT_E_db
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies

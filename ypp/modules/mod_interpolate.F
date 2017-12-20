@@ -37,6 +37,8 @@ module interpolate
  real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
  !
+ character(schlen) :: INTERPOLATION_name
+ !
  ! Interpolation type
  !
  character(schlen), parameter :: REAL1D   = "REAL1D"
@@ -81,7 +83,7 @@ module interpolate
      integer,       intent(in)            :: ID
    end subroutine bz_interpolation
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_bands,INTERP_bands)
+   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -89,8 +91,9 @@ module interpolate
      type(levels),  intent(in)  :: Xen
      integer      , intent(in)  :: BANDS_range(2)
      integer      , intent(out) :: ID_interp
-     type(levels),  intent(out) :: CIRCUIT_bands
-     type(levels),  intent(out), optional  :: INTERP_bands
+     type(levels),  intent(out) :: CIRCUIT_E
+     type(levels),  intent(out), optional  :: INTERP_E
+     type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
  end interface  

@@ -47,7 +47,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Work space
  !
  type(bz_samp)         :: k_bands
- type(levels)          :: E_bands,CIRCUIT_bands
+ type(levels)          :: E_bands,CIRCUIT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
@@ -73,7 +73,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(E_bands,K_bands,ID_interp,RT_bands,CIRCUIT_bands)
+ call electrons_bands_interpolate(E_bands,K_bands,ID_interp,RT_bands,CIRCUIT_E)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
@@ -227,7 +227,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        if (ik==1) values(1)=0._SP
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
-       values(2)=CIRCUIT_bands%E(ib,1,ik)*HA2EV
+       values(2)=CIRCUIT_E%E(ib,1,ik)*HA2EV
        if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
        if (l_RT_occupations) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
@@ -246,7 +246,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  YAMBO_FREE(fit_on_circuit)
  !
- call E_reset(CIRCUIT_bands)
+ call E_reset(CIRCUIT_E)
  if(n_spinor==2) then
    YAMBO_FREE(spin_interpolated)
    YAMBO_FREE(magn_interpolated)

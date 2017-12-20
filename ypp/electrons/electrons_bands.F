@@ -26,7 +26,7 @@ subroutine electrons_bands(Xk,Xen)
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
-&                         BANDS_bands,BANDS_Eo_DB,BANDS_Eo,USER_k,CIRCUIT_k,INTERP_k,&
+&                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
 &                         DOS_bands
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
@@ -47,7 +47,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(levels)          :: INTERP_bands,CIRCUIT_bands
+ type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp,i_f
  real(SP)              :: tmp_k(3),delta_Ef
@@ -61,10 +61,10 @@ subroutine electrons_bands(Xk,Xen)
  !=====================================
  call parser('BANDS_built_in',BANDS_internal)
  !
- if (.not.file_exists(trim(BANDS_Eo_DB)//"/SAVE/ns.db1")) BANDS_Eo_DB="none"
+ if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !
- BANDS_interpolate = BANDS_steps>0.or.trim(BANDS_Eo_DB)/="none"
- BANDS_bare        = trim(BANDS_Eo_DB)/="none"
+ BANDS_interpolate = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
+ BANDS_bare        = trim(CIRCUIT_E_DB_path)/="none"
  if (BANDS_bare)     BANDS_internal=.FALSE.
  GRID_interpolate  = all(INTERP_grid>0)
  DOS_interpolate   = GRID_interpolate.and.BANDS_bands(1)==1
@@ -95,7 +95,7 @@ subroutine electrons_bands(Xk,Xen)
    !====================================
    if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
-   call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_bands,INTERP_bands)
+   call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
    !
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
@@ -183,12 +183,12 @@ subroutine electrons_bands(Xk,Xen)
    if (DOS_interpolate) then
      !
      DOS_bands=BANDS_bands
-     INTERP_bands%nk=INTERP_k%nibz
-     INTERP_bands%nb=BANDS_bands(2)
+     INTERP_E%nk=INTERP_k%nibz
+     INTERP_E%nb=BANDS_bands(2)
      !
-     call OCCUPATIONS_Fermi(INTERP_bands,INTERP_k,mode="FERMI")
+     call OCCUPATIONS_Fermi(INTERP_E,INTERP_k,mode="FERMI")
      !
-     call electrons_dos(INTERP_k,INTERP_bands,"INTERP")
+     call electrons_dos(INTERP_k,INTERP_E,"INTERP")
      !
    endif
    !
@@ -208,7 +208,7 @@ subroutine electrons_bands(Xk,Xen)
      ik=INTERP_k%sstar(ikbz,1)
      values(1)=real(ik,SP)
      do is=1,n_sp_pol
-       values(1+4:nbands+4)=INTERP_bands%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
+       values(1+4:nbands+4)=INTERP_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
        call msg('o '//trim(file_name_grid(is)),' ',values,INDENT=0,USE_TABS=.true.)
      enddo
    enddo
@@ -222,17 +222,17 @@ subroutine electrons_bands(Xk,Xen)
  !
  if (BANDS_bands(1)==1) then
    if (DOS_interpolate) then
-     call msg("s",'Correction             (GRID) [eV]:',INTERP_bands%E_Fermi*HA2EV)
+     call msg("s",'Correction             (GRID) [eV]:',INTERP_E%E_Fermi*HA2EV)
    endif
-   CIRCUIT_bands%nk=CIRCUIT_k%nbz
-   CIRCUIT_bands%nb=BANDS_bands(2)
-   call OCCUPATIONS_Fermi(CIRCUIT_bands,CIRCUIT_k,mode="FERMI")
-   call msg("s",'Correction          (CIRCUIT) [eV]:',CIRCUIT_bands%E_Fermi*HA2EV)
+   CIRCUIT_E%nk=CIRCUIT_k%nbz
+   CIRCUIT_E%nb=BANDS_bands(2)
+   call OCCUPATIONS_Fermi(CIRCUIT_E,CIRCUIT_k,mode="FERMI")
+   call msg("s",'Correction          (CIRCUIT) [eV]:',CIRCUIT_E%E_Fermi*HA2EV)
  endif
  !
- if (allocated(BANDS_Eo%E)) then
-   call OCCUPATIONS_Fermi(BANDS_Eo,INTERP_k,mode="FERMI")
-   call msg("s",'Fermi Level        (DB bands) [eV]:',BANDS_Eo%E_Fermi*HA2EV)
+ if (allocated(CIRCUIT_E_db%E)) then
+   call OCCUPATIONS_Fermi(CIRCUIT_E_db,INTERP_k,mode="FERMI")
+   call msg("s",'Fermi Level        (DB bands) [eV]:',CIRCUIT_E_db%E_Fermi*HA2EV)
  endif
  !
  call section('=','Bands output')
@@ -298,25 +298,35 @@ subroutine electrons_bands(Xk,Xen)
        magn_values(1,:)=values(1)
      endif
      do is=1,n_sp_pol
+       !
+       ! Energies...
+       !
        delta_Ef=0._SP
-       if (allocated(BANDS_Eo%E)) delta_Ef=BANDS_Eo%E_Fermi-Xen%E_Fermi
-       values(1+1:nbands+1)=CIRCUIT_bands%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
-       if (allocated(Xen%Eo).and.allocated(BANDS_Eo%E)) then
+       if (allocated(CIRCUIT_E_db%E)) delta_Ef=CIRCUIT_E_db%E_Fermi-Xen%E_Fermi
+       values(1+1:nbands+1)=CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
+       if (allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E)) then
          values(1+1:nbands+1)=values(1+1:nbands+1)+&
-&                             (BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
+&                             (CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
        endif
        values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
-       if (allocated(BANDS_Eo%E)) then
-         values(1+1:nbands+1)=(BANDS_Eo%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
+       if (allocated(CIRCUIT_E_db%E)) then
+         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
        endif
        call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       !
        if(n_spinor==2) then
+         !
+         ! Spins...
+         !
          do i1=1,2
            spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
            spin_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
            call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
+         !
+         ! Magnetization...
+         !
          do i1=1,3
            magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
            magn_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
@@ -333,8 +343,8 @@ subroutine electrons_bands(Xk,Xen)
  deallocate(headings)
  YAMBO_FREE(spin_values)
  YAMBO_FREE(magn_values)
- call E_reset(INTERP_bands)
- call E_reset(CIRCUIT_bands)
+ call E_reset(INTERP_E)
+ call E_reset(CIRCUIT_E)
  YAMBO_FREE(spin_interpolated)
  YAMBO_FREE(magn_interpolated)
  !

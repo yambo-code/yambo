@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,PRE_FAC)
+subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERATION,PRE_FAC)
  !
  ! This routine just adds to qp_base qp with the plan plan_EWZG
  !
@@ -32,7 +32,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,
 #include<memory.h>
  !
  type(QP_t)         ::qp_base,qp_to_add
- logical            ::plan_EWZG(4),SAME_k,SAME_desc
+ logical            ::plan_EWZG(4),SAME_states,SAME_desc
  character(*)       ::OPERATION
  real(SP)           ::PRE_FAC
  !
@@ -66,13 +66,9 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,
  ! Add new descs/k-points
  !
  call ADD_descs(.FALSE.,qp_base)
- if (.not.SAME_desc) then
-   call ADD_descs(.FALSE.,qp_to_add)
- endif
+ if (.not.SAME_desc)   call ADD_descs(.FALSE.,qp_to_add)
  call ADD_descs(.TRUE.,qp_base)
- if (.not.SAME_k) then
-   call ADD_descs(.TRUE.,qp_to_add)
- endif
+ if (.not.SAME_states) call ADD_descs(.TRUE.,qp_to_add)
  !
  qp%nb=maxval(dummy_table(:,1))
  qp%nk=maxval(dummy_table(:,3))
@@ -171,12 +167,12 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_k,SAME_desc,OPERATION,
  !
  contains 
    !
-   subroutine ADD_descs(KPTS,qp_in)
-     logical    :: KPTS
+   subroutine ADD_descs(STATES,qp_in)
+     logical    :: STATES
      type(QP_t) :: qp_in
      do i_d=1,qp_in%n_descs
-       if (KPTS     .and.index(qp_in%description(i_d),"QP @ K") == 0) cycle
-       if (.not.KPTS.and.index(qp_in%description(i_d),"QP @ K") >  0) cycle
+       if (     STATES.and.index(qp_in%description(i_d),"QP @ K") == 0) cycle
+       if (.not.STATES.and.index(qp_in%description(i_d),"QP @ K") >  0) cycle
        if (len_trim(qp_in%description(i_d)) == 0) cycle
        qp%n_descs=qp%n_descs+1
        qp%description(qp%n_descs)=qp_in%description(i_d)

@@ -194,7 +194,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  n_threads_FFT=1
  call msg('s','[X] NESTED openmp parallelism off')
 #  endif
- call OPENMP_locks_reset(INIT=.true.,nlocks=16)
+ if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
  !
  ! Timing
@@ -268,8 +268,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      !
      do ig_col=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
-       call OPENMP_compute_mutex(ig_col,mutexid)
-       call omp_set_lock(omp_locks(mutexid))
+       if(n_threads_X>1) then
+         call OPENMP_compute_mutex(ig_col,mutexid)
+         call omp_set_lock(omp_locks(mutexid))
+       endif
 #endif
        !
        X_rows  = (/X_par%rows(1),min(ig_col,X_par%rows(2))/)
@@ -306,7 +308,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          endif
        endif
 #if defined _OPENMP
-       call omp_unset_lock(omp_locks(mutexid))
+       if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
      enddo
      !

@@ -94,9 +94,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
  !
- YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),1:n_sp_pol,RT_carriers%nk))
+ YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),RT_carriers%nk,n_sp_pol))
  !
- YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),1:n_sp_pol,CIRCUIT_k%nbz,n_T_steps))
+ YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_sp_pol,n_T_steps))
  !
  do i_T=1,n_T_steps
    !
@@ -126,8 +126,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%delta_f(i_RT)
-       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%NEQ_Lifetime(i_RT) 
+       if (l_RT_occupations) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%delta_f(i_RT)
+       if (l_RT_lifetimes  ) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%NEQ_Lifetime(i_RT) 
        !
      enddo
      !
@@ -147,15 +147,15 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      !
      if(l_RT_occupations)  then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
-&                                       RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+&                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
      endif
      if(l_RT_lifetimes) then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
-&                                       RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
+&                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
      endif
      !
    endif
@@ -228,8 +228,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
        values(2)=CIRCUIT_E%E(ib,1,ik)*HA2EV
-       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
-       if (l_RT_occupations) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
+       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)

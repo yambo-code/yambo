@@ -23,8 +23,9 @@
 !
 subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
  !
- ! Notice that input/output k-points for the interpolation 
- ! are in iku units
+ ! Notice that input/output k-points for the interpolation are in iku units
+ !
+ ! Also note that K index is the the second in R2D
  !
  use pars,        ONLY:SP
  use R_lattice,   ONLY:bz_samp
@@ -101,12 +102,12 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
    !
    interpls(ID)%interp_type=REAL2D
    inpdim(1)               =size(R2D(:,1,1))
-   inpdim(2)               =size(R2D(1,:,1))
+   inpdim(2)               =size(R2D(1,1,:))
    interpls(ID)%ndim       =inpdim(1)*inpdim(2)
    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
    allocate(RDATA(interpls(ID)%ndim,Nk_local))
    do i1=1,inpdim(2)
-     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)            = R2D(1:inpdim(1),i1,1:Nk_local)
+     RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),1:Nk_local)            = R2D(1:inpdim(1),1:Nk_local,i1)
    enddo
    !
  elseif(present(C2D)) then

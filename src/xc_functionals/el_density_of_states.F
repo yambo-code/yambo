@@ -26,7 +26,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,nkbz
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
  use parser_m,       ONLY:parser
@@ -65,7 +65,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
    !
    ik_ibz_done=.false.
    !
-   do ik_bz=1,nkbz
+   do ik_bz=1,Xk%nbz
      !
      ik=Xk%sstar(ik_bz,1)
      if (.not.USE_the_DbGd_) then

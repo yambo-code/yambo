@@ -42,7 +42,7 @@ subroutine electrons_bands(Xk,Xen)
  use D_lattice,      ONLY:i_time_rev,lattice
  use com,            ONLY:msg,of_open_close,error,file_exists,msg_deliver
  use vec_operate,    ONLY:v_norm,iku_v_norm
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,set_real_printed_length
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
  use QP_CTL_m,       ONLY:QP_apply
@@ -219,7 +219,7 @@ subroutine electrons_bands(Xk,Xen)
      ik=INTERP_k%sstar(ikbz,1)
      values(1)=real(ik,SP)
      do is=1,n_sp_pol
-       values(1+4:nbands+4)=INTERP_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
+       values(1+4:nbands+4)=INTERP_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
        call msg('o '//trim(file_name_grid(is)),' ',values,INDENT=0,USE_TABS=.true.)
      enddo
    enddo
@@ -290,6 +290,8 @@ subroutine electrons_bands(Xk,Xen)
    !
    values(1)=0._SP
    !
+   call set_real_printed_length(f_length=10,g_length=10)
+   !
    do ik=1,CIRCUIT_k%nbz
      !
      if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-tmp_k)
@@ -307,7 +309,7 @@ subroutine electrons_bands(Xk,Xen)
        !
        ! ... Interpolated Eo or Eo+deltaE (if QP present)
        !
-       values(1+1:nbands+1)=(CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)+delta_Ef)*HA2EV
+       values(1+1:nbands+1)=(CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        if (allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E)) then
          values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+&
 &                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
@@ -323,12 +325,12 @@ subroutine electrons_bands(Xk,Xen)
        !
        if (allocated(CIRCUIT_E_db%E)) then
          values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
+         call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+         if (len_trim(CIRCUIT_k_label(ik))>0) then
+           of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+         endif
+         call msg_deliver(trim(file_name_bands(3,is)),of_string)
        endif
-       call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       if (len_trim(CIRCUIT_k_label(ik))>0) then
-         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
-       endif
-       call msg_deliver(trim(file_name_bands(3,is)),of_string)
        !
        if(n_spinor==2) then
          !
@@ -351,6 +353,8 @@ subroutine electrons_bands(Xk,Xen)
      enddo
      !
    enddo
+   !
+   call set_real_printed_length( )
    !
  endif
  !

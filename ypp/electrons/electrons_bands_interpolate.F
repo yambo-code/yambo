@@ -49,7 +49,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  ! Work space
  !
- real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3)
+ real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
  real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
  integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,i_err,ID_dE_interp,ik_special
  integer,  allocatable :: int_distances(:)
@@ -186,20 +186,20 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  ! Energies to be interpolated
  !=============================
- YAMBO_ALLOC(E_in,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz))
+ YAMBO_ALLOC(E_in,(BANDS_range(1):BANDS_range(2),Xk%nibz,n_sp_pol))
  if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-   YAMBO_ALLOC(DE_in,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,1:Xk%nibz))
+   YAMBO_ALLOC(DE_in,(BANDS_range(1):BANDS_range(2),Xk%nibz,n_sp_pol))
  endif
  do i_sp_pol=1,n_sp_pol
    do ib=BANDS_range(1),BANDS_range(2)
      do ik=1,Xk%nibz
        !
-       E_in(ib,i_sp_pol,ik)=Xen%E(ib,ik,i_sp_pol)
+       E_in(ib,ik,i_sp_pol)=Xen%E(ib,ik,i_sp_pol)
        !
        ! Interpolate only GW corrections?
        !
        if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-         dE_in(ib,i_sp_pol,ik)=Xen%E(ib,ik,i_sp_pol)-Xen%Eo(ib,ik,i_sp_pol)
+         dE_in(ib,ik,i_sp_pol)=Xen%E(ib,ik,i_sp_pol)-Xen%Eo(ib,ik,i_sp_pol)
        endif
        !
      enddo
@@ -219,10 +219,10 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  endif
  !
  if (BANDS_steps> 0) then
-   YAMBO_ALLOC(CIRCUIT_E%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nbz))
+   YAMBO_ALLOC(CIRCUIT_E%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
    call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=ID_E_interp)
    if (allocated(dE_in).and.present(CIRCUIT_dE)) then
-     YAMBO_ALLOC(CIRCUIT_dE%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nbz))
+     YAMBO_ALLOC(CIRCUIT_dE%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
      call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=ID_dE_interp)
    endif
    YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
@@ -230,7 +230,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  endif
  !
  if(all(INTERP_grid>0)) then
-   YAMBO_ALLOC(INTERP_E%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
+   YAMBO_ALLOC(INTERP_E%E,(BANDS_range(1):BANDS_range(2),INTERP_k%nibz,n_sp_pol))
    call INTERPOLATION_BZ(K=INTERP_k,R2D=INTERP_E%E,ID=ID_E_interp)
  endif
  !
@@ -238,7 +238,14 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !============
  !
  if (allocated(CIRCUIT_E_db%E)) then
-   CIRCUIT_E_db%E=CIRCUIT_E_db%E+CIRCUIT_E%E(BANDS_range(1),1,1)-CIRCUIT_E_db%E(BANDS_range(1),1,1)
+   do i_sp_pol=1,n_sp_pol
+     delta_align=CIRCUIT_E%E(BANDS_range(1),1,i_sp_pol)-CIRCUIT_E_db%E(BANDS_range(1),1,i_sp_pol)
+     do ib=BANDS_range(1),BANDS_range(2)
+       do ik=1,CIRCUIT_k%nbz
+         CIRCUIT_E_db%E(ib,ik,i_sp_pol)=CIRCUIT_E_db%E(ib,ik,i_sp_pol)+delta_align
+       enddo
+     enddo
+   enddo
  endif
  !
  ! Free

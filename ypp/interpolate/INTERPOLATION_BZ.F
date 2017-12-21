@@ -60,9 +60,9 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
   elseif(interpls(ID)%interp_type==REAL2D.and.present(R2D)) then
     !
     outdim(1)               =size(R2D(:,1,1))
-    outdim(2)               =size(R2D(1,:,1))
+    outdim(2)               =size(R2D(1,1,:))
     do i1=1,outdim(2)
-      R2D(1:outdim(1),i1,1:K%nibz)=RDATA((i1-1)*outdim(1)+1:i1*outdim(1),1:K%nibz)
+      R2D(1:outdim(1),1:K%nibz,i1)=RDATA((i1-1)*outdim(1)+1:i1*outdim(1),1:K%nibz)
     enddo
   elseif(interpls(ID)%interp_type==REAL2D.and.present(E)) then
     !

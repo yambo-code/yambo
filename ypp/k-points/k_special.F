@@ -30,7 +30,8 @@ subroutine k_special()
  use com,                 ONLY:msg,of_open_close,msg_deliver,warning
  use vec_operate,         ONLY:c2a,v_norm
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
-&                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,coo_out
+&                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
+&                              SPECIAL_k_position_in_CIRCUIT
  use stderr,              ONLY:string_split
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
@@ -39,7 +40,7 @@ subroutine k_special()
  !
  ! Work Space
  ! 
- integer          :: ik,il,n_lines,ip,k_order(50),i_str
+ integer          :: ik,il,n_lines,ip,i_str
  real(SP)         :: trial_b(3,3),K_norm
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
@@ -149,22 +150,29 @@ subroutine k_special()
    return
  endif
  !
+ if (.not.l_high_sym_pts) then
+   do ik=1,SPECIAL_k%nbz
+     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+   enddo
+ endif
+ !
  call string_split(PtsPath,Path_strings)
  !
- k_order=0
+ SPECIAL_k_position_in_CIRCUIT=0
  n_lines=0
  do i_str=1,50
    do ik=1,SPECIAL_k%nbz
      if (SPECIAL_k_label(ik)==trim(Path_strings(i_str))) then
        n_lines=n_lines+1
-       k_order(n_lines)=ik
+       SPECIAL_k_position_in_CIRCUIT(n_lines)=ik
      endif
    enddo
  enddo
  if (n_lines==0) n_lines=1
- CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
  !
- if (CIRCUIT_k%nbz==0.and..not.l_high_sym_pts) return
+ if (n_lines==1.and..not.l_high_sym_pts) return
+ !
+ CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
  !
  if (CIRCUIT_k%nbz==0) then
    live_timing_is_on=.false.
@@ -187,20 +195,22 @@ subroutine k_special()
    do il=1,n_lines-1
      do ip=1,n_path_pts
        CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-       if (ip==1) K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( k_order(il) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(k_order(il),:)+ ( SPECIAL_k%pt(k_order(il+1),:) -  &
-&                                     SPECIAL_k%pt(k_order(il),:) )/n_path_pts*(ip-1)
+       if (ip==1) K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( SPECIAL_k_position_in_CIRCUIT(il) )
+       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il),:)+ &
+&                                     ( SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il+1),:) -  &
+&                                       SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il),:) )/n_path_pts*(ip-1)
        if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
        CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
      enddo
    enddo
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(k_order(n_lines),:)
-   K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( k_order(n_lines) )
+   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(n_lines),:)
+   K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( SPECIAL_k_position_in_CIRCUIT(n_lines) )
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
    CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
    !
    if (l_high_sym_pts) then
+     !
      k_f_name(1)="path_points"
      k_f_name(2)="PWSCF_points"
      call of_open_close(k_f_name(1),'ot')
@@ -208,19 +218,16 @@ subroutine k_special()
      call msg('o  path',"#",(/"c1    ","c2    ","c3    ","Norm  "/),INDENT=0,USE_TABS=.true.)
      call msg('o PWSCF',"#",(/"c1    ","c2    ","c3    ","Weight"/),INDENT=0,USE_TABS=.true.)
      call msg('o path PWSCF',"#"," ",INDENT=0)
-   endif
-   !
-   do ik=1,CIRCUIT_k%nbz
-     if (.not.l_high_sym_pts) coo_out="iku" 
-     call K_transform(CIRCUIT_k%pt(ik,:3),'cc')
-     if (l_high_sym_pts) then
+     !
+     do ik=1,CIRCUIT_k%nbz
        call msg('o  path',"",CIRCUIT_k%pt(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:3),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        dumb_ch=of_string
        if (len_trim(K_path_label(ik))>0) write (dumb_ch,'(a,5x,3a)') trim(of_string),'[', K_path_label(ik),']'
        call msg_deliver(dumb_ch)
-     endif
-   enddo
+     enddo
+     !
+   endif
    !
    if (l_high_sym_pts) then
      call of_open_close(k_f_name(1))

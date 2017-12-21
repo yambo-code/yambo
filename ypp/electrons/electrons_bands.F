@@ -23,12 +23,20 @@
 !
 subroutine electrons_bands(Xk,Xen)
  !
+ ! Levels produced by this routine:
+ !
+ ! CIRCUIT_E    = Eo (+delta E if QP) interpolated @ CIRCUIT_k (no GS SAVE)
+ !              = Eo                  interpolated @ CIRCUIT_k (if GS SAVE)
+ ! CIRCUIT_dE   = delta E (if QP) interpolated @ CIRCUIT_k (eventually read from GS SAVE)
+ ! INTERP_E     = interpolated @ INTERP_k (if INTERP_grid>0)
+ ! CIRCUIT_E_db = eventually read from GS SAVE
+ !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         DOS_bands
+&                         DOS_bands,BANDS_E_and_k_db
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev,lattice
@@ -55,7 +63,7 @@ subroutine electrons_bands(Xk,Xen)
  character(8)          :: spin_ch
  character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
  character(schlen), allocatable :: headings(:)
- logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate,BANDS_bare,GRID_interpolate
+ logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate,GRID_interpolate
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -63,16 +71,18 @@ subroutine electrons_bands(Xk,Xen)
  !
  if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
  !
- BANDS_interpolate = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
- BANDS_bare        = trim(CIRCUIT_E_DB_path)/="none"
- if (BANDS_bare)     BANDS_internal=.FALSE.
- GRID_interpolate  = all(INTERP_grid>0)
- DOS_interpolate   = GRID_interpolate.and.BANDS_bands(1)==1
+ BANDS_E_and_k_db    = trim(CIRCUIT_E_DB_path)/="none"
+ BANDS_interpolate   = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
+ if (BANDS_E_and_k_db) BANDS_internal=.FALSE.
+ GRID_interpolate    = all(INTERP_grid>0)
+ DOS_interpolate     = GRID_interpolate.and.BANDS_bands(1)==1
  !
  if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
+ if (BANDS_E_and_k_db) BANDS_path= " " 
+ !
  PtsPath=BANDS_path
  n_path_pts=BANDS_steps
  !
@@ -145,7 +155,7 @@ subroutine electrons_bands(Xk,Xen)
    !
    if (BANDS_interpolate) file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
    if (BANDS_internal   ) file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
-   if (BANDS_bare       ) file_name_bands(3,is)="bands_bare"//trim(spin_ch)
+   if (BANDS_E_and_k_db ) file_name_bands(3,is)="bands_from_DB"//trim(spin_ch)
    if (GRID_interpolate ) file_name_grid(is)   ="grid"//trim(spin_ch)
    !
    call of_open_close(trim(file_name_grid(is)),'ot')
@@ -219,20 +229,13 @@ subroutine electrons_bands(Xk,Xen)
  !==============
  call section('=','Fermi Levels')
  call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
+ delta_Ef=-Xen%E_Fermi
  !
  if (BANDS_bands(1)==1) then
+   delta_Ef=-INTERP_E%E_Fermi
    if (DOS_interpolate) then
      call msg("s",'Correction             (GRID) [eV]:',INTERP_E%E_Fermi*HA2EV)
    endif
-   CIRCUIT_E%nk=CIRCUIT_k%nbz
-   CIRCUIT_E%nb=BANDS_bands(2)
-   call OCCUPATIONS_Fermi(CIRCUIT_E,CIRCUIT_k,mode="FERMI")
-   call msg("s",'Correction          (CIRCUIT) [eV]:',CIRCUIT_E%E_Fermi*HA2EV)
- endif
- !
- if (allocated(CIRCUIT_E_db%E)) then
-   call OCCUPATIONS_Fermi(CIRCUIT_E_db,INTERP_k,mode="FERMI")
-   call msg("s",'Fermi Level        (DB bands) [eV]:',CIRCUIT_E_db%E_Fermi*HA2EV)
  endif
  !
  call section('=','Bands output')
@@ -301,17 +304,20 @@ subroutine electrons_bands(Xk,Xen)
        !
        ! Energies...
        !
-       delta_Ef=0._SP
-       if (allocated(CIRCUIT_E_db%E)) delta_Ef=CIRCUIT_E_db%E_Fermi-Xen%E_Fermi
-       values(1+1:nbands+1)=CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)*HA2EV
+       ! ... Interpolated Eo or Eo+deltaE (if QP present)
+       !
+       values(1+1:nbands+1)=(CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),is,ik)+delta_Ef)*HA2EV
        if (allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E)) then
-         values(1+1:nbands+1)=values(1+1:nbands+1)+&
-&                             (CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
+         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+&
+&                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
        values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       !
+       ! ... Read from GS SAVE (if present)
+       !
        if (allocated(CIRCUIT_E_db%E)) then
-         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)-delta_Ef)*HA2EV
+         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
        call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.)
        !
@@ -345,6 +351,8 @@ subroutine electrons_bands(Xk,Xen)
  YAMBO_FREE(magn_values)
  call E_reset(INTERP_E)
  call E_reset(CIRCUIT_E)
+ call E_reset(CIRCUIT_DE)
+ call E_reset(CIRCUIT_E_db)
  YAMBO_FREE(spin_interpolated)
  YAMBO_FREE(magn_interpolated)
  !

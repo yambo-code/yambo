@@ -59,6 +59,7 @@ module YPP
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter :: n_SPECIAL_k_MAX=20
+ integer      :: SPECIAL_k_position_in_CIRCUIT(n_SPECIAL_k_MAX)
  character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
@@ -84,6 +85,7 @@ module YPP
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
+ logical               ::BANDS_E_and_k_db
  !
  ! SPIN and SOC
  integer      ::WF_ref(2)

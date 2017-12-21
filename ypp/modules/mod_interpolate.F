@@ -37,7 +37,7 @@ module interpolate
  real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
  !
- character(schlen) :: INTERPOLATION_name
+ character(schlen) :: INTERPOLATION_name = " "
  !
  ! Interpolation type
  !
@@ -47,9 +47,9 @@ module interpolate
  character(schlen), parameter :: CMPLX2D  = "CMPLX2D"
  ! 
  type interp_coeff
-   character(schlen)     :: interp_type
+   character(schlen)        :: interp_type = " "
    complex(DP), allocatable :: engre(:,:)
-   integer               :: ndim
+   integer                  :: ndim = 0
  end type interp_coeff
  !
  integer, parameter :: max_interpls=10
@@ -127,7 +127,7 @@ module interpolate
        i1=i1+1
      enddo
      !
-     if(.not.done) call error("Error too many interpolations!!! ")
+     if(.not.done) call error("Error too many simultaneous interpolations.")
      !
    end subroutine get_ID
    !

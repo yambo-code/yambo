@@ -31,7 +31,7 @@ subroutine k_special()
  use vec_operate,         ONLY:c2a,v_norm
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
-&                              SPECIAL_k_position_in_CIRCUIT
+&                              n_SPECIAL_k_MAX,CIRCUIT_k_label
  use stderr,              ONLY:string_split
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
@@ -40,11 +40,10 @@ subroutine k_special()
  !
  ! Work Space
  ! 
- integer          :: ik,il,n_lines,ip,i_str
+ integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
  real(SP)         :: trial_b(3,3),K_norm
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
- character(1), allocatable :: K_path_label(:)
  !
  call bz_samp_reset(SPECIAL_k)
  call bz_samp_reset(CIRCUIT_k)
@@ -158,13 +157,13 @@ subroutine k_special()
  !
  call string_split(PtsPath,Path_strings)
  !
- SPECIAL_k_position_in_CIRCUIT=0
+ K_position=0
  n_lines=0
  do i_str=1,50
    do ik=1,SPECIAL_k%nbz
      if (SPECIAL_k_label(ik)==trim(Path_strings(i_str))) then
        n_lines=n_lines+1
-       SPECIAL_k_position_in_CIRCUIT(n_lines)=ik
+       K_position(n_lines)=ik
      endif
    enddo
  enddo
@@ -188,24 +187,24 @@ subroutine k_special()
 &                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
    !
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,4))
-   allocate(K_path_label(CIRCUIT_k%nbz+1))
+   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
    CIRCUIT_k%nbz=0
    K_norm=0.
-   K_path_label=" "
+   CIRCUIT_k_label=" "
    do il=1,n_lines-1
      do ip=1,n_path_pts
        CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-       if (ip==1) K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( SPECIAL_k_position_in_CIRCUIT(il) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il),:)+ &
-&                                     ( SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il+1),:) -  &
-&                                       SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(il),:) )/n_path_pts*(ip-1)
+       if (ip==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
+       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(il),:)+ &
+&                                     ( SPECIAL_k%pt(K_position(il+1),:) -  &
+&                                       SPECIAL_k%pt(K_position(il),:) )/n_path_pts*(ip-1)
        if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
        CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
      enddo
    enddo
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(SPECIAL_k_position_in_CIRCUIT(n_lines),:)
-   K_path_label(CIRCUIT_k%nbz)=SPECIAL_k_label( SPECIAL_k_position_in_CIRCUIT(n_lines) )
+   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)
+   CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
    CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
    !
@@ -221,10 +220,11 @@ subroutine k_special()
      !
      do ik=1,CIRCUIT_k%nbz
        call msg('o  path',"",CIRCUIT_k%pt(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
+       call msg_deliver('path',trim(of_string))
        call msg('o PWSCF',"",(/CIRCUIT_k%pt(ik,:3),1._SP/),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
-       dumb_ch=of_string
-       if (len_trim(K_path_label(ik))>0) write (dumb_ch,'(a,5x,3a)') trim(of_string),'[', K_path_label(ik),']'
-       call msg_deliver(dumb_ch)
+       if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
+       call msg_deliver('PWSCF',trim(of_string))
      enddo
      !
    endif
@@ -233,8 +233,6 @@ subroutine k_special()
      call of_open_close(k_f_name(1))
      call of_open_close(k_f_name(2))
    endif
-   !
-   deallocate(K_path_label)
    !
  endif
  !

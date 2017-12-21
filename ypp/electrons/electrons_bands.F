@@ -31,16 +31,16 @@ subroutine electrons_bands(Xk,Xen)
  ! INTERP_E     = interpolated @ INTERP_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         DOS_bands,BANDS_E_and_k_db
+&                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:i_time_rev,lattice
- use com,            ONLY:msg,of_open_close,error,file_exists
+ use com,            ONLY:msg,of_open_close,error,file_exists,msg_deliver
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc
  use parser_m,       ONLY:parser
@@ -62,6 +62,7 @@ subroutine electrons_bands(Xk,Xen)
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
  character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
+ character(lchlen)     :: of_string
  character(schlen), allocatable :: headings(:)
  logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate,GRID_interpolate
  !
@@ -312,14 +313,22 @@ subroutine electrons_bands(Xk,Xen)
 &                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
        values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:)
-       call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       if (len_trim(CIRCUIT_k_label(ik))>0) then
+         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+       endif
+       call msg_deliver(trim(file_name_bands(1,is)),of_string)
        !
        ! ... Read from GS SAVE (if present)
        !
        if (allocated(CIRCUIT_E_db%E)) then
          values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
-       call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       if (len_trim(CIRCUIT_k_label(ik))>0) then
+         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+       endif
+       call msg_deliver(trim(file_name_bands(3,is)),of_string)
        !
        if(n_spinor==2) then
          !

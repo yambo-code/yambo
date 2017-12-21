@@ -27,7 +27,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
-&                         SPECIAL_k_position_in_CIRCUIT,BANDS_path,SPECIAL_k_label
+&                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:alat,a
  use R_lattice,      ONLY:bz_samp,bz_samp_reset,k_the_nearest
@@ -103,9 +103,9 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  ! Define the path (CIRCUIT_K) from the user kpts if BANDS_steps>0
  !================================================================= 
- if( BANDS_steps> 0 .and. .not. CIRCUIT_made_of_SPECIAL_k ) then
+ if(.not.CIRCUIT_made_of_SPECIAL_k ) then
    !
-   if (trim(CIRCUIT_E_DB_path)=="none") then
+   if (trim(CIRCUIT_E_DB_path)=="none".and.BANDS_steps> 0) then
      !
      allocate(distances(USER_k%nbz-1),int_distances(USER_k%nbz-1))
      !
@@ -156,14 +156,17 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
      if (i_err/=0) call error("Reading the "//trim(CIRCUIT_E_DB_path)//" SAVE database")
      BANDS_E_and_k_db=.TRUE.
      !
+     allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
+     CIRCUIT_k_label=" "
+     BANDS_path=" "
      do ik=1,CIRCUIT_k%nbz
        ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)  
        if (i_err==0) then
-         SPECIAL_k_position_in_CIRCUIT(ik_special)=ik
+         CIRCUIT_k_label(ik)=trim(SPECIAL_k_label(ik_special))
          BANDS_path=trim(BANDS_path)//" "//trim(SPECIAL_k_label(ik_special))
        endif
      enddo
-     if (any(SPECIAL_k_position_in_CIRCUIT/=0)) call msg("s",'Circuit path         :',trim(BANDS_path))
+     if (len_trim(BANDS_path)>0) call msg("s",'Circuit path         :',trim(BANDS_path))
      !
    endif
    !
@@ -196,7 +199,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
        ! Interpolate only GW corrections?
        !
        if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-         E_in(ib,i_sp_pol,ik) =Xen%Eo(ib,ik,i_sp_pol)
          dE_in(ib,i_sp_pol,ik)=Xen%E(ib,ik,i_sp_pol)-Xen%Eo(ib,ik,i_sp_pol)
        endif
        !

@@ -401,7 +401,7 @@ subroutine k_grids(en,k,Xk,q)
            write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
          endif
        else if (PW_format) then
-           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
+         write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
        else
          if(No_Weight) then
            write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x))') v(:)

@@ -58,8 +58,8 @@ module YPP
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
- integer, parameter :: n_SPECIAL_k_MAX=20
- integer      :: SPECIAL_k_position_in_CIRCUIT(n_SPECIAL_k_MAX)
+ integer, parameter        :: n_SPECIAL_k_MAX=20
+ character(1), allocatable :: CIRCUIT_k_label(:)
  character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
+subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
  !
  ! Notice that input/output k-points for the interpolation 
  ! are in iku units
@@ -58,7 +58,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
    interpls(ID)%interp_type=REAL1D
    interpls(ID)%ndim       =size(R1D(:,1))
    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
-   call bz_interp_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
+   call INTERPOLATION_BZ_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
    return
    !
  endif
@@ -125,7 +125,7 @@ subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
    !
  endif
  !  
- call bz_interp_coeff(k,RDATA,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
+ call INTERPOLATION_BZ_coeff(k,RDATA,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
  deallocate(RDATA)
  !
-end subroutine  eval_interpolation_coeff
+end subroutine  INTERPOLATION_coefficients

@@ -34,7 +34,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation
+ use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ
  use interfaces,     ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
@@ -174,12 +174,12 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  if(all(INTERP_grid>0)) then
    call bz_samp_reset(INTERP_k)
    INTERP_k%description="Interp"
-   call grid_generator(INTERP_k,'i',INTERP_grid)
+   call INTERPOLATION_grid(INTERP_k,'i',INTERP_grid)
  endif
  !
  ! Brillouine zone setup
  !========================
- call bz_interp_setup(Xk)
+ call INTERPOLATION_BZ_setup(Xk)
  !
  ! Energies to be interpolated
  !=============================
@@ -210,18 +210,18 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- call eval_interpolation_coeff(R2D=E_in,k=Xk,Nk=Xk%nibz,ID=ID_E_interp)
+ call INTERPOLATION_coefficients(R2D=E_in,k=Xk,Nk=Xk%nibz,ID=ID_E_interp)
  !
  if (allocated(dE_in).and.present(CIRCUIT_dE)) then
-   call eval_interpolation_coeff(R2D=dE_in,k=Xk,Nk=Xk%nibz,ID=ID_dE_interp)
+   call INTERPOLATION_coefficients(R2D=dE_in,k=Xk,Nk=Xk%nibz,ID=ID_dE_interp)
  endif
  !
  if (BANDS_steps> 0) then
    YAMBO_ALLOC(CIRCUIT_E%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nbz))
-   call bz_interpolation(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=ID_E_interp)
+   call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=ID_E_interp)
    if (allocated(dE_in).and.present(CIRCUIT_dE)) then
      YAMBO_ALLOC(CIRCUIT_dE%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,CIRCUIT_k%nbz))
-     call bz_interpolation(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=ID_dE_interp)
+     call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=ID_dE_interp)
    endif
    YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
    CIRCUIT_k%weights=1./real( CIRCUIT_k%nbz )
@@ -229,7 +229,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  if(all(INTERP_grid>0)) then
    YAMBO_ALLOC(INTERP_E%E,(BANDS_range(1):BANDS_range(2),1:n_sp_pol,INTERP_k%nibz))
-   call bz_interpolation(K=INTERP_k,R2D=INTERP_E%E,ID=ID_E_interp)
+   call INTERPOLATION_BZ(K=INTERP_k,R2D=INTERP_E%E,ID=ID_E_interp)
  endif
  !
  ! Alignement

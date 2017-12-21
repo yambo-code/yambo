@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fourier_interpolation(K,VALUES,engre,nvalues,Nk)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,pi,cI,cZERO,DP
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,int_sop
@@ -67,4 +67,4 @@ subroutine fourier_interpolation(K,VALUES,engre,nvalues,Nk)
   !
   YAMBO_FREE(star)
   !
-end subroutine fourier_interpolation
+end subroutine INTERPOLATION_fourier

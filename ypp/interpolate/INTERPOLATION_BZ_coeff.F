@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -181,7 +181,7 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
    !
    YAMBO_ALLOC(new_VALUEs,(nvalues,Nk))
    !
-   call fourier_interpolation(Xk,new_VALUEs,engre,nvalues,Nk)
+   call INTERPOLATION_fourier(Xk,new_VALUEs,engre,nvalues,Nk)
    !
    max_err=0._SP
    ave_err=0._SP
@@ -205,4 +205,4 @@ subroutine bz_interp_coeff(Xk,VALUEs,engre,nvalues,Nk)
    !
   end subroutine k_compare 
   !
-end subroutine bz_interp_coeff
+end subroutine INTERPOLATION_BZ_coeff

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interp_setup(Xk)
+subroutine INTERPOLATION_BZ_setup(Xk)
  !
  ! Code inspired by BolzTraP
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
@@ -165,7 +165,7 @@ subroutine bz_interp_setup(Xk)
  YAMBO_FREE(all_vec_mod)
  YAMBO_FREE(indx)
  !
-end subroutine bz_interp_setup
+end subroutine INTERPOLATION_BZ_setup
 
 logical function vec_in_star(vec,nstar,star_vec)
   use pars,         ONLY:SP

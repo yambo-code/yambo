@@ -58,7 +58,7 @@ module interpolate
  !
  interface
    !
-   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
+   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -69,9 +69,9 @@ module interpolate
      type(levels),  intent(in), optional :: E
      integer,       intent(in), optional :: Nk
      integer,       intent(out)          :: ID
-   end subroutine  eval_interpolation_coeff
+   end subroutine  INTERPOLATION_coefficients
    !
-   subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,K,ID)
+   subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -81,7 +81,7 @@ module interpolate
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
      integer,       intent(in)            :: ID
-   end subroutine bz_interpolation
+   end subroutine INTERPOLATION_BZ
    !
    subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
      use pars,       ONLY:SP

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,K,ID)
+subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
   use electrons,   ONLY:levels,n_sp_pol
@@ -42,12 +42,12 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,K,ID)
   if(interpls(ID)%ndim==0) call error("Interpolation coefficients not present!")
   !
   if(interpls(ID)%interp_type==REAL1D.and.present(R1D)) then
-    call fourier_interpolation(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+    call INTERPOLATION_fourier(K,R1D,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
     return
   endif
   !
   allocate(RDATA(interpls(ID)%ndim,K%nibz))
-  call fourier_interpolation(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
+  call INTERPOLATION_fourier(K,RDATA,interpls(ID)%engre,interpls(ID)%ndim,K%nibz)
   !
   if(interpls(ID)%interp_type==CMPLX1D.and.present(C1D)) then
     !   
@@ -87,4 +87,4 @@ subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,K,ID)
   !
   deallocate(RDATA)
   !
-end subroutine bz_interpolation
+end subroutine INTERPOLATION_BZ

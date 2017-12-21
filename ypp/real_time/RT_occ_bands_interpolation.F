@@ -35,7 +35,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation, &
+ use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,reset_interpolation, &
 &                         electrons_bands_interpolate
  !
 #include<memory.h>
@@ -131,12 +131,12 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        !
      enddo
      !
-     call eval_interpolation_coeff(R2D=variable_to_fit,k=k_bands,Nk=k_bands%nibz,ID=ID_interp)
+     call INTERPOLATION_coefficients(R2D=variable_to_fit,k=k_bands,Nk=k_bands%nibz,ID=ID_interp)
      !
      ! STEP 2
      ! 1: interpolate on the circuit      if (BANDS_steps>0)
      !
-     if (BANDS_steps> 0) call bz_interpolation(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=ID_interp)
+     if (BANDS_steps> 0) call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=ID_interp)
      !
      call reset_interpolation(ID_interp)
      !

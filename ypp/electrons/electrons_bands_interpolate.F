@@ -161,14 +161,16 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
    CIRCUIT_k_label=" "
    BANDS_path=" "
-   do ik=1,CIRCUIT_k%nbz
-     ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)  
-     if (i_err==0) then
-       CIRCUIT_k_label(ik)=trim(SPECIAL_k_label(ik_special))
-       BANDS_path=trim(BANDS_path)//" "//trim(SPECIAL_k_label(ik_special))
-     endif
-   enddo
-   if (len_trim(BANDS_path)>0) call msg("s",'Circuit path         :',trim(BANDS_path))
+   if (SPECIAL_k%nbz>0) then
+     do ik=1,CIRCUIT_k%nbz
+       ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)  
+       if (i_err==0) then
+         CIRCUIT_k_label(ik)=trim(SPECIAL_k_label(ik_special))
+         BANDS_path=trim(BANDS_path)//" "//trim(SPECIAL_k_label(ik_special))
+       endif
+     enddo
+     if (len_trim(BANDS_path)>0) call msg("s",'Circuit path         :',trim(BANDS_path))
+   endif
    !
  endif
  !

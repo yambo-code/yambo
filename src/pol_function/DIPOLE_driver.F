@@ -233,7 +233,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
    !
    else
      !
-     call DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
+     !call DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
+     call DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
      !
    endif
    !

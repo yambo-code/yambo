@@ -51,7 +51,7 @@ subroutine MAG_common_build_A(build)
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use FFT_m,          ONLY:fft_size,fft_dim
- use D_lattice,      ONLY:a,x_cc
+ use D_lattice,      ONLY:x_cc
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_landau,MAG_psi,MAG_theta,  &
 &                         MAG_gauge,Bx,By,Bz,ir_table,                    &
 &                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,       &

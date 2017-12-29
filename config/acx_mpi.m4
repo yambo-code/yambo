@@ -31,7 +31,7 @@ acx_mpi_ok=no
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])
-        AC_CHECK_PROGS(MPICC_test,$MPICC mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+        AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
         MPICC=$MPICC_test
         CC=$MPICC_test
 ],

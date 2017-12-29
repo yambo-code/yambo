@@ -128,11 +128,13 @@ module interfaces
 #include <petsc/finclude/petscmat.h>
      !
      Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP),  optional      :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
      real(SP),     optional      :: E_real(:)    ! real eigenvalues
      real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     real(SP),     optional      :: slepc_tol    ! tolerance of the iterative solver
      character(schlen), optional :: extraction   ! extraction method for the eigenvalues
      integer,optional            :: slepc_ncv    ! dimension of the subspace
      !
@@ -158,6 +160,12 @@ module interfaces
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
      logical     ,optional :: keep_states_to_load
+   end subroutine
+   !
+   subroutine WF_free(WF,keep_fft)
+     use wave_func,       ONLY:WAVEs
+     type(WAVEs)           :: WF
+     logical     ,optional :: keep_fft
    end subroutine
    !
    subroutine PARALLEL_WF_index(COMM)

@@ -29,7 +29,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:J_cache,P_cache,M_cache,IO_JPSM_cache_steps
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,IO_JPSM_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -126,7 +126,8 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
  !
  if(n_spin>1) then
-   YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache_steps))
+   YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
+   YAMBO_ALLOC(Ml_cache,(6,IO_JPSM_cache_steps))
  endif
  !
  RT_J_t        =(0._DP,0._DP)
@@ -165,7 +166,8 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  YAMBO_FREE(J_cache)
  YAMBO_FREE(P_cache)
  if(n_spin>1) then
-   YAMBO_FREE(M_cache)
+   YAMBO_FREE(Ms_cache)
+   YAMBO_FREE(Ml_cache)
  endif
  !
 end subroutine

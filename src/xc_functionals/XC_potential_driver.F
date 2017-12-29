@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE,EXX_SCREENING)
+subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Wrapper for calculation of the XC potential. If available libxc,
  ! will be used instead of internal routines
@@ -34,6 +34,15 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
  use IO_m,           ONLY:IO_and_Messaging_switch
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+#endif
+#if defined _RT
+ use drivers,        ONLY:l_real_time
+#endif
+#if defined _TIMING && defined _RT
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -42,8 +51,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  integer,       intent(inout)    :: KIND,FUNCTIONAL
  integer,       intent(in)       :: ORDER
  real(SP),      intent(inout),optional :: EXX_FRACTION, EXX_SCREENING
- character(*),  intent(in),   optional :: MUTE
- logical,       intent(in),   optional :: unMUTE
  !
  ! Work space
  !
@@ -51,7 +58,16 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
  real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
  !
- if (present(MUTE)) call IO_and_Messaging_switch(MUTE)
+#if defined _TIMING && defined _RT
+ call timing('XC_potential_driver',OPR='start')
+#endif
+ !
+#if defined _RT
+ if (l_real_time) call IO_and_Messaging_switch("SAVE MUTE")
+#endif
+#if defined _SC
+ if (l_sc_run)    call IO_and_Messaging_switch("SAVE MUTE")
+#endif
  !
  local_exx_fraction = rZERO
  local_exx_screening= rZERO
@@ -91,16 +107,15 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unM
    call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
  endif
  !
- if (present(MUTE)) then
-   local_mute_ch=MUTE
-   do ic=1,len_trim(local_mute_ch)
-     if (local_mute_ch(ic:ic)=="-") local_mute_ch(ic:ic)="+"
-   enddo   
-   if (present(unMUTE)) then
-     call IO_and_Messaging_switch(trim(local_mute_ch),CONDITION=unMUTE)
-   else
-     call IO_and_Messaging_switch(MUTE)
-   endif
- endif
+#if defined _RT
+ if (l_real_time) call IO_and_Messaging_switch("RESTORE")
+#endif
+#if defined _SC
+ if (l_sc_run)    call IO_and_Messaging_switch("RESTORE")
+#endif
+ !
+#if defined _TIMING && defined _RT
+ call timing('XC_potential_driver',OPR='stop')
+#endif
  !
 end subroutine XC_potential_driver

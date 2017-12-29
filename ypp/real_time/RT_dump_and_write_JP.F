@@ -43,11 +43,10 @@ subroutine RT_dump_and_write_JP()
    !
    RT_conf%damp_factor=0._SP
    !
-   call msg('s','[RT] Applied Field derived damping')
-   !
    ! Force the minimal damping to make finite the Fourier Transform
    !
    if(l_force_min_damp) then
+     call msg('s','[RT] Applied Field derived damping')
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_J_t,3)
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_P_t,6)
    endif
@@ -74,7 +73,7 @@ subroutine RT_dump_and_write_JP()
    RT_ind_J    =RT_J_t(i_t,:)
    RT_P        =RT_P_t(i_t,1:3)
    call RT_output('pol',TIME=RT_time(i_t)*AUT2FS)
-   if (allocated(RT_J_t)) call RT_output('cur',TIME=RT_time(i_t)*AUT2FS)
+   call RT_output('cur',TIME=RT_time(i_t)*AUT2FS)
  enddo
  !
 end subroutine

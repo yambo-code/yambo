@@ -32,9 +32,9 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use hamiltonian,   ONLY:H_ref_bands,Ho
+ use hamiltonian,   ONLY:H_ref_bands,Hzero
  use magnetic,      ONLY:new_pp,old_pp
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:RD,RD_CL,io_control
  !
 #include<memory.h>
@@ -139,7 +139,7 @@ subroutine MAG_H_pseudo(Xk,Xen)
  !
  call live_timing()
  !
- Ho(:,:,:,:)=Ho(:,:,:,:)+H_pseudo_tot(:,:,:,:)
+ Hzero(:,:,:,:)=Hzero(:,:,:,:)+H_pseudo_tot(:,:,:,:)
  !
  ! Free mem
  YAMBO_FREE(kbv_ks_space)

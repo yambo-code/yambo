@@ -27,6 +27,7 @@ integer function variables_RT(ID,local_description,what)
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
+ use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
@@ -45,7 +46,7 @@ integer function variables_RT(ID,local_description,what)
  !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  !
  implicit none
  !
@@ -75,6 +76,7 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,I1=RT_bands,&
 &     VAR=' [RT] Bands                      :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
+ if (read_is_on(ID)) H_ref_bands=RT_bands
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
 &     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&

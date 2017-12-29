@@ -37,7 +37,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
- use SC,             ONLY:SC_R,SC_bands
+ use hamiltonian,    ONLY:SC_R,H_ref_bands
  !
  implicit none
  !
@@ -47,16 +47,16 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  ! Work Space
  !
  integer     :: ib,ibp,i_wf,i_wfp,i_spinor,ig
- complex(SP) :: WS_wf(wf_size,n_spinor,SC_bands(1):SC_bands(2))
+ complex(SP) :: WS_wf(wf_size,n_spinor,H_ref_bands(1):H_ref_bands(2))
  !
  WS_wf=cZERO
  !
- do ib = SC_bands(1),SC_bands(2)
+ do ib = H_ref_bands(1),H_ref_bands(2)
    !
    i_wf = WFo%index(ib,ik,i_sp_pol)
    if (i_wf==0) cycle
    !
-   do ibp = SC_bands(1),SC_bands(2)
+   do ibp = H_ref_bands(1),H_ref_bands(2)
      i_wfp = WFo%index(ibp,ik,i_sp_pol)
      if (i_wfp==0) cycle
      !call V_by_V_plus_V_omp(wf_size*n_spinor,SC_R(ibp,ib,ik,i_sp_pol),WFo%c(:,:,i_wfp),WS_wf(:,:,ib))
@@ -65,7 +65,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    !
  enddo
  !
- do ib = SC_bands(1),SC_bands(2) 
+ do ib = H_ref_bands(1),H_ref_bands(2)
    !
    i_wf = WFo%index(ib,ik,i_sp_pol)
    !

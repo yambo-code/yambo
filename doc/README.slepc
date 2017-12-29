@@ -1,0 +1,138 @@
+#############################################################
+#
+# SLEPC for diagonalization of the BSE Hamiltonian in yambo
+# by Henrique Miranda 8/06/2016
+# Last updated 8/11/2016
+#
+#############################################################
+
+1. Introduction
+==============================
+
+SLEPc is a software library for the solution of large scale sparse eigenvalue problems on parallel computers.
+http://slepc.upv.es/
+
+Currently the SLEPC library is only used to diagonalize the BSE auxiliary hamiltonian.
+To run it use -y s instead of -y h (haydock) or -y d (diagonalization) as argument to yambo.
+
+The available options when running slepc are:
+
+BSSmod = 's'
+Use slepc to solve the BSE auxiliary Hamiltonian
+
+BSSNEig 
+Choose the number of eigenstates to calculate from lower energy to higher
+The default is to calculate 1% of the states of the hamiltonian.
+
+BSSSlepcShell
+This creates a PETSC Shell matrix intead of re-allocating a PETSC sparse matrix.
+This is more memory efficient and yields the same results as with the re-allocation.
+
+BSSEnTarget
+Choose this value to look for eigenvalues close to a certain energy
+If the target is set in the middle of the spectra, then it might be a good idea to also specify BSSSlepcExtraction to harmonic.
+
+BSSSlepcExtraction
+Specifies the type of extraction technique to be employed by the eigensolver.
+The available options are:
+'ritz'     -> Finds eigenvalues from the outer limits
+'harmonic' -> Finds eigenvalues close to the specified target
+For more details see:
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetExtraction.html
+
+BSSSlepcNCV
+Size of subspace for finding the eigenvalues.
+In general the bigger the better. But it uses more memory.
+The menaing of this value is described in:
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetDimensions.html
+
+BSSSlepcTol
+Tolerance for the iterative solver
+http://slepc.upv.es/documentation/current/docs/manualpages/EPS/EPSSetTolerances.html
+
+More variables can be added for better control of the library.
+After getting the eigenvalues and eigenstates you can use ypp normally (of course less states are present).
+
+2. Installation
+===============================
+
+PETSC
+-------------------------------
+To install SLEPC you need to install PETSC.
+Here are the commands I used to configurei on a mac:
+
+./configure \
+ --with-blas-lapack-lib='-L/opt/local/lib/ -lopenblas'\
+ --with-scalar-type="complex" --with-precision="single"
+
+Follow the instructions after the compilation and save the PETSC_DIR and PETSC_ARCH variables
+
+on a ubuntu linux 12 machine I used:
+./configure \
+ --with-blas-lapack-dir='/packages/openblas/0.2.8_serial'\
+ --with-mpi-include="/usr/include/mpich2"\
+ --with-mpi-lib="-L/usr/lib/mpich2/lib -lmpich"\
+ --with-precision="single"\
+ --with-scalar-type="complex"\
+ --with-cc=mpicc --with-fc=mpif90
+
+SLEPC
+-------------------------------
+Then you can install SLEPC specifying the PETSC_DIR and PETSC_ARCH variables:
+
+PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4 PETSC_ARCH=arch-darwin-c-debug ./configure
+
+The final step is to configure yambo. In my case I used on a mac:
+
+PETSC_DIR=/Users/henrique.pereira/software/petsc-3.6.4
+SLEPC_DIR=/Users/henrique.pereira/software/slepc-3.6.3
+../configure \
+ --enable-keep-src \
+ --enable-debug \
+ --enable-msgs-comps \
+ --without-editor \
+ --with-fft-libs="-L/opt/local/lib -lfftw3 -lfftw3f"\
+ --with-netcdf-libs="-L/opt/local/lib -lnetcdff -L/opt/local/lib -Wl,-headerpad_max_install_names -lnetcdf -lnetcdf -I/opt/local/include -pipe -Os -L/opt/local/lib /opt/local/lib/libhdf5_hl.a /opt/local/lib/libhdf5.a -L/opt/local/lib -Wl,-headerpad_max_install_names -lz -ldl -lm -lcurl"\
+ --with-netcdf-includedir="/opt/local/include"\
+ --with-blas-libs="-L/opt/local/lib -lopenblas"\
+ --with-lapack-libs="-L/opt/local/lib -lopenblas"\
+ --with-slepc-libs="-L${SLEPC_DIR}/arch-darwin-c-debug/lib -lslepc"\
+ --with-petsc-libs="-L${PETSC_DIR}/arch-darwin-c-debug/lib -lpetsc"\
+ --with-slepc-includedir="$SLEPC_DIR/include"\
+ --with-petsc-includedir="$PETSC_DIR/include"\
+ --with-iotk-path="/Users/henrique.pereira/software/espresso-5.2.1/iotk"\
+ --with-libxc-libs="-L/usr/local/lib -lxc"\
+ --with-libxc-includedir="/usr/local/include"\
+ --with-mpi-libs="-L/opt/local/lib/mpich-gcc47/ -lmpi"
+
+
+on the linux machine I used:
+PETSC_DIR=/home/henrique/software/petsc-3.6.4
+SLEPC_DIR=/home/henrique/software/slepc-3.6.3
+../configure \
+ --enable-keep-src \
+ --enable-debug \
+ --enable-msgs-comps \
+ --enable-netcdf-LFS \
+ --enable-netcdf-hdf5 \
+ --without-editor \
+ --with-fft-libs="-L/opt/local/lib -lfftw3 -lfftw3f"\
+ --with-hdf5-path="/packages/hdf5/1.8.12/"\
+ --with-netcdf-libs="-L/packages/netcdf-fortran/4.2/lib -lnetcdff  -lnetcdf -L/packages/netcdf/4.3.1.1/lib -lnetcdf"\
+ --with-netcdf-includedir="/packages/netcdf-fortran/4.2/include"\
+ --with-blas-libs="-L/opt/local/lib -lopenblas"\
+ --with-lapack-libs="-L/opt/local/lib -lopenblas"\
+ --with-slepc-libs="-L${SLEPC_DIR}/arch-darwin-c-debug/lib -lslepc"\
+ --with-petsc-libs="-L${PETSC_DIR}/arch-darwin-c-debug/lib -lpetsc"\
+ --with-slepc-includedir="$SLEPC_DIR/include"\
+ --with-petsc-includedir="$PETSC_DIR/include"\
+ --with-iotk-path="/home/henrique/software/espresso-5.4.0/iotk"\
+ --with-libxc-libs="-L/packages/libxc/2.1.0_gcc46/lib -lxc"\
+ --with-libxc-includedir="/packages/libxc/2.1.0_gcc46/include"\
+ CPP="cpp"\
+ FCCPP="cpp"\
+ CC="gcc"\
+ FC="gfortran"\
+ F77="gfortran"\
+ PFC="mpif90"\
+ MPICC="mpicc"

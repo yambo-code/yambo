@@ -161,7 +161,6 @@ if test "$mpibuild" = "yes"; then
       if ! test -e "$MPI_INC_DIR"; then continue; fi
       AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found_tmp="yes"],[mpif_found_tmp="no"])
       if test "$mpif_found_tmp" = "yes" ; then
-        AC_MSG_CHECKING([mpif.h was found in folder $MPI_INC_DIR]);
         mpif_found="$mpif_found_tmp" ;
         MPI_INCS="${MPI_INCS}${IFLAG}${MPI_INC_DIR} "
         break;

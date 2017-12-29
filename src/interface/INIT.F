@@ -684,6 +684,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
+   if (index(BSS_mode,'s')/=0)  then
+      call initactivate(1,'BSSNEig')
+      call initactivate(1,'BSSEnTarget')
+      call initactivate(1,'BSSSlepcExtraction')
+      call initactivate(1,'BSSSlepcNCV')
+      call initactivate(1,'BSSSlepcTol')
+   endif
    !
    ! Special project dependent variables
    !
@@ -920,9 +927,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField SaveGhistory')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField UpdateSOC SaveGhistory')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
+&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
@@ -1561,7 +1570,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'bss' )  then
            BSS_mode=trim(rstr_piece(i1+1))
            if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0.and.&
+&              index(BSS_mode,'s')==0) BSS_mode='h'
            !
            ! With and ALDA Fxc the t solver is not permitted
            !

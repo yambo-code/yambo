@@ -107,7 +107,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
    !
-   call DIPOLE_driver(Xen, Xk, X, X%q0)
+   call DIPOLE_driver(Xen, Xk, X, X%q0,iq)
    call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)

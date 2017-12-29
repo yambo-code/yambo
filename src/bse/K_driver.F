@@ -82,11 +82,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  l_BSE_minimize_memory=(Xk%nbz==1)
  !
- ! Tranferred momentum. Only Gamma now
- !=====================================
- !
- iq=BS_q(1)
- !
  ! TDDFT setup and Resets
  !========================
  !
@@ -188,6 +183,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
+ ! Tranferred momentum. Only Gamma now
+ !=====================================
+ !
+ do iq=BS_q(1),BS_q(2)
+ !
  ! ... EH space (no parallelization)
  call K_Transitions_setup(iq,Ken,Xk,.FALSE.)
  !
@@ -248,6 +248,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! CLEAN (Blocks)
  !
- call BS_Blocks_and_Transitions_free( ) 
+ call BS_Blocks_and_Transitions_free( )
+ !
+ enddo
  !
 end subroutine

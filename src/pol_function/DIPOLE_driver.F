@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_driver(Xen,Xk,X,field_dir)
+subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
  !
  ! Presently there exist two gauges: (i ) the length   which uses <r>            
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
@@ -74,7 +74,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
- use BS,             ONLY:BS_q
 #if defined _RT || defined _SC
  use drivers,        ONLY:l_real_time,l_sc_run
  use com,            ONLY:secnm
@@ -100,6 +99,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  type(levels),  intent(inout) :: Xen
  type(X_t),     intent(inout) :: X
  real(SP),      intent(inout) :: field_dir(3)
+ integer,       intent(in)    :: iq
  !
  ! Work Space
  !
@@ -119,6 +119,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _TIMING
  call timing('Dipoles',OPR='start')
 #endif
+ !
+ if (iq==1) then
  !
  ! Setup logicals 
  !================
@@ -182,6 +184,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  io_err=-1
  call DIPOLES_IO('read ')
  !
+ else
+  !
+  io_err=-1
+  !
+ endif
+ !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
  if (io_err/=0) then
@@ -193,6 +201,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    ! Allocation
    !
+   if (iq==1) then
+   !
    call DIPOLES_alloc()
    !
    ! GPL_EXCLUDE_START 
@@ -202,11 +212,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
-   !
-   if (BS_q(1).ne.1.or.BS_q(2).ne.1) call DIPOLE_real_space_finiteq(Xen,Xk,X,idir_not_done)
-   !
-   ! Here set up a new logical for finite-q dipoles
-   !if (use_finiteq)                call DIPOLE_real_space_finiteq(Xen,Xk,Xq,X,idir_not_done)
    !
    ! GPL_EXCLUDE_END 
    !
@@ -224,9 +229,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-   ! If the calculation of the dipoles is very short the I/O is switched off
-   !
    call DIPOLES_IO('write')
+   !
+   else
+     !
+     call DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
+     !
+   endif
    !
    ! I/O privilegies: RESTORE to previous values
    !
@@ -245,6 +254,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  if (l_elphoton_corr) return
 #endif
  !
+ if(iq> 1) return
+ !
  ! Warn about missing [Vnl,r] commutator
  !
  if (.not.X%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
@@ -254,7 +265,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! Finally project the dipoles along q
  !=====================================
- call DIPOLE_project_along_q(Xk,X,field_dir)
+ if(iq==1) call DIPOLE_project_along_q(Xk,X,field_dir)
  !
  ! Clean up
  !

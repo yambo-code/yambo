@@ -246,8 +246,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======================
  if (l_bs_fxc) then
    !
-   ! if calculation is finite-q, then remove the if in order to call for any q  
-   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
+   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0,iq)
    !
    ! Allocation
    !-----------

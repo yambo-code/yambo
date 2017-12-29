@@ -130,7 +130,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  ! Oscillators I/O & Eps0
  !========================
  !
- if (iq==1) then
+ !if (iq==1) then
    !
    if( E_SOC_nbands==0.or.n_sp_pol==2) then
      n_SOC=1
@@ -150,12 +150,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
 #endif
    !
-   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
-   !
    BSS_Vnl_included=X_oscillators%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
+   !
+ !endif
+   !
+   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0,iq)
    !
    if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
@@ -170,7 +172,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
        !
-       ik_bz_mem= PAR_Xk_bz_index(ik_bz)
+       if(iq==1) ik_bz_mem= PAR_Xk_bz_index(ik_bz)
+       if(iq> 1) ik_bz_mem= ik_bz
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
@@ -203,7 +206,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        endif
 #endif
        !
-       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
+       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold .and. iq==1) cycle
        !
        ! Residuals DIP_cv * DIP_vc
        !
@@ -288,7 +291,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (trim(global_gauge)=='length'  ) then
      !
-     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
+     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(iq)**2
      !
    else if (trim(global_gauge)=='velocity') then
      !
@@ -336,11 +339,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (l_kerr) call K_kerr_IP(iq,W_bss%p)
 #endif
    !
- endif
  !
  ! CLEAN
  !
- if (iq==1) call X_alloc('DIP_projected')
+ call X_alloc('DIP_projected')
  !
  if (l_rpa_IP) then
    !

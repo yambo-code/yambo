@@ -279,6 +279,8 @@ module BS
        !
      enddo
      !
+     YAMBO_FREE(BS_T_grp)
+     !
    end subroutine
    !
    function BS_Block_size(i_block)

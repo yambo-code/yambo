@@ -121,7 +121,7 @@ integer function io_BS(iq,X,ID)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
-   tmp_link => linkM2V(BS_blk(i_block)%mat(1,1),(/n1*n2/))
+   tmp_link => linkM2V(BS_blk(i_block)%mat,(/n1*n2/))
    call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif

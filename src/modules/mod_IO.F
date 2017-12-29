@@ -231,18 +231,18 @@ module IO_m
    logical function read_is_on(ID)
      !
      integer :: ID
-     read_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_RD,&
-&                     io_action(ID)==   RD_CL,io_action(ID)==   RD,&
-&                     io_action(ID)==RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
+     read_is_on=any((/io_action(ID)==OP_RD_CL,       io_action(ID)==OP_RD,&
+&                     io_action(ID)==   RD_CL,       io_action(ID)==   RD,&
+&                     io_action(ID)==   RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
    end function
    !
    logical function write_is_on(ID)
      !
      integer :: ID
-     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
-&                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
-&                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
-&                      io_action(ID)==WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
+     write_is_on=any((/io_action(ID)==OP_WR_CL       ,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==   WR          ,io_action(ID)==OP_APP      ,&
+&                      io_action(ID)==OP_WR          ,io_action(ID)==       WR_CL,&
+&                      io_action(ID)==   WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
    logical function DB_is_OK(ID)

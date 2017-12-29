@@ -27,6 +27,7 @@ integer function io_BS(iq,X,ID)
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
+ use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
@@ -43,9 +44,9 @@ integer function io_BS(iq,X,ID)
  !
  ! Work Space
  !
- complex(SP),allocatable :: tmp_map(:)
+ complex(SP),pointer ::tmp_link(:)
  integer             ::i_block,i1,n1,n2,block_pos
- character(schlen)   ::ch,db_name
+ character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  character(lchlen)   ::local_description(100)
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
@@ -65,13 +66,11 @@ integer function io_BS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (io_mode(ID)==VERIFY.or.write_is_on(ID)) then
-     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
-&                    PARALLEL_STRUCTURE="Response_T_space",CUTOFF=.true.,FRAG=frag_BS_K)
-   else
-     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,&
-&                       XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
-   endif
+   PARALLEL_STRUCTURE="NONE"
+   if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+   !
+   io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
+&                    PARALLEL_STRUCTURE="PARALLEL_STRUCTURE",CUTOFF=.true.,FRAG=frag_BS_K)
    !
    if (io_BS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -118,17 +117,13 @@ integer function io_BS(iq,X,ID)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
    call io_bulk(ID,C2=BS_blk(i_block)%mat)
  else
+   if(i_block==1) call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
-   if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
-   if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
-   if(read_is_on(ID)) then
-     YAMBO_ALLOC(tmp_map,(n1*n2))
-     call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
-     BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-     YAMBO_FREE(tmp_map)
-   endif
+   tmp_link => linkM2V(BS_blk(i_block)%mat,(/n1*n2/))
+   call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
+   nullify(tmp_link)
  endif
  !
 1 continue

@@ -280,6 +280,7 @@ module BS
      enddo
      !
      YAMBO_FREE(BS_T_grp)
+     YAMBO_FREE(BS_blk)
      !
    end subroutine
    !

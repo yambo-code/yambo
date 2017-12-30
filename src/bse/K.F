@@ -86,7 +86,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,&
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -260,6 +260,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Oscillators Setup
  !===================
  O_ng=maxval(G_m_G)
+ O_ng_shift=maxval(qindx_B(:,:,2))
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
@@ -269,7 +270,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call WF_load(WF,max(O_ng,BS_n_g_exch),1,BS_bands,(/1,Xk%nibz/),space='R',title='-BSK->Fxc')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,BS_bands,(/1,Xk%nibz/),space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
    !
@@ -278,7 +279,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
  !

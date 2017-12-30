@@ -99,7 +99,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  Epsilon_ii   = cZERO
  X_drude_term = cZERO
  !
- Epsilon_ii(:,1)=W_bss%p(:)  
+ Epsilon_ii(:,1)=W_bss%p(:)
  if (BSS_eval_JDOS) then
    YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
    Joint_DOS=cZERO

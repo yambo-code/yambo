@@ -53,9 +53,7 @@ subroutine K_blocks( )
  !                 =============================
  do i_loop=1,2
    !
-   if (i_loop==2) then
-     allocate(BS_blk(n_BS_blks))
-   endif
+   if (i_loop==2) allocate(BS_blk(n_BS_blks))
    !
    N_Ts_total  =0
    n_BS_blks   =0

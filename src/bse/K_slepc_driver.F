@@ -261,6 +261,8 @@ subroutine K_slepc_driver(iq,W)
    nullify(BS_E_SOC_corr)
  endif
  !
+ call PARALLEL_Haydock_VEC_COMMs('reset')
+ !
 #if defined _TIMING
  call timing('Slepc Solver',OPR='stop')
 #endif

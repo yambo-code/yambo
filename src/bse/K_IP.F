@@ -311,7 +311,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (l_drude.and..not.skip_cond_sum_rule) then
      X_drude_term(:)=-drude_GreenF(:)
-     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(1)**2
+     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(iq)**2
    endif
    !
    ! GPL_EXCLUDE_START 
@@ -322,7 +322,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (BSS_add_antiresonant.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
    !
    if (trim(global_gauge)=='length'  ) then
-     A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term0
+     A_drude(1)=A_drude(1)/q_norm(iq)**2-diam_term0
      ! I add the term describing the intraband transitions which is
      ! missing in the length gauge (this should be zero for systems with a gap)
      if (skip_cond_sum_rule) Epsilon_ii(:,3)=Epsilon_ii(:,3)+A_drude(1)*Co_factor/W_bss%p(:)**2

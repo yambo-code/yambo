@@ -228,10 +228,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
    if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps))
 #endif
    !
-   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)
-   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/  W%p(:) **2)
+   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(iq)**2)
+   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/   W%p(:) **2)
    !
-   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
+   if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(iq)**2
    !
  enddo
  !

@@ -577,6 +577,8 @@ subroutine K_Haydock(iq,W)
    !
  end if
  !
+ call PARALLEL_Haydock_VEC_COMMs('reset')
+ !
 #if defined _TIMING
  call timing('Haydock Solver',OPR='stop')
 #endif
@@ -621,7 +623,7 @@ subroutine K_Haydock(iq,W)
      !
      if(trim(global_gauge)=='length'  ) then
        factor_jj=0._SP
-       gauge_factor=cONE*Co/q_norm(1)**2
+       gauge_factor=cONE*Co/q_norm(iq)**2
      endif
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
@@ -733,7 +735,7 @@ subroutine K_Haydock(iq,W)
        !
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
+           B_Hall(2)=B_Hall(2)*Co/q_norm(iq)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co

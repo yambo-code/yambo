@@ -117,7 +117,7 @@ integer function io_BS(iq,X,ID)
  !
  if(frag_BS_K) then
    if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
-   if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING_BLOCK_"//trim(intc(i_block))
+   if (BS_blk(i_block)%mode=="C") ch="BSE_COUPLING_BLOCK_"//trim(intc(i_block))
    !
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
    call io_bulk(ID,C2=BS_blk(i_block)%mat)

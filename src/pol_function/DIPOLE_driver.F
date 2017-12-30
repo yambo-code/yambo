@@ -233,7 +233,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
    !
    else
      !
+     ! Alternative form presently not working since uGo shift of the WFs is missing
+     !
      !call DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
+     !
      call DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
      !
    endif

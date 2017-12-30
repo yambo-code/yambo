@@ -639,7 +639,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! We have to add a new mode in addition to resonant and coupling for finiteq, where the kernel is recomputed in the antiresonant case
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
      enddo 
      !

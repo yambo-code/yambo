@@ -172,8 +172,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
        !
-       if(iq==1) ik_bz_mem= PAR_Xk_bz_index(ik_bz)
-       if(iq> 1) ik_bz_mem= ik_bz
+       ik_bz_mem= PAR_Xk_bz_index(ik_bz)
        !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)

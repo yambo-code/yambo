@@ -23,11 +23,14 @@
 !
 subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
  !
+ ! This is an alternative form of the subroutine DIPOLE_gspace_finiteq
+ ! However it misses the shift of the WFs by iGo
+ !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF
- use interfaces,         ONLY:WF_load
+ use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:qindx_X,bz_samp
@@ -35,7 +38,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
  use X_m,                ONLY:X_t,DIP_projected,X_alloc
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
- !use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,         ONLY:PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_Xk_nbz
  !
 #include<memory.h>
  !
@@ -46,27 +49,22 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
  !
  ! Work space
  !
- integer                      :: ik,ik_bz,isymm,i_sp_pol,ic,iv,ic_min,&
-&                                ic_indexes(4),ov_indexes(4),ok_bz,ok,osymm
+ integer                      :: ik,ik_bz,ik_bz_mem,isymm,i_sp_pol,ic,iv,ic_min,&
+&                                ic_indexes(4),ov_indexes(4),ok_bz,ok,osymm,iGo
  complex(SP), allocatable    :: WF_symm_i(:,:),WF_symm_o(:,:)
  !
- call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),Xk%nbz/))
+ call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
+ call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index()
  !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space')
  !
  YAMBO_ALLOC(WF_symm_i,(fft_size,n_spinor))
  YAMBO_ALLOC(WF_symm_o,(fft_size,n_spinor))
  !
- !call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
- !
- !if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
- call live_timing('Dipoles finite momentum',n_sp_pol*Xk%nibz)
+ call live_timing('Dipoles finite momentum',n_sp_pol*PAR_Xk_nbz)
  !
  do i_sp_pol=1,n_sp_pol
    do ik_bz=1,Xk%nbz 
@@ -75,13 +73,14 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
      isymm=Xk%sstar(ik_bz,2) 
      !
      ok_bz=qindx_X(iq,ik_bz,1)
+     iGo  =qindx_X(iq,ik_bz,2)
      !
      ok   =Xk%sstar(ok_bz,1)
      osymm=Xk%sstar(ok_bz,2)
      !
-     !if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
      !
-     !ik_mem=PAR_DIPk_ibz_index(ik)
+     ik_bz_mem= PAR_Xk_bz_index(ik_bz)
      !
      do iv=X%ib(1),X%ib_lim(1) 
        !
@@ -100,7 +99,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
          ov_indexes=(/iv,ok,osymm,i_sp_pol/)
          call WF_apply_symm(ov_indexes,WF_symm_o)
          !
-         DIP_projected(ic,iv,ik_bz,i_sp_pol) = Vstar_dot_V_omp(fft_size*n_spinor,WF_symm_o,WF_symm_i )
+         DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = Vstar_dot_V_omp(fft_size*n_spinor,WF_symm_o,WF_symm_i )
          !
        enddo 
        !

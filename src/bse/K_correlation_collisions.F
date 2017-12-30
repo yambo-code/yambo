@@ -160,7 +160,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
          endif
          BS_blk(iB)%O_table(:,i_s_k_p,i_c_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_c_p,i_k_sp)
          !
-       else if (BS_blk(iB)%mode=="A") then
+       else if (BS_blk(iB)%mode=="C") then
          !
          ! v->c'
          !

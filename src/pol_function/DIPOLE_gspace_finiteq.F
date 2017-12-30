@@ -27,7 +27,7 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
  use pars,               ONLY:SP,cI,cZERO
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF,wf_ng
- use interfaces,         ONLY:WF_load
+ use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:qindx_X,bz_samp
@@ -36,7 +36,7 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
  use collision_el,       ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- !use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,         ONLY:PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_Xk_nbz
  !
 #include<memory.h>
  !
@@ -47,15 +47,17 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
  !
  ! Work space
  !
- integer                      :: ik,ik_bz,isymm,i_sp_pol,ic,iv,ic_min,iGo,&
+ integer                      :: ik,ik_bz,ik_bz_mem,isymm,i_sp_pol,ic,iv,ic_min,iGo,&
 &                                ic_indexes(4),ov_indexes(4),ok_bz,ok,osymm
  type(elemental_collision):: Xo_scatt
  !
- call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),Xk%nbz/))
+ call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
  DIP_projected = cZERO
  !
- call WF_load(WF,1,maxval(qindx_X(:,:,2)),(/1,X%ib(2)/),(/1,Xk%nibz/),&
- &      title='-Oscillators/G space',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index()
+ !
+ call WF_load(WF,1,maxval(qindx_X(:,:,2)),(/X%ib(1),X%ib(2)/),(/1,Xk%nibz/),title='-Oscillators/R space')
  !
  call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
  call elemental_collision_alloc(Xo_scatt,NG=1,TITLE="DIPOLES") 
@@ -77,9 +79,9 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
      ok   =Xk%sstar(ok_bz,1)
      osymm=Xk%sstar(ok_bz,2)
      !
-     !if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
      !
-     !ik_mem=PAR_DIPk_ibz_index(ik)
+     ik_bz_mem= PAR_Xk_bz_index(ik_bz)
      !
      do iv=X%ib(1),X%ib_lim(1) 
        !
@@ -87,8 +89,6 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
        !if (l_X_terminator) ic_min=iv
        !
        do ic=ic_min,X%ib(2)
-         !
-         !if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
          ! |ib ik_is i_sp>
          ic_indexes=(/ic,ik,isymm,i_sp_pol/)
@@ -101,7 +101,7 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
          Xo_scatt%qs=(/iGo,iq,1/)
          call scatter_Bamp(Xo_scatt)
          !
-         DIP_projected(ic,iv,ik_bz,i_sp_pol) = -conjg(Xo_scatt%rhotw(1))
+         DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = -conjg(Xo_scatt%rhotw(1))
          !
        enddo 
        !

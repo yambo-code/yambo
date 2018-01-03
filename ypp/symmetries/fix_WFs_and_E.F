@@ -197,7 +197,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
        !
        ic_rot_table=-1
        do ic=1,wf_nc_k_reduced(ik_save)
-         ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
+         ig_rot=g_rot(wf_igk_reduced(ic,ik_save),is)
          l_found=.false.
          do ic_rot=1,wf_nc_k_new(ik)
            ig=wf_igk_new(ic_rot,ik)

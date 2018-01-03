@@ -104,7 +104,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
          lostr = os>nsym/(i_time_rev+1)
          call scatter_Bamp(isc)
          u(1:QP_ng_Sx) = 4._SP*pi*conjg(isc%rhotw(1:QP_ng_Sx))*isc%gamp(1:QP_ng_Sx,1)
-         iGo=g_rot(sop_inv(qs),isc%qs(1))
+         iGo=g_rot(isc%qs(1),sop_inv(qs))
          u_rs(fft_g_table(1:QP_ng_Sx,iGo))=u(1:QP_ng_Sx)
 #if defined _FFTW
          fftw_plan=0

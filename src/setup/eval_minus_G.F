@@ -43,7 +43,7 @@ subroutine eval_minus_G()
  !
  if (inv_index>0) then
    do ig=1,ng_closed
-     minus_G(ig)=g_rot(inv_index,ig)
+     minus_G(ig)=g_rot(ig,inv_index)
    enddo
  else
    minus_G(1)=1

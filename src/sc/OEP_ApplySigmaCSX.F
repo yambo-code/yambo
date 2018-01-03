@@ -163,7 +163,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
 #else 
          call cgemv('N', X%ng, X%ng, (1._SP,0._SP), PPaR, X%ng, conjg(isc%rhotw), 1, (0._SP,0_SP), u,1)
 #endif
-         iGo=g_rot(sop_inv(iqs),isc%qs(1))
+         iGo=g_rot(isc%qs(1),sop_inv(iqs))
          u_rs(fft_g_table(1:X%ng,iGo))=4._SP*pi*u(1:X%ng)
 #if defined _FFTW
          fftw_plan=0

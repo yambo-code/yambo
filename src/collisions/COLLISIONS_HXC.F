@@ -377,7 +377,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(sop_inv(i_p_s),ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(ig1,sop_inv(i_p_s)))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

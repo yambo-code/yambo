@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -310,14 +310,13 @@ clean_fast:
 clean:
 	@$(objects_clean)
 	@$(lib_mod_clean)
-	@$(lib_ext_clean)
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
-	@$(lib_ext_clean_all)
+	@$(lib_ext_clean)
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
@@ -462,8 +461,8 @@ define objects_clean
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
         grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*blacs*' |  \
-        grep -v '.*scalapack*' | grep -v '.*slepc*' | \
-        grep -v '.*petsc*'  | xargs rm -f
+        grep -v '.*scalapack*' | grep -v '.*/lib/slepc*' | \
+        grep -v '.*/lib/petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
@@ -473,18 +472,6 @@ define objects_clean
  fi
 endef
 define lib_ext_clean
- find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
-           -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
-           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
-  if test -d $(libdir)/$$libtoclean ; then \
-   cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
-   if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
-  fi ; \
- done
- echo "[CLEAN] External libraries compilation directories (clean) ... done" 
-endef
-define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
@@ -502,7 +489,7 @@ define lib_ext_clean_all
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
+ echo "[CLEAN] External libraries compilation directories ... done" 
 endef
 define sysincs_clean
  @if test -d $(prefix)/include/system/; then \
@@ -528,7 +515,7 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
+ cd $(bindir) ; rm -f * ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

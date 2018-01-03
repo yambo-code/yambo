@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -146,8 +146,8 @@ subroutine cutoff_box(q,is_cut)
 &              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>G_iku_zero(i1)) cycle g_loop
          enddo
          !
-         ig_r=g_rot( sop_inv(is), ig_p )
-         v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2.*pi/alat(:)
+         ig_r=g_rot( ig_p, sop_inv(is) )
+         v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2._SP*pi/alat(:)
          !
          V_cut_tmp=V_cut_tmp+V_bare(iqibz,ig_r)*F_box(v1,v2)
          !

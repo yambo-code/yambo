@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -128,11 +128,13 @@ module interfaces
 #include <petsc/finclude/petscmat.h>
      !
      Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     integer                     :: n_eig        ! number of eigenvalues to compute
      complex(SP),  optional      :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
      real(SP),     optional      :: E_real(:)    ! real eigenvalues
      real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     real(SP),     optional      :: slepc_tol    ! tolerance of the iterative solver
      character(schlen), optional :: extraction   ! extraction method for the eigenvalues
      integer,optional            :: slepc_ncv    ! dimension of the subspace
      !

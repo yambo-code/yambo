@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -43,14 +43,14 @@ module pointers
    function linkM2V_real(M,N) result(VEC_pointer)
      real(SP), target  :: M(1,1)
      integer, intent(in)  :: N(:)
-     real(SP), pointer :: VEC_pointer(:,:)
+     real(SP), pointer :: VEC_pointer(:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
    end function linkM2V_real
    !
    function linkM2V_complex(M,N) result(VEC_pointer)
      complex(SP), target  :: M(1,1)
      integer, intent(in)  :: N(:)
-     complex(SP), pointer :: VEC_pointer(:,:)
+     complex(SP), pointer :: VEC_pointer(:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
    end function linkM2V_complex
    !

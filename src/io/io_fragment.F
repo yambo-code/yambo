@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,6 +44,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  use timing_m,       ONLY:timing
 #endif
  implicit none
+ !
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr
  !
@@ -53,9 +54,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  logical           :: close_is_on_save
  character(schlen) :: fragment_filename
  !
- if (present(ierr)) then
-   ierr=0
- endif
+ if (present(ierr)) ierr=0
  !
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
@@ -76,9 +75,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
      if (.not.frag_ELPH) return
  end select
  !
- if (index(trim(io_raw_extension(ID)),"BS_Q")>0) then
-   if (.not.frag_BS_K) return
- endif
+ if (index(trim(io_raw_extension(ID)),"BS_Q")>0 .and. .not.frag_BS_K) return
  !
 #if defined _TIMING
  call timing('io_fragment',OPR='start')
@@ -89,7 +86,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  if (read_is_on(ID))  io_action(ID)=OP_RD_CL
  if (write_is_on(ID)) io_action(ID)=OP_WR_CL
  !
- if (present(i_fragment))      i_frag=i_fragment
+ if (     present(i_fragment)) i_frag=i_fragment
  if (.not.present(i_fragment)) i_frag=maxval(io_sec(ID,:))
  !
  ! Disconnect without calling io_reset
@@ -107,18 +104,16 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
    fragment_filename=trim(io_extension(ID)) &
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
  endif
+ !
  ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
+ if (present(ierr)) ierr=ierr_
  !
  if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then
    if (write_is_on(ID)) call PARALLEL_live_message("Writing "//trim(fragment_filename))
    if (read_is_on(ID) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
  endif
  !
- if (present(ierr)) then
-   ierr=ierr_
- endif
- !
- ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF) 
+ ! io_action must be saved otherwise any io_disconnect call would call io_reset (like in ioWF)
  !
  if (close_is_on_save) io_resetable(ID)=.true.
  !

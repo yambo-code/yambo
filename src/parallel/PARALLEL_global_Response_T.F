@@ -28,7 +28,8 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  use IO_m,          ONLY:IO_and_Messaging_switch
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
- use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
+ use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset, &
+&                        PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered, &
@@ -36,13 +37,15 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &                        PAR_COM_DIPk_ibz_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_Kk_ibz,PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_DIPk_ibz, &
-&                        PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_eh,PAR_IND_DIPk_bz
+&                        PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_eh,PAR_IND_DIPk_bz,            &
+&                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  ! INDEX
  use parallel_m,    ONLY:PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index,PAR_DIPk_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_DIPk_nibz,PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz,PAR_DIPk_nbz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
+ use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID, &
+&                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
  !
 #include<memory.h>
  !
@@ -140,6 +143,28 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
 &                           TOTAL=BS_nT_grps*(BS_nT_grps+1)/2,NCPU=PAR_COM_T_INDEX%n_CPU)
  !
  ! Linear Algebra setup moved in the solver_driver...
+ !
+ ! Conduction band
+ !
+ call PARALLEL_index(PAR_IND_CON_BANDS_DIP,(/PAR_n_c_bands(2)/),low_range=(/PAR_n_c_bands(1)/),&
+&                     COMM=PAR_COM_CON_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_CON_BANDS_DIP_ID=PAR_COM_CON_INDEX_DIP%CPU_id
+ !   
+ call PARALLEL_live_message("CON bands",ENVIRONMENT="Response_T_space",&
+&                             LOADED=PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_COM_CON_INDEX_DIP%CPU_id+1),&
+&                             TOTAL=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1,&
+&                             NCPU=PAR_COM_CON_INDEX_DIP%n_CPU)
+ !
+ ! Response functions valence bands
+ !
+ call PARALLEL_index(PAR_IND_VAL_BANDS_DIP,(/PAR_n_v_bands(2)/),low_range=(/PAR_n_v_bands(1)/),&
+&                    COMM=PAR_COM_VAL_INDEX_DIP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+ PAR_IND_VAL_BANDS_DIP_ID=PAR_COM_VAL_INDEX_DIP%CPU_id
+ !
+ call PARALLEL_live_message("VAL bands",ENVIRONMENT="Response_T_space",&
+&                           LOADED=PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_COM_VAL_INDEX_DIP%CPU_id+1),&
+&                           TOTAL=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1,&
+&                           NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
  !
  ! I/O privileges
  !

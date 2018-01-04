@@ -110,7 +110,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      is=kpoints_map(2,ik)
      !
      wf_nc_k(ik) = wf_nc_k_reduced(ik_save)
-     wf_igk(1:wf_nc_k(ik),ik) = g_rot(is,wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save))
+     wf_igk(1:wf_nc_k(ik),ik) = g_rot(wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save),is)
      call sort( wf_igk(1:wf_nc_k(ik),ik) )
      !
    enddo

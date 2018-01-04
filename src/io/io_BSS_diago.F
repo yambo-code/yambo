@@ -68,7 +68,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
    endif
    !
    call io_elemental(ID,VAR=&
-&       " BSK Identifier                  :",I0=BS_identifier,CHECK=.TRUE.,OP=(/"=="/))
+&       " BSK Identifier                  :",I0=BS_identifier,WARN=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Excitonic eigenstates included  :",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR=&

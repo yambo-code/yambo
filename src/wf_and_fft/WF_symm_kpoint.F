@@ -60,7 +60,7 @@ subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
    do i_sp_pol=1,n_sp_pol
      do ib=b_to_load(1),b_to_load(2)
        iwf=WF%index(ib,ik,i_sp_pol)
-       WF_k_out(g_rot(is,:wf_ng),:,ib,i_sp_pol)=WF%c(:wf_ng,:,iwf)
+       WF_k_out(g_rot(:wf_ng,is),:,ib,i_sp_pol)=WF%c(:wf_ng,:,iwf)
        if(n_spinor==2) forall(ig=1:wf_ng) &
 &        WF_k_out(ig,:,ib,i_sp_pol)=matmul(spin_sop(:,:,is),WF_k_out(ig,:,ib,i_sp_pol))
      enddo

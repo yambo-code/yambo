@@ -263,8 +263,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        ik_save=kpoints_map(1,ik)
        is=kpoints_map(2,ik)
        !
-       pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
-       pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
+       pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
+       pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
        !
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)      
        io_KB_abinit_err=io_KB_abinit(ID)
@@ -329,7 +329,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        is=kpoints_map(2,ik)
        !
        do ic=1,wf_nc_k_reduced(ik_save)
-         ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
+         ig_rot=g_rot(wf_igk_reduced(ic,ik_save),is)
          do ic_rot=1,wf_nc_k_new(ik)
            ig=wf_igk_new(ic_rot,ik)
            if(ig==ig_rot) exit

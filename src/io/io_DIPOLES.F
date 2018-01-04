@@ -27,10 +27,9 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
@@ -145,13 +144,13 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
+ ! Manage OP_IF_START_and_RD_CL_IF_END
+ !
+ call manage_OP_IF_START_and_CL_IF_END(ID,ik,nXkibz)
+ !
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=i_fragment)
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.ik==nXkibz) io_action(ID)=RD_CL
  !
  ! iR
  !

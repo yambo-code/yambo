@@ -124,7 +124,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
          isave=(/iv,ic,ik,i_spin/)
        endif
        do ig1=1,X%ng
-         ig2=g_rot(sop_inv(is),ig1)
+         ig2=g_rot(ig1,sop_inv(is))
          Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
        enddo
        if (is>nsym/(i_time_rev+1)) then
@@ -185,7 +185,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !$omp parallel do default(shared), private(ig1,ig2)
 #endif
      do ig1=1,X%ng
-       ig2=g_rot(sop_inv(is),ig1)
+       ig2=g_rot(ig1,sop_inv(is))
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
 #if defined _OPENMP

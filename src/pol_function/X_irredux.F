@@ -328,7 +328,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_FREE(Xo_res)
  call elemental_collision_free(Xo_scatt)
  !
-<<<<<<< HEAD
+!$omp end parallel
+ !
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
@@ -338,12 +339,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    call DIP_alloc('DIP_projected')
    call DIP_alloc('DIP_P_spinor')
  endif
- !
-#if defined _OPENMP
-=======
->>>>>>> master
-!$omp end parallel
- !
  !
  if(coarse_grid_N>0) call live_timing()
  !

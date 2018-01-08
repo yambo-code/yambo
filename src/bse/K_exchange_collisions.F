@@ -23,6 +23,7 @@
 !
 subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
+ use pars,           ONLY:cZERO
  use drivers,        ONLY:l_col_cut
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
@@ -127,7 +128,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
 #if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1)
 #endif
-     do i_g1=1,BS_n_g_exch
+     BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
+     do i_g1=2,BS_n_g_exch
        if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
        if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo

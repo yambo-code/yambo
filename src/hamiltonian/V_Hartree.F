@@ -35,7 +35,9 @@ subroutine V_Hartree(rho,vhr)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ ! 
  implicit none
+ !
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
  !

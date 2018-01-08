@@ -125,7 +125,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  if (BSS_eval_JDOS) then
    YAMBO_FREE(Joint_DOS)
  endif
- BSS_eval_JDOS=.FALSE.
  !
  ! Inversion
  !

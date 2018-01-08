@@ -52,7 +52,7 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  !
  ! Work Space
  !
- complex(SP) :: WF_der(3,fft_size,n_spinor)
+ complex(SP) :: WF_der(fft_size,n_spinor,3)
  !
  integer     :: qs,iGo,ig, ir,ic,ig_
  !
@@ -63,16 +63,10 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
  call WF_apply_symm(isc%os,isc%WF_symm_o)
  !
  ! \grad <ib ik_is i_sp|
- if (which=="i") call eval_Gradient(isc%WF_symm_i(:,1),WF_der(:,:,1),"wave")
- if (n_spinor==2) then
-   if (which=="i") call eval_Gradient(isc%WF_symm_i(:,2),WF_der(:,:,2),"wave")
- endif
+ if (which=="i") call eval_Gradient(isc%WF_symm_i,WF_der,n_spinor,"wave")
  !
  ! \grad | ob ok_os o_sp>   
- if (which=="o") call eval_Gradient(isc%WF_symm_o(:,1),WF_der(:,:,1),"wave")
- if (n_spinor==2) then
-   if (which=="o") call eval_Gradient(isc%WF_symm_o(:,2),WF_der(:,:,2),"wave")
- endif
+ if (which=="o") call eval_Gradient(isc%WF_symm_o,WF_der,n_spinor,"wave")
  !
  ! Chartesian components of the gradient loop
  !
@@ -85,8 +79,8 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    !$omp do
 #endif
    do ir = 1, fft_size
-     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ic,ir,1))*isc%WF_symm_o(ir,1)
-     if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ic,ir,1)
+     if (which=="i")  isc%rho_tw_rs(ir) = conjg(WF_der(ir,1,ic))*isc%WF_symm_o(ir,1)
+     if (which=="o")  isc%rho_tw_rs(ir) = conjg(isc%WF_symm_i(ir,1))*WF_der(ir,1,ic)
    enddo
 #if defined _OPENMP
    !$omp end do
@@ -95,11 +89,8 @@ subroutine scatter_Bamp_using_the_gradient(isc,which)
    if (n_spinor==2) then
    !$omp do
      do ir = 1, fft_size
-       if (which=="i")  then
-         isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(WF_der(ic,ir,2))*isc%WF_symm_o(ir,2)
-       else if (which=="o") then
-         isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(isc%WF_symm_i(ir,2))*WF_der(ic,ir,2)
-       endif
+       if (which=="i") isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(WF_der(ir,2,ic))*isc%WF_symm_o(ir,2)
+       if (which=="o") isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir) + conjg(isc%WF_symm_i(ir,2))*WF_der(ir,2,ic)
      enddo
    !$omp end do
    endif

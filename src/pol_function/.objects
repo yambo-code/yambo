@@ -2,7 +2,7 @@
 SC_objects = DIPOLE_rotate.o
 #endif
 #if defined _RT
-RT_objects = DIPOLE_magnetization.o
+RT_objects = DIPOLE_orbital_magnetization.o DIPOLE_spin_magnetization.o
 #endif
 #if defined _ELPH
 ELPH_objects = X_GreenF_remap.o
@@ -11,7 +11,7 @@ objs = OPTICS_driver.o OPTICS_eels.o DIPOLE_build_parallelization_mask.o \
        DIPOLE_project_along_q.o DIPOLE_driver.o DIPOLE_build_covariants.o DIPOLE_x_real_space.o \
        DIPOLE_kb_abinit_comp.o DIPOLE_kb_sum.o DIPOLE_kb_Ylm.o \
        DIPOLE_kb_pwscf_comp.o DIPOLE_kb_init.o DIPOLE_p_matrix_elements.o DIPOLE_overlaps.o \
-       DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o DIPOLE_real_space_finiteq.o \
+       DIPOLE_transverse.o DIPOLE_shifted_grids.o DIPOLE_check_shifted_grids.o DIPOLE_real_space_finiteq.o DIPOLE_gspace_finiteq.o \
        X_drude.o X_half_mat_check.o X_pre_setup.o X_eh_setup.o \
        X_dielectric_matrix.o X_irredux.o X_irredux_residuals.o X_redux.o \
        $(ELPH_objects) X_GreenF_convoluted.o $(SC_objects) $(RT_objects) Build_Overlaps_Det_EQ.o \

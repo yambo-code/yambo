@@ -225,7 +225,7 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
        !
        if (BS_blk(i_B)%mode=="R") BS_mat(H_pos(1),H_pos(2))         =BS_blk(i_B)%mat(i_r,i_c)
        !
-       if (BS_blk(i_B)%mode=="A") BS_mat(H_pos(1),H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+       if (BS_blk(i_B)%mode=="C") BS_mat(H_pos(1),H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
        !
      enddo
      !

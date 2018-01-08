@@ -31,7 +31,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
- use interfaces,   ONLY:WF_load
+ use interfaces,   ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
@@ -86,7 +86,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,&
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -246,8 +246,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======================
  if (l_bs_fxc) then
    !
-   ! if calculation is finite-q, then remove the if in order to call for any q  
-   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
+   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0,iq)
    !
    ! Allocation
    !-----------
@@ -261,6 +260,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Oscillators Setup
  !===================
  O_ng=maxval(G_m_G)
+ O_ng_shift=maxval(qindx_B(:,:,2))
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
@@ -270,7 +270,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_START
    !
-   call WF_load(WF,max(O_ng,BS_n_g_exch),1,BS_bands,(/1,Xk%nibz/),space='R',title='-BSK->Fxc')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,BS_bands,(/1,Xk%nibz/),space='R',title='-BSK->Fxc')
    !
    ! GPL_EXCLUDE_END
    !
@@ -279,7 +279,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    bands_to_load=BS_bands
    if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
    !
-   call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
+   call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
  !
@@ -639,7 +639,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! We have to add a new mode in addition to resonant and coupling for finiteq, where the kernel is recomputed in the antiresonant case
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
      enddo 
      !

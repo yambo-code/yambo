@@ -268,7 +268,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
-     if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
+     if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 ) T_is_ok=.FALSE.
      !
      ! GPL_EXCLUDE_START
      !

@@ -215,7 +215,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 &                              TOTAL=W%n_freqs,NCPU=PAR_COM_SLK_INDEX_local%n_CPU)
    call live_timing('Perturbative inversion ',PAR_IND_freqs%n_of_elements(PAR_IND_FREQ_ID))
    !
-   call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
+   call K_inversion_engine("any",1,W%n_freqs,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
    call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -302,7 +302,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(iq)**2
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
@@ -334,7 +334,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        iw=TYP%iw_full(i1)
        !
-       call K_inversion_engine(TYP%what,iw,1,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
+       call K_inversion_engine(TYP%what,iw,1,iq,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.TRUE.)
        !
        call live_timing(steps=1)
        !

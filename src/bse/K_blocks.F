@@ -44,8 +44,6 @@ subroutine K_blocks( )
  !
 #include<memory.h>
  !
-#include <yambo_common.h>
- !
  ! Work Space
  !
  integer    :: i_T,j_T,i_loop,iB,n_new_blocks
@@ -55,9 +53,7 @@ subroutine K_blocks( )
  !                 =============================
  do i_loop=1,2
    !
-   if (i_loop==2) then
-     YAMBO_ALLOCATE(BS_blk(n_BS_blks))
-   endif
+   if (i_loop==2) allocate(BS_blk(n_BS_blks))
    !
    N_Ts_total  =0
    n_BS_blks   =0
@@ -77,7 +73,7 @@ subroutine K_blocks( )
            BS_blk(iB)%mat=cZERO
            BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"
-           if (iB-n_BS_blks==2) BS_blk(iB)%mode="A"
+           if (iB-n_BS_blks==2) BS_blk(iB)%mode="C"
            BS_blk(iB)%iT_k=i_T
            BS_blk(iB)%iT_p=j_T
            BS_blk(iB)%ik=BS_T_grp(i_T)%ik

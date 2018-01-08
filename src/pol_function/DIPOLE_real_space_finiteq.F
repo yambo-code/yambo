@@ -21,149 +21,100 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,idir_todo)
- ! We need to add Xq for the q-vector variable
+subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
+ !
+ ! This is an alternative form of the subroutine DIPOLE_gspace_finiteq
+ ! However it misses the shift of the WFs by iGo
  !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF
- use interfaces,         ONLY:WF_load
+ use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:qindx_X,bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach,l_X_terminator
+ use X_m,                ONLY:X_t,DIP_projected,X_alloc
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
- use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
- use BS,                 ONLY:BS_q
+ use parallel_m,         ONLY:PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_Xk_nbz
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
- !
- !type(bz_samp), intent(in)    :: Xq
- !
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(in)    :: X
- logical,       intent(in)    :: idir_todo(3)
+ integer,       intent(in)    :: iq
  !
  ! Work space
  !
- integer                      :: iq,ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
-&                                ic_wf,iv_wf,idir,n_LT_steps,start_iq,last_iq,okbz,ok
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- real(SP)                     :: Ev_m_Ec
- complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- ! Provisional
- start_iq = BS_q(1)
- last_iq  = BS_q(2)
- !write(*,*)q%k_table
+ integer                      :: ik,ik_bz,ik_bz_mem,isymm,i_sp_pol,ic,iv,ic_min,&
+&                                ic_indexes(4),ov_indexes(4),ok_bz,ok,osymm,iGo
+ complex(SP), allocatable    :: WF_symm_i(:,:),WF_symm_o(:,:)
  !
- call load_cc(.false.,.true.)
+ call X_alloc('DIP_projected',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_Xk_nbz/))
+ DIP_projected = cZERO
  !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
+ call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index()
  !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space')
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
+ YAMBO_ALLOC(WF_symm_i,(fft_size,n_spinor))
+ YAMBO_ALLOC(WF_symm_o,(fft_size,n_spinor))
  !
- if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
+ call live_timing('Dipoles finite momentum',n_sp_pol*PAR_Xk_nbz)
  !
  do i_sp_pol=1,n_sp_pol
- ! We have to add a do iq=1,Xq%nibz
- do iq=start_iq,last_iq
-   write(*,*)iq
-   do ik=1,Xk%nibz !It has to be changed to go to the FULL BZ (X_eh_setup.F, check how it's done in G-space)
-     ! Call WF_Apply_symmetry to rotate wfcs, then I can directly compute the integral
+   do ik_bz=1,Xk%nbz 
      !
-     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     ik   =Xk%sstar(ik_bz,1) 
+     isymm=Xk%sstar(ik_bz,2) 
      !
-     ik_mem=PAR_DIPk_ibz_index(ik)
+     ok_bz=qindx_X(iq,ik_bz,1)
+     iGo  =qindx_X(iq,ik_bz,2)
      !
-     DIP_tmp=cZERO
+     ok   =Xk%sstar(ok_bz,1)
+     osymm=Xk%sstar(ok_bz,2)
+     !
+     if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
+     !
+     ik_bz_mem= PAR_Xk_bz_index(ik_bz)
      !
      do iv=X%ib(1),X%ib_lim(1) 
        !
        ic_min=max(iv,X%ib_lim(2))
-       if (l_X_terminator) ic_min=iv
+       !if (l_X_terminator) ic_min=iv
        !
        do ic=ic_min,X%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         !if (.not.l_mat_eval_DIP(ic,iv)) cycle
          !
-         ! Here we will get vk-q and ck, we must find the index of k(ik)-q(iq)
-         ! TO CHECK:
-         !   Xk%sstar(ik) --> gives the index of ik in the full bz list ?
-         !   Xk%star(okbz) --> gives the index of okbz in the irreducible bz list ?
-         okbz = qindx_X(iq,Xk%sstar(ik,1),1)
-         ok   = Xk%star(okbz,1)
+         ! |ib ik_is i_sp>
+         ic_indexes=(/ic,ik,isymm,i_sp_pol/)
+         call WF_apply_symm(ic_indexes,WF_symm_i)
          !
-         iv_wf=WF%index(iv,ok,i_sp_pol)
-         ic_wf=WF%index(ic,ik,i_sp_pol)
+         ! | ob ok_os o_sp>   
+         ov_indexes=(/iv,ok,osymm,i_sp_pol/)
+         call WF_apply_symm(ov_indexes,WF_symm_o)
          !
-         if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
-         if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
-         !
-         do i_spinor=1,n_spinor
-           do idir=1,3
-             !
-             ! Here I assume that for the non periodic direction id_red==id_cartesian
-             !
-             if(.not.idir_todo(idir)) cycle
-             !
-             ! Check with Davide how to define the finite q for the dipoles --> x_cc by the corresponding finite-q expression 
-             DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
-&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
-&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
-             !
-           enddo
-         enddo
-         !
-         call live_timing(steps=1)
+         DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = Vstar_dot_V_omp(fft_size*n_spinor,WF_symm_o,WF_symm_i )
          !
        enddo 
        !
      enddo
      !
-     !======
-     ! <iR>
-     !======
-     do idir=1,3
-       if(.not.idir_todo(idir)) cycle
-       DIP_iR(idir,:,:,ik_mem,i_sp_pol)=cI*DIP_tmp(idir,:,:)
-     enddo
-     !
-     !=====
-     ! <P>
-     !=====
-     if(.not.force_v_g_space_approach) then
-       do iv=X%ib(1),X%ib_lim(1) 
-         do ic=max(iv,X%ib_lim(2)),X%ib(2)
-           if (.not.l_mat_eval_DIP(ic,iv)) cycle
-           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-           do idir=1,3
-             if(.not.idir_todo(idir)) cycle
-             DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
-           enddo
-         enddo
-       enddo
-     endif
+     call live_timing(steps=1)
      !
    enddo
-   !
- enddo 
    !
  enddo
  ! STORE IN DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
  call live_timing()
  !
- YAMBO_FREE(x_cc)
+ YAMBO_FREE(WF_symm_i)
+ YAMBO_FREE(WF_symm_o)
  !
  call WF_free(WF)
  !

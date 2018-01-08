@@ -99,7 +99,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  Epsilon_ii   = cZERO
  X_drude_term = cZERO
  !
- Epsilon_ii(:,1)=W_bss%p(:)  
+ Epsilon_ii(:,1)=W_bss%p(:)
  if (BSS_eval_JDOS) then
    YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
    Joint_DOS=cZERO
@@ -130,7 +130,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  ! Oscillators I/O & Eps0
  !========================
  !
- if (iq==1) then
+ !if (iq==1) then
    !
    if( E_SOC_nbands==0.or.n_sp_pol==2) then
      n_SOC=1
@@ -150,12 +150,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (trim(global_gauge)=='velocity') A_drude(1)=cZERO
 #endif
    !
-   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
-   !
    BSS_Vnl_included=X_oscillators%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
+   !
+ !endif
+   !
+   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0,iq)
    !
    if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
@@ -203,7 +205,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        endif
 #endif
        !
-       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold ) cycle
+       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold .and. iq==1) cycle
        !
        ! Residuals DIP_cv * DIP_vc
        !
@@ -288,7 +290,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (trim(global_gauge)=='length'  ) then
      !
-     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(1)**2
+     Epsilon_ii(:,3)=1._SP+Epsilon_ii(:,3)*Co_factor/q_norm(iq)**2
      !
    else if (trim(global_gauge)=='velocity') then
      !
@@ -309,7 +311,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (l_drude.and..not.skip_cond_sum_rule) then
      X_drude_term(:)=-drude_GreenF(:)
-     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(1)**2
+     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(iq)**2
    endif
    !
    ! GPL_EXCLUDE_START 
@@ -320,7 +322,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (BSS_add_antiresonant.or.BS_K_coupling) A_drude(1)=A_drude(1)+conjg(A_drude(1))
    !
    if (trim(global_gauge)=='length'  ) then
-     A_drude(1)=A_drude(1)/q_norm(1)**2-diam_term0
+     A_drude(1)=A_drude(1)/q_norm(iq)**2-diam_term0
      ! I add the term describing the intraband transitions which is
      ! missing in the length gauge (this should be zero for systems with a gap)
      if (skip_cond_sum_rule) Epsilon_ii(:,3)=Epsilon_ii(:,3)+A_drude(1)*Co_factor/W_bss%p(:)**2
@@ -336,11 +338,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (l_kerr) call K_kerr_IP(iq,W_bss%p)
 #endif
    !
- endif
  !
  ! CLEAN
  !
- if (iq==1) call X_alloc('DIP_projected')
+ call X_alloc('DIP_projected')
  !
  if (l_rpa_IP) then
    !

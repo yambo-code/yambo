@@ -82,10 +82,10 @@ subroutine K_output_file(iq,mode)
  !
  if (l_INIT) then
    if (l_IP) then
-     call X_setup_file_names(1,trim(name_),' ',' ')
+     call X_setup_file_names(iq,trim(name_),' ',' ')
    else
-     call X_setup_file_names(1,trim(name_),' ','bse')
-     if (BS_K_is_ALDA) call X_setup_file_names(1,trim(name_),'alda','bse')
+     call X_setup_file_names(iq,trim(name_),' ','bse')
+     if (BS_K_is_ALDA) call X_setup_file_names(iq,trim(name_),'alda','bse')
    endif
  endif
  !

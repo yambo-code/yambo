@@ -133,8 +133,8 @@ subroutine K_kerr_IP(iq,w)
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if(trim(global_gauge)=='length'   ) then
-   B_Hall(1)=B_Hall(1)*Co_factor/q_norm(1)**2
-   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(1)**2
+   B_Hall(1)=B_Hall(1)*Co_factor/q_norm(iq)**2
+   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(iq)**2
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
    if (l_anomalous_Hall) Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/w(:)

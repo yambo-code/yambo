@@ -34,7 +34,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait
  use D_lattice,     ONLY:DL_vol
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP

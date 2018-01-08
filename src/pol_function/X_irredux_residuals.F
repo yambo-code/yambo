@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM,AF,IM
@@ -133,7 +133,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
        endif
        ! apply symmetries
        do ig1=2,X%ng
-         ig2=g_rot(sop_inv(is),ig1)
+         ig2=g_rot(ig1,sop_inv(is))
          Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
        enddo
        if (is>nsym/(i_time_rev+1)) then
@@ -198,7 +198,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !$omp parallel do default(shared), private(ig1,ig2)
 #endif
      do ig1=1,X%ng
-       ig2=g_rot(sop_inv(is),ig1)
+       ig2=g_rot(ig1,sop_inv(is))
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
 #if defined _OPENMP

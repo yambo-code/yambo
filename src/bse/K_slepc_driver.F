@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS, HM
@@ -47,7 +47,6 @@ subroutine K_slepc_driver(iq,W)
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
- use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:MATRIX_slepc,K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -56,10 +55,8 @@ subroutine K_slepc_driver(iq,W)
  use timing_m,       ONLY:timing
 #endif
  !
- implicit none
- !
-#include <yambo_common.h>
- !
+#include <memory.h>
+ ! 
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -136,13 +133,13 @@ subroutine K_slepc_driver(iq,W)
  ! Allocation (BS_R and BS_E)
  !===========================
  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
- YAMBO_ALLOCATE( BS_E(BSS_n_eig) )
+ allocate( BS_E(BSS_n_eig) )
  if(E_SOC_nbands/=0) then
-   YAMBO_ALLOCATE( BS_corrections(2,BS_H_dim) )
-   YAMBO_ALLOCATE( BS_E_SOC_corr(2,BS_H_dim) )
+   YAMBO_ALLOC( BS_corrections, (2,BS_H_dim) )
+   YAMBO_ALLOC_P( BS_E_SOC_corr, (2,BS_H_dim) )
  endif
- YAMBO_ALLOCATE( BS_R_left(BS_H_dim) )
- YAMBO_ALLOCATE( BS_R_right(BS_H_dim) )
+ YAMBO_ALLOC( BS_R_left, (BS_H_dim) )
+ YAMBO_ALLOC( BS_R_right, (BS_H_dim) )
  !
  ! Diagonalization DB (IN)
  !========================
@@ -174,13 +171,13 @@ subroutine K_slepc_driver(iq,W)
  ! Allocation (BS_E_real or BS_V)
  !===============================
  if(K_is_not_hermitian) then
-   YAMBO_ALLOCATE( BS_V_left(BS_H_dim,BSS_n_eig) )
-   YAMBO_ALLOCATE( BS_V_right(BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOC( BS_V_left, (BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOC( BS_V_right, (BS_H_dim,BSS_n_eig) )
  else
-   YAMBO_ALLOCATE( BS_mat(BS_H_dim,BSS_n_eig) )
-   YAMBO_ALLOCATE( BS_E_real(BSS_n_eig) )
+   YAMBO_ALLOC( BS_mat, (BS_H_dim,BSS_n_eig) )
+   YAMBO_ALLOC( BS_E_real, (BSS_n_eig) )
    if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
-     YAMBO_ALLOCATE( BS_corrections(1,BS_H_dim) )
+     YAMBO_ALLOC( BS_corrections, (1,BS_H_dim) )
    endif
  endif
  !
@@ -193,7 +190,6 @@ subroutine K_slepc_driver(iq,W)
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
-   call live_timing('BSK diagonalize',1)
    !
    if (K_is_not_hermitian) then
      !
@@ -217,8 +213,6 @@ subroutine K_slepc_driver(iq,W)
    !============================
    call MatDestroy(slepc_mat,ierr)
    !
-   call live_timing(steps=1)
-   call live_timing
    !
    ! Construct the residuals of epsilon
    !====================================
@@ -254,14 +248,14 @@ subroutine K_slepc_driver(iq,W)
  ! CLEAN
  !=======
  call PetscFinalize(ierr)
- YAMBO_DEALLOCATE_A(BS_E)
- YAMBO_DEALLOCATE_A(BS_E_real)
- YAMBO_DEALLOCATE_A(BS_corrections)
- YAMBO_DEALLOCATE_A(BS_R_right)
- YAMBO_DEALLOCATE_A(BS_R_left)
- YAMBO_DEALLOCATE_A(BS_V_right)
- YAMBO_DEALLOCATE_A(BS_V_left)
- YAMBO_DEALLOCATE_A(BS_mat)
+ YAMBO_FREE(BS_E)
+ YAMBO_FREE(BS_E_real)
+ YAMBO_FREE(BS_corrections)
+ YAMBO_FREE(BS_R_right)
+ YAMBO_FREE(BS_R_left)
+ YAMBO_FREE(BS_V_right)
+ YAMBO_FREE(BS_V_left)
+ YAMBO_FREE(BS_mat)
  if(associated(BS_E_SOC_corr)) then
    deallocate(BS_E_SOC_corr)
    nullify(BS_E_SOC_corr)
@@ -481,7 +475,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  use parallel_m,    ONLY : PAR_IND_T_Haydock, myid
  !REMOVE
  !
- implicit none
+#include <memory.h>
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
@@ -501,8 +495,8 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! Allocate haydock vectors
  ! 
  call PARALLEL_Haydock_VEC_COMMs('assign')
- YAMBO_ALLOCATE(Slepc_v%Vi(BS_nT_grps))
- YAMBO_ALLOCATE(Slepc_v%Vo(BS_nT_grps))
+ allocate(Slepc_v%Vi(BS_nT_grps))
+ allocate(Slepc_v%Vo(BS_nT_grps))
  call BS_HAYVEC_alloc(Slepc_v%Vi)
  call BS_HAYVEC_alloc(Slepc_v%Vo) 
  !

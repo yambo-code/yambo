@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF
@@ -143,7 +143,7 @@ subroutine scatter_Bamp(isc)
  else
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo))),kind=SP)
+     isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(g_rot(ig,qs),iGo))),kind=SP)
    enddo
    !$omp end parallel do
  endif
@@ -158,13 +158,13 @@ subroutine scatter_Bamp(isc)
  else
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
-     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(qs,ig),iGo)),kind=SP)
+     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(ig,qs),iGo)),kind=SP)
    enddo
    !$omp end parallel do
  endif
 #  else
  if (qs==idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo)),kind=SP)
- if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(qs,1:isc%ngrho),iGo)),kind=SP)
+ if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(1:isc%ngrho,qs),iGo)),kind=SP)
 #  endif
 #endif
  !

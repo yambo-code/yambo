@@ -168,8 +168,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
 #if defined _ELPH
  !
- ! Green Functions must be all mapped to the Xw range so
- ! to be easily convoluted
+ ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !

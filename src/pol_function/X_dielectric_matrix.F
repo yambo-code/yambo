@@ -31,7 +31,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  use drivers,       ONLY:l_photolum
 #endif
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_integrated,&
-&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_use_kpt,use_X_DbGd
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -213,6 +214,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
    !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq)
+   !
    ! ALDA (only once) 
    !
    if (l_alda_fxc.and..not.allocated(FXC)) then
@@ -280,6 +285,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
+   !
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+     YAMBO_FREE(X_DbGd_use_kpt)
+   endif  
    !
  enddo
  !

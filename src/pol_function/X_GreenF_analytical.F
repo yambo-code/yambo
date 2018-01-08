@@ -27,14 +27,14 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
-&                     X_t,l_X_terminator,X_term_E
+ use X_m,        ONLY:use_X_DbGd,X_t,l_X_terminator,X_term_E,X_DbGd_nkpt_at_q,X_DbGd_use_kpt
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_weight,BZ_DbGd_kpts
- use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
+ use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
- use vec_operate,ONLY:iku_v_norm
+ use parallel_m, ONLY:PAR_Xk_bz_index
+ 
 #include<memory.h>
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
@@ -47,14 +47,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !Work Space
  !
  logical      :: X_os_run,K_inv_run 
- integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
- real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
+ integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp,ikbz_mem
+ real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
- !
- integer, allocatable      ::BZ_DbGd_iq_npt(:)
- logical, allocatable      ::use_kpt(:,:)
  !
  GreenF  = cZERO
  !
@@ -130,25 +127,21 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  !  \Omega_{anti-res} = -\Omega_{res}
  !
- allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- YAMBO_ALLOC(use_kpt,(BZ_DbGd_nkpt(ikbz),BZ_DbGd_nkpt(ikpbz)))
- !
- call tmp_double_grid()
- !
  do i1=1,BZ_DbGd_nkpt(ikbz)
    !
    weight1   = BZ_DbGd_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
    ik_rand   = BZ_DbGd_table(ikbz,i1,1)
    ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
+   ikbz_mem  = PAR_Xk_bz_index(ikbz)
    !
    if( X_os_run  ) f_h = spin_occ-Xen%f_DbGd(ic,ik_rand,i_spin)
    if( K_inv_run ) f_h =          Xen%f_DbGd(ic,ik_rand,i_spin)
    !
    do i2=1,BZ_DbGd_nkpt(ikpbz)
      !
-     if(.not.use_kpt(i1,i2)) cycle
+     if(.not.X_DbGd_use_kpt(ikbz_mem,i1,i2)) cycle
+     weight2    = BZ_DbGd_weight(i2)/real(X_DbGd_nkpt_at_q(ikbz_mem,i1),SP)
      !
-     weight2    = BZ_DbGd_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
      ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
      ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
      !
@@ -181,45 +174,4 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
  enddo
  !
- YAMBO_FREE(use_kpt)
- deallocate(BZ_DbGd_iq_npt)
- !
- contains
-   !
-   subroutine tmp_double_grid()
-     !
-     ! [DAVIDE]
-     ! Define which kpts I will use in a consistent way between q=0 and q/=0
-     ! For q/=0 this change makes the code much faster as it avoids the use of all 
-     ! double-grid kpts in the two spheres (k and kp) which would smear out too much
-     ! the absorption.
-     ! For q==0 the approach can be used to properly describe the q->0 limit
-     ! This part of the code should be moved away from this subroutine as here the 
-     ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
-     !
-     q_norm_ref=100000._SP
-     do i1=2,nqibz
-       q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
-     enddo
-     !
-     qsize_fac=2._SP
-     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
-     !
-     q_norm_ref=q_norm_ref/qsize_fac
-     !
-     BZ_DbGd_iq_npt=0
-     use_kpt=.false.
-     do i1=1,BZ_DbGd_nkpt(ikbz)
-       ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
-       do i2=1,BZ_DbGd_nkpt(ikpbz)
-         ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
-         q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
-         if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-         BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
-         use_kpt(i1,i2)=.true.
-       enddo
-     enddo
-     !
-   end subroutine
-   !
 end subroutine

@@ -36,7 +36,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_use_kpt
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -101,6 +102,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,wv)
+   !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq)
    !
    ! ALDA (only once) 
    !
@@ -331,6 +336,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    call FREQUENCIES_reset(wv,"all")
    call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+     YAMBO_FREE(X_DbGd_use_kpt)
+   endif
    !
  enddo
  !

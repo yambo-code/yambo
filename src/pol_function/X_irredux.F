@@ -237,7 +237,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
    ! 2) Then the frequency dependent term
    !=======================================
-<<<<<<< HEAD
    if( (iq==1) .and. abs(coarse_grid_Pt(i_cg))<Dipole_Energy_treshold ) then
       GreenF=drude_GreenF
    else

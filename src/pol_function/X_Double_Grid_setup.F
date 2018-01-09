@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -36,6 +36,7 @@ subroutine X_Double_Grid_setup(iq)
  use R_lattice,     ONLY:q_pt,nqibz,qindx_X
  use vec_operate,   ONLY:iku_v_norm
  use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_Xk_nbz,PAR_IND_Xk_bz,PAR_Xk_bz_index
+ use BS_solvers,    ONLY:BSS_uses_DbGd
  !
 #include<memory.h>
  !
@@ -46,7 +47,7 @@ subroutine X_Double_Grid_setup(iq)
  integer   :: NK,iqbz,ik,ip,ikbz,ikbz_rand,ikpbz_rand,ikpbz,ikbz_mem
  real(SP)  :: q_pt_shift(3),q_norm_ref,qsize_fac
  !
- if (.not.use_X_DbGd) return
+ if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
  !
  NK=maxval(BZ_DbGd_nkpt)
  !

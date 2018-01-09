@@ -26,13 +26,13 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude,X_DbGd_nkpt_at_q,X_DbGd_use_kpt
  use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,&
-&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
+&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal,BSS_uses_DbGd
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
@@ -75,6 +75,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
 #endif
  !
  Epsilon_ii(:,3:4) = cZERO
+ !
+ ! DbGd setup
+ !
+ call X_Double_Grid_setup(1)  
  !
 #if defined _ELPH
  !
@@ -238,6 +242,10 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  if(.not.K_diago_in_BS_mat) then
    YAMBO_FREE(BS_diagonal)
  endif
+ if (BSS_uses_DbGd) then
+   YAMBO_FREE(X_DbGd_nkpt_at_q)
+   YAMBO_FREE(X_DbGd_use_kpt)
+ endif  
  !
  BSS_n_descs=BSS_n_descs+2
  BSS_description(BSS_n_descs-1)=' '

@@ -58,9 +58,9 @@ module X_m
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical              :: X_is_integrated
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
+ real(SP)             :: X_DbGd_q_size=0.5
  integer ,allocatable :: X_DbGd_nkpt_at_q(:,:)
  logical, allocatable :: X_DbGd_use_kpt(:,:,:)
  !

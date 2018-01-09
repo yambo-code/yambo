@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,Dipole_Energy_treshold,&
 &                        global_gauge,Dipole_approach,Chi_linalg_mode, &
-&                        X_terminator_Kind,X_terminator_E
+&                        X_terminator_Kind,X_terminator_E,X_DbGd_q_size
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
@@ -365,6 +365,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
  !
 #endif
+ !
+ ! Double Grid(s)
+ !
+ call it(defs,'DbGdQsize', '[X,DbGd] Size of the region associated to each q-point. In units of the smalles q modulus',&
+&                          X_DbGd_q_size,verb_level=V_resp)
  !
  ! RIM
  !

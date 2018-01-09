@@ -30,7 +30,7 @@ subroutine X_Double_Grid_setup(iq)
  ! For q==0 the approach can be used to properly describe the q->0 limit
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_use_kpt,X_is_integrated
+ use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_use_kpt,X_DbGd_q_size
  use electrons,     ONLY:BZ_DbGd_nkpt,BZ_DbGd_kpts,BZ_DbGd_table
  use R_lattice,     ONLY:nXkbz
  use R_lattice,     ONLY:q_pt,nqibz,qindx_X
@@ -45,7 +45,7 @@ subroutine X_Double_Grid_setup(iq)
  ! Work Space
  !
  integer   :: NK,iqbz,ik,ip,ikbz,ikbz_rand,ikpbz_rand,ikpbz,ikbz_mem
- real(SP)  :: q_pt_shift(3),q_norm_ref,qsize_fac
+ real(SP)  :: q_pt_shift(3),q_norm_ref
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
  !
@@ -62,10 +62,7 @@ subroutine X_Double_Grid_setup(iq)
    q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(iqbz,:)))
  enddo
  !
- qsize_fac=2._SP
- if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
- !
- q_norm_ref=q_norm_ref/qsize_fac
+ q_norm_ref=q_norm_ref*X_DbGd_q_size
  !
  do ikbz=1,nXkbz
    !

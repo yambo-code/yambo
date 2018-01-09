@@ -30,7 +30,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_integrated,&
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_use_kpt,use_X_DbGd
  use frequency,     ONLY:w_samp
@@ -203,11 +203,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
- ! As we are cycling over the q-points the screened interaction evaluated here is supposed
- ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
- !
- X_is_integrated=.true.
- !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
@@ -293,7 +288,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  enddo
  !
- X_is_integrated=.false.
  l_X_terminator=.false.
  !
  ! CLEAN (3)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS, HM
@@ -47,7 +47,6 @@ subroutine K_slepc_driver(iq,W)
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
- use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:MATRIX_slepc,K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
@@ -191,7 +190,6 @@ subroutine K_slepc_driver(iq,W)
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
-   call live_timing('BSK diagonalize',1)
    !
    if (K_is_not_hermitian) then
      !
@@ -215,8 +213,6 @@ subroutine K_slepc_driver(iq,W)
    !============================
    call MatDestroy(slepc_mat,ierr)
    !
-   call live_timing(steps=1)
-   call live_timing
    !
    ! Construct the residuals of epsilon
    !====================================

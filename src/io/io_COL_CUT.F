@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,9 @@ integer function io_COL_CUT(ID)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ !
 #include<memory.h>
+ !
  integer :: ID
  ! 
  ! Work Space
@@ -93,7 +95,7 @@ integer function io_COL_CUT(ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng/))
-   call io_bulk(ID,C2=bare_qpg)
+   call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
    !
  endif
  !

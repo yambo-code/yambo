@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -70,7 +70,7 @@ integer function io_BS(iq,X,ID)
    if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
    !
    io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
-&                    PARALLEL_STRUCTURE="PARALLEL_STRUCTURE",CUTOFF=.true.,FRAG=frag_BS_K)
+&                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
    !
    if (io_BS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

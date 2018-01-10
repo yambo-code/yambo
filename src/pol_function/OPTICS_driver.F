@@ -32,7 +32,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use stderr,        ONLY:intc,set_real_printed_length
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
@@ -196,7 +196,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    if (use_X_DbGd) then
      call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait

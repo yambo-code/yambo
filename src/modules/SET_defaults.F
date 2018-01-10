@@ -53,7 +53,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
@@ -311,7 +311,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_spin_den=1
  l_spin_orbit       = .FALSE.
  BZ_DbGd_nbands=0
- BZ_DbGd_tot_nkpts=0
+ BZ_DbGd_tot_nk_levels=0
  BZ_ASSOCIATED_nkpts=0
  E_SOC_nbands=0
  filled_tresh=0.00001

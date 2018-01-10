@@ -47,7 +47,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg,depth
  use electrons,     ONLY:levels,n_sp_pol,E_duplicate,E_reset,&
-&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+&                        BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels
  use D_lattice,     ONLY:input_Tel_is_negative
  use R_lattice,     ONLY:bz_samp
  use QP_CTL_m,      ONLY:QP_actions_reset,n_QP_actions,QP_action,QP_CTL_copy,&
@@ -153,7 +153,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !========
  if (allocated(en%E_DbGd).and.allocated(en%Eo)) then
    !
-   YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nkpts))
+   YAMBO_ALLOC(DbGd_k_done,(BZ_DbGd_tot_nk_levels))
    DbGd_k_done=0
    !
    do ik_bz=1,k%nbz

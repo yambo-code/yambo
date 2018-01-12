@@ -30,11 +30,14 @@ subroutine X_Double_Grid_setup(iq)
  ! For q==0 the approach can be used to properly describe the q->0 limit
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_use_kpt,X_DbGd_q_size
+ use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_q_size,X_DbGd_nkpt_at_q_table
+ use LIVE_t,        ONLY:live_timing
+ use com,           ONLY:msg
+ use stderr,        ONLY:intc
  use electrons,     ONLY:BZ_DbGd_nkpt,BZ_DbGd_kpts,BZ_DbGd_table
  use R_lattice,     ONLY:nXkbz
  use R_lattice,     ONLY:q_pt,nqibz,qindx_X
- use vec_operate,   ONLY:iku_v_norm
+ use vec_operate,   ONLY:v_norm,iku_v_norm
  use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_Xk_nbz,PAR_IND_Xk_bz,PAR_Xk_bz_index
  use BS_solvers,    ONLY:BSS_uses_DbGd
  !
@@ -44,47 +47,70 @@ subroutine X_Double_Grid_setup(iq)
  ! 
  ! Work Space
  !
- integer   :: NK,iqbz,ik,ip,ikbz,ikbz_rand,ikpbz_rand,ikpbz,ikbz_mem
- real(SP)  :: q_pt_shift(3),q_norm_ref
+ integer   :: iq_,ik,ip,ikbz,ikbz_rand,ipbz_rand,ipbz,ikbz_mem,i_c,N_all_pairs
+ real(SP)  :: central_q(3),running_q(3),q_radius
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
  !
- NK=maxval(BZ_DbGd_nkpt)
+ YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz))
  !
- YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz,NK))
- YAMBO_ALLOC(X_DbGd_use_kpt,(PAR_Xk_nbz,NK,NK))
- !
- X_DbGd_nkpt_at_q=0
- X_DbGd_use_kpt  =.FALSE.
- !
- q_norm_ref=100000._SP
- do iqbz=2,nqibz
-   q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(iqbz,:)))
+ q_radius=100000._SP
+ do iq_=2,nqibz
+   q_radius=min(q_radius,iku_v_norm(q_pt(iq_,:)))*X_DbGd_q_size
  enddo
  !
- q_norm_ref=q_norm_ref*X_DbGd_q_size
+ call live_timing('Double-Grid setup',2*nXkbz)
  !
- do ikbz=1,nXkbz
+ do i_c=1,2
    !
-   if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+   N_all_pairs=0
    !
-   ikbz_mem=PAR_Xk_bz_index(ikbz)
-   ikpbz   =qindx_X(iq,ikbz,1) 
+   X_DbGd_nkpt_at_q=0
    !
-   do ik=1,BZ_DbGd_nkpt(ikbz)
-     ikbz_rand = BZ_DbGd_table(ikbz,ik,2)
-     do ip=1,BZ_DbGd_nkpt(ikpbz)
+   do ikbz=1,nXkbz
+     !
+     if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+     !
+     ikbz_mem=PAR_Xk_bz_index(ikbz)
+     ipbz    =qindx_X(iq,ikbz,1) 
+     !
+     central_q=BZ_DbGd_kpts(BZ_DbGd_table(ipbz,BZ_DbGd_nkpt(ipbz),2),:)-&
+&              BZ_DbGd_kpts(BZ_DbGd_table(ikbz,BZ_DbGd_nkpt(ikbz),2),:)
+     !
+     N_all_pairs=N_all_pairs+BZ_DbGd_nkpt(ikbz)*BZ_DbGd_nkpt(ipbz)
+     !
+     do ik=1,BZ_DbGd_nkpt(ikbz)
        !
-       ikpbz_rand = BZ_DbGd_table(ikpbz,ip,2)
-       q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
+       ikbz_rand = BZ_DbGd_table(ikbz,ik,2)
        !
-       if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-       !
-       X_DbGd_nkpt_at_q(ikbz_mem,ik)=X_DbGd_nkpt_at_q(ikbz_mem,ik)+1
-       X_DbGd_use_kpt(ikbz_mem,ik,ip)=.true.
-       !
+       do ip=1,BZ_DbGd_nkpt(ipbz)
+         !
+         ipbz_rand = BZ_DbGd_table(ipbz,ip,2)
+         !
+         running_q(:)=BZ_DbGd_kpts(ipbz_rand,:)-BZ_DbGd_kpts(ikbz_rand,:)-central_q
+         !
+         if (iku_v_norm( running_q ) > q_radius) cycle
+         !
+         X_DbGd_nkpt_at_q(ikbz_mem)=X_DbGd_nkpt_at_q(ikbz_mem)+1
+         if (i_c==2) then
+           X_DbGd_nkpt_at_q_table(ikbz_mem, X_DbGd_nkpt_at_q(ikbz_mem) ,:)=(/ik,ip/)
+         endif
+         !
+       enddo
      enddo
+     !
    enddo
- enddo
+   !
+   if (i_c==1) then
+     YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
+   endif
+   !
+   call live_timing(steps=1)
+   !
+ enddo 
+ !
+ call live_timing( )
+ !
+ call msg('nrn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]:',real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100.)
  !
 end subroutine

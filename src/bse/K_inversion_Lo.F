@@ -26,7 +26,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude,X_DbGd_nkpt_at_q,X_DbGd_use_kpt
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
@@ -244,7 +244,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  endif
  if (BSS_uses_DbGd) then
    YAMBO_FREE(X_DbGd_nkpt_at_q)
-   YAMBO_FREE(X_DbGd_use_kpt)
+   YAMBO_FREE(X_DbGd_nkpt_at_q_table)
  endif  
  !
  BSS_n_descs=BSS_n_descs+2

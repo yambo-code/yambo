@@ -78,8 +78,8 @@ integer function io_Double_Grid(E,Xk,ID)
  endif
  !
  call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           :')
- call io_elemental(ID,I0=BZ_DbGd_tot_nk,        VAR=' Fine grid number of points      :')
- call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels)
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk)
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      :')
  ! 
  if (DG_format==3) then
    call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')

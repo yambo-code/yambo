@@ -90,7 +90,7 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
-if  test ! -d "$extlibs_path/${FCKIND}/${FC}" ; then
+if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  for file in $extlibs_path/${FCKIND}/${FC}/bin/*; do
   cp $file $exec_prefix/bin/
  done

@@ -269,7 +269,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
    do is=1,n_sp_pol
      do ikbz=1,K%nbz
        do i1=1,BZ_DbGd_nkpt(ikbz)
-         ik_rand   = BZ_DbGd_table(ikbz,i1,1)
+         ik_rand = BZ_DbGd_table(ikbz,i1,1)
          do ib=1,BZ_DbGd_nbands
            E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
            nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)

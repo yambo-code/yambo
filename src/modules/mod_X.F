@@ -61,8 +61,8 @@ module X_m
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
  real(SP)             :: X_DbGd_q_size=0.5
- integer ,allocatable :: X_DbGd_nkpt_at_q(:,:)
- logical, allocatable :: X_DbGd_use_kpt(:,:,:)
+ integer ,allocatable :: X_DbGd_nkpt_at_q(:)
+ integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !
  ! Dipole M.E.
  !

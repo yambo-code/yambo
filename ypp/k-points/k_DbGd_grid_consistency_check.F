@@ -37,7 +37,7 @@ subroutine k_DbGd_grid_consistency_check(iK_ref,k,E,k_DbGd,E_DbGd)
  ! Work Space
  !
  integer :: ik,ik_DbGd,nb
- real(SP):: shifts(2)
+ real(SP):: shifts(2)=0.
  !
  iK_ref=-1
  !
@@ -60,7 +60,7 @@ subroutine k_DbGd_grid_consistency_check(iK_ref,k,E,k_DbGd,E_DbGd)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_DbGd==E_DbGd%nk+1 ) then
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) ) then
    iK_ref=-1
    return
  endif

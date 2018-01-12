@@ -35,7 +35,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys,X_DbGd_q_size
+&                     X_use_lin_sys,X_DbGd_percentual
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -363,7 +363,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use_g_space_approach       = .TRUE.
  force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
- X_DbGd_q_size=0.5
+ X_DbGd_percentual=1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'

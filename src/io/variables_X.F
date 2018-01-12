@@ -25,7 +25,7 @@ integer function variables_X(ID,local_description,X)
  !
  use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs,X_DbGd_q_size
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs,X_DbGd_percentual
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
  !
@@ -134,7 +134,7 @@ integer function variables_X(ID,local_description,X)
    if (ver_is_gt_or_eq(ID,revision=15206)) then
      i_local_desc=i_local_desc+1
      call io_elemental(ID,&
-&         VAR=" BZ Q point size factor :",R0=X_DbGd_q_size,WARN=.true.,OP=(/"=="/),&
+&         VAR=" BZ Q point size factor :",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),&
 &         DESCRIPTION=local_description(i_local_desc))
    endif
  endif

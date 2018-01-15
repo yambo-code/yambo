@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,10 +60,10 @@ subroutine REPORT_Occupations(what,E)
  !
  ! Initial Report
  !
+ call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
  do i_sp_pol=1,n_sp_pol
    call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
  enddo
- call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
  call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
  call msg('r',trim(title)//'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
  call msg('r',trim(title)//'Finite Temperature mode: ',Finite_Tel)

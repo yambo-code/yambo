@@ -42,19 +42,12 @@
   ! automatically finds whether the cell is orthorombic or not
   vcut%orthorombic=.false.
   mod2a=sqrt(sum(vcut%a**2,1))
-  !write(*,*) "CHECK OPRTJO"
-  !write(*,*) vcut%a(:,1) 
-  !write(*,*) vcut%a(:,2) 
-  !write(*,*) vcut%a(:,3) 
-  !write(*,*) "****"
-  !write(*,*) mod2a 
   if(abs(sum(vcut%a(:,1)*vcut%a(:,2)))/(mod2a(1)*mod2a(2))<toll .and. &
      abs(sum(vcut%a(:,2)*vcut%a(:,3)))/(mod2a(2)*mod2a(3))<toll .and. &
      abs(sum(vcut%a(:,3)*vcut%a(:,1)))/(mod2a(3)*mod2a(1))<toll) vcut%orthorombic=.true.
-  !write(*,*) sum(vcut%a(:,1)*vcut%a(:,2))/(mod2a(1)*mod2a(2))
-  !write(*,*) sum(vcut%a(:,2)*vcut%a(:,3))/(mod2a(2)*mod2a(3))
-  !write(*,*) sum(vcut%a(:,3)*vcut%a(:,1))/(mod2a(3)*mod2a(1))
-  !write(*,*) "orthorombic",vcut%orthorombic
+!
+  if (.not.vcut%orthorombic) call msg('nr','WARNING non-orthorombic case untested')
+!
   n1=ceiling(vcut%cutoff*sqrt(sum(vcut%a(1,:)**2))/(2.0*pi))
   n2=ceiling(vcut%cutoff*sqrt(sum(vcut%a(2,:)**2))/(2.0*pi))
   n3=ceiling(vcut%cutoff*sqrt(sum(vcut%a(3,:)**2))/(2.0*pi))
@@ -195,12 +188,6 @@ END SUBROUTINE vcut_destroy
      IF( i(1)>ubound(vcut%corrected,1) .OR. i(1)<lbound(vcut%corrected,1) .OR. &
          i(2)>ubound(vcut%corrected,2) .OR. i(2)<lbound(vcut%corrected,2) .OR. &
          i(3)>ubound(vcut%corrected,3) .OR. i(3)<lbound(vcut%corrected,3)) THEN
-   !write(*,*) i(1),i(2),i(3)
-   !write(*,*) "bounds"
-   !write(*,*) ubound(vcut%corrected,1),lbound(vcut%corrected,1)
-   !write(*,*) ubound(vcut%corrected,2),lbound(vcut%corrected,2)
-   !write(*,*) ubound(vcut%corrected,3),lbound(vcut%corrected,3)
-   !STOP 
          CALL error('index out of bound') 
      ENDIF
      !

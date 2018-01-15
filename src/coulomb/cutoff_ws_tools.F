@@ -14,7 +14,7 @@
   !------------------------------------------
   !
   USE cutoff_ws_m
-  use com,           ONLY:error
+  use com,           ONLY:error,msg
   use LIVE_t,        ONLY:live_timing
   use openmp,        ONLY:OPENMP_update,n_threads,master_thread
   implicit none

@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,pi
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
@@ -302,7 +302,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/q_norm(1)**2
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP

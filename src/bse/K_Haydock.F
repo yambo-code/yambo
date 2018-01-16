@@ -23,7 +23,7 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use com,            ONLY:error
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -722,7 +722,7 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_INCLUDE_END
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/q_norm(1)**2
        !
        ! GPL_EXCLUDE_START
        !

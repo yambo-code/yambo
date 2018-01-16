@@ -307,7 +307,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    if (l_drude.and..not.skip_cond_sum_rule) then
      X_drude_term(:)=-drude_GreenF(:)
-     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*Co_factor/q_norm(1)**2
+     Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)*4._SP*pi/q_norm(1)**2
    endif
    !
    ! GPL_EXCLUDE_START 

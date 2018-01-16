@@ -27,7 +27,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use R_lattice,      ONLY:bz_samp
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
-&                         IO_OUTDATED_DB
+&                         IO_OUTDATED_DB,variable_exist
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -55,6 +55,8 @@ integer function io_Double_Grid(E,Xk,ID)
  io_Double_Grid=io_header(ID)
  !
  if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
+ !
+ if (variable_exist(ID,'KPTS'))              io_Double_Grid=IO_OUTDATED_DB 
  !
  if (io_Double_Grid/=0) goto 1
  !

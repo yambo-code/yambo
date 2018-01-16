@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_Double_Grid_setup(iq)
+subroutine X_Double_Grid_setup(iq,k)
  !
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
  ! For q/=0 this change makes the code much faster as it avoids the use of all
@@ -34,20 +34,21 @@ subroutine X_Double_Grid_setup(iq)
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use electrons,     ONLY:BZ_DbGd_nkpt,BZ_DbGd_kpts,BZ_DbGd_table
- use R_lattice,     ONLY:nXkbz
+ use R_lattice,     ONLY:nXkbz,bz_samp
  use R_lattice,     ONLY:q_pt,nqibz,qindx_X
  use vec_operate,   ONLY:v_norm,iku_v_norm
- use parallel_m,    ONLY:PAR_IND_Xk_bz,PAR_Xk_nbz,PAR_Xk_bz_index,PP_redux_wait,PAR_COM_Xk_bz_A2A
+ use parallel_m,    ONLY:PAR_Xk_nbz,PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use BS_solvers,    ONLY:BSS_uses_DbGd
  !
 #include<memory.h>
  !
- integer :: iq
+ integer       :: iq
+ type(bz_samp) :: k
  ! 
  ! Work Space
  !
  integer   :: iq_,ik,ip,ikbz,ikbz_rand,ipbz_rand,ipbz,ikbz_mem,N_all_pairs
- real(SP)  :: central_q(3),running_q(3),q_radius,PREC
+ real(SP)  :: central_q(3),running_q(3),q_radius,PREC(1)
  logical   :: FILL_it=.false.
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
@@ -69,7 +70,7 @@ subroutine X_Double_Grid_setup(iq)
    N_all_pairs=N_all_pairs+BZ_DbGd_nkpt(ikbz)*BZ_DbGd_nkpt(ipbz)
  enddo
  !
- do while(PREC<X_DbGd_percentual.or.FILL_it)
+ do while(PREC(1)<X_DbGd_percentual.or.FILL_it)
    !
    if (FILL_it) then
      YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
@@ -81,7 +82,7 @@ subroutine X_Double_Grid_setup(iq)
    !
    do ikbz=1,nXkbz
      !
-     if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(k%sstar(ikbz,1))) cycle
      !
      ikbz_mem=PAR_Xk_bz_index(ikbz)
      ipbz    =qindx_X(iq,ikbz,1) 
@@ -113,11 +114,11 @@ subroutine X_Double_Grid_setup(iq)
    !
    PREC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100.
    !
-   call PP_redux_wait((/PREC/),COMM=PAR_COM_Xk_bz_A2A%COMM)
+   call PP_redux_wait(PREC,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    if (FILL_it) exit
    !
-   if (PREC>=X_DbGd_percentual) FILL_it=.TRUE.
+   if (PREC(1)>=X_DbGd_percentual) FILL_it=.TRUE.
    !
  enddo 
  !

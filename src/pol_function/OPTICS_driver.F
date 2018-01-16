@@ -105,7 +105,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(iq)
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !

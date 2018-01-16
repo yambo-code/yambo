@@ -23,7 +23,7 @@
 !
 subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
  !
- use pars,           ONLY:SP,cZERO,cI,pi,rZERO
+ use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
@@ -34,8 +34,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_n_descs,BSS_description,BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal,BSS_uses_DbGd
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH
@@ -57,13 +56,13 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  ! Work Space
  !
- type(PP_indexes) :: px
  type(w_samp)     :: W_mins,W_plus
  integer          :: i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
  complex(SP)      :: E_plus_W,residual
 #if defined _PL
  complex(SP)      :: SF(W%n_freqs,2)
 #endif
+ character(schlen):: LT_title
  !
 #if defined _PL
  !
@@ -78,7 +77,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(1)  
+ call X_Double_Grid_setup(1,k,"K")  
  !
 #if defined _ELPH
  !
@@ -94,8 +93,6 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_K_dim/))
  !
  do i_loop=1,n_loop
    !
@@ -103,15 +100,16 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
    !
    if(n_loop==2) then
 #if defined _PL
-     if(i_loop==1) call live_timing('IP PL',px%n_of_elements(myid+1))
-     if(i_loop==2) call live_timing('Shifted GF and PL',px%n_of_elements(myid+1))
+     if(i_loop==1) LT_title='IP PL'
+     if(i_loop==2) LT_title='Shifted GF and PL'
 #else
-     if(i_loop==1) call live_timing('IP Absorption',px%n_of_elements(myid+1))
-     if(i_loop==2) call live_timing('Shifted GF and Absorption',px%n_of_elements(myid+1))
+     if(i_loop==1) LT_title='IP Absorption'
+     if(i_loop==2) LT_title='Shifted GF and Absorption'
 #endif
    else
-     call live_timing('IP GF and Absorption',px%n_of_elements(myid+1))
+     LT_title='IP GF and Absorption'
    endif
+   call live_timing(trim(LT_title),PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1))
    !
    Lo=cZERO
    !
@@ -124,14 +122,14 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      !
      i_cpl=i_res+BS_K_dim
      !
-     if (.not.px%element_1D(i_res)) cycle
-     !
      ik_bz =BSS_eh_table(i_res,1)
      iv    =BSS_eh_table(i_res,2)
      ic    =BSS_eh_table(i_res,3)
      i_sp  =spin(BSS_eh_table(i_res,:))
      !
      ik_ibz=k%sstar(ik_bz,1)   
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle
      !
      transition=(/ik_bz,iv,ic,i_sp/)
      !
@@ -219,17 +217,17 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
      endif
 #endif
      !
-     call live_timing(steps=1)
+     if (k%sstar(ik_bz,2)==1) call live_timing(steps=1)
      !
    enddo
    !
    call live_timing( )
    !
-   if(i_loop==n_loop) call PP_redux_wait(Lo)
+   if(i_loop==n_loop) call PP_redux_wait(Lo,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
-   call PP_redux_wait(Epsilon_ii(:,i_eps))
+   call PP_redux_wait(Epsilon_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
 #if defined _PL
-   if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps))
+   if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
 #endif
    !
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)

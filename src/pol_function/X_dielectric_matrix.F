@@ -211,7 +211,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(iq)
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !

@@ -151,7 +151,6 @@ integer function io_Double_Grid(E,Xk,ID)
  else
    call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
  endif
- !
  call io_bulk(ID, R1=BZ_DbGd_weight)
  !
 1 call io_disconnect(ID=ID)

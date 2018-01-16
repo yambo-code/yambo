@@ -191,7 +191,7 @@ module electrons
      !
      ! E Double Grid
      !
-     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
+     if (BZ_DbGd_nbands>0.and.Ei%nk==Eo%nk) then
        YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
        YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
        YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))

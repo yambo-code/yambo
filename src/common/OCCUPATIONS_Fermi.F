@@ -279,8 +279,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
    enddo
    nel_DbGd=nel_DbGd/real(sum(BZ_DbGd_nkpt),SP)
    !
-   if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   if (abs(nel-nel_DbGd)>        1.E-2) call error  (' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   if (abs(nel-nel_DbGd)>nel_diff_zero) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !
  endif
  !

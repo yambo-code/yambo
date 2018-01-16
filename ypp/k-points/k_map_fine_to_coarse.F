@@ -37,7 +37,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
 &                              BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk,n_sp_pol,BZ_DbGd_max_filling,&
 &                              BZ_DbGd_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,          ONLY:PARALLEL_index
+ use interfaces,          ONLY:PARALLEL_index,OCCUPATIONS_Fermi
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -67,6 +67,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  ! Functions
  !
  integer, external :: io_DB1_selective_scan,io_Double_Grid
+ !
+ BZ_DbGd_nbands=0
  !
  if (n_DbGd_DBs==0) then
    call msg("s",'DbGd: no database secified. Nothing to do.')
@@ -223,7 +225,15 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  if (l_skip_check) then
    call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
    ik_ref=-1
-   DbGd_E(i_db_merge)%E(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)+Xen%E_Fermi
+   YAMBO_ALLOC(DbGd_k(i_db_merge)%weights,( DbGd_E(i_db_merge)%nk ))
+   DbGd_k(i_db_merge)%weights=1./real(DbGd_E(i_db_merge)%nk )
+   call OCCUPATIONS_Fermi(DbGd_E(i_db_merge),DbGd_k(i_db_merge),mode="FERMI")
+   YAMBO_FREE(DbGd_k(i_db_merge)%weights)
+   !
+   ! I want that E_dbgd%E'-Xe%E_fermi=E_dbgd%E-E_dbgd%E_fermi=> E_dbgd%E'= E_dbgd%E+Xe%E_fermi-E_dbgd%E_fermi
+   !
+   DbGd_E(i_db_merge)%E(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)+Xen%E_Fermi-DbGd_E(i_db_merge)%E_Fermi
+   !
  else
    call section('+','Internal consistency check ...')
    !
@@ -439,6 +449,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    Xen%E_DbGd(:,:DbGd_k(i_db_merge)%nibz,:)=DbGd_E(i_db_merge)%E(:,:,:)
    BZ_DbGd_kpts(:DbGd_k(i_db_merge)%nbz,:) =DbGd_k(i_db_merge)%ptbz(:,:)
+   BZ_DbGd_table(:,:BZ_DbGd_nkpt(ik_bz)-1,:)=TMP_map3(:,:,:)
    !
    ik_grid=DbGd_k(i_db_merge)%nbz
    iE_grid=DbGd_k(i_db_merge)%nibz
@@ -447,7 +458,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
       ik_grid=ik_grid+1
       if (Xk%sstar(ik_bz,2)==1) iE_grid=iE_grid+1
       !
-      BZ_DbGd_table(ik_bz,:BZ_DbGd_nkpt(ik_bz)-1,:)=TMP_map3(ik_bz,:,:)
       BZ_DbGd_table(ik_bz,BZ_DbGd_nkpt(ik_bz),:)=(/ iE_grid, ik_grid/)
       !
       BZ_DbGd_kpts(ik_grid,:)=Xk%ptbz(ik_bz,:)

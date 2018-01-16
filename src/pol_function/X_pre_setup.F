@@ -59,7 +59,7 @@ subroutine X_pre_setup(Xen,X)
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_DbGd=BZ_DbGd_nbands/=0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
+ use_X_DbGd=BZ_DbGd_nbands>0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
  !
  if (use_X_DbGd.and.DbGd_is_symmetry_expanded) then
    X_DbGd_nkpts=BZ_DbGd_tot_nk_levels

@@ -81,6 +81,8 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    endif
+   call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Xk_bz_A2A)
    !
    ! K-points (IBZ)
    !

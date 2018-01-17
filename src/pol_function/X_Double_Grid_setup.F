@@ -37,7 +37,7 @@ subroutine X_Double_Grid_setup(iq,k)
  use R_lattice,     ONLY:nXkbz,bz_samp
  use R_lattice,     ONLY:q_pt,nqibz,qindx_X
  use vec_operate,   ONLY:v_norm,iku_v_norm
- use parallel_m,    ONLY:PAR_Xk_nbz,PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,    ONLY:PAR_Xk_nbz,PP_redux_wait,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
  use BS_solvers,    ONLY:BSS_uses_DbGd
  !
 #include<memory.h>
@@ -49,7 +49,7 @@ subroutine X_Double_Grid_setup(iq,k)
  !
  integer   :: iq_,ik,ip,ikbz,ikbz_rand,ipbz_rand,ipbz,ikbz_mem,N_all_pairs
  real(SP)  :: central_q(3),running_q(3),q_radius,PREC(1)
- logical   :: FILL_it=.false.
+ logical   :: FILL_it
  !
  if (.not.use_X_DbGd.and..not.BSS_uses_DbGd) return
  !
@@ -82,7 +82,7 @@ subroutine X_Double_Grid_setup(iq,k)
    !
    do ikbz=1,nXkbz
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(k%sstar(ikbz,1))) cycle
+     if (.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
      !
      ikbz_mem=PAR_Xk_bz_index(ikbz)
      ipbz    =qindx_X(iq,ikbz,1) 
@@ -114,7 +114,7 @@ subroutine X_Double_Grid_setup(iq,k)
    !
    PREC=real(sum(X_DbGd_nkpt_at_q))/real(N_all_pairs)*100.
    !
-   call PP_redux_wait(PREC,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(PREC,COMM=PAR_COM_Xk_bz_INDEX%COMM)
    !
    if (FILL_it) exit
    !

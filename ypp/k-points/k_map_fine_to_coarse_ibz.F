@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
+subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  use pars,                ONLY:SP
  use stderr,              ONLY:intc
@@ -39,6 +39,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
  type(levels),  intent(inout) :: Xen
  type(bz_samp), intent(inout) :: FineGd_k
  type(levels),  intent(in)    :: FineGd_E
+ integer,       intent(out)   :: Reordering_map(FineGd_k%nibz)
  !
  ! Work Space
  !
@@ -154,6 +155,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
      Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,TMP_table_duplicate(ikibz,i1),:)
      Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_duplicate(ikibz,i1),:)
      Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_duplicate(ikibz,i1))
+     Reordering_map(TMP_table_duplicate(ikibz,i1))=ikibz_FineGd
      call live_timing(steps=1)
    enddo
    !
@@ -164,6 +166,7 @@ subroutine k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
      Xen%E_FineGd(:,ikibz_FineGd,:) =FineGd_E%E(:,TMP_table_mapped(ikibz,i1),:)
      Xk%pt_FineGd(ikibz_FineGd,:)   =FineGd_k%pt(TMP_table_mapped(ikibz,i1),:)
      Xk%weights_FineGd(ikibz_FineGd)=FineGd_k%weights(TMP_table_mapped(ikibz,i1))
+     Reordering_map(TMP_table_mapped(ikibz,i1))=ikibz_FineGd
      !
 !     Xk%weights_DbGd(ikibz)=Xk%weights_DbGd(ikibz)+Xk%weights_FineGd(ikibz_FineGd)* &
 !&                                             real(Xk%nbz_FineGd,SP)/real(Xk%nbz+Xk%nbz_FineGd-Xk%nbz_duplicate,SP)

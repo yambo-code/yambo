@@ -31,7 +31,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use electrons,           ONLY:levels
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
@@ -40,6 +40,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  type(levels)         :: FineGd_E
  type(bz_samp)        :: FineGd_k
+ !
+ integer, allocatable :: Reordering_map(:)
  !
  integer           :: i_err,ID
  integer, external :: io_Double_Grid
@@ -61,10 +63,12 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  call section('+','Double Grid initialization')
  call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  !
+ YAMBO_ALLOC(Reordering_map,(FineGd_k%nibz))
+ !
  ! First map IBZ to IBZ
  !=======================
  call section('=','Double Grid IBZ mapping')
- call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E)
+ call k_map_fine_to_coarse_ibz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
  !
  ! Expand to the BZ 
  !==================
@@ -83,7 +87,9 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Then map BZ to BZ
  !===================
  call section('=','Double Grid BZ mapping')
- call k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E)
+ call k_map_fine_to_coarse_bz(Xk,Xen,FineGd_k,FineGd_E,Reordering_map)
+ !
+ YAMBO_FREE(Reordering_map)
  !
  ! Final I/O
  !============

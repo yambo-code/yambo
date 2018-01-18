@@ -43,6 +43,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ !
  implicit none
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr

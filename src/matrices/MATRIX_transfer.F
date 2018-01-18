@@ -114,7 +114,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  endif
  !
 #if defined _TIMING
- call timing('MATRIX transfer',OPR='start')
+ call timing('MATRIX transfer ('//COMM_name//')',OPR='start')
 #endif
  !
  ! Transfer World
@@ -166,7 +166,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  call COMM_reset(TRANSFER_world)
  !
 #if defined _TIMING
- call timing('MATRIX transfer',OPR='stop')
+ call timing('MATRIX transfer ('//COMM_name//')',OPR='stop')
 #endif
  !
 end SUBROUTINE

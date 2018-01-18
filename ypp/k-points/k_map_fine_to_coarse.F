@@ -449,7 +449,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    Xen%E_DbGd(:,:DbGd_k(i_db_merge)%nibz,:)=DbGd_E(i_db_merge)%E(:,:,:)
    BZ_DbGd_kpts(:DbGd_k(i_db_merge)%nbz,:) =DbGd_k(i_db_merge)%ptbz(:,:)
-   BZ_DbGd_table(:,:BZ_DbGd_nkpt(ik_bz)-1,:)=TMP_map3(:,:,:)
    !
    ik_grid=DbGd_k(i_db_merge)%nbz
    iE_grid=DbGd_k(i_db_merge)%nibz
@@ -458,7 +457,8 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
       ik_grid=ik_grid+1
       if (Xk%sstar(ik_bz,2)==1) iE_grid=iE_grid+1
       !
-      BZ_DbGd_table(ik_bz,BZ_DbGd_nkpt(ik_bz),:)=(/ iE_grid, ik_grid/)
+      BZ_DbGd_table(ik_bz,:BZ_DbGd_nkpt(ik_bz)-1,:)=TMP_map3(ik_bz,:BZ_DbGd_nkpt(ik_bz)-1,:)
+      BZ_DbGd_table(ik_bz, BZ_DbGd_nkpt(ik_bz)  ,:)=(/ iE_grid, ik_grid/)
       !
       BZ_DbGd_kpts(ik_grid,:)=Xk%ptbz(ik_bz,:)
       Xen%E_DbGd(:,iE_grid,:)=Xen%E(:BZ_DbGd_nbands,Xk%sstar(ik_bz,1),:)+Xen%E_fermi

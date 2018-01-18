@@ -57,9 +57,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X
+ integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
  !
  ! logicals and control
@@ -142,7 +142,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! must be repeated here:
        !
        if (self_detect_E_range) then
-         call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+         n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
          YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif

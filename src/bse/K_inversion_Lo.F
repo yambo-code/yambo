@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo) 
+subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo) 
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use stderr,         ONLY:intc
@@ -50,14 +50,14 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  type(w_samp),  intent(in)  :: W
  type(levels),  intent(in)  :: E
- type(bz_samp), intent(in)  :: k,q
+ type(bz_samp), intent(in)  :: k
  integer,       intent(in)  :: iq,Lo_dim,Lo_n_loop
  complex(SP),   intent(out) :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
  ! Work Space
  !
  type(w_samp)     :: W_mins,W_plus
- integer          :: i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4),i_c
+ integer          :: i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual
 #if defined _PL
  complex(SP)      :: SF(W%n_freqs,2)
@@ -77,7 +77,7 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(1,k,"K")  
+ call X_Double_Grid_setup(1,k)  
  !
 #if defined _ELPH
  !
@@ -181,11 +181,11 @@ subroutine K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
        !
        ! Convoluted GFs
        !================
-       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r",.FALSE.)
+       call X_GreenF_convoluted(1,transition,W_mins,E,k,Lo(i_res,:,1),"r")
        !
        if (BSS_add_antiresonant.or.BS_K_coupling) then
          !
-         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra",.FALSE.)
+         call X_GreenF_convoluted(1,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
          !
        endif
        !

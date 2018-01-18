@@ -40,11 +40,10 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
-&                         l_NE_with_fields,l_RT_induced_field,RT_alloc,RT_free,&
-&                         NE_i_time,l_RT_impose_N_dN,l_RT_impose_E,eval_energy,&
-&                         G_lesser_reference,rho_reference,magn_reference,eval_entropy, &
+&                         RT_alloc,RT_free,NE_i_time,eval_energy,&
+&                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
-&                         dG_lesser,l_initial_equilibrium,NE_initial_time_step_update,&
+&                         dG_lesser,l_initial_equilibrium,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_update_QP_Energies
  use plasma,          ONLY:PLASMA_free,EH_gas
@@ -181,7 +180,7 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Start and Restart')
  !######################################
  !
- call RT_start_and_restart(E,k,q,X)
+ call RT_start_and_restart(E,k,q)
  !
  ! Collisions => No need of WFs and Density
  !

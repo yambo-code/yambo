@@ -34,8 +34,8 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  implicit none
  !
- type(levels), intent(in) :: en
- type(bz_samp),intent(in) :: kpt,qpt
+ type(levels), intent(inout) :: en
+ type(bz_samp),intent(in)    :: kpt,qpt
  !
  ! Work Space
  !

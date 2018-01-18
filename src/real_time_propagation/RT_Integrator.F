@@ -59,12 +59,11 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  ! Notice that dG_in is never overwritten 
  ! --------------------------------------
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:l_RT_HEUN,l_RT_RK2,l_RT_RK4,l_RT_simple,                &
-&                         l_NE_with_fields,G_lesser_reference,RT_E_occupations,   &
+ use real_time,      ONLY:G_lesser_reference,RT_E_occupations,   &
 &                         RT_H_occupations,RT_delta0_occupations,                 &
-&                         Integrator_step,RT_nk,RT_bands,l_RT_induced_field,      &
+&                         RT_nk,RT_bands,Integrator_step,&
 &                         a_tableau,b_tableau,c_tableau,RWA_table,Integrator_nsteps
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
@@ -74,7 +73,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  implicit none
  !
  type(bz_samp),        intent(in) :: k,q
- type(levels),         intent(in) :: E
+ type(levels),      intent(inout) :: E
  real(SP),             intent(in) :: T_step,Time
  complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)

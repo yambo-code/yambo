@@ -46,7 +46,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  implicit none
  !
  type(levels),           intent(in)     :: Xen
- type(bz_samp),          intent(in)     :: Xk
+ type(bz_samp),          intent(inout)  :: Xk
  type(X_t),              intent(in)     :: X      
  !
  ! Work Space
@@ -66,7 +66,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
-
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 

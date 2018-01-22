@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -194,8 +194,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  n_threads_FFT=1
  call msg('s','[X] NESTED openmp parallelism off')
 #  endif
+ if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
- call OPENMP_locks_reset(INIT=.true.,nlocks=16)
  !
  ! Timing
  !========
@@ -211,7 +211,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !==============
  !
 !$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_row,ig_col_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
+!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,ig_row_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)
  !
@@ -248,11 +248,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
-   if( allocated(Xen%GreenF) ) then
-     call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
-   else
-     call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
-   endif
+   if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
+   if(.not.allocated(Xen%GreenF)) call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.)
 #else
    !
    ! GPL_EXCLUDE_END
@@ -271,8 +268,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      !
      do ig_col=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
-       call OPENMP_compute_mutex(ig_col,mutexid)
-       call omp_set_lock(omp_locks(mutexid))
+       if(n_threads_X>1) then
+         call OPENMP_compute_mutex(ig_col,mutexid)
+         call omp_set_lock(omp_locks(mutexid))
+       endif
 #endif
        !
        X_rows  = (/X_par%rows(1),min(ig_col,X_par%rows(2))/)
@@ -309,7 +308,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          endif
        endif
 #if defined _OPENMP
-       call omp_unset_lock(omp_locks(mutexid))
+       if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
      enddo
      !

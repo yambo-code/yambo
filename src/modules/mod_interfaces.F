@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -119,6 +119,28 @@ module interfaces
      real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
+#if defined _SLEPC
+   subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,target_energy,&
+&                          extraction,slepc_ncv,slepc_tol)
+     !
+     use pars,           ONLY:SP,schlen
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscmat.h>
+     !
+     Mat                         :: A            ! matrix to diagonalize of stype from slepc
+     integer                     :: n_eig        ! number of eigenvalues to compute
+     complex(SP),  optional      :: V_right(:,:) ! right eigenvalues
+     complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
+     complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
+     real(SP),     optional      :: E_real(:)    ! real eigenvalues
+     real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     real(SP),     optional      :: slepc_tol    ! tolerance of the iterative solver
+     character(schlen), optional :: extraction   ! extraction method for the eigenvalues
+     integer,optional            :: slepc_ncv    ! dimension of the subspace
+     !
+   end subroutine
+#endif
+   !
    integer function eval_G_minus_G(iG,iGo,COMM)
      use parallel_m,      ONLY:MPI_comm
      implicit none
@@ -138,6 +160,12 @@ module interfaces
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
      logical     ,optional :: keep_states_to_load
+   end subroutine
+   !
+   subroutine WF_free(WF,keep_fft)
+     use wave_func,       ONLY:WAVEs
+     type(WAVEs)           :: WF
+     logical     ,optional :: keep_fft
    end subroutine
    !
    subroutine PARALLEL_WF_index(COMM)

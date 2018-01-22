@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -37,7 +37,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a,x_cc
  use wrapper,        ONLY:Vstar_dot_V
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol

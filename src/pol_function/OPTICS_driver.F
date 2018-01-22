@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,7 +45,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
  use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>

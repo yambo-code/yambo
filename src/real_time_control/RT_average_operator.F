@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -164,6 +164,10 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  ! NOTE, however, that the all2all procedure are not at all general and must be changed if the
  ! input array is distributed in another way.
  !
+#if defined _TIMING
+ call timing('RT avg redux',OPR='start')
+#endif
+ !
  if (present(O_QP).or.present(O_REAL)) then
    if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE)
    if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE)
@@ -173,6 +177,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  endif
  !
 #if defined _TIMING
+ call timing('RT avg redux',OPR='stop')
  call timing('RT average Op',OPR='stop')
 #endif
  !

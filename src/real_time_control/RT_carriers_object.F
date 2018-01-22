@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -34,8 +34,9 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime,E_P_Ho_abs_lifetime, &
 &                         E_P_El_abs_lifetime,l_RT_uses_E_DbGd,RT_ibz_coo,DbGd_ibz_coo,  &
 &                         RT_nk,RT_all2ibz,RT_delta0_occupations,RT_Nk_ibz,RT_bands,&
-&                         BGR_Hartree,BGR_V_xc,BGR_Self_Energy,RT_obj_alloc,RT_obj_free,&
+&                         RT_obj_alloc,RT_obj_free,RT_E_and_k,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime
+ use hamiltonian,    ONLY:E_reference
  use IO_m,           ONLY:io_bulk
  !
  implicit none
@@ -43,7 +44,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  ! WHAT=1 allocate and define, 2 deallocate
  !
  type(RT_t),    intent(inout):: RT
- type(levels),  intent(in)   ,optional :: E
+ type(levels),  intent(inout),optional :: E
  type(bz_samp), intent(in)   ,optional :: K
  integer,       intent(in)   ,optional :: DB_id
  character(*),  intent(in)   ,optional :: WHAT
@@ -90,11 +91,11 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_DbGd=i_k_RT+DbGd_ibz_coo(i_k,1)-RT_ibz_coo(i_k,1)
        !
        if(l_RT_uses_E_DbGd) then
-         RT%E_bare(i_RT)=E%E_DbGd(i_b,i_k_DbGd,i_spin)
+         RT%E_bare(i_RT)=E_reference%E_DbGd(i_b,i_k_DbGd,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)
          if(     allocated(E%fo)) RT%f_bare(i_RT)=E%f_DbGd(i_b,i_k_DbGd,i_spin)-E%df_DbGd(i_b,i_k_DbGd,i_spin)
        else
-         RT%E_bare(i_RT)=E%E(i_b,i_k,i_spin)
+         RT%E_bare(i_RT)=E_reference%E(i_b,i_k,i_spin)
          if(.not.allocated(E%fo)) RT%f_bare(i_RT)=E%f(i_b,i_k,i_spin)
          if(     allocated(E%fo)) RT%f_bare(i_RT)=E%fo(i_b,i_k,i_spin)
        endif
@@ -121,17 +122,12 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          RT_delta0_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
-       ! BGR
+       ! Energies
        !
-       if (what=="fill") RT%delta_E(i_RT)=BGR_Hartree(i_b,i_k,1)+BGR_V_xc(i_b,i_k,1)+BGR_Self_Energy(i_b,i_k,1)
        if (what=="fill") then
-         RT%dE_Hartree(i_RT)    =BGR_Hartree(i_b,i_k,1)
-         RT%dE_V_xc(i_RT)       =BGR_V_xc(i_b,i_k,1)
-         RT%dE_Self_Energy(i_RT)=BGR_Self_Energy(i_b,i_k,1)
-       else if (allocated(BGR_Hartree)) then
-         BGR_Hartree(i_b,i_k,1)    =RT%dE_Hartree(i_RT)    
-         BGR_V_xc(i_b,i_k,1)       =RT%dE_V_xc(i_RT)
-         BGR_Self_Energy(i_b,i_k,1)=RT%dE_Self_Energy(i_RT)
+         RT%delta_E(i_RT)=RT_E_and_k%En(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
+       else if (what=="dump".and.allocated(RT_E_and_k%En)) then
+         RT_E_and_k%En(i_b,i_k_RT,i_spin)=RT%E_bare(i_RT)+RT%delta_E(i_RT)
        endif
        !
        ! Lifetimes
@@ -186,7 +182,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (what=="fill") then
          !
-         f_occ=RT%f_bare(i_RT)/spin_occ
+         f_occ =RT%f_bare(i_RT)/spin_occ
          df_occ=RT%delta_f(i_RT)/spin_occ
          if(l_elel_scatt.or.l_elph_scatt) then
            RT%delta_GAMMA(i_RT)=  Hole_lifetime+Elec_lifetime
@@ -212,9 +208,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
    case('ref_input_output')
      !
-     ! These are written in the REF DBs
-     ! It is a waste to write them again at each time-step
-     !
      call io_bulk(DB_id,VAR="RT_carriers_E_bare",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%E_bare)
      call io_bulk(DB_id,VAR="RT_carriers_f_bare",VAR_SZ=(/RT%nstates/))
@@ -231,12 +224,6 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
      !
      call io_bulk(DB_id,VAR="RT_carriers_delta_E",VAR_SZ=(/RT%nstates/))
      call io_bulk(DB_id,R1=RT%delta_E)
-     call io_bulk(DB_id,VAR="RT_carriers_dE_Hartree",VAR_SZ=(/RT%nstates/))
-     call io_bulk(DB_id,R1=RT%dE_Hartree)
-     call io_bulk(DB_id,VAR="RT_carriers_dE_V_xc",VAR_SZ=(/RT%nstates/))
-     call io_bulk(DB_id,R1=RT%dE_V_xc)
-     call io_bulk(DB_id,VAR="RT_carriers_dE_Self_Energy",VAR_SZ=(/RT%nstates/))
-     call io_bulk(DB_id,R1=RT%dE_Self_Energy)
      !
      ! Occupations
      !

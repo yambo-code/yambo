@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -34,7 +34,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  use YPP,            ONLY:output_fname
  use wrapper,        ONLY:Vstar_dot_V
  use stderr,         ONLY:intc
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  !
 #include<memory.h>
  !

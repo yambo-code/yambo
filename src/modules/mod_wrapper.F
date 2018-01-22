@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AF
@@ -29,7 +29,7 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP
+ use pars,   ONLY:SP,cI
  !
  implicit none
  !
@@ -50,6 +50,7 @@ module wrapper
  public :: V_dot_V
  public :: real_V_dot_V
  public :: M_by_V
+ public :: FADEVA
  !
  contains
    !
@@ -244,5 +245,26 @@ module wrapper
 #endif
      !
    end function V_dot_V
+   !
+   complex(SP) function FADEVA(Z)
+     !
+     complex(SP), intent(in) :: Z
+     real(SP)    :: rW(2),rZ(2)
+     integer     :: istatus
+     !
+     istatus=0
+     rZ=(/real(Z,SP),aimag(Z)/)
+     !
+     ! Compute rW=w(-z)
+     !=================
+#if defined _DOUBLE
+     call zwofz(rZ,rW,istatus)
+#else
+     call cwofz(rZ,rW,istatus)
+#endif
+     !
+     FADEVA=cmplx(rW(1),rW(2),SP)
+     !
+   end function
    !
 end module

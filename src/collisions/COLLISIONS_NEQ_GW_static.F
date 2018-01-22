@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -61,7 +61,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  integer                  ::i_coll1,i_coll2,i1,i2,iqbz,iqibz,alloc_err,iqs,&
 &                           i_n,i_k,i_k_s,i_k_sp,i_J,i_J_mem,PAR_NC_local,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_sp,i_kmq_G0,&
-&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,&
+&                           i_m,i_p,i_p_bz,i_p_s,i_p_sp,i_p_star,PAR_nPLASMA_local,PAR_nPLASMA_step,&
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_coll1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
@@ -127,7 +127,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      PAR_NC_local=PAR_NC_local+1
    enddo
  endif
- call live_timing("Collisions",PAR_NC_local*PAR_nQ)
+ !
+ PAR_nPLASMA_step =max(1,count(PAR_IND_Plasma%element_1D(:))/100)
+ PAR_nPLASMA_local=count(PAR_IND_Plasma%element_1D(:))/PAR_nPLASMA_step
+ !
+ call live_timing("Collisions",PAR_NC_local*PAR_nQ*PAR_nPLASMA_local)
  !
  ! Write Database Header 
  !
@@ -282,11 +286,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
            !
          endif
          !
+         if ( mod(count(PAR_IND_Plasma%element_1D(:i_J)),PAR_nPLASMA_step)==0 ) call live_timing(steps=1)
+         !
        enddo
        !
      enddo
-     !
-     call live_timing(steps=1)
      !
    enddo 
    !

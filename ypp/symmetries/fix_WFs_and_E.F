@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -34,7 +34,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
 &                              wf_nc_k_new,l_wf_nc_k_red,wf_igk_new,&
 &                              wf_nc_k_new,wf_ncx_new,wf_ncx_save,wf_ng_new,wf_ng_save

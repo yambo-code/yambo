@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -77,7 +77,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  if (RAD_LifeTime > tresh) then
    !
-   call msg('rs','[RT] External scalar Radiative lifetime applied')
+   call msg('rs','[RT] External scalar Radiative Scattering lifetime applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
@@ -126,7 +126,7 @@ subroutine RT_Dephasing_Matrix(E)
    ! QP database 
    !-------------
    !
-   call msg('rs','[RT] Quasiparticle database Dephasing applied')
+   call msg('rs','[RT] Quasiparticle Dephasing applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)

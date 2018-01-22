@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,7 +55,9 @@ module electrons
  ! Average magnetization density
  !
  logical                  :: eval_magn
- real(SP)                 :: Total_magn(3)
+ real(SP)                 :: Spin_magn(3)
+ real(SP)                 :: Orbital_magn(3)
+ real(SP)                 :: Itinerant_magn(3)
  !
  type levels
    integer         :: nb

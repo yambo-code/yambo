@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -167,11 +167,13 @@ subroutine ypp_INIT_load(defs)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
- call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations in the dos')
+ call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !
  ! TRANSIENT ABSORPTION
  !
+ call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
  call it('f',defs,'Transmission','Compute the transient transmissions')
  call it('f',defs,'Reflectivity','Compute the transient reflectivity')
  call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')

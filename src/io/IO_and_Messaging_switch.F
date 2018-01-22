@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,7 +44,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  character(schlen)::ch_piece(10)
  logical          ::local_TRUE,local_FALSE,local_master,local_write_to_report
  !
- logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,live_timing_is_on_now
+ logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,write_to_log_now,live_timing_is_on_now
  !
 #if defined _TIMING
  call timing('IO_and_Messaging_switch',OPR='start')
@@ -67,13 +67,14 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
    !
    do ich=1,10
      !
-     ! SAVEs used later for a RESTART
+     ! SAVEs used later for a RESTORE
      !
      if (trim(ch_piece(ich))=="SAVE") then
        IO_read_now           =IO_read
        IO_write_now          =IO_write
        write_to_of_now       =write_to_of
        write_to_report_now   =write_to_report
+       write_to_log_now      =write_to_log
        live_timing_is_on_now =live_timing_is_on
      endif
      !
@@ -84,6 +85,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
        IO_write          =IO_write_now
        write_to_of       =write_to_of_now
        write_to_report   =write_to_report_now
+       write_to_log      =write_to_log_now
        live_timing_is_on =live_timing_is_on_now
      endif
      !
@@ -94,7 +96,19 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
        IO_write          =IO_write_default(myid+1)
        write_to_of       =master_cpu
        write_to_report   =master_cpu
+       write_to_log      =write_to_log_default
        live_timing_is_on =write_to_log_default
+     endif
+     !
+     ! Mute
+     !
+     if (trim(ch_piece(ich))=="MUTE") then
+       IO_read           =.FALSE.
+       IO_write          =.FALSE.
+       write_to_of       =.FALSE.
+       write_to_report   =.FALSE.
+       write_to_log      =.FALSE.
+       live_timing_is_on =.FALSE.
      endif
      !
      ! Messages

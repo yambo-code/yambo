@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,6 +31,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz
+ use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
@@ -195,7 +196,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! read the DB
  !
  if (allocated(states_to_load)) then
-   WF%to_load=count(states_to_load .eqv. .true.)>0
+   WF%to_load=count(states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)) .eqv. .true.)>0
    if (.not.WF%to_load) then
      YAMBO_FREE(WF%state)
      YAMBO_ALLOC(WF%state,(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)))

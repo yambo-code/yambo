@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -27,7 +27,7 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:PARALLEL_index,WF_load
+ use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !

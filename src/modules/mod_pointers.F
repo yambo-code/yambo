@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,11 +28,33 @@ module pointers
  !
  implicit none
  !
+ interface linkM2V
+   module procedure linkM2V_real,linkM2V_complex
+ end interface
+ !
  interface linkC2R
-   module procedure linkC2R_0D,linkC2R_1D,linkC2R_2D,linkC2R_3D,linkC2R_4D
+   module procedure linkC2R_0D,linkC2R_1D,linkC2R_2D,linkC2R_3D,linkC2R_4D,linkC2R_5D
  end interface
  !
  contains
+   !
+   ! Interface which links Matrix to Vector
+   !
+   function linkM2V_real(M,N) result(VEC_pointer)
+     real(SP), target  :: M(1,1)
+     integer, intent(in)  :: N(:)
+     real(SP), pointer :: VEC_pointer(:,:)
+     call C_F_POINTER(C_LOC(M), VEC_pointer, N )
+   end function linkM2V_real
+   !
+   function linkM2V_complex(M,N) result(VEC_pointer)
+     complex(SP), target  :: M(1,1)
+     integer, intent(in)  :: N(:)
+     complex(SP), pointer :: VEC_pointer(:,:)
+     call C_F_POINTER(C_LOC(M), VEC_pointer, N )
+   end function linkM2V_complex
+   !
+   ! Interface which links Complex to Real
    !
    function linkC2R_0D(M,N) result(REAL_pointer)
      complex(SP), target  :: M
@@ -68,5 +90,12 @@ module pointers
      real(SP), pointer :: REAL_pointer(:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_4D
+   !
+   function linkC2R_5D(M,N) result(REAL_pointer)
+     complex(SP), target  :: M(1,1,1,1,1)
+     integer, intent(in)  :: N(:)
+     real(SP), pointer :: REAL_pointer(:,:,:,:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkC2R_5D
    !
 end module

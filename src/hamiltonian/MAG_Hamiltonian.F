@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -55,8 +55,9 @@ subroutine MAG_Hamiltonian()
  !
  use pars,           ONLY:SP,cZERO,cI,cONE
  use units,          ONLY:SPEED_OF_LIGHT
- use hamiltonian,    ONLY:Ho
+ use hamiltonian,    ONLY:Hzero
  use FFT_m,          ONLY:fft_size
+ use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
 &                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
@@ -65,7 +66,7 @@ subroutine MAG_Hamiltonian()
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index,WF_load
+ use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
  !
 #include<memory.h>
@@ -77,7 +78,6 @@ subroutine MAG_Hamiltonian()
  ! Dummies
  !
  integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_spinor,j_spinor
- complex(SP):: sigma_x(2,2),sigma_y(2,2),sigma_z(2,2)
  logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
  !
  ! Allocs
@@ -133,9 +133,6 @@ subroutine MAG_Hamiltonian()
      enddo 
    else if(n_spinor==2) then
      ! Pauli matrices
-     sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
-     sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
-     sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
      do ir=1,fft_size
        if(.not.ir_table(ir)) cycle
        H_pauli(ir,:,:,1)=Bx*sigma_x+By*sigma_y+Bz*sigma_z
@@ -212,7 +209,8 @@ subroutine MAG_Hamiltonian()
              if (MAG_pauli) H_tmp(:,i_spinor,j_spinor)= H_tmp(:,i_spinor,j_spinor) &
              &                                          +H_pauli(:,i_spinor,j_spinor,i_sp_pol)*WF%c(:,j_spinor,ip_wf)
              !
-             Ho(ib,ibp,ik,i_sp_pol)= Ho(ib,ibp,ik,i_sp_pol)+Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
+             Hzero(ib,ibp,ik,i_sp_pol)= Hzero(ib,ibp,ik,i_sp_pol)+&
+&              Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
          enddo
@@ -228,7 +226,7 @@ subroutine MAG_Hamiltonian()
    if(MAG_landau) call WF_derivative_free()
    call WF_free(WF)
    !
-   call PP_redux_wait(Ho(:,:,ik,:))
+   call PP_redux_wait(Hzero(:,:,ik,:))
    !
  enddo
  !

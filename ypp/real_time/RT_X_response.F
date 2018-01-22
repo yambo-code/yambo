@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -27,6 +27,7 @@ subroutine RT_X_response(en,k,q)
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
 &                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes
+ use RT_control,     ONLY:JPC_RT_IO_t
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
@@ -69,7 +70,7 @@ subroutine RT_X_response(en,k,q)
  !
  ! Time Initialization
  !====================
- call RT_time_configuration_setup('CURRENT')
+ call RT_time_configuration_setup('CURRENT',JPC_RT_IO_t)
  !
  ! Field-Dependent actions
  !=========================

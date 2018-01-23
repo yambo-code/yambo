@@ -185,6 +185,12 @@ module interfaces
      logical,         optional::RESET
    end subroutine
    !
+   subroutine PARALLEL_check_phase_space(N_par,N,COMM,N_cpu,MSG)
+     integer               :: N_par,N
+     integer,     optional :: COMM,N_cpu
+     character(*),optional :: MSG
+   end subroutine
+   !
    subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)
      use pars,           ONLY:SP
      character(*)          :: WHAT

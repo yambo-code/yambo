@@ -242,9 +242,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
- call it(defs,'HARRLvcs', '[HA] Hartree  RL components',QP_ng_SH,G_unit)
- call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
- call it(defs,'CORRLvcs', '[GW] Correlat RL components',QP_ng_Sc,G_unit)
+ call it(defs,'HARRLvcs', '[HA] Hartree     RL components',QP_ng_SH,G_unit)
+ call it(defs,'EXXRLvcs', '[XX] Exchange    RL components',QP_ng_Sx,G_unit)
+ call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
 #endif

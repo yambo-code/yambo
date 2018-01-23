@@ -101,6 +101,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
+ use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -529,6 +530,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
+ H_potential="default"
  !
 #endif
  !

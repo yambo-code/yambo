@@ -58,7 +58,7 @@ subroutine PARALLEL_check_phase_space(N_par,N,COMM,N_cpu,MSG)
  call PP_redux_wait(VALUES,COMM=COMM_here)
  !
  do i_c=1,N_cpu_here
-   if (VALUES(i_c,1)==0) then
+   if (VALUES(i_c,1)>VALUES(i_c,2)) then
      if (present(MSG)) then
        call error(trim(MSG_here)//" :"//trim(MSG))
      else

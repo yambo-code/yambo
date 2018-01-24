@@ -84,7 +84,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
 &                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
-         call PARALLEL_check_phase_space(PARALLEL_CPU_used(i_structure),PHASE_space,MSG=trim(USER_structure_msg))
+         call PARALLEL_check_phase_space(PHASE_space/PARALLEL_CPU_used(i_structure),MSG=trim(USER_structure_msg))
        endif
        ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
      endif

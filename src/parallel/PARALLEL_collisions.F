@@ -213,6 +213,6 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  call PARALLEL_live_message(trim(COLL%name)//" Number of Collisions",LOADED=COLL%PAR_N,TOTAL=NC_tot)
  !
- call PARALLEL_check_phase_space(COLL%PAR_N,NC_tot)
+ call PARALLEL_check_phase_space(COLL%PAR_N,trim(COLL%name)//" COLLISIONS")
  !
 end subroutine

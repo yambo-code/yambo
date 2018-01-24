@@ -185,9 +185,9 @@ module interfaces
      logical,         optional::RESET
    end subroutine
    !
-   subroutine PARALLEL_check_phase_space(N_par,N,COMM,N_cpu,MSG)
-     integer               :: N_par,N
-     integer,     optional :: COMM,N_cpu
+   subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )
+     integer               :: N_par_elements
+     integer,     optional :: WORLD,WORLD_size
      character(*),optional :: MSG
    end subroutine
    !

@@ -21,49 +21,50 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_check_phase_space(N_par,N,COMM,N_cpu,MSG)
+subroutine PARALLEL_check_phase_space(N_PAR_elements,WORLD,WORLD_size,MSG)
  !
  use pars,        ONLY:schlen
  use parallel_m,  ONLY:ncpu,mpi_comm_world,PP_redux_wait,myid
  use stderr,      ONLY:intc
  use com,         ONLY:error
+ use LIVE_t,      ONLY:LIVE_message
  !
  implicit none
  !
- integer                :: N_par,N
- integer,      optional :: COMM,N_cpu
+ integer                :: N_PAR_elements
+ integer,      optional :: WORLD,WORLD_size
  character(*), optional :: MSG
  ! 
  ! Work Space
  !
- integer              :: N_cpu_here,COMM_here,i_c
- integer, allocatable :: VALUES(:,:)
+ integer              :: Ncpu_tot,COMM,i_c
+ integer, allocatable :: VALUES(:)
  character(schlen)    :: MSG_here="USER parallel structure does not fit the current run parameters"
  !
- N_cpu_here= ncpu
- COMM_here = mpi_comm_world
+ Ncpu_tot= ncpu
+ COMM    = mpi_comm_world
  !
- if (present(N_cpu)) then
-   N_cpu_here=N_cpu
+ if (present(WORLD_size)) then
+   Ncpu_tot=WORLD_size
  endif
- if (present(COMM)) then
-   COMM_here=COMM
+ if (present(WORLD)) then
+   COMM=WORLD
  endif
  ! 
- allocate(VALUES(N_cpu_here,2))
+ allocate(VALUES(Ncpu_tot))
  !
  VALUES=0
- VALUES(myid+1,:)=(/N_par,N/)
+ VALUES(myid+1)=N_PAR_elements
  !
- call PP_redux_wait(VALUES,COMM=COMM_here)
+ call PP_redux_wait(VALUES,COMM=COMM)
  !
- do i_c=1,N_cpu_here
-   if (VALUES(i_c,1)>VALUES(i_c,2)) then
+ do i_c=1,Ncpu_tot
+   if (VALUES(i_c)==0) then
+     call LIVE_message(message="NULL parallel world for CPU#"//trim(intc(i_c)),CPU_TIME=.FALSE.)
      if (present(MSG)) then
-       call error(trim(MSG_here)//" :"//trim(MSG))
-     else
-       call error(trim(MSG_here)//" : NULL parallel world for (at least) CPU#"//trim(intc(i_c)))
+       MSG_here=trim(MSG_here)//". "//trim(MSG)
      endif
+     call error(trim(MSG_here))
    endif
  enddo
  !

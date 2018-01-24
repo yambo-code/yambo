@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -28,14 +28,15 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, E)
+subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- use linear_algebra, ONLY:WS,LINEAR_ALGEBRA_error,WS,LINEAR_ALGEBRA_WS_clean_up
+ use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use matrix,         ONLY:PAR_matrix
  !
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -43,19 +44,18 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
 #include<memory.h>
  !
  integer           :: N
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: M_slk,EIGEN_slk
+ type(PAR_matrix)  :: M,V
  real(SP)          :: E(N)
  !
- character(64) :: subname="PARALLEL_HERMITIAN_diagonalization"
- integer :: lwork,lrwork
- real(SP):: rvar
- complex(SP) :: cvar
+ character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
+ integer           :: lwork,lrwork
+ real(SP)          :: rvar
+ complex(SP)       :: cvar
+ type(LALGEBRA_WS) :: WS
  !
  E=0.0_SP
  !
- if (ORTHO%coordinate(1)==-1) return
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
 #if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
@@ -65,35 +65,33 @@ subroutine PARALLEL_HERMITIAN_diagonalization(ORTHO, POOL, M_slk, EIGEN_slk, N, 
  lrwork=-1
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-             cvar,lwork,rvar,lrwork,WS%i_fail)
+ call PZHEEV&
 #else
- call PCHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-             cvar,lwork,rvar,lrwork,WS%i_fail)
+ call PCHEEV&
 #endif
+&  ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,cvar,lwork,rvar,lrwork,WS%i_fail)
  !
- !lwork=nint(real(cvar))
- !lrwork=nint(rvar)
- ! AF: better estimates should be used
+ ! AF: A better estimates should be used
  lwork=2*n**2
  lrwork=2*n + 2*n-2
  YAMBO_ALLOC(WS%v_cmplx,(lwork))
  YAMBO_ALLOC(WS%v_real,(lrwork))
  !
 #if defined _DOUBLE
- call PZHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-             WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PZHEEV')
+ call PZHEEV&
 #else
- call PCHEEV('V','U',N,M_slk%blc,1,1,M_slk%desc,E,EIGEN_slk%blc,1,1,EIGEN_slk%desc,&
-             WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
- if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing PCHEEV')
+ call PCHEEV&
 #endif
+& ('V','U',N,M%blc(:,:,M%I),1,1,M%desc,E,V%blc(:,:,V%I),1,1,V%desc,WS%v_cmplx,lwork,WS%v_real,lrwork,WS%i_fail)
  !
- if (ORTHO%task/=0) E=0.0_SP
+ if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing P(Z/C)HEEV')
  !
- call PP_redux_wait(E,COMM=POOL%INTRA_comm)
- ! 
+ if (SLK_ORTHO%task/=0) E=0.0_SP
+ !
+ call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
+ !
+ call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ !
 #if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
 #endif

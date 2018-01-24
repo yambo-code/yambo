@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -93,6 +93,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
          else
            nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
          endif
+         call netcdf_call(nf_error,ID,VAR=VAR)
        endif
        call netcdf_call(nf_error,ID,VAR=VAR)
        call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
@@ -106,9 +107,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
 &          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
 &          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
-     !
-     ! GPL_EXCLUDE_START
-     !
      !
      ! GPL_EXCLUDE_END
      !

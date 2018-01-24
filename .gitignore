@@ -39,11 +39,14 @@ lib/*/iotk*
 lib/*/libxc-*
 lib/*/lapack-*
 lib/*/fftw-*
+lib/*/blacs*
+lib/*/scalapack-*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh
 sbin/make_makefile.sh
 sbin/objects_store.sh
+sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
 

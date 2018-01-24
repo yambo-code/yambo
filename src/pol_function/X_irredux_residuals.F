@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM,AF,IM
@@ -32,7 +32,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator 
+ use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator,X_cols,X_rows
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
@@ -47,7 +47,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  type(bz_samp),intent(in) :: Xk
  type(X_t),    intent(in) :: X
  integer,      intent(in) :: i_cg,iq
- complex(SP),  intent(out):: Xo_res(X%ng,X%ng)
+ complex(SP),  intent(out):: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
  !
  ! Work sapce
  !
@@ -55,19 +55,17 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !     (stack overflow, causing random crashes of the code)
  !     it would be best to define it as allocatable (less efficient if too
  !     many calls are done, though)
+ !
  complex(SP)              :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
  real(SP)                 :: Z_eh_occ
  logical                  :: l_X_term_vv
  integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
-&                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start
+&                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
  !
- isave=0
- !
- n_poles = sum(bare_grid_N(1:i_cg-1))
- !
+ isave       = 0
+ n_poles     = sum(bare_grid_N(1:i_cg-1))
  Xo_res(:,:) = cZERO
- !
- Z_=cONE
+ Z_          = cONE
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
@@ -103,12 +101,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    ! GPL_EXCLUDE_END
    !
    !
-   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/&
-&             spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+   Z_eh_occ = Xen%f(iv,ikp,i_spin)*(spin_occ-Xen%f(ic,ik,i_spin))/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    !
    if (l_X_term_vv) then
-     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/ &
-&               spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
+     Z_eh_occ = Xen%f(iv,ikp,i_spin)*Xen%f(ic,ik,i_spin)/spin_occ/real(Xk%nbz,SP)/DL_vol*real(Z_)
    endif  
    !
    ! Scattering CALL
@@ -118,7 +114,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%is = (/ic,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
-     ik_bz_mem=PAR_Xk_bz_index(ikbz)
+     ik_bz_mem   = PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          call scatter_Bamp(Xo_scatt)
@@ -155,8 +151,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
 #if defined _OPENMP
    !$omp parallel do default(shared), private(ig2)
 #endif
-   do ig2=1,X%ng
-     call V_by_V_plus_V(ig2,Z_eh_occ*Xo_scatt%rhotw(ig2),conjg(Xo_scatt%rhotw(:ig2)),Xo_res(:ig2,ig2))
+   do ig2=X_cols(1),X_cols(2)
+     ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
+     call V_by_V_plus_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
+&                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
 #if defined _OPENMP
    !$omp end parallel do
@@ -200,16 +198,16 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !
      ! take into account the cancellation of terms
      ! occurring when dealing with the wings
-     ig_start=1
-     if(iq==1) ig_start=2
+     ig_start=X_rows(1)
+     if (iq==1) ig_start= max(2,ig_start)
      !
 #if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
 #endif
-     do ig2=1,X%ng
-     do ig1=ig_start,ig2
-       Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
-     enddo
+     do ig2=X_cols(1),X_cols(2)
+       do ig1=ig_start,min(ig2,X_rows(2))
+         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
+       enddo
      enddo
 #if defined _OPENMP
      !$omp end parallel do 

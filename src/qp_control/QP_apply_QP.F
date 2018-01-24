@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -62,7 +62,7 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  ! FIT
  !
- if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,bands,qp)
+ if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,bands,en,qp)
  if (QP_action(i_ACTION)%plan(2)) call QP_fit_widths(i_ACTION,bands,en,k,qp)
  if (QP_action(i_ACTION)%plan(3)) then
    do i_spin=1,n_sp_pol

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -110,7 +110,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
-   if (index(BSS_mode,'h')/=0) then
+   if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
      YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
@@ -197,7 +197,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
              PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
              !
-             if (index(BSS_mode,'h')/=0) PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+                PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             endif
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
@@ -336,11 +338,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
 &                 ' ACTION: Use the same occupations in K and R.')
      !
 #endif
-     !
-     ! GPL_EXCLUDE_END
-     !
-     !
-     ! GPL_EXCLUDE_START
      !
 #if defined _RT
      if (.not.l_rt_carriers_in_use) then

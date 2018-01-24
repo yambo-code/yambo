@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -47,7 +47,6 @@ subroutine YPP_SET_defaults()
  dos_E_range=(/1._SP,-1._SP/)/HA2EV
  dos_E_steps=500
  WF_ref=0
- !
  !
  ! RT OCCUPATIONS
  !
@@ -194,6 +193,10 @@ subroutine YPP_SET_defaults()
  Eh_pumped_pair_BZ_width=0.1_SP
  Eh_pumped_pair_BZ_reagions=-1.0_SP
  Eh_pumped_Nel=1._SP
+ !
+ !TR abs
+ !
+ RT_p_format="3col" 
  !
 #endif
  !

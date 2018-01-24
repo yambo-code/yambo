@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -123,8 +123,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      wf_nc_k(ik)         = wf_nc_k_reduced(kpoints_map(1,ik))
    enddo
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Close the G-vectors shell
    !
    if(nsym>old_nsym) then
@@ -139,8 +137,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      call msg('l','done')
      !
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  end select
  !

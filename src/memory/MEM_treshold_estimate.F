@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,14 +28,12 @@ subroutine MEM_treshold_estimate( )
  use electrons,    ONLY:n_spin,n_bands
  use R_lattice,    ONLY:nkibz
  use wave_func,    ONLY:wf_ng
- use memory,       ONLY:MEM_treshold,MEM_SAVE_treshold,MEM_jump_treshold
+ use memory,       ONLY:MEM_treshold
  !
  implicit none
  !
  ! In Kb!
  !
  MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),1000)
- MEM_SAVE_treshold=10 *MEM_treshold
- MEM_jump_treshold=100*MEM_treshold
  !
 end subroutine

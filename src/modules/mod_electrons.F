@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,7 +55,9 @@ module electrons
  ! Average magnetization density
  !
  logical                  :: eval_magn
- real(SP)                 :: Total_magn(3)
+ real(SP)                 :: Spin_magn(3)
+ real(SP)                 :: Orbital_magn(3)
+ real(SP)                 :: Itinerant_magn(3)
  !
  type levels
    integer         :: nb
@@ -66,10 +68,10 @@ module electrons
    integer         :: kf
    integer         :: sf
    real(SP)        :: E_Fermi
-   real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
+   real(SP)        :: E_dir_gap(2)       ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
-   real(SP)        :: E_VBM        ! Valence    Band Maximum
-   real(SP)        :: E_CBm        ! Conduction Band minimum
+   real(SP)        :: E_VBM(2)           ! Valence    Band Maximum
+   real(SP)        :: E_CBm(2)           ! Conduction Band minimum
    !
    ! QP corrections
    !

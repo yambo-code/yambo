@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -46,10 +46,12 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  real(SP)  :: COLLISIONS_max
  !
  if (i_coll==0) then
+   ! GPL_EXCLUDE_START
    if(io_COLLs.and.master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
+   ! GPL_EXCLUDE_END
    return
  endif
  !
@@ -109,6 +111,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    !
  enddo
  !
+ ! GPL_EXCLUDE_START
+ !
  if (IO_colls) then
    !
    call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
@@ -117,6 +121,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    call COLLISIONS_alloc_and_free(what,"v1","clean",1)
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 #if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='stop')

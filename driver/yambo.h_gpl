@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2017 the YAMBO team
+         Copyright (C) 2000-2018 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -49,6 +49,7 @@
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
@@ -69,12 +70,15 @@
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
+#if defined _RT
+  {"tdBSE", "q","Real-time Bethe-Salpter Equation ",0,0,0,0,0}, 
+#endif
 #if defined _ELPH 
   {"corrtp", "c","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
   {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
 #endif
-#if defined _SURF
-  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
+#if defined _RT
+  {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

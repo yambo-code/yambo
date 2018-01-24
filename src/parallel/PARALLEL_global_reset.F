@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,6 +27,9 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
  use parallel_m,    ONLY:PP_indexes_reset
+ ! SLK
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
+ use matrix,        ONLY:TRANSFER_world
  ! COMMUNICATORS
  use parallel_m,    ONLY:COMM_reset,&  
 &                        PAR_COM_VAL_INDEX,PAR_COM_CON_INDEX,PAR_COM_Q_A2A,&
@@ -145,13 +148,18 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_WF_k_A2A)
  call COMM_reset(PAR_COM_WF_b_INDEX)
  call COMM_reset(PAR_COM_WF_k_INDEX)
+ call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
+ call COMM_reset(PAR_COM_X_WORLD)
  call COMM_reset(PAR_COM_DIPOLES)
  call COMM_reset(PAR_COM_DIPOLES_k_subgroup)
  call COMM_reset(PAR_COM_density)
  call COMM_reset(PAR_COM_eh_INDEX)
+ call COMM_reset(PAR_COM_RL_INDEX)
+ call COMM_reset(PAR_COM_RL_A2A)
  call COMM_reset(PAR_COM_eh_A2A)
  call COMM_reset(PAR_COM_T_INDEX)
  call COMM_reset(PAR_COM_SLK_INDEX_local)
+ call COMM_reset(TRANSFER_world)
 #if defined _SCALAPACK
  call COMM_reset(PAR_COM_SLK)
  call COMM_reset(PAR_COM_SLK_INDEX_global)

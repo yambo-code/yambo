@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -34,7 +34,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_ng,wf_ncx
- use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
+ use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
@@ -93,7 +93,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ! PWscf (old)
  X_Vnl%ib=(/1,E%nb/)       ! full bands range
  X_Vnl%ngostnts=1          ! to overcome check for io
- nXkibz=k_save%nibz
+ nkibz=k_save%nibz
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
@@ -242,6 +242,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      endif
      !
    endif
+   !    
+   nkibz=k%nibz
    !
    ! Pseudo-potentials
    !
@@ -263,7 +265,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
        pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
        !
-       nXkibz=k%nibz
        call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)      
        io_KB_abinit_err=io_KB_abinit(ID)
        !
@@ -379,7 +380,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      X_Vnl%ngostnts=wf_ng
-     nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !
@@ -457,7 +457,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
      !
      X_Vnl%ngostnts=wf_ng
-     nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !

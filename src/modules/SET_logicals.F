@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -68,6 +68,9 @@ subroutine SET_logicals()
  io_SCREEN  =.FALSE.
  io_HF      =.TRUE.
  io_COLLs   =.TRUE.
+ !GPL_INCLUDE_START
+ !io_COLLs   =.FALSE.
+ !GPL_INCLUDE_END
  io_GF      =.TRUE.
  io_J       =.TRUE.
  io_CARRIERs=.TRUE.

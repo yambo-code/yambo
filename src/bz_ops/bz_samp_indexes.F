@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -286,7 +286,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_C(ikbz,iqbz,1)=okbz
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
- do ikbz=1,Xk%nbz
+ do ikbz=1,k%nbz
    !
    ikibz=k%sstar(ikbz,1)
    iks  =k%sstar(ikbz,2)

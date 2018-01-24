@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -31,7 +31,7 @@ acx_mpi_ok=no
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])
-        AC_CHECK_PROGS(MPICC_test,$MPICC mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+        AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
         MPICC=$MPICC_test
         CC=$MPICC_test
 ],
@@ -126,7 +126,9 @@ AC_LANG_CASE([Fortran],
 #
 #
 mpibuild="no"
-if test "$acx_mpi_ok" = "yes"; then  mpibuild="yes"; fi
+if test "$acx_mpi_ok" = "yes"; then  
+ mpibuild="yes"; 
+fi
 
 #
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:

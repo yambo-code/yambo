@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,6 +24,7 @@
 integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
+ use com,              ONLY:error
  use electrons,        ONLY:n_sp_pol,n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
@@ -56,10 +57,12 @@ integer function io_WF(ID,wf)
    case(2)
      ifrag=io_sec(ID,1)-1
      ib_grp=io_sec(ID,2)
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (1)")
    case(3)
      ifrag=io_sec(ID,2)-1
      ib_grp=io_sec(ID,3)
      head_io=1
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (2)")
  end select
  !
  if(ifrag<=nkibz) then
@@ -147,6 +150,7 @@ integer function io_WF(ID,wf)
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
  !
  do ib_block=1,n_blocks
+   if(ib_grp>1) ib_lim(1,ib_block)=mod(ib_lim(1,ib_block)-1,wf_nb_io)+1
    call io_bulk(ID,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
  enddo
  !

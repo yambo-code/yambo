@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -27,9 +27,9 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -89,11 +89,12 @@ subroutine K_diago_driver(iq,W)
  !
  ! I/O
  !
- integer              ::io_err,ID
+ integer                 :: io_err,ID
  !
 #if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
 #endif
+ BSS_n_eig = BS_H_dim
  !  
  ! Sectioning
  !============
@@ -115,7 +116,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel and/or BSS components loading
  !======================================
@@ -132,6 +133,17 @@ subroutine K_diago_driver(iq,W)
  call K_output_file(iq,"open Diago")
  !
  if (io_err<0) then
+   !
+#if defined _SCALAPACK
+   !
+   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+   !
+   ! This line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+   ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
+   !=========================
+   !if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+   !
+#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
@@ -227,7 +239,7 @@ subroutine K_diago_driver(iq,W)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
    !
  endif
  !

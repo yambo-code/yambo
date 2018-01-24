@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -259,6 +259,9 @@ module parallel_m
  ! ... Optical oscillators
  integer            :: PAR_IND_DIPk_ID
  !
+ ! ... Freqs
+ integer            :: PAR_IND_FREQ_ID
+ !
  ! Specific MPI COMMUNICATORS...
  !==============================
  ! PAR_COM_*_INDEX is the interchain comunicator
@@ -275,8 +278,8 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- integer             :: PAR_nRL
- integer,allocatable :: PAR_RL_index(:)
+ type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
  type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
@@ -305,6 +308,8 @@ module parallel_m
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
+ type(MPI_comm),SAVE :: PAR_COM_X_WORLD
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES
  type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
@@ -330,9 +335,12 @@ module parallel_m
  integer            :: PAR_n_bands(2)   = 0
  integer            :: PAR_n_c_bands(2) = 0
  integer            :: PAR_n_v_bands(2) = 0
+ integer            :: PAR_n_G_vectors  = 0
  !
  ! ... and derived variables
  !==========================
+ integer            :: PAR_nRL
+ integer,allocatable:: PAR_RL_index(:)
  integer            :: PAR_nPlasma
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
@@ -356,6 +364,8 @@ module parallel_m
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
  integer,allocatable:: PAR_G_bands_index(:)
+ integer            :: PAR_n_freqs 
+ integer,allocatable:: PAR_FREQS_index(:)
  !
  ! WorkSpace
  !
@@ -366,7 +376,8 @@ module parallel_m
  interface PP_redux_wait
    module procedure l1share,i1share,i18share,i2share,i3share,&
 &                   r0share,r1share,r2share,r3share,&
-&                   c0share,c1share,c2share,c3share,c4share,ch0share,PARALLEL_wait
+&                   c0share,c1share,c2share,c3share,c4share,c5share,&
+&                   ch0share,PARALLEL_wait
 #if ! defined _DOUBLE
    module procedure d0share,d1share,d2share
 #endif
@@ -1082,6 +1093,37 @@ module parallel_m
      allocate(larray(dimension))
      larray=0.
      call mpi_allreduce(array(1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine c5share(array,COMM)
+     complex(SP):: array(:,:,:,:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(5),dimension,LOCAL_COMM  ! Work Space
+     complex(SP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0.
+     call mpi_allreduce(array(1,1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)

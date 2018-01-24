@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -104,15 +104,15 @@ subroutine QP_apply_dump_user_CTLs( E, object )
      !
      call USER_action_active( )
      !
-     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,2,E%E_CBm,E%E_VBM)
-     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,3,E%E_CBm,E%E_VBM)
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,2,E%E_CBm(1),E%E_VBM(1))
+     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,3,E%E_CBm(2),E%E_VBM(2))
      !
    else if (QP_CTL_is_active(QP_ctl_ID,1)) then
      !
      call USER_action_active( )
      !
-     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
-     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm(1),E%E_VBM(1))
+     call QP_CTL_fill(n_QP_actions,2,QP_ctl_ID,1,E%E_CBm(2),E%E_VBM(2))
      !
    endif
    !
@@ -122,7 +122,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
      !
      call USER_action_active( )
      !
-     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm,E%E_VBM)
+     call QP_CTL_fill(n_QP_actions,1,QP_ctl_ID,1,E%E_CBm(1),E%E_VBM(1))
      !
    endif
    !

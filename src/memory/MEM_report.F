@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
- use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
+ use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold
  use units,        ONLY:Kilobyte
  use com,          ONLY:msg
@@ -55,14 +55,14 @@ subroutine MEM_report( REPORT )
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem),"Unallocated components:")
+     call plot_the_element(MEMs(i_mem),"Not deallocated components:")
      !
    enddo
    !
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !
@@ -75,7 +75,7 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
- WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_bytes))
+ WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb))
  call msg("nr",msg_(1:len_trim(msg_)))
  !
  contains

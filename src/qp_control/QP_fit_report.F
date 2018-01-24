@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  ! Work Space
  !
  integer          ::i_spin,i_d,i_s
- real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
+ real(SP)         ::db_scissor,fit_scissor,E(4),E_err(2),E_ref(2),W(6),W_err(2),W_dos(2),W_dos_err(2)
  character(lchlen)::ch
  complex(SP)      ::Z
  logical          ::l_E,l_W,l_Z
@@ -69,6 +69,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    fit_scissor=QP_action(i_ACTION)%CTL(i_spin)%fit_scissor
    E=QP_action(i_ACTION)%CTL(i_spin)%E
    E_err=QP_action(i_ACTION)%CTL(i_spin)%E_err
+   E_ref=QP_action(i_ACTION)%CTL(i_spin)%E_ref
    W=QP_action(i_ACTION)%CTL(i_spin)%W
    W_dos=QP_action(i_ACTION)%CTL(i_spin)%W_dos
    W_err=QP_action(i_ACTION)%CTL(i_spin)%W_err
@@ -93,7 +94,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (fit_scissor/=0._SP) then
-     call msg(' r',' Additional GAP corr. (FIT)[ev]:',fit_scissor*HA2EV)
+     call msg(' r','             (FIT, actual) [ev]:',fit_scissor*HA2EV)
    endif
    !
    if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
@@ -127,12 +128,10 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
      l_Z=.TRUE.
    endif
    !
- enddo
- call msg('rn'," ")
- !
- ! Test output file
- !
- do i_spin=1,n_sp_pol
+   call msg('rn'," ")
+   !
+   ! Test output file
+   !
    !
    fname(2)=QP_action(i_ACTION)%CTL(1)%db
    fname(1)=string_remove(fname(2),"/ndb.QP")
@@ -204,22 +203,22 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    enddo
    !
    do i_s=1,n_steps
-     Eo=minval(E_sorted)+( maxval(E_sorted)-minval(E_sorted))/n_steps*i_s
+     Eo=minval(E_sorted)+( maxval(E_sorted)-minval(E_sorted))/real(n_steps,SP)*real(i_s,SP)
      n_titles=1
      value(1)=Eo*HA2EV
      if (l_E) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"E")*HA2EV
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"E")*HA2EV
      endif
      if (l_W) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"W")*HA2EV*1000.
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"W")*HA2EV*1000.
      endif
      if (l_Z) then
        n_titles=n_titles+1
-       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"Z"))
+       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z"))
        n_titles=n_titles+1
-       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,bands,en,k,"Z"))
+       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z"))
      endif
      call msg('o .fit','',value(:n_titles),INDENT=-2,USE_TABS=.TRUE.)
    enddo

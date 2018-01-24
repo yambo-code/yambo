@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,9 +38,9 @@ integer function io_RT_components(what,ID)
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
- use RT_control,     ONLY:J_cache,P_cache,M_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
- use fields,         ONLY:A_vecpot
+ use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -146,6 +146,8 @@ integer function io_RT_components(what,ID)
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_input_output")
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    if (l_G) then
      call io_elemental(ID,VAR="Save_G_history",VAR_SZ=1,MENU=0) 
      call io_elemental(ID,L0=SAVE_G_history)
@@ -157,9 +159,8 @@ integer function io_RT_components(what,ID)
    ! I/O time points
    !
    if ((l_JPSM.or.l_carriers).and.(db_type==2.or..not.l_real_time)) call LOCAL_IO(JPC_RT_IO_t)
-   if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
    !
-   ! GPL_EXCLUDE_END
+   if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
    !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
@@ -171,11 +172,11 @@ integer function io_RT_components(what,ID)
  ! === no K no Time ===
  !#####################
  !
+ ! GPL_EXCLUDE_START
+ !
  ! REFERENCE Lifetimes and Green function
  !========================================
  if ( l_REF ) then
-   !
-   ! GPL_EXCLUDE_START
    !
 #if defined _ELPH
    !
@@ -221,8 +222,6 @@ integer function io_RT_components(what,ID)
      !
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
    if (allocated(G_lesser_reference)) then
      !
      i_spin=1
@@ -239,8 +238,6 @@ integer function io_RT_components(what,ID)
  ! === K-dependent ===
  !####################
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! ELPH Kernel THETA Matrix 
@@ -256,8 +253,6 @@ integer function io_RT_components(what,ID)
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! lesser Green Function
  !=======================
@@ -281,16 +276,14 @@ integer function io_RT_components(what,ID)
    enddo
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
-     call io_bulk(ID,VAR="A_vecpot",VAR_SZ=(/2,9/))
-     call io_bulk(ID,C1=(/A_vecpot%vecpot,A_vecpot%vecpot_vel,A_vecpot%vecpot_acc/))
+     call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
+     call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
    !
  endif
  !
  ! === Time-dependent ===
  !#######################
- !
- ! GPL_EXCLUDE_START
  !
  ! Carrier components
  !====================
@@ -318,8 +311,11 @@ integer function io_RT_components(what,ID)
    call io_bulk(ID,R2=P_cache)
    !
    if(n_spin>1) then
-     call io_bulk(ID,VAR="Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-     call io_bulk(ID,R2=M_cache)
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ms_cache)
+     !
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
+     call io_bulk(ID,R2=Ml_cache)
    endif
    !
  endif       
@@ -329,8 +325,6 @@ integer function io_RT_components(what,ID)
 #if defined _TIMING
  call timing('io_RT_components',OPR='stop')
 #endif
- !
- ! GPL_EXCLUDE_START
  !
  contains
    !
@@ -352,7 +346,4 @@ integer function io_RT_components(what,ID)
      !
    end subroutine
    !
- !
- ! GPL_EXCLUDE_END
- !
 end function

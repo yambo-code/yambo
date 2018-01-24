@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -41,6 +41,7 @@ m4_include([config/acx_cpp.m4])
 m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_get_fc_kind.m4])
+m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 
@@ -258,7 +259,7 @@ ACX_REPORT()
 AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
 AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh 
+                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #
 AC_OUTPUT

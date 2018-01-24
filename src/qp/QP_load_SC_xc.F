@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -29,9 +29,9 @@ subroutine QP_load_SC_xc()
  use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
- use SC,              ONLY:SC_bands,load_SC_components,SC_R,H_rotate,compatible_SC_DB,&
+ use SC,              ONLY:SC_bands,load_SC_components,H_rotate,compatible_SC_DB,&
 &                          found_SC_DB
- use hamiltonian,     ONLY:H_nl_sc
+ use hamiltonian,     ONLY:H_nl_sc,SC_R
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
  !

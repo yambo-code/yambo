@@ -147,6 +147,8 @@ subroutine PARALLEL_collisions( k, COLL )
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
+ use interfaces,    ONLY:PARALLEL_check_phase_space
+ !
 #include<memory.h>
  !
  type(bz_samp)          :: k
@@ -210,5 +212,7 @@ subroutine PARALLEL_collisions( k, COLL )
  enddo
  !
  call PARALLEL_live_message(trim(COLL%name)//" Number of Collisions",LOADED=COLL%PAR_N,TOTAL=NC_tot)
+ !
+ call PARALLEL_check_phase_space(COLL%PAR_N,trim(COLL%name)//" COLLISIONS")
  !
 end subroutine

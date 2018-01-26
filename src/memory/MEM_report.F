@@ -43,8 +43,8 @@ subroutine MEM_report( REPORT )
    prefix=" "
    where="r"
    call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
-   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold*int(Kilobyte)))//" (basic treshold) "//&
-&                                       trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
+   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold))//" (basic treshold) "//&
+&                                       trim(mem_string(MEM_SAVE_treshold))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0
@@ -62,7 +62,7 @@ subroutine MEM_report( REPORT )
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !

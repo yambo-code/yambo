@@ -33,13 +33,14 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
 
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
-&                     X_t,l_X_terminator,X_terminator_E,X_term_E
+ use X_m,        ONLY:use_X_DbGd,X_t,l_X_terminator,X_terminator_E,X_term_E, &
+&                     X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use BS_solvers, ONLY:BSS_uses_DbGd
  use electrons,  ONLY:levels,spin_occ
- use R_lattice,  ONLY:qindx_X,bz_samp,nqibz,smallest_q_norm
+ use R_lattice,  ONLY:qindx_X,bz_samp,nqibz
  use frequency,  ONLY:w_samp
  use vec_operate,ONLY:iku_v_norm
+ use parallel_m, ONLY:PAR_Xk_bz_index
  !
 #include<memory.h>
  !
@@ -54,8 +55,8 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! Work Space
  !
  logical      :: X_os_run,K_inv_run,use_DbGd
- integer      :: ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp,&
-&                low_ik,upp_ik,low_ikp,upp_ikp
+ integer      :: ikbz_ikpbz_FineGd_used,ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp,&
+&                low_ik,upp_ik,low_ikp,upp_ikp,ikbz_mem
  real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
  complex(SP)  :: Z_,pole,pole_X_term
  !
@@ -144,17 +145,17 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  if(.not.allocated(Xk%ptbz)) call k_ibz2bz(Xk,'i',.true.)
  !
- call define_use_kpt()
- !
  ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
  ! because this routine is always called using the i_res \Omega. Indeed 
  !
  !  \Omega_{anti-res} = -\Omega_{res}
  !
- ! Coarse grid points are included for ikbz_FineGd= Xk%bz_DbGd_map(1,ikbz)-1
- ! Fine   grid points are included for ikbz_FineGd>=Xk%bz_DbGd_map(1,ikbz)
+ ikbz_mem=PAR_Xk_bz_index(ikbz)
  !
- do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz)-1,Xk%bz_DbGd_map(2,ikbz)
+ do ikbz_ikpbz_FineGd_used=1,X_DbGd_nkpt_at_q(ikbz_mem)
+   !
+   ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
+   ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
    weight = 1._SP/real(Xk%nbz_mapped(ikbz)+1,SP)/real(nkpt_DbGd_scatt(ikbz_FineGd),SP)
    !
@@ -170,82 +171,38 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
    !
-   do ikpbz_FineGd=Xk%bz_DbGd_map(1,ikpbz)-1,Xk%bz_DbGd_map(2,ikpbz)
+   !
+   if(ikpbz_FineGd<Xk%bz_DbGd_map(1,ikpbz)) then
+     En2       = Xen%E(iv,ikp,i_spin)
+     f_e       = Xen%f(iv,ikp,i_spin)
+   else
+     ikp_FineGd= Xk%sstar_FineGd(ikpbz_FineGd)
+     En2       = Xen%E_FineGd(iv,ikp_FineGd,i_spin)
+     f_e       = Xen%f_FineGd(iv,ikp_FineGd,i_spin)
+   endif
+   !
+   pole=cmplx(En1-En2,-W_)
+   !
+   if(l_X_terminator) pole_X_term=cmplx(X_term_E-En2,-W_,KIND=SP)
+   !
+   if( X_os_run       ) ffac=(f_e*f_h)/cg_ffac*weight
+   if( K_inv_run      ) ffac=(f_e-f_h)/cg_ffac*weight
+   if( no_occupations ) ffac = 1._SP
+   !
+   do iw=1,Xw%n_freqs
      !
-     if(.not.use_kpt_DbGd(ikpbz_FineGd,ikbz_FineGd)) cycle
+     GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
      !
-     if(ikpbz_FineGd<Xk%bz_DbGd_map(1,ikpbz)) then
-       En2       = Xen%E(iv,ikp,i_spin)
-       f_e       = Xen%f(iv,ikp,i_spin)
-     else
-       ikp_FineGd= Xk%sstar_FineGd(ikpbz_FineGd)
-       En2       = Xen%E_FineGd(iv,ikp_FineGd,i_spin)
-       f_e       = Xen%f_FineGd(iv,ikp_FineGd,i_spin)
+     if (l_X_terminator.and.ic>Xen%nbm) then 
+       GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
      endif
      !
-     pole=cmplx(En1-En2,-W_)
+     if (l_X_terminator.and.ic<=Xen%nbm) then
+       GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
+     endif      
      !
-     if(l_X_terminator) pole_X_term=cmplx(X_term_E-En2,-W_,KIND=SP)
-     !
-     if( X_os_run       ) ffac=(f_e*f_h)/cg_ffac*weight
-     if( K_inv_run      ) ffac=(f_e-f_h)/cg_ffac*weight
-     if( no_occupations ) ffac = 1._SP
-     !
-     do iw=1,Xw%n_freqs
-       !
-       GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
-       !
-       if (l_X_terminator.and.ic>Xen%nbm) then 
-         GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
-       endif
-       !
-       if (l_X_terminator.and.ic<=Xen%nbm) then
-         GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
-       endif      
-       !
-     enddo
-     !
-   enddo
+   enddo  
    !
  enddo
  !
- YAMBO_FREE(use_kpt_DbGd)
- deallocate(nkpt_DbGd_scatt)
- !
- contains
-   !
-   subroutine define_use_kpt()
-     !
-     ! [DAVIDE]
-     ! Define which kpts I will use in a consistent way between q=0 and q/=0
-     ! For q/=0 this change makes the code much faster as it avoids the use of all 
-     ! double-grid kpts in the two spheres (k and kp) which would smear out too much
-     ! the absorption.
-     ! For q==0 the approach can be used to properly describe the q->0 limit
-     ! This part of the code should be moved away from this subroutine as here the 
-     ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
-     !
-     !
-     qsize_fac=2._SP
-     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
-     !
-     q_norm_ref=smallest_q_norm/qsize_fac
-     !
-     nkpt_DbGd_scatt=0
-     use_kpt_DbGd=.false.
-     do ikbz_FineGd=Xk%bz_DbGd_map(1,ikbz)-1,Xk%bz_DbGd_map(2,ikbz)
-       if(ikbz_FineGd< Xk%bz_DbGd_map(1,ikbz)) k_pt_loc=Xk%ptbz(ikbz,:)
-       if(ikbz_FineGd>=Xk%bz_DbGd_map(1,ikbz)) k_pt_loc=Xk%ptbz_FineGd(ikbz_FineGd,:)
-       do ikpbz_FineGd=Xk%bz_DbGd_map(1,ikpbz)-1,Xk%bz_DbGd_map(2,ikpbz)
-         if(ikpbz_FineGd< Xk%bz_DbGd_map(1,ikpbz)) kp_pt_loc=Xk%ptbz(ikpbz,:)
-         if(ikpbz_FineGd>=Xk%bz_DbGd_map(1,ikpbz)) kp_pt_loc=Xk%ptbz_FineGd(ikpbz_FineGd,:)
-         q_pt_shift(:)=(k_pt_loc-kp_pt_loc)-(Xk%ptbz(ikbz,:)-Xk%ptbz(ikpbz,:))
-         if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-         nkpt_DbGd_scatt(ikbz_FineGd)=nkpt_DbGd_scatt(ikbz_FineGd)+1
-         use_kpt_DbGd(ikpbz_FineGd,ikbz_FineGd)=.true.
-       enddo
-     enddo
-     !
-   end subroutine
-   !
 end subroutine

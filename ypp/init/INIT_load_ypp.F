@@ -275,7 +275,6 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'BZ_DbGd_Nk',     'BZ Number of points in the fine grid',BZ_FineGd_nkpts_to_use)
  call it('f',defs,'SkipCheck' , 'Skip internal consistency check on k-point grids')
- call it('f',defs,'noBZExpand' ,'Keep the Double Grid k-points in the IBZ without using the symmetries')
  !
  !WFs perturbative SOC mapping
  !

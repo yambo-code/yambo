@@ -74,7 +74,7 @@ subroutine PLASMA_build_up(E,k,q)
    n_poles=PLASMA_tables_and_dimensions(-iqbz,E,k,q,poles,N_poles_bare)
    !
    ! Group the poles
-   call FREQUENCIES_coarse_grid('COLL',poles(:n_poles),n_poles,EH_gas%redux_percent,0.0_SP,.FALSE.)
+   call FREQUENCIES_coarse_grid('COLL',poles(:n_poles),n_poles,EH_gas%redux_percent,(/0.0_SP/),.FALSE.)
    !
    ! Create the Poles_tab with the sorted index
    n_poles=PLASMA_tables_and_dimensions( iqbz,E,k,q,poles(:n_poles),n_poles)

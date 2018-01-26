@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(E,k,q,X)
+subroutine RT_start_and_restart(E,k,q)
  !
  ! This subroutine initialize some variables and restart from SC
  ! or from a previous RT calculation:
@@ -35,9 +35,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions 
  !
- use pars,           ONLY:SP,cI,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use units,          ONLY:HA2EV,AUT2FS
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
@@ -53,9 +53,8 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_tot
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
- use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PP_redux_wait
@@ -65,7 +64,6 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
- type(X_t)         :: X
  !
  ! Work Space
  !

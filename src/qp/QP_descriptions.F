@@ -136,10 +136,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      qp%n_descs=qp%n_descs+1
                     qp%description(qp%n_descs)=' X BZ energy Double Grid: no'
      if (use_X_DbGd) qp%description(qp%n_descs)=' X BZ energy Double Grid: yes'
-!     qp%n_descs=qp%n_descs+1
-!     write (qp%description(qp%n_descs),trim(&
-!&          string_pack('(a,',gen_fmt( (/BZ_DbGd_tot_nkpts/) ),')'))) &
-!&          ' X BZ Double Grid points:',BZ_DbGd_tot_nkpts
    endif
  endif
  !

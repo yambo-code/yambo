@@ -143,7 +143,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    YAMBO_ALLOC(X_poles_tab,(n_poles,4))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
-   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,(/0.0_SP/),.FALSE.)
    !
    minmax_ehe=0._SP
    !
@@ -170,8 +170,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
 #if defined _ELPH
  !
- ! Green Functions must be all mapped to the Xw range so
- ! to be easily convoluted
+ ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !

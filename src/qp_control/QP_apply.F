@@ -111,7 +111,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
  !==============
  ! QP's section
  !==============
- if (present(qp_impose)) call QP_apply_QP(bands,en,k,qp_impose)
+ if (present(qp_impose)) call QP_apply_QP(n_QP_actions,bands,en,k,qp_impose)
  !
  !=========
  ! Actions

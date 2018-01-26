@@ -70,13 +70,15 @@ CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
 PH_PROJ  = yambo_ph ypp_ph
-SC_PROJ  = yambo_magnetic yambo_sc ypp_sc ypp_magnetic
-RT_PROJ  = yambo_rt yambo_qed ypp_rt yambo_pl
+SC_PROJ  = yambo_sc ypp_sc
+MAG_PROJ = yambo_magnetic ypp_magnetic
+RT_PROJ  = yambo_rt ypp_rt
+RTE_PROJ = yambo_rt yambo_qed yambo_pl ypp_rt
 KERR_PROJ= yambo_kerr
-ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(TESTS)
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -146,8 +148,12 @@ ph-project:
 	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project:
 	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+magn-project:
+	for target in $(MAG_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rt-project:
 	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rtext-project:
+	for target in $(RTE_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
 	for target in $(KERR_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: 
@@ -315,8 +321,10 @@ define make_message
  echo " [project-related suite] project (core, rt-project, ...)";      echo;\
  for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
  for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
+ for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
+ for target in $(RTE_PROJ);  do echo " [rtext-project] $$target"; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
  for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo

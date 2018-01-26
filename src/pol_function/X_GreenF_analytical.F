@@ -55,15 +55,12 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! Work Space
  !
  logical      :: X_os_run,K_inv_run,use_DbGd
- integer      :: ikbz_ikpbz_FineGd_used,ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,ik_FineGd,ikp_FineGd,ik,ikp,&
-&                low_ik,upp_ik,low_ikp,upp_ikp,ikbz_mem
+ integer      :: ikbz_ikpbz_FineGd_used,ikbz_FineGd,ikpbz_FineGd,iw,ikbz,ikpbz,iv,ic,i_spin,&
+&                ik_FineGd,ikp_FineGd,ik,ikp,ikbz_mem
  real(SP)     :: ffac,cg_ffac,f_e,f_h,weight,W_,q_pt_shift(3),q_norm_ref,qsize_fac,k_pt_loc(3),kp_pt_loc(3),En1,En2
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
- !
- integer, allocatable      ::nkpt_DbGd_scatt(:)
- logical, allocatable      ::use_kpt_DbGd(:,:)
  !
  GreenF  = cZERO
  !
@@ -136,15 +133,6 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  if( X_os_run  ) cg_ffac = Xen%f(iv,ikp,i_spin)*( spin_occ-Xen%f(ic,ik ,i_spin) )
  if( K_inv_run ) cg_ffac = spin_occ/real(Z_)
  !
- low_ik=Xk%bz_DbGd_map(1,ikbz)-1
- upp_ik=Xk%bz_DbGd_map(2,ikbz)
- low_ikp=Xk%bz_DbGd_map(1,ikpbz)-1
- upp_ikp=Xk%bz_DbGd_map(2,ikpbz)
- allocate( nkpt_DbGd_scatt(low_ik:upp_ik) )
- YAMBO_ALLOC(use_kpt_DbGd,(low_ikp:upp_ikp,low_ik:upp_ik))
- !
- if(.not.allocated(Xk%ptbz)) call k_ibz2bz(Xk,'i',.true.)
- !
  ! In the K case, the anti-res part of Lo uses a w+\Omega (and not -\Omega) simply
  ! because this routine is always called using the i_res \Omega. Indeed 
  !
@@ -152,12 +140,12 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  ikbz_mem=PAR_Xk_bz_index(ikbz)
  !
+ weight = 1._SP/real(X_DbGd_nkpt_at_q(ikbz_mem),SP)
+ !
  do ikbz_ikpbz_FineGd_used=1,X_DbGd_nkpt_at_q(ikbz_mem)
    !
    ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
-   !
-   weight = 1._SP/real(Xk%nbz_mapped(ikbz)+1,SP)/real(nkpt_DbGd_scatt(ikbz_FineGd),SP)
    !
    if(ikbz_FineGd<Xk%bz_DbGd_map(1,ikbz)) then
      En1       = Xen%E(ic,ik,i_spin)
@@ -170,7 +158,6 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
    !
    if( X_os_run  ) f_h = spin_occ-ffac
    if( K_inv_run ) f_h =          ffac
-   !
    !
    if(ikpbz_FineGd<Xk%bz_DbGd_map(1,ikpbz)) then
      En2       = Xen%E(iv,ikp,i_spin)

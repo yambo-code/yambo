@@ -54,6 +54,8 @@ subroutine X_Double_Grid_setup(iq,k)
  !
  YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz))
  !
+ if(.not.allocated(k%ptbz)) call k_ibz2bz(k,'i',.true.)
+ !
  q_radius=smallest_q_norm/100._SP
  !
  PREC=0._SP
@@ -98,7 +100,7 @@ subroutine X_Double_Grid_setup(iq,k)
          !
          running_q(:)=(k_pt_loc-kp_pt_loc)
          !
-         if (iku_v_norm( running_q ) > q_radius) cycle
+         if (iku_v_norm( running_q - central_q ) > q_radius) cycle
          !
          X_DbGd_nkpt_at_q(ikbz_mem)=X_DbGd_nkpt_at_q(ikbz_mem)+1
          if (FILL_it) then
@@ -120,6 +122,6 @@ subroutine X_Double_Grid_setup(iq,k)
    !
  enddo 
  !
- call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q transitions included [%]:',PREC)
+ call msg('nrsn','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, q-rad %)]:',(/PREC,q_radius/smallest_q_norm*100._SP/))
  !
 end subroutine

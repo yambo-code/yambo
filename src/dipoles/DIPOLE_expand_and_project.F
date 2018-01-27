@@ -26,7 +26,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
  use parallel_m,     ONLY:PAR_DIPk_nbz,PAR_DIPk_bz_index,PAR_DIPk_ibz_index,PAR_IND_DIPk_bz,&
-&                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_DIPk_ibz_INDEX
+&                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_INDEX
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
@@ -107,7 +107,10 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            !
          endif
          !
-         call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+         !write(*,*) PAR_COM_DIPk_ibz_A2A%COMM,PAR_COM_DIPk_ibz_INDEX%COMM
+         !call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+         !call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+         !call PP_redux_wait(dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
          !
          do i_star=1,Xk%nstar(ik)
            !

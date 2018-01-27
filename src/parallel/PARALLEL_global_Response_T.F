@@ -89,7 +89,6 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! 
  ! Dipoles k-points uses same distribution of K k-points
  !
- call PP_indexes_reset(PAR_IND_DIPk_ibz) ! Fix by AM (Jan 2017) to clean-up previous allocation
  call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
  call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
  PAR_IND_DIPk_ibz_ID=PAR_IND_Kk_ibz_ID

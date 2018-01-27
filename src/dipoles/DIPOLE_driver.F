@@ -61,7 +61,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                         use_shifted_grids_approach,DIP_P
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
-&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
+&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
+&                         mpi_comm_world
  use parser_m,       ONLY:parser
 #if defined _RT || defined _SC
  use drivers,        ONLY:l_real_time,l_sc_run
@@ -138,7 +139,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
- call DIPOLE_IO(Xk,Xen,Dip,'check',io_err)
+ call DIPOLE_IO(Xk,Xen,Dip,'check',io_err,mpi_comm_world)
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -192,7 +193,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   call DIPOLE_IO(Xk,Xen,Dip,'write',io_err)
+   call DIPOLE_IO(Xk,Xen,Dip,'write',io_err,mpi_comm_world)
    !
    ! I/O privilegies: RESTORE to previous values
    !

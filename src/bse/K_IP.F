@@ -40,8 +40,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        BSS_n_freqs,BSS_q0,Co_factor,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,&
-&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX,mpi_comm_world
  use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
@@ -140,7 +139,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 #endif
    !
    !
-   call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err)
+   call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,mpi_comm_world)
    call DIPOLE_expand_and_project(Xk,Dip)
    !
    BSS_Vnl_included=Dip%Vnl_included

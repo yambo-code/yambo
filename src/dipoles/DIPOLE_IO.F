@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
+subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
  !
  use pars,       ONLY:SP,cI,cZERO
  use com,        ONLY:msg
@@ -31,7 +31,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square
  use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD
  use parallel_m, ONLY:master_cpu,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,ncpu,&
-&                     PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PP_redux_wait
+&                     PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PP_redux_wait,myid,PAR_IND_Xk_ibz
  !
  implicit none
  !
@@ -40,6 +40,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  type(DIPOLE_t),intent(inout) :: Dip
  character(5),  intent(in)    :: check_read_or_write
  integer,       intent(out)   :: io_err
+ integer,       intent(in)    :: LOCAL_COMM
  !
  ! Work space
  !
@@ -60,7 +61,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  !
  if ((reading.or.check).and.PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu) then
    l_vnl=Dip%Vnl_included
-   call PP_redux_wait(l_vnl)
+   call PP_redux_wait(l_vnl,COMM=LOCAL_COMM)
    Dip%Vnl_included=l_vnl(1)
  endif
  !
@@ -70,7 +71,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
    io_err=io_DIPOLES(Dip,ID)
  endif
  !
- call PP_redux_wait(COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+ call PP_redux_wait(COMM=LOCAL_COMM)
  !
  if(read_header) then
    call msg('s','[DIP] Checking dipoles header ')
@@ -85,7 +86,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
-     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
+     !write(100+myid) ik,PAR_IND_DIPk_ibz%element_1D(ik)!,PAR_IND_Xk_ibz%element_1D(ik)
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)             ) cycle
      if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
      call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)

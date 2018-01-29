@@ -433,12 +433,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
      !
-     i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
-     i_v_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
-     i_c_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+     i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1)  !k-point in full BZ
+     i_v_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,2)  !v-index
+     i_c_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,3)  !c-index
      i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
      !
-     i_k  = Xk%sstar(i_k_bz,1)
+     i_k  = Xk%sstar(i_k_bz,1)                   !k-point in IBZ
      i_k_s= Xk%sstar(i_k_bz,2)
      !
      if (BS_K_is_ALDA) then
@@ -474,7 +474,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (H_pos(1)>H_pos(2)) cycle
        !
        ig_W   =qindx_B(i_k_bz,i_p_bz,2)
-       iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
+       iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1) !q_W=p-k
        iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
        !
        H_x=cZERO

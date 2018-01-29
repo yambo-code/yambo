@@ -95,7 +95,7 @@ subroutine K_diago_driver(iq,W)
  call timing('Diagonalization Solver',OPR='start')
 #endif
  BSS_n_eig = BS_H_dim
- !  
+ !
  ! Sectioning
  !============
  if (isec(2)/=0) then

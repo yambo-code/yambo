@@ -37,7 +37,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_DbGd_nbands,&
-&                     BZ_DbGd_tot_nkpts
+&                     BZ_DbGd_tot_nk_levels
  use com,        ONLY:warning
  use D_lattice,  ONLY:T_elecs,T_holes
  use functions,  ONLY:Fermi_fnc
@@ -114,7 +114,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
      enddo
      if (allocated(E%E_DbGd)) then
        do i1=1,BZ_DbGd_nbands
-         do i2=1,BZ_DbGd_tot_nkpts
+         do i2=1,BZ_DbGd_tot_nk_levels
            do is=1,n_sp_pol
              if( (E%E_DbGd(i1,i2,is)-Ef)<=0._SP) E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,T_holes)
              if( (E%E_DbGd(i1,i2,is)-Ef)> 0._SP) E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,T_elecs)

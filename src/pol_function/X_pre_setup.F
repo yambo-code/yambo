@@ -24,9 +24,9 @@
 subroutine X_pre_setup(Xen,X)
  !
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,Chi_linalg_mode,X_ng
- use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_gw0,l_cohsex,l_rt_carriers_in_use
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use R_lattice,     ONLY:nqibz
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
@@ -59,9 +59,14 @@ subroutine X_pre_setup(Xen,X)
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
  !
- use_X_DbGd=BZ_DbGd_nbands/=0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
+ use_X_DbGd=BZ_DbGd_nbands>0.and.X%ib(1)<BZ_DbGd_nbands.and.(.not.l_bs_fxc)
  !
- if (use_X_DbGd) X_DbGd_nkpts=BZ_DbGd_tot_nkpts
+ if (use_X_DbGd.and.DbGd_is_symmetry_expanded) then
+   X_DbGd_nkpts=BZ_DbGd_tot_nk_levels
+ else if (use_X_DbGd.and..not.DbGd_is_symmetry_expanded) then
+   use_X_DbGd=.FALSE.
+   call warning("Found a Double Grid not symmetry expanded. This is incompatible with the current runlevel")
+ endif
  !
  ! CHO checks
  !

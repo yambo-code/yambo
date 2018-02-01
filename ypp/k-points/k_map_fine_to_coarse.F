@@ -27,17 +27,17 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  use units,               ONLY:HA2EV
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use stderr,              ONLY:intc
- use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset,rl_sop
+ use R_lattice,           ONLY:bz_samp,k_the_nearest,bz_samp_reset,rl_sop
  use parser_m,            ONLY:parser
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
  use com,                 ONLY:msg,error,warning
  use YPP,                 ONLY:BZ_DbGd_nkpts_to_use,DbGd_DB1_paths,MAX_DbGd_DBs,n_DbGd_DBs
  use electrons,           ONLY:levels,default_nel,n_bands,BZ_ASSOCIATED_nkpts,&
 &                              BZ_DbGd_nbands,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_kpts,&
-&                              BZ_DbGd_tot_nkpts,BZ_DbGd_nkpts,n_sp_pol,BZ_DbGd_max_filling,&
+&                              BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk,n_sp_pol,BZ_DbGd_max_filling,&
 &                              BZ_DbGd_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,          ONLY:PARALLEL_index
+ use interfaces,          ONLY:PARALLEL_index,OCCUPATIONS_Fermi
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -48,12 +48,11 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Work Space
  !
- real(SP)     ::rand_k(BZ_DbGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),&
-&               gap(2),tmp_zero(3)
- integer      ::i1,ik_near,ik_near_ibz,is_near,ik_bz,ik_DbGd
+ real(SP)     ::a_save(3,3),alat_save(3),gap(2),tmp_zero(3)
+ integer      ::ik,ik_near,ik_ibz,is,ik_bz,ik_DbGd,i_c,NK_to_process,ik_grid,iE_grid
  logical      ::l_skip_check,l_flag
  integer,  allocatable :: BZ_SYM_table(:,:)
- real(SP), allocatable :: rand_E(:,:,:)
+ real(SP), allocatable :: rand_E(:,:,:),rand_k(:,:)
  !
  ! BZ DB1 I/O
  !
@@ -62,13 +61,14 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  integer              :: ID,i_err(MAX_DbGd_DBs),nsym_save,nsym_DbGd_DB,i_time_rev_save,&
 &                        i_time_rev_DB,i_db,i_db_merge,ik_ref(2)
  real(SP)             :: dl_sop_save(3,3,48)
- integer, allocatable :: TMP_map(:,:)
+ integer, allocatable :: TMP_map2(:,:),TMP_map3(:,:,:)
  type(PP_indexes)     :: px
  !
  ! Functions
  !
- integer, external :: k_DbGd_grid_consistency_check
  integer, external :: io_DB1_selective_scan,io_Double_Grid
+ !
+ BZ_DbGd_nbands=0
  !
  if (n_DbGd_DBs==0) then
    call msg("s",'DbGd: no database secified. Nothing to do.')
@@ -174,36 +174,37 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    do i_db=1,n_DbGd_DBs
      if (i_db==1) ik_ref(1)=0
      if (i_db> 1) ik_ref(1)=sum(DbGd_E(1:i_db-1)%nk)
-     do i1=1,DbGd_E(i_db)%nk
-       DbGd_E(i_db_merge)%E(:,i1+ik_ref(1),:)= DbGd_E(i_db)%E(:,i1,:)
-       DbGd_k(i_db_merge)%pt(i1+ik_ref(1),:)= DbGd_k(i_db)%pt(i1,:)
+     do ik=1,DbGd_E(i_db)%nk
+       DbGd_E(i_db_merge)%E(:,ik+ik_ref(1),:)= DbGd_E(i_db)%E(:,ik,:)
+       DbGd_k(i_db_merge)%pt(ik+ik_ref(1),:)= DbGd_k(i_db)%pt(ik,:)
      enddo
    enddo
  endif
  !
  ! Use of less (only BZ_DbGd_nkpts, read from input) k-points
  !
- if (BZ_DbGd_nkpts_to_use<nkibz.and.BZ_DbGd_nkpts_to_use>0) then
-   nkibz   =BZ_DbGd_nkpts_to_use
-   DbGd_E(i_db_merge)%nk=nkibz
-   DbGd_k(i_db_merge)%nibz=nkibz
-   YAMBO_ALLOC(rand_E,(DbGd_E(i_db_merge)%nb,nkibz,n_sp_pol))
-   rand_E(:,:,:)=DbGd_E(i_db_merge)%E(:,:nkibz,:)
-   rand_k(:nkibz,:)=DbGd_k(i_db_merge)%pt(:nkibz,:)
+ if (BZ_DbGd_nkpts_to_use>0) then
+   DbGd_E(i_db_merge)%nk=BZ_DbGd_nkpts_to_use
+   DbGd_k(i_db_merge)%nibz=BZ_DbGd_nkpts_to_use
+   YAMBO_ALLOC(rand_E,(DbGd_E(i_db_merge)%nb,BZ_DbGd_nkpts_to_use,n_sp_pol))
+   YAMBO_ALLOC(rand_k,(BZ_DbGd_nkpts_to_use,3))
+   rand_E(:,:,:)=DbGd_E(i_db_merge)%E(:,:BZ_DbGd_nkpts_to_use,:)
+   rand_k(:BZ_DbGd_nkpts_to_use,:)=DbGd_k(i_db_merge)%pt(:BZ_DbGd_nkpts_to_use,:)
    YAMBO_FREE(DbGd_E(i_db_merge)%E)
    YAMBO_FREE(DbGd_k(i_db_merge)%pt)
-   YAMBO_ALLOC(DbGd_E(i_db_merge)%E,(DbGd_E(i_db_merge)%nb,nkibz,n_sp_pol))
-   YAMBO_ALLOC(DbGd_k(i_db_merge)%pt,(nkibz,3))
+   YAMBO_ALLOC(DbGd_E(i_db_merge)%E,(DbGd_E(i_db_merge)%nb,BZ_DbGd_nkpts_to_use,n_sp_pol))
+   YAMBO_ALLOC(DbGd_k(i_db_merge)%pt,(BZ_DbGd_nkpts_to_use,3))
    DbGd_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
    DbGd_k(i_db_merge)%pt(:,:)=rand_k(:,:)
    YAMBO_FREE(rand_E)
+   YAMBO_FREE(rand_k)
  endif
  !
  gap(1)=minval(DbGd_E(i_db_merge)%E(Xen%nbf+1,:,1))-maxval(DbGd_E(i_db_merge)%E(Xen%nbf,:,1)) 
  gap(2)=10000._SP
- do i1=1,nkibz
-   if (DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)<gap(2)) then
-     gap(2)=DbGd_E(i_db_merge)%E(Xen%nbf+1,i1,1)-DbGd_E(i_db_merge)%E(Xen%nbf,i1,1)
+ do ik=1,DbGd_k(i_db_merge)%nibz
+   if (DbGd_E(i_db_merge)%E(Xen%nbf+1,ik,1)-DbGd_E(i_db_merge)%E(Xen%nbf,ik,1)<gap(2)) then
+     gap(2)=DbGd_E(i_db_merge)%E(Xen%nbf+1,ik,1)-DbGd_E(i_db_merge)%E(Xen%nbf,ik,1)
    endif
  enddo
  !
@@ -219,95 +220,117 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    call msg('s','::     direct        [ev]:',gap(2)*HA2EV)
  endif
  !
- ! See if there is correspondance between the random and the built-in
- ! k-points
+ ! See if there is correspondance between the random and the built-in k-points
  !
- call section('+','Internal consistency check ...')
- ik_ref(2)=k_DbGd_grid_consistency_check(Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
- !
- if (ik_ref(2)>0) then
-   call msg('l','passed @ Double Grid k-point #'//trim(intc(ik_ref(2)))) 
- else 
-   call msg('l','failed') 
-   if (l_skip_check) then
-     call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
-   else
+ if (l_skip_check) then
+   call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+   ik_ref=-1
+   YAMBO_ALLOC(DbGd_k(i_db_merge)%weights,( DbGd_E(i_db_merge)%nk ))
+   DbGd_k(i_db_merge)%weights=1./real(DbGd_E(i_db_merge)%nk )
+   call OCCUPATIONS_Fermi(DbGd_E(i_db_merge),DbGd_k(i_db_merge),mode="FERMI")
+   YAMBO_FREE(DbGd_k(i_db_merge)%weights)
+   !
+   ! I want that E_dbgd%E'-Xe%E_fermi=E_dbgd%E-E_dbgd%E_fermi=> E_dbgd%E'= E_dbgd%E+Xe%E_fermi-E_dbgd%E_fermi
+   !
+   DbGd_E(i_db_merge)%E(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)+Xen%E_Fermi-DbGd_E(i_db_merge)%E_Fermi
+   !
+ else
+   call section('+','Internal consistency check ...')
+   !
+   call k_DbGd_grid_consistency_check(ik_ref,Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
+   !
+   if (ik_ref(2)>0) then
+     !
+     call msg('l','passed @ Double-Grid (Internal) k-point #'//trim(intc(ik_ref(2)))//"("//trim(intc(ik_ref(1)))//")") 
+     !
+     call section('=','Removing the reference point from the Double Grid ...')
+     YAMBO_ALLOC(rand_k,(DbGd_k(i_db_merge)%nibz-1,3))
+     YAMBO_ALLOC(rand_E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz-1,n_sp_pol))
+     i_c=1
+     do ik=1,DbGd_k(i_db_merge)%nibz
+       if (ik==ik_ref(2)) cycle
+       rand_k(i_c,:)  =DbGd_k(i_db_merge)%pt(ik,:)
+       rand_E(:,i_c,:)=DbGd_E(i_db_merge)%E(:,ik,:)
+       i_c=i_c+1
+     enddo
+     YAMBO_FREE(DbGd_E(i_db_merge)%E)
+     YAMBO_FREE(DbGd_k(i_db_merge)%pt)
+     DbGd_k(i_db_merge)%nibz=DbGd_k(i_db_merge)%nibz-1
+     YAMBO_ALLOC(DbGd_E(i_db_merge)%E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz,n_sp_pol))
+     YAMBO_ALLOC(DbGd_k(i_db_merge)%pt,(DbGd_k(i_db_merge)%nibz,3))
+     DbGd_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
+     DbGd_k(i_db_merge)%pt(:,:)=rand_k(:,:)
+     YAMBO_FREE(rand_E)
+     YAMBO_FREE(rand_k)
+     DbGd_E(i_db_merge)%nk=DbGd_k(i_db_merge)%nibz
+     !
+   else 
+     call msg('l','failed') 
      call error(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
    endif
  endif
  !
  BZ_DbGd_nbands=DbGd_E(i_db_merge)%nb
  !
+ ! Xk (IBZ->BZ)
+ !
  BZ_ASSOCIATED_nkpts=Xk%nbz
+ call k_build_up_BZ_tables(Xk)
+ call k_ibz2bz(Xk,'i',.true.)
  !
  if (DbGd_is_symmetry_expanded) then
    !
-   call section('+','BZ Double Grid K-points expansion ...')
+   call section('=','BZ Double Grid K-points expansion ...')
    !
    ! DbGd_k (IBZ->BZ)
    !
    call k_ibz2bz(DbGd_k(i_db_merge),'i',.true.)
    !
-   call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
+   NK_to_process=DbGd_k(i_db_merge)%nbz
    !
-   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nbz
-   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz
+   call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
    !
  endif
  !
  !GPL_EXCLUDE_START
  if (.not.DbGd_is_symmetry_expanded) then
    !
-   call section('+','BZ Double Grid K-points summary ...')
+   call section('=','BZ Double Grid K-points summary ...')
    !
-   BZ_DbGd_nkpts    =DbGd_k(i_db_merge)%nibz
-   BZ_DbGd_tot_nkpts=DbGd_k(i_db_merge)%nibz+Xk%nbz
+   NK_to_process=DbGd_k(i_db_merge)%nibz
    !
-   ! The -1 is for the reference k that should not be added
-   if(ik_ref(2)>0) BZ_DbGd_tot_nkpts=BZ_DbGd_tot_nkpts-1
-   !
-   call msg('l','using '//trim(intc(BZ_DbGd_nkpts))//' k-points for a total of '//trim(intc(BZ_DbGd_tot_nkpts))//' k-points')
+   call msg('l','using '//trim(intc(DbGd_k(i_db_merge)%nibz))//' k-points')
    !
  endif
  !GPL_EXCLUDE_END
  !
- ! Xk (IBZ->BZ)
+ ! Maps allocation
  !
- call k_build_up_BZ_tables(Xk)
- call k_ibz2bz(Xk,'i',.true.)
- !
- !
- YAMBO_ALLOC(BZ_DbGd_nkpt,(Xk%nbz))
- YAMBO_ALLOC(TMP_map,(BZ_DbGd_nkpts,2))
- BZ_DbGd_nkpt=1
- TMP_map=0
+ YAMBO_ALLOC(TMP_map2,(NK_to_process,2))
+ TMP_map2=0
  !
  ! Par Proc
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BZ_DbGd_nkpts/))
+ call PARALLEL_index(px,(/NK_to_process/))
  call PP_redux_wait
  !
  call live_timing('BZ Double Grid Map',px%n_of_elements(myid+1))
  !                ============
- do i1=1,BZ_DbGd_nkpts
+ do ik=1,NK_to_process
    !
-   if (.not.px%element_1D(i1)) cycle
-   !
-   if (i1==ik_ref(2)) then
-     call live_timing(steps=1)
-     cycle
-   endif
+   if (.not.px%element_1D(ik)) cycle
    !
    if (DbGd_is_symmetry_expanded) then
-     ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(i1,:),Xk%ptbz(:,:),Xk%nbz)
-     TMP_map(i1,1)=ik_near
+     ik_near=k_the_nearest(DbGd_k(i_db_merge)%ptbz(ik,:),Xk%ptbz(:,:),Xk%nbz)
+     TMP_map2(ik,1)=ik_near ! bz@CG (coars grid)
    endif
+   !
    !GPL_EXCLUDE_START
    if (.not.DbGd_is_symmetry_expanded) then
-     ik_near_ibz = k_the_nearest(DbGd_k(i_db_merge)%pt(i1,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is_near)
-     TMP_map(i1,1)=ik_near_ibz
-     TMP_map(i1,2)=is_near
+     ik_ibz = k_the_nearest(DbGd_k(i_db_merge)%pt(ik,:),Xk%pt(:,:),Xk%nibz,ROTATE_k_ref=.TRUE.,k_symm=is)
+     TMP_map2(ik,1)=ik_ibz ! ibz@CG
+     TMP_map2(ik,2)=is     ! is@CG
    endif
    !GPL_EXCLUDE_END
    !
@@ -315,99 +338,100 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
  enddo
  !
- call PP_redux_wait(TMP_map)
+ call PP_redux_wait(TMP_map2)
  !
- ! Number of points in each zone
+ ! Number of points in each zone & Tables
  !
- BZ_DbGd_nkpt=1
- do i1=1,BZ_DbGd_nkpts
-   if (i1==ik_ref(2)) cycle
-   ik_near=TMP_map(i1,1)
-   if (.not.DbGd_is_symmetry_expanded) then
-     ik_near_ibz = TMP_map(i1,1)
-     ik_near     = Xk%k_table(ik_near_ibz,1)
-   endif
-   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
- enddo
+ YAMBO_ALLOC(BZ_DbGd_nkpt,(Xk%nbz))
  !
- ! Tables
- !
- YAMBO_ALLOC(BZ_DbGd_table,(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
- BZ_DbGd_table=0
- do i1=1,Xk%nbz
-   BZ_DbGd_table(i1,1,1)=Xk%sstar(i1,1)
-   BZ_DbGd_table(i1,1,2)=i1
- enddo
- if (.not.DbGd_is_symmetry_expanded) then
-   YAMBO_ALLOC(BZ_SYM_table,(Xk%nbz,maxval(BZ_DbGd_nkpt)))
-   BZ_SYM_table=0
-   BZ_SYM_table(1:Xk%nbz,1)=1
- endif
- !
- BZ_DbGd_nkpt=1
- do i1=1,BZ_DbGd_nkpts
-   if (i1==ik_ref(2)) cycle
-   ik_near=TMP_map(i1,1)
-   if (.not.DbGd_is_symmetry_expanded) then
-     ik_near_ibz = TMP_map(i1,1)
-     ik_near     = Xk%k_table(ik_near_ibz,1)
-   endif
-   BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
+ do i_c=1,2
    !
-   if (DbGd_is_symmetry_expanded) then
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=DbGd_k(i_db_merge)%sstar(i1,1)
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),2)=i1
+   if (i_c==2)  then
+     YAMBO_ALLOC(TMP_map3,(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
+     TMP_map3=0
+     if (.not.DbGd_is_symmetry_expanded) then
+       YAMBO_ALLOC(BZ_SYM_table,(Xk%nbz,maxval(BZ_DbGd_nkpt)))
+       BZ_SYM_table=0
+       BZ_SYM_table(1:Xk%nbz,1)=1
+     endif
    endif
-   !GPL_EXCLUDE_START
-   if (.not.DbGd_is_symmetry_expanded) then
-     BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map(i1,2)
-     BZ_DbGd_table(ik_near,BZ_DbGd_nkpt(ik_near),1)=i1+1
-   endif
-   !GPL_EXCLUDE_END
+   !
+   BZ_DbGd_nkpt=0
+   !
+   do ik=1,NK_to_process
+     ik_near=TMP_map2(ik,1)
+     if (.not.DbGd_is_symmetry_expanded) then
+       ik_ibz = TMP_map2(ik,1)
+       ik_near     = Xk%k_table(ik_ibz,1)
+     endif
+     BZ_DbGd_nkpt(ik_near)=BZ_DbGd_nkpt(ik_near)+1
+     !
+     if (i_c==1) cycle
+     !
+     if (DbGd_is_symmetry_expanded) then
+       TMP_map3(ik_near,BZ_DbGd_nkpt(ik_near),1)=DbGd_k(i_db_merge)%sstar(ik,1) ! ibz@FG
+       TMP_map3(ik_near,BZ_DbGd_nkpt(ik_near),2)=ik ! bz@FG
+     endif
+     !GPL_EXCLUDE_START
+     if (.not.DbGd_is_symmetry_expanded) then
+       TMP_map3(ik_near,BZ_DbGd_nkpt(ik_near),1)=ik ! ibz@FG 
+       BZ_SYM_table(ik_near,BZ_DbGd_nkpt(ik_near))=TMP_map2(ik,2) ! symm@CG
+     endif
+     !GPL_EXCLUDE_END
+   enddo
    !
  enddo
  !
- YAMBO_FREE(TMP_map)
+ YAMBO_FREE(TMP_map2)
+ !
+ ! Adding the built-in grid and filling/reordering
+ !=================================================
+ !
+ ! +1 is for the build-it grid
+ !
+ BZ_DbGd_nkpt=BZ_DbGd_nkpt+1
  !
  BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
  call msg('s',':: Blocks filling range  :',(/minval(BZ_DbGd_nkpt),BZ_DbGd_max_filling/))
  !
- ! DbGd double grid interpolation weights, not used here, but must be defined.
- !
- YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
- BZ_DbGd_weight = 1.0_SP
- !
- YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+ ! Dimensions & allocations
  !
  if (DbGd_is_symmetry_expanded) then
    !
-   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_nkpts,3))
-   BZ_DbGd_kpts=0._SP
+   BZ_DbGd_tot_nk       =DbGd_k(i_db_merge)%nbz+Xk%nbz
+   BZ_DbGd_tot_nk_levels=DbGd_k(i_db_merge)%nibz+Xk%nibz
    !
-   Xen%E_DbGd(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)
-   BZ_DbGd_kpts(:,:)=DbGd_k(i_db_merge)%ptbz(:,:)
+ else
    !
- endif 
+   BZ_DbGd_tot_nk       =DbGd_k(i_db_merge)%nibz+Xk%nbz
+   BZ_DbGd_tot_nk_levels=DbGd_k(i_db_merge)%nibz+Xk%nbz
+   !
+ endif
+ !
+ YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+ YAMBO_ALLOC(BZ_DbGd_table,(Xk%nbz,BZ_DbGd_max_filling,2))
+ YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nk,3))
+ YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
+ BZ_DbGd_weight = 1.0_SP
+ BZ_DbGd_table  = 0
  !
  !GPL_EXCLUDE_START
  if (.not.DbGd_is_symmetry_expanded) then
    !
-   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nkpts,3))
-   BZ_DbGd_kpts=0._SP
-   !
-   call live_timing('DbGd re-ordering and distribution',Xk%nbz)
-   !                ===============
-   i1=0
+   call live_timing('Built-in grid + re-ordering',Xk%nbz)
+   !                ============================
+   ik=0
    do ik_bz=1,Xk%nbz
      do ik_DbGd=1,BZ_DbGd_nkpt(ik_bz)
-       i1=i1+1
+       ik=ik+1
        if (ik_DbGd==1) then
-         Xen%E_DbGd(:,i1,:)=Xen%E(:BZ_DbGd_nbands,BZ_DbGd_table(ik_bz,1,1),:)+Xen%E_fermi
-         BZ_DbGd_kpts(i1,:)=Xk%ptbz(ik_bz,:)
+         Xen%E_DbGd(:,ik,:)=Xen%E(:BZ_DbGd_nbands,Xk%sstar(ik_bz,1),:)+Xen%E_fermi
+         BZ_DbGd_kpts(ik,:)=Xk%ptbz(ik_bz,:)
        else
-         Xen%E_DbGd(:,i1,:)=DbGd_E(i_db_merge)%E(:,BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:)
-         BZ_DbGd_kpts(i1,:)=matmul(rl_sop(:,:, BZ_SYM_table(ik_bz,ik_DbGd) ), &
-&                                  DbGd_k(i_db_merge)%pt(BZ_DbGd_table(ik_bz,ik_DbGd,1)-1,:) )
+         is     =BZ_SYM_table(ik_bz,ik_DbGd-1)
+         ik_grid=TMP_map3(ik_bz,ik_DbGd-1,1)
+         Xen%E_DbGd(:,ik,:)=DbGd_E(i_db_merge)%E(:,ik_grid,:)
+         BZ_DbGd_kpts(ik,:)=matmul(rl_sop(:,:, is),DbGd_k(i_db_merge)%pt(ik_grid,:) )
        endif
        BZ_DbGd_table(ik_bz,ik_DbGd,1)=ik_DbGd+sum(BZ_DbGd_nkpt(:ik_bz-1))
      enddo
@@ -419,6 +443,34 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  endif
  !GPL_EXCLUDE_END
  !
+ if (DbGd_is_symmetry_expanded) then
+   !
+   call live_timing('Built-in grid',Xk%nbz)
+   !
+   Xen%E_DbGd(:,:DbGd_k(i_db_merge)%nibz,:)=DbGd_E(i_db_merge)%E(:,:,:)
+   BZ_DbGd_kpts(:DbGd_k(i_db_merge)%nbz,:) =DbGd_k(i_db_merge)%ptbz(:,:)
+   !
+   ik_grid=DbGd_k(i_db_merge)%nbz
+   iE_grid=DbGd_k(i_db_merge)%nibz
+   do ik_bz=1,Xk%nbz
+      !
+      ik_grid=ik_grid+1
+      if (Xk%sstar(ik_bz,2)==1) iE_grid=iE_grid+1
+      !
+      BZ_DbGd_table(ik_bz,:BZ_DbGd_nkpt(ik_bz)-1,:)=TMP_map3(ik_bz,:BZ_DbGd_nkpt(ik_bz)-1,:)
+      BZ_DbGd_table(ik_bz, BZ_DbGd_nkpt(ik_bz)  ,:)=(/ iE_grid, ik_grid/)
+      !
+      BZ_DbGd_kpts(ik_grid,:)=Xk%ptbz(ik_bz,:)
+      Xen%E_DbGd(:,iE_grid,:)=Xen%E(:BZ_DbGd_nbands,Xk%sstar(ik_bz,1),:)+Xen%E_fermi
+      !
+      call live_timing(steps=1)
+      !
+   enddo
+   !
+   call live_timing( )
+   !
+ endif
+ !
  ! Final I/O
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
@@ -426,6 +478,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! CLEAN
  !
+ YAMBO_FREE(TMP_map3)
  YAMBO_FREE(BZ_DbGd_nkpt)
  YAMBO_FREE(BZ_DbGd_table)
  YAMBO_FREE(Xen%E_DbGd)

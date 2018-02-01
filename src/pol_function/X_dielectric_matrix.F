@@ -30,8 +30,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_integrated,&
-&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -56,9 +57,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X
+ integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
  !
  ! logicals and control
@@ -141,7 +142,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! must be repeated here:
        !
        if (self_detect_E_range) then
-         call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+         n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
          YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
@@ -202,16 +203,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
- ! As we are cycling over the q-points the screened interaction evaluated here is supposed
- ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
- !
- X_is_integrated=.true.
- !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
+   !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !
@@ -281,9 +281,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+     YAMBO_FREE(X_DbGd_nkpt_at_q_table)
+   endif  
+   !
  enddo
  !
- X_is_integrated=.false.
  l_X_terminator=.false.
  !
  ! CLEAN (3)

@@ -289,7 +289,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
    do is=1,n_sp_pol
      do ikbz=1,K%nbz
        do i1=1,BZ_DbGd_nkpt(ikbz)
-         ik_rand   = BZ_DbGd_table(ikbz,i1,1)
+         ik_rand = BZ_DbGd_table(ikbz,i1,1)
          do ib=1,BZ_DbGd_nbands
            if(E%E_DbGd(ib,ik_rand,is)<=0._SP) E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),T_holes)
            if(E%E_DbGd(ib,ik_rand,is)> 0._SP) E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),T_elecs)
@@ -300,8 +300,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
    enddo
    nel_DbGd=nel_DbGd/real(sum(BZ_DbGd_nkpt),SP)
    !
-   if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   if (abs(nel-nel_DbGd)>        1.E-2) call error  (' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
+   if (abs(nel-nel_DbGd)>nel_diff_zero) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
    !
  endif
  !

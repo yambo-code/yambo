@@ -5,6 +5,7 @@ cp config/Makefile .
 if ! test -d bin      ; then mkdir bin      ; fi
 if ! test -d include  ; then mkdir include  ; fi
 if ! test -d lib      ; then mkdir lib      ; fi
+if ! test -d bin-libs ; then mkdir bin-libs ; fi
 #
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
@@ -92,10 +93,10 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_pa
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  for file in $extlibs_path/${FCKIND}/${FC}/bin/*; do
-  cp $file $exec_prefix/bin/
+  cp $file $exec_prefix/bin-libs/
  done
- for bin in $extlibs_path/${FCKIND}/${FC}/v3/bin/*; do
-  cp $bin $exec_prefix/bin/
+ for file in $extlibs_path/${FCKIND}/${FC}/v3/bin/*; do
+  cp $file $exec_prefix/bin-libs/
  done
 fi
 #

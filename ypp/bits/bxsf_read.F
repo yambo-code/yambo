@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DK CA
@@ -30,7 +30,7 @@ subroutine bxsf_read(Xk,Xen)
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
                                BZ_DbGd_max_filling,BZ_DbGd_nbands, &
-                               BZ_DbGd_tot_nkpts,BZ_DbGd_weight,n_spin
+                               BZ_DbGd_tot_nk_levels,BZ_DbGd_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
@@ -215,7 +215,7 @@ subroutine bxsf_read(Xk,Xen)
  YAMBO_ALLOC(BZ_DbGd_nkpt,(Xk%nbz))
  BZ_DbGd_nkpt = 0
  BZ_DbGd_nbands=nbands
- BZ_DbGd_tot_nkpts=DbGd_k%nbz
+ BZ_DbGd_tot_nk_levels=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !
@@ -273,7 +273,7 @@ subroutine bxsf_read(Xk,Xen)
  !
  call section('*','Create & write BZ_DbGd')
  !
- YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spin))
+ YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_spin))
  Xen%E_DbGd(:,:DbGd_k%nbz,1)=ene(:,:DbGd_k%nbz)/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 

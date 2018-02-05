@@ -85,30 +85,19 @@ for includedir in $MPI_INCDIRS;    do
   if test $count != 0; then ln -fs $includedir/*mpi*.mod   include/system/  ; fi
 done
 #
-SLEPC_INCDIRS=`echo "$SLEPC_INCS"       | sed "s/$IFLAG/ /g"`
-for includedir in $SLEPC_INCDIRS;    do
-  echo $includedir
-  count=`ls -1 $includedir/slepc/finclude/*.h   2>/dev/null | wc -l`
-  if test $count != 0; then ln -fs $includedir/slepc/finclude/*.h     include/system/  ; fi
-  count=`ls -1 $includedir/slepc/finclude/*.h90 2>/dev/null | wc -l`
-  if test $count != 0; then ln -fs $includedir/slepc/finclude/*.h90   include/system/  ; fi
-done
-#
-PETSC_INCDIRS=`echo "$PETSC_INCS"       | sed "s/$IFLAG/ /g"`
-for includedir in $PETSC_INCDIRS;    do
-  count=`ls -1 $includedir/petsc/finclude/*.h   2>/dev/null | wc -l`
-  if test $count != 0; then ln -fs $includedir/petsc/finclude/*.h     include/system/  ; fi
-  count=`ls -1 $includedir/petsc/finclude/*.h90 2>/dev/null | wc -l`
-  if test $count != 0; then ln -fs $includedir/petsc/finclude/*.h90   include/system/  ; fi
-done
-#
 if ! test -d "$extlibs_path/${FCKIND}/${FC}";         then mkdir -p "$extlibs_path/${FCKIND}/${FC}";         fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/lib";     fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
-cp $extlibs_path/${FCKIND}/${FC}/bin/* $exec_prefix/bin/
-cp $extlibs_path/${FCKIND}/${FC}/v3/bin/* $exec_prefix/bin/
+if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
+ for file in $extlibs_path/${FCKIND}/${FC}/bin/*; do
+  cp $file $exec_prefix/bin/
+ done
+ for bin in $extlibs_path/${FCKIND}/${FC}/v3/bin/*; do
+  cp $bin $exec_prefix/bin/
+ done
+fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

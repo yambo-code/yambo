@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -183,6 +183,12 @@ module interfaces
      character(*)             ::ENVIRONMENT
      type(X_t),       optional::X
      logical,         optional::RESET
+   end subroutine
+   !
+   subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )
+     integer               :: N_par_elements
+     integer,     optional :: WORLD,WORLD_size
+     character(*),optional :: MSG
    end subroutine
    !
    subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)

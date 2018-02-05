@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM
@@ -31,16 +31,17 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   !
   use pars,          ONLY : SP,cONE,cZERO,schlen
   use com,           ONLY : error,msg
+  !
   implicit none
   !
   ! headers
   !
-#include <petscsys.h>
-#include <petscvec.h>
-#include <petscmat.h>
-#include <petscvec.h90>
-#include <slepcsys.h>
-#include <slepceps.h>
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
   !
   ! arguments
   !
@@ -64,7 +65,7 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   ! 
   Mat            A
   EPS            eps
-  EPSType        tname
+  !EPSType        tname
   EPSExtraction  extr
   PetscReal      tol, ferror
   PetscErrorCode ierr
@@ -99,8 +100,6 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   !Create eigensolver context
   call EPSCreate(PETSC_COMM_WORLD,eps,ierr)
   
-  !Set monitor
-  !call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
   
   !Set operators. In this case, it is a standard eigenvalue problem
   call EPSSetOperators(eps,A,PETSC_NULL_OBJECT,ierr)
@@ -141,6 +140,8 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
 
   !set type of problem
   !call EPSSetType(eps,EPSLAPACK,ierr)
+  !call EPSSetType(eps,EPSKRYLOVSCHUR,ierr)
+  
 
   !Set solver parameters at runtime
   nev = n_eig
@@ -156,13 +157,17 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Optional: Get some information from the solver and display it
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  call EPSGetType(eps,tname,ierr)
+  !call EPSGetType(eps,tname,ierr)
   call EPSGetTolerances(eps,tol,maxit,ierr)
-
-  call msg( 'rs', 'solution method: ', tname )
+  !
+  !call msg( 'rs', 'solution method: ', tname )
   call msg( 'rs', 'number of requested eigenvalues: ', nev )
-  call msg( 'rs', 'stopping condition tolerance: ', tol)
-  call msg( 'rs', 'stopping contition max iterations: ', maxit )
+  call msg( 'rs', 'stopping condition tolerance: ', real(tol,SP) )
+  call msg( 'rs', 'stopping condition max iterations: ', maxit )
+
+  !Set monitor
+  call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
+  !
  
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Solve the eigensystem
@@ -233,14 +238,15 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
   ! Monitor the convergence of the iterative diagonalization
   ! 
   use com,           ONLY : error,msg
+  !
   implicit none
-
-#include <petscsys.h>
-#include <petscvec.h>
-#include <petscmat.h>
-#include <petscvec.h90>
-#include <slepcsys.h>
-#include <slepceps.h>
+  !
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
 
   EPS            eps
   Vec            x

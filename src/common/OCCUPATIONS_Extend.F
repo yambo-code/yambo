@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ,BZ_DbGd_nbands,&
-&                     BZ_DbGd_tot_nkpts
+&                     BZ_DbGd_tot_nk_levels
  use com,        ONLY:warning
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
@@ -113,7 +113,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
      enddo
      if (allocated(E%E_DbGd)) then
        do i1=1,BZ_DbGd_nbands
-         do i2=1,BZ_DbGd_tot_nkpts
+         do i2=1,BZ_DbGd_tot_nk_levels
            do is=1,n_sp_pol
              E%f_DbGd(i1,i2,is) =spin_occ*Fermi_fnc(E%E_DbGd(i1,i2,is)-Ef,Tel)
              Xe%f_DbGd(i1,i2,is)=E%f_DbGd(i1,i2,is)

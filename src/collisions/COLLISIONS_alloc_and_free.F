@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,7 +75,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_all  =index(elements,"all")>0
  l_table    =index(elements,"table")>0
  l_collision=index(elements,"coll")>0
- !
  !
  ! Actions
  !

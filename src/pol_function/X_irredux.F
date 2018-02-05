@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -141,7 +141,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    YAMBO_ALLOC(X_poles_tab,(n_poles,4))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
-   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,(/0.0_SP/),.FALSE.)
    !
    minmax_ehe=0._SP
    !
@@ -168,8 +168,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
 #if defined _ELPH
  !
- ! Green Functions must be all mapped to the Xw range so
- ! to be easily convoluted
+ ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
@@ -194,8 +193,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  n_threads_FFT=1
  call msg('s','[X] NESTED openmp parallelism off')
 #  endif
+ if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
- call OPENMP_locks_reset(INIT=.true.,nlocks=16)
  !
  ! Timing
  !========
@@ -268,8 +267,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      !
      do ig_col=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
-       call OPENMP_compute_mutex(ig_col,mutexid)
-       call omp_set_lock(omp_locks(mutexid))
+       if(n_threads_X>1) then
+         call OPENMP_compute_mutex(ig_col,mutexid)
+         call omp_set_lock(omp_locks(mutexid))
+       endif
 #endif
        !
        X_rows  = (/X_par%rows(1),min(ig_col,X_par%rows(2))/)
@@ -306,7 +307,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          endif
        endif
 #if defined _OPENMP
-       call omp_unset_lock(omp_locks(mutexid))
+       if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
      enddo
      !

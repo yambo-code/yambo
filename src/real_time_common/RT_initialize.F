@@ -48,7 +48,8 @@ subroutine RT_initialize(E,k,q)
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
-&                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt
+&                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
+&                         l_RT_impose_for_metals
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -85,6 +86,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
  call parser('RTEqScatt',            l_RT_include_eq_scatt)
+ call parser('RTImpForMet',          l_RT_impose_for_metals)
  !
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.

@@ -32,15 +32,15 @@ subroutine MEM_report( REPORT )
  !
  character(*) :: REPORT
  !
- character(lchlen) :: msg_,prefix
+ character(lchlen) :: msg_,PREFIX
  character(1)      :: where
  integer :: i_mem,i_el,ORPHAN_TOT,i_title
  !
  if (REPORT=="check") then
    where="s"
-   prefix="[MEMORY]"
+   PREFIX="[MEMORY]"
  else
-   prefix=" "
+   PREFIX=" "
    where="r"
    call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
    call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold))//" (basic treshold) "//&
@@ -62,7 +62,7 @@ subroutine MEM_report( REPORT )
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !
@@ -75,7 +75,7 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
- WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb))
+ WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb))
  call msg("nr",msg_(1:len_trim(msg_)))
  !
  contains
@@ -106,9 +106,9 @@ subroutine MEM_report( REPORT )
          endif
        else
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
-           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
+           WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))//" "//trim(M%shelf)
          else
-           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))
+           WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))
          endif
          WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
          if (len_trim(M%desc(i_el))>0) then

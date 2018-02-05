@@ -1,0 +1,5 @@
+#
+# URL's
+#
+url_ydb=https://github.com/yambo-code/ydb.git
+#url_yambopy=https://github.com/yambo-code/yambo/files/855477/$(tarball_netcdff)

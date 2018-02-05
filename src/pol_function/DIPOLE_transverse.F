@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_transverse(Xen,Xk,X)
+subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  ! This routine returns <iR> and <P^2>.
  !
@@ -30,20 +30,22 @@ subroutine Dipole_transverse(Xen,Xk,X)
 #if defined _PL
  use drivers,             ONLY:l_photolum
 #endif
- use interfaces,          ONLY:WF_load
+ use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,l_X_terminator,&
+ use X_m,                 ONLY:X_t,DIP_iR,P_square,DIP_P,DIP_P_spinor,l_X_terminator,&
 &                              Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
 &                              use_g_space_approach,force_v_g_space_approach
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
-#if defined _SC || defined _RT
+#if defined _RT
  use drivers,             ONLY:l_real_time
+#endif
+#if defined _SC || defined _RT
  use com,                 ONLY:secnm
 #endif
  !
@@ -55,6 +57,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(X_t),     intent(inout) :: X
+ logical,       intent(in)    :: l_real_time_magn_dipoles
  !
  ! Work Space
  !
@@ -65,9 +68,9 @@ subroutine Dipole_transverse(Xen,Xk,X)
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
-&                                i_sp_pol,wf_dim,n_LT_steps,ik_mem,ic_min
+&                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
- complex(SP)                  :: rho(4)
+ complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ec,W_,Dipole_Energy_treshold_
  complex(SP)                  :: Ev_m_Ec_QP
  !
@@ -102,7 +105,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
  ! Eo    are always the eigenvalues consistent with the WFs
- ! E     do also include the QP corrections when Eo are associated
+ ! E     do also include the QP corrections when Eo are allocated
  !
  if (allocated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
@@ -113,7 +116,6 @@ subroutine Dipole_transverse(Xen,Xk,X)
  l_eval_DIP_P =use_g_space_approach.or.force_v_g_space_approach
 #endif
  l_eval_DIP_P2=.false.
- wf_dim=3
  !
  ! Parallelization Mask 
  !======================
@@ -123,9 +125,11 @@ subroutine Dipole_transverse(Xen,Xk,X)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _SC || defined _RT
- l_eval_DIP_P2=l_sc_run.or.l_real_time
- if(l_eval_DIP_P2) wf_dim=4
+#if defined _SC
+ l_eval_DIP_P2=l_sc_run
+#endif
+#if defined _RT
+ l_eval_DIP_P2=l_real_time
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -191,14 +195,13 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          ! Evaluate <iv_wf|   p   |ic_wf>
          !================================
-         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
+         call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
-         if (io_Vnl_err==0) rho(:3) = rho(:3) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho(:3),kbv)
-         !
+         if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ec may become very large)
@@ -209,17 +212,27 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !=====
          ! <P>
          !=====
-         ! P_vc=rho(:3)
+         ! P_vc=rho
          !
          if (l_eval_DIP_P) then
            !
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            !
-           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)
+           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
            if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)*Ev_m_Ec_QP/Ev_m_Ec
+             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
            endif
+           !
+#if defined _RT
+           if (l_real_time_magn_dipoles) then
+             if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
+             if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
+               if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=cZERO
+               if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor*Ev_m_Ec_QP/Ev_m_Ec
+             endif
+           endif
+#endif
            !
          endif
          !
@@ -243,7 +256,7 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !             =   P_vc/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec)
          !
          if (l_eval_DIP_iR) then
-           if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho(:3)/Ev_m_Ec
+           if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho/Ev_m_Ec
            if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
          endif
          !
@@ -255,10 +268,10 @@ subroutine Dipole_transverse(Xen,Xk,X)
          !
          if (l_eval_DIP_P2) then
            ! See for this PRB 48, 11789 (1993), definition of p_eff
-           if(.not.allocated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= rho(4)
+           if(.not.allocated(Xen%Eo)) P_square(ic,iv,ik_mem,i_sp_pol)= P2
            if(     allocated(Xen%Eo)) then
              if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=rho(4)*(Ev_m_Ec_QP/Ev_m_Ec)**2
+             if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) P_square(ic,iv,ik_mem,i_sp_pol)=P2*(Ev_m_Ec_QP/Ev_m_Ec)**2
            endif
          endif
          !

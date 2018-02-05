@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,13 +31,13 @@ subroutine RT_density(en,kpt,qpt)
  use stderr,         ONLY:intc
  use com,            ONLY:msg,of_open_close,warning
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history
+ use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta0_occupations
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
- use interfaces,     ONLY:WF_load,el_density_and_current
+ use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
@@ -85,7 +85,7 @@ subroutine RT_density(en,kpt,qpt)
  call msg('s',trim(ch_ws(1)))
  !
  RT_dyn_step=RT_step
- call RT_time_configuration_setup("DENSITY")
+ call RT_time_configuration_setup("DENSITY",GF_RT_IO_t)
  !
  ! Parallel Setups & WF_load
  !===========================

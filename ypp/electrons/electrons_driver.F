@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,7 +60,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:l_angular_momentum,l_position
 #endif
- use interfaces,     ONLY:WF_load,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,     ONLY:WF_load,WF_free,el_density_and_current,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
  !
 #include<memory.h>
  !

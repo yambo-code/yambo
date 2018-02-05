@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,8 +43,8 @@ subroutine MEM_report( REPORT )
    prefix=" "
    where="r"
    call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
-   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold*int(Kilobyte)))//" (basic treshold) "//&
-&                                       trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
+   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold))//" (basic treshold) "//&
+&                                       trim(mem_string(MEM_SAVE_treshold))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0
@@ -55,14 +55,14 @@ subroutine MEM_report( REPORT )
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem),"Unallocated components:")
+     call plot_the_element(MEMs(i_mem),"Not deallocated components:")
      !
    enddo
    !
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -596,6 +596,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+   !
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -611,6 +612,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_END
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
+   !
+ endif
+ !
+ ! Double Grid
+ !
+ if (l_optics.or.l_life) then
+   !
+   call initactivate(1,'DbGdQsize')
    !
  endif
  !
@@ -684,6 +693,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
    if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
+   if (index(BSS_mode,'s')/=0)  then
+      call initactivate(1,'BSSNEig')
+      call initactivate(1,'BSSEnTarget')
+      call initactivate(1,'BSSSlepcExtraction')
+      call initactivate(1,'BSSSlepcNCV')
+      call initactivate(1,'BSSSlepcTol')
+   endif
    !
    ! Special project dependent variables
    !
@@ -868,9 +884,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   if (l_eval_collisions) then
+     if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   endif
    !
  endif
  !
@@ -920,9 +938,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'BGR RTskipImposeN RTeeImposeE InducedField SaveGhistory')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField UpdateSOC SaveGhistory')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
-   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp')
+   if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
+&    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
@@ -1561,7 +1581,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'bss' )  then
            BSS_mode=trim(rstr_piece(i1+1))
            if (index(BSS_mode,'h')==0.and.index(BSS_mode,'d')==0.and.&
-&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0) BSS_mode='h'
+&              index(BSS_mode,'i')==0.and.index(BSS_mode,'t')==0.and.&
+&              index(BSS_mode,'s')==0) BSS_mode='h'
            !
            ! With and ALDA Fxc the t solver is not permitted
            !

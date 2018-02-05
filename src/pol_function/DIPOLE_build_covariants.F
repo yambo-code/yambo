@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -28,7 +28,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t,DIP_S,DIP_iR,DIP_P,X_alloc,force_v_g_space_approach
@@ -46,7 +46,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  implicit none
  !
  type(levels),           intent(in)     :: Xen
- type(bz_samp),          intent(in)     :: Xk
+ type(bz_samp),          intent(inout)  :: Xk
  type(X_t),              intent(in)     :: X      
  !
  ! Work Space
@@ -66,7 +66,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
-
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 

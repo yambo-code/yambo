@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,9 +33,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_integrated,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys
+&                     X_use_lin_sys,X_DbGd_percentual
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -53,7 +53,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
@@ -70,6 +70,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+#if defined _SLEPC
+ use BS_solvers, ONLY:BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol, BSS_target_E, Slepc_shell
+#endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode
@@ -82,6 +85,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,zero_dfl
+ use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
 #if defined _KERR
  use drivers,    ONLY:l_kerr,l_anomalous_Hall
@@ -97,6 +101,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
+ use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -105,12 +110,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,RT_Tfit_occupations,RT_Efit_occupations,          &
+&                     RT_Efit_lifetimes,                                                  &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RT_T_thermodynamics,RT_E_thermodynamics,RT_S_thermodynamics,        &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
-&                     A_vecpot,A_vecpot_previous,A_ind,A_ind_previous,A_ext
+&                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _MAGNETIC
@@ -167,6 +171,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #if defined _TIMING
  call timing_allocate(nclockx)
 #endif
+ !
+ call MEM_element_init(MEMs,N_MEM_max)
+ call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
  !
  ! ZEROs 
  !
@@ -305,7 +312,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_spin_den=1
  l_spin_orbit       = .FALSE.
  BZ_DbGd_nbands=0
- BZ_DbGd_tot_nkpts=0
+ BZ_DbGd_tot_nk_levels=0
  BZ_ASSOCIATED_nkpts=0
  E_SOC_nbands=0
  filled_tresh=0.00001
@@ -357,6 +364,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use_g_space_approach       = .TRUE.
  force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
+ X_DbGd_percentual=1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
@@ -364,7 +372,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- X_is_integrated=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
@@ -440,7 +447,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BS_K_dim=0
  BSS_mode=' '
  BSS_inversion_mode='pf'
- BSS_n_freqs=100
  BSS_n_descs=0
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
@@ -457,6 +463,15 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ !
+#if defined _SLEPC
+ BSS_slepc_extraction='ritz'
+ BSS_slepc_ncv=0
+ BSS_slepc_tol=1E-6_SP
+ BSS_n_freqs=100
+ BSS_target_E=0
+ Slepc_shell=.TRUE.
+#endif
  !
  ! TDDFT
  !
@@ -515,6 +530,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
+ H_potential="default"
  !
 #endif
  !
@@ -546,11 +562,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
    call Efield_reset(Efield(i1))
  enddo
  !
- call A_vecpot_reset(A_vecpot)
- call A_vecpot_reset(A_vecpot_previous)
+ call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  call A_vecpot_reset(A_ind)
- call A_vecpot_reset(A_ind_previous)
  !
  ! RT dynamics 
  !
@@ -590,11 +604,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Nfitted_lifetimes=0
  RT_Tfit_lifetimes=0._SP
  RT_Efit_lifetimes=0._SP
- RT_Tfit_occupations=0._SP
- RT_Efit_occupations=0._SP
- RT_T_thermodynamics=0._SP
- RT_E_thermodynamics=0._SP
- RT_S_thermodynamics=0._SP
  RAD_prefactor=0._SP
  EE_prefactor=0._SP
  EP_prefactor=0._SP

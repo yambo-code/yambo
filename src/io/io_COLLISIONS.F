@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -59,12 +59,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Collision element...
  !
  i_coll=0
- if (present(COLL_element)) then
-   i_coll=COLL_element%I
- endif
- if (present(i_coll_)) then
-   i_coll=i_coll_
- endif
+ if (present(COLL_element)) i_coll=COLL_element%I
+ if (present(i_coll_))      i_coll=i_coll_
  !
 #if defined _TIMING
  call timing('io_COLLISIONS',OPR='start')

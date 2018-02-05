@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -197,7 +197,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
- call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
+ call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! Initialize the output file 
  !============================

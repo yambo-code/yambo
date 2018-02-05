@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,22 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_build_I1_and_I2(G_input_k,ik,I1_k,I2_k)
+subroutine fft_free()
  !
- use pars,           ONLY:SP,cZERO
- use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands
- use wrapper_omp,    ONLY:M_by_M_omp
+ use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
+&                   fft_rot_r,fft_rot_r_inv,fft_multiplier
+#if defined _FFTW
+ use FFT_m,    ONLY:fftw_plan
+#endif
  !
- implicit none
+#include<memory.h>
  !
- integer, intent(in)      :: ik
- complex(SP), intent(in)  :: G_input_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP), intent(out) :: I1_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP), intent(out) :: I2_k(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ fft_size=0
+ fft_dim=0
+ fft_dim_loaded=0
+ fft_multiplier=1
+ YAMBO_FREE(fft_g_table)
+ YAMBO_FREE(fft_rot_r)
+ YAMBO_FREE(fft_rot_r_inv)
+#if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
+ fftw_plan=0
+#endif
  !
- I1_k=cZERO
- I2_k=cZERO
- call M_by_M_omp('n','n',RT_nbands,Ho_plus_Sigma(:,:,ik,1),G_input_k,I1_k)
- call M_by_M_omp('n','n',RT_nbands,G_input_k,Ho_plus_Sigma(:,:,ik,1),I2_k)     
- !
-end subroutine RT_build_I1_and_I2
+end subroutine fft_free

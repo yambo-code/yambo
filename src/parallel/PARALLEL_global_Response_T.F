@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,8 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered,PAR_COM_DIPOLES, &
-&                        PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
+&                        PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,&
+&                        PAR_COM_VAL_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_bz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Kk_ibz,PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_DIPk_ibz, &
 &                        PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_eh
@@ -63,11 +64,13 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
  endif
  !
- ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
+ ! Dipoles are calculated using PAR_COM_Xk_ibz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
  !
  call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
  call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX(X_type))
  call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX(X_type))
+ call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
+ call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Xk_bz_A2A)
  !
  ! K-points (IBZ)
  !

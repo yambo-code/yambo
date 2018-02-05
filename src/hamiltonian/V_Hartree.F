@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -35,7 +35,9 @@ subroutine V_Hartree(rho,vhr)
 #if defined _TIMING
  use timing_m,      ONLY:timing
 #endif
+ ! 
  implicit none
+ !
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
  !

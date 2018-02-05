@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -24,6 +24,7 @@
 module hamiltonian
  !
  use pars,       ONLY:SP,schlen
+ use electrons,  ONLY:levels
  !
 #include<memory.h>
  !
@@ -37,7 +38,7 @@ module hamiltonian
  integer           :: H_xc_functional
  integer           :: H_perturbation
  !
- complex(SP), allocatable :: Ho(:,:,:,:)
+ complex(SP), allocatable :: Hzero(:,:,:,:)
  !
  ! Non-Local part (sigma_x, sigma_cohsex)
  !
@@ -51,10 +52,14 @@ module hamiltonian
  !
  ! Kinetic Energy and Ionic potential energy
  !
- real(SP),    allocatable :: E_bare(:,:,:)
+ type(levels),save        :: E_reference
  !
  real(SP),    allocatable :: rho_n(:)
  real(SP),    allocatable :: magn_n(:,:)
+ !
+ ! Rotation matrix which diagonalize the hamiltonian
+ !
+ complex(SP), allocatable :: SC_R(:,:,:,:)
  !
  ! Wavefunction indexes
  !
@@ -91,15 +96,32 @@ module hamiltonian
      !
    end subroutine
    !
-   subroutine H_alloc(E)
+   subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use xc_functionals, ONLY:magn,V_xc
      !
-     type(levels) :: E
+     implicit none
+     !
+     type(levels), intent(in) :: E
+     logical,      intent(in) :: l_real_space,l_rotation_matrix
+     !
+     ! Store the reference energies
+     !
+     call E_reset(E_reference)
+     call E_duplicate(E,E_reference)
+     !
+     YAMBO_ALLOC(Hzero,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+     !
+     YAMBO_ALLOC(H_nl_sc,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
+     !
+     if(l_rotation_matrix) then
+       YAMBO_ALLOC(SC_R,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+     endif
+     !
+     if (.not.l_real_space) return
      !
      YAMBO_ALLOC(rho_n,(fft_size))
      !
@@ -108,15 +130,11 @@ module hamiltonian
        YAMBO_ALLOC(magn_n,(fft_size,3))
      endif
      !
-     YAMBO_ALLOC(Ho,(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
-     !
      YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
      !
      YAMBO_ALLOC(V_xc,(fft_size,n_spin))
      !
      YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
-     !
-     YAMBO_ALLOC(H_nl_sc,(H_ref_bands(2),H_ref_bands(2)))
      !
    end subroutine
    !
@@ -126,28 +144,18 @@ module hamiltonian
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !
-     if(allocated(rho_n)) then
-       YAMBO_FREE(rho_n)
-     endif
+     implicit none
      !
-     if(allocated(magn_n)) then
-       YAMBO_FREE(magn_n)
-     endif
-     !
-     if(allocated(magn)) then
-       YAMBO_FREE(magn)
-     endif
-     !
-     YAMBO_FREE(Ho)
-     !
+     YAMBO_FREE(Hzero)
      YAMBO_FREE(H_nl_sc)
+     YAMBO_FREE(SC_R)
      !
-     if(allocated(V_xc)) then 
-       YAMBO_FREE(V_xc)
-     endif
+     YAMBO_FREE(rho_n)
+     YAMBO_FREE(magn_n)
+     YAMBO_FREE(magn)
      !
+     YAMBO_FREE(V_xc)
      YAMBO_FREE(V_xc_sc)
-     !
      YAMBO_FREE(V_hartree_sc)
      !
    end subroutine

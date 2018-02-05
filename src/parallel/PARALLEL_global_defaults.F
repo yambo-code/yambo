@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
-&                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default
+&                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
  use com,           ONLY:error
  use stderr,        ONLY:intc
@@ -72,12 +72,12 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  ! Dump
  !------
  CPU_structure(i_PAR_structure)%CPU_string =trim(intc( PARALLEL_CPU_used(1) ))
- CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE(1))
+ CPU_structure(i_PAR_structure)%ROLE_string=trim(PARALLEL_CPU_role(1))
  do i_p=2,PARALLEL_n_structures_active
    CPU_structure(i_PAR_structure)%CPU_string =trim(CPU_structure(i_PAR_structure)%CPU_string)//"."//&
 &                                             trim(intc( PARALLEL_CPU_used(i_p) ))
    CPU_structure(i_PAR_structure)%ROLE_string=trim(CPU_structure(i_PAR_structure)%ROLE_string)//"."//&
-&                                             trim(CPU_structure(i_PAR_structure)%ROLE(i_p))
+&                                             trim(PARALLEL_CPU_role(i_p))
  enddo
  !
  ! Save that this ENVIRONMENT uses defaults to repeat the default procedure

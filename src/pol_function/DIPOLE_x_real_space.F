@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,7 +27,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use pars,               ONLY:SP,cI,cZERO
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF
- use interfaces,         ONLY:WF_load
+ use interfaces,         ONLY:WF_load,WF_free
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp

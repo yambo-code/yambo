@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,12 +25,12 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  !
  use pars,        ONLY:schlen
  use stderr,      ONLY:intc
- use com,         ONLY:error
  use parallel_m,  ONLY:ncpu,myid,INTER_CHAIN,nchains_group,n_groups,INTRA_CHAIN,&
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                      PAR_EH_range,PAR_n_G_vectors
+ use interfaces,  ONLY:PARALLEL_check_phase_space
  !
  implicit none
  !
@@ -80,10 +80,11 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="b" ) PHASE_space=PAR_n_bands(2)-PAR_n_bands(1)+1
        if (trim(ROLE(i_order))=="c" ) PHASE_space=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+       !
        if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
 &                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
-         call error('USER parallel structure does not fit the current run parameters: '//trim(USER_structure_msg))
+         call PARALLEL_check_phase_space(PHASE_space/PARALLEL_CPU_used(i_structure),MSG=trim(USER_structure_msg))
        endif
        ncpu_chain(i_chain)=PARALLEL_CPU_used(i_structure)
      endif

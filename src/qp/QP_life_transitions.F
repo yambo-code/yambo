@@ -112,7 +112,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  ! Here I reduce the frequencies
  !
  call FREQUENCIES_coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
-&                 n_of_transitions(iqibz_in),QP_cg_percent,0.0_SP,.FALSE.)
+&                 n_of_transitions(iqibz_in),QP_cg_percent,(/0.0_SP/),.FALSE.)
  X_life_W%n_freqs=coarse_grid_N
  !
  X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)

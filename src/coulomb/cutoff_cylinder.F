@@ -117,28 +117,28 @@ subroutine cutoff_cylinder(q,is_cut)
 &        cyl_cut*sin(cyl_vz_save*cyl_cut)/cyl_vz_save
          c2=sin(cyl_vz_save*cyl_cut)*sqrt(cyl_ph_radius2+cyl_cut2)
 #if defined _DOUBLE
-         call dqawo (bessel_F3,0,cyl_cut,cyl_vz_save,2,epsabs,0,Vd,&
+         call dqawo (bessel_F3,0.,cyl_cut,cyl_vz_save,2,epsabs,0.,Vd,&
 &                   abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
 #else
-         call qawo (bessel_F3,0,cyl_cut,cyl_vz_save,2,epsabs,0,Vd,&
+         call qawo (bessel_F3,0.,cyl_cut,cyl_vz_save,2,epsabs,0.,Vd,&
 &                   abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
 #endif
          V_cut(iq,ig)=c1+(c2-Vd)/cyl_vz_save
        elseif (cyl_vz_save==0.) then
 #if defined _DOUBLE
-         call dqag(bessel_F4,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+         call dqag(bessel_F4,0.,cyl_ph_radius,epsabs,0.,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
 #else
-         call qag(bessel_F4,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+         call qag(bessel_F4,0.,cyl_ph_radius,epsabs,0.,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
 #endif
         V_cut(iq,ig)=Vd
        else
 #if defined _DOUBLE
-         call dqawo(bessel_F2,0,cyl_cut,cyl_vz_save,1,epsabs,0,Vd,  &
+         call dqawo(bessel_F2,0.,cyl_cut,cyl_vz_save,1,epsabs,0.,Vd,  &
 &                  abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
 #else
-         call qawo(bessel_F2,0,cyl_cut,cyl_vz_save,1,epsabs,0,Vd,  &
+         call qawo(bessel_F2,0.,cyl_cut,cyl_vz_save,1,epsabs,0.,Vd,  &
 &                  abserr,neval,ier,leniw,maxp1,lenw2,last,iwork2,work2)
 #endif
      
@@ -170,12 +170,12 @@ subroutine cutoff_cylinder(q,is_cut)
        ! 
        if (cyl_vz_save==0.and.cyl_vr_save>0.) then
 #if defined _DOUBLE
-         call dqag(bessel_F5,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+         call dqag(bessel_F5,0.,cyl_ph_radius,epsabs,0.,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
          V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)* &
 &                     DBESJ1_(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 
 #else
-         call qag(bessel_F5,0,cyl_ph_radius,epsabs,0,key,Vd,abserr, &
+         call qag(bessel_F5,0.,cyl_ph_radius,epsabs,0.,key,Vd,abserr, &
 &                 neval,ier,limit,lenw,last,iwork,work)
          V_cut(iq,ig)=-Vd+cyl_ph_radius*log(2*cyl_cut)* &
 &                     BESJ1(cyl_vr_save*cyl_ph_radius)/cyl_vr_save 

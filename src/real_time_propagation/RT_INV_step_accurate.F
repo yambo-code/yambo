@@ -65,7 +65,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  complex(SP) :: M2_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP) :: G_com(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
- complex(SP), pointer :: vec_dG_out(:,:)
+ complex(SP), pointer :: vec_dG_out(:)
  !
  H1_k=-cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
  H2_k=+cI*2*deltaT*Ho_plus_Sigma(:,:,ik,1)
@@ -100,7 +100,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !call M_by_M_omp('n','n',RT_nbands,M2_tmp,U_k   ,dG_out)
  !!*******************************************************
  !
- vec_dG_out => linkM2V(dG_out,(/RT_nbands**2,1/))
+ vec_dG_out => linkM2V(dG_out,(/RT_nbands**2/))
  !
  AdA_k=cZERO
  do ib1=RT_bands(1),RT_bands(2)
@@ -117,6 +117,8 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !
  !call LINEAR_ALGEBRA_driver(LIN_SYS,M=AdA_k,B=vec_dG_out)
  call SERIAL_lin_system(RT_nbands**2,1,AdA_k,vec_dG_out)
+ !
+ nullify(vec_dG_out)
  !!*******************************************************
  !!
  !! Rotate G_com back the old basis set

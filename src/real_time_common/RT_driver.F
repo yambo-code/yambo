@@ -49,7 +49,7 @@ subroutine RT_driver(E,X,k,q)
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot
- use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element
+ use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,&
@@ -182,9 +182,10 @@ subroutine RT_driver(E,X,k,q)
  !
  call RT_start_and_restart(E,k,q)
  !
- ! Collisions => No need of WFs and Density
+ ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
  !
- if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. eval_energy ) then
+ if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP") .and. eval_energy .and. &
+&    (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)        ) then
    !
    call WF_free(WF)
    !

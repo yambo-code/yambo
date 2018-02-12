@@ -40,7 +40,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
 #if defined _RT
  use drivers,        ONLY:l_real_time
 #endif
-#if defined _RT
+#if defined _NL
  use drivers,        ONLY:l_nl_optics
 #endif
 #if defined _TIMING && defined _RT
@@ -57,7 +57,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  !
  ! Work space
  !
- integer           :: ic
  real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
  !
@@ -71,7 +70,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
 #if defined _SC
  if (l_sc_run)    call IO_and_Messaging_switch("SAVE MUTE")
 #endif
-#if defined _SC
+#if defined _NL
  if (l_nl_optics) call IO_and_Messaging_switch("SAVE MUTE")
 #endif
  !
@@ -119,7 +118,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
 #if defined _SC
  if (l_sc_run)    call IO_and_Messaging_switch("RESTORE")
 #endif
-#if defined _SC
+#if defined _NL
  if (l_nl_optics) call IO_and_Messaging_switch("RESTORE")
 #endif
  !

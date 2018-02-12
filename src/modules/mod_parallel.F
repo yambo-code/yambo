@@ -445,7 +445,7 @@ module parallel_m
    end subroutine
    !
    integer function i_INTER_CHAIN(N_father,N_child)
-     ! Note that N_child/_father art the #cpu's in the two chains
+     ! Note that N_child/_father are the #cpu's in the two chains
      integer :: N_father,N_child
      i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
    end function

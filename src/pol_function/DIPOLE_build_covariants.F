@@ -47,7 +47,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  implicit none
  !
  type(levels),           intent(in)     :: Xen
- type(bz_samp),          intent(in)     :: Xk
+ type(bz_samp),          intent(inout)  :: Xk
  type(X_t),              intent(in)     :: X      
  !
  ! Work Space

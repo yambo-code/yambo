@@ -51,7 +51,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- !
 #include<memory.h>
  type(levels) ::Ken
  type(bz_samp)::Xk,q

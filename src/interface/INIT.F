@@ -614,6 +614,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+   !
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -633,6 +634,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL | defined _ELECTRIC
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
+   !
+ endif
+ !
+ ! Double Grid
+ !
+ if (l_optics.or.l_life) then
+   !
+   call initactivate(1,'DbGdQsize')
    !
  endif
  !
@@ -897,9 +906,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   if (l_eval_collisions) then
+     if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   endif
    !
  endif
  !

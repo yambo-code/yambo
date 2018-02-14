@@ -33,9 +33,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_integrated,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys
+&                     X_use_lin_sys,X_DbGd_percentual
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -53,7 +53,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
@@ -101,6 +101,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _SC || defined _RT || defined _QED
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
+ use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -311,7 +312,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  n_spin_den=1
  l_spin_orbit       = .FALSE.
  BZ_DbGd_nbands=0
- BZ_DbGd_tot_nkpts=0
+ BZ_DbGd_tot_nk_levels=0
  BZ_ASSOCIATED_nkpts=0
  E_SOC_nbands=0
  filled_tresh=0.00001
@@ -363,6 +364,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use_g_space_approach       = .TRUE.
  force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
+ X_DbGd_percentual=1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
@@ -370,7 +372,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- X_is_integrated=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
@@ -529,6 +530,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
+ H_potential="default"
  !
 #endif
  !

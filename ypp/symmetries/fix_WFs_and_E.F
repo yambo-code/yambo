@@ -372,7 +372,7 @@ subroutine map_energies(E,E_new,k,kpoints_map)
  YAMBO_ALLOC(E_new%E,(E%nb,k%nibz,n_sp_pol))
  !
  do ik=1,k%nibz
-   E_new%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)
+   E_new%E(:,ik,:)=E%E(:,kpoints_map(1,ik),:)+E%E_Fermi
  enddo
  !
 end subroutine map_energies

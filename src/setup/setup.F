@@ -25,7 +25,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
-&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nkpts
+&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
@@ -255,7 +255,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             :',BZ_DbGd_tot_nkpts)
+   call msg('r', 'K-points             :',BZ_DbGd_tot_nk_levels)
    call msg('r', 'Bands                :',BZ_DbGd_nbands)
    call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
    !

@@ -80,7 +80,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! 2:
  call IO_and_Messaging_switch("-report") 
- call X_irredux(X_mat,1,E,k,Xw,X)
+ !call X_irredux(X_mat,1,E,k,Xw,X)
  call IO_and_Messaging_switch("+report")
  ! 3:
  YAMBO_ALLOC(Xo_inverse,(X%ng-1,X%ng-1))
@@ -143,11 +143,11 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
          !
          rho_tw_rs(fft_g_table(g_rot(1,1),1)) = (0.,0.)
          if (l_is_TR) then
-           !rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
-           rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
+           !rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+rho_tw_rs(fft_g_table(g_rot(:X%ng,is),1))
+           rhotw_sum_TR(:X%ng)=rhotw_sum_TR(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(:X%ng,is),1)))
          else
-           !rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1)))
-           rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+rho_tw_rs(fft_g_table(g_rot(is,:X%ng),1))
+           !rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+conjg(rho_tw_rs(fft_g_table(g_rot(:X%ng,is),1)))
+           rhotw_sum(:X%ng)=rhotw_sum(:X%ng)+rho_tw_rs(fft_g_table(g_rot(:X%ng,is),1))
          endif
          !
        end do

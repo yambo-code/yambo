@@ -93,7 +93,7 @@ integer function io_COL_CUT(ID)
  if (any((/io_sec(ID,:)==2/))) then
    !
    call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng/))
-   call io_bulk(ID,C2=bare_qpg)
+   call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
    !
  endif
  !

@@ -31,7 +31,7 @@ integer function io_X(X,Xw,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        RD_CL,RD_CL_IF_END,io_action,&
+&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
@@ -53,6 +53,7 @@ integer function io_X(X,Xw,ID)
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
  complex(SP),allocatable :: X_on_disk(:,:)
+ integer,    external    :: variables_X
  !
 #if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
@@ -97,7 +98,8 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   call variables_X(ID,X_description,X)
+   io_X=variables_X(ID,X_description,X)
+   if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors
@@ -134,9 +136,9 @@ integer function io_X(X,Xw,ID)
  enddo
  if (iq==0) goto 1
  !
- ! Manage RD_CL_IF_END
+ ! Manage OP_IF_START_and_RD_CL_IF_END
  !
- if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
+ call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
  !
  ! Fragmentation
  !

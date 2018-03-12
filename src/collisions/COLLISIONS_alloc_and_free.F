@@ -76,7 +76,6 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  l_table    =index(elements,"table")>0
  l_collision=index(elements,"coll")>0
  !
- !
  ! Actions
  !
  l_alloc     =index(actions,"alloc")>0

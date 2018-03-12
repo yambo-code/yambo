@@ -46,7 +46,7 @@ subroutine RT_X_response(en,k,q)
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- call RT_IO_J_and_P_paths( )
+ call RT_IO_J_and_P_paths(en)
  !
  ! LOGICALS
  !----------

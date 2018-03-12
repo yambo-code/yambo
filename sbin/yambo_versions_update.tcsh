@@ -37,9 +37,13 @@ endif
 # Get current version & revision
 #
 set dir=`git branch | grep 'master' |wc -l`
-set dummy=`git rev-list --count HEAD`
-set revision_HEAD=`echo $dummy`
-@ revision_HEAD= $revision_HEAD + 10000 
+# Revision number (the offset of 10000 commits exist since the migration from svn to git)
+set dummy1=`git rev-list --count HEAD`
+@ dummy1= $dummy1 + 10000 
+set dummy2=`cat include/version.inc | grep code_revision | tail -c 6`
+if ( "$dummy1" >= "$dummy2" ) set revision_HEAD=`echo $dummy1`
+if ( "$dummy1" <  "$dummy2" ) set revision_HEAD=`echo $dummy2`
+# HASH
 set hash_HEAD=`git rev-parse --short HEAD`
 #
 set gpl="yes"

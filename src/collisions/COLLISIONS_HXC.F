@@ -30,7 +30,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -106,6 +106,21 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  call k_build_up_BZ_tables(q)
  call k_expand(k)
  !
+ if (l_compute_screening) then
+   !
+   ! Plasmon-Pole/Static interaction DB I/O
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err=io_X(X,Xw,ID)
+   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
+   !
+   if (X%ng<QP_ng_Sc) then
+     QP_ng_Sc=X%ng
+     call warning('SEX size (CORRLvcs) reduced to match the Screening size (NGsBlkXs)')
+   endif 
+   !
+ endif
+ !
  ! Dimensions
  !
  N_g_vecs_H =0
@@ -168,14 +183,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  call elemental_collision_alloc(iscp_XC,NG=NG_XC,NG_GAMP=(/N_g_vecs_X,  1  /),TITLE=trim(H_potential))
  !
  if (l_compute_screening) then
-   !
-   ! Plasmon-Pole/Static interaction DB I/O
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
-   !
-   if (X%ng<N_g_vecs_C) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (CORRLvcs)')
    !
    ! Test the spatial Inversion
    !   
@@ -297,7 +304,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- if(l_compute_screening) then
+ if (l_compute_screening) then
    YAMBO_FREE(EM1s)
    call X_alloc('X')
    call elemental_collision_free(isc_H)
@@ -377,7 +384,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(sop_inv(i_p_s),ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(ig1,sop_inv(i_p_s)))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

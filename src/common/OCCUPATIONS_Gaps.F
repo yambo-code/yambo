@@ -133,6 +133,8 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir)
  !
  if (all(Nbf_==Nbm_)) then
    E_g_dir_(1,:)=(/100._SP,-100._SP/)
+   i_sp_ref=1
+   j_sp_ref=1
    do ik=1,E%nk
      do i_sp_pol=1,n_sp_pol
        do j_sp_pol=1,n_sp_pol

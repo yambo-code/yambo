@@ -53,10 +53,16 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
+ ! Double Grid
+ !
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: X_is_integrated
+ integer              :: X_DbGd_nkpts
+ logical              :: use_X_DbGd
+ real(SP)             :: X_DbGd_percentual=0.5
+ integer ,allocatable :: X_DbGd_nkpt_at_q(:)
+ integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !
  ! Dipole M.E.
  !
@@ -100,10 +106,8 @@ module X_m
  integer :: X_ng = 0
  integer :: current_iq
  integer :: iw_ref
- integer :: X_DbGd_nkpts
  logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
- logical :: use_X_DbGd
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.

@@ -42,35 +42,31 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  integer, parameter :: n_dl_pts=24 ! NO EVEN NUMBERS HERE !
  real(SP),parameter :: plot_factor=1.2
  character(schlen)  :: of_name(4)
- !
- real(SP), allocatable :: pl_xy_pt(:,:), v_xy(:,:)
- real(SP), allocatable :: pl_yz_pt(:,:), v_yz(:,:)
- real(SP), allocatable :: pl_xz_pt(:,:), v_xz(:,:)
- real(SP):: dummy(3),max_val
+ real(SP):: pl_xy_pt(n_dl_pts**2,3),v_xy(n_dl_pts**2,2),&
+&           pl_yz_pt(n_dl_pts**2,3),v_yz(n_dl_pts**2,2),&
+&           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&
+&           dummy(3),max_val
  integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
  type(PP_indexes) ::px
 
  !
  ! CutOff Test
  !
- allocate(pl_xy_pt(3,n_dl_pts**2),v_xy(n_dl_pts**2,2))
- allocate(pl_yz_pt(3,n_dl_pts**2),v_yz(n_dl_pts**2,2))
- allocate(pl_xz_pt(3,n_dl_pts**2),v_xz(n_dl_pts**2,2))
- !
- pl_xy_pt=0.0
- pl_yz_pt=0.0
- pl_xz_pt=0.0
- v_xy=0.0
- v_yz=0.0
- v_xz=0.0
+ pl_xy_pt=0._SP
+ pl_yz_pt=0._SP
+ pl_xz_pt=0._SP
+ v_xy=0._SP
+ v_yz=0._SP
+ v_xz=0._SP
  call PP_indexes_reset(px)
  !
  ! DL points along the 3 possible planes
  !
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
- if (cut_is_sphere) dummy=2.0*plot_factor*cyl_ph_radius
- if (cut_is_ws)     dummy=2.0*plot_factor*dummy
+<<<<<<< HEAD
+ if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
+ if (cut_is_ws)     dummy=2._SP*plot_factor*dummy
  !
  if (cut_is_cyl) then
    dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
@@ -152,15 +148,15 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
        !
        iqibz = q%sstar(iqbz,1)
        is    = q%sstar(iqbz,2)
-       ig_r  = g_rot( sop_inv(is), ig )
+       ig_r  = g_rot( ig, sop_inv(is) )
        !
-       dummy(1)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.0*pi/alat(:), pl_xy_pt(:,ip))
-       dummy(2)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.0*pi/alat(:), pl_yz_pt(:,ip))
-       dummy(3)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.0*pi/alat(:), pl_xz_pt(:,ip))
+       dummy(1)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2._SP*pi/alat(:), pl_xy_pt(ip,:))
+       dummy(2)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2._SP*pi/alat(:), pl_yz_pt(ip,:))
+       dummy(3)=dot_product( (q%ptbz(iqbz,:)+g_vec(ig,:))*2._SP*pi/alat(:), pl_xz_pt(ip,:))
        !
-       v_xy(ip,2)=v_xy(ip,2)+real(Exp( cmplx(0.0,dummy(1)) )*4.0*pi/bare_qpg(iqibz,ig_r)**2)
-       v_yz(ip,2)=v_yz(ip,2)+real(Exp( cmplx(0.0,dummy(2)) )*4.0*pi/bare_qpg(iqibz,ig_r)**2)
-       v_xz(ip,2)=v_xz(ip,2)+real(Exp( cmplx(0.0,dummy(3)) )*4.0*pi/bare_qpg(iqibz,ig_r)**2)
+       v_xy(ip,2)=v_xy(ip,2)+Exp( cmplx(0.,dummy(1),SP) )*4._SP*pi/bare_qpg(iqibz,ig_r)**2
+       v_yz(ip,2)=v_yz(ip,2)+Exp( cmplx(0.,dummy(2),SP) )*4._SP*pi/bare_qpg(iqibz,ig_r)**2
+       v_xz(ip,2)=v_xz(ip,2)+Exp( cmplx(0.,dummy(3),SP) )*4._SP*pi/bare_qpg(iqibz,ig_r)**2
        !
      enddo
      !
@@ -210,19 +206,19 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    call msg('o yz','',(/pl_yz_pt(2,ip),pl_yz_pt(3,ip),v_yz(ip,:)/),INDENT=-2,USE_TABS=.true.)
  enddo
  !
- max_val=0.0
+ max_val=0._SP
  !
  do ig=1,wf_ng 
    do iqbz=1,q%nbz 
      !
      iqibz = q%sstar(iqbz,1)
      is    = q%sstar(iqbz,2)
-     ig_r  = g_rot( sop_inv(is), ig )
+     ig_r  = g_rot( ig , sop_inv(is) )
      !
-     dummy(1)=v_norm( (q%ptbz(iqbz,:)+g_vec(ig,:))*2.0*pi/alat(:) )
-     dummy(2)=0.0
-     if (iqbz/=1.or.ig/=1) dummy(2)=4.0*pi/dummy(1)**2
-     dummy(3)=4.0*pi/real(bare_qpg(iqibz,ig_r)**2)
+     dummy(1)=v_norm( (q%ptbz(iqbz,:)+g_vec(ig,:))*2._SP*pi/alat(:) )
+     dummy(2)=0.
+     if (iqbz/=1.or.ig/=1) dummy(2)=4._SP*pi/dummy(1)**2
+     dummy(3)=4.*pi/bare_qpg(iqibz,ig_r)**2
      !
      if (dummy(2)>max_val) max_val=dummy(2)
      !
@@ -250,15 +246,15 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    real(SP) function V_in_sphere(r)
      real(SP) :: r(3)
      V_in_sphere=0.
-     if (v_norm(r)<cyl_ph_radius.and.v_norm(r)>0.1) V_in_sphere=1./v_norm(r)
+     if (v_norm(r)<cyl_ph_radius.and.v_norm(r)>0.1) V_in_sphere=1._SP/v_norm(r)
    end function
    !
    real(SP) function V_in_box(r)
      real(SP) :: r(3)
      V_in_box=0.
      if ( (.not.is_cut(1).or.abs(r(1))<box_length(1)/2.).and.&
-&         (.not.is_cut(2).or.abs(r(2))<box_length(2)/2.).and.&
-&         (.not.is_cut(3).or.abs(r(3))<box_length(3)/2.).and.v_norm(r)>0.1) V_in_box=1./v_norm(r)
+&       (.not.is_cut(2).or.abs(r(2))<box_length(2)/2.).and.&
+&       (.not.is_cut(3).or.abs(r(3))<box_length(3)/2.)) V_in_box=1._SP/v_norm(r)
    end function
 
    real(SP) function V_in_cyl(r)
@@ -272,7 +268,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
      else
        if (((is_cut(1).and.abs(r(2))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
 &           (is_cut(2).and.abs(r(1))**2+abs(r(3))**2<cyl_ph_radius**2).or.&
-&           (is_cut(3).and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)).and.v_norm(r)>0.1) V_in_cyl=1./v_norm(r)
+&           (is_cut(3).and.abs(r(1))**2+abs(r(2))**2<cyl_ph_radius**2)) V_in_cyl=1._SP/v_norm(r)
      endif
    end function
 

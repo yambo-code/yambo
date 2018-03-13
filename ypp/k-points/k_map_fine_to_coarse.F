@@ -37,11 +37,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
 &                              BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk,n_sp_pol,BZ_DbGd_max_filling,&
 &                              BZ_DbGd_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
-<<<<<<< HEAD
- use interfaces,          ONLY:PARALLEL_index,io_DB1_selective_scan
-=======
  use interfaces,          ONLY:PARALLEL_index,OCCUPATIONS_Fermi
->>>>>>> bug-fixes
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -70,12 +66,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Functions
  !
-<<<<<<< HEAD
- integer, external :: k_DbGd_grid_consistency_check
- integer, external :: io_Double_Grid
-=======
  integer, external :: io_DB1_selective_scan,io_Double_Grid
->>>>>>> bug-fixes
  !
  BZ_DbGd_nbands=0
  !

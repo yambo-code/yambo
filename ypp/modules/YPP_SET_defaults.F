@@ -115,6 +115,7 @@ subroutine YPP_SET_defaults()
  deg_energy =0.01_SP/HA2EV
  min_weight =0.01_SP
  WF_multiplier=1._SP
+ BSiq=1
  !
 #if defined _YPP_ELPH
  !

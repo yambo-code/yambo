@@ -29,7 +29,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,BSiq
  use pars,           ONLY:pi,SP,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -221,6 +221,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_wavefunction   =trim(rstr_piece(i1+1))=='w'
      l_sort           =trim(rstr_piece(i1+1))=='s'
      l_amplitude      =trim(rstr_piece(i1+1))=='a'
+     if (l_sort)  read(rstr_piece(i1+2),'(i10)') BSiq
 #if defined _YPP_ELPH
      l_gkkp           =trim(rstr_piece(i1+1))=='g'
 #endif

@@ -30,7 +30,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use X_m,           ONLY:X_t
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
- use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
+ use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report,BSiq
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
@@ -90,7 +90,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BS(1,Xbsk,io_ID) 
+ io_err=io_BS(BSiq,Xbsk,io_ID) 
  !
  if (io_err/=0) call error(' ndb.BS not found or not compatible with ypp input')
  !
@@ -131,8 +131,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  YAMBO_ALLOC(BS_R_right,(BS_H_dim))
  YAMBO_ALLOC(BS_R_left,(BS_H_dim))
  YAMBO_ALLOC(BS_E,(BS_H_dim))
- iq=BS_q(1)
- !
+ !iq=BS_q(1)
+ iq=BSiq
  if(E_SOC_nbands/=0) then
    YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
  endif

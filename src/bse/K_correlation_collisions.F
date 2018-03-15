@@ -93,7 +93,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        !
        H_pos = (/sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk,sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp/)
        !
-       if (H_pos(1)>H_pos(2).and.iq==1) cycle
+       if (H_pos(1)>H_pos(2)) cycle
        !
        ! Bands and spin indexes
        !
@@ -219,10 +219,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
    !
    subroutine SETUP_kp_indexes(iq_now)
      integer :: iq_now
+     !
      i_k_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_k)%table(i_Tk,1),1)
      i_p_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_p)%table(i_Tp,1),1)
-     i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
-     i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1)
      !
      i_k_s =Xk%sstar(i_k_bz,2)
      i_p_s =Xk%sstar(i_p_bz,2)
@@ -233,6 +232,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
      K_CORR_collision%is=(/0,i_k,1,i_k_sp/)
      K_CORR_collision%os=(/0,i_p,1,i_p_sp/)
      K_CORR_collision%qs=(/1, q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1) ,1/)
+     !
    end subroutine
    !
    subroutine EVAL_collision(i_b,i_b_p)

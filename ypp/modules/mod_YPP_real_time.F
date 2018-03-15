@@ -45,6 +45,7 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_X
  logical  :: l_RT_abs
+ logical  :: l_RT_ph_oscillations
  !
  ! RT post-processing (kind)
  !

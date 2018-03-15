@@ -53,7 +53,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions,l_RT_ph_oscillations 
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
@@ -200,6 +200,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_high_sym_pts) call initactivate(1,"High_Symm")
    endif
    !
+   if ( trim(rstr_piece(i1)) == 'WFs') then
+     call initactivate(1,'WFs')
+     l_fix_save=trim(rstr_piece(i1+1))=='c'
+     l_map_WFs  =trim(rstr_piece(i1+1))=='p'
+     if (l_map_WFs) call initactivate(1,'WFs_map')
+   endif
+   !
    if ( trim(rstr_piece(i1)) == 'QPDBs') then
      call initactivate(1,'QPDBs')
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
@@ -264,6 +271,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
      l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
+   endif
+   if ( trim(rstr_piece(i1)) == 'phonons') then
+     l_RT_ph_oscillations  =trim(rstr_piece(i1+1))=='o'
+     if (l_RT_ph_oscillations) call initactivate(1,'RT_ph_osc')
    endif
    !
    ! GPL_EXCLUDE_END
@@ -360,7 +371,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
- l_fix_save  =runlevel_is_on('fixsave')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -378,6 +388,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RealTime         = runlevel_is_on('RealTime')
  !
  l_RT_X             = runlevel_is_on('RT_X')
+ !
+ l_RT_ph_oscillations=runlevel_is_on('RT_ph_osc')
  !
  ! GPL_EXCLUDE_START
  !
@@ -445,8 +457,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
  !
- l_map_WFs   = runlevel_is_on('WFs_map')
- !
  l_bxsf      = runlevel_is_on('bxsf')
  !
  if (l_bxsf) call initactivate(1,"W90_fname WannBnds DgridOrd")
@@ -483,6 +493,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TimeRange DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
+ endif
+ !
+ if (l_RT_ph_oscillations) then 
+   call initactivate(1,"TimeRange DampMode DampFactor")
  endif
  !
 #endif

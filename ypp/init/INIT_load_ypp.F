@@ -85,7 +85,8 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
- call it('r',defs,'WFs_map',      '[R] WF map WFs with SOC to present WFs')
+ call it('r',defs,'WFs',          '[R] WF operations')
+ call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -99,6 +100,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
  !
 #endif
  !

@@ -685,19 +685,19 @@ contains
    !
    nflines_save=nflines
    if (field=="GWKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points list'
      n_u_k_pts=n_points
      U_k_pts(:n_u_k_pts,:)=real_v(:n_u_k_pts,:)
-   else if (field=="BKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points of the bands circuit'
+   else if (field=="BANDS_kpts") then
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points of the bands circuit'
      n_u_interp_pts=n_points
      U_interp_pts(:n_u_interp_pts,:)=real_v(:n_u_interp_pts,:)
    else if (field=="Qpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# Q points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# Q points list'
      n_u_q_pts=n_points
      U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
    else if (field=="KShift") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K-grid shifts (max 3)'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K-grid shifts (max 3)'
      U_q_shifts(:n_points,:)=real_v(:n_points,:)
    endif
    !

@@ -93,7 +93,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  i_err=0
  if (n_DbGd_DBs>0) then
    do i_db=1,n_DbGd_DBs
-     i_err(i_db)=io_DB1_selective_scan(DbGd_E(i_db),DbGd_k(i_db),trim(DbGd_DB1_paths(i_db,1)),'all')
+     i_err(i_db)=io_DB1_selective_scan('all',trim(DbGd_DB1_paths(i_db,1)),DbGd_E(i_db),DbGd_k(i_db))
      if (i_err(i_db)/=0) call msg("s",'DbGd database NOT FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
      if (i_err(i_db)==0) call msg("s",'DbGd database FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
      !

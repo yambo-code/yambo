@@ -29,7 +29,7 @@ subroutine RT_occupations_driver(kpt,En)
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_conf
- use RT_control,     ONLY:RT_apply,JPC_RT_IO_t
+ use RT_control,     ONLY:RT_apply,OBS_RT_IO_t
  use real_time,      ONLY:RT_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_lifetimes,l_RT_2D_dos
  !
@@ -47,7 +47,7 @@ subroutine RT_occupations_driver(kpt,En)
  !
  if (.not.l_rt_carriers_in_use) return
  !
- call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
+ call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
  !
  ! Additional QP corrections
  !===========================

@@ -35,8 +35,8 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
-&                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
+ use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
+&                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
@@ -127,7 +127,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Set the I/O steps: (J,P,CARRIERs) (GF) (output)
  !=================================================
- call SETUP_RT_IO_type(JPC_RT_IO_t,.TRUE.)
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.TRUE.)
  call SETUP_RT_IO_type(GF_RT_IO_t,.TRUE.)
  !
@@ -189,8 +189,8 @@ subroutine RT_initialize(E,k,q)
      if(NE_time_step_update_jump_SAVE<2._SP*RT_life_extrap_times(1)) NE_time_step_update_jump_SAVE=2._SP*RT_life_extrap_times(1) 
    endif
    !
-   NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,JPC_RT_IO_t%INTERVAL_time)
-   if(NE_time_step_update_jump_SAVE<JPC_RT_IO_t%INTERVAL_time) NE_time_step_update_jump_SAVE=JPC_RT_IO_t%INTERVAL_time
+   NE_time_step_update_jump_SAVE = TIME_adjust(NE_time_step_update_jump_SAVE,OBS_RT_IO_t%INTERVAL_time)
+   if(NE_time_step_update_jump_SAVE<OBS_RT_IO_t%INTERVAL_time) NE_time_step_update_jump_SAVE=OBS_RT_IO_t%INTERVAL_time
    !
    NE_time_step_update_jump = NE_time_step_update_jump_SAVE
    !
@@ -202,7 +202,7 @@ subroutine RT_initialize(E,k,q)
  !
    ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
    !=========================
-   IO_JPSM_cache_steps=JPC_RT_IO_t%INTERVAL_steps
+   IO_OBS_cache_steps=OBS_RT_IO_t%INTERVAL_steps
    !
  !
  ! GPL_EXCLUDE_START
@@ -240,13 +240,13 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     if ( mod(Efield(i1)%t_initial_indx-1,JPC_RT_IO_t%INTERVAL_steps)/=0 ) then
+     if ( mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)/=0 ) then
        call warning('Field starting time corrected to be a mutiple of the I/O step.')
-       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,JPC_RT_IO_t%INTERVAL_steps)
+       Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)
      endif
-     if (Efield(i1)%t_initial_indx< JPC_RT_IO_t%INTERVAL_steps+1 ) then
+     if (Efield(i1)%t_initial_indx< OBS_RT_IO_t%INTERVAL_steps+1 ) then
        call warning('Field starting time corrected to respect the I/O times.')
-       Efield(i1)%t_initial_indx=JPC_RT_IO_t%INTERVAL_steps+1
+       Efield(i1)%t_initial_indx=OBS_RT_IO_t%INTERVAL_steps+1
      endif
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
@@ -392,7 +392,7 @@ subroutine RT_initialize(E,k,q)
  ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
- call                          msg('r', 'T between I/O of J,P,f [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
+ call                          msg('r', 'T between I/O of J,P,f [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '          I/O of   GFs [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
  call                          msg('r', '               outputs [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)

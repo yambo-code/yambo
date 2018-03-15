@@ -67,7 +67,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
      if (.not.frag_HF) return
    case("em1s","em1d","pp","Xx")
      if (.not.frag_RESPONSE) return
-   case("carriers","THETA","JPSM","G","REF")
+   case("carriers","THETA","OBSERVABLES","G","REF")
      if (.not.frag_RT) return
    case("scE","scWFs","scV","sc_MeanPotential")
      if (.not.frag_SC) return

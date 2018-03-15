@@ -72,7 +72,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
- use RT_control,    ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
+ use RT_control,    ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t
  use stderr,        ONLY:intc
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
 &                        NE_tot_time,RT_life_extrap_times_SAVE,RT_bands,         &
@@ -431,9 +431,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
- IO_times=(/JPC_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
+ IO_times=(/OBS_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
  call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
- JPC_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
+ OBS_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
  GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
  !

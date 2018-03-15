@@ -106,7 +106,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
- integer           :: io_G,io_JPSM
+ integer           :: io_G,io_OBS
 #endif
 #if defined _SC || defined _RT
  integer           :: io_COLLISIONS_err
@@ -427,7 +427,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_JPSM=io_RT_components('JPSM',io_ID)
+ io_OBS=io_RT_components('OBSERVABLES',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_RT_components('G',io_ID)
 #endif

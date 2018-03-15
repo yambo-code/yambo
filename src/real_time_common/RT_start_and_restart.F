@@ -42,7 +42,7 @@ subroutine RT_start_and_restart(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
+ use RT_control,     ONLY:ID,NE_i_start_time,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
@@ -67,7 +67,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -130,8 +130,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_JPSM=io_RT_components('JPSM',ID(4))
- if (io_JPSM==0) COM_=NONE
+ io_OBS=io_RT_components('OBSERVABLES',ID(4))
+ if (io_OBS==0) COM_=NONE
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
@@ -229,7 +229,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)

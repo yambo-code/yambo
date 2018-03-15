@@ -104,7 +104,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
+ use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -611,7 +611,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
  OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !

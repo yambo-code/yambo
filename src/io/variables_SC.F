@@ -209,7 +209,7 @@ integer function variables_SC(ID,local_description,what)
  !
 #endif
  !
- if (what/="carriers".and.what/="THETA".and.what/="JPSM".and.what/="G".and.what/="REF") then
+ if (what/="carriers".and.what/="THETA".and.what/="OBS".and.what/="G".and.what/="REF") then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  else
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

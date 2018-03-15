@@ -27,7 +27,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
- use RT_control,    ONLY:JPC_RT_IO_t
+ use RT_control,    ONLY:OBS_RT_IO_t
  use real_time,     ONLY:RT_carriers,NE_i_time,RT_nk,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace
@@ -59,9 +59,9 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt)
  !
- JPC_RT_IO_t%N=1
- allocate(JPC_RT_IO_t%Time(1))
- JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=0._SP
+ OBS_RT_IO_t%N=1
+ allocate(OBS_RT_IO_t%Time(1))
+ OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=0._SP
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)

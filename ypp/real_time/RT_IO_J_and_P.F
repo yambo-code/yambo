@@ -29,7 +29,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,IO_JPSM_cache_steps
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,IO_OBS_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -43,7 +43,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  ! Work Space
  !
  real(SP)           :: TIME
- integer            :: io_JPSM,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
+ integer            :: io_OBS,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -98,8 +98,8 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  endif
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
- io_JPSM=io_RT_components('JPSM',ID)
- if( io_JPSM/=0 ) then
+ io_OBS=io_RT_components('OBSERVABLES',ID)
+ if( io_OBS/=0 ) then
    if (present(IO_error)) then
      IO_error=.TRUE.
    endif
@@ -121,13 +121,13 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,6))
  endif
  !
- YAMBO_ALLOC(J_cache,(6,IO_JPSM_cache_steps))
+ YAMBO_ALLOC(J_cache,(6,IO_OBS_cache_steps))
  !
- YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
+ YAMBO_ALLOC(P_cache,(6,IO_OBS_cache_steps))
  !
  if(n_spin>1) then
-   YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
-   YAMBO_ALLOC(Ml_cache,(6,IO_JPSM_cache_steps))
+   YAMBO_ALLOC(Ms_cache,(6,IO_OBS_cache_steps))
+   YAMBO_ALLOC(Ml_cache,(6,IO_OBS_cache_steps))
  endif
  !
  RT_J_t        =(0._DP,0._DP)
@@ -144,7 +144,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    NE_i_time=nint( TIME/RT_step ) + 1
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
-   io_JPSM=io_RT_components('JPSM',ID)
+   io_OBS=io_RT_components('JPSM',ID)
    !
    do i_c=1,3
      RT_J_t(i_time,i_c) =cmplx(J_cache(2*i_c-1,1),J_cache(2*i_c,1),SP)

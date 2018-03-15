@@ -32,7 +32,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,JPC_RT_IO_t
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
  !
  implicit none
@@ -192,11 +192,10 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  io_err=io_RT_components(trim(db_name),ID)
  !
  ! Adjust NE_i_time in case needed.
- ! Cannot do that in case l_real_time because JPC_RT_IO_t is not loaded
- ! to avoid breaking a restart
+ ! Cannot do that in case l_real_time because OBS_RT_IO_t is not loaded to not break the restart
  !
  if (io_err< 0 .and. .not. l_real_time) then 
-   NE_i_time= NE_i_time-mod(NE_i_time-1,JPC_RT_IO_t%INTERVAL_steps)
+   NE_i_time= NE_i_time-mod(NE_i_time-1,OBS_RT_IO_t%INTERVAL_steps)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=DUMP,ID=ID)
    io_err=io_RT_components(trim(db_name),ID)
  endif

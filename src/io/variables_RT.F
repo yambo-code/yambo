@@ -29,7 +29,7 @@ integer function variables_RT(ID,local_description,what)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
+&                         n_TIME_STEP_CONF_descriptions,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
@@ -55,14 +55,14 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc
- logical               :: l_JPSM,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  character(lchlen)     :: ch
  !
  l_RT_diamagnetic          = .false.
  RT_life_extrap_decay_time = 0._SP
  !
- l_JPSM        = what=="JPSM"
+ l_OBS         = what=="OBS"
  l_G           = what=="G"
  l_carriers    = what=="carriers"
  !
@@ -134,9 +134,9 @@ integer function variables_RT(ID,local_description,what)
  !
  ! GPL_EXCLUDE_END
  !
- if(.not.any((/l_JPSM,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if(.not.any((/l_OBS,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- if(any((/l_JPSM,l_G,l_carriers/))) then
+ if(any((/l_OBS,l_G,l_carriers/))) then
    !
    ! RT_DYNAMICS
    !
@@ -171,7 +171,7 @@ integer function variables_RT(ID,local_description,what)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_JPSM.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
+   if (l_OBS.or.l_carriers) call LOCAL_IO_variables(OBS_RT_IO_t)
    if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1

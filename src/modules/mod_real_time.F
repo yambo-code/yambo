@@ -27,6 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
+ use ELPH,       ONLY:ph_modes
  !
 #include<memory.h>
  !
@@ -133,6 +134,10 @@ module real_time
  !----------------------
  complex(SP) :: RT_P(3)
  complex(SP) :: RT_P_prev(3)
+ !
+ ! ... dV time \rho ...
+ !----------------------
+ complex(SP) :: RT_D(ph_modes)
  !
  ! ... and magnetization
  !----------------------

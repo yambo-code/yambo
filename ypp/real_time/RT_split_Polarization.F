@@ -24,7 +24,7 @@
 subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  use pars,           ONLY:SP,cI,schlen,DP
- use YPP_real_time,  ONLY:l_RT_X_inversion,l_skip_pol_and_curr_IO,RT_conf
+ use YPP_real_time,  ONLY:l_RT_X_inversion,l_skip_OBS_IO,RT_conf
  use units,          ONLY:HA2EV,AUT2FS
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:RT_P,RAD_LifeTime,Phase_LifeTime
@@ -63,7 +63,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    !
    if (what=="dump") then
      P_file_name="dP_order_"//trim(intc(i_n-1))
-     if (.not.l_skip_pol_and_curr_IO) call RT_output("open "//trim(P_file_name) )
+     if (.not.l_skip_OBS_IO) call RT_output("open "//trim(P_file_name) )
    endif
    !
    do i_t=1,nt
@@ -72,7 +72,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
      P_num(i_n,i_t,:)=X(i_n,:)*exp(cI*W(i_n)*T_i)+conjg(X(i_n,:))*exp(-cI*W(i_n)*T_i)
      if (W(i_n)<1.E-5) P_num(i_n,i_t,:)=real(X(i_n,:))
      !
-     if (what=="dump".and..not.l_skip_pol_and_curr_IO) then
+     if (what=="dump".and..not.l_skip_OBS_IO) then
        do i_c=1,3
          RT_P(i_c) = P(i_t,i_c)-sum( P_num(:i_n,i_t,i_c) )
        enddo

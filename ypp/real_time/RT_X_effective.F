@@ -26,7 +26,7 @@ subroutine RT_X_effective(en)
  use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
  use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,RT_conf,N_pumps,N_probe_frequencies,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO
+&                         l_RT_X_inversion,l_skip_OBS_IO
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AUT2FS
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
@@ -151,7 +151,7 @@ subroutine RT_X_effective(en)
  ! In the case of a PUMPED P(t) I rwite on file the difference
  ! P(t)-P_pump(t) to see the oscillations of the Probe induced component
  !
- if (N_pumps>0.and.N_probes==1.and..not.l_skip_pol_and_curr_IO) then
+ if (N_pumps>0.and.N_probes==1.and..not.l_skip_OBS_IO) then
    !
    call RT_output("open P_minus")
    !

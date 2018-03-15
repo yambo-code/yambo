@@ -25,7 +25,7 @@ subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
+&                         l_RT_X_inversion,l_skip_OBS_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes
  use RT_control,     ONLY:OBS_RT_IO_t
  use pars,           ONLY:lchlen
@@ -51,7 +51,8 @@ subroutine RT_X_response(en,k,q)
  ! LOGICALS
  !----------
  !
- call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
+ call parser('SkipOBS_IO',l_skip_OBS_IO)
+ call parser('SkipJP_IO',l_skip_OBS_IO) ! Back Compatibility
  call parser('FrMinDamp',l_force_min_damp)
  !
  i_Probe=1

@@ -80,11 +80,14 @@ integer function io_RT_components(what,ID)
 #endif
  !
  db_name="RT_"//trim(what)
+ if (l_OBS)    db_name="RT_OBSERVABLES"
  if (l_REF)    db_name="RT_reference_components"
  !
  what_=what
  db_type=2
- if (.not.any((/l_carriers,l_THETA,l_OBS,l_G,l_REF/))) then
+ if (l_OBS) then
+   what_='OBSERVABLES'
+ else if (.not.any((/l_carriers,l_THETA,l_G,l_REF/))) then
    db_name=trim(what)
    what_='carriers'
    l_carriers=.TRUE.
@@ -97,7 +100,7 @@ integer function io_RT_components(what,ID)
  !========
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NE_i_time,NE_steps)
- if (l_G     .or.l_THETA   ) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
+ if (l_G     .or.l_THETA) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
  !
  l_track_history=.false.
  if (l_OBS)     l_track_history=io_sec(ID,1)> 1
@@ -348,6 +351,7 @@ integer function io_RT_components(what,ID)
      if (.not.allocated(TYP%Time)) then
        YAMBO_ALLOC(TYP%Time,(NE_steps))
      endif
+write (*,*) TYP%N,TYP%last_point,shape(TYP%Time),NE_steps
      !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))

@@ -23,7 +23,7 @@
 !
 subroutine RT_dump_and_write_JP()
  !
- use YPP_real_time,  ONLY:RT_P_t,RT_conf,RT_J_t,l_force_min_damp,l_skip_pol_and_curr_IO,RT_time
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,RT_J_t,l_force_min_damp,l_skip_OBS_IO,RT_time
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
@@ -62,7 +62,7 @@ subroutine RT_dump_and_write_JP()
    !
  endif
  !
- if (l_skip_pol_and_curr_IO) return
+ if (l_skip_OBS_IO) return
  !
  call section("=",'Writing input current and Polarization')
  !=========================================================

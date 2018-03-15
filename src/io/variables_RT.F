@@ -62,7 +62,7 @@ integer function variables_RT(ID,local_description,what)
  l_RT_diamagnetic          = .false.
  RT_life_extrap_decay_time = 0._SP
  !
- l_OBS         = what=="OBS"
+ l_OBS         = what=="OBSERVABLES"
  l_G           = what=="G"
  l_carriers    = what=="carriers"
  !

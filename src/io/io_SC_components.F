@@ -23,7 +23,7 @@
 !
 integer function io_SC_components(what,E_sc,ID)
  !
- ! what can be E WF V JPSM G
+ ! what can be E WF V OBSERVABLES (J,P,D...) G
  !
  use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_sc_run

@@ -27,7 +27,6 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
- use ELPH,       ONLY:ph_modes
  !
 #include<memory.h>
  !
@@ -137,7 +136,7 @@ module real_time
  !
  ! ... dV time \rho ...
  !----------------------
- complex(SP) :: RT_D(ph_modes)
+ complex(SP), allocatable :: RT_D(:)
  !
  ! ... and magnetization
  !----------------------
@@ -471,6 +470,7 @@ module real_time
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
+     use ELPH,           ONLY:ph_modes
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use R_lattice,      ONLY:nqbz,nXkibz
@@ -528,6 +528,10 @@ module real_time
        YAMBO_ALLOC(E_E_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        E_E_Hole_lifetime=0._SP
        E_E_Electron_lifetime=0._SP
+     endif
+     !
+     if (l_elph_scatt) then
+       YAMBO_ALLOC(RT_D,(ph_modes))
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
@@ -648,6 +652,7 @@ module real_time
      YAMBO_FREE(RT_Deph_Matrix)
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
+     YAMBO_FREE(RT_D)
      !
    end subroutine RT_free
    !

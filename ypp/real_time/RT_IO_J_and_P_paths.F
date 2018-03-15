@@ -87,9 +87,9 @@ subroutine RT_IO_J_and_P_paths(en)
    do while (i_f<=nf)
      !
      if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_JPSM').or.&
+&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_OBSERVABLES').or.&
 &        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_JPSM')) then
+&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_OBSERVABLES')) then
        !
        if(index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0.or.&
 &         (trim(Probe_Keyword)=="none".and.index(trim(Probe_path(i_f)),trim(jobstr))>0)) then

@@ -123,7 +123,7 @@ module RT_control
        P_cache=rZERO
        if(l_elph_scatt) then
          YAMBO_ALLOC(D_cache,(ph_modes,IO_OBS_cache_steps))
-         dV_rho_cache=rZERO
+         D_cache=rZERO
        endif
        if(n_spin>1) then
          YAMBO_ALLOC(Ms_cache,(6,IO_OBS_cache_steps))

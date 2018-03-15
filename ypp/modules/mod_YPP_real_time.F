@@ -74,7 +74,7 @@ module YPP_real_time
  ! (RT) optics
  !
  logical  :: Use_FFT
- logical  :: l_skip_pol_and_curr_IO
+ logical  :: l_skip_OBS_IO
  logical  :: l_force_min_damp
  logical  :: l_RT_X_inversion
  integer  :: N_probes

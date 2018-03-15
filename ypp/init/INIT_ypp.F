@@ -82,7 +82,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
  integer, external::parse_character_arrays
  !
@@ -131,8 +131,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_END
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
- io_RT_JPSM_err=io_RT_components('JPSM' ,ID)
- if (io_RT_JPSM_err==0) QP_nb=RT_bands(2)
+ io_RT_OBS_err=io_RT_components('OBSERVABLES' ,ID)
+ if (io_RT_OBS_err==0) QP_nb=RT_bands(2)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_pwscf_err=io_KB_pwscf(ID)
@@ -478,7 +478,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
-   call initactivate(1,"TimeRange DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
+   call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
 #endif

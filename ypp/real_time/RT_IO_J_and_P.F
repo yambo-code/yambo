@@ -29,7 +29,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,IO_OBS_cache_steps
+ use RT_control,     ONLY:J_cache,P_cache,IO_OBS_cache_steps
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
@@ -98,7 +98,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  endif
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
- io_OBS=io_RT_components('OBSERVABLES',ID)
+ io_OBS=io_RT_components('JP',ID)
  if( io_OBS/=0 ) then
    if (present(IO_error)) then
      IO_error=.TRUE.
@@ -125,11 +125,6 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  YAMBO_ALLOC(P_cache,(6,IO_OBS_cache_steps))
  !
- if(n_spin>1) then
-   YAMBO_ALLOC(Ms_cache,(6,IO_OBS_cache_steps))
-   YAMBO_ALLOC(Ml_cache,(6,IO_OBS_cache_steps))
- endif
- !
  RT_J_t        =(0._DP,0._DP)
  RT_P_t        =(0._DP,0._DP)
  !
@@ -144,7 +139,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    NE_i_time=nint( TIME/RT_step ) + 1
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
-   io_OBS=io_RT_components('JPSM',ID)
+   io_OBS=io_RT_components('JP',ID)
    !
    do i_c=1,3
      RT_J_t(i_time,i_c) =cmplx(J_cache(2*i_c-1,1),J_cache(2*i_c,1),SP)
@@ -165,9 +160,5 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  YAMBO_FREE(J_cache)
  YAMBO_FREE(P_cache)
- if(n_spin>1) then
-   YAMBO_FREE(Ms_cache)
-   YAMBO_FREE(Ml_cache)
- endif
  !
 end subroutine

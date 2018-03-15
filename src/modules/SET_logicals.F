@@ -28,7 +28,7 @@ subroutine SET_logicals()
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report
  use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
-&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_J,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
+&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
 &                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
@@ -63,19 +63,19 @@ subroutine SET_logicals()
  !
  ! DBs IO
  !========
- io_DIP     =.TRUE.
- io_RESPONSE=.TRUE.
- io_SCREEN  =.FALSE.
- io_HF      =.TRUE.
- io_COLLs   =.TRUE.
+ io_DIP         =.TRUE.
+ io_RESPONSE    =.TRUE.
+ io_SCREEN      =.FALSE.
+ io_HF          =.TRUE.
+ io_COLLs       =.TRUE.
  !GPL_INCLUDE_START
- !io_COLLs   =.FALSE.
+ !io_COLLs       =.FALSE.
  !GPL_INCLUDE_END
- io_GF      =.TRUE.
- io_J       =.TRUE.
- io_CARRIERs=.TRUE.
- io_SC      =.TRUE.
- io_BS_K    =.TRUE.
+ io_GF          =.TRUE.
+ io_OBSERVABLES =.TRUE.
+ io_CARRIERs    =.TRUE.
+ io_SC          =.TRUE.
+ io_BS_K        =.TRUE.
  !
  ch_piece=' '
  call string_split(DBs_IO_control_string,ch_piece)
@@ -86,9 +86,10 @@ subroutine SET_logicals()
    if (str_check(4,(/"W  ","w  ","ALL","all"/),ch_piece(i_ch)) ) io_SCREEN  =.FALSE.
    if (str_check(4,(/"HF ","hf ","ALL","all"/),ch_piece(i_ch)) ) io_HF      =.FALSE.
    if (str_check(5,(/"COLLS","COLLs","colls","ALL  ","all  "/),&
-&                                               ch_piece(i_ch)) ) io_COLLs   =.FALSE.
-   if (str_check(4,(/"GF ","gf ","ALL","all"/),ch_piece(i_ch)) ) io_GF      =.FALSE.
-   if (str_check(4,(/"J  ","j  ","ALL","all"/),ch_piece(i_ch)) ) io_J       =.FALSE.
+&                                               ch_piece(i_ch)) ) io_COLLs      =.FALSE.
+   if (str_check(4,(/"GF ","gf ","ALL","all"/),ch_piece(i_ch)) ) io_GF          =.FALSE.
+   if (str_check(4,(/"J  ","j  ","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE.
+   if (str_check(4,(/"OBS","obs","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE. ! Back Compatibility
    if (str_check(5,(/"CARRIERs","carriers","CARRIERS","ALL     ","all     "/),&
 &                                               ch_piece(i_ch)) ) io_CARRIERs=.FALSE.
    if (str_check(4,(/"SC ","sc ","ALL","all"/),ch_piece(i_ch)) ) io_SC      =.FALSE.

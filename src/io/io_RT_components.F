@@ -39,7 +39,7 @@ integer function io_RT_components(what,ID)
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
-&                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
+&                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history,D_cache
  use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -313,6 +313,13 @@ integer function io_RT_components(what,ID)
    call io_elemental(ID,I0=IO_OBS_cache_steps)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
+#if defined _ELPH
+   if (allocated(D_cache).and.l_D) then
+     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2*ph_modes,IO_OBS_cache_steps/))
+     call io_bulk(ID,R2=D_cache)
+   endif
+#endif
+   !
    if (l_JP) then
      call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_OBS_cache_steps/))
      call io_bulk(ID,R2=J_cache)
@@ -351,7 +358,6 @@ integer function io_RT_components(what,ID)
      if (.not.allocated(TYP%Time)) then
        YAMBO_ALLOC(TYP%Time,(NE_steps))
      endif
-write (*,*) TYP%N,TYP%last_point,shape(TYP%Time),NE_steps
      !
      call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/TYP%N/))
      call io_bulk(ID,R1=TYP%Time(:TYP%N))

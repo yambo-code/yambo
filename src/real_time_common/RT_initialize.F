@@ -33,9 +33,9 @@ subroutine RT_initialize(E,k,q)
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
+ use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
@@ -50,7 +50,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
-&                         l_RT_impose_for_metals
+&                         l_RT_impose_for_metals,l_RT_PH_oscillations
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -74,6 +74,8 @@ subroutine RT_initialize(E,k,q)
  !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
+ call parser('PH_oscillations',      l_RT_PH_oscillations)
+ if (n_sp_pol>1) l_RT_PH_oscillations=.FALSE.
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTUpdateEqp',          l_update_QP_Energies)
  !

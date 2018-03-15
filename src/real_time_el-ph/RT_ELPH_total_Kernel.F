@@ -111,18 +111,22 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      N_q    = (bose_f(ph_freq)+(/0._SP,spin_occ/))/spin_occ
      !
-     !
-     ! Note the m.e. in Gkkp are stored with indexes order exchanged
+     ! Note the m.e. in elph_gkkp_expanded_sq are stored with indexes order exchanged (see RT_ELPH_initialize)
      !
      Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
+       !
        Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
        if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
+       !
        do i_np=RT_bands(1),RT_bands(2)
-         if(i_n==i_np) cycle
+         !
+         if (i_n==i_np) cycle
          Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ik_mem)
-         if(sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
-       enddo 
+         if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
+         !
+       enddo
+       !
      enddo
      !
      if (l_RT_CCA_Kernel) then

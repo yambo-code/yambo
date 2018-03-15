@@ -50,7 +50,7 @@ module IO_m
  logical           :: io_RESPONSE
  logical           :: io_HF
  logical           :: io_COLLs
- logical           :: io_J
+ logical           :: io_OBSERVABLES
  logical           :: io_CARRIERs
  logical           :: io_GF
  logical           :: io_SC

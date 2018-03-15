@@ -26,6 +26,7 @@ module RT_control
  use pars,       ONLY:SP,lchlen,schlen
  use units,      ONLY:AUT2FS
  use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
+ !
 #include<memory.h>
  !
  integer                  :: n_RT_descriptions = 0
@@ -122,7 +123,7 @@ module RT_control
        YAMBO_ALLOC(P_cache,(6,IO_OBS_cache_steps))
        P_cache=rZERO
        if(l_elph_scatt) then
-         YAMBO_ALLOC(D_cache,(ph_modes,IO_OBS_cache_steps))
+         YAMBO_ALLOC(D_cache,(2*ph_modes,IO_OBS_cache_steps))
          D_cache=rZERO
        endif
        if(n_spin>1) then

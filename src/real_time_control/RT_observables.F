@@ -43,7 +43,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  type(levels),  intent(inout) :: en
  type(bz_samp), intent(in)    :: k
  complex(SP),   intent(in)    :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),   intent(inout)    :: OBSERVABLES(23)
+ real(SP),      intent(inout) :: OBSERVABLES(23)
  !
  ! Workspace
  !
@@ -57,6 +57,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Current, Polarization and Magnetization
  !==========================================
  ! (evaluated also in RT_integrator when an induced field is included)
+ !
  call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
  if (.not. RT_do_it('OUT') ) then
@@ -82,16 +83,24 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
  !
  ! Energy
- !==========
+ !========
  call RT_energy_components(en,k,dG_lesser,Ener,E_IP,'tot')
  !
  ! Entropy
- !==========
+ !=========
  call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  ! BGR
- !==========
+ !=====
  call RT_BGR(en,k,BGR)
+ !
+#if defined _ELPH
+ !
+ ! PH Displacement
+ !=================
+ call RT_ELPH_displacement(k,en,dG_lesser)
+ !
+#endif
  !
  OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
  !

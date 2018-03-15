@@ -472,6 +472,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
  !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
+ call it('f',defs,'PH_oscillations','[RT] Evalute the force field inducing the Phonon oscillations',verb_level=V_real_time)
  !
  ! External fields
  !

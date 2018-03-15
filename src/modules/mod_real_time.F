@@ -59,10 +59,13 @@ module real_time
  !
  logical           :: l_RT_induced_field = .FALSE.
  !
+ ! To eval the force field of the PH coherent oscillations
+ !
+ logical           :: l_RT_PH_oscillations = .FALSE.
+ !
  ! TMP SOLUTION FOR TR ABS
  !
  logical  :: l_RT_abs_YAMBO = .false.
- !
  !
  ! ... core step length and Time-points array...
  !
@@ -202,6 +205,8 @@ module real_time
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
+ ! ... Gamma only GKKP
+ complex(SP), allocatable :: elph_gkkp_gamma(:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)
@@ -644,6 +649,7 @@ module real_time
      YAMBO_FREE(THETA_matrix)
      YAMBO_FREE(THETA_matrix_index)
      YAMBO_FREE(elph_gkkp_expanded_sq)
+     YAMBO_FREE(elph_gkkp_gamma)
      YAMBO_FREE(G_lesser_reference)
      YAMBO_FREE(dG_lesser)
      YAMBO_FREE(I1_matrix)

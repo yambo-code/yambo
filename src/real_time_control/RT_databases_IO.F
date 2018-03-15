@@ -29,9 +29,14 @@ subroutine RT_databases_IO(E)
 &                         GF_RT_IO_t,IO_OBS_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
-&                         io_GF,io_CARRIERs,io_J,OP_IF_START_WR_CL_IF_END
+&                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
+#if defined _ELPH
+ use ELPH,           ONLY:ph_modes
+ use real_time,      ONLY:RT_D
+ use RT_control,     ONLY:D_cache
+#endif
  !
  implicit none
  !
@@ -45,7 +50,18 @@ subroutine RT_databases_IO(E)
  ! Store the current and the polarization in the cache for future writing
  !
  if(l_NE_dynamics) then
+   !
    i_time=mod(NE_i_time-1,IO_OBS_cache_steps)+1
+   !
+#if defined _ELPH
+   if (allocated(D_cache)) then
+     do i_c=1,ph_modes
+       D_cache(2*i_c-1,i_time)= real(RT_D(i_c))
+       D_cache(2*i_c-1,i_time)= aimag(RT_D(i_c))
+     enddo
+   endif
+#endif
+   !
    do i_c=1,3
      J_cache(2*i_c-1,i_time)= real(RT_ind_J(i_c))
      J_cache(2*i_c  ,i_time)=aimag(RT_ind_J(i_c))
@@ -68,7 +84,7 @@ subroutine RT_databases_IO(E)
    OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
    OBS_RT_IO_t%last_point=NE_i_time
    !
-   if (io_J) then
+   if (io_OBSERVABLES) then
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 

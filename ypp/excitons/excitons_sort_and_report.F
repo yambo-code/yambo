@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
+subroutine excitons_sort_and_report(iq,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
@@ -44,7 +44,7 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  ! Work Space
  !
- integer            :: j1,j2,ia,is,i_mode,ic,n_elements
+ integer            :: j1,j2,ia,is,i_mode,ic,n_elements,iq
  integer            :: S_indx(BSS_n_eig)
  real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(10)
  character(schlen)  :: titles(7),ch_dummy(2)
@@ -63,11 +63,11 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  do i_mode=1,2
    !
-   if (i_mode==1) ch_dummy(1)='exc_E_sorted'
-   if (i_mode==2) ch_dummy(1)='exc_I_sorted'
+   if (i_mode==1) write(ch_dummy(1),'(A,I2.2)') 'exc_E_sorted_q',iq 
+   if (i_mode==2) write(ch_dummy(1),'(A,I2.2)') 'exc_I_sorted_q',iq 
    if (write_spin) then
-     if (i_mode==1) ch_dummy(1)='exc_E+spin_sorted'
-     if (i_mode==2) ch_dummy(1)='exc_I+spin_sorted'
+     if (i_mode==1) write(ch_dummy(1),'(A,I2.2)') 'exc_E+spin_sorted_q',iq 
+     if (i_mode==2) write(ch_dummy(1),'(A,I2.2)') 'exc_I+spin_sorted_q',iq 
    endif
    !
    call of_open_close(ch_dummy(1),'ot')

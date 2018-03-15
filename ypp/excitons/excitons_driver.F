@@ -153,7 +153,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ if (l_sort) call excitons_sort_and_report(iq,Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  if(.not.l_sort) then
    !

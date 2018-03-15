@@ -205,7 +205,7 @@ subroutine k_special()
      call msg('o path',"",K_path(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
      dumb_ch=of_string
      if (len_trim(K_path_label(ik))>0) write (dumb_ch,'(a,5x,3a)') trim(of_string),'[', K_path_label(ik),']'
-     call msg_deliver(dumb_ch)
+     call msg_deliver('path',dumb_ch)
    enddo
    !
    call of_open_close(k_f_name)

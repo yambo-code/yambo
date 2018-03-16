@@ -57,7 +57,7 @@ subroutine RT_databases_IO(E)
    if (allocated(D_cache)) then
      do i_c=1,ph_modes
        D_cache(2*i_c-1,i_time)= real(RT_D(i_c))
-       D_cache(2*i_c-1,i_time)= aimag(RT_D(i_c))
+       D_cache(2*i_c  ,i_time)= aimag(RT_D(i_c))
      enddo
    endif
 #endif

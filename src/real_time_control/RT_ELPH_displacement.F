@@ -27,7 +27,7 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  ! D(\nu,t) \propto -\sum_ijk <\psi_i(k)(r)| dV_\nu\(r)|\psi_j(k)(r)> \delta \gr_{ji}(t)
  !
- use pars,           ONLY:SP,cZERO,pi,cI
+ use pars,           ONLY:SP,cZERO,pi
  use R_lattice,      ONLY:bz_samp,nqbz
  use electrons,      ONLY:levels
  use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,RT_D,RT_PH_displaced

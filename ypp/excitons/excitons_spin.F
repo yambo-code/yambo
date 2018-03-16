@@ -29,7 +29,7 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  use BS,            ONLY:BS_H_dim
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,n_spinor
- use YPP,           ONLY:excitons_sort_and_report
+ use YPP,           ONLY:excitons_sort_and_report,BSiq
  !
  implicit none
  !
@@ -46,6 +46,6 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  if (n_spinor==2) call excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
- call excitons_sort_and_report(Xen,BS_R_right,BS_E,S_z=S_z,S_sq=S_sq)
+ call excitons_sort_and_report(BSiq,Xen,BS_R_right,BS_E,S_z=S_z,S_sq=S_sq)
  !
 end subroutine exciton_spin   

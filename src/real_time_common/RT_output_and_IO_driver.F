@@ -32,7 +32,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_update_QP_Energies,l_NE_with_fields,NE_time, &
-&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased
+&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,l_RT_PH_oscillations
  !
  implicit none
  !
@@ -59,14 +59,15 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    call RT_output(what="open carr magn")
    if(eval_energy)  call RT_output(what="open energy")
    if(eval_entropy) call RT_output(what="open therm")
-   if(l_update_QP_Energies) call RT_output(what="open BGR")
+   if(l_update_QP_Energies)  call RT_output(what="open BGR")
    if (l_NE_with_fields) then
      call RT_output(what="open ext")
-     if(l_RT_induced_field) call RT_output(what="open tot ind")
+     if(l_RT_induced_field)  call RT_output(what="open tot ind")
    endif
-   if (l_elph_scatt)     call RT_output('open EPlife')
-   if (l_elel_scatt)     call RT_output('open EElife')
-   if (l_elphoton_scatt) call RT_output('open RADlife')
+   if (l_elph_scatt)         call RT_output('open EPlife')
+   if (l_elel_scatt)         call RT_output('open EElife')
+   if (l_elphoton_scatt)     call RT_output('open RADlife')
+   if (l_RT_PH_oscillations) call RT_output('open displace')
    if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
    !
    ! GPL_EXCLUDE_END
@@ -98,11 +99,18 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
+   ! Energetics and BGR
+   !====================
+   !
    call RT_output('magn',TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)
    if(l_update_QP_Energies) call RT_output('BGR',   VALUES=BGR,                           TIME=NE_time*AUT2FS)
+   !
+   ! PH displacive field
+   !=====================
+   if (l_RT_PH_oscillations) call RT_output('displace',TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

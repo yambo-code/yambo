@@ -139,6 +139,8 @@ module real_time
  !
  ! ... dV time \rho ...
  !----------------------
+ integer                  :: N_RT_PH_displaced = 0
+ logical,     allocatable :: RT_PH_displaced(:)
  complex(SP), allocatable :: RT_D(:)
  !
  ! ... and magnetization
@@ -537,6 +539,7 @@ module real_time
      !
      if (l_elph_scatt) then
        YAMBO_ALLOC(RT_D,(ph_modes))
+       RT_D=cZERO
      endif
      !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
@@ -659,6 +662,7 @@ module real_time
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
      YAMBO_FREE(RT_D)
+     YAMBO_FREE(RT_PH_displaced)
      !
    end subroutine RT_free
    !

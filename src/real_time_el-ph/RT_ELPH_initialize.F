@@ -28,7 +28,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
 &                         l_RT_CCA_Kernel,RT_bands,l_RT_PH_oscillations,elph_gkkp_gamma
- use electrons,      ONLY:levels,spin_occ,n_sp_pol
+ use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:warning
@@ -133,7 +133,7 @@ subroutine RT_ELPH_initialize(E,k,q)
      if (iq==1.and.l_RT_PH_oscillations) then
        do i_n=RT_bands(1),RT_bands(2)
          do i_np=RT_bands(1),RT_bands(2)
-           elph_gkkp_gamma(:,i_n,i_np,ik_mem)=elph_gkkp(:,i_np,i_n,K_io_map(ik_bz))
+           elph_gkkp_gamma(:,i_n,i_np,ik_mem)=conjg(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))
          enddo
        enddo
      endif
@@ -145,7 +145,7 @@ subroutine RT_ELPH_initialize(E,k,q)
          ! where the band indexes have been exchanged. Instead of doing a global change of the notes
          ! and of the code I decided, here, to exchange the indexes:
          !
-         elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=abs(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))**2
+         elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=abs(elph_gkkp(:,i_n,i_np,K_io_map(ik_bz)))**2
          !
        enddo
      enddo

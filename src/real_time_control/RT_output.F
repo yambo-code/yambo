@@ -26,7 +26,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:lchlen,SP,schlen
  use com,            ONLY:msg,of_open_close
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_use_Hxc_collisions
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn,Orbital_magn,Itinerant_magn
@@ -39,6 +39,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  use LIVE_t,         ONLY:what_is_running
 #if defined _TIMING
  use timing_m,       ONLY:timing
+#endif
+#if defined _ELPH
+ use real_time,      ONLY:N_RT_PH_displaced,l_RT_PH_oscillations,RT_PH_displaced,RT_D
+ use ELPH,           ONLY:elph_branches
 #endif
  !
  implicit none
@@ -53,12 +57,12 @@ subroutine RT_output(what,VALUES,TIME,E)
  integer, parameter       :: n_output_files=100,max_X_order=9
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
- integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1
+ integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1,il
  logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
  logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
- character(schlen)        :: headings(n_output_files,11),append_ch,extension_ch,tmp_ch
+ character(schlen)        :: headings(n_output_files,max(11,N_RT_PH_displaced)),append_ch,extension_ch,tmp_ch
  character(2)             :: chart_string(3)
- real(SP)                 :: data_to_dump(11)
+ real(SP)                 :: data_to_dump(max(11,N_RT_PH_displaced))
  !
  open_files=index(what,'open')>0
  add_space=index(what,'space')>0
@@ -101,6 +105,22 @@ subroutine RT_output(what,VALUES,TIME,E)
  headings(next_file,2:4)=(/"Pol_x","Pol_y","Pol_z"/)
  next_file=next_file+1
  !
+#if defined _ELPH
+ if (l_RT_PH_oscillations) then
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'displace_field'
+   short_file_name(next_file)=trim(append_ch)//'displace_field'
+   n_headings(next_file)=N_RT_PH_displaced+1
+   i_f=1
+   do il=elph_branches(1),elph_branches(2)
+     if (.not.RT_PH_displaced(il)) cycle
+     i_f=i_f+1
+     headings(next_file,i_f)="<D>_l="//trim(intc(il))//" Field"
+   enddo
+   next_file=next_file+1
+ endif
+#endif
+ !
  if (open_files.and..not.file_already_opened(next_file)) &
 &   file_name(next_file)=trim(append_ch)//'total_field'
  short_file_name(next_file)=trim(append_ch)//'total_field'
@@ -141,13 +161,13 @@ subroutine RT_output(what,VALUES,TIME,E)
 &   file_name(next_file)=trim(append_ch)//'carriers'
  short_file_name(next_file)=trim(append_ch)//'carriers'
  n_headings(next_file)=4
- headings(next_file,2)="dNH - dNE"
- headings(next_file,3)="dN(Holes)"
- headings(next_file,4)="dN(Elecs)"
+ headings(next_file,2)="d(N_hole-N_elec)"
+ headings(next_file,3)="dN_hole"
+ headings(next_file,4)="dN_elec"
  if (l_elel_scatt.or.l_elph_scatt) then 
    n_headings(next_file)=n_headings(next_file)+2
-   headings(next_file,5)="T(hol) [K]"
-   headings(next_file,6)="T(el)  [K]"
+   headings(next_file,5)="T_hole [K]"
+   headings(next_file,6)="T_elec [K]"
  endif
  next_file=next_file+1
  !
@@ -528,6 +548,17 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
+     case('displace_field')
+#if defined _ELPH
+       if (l_RT_PH_oscillations) then
+         i_c=1
+         do il=elph_branches(1),elph_branches(2)
+           if (.not.RT_PH_displaced(il)) cycle
+           i_c=i_c+1
+           data_to_dump(i_c) =real(RT_D(il))
+         enddo
+       endif
+#endif
      case('magnetization')
        data_to_dump(2: 4) = real(RT_magn(:,1))
        !data_to_dump(5: 7) = real(RT_magn(:,2))

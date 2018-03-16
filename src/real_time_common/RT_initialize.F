@@ -55,6 +55,10 @@ subroutine RT_initialize(E,k,q)
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
+#if defined _ELPH
+ use ELPH,           ONLY:ph_modes,ph_freqs_sq
+ use real_time,      ONLY:RT_PH_displaced,N_RT_PH_displaced
+#endif
  !
 #include<memory.h>
  !
@@ -296,6 +300,14 @@ subroutine RT_initialize(E,k,q)
    call section('=','El-Ph matrix elements loading and setup')
    !                 =======================================
    call RT_ELPH_initialize(E,k,q)
+   !
+   if (l_RT_PH_oscillations) then
+     YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
+     do i1=1,ph_modes
+       RT_PH_displaced(i1)=  abs( sqrt(ph_freqs_sq(1,i1)) )> 3.E-5
+     enddo
+     N_RT_PH_displaced=count(RT_PH_displaced)
+   endif
    !
  endif
  !

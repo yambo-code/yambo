@@ -25,12 +25,12 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  ! Evalute force potential that define the phonon displacement
  !
- ! D(\nu,t) = -\sum_ijk e/(2m)  <\psi_i(k)(r)| dV_\nu\(r)|\psi_j(k)(r)> \delta \gr_{ji}(t)
+ ! D(\nu,t) \propto -\sum_ijk <\psi_i(k)(r)| dV_\nu\(r)|\psi_j(k)(r)> \delta \gr_{ji}(t)
  !
- use pars,           ONLY:SP,cZERO
- use R_lattice,      ONLY:bz_samp
+ use pars,           ONLY:SP,cZERO,pi,cI
+ use R_lattice,      ONLY:bz_samp,nqbz
  use electrons,      ONLY:levels
- use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,RT_D
+ use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,RT_D,RT_PH_displaced
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
  use RT_interfaces,  ONLY:RT_average_operator
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -43,45 +43,26 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  ! Work Spave
  !
- integer     :: il,i_n,i_np
+ integer     :: il
  real(SP)    :: ph_freq
- complex(SP) :: Gkkp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! GPL_EXCLUDE_START
  !
  if ( .not. l_NE_dynamics .or. .not. l_RT_PH_oscillations ) return
  !
+ RT_D=cZERO
+ !
  call RT_average_operator(N_V=ph_modes,V_VALUE=RT_D,V_MATRIX=elph_gkkp_gamma,G=dG,k=k,en=E,nK_mem=PAR_Xk_nibz)
  !
- stop
  do il=elph_branches(1),elph_branches(2)
+   !
+   if (.not.RT_PH_displaced(il)) cycle
    !
    ph_freq=abs(sqrt(ph_freqs_sq(1,il)))
    !
-   if ( abs(ph_freq)<3.E-5)     cycle
-   !
-   Gkkp=cZERO
-   do i_n=RT_bands(1),RT_bands(2)
-     !
-     !Gkkp(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
-     !
-     do i_np=RT_bands(1),RT_bands(2)
-       !
-       !if (i_n==i_np) cycle
-       !Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ik_mem)
-       !if (sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
-       !
-     enddo
-     !
-   enddo
+   RT_D(il)=-1/pi*sqrt(ph_freq/nqbz)*RT_D(il)
    !
  enddo
- !
- ! Store the current and the polarization at the previous time-step
- !
-! RT_ind_J_prev=RT_ind_J
-! RT_P_prev    =RT_P
-! ! 
  !
  ! GPL_EXCLUDE_END
  !

@@ -109,9 +109,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        !
        if (BS_blk(iB)%mode=="R") then
          !
-         ! v->v', i.e. k -> p transitions
+         ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         call SETUP_kp_indexes(1)
+         call SETUP_kp_indexes(iq)
          !
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
@@ -132,9 +132,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          endif
          BS_blk(iB)%O_table(:,i_s_k_p,i_v_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_v_p,i_k_sp)
          !
-         ! c->c', i.e. k+q -> p+q transitions
+         ! c->c', i.e. k -> p=k-q_w transitions
          !
-         call SETUP_kp_indexes(iq)
+         call SETUP_kp_indexes(1)
          !
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
@@ -158,9 +158,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
        else if (BS_blk(iB)%mode=="C") then
          !
-         ! v->c', i.e. k -> p transitions
+         ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         call SETUP_kp_indexes(1)
+         call SETUP_kp_indexes(iq)
          !
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
@@ -181,9 +181,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          endif
          BS_blk(iB)%O_table(:,i_s_k_p,i_v_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_c_p,i_k_sp)
          !
-         ! c->v', i.e. k+q -> p+q transitions
+         ! c->v', i.e. k -> p=k-q_W transitions
          !
-         call SETUP_kp_indexes(iq)
+         call SETUP_kp_indexes(1)
          !
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
@@ -220,8 +220,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
    subroutine SETUP_kp_indexes(iq_now)
      integer :: iq_now
      !
-     i_k_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_k)%table(i_Tk,1),1)
-     i_p_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_p)%table(i_Tp,1),1)
+     i_k_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_k)%table(i_Tk,1),1) ! k-q
+     i_p_bz=qindx_X(iq_now,BS_T_grp(i_Tgrp_p)%table(i_Tp,1),1) ! p-q = k - q_W -q
      !
      i_k_s =Xk%sstar(i_k_bz,2)
      i_p_s =Xk%sstar(i_p_bz,2)

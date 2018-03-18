@@ -263,6 +263,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===================
  O_ng=maxval(G_m_G)
  O_ng_shift=maxval(qindx_B(:,:,2))
+ if(iq>1) O_ng_shift=max(O_ng_shift,O_ng)
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !

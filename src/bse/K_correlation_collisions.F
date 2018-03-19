@@ -113,8 +113,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_kmq_bz=qindx_X(iq,i_k_bz,1) ! k-q
        i_pmq_bz=qindx_X(iq,i_p_bz,1) ! p-q = k - q_W -q
        !
-       ig_kmq=qindx_X(iq,i_k_bz,2)
-       ig_pmq=qindx_X(iq,i_p_bz,2)
+       !ig_kmq=qindx_X(iq,i_k_bz,2)
+       !ig_pmq=qindx_X(iq,i_p_bz,2)
        !
        i_kmq   =Xk%sstar(i_kmq_bz,1)
        i_pmq   =Xk%sstar(i_pmq_bz,1)
@@ -125,7 +125,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_s_k_p_mq =sop_tab(sop_inv(i_kmq_s),i_pmq_s)
        i_s_mq_star=Xk%s_table(i_pmq,i_s_k_p_mq)
        !
-       ig_k_p_mq=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
+       !ig_k_p_mq=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
        !ig_k_p_mq=G_m_G(g_rot(i_pmq_s,ig_pmq),g_rot(i_kmq_s,ig_kmq))
        !ig_k_p_mq=1
        !write(*,*) ig_kmq,g_rot(i_kmq_s,ig_kmq),ig_pmq,g_rot(i_pmq_s,ig_pmq),ig_k_p_mq
@@ -261,7 +261,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
      K_CORR_collision%is=(/ibi,iki,1,i_spi/)
      K_CORR_collision%os=(/ibo,iko,i_s_collision,i_spo/)
      !K_CORR_collision%qs=(/ig_W,iq_W,iq_W_s/)
-     K_CORR_collision%qs=(/i_g_collision,iq_W,1/)
+     !K_CORR_collision%qs=(/i_g_collision,iq_W,1/)
+     K_CORR_collision%qs=(/1,iq_W,1/)
      ! 
      call scatter_Bamp(K_CORR_collision)
      BS_blk(iB)%O_c(:,BS_blk(iB)%N_oscillators)=K_CORR_collision%rhotw(:)

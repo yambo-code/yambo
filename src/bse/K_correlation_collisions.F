@@ -58,8 +58,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_s_k_p,i_s_star,&
 &               i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_s_k_p_mq,i_s_mq_star,&
 &               i_Tk,i_Tp,iB_ref,iB_p,i_Tgrp_k,i_Tgrp_p,H_pos(2),i_cycle,&
-&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s,ig_W,&
-&               ig_kmq,ig_pmq,ig_k_p_mq,i_g_collision
+&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s !,ig_W,&
+!&               ig_kmq,ig_pmq,ig_k_p_mq,i_g_collision
  logical     :: l_eval_collision
  !
  if (.not.BS_res_K_corr) return 
@@ -133,9 +133,10 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        ! q_W indexes
        !
        iq_W_bz=qindx_B(i_k_bz,i_p_bz,1)
-       ig_W   =qindx_B(i_k_bz,i_p_bz,2)
+       !ig_W   =qindx_B(i_k_bz,i_p_bz,2)
+       !
        iq_W   =q%sstar( iq_W_bz ,1)
-       iq_W_s =q%sstar( iq_W_bz ,2)
+       !iq_W_s =q%sstar( iq_W_bz ,2)
        !
        ! Bands and spin indexes
        !
@@ -153,7 +154,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         i_g_collision=ig_k_p_mq
+         !i_g_collision=ig_k_p_mq
          i_s_collision=i_s_mq_star
          if (WF_phase(i_pmq,i_s_k_p_mq,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p_mq
          iB_ref=-1
@@ -175,7 +176,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! c->c', i.e. k -> p=k-q_w transitions
          !
-         i_g_collision=1
+         !i_g_collision=1
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          iB_ref=-1
@@ -200,7 +201,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         i_g_collision=ig_k_p_mq
+         !i_g_collision=ig_k_p_mq
          i_s_collision=i_s_mq_star
          if (WF_phase(i_pmq,i_s_k_p_mq,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p_mq
          iB_ref=-1
@@ -222,7 +223,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! c->v', i.e. k -> p=k-q_W transitions
          !
-         i_g_collision=1
+         !i_g_collision=1
          i_s_collision=i_s_star
          if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
          iB_ref=-1

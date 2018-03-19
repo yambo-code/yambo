@@ -86,9 +86,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_c_k,i_v_k,i_c_p,i_v_p,&
 &              i_k_bz,i_p_bz,i_k_s,i_p_s,i_k_p_s,i_k,i_p,i_k_s_m1,&
-&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,ig_k_p,ig_k_p_W,&
+&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,ig_k_p_mq,ig_k_p_mq_W,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,H_pos(2),&
-&              i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
+&              i_g1,ig_W,iq_bz_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -264,7 +264,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=maxval(G_m_G)
  O_ng_shift=maxval(qindx_B(:,:,2))
  if(iq>1) O_ng_shift=max(O_ng_shift,O_ng)
- write(*,*) 'O_ng, O_ng_shift ',O_ng, O_ng_shift
+ !write(*,*) 'O_ng, O_ng_shift ',O_ng, O_ng_shift
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
@@ -287,7 +287,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- write(*,*) 'G_m_G shape ',shape(G_m_G)
+ !write(*,*) 'G_m_G shape ',shape(G_m_G)
  !
  ! Elemental collisions allocation
  !=================================
@@ -455,7 +455,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      if (BS_K_is_ALDA) then
        is=(/i_c_k,i_k,i_k_s,i_k_spin/)
-       os=(/i_v_k,i_k,i_k_s,i_k_spin/)
+       os=(/i_v_k,i_kmq,i_kmq_s,i_k_spin/)
      endif
      !
      i_k_s_m1   = sop_inv(i_k_s)
@@ -483,25 +483,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_K_is_ALDA) then
          isp=(/i_c_p,i_p,i_p_s,i_p_spin/)
-         osp=(/i_v_p,i_p,i_p_s,i_p_spin/)
+         osp=(/i_v_p,i_pmq,i_pmq_s,i_p_spin/)
        endif
        !
        i_k_p_s    = sop_tab(i_k_s_m1,i_p_s)
        i_k_p_mq_s = sop_tab(i_kmq_s_m1,i_pmq_s)
        !
-       ig_k_p=G_m_G(ig_kmq,ig_pmq)
-       !ig_k_p=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
-       !ig_k_p=G_m_G(g_rot(i_kmq_s,ig_kmq),g_rot(i_pmq_s,ig_pmq))
+       ig_k_p_mq=G_m_G(ig_kmq,ig_pmq)
+       !ig_k_p_mq=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
+       !ig_k_p_mq=G_m_G(g_rot(i_kmq_s,ig_kmq),g_rot(i_pmq_s,ig_pmq))
        !
        H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
        ig_W   =qindx_B(i_k_bz,i_p_bz,2)
-       iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1) !q_W=p-k
-       iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
+       iq_bz_W=qindx_B(i_k_bz,i_p_bz,1)
        !
-       ig_k_p_W=G_m_G(ig_W,ig_k_p)
+       iq_W   =q%sstar( iq_bz_W,1) !q_W=p-k
+       iq_W_s =q%sstar( iq_bz_W,2)
+       !
+       ig_k_p_mq_W=G_m_G(ig_W,ig_k_p_mq)
        !
        H_x=cZERO
        H_c=cZERO
@@ -578,7 +580,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end do
            !$omp do
            do i_g1=1,BS_n_g_W
-             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_W)),iOvv)*PHASE_2
+             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_mq_W)),iOvv)*PHASE_2
            enddo
            !$omp end do
            !$omp end parallel
@@ -633,7 +635,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end do
            !$omp do
            do i_g1=1,BS_n_g_W
-             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_W)),iOvc)*PHASE_2
+             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_mq_W)),iOvc)*PHASE_2
            enddo
            !$omp end do
            !$omp end parallel

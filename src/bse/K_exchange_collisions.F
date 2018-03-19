@@ -39,7 +39,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  ! Work Space
  !
  logical :: divide_by_qpg
- integer :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,&
+ integer :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
 &           i_sp,i_T_el_last_with_identity_sym,i_T_grp_last_with_identity_sym,i_T_grp_p
  !
  ! Oscillators already done ?
@@ -63,6 +63,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
    i_s   =Xk%sstar(i_k_bz,2)
    !
    i_p_bz=qindx_X(iq,i_k_bz,1)
+   i_g_p =qindx_X(iq,i_k_bz,2)
+   !
    i_p   =Xk%sstar(i_p_bz,1)
    i_sp  =Xk%sstar(i_p_bz,2)
    !
@@ -72,7 +74,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
    !
    K_EXCH_collision%is=(/i_c,i_k,i_s,i_spin/)
    K_EXCH_collision%os=(/i_v,i_p,i_sp,i_spin/)
-   K_EXCH_collision%qs=(/qindx_X(iq,i_k_bz,2),iq,1/)
+   K_EXCH_collision%qs=(/i_g_p,iq,1/)
    !
    if (iq==1) then
      !

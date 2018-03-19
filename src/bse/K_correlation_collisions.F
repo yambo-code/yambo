@@ -41,7 +41,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  !
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,G_m_G
+ use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,G_m_G,g_rot
  use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
@@ -58,7 +58,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_s_k_p,i_s_star,&
 &               i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_s_k_p_mq,i_s_mq_star,&
 &               i_Tk,i_Tp,iB_ref,iB_p,i_Tgrp_k,i_Tgrp_p,H_pos(2),i_cycle,&
-&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,&
+&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s,ig_W,&
 &               ig_kmq,ig_pmq,ig_k_p_mq,i_g_collision
  logical     :: l_eval_collision
  !
@@ -123,16 +123,19 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_pmq_s =Xk%sstar(i_pmq_bz,2)
        !
        i_s_k_p_mq =sop_tab(sop_inv(i_kmq_s),i_pmq_s)
-       i_s_mq_star=Xk%s_table(i_p,i_s_k_p_mq)
+       i_s_mq_star=Xk%s_table(i_pmq,i_s_k_p_mq)
        !
-       ig_k_p_mq=G_m_G(ig_kmq,ig_pmq)
+       ig_k_p_mq=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
+       !ig_k_p_mq=G_m_G(g_rot(i_pmq_s,ig_pmq),g_rot(i_kmq_s,ig_kmq))
+       !ig_k_p_mq=1
+       !write(*,*) ig_kmq,g_rot(i_kmq_s,ig_kmq),ig_pmq,g_rot(i_pmq_s,ig_pmq),ig_k_p_mq
        !
        ! q_W indexes
        !
        iq_W_bz=qindx_B(i_k_bz,i_p_bz,1)
-       !ig_W   =qindx_B(i_k_bz,i_p_bz,2)
+       ig_W   =qindx_B(i_k_bz,i_p_bz,2)
        iq_W   =q%sstar( iq_W_bz ,1)
-       !iq_W_s =q%sstar( iq_W_bz ,2)
+       iq_W_s =q%sstar( iq_W_bz ,2)
        !
        ! Bands and spin indexes
        !
@@ -257,7 +260,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
      if (.not.l_eval_collision) return
      K_CORR_collision%is=(/ibi,iki,1,i_spi/)
      K_CORR_collision%os=(/ibo,iko,i_s_collision,i_spo/)
-    !K_CORR_collision%qs=(/ig_W,iq_W,iq_W_s/)
+     !K_CORR_collision%qs=(/ig_W,iq_W,iq_W_s/)
      K_CORR_collision%qs=(/i_g_collision,iq_W,1/)
      ! 
      call scatter_Bamp(K_CORR_collision)

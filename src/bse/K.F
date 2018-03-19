@@ -86,7 +86,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_c_k,i_v_k,i_c_p,i_v_p,&
 &              i_k_bz,i_p_bz,i_k_s,i_p_s,i_k_p_s,i_k,i_p,i_k_s_m1,&
-&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,&
+&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,H_pos(2),&
 &              i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
@@ -442,6 +442,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
      !
      i_kmq_bz  = qindx_X(iq,i_k_bz,1)            !k-q-point in full BZ
+     ig_kmq    = qindx_X(iq,i_k_bz,2)            !Go shift to reache the first BZ
      !
      i_k  = Xk%sstar(i_k_bz,1)                   !k-point in IBZ
      i_k_s= Xk%sstar(i_k_bz,2)
@@ -469,6 +470,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_p_spin= BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
        !
        i_pmq_bz  = qindx_X(iq,i_p_bz,1)
+       ig_pmq    = qindx_X(iq,i_p_bz,2)
        !
        i_p  =Xk%sstar(i_p_bz,1)
        i_p_s=Xk%sstar(i_p_bz,2)

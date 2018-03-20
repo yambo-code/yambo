@@ -29,6 +29,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
+ use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use interfaces,    ONLY:PARALLEL_WF_distribute
@@ -72,7 +73,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  real(SP)          ::res_PL(2)
 #endif
  !
- call section('=','Independent Particles absorption') 
+ call section('=','BSE - Independent Particles @q'//trim(intc(iq))) 
  !===================================================
  !
 #if defined _TIMING

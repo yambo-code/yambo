@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use stderr,         ONLY:string_remove
+ use stderr,         ONLY:string_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
@@ -187,14 +187,18 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Tranferred momentum
  !=====================================
  !
- YAMBO_ALLOC(q%pt,(q%nibz,3))
- YAMBO_ALLOC(BSqpts,(BS_q(2)-BS_q(1)+1,3))
+ !YAMBO_ALLOC(q%pt,(q%nibz,3))
+ YAMBO_ALLOC(BSqpts,(BS_q(1):BS_q(2),3))
  do iq=BS_q(1),BS_q(2)
-   BSqpts(iq-BS_q(1)+1,:) = q%pt(iq,:)
+   if (iq==1) BSqpts(iq,:) = BSS_q0
+   if (iq/=1) BSqpts(iq,:) = q%pt(iq,:)
  enddo
- YAMBO_FREE(q%pt)
+ !YAMBO_FREE(q%pt)
  !
  do iq=BS_q(1),BS_q(2)
+ !
+ if(iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
+ if(iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
  !
  ! ... EH space (no parallelization)
  call K_Transitions_setup(iq,Ken,Xk,.FALSE.)

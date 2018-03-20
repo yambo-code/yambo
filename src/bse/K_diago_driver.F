@@ -27,6 +27,7 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
+ use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
@@ -64,6 +65,7 @@ subroutine K_diago_driver(iq,W)
  ! Work Space
  !
  logical       :: K_is_not_hermitian
+ character(1)  :: sec
  !
  ! Residuals & Energies
  !
@@ -98,11 +100,10 @@ subroutine K_diago_driver(iq,W)
  !
  ! Sectioning
  !============
- if (isec(2)/=0) then
-   call section('=','Diagonalization solver')
- else if (isec(2)==0) then
-   call section('+','Diagonalization solver')
- endif
+ if (isec(3)/=0) sec="="
+ if (isec(3)==0) sec="+"
+ !
+ call section(sec,'Diagonalization solver @q'//trim(intc(iq)))
  !
  ! Eigenstates 2 DB ?
  !====================

@@ -37,6 +37,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
 &                       RIM_anisotropy,minus_G,bare_qpg,qindx_X
  use com,          ONLY:warning,error,msg
+ use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS_solvers,   ONLY:BSS_q0
@@ -131,13 +132,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !========
  !
  if (l_bs_fxc) then
-   section_title="Bethe-Salpeter Kernel -> xc-kernel"
+   section_title="BSE Kernel -> xc-kernel"
  else
    if (BS_K_is_ALDA) then
      section_title="TDDFT Kernel"
    else
-     section_title="Bethe-Salpeter"
+     section_title="BSE Kernel"
    endif
+   section_title=trim(section_title)//" @q"//trim(intc(iq))
    !
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//" (Resonant"
    if (BS_res_K_corr.or.BS_K_is_ALDA)          section_title=trim(section_title)//" CORRRELATION"
@@ -393,7 +395,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
  !
- call section('=','Kernel loop')
+ !call section('=','Kernel loop')
  !==============================
  !
  ! Allocations

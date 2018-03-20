@@ -49,8 +49,6 @@ subroutine K_blocks( )
  integer    :: i_T,j_T,i_loop,iB,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
- call section('=','CPU-dependent Block structure')
- !                 =============================
  do i_loop=1,2
    !
    if (i_loop==2) allocate(BS_blk(n_BS_blks))

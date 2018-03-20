@@ -24,6 +24,7 @@
 subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  use com,            ONLY:warning
+ use stderr,         ONLY:intc
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
@@ -66,7 +67,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  if (.not. BS_K_has_been_calculated_loaded ) return
  !
- call section('*','BSE solver(s)')
+ call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
  ! GPL_EXCLUDE_START
  !

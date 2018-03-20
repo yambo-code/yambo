@@ -43,7 +43,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !end type BS_T_group
  !
  use pars,         ONLY:SP
- use com,          ONLY:warning,error
+ use stderr,       ONLY:intc
+ use com,          ONLY:warning,error,isec
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
@@ -79,6 +80,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  ! Work Space
  !
+ character(1) :: sec
  integer :: ikbz,ikpbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
@@ -100,7 +102,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  if (FILL_the_groups) then
    !
-   call section('+','Transition Groups build-up')
+   if (isec(3)/=0) sec="-"
+   if (isec(3)==0) sec="+"
+   !
+   call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
    !
    allocate(BS_T_grp(BS_nT_grps))
    do i_g=1,BS_nT_grps

@@ -45,6 +45,7 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_X
  logical  :: l_RT_abs
+ logical  :: l_RT_ph_oscillations
  !
  ! RT post-processing (kind)
  !
@@ -89,6 +90,7 @@ module YPP_real_time
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
+ complex(DP),    allocatable :: RT_D_t(:,:)
  !
  character(3) :: RT_p_format   
  !
@@ -115,12 +117,13 @@ module YPP_real_time
  !
  interface
    !
-   subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+   subroutine  RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
-     logical, optional  :: IO_error,first_sec_only,G_lesser_only
-     integer, optional  :: COM_
-     character(*), optional  :: mesg
+     character,    optional :: what
+     logical,      optional :: IO_error,first_sec_only,G_lesser_only
+     integer,      optional :: COM_
+     character(*), optional :: mesg
    end subroutine
    !
    subroutine RT_IO_carriers(Time,imposed_COM)

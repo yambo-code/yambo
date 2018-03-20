@@ -21,29 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+subroutine RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP_real_time,  ONLY:RT_J_t,RT_P_t,RT_conf,RT_time
- use pars,           ONLY:DP,SP,schlen
- use electrons,      ONLY:n_spin
+ use YPP_real_time,  ONLY:RT_J_t,RT_P_t,RT_conf,RT_time,RT_D_t
+ use pars,           ONLY:DP,SP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:J_cache,P_cache,IO_OBS_cache_steps
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,D_cache
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
+ use ELPH,           ONLY:ph_modes
  !
 #include<memory.h>
  !
- logical, optional :: IO_error,first_sec_only,G_lesser_only
- integer, optional :: COM_
+ character(*), optional :: what
+ logical,      optional :: IO_error,first_sec_only,G_lesser_only
+ integer,      optional :: COM_
  character(*), optional :: mesg
  !
  ! Work Space
  !
  real(SP)           :: TIME
- integer            :: io_OBS,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_c,i_time
+ integer            :: io_OBS,ID,i_f,io_G,COM_here,ik,NE_steps_save,i_time
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -51,13 +52,19 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  COM_here=LOG
  if (present(COM_)) COM_here=COM_
+ !
+ if (COM_here==LOG) then
+   if (what=="JP") mesg_='Current and Polarization'
+   if (what=="D" ) mesg_='Phonon Displacement Field'
+   call section("+",trim(mesg_)//' Database')
+ endif
+ !
  mesg_=" "
  if (present(mesg)) mesg_="["//trim(mesg)//"]"
- !
- if (COM_here==LOG) call section("+",'Current and Polarization Database')
  !=======================================================================
  !
  if (present(G_lesser_only)) then
+   !
    if (G_lesser_only) then
      !
      YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz,1))
@@ -80,8 +87,10 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    return
    !
  else
+   !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
    io_G=io_RT_components('G',ID)
+   !
  endif
  !
  COM_here=NONE
@@ -98,7 +107,7 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  endif
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
- io_OBS=io_RT_components('JP',ID)
+ io_OBS=io_RT_components(what,ID)
  if( io_OBS/=0 ) then
    if (present(IO_error)) then
      IO_error=.TRUE.
@@ -113,20 +122,21 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    if (first_sec_only) return
  endif
  !
- ! I/O of Current and Vector Potential
- !=====================================
+ ! I/O of OBSERVABLES
+ !====================
  !
- if (.not.allocated(RT_J_t)) then
+ if (what=="JP".and..not.allocated(RT_J_t)) then
    YAMBO_ALLOC(RT_J_t,(RT_conf%T_n_steps,3))
    YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,6))
+   RT_J_t =cZERO_DP
+   RT_P_t =cZERO_DP
+ endif
+ if (what=="D".and..not.allocated(RT_D_t)) then
+   YAMBO_ALLOC(RT_D_t,(RT_conf%T_n_steps,ph_modes))
+   RT_D_t =cZERO_DP
  endif
  !
- YAMBO_ALLOC(J_cache,(6,IO_OBS_cache_steps))
- !
- YAMBO_ALLOC(P_cache,(6,IO_OBS_cache_steps))
- !
- RT_J_t        =(0._DP,0._DP)
- RT_P_t        =(0._DP,0._DP)
+ call RT_control_alloc(.TRUE.)
  !
  NE_steps=NE_steps_save
  !
@@ -138,13 +148,16 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    !
    NE_i_time=nint( TIME/RT_step ) + 1
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/NE_i_time+1/),ID=ID) 
-   io_OBS=io_RT_components('JP',ID)
+   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/2/),ID=ID) 
+   io_OBS=io_RT_components(what,ID)
    !
-   do i_c=1,3
-     RT_J_t(i_time,i_c) =cmplx(J_cache(2*i_c-1,1),J_cache(2*i_c,1),SP)
-     RT_P_t(i_time,i_c) =cmplx(P_cache(2*i_c-1,1),P_cache(2*i_c,1),SP)
-   enddo
+   if (what=="JP") then
+     RT_J_t(i_time,:) =J_cache(:,1)
+     RT_P_t(i_time,:) =P_cache(:,1)
+   endif
+   if (what=="D") then
+     RT_D_t(i_time,:) =D_cache(:,1)
+   endif
    !
    call live_timing(steps=1)
    !
@@ -158,7 +171,6 @@ subroutine RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
    Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo
  !
- YAMBO_FREE(J_cache)
- YAMBO_FREE(P_cache)
+ call RT_control_free()
  !
 end subroutine

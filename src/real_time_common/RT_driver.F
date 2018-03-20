@@ -36,7 +36,7 @@ subroutine RT_driver(E,X,k,q)
  use IO_m,           ONLY:OP_WR_CL,NONE,io_control
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
- use RT_control,     ONLY:RT_alloc_control,RT_free_control,ID,&
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
 &                         NE_i_start_time,RT_carriers_object,TIME_adjust,RT_apply
  use real_time,      ONLY:RT_potential,RT_kind,RT_xc_functional,RT_perturbation,&
 &                         NE_steps,RT_step,G_lesser,RT_bands,&
@@ -169,7 +169,7 @@ subroutine RT_driver(E,X,k,q)
  ! Core allocations
  !
  call RT_alloc(E)
- call RT_alloc_control()
+ call RT_control_alloc(.FALSE.)
  !
  ! Initial allocation and basic definitions of the RT_carriers object
  !
@@ -342,7 +342,7 @@ subroutine RT_driver(E,X,k,q)
    !
    subroutine CLOSE_and_clean( )
      call RT_free()
-     call RT_free_control()
+     call RT_control_free()
      call WF_free(WF)
      !
      ! GPL_EXCLUDE_START

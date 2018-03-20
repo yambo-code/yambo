@@ -56,7 +56,7 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   if (.not.RT_PH_displaced(il)) cycle
+   if (RT_PH_displaced(il)==0) cycle
    !
    ph_freq=abs(sqrt(ph_freqs_sq(1,il)))
    !

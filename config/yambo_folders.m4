@@ -27,7 +27,7 @@ cp config/Makefile .
 if ! test -d bin      ; then mkdir bin      ; fi
 if ! test -d include  ; then mkdir include  ; fi
 if ! test -d lib      ; then mkdir lib      ; fi
-if ! test -d bin-libs ; then mkdir bin-libs ; fi
+if ! test -d lib/bin  ; then mkdir lib/bin  ; fi
 #
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
@@ -117,13 +117,13 @@ if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  FILES=$extlibs_path/${FCKIND}/${FC}/bin/*
  for file in $FILES; do
   if test -f $file; then 
-   cp $file $exec_prefix/bin-libs/
+   cp $file $exec_prefix/lib/bin/
   fi
  done
  FILES=$extlibs_path/${FCKIND}/${FC}/v3/bin/*
  for file in $FILES; do
   if test -f $file; then 
-   cp $file $exec_prefix/bin-libs/
+   cp $file $exec_prefix/lib/bin/
   fi
  done
 fi

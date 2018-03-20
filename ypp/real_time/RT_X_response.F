@@ -24,7 +24,7 @@
 subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
+&                         N_probes,N_pumps,RT_IO_observables,X_order,&
 &                         l_RT_X_inversion,l_skip_OBS_IO,l_force_min_damp,&
 &                         Probe_path,Pump_path,N_probes
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -46,7 +46,7 @@ subroutine RT_X_response(en,k,q)
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- call RT_IO_J_and_P_paths(en)
+ call RT_IO_observables_paths('JP',en)
  !
  ! LOGICALS
  !----------
@@ -81,17 +81,17 @@ subroutine RT_X_response(en,k,q)
    !
    ! Search the database in JOBSTR,Pump_path and Probe_path
    !
-   call RT_IO_J_and_P( )
+   call RT_IO_observables( what='JP' )
    !
    jobstr_save=jobstr
    if (.not.allocated(RT_J_t)) then
      jobstr=trim(Pump_path)
-     call RT_IO_J_and_P(mesg=trim(Pump_path))
+     call RT_IO_observables(what='JP', mesg=trim(Pump_path))
    endif
    if (.not.allocated(RT_J_t)) then
      do i_f=1,N_probes
        jobstr=trim(Probe_path(i_f))
-       call RT_IO_J_and_P(mesg=trim(Pump_path))
+       call RT_IO_observables( what='JP', mesg=trim(Pump_path))
        if (allocated(RT_J_t)) exit
      enddo
    endif

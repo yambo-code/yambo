@@ -37,7 +37,8 @@ integer function io_RT_components(what,ID)
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,&
+&                         RT_PH_displaced,N_RT_PH_displaced
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history,D_cache
  use fields,         ONLY:A_tot
@@ -103,7 +104,7 @@ integer function io_RT_components(what,ID)
  if (l_G     .or.l_THETA) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
  !
  l_track_history=.false.
- if (l_OBS)     l_track_history=io_sec(ID,1)> 1
+ if (l_OBS)      l_track_history=io_sec(ID,1)> 1
  if (l_carriers) l_track_history=io_sec(ID,1)> 1
  if (l_G)        l_track_history=io_sec(ID,1)> 1 .and. SAVE_G_history
  !
@@ -153,6 +154,13 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,I2=RT_carriers%table)
      !
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_input_output")
+   endif
+   !
+   if (l_OBS.and.l_elph_scatt) then
+     call io_bulk(ID,VAR="N_ACTIVE_PH_MODES",VAR_SZ=(/1/))
+     call io_bulk(ID,I0=N_RT_PH_displaced)
+     call io_bulk(ID,VAR="ACTIVE_PH_MODES",VAR_SZ=(/ph_modes/))
+     call io_bulk(ID,L1=RT_PH_displaced)
    endif
    !
    ! GPL_EXCLUDE_END
@@ -315,25 +323,25 @@ integer function io_RT_components(what,ID)
    !
 #if defined _ELPH
    if (allocated(D_cache).and.l_D) then
-     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2*ph_modes,IO_OBS_cache_steps/))
-     call io_bulk(ID,R2=D_cache)
+     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,ph_modes,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=D_cache)
    endif
 #endif
    !
    if (l_JP) then
-     call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_OBS_cache_steps/))
-     call io_bulk(ID,R2=J_cache)
+     call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=J_cache)
      !
-     call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_OBS_cache_steps/))
-     call io_bulk(ID,R2=P_cache)
+     call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=P_cache)
    endif
    !
    if(n_spin>1.and.l_M) then
-     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_OBS_cache_steps/))
-     call io_bulk(ID,R2=Ms_cache)
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=Ms_cache)
      !
-     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_OBS_cache_steps/))
-     call io_bulk(ID,R2=Ml_cache)
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=Ml_cache)
    endif
    !
  endif       

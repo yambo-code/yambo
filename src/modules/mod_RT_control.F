@@ -58,11 +58,11 @@ module RT_control
  !
  ! J, P and M (spin) cache 
  !
- real(SP), allocatable    :: J_cache(:,:)
- real(SP), allocatable    :: P_cache(:,:)
- real(SP), allocatable    :: Ms_cache(:,:)
- real(SP), allocatable    :: Ml_cache(:,:)
- real(SP), allocatable    :: D_cache(:,:)
+ complex(SP), allocatable    :: J_cache(:,:)
+ complex(SP), allocatable    :: P_cache(:,:)
+ complex(SP), allocatable    :: Ms_cache(:,:)
+ complex(SP), allocatable    :: Ml_cache(:,:)
+ complex(SP), allocatable    :: D_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -109,28 +109,30 @@ module RT_control
  !
  contains
    !
-   subroutine RT_alloc_control()
+   subroutine RT_control_alloc(FORCE)
      !
-     use pars,           ONLY:rZERO
-     use real_time,      ONLY:NE_steps
+     use pars,           ONLY:cZERO,rZERO
+     use real_time,      ONLY:NE_steps,l_RT_PH_oscillations
      use electrons,      ONLY:n_spin
      use ELPH,           ONLY:ph_modes
      !
-     if(l_NE_dynamics) then
+     logical :: FORCE
+     !
+     if(l_NE_dynamics.or.FORCE) then
        !
-       YAMBO_ALLOC(J_cache,(6,IO_OBS_cache_steps))
-       J_cache=rZERO
-       YAMBO_ALLOC(P_cache,(6,IO_OBS_cache_steps))
-       P_cache=rZERO
-       if(l_elph_scatt) then
-         YAMBO_ALLOC(D_cache,(2*ph_modes,IO_OBS_cache_steps))
-         D_cache=rZERO
+       YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
+       J_cache=cZERO
+       YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
+       P_cache=cZERO
+       if(l_elph_scatt.and.(l_RT_PH_oscillations.or.FORCE)) then
+         YAMBO_ALLOC(D_cache,(ph_modes,IO_OBS_cache_steps))
+         D_cache=cZERO
        endif
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(6,IO_OBS_cache_steps))
-         Ms_cache=rZERO
-         YAMBO_ALLOC(Ml_cache,(6,IO_OBS_cache_steps))
-         Ml_cache=rZERO
+         YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
+         Ms_cache=cZERO
+         YAMBO_ALLOC(Ml_cache,(3,IO_OBS_cache_steps))
+         Ml_cache=cZERO
        endif
        !
      endif
@@ -145,9 +147,9 @@ module RT_control
      YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
      GF_RT_IO_t%Time=rZERO
      !
-   end subroutine RT_alloc_control
+   end subroutine RT_control_alloc
    !
-   subroutine RT_free_control
+   subroutine RT_control_free
      !
      YAMBO_FREE(J_cache)
      YAMBO_FREE(P_cache)
@@ -156,7 +158,7 @@ module RT_control
      YAMBO_FREE(OBS_RT_IO_t%Time)
      YAMBO_FREE(GF_RT_IO_t%Time)
      !
-   end subroutine RT_free_control
+   end subroutine RT_control_free
    !
    logical function RT_do_it(what)
      !

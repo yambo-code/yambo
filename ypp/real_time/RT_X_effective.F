@@ -24,7 +24,7 @@
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
- use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
+ use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_observables,&
 &                         max_n_of_paths,Use_FFT,RT_conf,N_pumps,N_probe_frequencies,X_order,&
 &                         l_RT_X_inversion,l_skip_OBS_IO
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AUT2FS
@@ -106,7 +106,7 @@ subroutine RT_X_effective(en)
  !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
-   call RT_IO_J_and_P(IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
+   call RT_IO_observables(what='JP',IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
    RT_P_pump=real(RT_P_t(:,1:3),SP)
    Pump_Frequency=Efield(i_Pump)%frequency(1)
    min_X_order=0
@@ -123,8 +123,8 @@ subroutine RT_X_effective(en)
  do i_f=1,N_probes
    !
    jobstr=trim(Probe_path(i_f))
-   if (i_f==1) call RT_IO_J_and_P(IO_error=IO_error,COM_=LOG, mesg=trim(jobstr))
-   if (i_f> 1) call RT_IO_J_and_P(IO_error=IO_error,COM_=NONE,mesg=trim(jobstr))
+   if (i_f==1) call RT_IO_observables(what='JP',IO_error=IO_error,COM_=LOG, mesg=trim(jobstr))
+   if (i_f> 1) call RT_IO_observables(what='JP',IO_error=IO_error,COM_=NONE,mesg=trim(jobstr))
    !
    if (IO_error) call error("J_and_P databases I/O error")
    !

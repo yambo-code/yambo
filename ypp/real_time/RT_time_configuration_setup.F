@@ -39,13 +39,15 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! 
  !
  integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
- logical  :: UNIFORM
+ logical  :: UNIFORM,l_use_non_uniform_time_grid
  real(SP) :: STEP,TIME,TIME_diff
  !
  if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
  if (GENERAL_RT_IO_t%N==1) STEP  = 1._SP
  STEP  = max(TIME_adjust(STEP),STEP)
  TIME  = TIME_adjust(GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N))
+ !
+ l_use_non_uniform_time_grid=.not.what=="CURRENT".and..not.what=="PH_DISPLACEMENT"
  !
  ! Time range ...
  !===============
@@ -96,7 +98,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! N.B.: This is needed for the carriers post-processing only
  !============================================================
  !
- if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. what/="CURRENT") then
+ if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. l_use_non_uniform_time_grid) then
    !
    if (UNIFORM) then
      RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
@@ -173,7 +175,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !
- if (what/="CURRENT") return
+ if (l_use_non_uniform_time_grid) return
  !
  call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
  call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)

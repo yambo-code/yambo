@@ -113,7 +113,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    n_headings(next_file)=N_RT_PH_displaced+1
    i_f=1
    do il=elph_branches(1),elph_branches(2)
-     if (.not.RT_PH_displaced(il)) cycle
+     if (RT_PH_displaced(il)==0) cycle
      i_f=i_f+1
      headings(next_file,i_f)="<D>_l="//trim(intc(il))//" Field"
    enddo
@@ -553,7 +553,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        if (l_RT_PH_oscillations) then
          i_c=1
          do il=elph_branches(1),elph_branches(2)
-           if (.not.RT_PH_displaced(il)) cycle
+           if (RT_PH_displaced(il)==0) cycle
            i_c=i_c+1
            data_to_dump(i_c) =real(RT_D(il))
          enddo

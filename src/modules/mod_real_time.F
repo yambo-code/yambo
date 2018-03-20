@@ -140,7 +140,7 @@ module real_time
  ! ... dV time \rho ...
  !----------------------
  integer                  :: N_RT_PH_displaced = 0
- logical,     allocatable :: RT_PH_displaced(:)
+ integer(LP), allocatable :: RT_PH_displaced(:)
  complex(SP), allocatable :: RT_D(:)
  !
  ! ... and magnetization

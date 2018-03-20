@@ -44,7 +44,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_c,ACTION_,i_time
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time
  integer, external :: io_RT_components
  !
  ! Store the current and the polarization in the cache for future writing
@@ -55,25 +55,17 @@ subroutine RT_databases_IO(E)
    !
 #if defined _ELPH
    if (allocated(D_cache)) then
-     do i_c=1,ph_modes
-       D_cache(2*i_c-1,i_time)= real(RT_D(i_c))
-       D_cache(2*i_c  ,i_time)= aimag(RT_D(i_c))
-     enddo
+     D_cache(1:ph_modes,i_time)= RT_D
    endif
 #endif
    !
-   do i_c=1,3
-     J_cache(2*i_c-1,i_time)= real(RT_ind_J(i_c))
-     J_cache(2*i_c  ,i_time)=aimag(RT_ind_J(i_c))
-     P_cache(2*i_c-1,i_time)= real(  RT_P(i_c)  )
-     P_cache(2*i_c  ,i_time)=aimag(  RT_P(i_c)  )
-     if(n_spin>1) then
-       Ms_cache(2*i_c-1,i_time)= real(RT_magn(i_c,1) )
-       Ms_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,1) )
-       Ml_cache(2*i_c-1,i_time)= real(RT_magn(i_c,2) )
-       Ml_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,2) )
-     endif
-   enddo
+   J_cache(1:3,i_time)=RT_ind_J
+   P_cache(1:3,i_time)=RT_P
+   if(n_spin>1) then
+     Ms_cache(1:3,i_time)= RT_magn(:,1) 
+     Ml_cache(1:3,i_time)= RT_magn(:,2) 
+   endif
+   !
  endif
  !
  ! Observables (J, P, M ...)
@@ -87,7 +79,7 @@ subroutine RT_databases_IO(E)
    if (io_OBSERVABLES) then
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4)) 
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(4))
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
    endif
    !

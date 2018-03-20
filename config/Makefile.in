@@ -54,7 +54,7 @@ bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
-libbindir   = @prefix@/bin-libs
+libbindir   = @prefix@/lib/bin
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
@@ -497,13 +497,17 @@ endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
        grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
- cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir)
+ @if test -d $(libbindir); then \
+  cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
+ fi
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- rmdir $(bindir)
+ @if test -d $(bindir); then \
+  rmdir $(bindir); \
+ fi
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

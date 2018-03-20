@@ -303,10 +303,11 @@ subroutine RT_initialize(E,k,q)
    !
    if (l_RT_PH_oscillations) then
      YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
+     RT_PH_displaced=0
      do i1=1,ph_modes
-       RT_PH_displaced(i1)=  abs( sqrt(ph_freqs_sq(1,i1)) )> 3.E-5
+       if (abs( sqrt(ph_freqs_sq(1,i1)) )> 3.E-5) RT_PH_displaced(i1)=1
      enddo
-     N_RT_PH_displaced=count(RT_PH_displaced)
+     N_RT_PH_displaced=count(RT_PH_displaced==1)
    endif
    !
  endif

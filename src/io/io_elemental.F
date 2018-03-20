@@ -275,7 +275,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
  !
- !
  if (present(C0)) then
    if (write_is_on(ID)) then
      RC0 => linkC2R(C0,(/2/))
@@ -319,7 +318,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+2
    !
  endif
- !
  !
  if (present(L0)) then
    i_db(1)=0

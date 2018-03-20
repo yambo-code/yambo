@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -40,10 +40,10 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  implicit none 
  !
- type(levels),  intent(in) :: en
- type(bz_samp), intent(in) :: k
- complex(SP),   intent(in) :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),   intent(inout) :: OBSERVABLES(23)
+ type(levels),  intent(inout) :: en
+ type(bz_samp), intent(in)    :: k
+ complex(SP),   intent(in)    :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ real(SP),   intent(inout)    :: OBSERVABLES(23)
  !
  ! Workspace
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine G_shells_finder()
  !
  ! Output: g_rot(nsym,ng_closed)
  !
- ! R_is G_ig = G_{g_rot(is,ig)}
+ ! R_is G_ig = G_{g_rot(ig,is)}
  !
  use pars,         ONLY:SP
  use LIVE_t,       ONLY:live_timing
@@ -93,10 +93,10 @@ subroutine G_shells_finder()
  !
  ! Init
  !
- YAMBO_ALLOC(g_rot,(nsym,ng_closed))
+ YAMBO_ALLOC(g_rot,(ng_closed,nsym))
  !
  g_rot=0
- if (myid==0) g_rot(:,1)=1 ! Gamma point
+ if (myid==0) g_rot(1,:)=1 ! Gamma point
  E_of_shell_TMP=0._SP
  !
  ! Parallel Setup
@@ -132,7 +132,7 @@ subroutine G_shells_finder()
          !
          if (v_is_zero(g_rotated-g_vec(ig_2,:),zero_=G_iku_zero)) then
            !
-           g_rot(i_s,ig_1)=ig_2
+           g_rot(ig_1,i_s)=ig_2
            !
            exit
            !
@@ -169,7 +169,7 @@ subroutine G_shells_finder()
  !
  do i_m=n_g_shells,2,-1
    !
-   if ( all(g_rot(:,:ng_in_shell_TMP(i_m))/=0) ) then
+   if ( all(g_rot(:ng_in_shell_TMP(i_m),:)/=0) ) then
      n_g_shells_no_holes=i_m
      exit 
    endif

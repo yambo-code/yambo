@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -345,22 +345,26 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call scatter_Gamp(isc,'c')
      !
      if (.not.l_td_hf) then
+       !
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        io_X_err=io_X(X,Xw,XID)
        !
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
-       do i_g2=1,BS_n_g_W
+       if (BS_W_is_diagonal) then
+         forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(1,i_g2)
+       else if (.not.BS_W_is_diagonal) then
          do i_g3=1,BS_n_g_W
-           if (.not.BS_W_is_diagonal) then
+           do i_g2=1,BS_n_g_W
              BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2,i_g3,1)*isc%gamp(i_g2,i_g3)
-             if (i_space_inv==0.and.i_time_rev==1) &
-&               BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
-           endif
-           if (BS_W_is_diagonal.and.i_g2==i_g3) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(1,i_g2)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
+           enddo
          enddo
-       enddo
+      endif
+      !
      else
+       !
        forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=isc%gamp(1,i_g2)
+       !
      endif
      ! 
    enddo
@@ -568,15 +572,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
-           !$omp parallel default(shared), private(i_g1)
+           !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do
            do i_g1=1,BS_n_g_W
-             Occ(i_g1)=BS_blk(i_block_cc)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcc)*PHASE_1
-           enddo
-           !$omp end do
-           !$omp do
-           do i_g1=1,BS_n_g_W
-             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_mq_W)),iOvv)*PHASE_2
+             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W       ),i_k_s_m1  )
+             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_k_p_mq_W),i_kmq_s_m1)
+             Occ(i_g1)=BS_blk(i_block_cc)%O_c(i_g2,iOcc)*PHASE_1
+             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(i_g3,iOvv)*PHASE_2
            enddo
            !$omp end do
            !$omp end parallel
@@ -623,15 +625,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
-           !$omp parallel default(shared), private(i_g1)
+           !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do
            do i_g1=1,BS_n_g_W
-             Ocv(i_g1)=BS_blk(i_block_cv)%O_c(g_rot(i_k_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_W)),iOcv)*PHASE_1
-           enddo
-           !$omp end do
-           !$omp do
-           do i_g1=1,BS_n_g_W
-             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(g_rot(i_kmq_s_m1,G_m_G(g_rot(iq_W_s,i_g1),ig_k_p_mq_W)),iOvc)*PHASE_2
+             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W       ),i_k_s_m1  )
+             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_k_p_mq_W),i_kmq_s_m1)
+             Ocv(i_g1)=BS_blk(i_block_cv)%O_c(i_g2,iOcv)*PHASE_1
+             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(i_g3,iOvc)*PHASE_2
            enddo
            !$omp end do
            !$omp end parallel

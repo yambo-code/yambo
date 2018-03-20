@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -50,7 +50,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
  !
  ! GPL_EXCLUDE_END
- !
  !
 #include<memory.h>
  type(levels) ::Ken

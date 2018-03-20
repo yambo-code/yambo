@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -53,6 +53,7 @@ integer function io_X(X,Xw,ID)
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
  complex(SP),allocatable :: X_on_disk(:,:)
+ integer,    external    :: variables_X
  !
 #if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
@@ -97,7 +98,8 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   call variables_X(ID,X_description,X)
+   io_X=variables_X(ID,X_description,X)
+   if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors

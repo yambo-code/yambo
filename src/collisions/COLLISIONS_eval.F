@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -68,7 +68,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,i_kind,IO_err
+ integer       :: ID,IO_err
  character(20) :: PAR_ch,FREE_ch
  !
 #if defined _TIMING
@@ -164,7 +164,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (IO_err/=0) then
      !
-     call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2),i_kind)
+     call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2))
      !
      ! GPL_EXCLUDE_START
      !
@@ -226,7 +226,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (IO_err/=0) then 
      !
-     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2),i_kind) 
+     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2)) 
      !
      ! GW_NEQ clean
      !--------------

@@ -183,7 +183,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      enddo
    endif
    !
-   if (io_BS_err==0) return
+   if (io_BS_err==0) goto 1
    !
    ! GPL_EXCLUDE_START
    !

@@ -25,7 +25,7 @@ subroutine RT_driver(en,k,q)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,l_RT_ph_oscillations
+ use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density
  !
  implicit none
  !
@@ -48,6 +48,6 @@ subroutine RT_driver(en,k,q)
  !
  ! Response Functions
  !====================
- if ( l_RT_X .or. l_RT_ph_oscillations)    call RT_X_response(en,k,q)
+ if ( l_RT_X)                              call RT_X_response(en,k,q)
  !
 end subroutine

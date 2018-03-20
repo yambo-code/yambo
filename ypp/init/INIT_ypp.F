@@ -53,7 +53,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions,l_RT_ph_oscillations 
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
@@ -272,10 +272,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
      l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
    endif
-   if ( trim(rstr_piece(i1)) == 'phonons') then
-     l_RT_ph_oscillations  =trim(rstr_piece(i1+1))=='o'
-     if (l_RT_ph_oscillations) call initactivate(1,'RT_ph_osc')
-   endif
    !
    ! GPL_EXCLUDE_END
    !
@@ -389,8 +385,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  l_RT_X             = runlevel_is_on('RT_X')
  !
- l_RT_ph_oscillations=runlevel_is_on('RT_ph_osc')
- !
  ! GPL_EXCLUDE_START
  !
  l_RT_DBs           = runlevel_is_on('RTDBs')
@@ -493,10 +487,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TimeRange DampMode DampFactor SkipJP_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
- endif
- !
- if (l_RT_ph_oscillations) then 
-   call initactivate(1,"TimeRange DampMode DampFactor")
  endif
  !
 #endif

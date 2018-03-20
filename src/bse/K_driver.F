@@ -111,8 +111,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! =========
  !
  if (.not.l_rpa_IP) then
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
-   if (BS_n_g_W/= Max_G_m_G ) then
+   if (      BS_q(1)==BS_q(2).and.BS_q(1)==1 ) Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   if (.not.(BS_q(1)==BS_q(2).and.BS_q(1)==1)) Max_G_m_G=eval_G_minus_G(BS_n_g_W,4*maxval(qindx_B(:,:,2)))
+   if (BS_n_g_W> Max_G_m_G ) then
      BS_n_g_W= Max_G_m_G
      call warning (' W size reduced due to symmetry constraints')
      call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)

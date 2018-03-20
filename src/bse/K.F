@@ -264,7 +264,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=maxval(G_m_G)
  O_ng_shift=maxval(qindx_B(:,:,2))
  if(iq>1) O_ng_shift=max(O_ng_shift,O_ng)
- !write(*,*) 'O_ng, O_ng_shift ',O_ng, O_ng_shift
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
@@ -286,8 +285,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
- !
- !write(*,*) 'G_m_G shape ',shape(G_m_G)
  !
  ! Elemental collisions allocation
  !=================================
@@ -445,7 +442,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
      !
      i_kmq_bz  = qindx_X(iq,i_k_bz,1)            !k-q-point in full BZ
-     ig_kmq    = qindx_X(iq,i_k_bz,2)            !Go shift to reache the first BZ
+     ig_kmq    = qindx_X(iq,i_k_bz,2)            !Go shift to reach the first BZ
      !
      i_k  = Xk%sstar(i_k_bz,1)                   !k-point in IBZ
      i_k_s= Xk%sstar(i_k_bz,2)
@@ -490,8 +487,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_p_mq_s = sop_tab(i_kmq_s_m1,i_pmq_s)
        !
        ig_k_p_mq=G_m_G(ig_kmq,ig_pmq)
-       !ig_k_p_mq=G_m_G(g_rot(sop_inv(i_kmq_s),ig_kmq),g_rot(sop_inv(i_pmq_s),ig_pmq))
-       !ig_k_p_mq=G_m_G(g_rot(i_kmq_s,ig_kmq),g_rot(i_pmq_s,ig_pmq))
+       !ig_k_p_mq=G_m_G(ig_pmq,ig_kmq)
        !
        H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
        !

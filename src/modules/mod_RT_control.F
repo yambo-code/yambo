@@ -25,7 +25,7 @@ module RT_control
  !
  use pars,       ONLY:SP,lchlen,schlen
  use units,      ONLY:AUT2FS
- use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
+ use real_time,  ONLY:l_NE_dynamics
 #include<memory.h>
  !
  integer                  :: n_RT_descriptions = 0
@@ -61,7 +61,6 @@ module RT_control
  real(SP), allocatable    :: P_cache(:,:)
  real(SP), allocatable    :: Ms_cache(:,:)
  real(SP), allocatable    :: Ml_cache(:,:)
- real(SP), allocatable    :: dV_rho_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -113,7 +112,6 @@ module RT_control
      use pars,           ONLY:rZERO
      use real_time,      ONLY:NE_steps
      use electrons,      ONLY:n_spin
-     use ELPH,           ONLY:ph_modes
      !
      if(l_NE_dynamics) then
        !
@@ -121,10 +119,6 @@ module RT_control
        J_cache=rZERO
        YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
        P_cache=rZERO
-       if(l_elph_scatt) then
-         YAMBO_ALLOC(dV_rho_cache,(ph_modes,IO_JPSM_cache_steps))
-         dV_rho_cache=rZERO
-       endif
        if(n_spin>1) then
          YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
          Ms_cache=rZERO

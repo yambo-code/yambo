@@ -63,8 +63,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    call error(" Interpolation of occupations/lifetimes only on a band circuit")
  endif
  !
- if(n_sp_pol>1) &
-&  call error('Occupations for spin polarized systems not implemented')
+ if(n_sp_pol>1) then
+   call error('Occupations for spin polarized systems not implemented')
+ endif
  !
  ! Map RT_carriers%kpt ==> k_bands%kpt
  !     RT_carriers%E   ==> E_bands%E 
@@ -227,7 +228,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        if (ik==1) values(1)=0._SP
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
-       values(2)=CIRCUIT_E%E(ib,1,ik)*HA2EV
+       values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
        if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
        if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then

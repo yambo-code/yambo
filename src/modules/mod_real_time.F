@@ -134,10 +134,6 @@ module real_time
  complex(SP) :: RT_P(3)
  complex(SP) :: RT_P_prev(3)
  !
- ! ... dV time \rho ...
- !----------------------
- complex(SP) :: dV_times_rho(3)
- !
  ! ... and magnetization
  !----------------------
  complex(SP) :: RT_magn(3,3)

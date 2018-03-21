@@ -106,7 +106,7 @@ subroutine electrons_bands(Xk,Xen)
    !====================================
    if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
-   call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
+   call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
    !
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================

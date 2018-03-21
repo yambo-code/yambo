@@ -32,7 +32,7 @@ subroutine RT_driver(en,k,q)
  type(levels)  :: en
  type(bz_samp) :: k,q
  !
- call section("*",'Real-Time Response Post-Processing')
+ call section("*",'RT Optics Processing')
  !
  ! GPL_EXCLUDE_START
  !
@@ -48,6 +48,6 @@ subroutine RT_driver(en,k,q)
  !
  ! Response Functions
  !====================
- if ( l_RT_X)                              call RT_X_response(en,k,q)
+ if ( l_RT_X )                             call RT_X_response(en,k,q)
  !
 end subroutine

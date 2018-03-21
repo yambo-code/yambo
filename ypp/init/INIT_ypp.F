@@ -429,6 +429,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
  l_spin     =runlevel_is_on('spin')
+ l_map_WFs  =runlevel_is_on('WFs_map')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
  !

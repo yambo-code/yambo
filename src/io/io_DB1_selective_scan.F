@@ -57,7 +57,7 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
  core_io_path=DB1_path
  !
  ! When all the informations in the DB1 need to be reloaded
- ! I can use also a plain fortran database.
+ ! I can use also a complete database.
  ! 
  if (what/='all') then
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
@@ -92,6 +92,7 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
    io_DB1_selective_scan=io_DB1(E,k,ID)
    !
  endif
+ !
  if (index(what,'alat')>0) then
    call io_bulk(ID,VAR="LATTICE_PARAMETER",VAR_SZ=(/3/))
    call io_bulk(ID,R1=db1_alat)

@@ -28,7 +28,7 @@ subroutine ELPH_RT_oscillations(E)
 ! use com,                 ONLY:msg,of_open_close,error
  use com,                 ONLY:error
  use electrons,           ONLY:levels
- use YPP_real_time,       ONLY:RT_D_t,RT_IO_observables
+ use YPP_real_time,       ONLY:PhDisp,RT_OBSERVABLES_IO
 !,n_met_bands,n_full_bands
 ! use R_lattice,           ONLY:bz_samp
 ! use YPP,                 ONLY:l_dos
@@ -41,6 +41,7 @@ subroutine ELPH_RT_oscillations(E)
 ! use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
   use IO_m,                ONLY:io_control,OP_RD,DUMP
   use RT_control,          ONLY:RT_IO_t,OBS_RT_IO_t
+  use real_time,           ONLY:N_RT_PH_displaced,RT_PH_displaced
 
 ! use LIVE_t,              ONLY:live_timing
 ! use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
@@ -55,18 +56,16 @@ subroutine ELPH_RT_oscillations(E)
  !
  ! Work Space 
  !
-! integer           ::i1,i2,im,iq,nq_todo
+ integer           ::il,it
 ! real(SP)          ::dos_ef,Ef_diff,E,q_weight,aF(elph_steps),&
 !&                    ph_dos(elph_steps),ph_energy(elph_steps),omega,e_step
 ! complex(SP)       ::d_elias_dos
 ! character(schlen) ::o_file_name,ch
 ! type(PP_indexes)  ::px
 ! real(SP), allocatable :: gamma(:,:)
-! !
-! !I/O
-! !
-! integer           ::io_err,ID
-! integer, external ::io_ELPH
+ !
+ !I/O
+ !
  integer           ::io_err,ID
  integer, external ::io_ELPH
  !
@@ -78,12 +77,28 @@ subroutine ELPH_RT_oscillations(E)
  io_err=io_ELPH(ID,'gkkp_expanded no_matrix_elements')
  if (io_err/=0) call error("GKKP database not found")
  !
- call RT_IO_observables_paths("D",E)
+ call RT_OBSERVABLES_IO_paths("D",E)
  !
  call RT_time_configuration_setup('PH_DISPLACEMENT',OBS_RT_IO_t)
  !
- call RT_IO_observables(what='D')
+ call RT_OBSERVABLES_IO(what='D')
  !
+ do il=1,ph_modes
+   if (RT_PH_displaced(il)==0) cycle
+!   write (100+il,*) 
+!   !
+!   if (i_p_dir==1) FT_title=' P (X axis)'
+!   if (i_p_dir==2) FT_title=' P (Y axis)'
+!   if (i_p_dir==3) FT_title=' P (Z axis)'
+!   !
+!   ! Polarization
+!   !
+!   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),RT_conf%W_n_steps,&
+!&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,Use_FFT,1)
+!   !
+ enddo
+ write (*,*) N_RT_PH_displaced
+ write (*,*) RT_PH_displaced
 stop
 ! !
 ! if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands

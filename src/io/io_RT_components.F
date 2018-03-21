@@ -157,8 +157,13 @@ integer function io_RT_components(what,ID)
    endif
    !
    if (l_OBS.and.l_elph_scatt) then
+     call io_bulk(ID,VAR="N_PH_MODES",VAR_SZ=(/1/))
+     call io_bulk(ID,I0=ph_modes)
      call io_bulk(ID,VAR="N_ACTIVE_PH_MODES",VAR_SZ=(/1/))
      call io_bulk(ID,I0=N_RT_PH_displaced)
+     if (.not.allocated(RT_PH_displaced)) then
+       YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
+     endif
      call io_bulk(ID,VAR="ACTIVE_PH_MODES",VAR_SZ=(/ph_modes/))
      call io_bulk(ID,L1=RT_PH_displaced)
    endif

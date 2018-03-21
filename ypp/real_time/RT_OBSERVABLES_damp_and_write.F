@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_dump_and_write_JP()
+subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
- use YPP_real_time,  ONLY:RT_P_t,RT_conf,RT_J_t,l_force_min_damp,l_skip_OBS_IO,RT_time
+ use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
  use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
@@ -32,23 +32,26 @@ subroutine RT_dump_and_write_JP()
  !
  implicit none
  !
+ type(OBS_el) :: OBS
+ type(RT_ctl) :: RT
+ logical      :: IO_skip
+ !
  ! Work Space
  !
  integer  :: i_t
  logical  :: l_no_damping
  !
- l_no_damping= trim(RT_conf%damping) == "NONE"
+ l_no_damping= trim(RT%damping) == "NONE"
  !
  if (l_no_damping) then
    !
-   RT_conf%damp_factor=0._SP
+   RT%damp_factor=0._SP
    !
    ! Force the minimal damping to make finite the Fourier Transform
    !
    if(l_force_min_damp) then
-     call msg('s','[RT] Applied Field derived damping')
-     call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_J_t,3)
-     call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,RT_P_t,6)
+     call section("s",'[RT] Minimum damping applied to '//trim(OBS%title))
+     call RT_damp_it("LORENTZIAN",RT%Field_damp_factor,OBS%F_t,OBS%N)
    endif
    !
  else
@@ -57,23 +60,32 @@ subroutine RT_dump_and_write_JP()
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
-   call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_J_t,3)
-   call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,6)
+   call RT_damp_it(RT%damping,RT%damp_factor,OBS%F_t,OBS%N)
    !
  endif
  !
- if (l_skip_OBS_IO) return
+ if (IO_skip) return
  !
- call section("=",'Writing input current and Polarization')
- !=========================================================
+ call section("s",'[RT] '//trim(OBS%title)//' dumped on file')
+ !=============================================================
+ !
  call RT_output(what="initialize")
- call RT_output(what="open cur pol")
  !
- do i_t=1,RT_conf%T_n_steps
-   RT_ind_J    =RT_J_t(i_t,:)
-   RT_P        =RT_P_t(i_t,1:3)
-   call RT_output('pol',TIME=RT_time(i_t)*AUT2FS)
-   call RT_output('cur',TIME=RT_time(i_t)*AUT2FS)
- enddo
+ select case (trim(OBS%title))
+   !
+   case("Polarization") 
+     call RT_output(what="open pol")
+     do i_t=1,RT%T_n_steps
+       RT_P=OBS%F_t(i_t,1:3)
+       call RT_output('pol',TIME=RT_time(i_t)*AUT2FS)
+     enddo
+   case("Current") 
+     call RT_output(what="open curr")
+     do i_t=1,RT%T_n_steps
+       RT_ind_J=OBS%F_t(i_t,1:3)
+       call RT_output('curr',TIME=RT_time(i_t)*AUT2FS)
+     enddo
+     !
+ end select
  !
 end subroutine

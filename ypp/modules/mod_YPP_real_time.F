@@ -25,7 +25,7 @@ module YPP_real_time
  !
  use pars,     ONLY:schlen,SP,DP
  !
- implicit none
+#include<memory.h>
  !
  ! RT
  !
@@ -88,12 +88,6 @@ module YPP_real_time
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
- complex(DP),    allocatable :: RT_J_t(:,:)
- complex(DP),    allocatable :: RT_P_t(:,:)
- complex(DP),    allocatable :: RT_D_t(:,:)
- !
- character(3) :: RT_p_format   
- !
  ! (RT) carriers
  !
  real(SP),allocatable     :: delta_f(:,:,:)
@@ -103,11 +97,12 @@ module YPP_real_time
  real(SP),allocatable     :: RT_time(:)
  !
  type RT_ctl
+   real(SP) :: delta_W           =0._SP   ! delta W
+   real(SP) :: W_range(2)        =0._SP   ! energy range 
+   integer  :: W_n_steps         =0       ! number of steps in energy mesh
    real(SP) :: delta_T           =0._SP   ! delta T
    real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
    integer  :: T_n_steps         =0       ! number of steps in Time mesh
-   real(SP) :: W_range(2)        =0._SP   ! energy range 
-   integer  :: W_n_steps         =0       ! number of steps in energy mesh
    real(SP) :: damp_factor       =0._SP   ! factor used in damping
    real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
    character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
@@ -115,9 +110,22 @@ module YPP_real_time
  !
  type(RT_ctl), save :: RT_conf 
  !
+ type OBS_el
+   character(schlen)        :: title
+   integer                  :: N
+   complex(DP), allocatable :: F_t(:,:)
+   complex(DP), allocatable :: F_w(:,:)
+   complex(SP), allocatable :: W(:)
+ end type OBS_el
+ !
+ type(OBS_el) :: Pol 
+ type(OBS_el) :: Curr 
+ type(OBS_el) :: ElField 
+ type(OBS_el) :: PhDisp 
+ !
  interface
    !
-   subroutine  RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+   subroutine  RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
      character,    optional :: what
@@ -133,5 +141,14 @@ module YPP_real_time
    end subroutine RT_IO_carriers
    !
  end interface
- !
+   !
+   contains 
+     !
+     subroutine FT_free(FT)
+       type(OBS_el) :: FT
+       YAMBO_FREE(FT%F_w)
+       YAMBO_FREE(FT%F_t)
+       YAMBO_FREE(FT%W)
+     end subroutine
+     !
 end module YPP_real_time

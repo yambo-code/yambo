@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP_real_time,  ONLY:RT_J_t,RT_P_t,RT_conf,RT_time,RT_D_t
+ use YPP_real_time,  ONLY:RT_conf,RT_time,Pol,Curr,ElField,PhDisp
  use pars,           ONLY:DP,SP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
@@ -125,15 +125,23 @@ subroutine RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  ! I/O of OBSERVABLES
  !====================
  !
- if (what=="JP".and..not.allocated(RT_J_t)) then
-   YAMBO_ALLOC(RT_J_t,(RT_conf%T_n_steps,3))
-   YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,6))
-   RT_J_t =cZERO_DP
-   RT_P_t =cZERO_DP
+ Pol%title    ="Polarization"
+ Curr%title   ="Current"
+ PhDisp%title ="Displacement"
+ !
+ Pol%N    =3
+ Curr%N   =3
+ PhDisp%N =ph_modes
+ !
+ if (what=="JP".and..not.allocated(Curr%F_t)) then
+   YAMBO_ALLOC(Curr%F_t,(RT_conf%T_n_steps,3))
+   YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
+   Curr%F_t =cZERO_DP
+   Pol%F_t =cZERO_DP
  endif
- if (what=="D".and..not.allocated(RT_D_t)) then
-   YAMBO_ALLOC(RT_D_t,(RT_conf%T_n_steps,ph_modes))
-   RT_D_t =cZERO_DP
+ if (what=="D".and..not.allocated(PhDisp%F_t)) then
+   YAMBO_ALLOC(PhDisp%F_t,(RT_conf%T_n_steps,ph_modes))
+   PhDisp%F_t =cZERO_DP
  endif
  !
  call RT_control_alloc(.TRUE.)
@@ -152,11 +160,11 @@ subroutine RT_IO_observables(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    io_OBS=io_RT_components(what,ID)
    !
    if (what=="JP") then
-     RT_J_t(i_time,:) =J_cache(:,1)
-     RT_P_t(i_time,:) =P_cache(:,1)
+     Curr%F_t(i_time,:) =J_cache(:,1)
+     Pol%F_t(i_time,:) =P_cache(:,1)
    endif
    if (what=="D") then
-     RT_D_t(i_time,:) =D_cache(:,1)
+     PhDisp%F_t(i_time,:) =D_cache(:,1)
    endif
    !
    call live_timing(steps=1)

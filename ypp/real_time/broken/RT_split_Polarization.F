@@ -31,8 +31,6 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
  !
- ! Fourier
- !
 #include<memory.h>
  !
  integer,     intent(in)   :: nt,nh
@@ -122,8 +120,8 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    if (i_n==0) FT_title="P(t)"
    if (i_n/=0) FT_title="P(t)-Sum[P_harm^(n<"//trim(intc(i_n))//"])"
    !
-   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,RT_conf%W_n_steps,P_DP(iT_o:,1),RT_conf%T_n_steps-iT_o+1,&
-&                               RT_conf%delta_T,(iT_o-1)*RT_conf%delta_T,.FALSE.,1)
+!   call RT_1D_Fourier_Transform('T2W'," "//trim(FT_title),freqs,P_W,RT_conf%W_n_steps,P_DP(iT_o:,1),RT_conf%T_n_steps-iT_o+1,&
+!&                               RT_conf%delta_T,(iT_o-1)*RT_conf%delta_T,.FALSE.,1)
    !
    do i_w=1,RT_conf%W_n_steps
      !

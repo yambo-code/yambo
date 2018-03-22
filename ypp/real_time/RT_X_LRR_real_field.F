@@ -79,21 +79,6 @@ subroutine RT_X_LRR_real_field(en)
  ElField%title="Field"
  ElField%N    =n_fields
  !
- !... Analytic contribution
- !
- !iE_err=0
- !do i_w = 1, RT_conf%W_n_steps
- !  !
- !  if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
- !  if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=ElField%W(i_w)-cI*RT_conf%Field_damp_factor
- !  !
- !  ElField%F_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)
- !  ElField%F_w(i_w,1)=ElField%F_w(i_w,1)*exp(cI*ElField%W(i_w)*RT_time(1))  
- !  !
- !  if (iE_err/=0) exit
- !  !
- !enddo 
- !
  !... definition
  !
  do i_t=1,RT_conf%T_n_steps
@@ -115,6 +100,24 @@ subroutine RT_X_LRR_real_field(en)
  call RT_OBSERVABLES_damp_and_write(ElField,RT_conf,.TRUE.)
  !
  call RT_1D_Fourier_Transform('T2W',ElField,RT_conf,1)
+ !
+ !... Analytic correction
+ !
+ ! AM@March 2018. This term is added only in the cases: 'SIN' 'ANTIRES' 'RES'
+ !
+ iE_err=0
+ do i_w = 1, RT_conf%W_n_steps
+   !
+   if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
+   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=ElField%W(i_w)-cI*RT_conf%Field_damp_factor
+   !
+   ElField%F_w(i_w,1)=ElField%F_w(i_w,1)+&
+&                     Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)*&
+&                     exp(cI*ElField%W(i_w)*RT_time(1))  
+   !
+   if (iE_err/=0) exit
+   !
+ enddo 
  !
  ! Check of finiteness of E field
  !--------------------------------

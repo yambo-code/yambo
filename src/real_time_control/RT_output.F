@@ -345,6 +345,23 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
  enddo
  !
+#if defined _ELPH
+ if (l_RT_PH_oscillations) then
+   if (open_files.and..not.file_already_opened(next_file)) &
+&     file_name(next_file)=trim(append_ch)//'FT_displace_field'
+   short_file_name(next_file)=trim(append_ch)//'FT_displace_field'
+   n_headings(next_file)=2*N_RT_PH_displaced+1
+   i_f=0
+   do il=elph_branches(1),elph_branches(2)
+     if (RT_PH_displaced(il)==0) cycle
+     i_f=i_f+2
+     headings(next_file,i_f )="Re[<D>_l="//trim(intc(il))//"(w)]"
+     headings(next_file,i_f+1)="Im[<D>_l="//trim(intc(il))//"(w)]"
+   enddo
+   next_file=next_file+1
+ endif
+#endif
+ !
  ! ... and time/energy resolved ...
  !
  if (open_files.and..not.file_already_opened(next_file)) &
@@ -548,8 +565,10 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-     case('displace_field')
 #if defined _ELPH
+     case('YPP-FT_displace_field')
+       data_to_dump(2:2*N_RT_PH_displaced+1) = VALUES
+     case('displace_field','YPP-displace_field')
        if (l_RT_PH_oscillations) then
          i_c=1
          do il=elph_branches(1),elph_branches(2)

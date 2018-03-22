@@ -24,13 +24,13 @@
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
- use com,            ONLY:msg
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:RT_ind_J,RT_P
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_D
+ use ELPH,           ONLY:ph_modes
  !
- implicit none
+#include<memory.h>
  !
  type(OBS_el) :: OBS
  type(RT_ctl) :: RT
@@ -85,7 +85,18 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
        RT_ind_J=OBS%F_t(i_t,1:3)
        call RT_output('curr',TIME=RT_time(i_t)*AUT2FS)
      enddo
+   case("Displacement") 
+     if (.not.allocated(RT_D)) then
+       YAMBO_ALLOC(RT_D,(ph_modes))
+     endif
+     call RT_output(what="open YPP-displ")
+     do i_t=1,RT%T_n_steps
+       RT_D=OBS%F_t(i_t,:)
+       call RT_output('YPP-displ',TIME=RT_time(i_t)*AUT2FS)
+     enddo
      !
  end select
+ !
+ call RT_output(what="close pol curr YPP-displ")
  !
 end subroutine

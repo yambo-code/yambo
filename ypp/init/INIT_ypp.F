@@ -494,6 +494,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_RT_ph_oscillations) then 
    call initactivate(1,"TimeRange DampMode DampFactor")
+   call initactivate(1,"EnRngeRt ETStpsRt")
+   call initactivate(1,"SkipOBS_IO FrMinDamp UseFFT")
  endif
  !
 #endif

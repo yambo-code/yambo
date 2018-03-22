@@ -31,7 +31,7 @@ subroutine electrons_bands(Xk,Xen)
  ! INTERP_E     = interpolated @ INTERP_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
- use pars,           ONLY:SP,schlen,lchlen
+ use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
@@ -228,9 +228,14 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Fermi Levels
  !==============
+ !
+ ! AM (March 2018): The delta_Ef must be applied in order to have consistent
+ !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
+ !                  only when it can be correctly (all occupied bands) evaulated with INTERP_E
+ !
  call section('=','Fermi Levels')
  call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
- delta_Ef=-Xen%E_Fermi
+ delta_Ef=rZERO
  !
  if (BANDS_bands(1)==1) then
    delta_Ef=-INTERP_E%E_Fermi

@@ -165,10 +165,10 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  if (present(O_QP).or.present(O_REAL)) then
    if (N_V==1) call PP_redux_wait(O_VALUE)
-   if (N_V> 3) call PP_redux_wait(V_VALUE)
+   if (N_V> 1) call PP_redux_wait(V_VALUE)
  else
    if (N_V==1) call PP_redux_wait(O_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   if (N_V> 3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (N_V> 1) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
 #if defined _TIMING
@@ -223,8 +223,6 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
        !
      endif
      !
-     ! B: Average of a vector
-     !========================
      if (N_V>1) then
        !
        Hk_vec_tmp=cZERO
@@ -238,20 +236,39 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
                 !
                 is = sop_inv(k%star(ik,i_star))
                 !
-                ! This procedure is correct for polar-vectors
-                !
-                if (present( V_MATRIX)) then
-                  R_s= dl_sop(:,:,is)
-                  V_N(:)=V_N(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                if (N_V == 3) then
+                  !
+                  ! B: Average of a Chartesian vector
+                  !===================================
+                  !
+                  ! This procedure is correct for polar-vectors
+                  !
+                  if (present( V_MATRIX)) then
+                    R_s= dl_sop(:,:,is)
+                    V_N(:)=V_N(:)+matmul(R_s, V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                  endif
+                  !
+                  ! This procedure is correct for axial-vectors
+                  !
+                  if (present(PV_MATRIX)) then
+                    R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
+                    V_N(:)=V_N(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
+                  endif
+                  !
+                else 
+                  !
+                  ! C: Average of a Multi-dim operator
+                  !====================================
+                  !
+                  ! Here I assume that V_MATRIX(:,:,:,R_is K_ik,:) = V_MATRIX(:,:,:,K_ik,:)
+                  !
+                  if (present( V_MATRIX)) then
+                    V_N(:)=V_N(:)+V_MATRIX(:,ib,ibp,ik_mem,i_sp_pol)
+                  endif
+                  if (present(PV_MATRIX)) then
+                    V_N(:)=V_N(:)+PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol)
+                  endif
                 endif
-                !
-                ! This procedure is correct for axial-vectors
-                !
-                if (present(PV_MATRIX)) then
-                  R_s=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
-                  V_N(:)=V_N(:)+matmul(R_s,PV_MATRIX(:,ib,ibp,ik_mem,i_sp_pol))
-                endif
-                !
              enddo
              !
              if (     l_transpose) Hk_vec_tmp(:,ibp,ib )=V_N(:)/real(k%nstar(ik),SP)

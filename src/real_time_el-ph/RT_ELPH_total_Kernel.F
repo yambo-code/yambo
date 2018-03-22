@@ -61,7 +61,6 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  integer               :: i_s,i_map(-1:1),il
  real(SP)              :: ph_freq,N_q(2)
  real(SP), parameter   :: cutoff= 5.E-3
- !real(SP), parameter   :: cutoff=25.E-6
  !
  real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !

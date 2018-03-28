@@ -519,7 +519,9 @@ endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
        grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
- cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir)
+ @if test -d $(libbindir); then \
+  cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
+ fi
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef

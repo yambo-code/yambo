@@ -1460,6 +1460,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      strings_to_not_use_as_runlevels(3)="idir"
      strings_to_not_use_as_runlevels(4)="odir"
      strings_to_not_use_as_runlevels(5)="cdir"
+     strings_to_not_use_as_runlevels(6)="com_path"
+     strings_to_not_use_as_runlevels(7)="more_io_path"
+     strings_to_not_use_as_runlevels(8)="core_io_path"
      !
      ! Split the string in pieces
      !
@@ -1475,19 +1478,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        INPUT_strings_loop: do i1=1,n_pieces
          !
          if (trim(rstr_piece(i1))=='ifile') cycle
-         if (i1>1) then
-           if(trim(rstr_piece(i1-1))=='ifile') cycle
-         endif
-         !
-         ! Input File editing?
-         !
-         do i2=1,nrnlvls
-           if (i1==1) then
-              if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
-           else
-             if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
-           endif
-         enddo
          !
          ! String suitable for runlevel switching?
          !
@@ -1496,6 +1486,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
            enddo
          endif
+         !
+         ! Input File editing?
+         !
+         do i2=1,nrnlvls
+           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
+         enddo
          !
          ! Run Levels
          !

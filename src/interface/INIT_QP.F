@@ -42,7 +42,7 @@ subroutine INIT_QP(use_for_QP,Energy_range)
  if (use_for_QP) comment="[GW] QP"
  !
  nflines_save=nflines
- write (flines(nflines+1),'(a,t30,2a)') '%QPkrange',&
+ write (flines(nflines+1),'(a,t32,2a)') '%QPkrange',&
 &      '# '//trim(comment)//' generalized Kpoint/Band indices'
  nflines=nflines+1
  if (.not.allocated(QP_state)) then 
@@ -59,7 +59,7 @@ subroutine INIT_QP(use_for_QP,Energy_range)
  nflines=nflines+1
  !
  if (Energy_range) then
-   write (flines(nflines+1),'(a,t30,a)') '%QPerange',&
+   write (flines(nflines+1),'(a,t32,a)') '%QPerange',&
 &      '# '//trim(comment)//' generalized Kpoint/Energy indices'
    write (flines(nflines+2),'(2(i3,a),2(f4.1,a))') 1,'|',QP_nk,'|',0.,'|',-1.,'|'
    flines(nflines+3)='%'

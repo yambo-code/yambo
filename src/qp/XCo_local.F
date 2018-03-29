@@ -50,9 +50,7 @@ subroutine XCo_local(E,Xk)
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
 #include<memory.h>
  !
@@ -71,9 +69,7 @@ subroutine XCo_local(E,Xk)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
 
-#if defined _TIMING
- call timing('XC_potential',OPR="start")
-#endif
+ call timing('XCo_local',OPR="start")
  !
  ! Allocation 
  !
@@ -234,9 +230,7 @@ subroutine XCo_local(E,Xk)
    !
  endif
  !
-#if defined _TIMING
- call timing('XC_potential',OPR="stop")
-#endif
+ call timing('XCo_local',OPR="stop")
  !
  return
  !

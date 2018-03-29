@@ -48,9 +48,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -67,9 +65,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Setup 
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='start')
-#endif
  !
  ! Barrier... 
  !
@@ -248,10 +244,8 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_reset(K_FXC)
  endif
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
-#endif
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -296,9 +290,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    enddo
  enddo
  !
-#if defined _TIMING
  call timing('X (REDUX)',OPR='stop')
-#endif
  !
  ! Clean-up of FREQ structure
  !==========

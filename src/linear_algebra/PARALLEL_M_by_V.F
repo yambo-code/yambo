@@ -34,10 +34,7 @@ subroutine PARALLEL_M_by_V(transa,N,A,X,Y)
  use parallel_m,     ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  integer           :: N
@@ -50,9 +47,7 @@ subroutine PARALLEL_M_by_V(transa,N,A,X,Y)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
-#if defined _TIMING
  call timing('PARALLEL_M_by_V',OPR='start')
-#endif
  !
  if (transa=="C") then
    call M_by_V_omp("n",A%nrows,A%ncols,cONE,conjg(A%blc(A%rows(1):A%rows(2),A%cols(1):A%cols(2),A%I)),&
@@ -67,8 +62,6 @@ subroutine PARALLEL_M_by_V(transa,N,A,X,Y)
  !
  call PP_redux_wait(Y,COMM=SLK_POOL%INTRA_comm)
  ! 
-#if defined _TIMING
  call timing('PARALLEL_M_by_V',OPR='stop')
-#endif
  !
 end subroutine

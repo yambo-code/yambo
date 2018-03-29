@@ -37,9 +37,7 @@ integer function io_X(X,Xw,ID)
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
 &                        IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -55,9 +53,7 @@ integer function io_X(X,Xw,ID)
  complex(SP),allocatable :: X_on_disk(:,:)
  integer,    external    :: variables_X
  !
-#if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
-#endif
  !
  if (.not.io_RESPONSE) then
    io_X=IO_NOT_ALLOWED
@@ -224,9 +220,7 @@ integer function io_X(X,Xw,ID)
  !
 1 call io_disconnect(ID)
  !
-#if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='stop')
-#endif
  !
  contains
    !

@@ -41,6 +41,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+ use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
  use X_m,           ONLY:DIP_P
@@ -51,10 +52,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use X_m,           ONLY:Epsilon_ij
  use KERR,          ONLY:A_drude
 #endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  type(levels) ::Ken
  type(bz_samp)::Xk
@@ -75,9 +72,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call section('=','Independent Particles absorption') 
  !===================================================
  !
-#if defined _TIMING
  call timing('T_space IP',OPR='start')
-#endif
  !
  ! Look for the W(iw_ref) closest 0
  !==================================
@@ -362,9 +357,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  !
 1 continue
  !
-#if defined _TIMING
  call timing('T_space IP',OPR='stop')
-#endif
  !
 #if defined _PL
  !

@@ -50,6 +50,9 @@ subroutine XCo_local(E,Xk)
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
+#if defined _TIMING
+ use timing_m,      ONLY:timing
+#endif
  !
 #include<memory.h>
  !
@@ -67,6 +70,10 @@ subroutine XCo_local(E,Xk)
  ! Spin support (collinear and not collinear)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
+
+#if defined _TIMING
+ call timing('XC_potential',OPR="start")
+#endif
  !
  ! Allocation 
  !
@@ -225,9 +232,13 @@ subroutine XCo_local(E,Xk)
    !
    call PP_redux_wait(QP_Vxc)
    !
-   return
-   !
  endif
+ !
+#if defined _TIMING
+ call timing('XC_potential',OPR="stop")
+#endif
+ !
+ return
  !
  contains
    !

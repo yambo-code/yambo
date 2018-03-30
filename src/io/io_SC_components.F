@@ -38,9 +38,7 @@ integer function io_SC_components(what,E_sc,ID)
 &                         io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  integer, intent(in)      :: ID
@@ -62,9 +60,7 @@ integer function io_SC_components(what,E_sc,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_SC_components',OPR='start')
-#endif
  !
  l_E =what=="E"
  l_MP=what=="MP"
@@ -239,8 +235,6 @@ integer function io_SC_components(what,E_sc,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_SC_components',OPR='stop')
-#endif
  !
 end function

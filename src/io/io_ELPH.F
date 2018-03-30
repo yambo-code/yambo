@@ -42,10 +42,7 @@ integer function io_ELPH(ID,what)
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer      ::ID
@@ -58,9 +55,7 @@ integer function io_ELPH(ID,what)
  character(schlen)      ::db_name
  logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='start')
-#endif
  !
  l_no_matrix_elements=.FALSE.
  l_gFsq              =.FALSE.
@@ -260,8 +255,6 @@ integer function io_ELPH(ID,what)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='stop')
-#endif
  !
 end function

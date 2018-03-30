@@ -37,9 +37,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use LIVE_t,         ONLY:what_is_running
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #if defined _ELPH
  use real_time,      ONLY:N_RT_PH_displaced,l_RT_PH_oscillations,RT_PH_displaced,RT_D
  use ELPH,           ONLY:elph_branches
@@ -70,9 +68,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
  if (.not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
-#if defined _TIMING
  call timing('RT output',OPR='start')
-#endif
  !
  call string_split(what,orders)
  !
@@ -682,8 +678,6 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
 1 continue
  !
-#if defined _TIMING
  call timing('RT output',OPR='stop')
-#endif
  !
 end subroutine RT_output

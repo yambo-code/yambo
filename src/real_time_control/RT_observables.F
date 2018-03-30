@@ -34,9 +34,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use real_time,      ONLY:RT_nk,RT_bands
  use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:A_tot
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none 
  !
@@ -50,9 +48,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
  real(SP) :: E_IP
  !
-#if defined _TIMING
  call timing('RT observables',OPR='start')
-#endif
  !
  ! Current, Polarization and Magnetization
  !==========================================
@@ -61,9 +57,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
  !
  if (.not. RT_do_it('OUT') ) then
-#if defined _TIMING
- call timing('RT observables',OPR='stop')
-#endif
+   call timing('RT observables',OPR='stop')
    return
  endif
  !
@@ -106,8 +100,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
  call timing('RT observables',OPR='stop')
-#endif
  !
 end subroutine RT_Observables

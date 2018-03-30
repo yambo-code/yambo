@@ -45,9 +45,6 @@ integer function io_RT_components(what,ID)
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer,      intent(in) :: ID
@@ -353,9 +350,7 @@ integer function io_RT_components(what,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_RT_components',OPR='stop')
-#endif
  !
  contains
    !

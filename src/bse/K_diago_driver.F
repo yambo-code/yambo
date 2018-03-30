@@ -38,6 +38,7 @@ subroutine K_diago_driver(iq,W)
  use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
+ use timing_m,       ONLY:timing
  !
  ! GPL_EXCLUDE_START
  !
@@ -51,10 +52,6 @@ subroutine K_diago_driver(iq,W)
 #endif
  !
  ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  !
 #include<memory.h>
  !
@@ -91,9 +88,7 @@ subroutine K_diago_driver(iq,W)
  !
  integer                 :: io_err,ID
  !
-#if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
-#endif
  BSS_n_eig = BS_H_dim
  !  
  ! Sectioning
@@ -258,9 +253,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
  call timing('Diagonalization Solver',OPR='stop')
-#endif
  !
  contains
    !

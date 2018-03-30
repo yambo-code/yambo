@@ -67,9 +67,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
 &                         a_tableau,b_tableau,c_tableau,RWA_table,Integrator_nsteps
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  type(bz_samp),        intent(in) :: k,q
@@ -88,9 +86,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  type(gauge_field) :: A_tmp(Integrator_nsteps+1)
  !
-#if defined _TIMING
  call timing('RT integrator',OPR='start')
-#endif
  !
  dG_tmp(:,:,:,1)=dG_old
  A_tmp(1)       =A_old
@@ -119,9 +115,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! Recalculate H and S using G(t+dt1) 
    !
-#if defined _TIMING
    call timing('RT integrator',OPR='stop')
-#endif
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    !
    ! GPL_EXCLUDE_START
@@ -130,9 +124,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! GPL_EXCLUDE_END
    !
-#if defined _TIMING
    call timing('RT integrator',OPR='start')
-#endif
    !
  enddo
  !
@@ -160,9 +152,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  integrator_step=1
  !
-#if defined _TIMING
  call timing('RT integrator',OPR='stop')
-#endif
  !
  contains
    !
@@ -204,15 +194,11 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        enddo
      enddo
      !
-#if defined _TIMING
      !call timing('RT int. redux',OPR='start')
-#endif
      !call PP_redux_wait(RT_E_occupations)
      !call PP_redux_wait(RT_H_occupations)
      !call PP_redux_wait(RT_delta0_occupations)
-#if defined _TIMING
      !call timing('RT int. redux',OPR='stop')
-#endif
      !
    end subroutine RT_update_occ
    !

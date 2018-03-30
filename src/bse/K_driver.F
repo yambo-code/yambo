@@ -261,6 +261,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  call BS_Blocks_and_Transitions_free( )
  !
+ !... Parallel distribution reset
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
+ !
  enddo
  !
  YAMBO_FREE(BSqpts)

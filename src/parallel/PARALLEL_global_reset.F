@@ -94,12 +94,10 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PP_indexes_reset(PAR_IND_T_ordered)
  !
  if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) then
-     allocate(PAR_IND_eh(nXkibz))
-     do i_k=1,nXkibz
-       call PP_indexes_reset(PAR_IND_eh(i_k))
-     enddo
-   endif
+   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
+   do i_k=1,nXkibz
+     call PP_indexes_reset(PAR_IND_eh(i_k))
+   enddo
  endif
  !
  YAMBO_FREE(PAR_B_mat_index)

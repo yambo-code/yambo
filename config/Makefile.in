@@ -59,7 +59,7 @@ CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           include/c_defs.h
+           include/c_defs.h sbin/generate_gpl.sh
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
@@ -80,7 +80,8 @@ KERR_PROJ= yambo_kerr
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   = yambo_electric
 TESTS    = 
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
+SCRIPTS  = ydb.pl
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -306,7 +307,7 @@ ypp_sc: libs
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_SC"; $(mk_ypp_x)
 ypp_magnetic: libs
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC -D_MAGNETIC"; $(mksrc)
-	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; $(mk_ypp_src)
+	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_MAGNETIC"; $(mk_ypp_src)
 	@+X2DO="ypp_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_MAGNETIC"; $(mk_ypp_x)
 #
@@ -514,6 +515,10 @@ define lib_ext_remove
  @if test -f $(prefix)/include/system/../../driver/driver.c; then \
   echo "[CLEAN] Local include directory ... done"; \
   rm -fr "$(prefix)/include/system"; \
+ fi
+ @if test -f $(prefix)/scripts/../driver/driver.c; then \
+  echo "[CLEAN] Local scripts directory ... done"; \
+  rm -fr "$(prefix)/scripts"; \
  fi
 endef
 define lib_mod_clean

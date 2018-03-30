@@ -41,9 +41,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -78,9 +76,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='start')
-#endif
  !
  ! Reset
  !
@@ -318,9 +314,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    YAMBO_FREE(magn)
  endif
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='stop')
-#endif
  !
  contains
    !

@@ -79,7 +79,8 @@ KERR_PROJ= yambo_kerr
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
+SCRIPTS  = ydb.pl
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -492,6 +493,10 @@ define lib_ext_remove
  @if test -f $(prefix)/include/system/../../driver/driver.c; then \
   echo "[CLEAN] Local include directory ... done"; \
   rm -fr "$(prefix)/include/system"; \
+ fi
+ @if test -f $(prefix)/scripts/../driver/driver.c; then \
+  echo "[CLEAN] Local scripts directory ... done"; \
+  rm -fr "$(prefix)/scripts"; \
  fi
 endef
 define lib_mod_clean

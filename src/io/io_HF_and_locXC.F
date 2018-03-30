@@ -31,9 +31,7 @@ integer function io_HF_and_locXC(ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
 &                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  integer :: ID
  !
@@ -49,9 +47,7 @@ integer function io_HF_and_locXC(ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_HF',OPR='start')
-#endif
  !
  io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
  if (io_HF_and_locXC/=0) then
@@ -159,8 +155,6 @@ integer function io_HF_and_locXC(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  if (io_HF) call timing('io_HF',OPR='stop')
-#endif
  !
 end function

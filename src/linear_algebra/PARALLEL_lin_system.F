@@ -33,10 +33,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
 &                         LINEAR_ALGEBRA_WS_clean_up
  use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer           :: n,nrhs
@@ -47,9 +44,7 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
-#if defined _TIMING
  call timing('PARALLEL_lin_system',OPR='start')
-#endif
  !
  ! better estimate of the dimensions to be included
  !
@@ -67,8 +62,6 @@ subroutine PARALLEL_lin_system(A,B,n,nrhs)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS) 
  ! 
-#if defined _TIMING
  call timing('PARALLEL_lin_system',OPR='stop')
-#endif
  !
 end subroutine

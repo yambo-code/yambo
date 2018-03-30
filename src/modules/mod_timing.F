@@ -93,6 +93,9 @@ MODULE timing_m
      INTEGER                               :: index
      TYPE(clock_list), POINTER  :: listp
      !
+#ifndef _TIMING
+     return
+#endif
      if (.not.master_thread) return
      !
      IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
@@ -151,6 +154,9 @@ MODULE timing_m
      IMPLICIT NONE
      INTEGER,             INTENT(in)  :: nclock_max_
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( nclock_max_ < 1 ) CALL error('timing_allocate:  Invalid NCLOCK_MAX')
      !
      ! public clocks
@@ -170,6 +176,9 @@ MODULE timing_m
    !
    SUBROUTINE timing_deallocate()
      IMPLICIT NONE
+#ifndef _TIMING
+     return
+#endif
      CALL clock_list_deallocate(global_list)
      CALL clock_stop(internal_list%clock(1))
      CALL clock_list_deallocate(internal_list)
@@ -414,6 +423,11 @@ MODULE timing_m
      REAL(DP) :: total_time
      character(lchlen)::ch
      !
+#ifndef _TIMING
+     call msg('rn'," ")
+     return
+#endif
+     !
      IF ( .NOT. internal_list%alloc ) CALL error('timing_upto_now:  Internal clock not allocated')
      CALL clock_update(internal_list%clock(1))
      !
@@ -436,6 +450,9 @@ MODULE timing_m
      TYPE(clock)                        :: tmp_clock
      INTEGER                            :: i
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
      call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')

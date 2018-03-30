@@ -34,16 +34,13 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
  use wave_func,      ONLY:WF
+ use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
-#endif
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -56,9 +53,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  Hzero=cZERO
  !
-#if defined _TIMING
  call timing('Bare_Hamiltonian',OPR='start')
-#endif
  !
 #if defined _MAGNETIC
  !
@@ -174,8 +169,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  call PP_redux_wait(Hzero)
  !
-#if defined _TIMING
  call timing('Bare_Hamiltonian',OPR='stop')
-#endif
  !
 end subroutine Bare_Hamiltonian

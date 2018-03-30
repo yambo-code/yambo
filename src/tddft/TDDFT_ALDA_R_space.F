@@ -43,9 +43,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
  use com,            ONLY:error
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -60,9 +58,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
  complex(SP) :: WF_symm2(fft_size,n_spinor)
  !
-#if defined _TIMING
  call timing('T_space ALDA scatt.',OPR='start')
-#endif
  !
  if (is(4)/=os(4).or.isp(4)/=osp(4)) call error(" TDDFT_ALDA_R_space: wrong spin index")
  if (mode/="RES" .and. mode/="CPL" ) call error(" TDDFT_ALDA_R_space: unkown mode")
@@ -106,8 +102,6 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  TDDFT_ALDA_R_space=TDDFT_ALDA_R_space*real(fft_size,SP)/4._SP/pi
  !
-#if defined _TIMING
  call timing('T_space ALDA scatt.',OPR='stop')
-#endif
  !
 end function

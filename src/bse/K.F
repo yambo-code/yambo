@@ -57,9 +57,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -124,9 +122,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call k_build_up_BZ_tables(Xk)
  !
-#if defined _TIMING
  call timing('X T_space Kernel',OPR='start')
-#endif
  !
  ! Titles
  !========
@@ -724,8 +720,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call elemental_collision_free(K_CORR_collision)
  call elemental_collision_free(K_EXCH_collision)
  !
-#if defined _TIMING
  call timing('X T_space Kernel',OPR='stop')
-#endif
  !
 end subroutine

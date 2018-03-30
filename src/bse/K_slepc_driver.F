@@ -51,10 +51,7 @@ subroutine K_slepc_driver(iq,W)
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include <memory.h>
  ! 
 #include <petsc/finclude/petscsys.h>
@@ -90,9 +87,7 @@ subroutine K_slepc_driver(iq,W)
  PetscFortranInt     :: vec_index(4)
  PetscFortranComplex :: vec_value(4)
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='start')
-#endif
  !  
  ! Sectioning
  !============
@@ -263,9 +258,7 @@ subroutine K_slepc_driver(iq,W)
  !
  call PARALLEL_Haydock_VEC_COMMs('reset')
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='stop')
-#endif
  !
 end subroutine
  

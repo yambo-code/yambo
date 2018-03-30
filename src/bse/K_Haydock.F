@@ -39,6 +39,7 @@ subroutine K_Haydock(iq,W)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use timing_m,       ONLY:timing
  !
  ! GPL_EXCLUDE_START
  !
@@ -48,10 +49,6 @@ subroutine K_Haydock(iq,W)
 #endif
  !
  ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
  !
 #include<memory.h>
  !
@@ -88,9 +85,7 @@ subroutine K_Haydock(iq,W)
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')
  !
-#if defined _TIMING
  call timing('Haydock Solver',OPR='start')
-#endif
  !
  if (isec(2)/=0) then
    call section('=','Haydock solver')
@@ -579,9 +574,7 @@ subroutine K_Haydock(iq,W)
  !
  call PARALLEL_Haydock_VEC_COMMs('reset')
  !
-#if defined _TIMING
  call timing('Haydock Solver',OPR='stop')
-#endif
  !
  contains
    !

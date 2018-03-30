@@ -38,10 +38,7 @@ integer function io_BS(iq,X,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  type(X_t):: X 
@@ -60,9 +57,7 @@ integer function io_BS(iq,X,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_BS',OPR='start')
-#endif
  !
  db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
@@ -141,8 +136,6 @@ integer function io_BS(iq,X,ID)
  !
  call io_disconnect(ID)
  !
-#if defined _TIMING
  call timing('io_BS',OPR='stop')
-#endif
  !
 end function

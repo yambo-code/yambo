@@ -42,14 +42,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+ use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use frequency,     ONLY:w_samp
 #if defined _MEM_CHECK 
  use memory,        ONLY:MEM_manager
 #endif
-#if defined _TIMING
- use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
-#endif
- use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use frequency,     ONLY:w_samp
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -303,13 +301,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
+
  !
  ! Timing Overview
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
-#endif
  !
  ! Memory Overview
  !=================
@@ -330,9 +327,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
-#if defined _TIMING
  call timing_deallocate( )
-#endif
  call it_reset(-1)
  !
 end function

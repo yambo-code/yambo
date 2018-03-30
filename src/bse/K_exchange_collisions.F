@@ -28,9 +28,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  type(bz_samp) :: Xk
@@ -46,9 +44,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  if (allocated( BS_T_grp(i_T_grp)%O_x )) return
  !
-#if defined _TIMING
  call timing('T_space EXX Osc.',OPR='start')
-#endif
  !
  divide_by_qpg=.not.l_col_cut
  !
@@ -100,51 +96,37 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
        call scatter_Bamp(K_EXCH_collision)
        !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1,i_g2)
-#endif
        do i_g1=1,BS_n_g_exch
          if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
          if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
      else
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1,i_g2)
-#endif
        do i_g1=1,BS_n_g_exch
          i_g2=g_rot(i_g1,sop_inv(i_s))
          BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
          if (i_s>nsym/(i_time_rev+1)) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el))
        enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
      endif
    else
      !
      call scatter_Bamp(K_EXCH_collision)
      !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i_g1)
-#endif
      BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
      do i_g1=2,BS_n_g_exch
        if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
        if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
      !
    endif
    !
  enddo T_loop
  !
-#if defined _TIMING
  call timing('T_space EXX Osc.',OPR='stop')
-#endif
  !
 end subroutine K_exchange_collisions

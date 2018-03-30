@@ -25,11 +25,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
 &                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
-&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
+&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,BSiq
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,BSiq,l_angular_momentum,l_position
  use pars,           ONLY:pi,SP,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -200,6 +200,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_high_sym_pts) call initactivate(1,"High_Symm")
    endif
    !
+   if ( trim(rstr_piece(i1)) == 'WFs') then
+     call initactivate(1,'WFs')
+     l_fix_save=trim(rstr_piece(i1+1))=='c'
+     l_map_WFs  =trim(rstr_piece(i1+1))=='p'
+     if (l_map_WFs) call initactivate(1,'WFs_map')
+   endif
+   !
    if ( trim(rstr_piece(i1)) == 'QPDBs') then
      call initactivate(1,'QPDBs')
      l_QP_DBs_create_and_modify=trim(rstr_piece(i1+1))=='g'
@@ -361,7 +368,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
  l_fix_syms  =runlevel_is_on('fixsyms')
- l_fix_save  =runlevel_is_on('fixsave')
 #if defined _YPP_SC
  l_mean_potential=runlevel_is_on('MeanPot')
  if (l_mean_potential) then
@@ -424,25 +430,28 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_mag      =runlevel_is_on('magnetization')
  l_wannier  =runlevel_is_on('wannier')
  l_spin     =runlevel_is_on('spin')
+ l_map_WFs  =runlevel_is_on('WFs_map')
  !
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  if (l_bz_grids) then
-   call initactivate(1,"NoWeights OutputAlat")
-   if (l_k_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts")
-   if (l_q_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts ForceUserPts")
-   if (l_high_sym_pts)  call initactivate(1,"cooIn cooOut PtsPath NPtsPath")
-   if (l_shifted_grid)  call initactivate(1,"cooIn cooOut")
-   if (l_random_grid)   call initactivate(1,"cooOut BZ_random_Nk GammaRadius")
+   call initactivate(1,"OutputAlat")
+   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts")
+   if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
+   if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
+   if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
+   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
  endif
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
- if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
+ if (l_bands) then
+   call initactivate(1,"cooIn NormN NelFac DOSERange DOSESteps DOS_broad")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_bands BANDS_built_in")
+ endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
- !
- l_map_WFs   = runlevel_is_on('WFs_map')
  !
  l_bxsf      = runlevel_is_on('bxsf')
  !
@@ -522,7 +531,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
-   if (l_RT_bands)       call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
+   if (l_RT_bands)       call initactivate(1,"cooIn BANDS_kpts BANDS_steps NNInterp")
    if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
@@ -582,7 +591,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
- l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
+ l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
@@ -619,7 +628,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_flag) call USER_vector_handle("BKpts")
+ if (l_flag) call USER_vector_handle("BANDS_kpts")
  !
  if (l_bz_grids) then
    if (l_k_grid)       call USER_vector_handle("GWKpts")
@@ -686,19 +695,19 @@ contains
    !
    nflines_save=nflines
    if (field=="GWKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points list'
      n_u_k_pts=n_points
      U_k_pts(:n_u_k_pts,:)=real_v(:n_u_k_pts,:)
-   else if (field=="BKpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K points of the bands circuit'
+   else if (field=="BANDS_kpts") then
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points of the bands circuit'
      n_u_interp_pts=n_points
      U_interp_pts(:n_u_interp_pts,:)=real_v(:n_u_interp_pts,:)
    else if (field=="Qpts") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# Q points list'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# Q points list'
      n_u_q_pts=n_points
      U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
    else if (field=="KShift") then
-     write (flines(nflines+1),'(a,t30,a)') '%'//field,'# K-grid shifts (max 3)'
+     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K-grid shifts (max 3)'
      U_q_shifts(:n_points,:)=real_v(:n_points,:)
    endif
    !

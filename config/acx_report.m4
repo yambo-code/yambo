@@ -164,6 +164,12 @@ if test "$internal_libxc" = "yes" ; then
 fi
 
 #
+YDB_str="-";
+if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
+YPY_str="-";
+if test "$enable_yambopy" = "yes" ; then YPY_str="X"; fi
+
+#
 MPI_str=" - ";
 MPI_info=""
 if test "$mpibuild" = "yes" ; then
@@ -197,6 +203,9 @@ AC_SUBST(BLACS_str)
 AC_SUBST(SLK_str)
 AC_SUBST(PETSC_str)
 AC_SUBST(SLEPC_str)
+#
+AC_SUBST(YDB_str)
+AC_SUBST(YPY_str)
 #
 AC_SUBST(LIBXC_str)
 AC_SUBST(MPI_str)

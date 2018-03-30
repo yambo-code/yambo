@@ -56,9 +56,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
+ use timing_m,      ONLY:timing
  implicit none
  !
  type(levels)  :: E
@@ -71,9 +69,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  integer       :: ID,IO_err
  character(20) :: PAR_ch,FREE_ch
  !
-#if defined _TIMING
  call timing('COLLISIONS_eval',OPR='start')
-#endif
  !
  call section('*','Extended collisions')
  !=======================================
@@ -280,9 +276,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
  call timing('COLLISIONS_eval',OPR='stop')
-#endif
  !
  contains
    !

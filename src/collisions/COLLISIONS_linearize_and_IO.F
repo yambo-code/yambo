@@ -28,10 +28,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_m,            ONLY:io_control,REP,OP_APP_WR_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
-#if defined _TIMING
  use timing_m,        ONLY:timing
-#endif
- !
  implicit none                                              
  !
  character(*)                            :: what
@@ -55,9 +52,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    return
  endif
  !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='start')
-#endif
  !
  l_COH      = index(what,"COH")     >0 
  l_HXC      = index(what,"HXC")     >0
@@ -124,8 +119,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='stop')
-#endif
  !
 end subroutine COLLISIONS_linearize_and_IO

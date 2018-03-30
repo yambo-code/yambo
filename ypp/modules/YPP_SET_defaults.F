@@ -26,7 +26,7 @@ subroutine YPP_SET_defaults()
  use YPP
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
- use interpolate,    ONLY:lpfac,interpls,max_interpls
+ use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
 #if defined _YPP_RT
  use YPP_real_time
@@ -42,10 +42,9 @@ subroutine YPP_SET_defaults()
  ! DOS
  !
  l_dos=.false.
- dos_broadening=0.1_SP/HA2EV
- dos_bands=(/1,n_bands/)
- dos_E_range=(/1._SP,-1._SP/)/HA2EV
- dos_E_steps=500
+ DOS_broadening=0.1_SP/HA2EV
+ DOS_E_range=(/1._SP,-1._SP/)/HA2EV
+ DOS_E_steps=500
  WF_ref=0
  !
  ! RT OCCUPATIONS
@@ -74,10 +73,11 @@ subroutine YPP_SET_defaults()
  !
  ! BANDS
  !
+ BANDS_bands=(/1,n_bands/)
  BANDS_steps=0
  l_bands=.false.
- lpfac=20._SP
- interp_grid = (/-1, -1, -1/)
+ INTERP_shell_factor=20._SP
+ INTERP_grid = (/-1, -1, -1/)
 #if defined _YPP_RT
  Nel_fac=1._SP
 #endif

@@ -25,11 +25,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
 &                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
-&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,&
+&                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
-&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths
+&                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,SP,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
@@ -440,17 +440,21 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (.not.l_exc_wf) l_free_hole=.false.
  !
  if (l_bz_grids) then
-   call initactivate(1,"NoWeights OutputAlat")
-   if (l_k_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts")
-   if (l_q_grid)        call initactivate(1,"cooIn cooOut ListPts ExpandPts ForceUserPts")
-   if (l_high_sym_pts)  call initactivate(1,"cooIn cooOut PtsPath NPtsPath")
-   if (l_shifted_grid)  call initactivate(1,"cooIn cooOut")
-   if (l_random_grid)   call initactivate(1,"cooOut BZ_random_Nk GammaRadius")
+   call initactivate(1,"OutputAlat")
+   if (l_k_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts")
+   if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
+   if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
+   if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
+   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
  endif
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
- if (l_bands) call initactivate(1,"cooIn BANDS_steps INTERPGrid ShellFac NormN NelFac")
+ if (l_bands) then
+   call initactivate(1,"cooIn NormN NelFac DOSERange DOSESteps DOS_broad")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_bands BANDS_built_in")
+ endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
  !
@@ -538,7 +542,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
-   if (l_RT_bands)       call initactivate(1,"cooIn BKpts BANDS_steps NNInterp")
+   if (l_RT_bands)       call initactivate(1,"cooIn BANDS_kpts BANDS_steps NNInterp")
    if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
@@ -598,7 +602,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
  !
- l_init_QP=(l_plot.and.l_sp_wf).or.l_bands
+ l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
@@ -635,7 +639,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
- if (l_flag) call USER_vector_handle("BKpts")
+ if (l_flag) call USER_vector_handle("BANDS_kpts")
  !
  if (l_bz_grids) then
    if (l_k_grid)       call USER_vector_handle("GWKpts")

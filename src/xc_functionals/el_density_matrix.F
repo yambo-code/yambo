@@ -37,9 +37,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,myid
  use matrix_operate, ONLY:UP_matrix_index
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -56,9 +54,7 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  complex(SP) :: f_occ
  type(WAVEs) :: WF_tmp
  !
-#if defined _TIMING
  call timing('el_density_matrix',OPR='start')
-#endif
  !
  rho=0._SP
  rho_no_sym=0._SP
@@ -139,8 +135,6 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  !
  rho(:)=real(1+i_time_rev,SP)*rho(:)
  !
-#if defined _TIMING
  call timing('el_density_matrix',OPR='stop')
-#endif
  !
 end subroutine

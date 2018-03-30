@@ -41,8 +41,6 @@ subroutine el_magnetization(en,Xk,magn)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
 #if defined _RT
  use drivers,       ONLY:l_real_time
-#endif
-#if defined _TIMING && defined _RT
  use timing_m,       ONLY:timing
 #endif
  !
@@ -57,7 +55,7 @@ subroutine el_magnetization(en,Xk,magn)
  integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
-#if defined _TIMING && defined _RT
+#if defined _RT
  call timing('el_magnetization',OPR='start')
 #endif
  !
@@ -146,7 +144,7 @@ subroutine el_magnetization(en,Xk,magn)
    Spin_magn(:)=Spin_magn(:)+magn(ifft,:)
  enddo
  !
-#if defined _TIMING && defined _RT
+#if defined _RT
  call timing('el_magnetization',OPR='stop')
 #endif
  !

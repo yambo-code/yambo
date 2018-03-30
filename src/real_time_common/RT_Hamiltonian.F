@@ -69,9 +69,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -87,9 +85,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:),E_new
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
  !
-#if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
-#endif
  !
  ! Contribution from \delta\Sigma_coherent
  !=========================================
@@ -273,8 +269,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    call PP_redux_wait(RT_E_and_k%En) !,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
-#if defined _TIMING
  call timing('RT Hamiltonian',OPR='stop')
-#endif
  !
 end subroutine RT_Hamiltonian

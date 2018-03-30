@@ -26,10 +26,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  use pars,           ONLY:SP
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer     :: n
@@ -40,9 +37,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  integer           :: lwork
  type(LALGEBRA_WS) :: WS
  !
-#if defined _TIMING
  call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
-#endif
  !
  lwork=-1
  allocate(WS%v_cmplx(1))
@@ -68,8 +63,6 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
-#if defined _TIMING
  call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
-#endif
  !
 end subroutine

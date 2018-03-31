@@ -85,9 +85,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_c_k,i_v_k,i_c_p,i_v_p,&
 &              i_k_bz,i_p_bz,i_k_s,i_p_s,i_k_p_s,i_k,i_p,i_k_s_m1,&
-&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,ig_k_p_mq,ig_k_p_mq_W,&
+&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_k_p_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,ig_kp_mq,ig_kp_W_mq,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,H_pos(2),&
-&              i_g1,ig_W,iq_bz_W,iq_W,iq_W_s,i_g2,i_g3,O_ng_shift,&
+&              i_g1,i_g2,i_g3,O_ng_shift,&
+&              ig_W,iq_bz_W,iq_W,iq_W_s,&
+&              ig_W_mq,iq_bz_W_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
@@ -487,20 +489,29 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_p_s    = sop_tab(i_k_s_m1,i_p_s)
        i_k_p_mq_s = sop_tab(i_kmq_s_m1,i_pmq_s)
        !
-       ig_k_p_mq=G_m_G(ig_kmq,ig_pmq)
-       !ig_k_p_mq=G_m_G(ig_pmq,ig_kmq)
+       ig_kp_mq=G_m_G(ig_kmq,ig_pmq)
        !
        H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
+       iq_bz_W=qindx_B(i_k_bz,i_p_bz,1) !q_W_bz+G_W=k_bz-p_bz
        ig_W   =qindx_B(i_k_bz,i_p_bz,2)
-       iq_bz_W=qindx_B(i_k_bz,i_p_bz,1)
        !
-       iq_W   =q%sstar( iq_bz_W,1) !q_W=p-k
+       iq_W   =q%sstar( iq_bz_W,1)
        iq_W_s =q%sstar( iq_bz_W,2)
        !
-       ig_k_p_mq_W=G_m_G(ig_W,ig_k_p_mq)
+       iq_bz_W_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) !q_W_mq_bz+G_W_mq=kmq_bz-pmq_bz
+       ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2)
+       !
+       iq_W_mq   =q%sstar( iq_bz_W_mq,1)
+       iq_W_s_mq =q%sstar( iq_bz_W_mq,2)
+       !
+       if (iq_bz_W/=iq_bz_W_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
+       !
+       !ig_kp_W_mq=ig_W_mq
+       ig_kp_W_mq=G_m_G(ig_W,ig_kp_mq)
+       !ig_kp_W_mq=G_m_G(ig_W_mq,minus_G(ig_kp_mq))
        !
        H_x=cZERO
        H_c=cZERO
@@ -572,8 +583,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do
            do i_g1=1,BS_n_g_W
-             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W       ),i_k_s_m1  )
-             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_k_p_mq_W),i_kmq_s_m1)
+             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s)   ,ig_W      ),i_k_s_m1  )
+             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s_mq),ig_kp_W_mq),i_kmq_s_m1)
              Occ(i_g1)=BS_blk(i_block_cc)%O_c(i_g2,iOcc)*PHASE_1
              Ovv(i_g1)=BS_blk(i_block_vv)%O_c(i_g3,iOvv)*PHASE_2
            enddo
@@ -625,8 +636,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do
            do i_g1=1,BS_n_g_W
-             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W       ),i_k_s_m1  )
-             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_k_p_mq_W),i_kmq_s_m1)
+             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s)   ,ig_W      ),i_k_s_m1  )
+             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s_mq),ig_kp_W_mq),i_kmq_s_m1)
              Ocv(i_g1)=BS_blk(i_block_cv)%O_c(i_g2,iOcv)*PHASE_1
              Ovc(i_g1)=BS_blk(i_block_vc)%O_c(i_g3,iOvc)*PHASE_2
            enddo

@@ -30,6 +30,7 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
+ use timing_m,       ONLY:timing
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
@@ -73,9 +74,7 @@ integer function io_RT_components(what,ID)
  l_D          =what=="D".or.what=="OBSERVABLES"
  l_OBS        =l_JP.or.l_M.or.l_D
  !
-#if defined _TIMING
  call timing('io_RT_components',OPR='start')
-#endif
  !
  db_name="RT_"//trim(what)
  if (l_OBS)    db_name="RT_OBSERVABLES"

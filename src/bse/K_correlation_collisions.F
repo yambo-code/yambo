@@ -41,7 +41,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  !
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp
+ use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,G_m_G
  use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
@@ -53,8 +53,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  !
  ! Work Space
  !
- integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_s_k_p,i_s_star,&
-&               i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_s_k_p_mq,i_s_mq_star,&
+ integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,i_star_s,&
+&               i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
 &               i_Tk,i_Tp,iB_ref,iB_p,i_Tgrp_k,i_Tgrp_p,H_pos(2),i_cycle,&
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s
  logical     :: l_eval_collision
@@ -100,8 +100,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_k_s =Xk%sstar(i_k_bz,2)
        i_p_s =Xk%sstar(i_p_bz,2)
        !
-       i_s_k_p =sop_tab(sop_inv(i_k_s),i_p_s)
-       i_s_star=Xk%s_table(i_p,i_s_k_p)
+       i_kp_s  =sop_tab(sop_inv(i_k_s),i_p_s)
+       i_star_s=Xk%s_table(i_p,i_kp_s)
        !
        ! k-q and p-q indexes
        !
@@ -110,6 +110,9 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        !
        !ig_kmq=qindx_X(iq,i_k_bz,2)
        !ig_pmq=qindx_X(iq,i_p_bz,2)
+       !ig_kp_mq=G_m_G(ig_kmq,ig_pmq)
+       !
+       !write(*,*) ig_kp_mq
        !
        i_kmq   =Xk%sstar(i_kmq_bz,1)
        i_pmq   =Xk%sstar(i_pmq_bz,1)
@@ -117,8 +120,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_kmq_s =Xk%sstar(i_kmq_bz,2)
        i_pmq_s =Xk%sstar(i_pmq_bz,2)
        !
-       i_s_k_p_mq =sop_tab(sop_inv(i_kmq_s),i_pmq_s)
-       i_s_mq_star=Xk%s_table(i_pmq,i_s_k_p_mq)
+       i_kp_mq_s =sop_tab(sop_inv(i_kmq_s),i_pmq_s)
+       i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s)
        !
        ! q_W indexes
        !
@@ -145,7 +148,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
          !
          i_s_collision=i_s_mq_star
-         if (WF_phase(i_pmq,i_s_k_p_mq,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p_mq
+         if (iq/=1) WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)=-99._SP
+         if (WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
          iB_ref=-1
          if(iq==1) then
            do iB_p=iB,1,-1
@@ -163,12 +167,12 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_v_p)
          endif
-         BS_blk(iB)%O_table(:,i_s_k_p_mq,i_v_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_v_p,i_k_sp)
+         BS_blk(iB)%O_table(:,i_kp_mq_s,i_v_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_v_p,i_k_sp)
          !
          ! c->c', i.e. k -> p=k-q_w transitions
          !
-         i_s_collision=i_s_star
-         if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+         i_s_collision=i_star_s
+         if (WF_phase(i_p,i_kp_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_s
          iB_ref=-1
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=i_k .or. BS_blk(iB_p)%ip/=i_p) exit
@@ -184,7 +188,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_c_p)
          endif
-         BS_blk(iB)%O_table(:,i_s_k_p,i_c_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_c_p,i_k_sp)
+         BS_blk(iB)%O_table(:,i_kp_s,i_c_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_c_p,i_k_sp)
          !
          !
        else if (BS_blk(iB)%mode=="C") then
@@ -192,7 +196,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
          !
          i_s_collision=i_s_mq_star
-         if (WF_phase(i_pmq,i_s_k_p_mq,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p_mq
+         if (iq/=1) WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)=-99._SP
+         if (WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
          iB_ref=-1
          if(iq==1) then
            do iB_p=iB,1,-1
@@ -210,12 +215,12 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_c_p)
          endif
-         BS_blk(iB)%O_table(:,i_s_k_p_mq,i_v_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_c_p,i_k_sp)
+         BS_blk(iB)%O_table(:,i_kp_mq_s,i_v_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_c_p,i_k_sp)
          !
          ! c->v', i.e. k -> p=k-q_W transitions
          !
-         i_s_collision=i_s_star
-         if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+         i_s_collision=i_star_s
+         if (WF_phase(i_p,i_kp_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_s
          iB_ref=-1
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=i_k .or. BS_blk(iB_p)%ip/=i_p) exit
@@ -231,7 +236,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_v_p)
          endif
-         BS_blk(iB)%O_table(:,i_s_k_p,i_c_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_v_p,i_k_sp)
+         BS_blk(iB)%O_table(:,i_kp_s,i_c_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_v_p,i_k_sp)
          !
        endif
        !

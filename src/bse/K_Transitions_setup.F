@@ -71,8 +71,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
 #include<memory.h>
  !
- ! For finite q we have to put a loop over q-indices
- !
  type(levels) :: Ken
  type(bz_samp):: Xk
  integer      :: iq

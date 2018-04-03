@@ -85,7 +85,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_c_k,i_v_k,i_c_p,i_v_p,&
 &              i_k_bz,i_p_bz,i_k_s,i_p_s,i_kp_s,i_k,i_p,i_k_s_m1,&
-&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_kp_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,ig_kp_mq,ig_kp_W_mq,&
+&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_kp_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,H_pos(2),&
 &              i_g1,i_g2,i_g3,O_ng_shift,&
 &              ig_W,iq_bz_W,iq_W,iq_W_s,&
@@ -262,9 +262,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Oscillators Setup
  !===================
  O_ng=maxval(G_m_G)
- O_ng_shift=maxval(qindx_B(:,:,2))
+ O_ng_shift=1
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   O_ng_shift=maxval(qindx_B(:,:,2))
+   call fft_check_size(1,O_ng,BS_n_g_exch)
+ endif
  !
  ! Wave Functions
  !================
@@ -489,7 +492,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kp_s    = sop_tab(i_k_s_m1,i_p_s)
        i_kp_mq_s = sop_tab(i_kmq_s_m1,i_pmq_s)
        !
-       ig_kp_mq=G_m_G(ig_kmq,ig_pmq)
+       !ig_kp_mq=G_m_G(ig_kmq,ig_pmq)
        !
        H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
        !
@@ -511,7 +514,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        !ig_kp_W_mq=ig_W_mq
        !ig_kp_W_mq=G_m_G(ig_W,ig_kp_mq)
-       !ig_kp_W_mq=G_m_G(ig_W_mq,minus_G(ig_kp_mq))
        !
        H_x=cZERO
        H_c=cZERO

@@ -147,11 +147,10 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         i_s_collision=i_s_mq_star
-         if (iq/=1) WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)=-99._SP
-         if (WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
          iB_ref=-1
-         if(iq==1) then
+         if (iq==1) then
+           i_s_collision=i_s_mq_star
+           if (WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
            do iB_p=iB,1,-1
              if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
              if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
@@ -159,6 +158,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
              iB_ref=iB_p
              exit
            enddo
+         else
+           i_s_collision=i_kp_mq_s
          endif
          if ( iB_ref==-1 ) then
            iB_ref=iB
@@ -195,11 +196,10 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          !
          ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
          !
-         i_s_collision=i_s_mq_star
-         if (iq/=1) WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)=-99._SP
-         if (WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
          iB_ref=-1
          if(iq==1) then
+           i_s_collision=i_s_mq_star
+           if (WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
            do iB_p=iB,1,-1
              if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
              if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
@@ -207,6 +207,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
              iB_ref=iB_p
              exit
            enddo
+         else
+           i_s_collision=i_kp_mq_s
          endif
          if ( iB_ref==-1 ) then
            iB_ref=iB

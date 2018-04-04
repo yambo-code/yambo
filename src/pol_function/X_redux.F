@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,9 +48,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -67,9 +65,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Setup 
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='start')
-#endif
  !
  ! Barrier... 
  !
@@ -129,10 +125,12 @@ subroutine X_redux(iq,X_par,Xw,X)
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
 &                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
 &                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
-     call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
+     if(allocated(X_par_lower_triangle%blc)) then
+       call MATRIX_transfer(M_in=X_par_lower_triangle,M_out=Xo,INDEX_in=iw_X(1),&
 &                                                   SND=X_par%INTRA_comm%CPU_id==0,&
 &                                                   RCV=i_LA_pool==PAR_COM_SLK_INDEX_local%CPU_id+1,&
 &                                                   COMM=PAR_COM_X_WORLD,COMM_name="X_redux_1_"//trim(intc(i_LA_pool)))
+     endif
      !
    enddo
    !
@@ -246,10 +244,8 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_reset(K_FXC)
  endif
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
-#endif
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -264,9 +260,9 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
  endif
  !
- ! Now the interfaces. Divide in 2 steps:
+ ! Now the interfaces. 
  !
- ! 1. From all CPU of the SLK group to one of the RL group.
+ ! From all CPU of the SLK group to one of the RL group.
  !
  do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
    !
@@ -294,9 +290,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    enddo
  enddo
  !
-#if defined _TIMING
  call timing('X (REDUX)',OPR='stop')
-#endif
  !
  ! Clean-up of FREQ structure
  !==========

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -38,6 +38,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin,E_SOC_table,E_SOC_nbands
  use LIVE_t,              ONLY:live_timing
+ use interfaces,          ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
  !
@@ -65,7 +66,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  complex(SP), allocatable :: WF_SOC_rot(:,:)
  !
  integer                      :: io_err,ID
- integer, external            :: io_DB1_selective_scan,io_E_SOC_map
+ integer, external            :: io_E_SOC_map
  !
  call WF_load(WF,0,1,(/ 1, En%nb /),(/1,kpt%nibz/),space='R',title='-SOC mapping')
  !
@@ -78,7 +79,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  a_save=a
  alat_save=alat
  !
- io_err=io_DB1_selective_scan(En_SOC,kpt_SOC,trim(perturbative_SOC_path),'all')
+ io_err=io_DB1_selective_scan('all',trim(perturbative_SOC_path),En_SOC,kpt_SOC)
  if (io_err/=0) call error(' SOC database NOT FOUND @ '//trim(perturbative_SOC_path))
  !
  call fft_setup(0,1,.true.)

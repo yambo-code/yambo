@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,10 +27,9 @@ integer function io_DIPOLES(X,ID)
  use X_m,           ONLY:X_t,DIP_iR,DIP_P,X_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
  use X_m,           ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
@@ -42,9 +41,7 @@ integer function io_DIPOLES(X,ID)
  use drivers,       ONLY:l_sc_run
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
  implicit none
  type(X_t)   ::X
@@ -66,9 +63,7 @@ integer function io_DIPOLES(X,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_DIPOLES',OPR='start')
-#endif
  !
  io_extension(ID)='dip_iR_and_P'
 #if defined _SC
@@ -147,13 +142,13 @@ integer function io_DIPOLES(X,ID)
    !
  endif
  !
+ ! Manage OP_IF_START_and_RD_CL_IF_END
+ !
+ call manage_OP_IF_START_and_CL_IF_END(ID,ik,nXkibz)
+ !
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=i_fragment)
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.ik==nXkibz) io_action(ID)=RD_CL
  !
  ! iR
  !
@@ -220,8 +215,6 @@ integer function io_DIPOLES(X,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  if (io_DIP) call timing('io_DIPOLES',OPR='stop')
-#endif
  !
 end function

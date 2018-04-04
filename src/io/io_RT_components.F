@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,11 +41,9 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
+ use timing_m,       ONLY:timing
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -69,9 +67,7 @@ integer function io_RT_components(what,ID)
  l_G          =what=="G"
  l_REF        =what=="REF"
  !
-#if defined _TIMING
  call timing('io_RT_components',OPR='start')
-#endif
  !
  db_name="RT_"//trim(what)
  if (l_REF) db_name="RT_reference_components"
@@ -322,9 +318,7 @@ integer function io_RT_components(what,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_RT_components',OPR='stop')
-#endif
  !
  contains
    !

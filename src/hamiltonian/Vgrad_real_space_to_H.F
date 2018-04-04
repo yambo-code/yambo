@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,13 +34,10 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  use wrapper,        ONLY:Vstar_dot_V
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
+ use timing_m,       ONLY:timing
 #if defined _RT || defined _SC
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
  implicit none
  !
  integer,     intent(in)    :: ik
@@ -57,9 +54,7 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
 #endif
  !
-#if defined _TIMING 
  call timing('Vgrad_to_H',OPR='start')
-#endif
  !
  ! Fill ...
  !
@@ -97,8 +92,6 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
    enddo
  enddo
  !
-#if defined _TIMING 
  call timing('Vgrad_to_H',OPR='stop')
-#endif
  !
 end subroutine 

@@ -1,10 +1,33 @@
 #
+#        Copyright (C) 2000-2018 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): DS AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
 chmod u+x sbin/*
 cp config/Makefile .
 #
 if ! test -d bin      ; then mkdir bin      ; fi
 if ! test -d include  ; then mkdir include  ; fi
 if ! test -d lib      ; then mkdir lib      ; fi
+if ! test -d bin-libs ; then mkdir bin-libs ; fi
 #
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
@@ -90,8 +113,20 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/lib";     then mkdir    "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_path/${FCKIND}/${FC}/include"; fi
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
-cp $extlibs_path/${FCKIND}/${FC}/bin/* $exec_prefix/bin/
-cp $extlibs_path/${FCKIND}/${FC}/v3/bin/* $exec_prefix/bin/
+if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
+ FILES=$extlibs_path/${FCKIND}/${FC}/bin/*
+ for file in $FILES; do
+  if test -f $file; then 
+   cp $file $exec_prefix/bin-libs/
+  fi
+ done
+ FILES=$extlibs_path/${FCKIND}/${FC}/v3/bin/*
+ for file in $FILES; do
+  if test -f $file; then 
+   cp $file $exec_prefix/bin-libs/
+  fi
+ done
+fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$prefix/driver"     ; then mkdir "$prefix/driver"     ; fi

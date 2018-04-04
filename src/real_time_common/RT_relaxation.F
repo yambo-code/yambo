@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,9 +75,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
 &                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,NE_i_time,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
 &                         RT_is_dynamically_dephased,l_RT_relax_time_approx
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -113,9 +111,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  ! El-El
  !=======
  if(l_elel_scatt.and.l_eval ) then
-#if defined _TIMING
+   !
    call timing('RT relaxation (e-e)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -125,9 +122,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-e)',OPR='stop')
-#endif
    !
  endif
  !
@@ -135,9 +130,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !=======
  if(l_elph_scatt.and.l_eval) then
    !
-#if defined _TIMING
    call timing('RT relaxation (e-p)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -147,9 +140,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-p)',OPR='stop')
-#endif
    !
  endif
  !
@@ -157,9 +148,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !============
  if(l_elphoton_scatt.and.l_eval) then
    !
-#if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -169,9 +158,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='stop')
-#endif
    !
  endif
  !

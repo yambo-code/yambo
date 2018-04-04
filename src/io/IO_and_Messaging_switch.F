@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,9 +30,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use stderr,         ONLY:string_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  character(*)      :: what
@@ -46,9 +44,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  logical,    SAVE ::IO_read_now,IO_write_now,write_to_of_now,write_to_report_now,write_to_log_now,live_timing_is_on_now
  !
-#if defined _TIMING
  call timing('IO_and_Messaging_switch',OPR='start')
-#endif
  !
  local_TRUE            = .TRUE.
  local_FALSE           = .FALSE.
@@ -145,8 +141,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  if (index(what_is_running,'YPP')>0) write_to_report = local_write_to_report
  !
-#if defined _TIMING
  call timing('IO_and_Messaging_switch',OPR='stop')
-#endif
  !
 end subroutine IO_and_Messaging_switch

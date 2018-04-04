@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -160,25 +160,25 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        ! Li =(r x p)_i for i=x,y,z
        ! These are gauge dependent if MAG_landau=.true.
        ! These are quantized if wfs are eigenstate
-       if(angular_dir(1)) L_tmp(1,:)=x_cc(:,2)*wf_z(:,ifft)-x_cc(:,3)*wf_y(:,ifft)
-       if(angular_dir(2)) L_tmp(2,:)=x_cc(:,3)*wf_x(:,ifft)-x_cc(:,1)*wf_z(:,ifft)
-       if(angular_dir(3)) L_tmp(3,:)=x_cc(:,1)*wf_y(:,ifft)-x_cc(:,2)*wf_x(:,ifft)
+       if(angular_dir(1)) L_tmp(1,:)=x_cc(:,2)*wf_z(:,1,ifft)-x_cc(:,3)*wf_y(:,1,ifft)
+       if(angular_dir(2)) L_tmp(2,:)=x_cc(:,3)*wf_x(:,1,ifft)-x_cc(:,1)*wf_z(:,1,ifft)
+       if(angular_dir(3)) L_tmp(3,:)=x_cc(:,1)*wf_y(:,1,ifft)-x_cc(:,2)*wf_x(:,1,ifft)
        !
        if(MAG_landau) then
          ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
          if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x_cc(:,2)*A_magn_z(:)- &
-&                             x_cc(:,3)*A_magn_y(:))*WF%c(:,ifft)
+&                             x_cc(:,3)*A_magn_y(:))*WF%c(:,1,ifft)
          if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x_cc(:,3)*A_magn_x(:)- &
-&                             x_cc(:,1)*A_magn_z(:))*WF%c(:,ifft)
+&                             x_cc(:,1)*A_magn_z(:))*WF%c(:,1,ifft)
          if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x_cc(:,1)*A_magn_y(:)- &
-&                             x_cc(:,2)*A_magn_x(:))*WF%c(:,ifft)
+&                             x_cc(:,2)*A_magn_x(:))*WF%c(:,1,ifft)
        endif
        !
        do i1=1,3
          if(.not.angular_dir(i1)) cycle
-         L(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),L_tmp(i1,:))
-         if(MAG_landau) M(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),M_tmp(i1,:))
+         L(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),L_tmp(i1,:))
+         if(MAG_landau) M(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),M_tmp(i1,:))
          L_tot(i1,ik)=L_tot(i1,ik)+L(i1)
          if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
        enddo

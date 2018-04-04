@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -31,9 +31,7 @@ integer function io_WF(ID,wf)
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
 &                           io_fragment,io_elemental,io_resetable,frag_WF
-#if defined _TIMING
  use timing_m,         ONLY:timing
-#endif
  implicit none
  integer,       intent(in) :: ID
  complex(SP),   optional   :: wf(:,:,:)
@@ -41,9 +39,7 @@ integer function io_WF(ID,wf)
  integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io
  character(schlen)         :: VAR_NAME
  !
-#if defined _TIMING
  call timing('io_WF',OPR='start')
-#endif
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
@@ -156,8 +152,6 @@ integer function io_WF(ID,wf)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_WF',OPR='stop')
-#endif
  !
 end function io_WF

@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -122,8 +122,8 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          ! 1)  3D
          if(l_3d) then
            do i1=1,3
-             x_tmp(:,i1)=x_cc(:,i1)**power*WF%c(:,ifft)
-             x_med(i1) = Vstar_dot_V(fft_size,WF%c(:,ifft),x_tmp(:,i1))
+             x_tmp(:,i1)=x_cc(:,i1)**power*WF%c(:,1,ifft)
+             x_med(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),x_tmp(:,i1))
              x_med(i1) = x_med(i1)**(1./power)
            enddo
            !
@@ -141,14 +141,14 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          if (l_3d) then
            do ir=1,fft_size
              tmp_var=sqrt((x_cc(ir,1)**2+x_cc(ir,2)**2))
-             rperp_tmp(ir)=tmp_var**power*WF%c(ir,ifft)
-             z_tmp(ir)=x_cc(ir,3)**power*WF%c(ir,ifft)
-             if ( x_cc(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,ifft)
-             if ( x_cc(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,ifft)
+             rperp_tmp(ir)=tmp_var**power*WF%c(ir,1,ifft)
+             z_tmp(ir)=x_cc(ir,3)**power*WF%c(ir,1,ifft)
+             if ( x_cc(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
+             if ( x_cc(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
            enddo
-           rperp_med = Vstar_dot_V(fft_size,WF%c(:,ifft),rperp_tmp(:))
-           z_med     = Vstar_dot_V(fft_size,WF%c(:,ifft),    z_tmp(:))
-           phi_med   = Vstar_dot_V(fft_size,WF%c(:,ifft),  phi_tmp(:))
+           rperp_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),rperp_tmp(:))
+           z_med     = Vstar_dot_V(fft_size,WF%c(:,1,ifft),    z_tmp(:))
+           phi_med   = Vstar_dot_V(fft_size,WF%c(:,1,ifft),  phi_tmp(:))
            rperp_med = rperp_med**(1./power)
            z_med     = z_med**(1./power)
            AB_dev    = (1.-6.41**2*rperp_med**(-2.))  ! 5.92 (8,0)  6.41 (5,5)  10.36  (14,0)
@@ -158,8 +158,8 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          endif
          ! 2)  2D
          if(l_2d) then
-           wf_tmp_2d(:,:,:)=reshape(WF%c(:,ifft),(/fft_dim(1),fft_dim(2),fft_dim(3)/))
-           rperp_tmp_2d(:,:,:)=reshape(sqrt((x_cc(:,1)**2+x_cc(:,2)**2))**power*WF%c(:,ifft),&
+           wf_tmp_2d(:,:,:)=reshape(WF%c(:,1,ifft),(/fft_dim(1),fft_dim(2),fft_dim(3)/))
+           rperp_tmp_2d(:,:,:)=reshape(sqrt((x_cc(:,1)**2+x_cc(:,2)**2))**power*WF%c(:,1,ifft),&
 &                                   (/fft_dim(1),fft_dim(2),fft_dim(3)/))
            rperp_med=(0.,0.)
            do ir3 = 0, fft_dim(3)-1         ! z 
@@ -179,15 +179,15 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
        if(l_spherical) then
          do ir=1,fft_size
            tmp_var=sqrt((x_cc(ir,1)**2+x_cc(ir,2)**2+x_cc(ir,3)**2))
-           r_tmp(ir)=tmp_var**power*WF%c(ir,ifft)
+           r_tmp(ir)=tmp_var**power*WF%c(ir,1,ifft)
            tmp_var=sqrt(x_cc(ir,1)**2+x_cc(ir,2)**2)
-           theta_tmp(ir)=atan(x_cc(ir,3)/tmp_var)*WF%c(ir,ifft)
-           if ( x_cc(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,ifft)
-           if ( x_cc(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,ifft)
+           theta_tmp(ir)=atan(x_cc(ir,3)/tmp_var)*WF%c(ir,1,ifft)
+           if ( x_cc(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
+           if ( x_cc(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
          enddo
-         r_med = Vstar_dot_V(fft_size,WF%c(:,ifft),rperp_tmp(:))
-         theta_med = Vstar_dot_V(fft_size,WF%c(:,ifft),theta_tmp(:))
-         psi_med   = Vstar_dot_V(fft_size,WF%c(:,ifft),  psi_tmp(:))
+         r_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),rperp_tmp(:))
+         theta_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),theta_tmp(:))
+         psi_med   = Vstar_dot_V(fft_size,WF%c(:,1,ifft),  psi_tmp(:))
          r_med=r_med**(1./power)
        endif
        !

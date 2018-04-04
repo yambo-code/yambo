@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -33,8 +33,8 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  implicit none
  !
- type(levels), intent(in) :: en
- type(bz_samp),intent(in) :: kpt,qpt
+ type(levels), intent(inout) :: en
+ type(bz_samp),intent(in)    :: kpt,qpt
  !
  ! Work Space
  !

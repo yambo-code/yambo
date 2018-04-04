@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,19 +30,21 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,X_is_integrated,&
-&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle
+ use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
+&                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_Q_index, PAR_nq, &
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
+&                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
-&                        PARALLEL_WF_index,WF_load,WF_free,MATRIX_transfer
+&                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
  !
@@ -56,9 +58,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem
+ integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X
+ integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
  !
  ! logicals and control
@@ -141,7 +143,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
        ! must be repeated here:
        !
        if (self_detect_E_range) then
-         call X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
+         n_poles=X_eh_setup(-iq,X,Xen,Xk,minmax_ehe)
          YAMBO_FREE(X_poles)
          Xw%er=minmax_ehe
        endif
@@ -181,8 +183,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
    endif
    !
-   X_mat=cZERO
-   !
  endif
  !
  ! WF distribution 
@@ -202,16 +202,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
- ! As we are cycling over the q-points the screened interaction evaluated here is supposed
- ! to be used as an integrand. Some procedures (like the DbGd) changes accordingly.
- !
- X_is_integrated=.true.
- !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,Xw)
+   !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !
@@ -244,17 +243,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
      X_par(iq_mem)%I=iw
      !
-     if (io_RESPONSE) then
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,iw),COMM=PAR_COM_X_WORLD,&
-&                                              COMM_name="X_dielectric")
-     else
-       call MATRIX_transfer(M_in=X_par(iq_mem),M=X_mat(:,:,(iq_mem-1)*X_MEM_n_freqs+iw),&
-&                           COMM=PAR_COM_X_WORLD,COMM_name="X_dielectric")
+     if (     io_RESPONSE) iw_X_mat=iw
+     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+     !
+     X_mat(:,:,iw_X_mat)=cZERO
+     !
+     if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
+       X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
+&            X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
      endif
      !
+     call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+     !
    enddo
-   !
-   call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus
@@ -281,9 +282,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+     YAMBO_FREE(X_DbGd_nkpt_at_q_table)
+   endif  
+   !
  enddo
  !
- X_is_integrated=.false.
  l_X_terminator=.false.
  !
  ! CLEAN (3)

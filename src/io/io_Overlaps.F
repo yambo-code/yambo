@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA MG
@@ -31,10 +31,7 @@ integer function io_Overlaps(X,ID)
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_nbz,PAR_IND_Xk_bz
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  type(X_t)   ::X
  integer     ::ID
@@ -50,9 +47,7 @@ integer function io_Overlaps(X,ID)
    goto 1
  endif
  !
-#if defined _TIMING
  call timing('io_Overlaps',OPR='start')
-#endif
  !
  io_Overlaps=io_connect(desc='Overlaps',type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
@@ -109,8 +104,6 @@ integer function io_Overlaps(X,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_Overlaps',OPR='stop')
-#endif
  !
 end function

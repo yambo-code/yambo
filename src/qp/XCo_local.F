@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -50,6 +50,7 @@ subroutine XCo_local(E,Xk)
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -62,11 +63,13 @@ subroutine XCo_local(E,Xk)
  integer     ::nb
 #endif
  integer     ::i1,ifft,iwf,iwfp,ib,ibp,ik,i_sp_pol
- complex(SP) ::c_ws(fft_size,n_spin)
+ complex(SP) ::c_ws(fft_size,n_spinor)
  !
  ! Spin support (collinear and not collinear)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
+
+ call timing('XCo_local',OPR="start")
  !
  ! Allocation 
  !
@@ -150,17 +153,13 @@ subroutine XCo_local(E,Xk)
      iwf =WF%index(ib,ik,1)
      iwfp=WF%index(ibp,ik,1)
      ! 
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ifft)
-#endif
      do ifft=1,fft_size
-         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
      enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
      !
    enddo
    !
@@ -187,6 +186,7 @@ subroutine XCo_local(E,Xk)
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
+     i_sp_pol=spin(QP_table(i1,:))
      !
 #if defined _RT
      if (l_real_time) then
@@ -201,13 +201,12 @@ subroutine XCo_local(E,Xk)
      !
      if (n_spinor==1) then
        !
-       i_sp_pol=spin(QP_table(i1,:))
        iwf =WF%index(ib,ik,i_sp_pol)
        iwfp=WF%index(ibp,ik,i_sp_pol)
        !
        c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%c(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
        !
      else
        !
@@ -217,8 +216,7 @@ subroutine XCo_local(E,Xk)
        c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,1,iwfp)+V_xc_mat(:,1,2)*WF%c(:,2,iwfp)
        c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))+&
-&                 Vstar_dot_V_omp(fft_size,WF%c(:,2,iwf),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
        !
      endif
      !
@@ -230,9 +228,11 @@ subroutine XCo_local(E,Xk)
    !
    call PP_redux_wait(QP_Vxc)
    !
-   return
-   !
  endif
+ !
+ call timing('XCo_local',OPR="stop")
+ !
+ return
  !
  contains
    !

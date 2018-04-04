@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -429,7 +429,7 @@ module parallel_m
    end subroutine
    !
    integer function i_INTER_CHAIN(N_father,N_child)
-     ! Note that N_child/_father art the #cpu's in the two chains
+     ! Note that N_child/_father are the #cpu's in the two chains
      integer :: N_father,N_child
      i_INTER_CHAIN=(myid/N_father)*(N_father/N_child)+mod(myid,N_father/N_child)
    end function

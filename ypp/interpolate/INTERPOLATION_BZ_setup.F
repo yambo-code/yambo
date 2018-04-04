@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_interp_setup(Xk)
+subroutine INTERPOLATION_BZ_setup(Xk)
  !
  ! Code inspired by BolzTraP
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
  use pars,           ONLY:SP,pi
- use interpolate,    ONLY:nshells,lattice_vectors,lpfac,int_sop,nshells,make_star,metric,int_sop
+ use interpolate,    ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,nshells,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
  use vec_operate,    ONLY:sort
@@ -52,7 +52,7 @@ subroutine bz_interp_setup(Xk)
  ! 
  metric=matmul(a,transpose(a))
  !
- sphere_radius=(lpfac*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
+ sphere_radius=(INTERP_shell_factor*Xk%nbz*3._SP*DL_vol/4._SP/pi)**(1._SP/3._SP)
  !
  call m3inv(transpose(a),a_inv)
  a_inv=transpose(a_inv)
@@ -165,7 +165,7 @@ subroutine bz_interp_setup(Xk)
  YAMBO_FREE(all_vec_mod)
  YAMBO_FREE(indx)
  !
-end subroutine bz_interp_setup
+end subroutine INTERPOLATION_BZ_setup
 
 logical function vec_in_star(vec,nstar,star_vec)
   use pars,         ONLY:SP

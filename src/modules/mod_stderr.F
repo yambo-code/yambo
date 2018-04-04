@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -84,6 +84,16 @@ module stderr
      character(*) :: lfmt,rfmt,msg,sfmt
      call c_fprintf(cstr(lfmt),cstr(msg),cstr(rfmt),cstr(sfmt))
    end subroutine
+   !
+   subroutine remove_new_line(s)
+    character(len=*) :: s
+    integer          :: i
+    do i = 1, len(s)
+      if (s(i:i) .eq. achar(10)) then
+        s(i:i)= " "
+      end if
+    end do
+  end subroutine
    !
    character(lchlen) function cstr(si) result(so)
      character(*), intent(IN) :: si

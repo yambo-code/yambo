@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -37,9 +37,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
  use plasma,        ONLY:EH_gas
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -99,9 +97,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
-#if defined _TIMING
  call timing('NEQ GW collisions',OPR='start')
-#endif
  !
  ! Test the spatial Inversion
  !   
@@ -309,9 +305,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  call live_timing()
  !
-#if defined _TIMING
  call timing('NEQ GW collisions',OPR='stop')
-#endif
  !
  ! CLEAN
  !

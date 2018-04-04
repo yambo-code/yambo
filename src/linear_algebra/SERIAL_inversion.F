@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,10 +26,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  use pars,          ONLY:SP,cONE
  use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
 &                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer           :: n
@@ -40,9 +37,7 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  integer           :: i_loop 
  type(LALGEBRA_WS) :: WS
  !
-#if defined _TIMING
  call timing('SERIAL_inversion',OPR='start')
-#endif
  !
  YAMBO_ALLOC(WS%v_int,(n))
  !
@@ -72,8 +67,6 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
-#if defined _TIMING
  call timing('SERIAL_inversion',OPR='stop')
-#endif
  !
 end subroutine

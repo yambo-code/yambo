@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,10 +42,7 @@ integer function io_ELPH(ID,what)
  use parallel_m,     ONLY:PAR_Q_index
  use vec_operate,    ONLY:rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer      ::ID
@@ -57,9 +54,7 @@ integer function io_ELPH(ID,what)
  real(SP)               ::v(3)
  character(schlen)      ::db_name
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='start')
-#endif
  !
  if (what=='gkkp'.or.what=='no_gkkp') db_name='elph_gkkp'
  if (what=='gFsq')                    db_name='elph_gFsq'
@@ -248,8 +243,6 @@ integer function io_ELPH(ID,what)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_ELPH',OPR='stop')
-#endif
  !
 end function

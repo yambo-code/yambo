@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, AM
@@ -32,10 +32,7 @@ subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
  use pars,           ONLY:cONE,cZERO
  use SLK_m,          ONLY:SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  integer           :: n,m,k
@@ -46,9 +43,7 @@ subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
-#if defined _TIMING
  call timing('PARALLEL_M_by_M',OPR='start')
-#endif
  !
 #if defined _DOUBLE
  CALL PZGEMM&
@@ -58,8 +53,6 @@ subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
 & ( transa, transb, m, n, k, cONE, A%blc(:,:,A%I), 1, 1, A%desc, &
     B%blc(:,:,B%I), 1, 1, B%desc, cZERO, C%blc(:,:,C%I), 1, 1, C%desc)
  !
-#if defined _TIMING
  call timing('PARALLEL_M_by_M',OPR='stop')
-#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
+subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
   !
   use pars,           ONLY:SP,pi,cI,cZERO,DP
   use interpolate,    ONLY:nshells,lattice_vectors,make_star,int_sop
@@ -32,7 +32,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   !
   integer,intent(in)        :: nvalues
   integer,intent(in)        :: Nk
-  type(bz_samp), intent(in) :: USER_k
+  type(bz_samp), intent(in) :: K
   real(SP), intent(out)     :: VALUES(nvalues,Nk)
   real(SP), parameter       :: twopi=2._SP*pi
   complex(DP), intent(in)   :: engre(nshells,nvalues)
@@ -51,7 +51,7 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   do i1=1,nshells
      call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
      do ik=1,Nk
-       if(Nk==USER_k%nibz) call c2a(v_in=USER_k%pt(ik,:),v_out=v,mode='ki2a')
+       if(Nk==K%nibz) call c2a(v_in=K%pt(ik,:),v_out=v,mode='ki2a')
        do is=1,nstar
          star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
        enddo
@@ -67,4 +67,4 @@ subroutine fourier_interpolation(USER_k,VALUES,engre,nvalues,Nk)
   !
   YAMBO_FREE(star)
   !
-end subroutine fourier_interpolation
+end subroutine INTERPOLATION_fourier

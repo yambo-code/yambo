@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,19 +29,16 @@ integer function io_COL_CUT(ID)
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
+ !
  integer :: ID
  ! 
  ! Work Space
  !
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_db
  !
-#if defined _TIMING
  call timing('io_COL_CUT',OPR='start')
-#endif
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
  if (io_COL_CUT/=0) goto 1
@@ -92,15 +89,13 @@ integer function io_COL_CUT(ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng_db/))
+   call io_bulk(ID,VAR='CUT_BARE_QPG',VAR_SZ=(/2,nqibz,wf_ng/))
    call io_bulk(ID,C2=bare_qpg(:,:wf_ng))
    !
  endif
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_COL_CUT',OPR='stop')
-#endif
  !
 end function

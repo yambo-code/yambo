@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -102,6 +102,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    !
  endif
  !
+ if (.not.RUNNING_ENVIRONMENT) return
+ !
  call PARALLEL_set_the_active_structures( n_structures )
  !
  ! The two top fields ("q" and "k") must be defined anyway. But only these two!
@@ -122,6 +124,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  CPU_structure(i_PAR_structure)%N_chains=n_structures
  !
- if (RUNNING_ENVIRONMENT) PARALLEL_n_structures_active=n_structures
+ PARALLEL_n_structures_active=n_structures
  !
 end subroutine PARALLEL_get_user_structure

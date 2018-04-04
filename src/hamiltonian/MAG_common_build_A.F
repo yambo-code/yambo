@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -83,7 +83,7 @@ subroutine MAG_common_build_A(build)
  call fft_setup(0,1,.true.)
  call module_alloc()
  !
- if(MAG_landau .and. phase_trick) call MAG_A_phase(n_loops)
+ if(MAG_landau .and. phase_trick) call MAG_A_phase()
  !
  if(.not.MAG_landau) return
  !

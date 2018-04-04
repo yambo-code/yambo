@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -40,12 +40,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
+ use timing_m,       ONLY:timing
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer
  use parallel_m,     ONLY:linear_algebra_is_parallel
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #if defined _RT
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
@@ -90,9 +88,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
  !
-#if defined _TIMING
  call timing('Inversion Solver',OPR='start')
-#endif
  !
  ! Sectioning
  !============
@@ -197,7 +193,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
- call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
+ call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! Initialize the output file 
  !============================
@@ -449,9 +445,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif
      !
-#if defined _TIMING
      call timing('Inversion Solver',OPR='stop')
-#endif
    end subroutine
    !
    subroutine LOCAL_TYP_clean(TYP)

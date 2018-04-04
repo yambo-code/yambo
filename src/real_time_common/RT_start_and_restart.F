@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_start_and_restart(E,k,q,X)
+subroutine RT_start_and_restart(E,k,q)
  !
  ! This subroutine initialize some variables and restart from SC
  ! or from a previous RT calculation:
@@ -35,9 +35,9 @@ subroutine RT_start_and_restart(E,k,q,X)
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions 
  !
- use pars,           ONLY:SP,cI,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use units,          ONLY:HA2EV,AUT2FS
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
@@ -48,14 +48,13 @@ subroutine RT_start_and_restart(E,k,q,X)
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
-&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser,RT_potential, &
+&                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_tot
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,rho_n,magn_n,Hzero
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
- use X_m,            ONLY:X_t
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use parallel_m,     ONLY:PP_redux_wait
@@ -65,11 +64,10 @@ subroutine RT_start_and_restart(E,k,q,X)
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q
- type(X_t)         :: X
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_E,io_V,io_WF,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_G,io_JPSM,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !

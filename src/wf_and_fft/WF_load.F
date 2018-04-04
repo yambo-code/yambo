@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,6 +48,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -275,6 +276,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
  endif
  !
+ call timing('WF_load_FFT',"start")
+ !
  WF%N=0
  do i_sp_pol=1,n_sp_pol
    !
@@ -366,6 +369,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
+ call timing('WF_load_FFT',"stop")
  !
  ! CLEAN
  !

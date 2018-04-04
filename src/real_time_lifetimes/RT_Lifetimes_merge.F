@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,9 +28,7 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use R_lattice,      ONLY:bz_samp
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX
  use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -43,9 +41,7 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  integer          :: ik
  !
-#if defined _TIMING
-   call timing('RT life merge',OPR='start')
-#endif
+ call timing('RT life merge',OPR='start')
  !
  !===========
  ! ALL 2 ALL
@@ -61,8 +57,6 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  if (l_initial_equilibrium) REF_lifetime(:,:,SAVE_index)=LIFE
  !
-#if defined _TIMING
-   call timing('RT life merge',OPR='stop')
-#endif
+ call timing('RT life merge',OPR='stop')
  !
 end subroutine RT_Lifetimes_merge

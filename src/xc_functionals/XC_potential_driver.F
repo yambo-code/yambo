@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG AM
@@ -40,9 +40,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
 #if defined _RT
  use drivers,        ONLY:l_real_time
 #endif
-#if defined _TIMING && defined _RT
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -58,9 +56,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  real(SP)          :: local_exx_fraction, local_exx_screening
  character(schlen) :: local_mute_ch
  !
-#if defined _TIMING && defined _RT
- call timing('XC_potential_driver',OPR='start')
-#endif
+ call timing('XC_potential',OPR='start')
  !
 #if defined _RT
  if (l_real_time) call IO_and_Messaging_switch("SAVE MUTE")
@@ -114,8 +110,6 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  if (l_sc_run)    call IO_and_Messaging_switch("RESTORE")
 #endif
  !
-#if defined _TIMING && defined _RT
- call timing('XC_potential_driver',OPR='stop')
-#endif
+ call timing('XC_potential',OPR='stop')
  !
 end subroutine XC_potential_driver

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,10 +35,7 @@ integer function io_KB_abinit(ID)
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
  use electrons,        ONLY:n_sp_pol
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
+ use timing_m,         ONLY:timing
 #include<memory.h>
  !
  integer,       intent(in) :: ID
@@ -47,9 +44,7 @@ integer function io_KB_abinit(ID)
  !
  integer :: ik,ifrag,i1,i_sp_pol,var_size
  !
-#if defined _TIMING
  call timing('io_KB_abinit',OPR='start')
-#endif
  !
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then
@@ -151,8 +146,6 @@ integer function io_KB_abinit(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_KB_abinit',OPR='stop')
-#endif
  !
 end function io_KB_abinit

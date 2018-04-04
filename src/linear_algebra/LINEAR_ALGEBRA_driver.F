@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -47,9 +47,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use com,           ONLY:warning
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  integer                    :: idriver
@@ -74,9 +72,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  integer             :: N,lib_in_use
  type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
  !
-#if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="start")
-#endif
  !
  ! M dimension
  !
@@ -278,8 +274,6 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! ===========================================================================================
  !
-#if defined _TIMING
  call timing("LINEAR ALGEBRA",OPR="stop")
-#endif
  !
 end subroutine

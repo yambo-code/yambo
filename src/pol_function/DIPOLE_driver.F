@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -89,9 +89,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
 #endif
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -115,9 +113,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer           :: ID,io_err
  integer, external :: io_DIPOLES
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='start')
-#endif
  !
  ! Setup logicals 
  !================
@@ -228,9 +224,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='stop')
-#endif
  !
 #if defined _SC || defined _RT
  if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return

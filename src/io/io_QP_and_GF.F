@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,10 +33,7 @@ integer function io_QP_and_GF(what,qp,ID)
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR,IO_NO_BINDING_ERROR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  type(QP_t)  ::qp
  character(*)::what ! 'QP'/'G'/filename
@@ -85,9 +82,7 @@ integer function io_QP_and_GF(what,qp,ID)
    !
  endif
  !
-#if defined _TIMING
  call timing('io_QP_and_GF',OPR='start')
-#endif
  !
  ! QP_DB_kind points to the "type" of self-energy. This is used
  ! to report about XC kind of the components of the self-energy here
@@ -305,8 +300,6 @@ integer function io_QP_and_GF(what,qp,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_QP_and_GF',OPR='stop')
-#endif
  !
 end function

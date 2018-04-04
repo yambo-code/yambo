@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -43,9 +43,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
  use matrix_operate, ONLY:UP_matrix_index,m3det
  use electrons,      ONLY:Spin_magn
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -62,9 +60,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  complex(SP) :: f_occ
  type(WAVEs) :: WF_tmp
  !
-#if defined _TIMING
  call timing('el_magn_matrix',OPR='start')
-#endif
  !
  magn=0._SP
  cv=  0._SP
@@ -193,8 +189,6 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    enddo
  endif
  !
-#if defined _TIMING
  call timing('el_magn_matrix',OPR='stop')
-#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -456,7 +456,7 @@ subroutine RT_initialize(E,k,q)
    !
    subroutine RT_adjust_equilibrium()
      !
-     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nkpts
+     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nk_levels
      use real_time,          ONLY:RT_ibz_coo,DbGd_ibz_coo
      !
      integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
@@ -474,7 +474,7 @@ subroutine RT_initialize(E,k,q)
      endif
      !
      if (l_RT_uses_E_DbGd.and..not.allocated(E%df_DbGd)) then
-       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
        E%df_DbGd=0._SP
      endif
      !

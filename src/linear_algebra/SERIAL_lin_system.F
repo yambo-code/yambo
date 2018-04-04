@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -29,9 +29,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  use pars,           ONLY:SP
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer     :: n,nrhs
@@ -41,9 +39,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  character(64)     :: subname="SERIAL_lin_system"
  type(LALGEBRA_WS) :: WS
  !
-#if defined _TIMING
  call timing('SERIAL_lin_system',OPR='start')
-#endif
  !
  WS%dim=n
  YAMBO_FREE(WS%v_int)
@@ -59,8 +55,6 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
-#if defined _TIMING
  call timing('SERIAL_lin_system',OPR='stop')
-#endif
  !
 end subroutine

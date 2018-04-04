@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -171,7 +171,6 @@ module real_time
  !----------------------------
  logical                  :: l_update_QP_Energies
  logical                  :: l_update_QP_WFs=.false.
- !
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
@@ -280,7 +279,7 @@ module real_time
  integer           :: two_alpha
  integer           :: N_Gr_descs
  real(SP)          :: Gr_QP_width
- character(schlen) :: Gr_kind = "QP"
+ character(schlen) :: Gr_kind
  character(lchlen) :: Gr_description(5) 
  !
  ! GFs

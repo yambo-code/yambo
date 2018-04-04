@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,9 +45,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  integer        :: iB
@@ -62,9 +60,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !
  if (.not.BS_res_K_corr) return 
  !
-#if defined _TIMING
  call timing('T_space CORR Osc.',OPR='start')
-#endif
  !
  ! Every block is at k (ibz) fixed
  !
@@ -211,9 +207,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
    !
  enddo
  !
-#if defined _TIMING
  call timing('T_space CORR Osc.',OPR='stop')
-#endif
  !
  contains
    !

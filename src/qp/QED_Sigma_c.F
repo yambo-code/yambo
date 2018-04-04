@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): PM AM
@@ -44,9 +44,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              PAR_IND_Q,PAR_nQ,PAR_nQP
  use functions,           ONLY:theta_function
  use com,                 ONLY:warning
-#if defined _TIMING
  use timing_m,            ONLY:timing
-#endif
  !
 #include<memory.h>
  !
@@ -74,9 +72,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call section('=','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  endif
  !
-#if defined _TIMING
  call timing('GW (Lamb)',OPR='start')
-#endif
  !
  ! PARALLEL distribution
  !=======================
@@ -275,9 +271,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
  endif
  !
-#if defined _TIMING
  call timing('GW (Lamb)',OPR='stop')
-#endif
  !
  contains
    !

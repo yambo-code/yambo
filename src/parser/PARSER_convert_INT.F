@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_convert_i(ivar,v_descr,force_RL)
+subroutine PARSER_convert_INT(ivar,v_descr,force_RL)
  !
  use units,  ONLY:Gigabyte,Megabyte,Kilobyte
  !
@@ -34,22 +34,22 @@ subroutine init_convert_i(ivar,v_descr,force_RL)
  if (ivar<0) return
  !
  if (index(v_descr,'RL')/=0) then
-   call Gclose(ivar,'tRL')
+   call PARSER_close_G(ivar,'tRL')
  else if (index(v_descr,'mHa')/=0) then
-   if (force_RL     ) call Gclose(ivar,'tRL')
-   if (.not.force_RL) call Gclose(ivar,'tmHa')
+   if (force_RL     ) call PARSER_close_G(ivar,'tRL')
+   if (.not.force_RL) call PARSER_close_G(ivar,'tmHa')
  else if (index(v_descr,'Ha')/=0) then
-   if (force_RL     ) call Gclose(ivar,'tRL')
-   if (.not.force_RL) call Gclose(ivar,'tHa')
+   if (force_RL     ) call PARSER_close_G(ivar,'tRL')
+   if (.not.force_RL) call PARSER_close_G(ivar,'tHa')
  else if (index(v_descr,'mRy')/=0) then
-   if (force_RL     ) call Gclose(ivar,'tRL')
-   if (.not.force_RL) call Gclose(ivar,'tmRy')
+   if (force_RL     ) call PARSER_close_G(ivar,'tRL')
+   if (.not.force_RL) call PARSER_close_G(ivar,'tmRy')
  else if (index(v_descr,'Ry')/=0) then
-   if (force_RL     ) call Gclose(ivar,'tRL')
-   if (.not.force_RL) call Gclose(ivar,'tRy')
+   if (force_RL     ) call PARSER_close_G(ivar,'tRL')
+   if (.not.force_RL) call PARSER_close_G(ivar,'tRy')
  else if (index(v_descr,'eV')/=0) then
-   if (force_RL     ) call Gclose(ivar,'tRL')
-   if (.not.force_RL) call Gclose(ivar,'teV')
+   if (force_RL     ) call PARSER_close_G(ivar,'tRL')
+   if (.not.force_RL) call PARSER_close_G(ivar,'teV')
  else if (index(v_descr,'Mb')/=0) then
    ivar=ivar*Kilobyte/Megabyte
  else if (index(v_descr,'Gb')/=0) then

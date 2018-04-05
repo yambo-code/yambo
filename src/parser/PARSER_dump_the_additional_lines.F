@@ -21,30 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_parse_K_list(k,variable)
+subroutine PARSER_dump_the_additional_lines(ou)
  !
- use pars,           ONLY:SP
- use R_lattice,      ONLY:bz_samp
- use parser_m,       ONLY:parser
+ use it_m,       ONLY:infile,nADDITIONAL_flines,ADDITIONAL_flines
+ use drivers,    ONLY:infile_editing
+ use parallel_m, ONLY:master_cpu
  !
-#include<memory.h>
- type(bz_samp)::k
- character(*) ::variable
+ implicit none
+ !
+ integer :: ou
  !
  ! Work Space
  !
- real(SP)     ::real_ctl
+ integer :: i1
  !
- real_ctl=0.
- k%nibz=1
- K_loop: do while(real_ctl/=999.)
-   YAMBO_FREE(k%pt)
-   YAMBO_ALLOC(k%pt,(k%nibz,3))
-   k%pt(k%nibz,:)=(/0.,0.,999./)
-   call parser('QptCoord',k%pt)
-   real_ctl=k%pt(k%nibz,3)
-   if (real_ctl/=999.) k%nibz=k%nibz+1
- enddo K_loop
- k%nibz=k%nibz-1
+ if (infile_editing) open(unit=ou,file=trim(infile),position='append')
+ do i1=1,nADDITIONAL_flines
+   if (master_cpu) then
+      if (ou==12) write (ou,'(a)') trim(ADDITIONAL_flines(i1))
+      if (ou==11) write (ou,'(2a)') ' | ',trim(ADDITIONAL_flines(i1))
+    endif
+    if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(ADDITIONAL_flines(i1))
+ enddo 
+ if (infile_editing) close(ou)
  !
 end subroutine

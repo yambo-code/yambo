@@ -172,8 +172,8 @@ subroutine electrons_bands(Xk,Xen)
  enddo
  !
  if(BANDS_interpolate.and.n_spinor==2) then
-   file_name_spin_magn(1)="spin_factors_1"
-   file_name_spin_magn(2)="spin_factors_2"
+   file_name_spin_magn(1)="spin_factors_UP"
+   file_name_spin_magn(2)="spin_factors_DN"
    file_name_spin_magn(3)="magnetization_x"
    file_name_spin_magn(4)="magnetization_y"
    file_name_spin_magn(5)="magnetization_z"

@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine init_convert_r(rfac,v_descr)
+subroutine PARSER_convert_REAL(rfac,v_descr)
  !
  use pars,   ONLY:SP
- use units
+ use units,  ONLY:HA2EV,HA2GHZ,HA2THZ,FS2AUT,PS2AUT,AS2AUT,AU2Tesla,&
+&                 AU2VMm1,DEG2RAD,AU2KWCMm2
  !
  implicit none
  !

@@ -59,8 +59,8 @@ module YPP
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter        :: n_SPECIAL_k_MAX=20
- character(1), allocatable :: CIRCUIT_k_label(:)
- character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ character(2), allocatable :: CIRCUIT_k_label(:)
+ character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k
@@ -82,7 +82,7 @@ module YPP
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
  type(levels)          ::CIRCUIT_E_db
- integer               ::interp_grid(3)  ! Interpolation Grid
+ integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
  logical               ::BANDS_E_and_k_db

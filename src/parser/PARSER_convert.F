@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ps_convert(rvar,ivar,v_name)
+subroutine PARSER_convert(rvar,ivar,v_name)
  !
  use pars,  ONLY:SP,lchlen,schlen
  use units, ONLY:AS2AUT,AU2VMm1,FS2AUT,HA2GHZ,HA2THZ,kWCMm22AU,&
@@ -85,22 +85,22 @@ subroutine ps_convert(rvar,ivar,v_name)
    ! INTEGERS
    !
    if (index(v_line,'RL')/=0.or.index(v_line,'rl')/=0) then
-     call Gclose(ivar,'fRL')
+     call PARSER_close_G(ivar,'fRL')
      call set_itp_unit('RL',1)
    else if (index(v_line,'mha')/=0.or.index(v_line,'mHa')/=0) then
-     call Gclose(ivar,'fmHa')
+     call PARSER_close_G(ivar,'fmHa')
      call set_itp_unit('mHa',1)
    else if (index(v_line,'Ha')/=0.or.index(v_line,'ha')/=0) then
-     call Gclose(ivar,'fHa')
+     call PARSER_close_G(ivar,'fHa')
      call set_itp_unit('Ha',1)
    else if (index(v_line,'mry')/=0.or.index(v_line,'mRy')/=0) then
-     call Gclose(ivar,'fmRy')
+     call PARSER_close_G(ivar,'fmRy')
      call set_itp_unit('mRy',1)
    else if (index(v_line,'Ry')/=0.or.index(v_line,'ry')/=0) then
-     call Gclose(ivar,'fRy')
+     call PARSER_close_G(ivar,'fRy')
      call set_itp_unit('Ry',1)
    else if (index(v_line,'eV')/=0.or.index(v_line,'ev')/=0) then
-     call Gclose(ivar,'feV')
+     call PARSER_close_G(ivar,'feV')
      call set_itp_unit('eV',1)
    else if (index(v_line,'Gb')/=0) then
      ivar=ivar*Gigabyte/Kilobyte

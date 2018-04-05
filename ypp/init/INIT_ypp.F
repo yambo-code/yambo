@@ -42,6 +42,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+ use parser_m,       ONLY:PARSER_array
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
@@ -53,7 +54,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,Eh_pumped_pair_n_BZ_regions
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
@@ -84,7 +85,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
  integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
- integer, external::parse_character_arrays
  !
  ! What is running ?
  !
@@ -508,11 +508,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then
-   call initactivate(1,'RTpumpNel RTBands')
+   call initactivate(1,'RTpumpNel RTpumpSpin RTBands')
    if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
    if (l_RTpump_kspace) then
      call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
-     do i1=1,n_regions
+     do i1=1,Eh_pumped_pair_n_BZ_regions
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
@@ -636,9 +636,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
-&              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
+!   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
+!   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
+!&              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
  endif
  !
 contains
@@ -688,9 +688,6 @@ contains
        real_v(i_p,i_p)=5.E-5_SP
      enddo
    endif
-   !
-   ADDITIONAL_flines = " "
-   nADDITIONAL_flines= 0
    !
    nflines_save=nflines
    if (field=="GWKpts") then

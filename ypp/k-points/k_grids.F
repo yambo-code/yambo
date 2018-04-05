@@ -352,7 +352,7 @@ subroutine k_grids(en,k,Xk,q)
    call section('+',"== Special Points for the "//trim(lattice)//" lattice ==")
    !===========================================================================  
    !
-   call k_special()
+   call k_special( )
    !
  endif
  !

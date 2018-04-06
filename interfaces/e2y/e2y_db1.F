@@ -125,6 +125,7 @@ subroutine e2y_db1(en,k,ncid)
  ! All other data
  !
  call import_miscellaneous_data
+ call msg('s','Misc data...done')
  !
  ! Report
  !
@@ -330,6 +331,7 @@ contains
     endif
     !
     if(trim(ETSF_kind)=='WFK') then
+
       !
       ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
       ! a gamma centered G-vector sphere
@@ -346,6 +348,7 @@ contains
       !       inv_map_k    map_gamma
       !      npw -> xyz   xyz -> npw
       ! TODO: handle the istwfk /= 1 cases
+      !
 
       ! 1.
       b_transpose = transpose(b)
@@ -369,7 +372,7 @@ contains
       n3 = 2*max_nz + 1
 
       ! Calculate G-vectors inside the sphere
-      allocate( g_vec(ng_vec_abinit,3) )
+      allocate( g_vec(wf_ncx*2,3) )
       npw = 0
       igk = -1
       do i1=-n1,n1
@@ -385,32 +388,35 @@ contains
                 g_vec(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
                 npw = npw+1
             end if
+            if (npw > wf_ncx*2) then
+                write(*,*) 'an error has occurred: npw > wf_ncx*2'
+                call exit(0)
+            end if
           end do
         end do
       end do
+      ng_vec = npw
 
       ! can sort the G vectors in whatever way here
 
       ! 2.
       allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-      do ic=1,npw
-        write(*,*) igk(:,ic)
-      end do
+      !do ic=1,npw
+      !  write(*,*) igk(:,ic)
+      !end do
       call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
 
       ! 3.
       ! Same thing but for the K-dependent G-spheres     
       ! Get storage type of the wavefunctions
-      !call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
-      istwfk = 1
-      
+      call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
-        write(*,*)
-        write(*,*)
-        do ic=1,npw
-          write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
-        end do
+        !write(*,*)
+        !write(*,*)
+        !do ic=1,npw
+        !  write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
+        !end do
         call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
       end do
  
@@ -430,9 +436,13 @@ contains
         end do
         wf_igk(ic,ik) = npw
       end do
+      wf_ng=maxval(wf_nc_k)
 
-      call exit(0)
 
+
+
+
+      !
       !TO BE REMOVED
       !
       if (.false.) then
@@ -519,6 +529,17 @@ contains
       endif
       !
       !END TO BE REMOVED
+
+
+
+
+
+
+
+
+
+
+
 
 
     endif
@@ -719,17 +740,17 @@ contains
     !
     ! Spin orbit splitting (Abinit)
     !
-    allocate(spin_orbit_atom_(n_atomic_species))
-    call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
-    if(lstat) then
+    !allocate(spin_orbit_atom_(n_atomic_species))
+    !call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
+    !if(lstat) then
       l_spin_orbit = .false.
-      if(any(spin_orbit_atom_.eq.2).or.any(spin_orbit_atom_.eq.3)) then
-        l_spin_orbit = .true.
-      endif
-    else
-      l_spin_orbit = .false.
-    endif
-    deallocate(spin_orbit_atom_)
+      !if(any(spin_orbit_atom_.eq.2).or.any(spin_orbit_atom_.eq.3)) then
+      !  l_spin_orbit = .true.
+      !endif
+    !else
+    !  l_spin_orbit = .false.
+    !endif
+    !deallocate(spin_orbit_atom_)
     !
     ! XC functional (Abinit)
     !

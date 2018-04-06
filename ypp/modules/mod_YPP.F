@@ -51,10 +51,10 @@ module YPP
  !
  integer  :: n_u_k_pts,n_u_q_pts,n_u_interp_pts
  !
- real(SP) :: U_k_pts(10,3)
- real(SP) :: U_q_pts(10,3)
- real(SP) :: U_q_shifts(3,3)
- real(SP) :: U_interp_pts(10,3)
+ real(SP), allocatable :: U_k_pts(:,:)
+ real(SP), allocatable :: U_q_pts(:,:)
+ real(SP), allocatable :: U_interp_pts(:,:)
+ real(SP)              :: U_q_shifts(3,3)
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
@@ -168,10 +168,12 @@ module YPP
  logical     :: l_QP_DBs_create_and_modify
  logical     :: l_QP_DBs_manipulate
  integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_input_control(:,:)
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
  character(schlen),  allocatable :: QP_db_operation(:)
  real(SP),           allocatable :: QP_db_prefactor(:)
+ real(SP),           allocatable :: QP_user_corrections(:,:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy

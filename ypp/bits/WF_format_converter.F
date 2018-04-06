@@ -77,7 +77,6 @@ subroutine WF_format_converter(E,Xk,q)
    !
  endif
  !
- !
  call section('=',trim(section_name))
  !====================================
  !

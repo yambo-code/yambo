@@ -21,28 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_QP(use_for_QP,Energy_range)
+subroutine INIT_QP(comment)
  !
  ! QP_state -> input file
  !
  use pars,      ONLY:SP
  use QP_m,      ONLY:QP_nk,QP_nb,QP_state
  use parser_m,  ONLY:PARSER_array
+ use it_m,      ONLY:check_verbosity
+ use drivers,   ONLY:infile_editing
  !
 #include<memory.h>
  !
- logical :: use_for_QP,Energy_range
+ character(*) ::comment
  ! 
  ! Work Space
  !
- character(7)         :: comment
  integer              :: n_states,state(4),i_c
  integer,    external :: QP_state_extract
  integer ,allocatable :: I_states(:,:)
  real(SP),allocatable :: R_states(:,:)
- !
- comment= ''
- if (use_for_QP) comment="[GW] QP"
  !
  call PARSER_array(mode="REAL dimensions",VAR="QPkrange",N=n_states,M=4)
  if (n_states==0) then
@@ -72,7 +70,7 @@ subroutine INIT_QP(use_for_QP,Energy_range)
  !
  YAMBO_FREE(I_states)
  !
- if (Energy_range) then
+ if (check_verbosity("qp").or..not.infile_editing) then
    call PARSER_array(mode="REAL dimensions",VAR="QPerange",N=n_states,M=4)
    if (n_states==0) then
      n_states=1
@@ -83,7 +81,7 @@ subroutine INIT_QP(use_for_QP,Energy_range)
      call PARSER_array(mode="read",VAR="QPerange",N=N_states,M=4,R_v=R_states)
    endif
    call PARSER_array(mode="write",VAR="QPerange",DESC='# '//trim(comment)//' generalized Kpoint/Energy indices',&
-&                    N=n_states,M=2,I_v=int(R_states(:,1:2)),R_v=R_states(:,3:4))
+&                    N=n_states,M=4,R_v=R_states,Kn=(/"i","i","r","r"/))
  endif
  !
  YAMBO_FREE(R_states)

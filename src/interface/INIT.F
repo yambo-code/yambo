@@ -47,7 +47,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,V_real_time,V_qp,V_all,check_verbosity
+&                         switch_off_runlevel,check_verbosity
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -975,12 +975,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  !
 #if defined _RT
- if ((infile_verbosity==V_real_time.or.infile_verbosity==V_all).and.l_real_time) call INIT_DephMatrix()
+ if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
 #endif
  !
  ! Q-points (from input/DB)
  !
- if (l_setup.and.infile_editing.and.io_QINDX_err/=0.and.check_verbosity("kpt")) call INIT_q_points( )
+ if (l_setup.and.io_QINDX_err/=0) call INIT_q_points( )
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -996,7 +996,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    if (allocated(QP_state)) call QP_state_table_setup(en)
    !
-   call INIT_QP(.TRUE.,infile_verbosity==V_qp.or.infile_verbosity==V_all.or..not.infile_editing)
+   call INIT_QP("[GW] QP")
    !
    ! I use it to propose the value in the input file ...
    !

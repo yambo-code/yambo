@@ -31,16 +31,17 @@ module parser_m
  end interface
  !
  interface 
-   subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v)
+   subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
      use pars,  ONLY:SP,lchlen
      implicit none
      character(*)                ::mode
      integer                     ::N,M
      character(*)                ::VAR
      character(*)     , OPTIONAL ::DESC
-     character(lchlen), OPTIONAL ::CH_v(:,:)
-     integer,           OPTIONAL ::I_v(:,:)
-     real(SP),          OPTIONAL ::R_v(:,:)
+     character(*)     , OPTIONAL ::CH_v(N,M)
+     integer,           OPTIONAL ::I_v(N,M)
+     real(SP),          OPTIONAL ::R_v(N,M)
+     character(1),      OPTIONAL ::Kn(M)
    end subroutine
  end interface
  !

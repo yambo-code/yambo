@@ -272,6 +272,7 @@ module real_time
  !------------------------------
  !
  real(SP)                 :: RT_ave_dephasing
+ real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs (retarded)

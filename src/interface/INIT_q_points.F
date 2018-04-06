@@ -29,6 +29,7 @@ subroutine INIT_q_points( )
  ! 2. reads the q-points from the e-p DB's 
  !
  use pars,        ONLY:SP,schlen,DP
+ use it_m,        ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
 #if defined _ELPH
  use ELPH,        ONLY:ph_qpt,elph_use_q_grid,elph_nDBs,elph_grids_are_expanded
@@ -65,6 +66,8 @@ subroutine INIT_q_points( )
    q_pt(:,:)=-real(ph_qpt(:,:),SP)
  endif
 #endif
+ !
+ if (.not.check_verbosity("kpt")) return
  !
  ! Now check the input file
  !

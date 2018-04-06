@@ -287,7 +287,7 @@ contains
     integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
     real                          :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
     integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
-    integer,     allocatable      :: igk(:,:), g_vec_tmp(:,:), istwfk(:), map_k(:,:,:), map_gamma(:,:,:)
+    integer,     allocatable      :: igk(:,:), g_vec_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
@@ -296,7 +296,7 @@ contains
     !
     call allocate_basisdata_group
     allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
-    allocate( istwfk(k%nibz), igk(3,wf_ncx) )
+    allocate( istwfk(k%nibz), igk(3,wf_ncx*2) )
     !
     if(trim(ETSF_kind)=='KSS') then
       basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
@@ -338,18 +338,20 @@ contains
       !   1. Generate a G-sphere that accomodates all the G components
       !   2. Put this G-sphere into a big box using the 'gsphere_abinit' 
       !      routine and obtain mapping G-sphere to components
+      !      map_gamma :  xyz -> npw
       !   3. Put the G-vectors associated to each K-point in the same big box 
       !      using 'gsphere_abinit' and obtain mapping G-sphere to components
+      !      inv_map_k :  npw -> xyz
       !   4. Use the mappings 2 and 3 to generate wf_igk mapping
-      !
+      !       inv_map_k    map_gamma
+      !      npw -> xyz   xyz -> npw
       ! TODO: handle the istwfk /= 1 cases
 
       ! 1.
       b_transpose = transpose(b)
-      write(*,*)
 
       ! Get dimensions of sphere
-      ecut = 20
+      ecut = 1.1
       call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
 
       max_nx = 0
@@ -367,139 +369,156 @@ contains
       n3 = 2*max_nz + 1
 
       ! Calculate G-vectors inside the sphere
+      allocate( g_vec(ng_vec_abinit,3) )
       npw = 0
       igk = -1
       do i1=-n1,n1
         do i2=-n2,n2
           do i3=-n3,n3
             igv = [i1,i2,i3]
-            temp_g_vec = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
+            temp_g_vec = matmul(b_transpose,igv)/2.0_SP/pi
             norm_2 = temp_g_vec(1)**2.0_SP
             norm_2 = temp_g_vec(2)**2.0_SP + norm_2
             norm_2 = temp_g_vec(3)**2.0_SP + norm_2
             if (ecut .gt. 0.5_SP*norm_2) then
                 igk(:,npw) = igv
-                !write(*,*) temp_g_vec
-                !write(*,*) igk(:,npw)
+                g_vec(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
                 npw = npw+1
             end if
           end do
         end do
       end do
 
+      ! can sort the G vectors in whatever way here
+
       ! 2.
-      allocate(map_gamma(n1,n2,n3), map_k(n1,n2,n3))
+      allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
       do ic=1,npw
         write(*,*) igk(:,ic)
       end do
-      !call gsphere_abinit(n1,n2,n3,igk,npw,1,map_gamma)
+      call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
 
       ! 3.
       ! Same thing but for the K-dependent G-spheres     
       ! Get storage type of the wavefunctions
-      call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
+      !call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
+      istwfk = 1
+      
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
         write(*,*)
         write(*,*)
-        do ic=1,wf_nc_k(ik)
+        do ic=1,npw
           write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
         end do
-        !call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),map_k)
+        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
       end do
  
       ! 4.
       ! Do the mapping
+      wf_igk(ic,ik) = -1
+      do ik=1,k%nibz
+        do ic=1,wf_nc_k(ik)
+          i1 = inv_map_k(1,ic)
+          i2 = inv_map_k(2,ic)
+          i3 = inv_map_k(3,ic)
+          npw = map_gamma(i1,i2,i3)
+          if (npw .eq. -1) then
+              write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
+              call exit(0)
+          end if
+        end do
+        wf_igk(ic,ik) = npw
+      end do
 
       call exit(0)
 
-
-
       !TO BE REMOVED
       !
-      allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
-      wf_nc_k = basisdata_group%number_of_coefficients
-      wf_igk=-1
-      !
-      ! First guess: G vectors= gvectors at gamma
-      ng_vec = wf_nc_k(1) 
-      allocate(g_vec_tmp(2*wf_ncx,3))
-      !
-      do ic=1,wf_nc_k(1)
-        wf_igk(ic,1)=ic
-        ig=wf_igk(ic,1)
-        g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_WFK_(:,ic,1)
-      enddo
-      !
-      do ik=2,k%nibz
-        ng_vec_old=ng_vec
-        allocate(l_g_mapped(ng_vec_old))
-        l_g_mapped=.false.
-        do ic=1,wf_nc_k(ik)
-          g_vec_new=reduced_coordinates_of_plane_waves_WFK_(:,ic,ik)
-          l_new=.true.
-          do ig=1,ng_vec_old
-            if(l_g_mapped(ig)) cycle
-            if( all(g_vec_tmp(ig,:)-g_vec_new(:)==0) ) then
-              l_new=.false.
-              l_g_mapped(ig)=.true.
-              wf_igk(ic,ik)=ig
-              exit
-            endif
+      if (.false.) then
+          allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
+          wf_nc_k = basisdata_group%number_of_coefficients
+          wf_igk=-1
+          !
+          ! First guess: G vectors= gvectors at gamma
+          ng_vec = wf_nc_k(1) 
+          allocate(g_vec_tmp(2*wf_ncx,3))
+          !
+          do ic=1,wf_nc_k(1)
+            wf_igk(ic,1)=ic
+            ig=wf_igk(ic,1)
+            g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_WFK_(:,ic,1)
           enddo
-          if(.not.l_new) cycle
-          ng_vec=ng_vec+1
-          g_vec_tmp(ng_vec,:)=g_vec_new
-          wf_igk(ic,ik)=ng_vec
-        enddo
-        deallocate(l_g_mapped)
-      enddo
-      !
-      ng_vec_abinit=ng_vec
-      !
-      allocate(g_vec(ng_vec,3))
-      do ig=1,ng_vec
-        g_vec(ig,:3)=matmul(transpose(b),g_vec_tmp(ig,:3))*alat(:)/2.0_SP/pi
-      enddo
-      deallocate(g_vec_tmp)
-      !
-      if(nsym>1) then
-        call msg('s','Closing shells against symmetries...')
-        do is=2,nsym
-          call G_rot_grid(is,'extend_grid')
-        enddo
-        call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+          !
+          do ik=2,k%nibz
+            ng_vec_old=ng_vec
+            allocate(l_g_mapped(ng_vec_old))
+            l_g_mapped=.false.
+            do ic=1,wf_nc_k(ik)
+              g_vec_new=reduced_coordinates_of_plane_waves_WFK_(:,ic,ik)
+              l_new=.true.
+              do ig=1,ng_vec_old
+                if(l_g_mapped(ig)) cycle
+                if( all(g_vec_tmp(ig,:)-g_vec_new(:)==0) ) then
+                  l_new=.false.
+                  l_g_mapped(ig)=.true.
+                  wf_igk(ic,ik)=ig
+                  exit
+                endif
+              enddo
+              if(.not.l_new) cycle
+              ng_vec=ng_vec+1
+              g_vec_tmp(ng_vec,:)=g_vec_new
+              wf_igk(ic,ik)=ng_vec
+            enddo
+            deallocate(l_g_mapped)
+          enddo
+          !
+          ng_vec_abinit=ng_vec
+          !
+          allocate(g_vec(ng_vec,3))
+          do ig=1,ng_vec
+            g_vec(ig,:3)=matmul(transpose(b),g_vec_tmp(ig,:3))*alat(:)/2.0_SP/pi
+          enddo
+          deallocate(g_vec_tmp)
+          !
+          if(nsym>1) then
+            call msg('s','Closing shells against symmetries...')
+            do is=2,nsym
+              call G_rot_grid(is,'extend_grid')
+            enddo
+            call msg('l','done')
+            if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+          endif
+          !
+          ! Re-ordering by increasing module
+          !==================================
+          ! indx_m1 (j) went to position indx_m1(j)
+          ! indx    (i) before was in position indx(i) 
+          allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+          do ig=1,ng_vec
+            G_mod(ig)=iku_v_norm(g_vec(ig,:))
+          enddo
+          call sort(G_mod,indx_m1=G_mod_indx)
+          deallocate(G_mod)
+          !
+          allocate(g_vec_sort(ng_vec,3))
+          g_vec_sort=g_vec
+          g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
+          deallocate(g_vec_sort)
+          !
+          ! Sort wf_igk accordingly
+          allocate( wf_igk_tmp(wf_ncx,k%nibz) )
+          wf_igk_tmp=wf_igk
+          wf_igk=-1
+          do ik=1,k%nibz
+            wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
+          enddo
+          deallocate( wf_igk_tmp,G_mod_indx )
+          wf_ng=maxval(wf_igk)
       endif
       !
-      ! Re-ordering by increasing module
-      !==================================
-      ! indx_m1 (j) went to position indx_m1(j)
-      ! indx    (i) before was in position indx(i) 
-      allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
-      do ig=1,ng_vec
-        G_mod(ig)=iku_v_norm(g_vec(ig,:))
-      enddo
-      call sort(G_mod,indx_m1=G_mod_indx)
-      deallocate(G_mod)
-      !
-      allocate(g_vec_sort(ng_vec,3))
-      g_vec_sort=g_vec
-      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
-      deallocate(g_vec_sort)
-      !
-      ! Sort wf_igk accordingly
-      allocate( wf_igk_tmp(wf_ncx,k%nibz) )
-      wf_igk_tmp=wf_igk
-      wf_igk=-1
-      do ik=1,k%nibz
-        wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
-      enddo
-      deallocate( wf_igk_tmp,G_mod_indx )
-      wf_ng=maxval(wf_igk)
-      !
       !END TO BE REMOVED
-
 
 
     endif
@@ -518,7 +537,7 @@ contains
   ! 
   ! Maps G vectors defined in the kg_k to a fftbox of n1,n2,n3
   !
-  subroutine gsphere_abinit(n1,n2,n3,kg_k,npw,istwf_k,map)
+  subroutine gsphere_abinit(n1,n2,n3,kg_k,npw,istwf_k,map,inv_map)
 
   implicit none
 
@@ -527,13 +546,14 @@ contains
   integer,intent(in)  :: istwf_k,n1,n2,n3,npw
   !arrays
   integer,intent(in)  :: kg_k(3,npw)
-  integer,intent(out) :: map(n1,n2,n3)
+  integer,optional,intent(out) :: map(n1,n2,n3)
+  integer,optional,intent(out) :: inv_map(3,npw)
 
   !Local variables-------------------------------
   !scalars
   integer :: i1,i1inv,i2,i2inv,i3,i3inv,id1,id2,id3,idat,ipw
   !arrays
-  integer :: i1inver(n1),i2inver(n2),i3inver(n3)
+  !integer :: i1inver(n1),i2inver(n2),i3inver(n3)
 
   !In the case of special k-points, invariant under time-reversal,
   !but not Gamma, initialize the inverse coordinates. !Remember indeed that
@@ -541,48 +561,50 @@ contains
   !  u_k(G) = u_{k+G0}(G-G0); u_{-k}(G) = u_k(G)^* and therefore:
   !  u_{G0/2}(G) = u_{G0/2}(-G-G0)^*.
 
-  if (istwf_k>=2) then
-    if(istwf_k==2 .or. istwf_k==4 .or. istwf_k==6 .or. istwf_k==8)then
-      i1inver(1)=1
-      do i1=2,n1
-        i1inver(i1)=n1+2-i1
-      end do
-    else
-      do i1=1,n1
-        i1inver(i1)=n1+1-i1
-      end do
-    end if
-    if(istwf_k>=2 .and. istwf_k<=5)then
-      i2inver(1)=1
-      do i2=2,n2
-        i3inver(i2)=n2+2-i2
-      end do
-    else
-      do i2=1,n2
-        i2inver(i2)=n2+1-i2
-      end do
-    end if
-    if(istwf_k==2 .or. istwf_k==3 .or. istwf_k==6 .or. istwf_k==7)then
-      i3inver(1)=1
-      do i3=2,n3
-        i3inver(i3)=n3+2-i3
-      end do
-    else
-      do i3=1,n3
-        i3inver(i3)=n3+1-i3
-      end do
-    end if
-  end if
+  !if (istwf_k>=2) then
+  !  if(istwf_k==2 .or. istwf_k==4 .or. istwf_k==6 .or. istwf_k==8)then
+  !    i1inver(1)=1
+  !    do i1=2,n1
+  !      i1inver(i1)=n1+2-i1
+  !    end do
+  !  else
+  !    do i1=1,n1
+  !      i1inver(i1)=n1+1-i1
+  !    end do
+  !  end if
+  !  if(istwf_k>=2 .and. istwf_k<=5)then
+  !    i2inver(1)=1
+  !    do i2=2,n2
+  !      i3inver(i2)=n2+2-i2
+  !    end do
+  !  else
+  !    do i2=1,n2
+  !      i2inver(i2)=n2+1-i2
+  !    end do
+  !  end if
+  !  if(istwf_k==2 .or. istwf_k==3 .or. istwf_k==6 .or. istwf_k==7)then
+  !    i3inver(1)=1
+  !    do i3=2,n3
+  !      i3inver(i3)=n3+2-i3
+  !    end do
+  !  else
+  !    do i3=1,n3
+  !      i3inver(i3)=n3+1-i3
+  !    end do
+  !  end if
+  !end if
 
   ! TODO: handle the istwfk /= 1 cases
   ! create mapping from G sphere to box
+  if (present(map))     map = -1
+  if (present(inv_map)) inv_map = -1
   do ipw=1,npw
     i1=kg_k(1,ipw); if(i1<0)i1=i1+n1; i1=i1+1
     i2=kg_k(2,ipw); if(i2<0)i2=i2+n2; i2=i2+1
     i3=kg_k(3,ipw); if(i3<0)i3=i3+n3; i3=i3+1
 
-    write(*,*) i1,i2,i3, ipw
-    map(i1,i2,i3)=ipw
+    if (present(map)    ) map(i1,i2,i3)  = ipw
+    if (present(inv_map)) inv_map(:,ipw) = [i1,i2,i3]
   end do
 
   end subroutine

@@ -349,16 +349,19 @@ contains
       write(*,*)
 
       ! Get dimensions of sphere
-      ecut = 10
+      ecut = 20
       call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
 
+      max_nx = 0
+      max_ny = 0
+      max_nz = 0
       do ik=1,k%nibz
-        write(*,*) ik, wf_nc_k(ik)
-        max_nx = max(max_nx,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(1,:,ik)))
-        max_ny = max(max_ny,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(2,:,ik)))
-        max_nz = max(max_nz,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(3,:,ik)))
+        !write(*,*) ik, wf_nc_k(ik)
+        max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_wfk_(1,:,ik)))
+        max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_wfk_(2,:,ik)))
+        max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_wfk_(3,:,ik)))
       end do
-      write(*,*) max_nx, max_ny, max_nz
+      !write(*,*) max_nx, max_ny, max_nz
       n1 = 2*max_nx + 1
       n2 = 2*max_ny + 1
       n3 = 2*max_nz + 1
@@ -366,21 +369,16 @@ contains
       ! Calculate G-vectors inside the sphere
       npw = 0
       igk = -1
-      do i1=1,2*max_nx
-        do i2=1,2*max_ny
-          do i3=1,2*max_nz
-            if (i1 >  max_nx) igv(1) = max_nx-i1
-            if (i1 <= max_nx) igv(1) = i1-1
-            if (i2 >  max_ny) igv(2) = max_ny-i2
-            if (i2 <= max_ny) igv(2) = i2-1
-            if (i3 >  max_nz) igv(3) = max_nz-i3
-            if (i3 <= max_nz) igv(3) = i3-1
+      do i1=-n1,n1
+        do i2=-n2,n2
+          do i3=-n3,n3
+            igv = [i1,i2,i3]
             temp_g_vec = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
             norm_2 = temp_g_vec(1)**2.0_SP
             norm_2 = temp_g_vec(2)**2.0_SP + norm_2
             norm_2 = temp_g_vec(3)**2.0_SP + norm_2
             if (ecut .gt. 0.5_SP*norm_2) then
-                igk(:,npw) = [i1,i2,i3]
+                igk(:,npw) = igv
                 !write(*,*) temp_g_vec
                 !write(*,*) igk(:,npw)
                 npw = npw+1
@@ -390,17 +388,24 @@ contains
       end do
 
       ! 2.
-      allocate(map_gamma(n1,n2,n3),map_k(n1,n2,n3))
-      call gsphere_abinit(n1,n2,n3,igk,npw,1,map_gamma)
+      allocate(map_gamma(n1,n2,n3), map_k(n1,n2,n3))
+      do ic=1,npw
+        write(*,*) igk(:,ic)
+      end do
+      !call gsphere_abinit(n1,n2,n3,igk,npw,1,map_gamma)
 
       ! 3.
       ! Same thing but for the K-dependent G-spheres     
       ! Get storage type of the wavefunctions
       call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
-      write(*,*) istwfk 
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
-        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),map_k)
+        write(*,*)
+        write(*,*)
+        do ic=1,wf_nc_k(ik)
+          write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
+        end do
+        !call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),map_k)
       end do
  
       ! 4.

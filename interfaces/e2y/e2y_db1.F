@@ -269,21 +269,25 @@ contains
     ! Note that functional information is read in 'miscellaneous' section
     return
   end subroutine import_electrons_group
+
+
   !
   ! Wavefunction grids: l_KSS == (k-dependent = no)
-  !===========================================================
+  !
   subroutine import_basisdata_group
     !
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
-    use wave_func,            only : wf_nc_k, wf_igk,wf_ncx,wf_ng
+    use wave_func,            only : wf_nc_k, wf_igk, wf_ncx, wf_ng
     !
     implicit none
     !
     type(etsf_basisdata)          :: basisdata_group
-    integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
-    integer,     allocatable      :: g_vec_tmp(:,:)
+    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
+    real                          :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
+    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
+    integer,     allocatable      :: igk(:,:), g_vec_tmp(:,:), istwfk(:), map_k(:,:,:), map_gamma(:,:,:)
     real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
@@ -291,12 +295,15 @@ contains
     character(len=15)             :: format1
     !
     call allocate_basisdata_group
+    allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
+    allocate( istwfk(k%nibz), igk(3,wf_ncx) )
     !
-    if(trim(ETSF_kind)=='KSS') &
-&     basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
-    if(trim(ETSF_kind)=='WFK') &
-&     basisdata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_WFK_
-    basisdata_group%number_of_coefficients  => number_of_coefficients_
+    if(trim(ETSF_kind)=='KSS') then
+      basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
+    endif
+    if(trim(ETSF_kind)=='WFK') then
+      basisdata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_wfk_
+    endif
     !
     call etsf_io_basisdata_get(ncid, basisdata_group, lstat, error_data)
     !
@@ -323,6 +330,87 @@ contains
     endif
     !
     if(trim(ETSF_kind)=='WFK') then
+      !
+      ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
+      ! a gamma centered G-vector sphere
+      !
+      ! the mapping is found by:
+      !   1. Generate a G-sphere that accomodates all the G components
+      !   2. Put this G-sphere into a big box using the 'gsphere_abinit' 
+      !      routine and obtain mapping G-sphere to components
+      !   3. Put the G-vectors associated to each K-point in the same big box 
+      !      using 'gsphere_abinit' and obtain mapping G-sphere to components
+      !   4. Use the mappings 2 and 3 to generate wf_igk mapping
+      !
+      ! TODO: handle the istwfk /= 1 cases
+
+      ! 1.
+      b_transpose = transpose(b)
+      write(*,*)
+
+      ! Get dimensions of sphere
+      ecut = 10
+      call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
+
+      do ik=1,k%nibz
+        write(*,*) ik, wf_nc_k(ik)
+        max_nx = max(max_nx,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(1,:,ik)))
+        max_ny = max(max_ny,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(2,:,ik)))
+        max_nz = max(max_nz,maxval(basisdata_group%reduced_coordinates_of_plane_waves%data3d(3,:,ik)))
+      end do
+      write(*,*) max_nx, max_ny, max_nz
+      n1 = 2*max_nx + 1
+      n2 = 2*max_ny + 1
+      n3 = 2*max_nz + 1
+
+      ! Calculate G-vectors inside the sphere
+      npw = 0
+      igk = -1
+      do i1=1,2*max_nx
+        do i2=1,2*max_ny
+          do i3=1,2*max_nz
+            if (i1 >  max_nx) igv(1) = max_nx-i1
+            if (i1 <= max_nx) igv(1) = i1-1
+            if (i2 >  max_ny) igv(2) = max_ny-i2
+            if (i2 <= max_ny) igv(2) = i2-1
+            if (i3 >  max_nz) igv(3) = max_nz-i3
+            if (i3 <= max_nz) igv(3) = i3-1
+            temp_g_vec = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
+            norm_2 = temp_g_vec(1)**2.0_SP
+            norm_2 = temp_g_vec(2)**2.0_SP + norm_2
+            norm_2 = temp_g_vec(3)**2.0_SP + norm_2
+            if (ecut .gt. 0.5_SP*norm_2) then
+                igk(:,npw) = [i1,i2,i3]
+                !write(*,*) temp_g_vec
+                !write(*,*) igk(:,npw)
+                npw = npw+1
+            end if
+          end do
+        end do
+      end do
+
+      ! 2.
+      allocate(map_gamma(n1,n2,n3),map_k(n1,n2,n3))
+      call gsphere_abinit(n1,n2,n3,igk,npw,1,map_gamma)
+
+      ! 3.
+      ! Same thing but for the K-dependent G-spheres     
+      ! Get storage type of the wavefunctions
+      call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
+      write(*,*) istwfk 
+      do ik=1,k%nibz
+        npw = wf_nc_k(ik)
+        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),map_k)
+      end do
+ 
+      ! 4.
+      ! Do the mapping
+
+      call exit(0)
+
+
+
+      !TO BE REMOVED
       !
       allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
       wf_nc_k = basisdata_group%number_of_coefficients
@@ -405,6 +493,10 @@ contains
       deallocate( wf_igk_tmp,G_mod_indx )
       wf_ng=maxval(wf_igk)
       !
+      !END TO BE REMOVED
+
+
+
     endif
     !
     call deallocate_basisdata_group
@@ -412,6 +504,86 @@ contains
     return
     !
   end subroutine import_basisdata_group
+
+
+  !
+  ! Routine inspired in gsphere routine in
+  ! abinit/src/52_fft_mpi_noabirule/m_fftcore.F90
+  ! with important input from Matteo Giantomassi
+  ! 
+  ! Maps G vectors defined in the kg_k to a fftbox of n1,n2,n3
+  !
+  subroutine gsphere_abinit(n1,n2,n3,kg_k,npw,istwf_k,map)
+
+  implicit none
+
+  !Arguments ------------------------------------
+  !scalars
+  integer,intent(in)  :: istwf_k,n1,n2,n3,npw
+  !arrays
+  integer,intent(in)  :: kg_k(3,npw)
+  integer,intent(out) :: map(n1,n2,n3)
+
+  !Local variables-------------------------------
+  !scalars
+  integer :: i1,i1inv,i2,i2inv,i3,i3inv,id1,id2,id3,idat,ipw
+  !arrays
+  integer :: i1inver(n1),i2inver(n2),i3inver(n3)
+
+  !In the case of special k-points, invariant under time-reversal,
+  !but not Gamma, initialize the inverse coordinates. !Remember indeed that
+  !
+  !  u_k(G) = u_{k+G0}(G-G0); u_{-k}(G) = u_k(G)^* and therefore:
+  !  u_{G0/2}(G) = u_{G0/2}(-G-G0)^*.
+
+  if (istwf_k>=2) then
+    if(istwf_k==2 .or. istwf_k==4 .or. istwf_k==6 .or. istwf_k==8)then
+      i1inver(1)=1
+      do i1=2,n1
+        i1inver(i1)=n1+2-i1
+      end do
+    else
+      do i1=1,n1
+        i1inver(i1)=n1+1-i1
+      end do
+    end if
+    if(istwf_k>=2 .and. istwf_k<=5)then
+      i2inver(1)=1
+      do i2=2,n2
+        i3inver(i2)=n2+2-i2
+      end do
+    else
+      do i2=1,n2
+        i2inver(i2)=n2+1-i2
+      end do
+    end if
+    if(istwf_k==2 .or. istwf_k==3 .or. istwf_k==6 .or. istwf_k==7)then
+      i3inver(1)=1
+      do i3=2,n3
+        i3inver(i3)=n3+2-i3
+      end do
+    else
+      do i3=1,n3
+        i3inver(i3)=n3+1-i3
+      end do
+    end if
+  end if
+
+  ! TODO: handle the istwfk /= 1 cases
+  ! create mapping from G sphere to box
+  do ipw=1,npw
+    i1=kg_k(1,ipw); if(i1<0)i1=i1+n1; i1=i1+1
+    i2=kg_k(2,ipw); if(i2<0)i2=i2+n2; i2=i2+1
+    i3=kg_k(3,ipw); if(i3<0)i3=i3+n3; i3=i3+1
+
+    write(*,*) i1,i2,i3, ipw
+    map(i1,i2,i3)=ipw
+  end do
+
+  end subroutine
+
+
+
   !
   ! K-points (convert to new units)
   !===========================================================

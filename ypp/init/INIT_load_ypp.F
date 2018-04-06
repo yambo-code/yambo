@@ -165,7 +165,9 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
  do i_region=1,6
    call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Region in K space excited',Eh_pumped_pair_BZ_regions(:,i_region))
-   if( .not.all(Eh_pumped_pair_BZ_regions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) Eh_pumped_pair_n_BZ_regions=Eh_pumped_pair_n_BZ_regions+1
+   if( .not.all(Eh_pumped_pair_BZ_regions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) then
+     Eh_pumped_pair_n_BZ_regions=Eh_pumped_pair_n_BZ_regions+1
+   endif
  enddo
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')

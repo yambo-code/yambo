@@ -34,6 +34,9 @@ subroutine YPP_SET_defaults()
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
+#if defined _YPP_MAGNETIC
+ use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+#endif
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_2D_dos,&

@@ -59,7 +59,7 @@ subroutine K_Haydock(iq,W)
  !
  integer            ::it,it_on_disk,i_g
  integer, parameter ::Max_iterations=1000
- type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:)
+ type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
  !
  ! GPL_EXCLUDE_START
@@ -114,6 +114,10 @@ subroutine K_Haydock(iq,W)
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0)
+ if(trim(global_gauge)=="velocity") then
+   allocate(V_tmp(BS_nT_grps))
+   call BS_HAYVEC_alloc(V_tmp)
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -267,15 +271,31 @@ subroutine K_Haydock(iq,W)
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
    !
+   if(trim(global_gauge)=="velocity") then
+     V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+     call K_multiply_by_V(V_tmp,V0,1)
+   endif
+   !
    ! GPL_EXCLUDE_START
    !
 #if defined _KERR
-   if(l_kerr) V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
+   if(l_kerr) then
+     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
+     if(trim(global_gauge)=="velocity") then
+       V_tmp(i_g)%fragment(:) = V0_kerr(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+       call K_multiply_by_V(V_tmp,V0_kerr,1)
+     endif
+   endif
 #endif
    !
    ! GPL_EXCLUDE_END
    !
  enddo
+ !
+ if(trim(global_gauge)=="velocity") then
+   call BS_HAYVEC_free(V_tmp)
+   deallocate(V_tmp)
+ endif
  !
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -613,7 +633,8 @@ subroutine K_Haydock(iq,W)
      i_eps(1)=2
      i_eps(2)=4
      !
-     para_term_w0=cZERO
+     para_term_w0  =cZERO
+     diam_term_used=cZERO
      !
      if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/q_norm(1)**2
      !

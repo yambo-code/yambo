@@ -273,6 +273,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    subroutine DIPOLES_IO(read_or_write)
      !
      use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu,PAR_COM_RL_INDEX
+     use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -282,6 +283,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      logical                  :: write_header,read_header,reading,writing,l_vnl(1)
      !
      if (.not.io_DIP) return 
+     !
+     if (trim(global_gauge)=="velocity") return
      !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write".and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0.and.&

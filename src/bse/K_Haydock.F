@@ -682,8 +682,6 @@ subroutine K_Haydock(iq,W)
          X_o(:2,1) = YbyX(:)
        endif
        !
-       Epsilon_ii(iw,1)=W%p(iw)
-       !
        ! GPL_EXCLUDE_START
        ! 
        if(trim(global_gauge)=='velocity'.and.iw==0) then
@@ -693,6 +691,8 @@ subroutine K_Haydock(iq,W)
        endif
        !
        ! GPL_EXCLUDE_END
+       !
+       Epsilon_ii(iw,1)=W%p(iw)
        !
        select case(ii)
        case(1)

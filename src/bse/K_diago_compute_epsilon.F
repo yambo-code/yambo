@@ -33,7 +33,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor
+ use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !
@@ -66,7 +66,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  type(PP_indexes)     ::px
  !
  integer              :: i1,i_pert_SOC,n_SOC
- complex(SP)          :: para_term,diam_term,EXC_E(2/n_sp_pol)
+ complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol)
  !
  ! GPL_EXCLUDE_START
  !
@@ -89,9 +89,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  ! GPL_EXCLUDE_START
  !
- para_term=cZERO
- !
- !diam_term=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
+ para_term_w0=cZERO
  !
 #if defined _KERR
  if(l_kerr) then
@@ -147,8 +145,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+&
 &      conjg(BS_R_left(i1)*BS_R_right(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
-     if(trim(global_gauge)=='length')   para_term=para_term+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/q_norm(1)**2
-     if(trim(global_gauge)=='velocity') para_term=para_term+BS_R_left(i1)*BS_R_right(i1)/EXC_E(i_pert_SOC)
+     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/q_norm(1)**2
+     if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)/EXC_E(i_pert_SOC)
      !
      Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
      if (BSS_add_antiresonant) Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
@@ -180,8 +178,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  call PP_redux_wait(Epsilon_ii(:,2))
  call PP_redux_wait(Joint_DOS(:,2) )
- call PP_redux_wait(para_term)
- if (BSS_add_antiresonant) para_term=para_term+conjg(para_term)
+ call PP_redux_wait(para_term_w0)
+ if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
 #if defined _PL
  call PP_redux_wait(PL(:,2))
 #endif
@@ -199,8 +197,19 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  call PP_indexes_reset(px)
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)          +X_drude_term(:))*Co_factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-para_term+X_drude_term(:))*Co_factor/ W%p(:)  **2
+ if (trim(global_gauge)=='velocity') then
+   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+ endif
+ !
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-diam_term_used)*Co_factor/ W%p(:)  **2
+ !
+ ! Drude term
+ !============
+ if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
+ !
+ Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
  !

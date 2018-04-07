@@ -27,11 +27,11 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:error
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
  use R_lattice,      ONLY:q_norm
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_n_descs,Haydock_treshold,BSS_description,io_BSS_Haydock,Co_factor,&
+ use BS_solvers,     ONLY:BSS_n_descs,Haydock_treshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps
  use LIVE_t,         ONLY:LIVE_message
@@ -584,11 +584,12 @@ subroutine K_Haydock(iq,W)
      !
      ! Work Space
      !
-     integer     :: i1,iw,i_eps(2)
+     integer     :: i1,iw,iw_start,i_eps(2)
      real(SP)    :: Co,tmp_tresh,den
      !
-     complex(SP) :: factor_jj(2)
+     complex(SP) :: para_term_w0(2),diam_term_used(2)
      complex(SP) :: gauge_factor
+     complex(SP) :: freq_axis(0:W%n_freqs)
      !
      complex(SP) :: X_o(4,it), YbyX(2)
      complex(SP),allocatable :: X_i(:,:)
@@ -612,7 +613,7 @@ subroutine K_Haydock(iq,W)
      i_eps(1)=2
      i_eps(2)=4
      !
-     factor_jj=cZERO
+     para_term_w0=cZERO
      !
      if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/q_norm(1)**2
      !
@@ -640,25 +641,31 @@ subroutine K_Haydock(iq,W)
        end if
      end if
      !
-     do iw=1,W%n_freqs
+     iw_start=1
+     if(trim(global_gauge)=='velocity') iw_start=0
+     !
+     freq_axis(0 )=cZERO
+     freq_axis(1:)=W%p(:)
+     !
+     do iw=iw_start,W%n_freqs
        X_o=cZERO
        if (UseTerminator) then 
          if (.not.coupling) then
-           X_t(1) = terminator(W%p(iw), Av1,Av2, RES)
-           if (retarded) X_t(2) = terminator(W%p(iw),-Av1,Av2,ARES)
+           X_t(1) = terminator(freq_axis(iw), Av1,Av2, RES)
+           if (retarded) X_t(2) = terminator(freq_axis(iw),-Av1,Av2,ARES)
          endif
-         if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(W%p(iw),Av1,Av2,COUPL)
-         if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(W%p(iw),Av2,Av1,COUPL)
+         if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(freq_axis(iw),Av1,Av2,COUPL)
+         if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(freq_axis(iw),Av2,Av1,COUPL)
        endif
-       X_o(1:2,it) = 1._SP/(W%p(iw)-Af(it)-Bf(it+1)**2*X_t(1))
-       if (retarded) X_o(3:4,it)= 1._SP/(W%p(iw)+Af(it)-Bf(it+1)**2*X_t(2))
+       X_o(1:2,it) = 1._SP/(freq_axis(iw)-Af(it)-Bf(it+1)**2*X_t(1))
+       if (retarded) X_o(3:4,it)= 1._SP/(freq_axis(iw)+Af(it)-Bf(it+1)**2*X_t(2))
        do i1=it-1,1,-1
-         X_o(1,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
-         if (retarded) X_o(3,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
+         X_o(1,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
+         if (retarded) X_o(3,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
        enddo
        do i1=it-2,1,-1
-         X_o(2,i1) = 1._SP/(W%p(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
-         if (retarded) X_o(4,i1)= 1._SP/(W%p(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
+         X_o(2,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
+         if (retarded) X_o(4,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
        enddo
        if (coupling) then
          X_i(:,1) = -X_o(:2,1)
@@ -674,14 +681,16 @@ subroutine K_Haydock(iq,W)
          end do
          X_o(:2,1) = YbyX(:)
        endif
+       !
        Epsilon_ii(iw,1)=W%p(iw)
        !
        ! GPL_EXCLUDE_START
        ! 
-       !if(trim(global_gauge)=='velocity'.and.iw==iw_ref) then
-       !  if (.not.retarded) factor_jj(:)=X_o(1:2,1)
-       !  if (     retarded) factor_jj(:)=X_o(1:2,1)-X_o(3:4,1)
-       !endif
+       if(trim(global_gauge)=='velocity'.and.iw==0) then
+         if (.not.retarded) para_term_w0(:)=X_o(1:2,1)
+         if (     retarded) para_term_w0(:)=X_o(1:2,1)-X_o(3:4,1)
+         cycle
+       endif
        !
        ! GPL_EXCLUDE_END
        !
@@ -696,14 +705,19 @@ subroutine K_Haydock(iq,W)
        !
      enddo
      !
+     if (trim(global_gauge)=='velocity') then
+       if (     skip_cond_sum_rule) diam_term_used(:)=diam_term_exact
+       if (.not.skip_cond_sum_rule) diam_term_used(:)=para_term_w0(:)
+     endif
+     !
      do iw=1,W%n_freqs
        !
        ! GPL_EXCLUDE_START
        !
        if (trim(global_gauge)=='velocity') gauge_factor=Co/W%p(iw)**2
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+factor_jj(:))*gauge_factor
-       if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+factor_jj(:))*gauge_factor
+       if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
+       if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        !
        ! GPL_EXCLUDE_END
        !
@@ -768,11 +782,11 @@ subroutine K_Haydock(iq,W)
        terminator = terminator/g
      case (2)
        f = (x+c1)
-       terminator = f + sqrt(f**2 -4._SP*c2**2.)
+       terminator = f + sqrt(f**2 -4._SP*c2**2)
        terminator = terminator/2._SP/c2**2
      case (3)
        f = (x-c1)
-       terminator = f + sqrt(f**2 -4._SP*c2**2.)
+       terminator = f + sqrt(f**2 -4._SP*c2**2)
        terminator = terminator/2._SP/c2**2
      end select
    end function terminator

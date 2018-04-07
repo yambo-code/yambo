@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -50,15 +50,14 @@ subroutine MAG_common_build_A(build)
  !
  use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
- use memory_m,       ONLY:mem_est
  use FFT_m,          ONLY:fft_size,fft_dim
- use D_lattice,      ONLY:a,x_cc
+ use D_lattice,      ONLY:x_cc
  use magnetic,       ONLY:MAG_radius,MAG_B,MAG_landau,MAG_psi,MAG_theta,  &
 &                         MAG_gauge,Bx,By,Bz,ir_table,                    &
 &                         A_magn_x,A_magn_y,A_magn_z,gauge_factors,       &
 &                         phase_trick,phase_radius,n_loops
  use vec_operate,    ONLY:v_norm
- implicit none
+#include<memory.h>
  !
  ! Input variables
  logical   :: build
@@ -84,7 +83,7 @@ subroutine MAG_common_build_A(build)
  call fft_setup(0,1,.true.)
  call module_alloc()
  !
- if(MAG_landau .and. phase_trick) call MAG_A_phase(n_loops)
+ if(MAG_landau .and. phase_trick) call MAG_A_phase()
  !
  if(.not.MAG_landau) return
  !
@@ -111,7 +110,7 @@ subroutine MAG_common_build_A(build)
    gauge_factors(2,2)=0         ! Ax for By ~  z <--
  endif
  !
- if(allocated(x_cc)) deallocate(x_cc)
+ YAMBO_FREE(x_cc)
  call load_cc(.false.,.true.)
  !
  ! A(r) Build-Up
@@ -163,7 +162,7 @@ subroutine MAG_common_build_A(build)
    enddo
  enddo
  !
- deallocate (x_cc)
+ YAMBO_FREE(x_cc)
  !
  contains
    !
@@ -171,33 +170,29 @@ subroutine MAG_common_build_A(build)
    subroutine module_alloc()
      if(MAG_landau) then
        if(Bx/=0. .or. By/=0.) then
-         allocate(A_magn_z(fft_size))
-         call mem_est("A_magn_z",(/fft_size/))
+         YAMBO_ALLOC(A_magn_z,(fft_size))
          A_magn_z=0.
        endif
        if(Bx/=0. .or. Bz/=0.) then
-         allocate(A_magn_y(fft_size))
-         call mem_est("A_magn_y",(/fft_size/))
+         YAMBO_ALLOC(A_magn_y,(fft_size))
          A_magn_y=0.
        endif
        if(By/=0. .or. Bz/=0.) then
-         allocate(A_magn_x(fft_size))
-         call mem_est("A_magn_x",(/fft_size/))
+         YAMBO_ALLOC(A_magn_x,(fft_size))
          A_magn_x=0.
        endif
      endif
-     allocate(ir_table(fft_size))
+     YAMBO_ALLOC(ir_table,(fft_size))
      ir_table(:)=.true.
    end subroutine
    !
    subroutine module_free()
      if(MAG_landau) then
-       if(allocated(A_magn_x)) deallocate(A_magn_x)
-       if(allocated(A_magn_y)) deallocate(A_magn_y)
-       if(allocated(A_magn_z)) deallocate(A_magn_z)
-       call mem_est("A_magn_x A_magn_y A_magn_z")
+       YAMBO_FREE(A_magn_x)
+       YAMBO_FREE(A_magn_y)
+       YAMBO_FREE(A_magn_z)
      endif
-     deallocate(ir_table)
+     YAMBO_FREE(ir_table)
    end subroutine
    !
 end subroutine

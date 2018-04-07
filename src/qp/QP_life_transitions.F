@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  use pars,          ONLY:SP
- use memory_m,      ONLY:mem_est
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_n_states,QP_table,&
 &                        QP_cg_percent,h2ht,e2et
  use functions,     ONLY:bose_f
@@ -33,7 +32,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
  !
- implicit none
+#include<memory.h>
  type(levels) ::E
  type(bz_samp)::q,k
  type(w_samp) ::X_life_W
@@ -96,7 +95,7 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
    endif
    !
    if (i1==1) then
-     allocate(X_freqs(q%nibz,maxval(n_of_transitions)))
+     YAMBO_ALLOC(X_freqs,(q%nibz,maxval(n_of_transitions)))
      X_freqs=0.
    endif
    !
@@ -106,19 +105,19 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  QP_life_transitions=maxval(n_of_transitions)
  !
  if (iqibz_in<0) then
-   deallocate(X_freqs)
+   YAMBO_FREE(X_freqs)
    return
  endif
  !
  ! Here I reduce the frequencies
  !
  call FREQUENCIES_coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
-&                 n_of_transitions(iqibz_in),QP_cg_percent,0.0_SP,.FALSE.)
+&                 n_of_transitions(iqibz_in),QP_cg_percent,(/0.0_SP/),.FALSE.)
  X_life_W%n_freqs=coarse_grid_N
  !
  X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)
  !
- allocate(X_life_W%p(coarse_grid_N))
+ YAMBO_ALLOC(X_life_W%p,(coarse_grid_N))
  do i1=1,coarse_grid_N
    ! 
    X_life_W%p(i1)=coarse_grid_Pt(i1)+FREQUENCIES_damping(X_life_W,coarse_grid_Pt(i1))*cmplx(0.,1.,SP)
@@ -127,7 +126,9 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  !
  ! Clean
  !
- deallocate(bare_grid_N,coarse_grid_Pt,ordered_grid_index,X_freqs)
- call mem_est("BGn CGp RGi")
+ YAMBO_FREE(bare_grid_N)
+ YAMBO_FREE(coarse_grid_Pt)
+ YAMBO_FREE(ordered_grid_index)
+ YAMBO_FREE(X_freqs)
  !
 end function

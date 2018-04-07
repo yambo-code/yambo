@@ -1,9 +1,11 @@
 SLK_objs = 
 #if defined _SCALAPACK
-SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o \
-           SLK_matrix_init.o PARALLEL_inversion.o \
+SLK_objs = SLK_test.o SLK_ORTHO_group.o SLK_ORTHO_init.o SLK_setup.o PARALLEL_inversion.o \
            PARALLEL_HERMITIAN_diagonalization.o PARALLEL_lin_system.o PARALLEL_M_by_M.o PARALLEL_M_by_V.o \
-           SLK_tools.o SLK_matrix_transfer.o SLK_matrix_duplicate.o
+           SLK_tools.o 
+#endif
+#if defined _SLEPC
+SLEPC_objs = MATRIX_slepc.o 
 #endif
 objs = LINEAR_ALGEBRA_driver.o SERIAL_SVD_inversion.o SERIAL_inversion.o SERIAL_diagonalization.o \
-       SERIAL_HERMITIAN_diagonalization.o SERIAL_lin_system.o $(SLK_objs)
+       SERIAL_HERMITIAN_diagonalization.o SERIAL_lin_system.o $(SLK_objs) $(SLEPC_objs)

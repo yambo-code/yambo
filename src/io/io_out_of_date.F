@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,9 +34,30 @@ integer function io_out_of_date(ID)
  !
  io_out_of_date=IO_OUTDATED_DB
  !
- ! Global revision check (mostly based on io_header)
- !===================================================
+ ! Global revision check 
+ !=======================
  !
+ ! 4.2.0: global change of IO bulk due to the introduction of the COMPLEX interface.
+ !        affects only some ndb files
+ if (.not.ver_is_gt_or_eq(ID,(/4,2,0/))) then
+   if (index(io_file(ID),'Vnl')==0.and.&
+&      index(io_file(ID),'Double_Grid')==0.and.&
+&      index(io_file(ID),'RIM_E_and_k')==0.and.&
+&      index(io_file(ID),'E_RIM')==0.and.&
+&      index(io_file(ID),'elph_')==0.and.&
+&      index(io_file(ID),'kindx')==0.and.&
+&      index(io_file(ID),'RIM')==0.and.&
+&      index(io_file(ID),'Overlaps')==0.and.&
+&      index(io_file(ID),'gops')==0.and.&
+&      index(io_file(ID),'db1')==0.and.&
+&      index(io_file(ID),'kb_pp')==0.and.&
+&      index(io_file(ID),'wf')==0.and.&
+&      index(io_file(ID),'QP')==0.and.&
+&      index(io_file(ID),'E_SOC_map')==0&
+&     ) return
+ endif
+ !
+ ! 3.0.15: mostly based on io_header changes
  if (.not.ver_is_gt_or_eq(ID,(/3,0,15/))) return
  !
  ! DB specific

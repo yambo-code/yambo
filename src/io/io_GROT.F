@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,16 +23,17 @@
 !
 integer function io_GROT(io_db)
  !
- use pars,           ONLY:SP,IP
  use it_m,           ONLY:initactivate
- use memory_m,       ONLY:mem_est
  use D_lattice,      ONLY:nsym,inv_index
  use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
 &                         minus_G
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
- implicit none
+ use timing_m,       ONLY:timing
+#include<memory.h>
  integer :: io_db,nsym_db
+ !
+ call timing('io_GROT',OPR='start')
  !
  io_GROT=io_connect(desc='gops',type=1,ID=io_db)
  if (io_GROT/=0) goto 1
@@ -40,7 +41,7 @@ integer function io_GROT(io_db)
  io_GROT=io_header(io_db,IMPOSE_SN=.true.)
  if (io_GROT/=0) goto 1
  !
- if (.not.ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
+ if (.not.ver_is_gt_or_eq(io_db,revision=15192)) then
    io_GROT=-1 
    goto 1
  endif
@@ -58,10 +59,10 @@ integer function io_GROT(io_db)
  if (.not.any((/io_sec(io_db,:)==2/))) goto 1
  !
  if (read_is_on(io_db)) then
-   allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
-   allocate(g_rot(nsym_db,ng_closed),minus_G(ng_closed))
-   call mem_est("RL_Gshells RL_Eshells",&
-&               (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
+   YAMBO_ALLOC(ng_in_shell,(n_g_shells))
+   YAMBO_ALLOC(g_rot,(ng_closed,nsym_db))
+   YAMBO_ALLOC(E_of_shell,(n_g_shells))
+   YAMBO_ALLOC(minus_G,(ng_closed))
  endif
  !
  call io_bulk(io_db,VAR="ng_in_shell",VAR_SZ=(/n_g_shells/))
@@ -70,8 +71,8 @@ integer function io_GROT(io_db)
  call io_bulk(io_db,VAR="E_of_shell",VAR_SZ=(/n_g_shells/))
  call io_bulk(io_db,R1=E_of_shell(:n_g_shells))
  !
- call io_bulk(io_db,VAR="GROT",VAR_SZ=(/nsym_db,ng_closed/))
- call io_bulk(io_db,I2=g_rot(:,:ng_closed))
+ call io_bulk(io_db,VAR="GROT",VAR_SZ=(/ng_closed,nsym_db/))
+ call io_bulk(io_db,I2=g_rot(:ng_closed,:))
  !
  if (ver_is_gt_or_eq(io_db,revision=955).and.inv_index<0) then
    call io_bulk(io_db,VAR="minusG",VAR_SZ=(/ng_closed/))
@@ -81,5 +82,7 @@ integer function io_GROT(io_db)
  call initactivate(1,'Gmode')
  !
 1 call io_disconnect(ID=io_db)
+ !
+ call timing('io_GROT',OPR='stop')
  !
 end function

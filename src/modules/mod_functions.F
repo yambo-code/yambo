@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,11 +59,12 @@ module functions
    end function infinity
    !
    logical function NAN(E)
-     real(SP) :: E
-#if defined _BLUEGENE || _PGI
+#if defined(_XLF) || defined(_PGI)
      use ieee_arithmetic
+     real(SP) :: E
      NAN= ieee_is_nan(E)
 #else
+     real(SP) :: E
      NAN= isnan(E)
 #endif
    end function NAN

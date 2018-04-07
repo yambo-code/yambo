@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,23 +26,24 @@ integer function io_BS(iq,X,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use matrix_operate,ONLY:mat_c2r,mat_r2c
  use parallel_m,    ONLY:myid
+ use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
 &                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
- implicit none
+ use timing_m,      ONLY:timing
+#include<memory.h>
  !
  type(X_t):: X 
  integer  :: iq,ID
  !
  ! Work Space
  !
- complex(SP),allocatable :: tmp_map(:)
+ complex(SP),pointer ::tmp_link(:)
  integer             ::i_block,i1,n1,n2,block_pos
- character(schlen)   ::ch,db_name
+ character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  character(lchlen)   ::local_description(100)
  !
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
@@ -51,6 +52,8 @@ integer function io_BS(iq,X,ID)
    return
  endif
  !
+ call timing('io_BS',OPR='start')
+ !
  db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
@@ -58,13 +61,11 @@ integer function io_BS(iq,X,ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   if (io_mode(ID)==VERIFY.or.write_is_on(ID)) then
-     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
-&                    PARALLEL_STRUCTURE="Response_T_space",CUTOFF=.true.,FRAG=frag_BS_K)
-   else
-     io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,&
-&                       XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
-   endif
+   PARALLEL_STRUCTURE="NONE"
+   if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+   !
+   io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
+&                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
    !
    if (io_BS/=0) then
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -111,17 +112,13 @@ integer function io_BS(iq,X,ID)
    call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
    call io_bulk(ID,C2=BS_blk(i_block)%mat)
  else
+   if(i_block==1) call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
-   if(i_block==1)      call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
-   if(write_is_on(ID)) call io_bulk(ID,C1=(/BS_blk(i_block)%mat(:,:)/),IPOS=(/1,block_pos/))
-   if(read_is_on(ID)) then
-     allocate(tmp_map(n1*n2))
-     call io_bulk(ID,C1=tmp_map,IPOS=(/1,block_pos/))
-     BS_blk(i_block)%mat=reshape(tmp_map,(/n1,n2/))
-     deallocate(tmp_map)
-   endif
+   tmp_link => linkM2V(BS_blk(i_block)%mat,(/n1*n2/))
+   call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
+   nullify(tmp_link)
  endif
  !
 1 continue
@@ -133,5 +130,7 @@ integer function io_BS(iq,X,ID)
  if (io_BS< 0) BS_K_has_been_calculated_loaded=.FALSE.
  !
  call io_disconnect(ID)
+ !
+ call timing('io_BS',OPR='stop')
  !
 end function

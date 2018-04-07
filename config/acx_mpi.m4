@@ -2,10 +2,10 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -28,69 +28,64 @@ AC_DEFUN([ACX_MPI], [
 AC_PREREQ(2.50) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
-AC_ARG_VAR(PFC,[Parallel Fortran compiler command])
-
 AC_LANG_CASE([C], [
         AC_REQUIRE([AC_PROG_CC])
         AC_ARG_VAR(MPICC,[Parallel C compiler command])
-        AC_CHECK_PROGS(MPICC, mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
-        acx_mpi_save_CC="$CC"
-        CC="$MPICC"
+        AC_CHECK_PROGS(MPICC_test,$MPICC mpiicc mpicc hcc mpcc mpcc_r mpxlc cmpicc, $CC)
+        MPICC=$MPICC_test
+        CC=$MPICC_test
 ],
 [C++], [
         AC_REQUIRE([AC_PROG_CXX])
-        AC_ARG_VAR(MPICXX,[MPI C++ compiler command])
-        AC_CHECK_PROGS(MPICXX, mpic++ mpiCC mpCC hcp mpxlC mpxlC_r cmpic++, $CXX)
-        acx_mpi_save_CXX="$CXX"
-        CXX="$MPICXX"
-        AC_SUBST(MPICXX)
+        AC_ARG_VAR(MPICXX,[Parallel C++ compiler command])
+        AC_CHECK_PROGS(MPICXX_test,$MPICXX mpic++ mpiCC mpCC hcp mpxlC mpxlC_r cmpic++, $CXX)
+        MPICXX=$MPICXX_test
+        CXX=$MPICXX_test
 ],
 [Fortran 77], [
         AC_REQUIRE([AC_PROG_F77])
-        AC_ARG_VAR(MPIF77,[MPI Fortran compiler command])
-        AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
-        acx_mpi_save_F77="$F77"
-        F77="$MPIF77"
-        AC_SUBST(MPIF77)
+        AC_ARG_VAR(MPIF77,[Parallel Fortran 77 compiler command])
+        AC_CHECK_PROGS(MPIF77_test,$MPIF77 $MPIFC mpiifort mpifort mpif77 hf77 mpxlf mpf77 mpif90 mpf90 mpxlf90 mpxlf95 mpxlf_r cmpifc cmpif90c, $F77)
+        MPIF77=$MPIF77_test
+        F77=$MPIF77_test
 ],
 [Fortran], [
-        AC_CHECK_PROGS(PFC, mpiifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
-        FC="$PFC"
-        acx_mpi_save_FC="$PFC"
+        AC_REQUIRE([AC_PROG_FC])
+        AC_ARG_VAR(MPIFC,[Parallel Fortran compiler command])
+        AC_CHECK_PROGS(MPIFC_test,$MPIFC mpiifort mpifort mpif90 mpxlf90 mpxlf mpf90 mpxlf95 mpxlf_r, $FC)
+        MPIFC=$MPIFC_test
+        FC=$MPIFC_test
 ])
 
-if test x = x"$MPILIBS"; then
-  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
-               [C++], [AC_CHECK_FUNC(MPI_Init, [MPILIBS=" "])],
+if test "$acx_mpi_ok" = "yes"; then
+  AC_LANG_CASE([C],   [AC_CHECK_FUNC(MPI_Init, [acx_mpi_ok="yes"])],
+               [C++], [AC_CHECK_FUNC(MPI_Init, [acx_mpi_ok="yes"])],
                [Fortran 77], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK([],[      call MPI_Init], [MPILIBS=" "
+                AC_TRY_LINK_FUNC(MPI_Init,[ac_mpi_ok="yes"
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])],
                [Fortran], [AC_MSG_CHECKING([for MPI_Init])
-                AC_TRY_LINK_FUNC(MPI_init,[MPILIBS=" "
+                AC_TRY_LINK_FUNC(MPI_init,[acx_mpi_ok="yes"
                 AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])]
 )
-fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpi, MPI_Init, [MPILIBS="-lmpi"])
-fi
-if test x = x"$MPILIBS"; then
-        AC_CHECK_LIB(mpich, MPI_Init, [MPILIBS="-lmpich"])
 fi
 
 # We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
-AC_LANG_CASE([C], [if test x != x"$MPILIBS"; then
+AC_LANG_CASE([C], [if test "$acx_mpi_ok" = "no"; then
         AC_MSG_CHECKING([for a working mpi.h])
         AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], 
         [#include <mpi.h>]),
         [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
-        [MPILIBS="";AC_MSG_RESULT(no)])
+        [AC_MSG_RESULT(no) ;acx_mpi_ok="no"])
 fi],
-[C++], [if test x != x"$MPILIBS"; then
+[C++], [if test "$acx_mpi_ok" = "no"; then
         AC_MSG_CHECKING([for mpi.h])
-        AC_TRY_COMPILE([#include <mpi.h>],[],[AC_MSG_RESULT(yes)], [MPILIBS=""
-                AC_MSG_RESULT(no)])
+        AC_TRY_COMPILE([#include <mpi.h>],[],
+        [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
+        [AC_MSG_RESULT(no); acx_mpi_ok="no" ])
 fi])
+
+AC_LANG_CASE([Fortran 77],[acx_mpi_ok="yes"])
 
 AC_LANG_CASE([Fortran],
  [AC_MSG_CHECKING([for a working mpif.h])
@@ -101,7 +96,8 @@ AC_LANG_CASE([Fortran],
   integer :: ierr
   call MPI_Init(ierr)]), 
   [HAVE_MPIF_H=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
-  [HAVE_MPIF_H=0; AC_MSG_RESULT(no)])])
+  [HAVE_MPIF_H=0; acx_mpi_ok="no" ; AC_MSG_RESULT(no)])])
+
 
 AC_LANG_CASE([Fortran],
  [if test "$acx_mpi_ok" = "no"; then
@@ -113,7 +109,7 @@ AC_LANG_CASE([Fortran],
   integer :: ierr
   call MPI_Init(ierr)]), 
   [HAVE_MPI_H=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
-  [HAVE_MPI_H=0; AC_MSG_RESULT(no)]);fi])
+  [HAVE_MPI_H=0; acx_mpi_ok="no" ; AC_MSG_RESULT(no)]);fi])
 
 AC_LANG_CASE([Fortran],
  [if test "$acx_mpi_ok" = "no"; then 
@@ -125,39 +121,23 @@ AC_LANG_CASE([Fortran],
   integer :: ierr
   call MPI_Init(ierr)]), 
   [HAVE_MPI_MOD=1; acx_mpi_ok="yes"; AC_MSG_RESULT(yes)], 
-  [HAVE_MPI_MOD=0; AC_MSG_RESULT(no)]);fi])
-#
-if test x = x"$MPILIBS"; then acx_mpi_ok="no"; fi
+  [HAVE_MPI_MOD=0; acx_mpi_ok="no";  AC_MSG_RESULT(no)]);fi])
 
+#
+#
 mpibuild="no"
-AC_LANG_CASE(
- [Fortran],
- [if test "$acx_mpi_ok" = "yes"; then
-  mpibuild="yes"
-  PF90=$PFC
-  PF90FLAGS=$FCFLAGS
-  fi],
- [C],
- [if test "$acx_mpi_ok" = "yes"; then
-  mpibuild="yes"
-  PCC=$MPICC
-  PCCFLAGS=$CFLAGS
-  fi
-#
-# While the Fortran checks use FC (we use F90) the
-# variable for C is CC, the same used here. 
-# So we need to rename it.
-#
-  CC=$acx_mpi_save_CC
- ],
-)
+if test "$acx_mpi_ok" = "yes"; then  
+ mpibuild="yes"; 
+fi
 
+#
 # Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x = x"$MPILIBS"; then
+if test "$acx_mpi_ok" = "no"; then
         $2
         :
 else
         ifelse([$1],,[AC_DEFINE(HAVE_MPI,1,[Define if you have the MPI library.])],[$1])
         :
 fi
+
 ])dnl ACX_MPI

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -31,7 +31,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
 &                           COH_collisions,COLLISIONS_have_HARTREE
  use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
- !
+ use timing_m,         ONLY:timing
  implicit none
  !
  complex(SP), intent(in)   :: G_sex(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
@@ -43,6 +43,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and.&
 &   .not.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) return
+ !
+ call timing('COLLISIONS_compose_sc',OPR='start')
  !
  ! In _SC QP_Sc is calculated on-the-fly when the collision are not used.
  ! Here all contributions are packed in QP_Vnl_xc
@@ -95,5 +97,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  enddo
  !
  call PP_redux_wait(QP_Vnl_xc)
+ !
+ call timing('COLLISIONS_compose_sc',OPR='stop')
  !
 end subroutine COLLISIONS_compose_sc

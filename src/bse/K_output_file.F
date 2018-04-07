@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,7 @@ subroutine K_output_file(iq,mode)
  use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BSS_n_freqs,BSS_q0,K_diago_in_BS_mat
  use BS,        ONLY:BSE_mode,BS_K_is_ALDA
- use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,O_eels
+ use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
@@ -95,7 +95,7 @@ subroutine K_output_file(iq,mode)
  ! EELS / REFLECTIVITY logicals 
  !
  call parser('Reflectivity',eval_reflectivity)
- eval_eels= O_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
+ eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
  !
  title_mode='Ot'
  if (l_INIT) title_mode='ot'
@@ -329,9 +329,9 @@ subroutine K_output_file(iq,mode)
  !
  if (eval_eels) then
    !
-   eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eels(:,1)) 
-   eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
-   if (l_Haydock.or.l_Inversion) eval_eels=O_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
+   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eels(:,1)) 
+   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
+   if (l_Haydock.or.l_Inversion) eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
    !
    alpha(:,1)=(1._SP+eels(:,1))/4._SP/pi*eps_2_alpha
    alpha(:,2)=(1._SP+eels(:,2))/4._SP/pi*eps_2_alpha
@@ -487,7 +487,7 @@ subroutine K_output_file(iq,mode)
      endif
 #endif
      !
-     if(.not.l_Haydock) call of_open_close(jdos_file_name)
+     if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name)
      !
    end subroutine
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,7 @@ subroutine RT_X_effective(en)
  use LIVE_t,         ONLY:live_timing
  use stderr,         ONLY:intc,real2ch
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: en
  !
@@ -83,11 +83,15 @@ subroutine RT_X_effective(en)
  !
  N_probe_frequencies=max(N_probes,N_probe_frequencies) 
  !
- allocate(RT_P_probe(RT_conf%T_n_steps,N_probes,3),RT_P_pump(RT_conf%T_n_steps,3),X_effective(0:X_order,N_probe_frequencies,3))
- allocate(Susceptibility(0:X_order,N_probe_frequencies,3),Susc_err(0:X_order,N_probe_frequencies,3), &
-&         X_eff_err(0:X_order,N_probe_frequencies,3))
- if (dump_dP) allocate(RT_P_save(RT_conf%T_n_steps,N_probes,3))
- allocate(Probe_Frequency(N_probe_frequencies),Harmonic_Frequency(0:X_order,N_probe_frequencies))
+ YAMBO_ALLOC(RT_P_probe,(RT_conf%T_n_steps,N_probes,3))
+ YAMBO_ALLOC(RT_P_pump,(RT_conf%T_n_steps,3))
+ YAMBO_ALLOC(X_effective,(0:X_order,N_probe_frequencies,3))
+ YAMBO_ALLOC(Susceptibility,(0:X_order,N_probe_frequencies,3))
+ YAMBO_ALLOC(Susc_err,(0:X_order,N_probe_frequencies,3))
+ YAMBO_ALLOC(X_eff_err,(0:X_order,N_probe_frequencies,3))
+ YAMBO_ALLOC(RT_P_save,(RT_conf%T_n_steps,N_probes,3))
+ YAMBO_ALLOC(Probe_Frequency,(N_probe_frequencies))
+ YAMBO_ALLOC(Harmonic_Frequency,(0:X_order,N_probe_frequencies))
  !
  X_effective=cZERO
  X_eff_err  =cZERO
@@ -236,10 +240,6 @@ subroutine RT_X_effective(en)
    !
    RT_P_t(:,1:3)=RT_P_probe(:,1,:)
    !
-   !DEBUG>
-   !call RT_initialize()
-   !DEBUG<
-   !
    call RT_dump_and_write_JP()
    !
    call RT_X_LRR_real_field(en)
@@ -253,10 +253,6 @@ subroutine RT_X_effective(en)
  ! [B] The inversion method
  !
  if ( l_RT_X_inversion ) then
-   !
-   !DEBUG>
-   !call RT_initialize()
-   !DEBUG<
    !
    call RT_X_inversion(RT_P_probe,Susceptibility,Harmonic_Frequency,X_effective)
    !
@@ -375,9 +371,13 @@ subroutine RT_X_effective(en)
  contains
    !
    subroutine clean_ALLOC()
-     deallocate(RT_P_probe,RT_P_pump,X_effective,Susceptibility)
-     deallocate(Probe_Frequency,Harmonic_Frequency)
-     if (dump_dP) deallocate(RT_P_save)
+     YAMBO_FREE(RT_P_probe)
+     YAMBO_FREE(RT_P_pump)
+     YAMBO_FREE(X_effective)
+     YAMBO_FREE(Susceptibility)
+     YAMBO_FREE(Probe_Frequency)
+     YAMBO_FREE(Harmonic_Frequency)
+     YAMBO_FREE(RT_P_save)
    end subroutine
    !
    subroutine plot_X_effective()

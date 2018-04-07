@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,7 @@ module PHOTOLUM
  !
  use drivers,    ONLY:l_photolum
  use pars,       ONLY:SP
- use memory_m,   ONLY:mem_est
- !
- implicit none
+#include<memory.h>
  !
  real(SP)                 :: PL_prefactor
  !
@@ -37,7 +35,7 @@ module PHOTOLUM
  !
  ! PL direction
  !
- real(SP)                 :: PL_weights(3)=(/1.,1.,1./)
+ real(SP)                 :: PL_weights(3)
  !
  ! BS dipoles
  !
@@ -51,6 +49,7 @@ module PHOTOLUM
      use pars,       ONLY:pi,rZERO
      use units,      ONLY:SPEED_OF_LIGHT
      use R_lattice,  ONLY:RL_vol,nqbz
+     use vec_operate,ONLY:v_norm
      use BS_solvers, ONLY:BSS_n_freqs
      !
      integer :: ic
@@ -59,42 +58,36 @@ module PHOTOLUM
      !
      if (allocated(PL))  return
      !
-     allocate(PL(BSS_n_freqs,3)) !  2 (int) 3 (non int) 
+     YAMBO_ALLOC(PL,(BSS_n_freqs,3))!2(int)3(nonint)
      PL = rZERO
-     do ic=1,3
-       PL_weights(ic) = PL_weights(ic)/(sqrt(PL_weights(ic)))
-     enddo
+     PL_weights=PL_weights/v_norm(PL_weights)
      !
    end subroutine
    !
-   subroutine BS_PL_alloc( )
+   subroutine BSS_PL_alloc( )
      !
      use pars,       ONLY:cZERO,rZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
      !
      if (.not.l_photolum) return
      !
-     allocate(BSS_dipoles_PL(BS_H_dim,3))
-     call mem_est('BSS_dipoles_PL',(/size(BSS_dipoles_PL)/))
+     YAMBO_ALLOC(BSS_dipoles_PL,(BS_H_dim,3))
      BSS_dipoles_PL = cZERO
      !
-     allocate(BSS_PL_f(2,BS_K_dim))
-     call mem_est('BSS_PL_f',(/2,BS_K_dim/))
+     YAMBO_ALLOC(BSS_PL_f,(2,BS_K_dim))
      BSS_PL_f = rZERO
      !
    end subroutine
    !
-   subroutine BS_PL_free( )
+   subroutine BSS_PL_free( )
      !
      if (.not.l_photolum) return
      !
      if (allocated(BSS_dipoles_PL)) then
-       deallocate(BSS_dipoles_PL)
-       call mem_est('BSS_dipoles_PL')
+       YAMBO_FREE(BSS_dipoles_PL)
      endif
      if (allocated(BSS_PL_f)) then
-       deallocate(BSS_PL_f)
-       call mem_est('BSS_PL_f')
+       YAMBO_FREE(BSS_PL_f)
      endif
      !
    end subroutine

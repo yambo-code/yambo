@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,15 +41,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use drivers,       ONLY:l_sc_exx
  use SC,            ONLY:it_now
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  !
- implicit none
+#include<memory.h>
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  character(*),optional ::mode
@@ -108,15 +106,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  endif
  !
-#if defined _TIMING
  call timing('HF',OPR='start')
-#endif
  !
  ! allocation again
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
  call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
- allocate(local_rhotw(QP_ng_Sx))
+ YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
  isc%qs    =1
  !
  call scatter_Gamp(isc,'x')
@@ -221,17 +217,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 
- deallocate(local_rhotw)
+ YAMBO_FREE(local_rhotw)
  !
-#if defined _TIMING
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')
-#endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
-#if defined _TIMING
  call timing('HF(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

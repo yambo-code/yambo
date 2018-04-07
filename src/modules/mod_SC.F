@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -24,7 +24,7 @@
 module SC
  !
  use pars,            ONLY:SP,schlen,lchlen
- implicit none
+#include<memory.h>
  !
  integer           :: SC_bands(2)
  integer           :: it_to_start
@@ -36,7 +36,6 @@ module SC
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
  integer           :: n_SC_descriptions = 0
- real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
@@ -74,9 +73,8 @@ module SC
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
  !
- ! Rotation matrices and xc potential
+ ! xc potential
  !
- complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
  !
  interface
@@ -100,30 +98,22 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use pars,           ONLY:SP
-     use drivers,        ONLY:l_real_time,l_sc_sex,l_sc_coh,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
-     use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use memory_m,       ONLY:mem_est
-     use xc_functionals, ONLY:magn,V_xc
+     use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
      !
      implicit none
      !
      type(levels) :: E
      !
-     call H_alloc(E)
+     call H_alloc(E,.true.,.true.)
      !
      call H_QP_table_setup(E)
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
-       allocate(QP_Sc(QP_n_states,1))
-       call mem_est("QP_Sc",(/QP_n_states/))
+       YAMBO_ALLOC(QP_Sc,(QP_n_states,1))
      endif
-     !
-     allocate(SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R",(/size(SC_R)/))
      !
    end subroutine
    !
@@ -131,7 +121,6 @@ module SC
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !
@@ -144,13 +133,7 @@ module SC
      call X_alloc('DIP_spin')
      call X_alloc('P_square')
      !
-     if (allocated(QP_Sc)) then
-       deallocate(QP_Sc)
-       call mem_est("QP_Sc")
-     endif
-     !
-     deallocate(SC_R)
-     call mem_est("SC_R")
+     YAMBO_FREE(QP_Sc)
      !
    end subroutine
    !

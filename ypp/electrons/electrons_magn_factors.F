@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -27,7 +27,7 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:PARALLEL_index,WF_load
+ use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
@@ -53,16 +53,16 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
    call WF_load(WF,0,1,bands,(/ik,ik/),title='-Magn-factor',impose_free_and_alloc=.TRUE.)
    do ib=bands(1),bands(2)
      if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
-     i_wf(:)=WF%index(ib,ik,:)
+     i_wf=WF%index(ib,ik,1)
      ! x
-     magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(2)) ),SP) &
-&                         +real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(1)) ),SP)
+     magn_factors(ib,ik,1)=real(Vstar_dot_V_omp( fft_size, WF%c(:, 1,i_wf), WF%c(:,2,i_wf) ),SP) &
+&                         +real(Vstar_dot_V_omp( fft_size, WF%c(:, 2,i_wf), WF%c(:,1,i_wf) ),SP)
      ! y
-     magn_factors(ib,ik,2)=aimag(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(2)) )) &
-&                         -aimag(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(1)) ))
+     magn_factors(ib,ik,2)=aimag(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf), WF%c(:,2,i_wf) )) &
+&                         -aimag(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf), WF%c(:,1,i_wf) ))
      ! z
-     magn_factors(ib,ik,3)=real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(1) ), WF%c(:,i_wf(1)) ),SP) &
-&                         -real(Vstar_dot_V_omp( fft_size, WF%c(:, i_wf(2) ), WF%c(:,i_wf(2)) ),SP)
+     magn_factors(ib,ik,3)=real(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf), WF%c(:,1,i_wf) ),SP) &
+&                         -real(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf), WF%c(:,2,i_wf) ),SP)
      !
      call live_timing(steps=1)
    enddo

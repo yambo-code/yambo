@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ subroutine K_inversion_do_it_SLK(Lo,what)
  !
  ! Work Space
  !
- integer     ::i_r,i_r_,i_c_,borders(2)
+ integer     ::i_r,borders(2)
  !
  if (what=="r") K_inv_slk%blc=-K_slk%blc
  if (what=="a") K_inv_slk%blc=-conjg(K_slk%blc)
@@ -48,10 +48,7 @@ subroutine K_inversion_do_it_SLK(Lo,what)
  if (borders(1)<borders(2)) then
    do i_r=borders(1),borders(2)
      !
-     i_r_=i_r-K_slk%rows(1)+1
-     i_c_=i_r-K_slk%cols(1)+1
-     !
-     K_inv_slk%blc(i_r_,i_c_)=K_inv_slk%blc(i_r_,i_c_)+1._SP/Lo(i_r)
+     K_inv_slk%blc(i_r,i_r,1)=K_inv_slk%blc(i_r,i_r,1)+1._SP/Lo(i_r)
      !
    enddo
  endif

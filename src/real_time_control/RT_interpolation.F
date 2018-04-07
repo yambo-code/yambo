@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -23,16 +23,15 @@
 !
 subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
- use pars,           ONLY:SP
- use memory_m,       ONLY:mem_est
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
+ use pars,           ONLY:SP,schlen
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nk_levels,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:RT_carriers
+ use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
  !
- implicit none
+#include<memory.h>
  !
  integer,intent(in)    :: bands(2)
  type(levels),  intent(inout) :: E
@@ -46,36 +45,34 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
+ character(schlen)     :: title
  logical               :: l_DbGd
  !
- l_DbGd=BZ_DbGd_tot_nkpts>0
+ l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
  !
  N_carriers=0._SP
  !
- if (l_f.and..not.associated(E%df)) then
+ if (l_f.and..not.allocated(E%df)) then
    !
    ! These are *always* the equilibrium occupations
    !
-   if(.not.associated(E%fo)) then
-     allocate(E%fo(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-df E-fo",(/size(E%fo),size(E%df)/),(/SP,SP/))
+   if(.not.allocated(E%fo)) then
+     YAMBO_ALLOC(E%fo,(E%nb,E%nk,n_sp_pol))
      E%fo=E%f
    endif
    !
-   allocate(E%df(E%nb,E%nk,n_sp_pol))
-   call mem_est("E-df",(/size(E%df)/),(/SP,SP/))
+   YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
    call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
-     allocate(E%df_DbGd(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
-     call mem_est("E-df_DbGd",(/size(E%df_DbGd)/),(/SP,SP/))
+     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
      E%f_DbGd=E%f_DbGd+E%df_DbGd
    endif
    !
@@ -87,15 +84,14 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    ! Eo may already contain the DFT energies in case QP corrections have been applyed
    ! In this case the equilibrium QP energies are not stored anywhere
    !
-   if(.not.associated(E%Eo)) then
-     allocate(E%Eo(E%nb,E%nk,n_sp_pol))
-     call mem_est("E-Eo",(/size(E%Eo)/),(/SP/))
+   if(.not.allocated(E%Eo)) then
+     YAMBO_ALLOC(E%Eo,(E%nb,E%nk,n_sp_pol))
      E%Eo=E%E
    endif
    !
    call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
    !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
    !
  endif
  !
@@ -106,24 +102,30 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
  endif
  !
+ title=" "
+ if (l_f) title="f"
+ if (l_E) title=trim(title)//"E"
+ if (l_W) title=trim(title)//"W"
+ title=trim(title)//"@"//trim(what)
+ !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '[RT] Reference Time           [fs]: ',Time*AUT2FS)
- call msg('r',    '[RT] Bands range                  : ', (/nb(1),nb(2)/)) 
+ call msg('r',    '['//trim(title)//'] Reference Time           [fs]: ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Bands range                  : ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
-   call msg('r',  '[RT] Maximum occupations change   : ',df_Max)
-   call msg('r',  '[RT] N of carriers                : ',N_carriers(1))
-   if (l_DbGd) call msg('r',  '[RT]                 (Double Grid): ',N_carriers(2))
+   call msg('r',  '['//trim(title)//'] Maximum occupations change   : ',df_Max)
+   call msg('r',  '['//trim(title)//'] N of carriers                : ',N_carriers(1))
+   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid): ',N_carriers(2))
  endif
  !
  if (l_E) then
-   call msg('r',  '[RT] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change [ev]: ',dE_Max*HA2EV)
  endif
  !
- call msg('rn',  '[RT] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+ call msg('rn',  '['//trim(title)//'] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
  !
- call REPORT_OCCUPATIONS(E)
+ if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
  contains
   !
@@ -139,9 +141,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     integer      :: ik,i_carr,nb_max
     real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
     !
-    l_renormalize=.not.l_real_time
+    l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
-    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
+    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
  !
  use pars,           ONLY:SP,rZERO
- use SLK_m,          ONLY:BLACS_structure_in_use
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  use BS_solvers,     ONLY:K_INV_PL,BS_mat,K_slk
  !
@@ -71,7 +70,7 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
    !
    do ic=1,3
      !
-     if (BLACS_structure_in_use) then
+     if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
        call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,1,ic),R_x_D_n(:,1,ic))
 #endif
@@ -83,7 +82,7 @@ integer function PL_via_perturbative_inversion(n,Lo_dim,n_loop,D,C,f,Lo)
      f=f+C*Vstar_dot_V_omp(n,CUMULATIVE(:,1,ic),WK)
      !
      if (n_loop==2) then
-       if (BLACS_structure_in_use) then
+       if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
          call PARALLEL_M_by_V('n',n,K_slk,R_x_D_nm1(:,2,ic),R_x_D_n(:,2,ic))
 #endif

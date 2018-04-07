@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,11 +25,10 @@ subroutine G_shells_finder()
  !
  ! Output: g_rot(nsym,ng_closed)
  !
- ! R_is G_ig = G_{g_rot(is,ig)}
+ ! R_is G_ig = G_{g_rot(ig,is)}
  !
- use pars,         ONLY:SP,IP
+ use pars,         ONLY:SP
  use LIVE_t,       ONLY:live_timing
- use memory_m,     ONLY:mem_est
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
@@ -39,7 +38,7 @@ subroutine G_shells_finder()
  use interfaces,   ONLY:PARALLEL_index
  use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -61,17 +60,20 @@ subroutine G_shells_finder()
  !
  if (io_err==0) then
    if(inv_index<0) then
-     deallocate(ng_in_shell,E_of_shell,g_rot,minus_G)
-     call mem_est("RL_Gshells RL_Eshells")
+     YAMBO_FREE(ng_in_shell)
+     YAMBO_FREE(E_of_shell)
+     YAMBO_FREE(g_rot)
+     YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
    endif
    return
  else
    if (allocated(g_rot)) then
-     deallocate(ng_in_shell,E_of_shell,g_rot)
-     if(inv_index<0) deallocate(minus_G)
-     call mem_est("RL_Gshells RL_Eshells")
+     YAMBO_FREE(ng_in_shell)
+     YAMBO_FREE(E_of_shell)
+     YAMBO_FREE(g_rot)
+     YAMBO_FREE(minus_G)
    endif
  endif
  !
@@ -91,10 +93,10 @@ subroutine G_shells_finder()
  !
  ! Init
  !
- allocate(g_rot(nsym,ng_closed))
+ YAMBO_ALLOC(g_rot,(ng_closed,nsym))
  !
  g_rot=0
- if (myid==0) g_rot(:,1)=1 ! Gamma point
+ if (myid==0) g_rot(1,:)=1 ! Gamma point
  E_of_shell_TMP=0._SP
  !
  ! Parallel Setup
@@ -130,7 +132,7 @@ subroutine G_shells_finder()
          !
          if (v_is_zero(g_rotated-g_vec(ig_2,:),zero_=G_iku_zero)) then
            !
-           g_rot(i_s,ig_1)=ig_2
+           g_rot(ig_1,i_s)=ig_2
            !
            exit
            !
@@ -167,7 +169,7 @@ subroutine G_shells_finder()
  !
  do i_m=n_g_shells,2,-1
    !
-   if ( all(g_rot(:,:ng_in_shell_TMP(i_m))/=0) ) then
+   if ( all(g_rot(:ng_in_shell_TMP(i_m),:)/=0) ) then
      n_g_shells_no_holes=i_m
      exit 
    endif
@@ -177,9 +179,8 @@ subroutine G_shells_finder()
  !
  ! Shells Allocation & Transfer 
  !
- allocate(ng_in_shell(n_g_shells),E_of_shell(n_g_shells))
- call mem_est("RL_Gshells RL_Eshells",&
-&             (/n_g_shells+nsym*ng_closed,n_g_shells/),(/IP,SP/))
+ YAMBO_ALLOC(ng_in_shell,(n_g_shells))
+ YAMBO_ALLOC(E_of_shell,(n_g_shells))
  !
  ng_in_shell=ng_in_shell_TMP(:n_g_shells)
  ng_closed=ng_in_shell(n_g_shells)
@@ -192,7 +193,7 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
-   allocate(minus_G(ng_closed))
+   YAMBO_ALLOC(minus_G,(ng_closed))
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
      n_g_shells=n_g_shells-1 

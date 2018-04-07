@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -27,8 +27,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  use BS,          ONLY:BS_nT_grps
  use parallel_m,  ONLY:mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
 &                      PAR_COM_T_Haydock,CREATE_the_COMM
- !
- implicit none
+#include<memory.h>
  !
  character(*),       intent(in) :: what     
  !
@@ -41,7 +40,8 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      !
 #if defined _MPI
      !
-     !allocate(PAR_IND_T_Haydock%element_1D(BS_nT_grps))
+     !YAMBO_ALLOCATE(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
+     !Y_MEM(PAR_IND_T_Haydock%element_1D)
      !
      !PAR_IND_T_Haydock%element_1D = .false.
      !do i_b=1,n_BS_blks
@@ -95,7 +95,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
        deallocate(PAR_COM_T_Haydock)
 #endif
        ! This is allocated in K_Transitions setup
-       deallocate(PAR_IND_T_Haydock%element_1D)
+       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
        !
    end select
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,9 +37,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
-#if defined _TIMING
  use timing_m,            ONLY:timing
-#endif
  !
  implicit none
  !
@@ -59,9 +57,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
    call section('=','Correlation: Radiative Lifetimes')
  endif
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='start')
-#endif
  !
  ! PARALLEL distribution
  !=======================
@@ -140,9 +136,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X)
  !
  qp%E(:)=QP_sc(:,1)
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='stop')
-#endif
  !
 end subroutine QED_Radiative_Lifetimes
 

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -23,120 +23,191 @@
 #
 AC_DEFUN([ACX_REPORT],
 [
-srcdir_path=$PWD
+# 
+# - GENERAL CONFIGURATIONS -
+# 
+DP_check="-"
+if test "$enable_dp" = "yes" ; then DP_check="X"; fi
+#
+KEEP_OBJS_check="-"
+if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
+#
+TIME_profile_check="-"
+if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
+#
+MEM_profile_check="-"
+if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
+# 
+# - PARALLEL SUPPORT -
+# 
+MPI_check="-"
+if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
+#
+OPENMP_check="-"
+if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
-DP_str="-"
-if test "$enable_dp" = "yes" ; then DP_str="X"; fi
+#
+# - LIBRARIES -
+#
 
-Red_str="-"
-if test "$enable_debug" = "yes" ; then Red_str="X"; fi
-
-MPI_str="-"
-if test "$mpibuild" = "yes" ; then
-  MPI_str="X"
-fi
-
-NETCDF_str="-"
-if test "$compile_netcdf" = "yes" ; then
-  NETCDF_str="I"
-else
-  NETCDF_str="E"
-fi
-NETCDF_LF_str="(With large files support)"
-if test "$enable_netcdf_classic" = "yes"; then NETCDF_LF_str="(No large files support)"; fi
-
-HDF5_str="-"
-if test "$hdf5" = "yes" ; then
-  HDF5_str="E"
-  HDF5_support="(No HDF5-IO format)"
-  if test "$enable_netcdf_hdf5" = "yes"; then HDF5_support="(HDF5-IO format, no data compression)" ; fi
-  if test "$enable_netcdf_hdf5" = "yes" && test "$enable_hdf5_compression" = "yes"; then HDF5_support="(HDF5-IO format with data compression)" ; fi
-fi
-
-LIBXC_str="-"
-if test "$acx_libxc_ok" = "yes" ; then
-  LIBXC_str="E"
-else
-  LIBXC_str="I"
-fi
-
-TIME_profile_str="-"
-if test "$enable_time_profile" = "yes" ; then TIME_profile_str="X"; fi
-
-PW_str="-"
+#
+IOTK_str=" - "
 if test "$compile_p2y" = "yes" ; then
-  PW_str="E"
-  if test "$compile_iotk" = "yes" ; then PW_str="I"; fi
+  IOTK_str=" E "
+  if test "$internal_iotk" = "yes" ; then
+    if test "$compile_iotk" = "yes" ; then IOTK_str=" Ic"; fi
+    if test "$compile_iotk" = "no"  ; then IOTK_str=" If"; fi
+  fi
 fi
-
-OPENMP_str="-"
-if test "$enable_open_mp" = "yes" ; then OPENMP_str="X"; fi
 #
-# OPTIONALS
-#
-ETSF_str="-"
+ETSF_str=" - "
 if test "$compile_e2y" = "yes" ; then
-  ETSF_str="E"
-  if test "$compile_etsf" = "yes" ; then ETSF_str="I"; fi
+  ETSF_str=" E "
+  if test "$internal_etsf" = "yes" ; then
+    if test "$compile_etsf" = "yes" ; then ETSF_str=" Ic"; fi
+    if test "$compile_etsf" = "no"  ; then ETSF_str=" If"; fi
+  fi
+fi
+#
+NETCDF_str=" - "
+if test "$internal_netcdf" = "yes" ; then
+  if test "$compile_netcdf" = "yes" ; then NETCDF_str=" Ic"; fi
+  if test "$compile_netcdf" = "no"  ; then NETCDF_str=" If"; fi
+else
+  NETCDF_str=" E "
+fi
+NETCDF_info="(With large files support)"
+if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(No large files support)"; fi
+#
+HDF5_str=" - "
+if test "$hdf5" = "yes" ; then
+  if test "$internal_hdf5" = "yes" ; then
+    if test "$compile_hdf5" = "yes" ; then HDF5_str=" Ic"; fi
+    if test "$compile_hdf5" = "no"  ; then HDF5_str=" If"; fi
+  else
+    HDF5_str=" E "
+  fi
+  if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
+  if test "$enable_netcdf_hdf5" = "yes" ; then
+    if test "$compile_hdf5" = "yes" && test "$mpibuild" = "yes" ; then
+      HDF5_info="(HDF5-IO format, parallel lib";
+    else
+      HDF5_info="(HDF5-IO format"     ;
+    fi
+    if test "$enable_hdf5_compression" = "yes"; then
+      HDF5_info="${HDF5_info}, with data compression)" ;
+    else
+      HDF5_info="${HDF5_info}, no data compression)" ;
+    fi
+  fi
+fi
+#
+
+#
+FFT_str=" E "
+if test "$internal_fft" = "yes" ; then
+  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_str=" Ic"; fi
+  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_str=" If"; fi
+else
+  if test "$compile_fftqe" = "yes" ; then FFT_str="E+I"; fi
+fi
+#
+BLAS_str=" E "
+if test "$internal_blas" = "yes" ; then
+  if test "$compile_blas" = "yes"; then BLAS_str=" Ic"; fi
+  if test "$compile_blas" = "no" ; then BLAS_str=" If"; fi
+fi
+#
+LAPACK_str=" E "
+if test "$internal_lapack" = "yes" ; then
+  if test "$compile_lapack" = "yes"; then LAPACK_str=" Ic"; fi
+  if test "$compile_lapack" = "no" ; then LAPACK_str=" If"; fi
+fi
+#
+SLK_str=" - "
+if test "$enable_scalapack" = "yes" ; then SLK_str=" E "; fi
+if test "$internal_slk" = "yes" ; then
+  if test "$compile_slk" = "yes"; then SLK_str=" Ic"; fi
+  if test "$compile_slk" = "no" ; then SLK_str=" If"; fi
+fi
+#
+BLACS_str=" - "
+if test "$enable_scalapack" = "yes" ; then BLACS_str=" E "; fi
+if test "$internal_blacs" = "yes" ; then
+  if test "$compile_blacs" = "yes"; then BLACS_str=" Ic"; fi
+  if test "$compile_blacs" = "no" ; then BLACS_str=" If"; fi
+fi
+#
+#
+PETSC_str=" - "
+if test "$internal_petsc" = "yes" ; then
+  if test "$compile_petsc" = "yes" ; then PETSC_str=" Ic"; fi
+  if test "$compile_petsc" = "no"  ; then PETSC_str=" If"; fi
+elif test "$enable_petsc" = "yes" ; then
+  PETSC_str=" E "
 fi
 
-LAPACK_str="E"
-if test "$compile_lapack" = "yes" ; then LAPACK_str="I"; fi
-
-BLAS_str="E"
-if test "$compile_blas" = "yes" ; then BLAS_str="I"; fi
-
-PET_str="-"
-if test "$enable_petsc"  = "yes" ; 
- then PET_str="E"; 
- if test "$compile_petsc" = "yes" ; then PET_str="I"; fi
+#
+SLEPC_str=" - "
+if test "$internal_slepc" = "yes" ; then
+  if test "$compile_slepc" = "yes" ; then SLEPC_str=" Ic"; fi
+  if test "$compile_slepc" = "no"  ; then SLEPC_str=" If"; fi
+elif test "$enable_slepc" = "yes" ; then
+  SLEPC_str=" E "
 fi
 
-SLE_str="-"
-if test "$enable_slepc"  = "yes" ; 
- then SLE_str="E"; 
- if test "$compile_slepc" = "yes" ; then SLE_str="I"; fi
+#
+LIBXC_str=" E "
+if test "$internal_libxc" = "yes" ; then
+  if test "$compile_libxc" = "yes"; then LIBXC_str=" Ic"; fi
+  if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
 
-SLK_str="-"
-if test "$enable_scalapack" = "yes" ; then SLK_str="E"; fi
-if test "$compile_slk"      = "yes" ; then SLK_str="I"; fi
+#
+YDB_str="-";
+if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
+YPY_str="-";
+if test "$enable_yambopy" = "yes" ; then YPY_str="X"; fi
 
-BLACS_str="-"
-if ! test "$SLK_str" = "-" ; then
- if test "$enable_scalapack" = "yes" ; then BLACS_str="E"; fi
- if test "$compile_blacs"    = "yes" ; then BLACS_str="I"; fi
+#
+MPI_str=" - ";
+MPI_info=""
+if test "$mpibuild" = "yes" ; then
+  if test "$MPI_LIBS" = "" ; then
+    MPI_info="(system default detected)";
+    MPI_str=" X ";
+  else
+    MPI_str=" E ";
+  fi
 fi
-
-BGQ_str="-"
-if test "$enable_bluegene" = "yes" ; then BGQ_str="X"; fi
-
-MPI_LIB_str="-"
-if test "$enable_mpi_lib" = "yes" ; then MPI_LIB_str="E"; fi
-
-if test "$exec_prefix" = "NONE" ; then exec_prefix="$srcdir_path"; fi
-
-AC_SUBST(srcdir_path)
-AC_SUBST(exec_prefix)
-AC_SUBST(DP_str)
-AC_SUBST(Red_str)
-AC_SUBST(MPI_str)
-AC_SUBST(MPI_LIB_str)
-AC_SUBST(HDF5_str)
-AC_SUBST(HDF5_support)
-AC_SUBST(NETCDF_str)
-AC_SUBST(LIBXC_str)
-AC_SUBST(NETCDF_LF_str)
+#
+AC_SUBST(DP_check)
+AC_SUBST(KEEP_OBJS_check)
+AC_SUBST(TIME_profile_check)
+AC_SUBST(MEM_profile_check)
+#
+AC_SUBST(MPI_check)
+AC_SUBST(OPENMP_check)
+#
+AC_SUBST(IOTK_str)
 AC_SUBST(ETSF_str)
-AC_SUBST(PW_str)
+AC_SUBST(NETCDF_str)
+AC_SUBST(NETCDF_info)
+AC_SUBST(HDF5_str)
+AC_SUBST(HDF5_info)
+#
+AC_SUBST(FFT_str)
 AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
-AC_SUBST(SLK_str)
-AC_SUBST(PET_str)
-AC_SUBST(SLE_str)
 AC_SUBST(BLACS_str)
-AC_SUBST(OPENMP_str)
-AC_SUBST(BGQ_str)
-AC_SUBST(TIME_profile_str)
-
+AC_SUBST(SLK_str)
+AC_SUBST(PETSC_str)
+AC_SUBST(SLEPC_str)
+#
+AC_SUBST(YDB_str)
+AC_SUBST(YPY_str)
+#
+AC_SUBST(LIBXC_str)
+AC_SUBST(MPI_str)
+AC_SUBST(MPI_info)
 ])

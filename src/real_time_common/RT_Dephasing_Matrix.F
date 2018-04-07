@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,14 +26,13 @@ subroutine RT_Dephasing_Matrix(E)
  use pars,          ONLY:SP
  use units,         ONLY:FS2AUT
  use com,           ONLY:error,msg
- use memory_m,      ONLY:mem_est
  use electrons,     ONLY:levels
  use parser_m,      ONLY:parser
  use R_lattice,     ONLY:nXkibz
  use real_time,     ONLY:RT_Deph_Matrix,RT_is_statically_dephased,Phase_LifeTime,&
 &                        RAD_LifeTime,RT_bands
  !
- implicit none
+#include<memory.h>
  !
  type(levels), intent(in) :: E
  !
@@ -49,8 +48,8 @@ subroutine RT_Dephasing_Matrix(E)
  dm_rng_lines=1
  rcheck=1.
  do while(rcheck>0.)
-   if (allocated(DephM_r_limits)) deallocate(DephM_r_limits)
-   allocate(DephM_r_limits(dm_rng_lines,4))
+   YAMBO_FREE(DephM_r_limits)
+   YAMBO_ALLOC(DephM_r_limits,(dm_rng_lines,4))
    DephM_r_limits(dm_rng_lines,4)=-1.
    call parser('DephMatrix',DephM_r_limits)
    rcheck=DephM_r_limits(dm_rng_lines,4)
@@ -59,10 +58,9 @@ subroutine RT_Dephasing_Matrix(E)
  !
  dm_rng_lines=dm_rng_lines-2
  !
- if (dm_rng_lines/=0.or.RAD_LifeTime > tresh.or.Phase_LifeTime > tresh.or.associated(E%W)) then
+ if (dm_rng_lines/=0.or.RAD_LifeTime > tresh.or.Phase_LifeTime > tresh.or.allocated(E%W)) then
    !
-   allocate(RT_Deph_Matrix(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
-   call mem_est("DephMatrix",(/size(RT_Deph_Matrix)/))
+   YAMBO_ALLOC(RT_Deph_Matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
    !
    RT_Deph_Matrix=(0._SP,0._SP)
    !
@@ -79,7 +77,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  if (RAD_LifeTime > tresh) then
    !
-   call msg('rs','[RT] External scalar Radiative lifetime applied')
+   call msg('rs','[RT] External scalar Radiative Scattering lifetime applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
@@ -121,14 +119,14 @@ subroutine RT_Dephasing_Matrix(E)
      RT_Deph_Matrix(ib_2,ib_1,ik)  =1._SP/DephM_r_limits(i1,4)/FS2AUT
    enddo
    !
-   deallocate(DephM_r_limits)
+   YAMBO_FREE(DephM_r_limits)
    !
- else if (associated(E%W)) then
+ else if (allocated(E%W)) then
    !
    ! QP database 
    !-------------
    !
-   call msg('rs','[RT] Quasiparticle database Dephasing applied')
+   call msg('rs','[RT] Quasiparticle Dephasing applied')
    !
    do ib_1=RT_bands(1),RT_bands(2)
      do ib_2=ib_1+1,RT_bands(2)

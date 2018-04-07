@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -32,7 +32,6 @@ subroutine RT_X_LRR_real_field(en)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
  use vec_operate,    ONLY:v_norm
- use memory_m,       ONLY:mem_est
  use RT_control,     ONLY:RT_output
  use real_time,      ONLY:l_RT_induced_field
  use fields,         ONLY:Efield,small_a_frequency,small_a
@@ -40,14 +39,14 @@ subroutine RT_X_LRR_real_field(en)
  use parser_m,       ONLY:parser
  use com,            ONLY:error
  !
- implicit none
+#include<memory.h>
  !
  type(levels)  :: en
  !
  ! Work Space
  !
  integer  :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields
- character(10):: FT_title
+ character(11):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
  complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
@@ -76,17 +75,20 @@ subroutine RT_X_LRR_real_field(en)
    !
    if(mod(RT_conf%T_n_steps,2)==0) RT_conf%W_range=RT_conf%W_range+RT_conf%Field_damp_factor/2._SP
    !
-   allocate(EELS(RT_conf%T_n_steps,3),EPS(RT_conf%T_n_steps,3),Pol(RT_conf%T_n_steps,3),E_w(RT_conf%T_n_steps,n_fields))
+   YAMBO_ALLOC(EELS,(RT_conf%T_n_steps,3))
+   YAMBO_ALLOC(EPS,(RT_conf%T_n_steps,3))
+   YAMBO_ALLOC(Pol,(RT_conf%T_n_steps,3))
+   YAMBO_ALLOC(E_w,(RT_conf%T_n_steps,n_fields))
    !
  else
    !
-   allocate(EELS(RT_conf%W_n_steps,3),EPS(RT_conf%W_n_steps,3),Pol(RT_conf%W_n_steps,3)) 
-   allocate(E_w(RT_conf%W_n_steps,n_fields))
+   YAMBO_ALLOC(EELS,(RT_conf%W_n_steps,3))
+   YAMBO_ALLOC(EPS,(RT_conf%W_n_steps,3))
+   YAMBO_ALLOC(Pol,(RT_conf%W_n_steps,3))
+   YAMBO_ALLOC(E_w,(RT_conf%W_n_steps,n_fields))
    !
  endif
  !
- call mem_est("EELS EPS Pol",(/size(EELS),size(EPS),size(Pol)/),(/2*SP,2*SP,2*DP/))
- call mem_est("E_w",(/size(E_w)/),(/2*DP/))
  !
  EELS   =(0._SP,0._SP)
  EPS    =(0._SP,0._SP)
@@ -98,7 +100,7 @@ subroutine RT_X_LRR_real_field(en)
  !
  W_step=(RT_conf%W_range(2) - RT_conf%W_range(1))/(RT_conf%W_n_steps-1)
  !
- allocate(freqs(RT_conf%W_n_steps))
+ YAMBO_ALLOC(freqs,(RT_conf%W_n_steps))
  freqs=cZERO
  !
  do i_w = 1, RT_conf%W_n_steps
@@ -125,16 +127,22 @@ subroutine RT_X_LRR_real_field(en)
  !
  !... FT
  !
- allocate(E_t(RT_conf%T_n_steps,n_fields))
- do i_field=1,n_fields
-   do i_t=1,RT_conf%T_n_steps
-     Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
-     A_of_t =small_a(Field_time,Efield(i_Probe),0)
-     E_of_t =small_a(Field_time,Efield(i_Probe),1)
-     theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
-     delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+ YAMBO_ALLOC(E_t,(RT_conf%T_n_steps,n_fields))
+ !
+ do i_t=1,RT_conf%T_n_steps
+   Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
+   A_of_t =small_a(Field_time,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,Efield(i_Probe),1)
+   theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
+   delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+   !
+   do i_field=1,n_fields
      E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
+   !
+ enddo
+ !
+ do i_field=1,n_fields
    !
    if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) then
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,E_t(:,i_field),1)
@@ -145,11 +153,12 @@ subroutine RT_X_LRR_real_field(en)
    if (i_field==1) FT_title=' E#1'
    if (i_field==2) FT_title=' E#2'
    !
-   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:,i_field),RT_conf%W_n_steps,&
-&                                E_t(:,i_field),RT_conf%T_n_steps,USE_FFT,1)
+   call RT_1D_Fourier_Transform('T2W',FT_title,freqs,E_w(:RT_conf%W_n_steps,i_field),RT_conf%W_n_steps,&
+&                                E_t(:RT_conf%T_n_steps,i_field),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
- deallocate(E_t)
+ !
+ YAMBO_FREE(E_t)
  !
  ! Check of finiteness of E field
  !--------------------------------
@@ -174,7 +183,7 @@ subroutine RT_X_LRR_real_field(en)
    ! Polarization
    !
    call RT_1D_Fourier_Transform('T2W',FT_title,freqs,Pol(:,i_p_dir),RT_conf%W_n_steps,&
-&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,USE_FFT,1)
+&                               RT_P_t(:,i_p_dir),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
  !
@@ -244,10 +253,10 @@ subroutine RT_X_LRR_real_field(en)
  !
  if(     l_RT_induced_field) then
    EELS(:,1) = -1._SP+EELS(:,1)
-   EPS(:,:)  = -1._SP/EELS(:,:)
+   EPS(:,1)  = -1._SP/EELS(:,1)
  else
    EPS(:,1)  =  1._SP+EPS(:,1)
-   EELS(:,:) = -1._SP/EPS(:,:)
+   EELS(:,1) = -1._SP/EPS(:,1)
  endif
  !
  do i_w = 1, RT_conf%W_n_steps
@@ -272,7 +281,9 @@ subroutine RT_X_LRR_real_field(en)
  enddo
  call RT_output(what="close E_frequency eps_along_E eels_along_E")
  !
- deallocate(EELS,EPS,Pol,E_w)
- call mem_est("EELS EPS Pol E_w")
+ YAMBO_FREE(EELS)
+ YAMBO_FREE(EPS)
+ YAMBO_FREE(Pol)
+ YAMBO_FREE(E_w)
  !
 end subroutine

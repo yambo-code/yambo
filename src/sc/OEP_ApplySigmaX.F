@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -52,7 +52,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  ! I/O
  !
- implicit none
+#include<memory.h>
  complex(SP),intent(out)  :: U_x(nkibz,n_met_bands,fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k,q
@@ -72,7 +72,10 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  call PP_indexes_reset(px)
  !
  call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="OEP_SigmaX")
- allocate(local_u(fft_size),u(fft_size),u_rs(fft_size),rhotw_rs(fft_size))
+ YAMBO_ALLOC(local_u,(fft_size))
+ YAMBO_ALLOC(u,(fft_size))
+ YAMBO_ALLOC(u_rs,(fft_size))
+ YAMBO_ALLOC(rhotw_rs,(fft_size))
  !
  isc%qs=1
  call scatter_Gamp(isc,'x')
@@ -101,7 +104,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
          lostr = os>nsym/(i_time_rev+1)
          call scatter_Bamp(isc)
          u(1:QP_ng_Sx) = 4._SP*pi*conjg(isc%rhotw(1:QP_ng_Sx))*isc%gamp(1:QP_ng_Sx,1)
-         iGo=g_rot(sop_inv(qs),isc%qs(1))
+         iGo=g_rot(isc%qs(1),sop_inv(qs))
          u_rs(fft_g_table(1:QP_ng_Sx,iGo))=u(1:QP_ng_Sx)
 #if defined _FFTW
          fftw_plan=0
@@ -112,8 +115,8 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
          ifft=WF%index(iv1,ik,1)
          offt=WF%index(iv2,isc%os(2),1)
          rhotw_rs(:)=E%f(iv2,isc%os(2),1)/spin_occ
-         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(1:fft_size,os),offt))
-         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(1:fft_size,os),offt)
+         if (lostr)      rhotw_rs(1:fft_size)=rhotw_rs(:)*conjg(WF%c(fft_rot_r(1:fft_size,os),1,offt))
+         if (.not.lostr) rhotw_rs(1:fft_size)=rhotw_rs(:)*WF%c(fft_rot_r(1:fft_size,os),1,offt)
          local_u(:) =  u_rs(fft_rot_r(:,qs))*rhotw_rs(:)
          U_x(ik,iv1,:) = U_x(ik,iv1,:)-local_u(:)
          call live_timing(steps=1)
@@ -127,7 +130,10 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  !
  ! CLEAN UP
  !
- deallocate(local_u,u,u_rs,rhotw_rs)
+ YAMBO_FREE(local_u)
+ YAMBO_FREE(u)
+ YAMBO_FREE(u_rs)
+ YAMBO_FREE(rhotw_rs)
  !
  call elemental_collision_free(isc)
  !

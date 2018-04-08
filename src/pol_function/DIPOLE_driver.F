@@ -92,9 +92,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
 #endif
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -121,9 +119,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  integer, external :: io_Overlaps
 #endif
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='start')
-#endif
  !
  ! Setup logicals 
  !================
@@ -237,9 +233,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='stop')
-#endif
  !
 #if defined _SC || defined _RT || defined _NL
  if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) return

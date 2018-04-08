@@ -41,9 +41,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use drivers,       ONLY:l_sc_exx
  use SC,            ONLY:it_now
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
@@ -109,9 +107,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  endif
  !
-#if defined _TIMING
  call timing('HF',OPR='start')
-#endif
  !
  ! allocation again
  !
@@ -224,15 +220,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  call elemental_collision_free(iscp) 
  YAMBO_FREE(local_rhotw)
  !
-#if defined _TIMING
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')
-#endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
-#if defined _TIMING
  call timing('HF(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

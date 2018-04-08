@@ -34,9 +34,7 @@ integer function io_Overlaps(X,ID)
  use timing_m,      ONLY:timing
 #endif
  !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  implicit none
  type(X_t)   ::X
  integer     ::ID
@@ -53,9 +51,7 @@ integer function io_Overlaps(X,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_Overlaps',OPR='start')
-#endif
  !
  io_extension(ID)='Overlap'
  !
@@ -103,8 +99,6 @@ integer function io_Overlaps(X,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_Overlaps',OPR='stop')
-#endif
  !
 end function

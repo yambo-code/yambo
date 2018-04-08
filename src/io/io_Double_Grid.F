@@ -31,9 +31,7 @@ integer function io_Double_Grid(E,Xk,ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
 &                         IO_OUTDATED_DB
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  type(levels) :: E
@@ -44,9 +42,7 @@ integer function io_Double_Grid(E,Xk,ID)
  !
  integer :: DG_format
  !
-#if defined _TIMING
  call timing('io_Double_Grid',OPR='start')
-#endif
  !
  io_Double_Grid=-1
  !
@@ -155,8 +151,6 @@ integer function io_Double_Grid(E,Xk,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_Double_Grid',OPR='stop')
-#endif
  !
 end function

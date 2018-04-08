@@ -39,6 +39,7 @@ module BS
  logical :: BS_K_is_ALDA
  logical :: BS_not_const_eh_f
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
+ character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode

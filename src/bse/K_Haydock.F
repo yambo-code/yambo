@@ -33,7 +33,7 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_treshold,BSS_description,io_BSS_Haydock,Co_factor,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod
- use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps
+ use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,L_kind
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -717,7 +717,11 @@ subroutine K_Haydock(iq,W)
        !
        ! GPL_INCLUDE_END
        !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       if (ii==1) then
+         if(trim(L_kind)=="Lbar") Epsilon_ii(iw,i_eps(:))= 1._SP+Epsilon_ii(iw,i_eps(:))
+         if(trim(L_kind)=="full") Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)
+         Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
+       endif
        !
        ! GPL_EXCLUDE_START
        !

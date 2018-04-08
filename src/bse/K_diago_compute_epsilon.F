@@ -32,7 +32,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim
+ use BS,             ONLY:BS_H_dim,L_kind
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
@@ -199,8 +199,15 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  ! GPL_EXCLUDE_END
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)          +X_drude_term(:))*Co_factor/q_norm(iq)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-factor_jj+X_drude_term(:))*Co_factor/  W%p(:)  **2
+ if(     trim(L_kind)=="Lbar") then
+   if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)= 1._SP+(Epsilon_ii(:,2)          )*Co_factor/q_norm(iq)**2
+   if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)= 1._SP+(Epsilon_ii(:,2)-factor_jj)*Co_factor/  W%p(:)  **2
+ else if(trim(L_kind)=="full") then
+   if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=(1._SP-(Epsilon_ii(:,2)          )*Co_factor/q_norm(iq)**2)**(-1)
+   if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=(1._SP-(Epsilon_ii(:,2)-factor_jj)*Co_factor/  W%p(:)  **2)**(-1)
+ endif
+ !
+ Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(iq)**2
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
  !

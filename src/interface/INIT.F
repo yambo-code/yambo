@@ -61,7 +61,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:io_BS_Fxc
- use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,&
+ use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,L_kind,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH 
@@ -574,8 +574,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSEmod Lkind BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_optics.and.l_chi) then

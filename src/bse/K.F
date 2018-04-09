@@ -264,7 +264,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=maxval(G_m_G)
  O_ng_shift=1
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr,iq/=1/)).and..not.l_bs_fxc) then
    O_ng_shift=maxval(qindx_B(:,:,2))
    call fft_check_size(1,O_ng,BS_n_g_exch)
  endif
@@ -455,7 +455,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      i_kmq  = Xk%sstar(i_kmq_bz,1)               !k-q-point in IBZ
      i_kmq_s= Xk%sstar(i_kmq_bz,2)
-     i_kmq_t= BS_blk(i_block)%kp_table(1,i_kmq)
+     !
+     if (BS_res_K_corr) i_kmq_t= BS_blk(i_block)%kp_table(1,i_kmq)
      !
      if (BS_K_is_ALDA) then
        is=(/i_c_k,i_k,i_k_s,i_k_spin/)
@@ -484,7 +485,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_pmq  =Xk%sstar(i_pmq_bz,1)
        i_pmq_s=Xk%sstar(i_pmq_bz,2)
-       i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq)
+       !
+       if (BS_res_K_corr) i_pmq_t= BS_blk(i_block)%kp_table(2,i_pmq)
        !
        if (BS_K_is_ALDA) then
          isp=(/i_c_p,i_p,i_p_s,i_p_spin/)

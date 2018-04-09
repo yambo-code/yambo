@@ -28,6 +28,7 @@ fflags      = @FFLAGS@
 fuflags     = @FUFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
 shell       = @SHELL@
+yprecision  = @build_precision@
 #
 # Paths
 #

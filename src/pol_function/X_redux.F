@@ -260,9 +260,9 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
  endif
  !
- ! Now the interfaces. Divide in 2 steps:
+ ! Now the interfaces. 
  !
- ! 1. From all CPU of the SLK group to one of the RL group.
+ ! From all CPU of the SLK group to one of the RL group.
  !
  do i_LA_pool=1,PAR_COM_SLK_INDEX_local%n_CPU
    !

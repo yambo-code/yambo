@@ -193,14 +193,13 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (ver_is_gt_or_eq(ID,revision=2962)) then
-     if (variable_exist(ID,"EXX_FRACTION")) then
+   if (ver_is_gt_or_eq(ID,(/4,3,0/))) then
+     if (variable_exist(ID,"EXX_FRACTION").or.write_is_on(ID)) then
        call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_FRACTION,   CHECK=.true.,OP=(/"=="/),&
 &                           VAR=' Exact exchange fraction in XC   :')
-     endif
-   else if (ver_is_gt_or_eq(ID,revision=3997)) then
-     if (variable_exist(ID,"EXX_SCREENING")) then
+     endif 
+     if (variable_exist(ID,"EXX_SCREENING").or.write_is_on(ID)) then
        call io_elemental(ID, VAR="EXX_SCREENING",VAR_SZ=1,MENU=0)
        call io_elemental(ID,R0=GS_exx_SCREENING,   CHECK=.true.,OP=(/"=="/),&
 &                              VAR=' Exact exchange screening in XC  :')

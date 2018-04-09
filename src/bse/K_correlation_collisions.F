@@ -189,8 +189,6 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)==0) cycle
            iB_ref=iB_p
-           BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)= &
-&            BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
@@ -200,6 +198,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_v_p)
          endif
+         BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)= &
+&          BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)
          !
          ! c->c', i.e. k -> p=k-q_w transitions
          !
@@ -211,8 +211,6 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)==0) cycle
            iB_ref=iB_p
-           BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_c_p,i_k_sp)=&
-&            BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
@@ -222,6 +220,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_c_p)
          endif
+         BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_c_p,i_k_sp)=&
+&          BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)
          !
          !
        else if (BS_blk(iB)%mode=="C") then
@@ -236,8 +236,6 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)==0) cycle
            iB_ref=iB_p
-           BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=&
-&            BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
@@ -247,6 +245,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_c_p)
          endif
+         BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=&
+&          BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)
          !
          ! c->v', i.e. k -> p=k-q_W transitions
          !
@@ -258,8 +258,6 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
            if(BS_blk(iB_p)%O_table(1,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)==0) cycle
            iB_ref=iB_p
-           BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_v_p,i_k_sp)=&
-&            BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
@@ -269,6 +267,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
            BS_blk(iB)%O_table(2,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_v_p)
          endif
+         BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_v_p,i_k_sp)=&
+&          BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)
          !
        endif
        !

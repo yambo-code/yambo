@@ -36,10 +36,7 @@ subroutine PARALLEL_inversion(M,N)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LALGEBRA_WS,&
 &                         LINEAR_ALGEBRA_WS_clean_up
  use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer           :: N
@@ -50,9 +47,7 @@ subroutine PARALLEL_inversion(M,N)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
-#if defined _TIMING
  call timing('PARALLEL_inversion',OPR='start')
-#endif
  !
  ! LWORK  = LOCr(N+MOD(IA-1,MB_A))*NB_A
  ! LIWORK = LOCc( N_A + MOD(JA-1, NB_A) ) + NB_A
@@ -84,8 +79,6 @@ subroutine PARALLEL_inversion(M,N)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  ! 
-#if defined _TIMING
  call timing('PARALLEL_inversion',OPR='stop')
-#endif
  !
 end subroutine PARALLEL_inversion

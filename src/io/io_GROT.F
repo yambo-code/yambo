@@ -29,15 +29,11 @@ integer function io_GROT(io_db)
 &                         minus_G
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  integer :: io_db,nsym_db
  !
-#if defined _TIMING
  call timing('io_GROT',OPR='start')
-#endif
  !
  io_GROT=io_connect(desc='gops',type=1,ID=io_db)
  if (io_GROT/=0) goto 1
@@ -87,8 +83,6 @@ integer function io_GROT(io_db)
  !
 1 call io_disconnect(ID=io_db)
  !
-#if defined _TIMING
  call timing('io_GROT',OPR='stop')
-#endif
  !
 end function

@@ -46,9 +46,6 @@
 subroutine fft_3d(c,n,fft_sign)
  !
  use pars,          ONLY:DP
-#if defined _TIMING
- use timing_m,      ONLY:timing
-#endif
  implicit none
  integer     :: n(3),fft_sign
  complex(DP) :: c(n(1),n(2),n(3))
@@ -60,10 +57,6 @@ subroutine fft_3d(c,n,fft_sign)
  real(DP), allocatable :: zi(:,:,:,:,:)
 #if defined _OPENMP
  integer     :: i, j, k
-#endif
- !
-#if defined _TIMING
- call timing('FFT',OPR='start')
 #endif
  !
  ! ln(:):memory dimension of Z. ndi must always be greater or
@@ -119,9 +112,6 @@ subroutine fft_3d(c,n,fft_sign)
  c(:,:,:)=cmplx(zi(1,:n(1),:n(2),:n(3),ipos),zi(2,:n(1),:n(2),:n(3),ipos),DP)
 #endif
  !
-#if defined _TIMING
- call timing('FFT',OPR='stop')
-#endif
- !
  deallocate(zi)
+ !
 end subroutine

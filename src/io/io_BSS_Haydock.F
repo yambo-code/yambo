@@ -28,9 +28,7 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  use BS_solvers,    ONLY:BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -53,9 +51,7 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  !
  integer  :: it_on_disk
  !
-#if defined _TIMING
  call timing('io_BSS_Haydock',OPR='start')
-#endif
  !
  io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
@@ -138,8 +134,6 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_BSS_Haydock',OPR='stop')
-#endif
  !
 end function

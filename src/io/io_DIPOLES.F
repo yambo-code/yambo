@@ -41,9 +41,7 @@ integer function io_DIPOLES(X,ID)
  use drivers,       ONLY:l_sc_run
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
  implicit none
  type(X_t)   ::X
@@ -65,9 +63,7 @@ integer function io_DIPOLES(X,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_DIPOLES',OPR='start')
-#endif
  !
  io_extension(ID)='dip_iR_and_P'
 #if defined _SC
@@ -219,8 +215,6 @@ integer function io_DIPOLES(X,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  if (io_DIP) call timing('io_DIPOLES',OPR='stop')
-#endif
  !
 end function

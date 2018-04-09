@@ -29,7 +29,6 @@ subroutine INIT_QP(comment)
  use QP_m,      ONLY:QP_nk,QP_nb,QP_state
  use parser_m,  ONLY:PARSER_array
  use it_m,      ONLY:check_verbosity
- use drivers,   ONLY:infile_editing
  !
 #include<memory.h>
  !
@@ -70,7 +69,7 @@ subroutine INIT_QP(comment)
  !
  YAMBO_FREE(I_states)
  !
- if (check_verbosity("qp").or..not.infile_editing) then
+ if (check_verbosity("qp")) then
    call PARSER_array(mode="REAL dimensions",VAR="QPerange",N=n_states,M=4)
    if (n_states==0) then
      n_states=1

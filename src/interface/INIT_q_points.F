@@ -28,6 +28,7 @@ subroutine INIT_q_points( )
  ! 1. reads the q-points from the input file
  ! 2. reads the q-points from the e-p DB's 
  !
+ use drivers,     ONLY:infile_editing
  use pars,        ONLY:SP,schlen,DP
  use it_m,        ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
@@ -73,20 +74,18 @@ subroutine INIT_q_points( )
  !
  if (nqibz==0) then
    call PARSER_array(mode="REAL dimensions",VAR="QptCoord",N=nq_input,M=3)
-   if (nq_input==0) then
+   if (nq_input==0.and.infile_editing) then
      nqibz=1
      YAMBO_ALLOC(q_pt,(nqibz,3))
      q_pt=0.
-   else
+   else if (nq_input>0) then
      nqibz=nq_input
      YAMBO_ALLOC(q_pt,(nqibz,3))
      call PARSER_array(mode="read",VAR="QptCoord",N=nq_input,M=3,R_v=q_pt)
    endif
-   !
+   call PARSER_array(mode="write",VAR="QptCoord",DESC="[KPT] [iku] Q-points coordinates (compatibility)",&
+&                    N=nqibz,M=3,R_v=q_pt)
  endif
- !
- call PARSER_array(mode="write",VAR="QptCoord",DESC="[KPT] [iku] Q-points coordinates (compatibility)",&
-&                  N=nqibz,M=3,R_v=q_pt)
  !
  contains 
    !

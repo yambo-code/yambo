@@ -481,8 +481,6 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     YAMBO_ALLOC(E_xc,(fft_size))
-     !
      YAMBO_ALLOC(RT_E_and_k%En,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_E_and_k%kpt,(3,RT_nk))
@@ -539,11 +537,13 @@ module real_time
      !
      if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
        YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
-       YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
-       YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
        REF_lifetime=0._SP
-       SAVED_lifetime=0._SP
-       SAVED_times=0._SP
+       if (Life_MEM_steps>0) then
+         YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
+         YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
+         SAVED_lifetime=0._SP
+         SAVED_times=0._SP
+       endif
      endif
      !
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -570,6 +570,10 @@ module real_time
      YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
      MEM_pointer    = 0
      MEM_pointer(1) = 1
+     !
+     if (fft_size==0) return
+     !
+     YAMBO_ALLOC(E_xc,(fft_size))
      !
      YAMBO_ALLOC(REF_V_xc_sc,(fft_size,n_spin))
      YAMBO_ALLOC(REF_V_hartree_sc,(fft_size,n_spin))

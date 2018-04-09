@@ -33,7 +33,7 @@ subroutine ypp_INIT_load(defs)
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_regions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_width,Eh_pumped_Spin
+&                               Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_width
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -154,7 +154,6 @@ subroutine ypp_INIT_load(defs)
  ! RT DBs create
  !
  call it(defs,'RTpumpNel',  '[RT] Number of electrons excited by hand per unit cell',Eh_pumped_Nel)
- call it(defs,'RTpumpSpin', '[RT] Number of spin excited by hand per unit cell',Eh_pumped_Spin)
  call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
  call it(defs,'RTpumpEhWd', '[RT] Max Energy window used in the levels pick-up',Eh_pumped_pair_width,unit=E_unit)
  ! Method 1

@@ -77,7 +77,7 @@
   {"WFs",     "w","WFs:(p)erturbative SOC mapping or (c)onvertion to new I/O format",0,0,1,0,0},
   {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0},
 #if defined _YPP_RT
-  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(m)anual]",0,0,1,0,0}, 
+  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space]",0,0,1,0,0}, 
   {"RealTime","t","TD-polarization [(X)response,Tr(a)bs]",0,0,1,0,0}, 
   {"RealTime","n","NEQ plot opt#1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
   {"DESC",    " ","         opt#2 occ. [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},

@@ -36,7 +36,6 @@ module YPP_real_time
  !
  logical  :: l_RTpump_energy
  logical  :: l_RTpump_kspace
- logical  :: l_RTpump_manual
  !
  ! RT Post-processing (what)
  !
@@ -62,7 +61,6 @@ module YPP_real_time
  ! Manual pump
  !
  real(SP)    :: Eh_pumped_Nel
- real(SP)    :: Eh_pumped_Spin
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
  real(SP)    :: Eh_pumped_pair_deltaE

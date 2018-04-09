@@ -284,7 +284,6 @@ contains
     !
     implicit none
     !
-    type(etsf_basisdata)          :: basisdata_group
     integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
     real                          :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
     integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
@@ -296,23 +295,15 @@ contains
     character(len=15)             :: format1
     !
     call allocate_basisdata_group
-    allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
     allocate( istwfk(k%nibz), igk(3,wf_ncx*2) )
     !
     if(trim(ETSF_kind)=='KSS') then
-      basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
-    endif
-    if(trim(ETSF_kind)=='WFK') then
-      basisdata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_wfk_
-    endif
-    !
-    call etsf_io_basisdata_get(ncid, basisdata_group, lstat, error_data)
-    !
-    if(trim(ETSF_kind)=='KSS') then
+      !
+      call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_kss_, lstat)
       !
       allocate( g_vec(ng_vec_abinit,3) )
       do i1=1,ng_vec_abinit
-        g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_KSS_(:,i1))*alat(:)/2.0_SP/pi
+        g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_KSS_(:,i1,1))*alat(:)/2.0_SP/pi
       enddo
       !
       ng_vec=ng_vec_abinit
@@ -331,7 +322,6 @@ contains
     endif
     !
     if(trim(ETSF_kind)=='WFK') then
-
       !
       ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
       ! a gamma centered G-vector sphere
@@ -349,6 +339,8 @@ contains
       !      npw -> xyz   xyz -> npw
       ! TODO: handle the istwfk /= 1 cases
       !
+      allocate( wf_nc_k(k%nibz) )
+      allocate( wf_igk(wf_ncx,k%nibz) )
 
       ! 1.
       b_transpose = transpose(b)
@@ -356,6 +348,7 @@ contains
       ! Get dimensions of sphere
       ecut = 1.1
       call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
+      call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_wfk_, lstat)
 
       max_nx = 0
       max_ny = 0
@@ -395,7 +388,8 @@ contains
           end do
         end do
       end do
-      ng_vec = npw
+      ng_vec = npw-1
+      wf_ng = npw-1
 
       ! can sort the G vectors in whatever way here
 
@@ -436,7 +430,6 @@ contains
         end do
         wf_igk(ic,ik) = npw
       end do
-      wf_ng=maxval(wf_nc_k)
 
 
 
@@ -447,7 +440,7 @@ contains
       !
       if (.false.) then
           allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
-          wf_nc_k = basisdata_group%number_of_coefficients
+          !wf_nc_k = basisdata_group%number_of_coefficients
           wf_igk=-1
           !
           ! First guess: G vectors= gvectors at gamma

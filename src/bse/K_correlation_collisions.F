@@ -56,7 +56,8 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,i_star_s,&
 &               i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
 &               i_Tk,i_Tp,iB_ref,iB_p,i_Tgrp_k,i_Tgrp_p,H_pos(2),i_cycle,&
-&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s
+&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,iq_W,iq_W_bz,iq_W_s,&
+&               N_kmq,N_pmq,i_kmq_t,i_pmq_t
  logical     :: l_eval_collision
  !
  if (.not.BS_res_K_corr) return 
@@ -72,8 +73,40 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  !
  ! Table allocation
  !------------------
+ YAMBO_ALLOC(BS_blk(iB)%kp_table,(2,Xk%nibz))
+ BS_blk(iB)%kp_table=0
  !
- YAMBO_ALLOC(BS_blk(iB)%O_table,(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ N_kmq=0
+ N_pmq=0
+ !
+ do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
+   do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+     !
+     i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1) ! k
+     i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1) ! p = k - q_W
+     !
+     i_kmq_bz=qindx_X(iq,i_k_bz,1) ! k-q
+     i_pmq_bz=qindx_X(iq,i_p_bz,1) ! p-q = k - q_W -q
+     !
+     i_kmq   =Xk%sstar(i_kmq_bz,1)
+     i_pmq   =Xk%sstar(i_pmq_bz,1)
+     !
+     if( (BS_blk(iB)%kp_table(1,i_kmq)/=0) .and. (BS_blk(iB)%kp_table(2,i_pmq)/=0) ) cycle
+     !
+     if( BS_blk(iB)%kp_table(1,i_kmq)==0 ) then
+       N_kmq=N_kmq+1
+       BS_blk(iB)%kp_table(1,i_kmq)=N_kmq
+     endif
+     !
+     if( BS_blk(iB)%kp_table(2,i_pmq)==0 ) then
+       N_pmq=N_pmq+1
+       BS_blk(iB)%kp_table(2,i_pmq)=N_pmq
+     endif
+     !
+   enddo
+ enddo
+ !
+ YAMBO_ALLOC(BS_blk(iB)%O_table,(2,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  do i_cycle=1,2
    !    
@@ -112,13 +145,14 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        !ig_pmq=qindx_X(iq,i_p_bz,2)
        !ig_kp_mq=G_m_G(ig_kmq,ig_pmq)
        !
-       !write(*,*) ig_kp_mq
-       !
        i_kmq   =Xk%sstar(i_kmq_bz,1)
        i_pmq   =Xk%sstar(i_pmq_bz,1)
        !
        i_kmq_s =Xk%sstar(i_kmq_bz,2)
        i_pmq_s =Xk%sstar(i_pmq_bz,2)
+       !      
+       i_kmq_t=BS_blk(iB)%kp_table(1,i_kmq)
+       i_pmq_t=BS_blk(iB)%kp_table(2,i_pmq)
        !
        i_kp_mq_s =sop_tab(sop_inv(i_kmq_s),i_pmq_s)
        i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s)
@@ -148,27 +182,24 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
          !
          iB_ref=-1
-         if (iq==1) then
-           i_s_collision=i_s_mq_star
-           if (WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
-           do iB_p=iB,1,-1
-             if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
-             if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-             if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)==0) cycle
-             iB_ref=iB_p
-             exit
-           enddo
-         else
-           i_s_collision=i_kp_mq_s
-         endif
+         i_s_collision=i_s_mq_star
+         if (WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
+         do iB_p=iB,1,-1
+           if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
+           if(BS_blk(iB_p)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)==0) cycle
+           iB_ref=iB_p
+           BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)= &
+&            BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)
+           exit
+         enddo
          if ( iB_ref==-1 ) then
            iB_ref=iB
            BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-           BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
-           BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_v_p,i_k_sp)=iB_ref
+           BS_blk(iB)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
+           BS_blk(iB)%O_table(2,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_v_p)
          endif
-         BS_blk(iB)%O_table(:,i_kp_mq_s,i_v_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_v_p,i_k_sp)
          !
          ! c->c', i.e. k -> p=k-q_w transitions
          !
@@ -178,18 +209,19 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=i_k .or. BS_blk(iB_p)%ip/=i_p) exit
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-           if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)==0) cycle
+           if(BS_blk(iB_p)%O_table(1,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)==0) cycle
            iB_ref=iB_p
+           BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_c_p,i_k_sp)=&
+&            BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
            iB_ref=iB
            BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-           BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
-           BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_c_p,i_k_sp)=iB_ref
+           BS_blk(iB)%O_table(1,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
+           BS_blk(iB)%O_table(2,i_s_collision,1,1,i_c_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_c_p)
          endif
-         BS_blk(iB)%O_table(:,i_kp_s,i_c_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_c_p,i_k_sp)
          !
          !
        else if (BS_blk(iB)%mode=="C") then
@@ -197,27 +229,24 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
          !
          iB_ref=-1
-         if(iq==1) then
-           i_s_collision=i_s_mq_star
-           if (WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
-           do iB_p=iB,1,-1
-             if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
-             if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-             if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)==0) cycle
-             iB_ref=iB_p
-             exit
-           enddo
-         else
-           i_s_collision=i_kp_mq_s
-         endif
+         i_s_collision=i_s_mq_star
+         if (WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_kp_mq_s
+         do iB_p=iB,1,-1
+           if(BS_blk(iB_p)%ik/=i_kmq .or. BS_blk(iB_p)%ip/=i_pmq) exit
+           if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
+           if(BS_blk(iB_p)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)==0) cycle
+           iB_ref=iB_p
+           BS_blk(iB)%O_table(:,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=&
+&            BS_blk(iB_ref)%O_table(:,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)
+           exit
+         enddo
          if ( iB_ref==-1 ) then
            iB_ref=iB
            BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-           BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
-           BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_c_p,i_k_sp)=iB_ref
+           BS_blk(iB)%O_table(1,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
+           BS_blk(iB)%O_table(2,i_s_collision,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp)=iB_ref
            call EVAL_collision(i_kmq,i_pmq,i_k_sp,i_p_sp,i_v_k,i_c_p)
          endif
-         BS_blk(iB)%O_table(:,i_kp_mq_s,i_v_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_c_p,i_k_sp)
          !
          ! c->v', i.e. k -> p=k-q_W transitions
          !
@@ -227,18 +256,19 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
          do iB_p=iB,1,-1
            if(BS_blk(iB_p)%ik/=i_k .or. BS_blk(iB_p)%ip/=i_p) exit
            if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-           if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)==0) cycle
+           if(BS_blk(iB_p)%O_table(1,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)==0) cycle
            iB_ref=iB_p
+           BS_blk(iB)%O_table(:,i_kp_s,1,1,i_c_k,i_v_p,i_k_sp)=&
+&            BS_blk(iB_ref)%O_table(:,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)
            exit
          enddo
          if ( iB_ref==-1 ) then
            iB_ref=iB
            BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-           BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
-           BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_v_p,i_k_sp)=iB_ref
+           BS_blk(iB)%O_table(1,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
+           BS_blk(iB)%O_table(2,i_s_collision,1,1,i_c_k,i_v_p,i_k_sp)=iB_ref
            call EVAL_collision(i_k,i_p,i_k_sp,i_p_sp,i_c_k,i_v_p)
          endif
-         BS_blk(iB)%O_table(:,i_kp_s,i_c_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_v_p,i_k_sp)
          !
        endif
        !

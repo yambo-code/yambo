@@ -85,7 +85,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_c_k,i_v_k,i_c_p,i_v_p,&
 &              i_k_bz,i_p_bz,i_k_s,i_p_s,i_kp_s,i_k,i_p,i_k_s_m1,&
-&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_kp_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,&
+&              i_kmq_bz,i_pmq_bz,i_kmq_s,i_pmq_s,i_kp_mq_s,i_kmq,i_pmq,i_kmq_s_m1,ig_kmq,ig_pmq,i_kmq_t,i_pmq_t,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,H_pos(2),&
 &              i_g1,i_g2,i_g3,O_ng_shift,&
 &              ig_W,iq_bz_W,iq_W,iq_W_s,&
@@ -455,6 +455,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      i_kmq  = Xk%sstar(i_kmq_bz,1)               !k-q-point in IBZ
      i_kmq_s= Xk%sstar(i_kmq_bz,2)
+     i_kmq_t= BS_blk(i_block)%kp_table(1,i_kmq)
      !
      if (BS_K_is_ALDA) then
        is=(/i_c_k,i_k,i_k_s,i_k_spin/)
@@ -483,6 +484,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_pmq  =Xk%sstar(i_pmq_bz,1)
        i_pmq_s=Xk%sstar(i_pmq_bz,2)
+       i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq)
        !
        if (BS_K_is_ALDA) then
          isp=(/i_c_p,i_p,i_p_s,i_p_spin/)
@@ -570,18 +572,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ! :::SEX         (resonant):::
            !=============================
            !
-           iOcc        = BS_blk(i_block)%O_table(1,i_kp_s,i_c_k,i_c_p,i_k_spin)
-           i_block_cc  = BS_blk(i_block)%O_table(2,i_kp_s,i_c_k,i_c_p,i_k_spin)
+           iOcc        = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_c_k,i_c_p,i_k_spin)
+           i_block_cc  = BS_blk(i_block)%O_table(2,i_kp_s,1,1,i_c_k,i_c_p,i_k_spin)
            PHASE_1=WF_phase(i_p,i_kp_s,i_c_p,i_p_spin)
            if (PHASE_1==cZERO  ) PHASE_1=1._SP
            if (PHASE_1==-99._SP) PHASE_1=1._SP
            !
-           iOvv       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_v_k,i_v_p,i_k_spin)
-           i_block_vv = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_v_k,i_v_p,i_k_spin)
+           iOvv       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_spin)
+           i_block_vv = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_spin)
            PHASE_2=WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_spin)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
-           if (iq/=1) PHASE_2=1._SP
            !
            !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do
@@ -617,25 +618,24 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
          endif
          !
-       else
+       else if (BS_blk(i_block)%mode=="C") then
          !
          if (BS_cpl_K_corr.and.i_k_spin==i_p_spin) then
            !
-           ! :::SEX         (resonant):::
+           ! :::SEX         (coupling):::
            !=============================
            !
-           iOcv        = BS_blk(i_block)%O_table(1,i_kp_s,i_c_k,i_v_p,i_k_spin)
-           i_block_cv  = BS_blk(i_block)%O_table(2,i_kp_s,i_c_k,i_v_p,i_k_spin)
+           iOcv        = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_c_k,i_v_p,i_k_spin)
+           i_block_cv  = BS_blk(i_block)%O_table(2,i_kp_s,1,1,i_c_k,i_v_p,i_k_spin)
            PHASE_1=WF_phase(i_p,i_kp_s,i_v_p,i_p_spin)
            if (PHASE_1==cZERO  ) PHASE_1=1._SP
            if (PHASE_1==-99._SP) PHASE_1=1._SP
            !
-           iOvc       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_v_k,i_c_p,i_k_spin)
-           i_block_vc = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_v_k,i_c_p,i_k_spin)
+           iOvc       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_spin)
+           i_block_vc = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_spin)
            PHASE_2=WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_spin)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
-           if (iq/=1) PHASE_2=1._SP
            !
            !$omp parallel default(shared), private(i_g1,i_g2,i_g3)
            !$omp do

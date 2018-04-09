@@ -127,7 +127,8 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: O_table(:,:,:,:,:) ! 2,sym,n,n',spin @ k = (iOnn,i_block_ref)
+   integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
+   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
    !
  end type BS_block
@@ -198,6 +199,7 @@ module BS
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
        YAMBO_FREE(BS_blk(iB)%O_table)
+       YAMBO_FREE(BS_blk(iB)%kp_table)
      enddo
      !
    end subroutine

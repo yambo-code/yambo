@@ -92,7 +92,6 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    call fft_3d(Vr,fft_dim,1,fftw_plan)
 #else
    call fft_3d(Vr,fft_dim,1)
-!   call fft_3d(Vr,fft_dim,2) ???
 #endif
      f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=SP)
    enddo

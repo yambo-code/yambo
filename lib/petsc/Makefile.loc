@@ -23,9 +23,6 @@ AUXFLAGS=--prefix=$(LIBPATH) \
          --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=0 \
-         --with-clib-autodetect=0 \
-         --with-cxxlib-autodetect=0 \
-         --with-fortranlib-autodetect=0 \
          --with-blas-lapack-lib="$(llapack) $(lblas)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}"

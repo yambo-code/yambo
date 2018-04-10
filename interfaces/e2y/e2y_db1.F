@@ -392,6 +392,17 @@ contains
       wf_ng = npw-1
 
       ! can sort the G vectors in whatever way here
+      allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+      do ig=1,ng_vec
+        G_mod(ig)=iku_v_norm(g_vec(ig,:))
+      enddo
+      call sort(G_mod,indx_m1=G_mod_indx)
+      deallocate(G_mod)
+      !
+      allocate(g_vec_sort(ng_vec,3))
+      g_vec_sort=g_vec
+      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
+      deallocate(g_vec_sort)
 
       ! 2.
       allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
@@ -404,6 +415,7 @@ contains
       ! Same thing but for the K-dependent G-spheres     
       ! Get storage type of the wavefunctions
       call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
+      wf_igk = -1
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
         !write(*,*)
@@ -412,12 +424,8 @@ contains
         !  write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
         !end do
         call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
-      end do
- 
-      ! 4.
-      ! Do the mapping
-      wf_igk(ic,ik) = -1
-      do ik=1,k%nibz
+        ! 4.
+        ! Do the mapping
         do ic=1,wf_nc_k(ik)
           i1 = inv_map_k(1,ic)
           i2 = inv_map_k(2,ic)
@@ -427,8 +435,8 @@ contains
               write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
               call exit(0)
           end if
+          wf_igk(ic,ik) = npw
         end do
-        wf_igk(ic,ik) = npw
       end do
 
 

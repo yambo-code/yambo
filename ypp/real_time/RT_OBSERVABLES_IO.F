@@ -161,7 +161,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    !
    if (what=="JP") then
      Curr%F_t(i_time,:) =J_cache(:,1)
-     Pol%F_t(i_time,:) =P_cache(:,1)
+     Pol%F_t(i_time,:)  =P_cache(:,1)
    endif
    if (what=="D") then
      PhDisp%F_t(i_time,:) =D_cache(:,1)

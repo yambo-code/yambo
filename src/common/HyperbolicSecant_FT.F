@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-real function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
+real(SP) function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  !
  ! This subrutine returns the frequency dependent Green function
  ! which is the imaginary part of the

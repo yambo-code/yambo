@@ -23,9 +23,11 @@
 !
 module YPP
  !
- use pars,    ONLY:SP,DP,lchlen,schlen
- use units,   ONLY:HA2EV
- use QP_m,    ONLY:QP_t
+ use pars,      ONLY:SP,DP,lchlen,schlen
+ use R_lattice, ONLY:bz_samp
+ use units,     ONLY:HA2EV
+ use QP_m,      ONLY:QP_t
+ use electrons, ONLY:levels
  !
  implicit none
  !
@@ -55,19 +57,36 @@ module YPP
  real(SP) :: U_q_shifts(3,3)
  real(SP) :: U_interp_pts(10,3)
  ! 
+ ! DOS/BANDS/SPECIAL-K/INTERP grids
+ !
+ integer, parameter        :: n_SPECIAL_k_MAX=20
+ character(1), allocatable :: CIRCUIT_k_label(:)
+ character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ type(bz_samp):: SPECIAL_k
+ type(bz_samp):: USER_k
+ type(bz_samp):: CIRCUIT_k
+ type(bz_samp):: INTERP_k
+ logical      :: CIRCUIT_made_of_SPECIAL_k
+ ! 
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
- real(SP)     ::dos_broadening ! electrons
- real(SP)     ::dos_E_range(2) ! Energy Range
- integer      ::dos_bands(2)   ! Bands Range
- integer      ::dos_E_steps    ! Energy steps
+ real(SP)     ::DOS_broadening ! electrons
+ real(SP)     ::DOS_E_range(2) ! Energy Range
+ integer      ::DOS_bands(2)   ! Bands Range
+ integer      ::DOS_E_steps    ! Energy steps
  !
  ! BANDS
  !
+ integer               ::BANDS_bands(2)
  integer               ::BANDS_steps
+ character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
+ character(schlen)     ::BANDS_path  = " "
+ type(levels)          ::CIRCUIT_E_db
  integer               ::interp_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
+ logical               ::BANDS_print_internal_energies
+ logical               ::BANDS_E_and_k_db
  !
  ! SPIN and SOC
  integer      ::WF_ref(2)

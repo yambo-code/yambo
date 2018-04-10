@@ -30,9 +30,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,ver_is_gt_or_eq
  use electrons,     ONLY:n_sp_pol
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
  implicit none
  !
@@ -45,9 +43,7 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  !
  character(schlen):: db_name
  !
-#if defined _TIMING
  call timing('io_BSS_diago',OPR='start')
-#endif
  !
  write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
  !
@@ -140,8 +136,6 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  !
 1 call io_disconnect(ID)
  !
-#if defined _TIMING
  call timing('io_BSS_diago',OPR='stop')
-#endif
  !
 end function

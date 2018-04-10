@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,&
+subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
 &                               USE_the_DbGd,USE_Eo,WF_fac)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp,nkbz
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
  use parser_m,       ONLY:parser
@@ -37,12 +37,12 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
  type(bz_samp), intent(in) ::Xk
  type(levels),  intent(in) ::Xen
  !
- real(SP),   intent(in)  :: dos_E,dos_broadening
- integer,    intent(in)  :: dos_bands(2)
+ real(SP),   intent(in)  :: dos_E,DOS_broadening
+ integer,    intent(in)  :: DOS_bands(2)
  real(SP),   intent(out) :: dos_value(n_spin)
  logical,  optional, intent(in) :: USE_Eo
  logical,  optional, intent(in) :: USE_the_DbGd
- real(SP), optional, intent(in) :: WF_fac(dos_bands(1):dos_bands(2),Xk%nibz,2)
+ real(SP), optional, intent(in) :: WF_fac(DOS_bands(1):DOS_bands(2),Xk%nibz,2)
  !
  ! Work space
  !
@@ -69,7 +69,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
    !
    do ik=1,Xk%nibz
      !
-     do ib=dos_bands(1),dos_bands(2)
+     do ib=DOS_bands(1),DOS_bands(2)
        !
        el_dos_tmp=0._SP
        f_occ=spin_occ
@@ -80,19 +80,19 @@ subroutine el_density_of_states(Xk,Xen,dos_E,dos_broadening,dos_bands,dos_value,
        if (.not.USE_Eo_) E=Xen%E(ib,ik,i_sp_pol)
        if (     USE_Eo_) E=Xen%Eo(ib,ik,i_sp_pol)
        !
-       if ( abs(E-dos_E)>20._SP*dos_broadening ) cycle
+       if ( abs(E-dos_E)>20._SP*DOS_broadening ) cycle
        if (l_prt_occ_only ) f_occ=Xen%f(ib,ik,i_sp_pol)
        el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
-&                      Fermi_fnc_derivative(Xen%E(ib,ik,i_sp_pol)          -dos_E,dos_broadening)
+&                      Fermi_fnc_derivative(Xen%E(ib,ik,i_sp_pol)          -dos_E,DOS_broadening)
        !
        if (USE_the_DbGd_) then
          !
          do i1=2,Xk%nibz_mapped(ik)
            ik_rand=Xk%ibz_DbGd_map(ik_bz,i1)
-           if ( abs(Xen%E_FineGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*dos_broadening ) cycle
+           if ( abs(Xen%E_FineGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*DOS_broadening ) cycle
            if (l_prt_occ_only) f_occ=Xen%f_FineGd(ib,ik_rand,i_sp_pol)
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*weight*&
-&                      Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_rand,i_sp_pol)-dos_E,dos_broadening)
+&                      Fermi_fnc_derivative(Xen%E_FineGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening)
          enddo
          ! 
        endif

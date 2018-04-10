@@ -27,6 +27,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  use units,               ONLY:HA2EV
  use stderr,              ONLY:intc
  use parser_m,            ONLY:parser
+ use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
  use R_lattice,           ONLY:bz_samp,nkibz,k_the_nearest,bz_samp_reset
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev
@@ -61,7 +62,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  ! Functions
  !
  integer, external :: k_FineGd_grid_consistency_check
- integer, external :: io_DB1_selective_scan
  !
  a_save=a
  alat_save=alat

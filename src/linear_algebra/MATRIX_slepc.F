@@ -161,9 +161,9 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   call EPSGetTolerances(eps,tol,maxit,ierr)
   !
   !call msg( 'rs', 'solution method: ', tname )
-  call msg( 'rs', 'number of requested eigenvalues: ', nev )
+  call msg( 'rs', 'number of requested eigenvalues: ', int(nev) )
   call msg( 'rs', 'stopping condition tolerance: ', real(tol,SP) )
-  call msg( 'rs', 'stopping condition max iterations: ', maxit )
+  call msg( 'rs', 'stopping condition max iterations: ', int(maxit) )
 
   !Set monitor
   call EPSMonitorSet(eps,MyEPSMonitor,PETSC_NULL_OBJECT, PETSC_NULL_FUNCTION,ierr)
@@ -174,18 +174,18 @@ subroutine MATRIX_slepc(A,n_eig,E_real,E_cmpl,V_right,V_left,&
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   call EPSSolve(eps,ierr)
   call EPSGetIterationNumber(eps,its,ierr)
-  call msg( 'rs', 'number of iterations of the method: ', its )
+  call msg( 'rs', 'number of iterations of the method: ', int(its) )
   call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
-  call msg( 'rs', 'number of eigenvalues: ', nev)
-  call msg( 'rs', 'ncv: ', ncv)
-  call msg( 'rs', 'mpd: ', mpd)
+  call msg( 'rs', 'number of eigenvalues: ', int(nev))
+  call msg( 'rs', 'ncv: ', int(ncv))
+  call msg( 'rs', 'mpd: ', int(mpd))
 
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   !     Display solution and clean up
   ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   call EPSGetConverged(eps,nconv,ierr)
-  call msg( 'rs', 'number of converged eigenpairs: ', nconv)
+  call msg( 'rs', 'number of converged eigenpairs: ', int(nconv))
   call msg( 'rs', '')
   if ( nconv < n_eig ) then
     n_eig = nconv

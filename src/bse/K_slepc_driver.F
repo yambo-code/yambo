@@ -39,22 +39,18 @@ subroutine K_slepc_driver(iq,W)
  ! 3 of the implementation
  !
  use pars,           ONLY:SP,cZERO,cONE,DP
- use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_pert_soc
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat,BSS_n_eig,BSS_target_E, &
 &                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell, &
 &                         BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
- use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
  use interfaces,     ONLY:MATRIX_slepc,K_diago_compute_epsilon
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include <memory.h>
  ! 
 #include <petsc/finclude/petscsys.h>
@@ -90,9 +86,7 @@ subroutine K_slepc_driver(iq,W)
  PetscFortranInt     :: vec_index(4)
  PetscFortranComplex :: vec_value(4)
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='start')
-#endif
  !  
  ! Sectioning
  !============
@@ -134,7 +128,7 @@ subroutine K_slepc_driver(iq,W)
  !===========================
  call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
  allocate( BS_E(BSS_n_eig) )
- if(E_SOC_nbands/=0) then
+ if(BS_pert_soc) then
    YAMBO_ALLOC( BS_corrections, (2,BS_H_dim) )
    YAMBO_ALLOC_P( BS_E_SOC_corr, (2,BS_H_dim) )
  endif
@@ -261,9 +255,7 @@ subroutine K_slepc_driver(iq,W)
    nullify(BS_E_SOC_corr)
  endif
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='stop')
-#endif
  !
 end subroutine
  
@@ -274,8 +266,9 @@ subroutine fill_eh_dipoles()
  use pars,           ONLY:SP,cI,cONE
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use electrons,      ONLY:n_sp_pol
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,&
+&                         BS_pert_SOC
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
 &                         BSS_eh_E_SOC_corr,BSS_perturbative_width
  use com,            ONLY:error,msg
@@ -312,7 +305,7 @@ subroutine fill_eh_dipoles()
      !
      ! GPL_EXCLUDE_START
      !
-     if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+     if (BS_pert_soc) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
      !
      ! GPL_EXCLUDE_END
      !
@@ -344,7 +337,7 @@ subroutine fill_eh_dipoles()
  !
  ! GPL_EXCLUDE_START
  !
- if (E_SOC_nbands/=0) then
+ if (BS_pert_soc) then
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
  endif
@@ -364,8 +357,8 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  !
  use pars,           ONLY:SP,DP,cI,cONE
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use electrons,      ONLY:n_sp_pol
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_pert_soc
  use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
 &                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BSS_alloc
  use com,            ONLY:error,msg
@@ -566,7 +559,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  PetscScalar, pointer :: xx(:)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
- integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
+ integer              :: n, i_g, i_c, ierr, H_pos(1), start_index, low, high
  !
  ! create scattering context vi (distributed) -> x (local)
  !

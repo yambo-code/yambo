@@ -54,9 +54,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
 #include<memory.h>
  type(levels) ::en,Xen
@@ -203,9 +201,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Actual Calculation Body
  !=========================
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='start')
-#endif
  !
  ! Lifetimes Transitions 
  !=======================
@@ -440,7 +436,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          do i3=1,X%ng
            lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
          enddo
-         !       
+         !
          ! To compensate the Tel/w divergence of the Bose function at finite
          ! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
          !
@@ -550,8 +546,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call elemental_collision_free(scattering_prime)
  call PP_redux_wait()
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='stop')
-#endif
  !
 end subroutine

@@ -54,8 +54,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions
- use stderr,         ONLY:intc
+&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_ELPH
@@ -508,10 +507,20 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call initactivate(1,'RTpumpNel RTpumpSpin RTBands')
    if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
    if (l_RTpump_kspace) then
-     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
-     do i1=1,Eh_pumped_pair_n_BZ_regions
-       call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
-     enddo
+     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd cooIn')
+     !
+     call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
+     if (Eh_pumped_pair_n_BZ_regions>0) then
+       call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                        R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
+     else
+       Eh_pumped_pair_n_BZ_regions=1
+       Eh_pumped_pair_BZ_regions(1,:)=-1.
+     endif
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                      DESC="[RT] K-points manually excited",&
+&                      R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
+     !
    endif
  endif
  if (l_RealTime) then

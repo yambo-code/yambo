@@ -30,8 +30,9 @@ subroutine RT_manual_excitation(E,k)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
- use vec_operate,    ONLY:v_is_zero,c2a
+ use vec_operate,    ONLY:v_is_zero
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
+ use YPP,            ONLY:K_transform
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
 &                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,Eh_pumped_pair_n_BZ_regions,   &
@@ -74,9 +75,10 @@ subroutine RT_manual_excitation(E,k)
      iv=0
      !
      if(l_RTpump_kspace) then
-       call c2a(v_in=k%pt(ik,:),v_out=local_k,mode='ki2c')
+       local_k=Eh_pumped_pair_BZ_regions(:,i_region)
+       call K_transform(local_k,'iku')
        do i_region=1,Eh_pumped_pair_n_BZ_regions
-         if(.not. v_is_zero(local_k-Eh_pumped_pair_BZ_regions(:,i_region),zero_=(/1.,1.,1./)*Eh_pumped_pair_BZ_width) ) cycle
+         if(.not. v_is_zero(local_k-k%pt(ik,:),zero_=(/1.,1.,1./)*Eh_pumped_pair_BZ_width) ) cycle
          do_kpt(ik)=.TRUE.
        enddo
        if(.not.do_kpt(ik)) cycle

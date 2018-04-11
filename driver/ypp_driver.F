@@ -225,9 +225,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! GPL_EXCLUDE_END
  !
- if (l_RealTime) call RT_driver(en,k,q)
- !
- if (l_RT_ph_oscillations) call ELPH_RT_oscillations(en)
+ if (l_RealTime.or.l_RT_ph_oscillations) call RT_driver(en,k,q)
  !
 #endif
  !

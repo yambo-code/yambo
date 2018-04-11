@@ -25,14 +25,20 @@ subroutine RT_driver(en,k,q)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density
- !
+ use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
+&                         l_skip_OBS_IO,l_force_min_damp,l_RT_ph_oscillations
+ use parser_m,       ONLY:parser
  implicit none
  !
  type(levels)  :: en
  type(bz_samp) :: k,q
  !
- call section("*",'RT Optics Processing')
+ ! LOGICALS
+ !----------
+ call parser('SkipOBS_IO',l_skip_OBS_IO)
+ call parser('FrMinDamp',l_force_min_damp)
+ !
+ call section("*",'== Real-Time Post-Processing ==')
  !
  ! GPL_EXCLUDE_START
  !
@@ -43,6 +49,11 @@ subroutine RT_driver(en,k,q)
  ! Plotting 
  !===========
  if (l_RT_density)                         call RT_density(en,k,q)
+ !
+ ! Phonon Oscillations
+ !=====================
+ !
+ if (l_RT_ph_oscillations)                 call ELPH_RT_oscillations(en)
  !
  ! GPL_EXCLUDE_END
  !

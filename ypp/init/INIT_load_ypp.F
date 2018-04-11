@@ -340,7 +340,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
- call it('f',defs,'SkipOBS_IO','Do not write P(t) and J(t)')
+ call it('f',defs,'SkipOBS_IO','Do not dump on file the RT observables (P(t),J(t),D(t)...)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !

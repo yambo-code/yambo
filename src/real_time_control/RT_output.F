@@ -350,6 +350,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    short_file_name(next_file)=trim(append_ch)//'FT_displace_field'
    n_headings(next_file)=2*N_RT_PH_displaced+1
    i_f=0
+   headings(next_file,1)="E [meV]"
    do il=elph_branches(1),elph_branches(2)
      if (RT_PH_displaced(il)==0) cycle
      i_f=i_f+2
@@ -579,6 +580,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) =real(RT_P)
 #if defined _ELPH
      case('YPP-FT_displace_field')
+       data_to_dump(1)=data_to_dump(1)*1000.
        data_to_dump(2:2*N_RT_PH_displaced+1) = VALUES
      case('displace_field','YPP-displace_field')
        if (l_RT_PH_oscillations) then

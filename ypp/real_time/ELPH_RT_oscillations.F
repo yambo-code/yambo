@@ -23,54 +23,33 @@
 !
 subroutine ELPH_RT_oscillations(E)
  !
- use pars,                ONLY:SP
-!,schlen,pi
+ use pars,                ONLY:SP,pi
  use units,               ONLY:HA2EV
-!,HA2GHZ,HA2THZ 
-! use com,                 ONLY:msg,of_open_close,error
- use com,                 ONLY:error
+ use com,                 ONLY:error,msg
+ use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use YPP_real_time,       ONLY:PhDisp,RT_OBSERVABLES_IO,l_skip_OBS_IO,RT_conf,PhDisp
-!,n_met_bands,n_full_bands
-! use R_lattice,           ONLY:bz_samp
-! use YPP,                 ONLY:l_dos
-! use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
-!&                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes
-!,elph_nb,elph_gkkp,ph_freqs_sq,&
-!&                              W_debye,elph_nDBs,elph_use_q_grid,&
-!&                              E_k_plus_q,setup_k_plus_q_levels,elph_global_free
-! use IO_m,                ONLY:io_control,OP_RD,RD_CL_IF_END,DUMP,RD_CL
-  use IO_m,                ONLY:io_control,OP_RD,DUMP
-  use RT_control,          ONLY:RT_IO_t,OBS_RT_IO_t,RT_output
-  use real_time,           ONLY:N_RT_PH_displaced,RT_PH_displaced,l_RT_PH_oscillations
-
-! use LIVE_t,              ONLY:live_timing
-! use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid
-! use interfaces,          ONLY:PARALLEL_index
-! use functions,           ONLY:Fermi_fnc_derivative
-! use stderr,              ONLY:set_real_printed_length
+ use ELPH,                ONLY:ph_modes,ph_freqs_sq
+ use IO_m,                ONLY:io_control,OP_RD,DUMP
+ use RT_control,          ONLY:RT_IO_t,OBS_RT_IO_t,RT_output
+ use real_time,           ONLY:N_RT_PH_displaced,RT_PH_displaced,l_RT_PH_oscillations
  !
 #include<memory.h>
  !
  type(levels)   :: E
-! type(bz_samp)::k,q
  !
  ! Work Space 
  !
  integer               ::il,it,i_w,il_active
- real(SP), allocatable ::out_data(:),PhDisp_offset(:)
-!&                    ph_dos(elph_steps),ph_energy(elph_steps),omega,e_step
-! complex(SP)       ::d_elias_dos
-! character(schlen) ::o_file_name,ch
-! type(PP_indexes)  ::px
+ real(SP), allocatable ::out_data(:),PhDisp_offset(:),ph_freqs(:)
  !
  !I/O
  !
  integer           ::io_err,ID
+ real(SP)          ::R_dummy(2)
  integer, external ::io_ELPH
  !
- call section("*","== Real-Time Phonon displacement ==")
+ call section("+","Phonon displacement")
  !
  l_RT_PH_oscillations=.TRUE.
  !
@@ -79,10 +58,11 @@ subroutine ELPH_RT_oscillations(E)
  !
  allocate(out_data(2* N_RT_PH_displaced ))
  allocate(PhDisp_offset(ph_modes ))
+ allocate(ph_freqs(ph_modes ))
  !
  ! I/O
  !=====
- call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD,SEC=(/1,2/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gkkp_expanded no_matrix_elements')
  if (io_err/=0) call error("GKKP database not found")
  !
@@ -93,6 +73,7 @@ subroutine ELPH_RT_oscillations(E)
  call RT_OBSERVABLES_IO(what='D')
  !
  do il=1,ph_modes
+   ph_freqs(il)=abs(sqrt(ph_freqs_sq(1,il)))
    PhDisp_offset(il)=PhDisp%F_t(1,il)
    PhDisp%F_t(:,il)=PhDisp%F_t(:,il)-PhDisp_offset(il)
  enddo
@@ -102,15 +83,20 @@ subroutine ELPH_RT_oscillations(E)
  !
  call RT_OBSERVABLES_damp_and_write(PhDisp,RT_conf,l_skip_OBS_IO)
  !
- ! FT 
- !====
+ ! FT ....
+ !=========
+ !
+ ! @ Full freq range
+ !-------------------
+ !
+ if (any(RT_conf%W_range<0.)) RT_conf%W_range=(/0.,maxval(ph_freqs)/)
  !
  call RT_1D_Fourier_setup(PhDisp,RT_conf,ph_modes) 
  !
  call RT_1D_Fourier_Transform('T2W',PhDisp,RT_conf,ph_modes)
  !
- ! Output (Energy)
- !================
+ ! Output
+ !--------
  !
  call RT_output(what="initialize")
  call RT_output(what="open FT_displace")
@@ -134,7 +120,31 @@ subroutine ELPH_RT_oscillations(E)
    !
  enddo
  !
- deallocate(out_data,PhDisp_offset)
+ ! @ PH freqs
+ !------------
+ !
+ do il=1,ph_modes
+   PhDisp%F_w(il,:)=ph_freqs
+ enddo
+ RT_conf%W_n_steps=ph_modes
+ !
+ call RT_1D_Fourier_Transform('T2W',PhDisp,RT_conf,ph_modes)
+ !
+ ! Output
+ !--------
+ !
+ do il=1,ph_modes
+   !
+   if (RT_PH_displaced(il)==0) cycle
+   !
+   call msg('s','[Mode #'//trim(intc(il))//'] Energy [meV]:',ph_freqs(il)*HA2EV*1000.)
+   R_dummy=pi/ph_freqs(il)*(/-real(PhDisp%F_w(il,il)),aimag(PhDisp%F_w(il,il))/)
+   call msg('s','          R factor    :',R_dummy(1))
+   call msg('s','          D factor    :',R_dummy(2))
+   !
+ enddo
+ !
+ deallocate(out_data,PhDisp_offset,ph_freqs)
  !
  call RT_output(what="close FT_displace")
  !

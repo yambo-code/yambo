@@ -25,15 +25,14 @@ subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
 &                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,&
-&                         l_RT_X_inversion,l_skip_OBS_IO,l_force_min_damp,&
-&                         Probe_path,Pump_path,N_probes,RT_conf
+&                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
  use RT_control,     ONLY:OBS_RT_IO_t
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parser_m,       ONLY:parser
  use fields,         ONLY:Efield
  use com,            ONLY:jobstr,error
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -47,13 +46,6 @@ subroutine RT_X_response(en,k,q)
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  call RT_OBSERVABLES_IO_paths('JP',en)
- !
- ! LOGICALS
- !----------
- !
- call parser('SkipOBS_IO',l_skip_OBS_IO)
- call parser('SkipJP_IO',l_skip_OBS_IO) ! Back Compatibility
- call parser('FrMinDamp',l_force_min_damp)
  !
  i_Probe=1
  !

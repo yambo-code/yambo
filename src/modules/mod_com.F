@@ -222,8 +222,6 @@ module com
      integer          :: i2,i3,file_index
      character(lchlen):: local_file_name
      !
-     of_name=trim(of_name)
-     !
      if (len_trim(of_name)==0) return
      !
      if (present(mode)) then
@@ -246,7 +244,7 @@ module com
        ! Here I open the unit using file_name to define the name
        !
        if (index(mode,'a')==0.and.index(mode,'O')==0) then
-         local_file_name=get_name(desc=of_name,type=3,CORE_IO=.false.,&
+         local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,&
 &                                 MORE_IO=.false.,COM_IO=.true.)
          call rename_file(local_file_name)
        endif
@@ -279,7 +277,7 @@ module com
      else
        !
        do i2=1,max_open_ofs
-         if (index(opened_of(i2),of_name)/=0) then
+         if (index(opened_of(i2),trim(of_name))/=0) then
            close(iabs(of_unit(i2)))
            of_unit(i2)=0
            if (.not.any(of==of_name)) then

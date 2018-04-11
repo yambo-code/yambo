@@ -56,15 +56,17 @@ subroutine RT_output(what,VALUES,TIME,E)
  character(lchlen), save  :: file_name(n_output_files)
  character(schlen)        :: orders(n_output_files),short_file_name(n_output_files)
  integer                  :: i_f,i_fp,n_headings(n_output_files),next_file,i_order,i_c,n1,il
- logical                  :: file_is_todo(n_output_files),open_files,add_space,initialize
+ logical                  :: file_is_todo(n_output_files),open_files,add_empty_line,initialize,close_files,add_data
  logical,           save  :: RT_descriptions_dumped(n_output_files),file_already_opened(n_output_files)
  character(schlen)        :: headings(n_output_files,max(11,N_RT_PH_displaced)),append_ch,extension_ch,tmp_ch
  character(2)             :: chart_string(3)
  real(SP)                 :: data_to_dump(max(11,N_RT_PH_displaced))
  !
- open_files=index(what,'open')>0
- add_space=index(what,'space')>0
- initialize=index(what,'initialize')>0
+ open_files    =index(what,'open')>0
+ close_files   =index(what,'close')>0
+ add_empty_line=index(what,'space')>0
+ initialize    =index(what,'initialize')>0
+ add_data      =present(VALUES)
  !
  if (.not.RT_do_it('OUT').and..not.open_files.and..not.initialize) return      
  !
@@ -464,8 +466,8 @@ subroutine RT_output(what,VALUES,TIME,E)
   next_file=next_file+1
  enddo
  !
- ! Check which files to write
- !----------------------------
+ ! Check which files to operate on
+ !---------------------------------
  !
  file_is_todo=.FALSE.
  do i_f=1,n_output_files
@@ -497,11 +499,25 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
  endif
  !
+ ! CLOSE 
+ !-------
+ !
+ if (close_files) then
+   !
+   do i_f=1,n_output_files
+     if (.not.file_is_todo(i_f)) cycle
+     call of_open_close(trim(short_file_name(i_f)))
+   enddo
+   !
+   goto 1
+   !
+ endif
+ !
  do i_f=1,n_output_files
    !
    if (.not.file_is_todo(i_f)) cycle
    !
-   if (add_space) then
+   if (add_empty_line) then
      if(.not.file_already_opened(i_f)) cycle
      call of_open_close(file_name(i_f),'oa')
      call msg('o '//trim(short_file_name(i_f)),' ')

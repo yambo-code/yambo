@@ -70,8 +70,7 @@ module etsf_data
   !
   character(len=etsf_charlen),   target :: basis_set_ 
   integer,          allocatable, target :: number_of_coefficients_(:) 
-  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_KSS_(:,:,:)
-  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_WFK_(:,:,:)
+  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
   !
   ! Wave function coefficients
   !
@@ -175,14 +174,9 @@ contains
   end subroutine deallocate_gwdata_group
   !
   subroutine allocate_basisdata_group
-    if(trim(ETSF_kind)=='KSS') &
-      allocate(reduced_coordinates_of_plane_waves_KSS_(dims%number_of_reduced_dimensions, &
-&                                                  dims%max_number_of_coefficients, &
-&                                                  dims%number_of_kpoints ))
-    if(trim(ETSF_kind)=='WFK') &
-&     allocate(reduced_coordinates_of_plane_waves_WFK_(dims%number_of_reduced_dimensions, &
-&                                                  dims%max_number_of_coefficients,   &
-&                                                  dims%number_of_kpoints ))
+    allocate(reduced_coordinates_of_plane_waves_(dims%number_of_reduced_dimensions, &
+&                                                dims%max_number_of_coefficients, &
+&                                                dims%number_of_kpoints ))
     allocate(number_of_coefficients_(dims%number_of_kpoints))
     return
   end subroutine allocate_basisdata_group
@@ -190,10 +184,8 @@ contains
   ! basisdata group
   !
   subroutine deallocate_basisdata_group
-    if(allocated(reduced_coordinates_of_plane_waves_KSS_)) &
-&                deallocate( reduced_coordinates_of_plane_waves_KSS_)
-    if(allocated(reduced_coordinates_of_plane_waves_WFK_)) &
-&                deallocate( reduced_coordinates_of_plane_waves_WFK_)
+    if(allocated(reduced_coordinates_of_plane_waves_)) &
+&                deallocate( reduced_coordinates_of_plane_waves_)
     if(allocated(number_of_coefficients_)) &
 &                deallocate( number_of_coefficients_ )
     return

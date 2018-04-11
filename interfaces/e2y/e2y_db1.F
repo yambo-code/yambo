@@ -295,15 +295,21 @@ contains
     character(len=15)             :: format1
     !
     call allocate_basisdata_group
-    allocate( istwfk(k%nibz), igk(3,wf_ncx*2) )
+    allocate( istwfk(k%nibz) )
+    allocate( wf_nc_k(k%nibz) )
+    call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
+    wf_ncx = maxval(wf_nc_k) 
+    allocate( wf_igk(wf_ncx,k%nibz), igk(3,wf_ncx*2) )
     !
+    b_transpose = transpose(b)
+
+    call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_, lstat)
+
     if(trim(ETSF_kind)=='KSS') then
-      !
-      call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_kss_, lstat)
       !
       allocate( g_vec(ng_vec_abinit,3) )
       do i1=1,ng_vec_abinit
-        g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_KSS_(:,i1,1))*alat(:)/2.0_SP/pi
+        g_vec(i1,:)=matmul(b_transpose,reduced_coordinates_of_plane_waves_(:,i1,1))*alat(:)/2.0_SP/pi
       enddo
       !
       ng_vec=ng_vec_abinit
@@ -317,9 +323,15 @@ contains
         if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
       endif
       !
-      call e2y_wf_components(ncid)
-      !
     endif
+    !
+    wf_ng = wf_ncx
+    wf_igk=-1
+    do ik=1,nkibz
+      do ig=1,wf_nc_k(ik)
+        wf_igk(ig,ik)=ig
+      enddo
+    enddo
     !
     if(trim(ETSF_kind)=='WFK') then
       !
@@ -339,25 +351,20 @@ contains
       !      npw -> xyz   xyz -> npw
       ! TODO: handle the istwfk /= 1 cases
       !
-      allocate( wf_nc_k(k%nibz) )
-      allocate( wf_igk(wf_ncx,k%nibz) )
 
       ! 1.
-      b_transpose = transpose(b)
 
       ! Get dimensions of sphere
-      ecut = 1.1
-      call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
-      call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_wfk_, lstat)
+      ecut = 1
 
       max_nx = 0
       max_ny = 0
       max_nz = 0
       do ik=1,k%nibz
         !write(*,*) ik, wf_nc_k(ik)
-        max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_wfk_(1,:,ik)))
-        max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_wfk_(2,:,ik)))
-        max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_wfk_(3,:,ik)))
+        max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_(1,:,ik)))
+        max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_(2,:,ik)))
+        max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_(3,:,ik)))
       end do
       !write(*,*) max_nx, max_ny, max_nz
       n1 = 2*max_nx + 1
@@ -423,9 +430,9 @@ contains
         !write(*,*)
         !write(*,*)
         !do ic=1,npw
-        !  write(*,*) reduced_coordinates_of_plane_waves_wfk_(:,ic,ik)
+        !  write(*,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
         !end do
-        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_wfk_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
+        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
         ! 4.
         ! Do the mapping
         do ic=1,wf_nc_k(ik)
@@ -460,7 +467,7 @@ contains
           do ic=1,wf_nc_k(1)
             wf_igk(ic,1)=ic
             ig=wf_igk(ic,1)
-            g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_WFK_(:,ic,1)
+            g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_(:,ic,1)
           enddo
           !
           do ik=2,k%nibz
@@ -468,7 +475,7 @@ contains
             allocate(l_g_mapped(ng_vec_old))
             l_g_mapped=.false.
             do ic=1,wf_nc_k(ik)
-              g_vec_new=reduced_coordinates_of_plane_waves_WFK_(:,ic,ik)
+              g_vec_new=reduced_coordinates_of_plane_waves_(:,ic,ik)
               l_new=.true.
               do ig=1,ng_vec_old
                 if(l_g_mapped(ig)) cycle

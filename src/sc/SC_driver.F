@@ -109,28 +109,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !
  call H_QP_table_setup(E)
  !
- ! Initial Start & Restart 
- !==========================
- ! 
- call SC_start_and_restart(X,E,Xk)
- !
- ! Parallelization for DIPOLES
- ! ======================================
- !
- if(l_sc_electric.or.SC_up_W_iters>0.or.l_sc_exx) then
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   if (SC_up_W_iters>0) then 
-     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(2))
-   else
-     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(1))
-   endif
- endif
- !
- ! DIPOLES
- !=========
- if ((l_sc_exx.and.l_SC_cycle).or.l_sc_electric) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
- if (SC_up_W_iters>0)                            call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
- !
  ! Parallel Setup
  !================
  if (.not.l_eval_collisions) then
@@ -150,6 +128,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  !==========================
  ! 
  call SC_start_and_restart(X,E)
+ !
+#if defined _ELECTRIC
+ !
+ ! Parallelization for DIPOLES
+ ! ======================================
+ !
+ if(l_sc_electric.or.SC_up_W_iters>0.or.l_sc_exx) then
+   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
+   if (SC_up_W_iters>0) then 
+     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(2))
+   else
+     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(1))
+   endif
+ endif
+ !
+#endif
  !
  ! DIPOLES
  !=========

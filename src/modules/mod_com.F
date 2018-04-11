@@ -46,6 +46,8 @@ module com
  integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
  character(lchlen)  :: alt_jobstr(n_max_jobstr)
+ character(lchlen)  :: jobdir
+ character(lchlen)  :: alt_jobdir(n_max_jobstr)
  !
  ! Sectioning
  !
@@ -68,7 +70,7 @@ module com
  !
  contains
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING)
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      !
      ! -3 ----------------  -> desc 
      ! -2 ----------------  -> desc (no NETCDF support)
@@ -85,21 +87,25 @@ module com
      ! if ( COM_IO) PATH=com_path
      !
      ! Update of 27/12/2012. Added second jobstr to be used when the database of type 2 is read.
+     !           11/04/2018. Added support for jobstr and jobdir
      !
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,COM_IO
      character(*), optional ::subfolder
      character(*), optional ::ALT_JOB_STRING
+     character(*), optional ::ALT_JOB_DIR
      ! 
      ! Work Space
      !
      character(lchlen)::ch(2)
-     character(lchlen)::folder,jobstr_
+     character(lchlen)::folder,jobstr_,jobdir_
      !
      get_name=" "
      jobstr_ =jobstr
+     jobdir_ =jobdir
      if (present(ALT_JOB_STRING)) jobstr_=ALT_JOB_STRING
+     if (present(ALT_JOB_DIR)   ) jobdir_=ALT_JOB_DIR
      folder  ="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
@@ -125,7 +131,10 @@ module com
          ch(2)="db."//trim(desc)
        case(2,4)
          ch(2)="db."//trim(desc)
-         if (len_trim(jobstr_)>0) folder=trim(jobstr_)
+         if (len_trim(jobstr_)>0) then
+           if (len_trim(jobdir_)> 0) folder=trim(jobdir_)//"/"//trim(jobstr_)
+           if (len_trim(jobdir_)==0) folder=trim(jobstr_)
+         endif
          if (type==4) then
            ch(2)="db."//trim(desc)//"_"//trim(folder)
            folder="RESTART"
@@ -193,10 +202,12 @@ module com
      do i_jobstr=1,n_alt_jobstr
        all_locations(3+2*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                            MORE_IO=.TRUE.,COM_IO=.FALSE.,&
-&                                            ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+&                                            ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)),&
+&                                            ALT_JOB_DIR   =trim(alt_jobdir(i_jobstr)))
        all_locations(4+2*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                           MORE_IO=.FALSE.,COM_IO=.FALSE.,&
-&                                           ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+&                                           ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)),&
+&                                           ALT_JOB_DIR   =trim(alt_jobdir(i_jobstr)))
      enddo
      !
    end function

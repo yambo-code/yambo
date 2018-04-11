@@ -79,7 +79,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  ncpu       =np
  myid       =pid
  infile     =inf
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)
@@ -90,6 +90,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ call SET_job_strings_and_dirs(js)
  !
  ! Switch off report file support
  !

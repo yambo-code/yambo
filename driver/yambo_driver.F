@@ -82,11 +82,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  myid     =pid
  infile   =inf
  !
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call it_reset(1)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ call SET_job_strings_and_dirs(js)
  !
  ! not resetted in INIT call
  !

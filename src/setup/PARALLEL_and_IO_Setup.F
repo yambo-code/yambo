@@ -23,9 +23,10 @@
 !
 subroutine PARALLEL_and_IO_Setup(en,k)
  !
+ use pars,           ONLY:lchlen
  use stderr,         ONLY:log_as_a_file,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
-&                         alt_jobstr,n_alt_jobstr
+&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
@@ -44,6 +45,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Work Space
  !
  integer           :: ID,io_err,i_s,n_max_threads
+ character(lchlen) :: dumb_ch
  integer, external :: io_DB1
  !
  call section('*','CPU structure, Files & I/O Directories') 
@@ -106,14 +108,25 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r','Communications in   ',trim(com_path))
  call msg('r','Input file     is   ',trim(infile))
  call msg('r','Report file    is   ',trim(repfile))
+ if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
  !
  if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
  !
- if (len_trim(jobstr)>0        ) call msg('r','Job string(main): ',trim(jobstr))
+ ! Strings & Dirs
+ !-----------------
+ !
+ if (len_trim(jobstr)>0) dumb_ch='Job string(s)-dir(s) (main): '//trim(jobstr)
+ if (len_trim(jobdir)>0) dumb_ch=trim(dumb_ch)//" - "//trim(jobdir)
+ call msg('nr',trim(dumb_ch))
  do i_s=1,n_alt_jobstr
-   call msg('r','            (#'//trim(intc(i_s))//'): ',trim(alt_jobstr(i_s)))
+   if (len_trim(alt_jobstr(i_s))>0) then
+     dumb_ch='                    (alt#'//trim(intc(i_s))//'): '//trim(alt_jobstr(i_s))
+   else
+     dumb_ch='                    (alt#'//trim(intc(i_s))//'): none'
+   endif
+   if (len_trim(alt_jobdir(i_s))>0) dumb_ch=trim(dumb_ch)//" - "//trim(alt_jobdir(i_s))
+   call msg('r',trim(dumb_ch))
  enddo
- if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
  call msg('r','')
  !
  ! DB1 I/O

@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
+subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,cZERO,schlen
+ use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
@@ -58,10 +58,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
-&                     n_max_jobstr,grid_paths
- use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
-&                     string_split,log_as_a_file,string_remove
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths
+ use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
@@ -126,12 +124,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  implicit none
  !
- character(*) :: INSTR,IND,OD,JS,COM_DIR
+ character(*) :: INSTR,IND,OD,COM_DIR
  !
  ! Work Space 
  !
  integer           :: i1,i2
- character(schlen) :: string(10)
  !
  ! Printed reals format lengths 
  !
@@ -187,24 +184,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! ... created (core only)
  !
  call mk_dir(core_io_path)
- !
- ! ... and Job strings
- !
- call string_split(JS,string,",")
- !
- ! remove final /
- do i1=1,n_max_jobstr
-   if (len_trim(string(i1))==0) cycle
-   string(i1)=trim(string_remove(string(i1),"/"))
- enddo
- !
- jobstr=string(1)
- alt_jobstr=" "
- do i1=2,n_max_jobstr
-   if (len_trim(string(i1))==0) cycle
-   alt_jobstr(i1-1)=string(i1)
-   n_alt_jobstr=i1-1
- enddo
  !
  ! WFs fragmentation, this is for the interfaces
  !

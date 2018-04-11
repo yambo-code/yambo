@@ -249,7 +249,7 @@ module IO_m
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations,n_alt_jobstr
+&                            num_of_alternative_locations,n_alt_jobstr,jobdir
      character(*)           :: desc
      integer                :: type,ID
      character(*), optional :: subfolder
@@ -309,7 +309,10 @@ module IO_m
      ! Create Directories 
      !
      write (folder,'(2a)') trim(more_io_path),'/SAVE'
-     if (len_trim(jobstr)>0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
+     if (len_trim(jobstr)>0) then
+       if (len_trim(jobdir)> 0) write (folder,'(5a)') trim(more_io_path),'/',trim(jobdir),'/',trim(jobstr)
+       if (len_trim(jobdir)==0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
+     endif
      if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
        call mk_dir(more_io_path)
        call mk_dir(folder)
@@ -507,11 +510,22 @@ module IO_m
    end subroutine
    !
    subroutine mk_dir(dirname)
-     use stderr,         ONLY:cstr
+     use pars,           ONLY:schlen
+     use stderr,         ONLY:cstr,string_split
      implicit none
      character(*)      :: dirname
+     integer           :: i_j,n_s
+     character(schlen) :: dir(10)
+     character(lchlen) :: ch_tmp
      if (len_trim(dirname)==0) return
-     call imkdir( cstr(trim(dirname)) )
+     call string_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
+     ch_tmp=dir(1)
+     call imkdir( cstr(trim(ch_tmp)) )
+     do i_j=2,n_s
+       ch_tmp=trim(ch_tmp)//"/"//trim(dir(i_j))
+       call imkdir( cstr(trim(ch_tmp)) )
+     enddo
+   
    end subroutine
    !
    subroutine cp_file(file_,dest_,ierr_)

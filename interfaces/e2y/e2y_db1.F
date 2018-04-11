@@ -287,7 +287,7 @@ contains
     integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
     real                          :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
     integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
-    integer,     allocatable      :: igk(:,:), g_vec_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
+    integer,     allocatable      :: igk(:,:), igk_sort(:,:), g_vec_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
@@ -399,10 +399,12 @@ contains
       call sort(G_mod,indx_m1=G_mod_indx)
       deallocate(G_mod)
       !
-      allocate(g_vec_sort(ng_vec,3))
+      allocate(g_vec_sort(ng_vec,3),igk_sort(3,wf_ncx*2))
       g_vec_sort=g_vec
+      igk_sort=igk
       g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
-      deallocate(g_vec_sort)
+      igk(:3,G_mod_indx(:ng_vec))=igk_sort(:3,:ng_vec)
+      deallocate(g_vec_sort,igk_sort)
 
       ! 2.
       allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))

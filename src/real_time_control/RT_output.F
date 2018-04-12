@@ -83,8 +83,8 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    do i_f=1,N_RT_o_files
      if (.not.file_is_todo(i_f).or.RT_o_file_is_open(i_f)) cycle
-     call of_open_close(trim(RT_o_file_long(i_f)),'ot')
-     call of_open_close(trim(RT_o_file_short(i_f)))
+     call of_open_close(RT_o_file_long(i_f),'ot')
+     call of_open_close(RT_o_file_long(i_f))
      RT_o_file_is_open(i_f)=.TRUE.
    enddo
    !
@@ -99,7 +99,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    do i_f=1,N_RT_o_files
      if (.not.file_is_todo(i_f).or..not.RT_o_file_is_open(i_f)) cycle
-     call of_open_close(trim(RT_o_file_short(i_f)))
+     call of_open_close(RT_o_file_long(i_f))
      RT_o_file_is_open(i_f)=.FALSE.
    enddo
    !
@@ -119,13 +119,13 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (.not.RT_o_file_is_open(i_f)) cycle
    !
    if (index(what,'space')>0) then
-     call of_open_close(RT_o_file_short(i_f),'oa')
+     call of_open_close(RT_o_file_long(i_f),'oa')
      call msg('o '//trim(RT_o_file_short(i_f)),' ')
-     call of_open_close(RT_o_file_short(i_f))
+     call of_open_close(RT_o_file_long(i_f))
      cycle
    endif
    !
-   call of_open_close(RT_o_file_short(i_f),'oa')
+   call of_open_close(RT_o_file_long(i_f),'oa')
    !
    ! Headers and Descriptions
    !---------------------------
@@ -152,7 +152,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !--------
    if (.not.present(TIME).and..not.present(E)) then
      call msg('o '//trim(RT_o_file_short(i_f)),'')
-     call of_open_close(RT_o_file_short(i_f))
+     call of_open_close(RT_o_file_long(i_f))
      cycle
    endif
    !
@@ -282,7 +282,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    call msg('o '//trim(RT_o_file_short(i_f)),'',data_to_dump(1:n_RT_headings(i_f)),USE_TABS=.TRUE.)
    !
-   call of_open_close(RT_o_file_short(i_f))
+   call of_open_close(RT_o_file_long(i_f))
    !
  enddo
  !

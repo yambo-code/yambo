@@ -59,8 +59,8 @@ module RT_output_m
        RT_o_file_long(N_RT_o_files) =RT_o_file_short(N_RT_o_files)
      endif
      N=size(TITLES)
-     do i_t= n_RT_headings(N_RT_o_files)+1,n_RT_headings(N_RT_o_files)+N
-       RT_headings(N_RT_o_files,i_t)=trim(TITLES(i_t))
+     do i_t= 1,N
+       RT_headings(N_RT_o_files,n_RT_headings(N_RT_o_files)+i_t)=trim(TITLES(i_t))
      enddo
      n_RT_headings(N_RT_o_files)=n_RT_headings(N_RT_o_files)+N
      !

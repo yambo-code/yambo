@@ -210,6 +210,7 @@ module real_time
  real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
  ! ... Gamma only GKKP
  complex(SP), allocatable :: elph_gkkp_gamma(:,:,:,:)
+ complex(SP), allocatable :: elph_gkkp_gamma_diagonal(:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)

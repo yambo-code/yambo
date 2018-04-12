@@ -69,8 +69,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if (l_elel_scatt)         call RT_output('open EElife')
    if (l_elphoton_scatt)     call RT_output('open RADlife')
    if (l_RT_PH_oscillations) then
-                             call RT_output('open displace_polarization')
-                             call RT_output('open displace_population')
+                             call RT_output('open displace_field_polarization')
+                             call RT_output('open displace_field_population')
    endif
    if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
    !

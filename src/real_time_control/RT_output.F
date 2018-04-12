@@ -35,8 +35,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
-&                         RT_Tfit_lifetimes,N_RT_PH_displaced,l_RT_PH_oscillations,&
-&                         RT_PH_displaced,RT_D_pol,RT_D_occ
+&                         RT_Tfit_lifetimes,N_RT_PH_displaced,RT_PH_displaced,RT_D_pol,RT_D_occ
  use LIVE_t,         ONLY:what_is_running
  use timing_m,       ONLY:timing
  !
@@ -87,8 +86,8 @@ subroutine RT_output(what,VALUES,TIME,E)
  append_ch=' '
  if (index(what_is_running,'YPP')>0) append_ch='YPP-'
  !
- if (open_files.and..not.file_already_opened(next_file)) file_name(next_file)=trim(append_ch)//'current'
  short_file_name(next_file)=trim(append_ch)//'current'
+ if (open_files.and..not.file_already_opened(next_file))  file_name(next_file)=short_file_name(next_file)
  n_headings(next_file)=4
  headings(next_file,2:4)=(/"j_x","j_y","j_z"/)
  next_file=next_file+1
@@ -101,35 +100,28 @@ subroutine RT_output(what,VALUES,TIME,E)
  next_file=next_file+1
  !
 #if defined _ELPH
- if (l_RT_PH_oscillations) then
-   do i_fp=1,2
-     !
-     if (i_fp==1) tmp_ch="_polarization"
-     if (i_fp==2) tmp_ch="_population"
-     !
-     if (open_files.and..not.file_already_opened(next_file)) &
-&       file_name(next_file)=trim(append_ch)//'displace_field'//trim(tmp_ch)
-     short_file_name(next_file)=trim(append_ch)//'displace_field'//trim(tmp_ch)
-     n_headings(next_file)=N_RT_PH_displaced+1
-     do i_f=2,N_RT_PH_displaced+1
-       headings(next_file,i_f)="<D>_l="//trim(intc(RT_PH_displaced(i_f-1)))//" Field"
-     enddo
-     next_file=next_file+1
+ do i_fp=1,2
+   if (i_fp==1) tmp_ch="_polarization"
+   if (i_fp==2) tmp_ch="_population"
+   short_file_name(next_file)=trim(append_ch)//'displace_field'//trim(tmp_ch)
+   if (open_files.and..not.file_already_opened(next_file))  file_name(next_file)=short_file_name(next_file)
+   n_headings(next_file)=N_RT_PH_displaced+1
+   do i_f=2,N_RT_PH_displaced+1
+     headings(next_file,i_f)="<D>_l="//trim(intc(RT_PH_displaced(i_f-1)))//" Field"
    enddo
- endif
+   next_file=next_file+1
+ enddo
 #endif
  !
- if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'total_field'
  short_file_name(next_file)=trim(append_ch)//'total_field'
+ if (open_files.and..not.file_already_opened(next_file))  file_name(next_file)=short_file_name(next_file)
  n_headings(next_file)=7
  headings(next_file,2:4)=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]"/)
  headings(next_file,5:7)=(/"E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/)
  next_file=next_file+1
  !
- if (open_files.and..not.file_already_opened(next_file)) &
-&   file_name(next_file)=trim(append_ch)//'external_field'
  short_file_name(next_file)=trim(append_ch)//'external_field'
+ if (open_files.and..not.file_already_opened(next_file))  file_name(next_file)=short_file_name(next_file)
  n_headings(next_file)=9
  headings(next_file,2:4)=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]"/)
  headings(next_file,5:7)=(/"E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/)
@@ -344,7 +336,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  enddo
  !
 #if defined _ELPH
- if (l_RT_PH_oscillations) then
+ if (index(what_is_running,'YPP')>0) then
    do i_fp=1,2
      !
      if (i_fp==1) tmp_ch="_polarization"
@@ -581,12 +573,12 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('displace_field_polarization','YPP-displace_field_polarization')
        do i_c=1,N_RT_PH_displaced
          il=RT_PH_displaced(i_c)
-         data_to_dump(i_c) = RT_D_pol(il)
+         data_to_dump(i_c+1) = RT_D_pol(il)
        enddo
      case('displace_field_population','YPP-displace_field_population')
        do i_c=1,N_RT_PH_displaced
          il=RT_PH_displaced(i_c)
-         data_to_dump(i_c) = RT_D_occ(il)
+         data_to_dump(i_c+1) = RT_D_occ(il)
        enddo
 #endif
      case('magnetization')

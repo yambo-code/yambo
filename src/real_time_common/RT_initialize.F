@@ -44,7 +44,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
 &                         l_update_QP_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
-&                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
+&                         NE_time_step_update_jump,NE_initial_time_step_update,               &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
@@ -304,10 +304,12 @@ subroutine RT_initialize(E,k,q)
    if (l_RT_PH_oscillations) then
      YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
      RT_PH_displaced=0
+     N_RT_PH_displaced=0
      do i1=1,ph_modes
-       if (abs( sqrt(ph_freqs_sq(1,i1)) )> 3.E-5) RT_PH_displaced(i1)=1
+       if (abs( sqrt(ph_freqs_sq(1,i1)) )< 3.E-5) cycle
+       N_RT_PH_displaced=N_RT_PH_displaced+1
+       RT_PH_displaced(N_RT_PH_displaced)=i1
      enddo
-     N_RT_PH_displaced=count(RT_PH_displaced==1)
    endif
    !
  endif

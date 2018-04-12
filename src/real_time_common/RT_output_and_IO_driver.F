@@ -32,7 +32,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_update_QP_Energies,l_NE_with_fields,NE_time, &
-&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,l_RT_PH_oscillations
+&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,&
+&                         l_RT_PH_oscillations
  !
  implicit none
  !
@@ -67,7 +68,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if (l_elph_scatt)         call RT_output('open EPlife')
    if (l_elel_scatt)         call RT_output('open EElife')
    if (l_elphoton_scatt)     call RT_output('open RADlife')
-   if (l_RT_PH_oscillations) call RT_output('open displace')
+   if (l_RT_PH_oscillations) then
+                             call RT_output('open displace_polarization')
+                             call RT_output('open displace_population')
+   endif
    if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
    !
    ! GPL_EXCLUDE_END
@@ -110,7 +114,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! PH displacive field
    !=====================
-   if (l_RT_PH_oscillations) call RT_output('displace',TIME=NE_time*AUT2FS)
+   if (l_RT_PH_oscillations) call RT_output('displace_field',TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

@@ -30,7 +30,8 @@ subroutine RT_ELPH_displacement(k,E,dG)
  use pars,           ONLY:SP,cZERO,pi
  use R_lattice,      ONLY:bz_samp,nqbz
  use electrons,      ONLY:levels
- use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,RT_D,RT_PH_displaced
+ use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,&
+&                         RT_D_pol,RT_D_occ,RT_PH_displaced
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
  use RT_interfaces,  ONLY:RT_average_operator
  use parallel_m,     ONLY:PAR_Xk_nibz
@@ -50,9 +51,10 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  if ( .not. l_NE_dynamics .or. .not. l_RT_PH_oscillations ) return
  !
- RT_D=cZERO
+ RT_D_pol=cZERO
+ RT_D_occ=cZERO
  !
- call RT_average_operator(N_V=ph_modes,V_VALUE=RT_D,V_MATRIX=elph_gkkp_gamma,G=dG,k=k,en=E,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(N_V=ph_modes,V_VALUE=RT_D_pol,V_MATRIX=elph_gkkp_gamma,G=dG,k=k,en=E,nK_mem=PAR_Xk_nibz)
  !
  do il=elph_branches(1),elph_branches(2)
    !
@@ -60,7 +62,7 @@ subroutine RT_ELPH_displacement(k,E,dG)
    !
    ph_freq=abs(sqrt(ph_freqs_sq(1,il)))
    !
-   RT_D(il)=-1/pi*sqrt(ph_freq/nqbz)*RT_D(il)
+   RT_D_pol(il)=-1/pi*sqrt(ph_freq/nqbz)*RT_D_pol(il)
    !
  enddo
  !

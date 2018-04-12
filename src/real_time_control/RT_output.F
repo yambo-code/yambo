@@ -29,19 +29,16 @@ subroutine RT_output(what,VALUES,TIME,E)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
- use electrons,      ONLY:n_spin,Spin_magn,Orbital_magn,Itinerant_magn
+ use electrons,      ONLY:n_spin,Spin_magn
  use D_lattice,      ONLY:Bose_Temp
  use stderr,         ONLY:set_real_printed_length,string_split,intc,real2ch
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
-&                         RT_Tfit_lifetimes
+&                         RT_Tfit_lifetimes,N_RT_PH_displaced,l_RT_PH_oscillations,&
+&                         RT_PH_displaced,RT_D_pol,RT_D_occ
  use LIVE_t,         ONLY:what_is_running
  use timing_m,       ONLY:timing
-#if defined _ELPH
- use real_time,      ONLY:N_RT_PH_displaced,l_RT_PH_oscillations,RT_PH_displaced,RT_D
- use ELPH,           ONLY:elph_branches
-#endif
  !
  implicit none
  !
@@ -105,17 +102,20 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
 #if defined _ELPH
  if (l_RT_PH_oscillations) then
-   if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'displace_field'
-   short_file_name(next_file)=trim(append_ch)//'displace_field'
-   n_headings(next_file)=N_RT_PH_displaced+1
-   i_f=1
-   do il=elph_branches(1),elph_branches(2)
-     if (RT_PH_displaced(il)==0) cycle
-     i_f=i_f+1
-     headings(next_file,i_f)="<D>_l="//trim(intc(il))//" Field"
+   do i_fp=1,2
+     !
+     if (i_fp==1) tmp_ch="_polarization"
+     if (i_fp==2) tmp_ch="_population"
+     !
+     if (open_files.and..not.file_already_opened(next_file)) &
+&       file_name(next_file)=trim(append_ch)//'displace_field'//trim(tmp_ch)
+     short_file_name(next_file)=trim(append_ch)//'displace_field'//trim(tmp_ch)
+     n_headings(next_file)=N_RT_PH_displaced+1
+     do i_f=2,N_RT_PH_displaced+1
+       headings(next_file,i_f)="<D>_l="//trim(intc(RT_PH_displaced(i_f-1)))//" Field"
+     enddo
+     next_file=next_file+1
    enddo
-   next_file=next_file+1
  endif
 #endif
  !
@@ -345,19 +345,23 @@ subroutine RT_output(what,VALUES,TIME,E)
  !
 #if defined _ELPH
  if (l_RT_PH_oscillations) then
-   if (open_files.and..not.file_already_opened(next_file)) &
-&     file_name(next_file)=trim(append_ch)//'FT_displace_field'
-   short_file_name(next_file)=trim(append_ch)//'FT_displace_field'
-   n_headings(next_file)=2*N_RT_PH_displaced+1
-   i_f=0
-   headings(next_file,1)="E [meV]"
-   do il=elph_branches(1),elph_branches(2)
-     if (RT_PH_displaced(il)==0) cycle
-     i_f=i_f+2
-     headings(next_file,i_f )="Re[<D>_l="//trim(intc(il))//"(w)]"
-     headings(next_file,i_f+1)="Im[<D>_l="//trim(intc(il))//"(w)]"
+   do i_fp=1,2
+     !
+     if (i_fp==1) tmp_ch="_polarization"
+     if (i_fp==2) tmp_ch="_population"
+     !
+     if (open_files.and..not.file_already_opened(next_file)) &
+&       file_name(next_file)=trim(append_ch)//'FT_displace_field'//trim(tmp_ch)
+     short_file_name(next_file)=trim(append_ch)//'FT_displace_field'//trim(tmp_ch)
+     n_headings(next_file)=2*N_RT_PH_displaced+1
+     headings(next_file,1)="E [meV]"
+     do i_f=1,N_RT_PH_displaced
+       il=RT_PH_displaced(i_f)
+       headings(next_file,2*i_f  )="Re[<D>_l="//trim(intc(il))//"(w)]"
+       headings(next_file,2*i_f+1)="Im[<D>_l="//trim(intc(il))//"(w)]"
+     enddo
+     next_file=next_file+1
    enddo
-   next_file=next_file+1
  endif
 #endif
  !
@@ -391,10 +395,8 @@ subroutine RT_output(what,VALUES,TIME,E)
 &     file_name(next_file)=trim(append_ch)//'magnetization'
    short_file_name(next_file)=trim(append_ch)//'magnetization'
    n_headings(next_file)=4
-   !n_headings(next_file)=10
    headings(next_file,1)='T [fs]'
    headings(next_file,2:4)=(/"Ms_x","Ms_y","Ms_z"/)
-   !headings(next_file,2:10)=(/"Ms_x","Ms_y","Ms_z","Ml_x","Ml_y","Ml_z","Mi_x","Mi_y","Mi_z"/)
    next_file=next_file+1
  endif
  !
@@ -540,12 +542,6 @@ subroutine RT_output(what,VALUES,TIME,E)
        call msg('o '//trim(short_file_name(i_f)),'#')
        tmp_ch="Equilibrium spin      magnetization is "//&
 &             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
-!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
-!       tmp_ch="Equilibrium orbital   magnetization is "//&
-!&             trim(real2ch(Orbital_magn(1)))//", "//trim(real2ch(Orbital_magn(2)))//", "//trim(real2ch(Orbital_magn(3)))//". "
-!       call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
-!       tmp_ch="Equilibrium itinerant magnetization is "//&
-!&             trim(real2ch(Itinerant_magn(1)))//", "//trim(real2ch(Itinerant_magn(2)))//", "//trim(real2ch(Itinerant_magn(3)))//". "
        call msg('o '//trim(short_file_name(i_f)),'#',tmp_ch,INDENT=0,USE_TABS=.TRUE.)
      endif
      !
@@ -579,23 +575,22 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
 #if defined _ELPH
-     case('YPP-FT_displace_field')
+     case('YPP-FT_displace_field_population','YPP-FT_displace_field_polarization')
        data_to_dump(1)=data_to_dump(1)*1000.
        data_to_dump(2:2*N_RT_PH_displaced+1) = VALUES
-     case('displace_field','YPP-displace_field')
-       if (l_RT_PH_oscillations) then
-         i_c=1
-         do il=elph_branches(1),elph_branches(2)
-           if (RT_PH_displaced(il)==0) cycle
-           i_c=i_c+1
-           data_to_dump(i_c) =real(RT_D(il))
-         enddo
-       endif
+     case('displace_field_polarization','YPP-displace_field_polarization')
+       do i_c=1,N_RT_PH_displaced
+         il=RT_PH_displaced(i_c)
+         data_to_dump(i_c) = RT_D_pol(il)
+       enddo
+     case('displace_field_population','YPP-displace_field_population')
+       do i_c=1,N_RT_PH_displaced
+         il=RT_PH_displaced(i_c)
+         data_to_dump(i_c) = RT_D_occ(il)
+       enddo
 #endif
      case('magnetization')
        data_to_dump(2: 4) = real(RT_magn(:,1))
-       !data_to_dump(5: 7) = real(RT_magn(:,2))
-       !data_to_dump(8:10) = real(RT_magn(:,3))
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

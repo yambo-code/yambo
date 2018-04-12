@@ -89,10 +89,11 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
      if (.not.allocated(RT_D)) then
        YAMBO_ALLOC(RT_D,(ph_modes))
      endif
-     call RT_output(what="open YPP-displ")
+     call RT_output(what="open YPP-displacement")
      do i_t=1,RT%T_n_steps
-       RT_D=OBS%F_t(i_t,:)
-       call RT_output('YPP-displ',TIME=RT_time(i_t)*AUT2FS)
+       !RT_D(:,1)=OBS%F_t(i_t,1         :  ph_mods)
+       !RT_D(:,2)=OBS%F_t(i_t,ph_modes+1:2*ph_mods)
+       !call RT_output('YPP-displ',TIME=RT_time(i_t)*AUT2FS)
      enddo
      !
  end select

@@ -34,7 +34,7 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes
- use real_time,      ONLY:RT_D
+ use real_time,      ONLY:RT_D_pol,RT_D_occ
  use RT_control,     ONLY:D_cache
 #endif
  !
@@ -55,7 +55,8 @@ subroutine RT_databases_IO(E)
    !
 #if defined _ELPH
    if (allocated(D_cache)) then
-     D_cache(1:ph_modes,i_time)= RT_D
+     D_cache(1         :  ph_modes,i_time)= RT_D_pol
+     D_cache(ph_modes+1:2*ph_modes,i_time)= RT_D_occ
    endif
 #endif
    !

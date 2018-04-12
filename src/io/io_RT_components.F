@@ -161,7 +161,7 @@ integer function io_RT_components(what,ID)
        YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
      endif
      call io_bulk(ID,VAR="ACTIVE_PH_MODES",VAR_SZ=(/ph_modes/))
-     call io_bulk(ID,L1=RT_PH_displaced)
+     call io_bulk(ID,I1=RT_PH_displaced)
    endif
    !
    ! GPL_EXCLUDE_END
@@ -324,7 +324,7 @@ integer function io_RT_components(what,ID)
    !
 #if defined _ELPH
    if (allocated(D_cache).and.l_D) then
-     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,ph_modes,IO_OBS_cache_steps/))
+     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,2*ph_modes,IO_OBS_cache_steps/))
      call io_bulk(ID,C2=D_cache)
    endif
 #endif

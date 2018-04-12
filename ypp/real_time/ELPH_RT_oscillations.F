@@ -98,7 +98,6 @@ subroutine ELPH_RT_oscillations(E)
  ! Output
  !--------
  !
- call RT_output(what="initialize")
  call RT_output(what="open FT_displace")
  !
  do i_w = 1, RT_conf%W_n_steps

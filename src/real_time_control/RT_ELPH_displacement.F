@@ -31,8 +31,8 @@ subroutine RT_ELPH_displacement(k,E,dG)
  use R_lattice,      ONLY:bz_samp,nqbz
  use electrons,      ONLY:levels
  use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,&
-&                         RT_D_pol,RT_D_occ,RT_PH_displaced
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,ph_modes
+&                         RT_D_pol,RT_D_occ,RT_PH_displaced,N_RT_PH_displaced
+ use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use RT_interfaces,  ONLY:RT_average_operator
  use parallel_m,     ONLY:PAR_Xk_nibz
  !
@@ -44,7 +44,7 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  ! Work Spave
  !
- integer     :: il
+ integer     :: il,ic
  real(SP)    :: ph_freq
  !
  ! GPL_EXCLUDE_START
@@ -54,11 +54,15 @@ subroutine RT_ELPH_displacement(k,E,dG)
  RT_D_pol=cZERO
  RT_D_occ=cZERO
  !
+ ! Polarization + Occupations
+ !
  call RT_average_operator(N_V=ph_modes,V_VALUE=RT_D_pol,V_MATRIX=elph_gkkp_gamma,G=dG,k=k,en=E,nK_mem=PAR_Xk_nibz)
  !
- do il=elph_branches(1),elph_branches(2)
+ ! Occupations
+ !
+ do ic=1,N_RT_PH_displaced
    !
-   if (RT_PH_displaced(il)==0) cycle
+   il=RT_PH_displaced(ic)
    !
    ph_freq=abs(sqrt(ph_freqs_sq(1,il)))
    !

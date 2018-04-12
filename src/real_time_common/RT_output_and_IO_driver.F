@@ -48,11 +48,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  select case(trim(what))
    !
- case('initialize')
+ case('open')
    !
    OBSERVABLES=0._SP
    !
-   call RT_output(what="initialize")
    call RT_output(what="open curr pol")
    !
    ! GPL_EXCLUDE_START
@@ -65,14 +64,11 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
      call RT_output(what="open ext")
      if(l_RT_induced_field)  call RT_output(what="open tot ind")
    endif
-   if (l_elph_scatt)         call RT_output('open EPlife')
-   if (l_elel_scatt)         call RT_output('open EElife')
-   if (l_elphoton_scatt)     call RT_output('open RADlife')
-   if (l_RT_PH_oscillations) then
-                             call RT_output('open displace_field_polarization')
-                             call RT_output('open displace_field_population')
-   endif
-   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open factors')
+   if (l_elph_scatt)         call RT_output('open mean_EPlife')
+   if (l_elel_scatt)         call RT_output('open mean_EElife')
+   if (l_elphoton_scatt)     call RT_output('open mean_RADlife')
+   if (l_RT_PH_oscillations) call RT_output('open displace_field')
+   if ((l_elel_scatt.or.l_elph_scatt).and.(l_RT_impose_N_dN.or.l_RT_impose_E)) call RT_output('open N_dN_E')
    !
    ! GPL_EXCLUDE_END
    !
@@ -120,10 +116,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !========================
    if (RT_is_dynamically_dephased) then
      call RT_mean_carrier_lifetimes(E,k)
-     if(l_elph_scatt)                      call RT_output('EPlife', TIME=NE_time*AUT2FS)
-     if(l_elel_scatt)                      call RT_output('EElife', TIME=NE_time*AUT2FS)
-     if(l_elphoton_scatt)                  call RT_output('RADlife',TIME=NE_time*AUT2FS)
-     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('factors',TIME=NE_time*AUT2FS)
+     if(l_elph_scatt)                      call RT_output('mean_EPlife', TIME=NE_time*AUT2FS)
+     if(l_elel_scatt)                      call RT_output('mean_EElife', TIME=NE_time*AUT2FS)
+     if(l_elphoton_scatt)                  call RT_output('mean_RADlife',TIME=NE_time*AUT2FS)
+     if(l_RT_impose_N_dN.or.l_RT_impose_E) call RT_output('N_dN_E',TIME=NE_time*AUT2FS)
    endif
    !
    ! GPL_EXCLUDE_END

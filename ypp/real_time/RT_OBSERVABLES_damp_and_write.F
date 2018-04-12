@@ -27,7 +27,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:RT_ind_J,RT_P,RT_D
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_D_pol,RT_D_occ
  use ELPH,           ONLY:ph_modes
  !
 #include<memory.h>
@@ -69,8 +69,6 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  call section("s",'[RT] '//trim(OBS%title)//' dumped on file')
  !=============================================================
  !
- call RT_output(what="initialize")
- !
  select case (trim(OBS%title))
    !
    case("Polarization") 
@@ -86,14 +84,17 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
        call RT_output('curr',TIME=RT_time(i_t)*AUT2FS)
      enddo
    case("Displacement") 
-     if (.not.allocated(RT_D)) then
-       YAMBO_ALLOC(RT_D,(ph_modes))
+     if (.not.allocated(RT_D_occ)) then
+       YAMBO_ALLOC(RT_D_occ,(ph_modes))
      endif
-     call RT_output(what="open YPP-displacement")
+     if (.not.allocated(RT_D_pol)) then
+       YAMBO_ALLOC(RT_D_pol,(ph_modes))
+     endif
+     call RT_output(what="open displ")
      do i_t=1,RT%T_n_steps
-       !RT_D(:,1)=OBS%F_t(i_t,1         :  ph_mods)
-       !RT_D(:,2)=OBS%F_t(i_t,ph_modes+1:2*ph_mods)
-       !call RT_output('YPP-displ',TIME=RT_time(i_t)*AUT2FS)
+       RT_D_pol(:)=OBS%F_t(i_t,1         :  ph_modes)
+       RT_D_occ(:)=OBS%F_t(i_t,ph_modes+1:2*ph_modes)
+       call RT_output('displ',TIME=RT_time(i_t)*AUT2FS)
      enddo
      !
  end select

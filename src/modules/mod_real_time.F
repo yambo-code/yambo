@@ -556,7 +556,7 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
+     if (l_elel_scatt.or.(l_RT_CCA_Kernel.and.l_elph_scatt).or.l_elphoton_scatt) then
        YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
        YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
        YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))

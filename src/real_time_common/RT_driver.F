@@ -242,7 +242,9 @@ subroutine RT_driver(E,X,k,q)
  ! Initialize output files
  !==========================
  !
- call RT_output_and_IO_driver('initialize',E,k,OBSERVABLES)
+ call RT_output_INIT( )
+ !
+ call RT_output_and_IO_driver('open',E,k,OBSERVABLES)
  !
  ! Loop on time
  !==============

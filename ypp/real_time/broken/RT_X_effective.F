@@ -402,7 +402,6 @@ subroutine RT_X_effective(en)
          !
          ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
          !
-         call RT_output(what="initialize")
          call RT_output(what="open "//trim(X_file_name) )
          !
          do i_fp=1,N_probe_frequencies

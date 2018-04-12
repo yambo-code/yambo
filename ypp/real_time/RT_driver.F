@@ -40,6 +40,11 @@ subroutine RT_driver(en,k,q)
  !
  call section("*",'== Real-Time Post-Processing ==')
  !
+ ! Output files
+ !==============
+ !
+ call RT_output_INIT( )
+ !
  ! GPL_EXCLUDE_START
  !
  ! Real-Time occupations and lifetimes

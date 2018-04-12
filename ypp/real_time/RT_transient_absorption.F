@@ -57,8 +57,8 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  type(w_samp)      :: W_bss
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp
- real(SP)             :: Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp,x_tmp
+ integer              :: i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp
+ real(SP)             :: Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,dipole,BS_R1(BS_H_dim),BS_R_var
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
@@ -117,7 +117,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Output
  !
- call RT_output(what="initialize")
  call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")

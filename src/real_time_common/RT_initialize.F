@@ -312,6 +312,9 @@ subroutine RT_initialize(E,k,q)
      enddo
    endif
    !
+ else if (l_RT_PH_oscillations) then
+   call warning("NO e-p. PH oscillations switched off")
+   l_RT_PH_oscillations=.FALSE.
  endif
  !
 #endif

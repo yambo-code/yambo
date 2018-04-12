@@ -69,7 +69,6 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  ! Output files headers
  !
- call RT_output(what="initialize")
  call RT_output("open 2D_occ_dos")
  !
  if (DOS_E_range(1)>DOS_E_range(2)) then

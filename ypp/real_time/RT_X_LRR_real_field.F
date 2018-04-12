@@ -151,7 +151,6 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! EPS=-1./EELS
  !
- call RT_output(what="initialize")
  call RT_output(what="open E_frequency eps_along_E eels_along_E")
  !
  if(Efield(i_Probe)%ef_pol=="linear"  ) then

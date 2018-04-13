@@ -140,7 +140,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    Pol%F_t =cZERO_DP
  endif
  if (what=="D".and..not.allocated(PhDisp%F_t)) then
-   YAMBO_ALLOC(PhDisp%F_t,(RT_conf%T_n_steps,ph_modes))
+   YAMBO_ALLOC(PhDisp%F_t,(RT_conf%T_n_steps,2*ph_modes))
    PhDisp%F_t =cZERO_DP
  endif
  !

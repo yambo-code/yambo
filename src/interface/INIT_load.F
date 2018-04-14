@@ -617,11 +617,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)
-#if defined _NL
  call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+#if defined _NL
  call it('f',defs,'EvPolarization',    '[Xd] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
-#else
- call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Shifted grids]',Dipole_approach,verb_level=V_resp)
 #endif
  call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)

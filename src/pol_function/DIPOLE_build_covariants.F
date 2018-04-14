@@ -27,6 +27,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  ! in PRB 69, 085106 (2004)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
+ use drivers,        ONLY:l_nl_optics
  use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:WF_load,PARALLEL_WF_distribute,WF_free
  use wave_func,      ONLY:WF
@@ -84,7 +85,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_OVLP_ibz,CLEAN_UP=.TRUE.)
+#if defined _NL
+ if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_OVLP_ibz,CLEAN_UP=.TRUE.)
+#endif
  !
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
  &             keep_states_to_load=.TRUE.)
@@ -224,11 +227,15 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  call live_timing()
  !
- if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,X)     
+#if defined _NL
+ if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,X)
+#endif
  !
  call WF_free(WF)
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
+#if defined _NL
+ if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
+#endif
  !
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
  !

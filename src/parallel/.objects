@@ -1,6 +1,6 @@
 NL_objs =
 #if defined _NL | defined _ELECTRIC
-NL_objs = PARALLEL_global_Non_Linear.o k_map_nearest_by_dir.o
+NL_objs = PARALLEL_global_Non_Linear.o
 #endif
 #if  _RT
 RT_objs = PARALLEL_global_Real_Time.o

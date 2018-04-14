@@ -1,2 +1,2 @@
 objs = k_lattice.o k_expand.o k_ibz2bz.o k_reduce.o k_build_up_BZ_tables.o \
-       bz_samp_indexes.o  k_the_nearest.o 
+       bz_samp_indexes.o  k_the_nearest.o k_map_nearest_by_dir.o

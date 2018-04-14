@@ -67,7 +67,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator
+&                         l_X_terminator,DIP_S
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
@@ -85,9 +85,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #if defined _SC || defined _RT
  use X_m,            ONLY:P_square
  use electrons,      ONLY:n_spin
-#endif
-#if defined _NL | defined _ELECTRIC
- use X_m,            ONLY:DIP_S
 #endif
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
@@ -115,9 +112,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  integer           :: ID,ID_S,io_err
  integer, external :: io_DIPOLES
-#if defined _NL | defined _ELECTRIC
  integer, external :: io_Overlaps
-#endif
  !
  call timing('Dipoles',OPR='start')
  !
@@ -201,9 +196,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
-#if defined _NL | defined _ELECTRIC
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
-#endif
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
@@ -264,6 +257,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! GPL_EXCLUDE_START
  !
+ if (use_covariant_approach) call X_alloc('DIP_S')
+ !
 #if defined _RT
  if (l_real_time_magn_dipoles) then
    call X_alloc('DIP_orbital')
@@ -273,9 +268,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #endif
 #if defined _SC || defined _RT
  if(l_real_time.or.l_sc_run) call X_alloc('P_square') 
-#endif
-#if defined _NL | defined _ELECTRIC
- call X_alloc('DIP_S')
 #endif
  !
  ! GPL_EXCLUDE_END
@@ -300,9 +292,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                                             PAR_COM_RL_INDEX%CPU_id==0
      !
      ID=0
-#if defined _NL | defined _ELECTRIC
      ID_S=0
-#endif
+     !
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
@@ -321,12 +312,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
-#if defined _NL | defined _ELECTRIC
        if(use_covariant_approach) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
          io_err=io_Overlaps(X,ID_S)
        endif
-#endif
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -335,12 +324,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
-#if defined _NL | defined _ELECTRIC
        if(use_covariant_approach) then
          call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
          io_err=io_err+io_Overlaps(X,ID_S)
        endif
-#endif
      endif
      !
      ! In case io_err is /=0 all CPU have to sincronize before starting
@@ -362,7 +349,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           enddo
          endif
        enddo
-#if defined _NL | defined _ELECTRIC
        if(use_covariant_approach.and.(write_header.or.reading)) then
          do ik=1,Xk%nbz
            do i_sp_pol=1,n_sp_pol
@@ -371,7 +357,6 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            enddo
          enddo
        endif
-#endif
        !
      endif
      !
@@ -407,12 +392,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      endif
 #endif
      !
-#if defined _NL | defined _ELECTRIC
      if(use_covariant_approach) then
        call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
-#endif
      !
      ! GPL_EXCLUDE_END
      !

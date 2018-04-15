@@ -117,7 +117,7 @@ subroutine K_output_file(iq,mode)
 #endif
  if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name,title_mode)
  !
- call X_write_q_plus_g(iq,BSqpts(iq,:),ig=1)
+ call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  ! Description of the run and headers for output files:

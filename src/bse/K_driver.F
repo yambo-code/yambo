@@ -187,13 +187,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Tranferred momentum
  !=====================================
  !
- !YAMBO_ALLOC(q%pt,(q%nibz,3))
- YAMBO_ALLOC(BSqpts,(BS_q(1):BS_q(2),3))
+ YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
  do iq=BS_q(1),BS_q(2)
-   if (iq==1) BSqpts(iq,:) = BSS_q0
-   if (iq/=1) BSqpts(iq,:) = q%pt(iq,:)
+   if (iq==1) BSqpts(:,iq) = BSS_q0
+   if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
  enddo
- !YAMBO_FREE(q%pt)
  !
  do iq=BS_q(1),BS_q(2)
  !

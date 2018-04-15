@@ -24,7 +24,7 @@
 integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
- use BS,            ONLY:BS_identifier,BS_K_dim,BS_q,BSqpts
+ use BS,            ONLY:BS_identifier,BS_K_dim,BSqpts
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
@@ -67,8 +67,14 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
 &       " BSK Identifier                  :",I0=BS_identifier,WARN=.TRUE.,OP=(/"=="/))
    call io_elemental(ID,VAR=&
 &       " Excitonic eigenstates included  :",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR=&
-&       " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+   if(iq==1) then
+     call io_elemental(ID,VAR=&
+&         " Field direction                 :",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+     BSqpts(:,iq)=BSS_q0
+   else
+     call io_elemental(ID,VAR=&
+&         " Q-point                         :",R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/))
+   endif
    call io_elemental(ID,VAR=&
 &       " Number of eigenstates included  :",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
@@ -89,11 +95,6 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
    if(E_SOC_nbands/=0) then
      call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BS_H_dim/))
      call io_bulk(ID,R2=BsE_corr)
-   endif
-   !
-   if (BS_q(2)/=1) then
-     call io_bulk(ID, 'BS_QPT', VAR_SZ=(/BS_q(2)-BS_q(1)+1,3/))
-     call io_bulk(ID,R2=BSqpts)
    endif
    !
    call io_bulk(ID,'BS_left_Residuals',VAR_SZ=(/2,BS_H_dim/))

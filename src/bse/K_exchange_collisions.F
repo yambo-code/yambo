@@ -80,6 +80,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      if(trim(L_kind)=="full") then
        if(     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)/bare_qpg(1,1)
        if(.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+       !
      else if(trim(L_kind)=="Lbar") then
        BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
      endif

@@ -38,7 +38,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 &                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,Co_factor,BSS_Wd
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
@@ -262,8 +262,10 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+   if (BSS_eval_JDOS) then
+     call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
+   endif
 #if defined _KERR
    call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( A_drude(1) ,COMM=PAR_COM_eh_INDEX%COMM )
@@ -274,6 +276,17 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      call PP_redux_wait(PL(:,3)        ,COMM=PAR_COM_eh_INDEX%COMM )
    endif
 #endif
+   !
+   if (trim(L_kind)=="full") then
+     do i_T_g=1,BS_nT_grps
+       if (.not.allocated(BS_T_grp(i_T_g)%dipoles_R) ) then
+         YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_R,(BS_T_grp(i_T_g)%size))
+         BS_T_grp(i_T_g)%dipoles_R=cZERO
+       endif
+       call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_R(:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+       call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_R(:), COMM=PAR_COM_eh_INDEX%COMM )
+     enddo
+   endif
    !
    ! DOS
    !=====

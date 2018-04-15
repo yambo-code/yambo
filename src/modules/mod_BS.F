@@ -206,7 +206,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
-     use pars,       ONLY:IP
+     use pars,       ONLY:IP,cZERO
      use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
@@ -221,6 +221,8 @@ module BS
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
+     BS_T_grp(iT)%dipoles_R=cZERO
+     BS_T_grp(iT)%dipoles_A=cZERO
      if(l_kerr) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))

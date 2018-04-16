@@ -39,6 +39,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
    !
  end type Haydock_vector
+ !
 #if defined _SLEPC
  !
  ! Slepc

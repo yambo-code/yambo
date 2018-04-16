@@ -43,7 +43,8 @@ subroutine K_slepc_driver(iq,W)
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
 &                         BS_mat,BSS_n_eig,BSS_target_E, &
 &                         BSS_write_eig_2_db,BSS_eh_W, Slepc_shell, &
-&                         BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
+&                         BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol,&
+&                         Slepc_v,BS_HAYVEC_free
  use electrons,      ONLY:E_SOC_nbands
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec,warning
@@ -254,6 +255,13 @@ subroutine K_slepc_driver(iq,W)
  if(associated(BS_E_SOC_corr)) then
    deallocate(BS_E_SOC_corr)
    nullify(BS_E_SOC_corr)
+ endif
+ !
+ if (Slepc_shell) then
+   call BS_HAYVEC_free(Slepc_v%Vi)
+   call BS_HAYVEC_free(Slepc_v%Vo) 
+   deallocate(Slepc_v%Vi)
+   deallocate(Slepc_v%Vo)
  endif
  !
  call PARALLEL_Haydock_VEC_COMMs('reset')

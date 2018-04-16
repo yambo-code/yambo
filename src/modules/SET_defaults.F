@@ -33,7 +33,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
-&                     l_X_terminator,X_terminator_E,global_gauge,X_is_integrated,&
+&                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach

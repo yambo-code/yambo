@@ -28,16 +28,13 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use hamiltonian,    ONLY:H_ref_bands
  use matrix_operate, ONLY:UP_matrix_index
+ use timing_m,       ONLY:timing
 #if defined _SC || !defined _RT
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
 #if defined _RT
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
  implicit none
  !
  integer                 :: ik,i_sp_pol
@@ -54,9 +51,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_QP_cpu) return
 #endif
  !
-#if defined _TIMING
  call timing('V_qp_basis_to_H',OPR='start')
-#endif
  !
  do i1=1,QP_n_states
    !
@@ -89,8 +84,6 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
    !
  end do
  !
-#if defined _TIMING
  call timing('V_qp_basis_to_H',OPR='stop')
-#endif
  !
 end subroutine 

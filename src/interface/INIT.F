@@ -606,6 +606,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Optics(not bse) nor GW (no PP)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+   !
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
@@ -620,6 +621,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'Qdirection QShiftOrder')
    !
    ! GPL_EXCLUDE_END
+   !
+ endif
+ !
+ ! Double Grid
+ !
+ if (l_optics.or.l_life) then
+   !
+   call initactivate(1,'DbGdQsize')
    !
  endif
  !
@@ -884,9 +893,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(-1,'QpntsRXs')
    !
-   if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
-   if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   if (l_eval_collisions) then
+     if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
+     if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')
+   endif
    !
  endif
  !
@@ -1446,6 +1457,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      strings_to_not_use_as_runlevels(3)="idir"
      strings_to_not_use_as_runlevels(4)="odir"
      strings_to_not_use_as_runlevels(5)="cdir"
+     strings_to_not_use_as_runlevels(6)="com_path"
+     strings_to_not_use_as_runlevels(7)="more_io_path"
+     strings_to_not_use_as_runlevels(8)="core_io_path"
      !
      ! Split the string in pieces
      !
@@ -1461,19 +1475,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        INPUT_strings_loop: do i1=1,n_pieces
          !
          if (trim(rstr_piece(i1))=='ifile') cycle
-         if (i1>1) then
-           if(trim(rstr_piece(i1-1))=='ifile') cycle
-         endif
-         !
-         ! Input File editing?
-         !
-         do i2=1,nrnlvls
-           if (i1==1) then
-              if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
-           else
-             if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1)).and.trim(rstr_piece(i1-1)) /= 'jobstr' ) infile_editing=.true.
-           endif
-         enddo
          !
          ! String suitable for runlevel switching?
          !
@@ -1482,6 +1483,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
              if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
            enddo
          endif
+         !
+         ! Input File editing?
+         !
+         do i2=1,nrnlvls
+           if ( trim(rnlvls(i2,1)) == trim(rstr_piece(i1))) infile_editing=.true.
+         enddo
          !
          ! Run Levels
          !

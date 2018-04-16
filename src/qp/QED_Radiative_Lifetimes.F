@@ -38,9 +38,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  use wave_func,           ONLY:wf_ng
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute
-#if defined _TIMING
  use timing_m,            ONLY:timing
-#endif
  !
  implicit none
  !
@@ -61,9 +59,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
    call section('=','Correlation: Radiative Lifetimes')
  endif
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='start')
-#endif
  !
  ! PARALLEL distribution
  !=======================
@@ -140,9 +136,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !
  qp%E(:)=QP_sc(:,1)
  !
-#if defined _TIMING
  call timing('Radiative Lifetimes',OPR='stop')
-#endif
  !
 end subroutine QED_Radiative_Lifetimes
 

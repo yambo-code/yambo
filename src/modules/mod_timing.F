@@ -93,6 +93,9 @@ MODULE timing_m
      INTEGER                               :: index
      TYPE(clock_list), POINTER  :: listp
      !
+#ifndef _TIMING
+     return
+#endif
      if (.not.master_thread) return
      !
      IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
@@ -151,6 +154,9 @@ MODULE timing_m
      IMPLICIT NONE
      INTEGER,             INTENT(in)  :: nclock_max_
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( nclock_max_ < 1 ) CALL error('timing_allocate:  Invalid NCLOCK_MAX')
      !
      ! public clocks
@@ -170,6 +176,9 @@ MODULE timing_m
    !
    SUBROUTINE timing_deallocate()
      IMPLICIT NONE
+#ifndef _TIMING
+     return
+#endif
      CALL clock_list_deallocate(global_list)
      CALL clock_stop(internal_list%clock(1))
      CALL clock_list_deallocate(internal_list)
@@ -351,35 +360,35 @@ MODULE timing_m
          nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
          IF ( call_number == 1 )  THEN
            IF (nday > 0) THEN
-             WRITE (local_ch, '(a35," : ",3x,i2,"d",i2,"h CPU ")') &
+             WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') &
                          TRIM(obj%name), nday, nhour
            ELSEIF (nhour > 0) THEN
-             WRITE (local_ch, '(a35," : ",3x,i2,"h",i2,"m CPU ")') &
+             WRITE (local_ch, '(a40," : ",3x,i2,"h",i2,"m CPU ")') &
                          TRIM(obj%name), nhour, nmin
            ELSEIF (nmin > 0) THEN
-             WRITE (local_ch, '(a35," : ",i2,"m",f5.2,"s CPU ")') &
+             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU ")') &
                    TRIM(obj%name), nmin, nsec
            ELSE
-             WRITE (local_ch, '(a35," : ",3x,f5.2,"s CPU ")') &
+             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU ")') &
                    TRIM(obj%name), nsec
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
-             WRITE(local_ch,'(a35," : ",3x,i2,"d",i2,"h CPU (", &
+             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (", &
                    &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nday, nhour, &
                    call_number , total_time / REAL( call_number, DP )
            ELSEIF (nhour > 0) THEN
-             WRITE(local_ch,'(a35," : ",3x,i2,"h",i2,"m CPU (", &
+             WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
                    &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
                    call_number , total_time / REAL( call_number, DP )
            ELSEIF (nmin > 0) THEN
-             WRITE (local_ch, '(a35," : ",i2,"m",f5.2,"s CPU (", &
+             WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
                         call_number , total_time / REAL( call_number, DP )
            ELSE
-             WRITE (local_ch, '(a35," : ",3x,f5.2,"s CPU (", &
+             WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
                    &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
                         call_number , total_time / REAL( call_number, DP )
            ENDIF
@@ -391,9 +400,9 @@ MODULE timing_m
          ! time in seconds
          !
          IF ( call_number == 1) THEN
-           WRITE (local_ch, '(a35," :",f9.2,"s CPU")') TRIM(obj%name), total_time
+           WRITE (local_ch, '(a40," :",f9.2,"s CPU")') TRIM(obj%name), total_time
          ELSE
-           WRITE (local_ch, '(a35," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
+           WRITE (local_ch, '(a40," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
                         TRIM(obj%name) , total_time , call_number ,   &
                         total_time / REAL( call_number, DP )
          ENDIF
@@ -409,10 +418,15 @@ MODULE timing_m
      use pars,    ONLY:lchlen
      use com,     ONLY:msg
      use stderr,  ONLY:real2ch
-     use LIVE_t,  ONLY:LIVE_message
+     use LIVE_t,  ONLY:LIVE_message,time_string
      IMPLICIT NONE
-     REAL(SP) :: total_time
+     REAL(DP) :: total_time
      character(lchlen)::ch
+     !
+#ifndef _TIMING
+     call msg('rn'," ")
+     return
+#endif
      !
      IF ( .NOT. internal_list%alloc ) CALL error('timing_upto_now:  Internal clock not allocated')
      CALL clock_update(internal_list%clock(1))
@@ -421,7 +435,7 @@ MODULE timing_m
      !
      total_time = real(internal_list%clock(1)%total_time,SP)
      !
-     ch='            [Time-Profile]: '//trim(real2ch(total_time))//'s'
+     ch='            [Time-Profile]: '//trim(time_string(total_time))
      call msg('rn',ch(:100))
      if (log_as_a_file) call LIVE_message(message="[TIMING]"//ch(:100),lfmt="n")
      !
@@ -436,6 +450,9 @@ MODULE timing_m
      TYPE(clock)                        :: tmp_clock
      INTEGER                            :: i
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
      call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')

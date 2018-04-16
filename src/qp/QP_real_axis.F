@@ -38,7 +38,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
-&                        PAR_nG_bands,PAR_nQ_bz
+&                        PAR_nG_bands,PAR_nQ_bz,myid
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
@@ -55,9 +55,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
 #include<memory.h>
  type(levels) ::en,Xen
@@ -205,9 +203,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! Actual Calculation Body
  !=========================
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='start')
-#endif
  !
  ! Lifetimes Transitions 
  !=======================
@@ -234,8 +230,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    do iqibz=1,q%nibz
      X%iq=iqibz
      i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
-     call PP_redux_wait()
    enddo
+   call PP_redux_wait()
    !
  endif
  !
@@ -442,7 +438,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
          do i3=1,X%ng
            lrhotw(i3)=V_dot_V_omp(X%ng,scattering_main%rhotw,X_mat(1,i3,i2+X_range(1)-1))
          enddo
-         !       
+         !
          ! To compensate the Tel/w divergence of the Bose function at finite
          ! Tel I multiply the X_mat function by [w/(Tel*Bose_E_cut)]^2
          !
@@ -552,8 +548,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  call elemental_collision_free(scattering_prime)
  call PP_redux_wait()
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='stop')
-#endif
  !
 end subroutine

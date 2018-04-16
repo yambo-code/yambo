@@ -112,8 +112,8 @@ module electrons
  ! Fine energy grid Tables
  !   
  integer  :: BZ_DbGd_max_filling = 1
- integer  :: BZ_DbGd_nkpts
- integer  :: BZ_DbGd_tot_nkpts
+ integer  :: BZ_DbGd_tot_nk
+ integer  :: BZ_DbGd_tot_nk_levels
  integer  :: BZ_ASSOCIATED_nkpts
  integer  :: BZ_DbGd_nbands
  logical  :: DbGd_is_symmetry_expanded=.FALSE.
@@ -197,15 +197,15 @@ module electrons
      !
      ! E Double Grid
      !
-     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+     if (BZ_DbGd_nbands>0.and.Ei%nk==Eo%nk) then
+       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(allocated(Ei%df_DbGd)) then
-         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
          Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
@@ -264,8 +264,8 @@ module electrons
      !
      if (.not.FULL_RESET) return
      !
-     BZ_DbGd_nkpts=0
-     BZ_DbGd_tot_nkpts=0
+     BZ_DbGd_tot_nk=0
+     BZ_DbGd_tot_nk_levels=0
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !

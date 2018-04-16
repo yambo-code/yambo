@@ -31,7 +31,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
 &                        global_gauge,Chi_linalg_mode, &
-&                        X_terminator_Kind,X_terminator_E
+&                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
@@ -245,9 +245,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! S_xc
  !
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
- call it(defs,'HARRLvcs', '[HA] Hartree  RL components',QP_ng_SH,G_unit)
- call it(defs,'EXXRLvcs', '[XX] Exchange RL components',QP_ng_Sx,G_unit)
- call it(defs,'CORRLvcs', '[GW] Correlat RL components',QP_ng_Sc,G_unit)
+ call it(defs,'HARRLvcs', '[HA] Hartree     RL components',QP_ng_SH,G_unit)
+ call it(defs,'EXXRLvcs', '[XX] Exchange    RL components',QP_ng_Sx,G_unit)
+ call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
 #endif
@@ -368,6 +368,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
  !
 #endif
+ !
+ ! Double Grid(s)
+ !
+ call it(defs,'DbGdQsize', '[X,DbGd][o/o] Percentual of the total DbGd transitions to be used',X_DbGd_percentual,verb_level=V_resp)
  !
  ! RIM
  !

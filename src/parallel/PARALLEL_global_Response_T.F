@@ -34,7 +34,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered, &
 &                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP,PAR_COM_DIPk_ibz_A2A,&
-&                        PAR_COM_DIPk_ibz_INDEX
+&                        PAR_COM_DIPk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_bz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Kk_ibz,PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_DIPk_ibz, &
 &                        PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_eh,PAR_IND_DIPk_bz,            &
@@ -67,12 +67,14 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
    call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_eh_A2A)
  endif
  !
- ! Dipoles are calculated using PAR_COM_Xk_bz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
+ ! Dipoles are calculated using PAR_COM_Xk_ibz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
  !
  !call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPk_ibz_INDEX)
  call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_ibz_A2A)
  call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX_DIP)
  call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX_DIP)
+ call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
+ call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Xk_bz_A2A)
  !
  ! K-points (IBZ)
  !

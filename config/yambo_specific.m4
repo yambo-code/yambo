@@ -63,10 +63,11 @@ AC_SUBST(enable_keep_extlibs)
 # DP
 AC_ARG_ENABLE(dp, AC_HELP_STRING([--enable-dp], [Double-precision build. Default is no.]))
 def_dp=""
-if test x"$enable_dp" = "x"; then enable_dp="no"; fi
-if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; fi
+if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
+if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
+AC_SUBST(build_precision)
 #
 # ============================================================================
 #

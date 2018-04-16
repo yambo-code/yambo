@@ -163,10 +163,12 @@ module BS
      integer :: iG,iB
      !
      if (EXCHANGE) then
+       if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
      endif
      !
      if (CORRELATION) then
+       if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
      endif
      !

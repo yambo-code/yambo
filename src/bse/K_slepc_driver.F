@@ -51,10 +51,7 @@ subroutine K_slepc_driver(iq,W)
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include <memory.h>
  ! 
 #include <petsc/finclude/petscsys.h>
@@ -90,9 +87,7 @@ subroutine K_slepc_driver(iq,W)
  PetscFortranInt     :: vec_index(4)
  PetscFortranComplex :: vec_value(4)
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='start')
-#endif
  !  
  ! Sectioning
  !============
@@ -261,9 +256,7 @@ subroutine K_slepc_driver(iq,W)
    nullify(BS_E_SOC_corr)
  endif
  !
-#if defined _TIMING
  call timing('Slepc Solver',OPR='stop')
-#endif
  !
 end subroutine
  
@@ -566,7 +559,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  PetscScalar, pointer :: xx(:)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
- integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
+ integer              :: n, i_g, i_c, ierr, H_pos(1), start_index, low, high
  !
  ! create scattering context vi (distributed) -> x (local)
  !

@@ -26,8 +26,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
- use com,           ONLY:warning
- use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
@@ -164,21 +163,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   !
-   ! io_RESPONSE check
-   !
-   ! No X I/O is possible ONLY when the number of cpu's allocated with the "q" field
-   ! in the response function string is the same of the SE/RT/SC...string
-   !  
-   if (.not.io_RESPONSE) then
-     !
-     call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
-     !
-       if (CPU_structure(3)%CPU(1)/=CPU_structure(5)%CPU(1)) io_RESPONSE=.TRUE.
-     !
-     if (io_RESPONSE) call warning('Response function I/O forced. Different CPU for the "q" field in X and SE')
-     !
-   endif
+   if (ENVIRONMENT=="Response_G_space") call PARALLEL_global_Response_IO( )
    !
  endif
  !

@@ -78,9 +78,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
 #endif
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -95,9 +93,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  logical           :: l_sta_X,l_dyn_X,use_dipole_transverse,idir_not_done(3),&
 &                     l_real_time_magn_dipoles
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='start')
-#endif
  !
  call section('*','Dipoles')
  !
@@ -204,9 +200,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
  endif
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='stop')
-#endif
  !
  ! Warn about missing [Vnl,r] commutator
  !

@@ -171,7 +171,6 @@ module real_time
  !----------------------------
  logical                  :: l_update_QP_Energies
  logical                  :: l_update_QP_WFs=.false.
- !
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
@@ -180,6 +179,7 @@ module real_time
  logical                  :: l_RT_uses_E_DbGd
  logical                  :: l_RT_eq_is_zero_temp
  logical                  :: l_RT_include_eq_scatt
+ logical                  :: l_RT_impose_for_metals
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
  integer,     allocatable :: DbGd_ibz_coo(:,:)

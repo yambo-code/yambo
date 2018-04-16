@@ -55,12 +55,10 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
 #if defined _RT
  use drivers,       ONLY:l_real_time
+ use timing_m,       ONLY:timing
 #endif
 #if defined _YPP_RT
  use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
-#endif
-#if defined _TIMING && defined _RT
- use timing_m,       ONLY:timing
 #endif
  !
  implicit none
@@ -82,7 +80,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  complex(SP):: WF_der(fft_size,n_spinor,3)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
-#if defined _TIMING && defined _RT
+#if defined _RT
  call timing('el_density',OPR='start')
 #endif
  !
@@ -195,7 +193,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !  enddo
  !endif
  !
-#if defined _TIMING && defined _RT
+#if defined _RT
  call timing('el_density',OPR='stop')
 #endif
  ! 

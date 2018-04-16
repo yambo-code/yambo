@@ -39,10 +39,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use X_m,           ONLY:n_X_descs,X_description
  use stderr,        ONLY:intc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer, intent(inout)            ::ID
@@ -62,9 +59,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  if (present(COLL_element)) i_coll=COLL_element%I
  if (present(i_coll_))      i_coll=i_coll_
  !
-#if defined _TIMING
  call timing('io_COLLISIONS',OPR='start')
-#endif
  !
  if(COLL%kind==H_SE_COH) then
    db_name = "COLLISIONS_COH"
@@ -262,8 +257,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_COLLISIONS',OPR='stop')
-#endif
  !
 end function io_COLLISIONS

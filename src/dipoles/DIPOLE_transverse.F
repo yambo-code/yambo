@@ -43,15 +43,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
+ use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time
-#endif
-#if defined _SC || defined _RT
- use com,                 ONLY:secnm
-#endif
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -76,9 +70,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
-#if defined _TIMING
  call timing('DIPOLE_transverse',OPR='start')
-#endif
  !
  call DIPOLE_kb_init(Xen,Dip,io_err,ID)
  !
@@ -289,8 +281,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    YAMBO_FREE(Vnl)
  endif 
  !
-#if defined _TIMING
  call timing('DIPOLE_transverse',OPR='stop')
-#endif
  !
 end subroutine Dipole_transverse

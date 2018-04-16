@@ -34,7 +34,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -133,6 +133,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  YAMBO_ALLOC(BS_E,(BS_H_dim))
  !iq=BS_q(1)
  iq=BSiq
+ YAMBO_ALLOC(BSqpts,(3,iq))
  if(E_SOC_nbands/=0) then
    YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
  endif

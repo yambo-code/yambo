@@ -27,12 +27,12 @@ subroutine RT_ELPH_displacement(k,E,dG)
  !
  ! D(\nu,t) \propto -\sum_ijk <\psi_i(k)(r)| dV_\nu\(r)|\psi_j(k)(r)> \delta \gr_{ji}(t)
  !
- use pars,           ONLY:SP,cZERO,pi,cI
+ use pars,           ONLY:SP,cZERO,pi
  use R_lattice,      ONLY:bz_samp,nqbz
  use electrons,      ONLY:levels
  use real_time,      ONLY:l_NE_dynamics,l_RT_PH_oscillations,RT_bands,elph_gkkp_gamma,RT_nk,&
 &                         RT_D_pol,RT_D_occ,RT_PH_displaced,N_RT_PH_displaced,elph_gkkp_gamma_diagonal,&
-&                         RT_Nk_ibz,RT_ibz_coo
+&                         RT_Nk_ibz,RT_ibz_coo,RT_delta0_occupations
  use ELPH,           ONLY:ph_freqs_sq,ph_modes
  use RT_interfaces,  ONLY:RT_average_operator
  use parallel_m,     ONLY:PAR_Xk_nibz,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_Xk_ibz_index
@@ -46,7 +46,8 @@ subroutine RT_ELPH_displacement(k,E,dG)
  ! Work Spave
  !
  integer     :: il,ic,ik,ib,ik_rim,ik_mem
- real(SP)    :: ph_freq,POL
+ real(SP)    :: ph_freq
+ complex(SP) :: POL
  !
  ! GPL_EXCLUDE_START
  !
@@ -66,8 +67,10 @@ subroutine RT_ELPH_displacement(k,E,dG)
    do il=1,ph_modes
      do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        do ib=RT_bands(1),RT_bands(2)
-          RT_D_occ(il)=RT_D_occ(il)-cI*conjg(elph_gkkp_gamma_diagonal(il,ib,ik_mem))*&
-&                                      dG(ib,ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik))
+          !
+          RT_D_occ(il)=RT_D_occ(il)+conjg(elph_gkkp_gamma_diagonal(il,ib,ik_mem))*&
+&                                   RT_delta0_occupations(ib,ik_rim)*k%weights(ik)/real(RT_Nk_ibz(ik))
+          !
         enddo
      enddo
    enddo

@@ -490,6 +490,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv")
  !
 #if defined _YPP_RT
+ !
+ if (l_RT_ph_oscillations) call initactivate(1,"Back_T_ref Carr_Damp")
  !             
  if (l_RT_X) then 
    call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")

@@ -94,6 +94,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  if (l_RT_PH_oscillations) then
    YAMBO_ALLOC(elph_gkkp_gamma,(ph_modes,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_Xk_nibz))
    YAMBO_ALLOC(elph_gkkp_gamma_diagonal,(ph_modes,RT_bands(1):RT_bands(2),PAR_Xk_nibz))
+   elph_gkkp_gamma=cZERO
+   elph_gkkp_gamma_diagonal=cZERO
  endif
  !
  MAX_gkkp_expanded_at_kpq=0._SP
@@ -135,7 +137,7 @@ subroutine RT_ELPH_initialize(E,k,q)
        do i_n=RT_bands(1),RT_bands(2)
          elph_gkkp_gamma_diagonal(:,i_n,ik_mem)=conjg(elph_gkkp(:,i_n,i_n,K_io_map(ik_bz)))
          do i_np=RT_bands(1),RT_bands(2)
-           elph_gkkp_gamma(:,i_n,i_np,ik_mem)=conjg(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))
+           if (i_n/=i_np) elph_gkkp_gamma(:,i_n,i_np,ik_mem)=conjg(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))
          enddo
        enddo
      endif

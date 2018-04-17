@@ -33,7 +33,7 @@ subroutine ypp_INIT_load(defs)
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width
+&                               n_regions,Eh_pumped_pair_BZ_width,RT_background_T_ref,RT_population_damp
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -179,6 +179,13 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'Transmission','Compute the transient transmissions')
  call it('f',defs,'Reflectivity','Compute the transient reflectivity')
  call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
+ !
+ ! PH oscillations
+ !
+ call it(defs,'Carr_Damp' ,'[RT] Damping  parameter for the population component',&
+&                                RT_population_damp,E_unit,verb_level=V_real_time)
+ call it(defs,'Back_T_ref','[RT] Time reference to take in order to remove the background noise',&
+&                                RT_background_T_ref,unit=Time_unit(1),verb_level=V_real_time)
  !
 #endif
  !

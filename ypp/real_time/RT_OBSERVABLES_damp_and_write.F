@@ -23,11 +23,11 @@
 !
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
- use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
+ use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl,RT_background_T_ref
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:RT_ind_J,RT_P,RT_D_pol,RT_D_occ
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_D_pol,RT_D_occ,N_RT_PH_displaced,RT_PH_displaced
  use ELPH,           ONLY:ph_modes
  !
 #include<memory.h>
@@ -38,7 +38,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  ! Work Space
  !
- integer  :: i_t
+ integer  :: i_t,i_l,i_c
  logical  :: l_no_damping
  !
  l_no_damping= trim(RT%damping) == "NONE"
@@ -61,6 +61,29 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
    ! there will problems doing FFT for the non-zero starting point 
    !
    call RT_damp_it(RT%damping,RT%damp_factor,OBS%F_t,OBS%N)
+   !
+ endif
+ !
+ ! Background removal
+ !====================
+ !
+ if (trim(OBS%title)=="Displacement".and.RT_background_T_ref>0.) then
+   !
+   call section("s",'[RT] Background removal from '//trim(OBS%title)//' data')
+   !
+   do i_c=1,N_RT_PH_displaced
+     !
+     i_l=RT_PH_displaced(i_c)
+     !
+     ! Polarization
+     !
+     call RT_remove_background(OBS%F_t(:,         i_l),RT%T_n_steps,.TRUE.) 
+     !
+     ! Population
+     !
+     call RT_remove_background(OBS%F_t(:,ph_modes+i_l),RT%T_n_steps,.FALSE.) 
+     !
+   enddo
    !
  endif
  !

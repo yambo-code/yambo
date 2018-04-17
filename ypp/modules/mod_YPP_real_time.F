@@ -84,7 +84,7 @@ module YPP_real_time
  integer  :: X_order
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
- integer, parameter:: max_n_of_paths=10000
+ integer, parameter:: max_n_of_paths=100
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  !
@@ -95,6 +95,11 @@ module YPP_real_time
  ! (RT) common
  !
  real(SP),allocatable     :: RT_time(:)
+ !
+ ! (RT) background removal
+ !
+ real(SP)    :: RT_population_damp  = 0._SP
+ real(SP)    :: RT_background_T_ref = 0._SP
  !
  type RT_ctl
    real(SP) :: delta_W           =0._SP   ! delta W

@@ -38,10 +38,9 @@ integer function io_RT_components(what,ID)
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,&
-&                         RT_PH_displaced,N_RT_PH_displaced
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
-&                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history,D_cache
+&                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -150,18 +149,6 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,I2=RT_carriers%table)
      !
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_input_output")
-   endif
-   !
-   if (l_OBS.and.l_elph_scatt) then
-     call io_bulk(ID,VAR="N_PH_MODES",VAR_SZ=(/1/))
-     call io_bulk(ID,I0=ph_modes)
-     call io_bulk(ID,VAR="N_ACTIVE_PH_MODES",VAR_SZ=(/1/))
-     call io_bulk(ID,I0=N_RT_PH_displaced)
-     if (.not.allocated(RT_PH_displaced)) then
-       YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
-     endif
-     call io_bulk(ID,VAR="ACTIVE_PH_MODES",VAR_SZ=(/ph_modes/))
-     call io_bulk(ID,I1=RT_PH_displaced)
    endif
    !
    ! GPL_EXCLUDE_END
@@ -321,13 +308,6 @@ integer function io_RT_components(what,ID)
    call io_elemental(ID,VAR="OBSERV_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
    call io_elemental(ID,I0=IO_OBS_cache_steps)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   !
-#if defined _ELPH
-   if (allocated(D_cache).and.l_D) then
-     call io_bulk(ID,VAR="Displacement_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,2*ph_modes,IO_OBS_cache_steps/))
-     call io_bulk(ID,C2=D_cache)
-   endif
-#endif
    !
    if (l_JP) then
      call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))

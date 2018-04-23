@@ -23,16 +23,15 @@
 !
 subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP_real_time,  ONLY:RT_conf,RT_time,Pol,Curr,PhDisp
+ use YPP_real_time,  ONLY:RT_conf,RT_time,Pol,Curr
  use pars,           ONLY:DP,SP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
  use LIVE_t,         ONLY:live_timing
  use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,NONE,DUMP,LOG,RD_CL_IF_END
- use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,D_cache
+ use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
- use ELPH,           ONLY:ph_modes
  !
 #include<memory.h>
  !
@@ -127,21 +126,15 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  Pol%title    ="Polarization"
  Curr%title   ="Current"
- PhDisp%title ="Displacement"
  !
  Pol%N    =3
  Curr%N   =3
- PhDisp%N =ph_modes
  !
  if (what=="JP".and..not.allocated(Curr%F_t)) then
    YAMBO_ALLOC(Curr%F_t,(RT_conf%T_n_steps,3))
    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
    Curr%F_t =cZERO_DP
    Pol%F_t =cZERO_DP
- endif
- if (what=="D".and..not.allocated(PhDisp%F_t)) then
-   YAMBO_ALLOC(PhDisp%F_t,(RT_conf%T_n_steps,2*ph_modes))
-   PhDisp%F_t =cZERO_DP
  endif
  !
  call RT_control_alloc(.TRUE.)
@@ -162,9 +155,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    if (what=="JP") then
      Curr%F_t(i_time,:) =J_cache(:,1)
      Pol%F_t(i_time,:)  =P_cache(:,1)
-   endif
-   if (what=="D") then
-     PhDisp%F_t(i_time,:) =D_cache(:,1)
    endif
    !
    call live_timing(steps=1)

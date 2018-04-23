@@ -88,14 +88,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !=====
  call RT_BGR(en,k,BGR)
  !
-#if defined _ELPH
- !
- ! PH Displacement
- !=================
- call RT_ELPH_displacement(k,en,dG_lesser)
- !
-#endif
- !
  OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
  !
  ! GPL_EXCLUDE_END

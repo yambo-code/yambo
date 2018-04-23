@@ -26,8 +26,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  use pars,           ONLY:SP,pi,cZERO
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
-&                         THETA_matrix_index,Q_io_map,K_io_map,elph_gkkp_gamma_diagonal,&
-&                         l_RT_CCA_Kernel,RT_bands,l_RT_PH_oscillations,elph_gkkp_gamma
+&                         THETA_matrix_index,Q_io_map,K_io_map,&
+&                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
@@ -91,12 +91,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  !============
  !
  YAMBO_ALLOC(elph_gkkp_expanded_sq,(elph_nb,elph_nb,ph_modes,PAR_nQ,PAR_Xk_nibz))
- if (l_RT_PH_oscillations) then
-   YAMBO_ALLOC(elph_gkkp_gamma,(ph_modes,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_Xk_nibz))
-   YAMBO_ALLOC(elph_gkkp_gamma_diagonal,(ph_modes,RT_bands(1):RT_bands(2),PAR_Xk_nibz))
-   elph_gkkp_gamma=cZERO
-   elph_gkkp_gamma_diagonal=cZERO
- endif
  !
  MAX_gkkp_expanded_at_kpq=0._SP
  !
@@ -132,15 +126,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      !
      ik_mem = PAR_Xk_ibz_index(ik)
      iq_mem = PAR_Q_index(iq)
-     !
-     if (iq==1.and.l_RT_PH_oscillations) then
-       do i_n=RT_bands(1),RT_bands(2)
-         elph_gkkp_gamma_diagonal(:,i_n,ik_mem)=conjg(elph_gkkp(:,i_n,i_n,K_io_map(ik_bz)))
-         do i_np=RT_bands(1),RT_bands(2)
-           if (i_n/=i_np) elph_gkkp_gamma(:,i_n,i_np,ik_mem)=conjg(elph_gkkp(:,i_np,i_n,K_io_map(ik_bz)))
-         enddo
-       enddo
-     endif
      !
      do i_n=1,elph_nb
        do i_np=1,elph_nb
@@ -195,10 +180,6 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ph_freqs_sq=ph_Esq_local
  !
- if (iq==1.and.l_RT_PH_oscillations) then
-   call PP_redux_wait(elph_gkkp_gamma,COMM=PAR_COM_Q_INDEX%COMM)
-   call PP_redux_wait(elph_gkkp_gamma,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- endif
  call PP_redux_wait(ph_freqs_sq,COMM=PAR_COM_Q_INDEX%COMM)
  call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Q_INDEX%COMM)
  call PP_redux_wait(MAX_gkkp_expanded_at_kpq,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

@@ -23,12 +23,11 @@
 !
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
- use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl,RT_background_T_ref
+ use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
- use real_time,      ONLY:RT_ind_J,RT_P,RT_D_pol,RT_D_occ,N_RT_PH_displaced,RT_PH_displaced
- use ELPH,           ONLY:ph_modes
+ use real_time,      ONLY:RT_ind_J,RT_P
  !
 #include<memory.h>
  !
@@ -38,7 +37,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  ! Work Space
  !
- integer  :: i_t,i_l,i_c
+ integer  :: i_t
  logical  :: l_no_damping
  !
  l_no_damping= trim(RT%damping) == "NONE"
@@ -64,29 +63,6 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
    !
  endif
  !
- ! Background removal
- !====================
- !
- if (trim(OBS%title)=="Displacement".and.RT_background_T_ref>0.) then
-   !
-   call section("s",'[RT] Background removal from '//trim(OBS%title)//' data')
-   !
-   do i_c=1,N_RT_PH_displaced
-     !
-     i_l=RT_PH_displaced(i_c)
-     !
-     ! Polarization
-     !
-     call RT_remove_background(OBS%F_t(:,         i_l),RT%T_n_steps,.TRUE.) 
-     !
-     ! Population
-     !
-     call RT_remove_background(OBS%F_t(:,ph_modes+i_l),RT%T_n_steps,.FALSE.) 
-     !
-   enddo
-   !
- endif
- !
  if (IO_skip) return
  !
  call section("s",'[RT] '//trim(OBS%title)//' dumped on file')
@@ -106,22 +82,9 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
        RT_ind_J=OBS%F_t(i_t,1:3)
        call RT_output('curr',TIME=RT_time(i_t)*AUT2FS)
      enddo
-   case("Displacement") 
-     if (.not.allocated(RT_D_occ)) then
-       YAMBO_ALLOC(RT_D_occ,(ph_modes))
-     endif
-     if (.not.allocated(RT_D_pol)) then
-       YAMBO_ALLOC(RT_D_pol,(ph_modes))
-     endif
-     call RT_output(what="open displ")
-     do i_t=1,RT%T_n_steps
-       RT_D_pol(:)=OBS%F_t(i_t,1         :  ph_modes)
-       RT_D_occ(:)=OBS%F_t(i_t,ph_modes+1:2*ph_modes)
-       call RT_output('displ',TIME=RT_time(i_t)*AUT2FS)
-     enddo
      !
  end select
  !
- call RT_output(what="close pol curr YPP-displ")
+ call RT_output(what="close pol curr")
  !
 end subroutine

@@ -62,7 +62,6 @@ module RT_control
  complex(SP), allocatable    :: P_cache(:,:)
  complex(SP), allocatable    :: Ms_cache(:,:)
  complex(SP), allocatable    :: Ml_cache(:,:)
- complex(SP), allocatable    :: D_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -112,7 +111,7 @@ module RT_control
    subroutine RT_control_alloc(FORCE)
      !
      use pars,           ONLY:cZERO,rZERO
-     use real_time,      ONLY:NE_steps,l_RT_PH_oscillations
+     use real_time,      ONLY:NE_steps
      use electrons,      ONLY:n_spin
      use ELPH,           ONLY:ph_modes
      !
@@ -124,10 +123,6 @@ module RT_control
        J_cache=cZERO
        YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
        P_cache=cZERO
-       if(l_elph_scatt.and.(l_RT_PH_oscillations.or.FORCE)) then
-         YAMBO_ALLOC(D_cache,(2*ph_modes,IO_OBS_cache_steps))
-         D_cache=cZERO
-       endif
        if(n_spin>1) then
          YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
          Ms_cache=cZERO

@@ -38,7 +38,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
  use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
-&                         RT_Tfit_lifetimes,N_RT_PH_displaced,RT_PH_displaced,RT_D_pol,RT_D_occ
+&                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
  use LIVE_t,         ONLY:what_is_running
  !
@@ -52,7 +52,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! Work space
  !
  character(schlen)        :: orders(20),dumb_ch
- integer                  :: i_f,n_orders,i_o,i_desc,i_c,il,N
+ integer                  :: i_f,n_orders,i_o,i_desc,il,N
  logical                  :: file_is_todo(N_MAX_RT_o_files)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
  !
@@ -173,21 +173,6 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
     !
-#if defined _ELPH
-     case('YPP-FT_displace_field_population','YPP-FT_displace_field_polarization')
-       data_to_dump(1)=data_to_dump(1)*1000.
-       data_to_dump(2:2*N_RT_PH_displaced+1) = VALUES
-     case('displace_field_polarization','YPP-displace_field_polarization')
-       do i_c=1,N_RT_PH_displaced
-         il=RT_PH_displaced(i_c)
-         data_to_dump(i_c+1) = RT_D_pol(il)
-       enddo
-     case('displace_field_population','YPP-displace_field_population')
-       do i_c=1,N_RT_PH_displaced
-         il=RT_PH_displaced(i_c)
-         data_to_dump(i_c+1) = RT_D_occ(il)
-       enddo
-#endif
      case('magnetization')
        data_to_dump(2: 4) = real(RT_magn(:,1))
      case('total_field')

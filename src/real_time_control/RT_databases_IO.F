@@ -32,11 +32,6 @@ subroutine RT_databases_IO(E)
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
-#if defined _ELPH
- use ELPH,           ONLY:ph_modes
- use real_time,      ONLY:RT_D_pol,RT_D_occ
- use RT_control,     ONLY:D_cache
-#endif
  !
  implicit none
  !
@@ -52,13 +47,6 @@ subroutine RT_databases_IO(E)
  if(l_NE_dynamics) then
    !
    i_time=mod(NE_i_time-1,IO_OBS_cache_steps)+1
-   !
-#if defined _ELPH
-   if (allocated(D_cache)) then
-     D_cache(1         :  ph_modes,i_time)= RT_D_pol
-     D_cache(ph_modes+1:2*ph_modes,i_time)= RT_D_occ
-   endif
-#endif
    !
    J_cache(1:3,i_time)=RT_ind_J
    P_cache(1:3,i_time)=RT_P

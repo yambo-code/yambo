@@ -50,15 +50,11 @@ subroutine RT_initialize(E,k,q)
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
-&                         l_RT_impose_for_metals,l_RT_PH_oscillations
+&                         l_RT_impose_for_metals
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
-#if defined _ELPH
- use ELPH,           ONLY:ph_modes,ph_freqs_sq
- use real_time,      ONLY:RT_PH_displaced,N_RT_PH_displaced
-#endif
  !
 #include<memory.h>
  !
@@ -78,8 +74,6 @@ subroutine RT_initialize(E,k,q)
  !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
- call parser('PH_oscillations',      l_RT_PH_oscillations)
- if (n_sp_pol>1) l_RT_PH_oscillations=.FALSE.
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
  call parser('RTUpdateEqp',          l_update_QP_Energies)
  !
@@ -301,20 +295,6 @@ subroutine RT_initialize(E,k,q)
    !                 =======================================
    call RT_ELPH_initialize(E,k,q)
    !
-   if (l_RT_PH_oscillations) then
-     YAMBO_ALLOC(RT_PH_displaced,(ph_modes))
-     RT_PH_displaced=0
-     N_RT_PH_displaced=0
-     do i1=1,ph_modes
-       if (abs( sqrt(ph_freqs_sq(1,i1)) )< 3.E-5) cycle
-       N_RT_PH_displaced=N_RT_PH_displaced+1
-       RT_PH_displaced(N_RT_PH_displaced)=i1
-     enddo
-   endif
-   !
- else if (l_RT_PH_oscillations) then
-   call warning("NO e-p. PH oscillations switched off")
-   l_RT_PH_oscillations=.FALSE.
  endif
  !
 #endif

@@ -45,7 +45,6 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_X
  logical  :: l_RT_abs
- logical  :: l_RT_ph_oscillations
  !
  ! RT post-processing (kind)
  !
@@ -96,11 +95,6 @@ module YPP_real_time
  !
  real(SP),allocatable     :: RT_time(:)
  !
- ! (RT) background removal
- !
- real(SP)    :: RT_population_damp  = 0._SP
- real(SP)    :: RT_background_T_ref = 0._SP
- !
  type RT_ctl
    real(SP) :: delta_W           =0._SP   ! delta W
    real(SP) :: W_range(2)        =0._SP   ! energy range 
@@ -126,7 +120,6 @@ module YPP_real_time
  type(OBS_el) :: Pol 
  type(OBS_el) :: Curr 
  type(OBS_el) :: ElField 
- type(OBS_el) :: PhDisp 
  !
  interface
    !

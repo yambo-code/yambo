@@ -31,7 +31,7 @@ subroutine RT_output_INIT( )
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use real_time,      ONLY:N_RT_PH_displaced,RT_PH_displaced,l_lftm_fit_temperatures
+ use real_time,      ONLY:l_lftm_fit_temperatures
  use LIVE_t,         ONLY:what_is_running
  use timing_m,       ONLY:timing
  use D_lattice,      ONLY:Bose_Temp
@@ -56,17 +56,6 @@ subroutine RT_output_INIT( )
  call RT_FILE_add(name='current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
  !
  call RT_FILE_add(name='polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
- !
-#if defined _ELPH
- do i_fp=1,2
-   if (i_fp==1) dumb_ch="_polarization"
-   if (i_fp==2) dumb_ch="_population"
-   call RT_FILE_add('displace_field'//trim(dumb_ch),TITLES=(/"Time[fs]"/))
-   do i_f=2,N_RT_PH_displaced+1
-     call RT_FILE_add(TITLES=(/"<D>_l="//trim(intc(RT_PH_displaced(i_f-1)))//" Field"/))
-   enddo
- enddo
-#endif
  !
  call RT_FILE_add('total_field',TITLES=(/"Time[fs]"/))
  call RT_FILE_add(TITLES=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
@@ -158,21 +147,6 @@ subroutine RT_output_INIT( )
    call RT_FILE_add('dP_W_order_'//trim(intc(i_order)),TITLES=(/'E [eV]','P/Im  ','P/Re  '/))
    !
  enddo
- !
-#if defined _ELPH
- if (index(what_is_running,'YPP')>0) then
-   do i_fp=1,2
-     if (i_fp==1) dumb_ch="_polarization"
-     if (i_fp==2) dumb_ch="_population"
-     call RT_FILE_add('FT_displace_field'//trim(dumb_ch),TITLES=(/"E [meV]"/))
-     do i_f=1,N_RT_PH_displaced
-       il=RT_PH_displaced(i_f)
-       call RT_FILE_add(TITLES=(/"Re[<D>_l="//trim(intc(il))//"(w)]"/))
-       call RT_FILE_add(TITLES=(/"Im[<D>_l="//trim(intc(il))//"(w)]"/))
-     enddo
-   enddo
- endif
-#endif
  !
  ! ... and time/energy resolved ...
  !==================================

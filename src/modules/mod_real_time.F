@@ -59,10 +59,6 @@ module real_time
  !
  logical           :: l_RT_induced_field = .FALSE.
  !
- ! To eval the force field of the PH coherent oscillations
- !
- logical           :: l_RT_PH_oscillations = .FALSE.
- !
  ! TMP SOLUTION FOR TR ABS
  !
  logical  :: l_RT_abs_YAMBO = .false.
@@ -137,13 +133,6 @@ module real_time
  complex(SP) :: RT_P(3)
  complex(SP) :: RT_P_prev(3)
  !
- ! ... dV time \rho ...
- !----------------------
- integer                  :: N_RT_PH_displaced = 0
- integer,     allocatable :: RT_PH_displaced(:)
- complex(SP), allocatable :: RT_D_pol(:)
- complex(SP), allocatable :: RT_D_occ(:)
- !
  ! ... and magnetization
  !----------------------
  complex(SP) :: RT_magn(3,3)
@@ -208,9 +197,6 @@ module real_time
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
  real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
- ! ... Gamma only GKKP
- complex(SP), allocatable :: elph_gkkp_gamma(:,:,:,:)
- complex(SP), allocatable :: elph_gkkp_gamma_diagonal(:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)
@@ -539,13 +525,6 @@ module real_time
        E_E_Electron_lifetime=0._SP
      endif
      !
-     if (l_elph_scatt) then
-       YAMBO_ALLOC(RT_D_pol,(ph_modes))
-       RT_D_pol=cZERO
-       YAMBO_ALLOC(RT_D_occ,(ph_modes))
-       RT_D_occ=cZERO
-     endif
-     !
      if (l_RT_CCA_Kernel.and.l_elph_scatt) then
        YAMBO_ALLOC(E_P_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
        YAMBO_ALLOC(E_P_Electron_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
@@ -656,7 +635,6 @@ module real_time
      YAMBO_FREE(THETA_matrix)
      YAMBO_FREE(THETA_matrix_index)
      YAMBO_FREE(elph_gkkp_expanded_sq)
-     YAMBO_FREE(elph_gkkp_gamma)
      YAMBO_FREE(G_lesser_reference)
      YAMBO_FREE(dG_lesser)
      YAMBO_FREE(I1_matrix)
@@ -665,9 +643,6 @@ module real_time
      YAMBO_FREE(RT_Deph_Matrix)
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)
-     YAMBO_FREE(RT_D_pol)
-     YAMBO_FREE(RT_D_occ)
-     YAMBO_FREE(RT_PH_displaced)
      !
    end subroutine RT_free
    !

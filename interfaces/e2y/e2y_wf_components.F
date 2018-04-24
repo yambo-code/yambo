@@ -59,6 +59,7 @@ subroutine e2y_wf_components(ncid)
   !
   start(:) = 1     ; count(:) = 0
   start(4) = 1     ; count(4) = 1  ! nb
+  start(6) = 1     ; count(6) = 1  ! spin polarization
   !
   call etsf_io_low_read_var(ncid, "coefficients_of_wavefunctions", &
                             & wavefunction_section_, lstat,          &

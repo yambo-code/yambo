@@ -198,7 +198,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Exciton's Amplitude
  !=====================
- if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
+ if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !
  ! Exciton's WFs
  !=====================

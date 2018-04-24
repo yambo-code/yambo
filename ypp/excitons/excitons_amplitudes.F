@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
+subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !
  use pars,          ONLY:SP,schlen,pi,cI
  use units,         ONLY:HA2EV
@@ -38,7 +38,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !
  type(bz_samp)    :: Xk
  type(levels)     :: Xen
- integer          :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda
+ integer          :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda,iq
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
@@ -96,8 +96,8 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
    ! 
    ! ... first open the file.
    ! 
-   ch_dummy(1)='exc_weights_at_'//trim(intc(i_l_grp))
-   ch_dummy(2)='exc_amplitude_at_'//trim(intc(i_l_grp))
+   ch_dummy(1)='exc_weights_at_'//trim(intc(i_l_grp))//'_qpt'//trim(intc(iq))
+   ch_dummy(2)='exc_amplitude_at_'//trim(intc(i_l_grp))//'_qpt'//trim(intc(iq))
    call of_open_close(ch_dummy(1),'ot')
    call of_open_close(ch_dummy(2),'ot')
    !

@@ -42,7 +42,7 @@ subroutine e2y_wf_components(ncid)
   !
   real(SP)                       :: wf_disk(2,ng_vec_abinit,nkibz)
   integer,          allocatable  :: wf_igk_tmp(:,:)
-  real(DP),         allocatable  :: wavefunction_section_(:,:,:)
+  real(DP),         allocatable  :: wavefunction_section_(:,:,:,:)
   logical                        :: lstat
   type(etsf_io_low_error)        :: error_data 
   ! 
@@ -53,6 +53,7 @@ subroutine e2y_wf_components(ncid)
   !
   allocate(wavefunction_section_(dims%real_or_complex_coefficients, &
 &                                dims%max_number_of_coefficients,   &
+&                                dims%number_of_spinor_components,  &
 &                                dims%number_of_kpoints ) )
   !
   ! Initialize the mapping
@@ -65,7 +66,7 @@ subroutine e2y_wf_components(ncid)
                             & wavefunction_section_, lstat,          &
                             & error_data = error_data, start = start, count = count)
   !
-  forall( ireal=1:2, ig=1:ng_vec_abinit, ik=1:nkibz ) wf_disk(ireal,ig,ik) = wavefunction_section_(ireal,ig,ik)
+  forall( ireal=1:2, ig=1:ng_vec_abinit, ik=1:nkibz ) wf_disk(ireal,ig,ik) = wavefunction_section_(ireal,ig,1,ik)
   !
   deallocate(wavefunction_section_)
   !

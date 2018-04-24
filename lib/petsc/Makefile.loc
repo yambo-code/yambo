@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 #
 LIBNAME=libpetsc.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_petsc)
@@ -16,16 +16,16 @@ TARBALL=$(tarball_petsc)
 #
 # redefinitions
 #
-PETSC_ARCH=yambo_single_complex
+PETSC_ARCH=yambo_${yprecision}_complex
 AUXFLAGS=--prefix=$(LIBPATH) \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
-	     --with-x=0 \
+         --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=0 \
          --with-blas-lapack-lib="$(llapack) $(lblas)" \
          --with-scalar-type="complex" \
-         --with-precision="single"
+         --with-precision="${yprecision}"
 
 #
 # MAIN target

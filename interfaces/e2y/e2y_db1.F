@@ -285,7 +285,7 @@ contains
     implicit none
     !
     integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
-    real                          :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
+    real(SP)                      :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
     integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
     integer,     allocatable      :: igk(:,:), igk_sort(:,:), g_vec_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
@@ -325,13 +325,13 @@ contains
       !
     endif
     !
-    wf_ng = wf_ncx
     wf_igk=-1
     do ik=1,nkibz
       do ig=1,wf_nc_k(ik)
         wf_igk(ig,ik)=ig
       enddo
     enddo
+    wf_ng=maxval(wf_igk)
     !
     if(trim(ETSF_kind)=='WFK') then
       !
@@ -383,10 +383,10 @@ contains
             norm_2 = temp_g_vec(1)**2.0_SP
             norm_2 = temp_g_vec(2)**2.0_SP + norm_2
             norm_2 = temp_g_vec(3)**2.0_SP + norm_2
-            if (ecut .gt. 0.5_SP*norm_2) then
+            if (ecut .gt. 0.25_SP*norm_2) then
+                npw = npw+1
                 igk(:,npw) = igv
                 g_vec(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
-                npw = npw+1
             end if
             if (npw > wf_ncx*2) then
                 write(*,*) 'an error has occurred: npw > wf_ncx*2'
@@ -395,8 +395,7 @@ contains
           end do
         end do
       end do
-      ng_vec = npw-1
-      wf_ng = npw-1
+      ng_vec = npw
 
       ! can sort the G vectors in whatever way here
       allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
@@ -447,8 +446,8 @@ contains
           wf_igk(ic,ik) = npw
         end do
       end do
-
-
+      !
+      wf_ng=maxval(wf_igk)
 
 
 

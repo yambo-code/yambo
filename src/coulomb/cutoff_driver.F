@@ -218,7 +218,6 @@ subroutine cutoff_driver(q)
  ! to break the clock
  !
  call timing('Coulomb Cutoff',OPR='start')
-
  !
  ! I/O + Specific geometry calls
  !

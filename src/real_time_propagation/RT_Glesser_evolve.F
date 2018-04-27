@@ -34,7 +34,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  use parallel_m,     ONLY:HEAD_k_cpu,PAR_IND_WF_k
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
-&                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz,l_RT_off_diagonals_are_zero
+&                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
  !
  implicit none
  !

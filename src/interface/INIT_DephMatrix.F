@@ -25,6 +25,7 @@ subroutine INIT_DephMatrix()
  !
  ! Dephasing Matrix -> input file
  !
+ use pars,           ONLY:SP
  use parser_m,       ONLY:PARSER_array
  use real_time,      ONLY:RT_INPUT_Deph_limits
  !
@@ -45,7 +46,7 @@ subroutine INIT_DephMatrix()
  else
    call PARSER_array(mode="write",VAR="DephMatrix",&
 &                    DESC='[RT] Dephasing Matrix (bnd1 | bnd2 | kpt | dephasing(fs) |)',&
-&                    N=1,M=4,R_v=reshape((/1.,1.,1.,-1./),(/1,4/)),Kn=(/"i","i","i","r"/))
+&                    N=1,M=4,R_v=reshape((/1._SP,1._SP,1._SP,-1._SP/),(/1,4/)),Kn=(/"i","i","i","r"/))
  endif
  !
 end subroutine

@@ -284,21 +284,6 @@ subroutine RT_initialize(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
-#if defined _ELPH
- !
- ! Electron-phonon
- ! ===============
- !
- if (l_elph_scatt) then
-   !
-   call section('=','El-Ph matrix elements loading and setup')
-   !                 =======================================
-   call RT_ELPH_initialize(E,k,q)
-   !
- endif
- !
-#endif
- !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
@@ -324,6 +309,21 @@ subroutine RT_initialize(E,k,q)
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
+ !
+#if defined _ELPH
+ !
+ ! Electron-phonon
+ ! ===============
+ !
+ if (l_elph_scatt) then
+   !
+   call section('=','El-Ph matrix elements loading and setup')
+   !                 =======================================
+   call RT_ELPH_initialize(E,k,q)
+   !
+ endif
+ !
+#endif
  !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
@@ -366,9 +366,11 @@ subroutine RT_initialize(E,k,q)
  !
  if (RT_is_statically_dephased) then
    call msg( 'nr','---Lifetimes---')
-   call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg( 'r', 'Extrapolation                  :',l_RT_lifetimes_extrapolation)
-   call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
+   if (all(RT_life_extrap_times>0)) then
+     call msg( 'r', 'Point groups (inter/intra) [fs]:',RT_life_extrap_times*AUT2FS)
+     call msg( 'r', 'Extrapolation                  :',l_RT_lifetimes_extrapolation)
+     call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
+   endif
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
    call msg( 'r', 'Relaxation time approximation  :',l_RT_relax_time_approx)
    call msg( 'r', 'Equilibrium is zero temperature:',l_RT_eq_is_zero_temp)

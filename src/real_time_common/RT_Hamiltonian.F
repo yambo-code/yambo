@@ -182,7 +182,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    call COLLISIONS_compose_rt(dG_in)
    !
-   !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
    if(HEAD_QP_cpu.and.HEAD_k_cpu) then

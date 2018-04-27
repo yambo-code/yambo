@@ -559,7 +559,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_MEM_treshold=0.
  RT_nk=0
  RT_eh_en=0._SP
- RT_scatt_tresh=1._SP
+ RT_scatt_tresh=-1._SP/HA2EV
  PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !

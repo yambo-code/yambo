@@ -287,8 +287,8 @@ module real_time
  !-----
  !
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
- complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
+ complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
  complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! COLLISIONS

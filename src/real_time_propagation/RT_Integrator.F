@@ -23,7 +23,7 @@
 !
 subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
- !  This subroutine perform integration using different methods: EULER / EXP / NEW ??
+ !  This subroutine perform integration using different methods: EULER / EXP / INV
  !        G(t),H[G(t')],dt  --> G(t+dt)
  !  * Explicit methods available
  !    1 - Euler's method:    G(t+dt) = G(t) - i*dt *[H(t'),G(t)]
@@ -113,9 +113,10 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    integrator_step=integrator_step+1
    !
+   call timing('RT integrator',OPR='stop')
+   !
    ! Recalculate H and S using G(t+dt1) 
    !
-   call timing('RT integrator',OPR='stop')
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    !
    ! GPL_EXCLUDE_START

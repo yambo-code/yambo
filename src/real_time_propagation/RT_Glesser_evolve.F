@@ -29,12 +29,12 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  !  T0+dt = T+dt'
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:levels,spin_occ
  use parallel_m,     ONLY:HEAD_k_cpu,PAR_IND_WF_k
  use real_time,      ONLY:l_RT_EULER,l_RT_EXP,l_RT_INV, &
 &                         l_RT_RWA,l_RT_DIAG,l_RT_ACC,  &
-&                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz
+&                         G_lesser_reference,RT_bands,RT_nk,RT_all2ibz,l_RT_off_diagonals_are_zero
  !
  implicit none
  !
@@ -47,7 +47,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
  !
  ! Work space
  !
- logical :: l_RT_std
+ logical :: l_RT_STD
  integer :: ik
  !
  dG_out=cZERO
@@ -61,7 +61,7 @@ subroutine RT_Glesser_evolve(En,dG_old,dG_in,dG_out,dT,dTp)
    if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   if (l_RT_EULER            ) call RT_EULER_step(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
    if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_diago(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)

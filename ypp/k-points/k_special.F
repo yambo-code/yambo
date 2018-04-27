@@ -31,7 +31,7 @@ subroutine k_special()
  use vec_operate,         ONLY:c2a,v_norm
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
-&                              n_SPECIAL_k_MAX,CIRCUIT_k_label
+&                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
  use stderr,              ONLY:string_split
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
@@ -41,7 +41,7 @@ subroutine k_special()
  ! Work Space
  ! 
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
- real(SP)         :: trial_b(3,3),K_norm
+ real(SP)         :: trial_b(3,3),K_norm,k_(3)
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
  !
@@ -123,20 +123,23 @@ subroutine k_special()
      trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
      trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
      !
-     SPECIAL_k%nbz=6
+     SPECIAL_k%nbz=7
      !
      SPECIAL_k%pt(1,:)=(/0.,0.,0./)
      SPECIAL_k_label(1)='G'
      SPECIAL_k%pt(2,:)=(/0. ,0.5,0./)
      SPECIAL_k_label(2)='M'
+     SPECIAL_k%pt(3,:)=(/2./3.,0.,0./)
      SPECIAL_k%pt(3,:)=(/1./3.,1./3.,0./)
      SPECIAL_k_label(3)='K'
-     SPECIAL_k%pt(4,:)=(/0. ,0.  ,0.5/)
-     SPECIAL_k_label(4)='A'
-     SPECIAL_k%pt(5,:)=(/0.,0.5,0.5/)
-     SPECIAL_k_label(5)='L'
-     SPECIAL_k%pt(6,:)=(/1./3.,1./3.,0.5/)
-     SPECIAL_k_label(6)='H'
+     SPECIAL_k%pt(4,:)=(/-1./3.,-1./3.,0./)
+     SPECIAL_k_label(4)='Kp'
+     SPECIAL_k%pt(5,:)=(/0. ,0.  ,0.5/)
+     SPECIAL_k_label(5)='A'
+     SPECIAL_k%pt(6,:)=(/0.,0.5,0.5/)
+     SPECIAL_k_label(6)='L'
+     SPECIAL_k%pt(7,:)=(/1./3.,1./3.,0.5/)
+     SPECIAL_k_label(7)='H'
      !
      do ik=1,SPECIAL_k%nbz
        call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
@@ -149,7 +152,20 @@ subroutine k_special()
    return
  endif
  !
- if (.not.l_high_sym_pts) then
+ ! Report and rotation to appropriate basis
+ !
+ if (l_high_sym_pts) then
+   call section("p","Special K-points list ["//trim(coo_out)//"]")
+   live_timing_is_on=.false.
+   do ik=1,SPECIAL_k%nbz
+     k_=SPECIAL_k%pt(ik,:)
+     call K_transform(k_,'cc')
+     write (dumb_ch,'(3f12.7,2x,a)') k_,SPECIAL_k_label(ik)
+     call msg("s",trim(dumb_ch))
+     if (l_high_sym_pts) SPECIAL_k%pt(ik,:)=k_
+   enddo
+   live_timing_is_on=.true.
+ else
    do ik=1,SPECIAL_k%nbz
      call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
    enddo
@@ -173,21 +189,13 @@ subroutine k_special()
  !
  CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
  !
- if (CIRCUIT_k%nbz==0) then
-   live_timing_is_on=.false.
-   do ik=1,SPECIAL_k%nbz
-     call K_transform(SPECIAL_k%pt(ik,:),'cc')
-     write (dumb_ch,'(3f12.7,2x,a)') SPECIAL_k%pt(ik,:),SPECIAL_k_label(ik)
-     call msg("s",trim(dumb_ch))
-   enddo
-   live_timing_is_on=.true.
- else
+ if (CIRCUIT_k%nbz>0) then
    !
    call msg('s','Found '//trim(intc(n_lines-1))//' segments and  '//&
 &                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
    !
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,4))
-   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
+   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
    CIRCUIT_k%nbz=0
    K_norm=0.
    CIRCUIT_k_label=" "

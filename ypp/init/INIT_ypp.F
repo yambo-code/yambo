@@ -30,7 +30,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,MAX_DbGd_DBs,n_DbGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,DbGd_DB1_paths,l_angular_momentum,l_position
- use pars,           ONLY:pi,SP,schlen
+ use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -42,6 +42,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+ use parser_m,       ONLY:PARSER_array
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
@@ -53,15 +54,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
- use stderr,         ONLY:intc
+&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(levels)     ::E
  integer          ::lnstr
@@ -84,7 +84,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
  integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
- integer, external::parse_character_arrays
  !
  ! What is running ?
  !
@@ -270,7 +269,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
-     l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
    endif
    !
    ! GPL_EXCLUDE_END
@@ -327,7 +325,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
-     if (l_RTpump_manual) call initactivate(1,'Select_manual')
    endif
    !
    ! GPL_EXCLUDE_END
@@ -391,7 +388,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
- l_RTpump_manual    = runlevel_is_on('Select_manual')
  !
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
@@ -508,13 +504,23 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then
-   call initactivate(1,'RTpumpNel RTBands')
+   call initactivate(1,'RTpumpNel RTpumpSpin RTBands')
    if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
    if (l_RTpump_kspace) then
-     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
-     do i1=1,n_regions
-       call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
-     enddo
+     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd cooIn')
+     !
+     call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
+     if (Eh_pumped_pair_n_BZ_regions>0) then
+       call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                        R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
+     else
+       Eh_pumped_pair_n_BZ_regions=1
+       Eh_pumped_pair_BZ_regions(1,:)=-1.
+     endif
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+&                      DESC="[RT] K-points manually excited",&
+&                      R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
+     !
    endif
  endif
  if (l_RealTime) then
@@ -581,14 +587,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  call QP_state_table_setup(E)
  !
- if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
-   call PP_redux_wait
- endif
- !
- if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate.and.infile_editing) call QP_DBs_initialize()
+ if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
  !
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
@@ -605,11 +604,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #if defined _YPP_RT
  if (.not.l_init_QP) l_init_QP=l_RT_occupations.or.l_RT_lifetimes
- if (     l_init_QP) call INIT_QP(.FALSE.,infile_verbosity==V_real_time)
+ if (     l_init_QP) call INIT_QP(" ")
  if (l_RT_DBs)  call RT_DBs_initialize()
 #else
  ! GPL_EXCLUDE_END
- if (l_init_QP) call INIT_QP(.FALSE.,.FALSE.)
+ if (l_init_QP) call INIT_QP(" ")
  ! GPL_EXCLUDE_START
 #endif
  !
@@ -636,9 +635,22 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
-   if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
-&              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
+   call PARSER_array(mode="CH dimensions",VAR="DbGd_DB1_paths",N=n_DbGd_DBs,M=1)
+   if (n_DbGd_DBs>0) then
+     call PARSER_array(mode="read",VAR="DbGd_DB1_paths",N=n_DbGd_DBs,M=1,CH_v=DbGd_DB1_paths(:n_DbGd_DBs,:))
+   else
+     n_DbGd_DBs=1
+     DbGd_DB1_paths(1,1)="none"
+   endif
+   call PARSER_array(mode="write",VAR="DbGd_DB1_paths",DESC="Paths to the SAVE folders with the Double Grid DB1",&
+&                    N=n_DbGd_DBs,M=1,CH_v=DbGd_DB1_paths(:n_DbGd_DBs,:))
+ endif
+ !
+ if (infile_editing) then
+   open(unit=12,file=trim(infile))
+   call initinfio(defs,12)
+   close(12)
+   call PP_redux_wait
  endif
  !
 contains
@@ -657,74 +669,43 @@ contains
  !
  subroutine USER_vector_handle(field)
    !
-   use parser_m,       ONLY:parser
-   use it_m,           ONLY:nflines,flines,nADDITIONAL_flines,ADDITIONAL_flines
+   use parser_m,       ONLY:PARSER_array
    !
-   character(*):: field
+   character(*)::field
    !
-   integer     :: n_points,i_p,nflines_save
-   real(SP)    :: real_ctl,real_v(10,3)
+   integer     ::nk,nq_s
    !
-   real_ctl=0._SP
-   real_v(:,3)=999._SP
-   call parser(field,real_v)
+   call PARSER_array(mode="REAL dimensions",VAR=field,N=nk,M=3)
    !
-   !
-   do i_p=1,10
-     if (real_v(i_p,3)==999._SP) exit
-   enddo
-   !
-   n_points=i_p-1
-   !
-   if (n_points==0) then
-     n_points=1
-     real_v(1,:)=0._SP
-   endif
-   !
-   if (field=="KShift") then
-     n_points=3
-     real_v(:,:)=0._SP
-     do i_p=1,3
-       real_v(i_p,i_p)=5.E-5_SP
-     enddo
-   endif
-   !
-   ADDITIONAL_flines = " "
-   nADDITIONAL_flines= 0
-   !
-   nflines_save=nflines
    if (field=="GWKpts") then
-     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points list'
-     n_u_k_pts=n_points
-     U_k_pts(:n_u_k_pts,:)=real_v(:n_u_k_pts,:)
+     if (nk> 0) n_u_k_pts=nk
+     if (nk==0) n_u_k_pts=1
+     YAMBO_ALLOC(U_k_pts,(n_u_k_pts,3))
+     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_k_pts)
+     if (nk==0) U_k_pts=0.
+     call PARSER_array(mode="write",VAR=field,DESC='K points list',N=n_u_k_pts,M=3,R_v=U_k_pts)
    else if (field=="BANDS_kpts") then
-     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K points of the bands circuit'
-     n_u_interp_pts=n_points
-     U_interp_pts(:n_u_interp_pts,:)=real_v(:n_u_interp_pts,:)
+     if (nk> 0) n_u_interp_pts=nk
+     if (nk==0) n_u_interp_pts=1
+     YAMBO_ALLOC(U_interp_pts,(n_u_interp_pts,3))
+     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_interp_pts)
+     if (nk==0) U_interp_pts=0.
+     call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',&
+&                      N=n_u_interp_pts,M=3,R_v=U_interp_pts)
    else if (field=="Qpts") then
-     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# Q points list'
-     n_u_q_pts=n_points
-     U_q_pts(:n_u_q_pts,:)=real_v(:n_u_q_pts,:)
+     if (nk> 0) n_u_q_pts=nk
+     if (nk==0) n_u_q_pts=1
+     YAMBO_ALLOC(U_q_pts,(n_u_q_pts,3))
+     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_q_pts)
+     if (nk==0) U_q_pts=0.
+     call PARSER_array(mode="write",VAR=field,DESC='Q points list',&
+&                      N=n_u_q_pts,M=3,R_v=U_q_pts)
    else if (field=="KShift") then
-     write (flines(nflines+1),'(a,t32,a)') '%'//field,'# K-grid shifts (max 3)'
-     U_q_shifts(:n_points,:)=real_v(:n_points,:)
+     U_q_shifts=0.
+     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=min(nk,3),M=3,R_v=U_q_shifts)
+     call PARSER_array(mode="write",VAR=field,DESC='K-grid shifts (max 3)',&
+&                      N=3,M=3,R_v=U_q_shifts)
    endif
-   !
-   nflines=nflines+1
-   do i_p=1,n_points
-     write (flines(nflines+1),'(4(f7.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
-     nflines=nflines+1
-   enddo
-   write (flines(nflines+1),'(a)') '%'
-   nflines=nflines+1
-   !
-   if (infile_editing) open(unit=12,file=trim(infile),position='append')
-   do i1=nflines_save+1,nflines
-     nADDITIONAL_flines=nADDITIONAL_flines+1
-     ADDITIONAL_flines(nADDITIONAL_flines)=flines(i1)
-     if (infile_editing) write (12,'(a)') trim(flines(i1))
-   enddo 
-   if (infile_editing) close(12)
    !
  end subroutine
  !

@@ -85,8 +85,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  iGo_max=iGo_max_in
  !
- call Gclose(iG_max,'tRL')
- call Gclose(iGo_max,'tRL')
+ call PARSER_close_G(iG_max,'tRL')
+ call PARSER_close_G(iGo_max,'tRL')
  !
  wf_space_here='R'
  if (present(space)) wf_space_here=space

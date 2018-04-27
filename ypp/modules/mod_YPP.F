@@ -51,16 +51,16 @@ module YPP
  !
  integer  :: n_u_k_pts,n_u_q_pts,n_u_interp_pts
  !
- real(SP) :: U_k_pts(10,3)
- real(SP) :: U_q_pts(10,3)
- real(SP) :: U_q_shifts(3,3)
- real(SP) :: U_interp_pts(10,3)
+ real(SP), allocatable :: U_k_pts(:,:)
+ real(SP), allocatable :: U_q_pts(:,:)
+ real(SP), allocatable :: U_interp_pts(:,:)
+ real(SP)              :: U_q_shifts(3,3)
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter        :: n_SPECIAL_k_MAX=20
- character(1), allocatable :: CIRCUIT_k_label(:)
- character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ character(2), allocatable :: CIRCUIT_k_label(:)
+ character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k
@@ -82,7 +82,7 @@ module YPP
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
  type(levels)          ::CIRCUIT_E_db
- integer               ::interp_grid(3)  ! Interpolation Grid
+ integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
  logical               ::BANDS_E_and_k_db
@@ -168,10 +168,12 @@ module YPP
  logical     :: l_QP_DBs_create_and_modify
  logical     :: l_QP_DBs_manipulate
  integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_input_control(:,:)
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
  character(schlen),  allocatable :: QP_db_operation(:)
  real(SP),           allocatable :: QP_db_prefactor(:)
+ real(SP),           allocatable :: QP_user_corrections(:,:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy

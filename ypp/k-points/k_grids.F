@@ -39,6 +39,7 @@ subroutine k_grids(en,k,Xk,q)
  use stderr,              ONLY:set_real_printed_length
  !
 #include<memory.h>
+ !
  type(levels) ::en       
  type(bz_samp)::k,Xk,q
  !
@@ -352,7 +353,7 @@ subroutine k_grids(en,k,Xk,q)
    call section('+',"== Special Points for the "//trim(lattice)//" lattice ==")
    !===========================================================================  
    !
-   call k_special()
+   call k_special( )
    !
  endif
  !

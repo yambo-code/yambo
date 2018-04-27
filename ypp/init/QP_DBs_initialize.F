@@ -25,30 +25,22 @@ subroutine QP_DBs_initialize()
  !
  ! QPDB_states -> input file
  !
- use pars,      ONLY:schlen
  use QP_m,      ONLY:QP_t,QP_reset
- use drivers,   ONLY:infile_editing
- use it_m,      ONLY:nflines,flines,infile
- use com,       ONLY:warning
- use parser_m,  ONLY:parser       
+ use parser_m,  ONLY:PARSER_array
  use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
  use units,     ONLY:HA2EV
- use YPP,       ONLY:l_QP_DBs_create_and_modify,QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name
+ use YPP,       ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
+&                    QP_user_corrections,QP_db_input_control
  !
- implicit none
+#include<memory.h>
  ! 
  ! Work Space
  !
  type(QP_t) :: qp
- integer :: i_qp,i_f,i_c,nflines_save,io_QP_and_GF_err,ID
- character(schlen) :: DB_file_name(40,4)
+ integer :: i_qp,io_QP_and_GF_err,ID,n_user_qp_corrections
  integer, external :: io_QP_and_GF
  !
  ! If there are already the DB lines or there's not the input file todo return
- !
- if (.not.infile_editing.and.l_QP_DBs_create_and_modify) return 
- !
- nflines_save=nflines
  !
  if (l_QP_DBs_create_and_modify) then
    !
@@ -58,93 +50,45 @@ subroutine QP_DBs_initialize()
    !
    ! QP corrections
    ! 
-   write (flines(nflines+1),'(a,t22,a)') '%QPkrange',&
-&                           '# [QPDB] Correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Re[Z] |)'
-   if(io_QP_and_GF_err==0) then
+   call PARSER_array(mode="REAL dimensions",VAR="QP_user_corrections",N=n_user_qp_corrections,M=7)
+   if (n_user_qp_corrections>0) then
+     YAMBO_ALLOC(QP_user_corrections,(n_user_qp_corrections,7))
+     call PARSER_array(mode="read",VAR="QP_user_corrections",N=n_user_qp_corrections,M=7,R_v=QP_user_corrections)
+   else if (io_QP_and_GF_err==0) then
+     n_user_qp_corrections=qp%n_states
+     YAMBO_ALLOC(QP_user_corrections,(n_user_qp_corrections,7))
      do i_qp=1,qp%n_states
-       nflines=nflines+1
-       write (flines(nflines+1),'(4(i3,a),3(f12.6,a))') qp%table(i_qp,3),'|',qp%table(i_qp,3),'|',&
-&                                                       qp%table(i_qp,1),'|',qp%table(i_qp,1),'|', &
-&                               real(qp%E(i_qp)-qp%E_bare(i_qp))*HA2EV,'|',aimag(qp%E(i_qp))*HA2EV,'|',real(qp%Z(i_qp)),'|'
+       QP_user_corrections(i_qp,1:2)=qp%table(i_qp,3)  
+       QP_user_corrections(i_qp,3:4)=qp%table(i_qp,1)  
+       QP_user_corrections(i_qp,5)  =real(qp%E(i_qp)-qp%E_bare(i_qp))*HA2EV
+       QP_user_corrections(i_qp,6)  =aimag(qp%E(i_qp))*HA2EV
+       QP_user_corrections(i_qp,7)  =real(qp%Z(i_qp))
      enddo
    else
-     nflines=nflines+1
-     write (flines(nflines+1),'(4(i3,a),3(f4.1,a))') -1,'|',-1,'|',-1,'|',-1,'|',0.0,'|',0.0,'|',0.0,'|'
+     n_user_qp_corrections=1
+     YAMBO_ALLOC(QP_user_corrections,(n_user_qp_corrections,7))
+     QP_user_corrections(1,:)=(/-1,-1,-1,-1,0,0,0/)
    endif
-   nflines=nflines+1
-   flines(nflines+1)='%'
-   nflines=nflines+1
+   !
+   call PARSER_array(mode="write",VAR="QP_user_corrections",&
+&                    DESC="[QPDB] Correction( kp1| kp2| bnd1| bnd2| E-Eo[eV]| Img(E)[eV]| Re[Z] |)",&
+&                    N=n_user_qp_corrections,M=7,R_v=QP_user_corrections,Kn=(/"i","i","i","i","r","r","r"/))
    !
  else
    !
-   n_QP_dbs=0
-   DB_file_name=" "
-   call parser("Actions_and_names",DB_file_name)
-   !
-   do i_c=1,2
-     n_QP_dbs=0
-     do i_qp=1,size(DB_file_name,1)
-       if (len_trim(DB_file_name(i_qp,1))==0) exit
-       n_QP_dbs=n_QP_dbs+1
-       if (i_c==2) then
-         call QP_reset(QP_db(n_QP_dbs))
-         QP_db_what(n_QP_dbs)=DB_file_name(i_qp,1)
-         QP_db_operation(n_QP_dbs)=DB_file_name(i_qp,2)
-         read (DB_file_name(i_qp,3),*) QP_db_prefactor(n_QP_dbs)
-         QP_db_name(n_QP_dbs)=DB_file_name(i_qp,4)
-         call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
-         io_QP_and_GF_err=io_QP_and_GF(trim(DB_file_name(i_qp,4)),QP_db(n_QP_dbs),ID)
-         if (io_QP_and_GF_err/=0) then
-           call warning("QP DB "//trim(DB_file_name(i_qp,4))//" not found")
-           call QP_reset(QP_db(n_QP_dbs))
-           n_QP_dbs=n_QP_dbs-1
-         endif
-       endif
-     enddo
-     if (i_c==1) then
-       allocate(QP_db_what(n_QP_dbs))
-       allocate(QP_db(n_QP_dbs))
-       allocate(QP_db_name(n_QP_dbs))
-       allocate(QP_db_operation(n_QP_dbs))
-       allocate(QP_db_prefactor(n_QP_dbs))
-       QP_db_operation="+"
-       QP_db_prefactor=1.
-     endif
-   enddo
-   !
-   if  ( infile_editing ) then
-     !
-     nflines=nflines+1
-     write (flines(nflines),'(a,t32,a)') '%Actions_and_names',&
-&                           '# [QPDB] Format is "what"|"OP"|"prefactor"|"DB"|. OP can be +/-/x(ony for Z). '
-     !
-     if (n_QP_dbs==0) then
-       nflines=nflines+1
-       flines(nflines)=' "E" | "+" | "1" | "none" |'
-     else
-       do i_qp=1,n_QP_dbs
-         nflines=nflines+1
-         flines(nflines)=' "'//trim(DB_file_name(i_qp,1))//'" | "'//trim(DB_file_name(i_qp,2))//'" |'//&
-&                        ' "'//trim(DB_file_name(i_qp,3))//'" | "'//trim(DB_file_name(i_qp,4))//'" |'
-       enddo
-     endif
-     !
-     nflines=nflines+1
-     flines(nflines)='%'
-     !
+   call PARSER_array(mode="CH dimensions",VAR="Actions_and_names",N=n_QP_dbs,M=4)
+   if (n_QP_dbs>0) then
+     allocate(QP_db_input_control(n_QP_dbs,4))
+     call PARSER_array(mode="read",VAR="Actions_and_names",N=n_QP_dbs,M=4,CH_v=QP_db_input_control)
+   else
+     n_QP_dbs=1
+     allocate(QP_db_input_control(n_QP_dbs,4))
+     QP_db_input_control(1,1)=' "E" | "+" | "1" | "none" |'
    endif
+   call PARSER_array(mode="write",VAR="Actions_and_names",&
+&                    DESC='[QPDB] Format is "what"|"OP"|"prefactor"|"DB"|. OP can be +/-/x(only for Z)',&
+&                    N=n_QP_dbs,M=4,CH_v=QP_db_input_control)
    !
  endif
- !
- if  ( .not.infile_editing ) return
- !
- ! Write to input file
- !
- open(unit=12,file=trim(infile),position='append')
- do i_f=nflines_save+1,nflines
-   write (12,'(a)') trim(flines(i_f))
- enddo 
- close(12)
- return
  !
 end subroutine

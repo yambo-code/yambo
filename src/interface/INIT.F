@@ -47,13 +47,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,V_real_time,V_parallel,V_qp
+&                         switch_off_runlevel,check_verbosity
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
@@ -114,7 +114,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
- logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
+ logical           :: OSTNTS_Vnl_included
  !
  integer, external :: io_Double_Grid
  !
@@ -974,22 +974,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
- ! Are we editing the input file ?
+#if defined _RT
+ if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
+#endif
  !
- if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
-   call PP_redux_wait
- endif
+ ! Q-points (from input/DB)
  !
- ! To handle externally defined Q-points I use the INIT_q_pts
- !
- ! (a) first check if input file contains already a list of Q-points...
- call INIT_q_points(io_QINDX_err,.FALSE.)
- !
- ! (b) ... then (re)write the file
- if (l_setup.and.infile_editing) call INIT_q_points(io_QINDX_err,.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0) call INIT_q_points( )
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -997,35 +988,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (QP_field) then
    !
-   ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
+   ! The QP_state can be read from DB's in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
-   ! had no QP_state fields.
+   ! has no QP fields (see inside INIT_QP)
    !
    ! QP_state from DB ?
    !
-   if (allocated(QP_state)) then
-     !
-     ! QP_state from input file ?
-     !
-     call parser('QPkrange',QP_state_in_input_file)
-     !
-     if (QP_state_in_input_file) then
-       !
-       YAMBO_FREE(QP_state)
-       QP_nb=0
-       QP_nk=0
-       !
-       call QP_state_table_setup(en)
-       !
-     endif
-     !
-   else
-     !
-     call QP_state_table_setup(en)
-     !
-   endif
+   if (allocated(QP_state)) call QP_state_table_setup(en)
    !
-   call INIT_QP(.TRUE.,infile_verbosity==V_qp)
+   call INIT_QP("[GW] QP")
    !
    ! I use it to propose the value in the input file ...
    !
@@ -1036,11 +1007,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
-#if defined _RT
- if(infile_verbosity==V_real_time.and.l_real_time) call INIT_DephMatrix()
-#endif
+ ! Are we editing the input file ?
  !
- if (infile_editing) return
+ if (infile_editing) then
+   open(unit=12,file=trim(infile))
+   call initinfio(defs,12)
+   close(12)
+   call PP_redux_wait
+   return
+ endif
  !
  ! Update Logicals (especially the write_to_log)
  !
@@ -1406,7 +1381,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
      use stderr, ONLY:string_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all
+&                     V_real_time,V_all,V_parallel
      implicit none
      integer     :: init_
      character(*):: rstr

@@ -121,7 +121,7 @@ module hamiltonian
        YAMBO_ALLOC(SC_R,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      endif
      !
-     if (.not.l_real_space) return
+     if (.not.l_real_space.or.fft_size==0) return
      !
      YAMBO_ALLOC(rho_n,(fft_size))
      !

@@ -24,10 +24,10 @@
 subroutine QP_DBs_manipulate( E )
  !
  use pars,          ONLY:schlen
- use YPP,           ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name
+ use YPP,           ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_input_control
  use stderr,        ONLY:intc,real2ch
- use com,           ONLY:msg
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use com,           ONLY:msg,warning
+ use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states,&
 &                        report_Vnlxc,report_Sc,report_dSc,l_extended_output
  use interfaces,    ONLY:QP_DBs_merge
@@ -39,15 +39,46 @@ subroutine QP_DBs_manipulate( E )
  !
  ! Work Space
  !
- integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
  integer,    external    :: io_QP_and_GF
  character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
  logical,           allocatable :: plan_EWZG(:,:)
  type(QP_t),        allocatable :: qp(:)
  !
- ! Resets
+ ! Setup
  !--------
- call QP_DBs_initialize()
+ !
+ do i_c=1,2
+   n_QP_dbs=0
+   do i_qp=1,size(QP_db_input_control,1)
+     if (len_trim(QP_db_input_control(i_qp,1))==0) exit
+     n_QP_dbs=n_QP_dbs+1
+     if (i_c==2) then
+       call QP_reset(QP_db(n_QP_dbs))
+       QP_db_what(n_QP_dbs)=QP_db_input_control(i_qp,1)
+       QP_db_operation(n_QP_dbs)=QP_db_input_control(i_qp,2)
+       read (QP_db_input_control(i_qp,3),*) QP_db_prefactor(n_QP_dbs)
+       QP_db_name(n_QP_dbs)=QP_db_input_control(i_qp,4)
+       call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
+       i_err=io_QP_and_GF(trim(QP_db_input_control(i_qp,4)),QP_db(n_QP_dbs),ID)
+       if (i_err/=0) then
+         call warning("QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
+         call QP_reset(QP_db(n_QP_dbs))
+         n_QP_dbs=n_QP_dbs-1
+       endif
+     endif
+   enddo
+   if (i_c==1) then
+     allocate(QP_db_what(n_QP_dbs))
+     allocate(QP_db(n_QP_dbs))
+     allocate(QP_db_name(n_QP_dbs))
+     allocate(QP_db_operation(n_QP_dbs))
+     allocate(QP_db_prefactor(n_QP_dbs))
+     QP_db_operation="+"
+     QP_db_prefactor=1.
+   endif
+   !
+ enddo
  !
  if (n_QP_dbs==0) return
  !

@@ -21,7 +21,7 @@
 ! Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 ! 02111-1307, USA.
 !
-module parser_lib
+module PARSER_lib
  !
  implicit none
  !
@@ -147,4 +147,4 @@ module parser_lib
      call iparse_block_string(name1, l, c, res)
    end subroutine iparse_block_str
    !
-end module parser_lib
+end module PARSER_lib

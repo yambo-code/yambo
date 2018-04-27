@@ -36,7 +36,6 @@ module YPP_real_time
  !
  logical  :: l_RTpump_energy
  logical  :: l_RTpump_kspace
- logical  :: l_RTpump_manual
  !
  ! RT Post-processing (what)
  !
@@ -65,11 +64,11 @@ module YPP_real_time
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
  real(SP)    :: Eh_pumped_pair_deltaE
- real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
+ real(SP)    :: Eh_pumped_pair_BZ_regions(3,6)   
  !
  real(SP)    :: Eh_pumped_pair_width               ! energy with
  real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
- integer     :: n_regions
+ integer     :: Eh_pumped_pair_n_BZ_regions
  !
  ! (RT) optics
  !

@@ -23,7 +23,7 @@
 !
 subroutine ypp_INIT_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -31,11 +31,10 @@ subroutine ypp_INIT_load(defs)
  use interpolate,   ONLY:INTERP_shell_factor
  use YPP
 #if defined _YPP_RT
- use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
+ use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width
+&                               Eh_pumped_pair_BZ_width
  use real_time,            ONLY:RT_bands
- use stderr,               ONLY:intc
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
@@ -44,7 +43,6 @@ subroutine ypp_INIT_load(defs)
  implicit none
  !
  type(initdefs)::defs
- integer       ::i_region
  !
  ! RunLevels
  !
@@ -152,7 +150,7 @@ subroutine ypp_INIT_load(defs)
  !
  ! RT DBs create
  !
- call it(defs,'RTpumpNel',  '[RT] Number of electrons pumbed by hand per unit cell',Eh_pumped_Nel)
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons excited by hand per unit cell',Eh_pumped_Nel)
  call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
  call it(defs,'RTpumpEhWd', '[RT] Max Energy window used in the levels pick-up',Eh_pumped_pair_width,unit=E_unit)
  ! Method 1
@@ -161,10 +159,6 @@ subroutine ypp_INIT_load(defs)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
  call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
- do i_region=1,6
-   call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Region in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
-   if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
- enddo
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

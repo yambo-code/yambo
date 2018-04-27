@@ -285,7 +285,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
  !
- k_shift=Xk%ptbz(1,:)
+ k_shift=Xk%ptbz(1,:) ! I assume the first k-point as shift
  !
  Xk%ptbz(:,:)=Xk%ptbz(:,:)-nint(Xk%ptbz(:,:)) ! Bring in the BZ
  !  

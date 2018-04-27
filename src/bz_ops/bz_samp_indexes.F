@@ -131,7 +131,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    call m3inv(M=k_b_m1)
    !
-   call define_q_map_new( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -194,7 +194,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      bse_scattering=.false.
      gamma_point_only=.true.
    else
-     call define_q_map_new(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
+     call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
    endif
    !
  else
@@ -243,10 +243,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  do ikbz=1,Xk%nbz
    !
    do ikbz_p=1,Xk%nbz
-! ################### BEGIN NEW MAPPING #######################
-!     v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
-!     iv1=nint(v1)
-!     call k_grid_shift(iv1)
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
      v1=v1-nint(v1)       ! Bring in the BZ, remove the G0
      where(v1<-zero_dfl)  ! Bring between [0,1)
@@ -259,7 +255,6 @@ subroutine bz_samp_indexes(k,Xk,q)
          iv1(id)=nint(v1(id)/q_step(id))+1
        endif
      enddo
-! ################### END   NEW MAPPING #######################
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
@@ -309,16 +304,6 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    do ikbz_p=1,k%nbz
      !
-! ################### BEGIN NEW MAPPING #######################
-!     !
-!     v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
-!     iv1=nint(v1)
-!     !
-!     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) connected_grids=.false.
-!     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) cycle
-!     !
-!     call k_grid_shift(iv1)
-!     !
      v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
      v1=v1-nint(v1)       ! Bring in the BZ, remove the G0
      where(v1<-zero_dfl)  ! Bring between [0,1)
@@ -331,7 +316,6 @@ subroutine bz_samp_indexes(k,Xk,q)
          iv1(id)=nint(v1(id)/q_step(id))+1
        endif
      enddo
-! ################### END   NEW MAPPING #######################
      !
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
      !
@@ -420,8 +404,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      v=u 
    end subroutine
    !
-   ! ################# NEW MAPPING ####################
-   subroutine define_q_map_new(qpt_map,q_ref)
+   subroutine define_q_map(qpt_map,q_ref)
      !
      use pars,      ONLY:zero_dfl
      !
@@ -482,41 +465,6 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
    end subroutine
 
-   ! ################# NEW MAPPING ####################
-   !
-   subroutine define_q_map(qpt_map,q_ref)
-     !
-     real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
-     !
-     q_map=0
-     do i1=1,Xk%nbz
-       v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref)
-       q_iptbz(i1,:)=nint(v1)
-       call k_grid_shift(q_iptbz(i1,:))
-       if (q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))/=0) then
-         call warning('[RL indx] 2 equivalent points in the rlu grid found')
-         q_map=0
-         return
-       endif
-       q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
-     enddo
-     !
-     ! Now I fill the holes in the map shifting the whole grid
-     !
-     do i1=1,Xk%nbz
-       do i2=-2,2
-         do i3=-2,2
-           do i4=-2,2
-             v1=matmul(k_b_m1,qpt_map(i1,:)-q_ref+real((/i2,i3,i4/)))
-             iv1=nint(v1)
-             call k_grid_shift(iv1)
-             if (q_map(iv1(1),iv1(2),iv1(3))==0) q_map(iv1(1),iv1(2),iv1(3))=i1
-           enddo
-         enddo
-       enddo
-     enddo
-   end subroutine
-   !
    subroutine q_shadows(force_gamma_only)
      use vec_operate,    ONLY:iku_v_norm
      logical                ::force_gamma_only

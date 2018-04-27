@@ -1661,7 +1661,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
            H_potential=""
-           if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+           if ( index(trim(rstr_piece(i1+1)),'cohsex')>0) then
+             H_potential='COH+SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
              H_potential='SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'f')>0) then

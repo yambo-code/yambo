@@ -63,14 +63,16 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! GPL_EXCLUDE_START
  !
- NCarr =OBSERVABLES( 1: 3)
- TFit  =OBSERVABLES( 4: 5)
- EfFit =OBSERVABLES( 6: 7)
- Ener  =OBSERVABLES( 8:12)
- Entr  =OBSERVABLES(13:15)
- TEntr =OBSERVABLES(16:18)
- EnEntr=OBSERVABLES(19:21)
- BGR   =OBSERVABLES(22:23)
+ ! DEBUG>
+ !NCarr =OBSERVABLES( 1: 3)
+ !TFit  =OBSERVABLES( 4: 5)
+ !EfFit =OBSERVABLES( 6: 7)
+ !Ener  =OBSERVABLES( 8:12)
+ !Entr  =OBSERVABLES(13:15)
+ !TEntr =OBSERVABLES(16:18)
+ !EnEntr=OBSERVABLES(19:21)
+ !BGR   =OBSERVABLES(22:23)
+ ! DEBUG<
  !
  ! Carriers
  !==========
@@ -86,7 +88,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! BGR
  !=====
- call RT_BGR(en,k,BGR)
+ BGR=0._SP
+ !call RT_BGR(en,k,BGR)
  !
  OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
  !

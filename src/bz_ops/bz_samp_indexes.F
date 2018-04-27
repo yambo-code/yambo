@@ -458,7 +458,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      qpt_map=qpt_save
      !
      if(any(q_map==0)) then
-       call warning('[RL indx] error in mapping')
+       call error('[RL indx] error in mapping')
        q_map=0
        return
      endif

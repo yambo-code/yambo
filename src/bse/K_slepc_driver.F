@@ -569,7 +569,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  PetscScalar, pointer :: xx(:)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
- integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
+ integer              :: n, i_g, i_c, ierr, H_pos(1), start_index, low, high
  !
  ! create scattering context vi (distributed) -> x (local)
  !

@@ -24,7 +24,6 @@
 subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  use pars,           ONLY:cZERO
- use drivers,        ONLY:l_col_cut
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch,L_kind
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
@@ -37,7 +36,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  ! Work Space
  !
- logical :: divide_by_qpg
  integer :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g0,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
 &           i_sp,i_T_el_last_with_identity_sym,i_T_grp_last_with_identity_sym,i_T_grp_p
  !
@@ -46,8 +44,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  if (allocated( BS_T_grp(i_T_grp)%O_x )) return
  !
  call timing('T_space EXX Osc.',OPR='start')
- !
- divide_by_qpg=.not.l_col_cut
  !
  ! Allocate
  !
@@ -77,13 +73,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if(trim(L_kind)=="full") then
-       if(     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)/bare_qpg(1,1)
-       if(.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
-       !
-     else if(trim(L_kind)=="Lbar") then
-       BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
-     endif
+     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_R(i_T_el)
+     if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
      !
      ! G/=0 terms
      !
@@ -111,8 +102,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
 !$omp parallel do default(shared), private(i_g1)
        do i_g1=2,BS_n_g_exch
-         if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-         if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
+         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
 !$omp end parallel do
      else
@@ -134,8 +124,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      if(trim(L_kind)=="Lbar") i_g0=2
 !$omp parallel do default(shared), private(i_g1)
      do i_g1=i_g0,BS_n_g_exch
-       if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-       if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
+       BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
 !$omp end parallel do
      !

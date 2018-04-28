@@ -457,12 +457,12 @@ static void usage(int verbose)
 #if defined _OPENMP
   char* OMP_string="+OpenMP";
 #else
-  char* OMP_string=" ";
+  char* OMP_string="";
 #endif
 #if defined _SLEPC
   char* SLEPC_string="+SLEPC+PETSC";
 #else
-  char* SLEPC_string=" ";
+  char* SLEPC_string="";
 #endif
   fprintf(stderr,"\nThis is %s %s - %s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string); 
   fprintf(stderr,"Usage: %s",tool); 

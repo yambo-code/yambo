@@ -284,11 +284,11 @@ contains
     !
     implicit none
     !
-    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3)
-    real(SP)                      :: ecut, norm_2, b_transpose(3,3), temp_g_vec(3)
-    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
-    integer,     allocatable      :: igk(:,:), igk_sort(:,:), g_vec_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
-    real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
+    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
+    real(SP)                      :: ecut, norm_2, b_transpose(3,3)
+    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3)
+    integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
+    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
     logical,     allocatable      :: l_g_mapped(:)
@@ -299,7 +299,7 @@ contains
     allocate( wf_nc_k(k%nibz) )
     call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
     wf_ncx = maxval(wf_nc_k) 
-    allocate( wf_igk(wf_ncx,k%nibz), igk(3,wf_ncx*2) )
+    allocate( wf_igk(wf_ncx,k%nibz) )
     !
     b_transpose = transpose(b)
 
@@ -367,30 +367,31 @@ contains
         max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_(3,:,ik)))
       end do
       !write(*,*) max_nx, max_ny, max_nz
-      n1 = 2*max_nx + 1
-      n2 = 2*max_ny + 1
-      n3 = 2*max_nz + 1
+      n1 = 4*max_nx
+      n2 = 4*max_ny
+      n3 = 4*max_nz
 
       ! Calculate G-vectors inside the sphere
-      allocate( g_vec(wf_ncx*2,3) )
+      max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
+      allocate( g_vec_tmp(max_size,3) )
+      allocate( igk_tmp(3,max_size) )
       npw = 0
-      igk = -1
       do i1=-n1,n1
         do i2=-n2,n2
           do i3=-n3,n3
             igv = [i1,i2,i3]
-            temp_g_vec = matmul(b_transpose,igv)/2.0_SP/pi
-            norm_2 = temp_g_vec(1)**2.0_SP
-            norm_2 = temp_g_vec(2)**2.0_SP + norm_2
-            norm_2 = temp_g_vec(3)**2.0_SP + norm_2
+            g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
+            norm_2 = g_vec_tmp1(1)**2.0_SP + &
+                     g_vec_tmp1(2)**2.0_SP + &
+                     g_vec_tmp1(3)**2.0_SP
             if (ecut .gt. 0.25_SP*norm_2) then
                 npw = npw+1
-                igk(:,npw) = igv
-                g_vec(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
+                igk_tmp(:,npw) = igv
+                g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
             end if
-            if (npw > wf_ncx*2) then
-                write(*,*) 'an error has occurred: npw > wf_ncx*2'
-                call exit(0)
+            !this check is not needed anymore in principle
+            if (npw > max_size) then
+                write(*,*) 'an error has occurred: npw > max_size', max_size
             end if
           end do
         end do
@@ -400,23 +401,22 @@ contains
       ! can sort the G vectors in whatever way here
       allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
       do ig=1,ng_vec
-        G_mod(ig)=iku_v_norm(g_vec(ig,:))
+        G_mod(ig)=iku_v_norm(g_vec_tmp(ig,:))
       enddo
       call sort(G_mod,indx_m1=G_mod_indx)
       deallocate(G_mod)
       !
-      allocate(g_vec_sort(ng_vec,3),igk_sort(3,wf_ncx*2))
-      g_vec_sort=g_vec
-      igk_sort=igk
-      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
-      igk(:3,G_mod_indx(:ng_vec))=igk_sort(:3,:ng_vec)
-      deallocate(g_vec_sort,igk_sort)
+      allocate(g_vec(ng_vec,3), igk(3,ng_vec))
+      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
+      igk(:3,G_mod_indx(:ng_vec))=igk_tmp(:3,:ng_vec)
+      deallocate(g_vec_tmp,igk_tmp)
 
       ! 2.
       allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-      !do ic=1,npw
-      !  write(*,*) igk(:,ic)
-      !end do
+      open(2,file='gs.dat')
+      do ic=1,ng_vec
+        write(2,*) igk(:,ic)
+      end do
       call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
 
       ! 3.
@@ -426,11 +426,11 @@ contains
       wf_igk = -1
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
-        !write(*,*)
-        !write(*,*)
-        !do ic=1,npw
-        !  write(*,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
-        !end do
+        write(2,*)
+        write(2,*)
+        do ic=1,npw
+          write(2,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
+        end do
         call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
         ! 4.
         ! Do the mapping
@@ -439,6 +439,7 @@ contains
           i2 = inv_map_k(2,ic)
           i3 = inv_map_k(3,ic)
           npw = map_gamma(i1,i2,i3)
+          !write(*,*) ic, npw
           if (npw .eq. -1) then
               write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
               call exit(0)
@@ -448,109 +449,7 @@ contains
       end do
       !
       wf_ng=maxval(wf_igk)
-
-
-
       !
-      !TO BE REMOVED
-      !
-      if (.false.) then
-          allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
-          !wf_nc_k = basisdata_group%number_of_coefficients
-          wf_igk=-1
-          !
-          ! First guess: G vectors= gvectors at gamma
-          ng_vec = wf_nc_k(1) 
-          allocate(g_vec_tmp(2*wf_ncx,3))
-          !
-          do ic=1,wf_nc_k(1)
-            wf_igk(ic,1)=ic
-            ig=wf_igk(ic,1)
-            g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_(:,ic,1)
-          enddo
-          !
-          do ik=2,k%nibz
-            ng_vec_old=ng_vec
-            allocate(l_g_mapped(ng_vec_old))
-            l_g_mapped=.false.
-            do ic=1,wf_nc_k(ik)
-              g_vec_new=reduced_coordinates_of_plane_waves_(:,ic,ik)
-              l_new=.true.
-              do ig=1,ng_vec_old
-                if(l_g_mapped(ig)) cycle
-                if( all(g_vec_tmp(ig,:)-g_vec_new(:)==0) ) then
-                  l_new=.false.
-                  l_g_mapped(ig)=.true.
-                  wf_igk(ic,ik)=ig
-                  exit
-                endif
-              enddo
-              if(.not.l_new) cycle
-              ng_vec=ng_vec+1
-              g_vec_tmp(ng_vec,:)=g_vec_new
-              wf_igk(ic,ik)=ng_vec
-            enddo
-            deallocate(l_g_mapped)
-          enddo
-          !
-          ng_vec_abinit=ng_vec
-          !
-          allocate(g_vec(ng_vec,3))
-          do ig=1,ng_vec
-            g_vec(ig,:3)=matmul(transpose(b),g_vec_tmp(ig,:3))*alat(:)/2.0_SP/pi
-          enddo
-          deallocate(g_vec_tmp)
-          !
-          if(nsym>1) then
-            call msg('s','Closing shells against symmetries...')
-            do is=2,nsym
-              call G_rot_grid(is,'extend_grid')
-            enddo
-            call msg('l','done')
-            if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
-          endif
-          !
-          ! Re-ordering by increasing module
-          !==================================
-          ! indx_m1 (j) went to position indx_m1(j)
-          ! indx    (i) before was in position indx(i) 
-          allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
-          do ig=1,ng_vec
-            G_mod(ig)=iku_v_norm(g_vec(ig,:))
-          enddo
-          call sort(G_mod,indx_m1=G_mod_indx)
-          deallocate(G_mod)
-          !
-          allocate(g_vec_sort(ng_vec,3))
-          g_vec_sort=g_vec
-          g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
-          deallocate(g_vec_sort)
-          !
-          ! Sort wf_igk accordingly
-          allocate( wf_igk_tmp(wf_ncx,k%nibz) )
-          wf_igk_tmp=wf_igk
-          wf_igk=-1
-          do ik=1,k%nibz
-            wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
-          enddo
-          deallocate( wf_igk_tmp,G_mod_indx )
-          wf_ng=maxval(wf_igk)
-      endif
-      !
-      !END TO BE REMOVED
-
-
-
-
-
-
-
-
-
-
-
-
-
     endif
     !
     call deallocate_basisdata_group

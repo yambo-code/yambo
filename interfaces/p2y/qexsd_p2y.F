@@ -1229,6 +1229,8 @@ CONTAINS
 
       ierr = 0
       !
+      call iotk_scan_begin(iunit, "dft", IERR=ierr)
+      if ( ierr/=0 ) return
       call iotk_scan_begin(iunit, "hybrid", FOUND=lfound, IERR=ierr)
       if ( ierr/=0 ) return
       !
@@ -1284,6 +1286,8 @@ CONTAINS
          call iotk_scan_end(iunit, "hybrid", IERR=ierr )
          if ( ierr/=0 ) return
       endif
+      call iotk_scan_end(iunit, "dft", IERR=ierr )
+      if ( ierr/=0 ) return
       !
     end subroutine qexsd_read_exx 
     !

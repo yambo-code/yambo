@@ -57,8 +57,6 @@ subroutine QP_DBs_create_and_modify(en,k)
  qp%nk      =QP_nk
  ! 
  call QP_alloc(qp)
- write (*,*) QP%nb,QP%nk
- stop
  !
  ! Check the input file
  !

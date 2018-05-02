@@ -82,7 +82,7 @@ subroutine PARALLEL_WF_index(COMM)
    call PP_redux_wait(b_filling,COMM=PAR_COM_density%COMM)
    !
    do ib=1,NB
-     if (b_filling(ib)==0.and.PAR_COM_density%CPU_id==0)  states_to_load(ib,ik,1)=.TRUE.
+     if (b_filling(ib)==0.and.PAR_COM_density%CPU_id==0)  states_to_load(ib,ik,:)=.TRUE.
    enddo
    !
    do ib=1,NB

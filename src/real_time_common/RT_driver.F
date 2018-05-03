@@ -277,6 +277,10 @@ subroutine RT_driver(E,X,k,q)
    ! G_lesser@NE_time
    !###################
    !
+   ! Rotation in the Coherent Hamiltonian basis
+   !============================================
+   call RT_H_rotate(E,k,OBSERVABLES(22:23))
+   !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)

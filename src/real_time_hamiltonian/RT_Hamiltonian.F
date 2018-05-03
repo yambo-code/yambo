@@ -53,6 +53,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use pars,           ONLY:SP,cONE,cZERO,rZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
+ use units,          ONLY:SPEED_OF_LIGHT
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -152,7 +153,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      call eval_Gradient(V_scf,V_scf_grad,1,"potential")
      deallocate(V_scf)
    endif
-   !
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------

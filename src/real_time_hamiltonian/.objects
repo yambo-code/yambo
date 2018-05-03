@@ -1,1 +1,1 @@
-objs = RT_Hamiltonian.o RT_BGR.o RT_apply_field.o 
+objs = RT_Hamiltonian.o RT_H_rotate.o RT_apply_field.o 

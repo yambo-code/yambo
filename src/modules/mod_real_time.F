@@ -166,10 +166,11 @@ module real_time
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)   
  !
- ! Update QP Energies and WFs
- !----------------------------
- logical                  :: l_update_QP_Energies=.FALSE.
- logical                  :: l_update_QP_WFs=.FALSE.
+ ! Update Energies, eval Lifetimes rotate DM (density matrix)
+ !-----------------------------------------------------------
+ logical                  :: l_eval_Lifetimes
+ logical                  :: l_RT_update_Energies
+ logical                  :: l_RT_rotate_DM
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
@@ -217,9 +218,12 @@ module real_time
  !
  type(RT_DbGd),save  :: RT_E_and_k
  !
- ! Locks and reference
- !----------------------
- logical                  :: l_use_updated_reference
+ ! Locks, reference & Logicals
+ !-----------------------------
+ logical                  :: l_RT_relaxation_update_reference
+ logical                  :: l_RT_constant_lifetimes
+ logical                  :: l_RT_extrapolate_lifetimes
+ logical                  :: l_RT_eval_lifetimes
  logical                  :: l_initial_equilibrium
  !
  real(SP),    allocatable :: RT_E_occupations(:,:) 
@@ -475,7 +479,7 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
+     call H_alloc(en,.not.l_RT_is_WFfree,l_RT_rotate_DM)
      !
      call H_QP_table_setup(en)
      !

@@ -43,14 +43,14 @@ subroutine RT_initialize(E,k,q)
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
 &                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
 &                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
-&                         l_update_QP_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
+&                         l_RT_update_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,               &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
-&                         l_RT_impose_for_metals,l_update_QP_WFs
+&                         l_RT_impose_for_metals,l_RT_rotate_DM
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -75,7 +75,8 @@ subroutine RT_initialize(E,k,q)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- call parser('RTUpdateEqp',          l_update_QP_Energies)
+ call parser('RTUpdateEqp',          l_RT_update_Energies)
+ l_RT_rotate_DM                     =l_RT_update_Energies
  !
  ! GPL_EXCLUDE_START
  !
@@ -388,9 +389,8 @@ subroutine RT_initialize(E,k,q)
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   :',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
- if (l_update_QP_Energies) then
-   call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
-   l_update_QP_WFs=.TRUE.
+ if (l_RT_update_Energies) then
+   call msg( 'r','Update QP Energies         :',l_RT_update_Energies)
  endif
  if (l_update_SOC)         call msg( 'r','Update SOC Interaction     :',l_update_SOC)
  !

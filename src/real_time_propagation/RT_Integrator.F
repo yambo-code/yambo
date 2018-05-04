@@ -62,7 +62,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp  
  use real_time,      ONLY:G_lesser_reference,RT_E_occupations,&
-&                         RT_H_occupations,RT_delta_occupations,&
+&                         RT_H_occupations,RT_delta_occupations,Integrator_step,&
 &                         RT_nk,RT_bands,a_tableau,b_tableau,c_tableau,RWA_table,Integrator_nsteps
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels,spin_occ
@@ -90,7 +90,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  dG_tmp(:,:,:,1)=dG_old
  A_tmp(1)       =A_old
  !
- integrator_step=1
+ Integrator_step=1
  !
  do i_step=1,Integrator_nsteps
    !
@@ -104,13 +104,17 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
+   ! ... Update of logicals before the occupations update
+   !
+   call RT_relaxation_logicals( )
+   !
    call RT_update_occ(dG_tmp(:,:,:,i_step))
    !
    ! Fields @ T+dt2
    !
    call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
    !
-   integrator_step=integrator_step+1
+   Integrator_step=Integrator_step+1
    !
    call timing('RT integrator',OPR='stop')
    !
@@ -120,7 +124,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1,.false.)    ! since nothing explicitely depends on time
+   call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1)            ! since nothing explicitely depends on time
    !
    ! GPL_EXCLUDE_END
    !
@@ -150,7 +154,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Reset integrator time-point
  !
- integrator_step=1
+ Integrator_step=1
  !
  call timing('RT integrator',OPR='stop')
  !

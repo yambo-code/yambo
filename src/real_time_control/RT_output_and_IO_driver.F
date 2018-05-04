@@ -31,7 +31,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use stderr,         ONLY:set_real_printed_length
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use real_time,      ONLY:eval_energy,eval_entropy,l_update_QP_Energies,l_NE_with_fields,NE_time, &
+ use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
 &                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased
  !
  implicit none
@@ -58,7 +58,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    call RT_output(what="open carr magn")
    if(eval_energy)  call RT_output(what="open energy")
    if(eval_entropy) call RT_output(what="open therm")
-   if(l_update_QP_Energies)  call RT_output(what="open BGR")
+   if(l_RT_update_Energies)  call RT_output(what="open BGR")
    if (l_NE_with_fields) then
      call RT_output(what="open ext")
      if(l_RT_induced_field)  call RT_output(what="open tot ind")
@@ -104,7 +104,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)
-   if(l_update_QP_Energies) call RT_output('BGR',   VALUES=BGR,                           TIME=NE_time*AUT2FS)
+   if(l_RT_update_Energies) call RT_output('BGR',   VALUES=BGR,                           TIME=NE_time*AUT2FS)
    !
    ! Mean Carrier Lifetimes
    !========================

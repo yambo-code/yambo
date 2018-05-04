@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_update_QP_Energies
+&                         l_RT_update_Energies
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot
@@ -222,16 +222,18 @@ subroutine RT_driver(E,X,k,q)
    !
    call msg('s','Reference Lifetimes, GF, Self-Energy ...')
    !
-   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0._SP,.true.)
+   l_initial_equilibrium=.TRUE.
+   !
+   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0._SP)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
    !
    call msg('l','done')
    !
-   l_initial_equilibrium=.FALSE.
-   !
  endif
+ !
+ l_initial_equilibrium=.FALSE.
  !
  ! GPL_EXCLUDE_END
  !
@@ -293,7 +295,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
-   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time,.false.)
+   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time)
    !
    ! GPL_EXCLUDE_END
    !

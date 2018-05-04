@@ -21,38 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
+subroutine RT_Lifetimes_use_delta_Occupations( )
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
  use parallel_m,     ONLY:ncpu,PAR_COM_PLASMA_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_life_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
-&                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta_occupations,&
+&                         RT_life_delta_occupations,l_RT_relaxation_update_reference,&
+&                         RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,NE_i_time
+&                         G_lesser_reference,RT_nk,l_RT_relaxation_update_reference
  !
  implicit none
- !
- logical                      :: l_eval
  !
  ! Work Space
  !
  integer :: ik,ib
  real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
  !
- l_use_updated_reference=.not.l_initial_equilibrium
- !
- if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(NE_i_time)> 1)
- !
- if (.not.l_eval) return
- !
- if (l_use_updated_reference) then
+ if (l_RT_relaxation_update_reference) then
    !
    df_max=0._SP
    !
@@ -79,7 +71,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
      !
      RT_occupations_locked(ib,ik)=.FALSE. 
      !
-     if (l_use_updated_reference) then
+     if (l_RT_relaxation_update_reference) then
        !
        !DEBUG<
        !if (abs( RT_delta_occupations(ib,ik) )<1.E-4*df_max) RT_occupations_locked(ib,ik)=.TRUE.

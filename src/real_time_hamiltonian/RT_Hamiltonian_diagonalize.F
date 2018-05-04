@@ -45,8 +45,8 @@ subroutine RT_Hamiltonian_diagonalize(E,BGR)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_QP_cpu
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Gaps
  use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_bands,&
-&                         l_RT_uses_E_DbGd,l_update_QP_Energies,l_update_QP_WFs,&
-&                         DbGd_ibz_coo,RT_TIME_status,NE_i_time
+&                         l_RT_uses_E_DbGd,l_RT_update_Energies,l_RT_rotate_DM,&
+&                         DbGd_ibz_coo,l_RT_eval_lifetimes
  use RT_control,     ONLY:RT_do_it
  !
  implicit none
@@ -63,8 +63,8 @@ subroutine RT_Hamiltonian_diagonalize(E,BGR)
  !
  BGR=rZERO
  !
- l_do_E=l_update_QP_Energies.and.(RT_TIME_status(NE_i_time)>0.or.RT_do_it('OUT'))
- l_do_R=l_update_QP_WFs.and.RT_do_it('OUT')
+ l_do_E=l_RT_update_Energies.and.(l_RT_eval_lifetimes.or.RT_do_it('OUT'))
+ l_do_R=l_RT_rotate_DM.and.RT_do_it('OUT')
  !
  if (.not.l_do_E .and. .not. l_do_R) return
  !

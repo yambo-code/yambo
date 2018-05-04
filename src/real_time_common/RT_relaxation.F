@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
+subroutine RT_relaxation(dG_in,E,k,q,Time)
  !
  ! 1) The KBE is coded in terms of :
  !
@@ -67,48 +67,39 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use RT_control,     ONLY:NE_i_start_time
  use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_TIME_status,REF_lifetime,FIRST_step,l_initial_equilibrium,RT_is_statically_dephased,&
-&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,NE_i_time,&
+&                         REF_lifetime,FIRST_step,l_initial_equilibrium,RT_is_statically_dephased,&
+&                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
-&                         RT_is_dynamically_dephased,l_RT_relax_time_approx
+&                         RT_is_dynamically_dephased,l_RT_relax_time_approx,l_RT_eval_lifetimes
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k,q
- logical,       intent(in)    :: l_equilibrium
  real(SP),      intent(in)    :: Time
  complex(SP),   intent(inout) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !
  integer          :: ik
- logical          :: l_eval
  !
- l_initial_equilibrium=l_equilibrium
+ call RT_relaxation_logicals( )
  !
  if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
 &     (.not.RT_is_dynamically_dephased)                          .or. &
 &     (.not.l_initial_equilibrium.and.l_RT_relax_time_approx)         ) return
  !
- if (.not.l_initial_equilibrium) then
-   l_eval= RT_TIME_status(NE_i_time)>0.and.(FIRST_step( ).or.NE_i_time<=NE_i_start_time+Life_MEM_steps-1)
- else
-   l_eval=.TRUE.
- endif
- !
  ! Lifetimes History and updates
  !================================
- call RT_Lifetimes_use_delta_Occupations(l_eval)
+ if (l_RT_eval_lifetimes) call RT_Lifetimes_use_delta_Occupations( )
  !
  ! El-El
  !=======
- if(l_elel_scatt.and.l_eval ) then
+ if(l_elel_scatt.and.l_RT_eval_lifetimes ) then
    !
    call timing('RT relaxation (e-e)',OPR='start')
    !
@@ -126,7 +117,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! El-Ph
  !=======
- if(l_elph_scatt.and.l_eval) then
+ if(l_elph_scatt.and.l_RT_eval_lifetimes) then
    !
    call timing('RT relaxation (e-p)',OPR='start')
    !
@@ -144,7 +135,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! El-Photon
  !============
- if(l_elphoton_scatt.and.l_eval) then
+ if(l_elphoton_scatt.and.l_RT_eval_lifetimes) then
    !
    call timing('RT relaxation (e-photon)',OPR='start')
    !
@@ -162,7 +153,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! PARALLEL Mergering & N/dN conservation (of the evaluated Lifetimes)
  !=====================================================================
- if (l_eval) then
+ if (l_RT_eval_lifetimes) then
    if (l_elel_scatt) then
      call RT_Lifetimes_merge(E,k,E_E_Hole_lifetime,1)
      call RT_Lifetimes_merge(E,k,E_E_Electron_lifetime,2)
@@ -181,7 +172,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
    endif
  endif
  !
- if (l_eval) call Impose_Conservations( )
+ if (l_RT_eval_lifetimes) call Impose_Conservations( )
  !
  if (l_initial_equilibrium) return
  !
@@ -190,26 +181,26 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! Time points saved for later extrapolation
  !
- if (l_eval) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
+ if (l_RT_eval_lifetimes) call ADD_to_saved_values(Time,SAVED_times,Life_MEM_steps)
  !
  if (l_elel_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_E_Hole_lifetime,1)
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_E_Electron_lifetime,2)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_E_Hole_lifetime,1)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_E_Electron_lifetime,2)
  endif
  if (l_elph_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Hole_lifetime,3)
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Electron_lifetime,4)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Hole_lifetime,3)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Electron_lifetime,4)
    if(Bose_Temp>0._SP) then
-     call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_Ho_abs_lifetime,5)
-     call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_P_El_abs_lifetime,6)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_Ho_abs_lifetime,5)
+     call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_P_El_abs_lifetime,6)
    endif
  endif
  if (l_elphoton_scatt) then
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_PHOT_Hole_lifetime,7)
-   call RT_Lifetimes_save_and_extrap(Time,l_eval,E,k,E_PHOT_Electron_lifetime,8)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_PHOT_Hole_lifetime,7)
+   call RT_Lifetimes_save_and_extrap(Time,l_RT_eval_lifetimes,E,k,E_PHOT_Electron_lifetime,8)
  endif
  !
- if (.not.l_eval) call Impose_Conservations( )
+ if (.not.l_RT_eval_lifetimes) call Impose_Conservations( )
  !
  contains
    !

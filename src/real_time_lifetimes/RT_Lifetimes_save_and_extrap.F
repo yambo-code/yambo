@@ -27,11 +27,10 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
  use drivers,        ONLY:l_elel_scatt,l_elphoton_scatt,l_elph_scatt
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_TIME_status,SAVED_times,FIRST_step,&
-&                         Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,NE_i_time,&
-&                         RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference,RT_bands
+ use real_time,      ONLY:SAVED_times,Life_MEM_steps,SAVED_lifetime,RT_nk,&
+&                         ADD_to_saved_values,RT_E_occupations,RT_E_occupations_reference,&
+&                         RT_H_occupations,RT_H_occupations_reference,RT_bands,&
+&                         l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes
  !
  implicit none
  !
@@ -82,7 +81,7 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
    !
  else
    !
-   if (RT_TIME_status(NE_i_time)==0 .or. (RT_TIME_status(NE_i_time)>0.and..not.FIRST_step( )) ) then
+   if (l_RT_extrapolate_lifetimes) then
      !
      !==============
      ! EXTRAPOLATE 
@@ -94,7 +93,7 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
        enddo
      enddo
      !
-   else if (RT_TIME_status(NE_i_time)<0) then
+   else if (l_RT_constant_lifetimes) then
      !
      !===============
      ! KEEP CONSTANT 

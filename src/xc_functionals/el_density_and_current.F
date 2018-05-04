@@ -57,7 +57,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  use timing_m,       ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
+ use real_time,     ONLY:RT_delta_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
  !
  implicit none
@@ -123,7 +123,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           f_occ=f_occ+RT_delta0_occupations(ib,ik_RT)
+           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)
          enddo
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
@@ -144,7 +144,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
            rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
          enddo
        endif
-       !
+       !DEBUG>
        !if (l_J) then
        !  !
        !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
@@ -158,7 +158,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !  enddo
        !  !
        !endif
-       !
+       !DEBUG<
      enddo
    enddo
  enddo

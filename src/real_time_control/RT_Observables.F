@@ -45,7 +45,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Workspace
  !
- real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),BGR(2)
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3)
  real(SP) :: E_IP
  !
  call timing('RT observables',OPR='start')
@@ -63,17 +63,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! GPL_EXCLUDE_START
  !
- ! DEBUG>
- !NCarr =OBSERVABLES( 1: 3)
- !TFit  =OBSERVABLES( 4: 5)
- !EfFit =OBSERVABLES( 6: 7)
- !Ener  =OBSERVABLES( 8:12)
- !Entr  =OBSERVABLES(13:15)
- !TEntr =OBSERVABLES(16:18)
- !EnEntr=OBSERVABLES(19:21)
- !BGR   =OBSERVABLES(22:23)
- ! DEBUG<
- !
  ! Carriers
  !==========
  call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
@@ -86,12 +75,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !=========
  call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
- ! BGR
- !=====
- BGR=0._SP
- !call RT_BGR(en,k,BGR)
- !
- OBSERVABLES=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:),BGR(:)/)
+ OBSERVABLES(1:21)=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:)/)
  !
  ! GPL_EXCLUDE_END
  !

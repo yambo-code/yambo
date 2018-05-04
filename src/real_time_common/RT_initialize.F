@@ -50,7 +50,7 @@ subroutine RT_initialize(E,k,q)
 &                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
 &                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
-&                         l_RT_impose_for_metals
+&                         l_RT_impose_for_metals,l_update_QP_WFs
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
@@ -388,7 +388,10 @@ subroutine RT_initialize(E,k,q)
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
  if (l_elel_scatt)         call msg( 'r','El-El         scattering   :',l_elel_scatt)
  if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
- if (l_update_QP_Energies) call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
+ if (l_update_QP_Energies) then
+   call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
+   l_update_QP_WFs=.TRUE.
+ endif
  if (l_update_SOC)         call msg( 'r','Update SOC Interaction     :',l_update_SOC)
  !
  ! GPL_EXCLUDE_END

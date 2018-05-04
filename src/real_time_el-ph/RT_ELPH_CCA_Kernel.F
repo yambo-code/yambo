@@ -31,7 +31,7 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
 &                         E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         l_RT_uses_E_DbGd,DbGd_ibz_coo,RT_occupations_locked,&
 &                         RT_H_occupations_reference,RT_E_occupations_reference,&
-&                         RT_delta_occupations,l_initial_equilibrium,q_weight_RT,&
+&                         RT_life_delta_occupations,l_initial_equilibrium,q_weight_RT,&
 &                         RT_eh_en,RT_ibz_coo,RT_Nk_ibz,RT_bands
  use parallel_m,     ONLY:PAR_IND_B_mat,PAR_B_mat_index,PAR_Xk_ibz_index,PAR_Q_index
  !
@@ -122,8 +122,8 @@ subroutine RT_ELPH_CCA_Kernel(ik,ik_m_q,i_q,i_l,N_q,E,ph_freq,Gkkp_sq,l_skip_ABS
            f_kmq      = RT_E_occupations_reference(i_np,ip_rim)/spin_occ
            Hole_f_kmq = RT_H_occupations_reference(i_np,ip_rim)/spin_occ
          else
-           f_kmq      =  RT_delta_occupations(i_np,ip_rim)/spin_occ
-           Hole_f_kmq = -RT_delta_occupations(i_np,ip_rim)/spin_occ
+           f_kmq      =  RT_life_delta_occupations(i_np,ip_rim)/spin_occ
+           Hole_f_kmq = -RT_life_delta_occupations(i_np,ip_rim)/spin_occ
          endif
          !
          TMP_Hole_lifetime(1)=TMP_Hole_lifetime(1)+f_kmq*P_ph_abs

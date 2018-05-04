@@ -49,10 +49,10 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
  ! 
  use pars,           ONLY:SP,cI
  use electrons,      ONLY:spin_occ
- use real_time,      ONLY:RT_bands,RT_all2ibz,l_RT_CCA_kernel,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
-&                         l_RT_relax_time_approx,RT_RTA_temp,RT_RTA_chem,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
-&                         RT_E_occupations,RT_H_occupations,RT_E_occupations_reference,RT_H_occupations_reference, &
-&                         RT_delta0_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
+ use real_time,      ONLY:RT_bands,RT_all2ibz,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,          &
+&                         l_RT_relax_time_approx,RT_RTA_E_occ_infty,RT_RTA_H_occ_infty,    &
+&                         RT_E_occupations,RT_H_occupations, &
+&                         RT_delta_occupations,REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,              &
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,         &
 &                         E_PHOT_Electron_lifetime,E_PHOT_Hole_lifetime,l_RT_include_eq_scatt,                     &
 &                         RT_is_statically_dephased,RT_is_dynamically_dephased,RT_Deph_Matrix,G_lesser_reference
@@ -79,20 +79,10 @@ subroutine RT_Scattering_step(dG_old,dG_inp,dG_out,ik,deltaT)
    f_(1)=RT_E_occupations(ib,ik)
    f_(2)=RT_H_occupations(ib,ik)
    !
-   ! 
-   ! The following is not sensitive 
-   !
-   ! DEBUG <
-   !f0(1)=RT_E_occupations_reference(ib,ik)
-   !f0(2)=RT_H_occupations_reference(ib,ik)
-   !df(1)= RT_delta_occupations(ib,ik)
-   !df(2)=-RT_delta_occupations(ib,ik)
-   ! DEBUG >
-   !
    f0(1)=         aimag(G_lesser_reference(ib,ib,ik))
    f0(2)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-   df(1)= RT_delta0_occupations(ib,ik)
-   df(2)=-RT_delta0_occupations(ib,ik)
+   df(1)= RT_delta_occupations(ib,ik)
+   df(2)=-RT_delta_occupations(ib,ik)
    !
    ! The GAMMA0 term could be moved inside RT_apply_RWA.F
    ! For the moment I keep it here, together with the rest of the relaxation term

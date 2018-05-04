@@ -137,48 +137,4 @@ module SC
      !
    end subroutine
    !
-   subroutine H_rotate(R,H,N,direction)
-     !
-     ! Transform H in the new/old basis defined by R
-     !
-     ! new basis |n'>
-     ! old basis |n>
-     !
-     ! R(i,j)=<i|j'>
-     !
-     ! direction = +1 => <n'|H|k'>=sum_{m,p} <n'|m> H(m,p) <p|k'> =
-     !                               sum_{m,p} R_(m,n')^* H(m,p) R(p,k) = 
-     !                               sum_{m,p} R^+_(n',m) H(m,p) R(p,k)
-     !
-     ! direction = -1 => <n|H|k>=sum_{m,p} <n|m'> H(m',p') <p'|k> =
-     !                               sum_{m,p} R_(n,m) H(m',p') R^*(k,p) = 
-     !                               sum_{m,p} R_(n,m) H(m',p') R^+(p,k)
-     !
-     use wrapper,        ONLY:M_by_M
-     !
-     integer     :: direction,N
-     complex(SP) :: H(N,N),R(N,N)
-     !
-     ! Work Space
-     !
-     integer     :: i,j
-     complex(SP) :: H_rot(N,N),R_(N,N)
-     !
-     if (direction ==  1) R_=R
-     if (direction == -1) forall(i=1:N,j=1:N) R_(i,j)=conjg(R(j,i))
-     !
-     ! [1] H_rot = (R_^{\dagger}) H
-     !     H     = H_rot
-     !
-     call M_by_M('c','n',N,R_,H,H_rot)
-     H = H_rot
-     !
-     ! [2] H_rot = H R_
-     !     H     = H_rot
-     !
-     call M_by_M('n','n',N,H,R_,H_rot)
-     H = H_rot
-     !
-   end subroutine 
-   !
 end module

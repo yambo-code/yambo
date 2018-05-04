@@ -49,7 +49,7 @@ module RT_interfaces
      character(6),    optional, intent(in) :: Double_Grid
    end subroutine RT_average_operator
    !
-   subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
+   subroutine RT_update(G_input,H_rotation,it,E,k,X,up_Gref,up_DIP,an_QP)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use QP_m,       ONLY:QP_nk
@@ -58,7 +58,7 @@ module RT_interfaces
      use real_time,  ONLY:RT_bands
      type(X_t),      intent(inout)        :: X
      complex(SP),    intent(inout)        :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk)
-     complex(SP),    intent(in)           :: SC_R(RT_bands(2),RT_bands(2),QP_nk,n_sp_pol)
+     complex(SP),    intent(in)           :: H_rotation(RT_bands(2),RT_bands(2),QP_nk,n_sp_pol)
      type(bz_samp),  intent(in)           :: k
      type(levels),   intent(in)           :: E
      integer,        intent(in)           :: it

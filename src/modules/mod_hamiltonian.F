@@ -59,11 +59,12 @@ module hamiltonian
  !
  ! Rotation matrix which diagonalize the hamiltonian
  !
- complex(SP), allocatable :: SC_R(:,:,:,:)
+ complex(SP), allocatable :: H_rotation(:,:,:,:)
  !
  ! Wavefunction indexes
  !
- integer :: WF_G_max,WF_Go_indx
+ integer :: WF_G_max
+ integer :: WF_Go_indx
  !
  contains
    !
@@ -118,7 +119,7 @@ module hamiltonian
      YAMBO_ALLOC(H_nl_sc,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
      !
      if(l_rotation_matrix) then
-       YAMBO_ALLOC(SC_R,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+       YAMBO_ALLOC(H_rotation,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      endif
      !
      if (.not.l_real_space.or.fft_size==0) return
@@ -148,7 +149,7 @@ module hamiltonian
      !
      YAMBO_FREE(Hzero)
      YAMBO_FREE(H_nl_sc)
-     YAMBO_FREE(SC_R)
+     YAMBO_FREE(H_rotation)
      !
      YAMBO_FREE(rho_n)
      YAMBO_FREE(magn_n)

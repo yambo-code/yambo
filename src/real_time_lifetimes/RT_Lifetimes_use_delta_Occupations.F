@@ -28,8 +28,8 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:ncpu,PAR_COM_PLASMA_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
-&                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
+&                         RT_life_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
+&                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
@@ -64,10 +64,10 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        f_E_occ_reference=RT_E_occupations_reference(ib,ik)
        f_H_occ_reference=RT_H_occupations_reference(ib,ik)
        !
-       if(f_E_occ<=0.5*spin_occ) RT_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
-       if(f_E_occ> 0.5*spin_occ) RT_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
+       if(f_E_occ<=0.5*spin_occ) RT_life_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
+       if(f_E_occ> 0.5*spin_occ) RT_life_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
        !
-       df_max=max(df_max,abs(RT_delta_occupations(ib,ik)))
+       df_max=max(df_max,abs(RT_life_delta_occupations(ib,ik)))
        !
      enddo
    enddo
@@ -81,7 +81,9 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
      !
      if (l_use_updated_reference) then
        !
+       !DEBUG<
        !if (abs( RT_delta_occupations(ib,ik) )<1.E-4*df_max) RT_occupations_locked(ib,ik)=.TRUE.
+       !DEBUG>
        !
        !DEBUG<
        !if( RT_occupations_locked(ib,ik) ) write(*,*) 'state= ',ib,ik,' locked'
@@ -113,7 +115,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        !
      else
        !
-       RT_delta_occupations(ib,ik)=RT_delta0_occupations(ib,ik)
+       RT_life_delta_occupations(ib,ik) =RT_delta_occupations(ib,ik)
        RT_E_occupations_reference(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
        !

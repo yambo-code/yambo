@@ -30,7 +30,7 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
  use RT_control,     ONLY:NE_i_start_time
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
  use real_time,      ONLY:RT_ibz_coo,DbGd_ibz_coo,l_RT_uses_E_DbGd,RT_Nk_ibz,NE_i_time,       &
-&                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta0_occupations
+&                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
  !
  implicit none
  !
@@ -82,10 +82,10 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
        endif
        if ( tmp_E<=0._SP ) then
          if(NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)
-         if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta0_occupations(ib,ik_RT)
+         if(NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)
        else
          if(NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)
-         if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta0_occupations(ib,ik_RT)
+         if(NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)
        endif
      enddo
      Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)

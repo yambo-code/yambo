@@ -168,8 +168,8 @@ module real_time
  !
  ! Update QP Energies and WFs
  !----------------------------
- logical                  :: l_update_QP_Energies
- logical                  :: l_update_QP_WFs=.false.
+ logical                  :: l_update_QP_Energies=.FALSE.
+ logical                  :: l_update_QP_WFs=.FALSE.
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
@@ -210,9 +210,9 @@ module real_time
  ! Energies
  !---------------------
  type RT_DbGd
-   real(SP), allocatable :: En(:,:,:)
+   real(SP), allocatable :: E(:,:,:)
    real(SP), allocatable :: W(:,:,:)
-   real(SP), allocatable :: kpt(:,:)
+   real(SP), allocatable :: k(:,:)
  end type
  !
  type(RT_DbGd),save  :: RT_E_and_k
@@ -221,14 +221,15 @@ module real_time
  !----------------------
  logical                  :: l_use_updated_reference
  logical                  :: l_initial_equilibrium
+ !
  real(SP),    allocatable :: RT_E_occupations(:,:) 
  real(SP),    allocatable :: RT_H_occupations(:,:) 
- real(SP),    allocatable :: RT_delta0_occupations(:,:) 
- real(SP),    allocatable :: RT_delta_occupations(:,:) 
+ real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
+ real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
  real(SP),    allocatable :: RT_E_occupations_reference(:,:) 
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
+ !
  logical,     allocatable :: RT_occupations_locked(:,:) 
- logical,     allocatable :: RT_lifetimes_locked(:,:) 
  !
  ! EL-PH RT life-times
  !-----------------------------------------
@@ -295,7 +296,6 @@ module real_time
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
- !complex(SP), allocatable :: I_relax_static(:,:,:)
  !
  ! Density
  !---------
@@ -481,15 +481,15 @@ module real_time
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     YAMBO_ALLOC(RT_E_and_k%En,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_E_and_k%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%kpt,(3,RT_nk))
+     YAMBO_ALLOC(RT_E_and_k%k,(3,RT_nk))
      !
      YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      !
      YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
      RT_E_occupations_reference=0._SP
@@ -499,9 +499,6 @@ module real_time
      !
      YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
      RT_occupations_locked=.false.
-     !
-     YAMBO_ALLOC(RT_lifetimes_locked,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_lifetimes_locked=.false.
      !
      YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
@@ -553,10 +550,6 @@ module real_time
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     !if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-     !  YAMBOO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     !endif
-     !
      YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      HARTREE0=cZERO
      !
@@ -607,7 +600,6 @@ module real_time
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
      YAMBO_FREE(RT_TIME_status)
-     !YAMBOO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
      YAMBO_FREE(E_PHOT_Hole_lifetime)
@@ -624,16 +616,15 @@ module real_time
      YAMBO_FREE(REF_V_xc_sc)
      YAMBO_FREE(RT_E_occupations)
      YAMBO_FREE(RT_H_occupations)
-     YAMBO_FREE(RT_delta0_occupations)
      YAMBO_FREE(RT_delta_occupations)
+     YAMBO_FREE(RT_life_delta_occupations)
      YAMBO_FREE(RT_E_occupations_reference)
      YAMBO_FREE(RT_H_occupations_reference)
      YAMBO_FREE(RT_occupations_locked)
-     YAMBO_FREE(RT_lifetimes_locked)
      YAMBO_FREE(REF_V_hartree_sc)
-     YAMBO_FREE(RT_E_and_k%En)
+     YAMBO_FREE(RT_E_and_k%E)
      YAMBO_FREE(RT_E_and_k%W)
-     YAMBO_FREE(RT_E_and_k%kpt)
+     YAMBO_FREE(RT_E_and_k%k)
      YAMBO_FREE(G_lesser)
      YAMBO_FREE(MEM_pointer)
      YAMBO_FREE(q_weight_RT)

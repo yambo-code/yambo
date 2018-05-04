@@ -49,7 +49,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
-&                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
+&                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
 &                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_tot
@@ -333,8 +333,8 @@ subroutine RT_start_and_restart(E,k,q)
      RT_H_occupations          =rzero
      RT_E_occupations_reference=rzero
      RT_H_occupations_reference=rzero
-     RT_delta0_occupations     =rzero
      RT_delta_occupations      =rzero
+     RT_life_delta_occupations =rzero
      !
      ! GPL_EXCLUDE_END
      !
@@ -378,9 +378,8 @@ subroutine RT_start_and_restart(E,k,q)
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
            endif
            !
-           RT_E_and_k%En(ib,ik_RT_DbGd,1) = Energy
-           RT_E_and_k%W(ib,ik_RT_DbGd,1)  = Width 
-           !RT_E_and_k%kpt(:,ik_RT_DbGd)  = k%pt(ik,:)
+           RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
+           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
            !
            G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
@@ -408,10 +407,10 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
        RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       RT_delta0_occupations(ib,:)     =         aimag(dG_lesser(ib,ib,:,1))
        RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
-       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta0_occupations(ib,:)
-       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta0_occupations(ib,:)
+       RT_life_delta_occupations(ib,:) =         aimag(dG_lesser(ib,ib,:,1))
+       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta_occupations(ib,:)
+       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta_occupations(ib,:)
      enddo
      !
      ! RTA infinity ditributions

@@ -165,17 +165,4 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
  enddo ! iqbz
  !
- ! Kernel composition
- !====================
- !
- !if (.not.l_RT_CCA_Kernel) then
- !  !
- !  do i_n=RT_bands(1),RT_bands(2)
- !    do i_np=RT_bands(1),RT_bands(2)
- !      I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
- !    enddo 
- !  enddo
- !  !
- !endif
- !
 end subroutine RT_ELPH_total_kernel

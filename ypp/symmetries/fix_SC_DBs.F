@@ -29,7 +29,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use SC,                  ONLY:l_sc_V_is_local,H_nl_sc,SC_bands
- use hamiltonian,         ONLY:SC_R
+ use hamiltonian,         ONLY:H_rotation
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
@@ -101,7 +101,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  !  Wave-function
  !
- YAMBO_ALLOC(SC_R,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz,n_sp_pol))
+ YAMBO_ALLOC(H_rotation,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz,n_sp_pol))
  !
  nkibz=k_save%nibz
  !
@@ -126,12 +126,12 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  enddo
  !
  do ik=k_save%nibz+1,k%nibz
-   SC_R(:,:,ik,:)=SC_R(:,:,kpoints_map(1,ik),:)
+   H_rotation(:,:,ik,:)=H_rotation(:,:,kpoints_map(1,ik),:)
    call io_control(ACTION=WR_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*k%nibz/),ID=ID)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
- YAMBO_FREE(SC_R)
+ YAMBO_FREE(H_rotation)
  !
  ! Copy the potential
  !

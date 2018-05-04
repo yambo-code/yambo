@@ -277,17 +277,17 @@ subroutine RT_driver(E,X,k,q)
    ! G_lesser@NE_time
    !###################
    !
+   ! Calculate the RT Hamiltonian Ho_plus_Sigma
+   !============================================
+   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   call RT_H_rotate(E,k,OBSERVABLES(22:23))
+   call RT_Hamiltonian_diagonalize(E,OBSERVABLES(22:23))
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
-   !
-   ! Calculate the RT Hamiltonian Ho_plus_Sigma
-   !============================================
-   call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
    ! GPL_EXCLUDE_START
    !

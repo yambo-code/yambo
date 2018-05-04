@@ -50,10 +50,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !    TD-LDA      ==>  \Sigma^Hxc=V^H+V^xc
  !    TD-SEX      ==>  \Sigma^Hxc=V^H+\Simga^{SEX} (only strategy 2a available)
  !
- use pars,           ONLY:SP,cONE,cZERO,rZERO
+ use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
- use units,          ONLY:SPEED_OF_LIGHT
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
@@ -61,11 +60,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,l_RT_uses_E_DbGd,REF_V_xc_sc, &
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
-&                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k,    &
+&                         RT_bands,RT_nbands,RT_nk,    &
 &                         l_update_SOC
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu!,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -82,7 +81,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  logical                  :: l_H_contains_Hartree
  integer                  :: ik,ik_RT,ik_DbGd,ib
- real(SP),    allocatable :: delta_rho(:),delta_magn(:,:),E_new
+ real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
  !
  call timing('RT Hamiltonian',OPR='start')
@@ -203,7 +202,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  ! The External Field
  !====================
  if (l_NE_with_fields.and.HEAD_k_cpu) then
- !if (l_NE_with_fields) then
    !
    do ik=1,nXkibz 
      if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
@@ -219,7 +217,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  ! The bare Hamiltonian
  !=========================
  if ((.not.l_RT_RWA).and.HEAD_k_cpu.and.HEAD_QP_cpu) then
- !if (.not.l_RT_RWA) then
    !
    do ik=1,nXkibz
      !
@@ -240,32 +237,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  ! All2All
  !=========
  call PP_redux_wait(Ho_plus_Sigma)
- !
- ! The Energies (only) update
- !==========================
- if (l_update_QP_Energies) then
-   !
-   RT_E_and_k%En=rZERO
-   !
-   do ik=1,nXkibz 
-     !
-     if (.not.(PAR_IND_WF_k%element_1D(ik).and.HEAD_k_CPU)) cycle
-     !if (.not. PAR_IND_WF_k%element_1D(ik) ) cycle
-     !
-     do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-       ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-       do ib=RT_bands(1),RT_bands(2)
-         E_new=real(Ho_plus_sigma(ib,ib,ik_RT,1),SP)
-         ! Here I update both E%E and RT_E_and_k%En
-         ! In future only RT_E_and_k could be used, like for the occupations
-         RT_E_and_k%En(ib,ik_RT,1)=E_new
-         if(     l_RT_uses_E_DbGd) E%E_DbGd(ib,ik_DbGd,1)   =E_new
-         if(.not.l_RT_uses_E_DbGd) E%E(ib,ik,1)             =E_new
-       enddo
-     enddo
-   enddo
-   call PP_redux_wait(RT_E_and_k%En) !,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- endif
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

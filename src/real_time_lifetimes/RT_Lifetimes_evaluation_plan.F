@@ -96,6 +96,10 @@ integer function RT_Lifetimes_evaluation_plan( )
    !
  enddo
  !
+ ! First Life_MEM_steps elements must be calculated
+ !
+ RT_TIME_status(NE_i_start_time:NE_i_start_time+Life_MEM_steps-1)=1
+ !
  RT_Lifetimes_evaluation_plan = count( RT_TIME_status >0 )
  !
  contains

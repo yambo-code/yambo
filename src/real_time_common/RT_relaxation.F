@@ -61,7 +61,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !    E  X                     X       X
  !    dF                       X       X
  !
- use pars,           ONLY:SP,cI,cZERO
+ use pars,           ONLY:SP
  use D_lattice,      ONLY:Bose_Temp
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
@@ -96,12 +96,10 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
 &     (.not.RT_is_dynamically_dephased)                          .or. &
 &     (.not.l_initial_equilibrium.and.l_RT_relax_time_approx)         ) return
  !
- l_eval=l_initial_equilibrium 
- !
  if (.not.l_initial_equilibrium) then
-   l_eval= ( RT_TIME_status(NE_i_time)>0 .and. &
-&            (FIRST_step( ) .or. NE_i_time-NE_i_start_time+1<=Life_MEM_steps ) ).or. &
-&          Life_MEM_steps==1
+   l_eval= RT_TIME_status(NE_i_time)>0.and.(FIRST_step( ).or.NE_i_time<=NE_i_start_time+Life_MEM_steps-1)
+ else
+   l_eval=.TRUE.
  endif
  !
  ! Lifetimes History and updates

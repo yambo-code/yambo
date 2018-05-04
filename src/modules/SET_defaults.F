@@ -121,9 +121,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
-#if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
-#endif
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
  implicit none
@@ -168,9 +166,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Clocks
  !
-#if defined _TIMING
  call timing_allocate(nclockx)
-#endif
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)

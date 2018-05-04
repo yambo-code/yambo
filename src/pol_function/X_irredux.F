@@ -65,9 +65,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  type(PAR_matrix)     :: X_par
  type(levels)         :: Xen
@@ -121,9 +119,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
-#if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
-#endif
  !
  ! Poles tabulation
  !==================
@@ -335,10 +331,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  current_iq=iq
  n_threads_FFT=0
  !
-#if defined _TIMING
  call timing('Xo (procedure)',OPR='stop')
  call timing('Xo (REDUX)',OPR='start')
-#endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
@@ -347,9 +341,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    endif
  enddo
  !
-#if defined _TIMING
  call timing('Xo (REDUX)',OPR='stop')
-#endif
  !
  ! Populate the lower triangle/piece of Xo 
  !=========================================

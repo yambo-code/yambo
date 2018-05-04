@@ -29,9 +29,7 @@ integer function io_QINDX(Xk,q,io_db)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -40,9 +38,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  integer      :: ioScatt
  !
-#if defined _TIMING
  call timing('io_QINDX',OPR='start')
-#endif
  !
  io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
@@ -155,8 +151,6 @@ integer function io_QINDX(Xk,q,io_db)
  !
 1 call io_disconnect(ID=io_db)
  !
-#if defined _TIMING
  call timing('io_QINDX',OPR='stop')
-#endif
  !
 end function

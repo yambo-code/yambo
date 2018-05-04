@@ -31,6 +31,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use wrapper,        ONLY:Vstar_dot_V
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
+ use timing_m,       ONLY:timing
 #if defined _SC
  use drivers,        ONLY:l_sc_run
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
@@ -39,11 +40,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use drivers,        ONLY:l_real_time
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
 #endif
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
  implicit none
  !
  integer,      intent(in)    :: ik,i_sp_pol
@@ -63,9 +59,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu)) return
 #endif
  !
-#if defined _TIMING
  call timing('V_real_space_to_H',OPR='start')
-#endif
  !
  if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
  if(V_kind=="def") then
@@ -142,8 +136,6 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
    enddo
  enddo
  !
-#if defined _TIMING
  call timing('V_real_space_to_H',OPR='stop')
-#endif
  !
 end subroutine 

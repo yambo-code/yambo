@@ -37,10 +37,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer           :: N
@@ -57,9 +54,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  if (SLK_ORTHO%coordinate(1)==-1) return
  !
-#if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='start')
-#endif
  !
  lwork=-1
  lrwork=-1
@@ -92,9 +87,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS) 
  !
-#if defined _TIMING
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
-#endif
  !
 end subroutine PARALLEL_HERMITIAN_diagonalization
 

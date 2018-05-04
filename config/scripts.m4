@@ -44,9 +44,14 @@ if test "x$enable_ydb" = "xyes"; then
   mkdir -p scripts
   git clone $url_ydb scripts/ydb
   #
-  cd bin
-  ln -s ../scripts/ydb/ydb.pl .
-  cd ..
+  if test -d "scripts/ydb"; then 
+   cd $exec_prefix/bin
+   ln -s ../scripts/ydb/ydb.pl .
+   cd $srcdir
+  else
+   enable_ydb="no"
+   AC_MSG_WARN([Impossible to install YDB.])
+  fi
  fi
  #
  YDB_dir="$PWD/scripts/ydb"

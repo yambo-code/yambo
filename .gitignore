@@ -50,6 +50,7 @@ sbin/objects_store.sh
 sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
+bin-libs/*
 
 # source #
 ##########

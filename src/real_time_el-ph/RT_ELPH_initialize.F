@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel,RT_bands,l_RT_uses_E_DbGd
+&                         l_RT_CCA_Kernel,RT_bands,RT_nbands,l_RT_uses_E_DbGd
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
@@ -50,8 +50,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_s,i_n,i_np,ik_bz,ik_mem,ik_m_q,&
-&                      first_el(2,RT_bands(2)),n_of_el(2,RT_bands(2)),n_deg_grp(2),i1,i2,iq_mem,io_REF
+ integer             ::iq,ID,io_err,ik,i_counter,iq_io,il,i_s,i_n,i_n1,i_n2,i_np,i_np1,i_np2,ik_bz,ik_mem,ik_m_q,&
+&                      first_el(RT_bands(2),2),n_of_el(RT_bands(2),2),n_deg_grp(2),i1,i2,iq_mem,i_ph,io_REF
  real(SP)            ::RADIUS_sphere,ph_Esq_local(q%nbz,ph_modes),q_mod(q%nbz),q0_mod,&
 &                      q_weight_tmp(q%nbz,2),ph_mean_speed(3),ph_E,MAX_gkkp_expanded_at_kpq(k%nibz,q%nbz)
  real(SP)            ::gkkp_average(ph_modes)
@@ -95,7 +95,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  MAX_gkkp_expanded_at_kpq=0._SP
  !
  if (.not.l_RT_CCA_Kernel) then
-   YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1,nXkibz))
+   YAMBO_ALLOC(THETA_matrix,(2*q%nbz*ph_modes,RT_nbands,RT_nbands,nXkibz))
    THETA_matrix=cZERO
    YAMBO_ALLOC(THETA_matrix_index,(q%nbz,ph_modes,2))
  endif
@@ -144,37 +144,35 @@ subroutine RT_ELPH_initialize(E,k,q)
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
      !
-     if (l_RT_uses_E_DbGd) then
+     !if (l_RT_uses_E_DbGd) then
        !
        ! Degeneration Finder
        !====================
-       call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)
-       call degeneration_finder(E%E(:RT_bands(2),ik_m_q,1),RT_bands(2),first_el(2,:),n_of_el(2,:),n_deg_grp(2),0.0001/HA2EV)
+       call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(:,1),n_of_el(:,1),n_deg_grp(1),0.0001_SP/HA2EV)
+       call degeneration_finder(E%E(:RT_bands(2),ik_m_q,1),RT_bands(2),first_el(:,2),n_of_el(:,2),n_deg_grp(2),0.0001_SP/HA2EV)
        !
-       do i1=1,n_deg_grp(1)
-         do i_np=RT_bands(1),RT_bands(2)
-           do i2=1,2
-             if (i2==1) gkkp_average=0._SP
-             do i_n=first_el(1,i1),first_el(1,i1)+n_of_el(1,i1)-1
-               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
-               if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(1,i1))
-             enddo
+       do i_np=RT_bands(1),RT_bands(2)
+         do i1=1,n_deg_grp(1)
+           i_n1=first_el(i1,1)
+           i_n2=first_el(i1,1)+n_of_el(i1,1)-1
+           do i_ph=1,ph_modes
+             gkkp_average(i_ph)=sum(elph_gkkp_expanded_sq(i_n1:i_n2,i_np,i_ph,iq_mem,ik_mem))
+             elph_gkkp_expanded_sq(i_n1:i_n2,i_np,i_ph,iq_mem,ik_mem)=gkkp_average(i_ph)/real(n_of_el(i1,1),SP)
            enddo
          enddo
        enddo
-       do i1=1,n_deg_grp(2)
-         do i_n=RT_bands(1),RT_bands(2)
-           do i2=1,2
-             if (i2==1) gkkp_average=0._SP
-             do i_np=first_el(2,i1),first_el(2,i1)+n_of_el(2,i1)-1
-               if (i2==1) gkkp_average(:)=gkkp_average(:)+elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)
-               if (i2==2) elph_gkkp_expanded_sq(i_n,i_np,:,iq_mem,ik_mem)=gkkp_average(:)/real(n_of_el(2,i1))
-             enddo
+       do i_n=RT_bands(1),RT_bands(2)
+         do i1=1,n_deg_grp(2)
+           i_np1=first_el(i1,2)
+           i_np2=first_el(i1,2)+n_of_el(i1,2)-1
+           do i_ph=1,ph_modes
+             gkkp_average(i_ph)=sum(elph_gkkp_expanded_sq(i_n,i_np1:i_np2,i_ph,iq_mem,ik_mem))
+             elph_gkkp_expanded_sq(i_n,i_np1:i_np2,i_ph,iq_mem,ik_mem)=gkkp_average(i_ph)/real(n_of_el(i1,2),SP)
            enddo
          enddo
        enddo
        !
-     endif
+     !endif
      !
      MAX_gkkp_expanded_at_kpq(ik,iq)=maxval(sqrt(elph_gkkp_expanded_sq(:,:,:,iq_mem,ik_mem)))
      !

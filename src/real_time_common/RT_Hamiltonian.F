@@ -62,15 +62,14 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
 &                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k,    &
-&                         l_update_SOC,NE_time
- use fields,         ONLY:gauge_field,Efield,n_ext_fields
+&                         l_update_SOC
+ use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu,master_cpu,myid,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu!,PAR_COM_Xk_ibz_INDEX
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
-#if defined _TIMING
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -81,13 +80,12 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ik_DbGd,ib,ibp,i_dir
+ logical                  :: l_H_contains_Hartree
+ integer                  :: ik,ik_RT,ik_DbGd,ib
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:),E_new
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
  !
-#if defined _TIMING
  call timing('RT Hamiltonian',OPR='start')
-#endif
  !
  ! Contribution from \delta\Sigma_coherent
  !=========================================
@@ -103,12 +101,14 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !  V_xc(rho_reference)      is in REF_V_xc_sc
  !  S_xc(G_reference)        is introduced in the QP corrections to the eigenvalues
  !
+ l_H_contains_Hartree=.FALSE.
  Ho_plus_Sigma=cZERO
  !
  ! Local part computed in real space (V_xc_sc and V_Hartree_sc)
  !=============================================================
  !
- if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') ) then
+ if ( (.not.l_use_Hxc_collisions .and. .not.trim(RT_Potential)=='IP') .or. &
+&     (.not.COLLISIONS_have_HARTREE .and. index(trim(RT_potential),"HARTREE")>0) ) then
    !
    ! Density & Magnetization (needed for VHartree and Vxc)
    !--------------------------
@@ -171,6 +171,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      enddo
    endif
    !
+   l_H_contains_Hartree=index(trim(RT_potential),"HARTREE")>0
    if(allocated(V_scf_grad)) deallocate(V_scf_grad)
    !
  endif
@@ -187,9 +188,15 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    if(HEAD_QP_cpu.and.HEAD_k_cpu) then
      do ik=1,nXkibz 
        if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
-       enddo
+       if (l_H_contains_HARTREE) then
+         do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           Ho_plus_Sigma(:,:,ik_RT,1)=Ho_plus_Sigma(:,:,ik_RT,1)+RT_Vnl_xc(:,:,ik,1)
+         enddo
+       else
+         do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
+         enddo
+       endif
      enddo
    endif
    !
@@ -242,7 +249,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !==========================
  if (l_update_QP_Energies) then
    !
-   RT_E_and_k%En(ib,ik_RT,1)=rZERO
+   RT_E_and_k%En=rZERO
    !
    do ik=1,nXkibz 
      !
@@ -264,8 +271,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    call PP_redux_wait(RT_E_and_k%En) !,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
-#if defined _TIMING
  call timing('RT Hamiltonian',OPR='stop')
-#endif
  !
 end subroutine RT_Hamiltonian

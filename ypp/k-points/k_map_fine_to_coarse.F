@@ -37,7 +37,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
 &                              BZ_DbGd_tot_nk_levels,BZ_DbGd_tot_nk,n_sp_pol,BZ_DbGd_max_filling,&
 &                              BZ_DbGd_weight,E_reset,DbGd_is_symmetry_expanded
  use parallel_m,          ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,          ONLY:PARALLEL_index,OCCUPATIONS_Fermi
+ use interfaces,          ONLY:PARALLEL_index,OCCUPATIONS_Fermi,io_DB1_selective_scan
  use LIVE_t,              ONLY:live_timing
  use IO_m,                ONLY:io_control,LOG,OP_WR_CL
  !
@@ -66,7 +66,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  ! Functions
  !
- integer, external :: io_DB1_selective_scan,io_Double_Grid
+ integer, external :: io_Double_Grid
  !
  BZ_DbGd_nbands=0
  !
@@ -93,7 +93,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  i_err=0
  if (n_DbGd_DBs>0) then
    do i_db=1,n_DbGd_DBs
-     i_err(i_db)=io_DB1_selective_scan(DbGd_E(i_db),DbGd_k(i_db),trim(DbGd_DB1_paths(i_db,1)),'all')
+     i_err(i_db)=io_DB1_selective_scan('all',trim(DbGd_DB1_paths(i_db,1)),DbGd_E(i_db),DbGd_k(i_db))
      if (i_err(i_db)/=0) call msg("s",'DbGd database NOT FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
      if (i_err(i_db)==0) call msg("s",'DbGd database FOUND @'//trim(DbGd_DB1_paths(i_db,1)))
      !

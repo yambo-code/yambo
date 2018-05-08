@@ -35,9 +35,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -52,9 +50,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
 &               ExJs(3,n_spinor,n_spinor),A_A_vec_pot_tens(3,3),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
-#if defined _TIMING
  call timing('RT Apply Field',OPR='start')
-#endif
  !
  if(trim(global_gauge)=='velocity') then
    !
@@ -166,8 +162,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    enddo
  endif
  !
-#if defined _TIMING
  call timing('RT Apply Field',OPR='stop')
-#endif
  !
 end subroutine RT_apply_field

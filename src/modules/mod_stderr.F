@@ -85,6 +85,16 @@ module stderr
      call c_fprintf(cstr(lfmt),cstr(msg),cstr(rfmt),cstr(sfmt))
    end subroutine
    !
+   subroutine remove_new_line(s)
+    character(len=*) :: s
+    integer          :: i
+    do i = 1, len(s)
+      if (s(i:i) .eq. achar(10)) then
+        s(i:i)= " "
+      end if
+    end do
+  end subroutine
+   !
    character(lchlen) function cstr(si) result(so)
      character(*), intent(IN) :: si
      integer :: i 

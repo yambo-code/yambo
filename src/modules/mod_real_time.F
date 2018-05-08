@@ -160,6 +160,10 @@ module real_time
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
+ ! K-points parallelization
+ !
+ integer                 :: RT_PAR_nk
+ !
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used
  !
@@ -489,23 +493,6 @@ module real_time
      YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_E_and_k%k,(3,RT_nk))
      !
-     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     !
-     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
-     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_E_occupations_reference=0._SP
-     !
-     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_H_occupations_reference=0._SP
-     !
-     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_occupations_locked=.false.
-     !
-     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
      if(l_RT_relax_time_approx) then
        YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
        YAMBO_ALLOC(RT_RTA_H_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
@@ -560,9 +547,22 @@ module real_time
      YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      XC0=cZERO
      !
-     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     ! G's ...
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk))
+     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,G_MEM_steps))
+     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,G_MEM_steps))
      !
-     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     ! Occ's ...
+     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_E_occupations_reference=0._SP
+     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_H_occupations_reference=0._SP
+     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_occupations_locked=.false.
+     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
      MEM_pointer    = 0

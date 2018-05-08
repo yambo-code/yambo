@@ -28,7 +28,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use RT_control,    ONLY:OBS_RT_IO_t
- use real_time,     ONLY:RT_carriers,NE_i_time,RT_nk,l_elel_scatt,l_elph_scatt,&
+ use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace
  !
@@ -40,7 +40,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  ! Work Space
  !
  integer           :: io_RT_err,ID
- integer, external :: io_RT_components,RT_k_grid
+ integer, external :: io_RT_components
  !
  call section('*','Manual carriers excitation')
  !
@@ -51,7 +51,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  l_elphoton_scatt=.true.
  l_RT_CCA_Kernel =.true.
  !
- RT_nk=RT_k_grid(en,kpt,qpt)
+ call RT_k_grid(en,kpt,qpt)
  !
  call RT_alloc(en)
  !

@@ -31,8 +31,9 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
  use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
- use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,l_RT_uses_E_DbGd,RT_bands
+ use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
+ !
  implicit none
  !
  complex(SP), intent(in)   :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
@@ -49,6 +50,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  G_avg=cZERO
  !
  do i_k=1,nXkibz
+   !
    do i_k_RT=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
      G_avg(:,:,i_k)=G_avg(:,:,i_k)+dG_in(:,:,i_k_RT)
    enddo

@@ -438,24 +438,28 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)
  !
  call it(defs,'RTehEny',     '[RT] Electron-hole energy range',RT_eh_en,unit=E_unit,verb_level=V_real_time)
+ !
+ ! ... flags ...
  call it('f',defs,'RTskipImposeN', '[RT] Conservation of N, dN  imposed by hand on-the-fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEnergt',  '[RT] Energy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'RTEvalEntropy', '[RT] Entropy variation computed on the fly',Verb_level=V_real_time)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
- call it('f',defs,'UpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
+ call it('f',defs,'RTUpdateSOC',   '[RT] Update the SOC interaction on-the-fl',Verb_level=V_real_time)
+ call it('f',defs,'RTUpdateE',     '[RT] Update the Enery levels on-the-fly',Verb_level=V_real_time)
  !
  ! Scattering
  !
- call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
  call it(defs,'LifeExtrapSteps',   '[RT] Step length between and inside two consecutive groups of lifetimes',&
 &                                  RT_life_extrap_times_SAVE,unit=Time_unit(1))
- call it('f',defs,'RelaxTimeApprox',    '[RT] Skipped Lifetimes are extrapolated',Verb_level=V_real_time)
  call it(defs,'RTAtemp',   '[RT] Temperatures for relaxation time approximation',&
 &              RT_RTA_temp,unit=T_unit,Verb_level=V_real_time)
  call it(defs,'RTAchem',   '[RT] Chemical potentials for relaxation time approximation',&
 &              RT_RTA_chem,unit=E_unit,Verb_level=V_real_time)
  call it(defs,'ScattTresh', '[RT] Treshold on the eh energy to compute the scattering',RT_scatt_tresh,&
 &                           unit=E_unit,verb_level=V_real_time)
+ ! ... flags ...
+ call it('f',defs,'LifeExtrapolation',    '[RT] Skipped Lifetimes are extrapolated')
+ call it('f',defs,'RelaxTimeApprox',      '[RT] Skipped Lifetimes are extrapolated',Verb_level=V_real_time)
  ! 
  ! Update QP Energies
  !
@@ -470,7 +474,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! ELPH
  !
  call it(defs,'MemTresh',   '[RT] Treshold on the decay of the retarded GF',NE_MEM_treshold,verb_level=V_real_time)
- !call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
+ call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
  ! External fields

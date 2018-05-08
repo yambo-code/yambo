@@ -61,11 +61,10 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:bz_samp  
- use real_time,      ONLY:G_lesser_reference,RT_E_occupations,&
-&                         RT_H_occupations,RT_delta_occupations,Integrator_step,&
-&                         RT_nk,RT_bands,a_tableau,b_tableau,c_tableau,RWA_table,Integrator_nsteps
+ use real_time,      ONLY:Integrator_step,RT_nk,RT_bands,a_tableau,b_tableau,&
+&                         c_tableau,RWA_table,Integrator_nsteps
  use fields,         ONLY:gauge_field
- use electrons,      ONLY:levels,spin_occ
+ use electrons,      ONLY:levels
  use timing_m,       ONLY:timing
  implicit none
  !
@@ -80,7 +79,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  ! Work Space
  !
  integer     :: i_step
- real(SP)    :: df_H,delta_T1,delta_T2,delta_T3
+ real(SP)    :: delta_T1,delta_T2,delta_T3
  complex(SP) :: dG_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,Integrator_nsteps+1)
  !
  type(gauge_field) :: A_tmp(Integrator_nsteps+1)
@@ -108,7 +107,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    call RT_relaxation_logicals( )
    !
-   call RT_update_occ(dG_tmp(:,:,:,i_step))
+   call RT_occupations(dG_tmp(:,:,:,i_step))
    !
    ! Fields @ T+dt2
    !
@@ -140,9 +139,13 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! GPL_EXCLUDE_START
  !
+ ! Rotate the G_lesser in the instaneous basis
+ !
+ call RT_Glesser_rotate(dG_new)
+ !
  ! Occupations @ T+dT
  !
- call RT_update_occ(dG_new)
+ call RT_occupations(dG_new)
  !
  ! GPL_EXCLUDE_END
  !
@@ -159,52 +162,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  call timing('RT integrator',OPR='stop')
  !
  contains
-   !
-   subroutine RT_update_occ(dG)
-     !
-     use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_INDEX,HEAD_k_CPU
-     use real_time,      ONLY:RT_all2ibz
-     !
-     complex(SP), intent(in) :: dG(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
-     !
-     integer                 :: ik,ib,ibp
-     !
-     ! Update the occupations:
-     !  RT_delta_occupations are always sensitive to small changes 
-     !  for Gref~spin_occ RT_H_occ is also sensitive
-     !  for Gref~0        RT_E_occ is also sensitive
-     !
-     RT_E_occupations=0._SP
-     RT_H_occupations=0._SP
-     RT_delta_occupations=0._SP
-     !
-     do ik=1,RT_nk
-       !
-       !if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
-       !if (.not.(PAR_IND_WF_k%element_1D(RT_all2ibz(ik)).and.HEAD_k_CPU)) cycle
-       !
-       do ib=RT_bands(1),RT_bands(2)
-         !
-         RT_E_occupations(ib,ik)= aimag(dG(ib,ib,ik))+aimag(G_lesser_reference(ib,ib,ik))
-         !
-         ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
-         ! df_H this problem is solved.
-         !
-         df_H                   =spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-         RT_H_occupations(ib,ik)=-aimag(dG(ib,ib,ik))+ df_H
-         !
-         RT_delta_occupations(ib,ik)=aimag(dG(ib,ib,ik))
-         !
-       enddo
-     enddo
-     !
-     !call timing('RT int. redux',OPR='start')
-     !call PP_redux_wait(RT_E_occupations)
-     !call PP_redux_wait(RT_H_occupations)
-     !call PP_redux_wait(RT_delta_occupations)
-     !call timing('RT int. redux',OPR='stop')
-     !
-   end subroutine RT_update_occ
    !
    subroutine RT_build_dG_new()
      !

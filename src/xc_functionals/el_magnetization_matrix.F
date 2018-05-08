@@ -39,8 +39,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear
+ use real_time,      ONLY:RT_PAR_nk,RT_ibz_coo,RT_Nk_ibz,RT_bands
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_RT_k_index
  use matrix_operate, ONLY:UP_matrix_index,m3det
  use electrons,      ONLY:Spin_magn
  use timing_m,       ONLY:timing
@@ -48,14 +48,14 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,n_sp_pol)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: magn(fft_size,3)
  !
  ! Work Space
  !
- integer :: ib1,ib2,i_sp_pol,ik,ik_RT,isym,ifft,i_wf1,i_wf2
+ integer :: ib1,ib2,i_sp_pol,ik,ik_RT,isym,ifft,i_wf1,i_wf2,ik_mem
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  complex(SP) :: f_occ
  type(WAVEs) :: WF_tmp
@@ -131,8 +131,9 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
        !
        f_occ=cZERO
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)
-         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,1)*2._SP
+         ik_mem=PAR_RT_k_index(ik_RT)
+         if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_mem,1)
+         if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_mem,1)*2._SP
        enddo
        f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Hamiltonian_diagonalize(E,BGR)
+subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  !
  ! This routine defines and diagonalize the Coherent part of the
  ! evolution operator.
@@ -43,15 +43,17 @@ subroutine RT_Hamiltonian_diagonalize(E,BGR)
  use hamiltonian,    ONLY:H_rotation,E_reference
  use linear_algebra, ONLY:DIAGO,USE_LK
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_QP_cpu
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Gaps
+ use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_bands,&
 &                         l_RT_uses_E_DbGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         DbGd_ibz_coo,l_RT_eval_lifetimes
+ use R_lattice,      ONLY:bz_samp
  use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
  type(levels)                 :: E
+ type(bz_samp), intent(in)    :: k
  real(SP),      intent(out)   :: BGR(2)
  !
  ! Work Space
@@ -111,8 +113,10 @@ subroutine RT_Hamiltonian_diagonalize(E,BGR)
  !if (l_RT_uses_E_DbGd) call PP_redux_wait(E%E_DbGd)
  !
  ! Evaluation of the contribution to the minimal gap
+ 
+ call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS")
  !
- call OCCUPATIONS_Gaps(E)
+ !call OCCUPATIONS_Gaps(E)
  !
  BGR(1)=E%E_dir_gap(1)
  BGR(2)=E%E_ind_gap(1)

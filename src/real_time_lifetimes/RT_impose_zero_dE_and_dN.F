@@ -28,10 +28,9 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:DbGd_ibz_coo,l_RT_uses_E_DbGd,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
-&                         RT_E_occupations,RT_H_occupations,REF_lifetime,G_lesser_reference,&
+&                         REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta_occupations,&
-&                         l_RT_impose_E,RT_E_occupations_reference,l_RT_impose_for_metals,&
-&                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
+&                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
 &                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
  !
  implicit none
@@ -54,14 +53,14 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                dN0_dT_h_v,dN0_dT_h_c,dN0_dT_e_v,dN0_dT_e_c,dE0_dT_h_v,dE0_dT_h_c,dE0_dT_e_v,dE0_dT_e_c,&
 &                dN_v,dN_c,dE_v,dE_c,dN_e,dN_h,dE_e,dE_h,&
 &                dN0_v,dN0_c,dE0_v,dE0_c,dN0_e,dN0_h,dE0_e,dE0_h,&
-&                NUM,NUM0,DEN,DEN0
+&                NUM,NUM0,DEN
  !
  ! Prefactors
  real(DP)     :: prefactor(2),prefactor_to_use
  !
  logical      :: l_energy,l_n_electrons,l_n_carriers
  !
- if(l_initial_equilibrium.and.l_RT_include_eq_scatt) return
+ if (l_initial_equilibrium.and.l_RT_include_eq_scatt) return
  !
  if(index(Scatt_kind,'elel')/=0) then
    l_energy      =l_RT_impose_E

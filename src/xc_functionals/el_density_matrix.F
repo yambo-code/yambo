@@ -34,22 +34,22 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,myid
+ use real_time,      ONLY:RT_PAR_nk,RT_bands,RT_ibz_coo,RT_Nk_ibz
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_RT_k_index
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing
  !
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: G_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,n_sp_pol)
  integer,       intent(in)  :: lowest_band
  type(levels),  intent(in)  :: en       
  real(SP),      intent(out) :: rho(fft_size)
  !
  ! Work Space 
  !
- integer     :: ib1,ib2,ik,ik_RT,i_wf1,rho_syms,i_wf2,ir,i_sp_pol,i_spinor
+ integer     :: ib1,ib2,ik,ik_RT,i_wf1,rho_syms,i_wf2,ir,i_sp_pol,i_spinor,ik_mem
  real(SP)    :: rho_no_sym(fft_size)
  complex(SP) :: f_occ
  type(WAVEs) :: WF_tmp
@@ -106,8 +106,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
          !
          f_occ=cZERO
          do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)
-           if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)*2._SP
+           ik_mem=PAR_RT_k_index(ik_RT)
+           if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_mem,i_sp_pol)
+           if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_mem,i_sp_pol)*2._SP
          enddo
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
          !

@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
- use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
+ use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk, RT_PAR_nk,  &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
@@ -67,7 +67,7 @@ subroutine RT_initialize(E,k,q)
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it
- integer,         external:: RT_k_grid,RT_Lifetimes_evaluation_plan
+ integer,         external:: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
  !==========
@@ -75,7 +75,7 @@ subroutine RT_initialize(E,k,q)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
- call parser('RTUpdateEqp',          l_RT_update_Energies)
+ call parser('RTUpdateE',            l_RT_update_Energies)
  l_RT_rotate_DM                     =l_RT_update_Energies
  !
  ! GPL_EXCLUDE_START
@@ -98,7 +98,7 @@ subroutine RT_initialize(E,k,q)
  if(.not.eval_energy) eval_entropy=.false.
  !
  call parser('SaveGhistory',         SAVE_G_history)
- call parser('UpdateSOC',            l_update_SOC)
+ call parser('RTUpdateSOC',          l_update_SOC)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !
@@ -281,7 +281,7 @@ subroutine RT_initialize(E,k,q)
  !
  ! Number of K-points
  !====================
- RT_nk=RT_k_grid(E,k,q)
+ call RT_k_grid(E,k,q)
  !
  ! GPL_EXCLUDE_START
  !
@@ -408,7 +408,7 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
  call msg( 'r', '        (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
  call msg( 'nr','---Retarded GF---')
- call msg( 'r','Retarded Green`s function   :',Gr_kind)
+ call msg( 'r', 'Retarded Green`s function  :',Gr_kind)
  call msg( 'r', '        Energy ref  (c)[eV]:',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)
  call msg( 'r', '                    (v)[eV]:',QP_ctl_user(3,1)%Wv_E_ref*HA2EV)
  call msg( 'r', '        Analytic term (c)[eV,adim,eV^-1]:',QP_ctl_user(3,1)%Wc)
@@ -420,15 +420,17 @@ subroutine RT_initialize(E,k,q)
    if (l_elel_scatt) call msg( 'r','Energy (e-e)                :',l_RT_impose_E)
  endif
  !
- call msg( 'nr','---Double Grid---')
- call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
+ call msg( 'nr','---K Grid---')
+ call msg( 'r',      'Double Grid support        :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
-   call msg( 'r', 'K-points            (TOTAL):',RT_DbGd_nk)
-   call msg( 'r', '                     (USED):',RT_nk)
+   call msg( 'r',    'K-points            (TOTAL):',RT_DbGd_nk)
+   call msg( 'r',    '           (EVOLVED,MEMORY):',(/RT_nk,RT_PAR_nk/))
    if (l_elel_scatt) then
-     call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)
-     call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
+     call msg( 'r',  'Percentual used in e-e[o/o]:',DbGd_EE_percent)
+     call msg( 'r',  'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
    endif
+ else
+   call msg( 'r',    'K-points   (EVOLVED,MEMORY):',(/RT_nk,RT_PAR_nk/))
  endif
  !
  ! GPL_EXCLUDE_END

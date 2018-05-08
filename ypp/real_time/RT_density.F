@@ -53,13 +53,13 @@ subroutine RT_density(en,kpt,qpt)
  character(schlen)     :: ch_ws(2)
  logical               :: load_G_history
  !
- integer, external     :: io_RT_components,RT_k_grid
+ integer, external     :: io_RT_components
  !
  call parser('LoadGhistory',load_G_history)
  !
  call section('*','Time dependent density plot')
  !
- RT_nk=RT_k_grid(en,kpt,qpt)
+ call RT_k_grid(en,kpt,qpt)
  !
  ! I/O
  !=====

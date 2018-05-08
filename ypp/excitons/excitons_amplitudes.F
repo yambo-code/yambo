@@ -27,7 +27,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,real2ch
  use YPP,           ONLY:min_weight
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description
  use BS,            ONLY:BS_H_dim
@@ -107,7 +107,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    call msg('o weight amp',"#")
    call msg('o weight amp',&
 &   '# Electron-Hole pairs that contributes to Excitonic State '//&
-&   trim(intc(i_l_grp))//' more than 5%')
+&   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(min_weight*100)) //'%')
    call msg('o weight amp','#')
    !
    ! First summarize the total weight vs K-points
@@ -122,7 +122,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
-     if (K_weight(ikibz)>min_weight*5._SP) then
+     if (K_weight(ikibz)>min_weight) then
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
@@ -160,7 +160,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
      amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<min_weight*5._SP) cycle
+     if (A_weight(neh)<min_weight) cycle
      !
      if(n_sp_pol==1) then
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&

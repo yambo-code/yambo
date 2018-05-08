@@ -113,7 +113,7 @@ subroutine YPP_SET_defaults()
  r_hole= (/0._SP,0._SP,0._SP/)
  state_ctl = '1 - 1'
  deg_energy =0.01_SP/HA2EV
- min_weight =0.01_SP
+ min_weight =0.05_SP
  WF_multiplier=1._SP
  BSiq=1
  !

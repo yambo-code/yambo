@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MAG_H_pseudo(Xk,Xen)
+subroutine Pseudo_H_correction(Xk,Xen)
  !
  use pars,          ONLY:SP,cZERO
+ use drivers,       ONLY:l_sc_magnetic,l_real_time
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
@@ -32,8 +33,10 @@ subroutine MAG_H_pseudo(Xk,Xen)
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use hamiltonian,   ONLY:H_ref_bands,Hzero
- use magnetic,      ONLY:new_pp,old_pp
+ use hamiltonian,   ONLY:H_ref_bands,Hzero,new_pp,old_pp
+#if defined _RT
+ use real_time,     ONLY:Ho_plus_sigma
+#endif
  use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:RD,RD_CL,io_control
  !
@@ -47,8 +50,8 @@ subroutine MAG_H_pseudo(Xk,Xen)
  type(X_t)     :: X
  !
  complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space(:,:)
- complex(SP)             :: H_pseudo(H_ref_bands(2),H_ref_bands(2)), &
-&                           H_pseudo_tot(H_ref_bands(2),H_ref_bands(2),Xk%nibz,n_sp_pol)
+ complex(SP)             :: H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
+&                           H_pseudo_corr(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
  !
  ! Dummies
  integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf
@@ -73,13 +76,17 @@ subroutine MAG_H_pseudo(Xk,Xen)
  YAMBO_ALLOC(old_pp,(fft_size,pp_kbv_dim,n_spinor))
  YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2),2))
  !
- H_pseudo_tot=cZERO
+ H_pseudo_corr=cZERO
  !
- call live_timing('MAG-pseudo',Xk%nibz)        
+#if defined _MAGNETIC
+ if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz)        
+#endif
  !
  do ik=1,Xk%nibz
    !
-   call WF_load(WF,0,1,(/1,H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+#if defined _MAGNETIC
+   if(l_sc_magnetic) call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+#endif
    !
    if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
@@ -99,8 +106,8 @@ subroutine MAG_H_pseudo(Xk,Xen)
      ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
-     ! 
-     call MAG_pseudo_nl(kbv)
+     !
+     call Pseudo_build_kbv(kbv)
      !
      do i1=1,pp_kbv_dim
        !     
@@ -110,12 +117,8 @@ subroutine MAG_H_pseudo(Xk,Xen)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
-         do i_spinor=1,n_spinor
-           !
-           kbv_ks_space(ib,1)=kbv_ks_space(ib,1)+V_dot_V(fft_size,WF%c(:,i_spinor,iwf),new_pp(:,i1,i_spinor))
-           kbv_ks_space(ib,2)=kbv_ks_space(ib,2)+V_dot_V(fft_size,WF%c(:,i_spinor,iwf),old_pp(:,i1,i_spinor))
-           !
-         enddo
+         kbv_ks_space(ib,1)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),new_pp(:,i1,:))
+         kbv_ks_space(ib,2)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),old_pp(:,i1,:))
          !
          do ibp=H_ref_bands(1),ib
            !
@@ -125,21 +128,31 @@ subroutine MAG_H_pseudo(Xk,Xen)
          enddo   ! ibp
        enddo   ! ib
        !
-       H_pseudo_tot(:,:,ik,i_sp_pol)=H_pseudo_tot(:,:,ik,i_sp_pol)+H_pseudo(:,:)
+       H_pseudo_corr(:,:,ik,i_sp_pol)=H_pseudo_corr(:,:,ik,i_sp_pol)+H_pseudo(:,:)
        !
      enddo   ! i1
      !
    enddo   ! i_sp_pol
    !
-   call live_timing(steps=1)
-   !
-   call WF_free(WF)
+#if defined _MAGNETIC
+   if(l_sc_magnetic) then
+     call live_timing(steps=1)
+     call WF_free(WF)
+   endif
+#endif
    !
  enddo  ! ik
  !
- call live_timing()
+#if defined _MAGNETIC
+ if(l_sc_magnetic) then
+   call live_timing()
+   Hzero(:,:,:,:)=Hzero(:,:,:,:)+H_pseudo_corr(:,:,:,:)
+ endif
+#endif
  !
- Hzero(:,:,:,:)=Hzero(:,:,:,:)+H_pseudo_tot(:,:,:,:)
+#if defined _RT
+ if(l_real_time) Ho_plus_sigma=Ho_plus_sigma+H_pseudo_corr(:,:,:,:)
+#endif
  !
  ! Free mem
  YAMBO_FREE(kbv_ks_space)
@@ -147,4 +160,4 @@ subroutine MAG_H_pseudo(Xk,Xen)
  YAMBO_FREE(new_pp)
  YAMBO_FREE(old_pp)
  !
-end subroutine
+end subroutine Pseudo_H_correction

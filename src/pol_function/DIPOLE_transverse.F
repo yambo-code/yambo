@@ -88,6 +88,8 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
+ io_err=-1
+ !
  io_KB_abinit_err= io_err(1)
  io_KB_pwscf_err = io_err(2)
  io_Vnl_err      = io_err(3)

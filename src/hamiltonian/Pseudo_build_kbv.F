@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MAG_pseudo_nl(kbv)
+subroutine Pseudo_build_kbv(kbv)
  !
  use pars,          ONLY:SP,DP
  use units,         ONLY:SPEED_OF_LIGHT
@@ -31,7 +31,15 @@ subroutine MAG_pseudo_nl(kbv)
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
  use com,           ONLY:warning
- use magnetic,      ONLY:Bz,new_pp,old_pp,phase_trick,MAG_radius,n_loops
+ use hamiltonian,   ONLY:new_pp,old_pp
+#if defined _MAGNETIC
+ use drivers,       ONLY:l_sc_magnetic
+ use magnetic,      ONLY:Bz,phase_trick,MAG_radius,n_loops
+#endif
+#if defined _RT
+ use drivers,       ONLY:l_real_time
+ use fields,        ONLY:A_tot
+#endif
  !
 #include<memory.h>
  !
@@ -49,21 +57,25 @@ subroutine MAG_pseudo_nl(kbv)
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
- call load_cc(.true.,(/0._SP,0._SP,0._SP/))
+#if defined _MAGNETIC
+ if(l_sc_magnetic) call load_cc(.true.,(/0._SP,0._SP,0._SP/))
+#endif
  !
  i1=0
  !
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
      !
+#if defined _MAGNETIC
+     if(l_sc_magnetic) then
      if(MAG_radius==0) then
        ! int_A_dl (R-->r') = 0.5 B_0/c (x_R y' - y_R x') (landau)
        int_A_dl(:)= 0.5*Bz/SPEED_OF_LIGHT*(x_cc(:,2)*atom_pos(1,ia,is)-atom_pos(2,ia,is)*x_cc(:,1))
        gauge_factor(:)=cmplx( cos(int_A_dl(:)),sin(int_A_dl(:)) )
      else
-       gauge_factor(:)=1.
+       gauge_factor(:)=1._SP
      endif
-     if(MAG_radius>0. .or. (phase_trick.and.n_loops>0) ) then
+     if(MAG_radius>0._SP .or. (phase_trick.and.n_loops>0) ) then
        r_atom_pos(:)=sqrt(atom_pos(1,ia,is)**2+atom_pos(2,ia,is)**2)
        r_x(:)=sqrt(x_cc(:,1)**2+x_cc(:,2)**2)
        ! cos(\delta_phi)= (R,r') / (||a|| ||b||)
@@ -76,6 +88,17 @@ subroutine MAG_pseudo_nl(kbv)
        if(phase_trick.and.n_loops>0.and.MAG_radius==0.) Phi_over_Phio=-n_loops
        gauge_factor(:)=gauge_factor(:)*cmplx(  cos_delta_phi(:) , sin_delta_phi(:)   )**Phi_over_Phio
      endif
+     endif
+#endif
+     !
+#if defined _RT
+     if(l_real_time) then
+       call load_cc(.false.,atom_pos(:,ia,is))
+       ! int_A_dl (atom_pos-->r) = A*r
+       int_A_dl(:)= (A_tot%vecpot(1)*x_cc(:,1)+A_tot%vecpot(2)*x_cc(:,2)+A_tot%vecpot(3)*x_cc(:,3))/SPEED_OF_LIGHT
+       gauge_factor(:)=cmplx( cos(int_A_dl(:)),sin(int_A_dl(:)) )
+     endif
+#endif
      !
      do i_pp = 1, pp_n_l_times_proj_max
        il = pp_table(1,is,i_pp)
@@ -101,13 +124,24 @@ subroutine MAG_pseudo_nl(kbv)
            !
            old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))
            new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*gauge_factor(:)
-           !       
+           !
          enddo   ! i_spinor
        enddo   ! im
      enddo   ! i_pp
+     !
+#if defined _RT
+     if(l_real_time) then
+       YAMBO_FREE(x_cc)
+     endif
+#endif
+     !
    enddo   ! ia
  enddo  ! is
  !
- YAMBO_FREE(x_cc)
+#if defined _MAGNETIC
+ if(l_sc_magnetic) then
+   YAMBO_FREE(x_cc)
+ endif
+#endif
  !
-end subroutine
+end subroutine Pseudo_build_kbv

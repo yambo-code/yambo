@@ -1,10 +1,10 @@
 MAGNETIC_objects = 
 #if defined _MAGNETIC
-MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
-                   MAG_pseudo_nl.o MAG_H_pseudo.o
+MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o
 #endif
-#if defined _RT
-RT_objects = RT_H_pseudo.o RT_KB_pseudo.o
+PSEUDO_objects =
+#if defined _RT || defined _MAGNETIC
+PSEUDO_objects = Pseudo_H_correction.o Pseudo_build_kbv.o
 #endif
 objs = Bare_Hamiltonian.o V_Hartree.o XC_switch.o V_qp_basis_to_H.o V_real_space_to_H.o Vgrad_real_space_to_H.o \
-       Check_symmetries.o WF_and_dipole_dimensions.o ${MAGNETIC_objects} ${RT_objects}
+       Check_symmetries.o WF_and_dipole_dimensions.o ${MAGNETIC_objects} ${PSEUDO_objects}

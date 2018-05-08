@@ -48,8 +48,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: A_dot_J,Vnl_A,Vnl_A_A,E_dot_P,&
-&               ExJs(3,n_spinor,n_spinor),A_A_vec_pot_tens(3,3),A_vec_pot(3),E_vec_pot(3),&
+ complex(SP) :: A_dot_J,E_dot_P,&
+&               ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
 #if defined _TIMING
@@ -62,12 +62,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !================
    !
    A_vec_pot=A_input%vecpot/SPEED_OF_LIGHT ! Gaussian units
-   do i1=1,3
-     A_A_vec_pot_tens(:,i1)=A_vec_pot(:)*A_vec_pot(i1)
-   enddo
-   !
-   Vnl_A  =cZERO
-   Vnl_A_A=cZERO
    !
    ! Add the vector potential to the singular part of the Self-Energy
    ! in case of complex Efield puts the correct Hermitian matrix
@@ -76,11 +70,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    do i1=RT_bands(1),RT_bands(2)
      Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
-     if(l_velocity_gauge_corr) then
-       !Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i1,ik,i_sp_pol))
-       Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i1,ik,i_sp_pol))
-     endif
-     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J+Vnl_A+Vnl_A_A,SP)
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
    enddo
    !
    do i1=RT_bands(1),RT_bands(2)
@@ -90,18 +80,11 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !     
        Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) ! the off-diagonal diamagnetic term is zero
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-       if(l_velocity_gauge_corr) then
-         !Vnl_A  =sum(A_vec_pot(1:3)*H_pseudo_order1(1:3,i1,i2,ik,i_sp_pol))
-         Vnl_A_A=sum(A_A_vec_pot_tens(1:3,1:3)*H_pseudo_order2(1:3,1:3,i1,i2,ik,i_sp_pol))
-       endif
-       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J+Vnl_A+Vnl_A_A)
-       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J+Vnl_A+Vnl_A_A)
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J)
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
        !
      enddo
    enddo
-   !
-   ! Correction to the pseudo <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k> included here up to second order in A 
-   ! Its low field expansion however gives <nk|iA*[\hat{x},V(r,r')]|n'k>, which is included via DIP_P
    !
  else  
    !

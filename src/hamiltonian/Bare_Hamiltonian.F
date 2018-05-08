@@ -75,7 +75,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call MAG_H_pseudo(Xk,E)
+   call Pseudo_H_correction(Xk,E)
    !
  endif
  !

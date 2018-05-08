@@ -51,8 +51,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
-&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
-&                         l_velocity_gauge_corr
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
@@ -119,10 +118,6 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call PP_redux_wait(HARTREE0)
    call PP_redux_wait(XC0)
-   !
-   ! Pseudo potential terms needed for velocity gauge
-   !==================================================
-   if (l_velocity_gauge_corr) call RT_H_pseudo(k,E)
    !
  endif
  !

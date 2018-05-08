@@ -62,8 +62,4 @@ module magnetic
  real(SP), parameter      :: phase_radius=0.01
  integer                  :: n_loops
  !
- ! Pseudo potentials
- !
- complex(SP), allocatable :: new_pp(:,:,:),old_pp(:,:,:)
- !
 end module

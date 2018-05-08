@@ -683,9 +683,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        else
-         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        endif
      endif
      !

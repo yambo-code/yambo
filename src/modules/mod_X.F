@@ -78,6 +78,7 @@ module X_m
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
@@ -184,6 +185,10 @@ module X_m
          if (allocated(DIP_iR)) return
          YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
+       case('DIP_v')
+         if (allocated(DIP_v)) return
+         YAMBO_ALLOC(DIP_v,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         DIP_v=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
          YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
@@ -228,6 +233,9 @@ module X_m
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
          YAMBO_FREE(DIP_iR)
+       case('DIP_v')
+         if (.not.allocated(DIP_v)) return
+         YAMBO_FREE(DIP_v)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          YAMBO_FREE(DIP_P)

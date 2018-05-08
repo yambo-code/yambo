@@ -29,7 +29,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use electrons,      ONLY:n_sp_pol,n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_P_spinor,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,DIP_v,DIP_P_spinor,global_gauge
  use real_time,      ONLY:RT_bands,l_update_SOC,H_pseudo_order1,H_pseudo_order2, &
 &                         l_velocity_gauge_corr
  use vec_operate,    ONLY:cross_product
@@ -64,7 +64,12 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=RT_bands(1),RT_bands(2)
-     Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     !
+     ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
+     if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
+     !         A*v accounts for the linear expansion of the gauge correction to the non local potential
+     if (.not.l_velocity_gauge_corr) Jtot(1:3)= -DIP_v(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
    enddo

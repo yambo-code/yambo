@@ -66,7 +66,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
-&                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
+&                         use_shifted_grids_approach,DIP_P,DIP_v,force_v_g_space_approach,Dipole_Energy_treshold,&
 &                         l_X_terminator
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
@@ -248,9 +248,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  call X_alloc('DIP_iR') 
 #if defined _PL
- if (.not.l_photolum) call X_alloc('DIP_P')
-#else
- call X_alloc('DIP_P')
+ if (.not.l_photolum) then
+   call X_alloc('DIP_P')
+   call X_alloc('DIP_v')
+ endif
 #endif
  !
  ! GPL_EXCLUDE_START
@@ -346,8 +347,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      call X_alloc('DIP_iR',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
      call X_alloc('DIP_P' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+     call X_alloc('DIP_v' ,(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
      DIP_P=cZERO
+     DIP_v=cZERO
      !
      ! GPL_EXCLUDE_START 
      !
@@ -391,6 +394,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
          !
          call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
          !
          ! GPL_EXCLUDE_START
          !
@@ -421,6 +425,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            !
            DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/par_factor
            DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/par_factor
+           DIP_v(:,:,:,ik_mem,i_sp_pol) = DIP_v(:,:,:,ik_mem,i_sp_pol)/par_factor
            !
            ! GPL_EXCLUDE_START
            !
@@ -457,6 +462,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
            if(iv>=X%ib_lim(2)) then
              DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
              DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
              !
              ! GPL_EXCLUDE_START
              !
@@ -481,6 +487,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
              if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
                DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
                DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+               DIP_v (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_v (:,ic,iv,ik_mem,i_sp_pol))
                !
                ! GPL_EXCLUDE_START
                !

@@ -39,6 +39,7 @@ subroutine Pseudo_H_correction(Xk,Xen)
 #endif
  use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:RD,RD_CL,io_control
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -60,7 +61,6 @@ subroutine Pseudo_H_correction(Xk,Xen)
  integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
  integer, external       :: io_KB_abinit,io_KB_pwscf
  !
- !
  call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
  io_KB_abinit_err= io_err(1)
@@ -69,7 +69,9 @@ subroutine Pseudo_H_correction(Xk,Xen)
  !
  if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
- call fft_setup(0,1,.true.)  ! fft_size
+#if defined _MAGNETIC
+ if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
+#endif
  !
  YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
  YAMBO_ALLOC(new_pp,(fft_size,pp_kbv_dim,n_spinor))
@@ -88,6 +90,10 @@ subroutine Pseudo_H_correction(Xk,Xen)
    if(l_sc_magnetic) call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
 #endif
    !
+#if defined _RT
+   if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
+#endif
+   !
    if (io_KB_pwscf_err==0) then
      if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
      if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
@@ -100,14 +106,28 @@ subroutine Pseudo_H_correction(Xk,Xen)
      io_KB_abinit_err=io_KB_abinit(ID)
    endif
    !
+#if defined _RT
+   if(l_real_time) call timing('Pseudo kbv I/O',OPR='stop')
+#endif
+   !
    do i_sp_pol=1,n_sp_pol
      !  
+#if defined _RT
+     if(l_real_time) call timing('Pseudo kbv load',OPR='start')
+#endif
      ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
      ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
      call Pseudo_build_kbv(kbv)
+#if defined _RT
+     if(l_real_time) call timing('Pseudo kbv load',OPR='stop')
+#endif
+     !
+#if defined _RT
+     if(l_real_time) call timing('Pseudo_correction',OPR='start')
+#endif
      !
      do i1=1,pp_kbv_dim
        !     
@@ -131,6 +151,10 @@ subroutine Pseudo_H_correction(Xk,Xen)
        H_pseudo_corr(:,:,ik,i_sp_pol)=H_pseudo_corr(:,:,ik,i_sp_pol)+H_pseudo(:,:)
        !
      enddo   ! i1
+     !
+#if defined _RT
+     if(l_real_time) call timing('Pseudo_correction',OPR='stop')
+#endif
      !
    enddo   ! i_sp_pol
    !

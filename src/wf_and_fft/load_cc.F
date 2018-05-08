@@ -33,6 +33,7 @@ subroutine load_cc(manage_zero,x_zero_point)
  !  - true  --> the saw-like jump is at the center of the supercell
  !
  use pars,        ONLY:SP
+ use drivers,     ONLY:l_real_time 
  use FFT_m,       ONLY:fft_size,fft_dim
  use D_lattice,   ONLY:x_cc,a
  !
@@ -48,7 +49,7 @@ subroutine load_cc(manage_zero,x_zero_point)
  real(SP)   :: tmp_border(3),tmp_x(3),rir1,rir2,rir3
  integer    :: ir,ir1,ir2,ir3,i_dir   
  !
- call fft_setup(0,1,.true.)      ! FFT size
+ if(.not.l_real_time) call fft_setup(0,1,.true.)      ! FFT size
  !
  YAMBO_ALLOC(x_cc,(fft_size,3))
  !
@@ -99,4 +100,3 @@ subroutine load_cc(manage_zero,x_zero_point)
  enddo
  !
 end subroutine
-

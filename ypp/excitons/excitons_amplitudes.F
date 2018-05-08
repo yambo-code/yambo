@@ -25,7 +25,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !
  use pars,          ONLY:SP,schlen,pi,cI
  use units,         ONLY:HA2EV
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,qindx_X
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
  use YPP,           ONLY:min_weight
@@ -41,8 +41,9 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  integer          :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda,iq
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
+ integer          :: ikpbz,ikp,isp
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
- character(schlen):: titles(7),ch_dummy(2)
+ character(schlen):: titles(8),ch_dummy(2)
  !
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans
@@ -130,10 +131,10 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    ! Then report the detailed list of transitions & calculate the amplitude
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
-   titles(1:4)=(/'Band_V','Band_C','K  ibz','Symm. '/)
+   titles(1:6)=(/'Band_V','Band_C','K  ibz','Symm. ', 'Kp ibz', 'Symmp '/)
    if(n_sp_pol==1) then
-     titles(5:6)=(/'Weight','Energy'/)
-     call msg('o weight','#',titles(:6),INDENT=0,USE_TABS=.true.)
+     titles(7:8)=(/'Weight','Energy'/)
+     call msg('o weight','#',titles(:8),INDENT=0,USE_TABS=.true.)
    else
      titles(5:7)=(/'Spin  ','Weight','Energy'/)
      call msg('o weight','#',titles(:7),INDENT=0,USE_TABS=.true.)
@@ -156,14 +157,19 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
      !
+     ikpbz = qindx_X(iq,ikbz,1)
+     ikp  = Xk%sstar(ikpbz,1)
+     isp = Xk%sstar(ikpbz,2)
+     !
      amp_n_trans=amp_n_trans+1
-     amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikibz,i_spin)
+     amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikp,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
      if (A_weight(neh)<min_weight) cycle
      !
      if(n_sp_pol==1) then
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
+&                             real(ikp,SP),real(isp,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
      else

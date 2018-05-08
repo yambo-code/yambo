@@ -185,7 +185,7 @@ subroutine RT_driver(E,X,k,q)
  ! If I loaded the WFs just to compute HARTREE0 and XC0 I can now free the WFs 
  !
  if( (l_use_Hxc_collisions.or.trim(RT_potential)=="IP").and. &
-&    (eval_energy.or.l_velocity_gauge_corr)            .and. &
+&    .not.(eval_energy.or.l_velocity_gauge_corr)       .and. &
 &    (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)        ) then
    !
    call WF_free(WF)

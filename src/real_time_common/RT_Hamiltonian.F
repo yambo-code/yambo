@@ -62,8 +62,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         DbGd_ibz_coo,rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
 &                         RT_bands,RT_nbands,RT_nk,l_update_QP_Energies,RT_E_and_k,    &
-&                         l_update_SOC
- use fields,         ONLY:gauge_field
+&                         l_update_SOC,NE_time,l_velocity_gauge_corr
+ use fields,         ONLY:gauge_field!,Efield,n_ext_fields
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu!,PAR_COM_Xk_ibz_INDEX
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
@@ -244,6 +244,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  ! All2All
  !=========
  call PP_redux_wait(Ho_plus_Sigma)
+ !
+ ! Pseudo potential terms needed for velocity gauge
+ !==================================================
+ if (l_velocity_gauge_corr) call Pseudo_H_correction(k,E)
  !
  ! The Energies (only) update
  !==========================

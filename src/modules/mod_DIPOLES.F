@@ -66,6 +66,11 @@ module DIPOLES
    logical    :: bands_ordered
    logical    :: force_v_g_space
    character(schlen) :: approach
+   !
+   ! TO DO: add PAR INDEX / COMM and everything needeed (in particular by DIPOLES_IO)
+   !        inside dipole type. Like that I do not need to give extra arguments in input
+   !        to DIPOLES_IO
+   !
  end type
  !
  contains

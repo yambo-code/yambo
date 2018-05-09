@@ -120,7 +120,8 @@ subroutine Pseudo_H_correction(Xk,Xen)
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
-     call Pseudo_build_kbv(kbv)
+     call Pseudo_build_kbv(kbv,Xk%pt(ik,:))
+     !
 #if defined _RT
      if(l_real_time) call timing('Pseudo kbv load',OPR='stop')
 #endif

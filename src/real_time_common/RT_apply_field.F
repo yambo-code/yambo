@@ -65,6 +65,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
    do i1=RT_bands(1),RT_bands(2)
      !
+     !Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
      if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
@@ -78,8 +79,14 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      do i2=i1+1,RT_bands(2)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
+       ! the off-diagonal diamagnetic term is zero
        !     
-       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) ! the off-diagonal diamagnetic term is zero
+       !Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) 
+       ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
+       if (     l_velocity_gauge_corr) Jtot(:)= -DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
+       ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
+       !         A*v accounts for the linear expansion of the gauge correction to the non local potential
+       if (.not.l_velocity_gauge_corr) Jtot(:)= -DIP_v(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J)
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)

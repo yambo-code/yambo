@@ -21,15 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Pseudo_build_kbv(kbv)
+subroutine Pseudo_build_kbv(kbv,kpt)
  !
- use pars,          ONLY:SP,DP
+ use pars,          ONLY:SP,DP,cI
  use units,         ONLY:SPEED_OF_LIGHT
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table
- use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
  use com,           ONLY:warning
  use hamiltonian,   ONLY:new_pp,old_pp
 #if defined _MAGNETIC
@@ -43,11 +43,13 @@ subroutine Pseudo_build_kbv(kbv)
  !
 #include<memory.h>
  !
+ complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ real(SP)                :: kpt(3)
+ !
  ! Work Space
  !
- complex(SP)             :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
  complex(DP)             :: kbv_DP(fft_size)
- complex(SP)             :: gauge_factor(fft_size)
+ complex(SP)             :: gauge_factor(fft_size),kpt_factor(fft_size)
  real(SP)                :: int_A_dl(fft_size),r_atom_pos(fft_size),r_x(fft_size)
  real(SP)                :: cos_delta_phi(fft_size),sin_delta_phi(fft_size)
  real(SP)                :: Phi_over_Phio
@@ -94,9 +96,13 @@ subroutine Pseudo_build_kbv(kbv)
 #if defined _RT
      if(l_real_time) then
        call load_cc(.false.,atom_pos(:,ia,is))
+       !call load_cc(.false.,(/0._SP,0._SP,0._SP/))
        ! int_A_dl (atom_pos-->r) = A*r
        int_A_dl(:)= (A_tot%vecpot(1)*x_cc(:,1)+A_tot%vecpot(2)*x_cc(:,2)+A_tot%vecpot(3)*x_cc(:,3))/SPEED_OF_LIGHT
        gauge_factor(:)=cmplx( cos(int_A_dl(:)),sin(int_A_dl(:)) )
+       !gauge_factor(:)=1._SP+cI*int_A_dl(:)
+       int_A_dl(:)=(kpt(1)*x_cc(:,1)+kpt(2)*x_cc(:,2)+kpt(3)*x_cc(:,3))
+       kpt_factor(:)  =cmplx( cos(int_A_dl(:)),sin(int_A_dl(:)) )
      endif
 #endif
      !
@@ -122,8 +128,8 @@ subroutine Pseudo_build_kbv(kbv)
            call fft_3d(kbv_DP,fft_dim,1)
 #endif
            !
-           old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))
-           new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*gauge_factor(:)
+           old_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*kpt_factor(:)
+           new_pp(:,i1,i_spinor)=conjg(kbv_DP(:))*kpt_factor(:)*gauge_factor(:)
            !
          enddo   ! i_spinor
        enddo   ! im

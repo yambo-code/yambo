@@ -28,9 +28,9 @@ subroutine load_cc(manage_zero,x_zero_point)
  !  - true  --> if(x<10*epsilon(1._SP)) x=sing(x)*10*epsilon(1._SP)
  !              useful in case one needs to compute 1/x^apha
  !
- ! center_cc
- !  - false --> the saw-like jump is at the border of the supercell
- !  - true  --> the saw-like jump is at the center of the supercell
+ ! center_cc, 
+ !  - false,i.e. x_zero_point=(0.5,0.5,0.5) --> the saw-like jump is at the border of the supercell
+ !  - true ,i.e. x_zero_point=( 0 , 0 , 0 ) --> the saw-like jump is at the center of the supercell 
  !
  use pars,        ONLY:SP
  use drivers,     ONLY:l_real_time 

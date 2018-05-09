@@ -58,7 +58,9 @@ module real_time
  ! To include the induced field in the coupling and current
  !
  logical          :: l_RT_induced_field = .FALSE.
+ logical          :: l_P_integrating_J
  logical          :: l_velocity_gauge_corr
+ logical          :: l_velocity_gauge_diam
  !
  ! TMP SOLUTION FOR TR ABS
  !

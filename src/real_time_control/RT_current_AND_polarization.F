@@ -42,9 +42,9 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
 &                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time,&
-&                         RT_dyn_step,l_velocity_gauge_corr,integrator_step
+&                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
@@ -78,11 +78,11 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !               (it will be computed from the current in the velocity gauge)
  !               The proper value is set in RT_propagate_fields
  !
- if(trim(global_gauge)=='velocity') RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
  !
  RT_ind_J=RT_ind_J/DL_vol
  !
- if (.not.l_velocity_gauge_corr) then
+ if (.not.l_P_integrating_J) then
    !
    ! B : Polarization in terms of the off-diagonal dipoles x_ij.
    !     This expression is exact up to linear order in the field.

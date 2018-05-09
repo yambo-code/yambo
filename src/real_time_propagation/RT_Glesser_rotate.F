@@ -24,7 +24,7 @@
 subroutine RT_Glesser_rotate(dG)
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_INDEX,HEAD_k_CPU
+ use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,HEAD_k_CPU
  use real_time,      ONLY:RT_all2ibz,l_RT_eval_lifetimes,RT_E_occupations,&
 &                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,G_lesser_reference
  use RT_control,     ONLY:RT_do_it

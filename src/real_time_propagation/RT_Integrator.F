@@ -123,7 +123,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_relaxation(dG_tmp(:,:,:,i_step),E,k,q,Time+delta_T1)            ! since nothing explicitely depends on time
+   call RT_relaxation(E,k,q,Time+delta_T1)                                 ! since nothing explicitely depends on time
    !
    ! GPL_EXCLUDE_END
    !
@@ -165,7 +165,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    subroutine RT_build_dG_new()
      !
-     use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_COM_Xk_ibz_INDEX
+     use parallel_m,     ONLY:PAR_IND_Xk_ibz
      use real_time,      ONLY:RT_all2ibz
      !
      ! Now I remove dG_old from dG_tmp and rescale to a_tableau
@@ -174,21 +174,21 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
      !
      do ik=1,RT_nk
        !
-       !if (.not.PAR_IND_WF_k%element_1D(RT_all2ibz(ik)) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
-     do i_step=1,Integrator_nsteps
-       if (a_tableau(i_step)==0._SP) cycle 
-       dG_tmp(:,:,ik,i_step)=(dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik))/a_tableau(i_step)
-     enddo
-     dG_tmp(:,:,ik,i_step)=dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik)
-     !
-     ! Finally I average using b_tableau
-     !
-     dG_new(:,:,ik)=dG_old(:,:,ik)
-     do i_step=1,Integrator_nsteps
-       dG_new(:,:,ik)=dG_new(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
-     enddo
-     !
+       do i_step=1,Integrator_nsteps
+         if (a_tableau(i_step)==0._SP) cycle 
+         dG_tmp(:,:,ik,i_step)=(dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik))/a_tableau(i_step)
+       enddo
+       dG_tmp(:,:,ik,i_step)=dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik)
+       !
+       ! Finally I average using b_tableau
+       !
+       dG_new(:,:,ik)=dG_old(:,:,ik)
+       do i_step=1,Integrator_nsteps
+         dG_new(:,:,ik)=dG_new(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
+       enddo
+       !
      enddo
    end subroutine RT_build_dG_new
    !

@@ -224,7 +224,7 @@ subroutine RT_driver(E,X,k,q)
    !
    l_initial_equilibrium=.TRUE.
    !
-   call RT_relaxation(dG_lesser(:,:,:,1),E,k,q,0._SP)
+   call RT_relaxation(E,k,q,0._SP)
    !
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID(8))
    io_REF=io_RT_components('REF',ID(8))
@@ -295,7 +295,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
-   call RT_relaxation(dG_lesser(:,:,:,i_MEM_collision),E,k,q,NE_time)
+   call RT_relaxation(E,k,q,NE_time)
    !
    ! GPL_EXCLUDE_END
    !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(dG_in,E,k,q,Time)
+subroutine RT_relaxation(E,k,q,Time)
  !
  ! 1) The KBE is coded in terms of :
  !
@@ -81,7 +81,6 @@ subroutine RT_relaxation(dG_in,E,k,q,Time)
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
- complex(SP),   intent(inout) :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
  ! Work Space
  !

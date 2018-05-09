@@ -86,7 +86,6 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  call RT_energy_components(en,k,dG_lesser_h,Energies_e,EnEntr(2),'el ')
  call RT_energy_components(en,k,dG_lesser_e,Energies_h,EnEntr(3),'hol')
  !
- !
  ! Compute IP Entropy
  !
  Entr= 0._SP

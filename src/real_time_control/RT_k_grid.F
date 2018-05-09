@@ -45,7 +45,7 @@ subroutine RT_k_grid(E,k,q)
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk,RT_PAR_nk
  use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PAR_Xk_nibz,PAR_IND_WF_k,PAR_RT_k_index,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_Xk_nibz,PAR_RT_k_index,PAR_Xk_ibz_index,PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -140,7 +140,7 @@ subroutine RT_k_grid(E,k,q)
      RT_all2ibz(ik_rim)    =ik
    enddo
  !DEBUG
- !  if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+ !  if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_PAR_nk=RT_PAR_nk+1
      PAR_RT_k_index(ik_rim)=RT_PAR_nk

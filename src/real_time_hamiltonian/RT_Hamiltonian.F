@@ -64,7 +64,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_k_cpu,HEAD_QP_cpu
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -155,19 +155,17 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
-   if (HEAD_QP_cpu) then
-     do ik=1,nXkibz 
-       H_nl_sc=cZERO
-       if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
-       if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-       if (n_spinor==2 ) then
-         if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-         if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
-         if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
-       endif
-       forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
-     enddo
-   endif
+   do ik=1,nXkibz 
+     H_nl_sc=cZERO
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
+     if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+     if (n_spinor==2 ) then
+       if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
+       if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+       if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
+     endif
+     forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
+   enddo
    !
    l_H_contains_Hartree=index(trim(RT_potential),"HARTREE")>0
    if(allocated(V_scf_grad)) deallocate(V_scf_grad)
@@ -182,29 +180,27 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    ! Add RT_Vnl_xc to Ho_plus_Sigma 
    !---------------------------------
-   if(HEAD_QP_cpu.and.HEAD_k_cpu) then
-     do ik=1,nXkibz 
-       if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
-       if (l_H_contains_HARTREE) then
-         do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           Ho_plus_Sigma(:,:,ik_RT,1)=Ho_plus_Sigma(:,:,ik_RT,1)+RT_Vnl_xc(:,:,ik,1)
-         enddo
-       else
-         do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
-         enddo
-       endif
-     enddo
-   endif
+   do ik=1,nXkibz 
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     if (l_H_contains_HARTREE) then
+       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         Ho_plus_Sigma(:,:,ik_RT,1)=Ho_plus_Sigma(:,:,ik_RT,1)+RT_Vnl_xc(:,:,ik,1)
+       enddo
+     else
+       do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         Ho_plus_Sigma(:,:,ik_RT,1)=RT_Vnl_xc(:,:,ik,1)
+       enddo
+     endif
+   enddo
    !
  endif
  !
  ! The External Field
  !====================
- if (l_NE_with_fields.and.HEAD_k_cpu) then
+ if (l_NE_with_fields) then
    !
    do ik=1,nXkibz 
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      H_nl_sc=cZERO
      call RT_apply_field(ik,1,H_nl_sc,A_input)
      do ik_RT =RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
@@ -216,11 +212,11 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The bare Hamiltonian
  !=========================
- if ((.not.l_RT_RWA).and.HEAD_k_cpu.and.HEAD_QP_cpu) then
+ if (.not.l_RT_RWA) then
    !
    do ik=1,nXkibz
      !
-     if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        ik_DbGd=ik_RT-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
@@ -233,10 +229,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    enddo
    !
  endif
- !
- ! All2All
- !=========
- call PP_redux_wait(Ho_plus_Sigma)
  !
  call timing('RT Hamiltonian',OPR='stop')
  !

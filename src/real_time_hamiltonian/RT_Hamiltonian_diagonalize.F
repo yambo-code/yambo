@@ -42,7 +42,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  use electrons,      ONLY:levels
  use hamiltonian,    ONLY:H_rotation,E_reference
  use linear_algebra, ONLY:DIAGO,USE_LK
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,HEAD_QP_cpu
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_bands,&
 &                         l_RT_uses_E_DbGd,l_RT_update_Energies,l_RT_rotate_DM,&
@@ -61,7 +61,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  complex(SP)  :: H(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  real(SP)     :: Ed(RT_bands(1):RT_bands(2)),dE
  integer      :: ib,ik,ik_RT,ik_DbGd
- logical      :: l_DO_E,l_DO_R
+ logical      :: l_do_E,l_do_R
  !
  BGR=rZERO
  !
@@ -74,8 +74,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  !
  do ik=1,nkibz
    !
-   !if (.not.PAR_IND_WF_k%element_1D(ik) ) cycle
-   !if (.not.HEAD_QP_cpu) cycle
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    !
    ik_RT=RT_ibz_coo(ik,1)
    !
@@ -110,7 +109,9 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
    !
  enddo
  !
- !if (l_RT_uses_E_DbGd) call PP_redux_wait(E%E_DbGd)
+ if (     l_RT_uses_E_DbGd) call PP_redux_wait(E%E_DbGd,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ if (.not.l_RT_uses_E_DbGd) call PP_redux_wait(E%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(RT_E_and_K%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! Evaluation of the contribution to the minimal gap
  

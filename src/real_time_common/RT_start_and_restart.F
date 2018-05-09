@@ -249,7 +249,7 @@ subroutine RT_start_and_restart(E,k,q)
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
+ if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
  !
  call msg('r','')
  !

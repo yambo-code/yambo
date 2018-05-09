@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
+subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -55,7 +55,6 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
  type(bz_samp),        intent(in) :: k 
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
- type(gauge_field),    intent(in) :: A_inp
  type(gauge_field),   intent(out) :: A_new
  complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
@@ -90,6 +89,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
    ! Thus I add A null vector potential here and then update the current later 
    !
    call A_vecpot_reset(A_null)
+   !
    call RT_current_AND_polarization(k,E,G_inp,A_null)
    !
    ! OPTION 1: "velocity gauge"

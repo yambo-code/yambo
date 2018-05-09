@@ -30,7 +30,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,HEAD_q_cpu
+ use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,HEAD_q_cpu,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
@@ -51,6 +51,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  do i_k=1,nXkibz
    !
+   if (.not.PAR_IND_Xk_ibz%element_1D(i_k) ) cycle
+   !
    do i_k_RT=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
      G_avg(:,:,i_k)=G_avg(:,:,i_k)+dG_in(:,:,i_k_RT)
    enddo
@@ -61,6 +63,8 @@ subroutine COLLISIONS_compose_rt(dG_in)
    G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)
    !
  enddo
+ !
+ call PP_redux_wait(G_avg,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  RT_Vnl_xc=cZERO
  !

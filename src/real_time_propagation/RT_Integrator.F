@@ -111,7 +111,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! Fields @ T+dt2
    !
-   call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
+   call RT_propagate_fields(E,k,A_old,A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
    !
    Integrator_step=Integrator_step+1
    !
@@ -151,7 +151,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Fields @ T+dT
  !
- call RT_propagate_fields(E,k,A_old,A_tmp(i_step-1),A_tmp(i_step),dG_new,Time,T_step)
+ call RT_propagate_fields(E,k,A_old,A_tmp(i_step),dG_new,Time,T_step)
  !
  call RT_build_A_new()
  !
@@ -190,6 +190,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        enddo
        !
      enddo
+     !
    end subroutine RT_build_dG_new
    !
    subroutine RT_build_A_new()

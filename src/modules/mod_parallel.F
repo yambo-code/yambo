@@ -82,6 +82,7 @@ module parallel_m
  !
  logical           :: HEAD_QP_cpu=.TRUE.
  logical           :: HEAD_k_cpu =.TRUE.
+ logical           :: HEAD_q_cpu =.TRUE.
  !
  ! Communicators
  !

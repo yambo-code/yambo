@@ -87,11 +87,11 @@ subroutine RT_relaxation(dG_in,E,k,q,Time)
  !
  integer          :: ik
  !
- call RT_relaxation_logicals( )
- !
  if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
 &     (.not.RT_is_dynamically_dephased)                          .or. &
 &     (.not.l_initial_equilibrium.and.l_RT_relax_time_approx)         ) return
+ !
+ call RT_relaxation_logicals( )
  !
  ! Lifetimes History and updates
  !================================

@@ -28,8 +28,8 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
 &                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                          RT_H_occupations,RT_E_occupations,DbGd_ibz_coo,l_RT_uses_E_DbGd,&
-&                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en,RT_ibz_coo
+&                          DbGd_ibz_coo,l_RT_uses_E_DbGd,l_initial_equilibrium,DbGd_EE_scatt_table,&
+&                          DbGd_EE_Nk_table,RT_eh_en,RT_ibz_coo
  use plasma,          ONLY:EH_gas
  use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index

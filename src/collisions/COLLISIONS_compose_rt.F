@@ -30,7 +30,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
+ use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,HEAD_q_cpu
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
@@ -66,7 +66,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  do i_coll=1,HXC_collisions%N
    !
-   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
+   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_q_cpu)) cycle
    !
    i_k       =HXC_collisions%state(i_coll,3)
    i_n       =HXC_collisions%state(i_coll,1)
@@ -82,6 +82,11 @@ subroutine COLLISIONS_compose_rt(dG_in)
    i_comp=1
    !
    do i_kmq=1,nXkibz
+     !
+     if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
+       i_comp=i_comp+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),i_kmq)/=0)
+       cycle
+     endif
      !
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
@@ -99,21 +104,20 @@ subroutine COLLISIONS_compose_rt(dG_in)
    !
  enddo
  !
+ ! All 2 All
+ !===========
+ call PP_redux_wait(RT_Vnl_xc)
+ !
  ! Symmetrization
  !================
- do i_coll=1,HXC_collisions%N
-   !
-   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_QP_cpu)) cycle
-   i_k       =HXC_collisions%state(i_coll,3)
-   i_n       =HXC_collisions%state(i_coll,1)
-   i_m       =HXC_collisions%state(i_coll,2)
-   !
-   RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
-   RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
-   !
+ do i_k=1,nXkibz
+   do i_n=COLL_bands(1),COLL_bands(2)
+     RT_Vnl_xc(i_n,i_n,i_k,:)= real(RT_Vnl_xc(i_n,i_n,i_k,:))
+     do i_m=i_n+1,COLL_bands(2)
+       RT_Vnl_xc(i_m,i_n,i_k,:)=conjg(RT_Vnl_xc(i_n,i_m,i_k,:))
+     enddo
+   enddo
  enddo
- !
- call PP_redux_wait(RT_Vnl_xc)
  !
  call timing('COLLISIONS_compose_rt',OPR='stop')
  !

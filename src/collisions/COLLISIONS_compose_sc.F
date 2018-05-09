@@ -30,7 +30,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
  use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
 &                           COH_collisions,COLLISIONS_have_HARTREE
- use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
+ use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_q_cpu,PAR_IND_G_k
  use timing_m,         ONLY:timing
  implicit none
  !
@@ -59,7 +59,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  !
  do i_qp=1,QP_n_states
    !
-   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
+   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_q_cpu)) cycle
    !
    if (l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) i_coll_mem=HXC_collisions%PAR_map(i_qp)
    if (l_sc_coh)                                                            i_coll_mem=COH_collisions%PAR_map(i_qp)
@@ -68,6 +68,12 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
    ic2=1
    !
    do i_kmq=1,QP_nk
+     !
+     if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
+       ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)/=0)
+       ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)/=0)
+       cycle
+     endif
      !
      do ibp=COLL_bands(1),QP_nb
        do ib=COLL_bands(1),QP_nb

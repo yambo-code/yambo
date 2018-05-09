@@ -43,7 +43,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  integer          :: ikpbz,ikp,isp
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
- character(schlen):: titles(8),ch_dummy(2)
+ character(schlen):: titles(9),ch_dummy(2)
  !
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans
@@ -136,7 +136,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
      titles(7:8)=(/'Weight','Energy'/)
      call msg('o weight','#',titles(:8),INDENT=0,USE_TABS=.true.)
    else
-     titles(5:7)=(/'Spin  ','Weight','Energy'/)
+     titles(7:9)=(/'Spin  ','Weight','Energy'/)
      call msg('o weight','#',titles(:7),INDENT=0,USE_TABS=.true.)
    endif
    titles(1:2)=(/'E    [eV]','Amplitude'/)
@@ -176,6 +176,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
        if(i_spin==1) value= 1._SP
        if(i_spin==2) value=-1._SP
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
+                              real(ikp,SP),real(isp,SP),&
 &                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &                 INDENT=-2,USE_TABS=.FALSE.)
      endif

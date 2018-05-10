@@ -119,15 +119,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! All 2 All
  !===========
  !
- call timing('COLLISIONS (compose)',OPR='stop')
- !
- call timing('COLLISIONS (redux)',OPR='start')
- !
  call PP_redux_wait(RT_Vnl_xc)
- !
- call timing('COLLISIONS (redux)',OPR='stop')
- !
- call timing('COLLISIONS (compose)',OPR='start')
  !
  ! Symmetrization
  !================
@@ -140,6 +132,6 @@ subroutine COLLISIONS_compose_rt(dG_in)
    enddo
  enddo
  !
- call timing('COLLISIONS_compose_rt',OPR='stop')
+ call timing('COLLISIONS (compose)',OPR='stop')
  !
 end subroutine COLLISIONS_compose_rt

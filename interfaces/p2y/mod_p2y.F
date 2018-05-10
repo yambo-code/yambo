@@ -322,7 +322,8 @@ contains
    enddo
    tau_units = alat_
 
-   YAMBO_FREE(atom_type_,species_type_)
+   YAMBO_FREE(atom_type_)
+   YAMBO_FREE(species_type_)
 
 #elif defined _P2Y_QEXML
 

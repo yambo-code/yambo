@@ -133,7 +133,6 @@ module interpolate
    !
    subroutine make_star(R_vec,nsym,symop,nstar,star_vec)
      use vec_operate,    ONLY:v_is_zero
-     use D_lattice,      ONLY:i_time_rev
      !
      implicit none
      !
@@ -152,7 +151,6 @@ module interpolate
      star_vec(1:3,1)=R_vec(1:3)
      !
      do is=1,nsym 
-       if(is>nsym/(i_time_rev+1)) cycle
        try(1:3)=matmul(symop(:,:,is),R_vec(:))
        add_vec=.TRUE.
        do i1=1,nstar

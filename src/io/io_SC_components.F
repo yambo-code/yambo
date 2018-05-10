@@ -130,7 +130,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  ! 
- call manage_OP_IF_START_and_CL_IF_END(ID,ik,nkibz)
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nkibz)
  !
  ! Potential
  !===========

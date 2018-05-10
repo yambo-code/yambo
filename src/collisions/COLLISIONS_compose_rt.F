@@ -45,7 +45,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
- call timing('COLLISIONS_compose_rt',OPR='start')
+ call timing('COLLISIONS (compose)',OPR='start')
  !
  G_avg=cZERO
  !
@@ -64,7 +64,15 @@ subroutine COLLISIONS_compose_rt(dG_in)
    !
  enddo
  !
+ call timing('COLLISIONS (compose)',OPR='stop')
+ !
+ call timing('COLLISIONS (redux)',OPR='start')
+ !
  call PP_redux_wait(G_avg,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
+ call timing('COLLISIONS (redux)',OPR='stop')
+ !
+ call timing('COLLISIONS (compose)',OPR='start')
  !
  RT_Vnl_xc=cZERO
  !
@@ -110,7 +118,16 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  ! All 2 All
  !===========
+ !
+ call timing('COLLISIONS (compose)',OPR='stop')
+ !
+ call timing('COLLISIONS (redux)',OPR='start')
+ !
  call PP_redux_wait(RT_Vnl_xc)
+ !
+ call timing('COLLISIONS (redux)',OPR='stop')
+ !
+ call timing('COLLISIONS (compose)',OPR='start')
  !
  ! Symmetrization
  !================

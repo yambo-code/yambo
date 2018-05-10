@@ -134,7 +134,7 @@ integer function io_X(X,Xw,ID)
  !
  ! Manage OP_IF_START_and_RD_CL_IF_END
  !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=iq,LAST=nqibz)
  !
  ! Fragmentation
  !

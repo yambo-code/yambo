@@ -29,9 +29,10 @@ subroutine RT_databases_IO(E)
 &                         GF_RT_IO_t,IO_OBS_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
-&                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END
- use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
+&                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END,IO_and_Messaging_switch
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
+ use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -41,6 +42,8 @@ subroutine RT_databases_IO(E)
  !
  integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time
  integer, external :: io_RT_components
+ !
+ call timing('RT databases IO',OPR='start')
  !
  ! Store the current and the polarization in the cache for future writing
  !
@@ -92,6 +95,9 @@ subroutine RT_databases_IO(E)
  !====================
  if (io_GF.and.RT_do_it('G')) then
    !
+   call IO_and_Messaging_switch("SAVE")
+   call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
+   !
    GF_RT_IO_t%N=GF_RT_IO_t%N+1
    GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
    GF_RT_IO_t%last_point=NE_i_time
@@ -110,7 +116,11 @@ subroutine RT_databases_IO(E)
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
+   !call PP_redux_wait(dG_lesser,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   !
    do ik = 1, RT_nk
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
      !
      ACTION_=WR_CL_IF_END
      if (SAVE_G_history) then
@@ -144,7 +154,11 @@ subroutine RT_databases_IO(E)
      !
    enddo
    !
+   call IO_and_Messaging_switch("RESTORE")
+   !
  endif
+ !
+ call timing('RT databases IO',OPR='stop')
  !
  ! GPL_EXCLUDE_END
  !

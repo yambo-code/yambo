@@ -31,6 +31,7 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
@@ -96,7 +97,10 @@ integer function io_RT_components(what,ID)
  !========
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NE_i_time,NE_steps)
- if (l_G     .or.l_THETA) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
+ if (l_G     .or.l_THETA) then
+   if (     allocated(PAR_IND_Xk_ibz%element_1D)) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,PAR_index=PAR_IND_Xk_ibz)
+   if (.not.allocated(PAR_IND_Xk_ibz%element_1D)) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
+ endif
  !
  l_track_history=.false.
  if (l_OBS)      l_track_history=io_sec(ID,1)> 1

@@ -471,21 +471,45 @@ module IO_m
      !
    end subroutine
    !
-   subroutine manage_OP_IF_START_and_CL_IF_END(ID,start_,end_)
+   subroutine manage_OP_IF_START_and_CL_IF_END(ID,NOW,FIRST,LAST,PAR_index)
      !
-     integer :: ID
-     integer :: start_,end_
+     use parallel_m, ONLY:PP_indexes
+     !
+     integer           :: ID,NOW
+     integer, optional :: FIRST,LAST
+     type(PP_indexes), optional :: PAR_index
+     !
+     integer :: start_,end_,ii
+     !
+     start_=1
+     end_  =1
+     if (present(LAST)) then
+       end_  =LAST
+     endif
+     if (present(FIRST)) then
+       start_=FIRST
+     endif
+     if (present(PAR_index)) then
+       start_=0
+       end_  =0
+       do ii=1,size(PAR_index%element_1D)
+         if (PAR_index%element_1D(ii)) then
+           if (start_==0) start_=ii
+           end_=ii
+         endif
+       enddo
+     endif
      !
      if (read_is_on(ID)) then
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
-       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
-       if (io_action(ID)==            RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_RD_CL
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_RD
+       if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==            RD_CL_IF_END.and.                NOW==end_) io_action(ID)=   RD_CL
      else  if (write_is_on(ID)) then
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
-       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==            WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_WR_CL
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_WR
+       if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==            WR_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
      endif
      !
    end subroutine

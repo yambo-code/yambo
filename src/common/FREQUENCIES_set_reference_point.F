@@ -45,12 +45,12 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
- if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity".and..not.skip_cond_sum_rule) then
-   call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
-   skip_cond_sum_rule=.false.
-   global_gauge='length'
-   return
- endif
+ !if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity".and..not.skip_cond_sum_rule) then
+ !  call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
+ !  skip_cond_sum_rule=.false.
+ !  global_gauge='length'
+ !  return
+ !endif
  !
  do iw=1,n_freq
    if(abs(real(omega(iw)))>0.01) cycle

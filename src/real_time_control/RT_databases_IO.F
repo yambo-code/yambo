@@ -30,7 +30,7 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END,IO_and_Messaging_switch
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,master_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
  !
@@ -40,7 +40,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time,io_SEC
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time,io_SEC,i_cpu
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -114,24 +114,32 @@ subroutine RT_databases_IO(E)
    call io_control(ACTION=ACTION_,COM=NONE, SEC=(/io_SEC/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
    !
+   do i_cpu=1,ncpu
+     !
+     do ik = 1, RT_nk
+       !
+       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+       if (myid+1/=i_cpu) cycle
+       !
+       ACTION_=WR_CL_IF_END
+       if (SAVE_G_history) ACTION_=OP_IF_START_WR_CL_IF_END
+       !
+       call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
+       io_G=io_RT_components('G',ID(5))
+       !
+     enddo 
+     !
+   enddo 
+   !
+   call IO_and_Messaging_switch("RESTORE")
+   !
+#if defined _ELPH
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     !
      call io_control(ACTION=OP_WR,COM=NONE, SEC=(/io_SEC/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
-   endif
-   !
-   do ik = 1, RT_nk
      !
-     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-     !
-     ACTION_=WR_CL_IF_END
-     if (SAVE_G_history) ACTION_=OP_IF_START_WR_CL_IF_END
-     !
-     call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
-     io_G=io_RT_components('G',ID(5))
-     !
-#if defined _ELPH
-     !
-     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     do ik = 1, RT_nk
        !
        ! The I/O of the THETA matrix is tricky when the run is parallel.
        ! The point is that every CPU evolves a certain group of q-points.
@@ -146,15 +154,12 @@ subroutine RT_databases_IO(E)
        !
        call RT_ELPH_zeroing()
        !
-     endif
+     enddo
      !
-#endif
-     !
-   enddo
-   !
-   call IO_and_Messaging_switch("RESTORE")
+   endif
    !
  endif
+#endif
  !
  call timing('RT databases IO',OPR='stop')
  !

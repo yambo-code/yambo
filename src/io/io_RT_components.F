@@ -272,7 +272,7 @@ integer function io_RT_components(what,ID)
    !
    ! Needed for restart
    !
-   if (.not.SAVE_G_history) call io_fragment(ID,i_fragment=ik)
+   call io_fragment(ID,i_fragment=ik)
    !
    i_spin=1
    !

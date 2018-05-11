@@ -124,10 +124,7 @@ subroutine RT_databases_IO(E)
      if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
      !
      ACTION_=WR_CL_IF_END
-     if (SAVE_G_history) then
-       call PP_redux_wait()
-       ACTION_=OP_IF_START_WR_CL_IF_END
-     endif
+     if (SAVE_G_history) ACTION_=OP_IF_START_WR_CL_IF_END
      !
      call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))

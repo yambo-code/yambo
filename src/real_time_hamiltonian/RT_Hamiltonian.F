@@ -64,7 +64,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         l_update_SOC
  use fields,         ONLY:gauge_field
  use wave_func,      ONLY:WF
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
  use xc_functionals, ONLY:V_xc,XC_LDA_C_PZ,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -139,6 +139,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    ! Update of SOC term
    !
    if(n_spinor==2 .and. l_update_SOC ) then
+     !
      allocate(V_scf(fft_size),V_scf_grad(fft_size,3))
      V_scf=cZERO
      if(eval_HARTREE) V_scf=V_scf+V_Hartree_sc(:,1)
@@ -151,20 +152,28 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      allocate(V_scf_grad(fft_size,3))
      call eval_Gradient(V_scf,V_scf_grad,1,"potential")
      deallocate(V_scf)
+     !
    endif
    !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
    do ik=1,nXkibz 
+     !
      H_nl_sc=cZERO
+     !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
+     !
      if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
      if (n_spinor==2 ) then
        if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
        if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
        if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
      endif
+     !
+     call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
+     !
      forall(ik_RT=RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) Ho_plus_Sigma(:,:,ik_RT,1)=H_nl_sc
+     !
    enddo
    !
    l_H_contains_Hartree=index(trim(RT_potential),"HARTREE")>0

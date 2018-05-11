@@ -95,9 +95,6 @@ subroutine RT_databases_IO(E)
  !====================
  if (io_GF.and.RT_do_it('G')) then
    !
-   call IO_and_Messaging_switch("SAVE")
-   call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
-   !
    GF_RT_IO_t%N=GF_RT_IO_t%N+1
    GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
    GF_RT_IO_t%last_point=NE_i_time
@@ -106,7 +103,7 @@ subroutine RT_databases_IO(E)
    io_THETA=0
    !
    ACTION_=OP_WR
-   if(SAVE_G_history) ACTION_=OP_WR_CL
+   if (SAVE_G_history) ACTION_=OP_WR_CL
    !
    call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
    io_G=io_RT_components('G',ID(5))
@@ -116,7 +113,8 @@ subroutine RT_databases_IO(E)
      io_THETA=io_RT_components('THETA',ID(7))
    endif
    !
-   !call PP_redux_wait(dG_lesser,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call IO_and_Messaging_switch("SAVE")
+   call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
    !
    do ik = 1, RT_nk
      !

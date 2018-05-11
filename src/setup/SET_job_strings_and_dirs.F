@@ -49,9 +49,10 @@ subroutine SET_job_strings_and_dirs(JS)
    ! remove final /
    !
    ch_tmp=string(i_j)
-   if (ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=="/") ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=" "
    !
    if (len_trim(ch_tmp)==0) cycle
+   !
+   if (ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=="/") ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=" "
    !
    call string_split(trim(ch_tmp),dir,"/",n_non_empty_strings=n_s)
    !

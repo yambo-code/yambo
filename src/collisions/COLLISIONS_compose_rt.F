@@ -30,7 +30,9 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,HEAD_q_cpu,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,PAR_COM_Xk_ibz_INDEX,&
+&                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat
+ use hamiltonian,      ONLY:B_mat_index
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
@@ -78,7 +80,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  !
  do i_coll=1,HXC_collisions%N
    !
-   if (.not.(HXC_collisions%PAR_IND%element_1D(i_coll).and.HEAD_q_cpu)) cycle
+   if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
    !
    i_k       =HXC_collisions%state(i_coll,3)
    i_n       =HXC_collisions%state(i_coll,1)
@@ -91,7 +93,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
    if (i_n<RT_bands(1).or.i_n>RT_bands(2)) cycle
    if (i_m<RT_bands(1).or.i_m>RT_bands(2)) cycle
    !
-   i_comp=1
+   i_comp=0
    !
    do i_kmq=1,nXkibz
      !
@@ -103,11 +105,14 @@ subroutine COLLISIONS_compose_rt(dG_in)
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
-           RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
-&                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
-           i_comp=i_comp+1
-         endif
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)==0) cycle
+         !
+         i_comp=i_comp+1
+         !
+         if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+         !
+         RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
+&                                      -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)
          !
        enddo
      enddo

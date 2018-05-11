@@ -114,7 +114,6 @@ module real_time
  integer  :: i_MEM_now       = 1
  integer  :: i_MEM_next      = 0 ! Defined in RT_driver 
  integer  :: i_MEM_previous  = 0 ! Defined in RT_driver
- integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...

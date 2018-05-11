@@ -148,7 +148,6 @@ subroutine RT_start_and_restart(E,k,q)
  ! To restart from RT only the G_lesser is necessary (latest and reference)
  !
  RESTART = (io_G ==0).and.(io_REF==0)
- write (*,*) io_REF,io_G
  !
  if (l_elph_scatt.and..not.l_RT_CCA_Kernel) RESTART = RESTART.and.(io_THETA==0)
  !

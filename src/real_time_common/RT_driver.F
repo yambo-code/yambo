@@ -53,7 +53,7 @@ subroutine RT_driver(E,X,k,q)
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,&
-&                          PP_redux_wait
+&                          PP_redux_wait,myid
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  !
 #include<memory.h>

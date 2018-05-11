@@ -32,14 +32,14 @@ integer function io_RT_components(what,ID)
  use electrons,      ONLY:n_spin
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
- use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
+ use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,&
 &                         frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,RT_all2ibz
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
@@ -98,8 +98,11 @@ integer function io_RT_components(what,ID)
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
  if (l_G     .or.l_THETA) then
-   if (     allocated(PAR_IND_Xk_ibz%element_1D)) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,PAR_index=PAR_IND_Xk_ibz)
-   if (.not.allocated(PAR_IND_Xk_ibz%element_1D)) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
+   if (allocated(PAR_IND_Xk_ibz%element_1D)) then
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
+   else
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
+   endif
  endif
  !
  l_track_history=.false.

@@ -30,7 +30,7 @@ subroutine RT_databases_IO(E)
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END,IO_and_Messaging_switch
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,master_cpu,ncpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
  !
@@ -40,7 +40,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time,io_SEC,i_cpu
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,ACTION_,i_time,i_cpu
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -102,24 +102,24 @@ subroutine RT_databases_IO(E)
    io_G=0
    io_THETA=0
    !
-   ACTION_=OP_WR
-   if (SAVE_G_history) ACTION_=OP_WR_CL
-   !
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
    !
-   io_SEC=1
-   if (.not.master_cpu) io_SEC=0
-   !
-   call io_control(ACTION=ACTION_,COM=NONE, SEC=(/io_SEC/),ID=ID(5))
-   io_G=io_RT_components('G',ID(5))
-   !
    do i_cpu=1,ncpu
+     !
+     if (myid+1/=i_cpu) cycle
+     !
+     ACTION_=OP_WR
+     if (SAVE_G_history) ACTION_=OP_WR_CL
+     !
+     if (i_cpu==1) then
+       call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
+       io_G=io_RT_components('G',ID(5))
+     endif
      !
      do ik = 1, RT_nk
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
-       if (myid+1/=i_cpu) cycle
        !
        ACTION_=WR_CL_IF_END
        if (SAVE_G_history) ACTION_=OP_IF_START_WR_CL_IF_END
@@ -129,6 +129,8 @@ subroutine RT_databases_IO(E)
        !
      enddo 
      !
+     call PP_redux_wait( )
+     !
    enddo 
    !
    call IO_and_Messaging_switch("RESTORE")
@@ -136,7 +138,7 @@ subroutine RT_databases_IO(E)
 #if defined _ELPH
    if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
      !
-     call io_control(ACTION=OP_WR,COM=NONE, SEC=(/io_SEC/),ID=ID(7))
+     call io_control(ACTION=OP_WR,COM=NONE, SEC=(/1/),ID=ID(7))
      io_THETA=io_RT_components('THETA',ID(7))
      !
      do ik = 1, RT_nk

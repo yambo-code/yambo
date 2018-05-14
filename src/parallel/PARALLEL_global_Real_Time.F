@@ -247,7 +247,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Messaging...
  !
  if (allocated( PAR_IND_G_k%element_1D)) then
-   call PARALLEL_live_message("K-q",ENVIRONMENT="Real_Time",&
+   call PARALLEL_live_message("k-q",ENVIRONMENT="Real_Time",&
 &                             LOADED=count( PAR_IND_G_k%element_1D ),&
 &                             TOTAL=Xk%nibz)
  endif

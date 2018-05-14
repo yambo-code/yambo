@@ -28,16 +28,15 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
- use QP_m,          ONLY:QP_n_states
+ use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
- use QP_m,          ONLY:QP_n_states
- use parallel_m,    ONLY:HEAD_QP_cpu,master_cpu,n_WF_bands_to_load,&
+ use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,&
 &                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
 &                        PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
  ! INDEX
  use parallel_m,    ONLY:PAR_QP_index,PAR_Q_index,PAR_Q_bz_index,PAR_G_bands_index
  ! DIMENSIONS
@@ -182,6 +181,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  YAMBO_ALLOC(PAR_G_bands_index,(PAR_n_bands(2)))
  call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
  !
+ HEAD_b_cpu=PAR_COM_G_b_index%CPU_id==0
+ !
  call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                           TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
@@ -210,6 +211,12 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
 &                           TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+   !
+   call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   !
+   call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",&
+&                             LOADED=count( PAR_IND_G_k%element_1D ),&
+&                             TOTAL=QP_nk)
    !
  endif
  !

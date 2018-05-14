@@ -51,7 +51,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
  real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
- integer               :: i1,ic,ib,ik,i_sp_pol,i_sp,i_err,ID_dE_interp,ik_special
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ID_dE_interp,ik_special
  integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing

@@ -26,7 +26,7 @@ subroutine RT_databases_IO(E)
  use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,IO_OBS_cache_steps,SAVE_G_history
+&                         GF_RT_IO_t,IO_OBS_cache_steps
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,OP_IF_START_WR_CL_IF_END,IO_and_Messaging_switch
@@ -107,22 +107,21 @@ subroutine RT_databases_IO(E)
    !
    do i_cpu=1,ncpu
      !
-     if (myid+1/=i_cpu) cycle
-     !
      ACTION_=OP_WR
-     if (SAVE_G_history) ACTION_=OP_WR_CL
      !
-     if (i_cpu==1) then
+     if (i_cpu==1.and.myid+1==i_cpu) then
        call io_control(ACTION=ACTION_,COM=NONE, SEC=(/1/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))
      endif
      !
      do ik = 1, RT_nk
        !
+       if (myid+1/=i_cpu) cycle
+       !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
        ACTION_=WR_CL_IF_END
-       if (SAVE_G_history) ACTION_=OP_IF_START_WR_CL_IF_END
+       if (i_cpu>1) ACTION_=OP_IF_START_WR_CL_IF_END
        !
        call io_control(ACTION=ACTION_,COM=NONE,SEC=(/ik+1/),ID=ID(5))
        io_G=io_RT_components('G',ID(5))

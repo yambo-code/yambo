@@ -128,7 +128,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! CURRENT
  !=========
- if (l_current) call electrons_current(Xk,Xen,Xq)
+ if (l_current) call electrons_current(Xk,Xen)
  !
  ! Clean-up
  !==========

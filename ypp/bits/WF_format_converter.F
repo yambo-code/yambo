@@ -32,7 +32,7 @@ subroutine WF_format_converter(E,Xk,q)
  use com,                 ONLY:msg,core_io_path,more_io_path
  use electrons,           ONLY:levels,n_spin,n_sp_pol,n_spinor
  use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY:io_control,NONE,DUMP,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
+ use IO_m,                ONLY:io_control,NONE,DUMP,OP_WR_CL,OP_APP_CL,OP_RD_CL
  !
 #include<memory.h>
  !
@@ -117,12 +117,12 @@ subroutine WF_format_converter(E,Xk,q)
        !
        if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
          if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID_new)
-         if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID_new)
+         if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID_new)
          io_KB_abinit_err=io_KB_abinit(ID_new)
        endif
        !
        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID_new)
-       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID_new)
+       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID_new)
        io_err=io_WF(ID_new,wf_disk_new)
        !
      enddo

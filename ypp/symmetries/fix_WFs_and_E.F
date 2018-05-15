@@ -25,7 +25,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path,error
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,&
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,&
 &                              OP_APP,OP_RD_CL,RD_CL,RD,frag_WF
  use wave_func,           ONLY:io_WF,wf_nc_k, wf_igk,wf_ncx,wf_nb_io,wf_ng, &
  &                             WF,wf_nb_io_groups
@@ -131,7 +131,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
    io_err=io_WF(ID)
    !
-   ACTION_=OP_APP_WR_CL
+   ACTION_=OP_APP_CL
    if(frag_WF) ACTION_=OP_WR_CL
    !
    do i_sp_pol=1,n_sp_pol
@@ -185,7 +185,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
      YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spinor))
      !
-     ACTION_=OP_APP_WR_CL
+     ACTION_=OP_APP_CL
      if (frag_WF) ACTION_=OP_WR_CL
      !
      do ik=k_save%nibz+1,k%nibz 
@@ -271,7 +271,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    YAMBO_ALLOC(wf_disk,(wf_ncx_new,n_spinor,wf_nb_io))
    !
-   ACTION_=OP_APP_WR_CL
+   ACTION_=OP_APP_CL
    if(frag_WF) ACTION_=OP_WR_CL
    !
    do i_sp_pol=1,n_sp_pol

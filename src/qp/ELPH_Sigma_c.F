@@ -40,7 +40,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
-&                        deliver_IO_error_message,OP_WR_CL,OP_APP_WR_CL
+&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
@@ -483,7 +483,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    !
    do iq_loop=iq_range(1),iq_range(2)
-     call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
+     call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
      io_err=io_ELPH(ID,'gFsq')
    enddo
    !

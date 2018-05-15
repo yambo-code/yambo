@@ -34,8 +34,7 @@ integer function io_RT_components(what,ID)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,&
-&                         frag_RT
+&                         manage_OP_IF_START_and_CL_IF_END,frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&

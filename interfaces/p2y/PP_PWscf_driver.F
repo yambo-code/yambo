@@ -38,7 +38,7 @@ subroutine PP_PWscf_driver(k)
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
  use com,                   ONLY:msg,warning
  use LIVE_t,                ONLY:live_timing
- use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
+ use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_CL,REP
  use interfaces,            ONLY:PARALLEL_index
  implicit none
  !
@@ -107,7 +107,7 @@ subroutine PP_PWscf_driver(k)
    !
    ! Write pseudovelocity to disk
    !
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/ik+1/),ID=ID)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/ik+1/),ID=ID)
    io_err=io_KB_pwscf(ID)
    !
  end do

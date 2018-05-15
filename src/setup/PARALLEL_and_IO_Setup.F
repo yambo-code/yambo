@@ -120,9 +120,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Strings & Dirs
  !-----------------
  !
- if (len_trim(jobstr)>0) dumb_ch='Job string(s)-dir(s) (main): '//trim(jobstr)
- if (len_trim(jobdir)>0) dumb_ch=trim(dumb_ch)//" - "//trim(jobdir)
- call msg('nr',trim(dumb_ch))
+ dumb_ch=" "
+ if (len_trim(jobstr) >0) dumb_ch='Job string(s)-dir(s) (main): '//trim(jobstr)
+ if (len_trim(jobdir) >0) dumb_ch=trim(dumb_ch)//" - "//trim(jobdir)
+ if (len_trim(dumb_ch)>0) call msg('nr',trim(dumb_ch))
  do i_s=1,n_alt_jobstr
    if (len_trim(alt_jobstr(i_s))>0) then
      dumb_ch='                    (alt#'//trim(intc(i_s))//'): '//trim(alt_jobstr(i_s))

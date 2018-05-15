@@ -38,7 +38,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  ! F_t(t) = \int F_w(w) exp^(-i w t) 
  !
  use YPP_real_time,  ONLY:RT_time,Use_FFT,OBS_el,RT_ctl
- use pars,           ONLY:DP,cI,cZERO_DP,SP
+ use pars,           ONLY:DP,cI,cZERO_DP
  use LIVE_t,         ONLY:live_timing
  !
  implicit none
@@ -52,8 +52,6 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
  !
  integer    :: i_w,i_t,fft_sign,i_c
  integer(8) :: fftw_plan
- complex(DP):: exp_
- real(SP)   :: dT
  logical    :: l_live_timing
  !
  l_live_timing=len_trim(FT%title)>0
@@ -85,11 +83,9 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
        !
      else
        !
-       do i_t = 1, RT%T_n_steps-1
-         dT=(RT_time(i_t+1)-RT_time(i_t))
-         do i_w = 1, RT%W_n_steps
-           exp_=exp(cI*I_sign*FT%W(i_w)*RT_time(i_t))*dT
-           FT%F_w(i_w,i_c) = FT%F_w(i_w,i_c)+FT%F_t(i_t,i_c)*exp_
+       do i_w = 1, RT%W_n_steps
+         do i_t = 1, RT%T_n_steps-1
+           FT%F_w(i_w,i_c) = FT%F_w(i_w,i_c)+FT%F_t(i_t,i_c)*exp(cI*I_sign*FT%W(i_w)*RT_time(i_t))*(RT_time(i_t+1)-RT_time(i_t))
          enddo
          if (l_live_timing) call live_timing(steps=1)
        enddo

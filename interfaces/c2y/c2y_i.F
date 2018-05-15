@@ -32,7 +32,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
- use mod_wf2y,            ONLY:wf_splitter
+ use mod_wf2y,            ONLY:WF_splitter
  use interfaces,          ONLY:PARALLEL_live_message
 #if defined _MEM_CHECK 
  use memory,              ONLY:MEM_manager
@@ -61,6 +61,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ncpu  =np
  myid  =pid
  call SET_defaults(instr,od,od,'','')
+ call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en) 
@@ -106,7 +107,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('l','done ==')
  endif
  !
- call wf_splitter()
+ call WF_splitter()
  !
  call msg('s','== DB2 ...')
  !

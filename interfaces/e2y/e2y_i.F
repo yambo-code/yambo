@@ -25,19 +25,18 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use etsf_io
  use etsf_io_low_level
  use etsf_data
- use pars,                only : SP,lchlen
- use LOGO,                only : pickup_a_random
- use com,                 only : msg,write_to_report,core_io_path, file_exists,write_the_logo
- use parallel_m,          only : ncpu,myid
- use electrons,           only : levels,E_reset,n_bands,n_spinor,n_sp_pol
- use D_lattice,           only : n_atoms_species_max
- use pseudo,              only : PP_alloc_abinit, PP_free
- use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
- use LIVE_t,              only : live_timing_is_on
- use wave_func,           only : wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                only : io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
- use mod_com2y,           only : interface_presets, force_noWFs
- use mod_wf2y,            only : wf_splitter
+ use pars,                ONLY: SP,lchlen
+ use LOGO,                ONLY: pickup_a_random
+ use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo
+ use parallel_m,          ONLY: ncpu,myid
+ use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
+ use D_lattice,           ONLY: n_atoms_species_max
+ use pseudo,              ONLY: PP_alloc_abinit, PP_free
+ use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
+ use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
+ use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use mod_com2y,           ONLY: interface_presets, force_noWFs
+ use mod_wf2y,            ONLY: WF_splitter
  !
  implicit none
  integer,          intent(in) :: lnstr,iind,iod,ijs,np,pid,icd
@@ -53,10 +52,10 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  type(bz_samp)                :: k
  !
  character(lchlen)            :: KSS_filename,WFK_filename
- integer                      :: ID,io_err,i_sp_pol,ik,ifrag,icycle, ib_grp
+ integer                      :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
- logical                      :: letsf_file, lwrite_PP, force_kbpp
+ logical                      :: force_kbpp
  ! 
  ! Work Space
  !
@@ -70,6 +69,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ncpu  = np
  myid  = pid
  call SET_defaults(instr,od,od,'')
+ call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -142,7 +142,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    return
  endif
  !
- call wf_splitter()
+ call WF_splitter()
  !
  ! WF & PP
  !==========================================

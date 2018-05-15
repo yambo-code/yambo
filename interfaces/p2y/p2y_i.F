@@ -23,19 +23,19 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use P2Y,                 ONLY : pw_init, pw_close 
- use LOGO,                ONLY : pickup_a_random
- use pars,                ONLY : SP,lchlen
- use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo
- use parallel_m,          ONLY : ncpu,myid,PARALLEL_wait
- use electrons,           ONLY : levels,E_reset,n_bands,n_sp_pol,n_spinor
- use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
- use wave_func,           ONLY : wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY : io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP
- use mod_com2y,           ONLY : interface_presets,force_noWFs,verboseIO
- use mod_wf2y,            ONLY : wf_splitter
- use stderr,              ONLY : intc
- use interfaces,          ONLY : PARALLEL_live_message
+ use P2Y,                 ONLY: pw_init, pw_close 
+ use LOGO,                ONLY: pickup_a_random
+ use pars,                ONLY: SP,lchlen
+ use com,                 ONLY: msg,write_to_report,core_io_path,error,write_the_logo
+ use parallel_m,          ONLY: ncpu,myid,PARALLEL_wait
+ use electrons,           ONLY: levels,E_reset,n_bands,n_sp_pol,n_spinor
+ use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
+ use wave_func,           ONLY: wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
+ use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP
+ use mod_com2y,           ONLY: interface_presets,force_noWFs,verboseIO
+ use mod_wf2y,            ONLY: WF_splitter
+ use stderr,              ONLY: intc
+ use interfaces,          ONLY: PARALLEL_live_message
 #if !defined _P2Y_EXPORT
  use qexml_module
 #endif
@@ -67,6 +67,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ncpu  =np
  myid  =pid
  call SET_defaults(instr,od,od,'')
+ call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)

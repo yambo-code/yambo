@@ -32,13 +32,14 @@ subroutine Pseudo_H_correction(Xk,Xen)
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:n_atoms
  use LIVE_t,        ONLY:live_timing
- use hamiltonian,   ONLY:H_ref_bands,Hzero,new_pp,old_pp
+ use hamiltonian,   ONLY:H_ref_bands,Hzero
 #if defined _RT
  use real_time,     ONLY:Ho_plus_sigma
 #endif
  use interfaces,    ONLY:WF_load,WF_free
- use io_m,          ONLY:RD,RD_CL,io_control
+ use io_m,          ONLY:OP_RD,RD,RD_CL,io_control
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -50,96 +51,89 @@ subroutine Pseudo_H_correction(Xk,Xen)
  !
  type(X_t)     :: X
  !
- complex(SP),allocatable :: kbv(:,:,:,:),kbv_ks_space(:,:)
+ complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:,:),kbv_gauged(:,:,:),gauge_factor(:,:),kpt_factor(:,:)
  complex(SP)             :: H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
 &                           H_pseudo_corr(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
+ integer                 :: kbv_real_space_table(pp_kbv_dim)
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf
+ integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,i_atom,ifrag
  !
  ! I / O
- integer                 :: ID,io_err(3),io_KB_pwscf_err,io_KB_abinit_err,io_Vnl_err
- integer, external       :: io_KB_abinit,io_KB_pwscf
- !
- call DIPOLE_kb_init(Xen,X,io_err,ID)
- !
- io_KB_abinit_err= io_err(1)
- io_KB_pwscf_err = io_err(2)
- io_Vnl_err     = io_err(3)
- !
- if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
+ integer                 :: ID,io_KB_real_space_err
+ integer, external       :: io_KB_real_space
  !
 #if defined _MAGNETIC
  if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
 #endif
  !
- YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
- YAMBO_ALLOC(new_pp,(fft_size,pp_kbv_dim,n_spinor))
- YAMBO_ALLOC(old_pp,(fft_size,pp_kbv_dim,n_spinor))
+ YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim))
+ !
+ call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
+ io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
+ !
+ if(io_KB_real_space_err/=0) then
+   call io_control(ACTION=RD_CL,SEC=(/1/),ID=ID)
+   io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
+   YAMBO_FREE(kbv_real_space)
+   return
+ endif
+ !
  YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2),2))
+ YAMBO_ALLOC(kbv_gauged,(fft_size,n_spinor,2))
+ YAMBO_ALLOC(kpt_factor,(fft_size,n_atoms))
+ YAMBO_ALLOC(gauge_factor,(fft_size,n_atoms))
  !
  H_pseudo_corr=cZERO
  !
 #if defined _MAGNETIC
- if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz)        
+ if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz*n_sp_pol)
 #endif
  !
- do ik=1,Xk%nibz
+ do i_sp_pol=1,n_sp_pol
    !
+   do ik=1,Xk%nibz
+     !
+     ifrag=ik+(i_sp_pol-1)*Xk%nibz
+     !
 #if defined _MAGNETIC
-   if(l_sc_magnetic) call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
-#endif
-   !
-#if defined _RT
-   if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
-#endif
-   !
-   if (io_KB_pwscf_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_pwscf_err=io_KB_pwscf(ID)
-   endif
-   !
-   if (io_KB_abinit_err==0) then
-     if (ik<Xk%nibz  ) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==Xk%nibz ) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)
-     io_KB_abinit_err=io_KB_abinit(ID)
-   endif
-   !
-#if defined _RT
-   if(l_real_time) call timing('Pseudo kbv I/O',OPR='stop')
-#endif
-   !
-   do i_sp_pol=1,n_sp_pol
-     !  
-#if defined _RT
-     if(l_real_time) call timing('Pseudo kbv load',OPR='start')
-#endif
-     ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
-     ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
-     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
-     !
-     call Pseudo_build_kbv(kbv,Xk%pt(ik,:))
-     !
-#if defined _RT
-     if(l_real_time) call timing('Pseudo kbv load',OPR='stop')
+     if(l_sc_magnetic) call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
 #endif
      !
 #if defined _RT
-     if(l_real_time) call timing('Pseudo_correction',OPR='start')
+     if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
 #endif
+     !
+     if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+     if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+     io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
+     !
+#if defined _RT
+     if(l_real_time) then
+       call timing('Pseudo kbv I/O',OPR='stop')
+       call timing('Pseudo_correction',OPR='start')
+     endif
+#endif
+     !
+     call Pseudo_KB_gauge_factor(Xk%pt(ik,:),gauge_factor,kpt_factor)
      !
      do i1=1,pp_kbv_dim
        !     
        kbv_ks_space=cZERO
        !
+       i_atom=kbv_real_space_table(i1)
+       !
+       do i_spinor=1,n_spinor
+         kbv_gauged(:,i_spinor,1)=kbv_real_space(:,i_spinor,i1)*kpt_factor(:,i_atom)*gauge_factor(:,i_atom)
+         kbv_gauged(:,i_spinor,2)=kbv_real_space(:,i_spinor,i1)*kpt_factor(:,i_atom)
+       enddo
+       !
        do ib=H_ref_bands(1),H_ref_bands(2)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
-         kbv_ks_space(ib,1)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),new_pp(:,i1,:))
-         kbv_ks_space(ib,2)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),old_pp(:,i1,:))
+         kbv_ks_space(ib,1)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged(:,:,1))
+         kbv_ks_space(ib,2)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged(:,:,2))
          !
          do ibp=H_ref_bands(1),ib
            !
@@ -156,8 +150,6 @@ subroutine Pseudo_H_correction(Xk,Xen)
 #if defined _RT
      if(l_real_time) call timing('Pseudo_correction',OPR='stop')
 #endif
-     !
-   enddo   ! i_sp_pol
    !
 #if defined _MAGNETIC
    if(l_sc_magnetic) then
@@ -165,8 +157,10 @@ subroutine Pseudo_H_correction(Xk,Xen)
      call WF_free(WF)
    endif
 #endif
+     !
+   enddo   ! ik
    !
- enddo  ! ik
+ enddo  ! i_sp_pol
  !
 #if defined _MAGNETIC
  if(l_sc_magnetic) then
@@ -181,8 +175,9 @@ subroutine Pseudo_H_correction(Xk,Xen)
  !
  ! Free mem
  YAMBO_FREE(kbv_ks_space)
- YAMBO_FREE(kbv)
- YAMBO_FREE(new_pp)
- YAMBO_FREE(old_pp)
+ YAMBO_FREE(kbv_real_space)
+ YAMBO_FREE(kbv_gauged)
+ YAMBO_FREE(kpt_factor)
+ YAMBO_FREE(gauge_factor)
  !
 end subroutine Pseudo_H_correction

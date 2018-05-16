@@ -50,10 +50,6 @@ module hamiltonian
  logical           :: l_sc_V_is_local=.TRUE.
  logical           :: l_sc_XC_is_local=.TRUE.
  !
- ! Pseudo potentials
- !
- complex(SP), allocatable :: new_pp(:,:,:),old_pp(:,:,:)
- !
  ! Kinetic Energy and Ionic potential energy
  !
  type(levels),save        :: E_reference

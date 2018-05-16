@@ -57,7 +57,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- complex(SP)   :: RT_P_tmp(3)
  complex(SP)   :: RT_M_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
@@ -78,7 +77,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !               (it will be computed from the current in the velocity gauge)
  !               The proper value is set in RT_propagate_fields
  !
- if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
  !
  RT_ind_J=RT_ind_J/DL_vol
  !
@@ -97,10 +96,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !     This expression is exact to all orders in the field.
    !     (to be fixed, it is not stable ...)
    !
-   if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
-   if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
-   !
-   RT_P=RT_P_tmp
+   if(integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
+   if(integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
    !
  endif
  !

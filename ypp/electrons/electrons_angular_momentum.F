@@ -74,6 +74,8 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  ! 
  ! Build the vector potential
  call MAG_common_build_A(.true.)
+ !
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
  call load_cc(.false.,(/0._SP,0._SP,0._SP/))
  ! 
  ! Choose which are the directions you are interested in
@@ -160,19 +162,19 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
        ! Li =(r x p)_i for i=x,y,z
        ! These are gauge dependent if MAG_landau=.true.
        ! These are quantized if wfs are eigenstate
-       if(angular_dir(1)) L_tmp(1,:)=x_cc(:,2)*wf_z(:,1,ifft)-x_cc(:,3)*wf_y(:,1,ifft)
-       if(angular_dir(2)) L_tmp(2,:)=x_cc(:,3)*wf_x(:,1,ifft)-x_cc(:,1)*wf_z(:,1,ifft)
-       if(angular_dir(3)) L_tmp(3,:)=x_cc(:,1)*wf_y(:,1,ifft)-x_cc(:,2)*wf_x(:,1,ifft)
+       if(angular_dir(1)) L_tmp(1,:)=x_cc(:,2,1)*wf_z(:,1,ifft)-x_cc(:,3,1)*wf_y(:,1,ifft)
+       if(angular_dir(2)) L_tmp(2,:)=x_cc(:,3,1)*wf_x(:,1,ifft)-x_cc(:,1,1)*wf_z(:,1,ifft)
+       if(angular_dir(3)) L_tmp(3,:)=x_cc(:,1,1)*wf_y(:,1,ifft)-x_cc(:,2,1)*wf_x(:,1,ifft)
        !
        if(MAG_landau) then
          ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
-         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x_cc(:,2)*A_magn_z(:)- &
-&                             x_cc(:,3)*A_magn_y(:))*WF%c(:,1,ifft)
-         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x_cc(:,3)*A_magn_x(:)- &
-&                             x_cc(:,1)*A_magn_z(:))*WF%c(:,1,ifft)
-         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x_cc(:,1)*A_magn_y(:)- &
-&                             x_cc(:,2)*A_magn_x(:))*WF%c(:,1,ifft)
+         if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x_cc(:,2,1)*A_magn_z(:)- &
+&                             x_cc(:,3,1)*A_magn_y(:))*WF%c(:,1,ifft)
+         if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x_cc(:,3,1)*A_magn_x(:)- &
+&                             x_cc(:,1,1)*A_magn_z(:))*WF%c(:,1,ifft)
+         if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x_cc(:,1,1)*A_magn_y(:)- &
+&                             x_cc(:,2,1)*A_magn_x(:))*WF%c(:,1,ifft)
        endif
        !
        do i1=1,3

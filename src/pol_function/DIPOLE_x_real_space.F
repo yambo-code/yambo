@@ -52,7 +52,9 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
- call load_cc(.false.,(/0._SP,0._SP,0._SP/))
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ !
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
  ! WF load
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
@@ -99,7 +101,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
              !
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
 &                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
-&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
+&                             x_cc(1:fft_size,idir,1)*WF%c(1:fft_size,i_spinor,ic_wf) )
              !
            enddo
          enddo

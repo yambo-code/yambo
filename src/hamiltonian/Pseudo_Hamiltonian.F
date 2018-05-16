@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Pseudo_H_correction(Xk,Xen)
+subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_sc_magnetic,l_real_time
@@ -36,7 +36,7 @@ subroutine Pseudo_H_correction(Xk,Xen)
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_ref_bands,Hzero
 #if defined _RT
- use real_time,     ONLY:Ho_plus_sigma
+ use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
  use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:OP_RD,RD,RD_CL,io_control
@@ -46,14 +46,15 @@ subroutine Pseudo_H_correction(Xk,Xen)
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
+ logical       :: l_equilibrium
  !
  ! Work Space
  !
  type(X_t)     :: X
  !
- complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:,:),kbv_gauged(:,:,:),gauge_factor(:,:),kpt_factor(:,:)
- complex(SP)             :: H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
-&                           H_pseudo_corr(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
+ complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:),kbv_gauged(:,:),gauge_factor(:,:)
+ complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
+&                           H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
  integer                 :: kbv_real_space_table(pp_kbv_dim)
  !
  ! Dummies
@@ -79,12 +80,11 @@ subroutine Pseudo_H_correction(Xk,Xen)
    return
  endif
  !
- YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2),2))
- YAMBO_ALLOC(kbv_gauged,(fft_size,n_spinor,2))
- YAMBO_ALLOC(kpt_factor,(fft_size,n_atoms))
+ YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2)))
+ YAMBO_ALLOC(kbv_gauged,(fft_size,n_spinor))
  YAMBO_ALLOC(gauge_factor,(fft_size,n_atoms))
  !
- H_pseudo_corr=cZERO
+ H_pseudo=cZERO
  !
 #if defined _MAGNETIC
  if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz*n_sp_pol)
@@ -111,11 +111,11 @@ subroutine Pseudo_H_correction(Xk,Xen)
 #if defined _RT
      if(l_real_time) then
        call timing('Pseudo kbv I/O',OPR='stop')
-       call timing('Pseudo_correction',OPR='start')
+       call timing('Pseudo correction',OPR='start')
      endif
 #endif
      !
-     call Pseudo_KB_gauge_factor(Xk%pt(ik,:),gauge_factor,kpt_factor)
+     call Pseudo_KB_gauge_factor(gauge_factor)
      !
      do i1=1,pp_kbv_dim
        !     
@@ -124,31 +124,30 @@ subroutine Pseudo_H_correction(Xk,Xen)
        i_atom=kbv_real_space_table(i1)
        !
        do i_spinor=1,n_spinor
-         kbv_gauged(:,i_spinor,1)=kbv_real_space(:,i_spinor,i1)*kpt_factor(:,i_atom)*gauge_factor(:,i_atom)
-         kbv_gauged(:,i_spinor,2)=kbv_real_space(:,i_spinor,i1)*kpt_factor(:,i_atom)
+         if(.not.l_equilibrium) kbv_gauged(:,i_spinor)=kbv_real_space(:,i_spinor,i1)*gauge_factor(:,i_atom)
+         if(     l_equilibrium) kbv_gauged(:,i_spinor)=kbv_real_space(:,i_spinor,i1)
        enddo
        !
        do ib=H_ref_bands(1),H_ref_bands(2)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
-         kbv_ks_space(ib,1)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged(:,:,1))
-         kbv_ks_space(ib,2)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged(:,:,2))
+         kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
          !
          do ibp=H_ref_bands(1),ib
            !
-           H_pseudo(ibp,ib)=conjg(kbv_ks_space(ibp,1))*kbv_ks_space(ib,1)-conjg(kbv_ks_space(ibp,2))*kbv_ks_space(ib,2)
-           if(ib/=ibp) H_pseudo(ib,ibp)=conjg(H_pseudo(ibp,ib))
+           H_pseudo_ik(ibp,ib)=conjg(kbv_ks_space(ibp))*kbv_ks_space(ib)
+           if(ib/=ibp) H_pseudo_ik(ib,ibp)=conjg(H_pseudo_ik(ibp,ib))
            !
          enddo   ! ibp
        enddo   ! ib
        !
-       H_pseudo_corr(:,:,ik,i_sp_pol)=H_pseudo_corr(:,:,ik,i_sp_pol)+H_pseudo(:,:)
+       H_pseudo(:,:,ik,i_sp_pol)=H_pseudo(:,:,ik,i_sp_pol)+H_pseudo_ik(:,:)
        !
      enddo   ! i1
      !
 #if defined _RT
-     if(l_real_time) call timing('Pseudo_correction',OPR='stop')
+     if(l_real_time) call timing('Pseudo correction',OPR='stop')
 #endif
    !
 #if defined _MAGNETIC
@@ -165,19 +164,22 @@ subroutine Pseudo_H_correction(Xk,Xen)
 #if defined _MAGNETIC
  if(l_sc_magnetic) then
    call live_timing()
-   Hzero(:,:,:,:)=Hzero(:,:,:,:)+H_pseudo_corr(:,:,:,:)
+   if(.not.l_equilibrium) Hzero=Hzero+H_pseudo
+   if(     l_equilibrium) Hzero=Hzero-H_pseudo
  endif
 #endif
  !
 #if defined _RT
- if(l_real_time) Ho_plus_sigma=Ho_plus_sigma+H_pseudo_corr(:,:,:,:)
+ if(l_real_time) then
+   if(.not.l_equilibrium) Ho_plus_sigma=Ho_plus_sigma+(H_pseudo-H_pseudo_eq)
+   if(     l_equilibrium) H_pseudo_eq  =H_pseudo
+ endif
 #endif
  !
  ! Free mem
  YAMBO_FREE(kbv_ks_space)
  YAMBO_FREE(kbv_real_space)
  YAMBO_FREE(kbv_gauged)
- YAMBO_FREE(kpt_factor)
  YAMBO_FREE(gauge_factor)
  !
-end subroutine Pseudo_H_correction
+end subroutine Pseudo_Hamiltonian

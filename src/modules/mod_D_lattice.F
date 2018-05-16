@@ -79,7 +79,7 @@ module D_lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
- real(SP),    allocatable :: x_cc(:,:)
+ real(SP),    allocatable :: x_cc(:,:,:)
  real(SP)                 :: x_zero_point(3)
  !
  ! Gradients

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine load_cc(manage_zero,x_zero_point)
+subroutine load_cc(manage_zero,x_zero_point,n_coord)
  !
  ! manage_zero:
  !  - false --> no action
@@ -43,6 +43,7 @@ subroutine load_cc(manage_zero,x_zero_point)
  !
  logical    :: manage_zero
  real(SP)   :: x_zero_point(3),x_jump(3)
+ integer    :: n_coord
  !
  ! work space
  !
@@ -51,9 +52,7 @@ subroutine load_cc(manage_zero,x_zero_point)
  !
  if(.not.l_real_time) call fft_setup(0,1,.true.)      ! FFT size
  !
- YAMBO_ALLOC(x_cc,(fft_size,3))
- !
- x_jump=(/a(1,1)/2._SP,a(1,1)/2._SP,a(1,1)/2._SP/)+x_zero_point
+ x_jump=(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/)+x_zero_point
  !
  do ir1 = 0, fft_dim(1)-1         ! x 
    rir1=real(ir1,SP)/real(fft_dim(1),SP)
@@ -72,26 +71,23 @@ subroutine load_cc(manage_zero,x_zero_point)
        ! which defines the supercell and which cross at the center of the supercell
        ! If center_cc is specified the saw-like jump is in the middle of the super-cell 
        !
-       x_cc(ir,:)=tmp_x(:)
+       x_cc(ir,:,n_coord)=tmp_x(:)
        !
-       !tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
-       !tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
-       !tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
        tmp_border(1)=x_jump(1)   +a(2,1)*rir2 +a(3,1)*rir3
        tmp_border(2)=a(1,2)*rir1 +x_jump(2)   +a(3,2)*rir3
        tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +x_jump(3)
        !
        do i_dir=1,3
-         if (tmp_x(i_dir)>  tmp_border(i_dir)                ) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)
-         if (tmp_x(i_dir)<=(tmp_border(i_dir)-a(i_dir,i_dir))) x_cc(ir,:)=x_cc(ir,:)+a(i_dir,:)
+         if (tmp_x(i_dir)>  tmp_border(i_dir)                ) x_cc(ir,:,n_coord)=x_cc(ir,:,n_coord)-a(i_dir,:)
+         if (tmp_x(i_dir)<=(tmp_border(i_dir)-a(i_dir,i_dir))) x_cc(ir,:,n_coord)=x_cc(ir,:,n_coord)+a(i_dir,:)
        enddo
        !
        if(.not.manage_zero) cycle
        !
        do i_dir=1,3
-         if(abs(x_cc(ir,i_dir))<10*epsilon(1._SP)) then
-           if(x_cc(ir,i_dir)>=0._SP) x_cc(ir,i_dir)= 10*epsilon(1._SP)
-           if(x_cc(ir,i_dir)< 0._SP) x_cc(ir,i_dir)=-10*epsilon(1._SP)
+         if(abs(x_cc(ir,i_dir,n_coord))<10*epsilon(1._SP)) then
+           if(x_cc(ir,i_dir,n_coord)>=0._SP) x_cc(ir,i_dir,n_coord)= 10*epsilon(1._SP)
+           if(x_cc(ir,i_dir,n_coord)< 0._SP) x_cc(ir,i_dir,n_coord)=-10*epsilon(1._SP)
          endif
        enddo
        !

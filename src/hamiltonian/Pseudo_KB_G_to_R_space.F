@@ -109,7 +109,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
-     call Pseudo_KB_FFT(kbv,kbv_real_space)
+     call Pseudo_KB_FFT(kbv,kbv_real_space,Xk%pt(ik,:))
      !
      if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=WR,SEC=(/ifrag+1/),ID=ID_R)
      if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=WR_CL,SEC=(/ifrag+1/),ID=ID_R)

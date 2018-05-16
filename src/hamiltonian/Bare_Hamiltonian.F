@@ -70,7 +70,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call Pseudo_H_correction(Xk,E)
+   call Pseudo_KB_G_to_R_space(k,E)  
+   call Pseudo_Hamiltonian(Xk,E,.true.)
+   call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !

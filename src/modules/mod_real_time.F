@@ -297,8 +297,7 @@ module real_time
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
- complex(SP), allocatable :: H_pseudo_order1(:,:,:,:,:)
- complex(SP), allocatable :: H_pseudo_order2(:,:,:,:,:,:)
+ complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !complex(SP), allocatable :: I_relax_static(:,:,:)
  !
@@ -471,7 +470,6 @@ module real_time
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
-     use X_m,            ONLY:global_gauge
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use R_lattice,      ONLY:nqbz,nXkibz
@@ -553,9 +551,8 @@ module real_time
      !
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
-     if (trim(global_gauge)=="velocity") then
-       YAMBO_ALLOC(H_pseudo_order1,(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-       YAMBO_ALLOC(H_pseudo_order2,(3,3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     if (l_velocity_gauge_corr) then
+       YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      endif
      !
      if(l_use_Hxc_collisions) then
@@ -612,8 +609,7 @@ module real_time
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
-     YAMBO_FREE(H_pseudo_order1)
-     YAMBO_FREE(H_pseudo_order2)
+     YAMBO_FREE(H_pseudo_eq)
      YAMBO_FREE(RT_TIME_status)
      !YAMBOO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)

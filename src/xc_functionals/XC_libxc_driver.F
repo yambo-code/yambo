@@ -231,7 +231,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    end if
  enddo
  !
- E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+ E_xc_val=0.0_SP
+ if (order==0) E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
  !
  if (EvaluateDGradient) then
    YAMBO_FREE(sigma)

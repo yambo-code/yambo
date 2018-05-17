@@ -25,6 +25,7 @@ subroutine PARALLEL_get_ENVIRONMENT_structure(ENVIRONMENT)
  !
  use pars,         ONLY:schlen
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,ncpu
+ use stderr,       ONLY:remove_new_line
  !
  implicit none
  !
@@ -61,6 +62,11 @@ subroutine PARALLEL_get_ENVIRONMENT_structure(ENVIRONMENT)
    CALL get_environment_variable("YAMBO_"//trim(PAR_pre_field)//"_ROLEs",ROLE_string)
    CALL get_environment_variable("YAMBO_"//trim(PAR_pre_field)//"_nCPU_LinAlg_INV",INV_string)
    CALL get_environment_variable("YAMBO_"//trim(PAR_pre_field)//"_nCPU_LinAlg_DIAGO",DIAGO_string)
+   !
+   call remove_new_line(CPU_string)
+   call remove_new_line(ROLE_string)
+   call remove_new_line(INV_string)
+   call remove_new_line(DIAGO_string)
    !
    if (len_trim(CPU_string)>0)    read (CPU_string,*)   CPU_structure(i_s)%CPU_string
    if (len_trim(ROLE_string)>0)   read (ROLE_string,*)  CPU_structure(i_s)%ROLE_string

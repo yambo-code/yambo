@@ -54,11 +54,12 @@ bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
-CFGFILES = config/setup config/Makefile config/report  \
+libbindir   = @prefix@/bin-libs
+CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           include/c_defs.h
+           include/c_defs.h sbin/generate_gpl.sh
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
@@ -78,7 +79,8 @@ KERR_PROJ= yambo_kerr
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(TESTS)
 BROKEN   =
 TESTS    = 
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS)
+SCRIPTS  = ydb.pl
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -284,7 +286,7 @@ ypp_sc: libs
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_SC"; $(mk_ypp_x)
 ypp_magnetic: libs
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC -D_MAGNETIC"; $(mksrc)
-	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; $(mk_ypp_src)
+	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_MAGNETIC"; $(mk_ypp_src)
 	@+X2DO="ypp_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_MAGNETIC"; $(mk_ypp_x)
 #
@@ -492,16 +494,23 @@ define lib_ext_remove
   echo "[CLEAN] Local include directory ... done"; \
   rm -fr "$(prefix)/include/system"; \
  fi
+ @if test -f $(prefix)/scripts/../driver/driver.c; then \
+  echo "[CLEAN] Local scripts directory ... done"; \
+  rm -fr "$(prefix)/scripts"; \
+ fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
        grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
+ @if test -d $(libbindir); then \
+  cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
+ fi
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f * ; cd ..
+ rmdir $(bindir)
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

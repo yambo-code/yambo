@@ -39,7 +39,7 @@ subroutine electrons_bands(Xk,Xen)
 &                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:i_time_rev,lattice
+ use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close,error,file_exists,msg_deliver
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc,set_real_printed_length
@@ -77,8 +77,6 @@ subroutine electrons_bands(Xk,Xen)
  if (BANDS_E_and_k_db) BANDS_internal=.FALSE.
  GRID_interpolate    = all(INTERP_grid>0)
  DOS_interpolate     = GRID_interpolate.and.BANDS_bands(1)==1
- !
- if ( i_time_rev==1 ) call error(' Bands interpolation does not work with T-rev symmetry')
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 

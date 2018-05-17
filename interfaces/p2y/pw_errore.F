@@ -29,7 +29,7 @@ subroutine errore(subname,msgin,ierr)
   character(3)              :: merr
   !
   write(merr,'(i3)') ierr
-  call error('Error in '//trim(subname)//' '//trim(msgin)//' ierr:'//trim(merr))
+  call error('Error in '//trim(subname)//':   '//trim(msgin)//';   ierr:'//trim(merr))
   stop ' ' ! not called
   !
 end subroutine errore

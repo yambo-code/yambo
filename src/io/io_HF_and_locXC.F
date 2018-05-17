@@ -24,6 +24,7 @@
 integer function io_HF_and_locXC(ID)
  !
  use pars,           ONLY:schlen
+ use drivers,        ONLY:l_col_cut
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
@@ -60,7 +61,7 @@ integer function io_HF_and_locXC(ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,&
-&                               XC_KIND="G_WF force",CUTOFF=.true.,FRAG=frag_HF)
+&                               XC_KIND="G_WF force",CUTOFF=l_col_cut,FRAG=frag_HF)
    !
    if (io_HF_and_locXC/=0) goto 1
    !

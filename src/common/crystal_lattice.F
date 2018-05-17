@@ -23,7 +23,7 @@
 !
 subroutine crystal_lattice()
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:a,alat,lattice,dl_sop,nsym
  use vec_operate   , ONLY:v_norm
  use matrix_operate, ONLY:m3inv
@@ -32,15 +32,17 @@ subroutine crystal_lattice()
  !
  ! Work Space
  !
- integer, parameter :: n_lattices=4,n_rep=3,n_pre=3
+ integer, parameter :: n_lattices=5,n_rep=3,n_pre=3
  real(SP)           :: latt_a(3,3,n_lattices),latt_a_m1(3,3),&
 &                      a_m1(3,3),coeff(3),v(3),latt_a_rot(3,3),pre_factor(n_pre)
- character(7)       :: lattice_name(n_lattices)
+ character(schlen)  :: lattice_name(n_lattices)
  integer            :: i_l,i,j,k,i_s,i_p
  logical            :: lattice_test_failed(n_lattices,n_pre)
  !
  ! Load standard lattice vectors 
- ! (taken from http://cst-www.nrl.navy.mil/bind/kpts/index.html)
+ !
+ ! Refs.  http://cst-www.nrl.navy.mil/bind/kpts/index.html (out of date)
+ !        http://web.mit.edu/espresso_v6.1/i386_linux26/qe-6.1/Doc/brillouin_zones.pdf 
  !
  lattice_name(1)='HCP'
  latt_a(1,:,1) = (/ 1./2. , -sqrt(3.)/2., 0./)*alat(1)
@@ -61,6 +63,11 @@ subroutine crystal_lattice()
  latt_a(1,:,4) = (/ 1.    , 0.      , 0.     /)*alat(1)
  latt_a(2,:,4) = (/ 0.    , 1.      , 0.     /)*alat(1)
  latt_a(3,:,4) = (/ 0.    , 0.      , 1.     /)*alat(1)
+ !
+ lattice_name(5)='FC-ORTHOROMBIC'
+ latt_a(1,:,5) = (/ a(1,1) , a(1,2) , 0.      /)
+ latt_a(2,:,5) = (/-a(1,1) , a(1,2) , 0.      /)
+ latt_a(3,:,5) = (/ 0.     , 0.     , alat(3) /)
  !
  call m3inv(a,a_m1)
  !

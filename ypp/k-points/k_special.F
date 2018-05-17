@@ -96,6 +96,27 @@ subroutine k_special()
      SPECIAL_k%pt(4,:)=(/0. ,1.  ,0.  /)
      SPECIAL_k_label(4)='H'
      !
+   case('FC-ORTHOROMBIC')
+     !
+!     trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
+!     trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
+!     trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
+!     !
+!     SPECIAL_k%nbz=4
+!     !
+!     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+!     SPECIAL_k_label(1)='G'
+!     SPECIAL_k%pt(2,:)=(/0.5,0.,0./)
+!     SPECIAL_k_label(2)='X'
+!     SPECIAL_k%pt(3,:)=(/0.5,0.5,0./)
+!     SPECIAL_k_label(3)='M'
+!     SPECIAL_k%pt(4,:)=(/0.5,0.5,0.5/)
+!     SPECIAL_k_label(4)='R'
+!     !
+!     do ik=1,SPECIAL_k%nbz
+!       call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
+!     enddo
+     !
    case('CUB')
      !
      trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)

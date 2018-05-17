@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM AR
@@ -29,15 +29,15 @@ subroutine WANNIER_driver(k,E)
  !
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nkbz
+ use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use YPP,            ONLY:seed_name
- use com,            ONLY:error,msg
+ use com,            ONLY:msg
  use vec_operate,    ONLY:rlu_v_is_zero
  use zeros,          ONLY:k_rlu_zero
  use QP_m,           ONLY:QP_t,QP_reset
  use IO_m,           ONLY:io_control,OP_RD_CL,LOG,DUMP
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::k
  type(levels)  ::E
@@ -50,7 +50,7 @@ subroutine WANNIER_driver(k,E)
  integer,    external :: io_QP_and_GF
  real(SP)             :: k_w(3)
  type(QP_t)           :: qp
- character(lchlen)    :: nnkp_file,eig_file
+ character(lchlen)    :: nnkp_file
  logical              :: found
  !
  call section("*","== Wannier 90 Interface ==")
@@ -61,7 +61,7 @@ subroutine WANNIER_driver(k,E)
  open(unit=10,file=trim(nnkp_file),form='formatted')
  call scan_file_to('kpoints',found,10)
  read(10,*) nk_w
- allocate(k_table(nk_w))
+ YAMBO_ALLOC(k_table,(nk_w))
  k_table=0
  !if (nk_w/=nkbz) call error('Inconsitent number of k-points')
  do i1=1,nk_w
@@ -100,7 +100,7 @@ subroutine WANNIER_driver(k,E)
    !---Subroutine from Wannier90, GPL license------------------------------
    !-----------------------------------------------------------------------
    !
-   implicit none
+#include<memory.h>
    !
    integer:: iun_nnkp
    character(len=*), intent(in)  :: keyword

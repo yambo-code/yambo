@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  use parallel_m,    ONLY:PP_indexes,MPI_comm
  use R_lattice,     ONLY:qindx_X,nkbz,nkibz,bz_samp,nqbz,qindx_S,qindx_B
  use QP_m,          ONLY:QP_n_states,QP_table
- !
- implicit none
+#include<memory.h>
  !
  character(*)           ::ZONE
  type(PP_indexes)       ::IND_in,IND_k_out,IND_q
@@ -40,7 +39,8 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  !
  IND_k_out_ID=IND_in_ID
  !
- allocate(IND_k_out%n_of_elements(COMM%n_CPU),IND_k_out%element_1D(nkibz))
+ YAMBO_ALLOC(IND_k_out%n_of_elements,(COMM%n_CPU))
+ YAMBO_ALLOC(IND_k_out%element_1D,(nkibz))
  !
  IND_k_out%n_of_elements(IND_k_out_ID+1)=0
  IND_k_out%element_1D(:)=.FALSE.

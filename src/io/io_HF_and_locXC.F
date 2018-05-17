@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 integer function io_HF_and_locXC(ID)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:schlen
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
@@ -31,10 +31,8 @@ integer function io_HF_and_locXC(ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
 &                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- implicit none
+#include<memory.h>
  integer :: ID
  !
  ! Work Space
@@ -49,9 +47,7 @@ integer function io_HF_and_locXC(ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_HF',OPR='start')
-#endif
  !
  io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
  if (io_HF_and_locXC/=0) then
@@ -123,8 +119,8 @@ integer function io_HF_and_locXC(ID)
    !
    if (read_is_on(ID)) then
      if(io_mode(ID)==DUMP) then
-       if (allocated(QP_state)) deallocate(QP_state)
-       allocate(QP_state(QP_nb_disk,QP_nk_disk))
+       YAMBO_FREE(QP_state)
+       YAMBO_ALLOC(QP_state,(QP_nb_disk,QP_nk_disk))
        QP_state=.false.
        do i1=1,QP_n_states_disk
          call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
@@ -159,8 +155,6 @@ integer function io_HF_and_locXC(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  if (io_HF) call timing('io_HF',OPR='stop')
-#endif
  !
 end function

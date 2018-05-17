@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,6 @@
 subroutine rim()
  !
  use pars,          ONLY:SP,pi,DP
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
@@ -35,10 +34,8 @@ subroutine rim()
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -55,9 +52,7 @@ subroutine rim()
  integer            :: iseed(8)
  real(DP), external :: dlaran
  ! 
-#if defined _TIMING
  call timing('RIM',OPR='start')
-#endif
  !
  call PP_indexes_reset(px)
  !
@@ -143,9 +138,8 @@ subroutine rim()
  !
  call section('=','RIM integrals')
  !
- allocate(RIM_qpg(nqibz,RIM_ng,RIM_ng))
+ YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
  RIM_qpg=0._SP
- call mem_est("RIM_qpg",(/size(RIM_qpg)/),(/SP/))
  !
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
@@ -175,8 +169,6 @@ subroutine rim()
  !
  call PP_indexes_reset(px)
  !
-#if defined _TIMING
  call timing('RIM',OPR='stop')
-#endif
  !
 end subroutine

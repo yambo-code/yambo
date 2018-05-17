@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,13 +25,12 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  ! Here I define the components of an integer array RT_TIME_status(NE_steps)
  !
- use pars,           ONLY:IP2,SP
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP
  use RT_control,     ONLY:NE_i_start_time
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_extrap_times,&
 &                         RT_dyn_step,l_RT_lifetimes_extrapolation,Life_MEM_steps,NE_i_time
  !
- implicit none
+#include<memory.h>
  !
  ! Work Space
  !
@@ -39,8 +38,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  complex(SP)     :: TIME
  !
  if (.not.allocated(RT_TIME_status)) then
-   allocate(RT_TIME_status(NE_steps))
-   call mem_est("RT_TIME_status",(/NE_steps/),(/IP2/))
+   YAMBO_ALLOC(RT_TIME_status,(NE_steps))
    RT_TIME_status=1
  endif
  !

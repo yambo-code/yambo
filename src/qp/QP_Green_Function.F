@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -84,7 +84,7 @@ subroutine QP_Green_Function(qp,E,GFdb_read_err)
    i_spin=spin(QP_table(iqp,:))
    !
    Eo=E%E(ib,ik,i_spin) 
-   if (associated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
+   if (allocated(E%Eo)) Eo=E%Eo(ib,ik,i_spin)
    !
    if (GFdb_read_err<0) then
      if ( allocated(QP_Vnl_xc) ) then

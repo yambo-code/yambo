@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,13 +39,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !  
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !  
- use pars,           ONLY:SP,cZero
+ use pars,           ONLY:SP,rZERO,cZERO
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,qindx_S
- use real_time,      ONLY:I_relax_static,elph_gkkp_expanded,l_RT_CCA_Kernel,RT_bands
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ !use real_time,      ONLY:I_relax_static,elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:elph_gkkp_expanded_sq,l_RT_CCA_Kernel,RT_bands
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,MAX_gkkp
  use functions,      ONLY:bose_f
- use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_nibz,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Q,PAR_Q_index,PAR_Xk_ibz_index
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -57,24 +58,23 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  !
  ! Work Space ...
  !
- integer               :: i_s,i_map(-1:1),il,i_gkkp
+ integer               :: i_s,i_map(-1:1),il
  real(SP)              :: ph_freq,N_q(2)
- real(SP)              :: max_gkkp
- real(SP), parameter   :: cutoff=0.005
+ real(SP), parameter   :: cutoff= 5.E-3
+ !real(SP), parameter   :: cutoff=25.E-6
  !
- complex(SP)           :: Gkkp(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: S_mat_out_of_eq(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: S_mat_eq(2,RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
- complex(SP)           :: S_mat_sum(RT_bands(2)-RT_bands(1)+1,RT_bands(2)-RT_bands(1)+1)
+ real(SP)              :: Gkkp_sq(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ !
+ complex(SP)           :: S_mat_out_of_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: S_mat_eq(2,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP)           :: S_mat_sum(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  logical :: l_skip_ABS
  !
  ! ... band index ...
- integer               :: i_n,i_np,i_m,B_dim,i_np_m,i_n_m
+ integer               :: i_n,i_np
  ! ... BZ index ...
- integer               :: iqbz,ik_m_q,ik_mem
- !
- B_dim=RT_bands(2)-RT_bands(1)+1
+ integer               :: iqbz,ik_m_q,ik_mem,iq_mem
  !
  ik_mem=PAR_Xk_ibz_index(ik)
  !
@@ -84,11 +84,9 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  i_map( 0)=1
  i_map( 1)=2
  !
- S_mat_eq=cZero
- S_mat_out_of_eq=cZero
- S_mat_sum=cZero
- !
- max_gkkp=maxval(abs(elph_gkkp_expanded))
+ S_mat_eq=cZERO
+ S_mat_out_of_eq=cZERO
+ S_mat_sum=cZERO
  !
  do iqbz=1,q%nbz
    !
@@ -96,7 +94,7 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
    !
    ik_m_q =k%sstar(qindx_S(ik,iqbz,1),1)
    !
-   i_gkkp=PAR_Q_index(iqbz)
+   iq_mem=PAR_Q_index(iqbz)
    !
    do il=elph_branches(1),elph_branches(2)
      !
@@ -116,16 +114,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
      !
      ! Note the m.e. in Gkkp are stored with indexes order exchanged
      !
-     Gkkp=cZERO
+     Gkkp_sq=rZERO
      do i_n=RT_bands(1),RT_bands(2)
-       i_n_m=i_n-RT_bands(1)+1
-       Gkkp(i_n_m,i_n_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_n,i_n)
-       if(abs(Gkkp(i_n_m,i_n_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_n_m)=cZERO
+       Gkkp_sq(i_n,i_n)=elph_gkkp_expanded_sq(i_n,i_n,il,iq_mem,ik_mem)
+       if(sqrt(Gkkp_sq(i_n,i_n))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_n)=rZERO
        do i_np=RT_bands(1),RT_bands(2)
          if(i_n==i_np) cycle
-         i_np_m=i_np-RT_bands(1)+1
-         Gkkp(i_n_m,i_np_m)=elph_gkkp_expanded((i_gkkp-1)*PAR_Xk_nibz+ik_mem,il,i_np,i_n)
-         if(abs(Gkkp(i_n_m,i_np_m))<max_gkkp*cutoff) Gkkp(i_n_m,i_np_m)=cZERO
+         Gkkp_sq(i_n,i_np)=elph_gkkp_expanded_sq(i_np,i_n,il,iq_mem,ik_mem)
+         if(sqrt(Gkkp_sq(i_n,i_np))<MAX_gkkp*cutoff) Gkkp_sq(i_n,i_np)=rZERO
        enddo 
      enddo
      !
@@ -134,26 +130,26 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
        ! Complete Collision Approximation (CCA)
        !=======================================
        !
-       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp,l_skip_ABS)
+       call RT_ELPH_CCA_Kernel(ik,ik_m_q,iqbz,il,N_q(1),E,ph_freq,Gkkp_sq,l_skip_ABS)
        !
      else
        !
        ! EQUILIBRIUM Kernel
        !=====================
        !
-       call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp,S_mat_eq)
+       call RT_ELPH_eq_kernel(ik,i_map,ik_m_q,N_q,E,TIME,ph_freq,Gkkp_sq,S_mat_eq)
        !
        ! OUT-OF-EQUILIBRIUM Kernel
        !===========================
        !
-       call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp,S_mat_out_of_eq)
+       call RT_ELPH_out_of_eq_kernel(ik,iqbz,il,i_map,ik_m_q,N_q,E,ph_freq,Gkkp_sq,S_mat_out_of_eq)
        !
        ! SUM-UP
        !========
        !
        do i_s=-1,1,2
-         do i_n=1,B_dim
-           do i_np=1,B_dim
+         do i_n=RT_bands(1),RT_bands(2)
+           do i_np=RT_bands(1),RT_bands(2)
              S_mat_sum(i_n,i_np)=S_mat_sum(i_n,i_np)+&
 &                                ( S_mat_out_of_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_out_of_eq(i_map(-i_s),i_np,i_n))+&
 &                                  S_mat_eq(i_map( i_s),i_n,i_np)+conjg(S_mat_eq(i_map(-i_s),i_np,i_n)) )
@@ -170,14 +166,14 @@ subroutine RT_ELPH_total_kernel(ik,E,k,q,TIME)
  ! Kernel composition
  !====================
  !
- if (.not.l_RT_CCA_Kernel) then
-   !
-   do i_n=RT_bands(1),RT_bands(2)
-     do i_np=RT_bands(1),RT_bands(2)
-       I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n-RT_bands(1)+1,i_np-RT_bands(1)+1)
-     enddo 
-   enddo
-   !
- endif
+ !if (.not.l_RT_CCA_Kernel) then
+ !  !
+ !  do i_n=RT_bands(1),RT_bands(2)
+ !    do i_np=RT_bands(1),RT_bands(2)
+ !      I_relax_static(i_n,i_np,ik)=I_relax_static(i_n,i_np,ik)+S_mat_sum(i_n,i_np)
+ !    enddo 
+ !  enddo
+ !  !
+ !endif
  !
 end subroutine RT_ELPH_total_kernel

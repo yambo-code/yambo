@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,13 +42,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
-#if defined _TIMING
  use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
-#endif
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _SURF
- use ras_module,    ONLY:lras, lreels
+#if defined _MEM_CHECK 
+ use memory,        ONLY:MEM_manager
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
@@ -85,10 +83,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  infile   =inf
  !
  call SET_defaults(instr,ind,od,js,com_dir)
-#ifdef _SURF
- call ras_presets()
-#endif
  call it_reset(1)
+#if defined _MEM_CHECK 
+ call MEM_defaults( )
+#endif
  !
  ! not resetted in INIT call
  !
@@ -146,15 +144,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !========
  !
  if (l_optics.and.l_chi) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3))
- !
-#if defined _SURF
- !
- ! SURFACE SPECTROSCOPY
- !=======================
- !
- if (lras.or.lreels) call surfdriver(Xen,Xk,q,Xw(3),X(3))
+#if defined _MEM_CHECK 
+ if (l_optics.and.l_chi) call MEM_manager("",REPORT="check")
 #endif
- ! 
+ !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
@@ -178,6 +171,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_dyn_em1)    i_err=X_dielectric_matrix(Xen,Xk,q,X(3),Xw(3),.false.)
  !
+#if defined _MEM_CHECK 
+ if (any((/l_em1s,l_pp_em1,l_dyn_em1/))) call MEM_manager("",REPORT="check")
+#endif
+ !
  ! HARTREE-FOCK AND VXC
  !======================
  !
@@ -185,10 +182,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  if (l_XCo)             call XCo_driver(en,k,Xk,q)
  !
- ! EXTENDED COLLISIONS (HF & COHSEX)
- !===================================
+ ! EXTENDED COLLISIONS 
+ !=====================
 #if defined _SC || defined _RT
  if (l_eval_collisions) call COLLISIONS_eval(en,X,k,Xk,q,Xw(:2))
+#endif
+ !
+#if defined _MEM_CHECK 
+ if (any((/l_eval_collisions,l_XCo/))) call MEM_manager("",REPORT="check")
 #endif
  !
  ! SELF-ENERGIES
@@ -219,6 +220,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
      !
    endif
    !
+#if defined _MEM_CHECK 
+   call MEM_manager("",REPORT="check")
+#endif
+   !
  endif
  !
  ! BETHE-SALPETER
@@ -229,6 +234,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    if (l_ppa)      call K_driver(Xen,Ken,Xk,q,X(4),Xw(4))
    !
    if (.not.l_ppa) call K_driver(Xen,Ken,Xk,q,X(2),Xw(2))
+   !
+#if defined _MEM_CHECK 
+   call MEM_manager("",REPORT="check")
+#endif
+   !
  endif
  !
  ! GPL_EXCLUDE_START
@@ -247,6 +257,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
 #if defined _SC
    call SC_driver(X(:2),Xw(:2),Xk,en,k,q)
+   !
+#endif
+   !
+#if defined _MEM_CHECK 
+   call MEM_manager("",REPORT="check")
 #endif
    !
  endif
@@ -258,6 +273,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
 #if defined _RT
    call RT_driver(en,X(:2),k,q)
+   !
+#endif
+#if defined _MEM_CHECK 
+   !
+   call MEM_manager("",REPORT="check")
+   !
 #endif
    !
  endif
@@ -280,12 +301,21 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
+
  !
  ! Timing Overview
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
+ !
+ ! Memory Overview
+ !=================
+#if defined _MEM_CHECK 
+ !
+ call section('*','Memory Overview')
+ !
+ call MEM_manager("",REPORT="final")
+ !
 #endif
  !
  ! GAME OVER :(
@@ -297,9 +327,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
-#if defined _TIMING
  call timing_deallocate( )
-#endif
  call it_reset(-1)
  !
 end function

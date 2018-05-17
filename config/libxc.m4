@@ -32,6 +32,10 @@ AC_ARG_WITH(libxc_libdir, [AS_HELP_STRING([--with-libxc-libdir=<path>],
 AC_ARG_WITH(libxc_includedir, [AS_HELP_STRING([--with-libxc-includedir=<path>], 
             [Path to the libxc include directory],[32])])
 
+
+internal_libxc="no"
+compile_libxc="no"
+
 if test -d "$with_libxc_path"; then
    libxc_incdir="$with_libxc_path/include"
    libxc_libdir="$with_libxc_path/lib"
@@ -39,7 +43,7 @@ fi
 if test -d "$with_libxc_includedir"; then libxc_incdir="$with_libxc_includedir" ; fi
 if test -d "$with_libxc_libdir";     then libxc_libdir="$with_libxc_libdir" ; fi
 
-FCFLAGS_LIBXC="$ax_cv_f90_modflag$libxc_incdir"
+LIBXC_INCS="$IFLAG$libxc_incdir"
 
 dnl Backup LIBS and FCFLAGS
 acx_libxc_save_LIBS="$LIBS"
@@ -57,51 +61,51 @@ testprog="AC_LANG_PROGRAM([],[
     i = XC_EXCHANGE
 ])"
 
-FCFLAGS="$FCFLAGS_LIBXC $acx_libxc_save_FCFLAGS"
+FCFLAGS="$LIBXC_INCS $acx_libxc_save_FCFLAGS"
 
 # set from environment variable, if not blank
-if test ! -z "$LIBS_LIBXC"; then
-  LIBS="$LIBS_LIBXC"
+if test ! -z "$LIBXC_LIBS"; then
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # set from --with-libxc-libs flag
 if test x"$acx_libxc_ok" = xno && test ! -z "$with_libxc_libs" ; then
-  LIBS_LIBXC="$with_libxc_libs"
-  LIBS="$LIBS_LIBXC"
-dnl $acx_libxc_save_LIBS"
-  AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
-fi
-
-# static linkage, separate Fortran interface
-if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="$with_libxc_libs"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$libxc_libdir -lxcf90 -lxc"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="-L$libxc_libdir -lxcf90 -lxc"
+  LIBS="$LIBXC_LIBS"
+dnl $acx_libxc_save_LIBS"
+  AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
+fi
+
+# static linkage, separate Fortran interface
+if test x"$acx_libxc_ok" = xno; then
+  LIBXC_LIBS="$libxc_libdir/libxcf90.a $libxc_libdir/libxc.a"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # static linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="$libxc_libdir/libxc.a"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="$libxc_libdir/libxc.a"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
 
 # dynamic linkage, combined Fortran interface (libxc pre-r10730)
 if test x"$acx_libxc_ok" = xno; then
-  LIBS_LIBXC="-L$libxc_libdir -lxc"
-  LIBS="$LIBS_LIBXC"
+  LIBXC_LIBS="-L$libxc_libdir -lxc"
+  LIBS="$LIBXC_LIBS"
 dnl $acx_libxc_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libxc_ok=yes], [])
 fi
@@ -158,27 +162,32 @@ fi
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libxc_ok" = xyes; then
   compile_libxc=no
+  internal_libxc=no
   #
-  if test ! -d include ; then mkdir include ; fi
-  for file in `find $libxc_incdir \( -name 'libxc*mod' -o -name 'xc_*mod' \)`;do	
-    cp $file include/ 
-  done
-  AC_MSG_RESULT([                  ... Compatible external LibXC ($FCFLAGS_LIBXC $LIBS_LIBXC)])
   AC_DEFINE(HAVE_LIBXC, 1, [Defined if you have the LIBXC library.])
 fi
 
 if test x"$acx_libxc_ok" = xno; then
   have_configured="no"
+  internal_libxc="yes"
   # version y2.0.3
-  #LIBS_LIBXC="-lxc"
+  #LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxc"
   # version 2.2.3 is used
-  LIBS_LIBXC="-lxcf90 -lxc"
-  AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal used.])
+  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxcf90 -lxc"
+  LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a"; then
+    compile_libxc="no"
+    AC_MSG_RESULT([Compatible external LibXC not found/specified. Found internal already compiled.])
+  else
+    compile_libxc="yes"
+    AC_MSG_RESULT([Compatible external LibXC not found/specified. Internal to be compiled.])
+  fi
 fi 
 
-AC_SUBST(FCFLAGS_LIBXC)
-AC_SUBST(LIBS_LIBXC)
+AC_SUBST(LIBXC_LIBS)
+AC_SUBST(LIBXC_INCS)
 AC_SUBST(compile_libxc)
+AC_SUBST(internal_libxc)
 FCFLAGS="$acx_libxc_save_FCFLAGS"
 LIBS="$acx_libxc_save_LIBS"
 ])dnl ACX_LIBXC

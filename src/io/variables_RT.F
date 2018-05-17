@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,8 +26,8 @@ integer function variables_RT(ID,local_description,what)
  use pars,           ONLY:lchlen,SP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
- use electrons,      ONLY:BZ_DbGd_tot_nkpts
  use stderr,         ONLY:intc
+ use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
@@ -36,14 +36,17 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_time,NE_steps,&
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
-&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,&
+&                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,RT_DbGd_nk,&
 &                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
+ !
+ ! GPL_EXCLUDE_END
+ !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq
+ use IO_m,           ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  !
  implicit none
  !
@@ -73,11 +76,14 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,I1=RT_bands,&
 &     VAR=' [RT] Bands                      :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
+ if (read_is_on(ID)) H_ref_bands=RT_bands
  i_desc=i_desc+1
  call io_elemental(ID,I0=RT_nk,&
 &     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ ! GPL_EXCLUDE_START
  !
  ! ELPH_vars
  !
@@ -126,6 +132,8 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  if(.not.any((/l_JPSM,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if(any((/l_JPSM,l_G,l_carriers/))) then
@@ -150,6 +158,9 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=" [RT]                  (done)[fs]:",R0=NE_time,WARN=.true.,OP=(/"=="/),UNIT=AUT2FS,&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
+   !
+   ! GPL_EXCLUDE_START
+   !
    call io_elemental(ID,&
 &    VAR=" [RT] Lifetimes Inter/Intra  [fs]:",R1=RT_life_extrap_times_SAVE,CHECK=.true.,OP=(/"==","==","=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
@@ -157,6 +168,9 @@ integer function variables_RT(ID,local_description,what)
    call io_elemental(ID,&
 &    VAR=" [RT]                   (now)[fs]:",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+   !
+   ! GPL_EXCLUDE_END
+   !
    if (l_JPSM.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
    if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
    !
@@ -166,6 +180,9 @@ integer function variables_RT(ID,local_description,what)
 &    DESCRIPTION=local_description(i_desc))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_START
+   !
    !
    ! Lifetimes Extrapolation
    !
@@ -199,6 +216,8 @@ integer function variables_RT(ID,local_description,what)
    ! ... for RESTART purposes...
    call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! INTEGRATOR
    !   
@@ -250,6 +269,8 @@ integer function variables_RT(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    enddo
    !
+   ! GPL_EXCLUDE_START
+   !
    ! G retarded variables
    !======================
    call io_elemental(ID,VAR="G_retarded_BASE",VAR_SZ=1,MENU=0) 
@@ -263,6 +284,8 @@ integer function variables_RT(ID,local_description,what)
      call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    enddo
    !
+   ! GPL_EXCLUDE_END
+   !
    ! Double Grid
    !======================
    call io_elemental(ID,VAR="Double_Grid_support",VAR_SZ=3,MENU=0) 
@@ -271,7 +294,7 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=' [DbGd] Double Grid support      :',  CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
-   call io_elemental(ID,I0=BZ_DbGd_tot_nkpts,&
+   call io_elemental(ID,I0=RT_DbGd_nk,&
 &    VAR=' [DbGd] Number of k-points       :',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    i_desc=i_desc+1
@@ -279,6 +302,8 @@ integer function variables_RT(ID,local_description,what)
 &    VAR=' [DbGd] Used for e-e        [o/o]:',  CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_START
    !
    ! CONSTRAINS
    !======================
@@ -292,6 +317,8 @@ integer function variables_RT(ID,local_description,what)
 &      VAR=' [CONSTRAINS] IP Energy      (ee):',  CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   ! GPL_EXCLUDE_END
    !
    ! FIELDS
    !======================

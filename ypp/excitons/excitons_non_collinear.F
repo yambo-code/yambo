@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,11 +33,11 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  use electrons,     ONLY:n_spinor
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
- use interfaces,    ONLY:WF_load
+ use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)          :: Xk
  integer                :: n_lambda,lambda_s(n_lambda)
@@ -57,7 +57,8 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
  call WF_load(WF,wf_ng,1,BS_bands,(/1,Xk%nibz/),space='R',title='-EXCWF')
  !
- allocate(WF_symm1(fft_size,n_spinor),WF_symm2(fft_size,n_spinor))
+ YAMBO_ALLOC(WF_symm1,(fft_size,n_spinor))
+ YAMBO_ALLOC(WF_symm2,(fft_size,n_spinor))
  !
  do i_lambda=1,n_lambda
    !
@@ -118,6 +119,7 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
  S_z=S_z/2._SP
  !
- deallocate(WF_symm1,WF_symm2)
+ YAMBO_FREE(WF_symm1)
+ YAMBO_FREE(WF_symm2)
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,17 +23,16 @@
 !
 integer function io_Double_Grid(E,Xk,ID)
  !
- use pars,           ONLY:SP,IP
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_max_filling,&
-&                         BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol,BZ_DbGd_ipol_weight,&
+&                         BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol,BZ_DbGd_weight,&
 &                         DbGd_is_symmetry_expanded,BZ_ASSOCIATED_nkpts,BZ_DbGd_kpts,&
-&                         BZ_DbGd_nkpts
+&                         BZ_DbGd_tot_nk
  use R_lattice,      ONLY:nXkbz,bz_samp
- use memory_m,       ONLY:mem_est
  use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
 &                         io_bulk,io_header,ver_is_gt_or_eq,file_is_present,write_is_on,&
 &                         IO_OUTDATED_DB
- implicit none
+ use timing_m,       ONLY:timing
+#include<memory.h>
  !
  type(levels) :: E
  type(bz_samp):: Xk
@@ -42,6 +41,8 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Work Space
  !
  integer :: DG_format
+ !
+ call timing('io_Double_Grid',OPR='start')
  !
  io_Double_Grid=-1
  !
@@ -72,9 +73,9 @@ integer function io_Double_Grid(E,Xk,ID)
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=1)
  endif
  !
- call io_elemental(ID,I0=BZ_DbGd_nbands,    VAR=' Bands                           :')
- call io_elemental(ID,I0=BZ_DbGd_nkpts,     VAR=' Fine grid number of points      :')
- call io_elemental(ID,I0=BZ_DbGd_tot_nkpts, VAR=' Total number of points          :')
+ call io_elemental(ID,I0=BZ_DbGd_nbands,        VAR=' Bands                           :')
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk)
+ call io_elemental(ID,I0=BZ_DbGd_tot_nk_levels, VAR=' Fine grid number of points      :')
  ! 
  if (DG_format==3) then
    call io_elemental(ID,I0=BZ_ASSOCIATED_nkpts, VAR=' BZ ASSOCIATED k-points          :')
@@ -92,16 +93,13 @@ integer function io_Double_Grid(E,Xk,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
  if (read_is_on(ID)) then
-   allocate(E%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   allocate(E%W_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   allocate(E%f_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-   if(.not.DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_tot_nkpts,3))
-   if(     DbGd_is_symmetry_expanded) allocate(BZ_DbGd_kpts(BZ_DbGd_nkpts,3))
-   allocate(BZ_DbGd_nkpt(BZ_ASSOCIATED_nkpts),BZ_DbGd_table(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
-   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   call mem_est("E_DbGd W_DbGd f_DbGd k_DbGd BZ_DbGd_nkpt BZ_DbGd_table",&
-&               (/size(E%E_DbGd),size(E%W_DbGd),size(E%f_DbGd),size(BZ_DbGd_kpts),size(BZ_DbGd_nkpt),&
-&                 size(BZ_DbGd_table)/),(/SP,SP,SP,SP,IP,IP/))
+   YAMBO_ALLOC(E%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+   YAMBO_ALLOC(E%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+   YAMBO_ALLOC(E%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+   YAMBO_ALLOC(BZ_DbGd_kpts,(BZ_DbGd_tot_nk,3))
+   YAMBO_ALLOC(BZ_DbGd_nkpt,(BZ_ASSOCIATED_nkpts))
+   YAMBO_ALLOC(BZ_DbGd_table,(BZ_ASSOCIATED_nkpts,BZ_DbGd_max_filling,2))
+   YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
  endif
  !
  ! Eigenvalues
@@ -145,13 +143,14 @@ integer function io_Double_Grid(E,Xk,ID)
  ! Double grid interpolation weights of each element in table
  !
  if (DG_format==3) then
-   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
+   call io_bulk(ID, VAR="INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
  else
-   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_ipol_weight) ) 
+   call io_bulk(ID, VAR="RIM_INTERPOL_WEIGHT", VAR_SZ=shape(BZ_DbGd_weight) ) 
  endif
- !
- call io_bulk(ID, R1=BZ_DbGd_ipol_weight)
+ call io_bulk(ID, R1=BZ_DbGd_weight)
  !
 1 call io_disconnect(ID=ID)
+ !
+ call timing('io_Double_Grid',OPR='stop')
  !
 end function

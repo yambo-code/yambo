@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH
@@ -39,7 +39,6 @@ subroutine PP_PWscf_driver(k)
 &                                PP_nlcc_alloc,PP_nlcc_free
  use com,                   ONLY:msg,warning
  use LIVE_t,                ONLY:live_timing
- use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index
  implicit none
@@ -202,10 +201,10 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  !
  ! Allocate and fill a single pseudo
  !
- use pars,     ONLY:SP
+ use pars,         only:SP
  use pw_pseudo_module
- use qexml_module
- use pw_data, only : ecutwfc_,ecutrho_
+ use qexml_module, only: read_pseudo_data
+ use pw_data,      only: ecutwfc_,ecutrho_
  implicit none
  type(pw_pseudo), intent(inout) :: pseudo
  integer,         intent(inout) :: nbeta, nmesh

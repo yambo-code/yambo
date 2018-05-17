@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,10 +27,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:real2ch
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
-&                         BS_mat_free,K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
+&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
- use memory_m,       ONLY:mem_est
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm,bz_samp
@@ -38,15 +37,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
- use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message
+ use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
- use SLK_m,          ONLY:BLACS_structure_in_use
-#if defined _SCALAPACK
- use SLK_m,          ONLY:SLK_ORTHO,SLK_POOL,SLK_matrix_reset
- use interfaces,     ONLY:MATRIX_transfer
-#endif
-#if defined _TIMING
+ use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
+#if defined _SCALAPACK
+ use interfaces,     ONLY:MATRIX_transfer
+ use parallel_m,     ONLY:linear_algebra_is_parallel
 #endif
 #if defined _RT
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
@@ -55,16 +52,16 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! GPL_EXCLUDE_START
  !
 #if defined _KERR
- use KERR,           ONLY:BS_KERR_free
+ use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
- use PHOTOLUM,       ONLY:BS_PL_free,PL
+ use PHOTOLUM,       ONLY:BSS_PL_free,PL
 #endif
  !
  ! GPL_EXCLUDE_END
  !
- implicit none
+#include<memory.h>
  !
  type(w_samp) :: W
  integer      :: iq
@@ -91,9 +88,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
  !
-#if defined _TIMING
  call timing('Inversion Solver',OPR='start')
-#endif
  !
  ! Sectioning
  !============
@@ -107,13 +102,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Symmetrize the K blocks (to be eventually sent to the BLACS)
  !=========================
- call BS_Blocks_symmetrize_K()
+ if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
  !
 #endif
  !
  ! Restart database
  !==================
  call K_inversion_restart(iq,W)
+ !
  completed=count(K_INV_EPS%err/=0)==0
 #if defined _PL
  completed=count(K_INV_EPS%err/=0)==0.and.count(K_INV_PL%err/=0)==0
@@ -128,27 +124,31 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  FULL         = index(BSS_inversion_mode,'f')/=0
  PERTURBATIVE = index(BSS_inversion_mode,'p')/=0
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
  if (NEQ_Residuals.neqv.NEQ_Kernel) then
    call warning("[INV] Different occupation configurations for Kernel and Residuals not supported")
  endif
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _SCALAPACK
  ! 
  ! SLK matrix initialization before the Kernel loading
  !
- call SLK_matrix_init( SLK_ORTHO, SLK_POOL, K_slk, BS_H_dim )
+ call MATRIX_init( "SLK", K_slk, BS_H_dim, 1 )
  !
- if ( SLK_ORTHO%coordinate(1) /= -1 )BLACS_structure_in_use=.TRUE.
+ YAMBO_ALLOC(K_slk%blc,(K_slk%BLCrows(1):K_slk%BLCrows(2),K_slk%BLCcols(1):K_slk%BLCcols(2),1))
  !
 #endif
  !
- ! Kernel Loading 
- !================
- call K_components_folded_in_serial_arrays(iq)
+ ! Kernel and/or BSS components loading
+ !======================================
+ call K_components_folded_in_serial_arrays(iq,"INV")
  !
- if (BLACS_structure_in_use) then
+ if (K_slk%kind=="SLK") then
    !
 #if defined _SCALAPACK
    !
@@ -157,13 +157,13 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    ! Prepare the BLACS matrices (reference, K_slk and local, K_inv_slk)
    !============================
    !
-   call MATRIX_transfer("fill_the_SLK", K_slk, BS_blk )
+   call MATRIX_transfer(M_out=K_slk, M_bse= BS_blk )
    !
    ! Diagonal removal
    !==================
    call K_diagonal(iq,"rm_OCC DIAG")
    !
-   if (FULL) call MATRIX_duplicate( "none", K_slk, K_inv_slk )
+   if (FULL) call MATRIX_duplicate( "none", M_in=K_slk, M_out=K_inv_slk )
    !
 #endif
    !
@@ -191,10 +191,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
 #endif
  !
- allocate(Lo(BS_H_dim,W%n_freqs,Lo_dim))
- call mem_est("Lo",(/size(Lo)/))
+ YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))
  !
- call K_inversion_Lo(iq,W,E,k,q,Lo_dim,Lo_n_loop,Lo)
+ call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! Initialize the output file 
  !============================
@@ -309,6 +308,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! CLEAN
  !
+ call LOCAL_clean()
+ !
  contains 
    !
    subroutine do_it_FULL(TYP)
@@ -414,15 +415,14 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    end subroutine
    !
    subroutine LOCAL_clean
-     call BS_mat_free( )
 #if defined _PL
-     call BS_PL_free( )
+     call BSS_PL_free( )
 #endif
      !
      ! GPL_EXCLUDE_START
      !
 #if defined _KERR
-     call BS_KERR_free( )
+     call BSS_KERR_free( )
 #endif
      !
      ! GPL_EXCLUDE_END
@@ -433,18 +433,19 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
      !
      call PP_indexes_reset(PAR_IND_freqs)
-     deallocate(Lo)
-     call mem_est("Lo")
+     YAMBO_FREE(Lo)
      !
 #if defined _SCALAPACK
-     call SLK_matrix_reset(K_slk)
-     call SLK_matrix_reset(K_inv_slk)
-     BLACS_structure_in_use=.FALSE.    
+     YAMBO_FREE(K_slk%blc)
+     call MATRIX_reset(K_slk)
+     !
+     ! Here I call MATRIX_duplicate instead of a simple YAMBO_FREE to keep the correct naming 
+     ! to be used in the memory module
+     !
+     call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif
      !
-#if defined _TIMING
      call timing('Inversion Solver',OPR='stop')
-#endif
    end subroutine
    !
    subroutine LOCAL_TYP_clean(TYP)

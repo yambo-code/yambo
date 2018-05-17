@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -31,7 +31,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use units,          ONLY:AUT2FS
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
- implicit none
+#include<memory.h>
  !
  real(SP)      :: RT_P_probe(RT_conf%T_n_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
  complex(SP)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
@@ -52,7 +52,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  !use_LRR=N_probe_frequencies>1.and.N_probes==1
  use_LRR=.FALSE.
  !
- allocate(X_w(X_order+1))
+ YAMBO_ALLOC(X_w,(X_order+1))
  !
  time_range_save=RT_conf%T_range
  !
@@ -138,7 +138,7 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
    ! 
  enddo
  !
- deallocate(X_w)
+ YAMBO_FREE(X_w)
  !
  contains 
    !

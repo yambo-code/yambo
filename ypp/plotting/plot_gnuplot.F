@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -31,7 +31,7 @@ subroutine plot_gnuplot(eval_only)
 &                      plot_is_1D,plot_is_2D
  use LIVE_t,      ONLY:live_timing
  !
- implicit none
+#include<memory.h>
  logical    :: eval_only
  ! 
  ! Work Space...
@@ -70,7 +70,7 @@ subroutine plot_gnuplot(eval_only)
        if (plot_is_1D(i1)) call msg(output_string,"#",(/titles(1),titles(4)/),INDENT=0,USE_TABS=.true.)
      enddo
      call msg(output_string,'#')
-     allocate(v2plot2D(nr2plot(1),1))
+     YAMBO_ALLOC(v2plot2D,(nr2plot(1),1))
      v2plot2D=0._SP
      ir=0
      do i1 = 0,nr(1)-1
@@ -102,7 +102,7 @@ subroutine plot_gnuplot(eval_only)
 &                            v2plot2D(i1+1,1)/),INDENT=-2,USE_TABS=.true.)
      enddo
      !
-     deallocate(v2plot2D)
+     YAMBO_FREE(v2plot2D)
      !
    case(2)
      !
@@ -118,7 +118,7 @@ subroutine plot_gnuplot(eval_only)
      if (plot_is_2D(1)) dir2plot=(/1,2/)
      if (plot_is_2D(2)) dir2plot=(/1,3/)
      if (plot_is_2D(3)) dir2plot=(/2,3/)
-     allocate(v2plot2D(nr2plot(1),nr2plot(2)))
+     YAMBO_ALLOC(v2plot2D,(nr2plot(1),nr2plot(2)))
      v2plot2D=0.
      ir=0
      do i1 = 0,nr(1)-1
@@ -159,7 +159,11 @@ subroutine plot_gnuplot(eval_only)
        enddo
      endif
      !
-     if (.not.use_xcrysden) deallocate(v2plot2D)
+     if (.not.use_xcrysden) then
+       !
+       YAMBO_FREE(v2plot2D)
+       !
+     endif
      !
  end select
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -36,7 +36,6 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,nkibz
  use FFT_m,           ONLY:fft_size,fft_rot_r
- use collision_el,    ONLY:elemental_collision
  use wave_func,       ONLY:WF
  use SC,              ONLY:l_oep_EWeight
  !
@@ -50,7 +49,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  ! Work space
  !
- integer          ::iv1,ig,i1,ik,ifft,os,is
+ integer          ::iv1,ig,i1,ik,ifft
  real(DP)         ::Vslt_DP(fft_size)
  complex(DP)      ::f(fft_size)
  real(SP)         ::EWeight
@@ -62,7 +61,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
    do ik = 1,k%nibz
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+E%E_Fermi
      ifft=WF%index(iv1,ik,1)
-     f(:)=conjg(WF%c(:,ifft))*U_x(ik,iv1,:)
+     f(:)=conjg(WF%c(:,1,ifft))*U_x(ik,iv1,:)
      Vslt_DP = Vslt_DP + E%f(iv1,ik,1)*real(f,DP)*k%weights(ik)/EWeight
    end do
  end do

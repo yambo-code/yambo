@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -58,8 +58,8 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,header)
    dumb_ch1='K ['//trim(intc(ik))//'] :'//trim(real2ch(k_cc(1)))//' '//&
 &          trim(real2ch(k_cc(2)))//' '//trim(real2ch(k_cc(3)))//&
 &          ' ( cc) * Comp.s '//trim(intc(wf_nc_k(ik)))
-   dumb_ch2='       '//trim(real2ch(k%pt(ik,1)))//' '//&
-&          trim(real2ch(k%pt(ik,2)))//' '//trim(real2ch(k%pt(ik,3)))//&
+   dumb_ch2='       '//trim(real2ch(k_al(1)))//' '//&
+&          trim(real2ch(k_al(2)))//' '//trim(real2ch(k_al(3)))//&
 &          ' (rlu) '
    if(ik>  9) dumb_ch2=' '//trim(dumb_ch2)
    if(ik> 99) dumb_ch2=' '//trim(dumb_ch2)

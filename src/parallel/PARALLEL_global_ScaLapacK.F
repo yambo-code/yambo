@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,10 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
+subroutine PARALLEL_global_ScaLapacK( )
  !
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:CPU_structure
  use interfaces,    ONLY:PARALLEL_assign_chains_and_COMMs
@@ -32,24 +30,15 @@ subroutine PARALLEL_global_ScaLapacK(E,Xk,q,ENVIRONMENT)
  !
  implicit none
  !
- type(levels)               ::E
- type(bz_samp)              ::Xk,q
- character(*)               ::ENVIRONMENT
+ CALL PARALLEL_structure(2,(/"p","d"/))
  !
- !======================================================
- if (ENVIRONMENT=="ScaLapacK") then
-   !====================================================
-   !
-   CALL PARALLEL_structure(2,(/"p","d"/))
-   !
-   call PARALLEL_assign_chains_and_COMMs(2,ROLE=(/"p","d"/),&
-&                                        COMM_index_1=SLK_COM_INDEX(1),COMM_index_2=SLK_COM_INDEX(2),&
-&                                        COMM_A2A_1=SLK_COM_A2A(1),    COMM_A2A_2=SLK_COM_A2A(2))
-   !
-   ! Linear Algebra (all drivers)
-   !
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(7)%nCPU_lin_algebra_INV)
-   !
- endif
+ call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=SLK_COM_INDEX(1),&
+&                                        COMM_index_2=SLK_COM_INDEX(2),&
+&                                        COMM_A2A_1=SLK_COM_A2A(1),&
+&                                        COMM_A2A_2=SLK_COM_A2A(2))
+ !
+ ! Linear Algebra (all drivers)
+ !
+ call PARALLEL_assign_LA_COMMs("ScaLapacK",INV,CPU_structure(7)%nCPU_lin_algebra_INV)
  !
 end subroutine PARALLEL_global_ScaLapacK

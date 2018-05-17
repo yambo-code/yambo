@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,9 +38,7 @@ subroutine section(mode,name)
  use parallel_m, ONLY:PP_redux_wait,ncpu
  use com,        ONLY:msg,depth,previous_secmode,isec,secnm,&
 &                     write_to_report,write_the_logo,repfile
-#if defined _TIMING
  use timing_m,   ONLY:timing_upto_now
-#endif
  implicit none
  !
  character(1)::mode
@@ -100,7 +98,7 @@ subroutine section(mode,name)
    max_time=time_string(maxval(cput_here))
    average_time =time_string(sum(cput_here)/real(ncpu,DP))
    if (all((/len_trim(min_time)>0,len_trim(max_time)>0,len_trim(average_time)>0/))) then
-     write (ch,'(6a)') 'CpuTiming [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
+     write (ch,'(6a)') 'Timing [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      call msg('nr',trim(ch))
    endif
    call ct(INIT_SEC=.true.)
@@ -168,12 +166,8 @@ subroutine section(mode,name)
      !
      write (ch,'(6a)')     'Timing   [Min/Max/Average]: ',trim(min_time),'/',trim(max_time),'/',trim(average_time)
      !
-#if defined _TIMING
-    call msg('nr',trim(ch))
-    call timing_upto_now()
-#else
-    call msg('nrn',trim(ch))
-#endif
+     call msg('nr',trim(ch))
+     call timing_upto_now()
      !
      call ofiles_append(line=" ")
      call ofiles_append(line=trim(ch))

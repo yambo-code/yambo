@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -32,14 +32,18 @@ subroutine V_Hartree(rho,vhr)
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
- !
+ use timing_m,      ONLY:timing
+ ! 
  implicit none
+ !
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
  !
  ! Work Space
  !
  complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(wf_ng)
+ !
+ call timing('V_Hartree',OPR='start')
  !
  vhg   = (0._DP,0._DP)
  vhtmp = (0._DP,0._DP)
@@ -71,5 +75,7 @@ subroutine V_Hartree(rho,vhr)
  !
  vhr(:,1) = real(vhtmp,SP)
  if(n_spin==2) vhr(:,2)=vhr(:,1)
+ !
+ call timing('V_Hartree',OPR='stop')
  !
 end subroutine V_hartree

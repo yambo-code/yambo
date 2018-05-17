@@ -25,7 +25,6 @@ integer function io_NLCC_pwscf(ID)
  !
  use pars,             ONLY:SP,IP
  use stderr,           ONLY:intc
- use memory_m,         ONLY:mem_est
  use D_lattice,        ONLY:n_atomic_species, n_atoms_species_max
  use R_lattice,        ONLY:ng_vec
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &

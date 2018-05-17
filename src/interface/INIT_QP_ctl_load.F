@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,27 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_QP_ctl_load(defs,i_type)
+subroutine INIT_QP_ctl_load(defs,ID)
  !
- ! Note that this routine is called in 'load' mode BEFORE
- ! the DB1 is read, so before n_sp_pol is set to the correct value.
- ! 
- ! Thus we must call it on the the no spin, spin + and spin - cases 
- ! because the code does not know if there is
- ! spin unless the DB1 is read. 
- !
- use electrons,     ONLY:n_sp_pol
- use it_m,          ONLY:it,initmode,initdefs,V_qp,E_unit
- use QP_m,          ONLY:QP_ctl_E,QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_Wv,&
-&                        QP_ctl_Wc,QP_ctl_Z,QP_ctl_Wc_E_ref,QP_ctl_Wv_E_ref
+ use it_m,          ONLY:it,initdefs,V_qp,E_unit
+ use QP_CTL_m,      ONLY:QP_ctl_db,QP_ctl_interp_neigh,QP_ctl_user
  !
  implicit none
- integer, intent(in) :: i_type
+ integer, intent(in) :: ID
  type(initdefs)      :: defs
  ! 
  ! Work Space
  ! 
- integer           ::i_spin,i1,i1_range(2),verbosity_here
+ integer           ::i_f,verbosity_here
  character(1)      ::prefix(3)
  character(3)      ::spin_ch(3)
  character(7)      ::description_ch(3)
@@ -57,59 +48,71 @@ subroutine INIT_QP_ctl_load(defs,i_type)
  !
  verbosity_here=V_qp
  !
- if (initmode==0) i1_range=(/1,3/)
- if (initmode/=0.and.n_sp_pol==1) i1_range=1
- if (initmode/=0.and.n_sp_pol==2) i1_range=(/2,3/)
- !
- do i1=i1_range(1),i1_range(2)
-   ! 
-   if (i1==1) i_spin=1
-   if (i1> 1) i_spin=i1-1
+ do i_f=1,3
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_E',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] E parameters '//&
-&          trim(spin_description_ch(i1))//' (c/v) eV|adim|adim',&
-&          QP_ctl_E(i_type,:,i_spin),verb_level=V_qp)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_E',&
+&          '[EXTQP '//trim(description_ch(ID))//'] E parameters '//&
+&          trim(spin_description_ch(i_f))//' (c/v) eV|adim|adim',&
+&          QP_ctl_user(ID,i_f)%E,verb_level=V_qp)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv_E',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] W Energy reference '//&
-&          trim(spin_description_ch(i1))//' (valence)',&
-&          QP_ctl_Wv_E_ref(i_type,i_spin),E_unit,verb_level=verbosity_here)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wv_E',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W Energy reference '//&
+&          trim(spin_description_ch(i_f))//' (valence)',&
+&          QP_ctl_user(ID,i_f)%Wv_E_ref,E_unit,verb_level=verbosity_here)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wv',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (valence) eV| eV|eV^-1',&
-&          QP_ctl_Wv(i_type,:,i_spin),verb_level=verbosity_here)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wv',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W parameters '//&
+&          trim(spin_description_ch(i_f))//' (valence) eV| 1|eV^-1',&
+&          QP_ctl_user(ID,i_f)%Wv,verb_level=verbosity_here)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc_E',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] W Energy reference '//&
-&          trim(spin_description_ch(i1))//' (conduction)',&
-&          QP_ctl_Wc_E_ref(i_type,i_spin),E_unit,verb_level=verbosity_here)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wc_E',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W Energy reference '//&
+&          trim(spin_description_ch(i_f))//' (conduction)',&
+&          QP_ctl_user(ID,i_f)%Wc_E_ref,E_unit,verb_level=verbosity_here)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Wc',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] W parameters '//&
-&          trim(spin_description_ch(i1))//' (conduction) eV| eV|eV^-1',&
-&          QP_ctl_Wc(i_type,:,i_spin),verb_level=verbosity_here)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wc',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W parameters '//&
+&          trim(spin_description_ch(i_f))//' (conduction) eV| 1 |eV^-1',&
+&          QP_ctl_user(ID,i_f)%Wc,verb_level=verbosity_here)
    !
    call it(defs,&
-&          prefix(i_type)//'fnQP'//trim(spin_ch(i1))//'_Z',&
-&          '[EXTQP '//trim(description_ch(i_type))//'] Z factor '//&
-&          trim(spin_description_ch(i1))//' (c/v)',&
-&          QP_ctl_Z(i_type,i_spin),verb_level=V_qp)
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Z',&
+&          '[EXTQP '//trim(description_ch(ID))//'] Z factor '//&
+&          trim(spin_description_ch(i_f))//' (c/v)',&
+&          QP_ctl_user(ID,i_f)%Z,verb_level=V_qp)
+   !
+   call it(defs,&
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wc_dos',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W dos pre-factor '//&
+&          trim(spin_description_ch(i_f))//' (conduction)',&
+&          QP_ctl_user(ID,i_f)%Wc_dos,E_unit,verb_level=V_qp)
+   !
+   call it(defs,&
+&          prefix(ID)//'fnQP'//trim(spin_ch(i_f))//'_Wv_dos',&
+&          '[EXTQP '//trim(description_ch(ID))//'] W dos pre-factor '//&
+&          trim(spin_description_ch(i_f))//' (valence)',&
+&          QP_ctl_user(ID,i_f)%Wv_dos,E_unit,verb_level=V_qp)
+   !
+   ! Back Compataibility with master input fields (temporary)
+   !
+   QP_ctl_user(ID,i_f)%Wv_dos=QP_ctl_user(ID,i_f)%Wv(2)
+   QP_ctl_user(ID,i_f)%Wv(3)=QP_ctl_user(ID,i_f)%Wv(3)
+   QP_ctl_user(ID,i_f)%Wc_dos=QP_ctl_user(ID,i_f)%Wc(2)
+   QP_ctl_user(ID,i_f)%Wc(3)=QP_ctl_user(ID,i_f)%Wc(3)
    !
  enddo
  !
- call it(defs,prefix(i_type)//'fnQPdb',&
-&        '[EXTQP '//trim(description_ch(i_type))//'] Database',&
-&        QP_ctl_db(i_type),verb_level=V_qp)
+ call it(defs,prefix(ID)//'fnQPdb',&
+&        '[EXTQP '//trim(description_ch(ID))//'] Database',&
+&        QP_ctl_db(ID),verb_level=V_qp)
  !
- call it(defs,prefix(i_type)//'fnQP_N',&
-&        '[EXTQP '//trim(description_ch(i_type))//'] Interpolation neighbours',&
-&        QP_ctl_interp_neigh(i_type),verb_level=V_qp)
+ call it(defs,prefix(ID)//'fnQP_N',&
+&        '[EXTQP '//trim(description_ch(ID))//'] Interpolation neighbours',&
+&        QP_ctl_interp_neigh(ID),verb_level=V_qp)
  !
 end subroutine

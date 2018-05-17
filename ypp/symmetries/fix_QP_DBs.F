@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,17 +23,16 @@
 !
 subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  !
- use pars,                ONLY:SP,lchlen
- use memory_m,            ONLY:mem_est
+ use pars,                ONLY:lchlen
  use QP_m,                ONLY:QP_t,QP_reset
  use stderr,              ONLY:intc
  use vec_operate,         ONLY:v_is_zero
  use com,                 ONLY:core_io_path,warning
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_RD_CL,DUMP
- use electrons,           ONLY:levels,E_reset,n_sp_pol
+ use electrons,           ONLY:n_sp_pol
  use R_lattice,           ONLY:bz_samp
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
@@ -90,9 +89,12 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  qp_expanded%nb      =qp%nb
  qp_expanded%n_states=(qp%n_states/qp%nk)*k%nibz
  !
- allocate(qp_expanded%k(k%nibz,3),qp_expanded%wk(k%nibz))
- allocate(qp_expanded%table(qp_expanded%n_states,3+n_sp_pol-1))
- allocate(qp_expanded%E_bare(qp_expanded%n_states),qp_expanded%E(qp_expanded%n_states),qp_expanded%Z(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%k,(k%nibz,3))
+ YAMBO_ALLOC(qp_expanded%wk,(k%nibz))
+ YAMBO_ALLOC(qp_expanded%table,(qp_expanded%n_states,3+n_sp_pol-1))
+ YAMBO_ALLOC(qp_expanded%E_bare,(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%E,(qp_expanded%n_states))
+ YAMBO_ALLOC(qp_expanded%Z,(qp_expanded%n_states))
  !
  i1=0
  ik_old_prev=0

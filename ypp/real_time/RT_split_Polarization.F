@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,7 +33,7 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  !
  ! Fourier
  !
- implicit none
+#include<memory.h>
  !
  integer,     intent(in)   :: nt,nh
  real(SP),    intent(inout):: P(nt,3),W(nh)
@@ -97,7 +97,9 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
  T_o=5.*max(RAD_LifeTime,Phase_LifeTime)
  iT_o=nint(T_o/RT_conf%delta_T)+1
  !
- allocate(P_DP(nt,3),P_W(RT_conf%W_n_steps),freqs(RT_conf%W_n_steps))
+ YAMBO_ALLOC(P_DP,(nt,3))
+ YAMBO_ALLOC(P_W,(RT_conf%W_n_steps))
+ YAMBO_ALLOC(freqs,(RT_conf%W_n_steps))
  !
  do i_w = 1, RT_conf%W_n_steps
    freqs(i_w)=cmplx((i_w-1)*(RT_conf%W_range(2)-RT_conf%W_range(1))/RT_conf%W_n_steps+RT_conf%W_range(1),0._SP)
@@ -137,6 +139,8 @@ subroutine RT_split_Polarization(nh,nt,W,X,P,what)
    !
  enddo
  !
- deallocate(P_DP,P_W,freqs)
+ YAMBO_FREE(P_DP)
+ YAMBO_FREE(P_W)
+ YAMBO_FREE(freqs)
  !
 end subroutine RT_split_Polarization

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CH DS
@@ -34,7 +34,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
  use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
- use interfaces,          ONLY: WF_load
+ use interfaces,          ONLY: WF_load,WF_free
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
 &                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
@@ -71,7 +71,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  character(schlen)            :: grid_paths_vector(3)
  logical                      :: idir_not_done(3)=.true.,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer                      :: ik,ik_mem,icfft(n_spinor),ivfft(n_spinor),ic,iv,iq,n_LT_steps,&
+ integer                      :: ik,ik_mem,ic_wf,iv_wf,ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
  real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP,q_mod(3)
@@ -175,7 +175,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
            !
            rho=cZERO
            !
-           if (associated(Xen%Eo)) then 
+           if (allocated(Xen%Eo)) then 
              Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
              Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
            else
@@ -187,20 +187,18 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
              cycle
            endif
            !
+           iv_wf=WF_shifted%index(iv,ik,i_sp_pol)
+           ic_wf=WF%index(ic,ik,i_sp_pol)
+           !
+           if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
+           if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
+           !
+           ! rho = < v,k+q | c,k >
+           !
            do i_spinor=1,n_spinor
              !
-             i_spin=i_sp_pol+i_spinor-1
-             ivfft(i_spinor)=WF_shifted%index(iv,ik,i_spin)
-             icfft(i_spinor)=WF%index(ic,ik,i_spin)
-             !
-             if (ivfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole iv)")
-             if (icfft(i_spinor)==0) call error(" Error in parallel wf distribution (Dipole ic)")
-             !
-             ! rho = < v,k+q | c,k >
-             !
-             !
-             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,ivfft(i_spinor)), &
-&                                                  WF%c(1:wf_ng_eff,icfft(i_spinor)))
+             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
+&                                                  WF%c(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !

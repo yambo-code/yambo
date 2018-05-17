@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,9 @@
 !
 integer function variables_X(ID,local_description,X)
  !
- use pars,          ONLY:schlen,lchlen,SP,cI
+ use pars,          ONLY:schlen,lchlen
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,n_X_descs,X_DbGd_percentual
  use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
  implicit none
  !
@@ -94,8 +94,9 @@ integer function variables_X(ID,local_description,X)
  ! PARS_3
  !
  sec_size=6
- if (ver_is_gt_or_eq(ID,(/3,0,1/))) sec_size=8
- if (ver_is_gt_or_eq(ID,(/3,0,9/))) sec_size=9
+ if (ver_is_gt_or_eq(ID,(/3,0,1/)))      sec_size=8
+ if (ver_is_gt_or_eq(ID,(/3,0,9/)))      sec_size=9
+ if (ver_is_gt_or_eq(ID,revision=15206)) sec_size=10
  call io_elemental(ID,VAR=trim(X_label)//"PARS_3",VAR_SZ=sec_size,MENU=0)
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
@@ -130,6 +131,12 @@ integer function variables_X(ID,local_description,X)
    call io_elemental(ID,&
 &       VAR=" BZ energy DbGd points  :",I0=X_DbGd_nkpts,WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
+   if (ver_is_gt_or_eq(ID,revision=15206)) then
+     i_local_desc=i_local_desc+1
+     call io_elemental(ID,&
+&         VAR=" BZ Q point size factor :",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),&
+&         DESCRIPTION=local_description(i_local_desc))
+   endif
  endif
  !
  n_X_descs=i_local_desc

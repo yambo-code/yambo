@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -34,7 +34,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
  use QP_CTL_m,       ONLY:QP_apply
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(in)    :: Xen
@@ -44,11 +44,11 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  real(SP), pointer     :: bands_interpolated(:,:,:)
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  !
- integer               :: is,ik,ikbz,ib,nbands,ID_interp
+ integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp
  real(SP)              :: tmp_k(3)
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
- character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol)
+ character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
  character(schlen), allocatable :: headings(:)
  !
  call section('*','Interpolation tool')
@@ -69,8 +69,8 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
  if(n_spinor>1 .and. BANDS_steps> 0) then
-   allocate(spin_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor))
-   allocate(magn_interpolated(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3))
+   YAMBO_ALLOC(spin_interpolated,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor))
+   YAMBO_ALLOC(magn_interpolated,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3))
    call electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_interpolated,magn_interpolated)
  endif
  !
@@ -83,10 +83,12 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  nbands=BANDS_range(2)-BANDS_range(1)+1
  !
- allocate(values(nbands+4),headings(nbands+4))
+ YAMBO_ALLOC(values,(nbands+4))
+ allocate(headings(nbands+4))
  values=0._SP
  if(n_spinor==2) then
-   allocate(spin_values(nbands+4,2),magn_values(nbands+4,3))
+   YAMBO_ALLOC(spin_values,(nbands+4,2))
+   YAMBO_ALLOC(magn_values,(nbands+4,3))
    spin_values=0._SP
    magn_values=0._SP
  endif
@@ -120,21 +122,16 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  enddo
  !
  if(BANDS_steps> 0.and.n_spinor==2) then
-   call of_open_close("spin_factors_1",'ot')
-   call of_open_close("spin_factors_2",'ot')
-   call of_open_close("magnetization_x",'ot')
-   call of_open_close("magnetization_y",'ot')
-   call of_open_close("magnetization_z",'ot')
-   call msg('o spin_factors_1',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o spin_factors_1',"#")
-   call msg('o spin_factors_2',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o spin_factors_2',"#")
-   call msg('o magnetization_x',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o magnetization_x',"#")
-   call msg('o magnetization_y',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o magnetization_y',"#")
-   call msg('o magnetization_z',"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o magnetization_z',"#")
+   file_name_spin_magn(1)="spin_factors_1"
+   file_name_spin_magn(2)="spin_factors_2"
+   file_name_spin_magn(3)="magnetization_x"
+   file_name_spin_magn(4)="magnetization_y"
+   file_name_spin_magn(5)="magnetization_z"
+   do i1=1,5
+     call of_open_close(trim(file_name_spin_magn(i1)),'ot')
+     call msg('o '//trim(file_name_spin_magn(i1)),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name_spin_magn(i1)),"#")
+   enddo
  endif
  !
  call msg('o path',"#"," ",INDENT=0)
@@ -145,7 +142,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  if(BANDS_steps> 0) then
    !
-   allocate(circuit_versor(USER_K%nibz-1,3))
+   YAMBO_ALLOC(circuit_versor,(USER_K%nibz-1,3))
    !
    do ik=1,USER_K%nibz-1
      tmp_k=USER_K%pt(ik+1,:)-USER_K%pt(ik,:)
@@ -179,7 +176,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      enddo
    enddo
    !
-   deallocate(circuit_versor)
+   YAMBO_FREE(circuit_versor)
    !
    values(1)=0._SP
    !
@@ -199,21 +196,16 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
        values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
        if(n_spinor==2) then
-         spin_values(1+1:nbands+1,1)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,1)
-         spin_values(1+1:nbands+1,2)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,2)
-         spin_values(nbands+2:nbands+4,1)=CIRCUIT_K%pt(ik,:)
-         spin_values(nbands+2:nbands+4,2)=CIRCUIT_K%pt(ik,:)
-         call msg('o spin_factors_1',' ',spin_values(:,1),INDENT=0,USE_TABS=.true.)
-         call msg('o spin_factors_2',' ',spin_values(:,2),INDENT=0,USE_TABS=.true.)
-         magn_values(1+1:nbands+1,1)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,1)
-         magn_values(1+1:nbands+1,2)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,2)
-         magn_values(1+1:nbands+1,3)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,3)
-         magn_values(nbands+2:nbands+4,1)=CIRCUIT_K%pt(ik,:)
-         magn_values(nbands+2:nbands+4,2)=CIRCUIT_K%pt(ik,:)
-         magn_values(nbands+2:nbands+4,3)=CIRCUIT_K%pt(ik,:)
-         call msg('o magnetization_x',' ',magn_values(:,1),INDENT=0,USE_TABS=.true.)
-         call msg('o magnetization_y',' ',magn_values(:,2),INDENT=0,USE_TABS=.true.)
-         call msg('o magnetization_z',' ',magn_values(:,3),INDENT=0,USE_TABS=.true.)
+         do i1=1,2
+           spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,i1)
+           spin_values(nbands+2:nbands+4,i1)=CIRCUIT_K%pt(ik,:)
+           call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
+         enddo
+         do i1=1,3
+           magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,i1)
+           magn_values(nbands+2:nbands+4,i1)=CIRCUIT_K%pt(ik,:)
+           call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
+         enddo
        endif
      enddo
      !
@@ -250,12 +242,13 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
  endif
  !
- deallocate(values,headings)
- if(n_spinor==2) deallocate(spin_values,magn_values)
- !
- deallocate(bands_interpolated)
- nullify(bands_interpolated)
- if(n_spinor==2) deallocate(spin_interpolated,magn_interpolated)
+ YAMBO_FREE(values)
+ deallocate(headings)
+ YAMBO_FREE(spin_values)
+ YAMBO_FREE(magn_values)
+ YAMBO_FREE_P(bands_interpolated)
+ YAMBO_FREE(spin_interpolated)
+ YAMBO_FREE(magn_interpolated)
  !
  do is=1,n_sp_pol
    call of_open_close(trim(file_name_bands(1,is)))
@@ -263,6 +256,10 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    call of_open_close(trim(file_name_grid(is)))
  enddo
  !
- if(BANDS_steps> 0.and.n_spinor==2) call of_open_close("spin_factors")
+ if(BANDS_steps> 0.and.n_spinor==2) then
+   do i1=1,5
+     call of_open_close(trim(file_name_spin_magn(i1)))
+   enddo
+ endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -26,25 +26,22 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! HXC collisions 
  !
  use pars,          ONLY:SP,pi,cZERO
- use memory_m,      ONLY:mem_est
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_index
+&                        PAR_IND_Bp_mat,PAR_nQ,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -55,7 +52,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use fft_m,         ONLY:fft_size
  use xc_functionals,ONLY:magn
  !
- implicit none
+#include<memory.h>
  !
  type(levels)             ::E
  type(bz_samp)            ::k,q,Xk
@@ -79,9 +76,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='start')
-#endif
  !
  ! Reset
  !
@@ -106,6 +101,21 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  call k_expand(k)
+ !
+ if (l_compute_screening) then
+   !
+   ! Plasmon-Pole/Static interaction DB I/O
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err=io_X(X,Xw,ID)
+   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
+   !
+   if (X%ng<QP_ng_Sc) then
+     QP_ng_Sc=X%ng
+     call warning('SEX size (CORRLvcs) reduced to match the Screening size (NGsBlkXs)')
+   endif 
+   !
+ endif
  !
  ! Dimensions
  !
@@ -154,7 +164,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    call elemental_collision_alloc(isc_H ,NG=N_g_vecs_H,NG_GAMP=(/N_g_vecs_H,    1   /),TITLE='HARTREE')
    call elemental_collision_alloc(iscp_H,NG=N_g_vecs_H,                                TITLE='HARTREE')
    !
-   allocate(rhotw_tmp(N_g_vecs_H))
+   YAMBO_ALLOC(rhotw_tmp,(N_g_vecs_H))
    !
  endif
  !
@@ -170,14 +180,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  if (l_compute_screening) then
    !
-   ! Plasmon-Pole/Static interaction DB I/O
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
-   !
-   if (X%ng<N_g_vecs_C) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (CORRLvcs)')
-   !
    ! Test the spatial Inversion
    !   
    call WF_spatial_inversion(E,Xk)
@@ -185,8 +187,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    ! Allocation (EM1S can be bigger than N_g_vecs_C)
    !
    call X_alloc('X',(/X%ng,X%ng,1/))
-   allocate(EM1s(N_g_vecs_C,N_g_vecs_C),stat=alloc_err)
-   call mem_est("EM1s",(/size(EM1s)/),errors=(/alloc_err/))
+   YAMBO_ALLOC(EM1s,(N_g_vecs_C,N_g_vecs_C))
    !
    call elemental_collision_alloc(isc_XC, NG=NG_XC,NG_GAMP=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
    !
@@ -196,27 +197,45 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
  endif
  !
+ Co=1._SP
  if (l_tddft) then
    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
-   allocate(F_xc(fft_size,n_spin,n_spin))
-   if (n_spin>1) allocate(magn(fft_size,3))
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   if (n_spin>1) then
+     YAMBO_ALLOC(magn,(fft_size,3))
+   endif
    call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
  endif
+ !
+ n_colls=max(HXC_collisions%N,COH_collisions%N)
  !
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
- if (associated(HXC_collisions%IO_status)) then
-   PAR_NC_local=count(HXC_collisions%IO_status==-1)
- else if (associated(COH_collisions%IO_status)) then
-   PAR_NC_local=count(COH_collisions%IO_status==-1)
+ if (allocated(HXC_collisions%IO_status)) then
+   PAR_NC_local=0
+   do i_coll=1,HXC_collisions%N
+     if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+     if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
+ else if (allocated(COH_collisions%IO_status)) then
+   PAR_NC_local=0
+   do i_coll=1,COH_collisions%N
+     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+     if (COH_collisions%IO_status(i_coll)/=-1) cycle
+     PAR_NC_local=PAR_NC_local+1
+   enddo
  endif
  !
  n_steps=0
  if (l_loc_HXC_collisions)                     n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
  if (l_MBPT_XC_collisions.or.l_COH_collisions) n_steps=n_steps+PAR_NC_local*PAR_nQ*PAR_n_Bp_mat_elements
  !
- n_colls=max(HXC_collisions%N,COH_collisions%N)
+ ! Write Database Header 
+ !
+ if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
+ if (l_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
  !
  call live_timing("Collisions",n_steps)
  !
@@ -261,11 +280,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if (COLLISIONS_parallel_SC_structure) then
      if(l_HXC_collisions) then
        call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
      endif
      if(l_COH_collisions) then
        call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_index%COMM)
+       call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
      endif
    else
      if(l_HXC_collisions) call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
@@ -281,9 +300,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- if(l_compute_screening) then
-   deallocate(EM1s)
-   call mem_est("EM1s")
+ if (l_compute_screening) then
+   YAMBO_FREE(EM1s)
    call X_alloc('X')
    call elemental_collision_free(isc_H)
    call elemental_collision_free(iscp_H)
@@ -292,13 +310,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  endif
  !
  if (l_tddft) then
-   deallocate(F_xc)
-   if (n_spin>1) deallocate(magn)
+   YAMBO_FREE(F_xc)
+   YAMBO_FREE(magn)
  endif
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='stop')
-#endif
  !
  contains
    !
@@ -362,7 +378,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(sop_inv(i_p_s),ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(ig1,sop_inv(i_p_s)))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

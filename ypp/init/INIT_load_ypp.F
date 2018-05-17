@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,17 +30,9 @@ subroutine ypp_INIT_load(defs)
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:lpfac
  use YPP
-#if defined _YPP_SURF
- use bulkeps,              ONLY: init_bulk
- use convolute,            ONLY: init_convolute
- use eels_kinematics,      ONLY: init_kinematics
- use model_loss_function,  ONLY: init_loss_function
- use surface_geometry,     ONLY: init_surface
- use eels_detector,        ONLY: init_detector
-#endif
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
-&                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Z_input,Eh_pumped_pair_energy,&
+&                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
 &                               n_regions,Eh_pumped_pair_BZ_width
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
@@ -89,13 +81,6 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
  call it('r',defs,'position',     '[R] Average <r^n>, n given in the input')
 #endif
-#if defined _YPP_SURF
- call it('r',defs,'surf',    '[R] Surface spectroscopy postprocessor')
- call it('r',defs,'ras',     '[R] RAS spectra generator')
- call it('r',defs,'reels',   '[R] REELS spectra generator')
- call it('r',defs,'loc',     '[R] State localizer')
- call it('r',defs,'trans',   '[R] Transition analyzer')
-#endif
  call INIT_QP_ctl_load(defs,3)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
@@ -108,20 +93,25 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'fixsyms', '[R] Reduce Symmetries')
  !
+ call it('r',defs,'fixsave', '[R] Convert WFs to new format')
+ !
+#if defined _YPP_RT
+ !
+ call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
+ call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ !
+#endif
+ !
  ! GPL_EXCLUDE_START 
  !
 #if defined _YPP_RT
  !
- ! runlevels
- !
  call it('r',defs,'RTDBs',        '[R] Real-Time databases')
- call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  !
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
  !
- call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
@@ -155,11 +145,9 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
- !
- ! QP DBs merge
- !
- call it(defs,'Z_input','input renormalization',Z_input)
  !
  ! RT DBs create
  !
@@ -179,27 +167,36 @@ subroutine ypp_INIT_load(defs)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
- call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations in the dos')
+ call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !
  ! TRANSIENT ABSORPTION
  !
+ call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
  call it('f',defs,'Transmission','Compute the transient transmissions')
  call it('f',defs,'Reflectivity','Compute the transient reflectivity')
  call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! BANDS
  !
  call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
  call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
  call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _YPP_RT
  call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
  call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
  call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Wannier interface
  !
@@ -270,39 +267,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
- !
-#endif
-#if defined _YPP_SURF
- !
- ! RAS/REELS
- !
- call it(defs,'XData',     'Filename of q[x] data',xdata)
- call it(defs,'YData',     'Filename of q[y] data',ydata)
- call it(defs,'ZData',     'Filename of q[z] data',zdata)
- call it(defs,'SrfShift',  'Shift of surface spectra',sshift,E_unit)
- call it(defs,'DataType',  'Form of epsilon/alpha data on input [eps/a_t/a_r][23/45]',datatype)
- call it(defs,'d_cell',    'Perpendicular component of cell',d_cellin)
- call init_bulk(defs)
- call init_convolute(defs)
- !
- ! Analysis
- !
- call it(defs,'NormDir',   'Index of surface normal (1/2/3)',normdir)
- call it(defs,'LowerLim',  'Lower limit of localization box (frac)',lowerlim)
- call it(defs,'UpperLim',  'Upper limit of localization box (frac)',upperlim)
- call it(defs,'NGLoc',     'G-vectors for localization sum',ngloc)
- call it(defs,'LbndRnge',  'Loc bands range',loc_bands)
- call it(defs,'KptRange',  'Loc kpts range',loc_kpts)
- call it('f',defs,'WrtLocDB','Create localization database')
- !
- call it(defs,'EcvMin',  'Lower limit of transition window',Ecv_min,E_unit)
- call it(defs,'EcvMax',  'Upper limit of transition window',Ecv_max,E_unit)
- call it(defs,'PolDir',  'Index of polarization direction',idir)
- call it(defs,'qdir'  ,  '[cc] X-polarization direction', qdir )
- call init_kinematics(defs)
- call init_loss_function(defs)
- call init_surface(defs)
- call init_detector(defs)
+ call it('f',defs,'GkkpConvert','Convert the gkkp to new I/O format')
  !
 #endif
  !
@@ -338,38 +303,43 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'RmAllSymm' , 'Remove all symmetries')
  call it('f',defs,'RmTimeRev' , 'Remove Time Reversal')
  !
+ call it(defs,'Efield1','First external Electric Field',E_field(1,:))
+ !
  ! GPL_EXCLUDE_START
  !
  call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
- call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
  call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
  call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
  call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _YPP_RT
  !
- ! Post-Processing
+ ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response functions',X_order)
- call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
- call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
- !
  call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+ call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call it(defs,'ProbeKey','Keyword to select groups of PROBE databases',Probe_Keyword,verb_level=V_real_time)
+ call it(defs,'PumpKey','Keyword to select groups of PUMP databases',Pump_Keyword,verb_level=V_real_time)
  !
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipJP_IO','Do not write P(t) and J(t)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
- call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
-#endif
- !
  ! GPL_EXCLUDE_END
+ !
+#endif
  !
 end subroutine

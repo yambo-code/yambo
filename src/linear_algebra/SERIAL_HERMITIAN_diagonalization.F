@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -24,20 +24,24 @@
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,&
-&                         LINEAR_ALGEBRA_WS_clean_up
- !
- implicit none
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
+&                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use timing_m,       ONLY:timing
+#include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n)
  real(SP)    :: E(n)
  !
- character(64) :: subname="SERIAL_HERMITIAN_diagonalization"
- integer :: lwork
-
+ character(64)     :: subname="SERIAL_HERMITIAN_diagonalization"
+ integer           :: lwork
+ type(LALGEBRA_WS) :: WS
+ !
+ call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
+ !
  lwork=-1
- allocate(WS%v_cmplx(1),WS%v_real(max(1,3*n-2)))
+ allocate(WS%v_cmplx(1))
+ YAMBO_ALLOC(WS%v_real,(max(1,3*n-2)))
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
@@ -47,7 +51,7 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  lwork=nint(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(lwork))
+ YAMBO_ALLOC(WS%v_cmplx,(lwork))
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
@@ -57,8 +61,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
 #endif
  !
- ! eigenvectors are stored in M
- !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+ call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
  !
 end subroutine

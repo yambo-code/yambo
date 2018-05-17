@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,11 +23,12 @@
 !
 subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
- use electrons,      ONLY:n_sp_pol,spin
+ use electrons,      ONLY:spin
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
  use hamiltonian,    ONLY:H_ref_bands
  use matrix_operate, ONLY:UP_matrix_index
+ use timing_m,       ONLY:timing
 #if defined _SC || !defined _RT
  use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
 #endif
@@ -38,7 +39,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
  !
  integer                 :: ik,i_sp_pol
  complex(SP),intent(in)  :: V(QP_n_states)
- complex(SP),intent(out) :: H(QP_nb,QP_nb)
+ complex(SP),intent(out) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
  !
@@ -49,6 +50,8 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
 #if defined _RT
  if (.not.PAR_IND_WF_k%element_1D(ik) .or. .not.HEAD_QP_cpu) return
 #endif
+ !
+ call timing('V_qp_basis_to_H',OPR='start')
  !
  do i1=1,QP_n_states
    !
@@ -80,5 +83,7 @@ subroutine V_qp_basis_to_H(ik,i_sp_pol,V,H)
    if (ib/=ibp) H(ibp,ib) = conjg(H(ib,ibp))
    !
  end do
+ !
+ call timing('V_qp_basis_to_H',OPR='stop')
  !
 end subroutine 

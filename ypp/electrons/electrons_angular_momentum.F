@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -37,7 +37,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use FFT_m,          ONLY:fft_size
  use D_lattice,      ONLY:a,x_cc
  use wrapper,        ONLY:Vstar_dot_V
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use SC,             ONLY:load_SC_components
  use electrons,      ONLY:n_sp_pol
@@ -45,7 +45,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  use units,          ONLY:SPEED_OF_LIGHT
  use com,            ONLY:msg,of_open_close
  !
- implicit none
+#include<memory.h>
  !
  ! Input variables
  integer                  :: nkpt_angular(2), nband_angular(2)
@@ -242,18 +242,18 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  !
  ! Free the vector potential
  call MAG_common_build_A(.false.)
- deallocate(x_cc)
+ YAMBO_FREE(x_cc)
  !
  contains
    subroutine local_alloc()
-     allocate(L_tmp(3,fft_size))
-     allocate(L_tot(3,nkpt_tot+1))
+     YAMBO_ALLOC(L_tmp,(3,fft_size))
+     YAMBO_ALLOC(L_tot,(3,nkpt_tot+1))
      L_tmp=cZERO
      L_tot=0._SP
      L=cZERO
      if(MAG_landau) then
-       allocate(M_tmp(3,fft_size))
-       allocate(M_tot(3,nkpt_tot+1))
+       YAMBO_ALLOC(M_tmp,(3,fft_size))
+       YAMBO_ALLOC(M_tot,(3,nkpt_tot+1))
        M_tmp=cZERO
        M_tot=0._SP
        M=cZERO
@@ -261,8 +261,10 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
    end subroutine 
    !
    subroutine local_free()
-     deallocate(L_tmp,L_tot)
-     if(MAG_landau) deallocate(M_tmp,M_tot)
+     YAMBO_FREE(L_tmp)
+     YAMBO_FREE(L_tot)
+     YAMBO_FREE(M_tmp)
+     YAMBO_FREE(M_tot)
    end subroutine
    !
 end subroutine

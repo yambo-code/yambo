@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -52,6 +52,7 @@ integer function io_out_of_date(ID)
 &      index(io_file(ID),'db1')==0.and.&
 &      index(io_file(ID),'kb_pp')==0.and.&
 &      index(io_file(ID),'wf')==0.and.&
+&      index(io_file(ID),'QP')==0.and.&
 &      index(io_file(ID),'E_SOC_map')==0&
 &     ) return
  endif

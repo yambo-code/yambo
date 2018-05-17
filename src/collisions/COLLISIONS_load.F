@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -41,12 +41,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use COLL_interfaces, ONLY:io_COLLISIONS
+ use timing_m,        ONLY:timing
 #if defined _QED || defined _RT
  use global_XC,       ONLY:QP_SE_GW_QED
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
 #endif
- !
  implicit none
  !
  logical            :: CHECK_EXISTENCE_ONLY
@@ -59,6 +59,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  io_err      =0
  !
  if (.not.any((/l_sc_fock,l_sc_coh,l_sc_hartree,l_sc_sex,l_sc_exx,l_sc_srpa,l_elel_scatt,l_elphoton_scatt,l_elphoton_corr/))) return
+ !
+ call timing('COLLISIONS_load',OPR='start')
  !
  ! Initial Setup & EXISTENCE
  !============================
@@ -131,11 +133,14 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
    l_use_collisions=l_use_Hxc_collisions.or.l_use_scatt_collisions.or.l_use_COH_collisions
    COLLISIONS_have_HARTREE=io_err(2)==0.and.HXC_collisions%kind>=H_SE_HARTREE
    !
+ endif
+ !
+ if (.not.l_use_collisions.or.CHECK_EXISTENCE_ONLY) then
+   !
+   call timing('COLLISIONS_load',OPR='stop')
    return
    !
  endif
- !
- if (.not.l_use_collisions) return
  !
  ! Actual I/O
  !============
@@ -151,6 +156,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if defined _QED
  if (l_elphoton_scatt.or.l_elphoton_corr)  call local_IO( P_collisions )
 #endif
+ !
+ call timing('COLLISIONS_load',OPR='stop')
  !
  contains
    !
@@ -200,7 +207,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        endif
 #if defined _RT
        if (COLL%kind==QP_SE_GW_NEQ) then
-         if(.not.associated(GW_NEQ_COLL_element(1)%v_r)) then
+         if(.not.allocated(GW_NEQ_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
          endif
@@ -208,7 +215,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
 #if defined _QED
        if (COLL%kind==QP_SE_GW_QED) then
-         if(.not.associated(P_COLL_element(1)%v_r)) then
+         if(.not.allocated(P_COLL_element(1)%v_r)) then
            io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
            call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
          endif
@@ -277,7 +284,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #endif
      !
      call live_timing()
-     ! 
+     !
    end subroutine
    !
 end subroutine COLLISIONS_load

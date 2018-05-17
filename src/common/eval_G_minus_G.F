@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF,DS
@@ -30,17 +30,14 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  ! and returns the orginal iG that is redefined in output
  ! in such a way that G_m_G(iG,j) exists for all j
  !
- use pars,         ONLY:SP,IP
- use memory_m,     ONLY:mem_est
+ use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
-#if defined _TIMING
  use timing_m,     ONLY:timing
-#endif
+#include<memory.h>
  !
- implicit none
  integer :: iG,iGo
  type(MPI_comm), optional :: COMM
  !
@@ -62,17 +59,14 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    return
  endif
  !
-#if defined _TIMING
  call timing("eval_G_minus_G",opr="start")
-#endif
  !
  iG_=iG
  iGo_=iGo
  if (iGo==0) iGo_=iG
  !
  ! aux data
- allocate(E_G_m_G(iG_,iGo_))
-
+ YAMBO_ALLOC(E_G_m_G,(iG_,iGo_))
  !
  ! setup MPI parallelism if required
  !
@@ -162,10 +156,8 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Fill the actual G_m_G matrix
  !
- allocate(G_m_G(iG_,iGo_))
+ YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
- !
- call mem_est("G_m_G",(/shape(G_m_G)/),(/IP/))
  !
 #if defined _OPENMP
 !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
@@ -191,10 +183,8 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
  call PP_indexes_reset(PAR_IND_G)
- deallocate(E_G_m_G)
+ YAMBO_FREE(E_G_m_G)
  !
-#if defined _TIMING
  call timing("eval_G_minus_G",opr="stop")
-#endif
  !
 end function

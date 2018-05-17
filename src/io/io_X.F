@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,23 +25,20 @@ integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:nqibz,g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_description,X_alloc
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
 &                        io_elemental,io_status,io_bulk,&
 &                        read_is_on,write_is_on,io_header,&
-&                        RD_CL,RD_CL_IF_END,io_action,&
+&                        manage_OP_IF_START_and_CL_IF_END,&
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
 &                        IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
- implicit none
+#include<memory.h>
  type(X_t)   :: X
  type(w_samp):: Xw
  integer     :: ID
@@ -54,10 +51,9 @@ integer function io_X(X,Xw,ID)
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
  complex(SP),allocatable :: X_on_disk(:,:)
+ integer,    external    :: variables_X
  !
-#if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='start')
-#endif
  !
  if (.not.io_RESPONSE) then
    io_X=IO_NOT_ALLOWED
@@ -98,12 +94,13 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   call variables_X(ID,X_description,X)
+   io_X=variables_X(ID,X_description,X)
+   if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 
    ! from a different calculation I check the RL vectors
    !
-   allocate(RL_vecs_disk(X%ng_db,3))
+   YAMBO_ALLOC(RL_vecs_disk,(X%ng_db,3))
    !
    if (write_is_on(ID)) RL_vecs_disk(:,:)=g_vec(:X%ng_db,:)
    !
@@ -111,12 +108,12 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,R2=RL_vecs_disk)
    !
    if (io_serial_number(ID)/=serial_number.and.read_is_on(ID).and.allocated(g_vec)) then
-     if (.not.allocated(X_RLcomp_ig)) allocate(X_RLcomp_ig(X%ng))
+     YAMBO_ALLOC(X_RLcomp_ig,(X%ng))
      i_err = X_RLcomp_table() 
      if ( i_err < 0 ) io_status(ID) = IO_INCOMPATIBLE_VAR
      if ( i_err > 0 ) different_db_RL_order=.true.
    endif
-   deallocate(RL_vecs_disk)
+   YAMBO_FREE(RL_vecs_disk)
    !
    ! Close & Menu lower line
    !
@@ -135,9 +132,9 @@ integer function io_X(X,Xw,ID)
  enddo
  if (iq==0) goto 1
  !
- ! Manage RD_CL_IF_END
+ ! Manage OP_IF_START_and_RD_CL_IF_END
  !
- if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
+ call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
  !
  ! Fragmentation
  !
@@ -153,10 +150,8 @@ integer function io_X(X,Xw,ID)
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
-   if (io_sec(ID,1)/=1.and.trim(db_desc)/="em1d") io_com(ID)=NONE
-   !
-   if (io_sec(ID,1)==1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=0)
-   if (io_sec(ID,1)/=1) call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
+   if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
+   call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
    !
    if (X%whoami==4) then
      call io_elemental(ID,UNIT=HA2EV,&
@@ -187,12 +182,8 @@ integer function io_X(X,Xw,ID)
    ! Xw%p
    !
    if (read_is_on(ID)) then
-     if (associated(Xw%p)) then
-       deallocate(Xw%p)
-       call mem_est("W-p")
-     endif
-     allocate(Xw%p(Xw%n_freqs))
-     call mem_est("W-p",(/Xw%n_freqs/))
+     YAMBO_FREE(Xw%p)
+     YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
@@ -209,12 +200,12 @@ integer function io_X(X,Xw,ID)
    call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
-     allocate(X_on_disk(X%ng,X%ng))
+     YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
      do i1=1,Xw%n_freqs
        X_on_disk=X_mat(:,:,i1)
        X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
      enddo
-     deallocate(X_on_disk)
+     YAMBO_FREE(X_on_disk)
    endif
    !
  endif
@@ -229,9 +220,7 @@ integer function io_X(X,Xw,ID)
  !
 1 call io_disconnect(ID)
  !
-#if defined _TIMING
  if (io_RESPONSE) call timing('io_X',OPR='stop')
-#endif
  !
  contains
    !

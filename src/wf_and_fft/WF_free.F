@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,46 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_free(WF)
+subroutine WF_free(WF,keep_fft)
  !
  use wave_func,ONLY:WAVEs,QUIET_free
- use memory_m, ONLY:mem_est
- use FFT_m,    ONLY:fft_size,fft_dim,fft_dim_loaded,fft_g_table,&
-&                    fft_rot_r,fft_rot_r_inv,fft_multiplier
-#if defined _FFTW
- use FFT_m,    ONLY:fftw_plan
-#endif
- type(WAVEs)      ::WF
  !
- if (.not.associated(WF%c)) return
+#include<memory.h>
  !
- deallocate(WF%c)
- if (WF%space/="B") call mem_est('WF'       ,quiet=QUIET_free)
- if (WF%space=="B") call mem_est('WF_buffer',quiet=QUIET_free)
- nullify(WF%c)
+ type(WAVEs)       :: WF
+ logical, optional :: keep_fft 
  !
- if (associated(WF%state)) then
-   deallocate(WF%state)
-   nullify(WF%state)
- endif 
+ ! Work-space
  !
- if (WF%space=="R") then
-   fft_size=0
-   fft_dim=0
-   fft_dim_loaded=0
-   fft_multiplier=1
-   if (allocated(fft_g_table)) then
-     deallocate(fft_g_table,fft_rot_r,fft_rot_r_inv)
-     call mem_est('FFT_g_tab FFT_rot')
-   endif
-#if defined _FFTW
-   call dfftw_destroy_plan(fftw_plan)
-   fftw_plan=0
-#endif
- endif
+ logical           :: keep_fft_
+ !
+ keep_fft_=.false.
+ if (present(keep_fft)) keep_fft_=keep_fft
+ !
+ if (.not.allocated(WF%c)) return
+ !
+ YAMBO_FREE(WF%c)
+ YAMBO_FREE(WF%state)
+ YAMBO_FREE(WF%index)
+ !
+ if(.not.keep_fft_.and.WF%space=="R") call fft_free()
+ !
  WF%k=0
  WF%b=0
- WF%spin=0
+ WF%sp_pol=0
  WF%space=' '
  WF%to_load=.TRUE.
  !

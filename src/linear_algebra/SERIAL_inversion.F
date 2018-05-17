@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,17 +24,22 @@
 subroutine SERIAL_inversion(n,M,det,eval_det)
  !
  use pars,          ONLY:SP,cONE
- use linear_algebra,ONLY:LINEAR_ALGEBRA_error,WS,LU_factorization,LU_inversion,&
-&                        LINEAR_ALGEBRA_WS_clean_up
+ use linear_algebra,ONLY:LINEAR_ALGEBRA_error,LU_factorization,LU_inversion,&
+&                        LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use timing_m,       ONLY:timing
+#include<memory.h>
  !
- implicit none
+ integer           :: n
+ complex(SP)       :: M(n,n),det
+ logical           :: eval_det
  !
- integer     :: n
- complex(SP) :: M(n,n),det
- logical     :: eval_det
- integer     :: i_loop !ws
+ !ws
+ integer           :: i_loop 
+ type(LALGEBRA_WS) :: WS
  !
- allocate(WS%v_int(n))
+ call timing('SERIAL_inversion',OPR='start')
+ !
+ YAMBO_ALLOC(WS%v_int,(n))
  !
  call LU_factorization(n,M,WS%v_int,WS%i_fail)
  !
@@ -55,11 +60,13 @@ subroutine SERIAL_inversion(n,M,det,eval_det)
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,-1,WS%i_fail)
  WS%dim=int(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- allocate(WS%v_cmplx(WS%dim))
+ YAMBO_ALLOC(WS%v_cmplx,(WS%dim))
  call LU_inversion(n,M,WS%v_int,WS%v_cmplx,WS%dim,WS%i_fail)
  !
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error('GETRI (SI)','failed')
  !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
+ !
+ call timing('SERIAL_inversion',OPR='stop')
  !
 end subroutine

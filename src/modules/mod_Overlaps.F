@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -24,8 +24,7 @@
 module Overlaps_m
  !
  use pars,  ONLY:SP
- !
- implicit none
+#include<memory.h>
  !
  complex(SP), allocatable :: S_det(:,:)        
  complex(SP), allocatable :: Sm1_plus(:,:,:,:)
@@ -57,32 +56,24 @@ module Overlaps_m
      !
      use R_lattice, ONLY:bz_samp
      use electrons, ONLY:levels
-     use memory_m,  ONLY:mem_est
      use drivers,   ONLY:l_real_time
      !
      type(bz_samp), intent(in) :: Xk
      type(levels),  intent(in) :: Xen
      !
-     allocate(S_det(3,Xk%nbz))
-     call mem_est("S_det",(/size(S_det)/),(/2*SP/))
-     allocate(Sm1_plus(3,Xen%nbf,Xen%nbf,Xk%nbz))
-     call mem_est("Sm1_plus",(/size(Sm1_plus)/),(/2*SP/))
-     allocate(Sm1_minus(3,Xen%nbf,Xen%nbf,Xk%nbz))
-     call mem_est("Sm1_minus",(/size(Sm1_minus)/),(/2*SP/))
+     YAMBO_ALLOC(S_det,(3,Xk%nbz))
+     YAMBO_ALLOC(Sm1_plus,(3,Xen%nbf,Xen%nbf,Xk%nbz))
+     YAMBO_ALLOC(Sm1_minus,(3,Xen%nbf,Xen%nbf,Xk%nbz))
      !
    end subroutine S_alloc
    !
    subroutine S_dealloc()
      !
-     use memory_m,  ONLY:mem_est
      use drivers,   ONLY:l_real_time
      !
-     deallocate(S_det)
-     call mem_est("S_det")
-     deallocate(Sm1_plus)
-     call mem_est("Sm1_plus")
-     deallocate(Sm1_minus)
-     call mem_est("Sm1_minus")
+     YAMBO_FREE(S_det)
+     YAMBO_FREE(Sm1_plus)
+     YAMBO_FREE(Sm1_minus)
      !
    end subroutine S_dealloc    
    !

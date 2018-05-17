@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,7 @@ subroutine RT_occ_bands_kpts_and_En_map(En,kpt,E_bands,k_bands)
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use real_time,      ONLY:RT_carriers
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp), intent(in)  :: kpt
  type(levels) , intent(in)  :: En
@@ -42,7 +42,8 @@ subroutine RT_occ_bands_kpts_and_En_map(En,kpt,E_bands,k_bands)
  k_bands%units='i'
  k_bands%description='k'
  k_bands%nibz=RT_carriers%nk
- allocate(k_bands%pt(k_bands%nibz,3),k_bands%weights(k_bands%nibz))
+ YAMBO_ALLOC(k_bands%pt,(k_bands%nibz,3))
+ YAMBO_ALLOC(k_bands%weights,(k_bands%nibz))
  do ik=1,k_bands%nibz
    k_bands%pt(ik,:)   =RT_carriers%kpt(ik,:)
    k_bands%weights(ik)=RT_carriers%k_weight(ik)
@@ -64,8 +65,8 @@ subroutine RT_occ_bands_kpts_and_En_map(En,kpt,E_bands,k_bands)
  E_bands%E_CBm    =En%E_CBm
  E_bands%E_dir_gap=En%E_dir_gap
  !
- allocate(E_bands%E(E_bands%nb,E_bands%nk,n_sp_pol))
- allocate(E_bands%f(E_bands%nb,E_bands%nk,n_sp_pol))
+ YAMBO_ALLOC(E_bands%E,(E_bands%nb,E_bands%nk,n_sp_pol))
+ YAMBO_ALLOC(E_bands%f,(E_bands%nb,E_bands%nk,n_sp_pol))
  E_bands%E=0._SP
  E_bands%f=0._SP
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -24,7 +24,6 @@
 subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
- use memory_m,      ONLY:mem_est
  use R_lattice,     ONLY:bz_samp
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
@@ -35,19 +34,20 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim
- use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description
+ use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
+&                        BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_bands
- use interfaces,    ONLY:PARALLEL_index,WF_load
+ use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
  use vec_operate,   ONLY:c2a
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)     :: Xk
- integer           :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda
+ integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
  ! 
  ! Workspace
  !
@@ -122,8 +122,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  ! Allocation
  !
- allocate(v2plot(nr_tot))
- call mem_est('v2plot ',(/nr_tot/),(/SP/))
+ YAMBO_ALLOC(v2plot,(nr_tot))
  !
  ! Par Proc
  !
@@ -224,8 +223,9 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  !
  call PP_indexes_reset(px)
  !
- deallocate(v2plot)
- deallocate(r_cell_cc,rindex)
+ YAMBO_FREE(v2plot)
+ YAMBO_FREE(r_cell_cc)
+ YAMBO_FREE(rindex)
  !
  call WF_free(WF)
  !
@@ -234,7 +234,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    subroutine expand_grid()
      !
      use FFT_m,       ONLY:fft_size
-     implicit none
+#include<memory.h>
      ! 
      ! Work Space
      !
@@ -257,7 +257,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
      enddo
      !
      nr_tot = fft_size*ncell(1)*ncell(2)*ncell(3)
-     allocate ( r_cell_cc(3,nr_tot), rindex(nr_tot) )
+     YAMBO_ALLOC(r_cell_cc,(3,nr_tot))
+     YAMBO_ALLOC(rindex,(nr_tot))
      !
      nr=(/ncell(1)*fft_dim(1),ncell(2)*fft_dim(2),ncell(3)*fft_dim(3)/)
      call msg('s',':: Extended grid :',nr)

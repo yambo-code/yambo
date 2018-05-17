@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  use YPP_real_time,  ONLY:i_t_start,RT_conf
  use fields,         ONLY:EtoT
  use real_time,      ONLY:RT_step
- implicit none
+#include<memory.h>
  !
  integer,     intent(in)   :: nw,nt
  real(SP),    intent(in)   :: P(nt),W(nw),deltaW
@@ -50,7 +50,7 @@ subroutine RT_coefficients_Fourier(nt,P,nw,W,X,X_err,deltaW)
  T_range=N_periods*EtoT(E=deltaW)
  iT_range=T_range/RT_step
  !
- allocate(xvalue(N_periods))
+ YAMBO_ALLOC(xvalue,(N_periods))
  !
  do i_f=1,nw
    !

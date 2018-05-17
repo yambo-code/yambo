@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -23,10 +23,10 @@
 !
 module pseudo
  !
- use pars,      ONLY:SP,DP,LP,IP
- use electrons, ONLY:n_spin,n_spinor
+ use pars,      ONLY:SP,DP,LP
+ use electrons, ONLY:n_sp_pol
  use D_lattice, ONLY:n_atomic_species
- implicit none
+#include <memory.h>
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
  !
@@ -56,66 +56,49 @@ module pseudo
    !
    ! Abinit
    subroutine PP_alloc_abinit()
-     use memory_m,   ONLY:mem_est
      use R_lattice,  ONLY:ng_vec
-     integer  :: alloc_err(3)
-     allocate(pp_kbs(n_atomic_species,pp_n_l_times_proj_max),stat=alloc_err(1))
-     allocate(pp_kb(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin),stat=alloc_err(2))
-     allocate(pp_kbd(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_spin),stat=alloc_err(3))
-     call mem_est("pp_kbs pp_kb pp_kbd",(/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
-&                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
+     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    ! PWscf
    subroutine PP_alloc_pwscf()
-     use memory_m,   ONLY:mem_est
      use wave_func,  ONLY:wf_ncx
-     integer  :: alloc_err(3)
-     allocate(pp_kbs(n_atomic_species,pp_n_l_times_proj_max),stat=alloc_err(1))
-     allocate(pp_kb(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1),stat=alloc_err(2))
-     allocate(pp_kbd(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1),stat=alloc_err(3))
-     call mem_est("pp_kbs pp_kb pp_kbd",(/size(pp_kbs),size(pp_kb),size(pp_kbd)/),&
-&                 elements_kind=(/SP,SP,SP/),errors=alloc_err)
-     pp_kbs =0.
-     pp_kb  =0.
-     pp_kbd =0.
+     YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
+     YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
    end subroutine
    !
    subroutine PP_free()
-     use memory_m,   ONLY:mem_est
-     if (.not.allocated(pp_kbs)) return
-     deallocate(pp_kbs,pp_kb,pp_kbd)
-     call mem_est("pp_kbs pp_kb pp_kbd")
+     YAMBO_FREE(pp_kbs)
+     YAMBO_FREE(pp_kb)
+     YAMBO_FREE(pp_kbd)
    end subroutine
    !
    subroutine PP_nlcc_alloc()
-     use memory_m,   ONLY:mem_est
      use R_lattice,  ONLY:ng_vec
      use FFT_m,      ONLY:fft_size
      implicit none
-     integer  :: alloc_err(3)
-     allocate(pp_rhog_nlcc(ng_vec),stat=alloc_err(1))
-     allocate(pp_rho_nlcc(fft_size),stat=alloc_err(2))
-     allocate(pp_has_nlcc_atom(n_atomic_species),stat=alloc_err(3))
-     call mem_est("pp_rhog_nlcc pp_rho_nlcc pp_has_nlcc_atom",&
-&                 (/size(pp_rhog_nlcc),size(pp_rho_nlcc),size(pp_has_nlcc_atom)/),&
-&                 elements_kind=(/SP,DP,SP/),errors=alloc_err)
+     YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
+     YAMBO_ALLOC(pp_rho_nlcc,(fft_size))
+     YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))
      pp_rhog_nlcc =0.
      pp_rho_nlcc =0.
      pp_has_nlcc_atom =0
    end subroutine 
    !
    subroutine PP_nlcc_free()
-     use memory_m,   ONLY:mem_est
-     if (.not.allocated(pp_rhog_nlcc)) return
-     deallocate(pp_rhog_nlcc)
-     deallocate(pp_rho_nlcc)
-     deallocate(pp_has_nlcc_atom)
+     YAMBO_FREE(pp_rhog_nlcc)
+     YAMBO_FREE(pp_rho_nlcc)
+     YAMBO_FREE(pp_has_nlcc_atom)
      pp_has_nlcc=.FALSE.
-     call mem_est("pp_rhog_nlcc pp_has_nlcc pp_has_nlcc_atom")
    end subroutine
    !
 end module pseudo

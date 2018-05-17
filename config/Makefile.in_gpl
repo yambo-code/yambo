@@ -1,8 +1,8 @@
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -23,91 +23,162 @@
 #
 cpu         = @build_cpu@
 os          = @build_os@
-mpi         = @mpi_cpp@
-netcdf      = @dnetcdf@
-scalapack   = @dscalapack@
-precision   = @dp_cpp@
-fft         = @FFT_CPP@
-xcpp        = @dnetcdf@ @mpi_cpp@ @FFT_CPP@ @dscalapack@ @compiler_cpp@ @dp_cpp@ @openmp_cpp@ @bluegene_cpp@ @time_profile_cpp@
-debug       = @enable_debug@
-do_blas     = @compile_blas@
+mpi         = @def_mpi@
+netcdf      = @def_netcdf@
+scalapack   = @def_scalapack@
+precision   = @def_dp@
+fft         = @def_fft@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
+keep_objs   = @enable_keep_objects@
+do_blacs    = @compile_blacs@
+do_slk      = @compile_slk@
 do_lapack   = @compile_lapack@
+do_fftw     = @compile_fftw@
 do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
+do_hdf5     = @compile_hdf5@
 do_netcdf   = @compile_netcdf@
 do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
+do_petsc    = @compile_petsc@
+do_slepc    = @compile_slepc@
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
 exec_prefix = @exec_prefix@
+libs_prefix = @extlibs_path@
 bindir      = @bindir@
 topdir      = @abs_top_srcdir@
-libdir      = @srcdir_path@/lib
-includedir  = @srcdir_path@/include
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
 CFGFILES = config/setup config/Makefile config/report  \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_debug.sh driver/editor.h lib/local/.objects lib/archive/keep-extlibs-stamp \
-           lib/install/make_iotk.inc
-TARGETS  = yambo interfaces ypp
-UTILS    = changelog get_extlibs
-CLEANS   = clean clean_all distclean
-INTERFCS = a2y p2y e2y 
+           sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
+           include/c_defs.h
+ifeq ($(do_p2y),yes)
+  p2y   = p2y
+endif
+ifeq ($(do_e2y),yes)
+  e2y   = e2y
+endif
+INTERFCS = a2y $(p2y) $(e2y)
+CORE     = yambo ypp $(INTERFCS)
+UTILS    = get_extlibs ext-libs
+CLEANS   = clean_fast clean clean_all distclean
+PH_PROJ  = yambo_ph ypp_ph
+RT_PROJ  = yambo_rt ypp_rt
+KERR_PROJ= yambo_kerr 
+ALL      = $(CORE) $(PH_PROJ) $(RT_PROJ) $(KERR_PROJ)
+EXE      = $(CORE) $(PH_PROJ) $(RT_PROJ) $(KERR_PROJ)
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules linear_algebra parallel parser io xc_functionals communicate common io \
+BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser xc_functionals communicate common io \
+               interface stop_and_restart wf_and_fft 
+BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser xc_functionals communicate common io \
                interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
                tddft pol_function qp bse
+MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup \
+               tddft pol_function qp bse
+
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
+               tddft pol_function qp bse collisions hamiltonian \
+               real_time_propagation real_time_common 
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup \
+               tddft pol_function qp bse collisions hamiltonian \
+               real_time_propagation real_time_common 
 #
 # Interfaces
 #
-2YLIBS       = external_c modules linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops 
+2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
-YPP_LIBS        = modules interpolate init qp plotting electrons excitons symmetries k-points bits 
-YPPPH_LIBS      = modules interpolate init qp plotting electrons elph excitons symmetries k-points bits 
+YPP_BASIC_LIBS     = modules interpolate init qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interpolate init qp plotting electrons 
+YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
+YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
+YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
+YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits 
+YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
+YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function bse
-#
-# PROJECTS
-#
-PROJECTS = yambo_kerr yambo_ph ypp_ph
-EXE      = $(TARGETS) $(PROJECTS)
-#
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
+YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+                     pol_function qp bse collisions hamiltonian 
+YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+                     pol_function qp bse collisions hamiltonian 
+
+.PHONY: interfaces
+
 nothing: 
 	@$(make_message)
-changelog:
-	svn log | perl sbin/svn2cl.pl > ChangeLog
-all:
-	for target in $(PROJECTS); do $(MAKE) $$target ; done
-	for target in $(TARGETS); do $(MAKE) $$target ; done
-	for target in $(DEBUG); do $(MAKE) $$target ; done
-libs:
+interfaces:
+	for target in $(INTERFCS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+core:      
+	for target in $(CORE) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+ph-project:
+	for target in $(PH_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+sc-project:
+	for target in $(SC_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rt-project:
+	for target in $(RT_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+kerr-project:
+	for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+all: 
+	for target in $(ALL) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+#
+# External libs #
+#
+ext-libs: 
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext) fi
-	@+LIBS2DO="slatec";  DIR2GO="lib"; VPATH="$(topdir)/lib" ; $(mklib)
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blas)" = yes ; then LIBS2DO="blas" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
-	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib) 
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_fftqe)" = yes ; then LIBS2DO="fftqe" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib); fi
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); $(mklib_internal); fi
 	@+if test "$(do_iotk)" = yes ; then LIBS2DO="iotk" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
-	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf" ; \
+	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_petsc)" = yes ; then LIBS2DO="petsc" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+#
+# Internal libs #
+#
+int-libs:
+	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
+#
+# All libs #
+#
+libs:	ext-libs int-libs
+#
+# Download external libs #
+#
 get_extlibs:
-	@+mkdir lib/archive; \
+	@+mkdir -p lib/archive; \
 	if [ $(topdir) != $(prefix) ] ; then \
 	cp $(topdir)/lib/archive/* lib/archive; \
 	cp $(topdir)/config/missing config/ ; \
@@ -118,44 +189,55 @@ get_extlibs:
 # 
 yambo: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
-	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; $(mkx)
+	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #
 # 
 yambo_kerr: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_KERR"; $(mksrc)
-	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_KERR"; $(mkx)
+	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)";ADF="-D_KERR"; $(mkx)
+yambo_rt: libs
+	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT"; $(mksrc)
+	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
-	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS)"; ADF="-D_ELPH"; $(mkx)
+	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; ADF="-D_ELPH"; $(mkx)
 #
 # Interfaces #
 #
-interfaces: libs
+interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib)
-	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS)"; $(mkx)
-	@+if test "$(do_p2y)" = yes ; then \
-	X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS)"; ADF="-D@PW_CPP@"; $(mkx) ; \
-	fi
-	@+if test "$(do_e2y)" = yes ; then \
-	X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS)"; $(mkx) ; \
-	fi
+	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+a2y: interfcs
+	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+ifeq ($(do_p2y),yes)
+p2y: interfcs
+	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
+endif
+ifeq ($(do_e2y),yes)
+e2y: interfcs
+	@+X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ;
+endif
 #
-# Ypp #
+# YPP #
 #
 ypp: libs
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
-	@+X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS)"; X_ypp_LIBS="$(YPP_LIBS)"; $(mk_ypp_x)
+	@+X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS_LD)"; X_ypp_LIBS="$(YPP_LIBS_LD)"; $(mk_ypp_x)
 #
 # Ypp projects #
 #
 ypp_ph: libs
-	@LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
-	@LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp";  ADF="-D_YPP_ELPH"; $(mk_ypp_src)
-	@X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS)"; \
-	X_ypp_LIBS="$(YPPPH_LIBS) elph"; ADF="-D_YPP_ELPH"; $(mk_ypp_x)
+	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
+	@+LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp";  ADF="-D_YPP_ELPH"; $(mk_ypp_src)
+	@+X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS_LD)"; \
+	X_ypp_LIBS="$(YPPPH_LIBS_LD) elph"; ADF="-D_YPP_ELPH"; $(mk_ypp_x)
+ypp_rt: libs
+	@+LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_YPP_RT"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_RT"; $(mk_ypp_src)
+	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
+	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
 #
 clean_fast: 
 	@$(objects_clean)
@@ -165,33 +247,48 @@ clean:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-distclean: clean_all
 clean_all:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean_all)
+	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
-	
+remove_ext_libs: 
+	@$(lib_ext_remove)
+distclean: clean_all remove_ext_libs
+#
+#===========
 # Functions
+#===========
+#
+# Messages
+#
 define make_message
  echo;echo "YAMBO" @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@ targets;echo;\
- echo  " [stable] all";\
- for target in $(TARGETS); do echo  " [stable] $$target" ; done;echo;\
- for target in $(PROJECTS); do echo " [devel] $$target" ; done;echo;\
- for target in $(UTILS); do echo  " [util] $$target" ; done;echo
- for target in $(CLEANS); do echo  " [clean] $$target" ; done;echo
+ echo " [all projects] all";\
+ echo " [project-related suite] project (core, rt-project, ...)";      echo;\
+ for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
+ for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
+ for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
+ for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
+ for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\
+ for target in $(CLEANS);    do echo " [clean] $$target"        ; done;echo
 endef
+#
+# SRC's and LIB's (needing the locks)
+#
 define mksrc
  if [ "$(topdir)" != "$(prefix)" ] ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+   if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
@@ -203,11 +300,11 @@ endef
 define mk_ypp_src
  if test "$(topdir)" != "$(prefix)" ; then cp -r $(topdir)/include/* include/ ; fi ; \
  for ldir in $$LIBS2DO; do \
-  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(libdir)/lib_ypp_$$ldir.a" || test "$(keep_objs)" = yes  ; then \
    rm -f "$(libdir)/lib_ypp_$$ldir.a" ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$XPATH/$$ldir" ; then mkdir "$$XPATH/$$ldir" ; fi ; \
+   if test ! -d "$$XPATH/$$ldir" ; then mkdir -p "$$XPATH/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
@@ -216,23 +313,12 @@ define mk_ypp_src
   fi ; \
  done
 endef
-define mklibxc
-  if test ! -f "$(libdir)/libxc.a" ; then \
-   echo " " ; \
-   echo ">>>[Making libxc]<<<" ; \
-   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
-   cd $$DIR2GO/libxc ; $(MAKE) -s VPATH=$$VPATH/libxc  || exit "$$?" ; \
-   echo ">>>[Installing libxc]<<<" ; \
-   $(MAKE) -s install ; \
-   cd ../../ ; \
-  fi
-endef
-define mklib
+define mklib_internal
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
-   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
+   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
@@ -241,19 +327,22 @@ define mklib
   fi \
  done
 endef
+#
+# External libs
+#
 define mklib_ext
- if test ! -d "lib/archive" ; then mkdir "lib/archive" ; fi ; \
- if test ! -d "lib/install" ; then mkdir "lib/install" ; fi ; \
+ if test ! -d "lib/archive" ; then mkdir -p "lib/archive" ; fi ; \
  if [ "$(topdir)" != "$(prefix)" ] ; then \
    cp $(topdir)/lib/archive/* lib/archive; \
    cp $(topdir)/config/missing config/ ; \
-   cp $(topdir)/lib/install/* lib/install; \
  fi ; \
  for ldir in $$LIBS2DO; do \
   if test ! -f "$(libdir)/lib$$ldir.a" ; then \
    if [ "$(topdir)" != "$(prefix)" ] ; then \
-    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir "$$DIR2GO/$$ldir" ; fi ; \
-    cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; \
+    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
+    if test -e $$VPATH/$$ldir/Makefile.loc; then cp $$VPATH/$$ldir/Makefile.loc $$DIR2GO/$$ldir/ ; fi ;\
+    if test -e $$VPATH/$$ldir/Makefile.lib; then cp $$VPATH/$$ldir/Makefile.lib $$DIR2GO/$$ldir/ ; fi ;\
+    if test -e $$VPATH/$$ldir/*inc*;        then cp $$VPATH/$$ldir/*inc* $$DIR2GO/$$ldir/ ;        fi ;\
    fi ; \
    echo " " ; \
    echo ">>>[Making $$ldir]<<<" ; \
@@ -261,13 +350,16 @@ define mklib_ext
   fi \
  done
 endef
+#
+# Final exe's
+#
 define mkx
  LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
-   if test ! -d $$XPATH ; then mkdir $$XPATH ; fi ; \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
+   if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
@@ -283,7 +375,7 @@ define mk_ypp_x
  for exe in $$X2DO; do \
   echo " " ; \
   echo ">>>[Linking $$exe]<<<" ; \
-  if test ! -f "$(bindir)/$$exe" || test "$(debug)" = yes  ; then \
+  if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
@@ -293,66 +385,84 @@ define mk_ypp_x
   echo " " ; \
  done
 endef
+#
+# CLEANING
+#
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name 'make.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
-        grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | xargs rm -f
+        grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
+        grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*blacs*' |  \
+        grep -v '.*scalapack*' | grep -v '.*slepc*' | \
+        grep -v '.*petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  echo "[CLEAN] Makefiles ... done"
- if test "$(debug)" = yes ; then \
- find . -name '.debug*' | xargs rm -fr ; \
- echo "[CLEAN] Debug locks and directories ... done" ; \
+ if test "$(keep_objs)" = yes ; then \
+ find . -name '.objects__lock*' | xargs rm -fr ; \
+ echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
-           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+           -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
+           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
+ @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; $(MAKE) -s -f Makefile.loc clean > /dev/null ; cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
- echo "[CLEAN] Libs EXT (clean) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean) ... done" 
 endef
 define lib_ext_clean_all
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
-           -o -name 'netcdf*h' -o -name 'netcdf*inc' \) -type f -print | xargs rm -f 
- @if test -d $(libdir)/install; then \
-  cd $(libdir)/install; \
-  if test -r make_iotk.inc ; then rm -f make_iotk.inc ; fi ; \
-  cd ../.. ; \
- fi
+           -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
+           -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdf" "etsf_io" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
-   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
    cd ../.. ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
  @if test -d $(libdir)/archive ; then \
   cd $(libdir)/archive; \
-  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *gz *stamp ; \
+  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] Libs EXT (clean_all) ... done" 
+ echo "[CLEAN] External libraries compilation directories (clean_all) ... done" 
+endef
+define sysincs_clean
+ @if test -d $(prefix)/include/system/; then \
+   rm -rf $(prefix)/include/system ; \
+   echo "[CLEAN] Libraries ... done"; \
+ fi 
+endef
+define lib_ext_remove
+ @if test -f $(libs_prefix)/../../driver/driver.c; then \
+  echo "[CLEAN] Pre-compiled internal libraries ... done"; \
+  rm -fr "$(libs_prefix)"; \
+ fi
+ @if test -f $(prefix)/include/system/../../driver/driver.c; then \
+  echo "[CLEAN] Local include directory ... done"; \
+  rm -fr "$(prefix)/include/system"; \
+ fi
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
-       grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | xargs rm -f 
+       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
  echo "[CLEAN] Libraries ... done" 
  echo "[CLEAN] Modules ... done" 
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- for exe in $(INTERFCS); do rm -f $(bindir)/$$exe; done
- cd $(bindir) ; rm -f etsf_io  ncgen ncgen3 nc-config nccopy ncdump  iotk iotk.x ; cd ..
+ cd $(bindir) ; rm -f etsf*  nc* nf* xc*  iotk* fftw* h5* gif2h5 ; cd ..
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

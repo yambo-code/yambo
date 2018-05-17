@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -39,7 +39,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  use parallel_m,     ONLY:PP_indexes,PP_redux_wait
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::kpt
  type(levels)  ::En
@@ -81,7 +81,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  dos_norm=1._SP/DL_vol
  !
  if (n_spinor==2) then
-   allocate(spin_factors(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
+   YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_spinor))
    call electrons_spin_factors((/1,kpt%nibz/),RT_carriers%nb,spin_factors)
  endif 
  !
@@ -134,7 +134,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
    do i_E=1,dos_E_steps
      dos_E=dos_E_range(1)+real(i_E,SP)*delta_E
      !
-     if(dos_E>En%E_VBM+dos_broadening .and. dos_E<En%E_CBm-dos_broadening) then
+     if(dos_E>En%E_VBM(1)+dos_broadening .and. dos_E<En%E_CBm(1)-dos_broadening) then
        if(l_separate_eh) then
          call RT_output("space 2D_occ_dos")
        endif
@@ -160,6 +160,6 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  call live_timing()
  !
- if (n_spinor==2) deallocate(spin_factors)
+ YAMBO_FREE(spin_factors)
  !
 end subroutine RT_occ_2D_dos_plot

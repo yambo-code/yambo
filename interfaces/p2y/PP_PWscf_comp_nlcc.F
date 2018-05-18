@@ -71,7 +71,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     if (.not.psp%psp_has_nlcc) cycle
     !
     do ig=1,npw
-      rhog(ig) = num_interpolation_calc(psp%interpolation_nlcc,G_norm(ig),3)
+      rhog(ig) = num_interpolation_calc(psp%interp_nlcc,G_norm(ig),3)
     enddo
     V_m1 = 1.0d0/basis%struct%a_omega
     pp_rhog_nlcc_atom(:npw,is) = rhog(:npw)*V_m1

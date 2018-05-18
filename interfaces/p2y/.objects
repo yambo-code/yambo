@@ -3,7 +3,7 @@ objs = pw_errore.o mod_pw_data.o qexml.o qexsd_p2y.o qeh5_module.o qexpt_p2y.o \
        mod_p2y.o numrec_kinds.o mod_numerical.o \
        numrec_module.o numrec_locate.o numrec_polint.o numrec_polcof.o numrec_ddpoly.o num_interpolation_module.o \
 	   pw_struct_module.o pw_basis_module.o pw_wfc_module.o \
-	   pw_pseudo_module.o pw_atoms_module.o \
+	   pw_pseudo_module.o pw_atoms_module.o pw_setqf.o \
        PP_PWscf_driver.o PP_PWscf_comp.o PP_PWscf_comp_nlcc.o p2y_db1.o p2y_wf.o p2y_i.o
 
 

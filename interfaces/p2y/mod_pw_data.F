@@ -89,5 +89,6 @@ module pw_data
 ! Pseudopotentials
   character(256),allocatable :: psfile(:)
   integer, allocatable       :: nmesh(:), nbeta(:)
+  integer, allocatable       :: nqf(:), nqlc(:), lmax(:)
 
 end module pw_data

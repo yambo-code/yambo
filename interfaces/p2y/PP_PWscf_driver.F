@@ -220,7 +220,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  integer,         intent(inout) :: nbeta, nmesh
  character(256),  intent(in)    :: psfile
  !
- ! Allocates pseudo% types and Inizializes pseudo%interpolation table
+ ! Allocates pseudo% types and Inizializes pseudo%interp table
  !
  call pw_pseudo_set_dim(pseudo,nbeta,nmesh)
  !
@@ -230,7 +230,7 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
 &                      pseudo%wmesh,pseudo%rho_nlcc,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
 &                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so,pseudo%psp_has_nlcc)
  !
- ! Fill the pseudo%interpolation table
+ ! Fill the pseudo%interp table
  ! ecutwfc(Ha) -> cutoff(Ry)
  !
  call pw_pseudo_set_table(pseudo,real(ecutwfc_,SP)*2._SP,real(ecutrho_,SP)*2._SP)

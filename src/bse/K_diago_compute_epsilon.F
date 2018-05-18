@@ -35,7 +35,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use BS,             ONLY:BS_H_dim
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor
  use interfaces,     ONLY:PARALLEL_index
- use R_lattice,      ONLY:nkbz
+ use R_lattice,      ONLY:nkbz,bare_qpg
  !
  ! GPL_EXCLUDE_START
  !
@@ -199,7 +199,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  ! GPL_EXCLUDE_END
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)          +X_drude_term(:))*Co_factor/q_norm(1)**2
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)          +X_drude_term(:))*Co_factor/bare_qpg(1,1)**2
  if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-factor_jj+X_drude_term(:))*Co_factor/ W%p(:)  **2
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor

@@ -58,12 +58,22 @@ subroutine PP_PWscf_driver(k)
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
-    use pw_struct_module
-    use pw_basis_module
-    type(pw_struct), target :: struct
-    type(pw_basis)  :: basis
-    integer, intent(in) :: ik, ngmax
+      use pw_struct_module
+      use pw_basis_module
+      implicit none
+      type(pw_struct), target :: struct
+      type(pw_basis)  :: basis
+      integer, intent(in) :: ik, ngmax
     end subroutine fill_basis
+    !
+    subroutine fill_basis_rho(basis,struct,ngmax)
+      use pw_struct_module
+      use pw_basis_module
+      implicit none
+      type(pw_struct), target :: struct
+      type(pw_basis)      :: basis
+      integer, intent(in) :: ngmax
+    end subroutine fill_basis_rho
  end interface
  !
  call k_expand(k)

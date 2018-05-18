@@ -92,7 +92,7 @@ MODULE qexsd_module
   !
   PUBLIC :: qe_current_version
   !
-  PUBLIC :: qexsd_init_schema, qexsd_openfile, qexsd_closefile
+  PUBLIC :: qexsd_init, qexsd_openfile, qexsd_closefile
   PUBLIC :: qexsd_open_output, qexsd_close_output
   !
   PUBLIC :: qexsd_read_header, qexsd_read_cell, qexsd_read_ions, &
@@ -100,6 +100,7 @@ MODULE qexsd_module
             qexsd_read_hubbard, qexsd_read_bands_info, &
             qexsd_read_band_structure, qexsd_read_xc, qexsd_read_exx, &
             qexsd_read_gk, qexsd_read_wfc, qexsd_igk_map, qexsd_fft2igv_map
+  PUBLIC :: fmt_is_qexsd, fmt_is_qexsd_hdf5
 
 CONTAINS
 
@@ -109,7 +110,7 @@ CONTAINS
 !-------------------------------------------
 !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_init_schema( unit_in, unit_out, dir, dir_in, dir_out )
+    SUBROUTINE qexsd_init( unit_in, unit_out, dir, dir_in, dir_out )
       !------------------------------------------------------------------------
       !    
       ! just init module data
@@ -144,7 +145,7 @@ CONTAINS
       call initialize_hdf5()
 #endif
       !    
-    END SUBROUTINE qexsd_init_schema
+    END SUBROUTINE qexsd_init
     !
     !
     !------------------------------------------------------------------------
@@ -1228,6 +1229,8 @@ CONTAINS
 
       ierr = 0
       !
+      call iotk_scan_begin(iunit, "dft", IERR=ierr)
+      if ( ierr/=0 ) return
       call iotk_scan_begin(iunit, "hybrid", FOUND=lfound, IERR=ierr)
       if ( ierr/=0 ) return
       !
@@ -1283,6 +1286,8 @@ CONTAINS
          call iotk_scan_end(iunit, "hybrid", IERR=ierr )
          if ( ierr/=0 ) return
       endif
+      call iotk_scan_end(iunit, "dft", IERR=ierr )
+      if ( ierr/=0 ) return
       !
     end subroutine qexsd_read_exx 
     !
@@ -1678,6 +1683,86 @@ CONTAINS
       !
     end subroutine qexsd_igk_map
     !
+    !
+    logical function fmt_is_qexsd(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename
+       logical :: lfound
+       integer :: ierr
+
+       fmt_is_qexsd=.false.
+       !
+       if (.not. fmt_is_qexsd_xml(dirname)) return
+       !
+       filename=trim(dirname)//"/wfc1.dat"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/wfcup1.dat"
+          inquire(file=filename, exist=lfound)
+       endif
+       if (.not.lfound) return
+       !
+       fmt_is_qexsd=.true.
+       return
+    end function
+    !
+    logical function fmt_is_qexsd_hdf5(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename
+       logical :: lfound
+       integer :: ierr
+
+       fmt_is_qexsd_hdf5=.false.
+       !
+       if (.not. fmt_is_qexsd_xml(dirname)) return
+       !
+       filename=trim(dirname)//"/wfc1.hdf5"
+       inquire(file=filename, exist=lfound)
+       !
+       if (.not.lfound) then
+          filename=trim(dirname)//"/wfcup1.hdf5"
+          inquire(file=filename, exist=lfound)
+       endif
+       if (.not.lfound) return
+       !
+       fmt_is_qexsd_hdf5=.true.
+       return
+    end function
+    !
+    logical function fmt_is_qexsd_xml(dirname)
+       implicit none
+       character(len=*) :: dirname
+       !
+       character(256) :: filename, fmt_name
+       logical :: lfound
+       integer :: ierr, iun
+
+       fmt_is_qexsd_xml=.false.
+       call iotk_free_unit(iun)
+       !
+       iunit=iun
+       !
+       filename=trim(dirname)//"/data-file-schema.xml"
+       call iotk_open_read ( iunit, FILE=TRIM(filename), IERR=ierr )
+       if ( ierr/=0 ) return
+       !
+       call qexsd_read_header(format_name=fmt_name,IERR=ierr)
+       if (ierr/=0) return
+       !
+       if (trim(fmt_name)/="QEXSD") return 
+       !
+       call iotk_close_read( iunit, IERR=ierr)
+       if (ierr/=0) return
+       !
+       fmt_is_qexsd_xml=.true.
+       return
+    end function 
+    
 !
 ! Copyright (C) 2016-2017 Quantum ESPRESSO Foundation 
 ! This file is distributed under the terms of the
@@ -1718,8 +1803,9 @@ CONTAINS
       integer            :: igwx_, nbnd_, npol_, ik_, ispin_, ngw_
       integer            :: iuni, j, jj, igwx, npwx
       real(DP)           :: xk_(3), scalef, b1(3), b2(3), b3(3)
-      logical            :: gamma_only_
+      logical            :: gamma_only_, lfound
       character(256)     :: filename
+      logical            :: file_is_hdf5, file_is_forbin
 #if defined(_QE_HDF5)
       type(qeh5_file)    :: h5file
       type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
@@ -1751,35 +1837,49 @@ CONTAINS
          filename=trim( qexsd_wfc_filename(datadir_in,"wfc",ik, EXTENSION=" ") )
       endif
       !
-#if defined(_QE_HDF5)
-      call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)
-      if ( ierr /= 0 ) return
-#else
-      open(iuni, file=trim(filename)//'dat', form='unformatted', status='old', iostat=ierr)
-      if ( ierr /= 0 ) return
+      inquire(file= TRIM(filename)//'hdf5',exist=file_is_hdf5)
+      file_is_forbin=.not.file_is_hdf5
+      !
+#if !defined(_QE_HDF5)
+      if (file_is_hdf5) then 
+         ierr=42; return
+      endif
 #endif
 
+#if defined(_QE_HDF5)
+      if (file_is_hdf5) then
+         call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)
+         if ( ierr /= 0 ) return
+      endif
+#endif
+      if (file_is_forbin) then
+         open(iuni, file=trim(filename)//'dat', form='unformatted', status='old', iostat=ierr)
+         if ( ierr /= 0 ) return
+      endif
       !
 #if defined(_QE_HDF5)
-      CALL qeh5_read_attribute (h5file%id, "ik", ik_)
-      CALL qeh5_read_attribute (h5file%id, "xk",xk_, RANK =1, DIMENSIONS = [3])
-      CALL qeh5_read_attribute (h5file%id, "ispin", ispin_)
-      CALL qeh5_read_attribute (h5file%id, "gamma_only", char_buf, MAXLEN = len(char_buf) )
-      IF (TRIM(char_buf) =='.TRUE.' .OR. TRIM(char_buf)=='.true.') THEN 
-         gamma_only_ = .TRUE. 
-      ELSE 
-         gamma_only_ = .FALSE.
-      END IF
-      call qeh5_read_attribute (h5file%id, "ngw", ngw_)
-      call qeh5_read_attribute (h5file%id, "nbnd",nbnd_)
-      call qeh5_read_attribute (h5file%id, "npol",npol_)
-      call qeh5_read_attribute (h5file%id, "igwx",igwx_)
-#else
-      read (iuni,iostat=ierr) ik_, xk_, ispin_, gamma_only_, scalef
-      if (ierr/=0) return
-      read (iuni,iostat=ierr) ngw_, igwx_, npol_, nbnd_
-      if (ierr/=0) return
+      if (file_is_hdf5) then
+         call qeh5_read_attribute (h5file%id, "ik", ik_)
+         call qeh5_read_attribute (h5file%id, "xk",xk_, RANK =1, DIMENSIONS = [3])
+         call qeh5_read_attribute (h5file%id, "ispin", ispin_)
+         call qeh5_read_attribute (h5file%id, "gamma_only", char_buf, MAXLEN = len(char_buf) )
+         if (trim(char_buf) =='.TRUE.' .or. trim(char_buf)=='.true.') then 
+            gamma_only_ = .TRUE. 
+         else 
+            gamma_only_ = .FALSE.
+         endif
+         call qeh5_read_attribute (h5file%id, "ngw", ngw_)
+         call qeh5_read_attribute (h5file%id, "nbnd",nbnd_)
+         call qeh5_read_attribute (h5file%id, "npol",npol_)
+         call qeh5_read_attribute (h5file%id, "igwx",igwx_)
+      endif
 #endif
+      if (file_is_forbin) then
+         read (iuni,iostat=ierr) ik_, xk_, ispin_, gamma_only_, scalef
+         if (ierr/=0) return
+         read (iuni,iostat=ierr) ngw_, igwx_, npol_, nbnd_
+         if (ierr/=0) return
+      endif
       !
       ierr=20
       if (igwx_>igwx) return
@@ -1792,35 +1892,38 @@ CONTAINS
       !
 #if defined(_QE_HDF5)
       !
-      if (present(igkv)) then
+      if (present(igkv).and.file_is_hdf5) then
          !
-         CALL qeh5_open_dataset(h5file, h5dset_mill, ACTION='read', NAME='MillerIndices', error=ierr)
+         call qeh5_open_dataset(h5file, h5dset_mill, ACTION='read', NAME='MillerIndices', error=ierr)
          if (ierr/=0) return
          !
          if ( h5dset_mill%filespace%dims(2) > igwx ) then
              ierr= 10 ; return
          endif
          !
-         CALL qeh5_read_dataset(igkv, h5dset_mill) 
-         CALL qeh5_close(h5dset_mill) 
-      endif
-      !
-#else
-      !
-      ! skip b1,b2,b3
-      !
-      read (iuni,iostat=ierr) b1, b2, b3
-      if (ierr/=0) return
-      !
-      if (present(igkv)) then
-         read (iuni,iostat=ierr) igkv(1:3,1:igwx_)
-         if (ierr/=0) return
-      else
-         read (iuni,iostat=ierr) jj
-         if (ierr/=0) return
+         call qeh5_read_dataset(igkv, h5dset_mill) 
+         call qeh5_close(h5dset_mill) 
       endif
       !
 #endif
+      !
+      !
+      if (file_is_forbin) then
+         !
+         ! skip b1,b2,b3
+         read (iuni,iostat=ierr) b1, b2, b3
+         if (ierr/=0) return
+         !
+         if (present(igkv)) then
+            read (iuni,iostat=ierr) igkv(1:3,1:igwx_)
+            if (ierr/=0) return
+         else
+            read (iuni,iostat=ierr) jj
+            if (ierr/=0) return
+         endif
+         !
+      endif
+      !
       if (present(igkv)) then
          if ( igwx > igwx_ ) igkv(1:3,igwx_+1:igwx) = 0
       endif
@@ -1828,7 +1931,7 @@ CONTAINS
       !
       ! wfc readin
       !
-      if ( PRESENT(wfc) ) then
+      if ( present(wfc) ) then
          !
          !npwx = SIZE( wfc, 1 ) / npol_
          !npwx = igwx
@@ -1840,9 +1943,11 @@ CONTAINS
          allocate( wtmp(npol_*igwx) )
          !
 #if defined(_QE_HDF5) 
-         CALL qeh5_open_dataset( h5file, h5dset_wfc, ACTION='read', NAME='evc', error=ierr)
-         if (ierr/=0) return
-         CALL qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol_*igwx_], MODE = 'm') 
+         if (file_is_hdf5) then
+            call qeh5_open_dataset( h5file, h5dset_wfc, ACTION='read', NAME='evc', error=ierr)
+            if (ierr/=0) return
+            call qeh5_set_space ( h5dset_wfc, wtmp(1), RANK = 1, DIMENSIONS = [npol_*igwx_], MODE = 'm') 
+         endif
 #endif
          !
          ! few size checks
@@ -1858,13 +1963,16 @@ CONTAINS
             j = jj-ibnds+1 
             !
 #if defined(_QE_HDF5)
-            !         
-            call qeh5_set_file_hyperslab (h5dset_wfc, OFFSET = [0,j-1], COUNT = [2*npol_*igwx_,1] )
-            call qeh5_read_dataset (wtmp, h5dset_wfc )  
-#else
-            read (iuni,iostat=ierr) wtmp(1:npol_*igwx_) 
-            if (ierr/=0) return
+            if (file_is_hdf5) then
+               call qeh5_set_file_hyperslab (h5dset_wfc, OFFSET = [0,j-1], COUNT = [2*npol_*igwx_,1] )
+               call qeh5_read_dataset (wtmp, h5dset_wfc )  
+            endif
 #endif
+            if (file_is_forbin) then
+               read (iuni,iostat=ierr) wtmp(1:npol_*igwx_) 
+               if (ierr/=0) return
+            endif
+
             IF ( igwx > igwx_ ) wtmp((npol_*igwx_+1):npol_*igwx) = 0.0_DP
             !
             if ( npol_ == 2 ) then
@@ -1880,18 +1988,19 @@ CONTAINS
          deallocate(wtmp)
          !
 #if defined(_QE_HDF5)
-         CALL qeh5_close(h5dset_wfc) 
-         CALL qeh5_close(h5file)
+         if (file_is_hdf5) then
+            call qeh5_close(h5dset_wfc) 
+            call qeh5_close(h5file)
+         endif
 #endif
          ! 
-      ENDIF
+      endif
       !
-#if !defined(_QE_HDF5)
-      CLOSE ( UNIT = iuni, STATUS = 'keep' )
-#endif
+      if (file_is_forbin) then 
+         close( UNIT=iuni, STATUS = 'keep' )
+      endif
       !
-      RETURN
-      !
+      return
     END SUBROUTINE qexsd_read_wfc
     !
     !
@@ -1917,6 +2026,7 @@ CONTAINS
       integer             :: iun, ns, ig
       integer             :: mill_dum
       logical             :: gamma_only
+      logical             :: file_is_hdf5, file_is_forbin
       character(len=320)  :: filename
       character(len=15)   :: subname="qexsd_read_rhog"
       !
@@ -1924,11 +2034,15 @@ CONTAINS
       type( qeh5_file)    :: h5file
       type( qeh5_dataset) :: h5dset_mill, h5dset_rho_g
       character(len=10)   :: tempchar, datasets(2) = ['rhotot_g  ', 'rhodiff_g ']
+#endif
       
       filename = trim( datadir_in ) // '/charge-density.hdf5'
-#else 
-      filename = trim( datadir_in ) // '/charge-density.dat'
-#endif 
+      inquire(file=filename,exist= file_is_hdf5)
+      !
+      file_is_forbin=.not.file_is_hdf5
+
+      if (file_is_hdf5)   filename = trim( datadir_in ) // '/charge-density.hdf5'
+      if (file_is_forbin) filename = trim( datadir_in ) // '/charge-density.dat'
       !
       ngm_g=0
       nspin=0
@@ -1946,46 +2060,52 @@ CONTAINS
       ierr = 0
       !
 #if defined (_QE_HDF5) 
-      call qeh5_openfile(h5file, trim(filename), ACTION='read', error=ierr)
-      if ( ierr /= 0 ) return
-      !
-      call qeh5_read_attribute (h5file%id, "gamma_only", tempchar, MAXLEN=len(tempchar)  )
-      call qeh5_read_attribute (h5file%id, "ngm_g", ngm_g ) 
-      call qeh5_read_attribute (h5file%id, "nspin", nspin_)  
-      !
-      select case (trim(tempchar) )  
-         case ('.true.', '.TRUE.' ) 
-             gamma_only = .TRUE.
-         case default
-             gamma_only = .FALSE.
-      end select    
-#else
-      open (iun, file=trim(filename), form='unformatted', status='old', iostat=ierr )
-      if ( ierr /= 0 ) return
-      ! 
-      read (iun, iostat=ierr) gamma_only, ngm_g, nspin_
-      if ( ierr /= 0 ) return
-      read (iun, iostat=ierr) b1, b2, b3
-      if ( ierr /= 0 ) return
+      if (file_is_hdf5) then
+         call qeh5_openfile(h5file, trim(filename), ACTION='read', error=ierr)
+         if ( ierr /= 0 ) return
+         !
+         call qeh5_read_attribute (h5file%id, "gamma_only", tempchar, MAXLEN=len(tempchar)  )
+         call qeh5_read_attribute (h5file%id, "ngm_g", ngm_g ) 
+         call qeh5_read_attribute (h5file%id, "nspin", nspin_)  
+         !
+         select case (trim(tempchar) )  
+            case ('.true.', '.TRUE.' ) 
+               gamma_only = .TRUE.
+            case default
+               gamma_only = .FALSE.
+         end select    
+         !
+      endif
 #endif
+      if (file_is_forbin) then
+         open (iun, file=trim(filename), form='unformatted', status='old', iostat=ierr )
+         if ( ierr /= 0 ) return
+         ! 
+         read (iun, iostat=ierr) gamma_only, ngm_g, nspin_
+         if ( ierr /= 0 ) return
+         read (iun, iostat=ierr) b1, b2, b3
+         if ( ierr /= 0 ) return
+      endif
 
       !
       ! read record containing G-vector indices
       !
 #if defined(_QE_HDF5)
-      if ( present(igv) ) then
+      if ( present(igv) .and. file_is_hdf5) then
          call qeh5_open_dataset ( h5file, h5dset_mill, NAME="MillerIndices" , ACTION='read', ERROR=ierr)
+         if ( ierr /= 0 ) return
          call qeh5_read_dataset( igv, h5dset_mill )
          call qeh5_close( h5dset_mill)
       endif
-#else
-      if ( present(igv)) then
-         read (iun, iostat=ierr) igv(1:3,1:ngm_g)
-      else
-         read (iun, iostat=ierr) mill_dum
-      endif
 #endif
-      if ( ierr /= 0 ) return
+      if (file_is_forbin) then
+         if ( present(igv) ) then
+            read (iun, iostat=ierr) igv(1:3,1:ngm_g)
+         else
+            read (iun, iostat=ierr) mill_dum
+         endif
+         if ( ierr /= 0 ) return
+      endif
 
       !
       ! ... now read the G-vector components
@@ -2002,13 +2122,17 @@ CONTAINS
          do ns = 1, nspin
             !
 #if defined(_QE_HDF5)
-            call qeh5_open_dataset( h5file, h5dset_rho_g, NAME=datasets(ns), ACTION='read', ERROR=ierr) 
-            call qeh5_read_dataset ( rho_g , h5dset_rho_g )
-            call qeh5_close ( h5dset_rho_g )  
-#else 
-            read (iun, iostat=ierr) rho_g(1:ngm_g)
+            if (file_is_hdf5) then
+               call qeh5_open_dataset( h5file, h5dset_rho_g, NAME=datasets(ns), ACTION='read', ERROR=ierr) 
+               if ( ierr /= 0 ) return
+               call qeh5_read_dataset ( rho_g , h5dset_rho_g )
+               call qeh5_close ( h5dset_rho_g )  
+            endif
 #endif
-            if ( ierr /= 0 ) return
+            if (file_is_forbin) then
+               read (iun, iostat=ierr) rho_g(1:ngm_g)
+               if ( ierr /= 0 ) return
+            endif
             !
             rho(1:ngm_g,ns) = rho_g(1:ngm_g)
             !
@@ -2030,9 +2154,7 @@ CONTAINS
          !
       endif
       !
-#if !defined(_QE_HDF5)
-      close (iun, status ='keep' )
-#endif
+      if (file_is_forbin) close (iun, status ='keep' )
       !
       return
       !

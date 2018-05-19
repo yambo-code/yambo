@@ -27,6 +27,7 @@ module P2Y
  use qexml_module
  use qexsd_module
  use pw_data
+ use pw_read_pseudo_m,      ONLY : read_pseudo_header
  use pars,                  ONLY : lchlen,SP,DP
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
@@ -378,7 +379,7 @@ contains
       !
       ! Check USPP/NC pseudopotential
       do i1 =1,n_atomic_species
-        call read_pseudo_header(u,z,psfile(i1),nmesh(i1),nbeta(i1))
+        call read_pseudo_header(psfile(i1),Z,nmesh(i1),nbeta(i1))
       enddo
       !
    endif

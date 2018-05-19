@@ -38,16 +38,17 @@
   vcut%b= 2.0d0* PI * transpose(num_inverse(vcut%a))
   vcut%b_omega=num_determinant(vcut%b)
   vcut%a_omega=num_determinant(vcut%a)
-
+  !
   ! automatically finds whether the cell is orthorombic or not
+  !
   vcut%orthorombic=.false.
   mod2a=sqrt(sum(vcut%a**2,1))
   if(abs(sum(vcut%a(:,1)*vcut%a(:,2)))/(mod2a(1)*mod2a(2))<toll .and. &
      abs(sum(vcut%a(:,2)*vcut%a(:,3)))/(mod2a(2)*mod2a(3))<toll .and. &
      abs(sum(vcut%a(:,3)*vcut%a(:,1)))/(mod2a(3)*mod2a(1))<toll) vcut%orthorombic=.true.
-!
+  !
   if (.not.vcut%orthorombic) call msg('nr','WARNING non-orthorombic case untested')
-!
+  !
   n1=ceiling(vcut%cutoff*sqrt(sum(vcut%a(1,:)**2))/(2.0*pi))
   n2=ceiling(vcut%cutoff*sqrt(sum(vcut%a(2,:)**2))/(2.0*pi))
   n3=ceiling(vcut%cutoff*sqrt(sum(vcut%a(3,:)**2))/(2.0*pi))
@@ -62,13 +63,17 @@
   !
   call live_timing('WS setup',(2*n1+1)*(2*n2+1)*(2*n3+1)/n_threads)
   !
-!$omp parallel default(shared), private(i3,i2,i1,q)
- call OPENMP_update(master_thread)
-!$omp do
+  !$omp parallel default(shared), private(i3,i2,i1,q)
+  !
+  call OPENMP_update(master_thread)
+  !
+  !$omp do collapse(3)
+  !
   DO i3=-n3,n3
     DO i2=-n2,n2
       DO i1=-n1,n1
-        call live_timing(steps=1)
+        !
+        if (master_thread) call live_timing(steps=1)
         !
         q = MATMUL(vcut%b,(/i1,i2,i3/)) 
         !
@@ -80,8 +85,9 @@
       ENDDO
     ENDDO
   ENDDO
-!$omp end do
-!$omp end parallel
+  !$omp end do
+  !$omp end parallel
+  !
   call live_timing()
   !
 END SUBROUTINE vcut_init

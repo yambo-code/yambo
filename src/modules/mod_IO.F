@@ -395,7 +395,7 @@ module IO_m
          endif
        endif
        !
-       if (type==-2) then
+       if (type==-2.or.type==-4) then
          open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
        else
          call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)

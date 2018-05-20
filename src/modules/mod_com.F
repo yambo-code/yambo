@@ -72,6 +72,7 @@ module com
    !
    character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      !
+     ! -4 ----------------  -> JOBSTR/JOBFOLDER/desc (no NETCDF support)
      ! -3 ----------------  -> desc 
      ! -2 ----------------  -> desc (no NETCDF support)
      ! -1 ----------------  -> subfolder/ndesc
@@ -129,7 +130,7 @@ module com
          ch(2)="s."//trim(desc)
        case(1)
          ch(2)="db."//trim(desc)
-       case(2,4)
+       case(-4,2,4)
          ch(2)="db."//trim(desc)
          if (len_trim(jobstr_)>0) then
            if (len_trim(jobdir_)> 0) folder=trim(jobdir_)//"/"//trim(jobstr_)
@@ -148,6 +149,17 @@ module com
            if (CORE_IO) ch(1)=core_io_path
            if (MORE_IO) ch(1)=more_io_path
            if ( COM_IO) ch(1)=com_path
+           !
+           !
+         else if (type<0) then
+           !
+           folder="."
+           if (len_trim(jobstr_)>0) then
+             if (len_trim(jobdir_)> 0) folder=trim(jobdir_)//"/"//trim(jobstr_)
+             if (len_trim(jobdir_)==0) folder=trim(jobstr_)
+           endif
+           get_name=trim(folder)//"/"//trim(desc)
+           return
            !
          endif
        case(3)

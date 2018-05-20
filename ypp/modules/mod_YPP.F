@@ -222,6 +222,17 @@ module YPP
  !
  interface
    !
+   subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
+     use pars,          ONLY:SP
+     integer               ::nk
+     real(SP)              ::k(nk,3)
+     character(*)          ::coo_in
+     character(*)          ::form
+     real(SP),    optional ::wk(nk)
+     character(*),optional ::coo_out
+     !
+   end subroutine
+   !
    subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim

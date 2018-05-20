@@ -33,7 +33,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
 &                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
@@ -214,7 +214,7 @@ subroutine electrons_bands(Xk,Xen)
    enddo
    !
    do ikbz=1,INTERP_k%nbz
-     call k_transform(INTERP_k%ptbz(ikbz,:),"iku")
+     call K_transform(INTERP_k%ptbz(ikbz,:),"iku")
      values(2:4)=INTERP_k%ptbz(ikbz,:)
      ik=INTERP_k%sstar(ikbz,1)
      values(1)=real(ik,SP)
@@ -275,7 +275,7 @@ subroutine electrons_bands(Xk,Xen)
          do is=1,n_sp_pol
            values(1+1:nbands+1)=Xen%E(BANDS_bands(1):BANDS_bands(2),Xk%sstar(ikbz,1),is)*HA2EV
            values(nbands+2:nbands+4)=Xk%ptbz(ikbz,:)
-           call k_transform(values(nbands+2:nbands+4),'iku')
+           call K_transform(values(nbands+2:nbands+4),'iku')
            call msg('o '//trim(file_name_bands(2,is)),' ',(/values(1)+iku_v_norm(tmp_k),values(2:)/),INDENT=0,USE_TABS=.true.)
          enddo
          !
@@ -302,7 +302,7 @@ subroutine electrons_bands(Xk,Xen)
      if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-tmp_k)
      if (ik<CIRCUIT_k%nbz) tmp_k=CIRCUIT_k%pt(ik,:)
      !
-     call k_transform(CIRCUIT_k%pt(ik,:),"iku")
+     call K_transform(CIRCUIT_k%pt(ik,:),"iku")
      !
      if(n_spinor==2) then
        spin_values(1,:)=values(1)

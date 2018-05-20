@@ -24,7 +24,7 @@
 subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
  !
  use pars,           ONLY:SP
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,INTERP_grid,&
+ use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
 &                         BANDS_path,CIRCUIT_k_label,SPECIAL_k_label
@@ -81,7 +81,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    !
    coo_out="iku"
    do ik=1,USER_k%nbz
-     call k_transform(USER_k%pt(ik,:),coo_in)
+     call K_transform(USER_k%pt(ik,:),coo_in)
    enddo
    !
  endif

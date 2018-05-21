@@ -64,7 +64,7 @@ subroutine read_pseudo_header(psfile,Z,nmesh,nbeta,psp_type,psp_has_so,psp_has_n
 &                          psp_has_so_, psp_has_nlcc_, ierr )
   !
   if(ierr>0) call read_upf_header_v1( psfile, z, nmesh, nbeta, psp_type_, &
-&                 psp_has_nlcc_, ierr )
+&                          psp_has_so_, psp_has_nlcc_, ierr )
   !
   if(ierr>0) call errore('read_pseudo_header', 'opening file: '//trim(psfile),1)
   !
@@ -124,18 +124,18 @@ subroutine read_upf_header_v2( psfile, z, nmesh, nbeta, psp_type,  psp_has_so, p
 end subroutine read_upf_header_v2
 
 !---------------------------------------------------------------------------------
-subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_nlcc, ierr )
+subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_so, psp_has_nlcc, ierr )
   !---------------------------------------------------------------------------------
   implicit none
   character(*),   intent(in)  :: psfile
   real(SP),       intent(out) :: Z
   integer,        intent(out) :: nmesh,nbeta
   character(*),   intent(out) :: psp_type
-  logical,        intent(out) :: psp_has_nlcc
+  logical,        intent(out) :: psp_has_so, psp_has_nlcc
   integer,        intent(out) :: ierr
   !
   character(50) :: dummy
-  logical :: ldummy
+  logical :: lfound
   integer :: i,idummy
 
   open(iun,file=trim(psfile),status='old',form='formatted', iostat=ierr)
@@ -177,6 +177,11 @@ subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_nlcc, 
   !
   call iotk_scan_end(iun, "PP_HEADER",ierr=ierr)
   if (ierr/=0) return
+  !
+  call iotk_scan_begin(iun, "PP_ADDINFO", found=lfound, ierr=ierr)
+  if (ierr/=0) return
+  psp_has_so=lfound
+  !
   rewind(iun) 
   close(iun)
   !
@@ -246,7 +251,7 @@ subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
     !
     rewind(iun)
     jbeta=0.
-    call read_upf_parameters_v1(psfile,nmesh,nbeta,mesh, psp_has_nlcc,wmesh, &
+    call read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh, &
 &                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,ierr)
   endif
   !
@@ -255,7 +260,7 @@ subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
 end subroutine
 
 !-----------------------------------------------------------------------
-subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh, psp_has_nlcc, &
+subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
 &                                 wmesh,rho_nlcc,vloc,lbeta,mesh_beta,beta,d,ierr)
   !-----------------------------------------------------------------------
   use interfaces,     ONLY:LINEAR_ALGEBRA_driver
@@ -264,7 +269,7 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh, psp_has_nlcc, &
   !
   character(len=*), intent(in)  :: psfile
   integer,          intent(in)  :: nmesh,nbeta
-  logical,          intent(in)  :: psp_has_nlcc
+  logical,          intent(in)  :: psp_has_so,psp_has_nlcc
   real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:)
   integer,          intent(out) :: lbeta(:),mesh_beta(:)
   Integer,          intent(out) :: ierr
@@ -272,7 +277,6 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh, psp_has_nlcc, &
   real(SP)      :: beta_tmp(nmesh,nbeta),d_tmp(nbeta,nbeta),rdummy
   complex(SP)   :: cd_tmp(nbeta,nbeta)
   character(50) :: dummy
-  logical :: ldummy
   integer :: idummy,ibeta,ibetap,i_dij,n_dij,i1
   integer :: i, ios
   !
@@ -385,6 +389,10 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh, psp_has_nlcc, &
   !
   lbeta=nint(matmul(transpose(d_tmp)**2,real(lbeta)))
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
+  !
+  if (psp_has_so) then
+     call errore("read_upf_parameters_v1","SO read not implemented",10)
+  endif
   !
   close(iun)
   !

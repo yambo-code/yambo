@@ -44,6 +44,7 @@ type pw_pseudo
   integer           :: nbeta               ! Number of nonlocal projectors
   integer           :: nmesh               ! Number of points in mesh
   integer           :: kkbeta              ! maxval(psp%mesh_beta(:))
+  integer           :: lmax                ! max angular momentum
   real(SP)          :: cutoff              ! Maximum useful cutoff (Ry)
   real(SP)          :: cutoff_rho          ! Maximum useful cutoff for the density (Ry)
   real(SP), allocatable :: mesh(:)         ! Mesh [nmesh]
@@ -98,6 +99,7 @@ subroutine pw_pseudo_init0(pseudo)
   pseudo%z    = 0.0
   pseudo%nbeta = 0
   pseudo%kkbeta = 0
+  pseudo%lmax = 0
   pseudo%nmesh = 0
   pseudo%cutoff = 0.0
   pseudo%cutoff_rho = 0.0
@@ -125,6 +127,7 @@ subroutine pw_pseudo_destroy0(pseudo)
   pseudo%z    = 0.0
   pseudo%nbeta = 0
   pseudo%kkbeta = 0
+  pseudo%lmax = 0
   pseudo%nmesh = 0
   pseudo%cutoff = 0._SP
   pseudo%cutoff_rho = 0._SP

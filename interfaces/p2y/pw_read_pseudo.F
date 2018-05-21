@@ -110,6 +110,8 @@ subroutine read_upf_header_v2( psfile, psp, ierr )
   if (ierr/=0) return
   CALL iotk_scan_attr(attr, 'z_valence',      psp%Z, ierr=ierr)
   if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'l_max',          psp%lmax, ierr=ierr)
+  if (ierr/=0) return
   !
   CALL iotk_scan_attr(attr, 'has_so', psp%has_so, ierr=ierr)
   if (ierr/=0) return
@@ -171,7 +173,7 @@ subroutine read_upf_header_v1( psfile, psp, ierr )
   if (ierr/=0) return
   read(iun,*,iostat=ierr) dummy
   if (ierr/=0) return
-  read(iun,*,iostat=ierr) dummy
+  read(iun,*,iostat=ierr) psp%lmax , dummy
   if (ierr/=0) return
   read(iun,*,iostat=ierr) psp%nmesh
   if (ierr/=0) return
@@ -242,9 +244,11 @@ subroutine read_pseudo_data(psfile,psp)
   allocate(psp%mesh_beta(nbeta))
   allocate(psp%beta(nmesh,nbeta))
   allocate(psp%d(nbeta))
+  allocate(psp%dmat(nbeta,nbeta))
   !
   call read_pseudo_parameters(psfile,psp%nmesh,psp%nbeta,psp%mesh,psp%has_so,psp%has_nlcc, &
-&                             psp%wmesh,psp%rho_nlcc,psp%vloc,psp%lbeta,psp%jbeta,psp%mesh_beta,psp%beta,psp%d)
+&                             psp%wmesh,psp%rho_nlcc,psp%vloc,psp%lbeta,psp%jbeta,psp%mesh_beta,&
+                              psp%beta,psp%d,psp%dmat)
   !
   if (psp%is_uspp) then
      !
@@ -257,26 +261,26 @@ end subroutine read_pseudo_data
 
 !-----------------------------------------------------------------------
 subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh,&
-&                                 rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d)
+&                                 rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,dmat)
   !-----------------------------------------------------------------------
   implicit none
   character(len=*), intent(in)  :: psfile
   logical,          intent(in)  :: psp_has_so
   logical,          intent(in)  :: psp_has_nlcc
   integer,          intent(in)  :: nmesh,nbeta
-  real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), dmat(:,:), jbeta(:)
   integer,          intent(out) :: lbeta(:),mesh_beta(:)
   !
   integer :: ierr
   
   call read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
-&                             wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,ierr)
+&                             wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,dmat,ierr)
   !
   if(ierr/=0) then
     !
     jbeta=0.
     call read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh, &
-&                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,ierr)
+&                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,dmat,ierr)
   endif
   !
   if(ierr/=0) CALL errore('read_pseudo_parameters', 'Cannot open file: '//TRIM(psfile),1)
@@ -285,7 +289,7 @@ end subroutine
 
 !-----------------------------------------------------------------------
 subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
-&                                 wmesh,rho_nlcc,vloc,lbeta,mesh_beta,beta,d,ierr)
+&                                 wmesh,rho_nlcc,vloc,lbeta,mesh_beta,beta,d,dmat,ierr)
   !-----------------------------------------------------------------------
   use interfaces,     ONLY:LINEAR_ALGEBRA_driver
   use linear_algebra, ONLY:DIAGO
@@ -294,7 +298,7 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   character(len=*), intent(in)  :: psfile
   integer,          intent(in)  :: nmesh,nbeta
   logical,          intent(in)  :: psp_has_so,psp_has_nlcc
-  real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:)
+  real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), dmat(:,:)
   integer,          intent(out) :: lbeta(:),mesh_beta(:)
   Integer,          intent(out) :: ierr
   !
@@ -402,6 +406,8 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   call iotk_scan_end(iun,"PP_NONLOCAL",ierr=ierr)
   if (ierr/=0) return
   !
+  dmat=d_tmp
+  !
   if(nbeta>1) then
     cd_tmp=cmplx(d_tmp,0._SP)
     call LINEAR_ALGEBRA_driver(DIAGO,M=cd_tmp,E_real=d)
@@ -424,7 +430,7 @@ end subroutine read_upf_parameters_v1
 
 !-----------------------------------------------------------------------
 subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
-&                                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,ierr)
+&                                 wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,dmat,ierr)
   !-----------------------------------------------------------------------
   !
   use interfaces,     ONLY:LINEAR_ALGEBRA_driver
@@ -436,7 +442,7 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   LOGICAL,          INTENT(IN)  :: psp_has_so
   LOGICAL,          INTENT(IN)  :: psp_has_nlcc
   INTEGER,          INTENT(IN)  :: nmesh,nbeta
-  REAL(SP),         INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  REAL(SP),         INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), dmat(:,:), jbeta(:)
   INTEGER,          INTENT(OUT) :: lbeta(:),mesh_beta(:)
   INTEGER,          INTENT(OUT) :: ierr
   !
@@ -492,8 +498,9 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
       if (ierr/=0) return
     enddo
     !
-    call iotk_scan_dat(iun, 'PP_DIJ', d_tmp , attr=attr,ierr=ierr)
+    call iotk_scan_dat(iun, 'PP_DIJ', dmat, attr=attr,ierr=ierr)
     if (ierr/=0) return
+    d_tmp=dmat
     !
     if(nbeta>1) then
       cd_tmp=cmplx(d_tmp,0._SP)
@@ -567,6 +574,8 @@ subroutine read_pseudo_uspp_v1(psfile,psp,ierr)
   integer,         intent(out) :: ierr
   !
   ierr=0
+  if (.not. psp%is_uspp) return
+  !
   call iotk_free_unit(iun)
   call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
   if (ierr/=0) return
@@ -583,12 +592,76 @@ subroutine read_pseudo_uspp_v2(psfile,psp,ierr)
   type(pw_pseudo), intent(inout) :: psp
   integer,         intent(out) :: ierr
   !
+  integer :: nb,mb,ln,lm,nmb,l
+  !
   ierr=0
+  if (.not. psp%is_uspp) return
+  !
   call iotk_free_unit(iun)
   call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
   if (ierr/=0) return
   !
-  close(iun)
+  call iotk_scan_begin(iun, 'PP_AUGMENTATION', attr=attr)
+  call iotk_scan_attr(attr, 'q_with_l', psp%q_with_l)
+  call iotk_scan_attr(attr, 'nqf',      psp%nqf)
+  call iotk_scan_attr(attr, 'nqlc',     psp%nqlc, default=2*psp%lmax+1)
+  !
+  ! a negative number means that all qfunc are stored
+  call iotk_scan_attr(attr,'augmentation_epsilon',psp%qqq_eps, default=-1.0_SP)
+  !
+  allocate( psp%rinner( psp%nqlc ) )
+  allocate( psp%qqq   ( psp%nbeta, psp%nbeta ) )
+  if ( psp%q_with_l ) then
+    allocate( psp%qfuncl( psp%nmesh, psp%nbeta*(psp%nbeta+1)/2, 0:2*psp%lmax) )
+    psp%qfuncl=0._SP
+  else
+    allocate( psp%qfunc(psp%nmesh, psp%nbeta*(psp%nbeta+1)/2) )
+  endif
+  !
+  ! Read the integrals of the Q functions
+  call iotk_scan_dat(iun, 'PP_Q',psp%qqq )
+  !
+  !
+  ! Read polinomial coefficients for Q_ij expansion at small radius
+  !
+  if (psp%nqf <= 0) then
+     psp%rinner(:) = 0._SP
+     allocate( psp%qfcoef(1,1,1,1) )
+     psp%qfcoef = 0._SP
+  else
+     allocate( psp%qfcoef( MAX( psp%nqf,1 ), psp%nqlc, psp%nbeta, psp%nbeta) )
+     call iotk_scan_dat(iun, 'PP_QFCOEF',psp%qfcoef, attr=attr,ierr=ierr)
+     if (ierr/=0) return
+     call iotk_scan_dat(iun, 'PP_RINNER',psp%rinner, attr=attr, ierr=ierr)
+     if (ierr/=0) return
+  endif
+  !
+  ! Read augmentation charge Q_ij
+  do nb = 1,psp%nbeta
+    ln = psp%lbeta(nb)
+    DO mb = nb,psp%nbeta
+      lm = psp%lbeta(mb)
+      nmb = mb * (mb-1) /2 + nb
+      q_with_l : &
+      IF( psp%q_with_l ) THEN
+         do l = abs(ln-lm),ln+lm,2 ! only even terms
+            psp%qfuncl(:,nmb,l)=0.0_SP
+            CALL iotk_scan_dat(iun, 'PP_QIJL'//iotk_index((/nb,mb,l/)),&
+                               psp%qfuncl(:,nmb,l))
+         enddo
+      ELSE q_with_l
+         psp%qfunc(:,nmb)=0.0_SP
+         CALL iotk_scan_dat(iun, 'PP_QIJ'//iotk_index((/nb,mb/)),&
+                            psp%qfunc(:,nmb))
+      ENDIF q_with_l
+    ENDDO
+  ENDDO
+  !
+  call iotk_scan_end(iun, 'PP_AUGMENTATION',ierr=ierr)
+  if (ierr/=0) return
+  !
+  call iotk_close_read(iun,ierr=ierr)
+  if (ierr/=0) return
   !
 end subroutine read_pseudo_uspp_v2
 

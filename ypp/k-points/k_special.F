@@ -26,7 +26,7 @@ subroutine k_special()
  use pars,                ONLY:SP,schlen,lchlen
  use units,               ONLY:pi
  use R_lattice,           ONLY:bz_samp_reset
- use D_lattice,           ONLY:alat,lattice
+ use D_lattice,           ONLY:alat,lattice,a
  use com,                 ONLY:msg,of_open_close,msg_deliver,warning
  use vec_operate,         ONLY:c2a,v_norm
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
@@ -41,7 +41,7 @@ subroutine k_special()
  ! Work Space
  ! 
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
- real(SP)         :: trial_b(3,3),K_norm,k_(3)
+ real(SP)         :: trial_b(3,3),K_norm,k_(3),a_,b_,c_
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
  !
@@ -50,7 +50,10 @@ subroutine k_special()
  !
  YAMBO_ALLOC(SPECIAL_k%pt,(n_SPECIAL_k_MAX,3))
  !
- ! Special K taken from http://cst-www.nrl.navy.mil/bind/kpts/index.html
+ ! Special K taken from 
+ ! 
+ !  http://cst-www.nrl.navy.mil/bind/kpts/index.html
+ !  http://lamp.tu-graz.ac.at/
  !
  select case (trim(lattice))
    !
@@ -98,24 +101,26 @@ subroutine k_special()
      !
    case('FC-ORTHOROMBIC')
      !
-!     trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
-!     trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
-!     trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
-!     !
-!     SPECIAL_k%nbz=4
-!     !
-!     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
-!     SPECIAL_k_label(1)='G'
-!     SPECIAL_k%pt(2,:)=(/0.5,0.,0./)
-!     SPECIAL_k_label(2)='X'
-!     SPECIAL_k%pt(3,:)=(/0.5,0.5,0./)
-!     SPECIAL_k_label(3)='M'
-!     SPECIAL_k%pt(4,:)=(/0.5,0.5,0.5/)
-!     SPECIAL_k_label(4)='R'
-!     !
-!     do ik=1,SPECIAL_k%nbz
-!       call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
-!     enddo
+     ! http://lamp.tu-graz.ac.at/~hadley/ss1/bzones/orthorhombic.php
+     !
+     a_=a(1,1)*2.
+     b_=a(1,2)*2.
+     c_=a(3,3)
+     !
+     SPECIAL_k%nbz=6
+     !
+     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k_label(1)='G'
+     SPECIAL_k%pt(2,:)=(/pi/a_,0.,0./)
+     SPECIAL_k_label(2)='Y'
+     SPECIAL_k%pt(3,:)=(/0.,0.,c_/pi/)
+     SPECIAL_k_label(3)='Z'
+     SPECIAL_k%pt(4,:)=(/pi/a_,0.,pi/c_/)
+     SPECIAL_k_label(4)='T'
+     SPECIAL_k%pt(5,:)=(/pi/2./a_,pi/2./b_,0./)
+     SPECIAL_k_label(5)='S'
+     SPECIAL_k%pt(6,:)=(/pi/2./a_,pi/2./b_,pi/c_/)
+     SPECIAL_k_label(6)='R'
      !
    case('CUB')
      !

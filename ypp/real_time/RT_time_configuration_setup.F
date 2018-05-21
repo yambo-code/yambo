@@ -36,33 +36,36 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  type(RT_IO_t):: GENERAL_RT_IO_t
  !
  ! Work Space
- ! 
  !
  integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
  logical  :: UNIFORM,l_use_non_uniform_time_grid
  real(SP) :: STEP,TIME,TIME_diff
  !
- if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
- if (GENERAL_RT_IO_t%N==1) STEP  = 1._SP
- STEP  = max(TIME_adjust(STEP),STEP)
- TIME  = TIME_adjust(GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N))
+ ! Definitions
+ !==============
  !
- l_use_non_uniform_time_grid=.not.what=="CURRENT".and..not.what=="PH_DISPLACEMENT"
+ TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
+ STEP  = RT_step
+ if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+ !
+ if (any(RT_conf%T_range>0._SP)) then
+   !
+   RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1), STEP )
+   RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
+   !
+ endif
  !
  ! Time range ...
  !===============
  if (any(RT_conf%T_range>0._SP)) then
    !
-   RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1) )
-   RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2) )
-   ! 
-   i_range(:) = nint( RT_conf%T_range(:)/RT_step )
+   i_range(:) = nint( RT_conf%T_range(:)/STEP )
    i_ref      = 0
    !
    do i_t=1,GENERAL_RT_IO_t%N-1
      !
-     i_io(1) = nint( GENERAL_RT_IO_t%Time(i_t)/RT_step )
-     i_io(2) = nint( GENERAL_RT_IO_t%Time(i_t+1)/RT_step )
+     i_io(1) = nint( GENERAL_RT_IO_t%Time(i_t)/STEP )
+     i_io(2) = nint( GENERAL_RT_IO_t%Time(i_t+1)/STEP )
      !
      do i_c=1,2
        if (i_range(i_c)==i_io(1)) then
@@ -84,7 +87,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
    i_ref           = (/1,GENERAL_RT_IO_t%N/)
    !
- endif
+ endif 
  !
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
@@ -93,6 +96,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  if (GENERAL_RT_IO_t%N==nint(TIME/STEP)+1) UNIFORM=.TRUE.
  if (GENERAL_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
  !
+ l_use_non_uniform_time_grid=.not.what=="CURRENT".and..not.what=="PH_DISPLACEMENT"
+ !
  ! Time step ...
  !
  ! N.B.: This is needed for the carriers post-processing only
@@ -100,15 +105,9 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. l_use_non_uniform_time_grid) then
    !
-   if (UNIFORM) then
-     RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
-   else 
-     !
-     STEP            = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
-     RT_conf%delta_T = nint( RT_conf%delta_T/STEP )*STEP
-     if ( nint( RT_conf%delta_T/STEP ) ==0 ) RT_conf%delta_T = STEP
-     !
-   endif
+   if (.not.UNIFORM) STEP = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
+   !
+   RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    !
    do i_c=1,2
      !
@@ -120,8 +119,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        !
        do i_t=i_ref(2)-1,i_ref(1),-1
          TIME_diff=GENERAL_RT_IO_t%Time(j_ref)-GENERAL_RT_IO_t%Time(i_t)
-         i_range(1) = nint(TIME_diff/RT_step)
-         if (i_range(1) == nint(RT_conf%delta_T/RT_step)) then
+         i_range(1) = nint(TIME_diff/STEP)
+         if (i_range(1) == nint(RT_conf%delta_T/STEP)) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
          endif
@@ -139,8 +138,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        !
        do i_t=i_ref(1)+1,i_ref(2)
          TIME_diff=GENERAL_RT_IO_t%Time(i_t)-GENERAL_RT_IO_t%Time(j_ref)
-         i_range(1) = nint(TIME_diff/RT_step)
-         if (i_range(1) == nint(RT_conf%delta_T/RT_step)) then
+         i_range(1) = nint(TIME_diff/STEP)
+         if (i_range(1) == nint(RT_conf%delta_T/STEP)) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
            RT_time(RT_conf%T_n_steps)=GENERAL_RT_IO_t%Time(i_t)

@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t
- use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth
+ use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth,alt_jobdir,jobdir
  !
  implicit none
  !
@@ -137,10 +137,10 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    !
    what_='YPP'
    !
-   db_name=trim(jobstr)//'/ndb.RT_carriers'
+   db_name=trim(jobdir)//'/'//trim(jobstr)//'/ndb.RT_carriers'
    if (.not.file_exists(trim(db_name))) then
      job_loop: do i_j=1,n_alt_jobstr
-       db_name=trim(alt_jobstr(i_j))//'/ndb.RT_carriers'
+       db_name=trim(alt_jobdir(i_j))//'/'//trim(alt_jobstr(i_j))//'/ndb.RT_carriers'
        if (file_exists(trim(db_name))) exit job_loop
      enddo job_loop
    endif 

@@ -327,8 +327,8 @@ contains
    select case(trim(dftdata_fmt))
    case("pw_export")
       !
-      YAMBO_ALLOC(atom_type_,(nat_))
-      YAMBO_ALLOC(species_type_,(nat_))
+      allocate(atom_type_(nat_))
+      allocate(species_type_(nat_))
       !
       call pw_atoms(pw_unit)
       !
@@ -345,8 +345,8 @@ contains
       enddo
       tau_units = alat_
       !
-      YAMBO_FREE(atom_type_)
-      YAMBO_FREE(species_type_)
+      deallocate(atom_type_)
+      deallocate(species_type_)
       !
    case("qexml")
       !

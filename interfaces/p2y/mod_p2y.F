@@ -374,15 +374,8 @@ contains
    case default
      call errore("get_atoms"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
    end select
-
-   if (trim(dftdata_fmt) /= "pw_export") then
-      !
-      ! Check USPP/NC pseudopotential
-      do i1 =1,n_atomic_species
-        call read_pseudo_header(psfile(i1),Z,nmesh(i1),nbeta(i1))
-      enddo
-      !
-   endif
+   !
+   ! init
    !
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0

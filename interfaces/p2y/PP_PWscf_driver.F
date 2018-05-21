@@ -103,7 +103,7 @@ subroutine PP_PWscf_driver(k)
      pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
      pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1
      pp_table(2,itype,ibeta) = 0
-     if(atoms%pseudo(itype)%psp_has_so) &
+     if(atoms%pseudo(itype)%has_so) &
 &      pp_table(2,itype,ibeta) = nint(2._SP*atoms%pseudo(itype)%jbeta(ibeta))   ! 2j
    enddo
  enddo
@@ -126,7 +126,7 @@ subroutine PP_PWscf_driver(k)
  !
  ! write NLCC info if needed
  !
- if( any(atoms%pseudo(:)%psp_has_nlcc) ) then
+ if( any(atoms%pseudo(:)%has_nlcc) ) then
    !
    call PP_nlcc_alloc()
    !
@@ -200,14 +200,14 @@ subroutine fill_atoms(atoms,struct)
  ! Fill the atoms%pseudo type for each type
  !
  do i =1,n_atomic_species
-   call fill_a_pseudo(atoms%pseudo(i),psfile(i),nbeta(i),nmesh(i))
+   call fill_a_pseudo(psfile(i),atoms%pseudo(i))
  enddo
  !
  return
  !
 end subroutine fill_atoms
 !
-subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
+subroutine fill_a_pseudo(psfile,pseudo)
  !
  ! Allocate and fill a single pseudo
  !
@@ -217,18 +217,12 @@ subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
  use pw_data,          only: ecutwfc_,ecutrho_
  implicit none
  type(pw_pseudo), intent(inout) :: pseudo
- integer,         intent(inout) :: nbeta, nmesh
  character(256),  intent(in)    :: psfile
- !
- ! Allocates pseudo% types and Inizializes pseudo%interp table
- !
- call pw_pseudo_set_dim(pseudo,nbeta,nmesh)
+ 
  !
  ! Read data from UPF files, fill pseudo% types
  !
- call read_pseudo_data(psfile,nmesh,nbeta,pseudo%z,pseudo%mesh,&
-&                      pseudo%wmesh,pseudo%rho_nlcc,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
-&                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so,pseudo%psp_has_nlcc)
+ call read_pseudo_data(psfile,pseudo)
  !
  ! Fill the pseudo%interp table
  ! ecutwfc(Ha) -> cutoff(Ry)

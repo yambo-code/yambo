@@ -27,6 +27,7 @@ module pw_read_pseudo_m
   !
   use pars,        ONLY: SP
   use iotk_module
+  use pw_pseudo_module
   implicit none
   !
   private
@@ -46,95 +47,93 @@ contains
 !
 
 !---------------------------------------------------------------------------------
-subroutine read_pseudo_header(psfile,Z,nmesh,nbeta,psp_type,psp_has_so,psp_has_nlcc) 
+subroutine read_pseudo_header(psfile,psp)
   !---------------------------------------------------------------------------------
   implicit none
-  character(len=*),  intent(in)  :: psfile
-  integer,           intent(out) :: nmesh,nbeta
-  real(SP),          intent(out) :: Z
-  character(*), optional, intent(out) :: psp_type
-  logical,      optional, intent(out) :: psp_has_so
-  logical,      optional, intent(out) :: psp_has_nlcc
+  character(len=*),  intent(in)    :: psfile
+  type(pw_pseudo),   intent(inout) :: psp
   !
-  character(256) :: psp_type_
   integer :: ierr
-  logical :: psp_has_so_,psp_has_nlcc_
   !
-  call read_upf_header_v2( psfile, Z, nmesh, nbeta, psp_type_, &
-&                          psp_has_so_, psp_has_nlcc_, ierr )
+  ierr=0
+  call read_upf_header_v2( psfile, psp, ierr)
   !
-  if(ierr>0) call read_upf_header_v1( psfile, z, nmesh, nbeta, psp_type_, &
-&                          psp_has_so_, psp_has_nlcc_, ierr )
+  if (ierr/=0) then
+     ierr=0
+     call read_upf_header_v1( psfile, psp, ierr)
+  endif
   !
-  if(ierr>0) call errore('read_pseudo_header', 'opening file: '//trim(psfile),1)
-  !
-  if(present(psp_type))     psp_type=trim(psp_type_)
-  if(present(psp_has_so))   psp_has_so=psp_has_so_
-  if(present(psp_has_nlcc)) psp_has_nlcc=psp_has_nlcc_
+  if(ierr/=0) call errore('read_pseudo_header', 'opening file: '//trim(psfile),1)
   !
 end subroutine read_pseudo_header
 
 !---------------------------------------------------------------------------------
-subroutine read_upf_header_v2( psfile, z, nmesh, nbeta, psp_type,  psp_has_so, psp_has_nlcc, ierr )
+subroutine read_upf_header_v2( psfile, psp, ierr )
   !---------------------------------------------------------------------------------
   implicit none
   !
-  character(len=*), intent(in)  :: psfile
-  character(len=*), intent(out) :: psp_type
-  integer,          intent(out) :: nmesh,nbeta
-  real(SP),         intent(out) :: Z
-  logical,          intent(out) :: psp_has_so
-  logical,          intent(out) :: psp_has_nlcc
+  character(len=*), intent(in)    :: psfile
+  type(pw_pseudo),  intent(inout) :: psp
+  integer,          intent(out)   :: ierr
   !
-  integer :: ierr,ierr_
-  logical :: found, tvanp
-  character(20) :: psp_type_    ! Pseudo type ( NCPP | USPP | PAW )
+  logical :: lfound
+  character(20) :: psp_type    ! Pseudo type ( NCPP | USPP | PAW )
   !
   ierr=0
   !
   call iotk_free_unit(iun)
-  call iotk_open_read(iun, FILE=trim(psfile), ATTR=attr, ROOT=root, IERR=ierr_ )
+  call iotk_open_read(iun, FILE=trim(psfile), ATTR=attr, ROOT=root, IERR=ierr)
   !
-  if( (abs(ierr_)>0) .or. .not. matches('UPF',root) ) THEN
-     call iotk_close_read(iun, ierr=ierr_)
+  if( (abs(ierr)>0) .or. .not. matches('UPF',root) ) THEN
+     call iotk_close_read(iun, ierr=ierr)
      ierr = 1 ! have to force error to make v1 called
      return
   endif
   !
-  call iotk_scan_begin(iun,'PP_INFO',found=found)
-  if(found) call iotk_scan_end(iun,'PP_INFO')
+  call iotk_scan_begin(iun,'PP_INFO',found=lfound,ierr=ierr)
+  if (ierr/=0) return
+  if(lfound) call iotk_scan_end(iun,'PP_INFO')
   !
-  call iotk_scan_empty(iun, 'PP_HEADER', attr=attr)
-  call iotk_scan_attr(attr, 'pseudo_type', psp_type_)
+  call iotk_scan_empty(iun, 'PP_HEADER', attr=attr,ierr=ierr)
+  if (ierr/=0) return
+  call iotk_scan_attr(attr, 'pseudo_type', psp_type,ierr=ierr)
+  if (ierr/=0) return
   !
-  psp_type=trim(psp_type_)
-  if( trim(psp_type_) == "NC" .or. trim(psp_type_) == "SL" .or. &
-&     trim(psp_type_) == "NL") psp_type="NCPP"
+  psp%is_ncpp=.false.
+  if( trim(psp_type) == "NC" .or. trim(psp_type) == "SL" .or. &
+&     trim(psp_type) == "NL") psp_type="NCPP"
+  if (trim(psp_type) == "NCPP") psp%is_ncpp=.true.
   !
-  CALL iotk_scan_attr(attr, 'is_ultrasoft',   tvanp) 
-  CALL iotk_scan_attr(attr, 'z_valence',      z)
+  CALL iotk_scan_attr(attr, 'is_ultrasoft',   psp%is_uspp, ierr=ierr) 
+  if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'is_paw',         psp%is_paw, ierr=ierr) 
+  if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'z_valence',      psp%Z, ierr=ierr)
+  if (ierr/=0) return
   !
-  CALL iotk_scan_attr(attr, 'has_so', psp_has_so)
-  CALL iotk_scan_attr(attr, 'core_correction', psp_has_nlcc)
-  CALL iotk_scan_attr(attr, 'mesh_size',      nmesh)
-  CALL iotk_scan_attr(attr, 'number_of_proj', nbeta)
+  CALL iotk_scan_attr(attr, 'has_so', psp%has_so, ierr=ierr)
+  if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'core_correction', psp%has_nlcc, ierr=ierr)
+  if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'mesh_size',      psp%nmesh, ierr=ierr)
+  if (ierr/=0) return
+  CALL iotk_scan_attr(attr, 'number_of_proj', psp%nbeta, ierr=ierr)
+  if (ierr/=0) return
   !
   call iotk_close_read(iun, ierr=ierr)
+  if (ierr/=0) return
   !
 end subroutine read_upf_header_v2
 
 !---------------------------------------------------------------------------------
-subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_so, psp_has_nlcc, ierr )
+subroutine read_upf_header_v1( psfile, psp, ierr )
   !---------------------------------------------------------------------------------
   implicit none
-  character(*),   intent(in)  :: psfile
-  real(SP),       intent(out) :: Z
-  integer,        intent(out) :: nmesh,nbeta
-  character(*),   intent(out) :: psp_type
-  logical,        intent(out) :: psp_has_so, psp_has_nlcc
-  integer,        intent(out) :: ierr
+  character(len=*), intent(in)    :: psfile
+  type(pw_pseudo),  intent(inout) :: psp
+  integer,          intent(out)   :: ierr
   !
-  character(50) :: dummy
+  character(50) :: dummy, psp_type
   logical :: lfound
   integer :: i,idummy
 
@@ -151,13 +150,22 @@ subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_so, ps
   if (ierr/=0) return
   read(iun,*,iostat=ierr) psp_type
   if (ierr/=0) return
-  if (trim(psp_type)=="NC") psp_type="NCPP"
   !
-  read(iun,*,iostat=ierr) psp_has_nlcc
+  select case (trim(psp_type))
+  case ("NC","NCPP","nc","ncpp")
+     psp%is_ncpp=.true.
+  case ("US","USPP","us","uspp")
+     psp%is_uspp=.true.
+  case default
+     call errore("read_upf_header_v1","invalid psp_type = "//trim(psp_type),10)
+  end select
+  psp%is_paw=.false.
+  !
+  read(iun,*,iostat=ierr) psp%has_nlcc
   if (ierr/=0) return
   read(iun,*,iostat=ierr) dummy
   if (ierr/=0) return
-  read(iun,*,iostat=ierr) z
+  read(iun,*,iostat=ierr) psp%Z
   if (ierr/=0) return
   read(iun,*,iostat=ierr) dummy
   if (ierr/=0) return
@@ -165,9 +173,9 @@ subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_so, ps
   if (ierr/=0) return
   read(iun,*,iostat=ierr) dummy
   if (ierr/=0) return
-  read(iun,*,iostat=ierr) nmesh
+  read(iun,*,iostat=ierr) psp%nmesh
   if (ierr/=0) return
-  read(iun,*,iostat=ierr) idummy,nbeta
+  read(iun,*,iostat=ierr) idummy,psp%nbeta
   if (ierr/=0) return
   read(iun,'(a)') dummy
   !
@@ -180,7 +188,7 @@ subroutine read_upf_header_v1( psfile, Z, nmesh, nbeta, psp_type, psp_has_so, ps
   !
   call iotk_scan_begin(iun, "PP_ADDINFO", found=lfound, ierr=ierr)
   if (ierr/=0) return
-  psp_has_so=lfound
+  psp%has_so=lfound
   !
   rewind(iun) 
   close(iun)
@@ -211,51 +219,67 @@ logical function matches (string1, string2)
 end function matches
 
 !-----------------------------------------------------------------------
-subroutine read_pseudo_data(psfile,nmesh,nbeta,z,mesh,wmesh,rho_nlcc,vloc,&
-&                           lbeta,jbeta,mesh_beta,beta,d,psp_has_so,psp_has_nlcc) 
+subroutine read_pseudo_data(psfile,psp)
 !-----------------------------------------------------------------------
   IMPLICIT NONE
   !
-  CHARACTER(LEN=*), INTENT(IN)    :: psfile
-  INTEGER,          INTENT(INOUT) :: nmesh,nbeta
-  REAL(SP),         INTENT(OUT)   :: z
-  REAL(SP),         INTENT(OUT)   :: mesh(:),wmesh(:),rho_nlcc(:),vloc(:),beta(:,:),d(:),jbeta(:)
-  INTEGER,          INTENT(OUT)   :: lbeta(:),mesh_beta(:)
-  LOGICAL,          INTENT(INOUT) :: psp_has_so,psp_has_nlcc
+  character(len=*), intent(in)    :: psfile
+  type(pw_pseudo),  intent(inout) :: psp
   !
-  call read_pseudo_header(psfile, Z, nmesh, nbeta, psp_has_so=psp_has_so, psp_has_nlcc=psp_has_nlcc)
+  integer :: nmesh,nbeta
   !
-  call read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
-&                             wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d)
+  call read_pseudo_header(psfile, psp)
+  !
+  nmesh=psp%nmesh
+  nbeta=psp%nbeta
+  !
+  allocate(psp%mesh(nmesh))
+  allocate(psp%wmesh(nmesh))
+  allocate(psp%rho_nlcc(nmesh))
+  allocate(psp%vloc(nmesh))
+  allocate(psp%lbeta(nbeta))
+  allocate(psp%jbeta(nbeta))
+  allocate(psp%mesh_beta(nbeta))
+  allocate(psp%beta(nmesh,nbeta))
+  allocate(psp%d(nbeta))
+  !
+  call read_pseudo_parameters(psfile,psp%nmesh,psp%nbeta,psp%mesh,psp%has_so,psp%has_nlcc, &
+&                             psp%wmesh,psp%rho_nlcc,psp%vloc,psp%lbeta,psp%jbeta,psp%mesh_beta,psp%beta,psp%d)
+  !
+  if (psp%is_uspp) then
+     !
+     ! more allocations inside the following routine
+     !
+     call read_pseudo_uspp(psfile,psp)
+  endif
   !
 end subroutine read_pseudo_data
 
 !-----------------------------------------------------------------------
 subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh,&
 &                                 rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d)
-!-----------------------------------------------------------------------
-  IMPLICIT NONE
-  CHARACTER(LEN=*), INTENT(IN)  :: psfile
-  LOGICAL,          INTENT(IN)  :: psp_has_so
-  LOGICAL,          INTENT(IN)  :: psp_has_nlcc
-  INTEGER,          INTENT(IN)  :: nmesh,nbeta
-  REAL(SP),         INTENT(OUT) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
-  INTEGER,          INTENT(OUT) :: lbeta(:),mesh_beta(:)
+  !-----------------------------------------------------------------------
+  implicit none
+  character(len=*), intent(in)  :: psfile
+  logical,          intent(in)  :: psp_has_so
+  logical,          intent(in)  :: psp_has_nlcc
+  integer,          intent(in)  :: nmesh,nbeta
+  real(SP),         intent(out) :: mesh(:), wmesh(:), rho_nlcc(:), vloc(:), beta(:,:), d(:), jbeta(:)
+  integer,          intent(out) :: lbeta(:),mesh_beta(:)
   !
-  INTEGER :: ierr
+  integer :: ierr
   
-  CALL read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
+  call read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
 &                             wmesh,rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,ierr)
   !
-  if(ierr>0) then
+  if(ierr/=0) then
     !
-    rewind(iun)
     jbeta=0.
     call read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh, &
 &                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,ierr)
   endif
   !
-  if(ierr>0) CALL errore('read_pseudo_parameters', 'Cannot open file: '//TRIM(psfile),1)
+  if(ierr/=0) CALL errore('read_pseudo_parameters', 'Cannot open file: '//TRIM(psfile),1)
   !
 end subroutine
 
@@ -391,12 +415,12 @@ subroutine read_upf_parameters_v1(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   forall (i1=1:nmesh) beta(i1,:)=matmul(transpose(d_tmp),beta_tmp(i1,:))
   !
   if (psp_has_so) then
-     call errore("read_upf_parameters_v1","SO read not implemented",10)
+     call errore("read_upf_parameters_v1","SO read not implemented for UPFv1",10)
   endif
   !
   close(iun)
   !
-end subroutine
+end subroutine read_upf_parameters_v1
 
 !-----------------------------------------------------------------------
 subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc, &
@@ -510,7 +534,63 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   call iotk_close_read(iun, ierr=ierr)
   if (ierr/=0) return
   ! 
-end subroutine
-    !
+end subroutine read_upf_parameters_v2
+
+
+!-------------------------------------------
+subroutine read_pseudo_uspp(psfile,psp)
+  !-------------------------------------------
+  implicit none
+  character(*),    intent(in) :: psfile
+  type(pw_pseudo), intent(inout) :: psp
+  !
+  integer :: ierr
+  !
+  ierr=0
+  call read_pseudo_uspp_v2(psfile,psp,ierr=ierr)
+  !
+  if (ierr/=0) then
+     ierr=0
+     call read_pseudo_uspp_v1(psfile,psp,ierr=ierr)
+  endif
+  !
+  if (ierr/=0) call errore('read_pseudo_uspp','unable to read USPP data',10)
+  !
+end subroutine read_pseudo_uspp
+
+!-------------------------------------------
+subroutine read_pseudo_uspp_v1(psfile,psp,ierr)
+  !-------------------------------------------
+  implicit none
+  character(*),    intent(in)  :: psfile
+  type(pw_pseudo), intent(inout) :: psp
+  integer,         intent(out) :: ierr
+  !
+  ierr=0
+  call iotk_free_unit(iun)
+  call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
+  if (ierr/=0) return
+  !
+  close(iun)
+  !
+end subroutine read_pseudo_uspp_v1
+
+!-------------------------------------------
+subroutine read_pseudo_uspp_v2(psfile,psp,ierr)
+  !-------------------------------------------
+  implicit none
+  character(*),    intent(in)  :: psfile
+  type(pw_pseudo), intent(inout) :: psp
+  integer,         intent(out) :: ierr
+  !
+  ierr=0
+  call iotk_free_unit(iun)
+  call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
+  if (ierr/=0) return
+  !
+  close(iun)
+  !
+end subroutine read_pseudo_uspp_v2
+
 end module pw_read_pseudo_m
 

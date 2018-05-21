@@ -66,9 +66,9 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
     !
     rhog=0._SP
     pp_has_nlcc_atom(is)=0
-    if (psp%psp_has_nlcc) pp_has_nlcc_atom(is)=1
+    if (psp%has_nlcc) pp_has_nlcc_atom(is)=1
     !
-    if (.not.psp%psp_has_nlcc) cycle
+    if (.not.psp%has_nlcc) cycle
     !
     do ig=1,npw
       rhog(ig) = num_interpolation_calc(psp%interp_nlcc,G_norm(ig),3)

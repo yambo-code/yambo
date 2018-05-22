@@ -576,11 +576,7 @@ subroutine pseudo_read_uspp_v1(psfile,psp,ierr)
   ierr=0
   if (.not. psp%is_uspp) return
   !
-  call iotk_free_unit(iun)
-  call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
-  if (ierr/=0) return
-  !
-  close(iun)
+  call errore("pseudo_read_uspp_v1","USPP reading not implemented for UPF v1",10)
   !
 end subroutine pseudo_read_uspp_v1
 

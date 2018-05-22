@@ -17,6 +17,8 @@
   use com,           ONLY:error,msg
   use LIVE_t,        ONLY:live_timing
   use openmp,        ONLY:OPENMP_update,n_threads,master_thread
+  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+  use interfaces,    ONLY:PARALLEL_index
   implicit none
   type(vcut_type),   intent(out) :: vcut
   real(DP),          intent(in)  :: a(3,3)
@@ -28,6 +30,7 @@
   real(DP)     :: q(3)
   !character(9) :: subname='vcut_init'     
   real(DP)     :: mod2a(3)
+  type(PP_indexes) ::px
   !
   real(DP), external :: vcut_formula
   real(DP), external :: num_determinant
@@ -53,42 +56,48 @@
   n2=ceiling(vcut%cutoff*sqrt(sum(vcut%a(2,:)**2))/(2.0*pi))
   n3=ceiling(vcut%cutoff*sqrt(sum(vcut%a(3,:)**2))/(2.0*pi))
 
-  ALLOCATE(vcut%corrected(-n1:n1,-n2:n2,-n3:n3), STAT=ierr)
-  IF ( ierr/=0 ) CALL error('allocating cvut%corrected')
-  !
-  vcut%corrected=0.0
+  allocate(vcut%corrected(-n1:n1,-n2:n2,-n3:n3), STAT=ierr)
+  if ( ierr/=0 ) CALL error('allocating cvut%corrected')
 
   !
   ! define the Fourier component of the modified Coulomb potential
   !
-  call live_timing('WS setup',(2*n1+1)*(2*n2+1)*(2*n3+1)/n_threads)
+  vcut%corrected=0.0
+  !
+  call PP_indexes_reset(px)
+  call PARALLEL_index(px,(/n2,n3/),low_range=(/-n2,-n3/))
+  !
+  call live_timing('WS setup',px%n_of_elements(myid+1)/n_threads)
   !
   !$omp parallel default(shared), private(i3,i2,i1,q)
   !
   call OPENMP_update(master_thread)
   !
-  !$omp do collapse(3)
-  !
-  DO i3=-n3,n3
-    DO i2=-n2,n2
-      DO i1=-n1,n1
+  !$omp do collapse(2), schedule(dynamic)
+  do i3=-n3,n3
+    do i2=-n2,n2
+      !
+      if (master_thread) call live_timing(steps=1)
+      if (.not.px%element_2D(i2,i3)) cycle
+      !
+      do i1=-n1,n1
         !
-        if (master_thread) call live_timing(steps=1)
-        !
-        q = MATMUL(vcut%b,(/i1,i2,i3/)) 
-        !
-        IF( SUM(q**2) > vcut%cutoff**2 ) CYCLE
+        q = matmul(vcut%b,(/i1,i2,i3/)) 
+        if( sum(q**2) > vcut%cutoff**2 ) cycle
         !
         vcut%corrected(i1,i2,i3) = &
-             vcut_formula(q,vcut%a,vcut%b,vcut%a_omega,vcut%orthorombic)
+&            vcut_formula(q,vcut%a,vcut%b,vcut%a_omega,vcut%orthorombic)
         !
-      ENDDO
-    ENDDO
-  ENDDO
+      enddo
+    enddo
+    !
+  enddo
   !$omp end do
   !$omp end parallel
   !
   call live_timing()
+  !
+  call PP_redux_wait(vcut%corrected)
   !
 END SUBROUTINE vcut_init
 

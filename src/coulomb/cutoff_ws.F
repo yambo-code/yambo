@@ -87,9 +87,9 @@ subroutine cutoff_ws(q)
  !
  call OPENMP_update(master_thread)
  !
- call live_timing('WS-cutoff',px%n_of_elements(myid+1)/n_threads_now)
+ if (master_thread) call live_timing('WS-cutoff',px%n_of_elements(myid+1)/n_threads_now)
  !
-!$omp do
+!$omp do collapse(2), schedule(dynamic)
  do ig=1,wf_ng
    do iq=1,nqibz
      !
@@ -97,12 +97,10 @@ subroutine cutoff_ws(q)
      !
      v1=( q%pt(iq,:)+g_vec(ig,:) )*2.0_SP*pi/alat(:)
      !
-     ! XXXX
-     !if (ig==1) write(*,*) v1
      dummy=vcut_get(vcut,real(v1,DP))
      V_cut(iq,ig)=real(dummy/(4.0_SP*PI*e2))
      !
-     call live_timing(steps=1)
+     if (master_thread) call live_timing(steps=1)
      !
    enddo
  enddo
@@ -112,9 +110,6 @@ subroutine cutoff_ws(q)
  call OPENMP_update(master_thread)
  !
  call live_timing()
- !
- ! XXXX
- !write(*,*) V_cut(1,1)
  !
  ! MPI 2 all
  !

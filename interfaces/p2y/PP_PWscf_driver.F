@@ -213,7 +213,7 @@ subroutine fill_a_pseudo(psfile,pseudo)
  !
  use pars,             only:SP
  use pw_pseudo_module
- use pw_read_pseudo_m, only: read_pseudo_data
+ use pw_pseudo_read_m, only: pseudo_read_data
  use pw_data,          only: ecutwfc_,ecutrho_
  implicit none
  type(pw_pseudo), intent(inout) :: pseudo
@@ -222,7 +222,7 @@ subroutine fill_a_pseudo(psfile,pseudo)
  !
  ! Read data from UPF files, fill pseudo% types
  !
- call read_pseudo_data(psfile,pseudo)
+ call pseudo_read_data(psfile,pseudo)
  !
  ! Fill the pseudo%interp table
  ! ecutwfc(Ha) -> cutoff(Ry)

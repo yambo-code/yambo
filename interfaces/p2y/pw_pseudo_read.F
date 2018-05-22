@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !----------------------------------------------------------------------------
-module pw_read_pseudo_m
+module pw_pseudo_read_m
   !----------------------------------------------------------------------------
   !
   use pars,        ONLY: SP
@@ -36,7 +36,7 @@ module pw_read_pseudo_m
   character(iotk_attlenx) :: attr, root
   integer                 :: iun
   !
-  public :: read_pseudo_header, read_pseudo_data
+  public :: pseudo_read_header, pseudo_read_data
 
 contains
 
@@ -47,7 +47,7 @@ contains
 !
 
 !---------------------------------------------------------------------------------
-subroutine read_pseudo_header(psfile,psp)
+subroutine pseudo_read_header(psfile,psp)
   !---------------------------------------------------------------------------------
   implicit none
   character(len=*),  intent(in)    :: psfile
@@ -63,9 +63,9 @@ subroutine read_pseudo_header(psfile,psp)
      call read_upf_header_v1( psfile, psp, ierr)
   endif
   !
-  if(ierr/=0) call errore('read_pseudo_header', 'opening file: '//trim(psfile),1)
+  if(ierr/=0) call errore('pseudo_read_header', 'opening file: '//trim(psfile),1)
   !
-end subroutine read_pseudo_header
+end subroutine pseudo_read_header
 
 !---------------------------------------------------------------------------------
 subroutine read_upf_header_v2( psfile, psp, ierr )
@@ -221,7 +221,7 @@ logical function matches (string1, string2)
 end function matches
 
 !-----------------------------------------------------------------------
-subroutine read_pseudo_data(psfile,psp)
+subroutine pseudo_read_data(psfile,psp)
 !-----------------------------------------------------------------------
   IMPLICIT NONE
   !
@@ -230,7 +230,7 @@ subroutine read_pseudo_data(psfile,psp)
   !
   integer :: nmesh,nbeta
   !
-  call read_pseudo_header(psfile, psp)
+  call pseudo_read_header(psfile, psp)
   !
   nmesh=psp%nmesh
   nbeta=psp%nbeta
@@ -246,7 +246,7 @@ subroutine read_pseudo_data(psfile,psp)
   allocate(psp%d(nbeta))
   allocate(psp%dmat(nbeta,nbeta))
   !
-  call read_pseudo_parameters(psfile,psp%nmesh,psp%nbeta,psp%mesh,psp%has_so,psp%has_nlcc, &
+  call pseudo_read_parameters(psfile,psp%nmesh,psp%nbeta,psp%mesh,psp%has_so,psp%has_nlcc, &
 &                             psp%wmesh,psp%rho_nlcc,psp%vloc,psp%lbeta,psp%jbeta,psp%mesh_beta,&
                               psp%beta,psp%d,psp%dmat)
   !
@@ -254,13 +254,13 @@ subroutine read_pseudo_data(psfile,psp)
      !
      ! more allocations inside the following routine
      !
-     call read_pseudo_uspp(psfile,psp)
+     call pseudo_read_uspp(psfile,psp)
   endif
   !
-end subroutine read_pseudo_data
+end subroutine pseudo_read_data
 
 !-----------------------------------------------------------------------
-subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh,&
+subroutine pseudo_read_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlcc,wmesh,&
 &                                 rho_nlcc,vloc,lbeta,jbeta,mesh_beta,beta,d,dmat)
   !-----------------------------------------------------------------------
   implicit none
@@ -283,7 +283,7 @@ subroutine read_pseudo_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
 &                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,dmat,ierr)
   endif
   !
-  if(ierr/=0) CALL errore('read_pseudo_parameters', 'Cannot open file: '//TRIM(psfile),1)
+  if(ierr/=0) CALL errore('pseudo_read_parameters', 'Cannot open file: '//TRIM(psfile),1)
   !
 end subroutine
 
@@ -545,7 +545,7 @@ end subroutine read_upf_parameters_v2
 
 
 !-------------------------------------------
-subroutine read_pseudo_uspp(psfile,psp)
+subroutine pseudo_read_uspp(psfile,psp)
   !-------------------------------------------
   implicit none
   character(*),    intent(in) :: psfile
@@ -554,19 +554,19 @@ subroutine read_pseudo_uspp(psfile,psp)
   integer :: ierr
   !
   ierr=0
-  call read_pseudo_uspp_v2(psfile,psp,ierr=ierr)
+  call pseudo_read_uspp_v2(psfile,psp,ierr=ierr)
   !
   if (ierr/=0) then
      ierr=0
-     call read_pseudo_uspp_v1(psfile,psp,ierr=ierr)
+     call pseudo_read_uspp_v1(psfile,psp,ierr=ierr)
   endif
   !
-  if (ierr/=0) call errore('read_pseudo_uspp','unable to read USPP data',10)
+  if (ierr/=0) call errore('pseudo_read_uspp','unable to read USPP data',10)
   !
-end subroutine read_pseudo_uspp
+end subroutine pseudo_read_uspp
 
 !-------------------------------------------
-subroutine read_pseudo_uspp_v1(psfile,psp,ierr)
+subroutine pseudo_read_uspp_v1(psfile,psp,ierr)
   !-------------------------------------------
   implicit none
   character(*),    intent(in)  :: psfile
@@ -582,10 +582,10 @@ subroutine read_pseudo_uspp_v1(psfile,psp,ierr)
   !
   close(iun)
   !
-end subroutine read_pseudo_uspp_v1
+end subroutine pseudo_read_uspp_v1
 
 !-------------------------------------------
-subroutine read_pseudo_uspp_v2(psfile,psp,ierr)
+subroutine pseudo_read_uspp_v2(psfile,psp,ierr)
   !-------------------------------------------
   implicit none
   character(*),    intent(in)  :: psfile
@@ -663,7 +663,7 @@ subroutine read_pseudo_uspp_v2(psfile,psp,ierr)
   call iotk_close_read(iun,ierr=ierr)
   if (ierr/=0) return
   !
-end subroutine read_pseudo_uspp_v2
+end subroutine pseudo_read_uspp_v2
 
-end module pw_read_pseudo_m
+end module pw_pseudo_read_m
 

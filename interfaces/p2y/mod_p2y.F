@@ -27,7 +27,6 @@ module P2Y
  use qexml_module
  use qexsd_module
  use pw_data
- use pw_read_pseudo_m,      ONLY : read_pseudo_header
  use pars,                  ONLY : lchlen,SP,DP
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp

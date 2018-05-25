@@ -26,8 +26,8 @@ subroutine qe_pseudo_init()
  use pars,              ONLY: DP, pi_DP
  !
  ! data already stored by p2y
- use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, nspin_, noncolin_, &
-                              alat_, a1_, a2_, a3_, npwx_
+ use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, nspin_, noncolin_, lspinorb_, &
+                              alat_, a1_, a2_, a3_, ecutrho_, npwx_, ngm_, igv_
  !
  ! qe_pseudo internal modules
  use io_files,          ONLY: pseudo_dir, qe_psfile => psfile
@@ -35,16 +35,19 @@ subroutine qe_pseudo_init()
  use cell_base,         ONLY: qe_omega => omega, qe_tpiba => tpiba
  use lsda_mod,          ONLY: qe_nspin => nspin
  use noncollin_module,  ONLY: qe_noncolin => noncolin, qe_npol => npol 
+ use spin_orb,          ONLY: qe_lspinorb => lspinorb
  use control_flags,     ONLY: qe_gamma_only => gamma_only
  use wvfct,             ONLY: qe_npwx => npwx
+ use gvect,             ONLY: qe_g => g, qe_gg => gg, qe_ngm=>ngm, qe_ecutrho=>ecutrho, &
+                              qe_gcutm => gcutm, qe_mill=>mill
  !
  use matrix_inversion,  ONLY: invmat
  !
 #include<memory.h>
  !
  character(14) :: subname="qe_pseudo_init"
- real(DP):: amat(3,3),a_inv(3,3)
- integer :: isp
+ real(DP):: amat(3,3),bmat(3,3)
+ integer :: i,ig,isp
 
  qe_nsp = nsp_
  qe_nat = nat_
@@ -63,16 +66,39 @@ subroutine qe_pseudo_init()
  qe_nspin = nspin_
  qe_noncolin = noncolin_
  qe_npol = 2
+ qe_lspinorb = lspinorb_
  !
  qe_gamma_only = .false.
  ! 
  amat(:,1)=a1_
  amat(:,2)=a2_
  amat(:,3)=a3_
- call invmat(3,amat,a_inv,qe_omega)
+ call invmat(3,amat,bmat,qe_omega)
+ bmat=bmat*2.0_DP * pi_DP
+ !
  qe_tpiba = 2.0_DP * pi_DP / alat_
  !
  qe_npwx = npwx_
+ qe_ngm = ngm_
+ qe_ecutrho = ecutrho_
+ qe_gcutm = ecutrho_/qe_tpiba**2
+ !
+ allocate(qe_g(3,ngm_),qe_gg(ngm_))
+ allocate(qe_mill(3,ngm_))
+ !
+ qe_mill=igv_
+ !
+ do ig = 1, ngm_
+    qe_g(:,ig)=0
+    do i = 1, 3
+      qe_g(:,ig) = qe_g(:,ig) + igv_(i,ig)*bmat(:,i)
+    enddo
+    qe_gg(ig) =sum(qe_g(:,ig)**2)
+ enddo
+ !
+ qe_g  = qe_g / qe_tpiba
+ qe_gg = qe_gg / qe_tpiba**2
+ !
  !
 end subroutine qe_pseudo_init
 

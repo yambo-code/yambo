@@ -39,6 +39,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use stderr,              ONLY : intc,logfile,log_as_a_file
  use interfaces,          ONLY : PARALLEL_index,PARALLEL_live_message
  use qexml_module
+! XXX
+ use wrapper,       ONLY:M_by_M
+! XXX
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
 #endif
@@ -59,6 +62,11 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(lchlen)     :: lch
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
+! XXX
+ complex(SP), allocatable :: swf_disk(:,:,:)
+ complex(SP), allocatable :: ovp(:,:)
+ integer                  :: i,j
+! XXX
  type(PP_indexes)      :: PAR_IND_wfc_io
  integer, external     :: io_DB1
  logical               :: IO_write_save,IO_read_save
@@ -216,7 +224,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (ncpu>1) call PARALLEL_wait()
  call live_timing()
  !
- YAMBO_FREE(wf_disk)
+! XXXX
+! YAMBO_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
@@ -236,6 +245,38 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  else
    call msg('s','Vnl support only with QE v5.0 or later (QEXML, QEXSD).')
  endif
+ !
+! XXX
+!================
+ !
+ ! DEBUG
+ !
+ WRITE(0,"(/,'DEBUG')")
+ WRITE(0,"('    npwk = ',i5)") wf_ncx
+ WRITE(0,"('n_spinor = ',i5)") n_spinor
+ WRITE(0,"(' n_bands = ',i5)") n_bands
+ WRITE(0,"('wf_nb_io = ',i5)") wf_nb_io
+ !
+ YAMBO_ALLOC(swf_disk,(wf_ncx,n_spinor,wf_nb_io))
+ YAMBO_ALLOC(ovp,(wf_nb_io,wf_nb_io))
+ !
+ call s_psi(wf_ncx,wf_ncx,wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))
+ !
+ call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
+             wf_disk(:,1,:), wf_ncx, swf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
+             ovp, wf_nb_io) 
+ !
+ write(0,*)
+ do j = 1, wf_nb_io
+   write(0,"(8f12.6)") ovp(:,j)
+   write(0,*)
+ enddo
+ !
+ YAMBO_FREE(wf_disk)
+ YAMBO_FREE(swf_disk)
+ YAMBO_FREE(ovp)
+!================
+ !
  !
  call PARALLEL_wait()
  !

@@ -32,7 +32,7 @@ subroutine COLLISIONS_compose_nl(G_in)
 &                           HXC_collisions,COLLISIONS_group,COLLISIONS_element
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu
+ use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_freqs_A2A
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,         ONLY:timing
@@ -101,7 +101,7 @@ subroutine COLLISIONS_compose_nl(G_in)
    ! 
  enddo
  !
- call PP_redux_wait(RT_Vnl_xc)
+ call PP_redux_wait(RT_Vnl_xc,COMM=PAR_COM_freqs_A2A%COMM)
  !
 #if defined _TIMING
  call timing('NL COLL_compose',OPR='stop')

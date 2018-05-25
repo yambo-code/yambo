@@ -41,6 +41,10 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use qexml_module
 ! XXX
  use wrapper,       ONLY:M_by_M
+ use pw_data,       ONLY:pw_igk_,pw_npwk_,xk_
+ use cell_base,     ONLY:tpiba
+ use becmod,        ONLY:calbec,bec_type,becp,allocate_bec_type,vkb
+ use uspp,          ONLY:nkb
 ! XXX
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
@@ -260,13 +264,30 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  YAMBO_ALLOC(swf_disk,(wf_ncx,n_spinor,wf_nb_io))
  YAMBO_ALLOC(ovp,(wf_nb_io,wf_nb_io))
  !
+ YAMBO_ALLOC(vkb,(wf_ncx,nkb))
+ call allocate_bec_type(nkb, wf_nb_io, becp)
+ !
+ ik = nkibz
+ call init_us_2(pw_npwk_(ik),pw_igk_(:,ik),xk_(:,ik),vkb)
+ call calbec(pw_npwk_(ik),vkb,wf_disk(:,1,:),becp,wf_nb_io) 
+ !
  call s_psi(wf_ncx,wf_ncx,wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))
  !
  call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
              wf_disk(:,1,:), wf_ncx, swf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
              ovp, wf_nb_io) 
  !
- write(0,*)
+ write(0,"(/,'< wfc | S | wfc >')")
+ do j = 1, wf_nb_io
+   write(0,"(8f12.6)") ovp(:,j)
+   write(0,*)
+ enddo
+ !
+ call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
+             wf_disk(:,1,:), wf_ncx, wf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
+             ovp, wf_nb_io) 
+ !
+ write(0,"(/,'< wfc | wfc >')")
  do j = 1, wf_nb_io
    write(0,"(8f12.6)") ovp(:,j)
    write(0,*)

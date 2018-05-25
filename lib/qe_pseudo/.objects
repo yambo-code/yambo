@@ -1,5 +1,6 @@
 PP_objects = atom.o becmod.o constants.o kind.o parameters.o pseudo_types.o s_psi.o uspp.o \
-             yambo_auxdata.o invmat.o init_us_1.o init_us_2.o radial_grids.o ylmr2.o \
+             qe_auxdata.o invmat.o init_us_1.o init_us_2.o radial_grids.o ylmr2.o \
              us_module.o recvec.o spin_orb.o simpsn.o upf_to_internal.o upf.o \
-             read_upf_v1.o read_upf_v2.o read_pseudo.o read_ncpp.o read_uspp.o
+             read_upf_v1.o read_upf_v2.o read_pseudo.o read_ncpp.o read_uspp.o struct_fact.o \
+             sph_ind.o spinor.o sph_bes.o qvan2.o
 objs = $(PP_objects)

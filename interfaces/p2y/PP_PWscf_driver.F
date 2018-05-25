@@ -208,6 +208,7 @@ subroutine fill_atoms(atoms,struct)
  if ( any(atoms%pseudo(:)%is_uspp) ) then
    !
    call qe_pseudo_init()
+   call init_us_1()
    !
  endif
  !

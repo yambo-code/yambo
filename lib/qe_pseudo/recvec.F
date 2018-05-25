@@ -15,7 +15,7 @@
      ! ... G> and G<, containing G and -G (G=0 is in G>)
      ! ... This is referred to as the "dense" (or "hard", or "thick") grid
 
-     USE kinds, ONLY: SP, DP
+     USE kinds, ONLY: DP
 
      IMPLICIT NONE
      SAVE
@@ -27,8 +27,8 @@
      INTEGER :: ngl = 0   ! number of G-vector shells
      INTEGER :: ngmx = 0  ! local number of G vectors, maximum across all procs
 
-     REAL(SP) :: ecutrho = 0.0_DP ! energy cut-off for charge density 
-     REAL(SP) :: gcutm = 0.0_DP   ! ecutrho/(2 pi/a)^2, cut-off for |G|^2
+     REAL(DP) :: ecutrho = 0.0_DP ! energy cut-off for charge density 
+     REAL(DP) :: gcutm = 0.0_DP   ! ecutrho/(2 pi/a)^2, cut-off for |G|^2
 
      INTEGER :: gstart = 2 ! index of the first G vector whose module is > 0
                            ! Needed in parallel execution: gstart=2 for the

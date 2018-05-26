@@ -27,7 +27,7 @@ subroutine qe_pseudo_init()
  !
  ! data already stored by p2y
  use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, nspin_, noncolin_, lspinorb_, &
-                              alat_, a1_, a2_, a3_, ecutrho_, npwx_, ngm_, igv_, nfft_
+                              alat_, a1_, a2_, a3_, ecutwfc_, ecutrho_, npwx_, ngm_, igv_, nfft_
  !
  ! qe_pseudo internal modules
  use io_files,          ONLY: pseudo_dir, qe_psfile => psfile
@@ -41,6 +41,7 @@ subroutine qe_pseudo_init()
  use gvect,             ONLY: qe_g => g, qe_gg => gg, qe_ngm=>ngm, qe_ecutrho=>ecutrho, &
                               qe_gcutm => gcutm, qe_mill=>mill, &
                               qe_eigts1 => eigts1, qe_eigts2 => eigts2, qe_eigts3 => eigts3
+ use gvecw,             ONLY: qe_ecutwfc => ecutwfc, qe_gcutw => gcutw
  !
  use matrix_inversion,  ONLY: invmat
  !
@@ -82,6 +83,8 @@ subroutine qe_pseudo_init()
  !
  qe_npwx = npwx_
  qe_ngm = ngm_
+ qe_ecutwfc = ecutwfc_
+ qe_gcutw = ecutwfc_ / qe_tpiba**2
  qe_ecutrho = ecutrho_
  qe_gcutm = ecutrho_/qe_tpiba**2
  !
@@ -112,6 +115,10 @@ subroutine qe_pseudo_init()
  call struc_fact(nat_,tau_,nsp_,ityp_,ngm_,qe_g,bmat,nr1,nr2,nr3, &
 &                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  deallocate(strf)
+ !
+ ! main allocations
+ !
+ call allocate_nlpot()
  !
 end subroutine qe_pseudo_init
 

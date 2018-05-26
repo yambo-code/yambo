@@ -1,4 +1,10 @@
 
+module control_flags
+  logical :: gamma_only
+  logical :: smallmem=.false.
+  logical :: tqr=.false.
+end module
+
 module io_global
   logical :: ionode=.true.
   integer :: stdout=6
@@ -19,11 +25,6 @@ module noncollin_module
   integer :: npol
 end module
 
-module control_flags
-  logical :: gamma_only
-  logical :: smallmem=.false.
-end module
-
 module ions_base
   use kinds,      ONLY: DP
   use parameters, ONLY: ntypx
@@ -40,6 +41,22 @@ module cell_base
   real(DP) :: tpiba
 end module
 
+module cellmd
+  use kinds, only : DP
+  real(DP) :: cell_factor = 1.1_DP
+end module
+
+module klist
+  use kinds, only : DP
+  real(DP) :: qnorm=0.0_DP
+end module
+
 module wvfct
   integer :: npwx
+end module
+
+module gvecw
+  use kinds, only : DP
+  real(DP) :: gcutw
+  real(DP) :: ecutwfc
 end module

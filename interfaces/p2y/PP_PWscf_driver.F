@@ -178,16 +178,18 @@ subroutine fill_atoms(atoms,struct)
  !  integer,          pointer :: type_map(:)
  !  real                      :: cutoff_vloc
  !end type pw_atoms
- use pw_data, only : psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
+ use pw_data,           ONLY: psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
  use pw_struct_module
  use pw_atoms_module
  use pw_pseudo_module
- use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                       atom_pos, Z_species,atomic_number
+ use D_lattice,         ONLY: n_atoms_species_max,n_atomic_species,n_atoms_species, &
+&                             atom_pos, Z_species,atomic_number
+ use read_pseudo_mod,   ONLY: readpp
  implicit none
  type(pw_struct), intent(in) :: struct
  type(pw_atoms) :: atoms
  integer        :: i
+ character(64)  :: input_dft="none"
  !
  ! Initialize atoms% types
  !
@@ -200,7 +202,10 @@ subroutine fill_atoms(atoms,struct)
  ! Fill the atoms%pseudo type for each type
  !
  do i =1,n_atomic_species
+! XXX
+write(0,*) "before reading pp atom ", i
    call fill_a_pseudo(psfile(i),atoms%pseudo(i))
+write(0,*) "after reading pp atom ", i
  enddo
  !
  ! USPP data
@@ -208,6 +213,7 @@ subroutine fill_atoms(atoms,struct)
  if ( any(atoms%pseudo(:)%is_uspp) ) then
    !
    call qe_pseudo_init()
+   call readpp(input_dft)
    call init_us_1()
    !
  endif

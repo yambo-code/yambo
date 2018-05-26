@@ -103,7 +103,7 @@ SUBROUTINE readpp ( input_dft, printout, ecutwfc_pp, ecutrho_pp )
      CALL nullify_pseudo_upf( upf( nt ) )
   end do
   !
-  IF (input_dft /='none') CALL enforce_input_dft (input_dft)
+!  IF (input_dft /='none') CALL enforce_input_dft (input_dft)
   !
   IF ( PRESENT(printout) ) THEN
      printout_ = printout .AND. ionode

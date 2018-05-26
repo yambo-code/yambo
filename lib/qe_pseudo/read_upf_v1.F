@@ -611,7 +611,7 @@ subroutine read_pseudo_addinfo (upf, iunps)
           upf%nn(nb), upf%lchi(nb), upf%jchi(nb), upf%oc(nb)
      if ( abs ( upf%jchi(nb)-upf%lchi(nb)-0.5_dp ) > 1.0d-7 .and. &
           abs ( upf%jchi(nb)-upf%lchi(nb)+0.5_dp ) > 1.0d-7      ) then
-        call infomsg ( 'read_pseudo_upf', 'obsolete ADDINFO section ignored')
+!        call infomsg ( 'read_pseudo_upf', 'obsolete ADDINFO section ignored')
         upf%has_so = .false.
         return
      end if
@@ -622,7 +622,7 @@ subroutine read_pseudo_addinfo (upf, iunps)
      read (iunps, *, err=100,end=100) upf%lll(nb), upf%jjj(nb)
      if ( abs ( upf%lll(nb)-upf%jjj(nb)-0.5_dp) > 1.0d-7 .and. &
           abs ( upf%lll(nb)-upf%jjj(nb)+0.5_dp) > 1.0d-7       ) then
-        call infomsg ( 'read_pseudo_upf', 'obsolete ADDINFO section ignored')
+!        call infomsg ( 'read_pseudo_upf', 'obsolete ADDINFO section ignored')
         upf%has_so = .false.
         return
      end if

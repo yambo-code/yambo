@@ -229,7 +229,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call live_timing()
  !
 ! XXXX
-! YAMBO_FREE(wf_disk)
+! YAXXXMBO_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
@@ -260,32 +260,42 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  WRITE(0,"('n_spinor = ',i5)") n_spinor
  WRITE(0,"(' n_bands = ',i5)") n_bands
  WRITE(0,"('wf_nb_io = ',i5)") wf_nb_io
+ WRITE(0,"('     nkb = ',i5)") nkb
+ WRITE(0,*) "alloc(wf_disk)", allocated(wf_disk)
+ WRITE(0,*) "shape(wf_disk)", SHAPE(wf_disk)
  !
  YAMBO_ALLOC(swf_disk,(wf_ncx,n_spinor,wf_nb_io))
  YAMBO_ALLOC(ovp,(wf_nb_io,wf_nb_io))
  !
- YAMBO_ALLOC(vkb,(wf_ncx,nkb))
- call allocate_bec_type(nkb, wf_nb_io, becp)
+ if (nkb > 0 ) then
+   !
+   YAMBO_ALLOC(vkb,(wf_ncx,nkb))
+   call allocate_bec_type(nkb, wf_nb_io, becp)
+   !
+   ik = nkibz
+   call init_us_2(pw_npwk_(ik),pw_igk_(:,ik),xk_(:,ik),vkb)
+   call calbec(pw_npwk_(ik),vkb,wf_disk(:,1,:),becp,wf_nb_io) 
+   !
+   call s_psi(wf_ncx,wf_ncx,wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))
+   !
+   call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
+               wf_disk(:,1,:), wf_ncx, swf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
+               ovp, wf_nb_io) 
+   !
+   write(0,"(/,'< wfc | S | wfc >')")
+   do j = 1, wf_nb_io
+     write(0,"(8f12.6)") ovp(:,j)
+     write(0,*)
+   enddo
+   !
+   YAMBO_FREE(vkb)
+   !
+ endif
  !
- ik = nkibz
- call init_us_2(pw_npwk_(ik),pw_igk_(:,ik),xk_(:,ik),vkb)
- call calbec(pw_npwk_(ik),vkb,wf_disk(:,1,:),becp,wf_nb_io) 
- !
- call s_psi(wf_ncx,wf_ncx,wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))
- !
- call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
-             wf_disk(:,1,:), wf_ncx, swf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
-             ovp, wf_nb_io) 
- !
- write(0,"(/,'< wfc | S | wfc >')")
- do j = 1, wf_nb_io
-   write(0,"(8f12.6)") ovp(:,j)
-   write(0,*)
- enddo
- !
- call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
-             wf_disk(:,1,:), wf_ncx, wf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
-             ovp, wf_nb_io) 
+! call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx,(1.0_SP,0.0_SP), &
+!             wf_disk(:,1,:), wf_ncx, wf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
+!             ovp, wf_nb_io) 
+ ovp=matmul(conjg(transpose(wf_disk(:,1,:))),wf_disk(:,1,:))
  !
  write(0,"(/,'< wfc | wfc >')")
  do j = 1, wf_nb_io

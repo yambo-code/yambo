@@ -139,6 +139,7 @@ subroutine read_upf_header_v1( psfile, psp, ierr )
   logical :: lfound
   integer :: i,idummy
 
+  ierr=0
   open(iun,file=trim(psfile),status='old',form='formatted', iostat=ierr)
   if (ierr/=0) return
   !
@@ -188,8 +189,11 @@ subroutine read_upf_header_v1( psfile, psp, ierr )
   call iotk_scan_end(iun, "PP_HEADER",ierr=ierr)
   if (ierr/=0) return
   !
+  rewind(iun) 
+  lfound=.false.
   call iotk_scan_begin(iun, "PP_ADDINFO", found=lfound, ierr=ierr)
-  if (ierr/=0) return
+  if (.not.lfound) ierr=0
+  if (lfound .and. ierr/=0) return
   psp%has_so=lfound
   !
   rewind(iun) 

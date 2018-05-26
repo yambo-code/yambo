@@ -195,7 +195,7 @@ subroutine pw_pseudo_set_table(pseudo,cutoff,cutoff_rho)
   q_max_rho = sqrt(2.0*cutoff_rho)
   delta_q = 0.01
   !
-  deallocate(pseudo%interp_beta)
+  if (allocated(pseudo%interp_beta)) call errore("pw_pseudo_set_table","pseudo%interp_beta already alloc",1)
   allocate(pseudo%interp_beta(pseudo%nbeta))
   !
   do ibeta=1,pseudo%nbeta
@@ -241,7 +241,8 @@ subroutine pw_pseudo_set_table(pseudo,cutoff,cutoff_rho)
     !
     if (pseudo%q_with_l) call errore("pw_pseudo_set_table","q_with_l not implemented",10)
     !
-    deallocate(pseudo%interp_qfunc)
+    if (allocated(pseudo%interp_qfunc)) call errore("pw_pseudo_set_table","pseudo%interp_qfunc already alloc",1)
+    !
     ndim=pseudo%nbeta*(pseudo%nbeta+1)/2
     allocate(pseudo%interp_qfunc(ndim))
     !

@@ -76,7 +76,6 @@ subroutine K_slepc_driver(iq,W)
  PetscFortranFloat     :: slepc_target_E
 #endif
  !
- !
  ! Residuals & Energies
  !
  complex(SP),allocatable :: BS_E(:)          !Eigenvalues

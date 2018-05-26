@@ -202,10 +202,7 @@ subroutine fill_atoms(atoms,struct)
  ! Fill the atoms%pseudo type for each type
  !
  do i =1,n_atomic_species
-! XXX
-write(0,*) "before reading pp atom ", i
    call fill_a_pseudo(psfile(i),atoms%pseudo(i))
-write(0,*) "after reading pp atom ", i
  enddo
  !
  ! USPP data

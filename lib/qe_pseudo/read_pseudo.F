@@ -146,7 +146,7 @@ SUBROUTINE readpp ( input_dft, printout, ecutwfc_pp, ecutrho_pp )
         INQUIRE ( file = file_pseudo, EXIST = exst) 
         IF (exst) ios = 0
         !CALL mp_sum (ios,intra_image_comm)
-        CALL errore('readpp', 'file '//TRIM(file_pseudo)//' not found',ABS(ios))
+        if (ios/=0) CALL errore('readpp', 'file '//TRIM(file_pseudo)//' not found',ABS(ios))
      END IF
      !
      upf(nt)%grid => rgrid(nt)

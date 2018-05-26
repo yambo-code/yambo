@@ -254,12 +254,15 @@ subroutine pseudo_read_data(psfile,psp)
 &                             psp%wmesh,psp%rho_nlcc,psp%vloc,psp%lbeta,psp%jbeta,psp%mesh_beta,&
                               psp%beta,psp%d,psp%dmat)
   !
-  if (psp%is_uspp) then
-     !
-     ! more allocations inside the following routine
-     !
-     call pseudo_read_uspp(psfile,psp)
-  endif
+  ! Currently USPP data are read natively within
+  ! qe_pseudo
+  !
+  !if (psp%is_uspp) then
+  !   !
+  !   ! more allocations inside the following routine
+  !   !
+  !   call pseudo_read_uspp(psfile,psp)
+  !endif
   !
 end subroutine pseudo_read_data
 
@@ -601,13 +604,18 @@ subroutine pseudo_read_uspp_v2(psfile,psp,ierr)
   call iotk_open_read(iun, file=trim(psfile), ierr=ierr)
   if (ierr/=0) return
   !
-  call iotk_scan_begin(iun, 'PP_AUGMENTATION', attr=attr)
-  call iotk_scan_attr(attr, 'q_with_l', psp%q_with_l)
-  call iotk_scan_attr(attr, 'nqf',      psp%nqf)
-  call iotk_scan_attr(attr, 'nqlc',     psp%nqlc, default=2*psp%lmax+1)
+  call iotk_scan_begin(iun, 'PP_AUGMENTATION', attr=attr,ierr=ierr)
+  if (ierr/=0) return
+  call iotk_scan_attr(attr, 'q_with_l', psp%q_with_l,ierr=ierr)
+  if (ierr/=0) return
+  call iotk_scan_attr(attr, 'nqf',      psp%nqf,ierr=ierr)
+  if (ierr/=0) return
+  call iotk_scan_attr(attr, 'nqlc',     psp%nqlc, default=2*psp%lmax+1,ierr=ierr)
+  if (ierr/=0) return
   !
   ! a negative number means that all qfunc are stored
-  call iotk_scan_attr(attr,'augmentation_epsilon',psp%qqq_eps, default=-1.0_SP)
+  call iotk_scan_attr(attr,'augmentation_epsilon',psp%qqq_eps, default=-1.0_SP,ierr=ierr)
+  if (ierr/=0) return
   !
   allocate( psp%rinner( psp%nqlc ) )
   allocate( psp%qqq   ( psp%nbeta, psp%nbeta ) )
@@ -619,7 +627,8 @@ subroutine pseudo_read_uspp_v2(psfile,psp,ierr)
   endif
   !
   ! Read the integrals of the Q functions
-  call iotk_scan_dat(iun, 'PP_Q',psp%qqq )
+  call iotk_scan_dat(iun, 'PP_Q',psp%qqq, ierr=ierr )
+  if (ierr/=0) return
   !
   !
   ! Read polinomial coefficients for Q_ij expansion at small radius

@@ -1,3 +1,4 @@
+
 !
 ! Copyright (C) 2001-2015 Quantum ESPRESSO group
 ! This file is distributed under the terms of the
@@ -59,8 +60,6 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   allocate ( ylm( npw_, (lmaxkb + 1) **2))    
   allocate (  gk( 3, npw_))    
   !
-!   write(*,'(3i4,i5,3f10.5)') size(tab,1), size(tab,2), size(tab,3), size(vq), q_
-
   do ig = 1, npw_
      gk (1,ig) = q_(1) + g(1, igk_(ig) )
      gk (2,ig) = q_(2) + g(2, igk_(ig) )

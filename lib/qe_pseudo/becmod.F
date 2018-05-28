@@ -34,7 +34,6 @@ MODULE becmod
   END TYPE bec_type
   !
   TYPE (bec_type) :: becp  ! <beta|psi>
-  complex(SP), allocatable :: vkb(:,:)
 
   PRIVATE
   !
@@ -53,7 +52,6 @@ MODULE becmod
   !
   PUBLIC :: bec_type, becp, allocate_bec_type, deallocate_bec_type, calbec, &
             beccopy, becscal, is_allocated_bec_type
-  PUBLIC :: vkb
   !
 CONTAINS
   !-----------------------------------------------------------------------

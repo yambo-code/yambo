@@ -26,7 +26,7 @@ subroutine qe_pseudo_init()
  use pars,              ONLY: DP, pi_DP
  !
  ! data already stored by p2y
- use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, nspin_, noncolin_, lspinorb_, &
+ use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, n_spin_pw_, noncolin_, lspinorb_, &
                               alat_, a1_, a2_, a3_, ecutwfc_, ecutrho_, npwx_, ngm_, igv_, nfft_
  !
  ! qe_pseudo internal modules
@@ -47,9 +47,10 @@ subroutine qe_pseudo_init()
  !
 #include<memory.h>
  !
- character(14) :: subname="qe_pseudo_init"
- real(DP):: amat(3,3),bmat(3,3)
- integer :: i,ig,isp,nr1,nr2,nr3
+ real(DP), parameter :: Ha2Ry=2.0_DP
+ character(14)       :: subname="qe_pseudo_init"
+ real(DP) :: amat(3,3),bmat(3,3)
+ integer  :: i,ig,isp,nr1,nr2,nr3
  complex(DP), allocatable :: strf(:,:)
 
  qe_nsp = nsp_
@@ -66,10 +67,15 @@ subroutine qe_pseudo_init()
    qe_psfile(isp) = trim(psfile(isp))
  enddo
  !
- qe_nspin = nspin_
+ qe_nspin = n_spin_pw_
  qe_noncolin = noncolin_
- qe_npol = 2
  qe_lspinorb = lspinorb_
+ !
+ if (qe_noncolin) then
+   qe_npol = 2
+ else
+   qe_npol = 1
+ endif
  !
  qe_gamma_only = .false.
  ! 
@@ -77,15 +83,16 @@ subroutine qe_pseudo_init()
  amat(:,2)=a2_
  amat(:,3)=a3_
  call invmat(3,amat,bmat,qe_omega)
+ bmat=transpose(bmat)
  bmat=bmat*2.0_DP * pi_DP
  !
  qe_tpiba = 2.0_DP * pi_DP / alat_
  !
  qe_npwx = npwx_
  qe_ngm = ngm_
- qe_ecutwfc = ecutwfc_
+ qe_ecutwfc = ecutwfc_ * Ha2Ry
  qe_gcutw = ecutwfc_ / qe_tpiba**2
- qe_ecutrho = ecutrho_
+ qe_ecutrho = ecutrho_ * Ha2Ry
  qe_gcutm = ecutrho_/qe_tpiba**2
  !
  allocate(qe_g(3,ngm_),qe_gg(ngm_))
@@ -107,18 +114,17 @@ subroutine qe_pseudo_init()
  nr1=nfft_(1)
  nr2=nfft_(2)
  nr3=nfft_(3)
+WRITE(0,*) "nfft_", nr1, nr2, nr3
+
  allocate(qe_eigts1(-nr1:nr1,nat_))
  allocate(qe_eigts2(-nr2:nr2,nat_))
  allocate(qe_eigts3(-nr3:nr3,nat_))
  allocate(strf(ngm_,nsp_))
  !
+ bmat=bmat/qe_tpiba
  call struc_fact(nat_,tau_,nsp_,ityp_,ngm_,qe_g,bmat,nr1,nr2,nr3, &
 &                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  deallocate(strf)
- !
- ! main allocations
- !
- call allocate_nlpot()
  !
 end subroutine qe_pseudo_init
 

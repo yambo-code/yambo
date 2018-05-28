@@ -253,6 +253,9 @@ subroutine init_us_1
   !   Q functions.
   !   
 !  call divide (intra_bgrp_comm, nqxq, startq, lastq)
+  startq=1
+  lastq=nqxq
+!
   !
   do nt = 1, ntyp
      if ( upf(nt)%tvanp ) then

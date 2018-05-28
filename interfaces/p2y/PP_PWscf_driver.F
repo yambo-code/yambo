@@ -211,6 +211,9 @@ subroutine fill_atoms(atoms,struct)
    !
    call qe_pseudo_init()
    call readpp(input_dft)
+   !
+   call pre_init()
+   call allocate_nlpot()
    call init_us_1()
    !
  endif

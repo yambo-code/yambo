@@ -280,20 +280,6 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
          ! counters
        COMPLEX(SP), ALLOCATABLE :: ps(:,:), qqc(:,:)
          ! ps = product vkb and psi ; qqc = complex version of qq
-! XXX
-open(10,file="data_vkb.dat")
-write(10,*) "shape vkb", shape(vkb)
-do ikb = 1, nkb
-   write(10,"(2f15.9)") vkb(:,ikb)
-   write(10,*)
-   write(10,*)
-enddo
-close(10)
-! XXX
-open(10,file="data_becp.dat")
-write(10,"(2f15.9)") becp%k
-close(10)
-! XXX
        !
        ALLOCATE( ps( nkb, m ), STAT=ierr )    
        IF( ierr /= 0 ) &
@@ -309,11 +295,6 @@ close(10)
              DO na = 1, nat
                 IF ( ityp(na) == nt ) THEN
                    qqc(:,:) = CMPLX ( qq_at(1:nh(nt),1:nh(nt),na), 0.0_SP, KIND=SP )
-! XXX
-open(10,file="data_qqc.dat")
-write(10,"(2f15.9)") qqc
-close(10)
-! XXX
 #if defined _DOUBLE
                    CALL ZGEMM('N','N', nh(nt), m, nh(nt), (1.0_dp,0.0_dp), &
                         qqc, nh(nt), becp%k(indv_ijkb0(na)+1,1), nkb, &
@@ -330,11 +311,6 @@ close(10)
           END IF
        END DO
        !
-! XXX
-open(10,file="data_ps.dat")
-write(10,"(2f15.9)") ps
-close(10)
-! XXX
        IF ( m == 1 ) THEN
           !
 #if defined _DOUBLE

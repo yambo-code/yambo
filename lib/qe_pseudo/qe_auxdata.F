@@ -31,6 +31,7 @@ module ions_base
   integer :: nat
   integer :: nsp
   integer, allocatable :: ityp(:)
+  ! internally, tau in alat units
   real(DP),allocatable :: tau(:,:)
   REAL(DP) :: zv(ntypx)    = 0.0_DP
 end module
@@ -57,6 +58,8 @@ end module
 
 module gvecw
   use kinds, only : DP
+  ! tpiba^2 units
   real(DP) :: gcutw
+  ! Ry-au
   real(DP) :: ecutwfc
 end module

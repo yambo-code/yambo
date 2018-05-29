@@ -59,7 +59,7 @@ subroutine qe_pseudo_init()
  if (.not. allocated(ityp_)) call errore(subname,"ityp_ not alloc",10)
  allocate(qe_tau(3,qe_nat))
  allocate(qe_ityp(qe_nat))
- qe_tau = tau_
+ qe_tau = tau_/alat_
  qe_ityp = ityp_
  !
  pseudo_dir="./"
@@ -114,6 +114,7 @@ subroutine qe_pseudo_init()
  nr1=nfft_(1)
  nr2=nfft_(2)
  nr3=nfft_(3)
+! XXX
 WRITE(0,*) "nfft_", nr1, nr2, nr3
 
  allocate(qe_eigts1(-nr1:nr1,nat_))
@@ -122,7 +123,7 @@ WRITE(0,*) "nfft_", nr1, nr2, nr3
  allocate(strf(ngm_,nsp_))
  !
  bmat=bmat/qe_tpiba
- call struc_fact(nat_,tau_,nsp_,ityp_,ngm_,qe_g,bmat,nr1,nr2,nr3, &
+ call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,bmat,nr1,nr2,nr3, &
 &                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  deallocate(strf)
  !

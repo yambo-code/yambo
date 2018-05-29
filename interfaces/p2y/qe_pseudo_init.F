@@ -27,7 +27,7 @@ subroutine qe_pseudo_init()
  !
  ! data already stored by p2y
  use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, n_spin_pw_, noncolin_, lspinorb_, &
-                              alat_, a1_, a2_, a3_, ecutwfc_, ecutrho_, npwx_, ngm_, igv_, nfft_
+                              alat_, a1_, a2_, a3_, ecutwfc_, ecutrho_, npwx_, ngm_, igv_, nr1_,nr2_,nr3_
  !
  ! qe_pseudo internal modules
  use io_files,          ONLY: pseudo_dir, qe_psfile => psfile
@@ -50,7 +50,7 @@ subroutine qe_pseudo_init()
  real(DP), parameter :: Ha2Ry=2.0_DP
  character(14)       :: subname="qe_pseudo_init"
  real(DP) :: amat(3,3),bmat(3,3)
- integer  :: i,ig,isp,nr1,nr2,nr3
+ integer  :: i,ig,isp
  complex(DP), allocatable :: strf(:,:)
 
  qe_nsp = nsp_
@@ -111,19 +111,13 @@ subroutine qe_pseudo_init()
  qe_g  = qe_g / qe_tpiba
  qe_gg = qe_gg / qe_tpiba**2
  !
- nr1=nfft_(1)
- nr2=nfft_(2)
- nr3=nfft_(3)
-! XXX
-WRITE(0,*) "nfft_", nr1, nr2, nr3
-
- allocate(qe_eigts1(-nr1:nr1,nat_))
- allocate(qe_eigts2(-nr2:nr2,nat_))
- allocate(qe_eigts3(-nr3:nr3,nat_))
+ allocate(qe_eigts1(-nr1_:nr1_,nat_))
+ allocate(qe_eigts2(-nr2_:nr2_,nat_))
+ allocate(qe_eigts3(-nr3_:nr3_,nat_))
  allocate(strf(ngm_,nsp_))
  !
  bmat=bmat/qe_tpiba
- call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,bmat,nr1,nr2,nr3, &
+ call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,bmat,nr1_,nr2_,nr3_, &
 &                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  deallocate(strf)
  !

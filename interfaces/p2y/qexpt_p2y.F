@@ -26,18 +26,22 @@ module pw_export_module
   use pars
   use iotk_module
   implicit none
+  private
   save
 
-  integer, parameter, private:: nstrx = 300
+  integer, parameter :: nstrx = 300
 
 ! PWSCF data
   complex(SP),allocatable :: pw_evec(:,:) ! check 
   public                  :: pw_evec
+ 
+  CHARACTER(iotk_attlenx) :: attr
 
   public :: pw_openindex, pw_closeindex, pw_dimensions
   public :: pw_cell, pw_symmetry, pw_kpoints, pw_other
   public :: pw_gvectors, pw_igkindex, pw_eigenvalues
-  public :: pw_wfcstart, pw_wfcstop, pw_wfck
+  public :: pw_wfcstart, pw_wfcstop, pw_wfck, pw_atoms
+  public :: qexpt_read_planewaves, qexpt_read_header
   public :: fmt_is_pwexport
 
 contains 
@@ -540,6 +544,92 @@ contains
       IF ( PRESENT(format_version) )   format_version  = TRIM(format_version_)
       !
     END SUBROUTINE qexpt_read_header
+
+    !------------------------------------------------------------------------
+    SUBROUTINE qexpt_read_planewaves( iunit, ecutwfc, ecutrho, npwx, &
+                                      nr1, nr2, nr3, ngm, igv, cutoff_units, ierr )
+      !------------------------------------------------------------------------
+      !
+      INTEGER,                INTENT(IN)  :: iunit
+      INTEGER,      OPTIONAL, INTENT(OUT) :: npwx, nr1, nr2, nr3, ngm
+      INTEGER,      OPTIONAL, INTENT(OUT) :: igv(:,:)
+      REAL(DP),     OPTIONAL, INTENT(OUT) :: ecutwfc, ecutrho
+      CHARACTER(*), OPTIONAL, INTENT(OUT) :: cutoff_units
+      INTEGER,                INTENT(OUT) :: ierr
+      !
+      INTEGER        :: npwx_, nr1_, nr2_, nr3_, ngm_
+      REAL(DP)       :: ecutwfc_, ecutrho_
+      CHARACTER(256) :: cutoff_units_
+      !
+
+      ierr = 0
+      !
+      ! ... dimensions
+      !
+      CALL iotk_scan_begin( iunit, "Other_parameters", IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "Cutoff", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "wfc", ecutwfc_ ,IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "rho", ecutrho_ ,IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "units", cutoff_units_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "Space_grid", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "nr1", nr1_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "nr2", nr2_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "nr3", nr3_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_end( iunit, 'Other_parameters', IERR=ierr)
+      IF (ierr/=0) RETURN
+
+      !
+      !
+      ! ... Main G grid (density)
+      !
+      CALL iotk_scan_begin( iunit, "Main_grid", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "npw", ngm_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      IF ( PRESENT( igv ) ) THEN
+          !
+          CALL iotk_scan_dat( iunit, "g", igv(1:3, 1:ngm_) , IERR=ierr)
+          IF (ierr/=0) RETURN
+          !
+      ENDIF
+      !
+      CALL iotk_scan_end( iunit, "Main_grid", IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_begin( iunit, "Wfc_grids", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "npwx", npwx_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_end( iunit, "Wfc_grids", IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      !
+      IF ( PRESENT( ecutwfc ) )           ecutwfc      = ecutwfc_
+      IF ( PRESENT( ecutrho ) )           ecutrho      = ecutrho_
+      IF ( PRESENT( npwx ) )              npwx         = npwx_
+      IF ( PRESENT( nr1 ) )               nr1          = nr1_
+      IF ( PRESENT( nr2 ) )               nr2          = nr2_
+      IF ( PRESENT( nr3 ) )               nr3          = nr3_
+      IF ( PRESENT( ngm ) )               ngm          = ngm_
+      IF ( PRESENT( cutoff_units ) )      cutoff_units = TRIM( cutoff_units_ )
+      !
+    END SUBROUTINE qexpt_read_planewaves
 
 end module pw_export_module
 

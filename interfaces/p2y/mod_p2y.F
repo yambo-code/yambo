@@ -202,9 +202,17 @@ contains
      !
      call pw_dimensions(pw_unit)
      !   
+     call qexpt_read_planewaves(pw_unit, ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_, ierr=ierr)
+     if (ierr/=0) call errore('qexpt_read_planewaves','fmt problem',ABS(ierr))
+     !
      ! data not read
      nelec_=0
      nsp_=0
+     !
+     nr1s_=nr1_
+     nr2s_=nr2_
+     nr3s_=nr3_
+     ngms_=ngm_
      !
    case ("qexml")
      !
@@ -216,7 +224,9 @@ contains
      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
      call qexml_read_spin(lspinorb=l_spin_orbit, ierr=ierr)
      if (ierr/=0) call errore('qexml_read_spin','fmt problem',ABS(ierr))
-     call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+     call qexml_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
+&                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
+&                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
      if (ierr/=0) call errore('qexml_read_planewaves','fmt problem',ABS(ierr))
      call qexml_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
      if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))
@@ -231,7 +241,9 @@ contains
      if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
      call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
-     call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,ngm=ngm_, ierr=ierr)
+     call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
+&                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
+&                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_planewaves','fmt problem I',ABS(ierr))
      call qexsd_read_spin(lspinorb=l_spin_orbit, noncolin=noncolin_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_spin','fmt problem',ABS(ierr))
@@ -657,7 +669,7 @@ contains
    use com,                   ONLY : msg, error
    character(lchlen) :: lch
    type(bz_samp) :: k
-   integer i1,ik
+   integer i1,ik,nfft_tmp(3)
    !
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
 
@@ -691,9 +703,11 @@ contains
       !
       if (.not.allocated(igv_)) call errore('qexsd_read_gk','igv_ not alloc',10)
       !
-      call qexsd_fft2igv_map(ngm_, igv_, nfft_, dims_only=.TRUE.)
-      YAMBO_ALLOC(fft2igv_,(product(nfft_)))
-      call qexsd_fft2igv_map(ngm_, igv_, nfft_, fft2igv_)
+      nfft_tmp=0   ! redefined in qexsd_fft2igv_map
+      !
+      call qexsd_fft2igv_map(ngm_, igv_, nfft_tmp, dims_only=.TRUE.)
+      YAMBO_ALLOC(fft2igv_,(product(nfft_tmp)))
+      call qexsd_fft2igv_map(ngm_, igv_, nfft_tmp, fft2igv_)
       !
       if (n_spin_pw_/=1.and.n_spin_pw_/=2.and.n_spin_pw_/=4) &
 &               call errore('qexsd_read_gk','invalid n_spin_pw_',10)
@@ -703,7 +717,7 @@ contains
         call qexsd_read_gk(ik, n_spin_pw_, npwk=npwk_, igkv=igkv_, ierr=ierr)
         if (ierr/=0) call errore('qexsd_read_gk','fmt error',ABS(ierr))
         !
-        call qexsd_igk_map( nfft_, fft2igv_, npwk_, igkv_, index_ )
+        call qexsd_igk_map( nfft_tmp, fft2igv_, npwk_, igkv_, index_ )
         !
         pw_igk_(1:npwk_, ik)= index_(1:npwk_) 
         wf_nc_k(ik) = npwk_

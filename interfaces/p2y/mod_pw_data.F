@@ -45,7 +45,9 @@ module pw_data
   logical                    :: trevsym_
 
 ! Planewaves
-  integer                    :: ngm_, npwx_
+  integer                    :: npwx_
+  integer                    :: nr1_,nr2_,nr3_,ngm_
+  integer                    :: nr1s_,nr2s_,nr3s_,ngms_
   real(DP)                   :: ecutwfc_
   real(DP)                   :: ecutrho_
   integer, allocatable       :: igv_(:,:)

@@ -38,7 +38,9 @@ end module
 
 module cell_base
   use kinds, only : DP
+  ! bohr^3 units
   real(DP) :: omega
+  ! bohr^-1 units
   real(DP) :: tpiba
 end module
 

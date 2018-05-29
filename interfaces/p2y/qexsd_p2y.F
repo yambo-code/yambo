@@ -1611,11 +1611,13 @@ CONTAINS
       integer :: gv_min, gv_max
       logical :: dims_only_
 
-      do i = 1, 3
-        gv_min=minval(igv(i,:))
-        gv_max=maxval(igv(i,:))
-        nfft(i)=gv_max-gv_min+1
-      enddo
+      if (any(nfft(:)<=0)) then
+        do i = 1, 3
+          gv_min=minval(igv(i,:))
+          gv_max=maxval(igv(i,:))
+          nfft(i)=gv_max-gv_min+1
+        enddo
+      endif
 
       dims_only_=.false.
       if (present(dims_only)) dims_only_=dims_only

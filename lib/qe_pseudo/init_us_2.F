@@ -19,7 +19,7 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   !  On output:
   !      vkb_(npwx,nkb) : beta functions (npw_ <= npwx)
   !
-  USE kinds,      ONLY : DP
+  USE kinds,      ONLY : DP, SP
   USE ions_base,  ONLY : nat, ntyp => nsp, ityp, tau
   USE cell_base,  ONLY : tpiba
   USE constants,  ONLY : tpi
@@ -34,8 +34,8 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   implicit none
   !
   INTEGER, INTENT (IN) :: npw_, igk_ (npw_)
-  REAL(dp), INTENT(IN) :: q_(3)
-  COMPLEX(dp), INTENT(OUT) :: vkb_ (npwx, nkb)
+  REAL(SP), INTENT(IN) :: q_(3)
+  COMPLEX(SP), INTENT(OUT) :: vkb_ (npwx, nkb)
   !
   !     Local variables
   !
@@ -61,9 +61,9 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
   allocate (  gk( 3, npw_))    
   !
   do ig = 1, npw_
-     gk (1,ig) = q_(1) + g(1, igk_(ig) )
-     gk (2,ig) = q_(2) + g(2, igk_(ig) )
-     gk (3,ig) = q_(3) + g(3, igk_(ig) )
+     gk (1,ig) = real(q_(1),DP) + g(1, igk_(ig) )
+     gk (2,ig) = real(q_(2),DP) + g(2, igk_(ig) )
+     gk (3,ig) = real(q_(3),DP) + g(3, igk_(ig) )
      qg (ig) = gk(1, ig)**2 +  gk(2, ig)**2 + gk(3, ig)**2
   enddo
   !
@@ -127,9 +127,9 @@ subroutine init_us_2 (npw_, igk_, q_, vkb_)
         ! ordering: first all betas for atoms of type 1
         !           then  all betas for atoms of type 2  and so on
         if (ityp (na) .eq.nt) then
-           arg = (q_(1) * tau (1, na) + &
-                  q_(2) * tau (2, na) + &
-                  q_(3) * tau (3, na) ) * tpi
+           arg = (real(q_(1),DP) * tau (1, na) + &
+                  real(q_(2),DP) * tau (2, na) + &
+                  real(q_(3),DP) * tau (3, na) ) * tpi
            phase = CMPLX(cos (arg), - sin (arg) ,kind=DP)
            do ig = 1, npw_
               sk (ig) = eigts1 (mill(1,igk_(ig)), na) * &

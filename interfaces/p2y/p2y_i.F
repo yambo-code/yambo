@@ -272,7 +272,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
    call allocate_bec_type(nkb, wf_nb_io, becp)
    !
-   call init_us_2(wf_nc_k(ik),wf_igk(1:wf_nc_k(ik),ik),xk_(:,ik),vkb)
+   call init_us_2(wf_nc_k(ik),wf_igk(1:wf_nc_k(ik),ik),real(xk_(:,ik)),vkb)
    call calbec(wf_nc_k(ik),vkb,wf_disk(:,1,:),becp,wf_nb_io) 
    !
    call s_psi(wf_ncx,wf_nc_k(ik),wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))

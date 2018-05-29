@@ -101,7 +101,7 @@ MODULE uspp
   ! - Clebsch-Gordan coefficients "ap", auxiliary variables "lpx", "lpl"
   ! - beta and q functions of the solid
   !
-  USE kinds, ONLY: DP
+  USE kinds, ONLY: DP, SP
   USE parameters, ONLY: lmaxx, lqmax
   IMPLICIT NONE
   PRIVATE
@@ -137,7 +137,7 @@ MODULE uspp
        okvan = .FALSE.,&  ! if .TRUE. at least one pseudo is Vanderbilt
        nlcc_any=.FALSE.   ! if .TRUE. at least one pseudo has core corrections
   !
-  COMPLEX(DP), ALLOCATABLE, TARGET :: &
+  COMPLEX(SP), ALLOCATABLE, TARGET :: &
        vkb(:,:)                ! all beta functions in reciprocal space
   REAL(DP), ALLOCATABLE :: &
        becsum(:,:,:)           ! \sum_i f(i) <psi(i)|beta_l><beta_m|psi(i)>

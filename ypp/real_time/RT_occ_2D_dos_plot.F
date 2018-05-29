@@ -51,7 +51,7 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
 &                         el_dos_max,el_dos_spin(2)
  real(SP),allocatable  :: spin_factors(:,:,:)
  integer               :: i_RT,i_E,i_spin,i_T,i_k,i_b
- logical               :: l_sum_equilibrium,l_separate_eh
+ logical               :: l_sum_equilibrium,l_separate_eh,space_printed
  type(PP_indexes)      :: px
  !
  call section('*','Electr. Time-dependent DOS')
@@ -130,16 +130,18 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
    !
    ! Output file
    !
+   space_printed=.false.
+   !
    do i_E=1,DOS_E_steps
      dos_E=DOS_E_range(1)+real(i_E,SP)*delta_E
      !
-     if(dos_E>En%E_VBM(1)+DOS_broadening .and. dos_E<En%E_CBm(1)-DOS_broadening) then
-       if(l_separate_eh) then
-         call RT_output("space 2D_occ_dos")
-       endif
-       l_separate_eh=.false.
+     if ( dos_E>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
+     &    dos_E<En%E_CBm(1)-DOS_broadening-epsilon(1._SP)         ) then
+       if(l_separate_eh.and.(.not.space_printed)) call RT_output("space 2D_occ_dos")
+       space_printed=.true.
        cycle
      endif
+     !
      if(n_spin==1) then
        call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      else

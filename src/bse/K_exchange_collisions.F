@@ -23,10 +23,9 @@
 !
 subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
- use drivers,        ONLY:l_col_cut
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
- use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
+ use R_lattice,      ONLY:g_rot,qindx_X,bz_samp
  use timing_m,       ONLY:timing
  implicit none
  !
@@ -35,7 +34,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  ! Work Space
  !
- logical :: divide_by_qpg
  integer :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_spin,i_k_bz,i_k,i_s,i_g1,i_g2,i_p_bz,i_p,&
 &           i_sp,i_T_el_last_with_identity_sym,i_T_grp_last_with_identity_sym,i_T_grp_p
  !
@@ -44,8 +42,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  if (allocated( BS_T_grp(i_T_grp)%O_x )) return
  !
  call timing('T_space EXX Osc.',OPR='start')
- !
- divide_by_qpg=.not.l_col_cut
  !
  ! Allocate
  !
@@ -93,10 +89,9 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
        call scatter_Bamp(K_EXCH_collision)
        !
-!$omp parallel do default(shared), private(i_g1,i_g2)
+!$omp parallel do default(shared), private(i_g1)
        do i_g1=1,BS_n_g_exch
-         if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-         if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
+         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
 !$omp end parallel do
      else
@@ -114,8 +109,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
 !$omp parallel do default(shared), private(i_g1)
      do i_g1=1,BS_n_g_exch
-       if (     divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)/bare_qpg(iq,i_g1)
-       if (.not.divide_by_qpg) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
+       BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
 !$omp end parallel do
      !

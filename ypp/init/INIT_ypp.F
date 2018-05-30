@@ -441,7 +441,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
  if (l_bands) then
-   call initactivate(1,"cooIn NormN NelFac DOSERange DOSESteps DOS_broad")
+   call initactivate(1,"cooIn cooOut NormN NelFac DOSERange DOSESteps DOS_broad")
    call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_bands BANDS_built_in")
  endif

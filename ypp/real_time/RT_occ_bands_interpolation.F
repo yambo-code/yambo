@@ -28,7 +28,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
- use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,INTERP_grid,CIRCUIT_k
+ use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
@@ -199,8 +199,6 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    headings(5)='occ(dw)'
    n_values=5
  endif
- !
- coo_out=coo_in
  !
  do i_T=1,n_T_steps
    !

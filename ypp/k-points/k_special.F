@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine k_special()
+subroutine k_special(LIST)
  !
  use pars,                ONLY:SP,schlen,lchlen
  use units,               ONLY:pi
@@ -38,10 +38,12 @@ subroutine k_special()
  !
 #include<memory.h>
  !
+ logical :: LIST
+ !
  ! Work Space
  ! 
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
- real(SP)         :: trial_b(3,3),K_norm,k_(3),a_,b_,c_
+ real(SP)         :: trial_b(3,3),K_norm,k_(3),ap,bp,cp,fp,ep
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
  !
@@ -99,28 +101,75 @@ subroutine k_special()
      SPECIAL_k%pt(4,:)=(/0. ,1.  ,0.  /)
      SPECIAL_k_label(4)='H'
      !
-   case('FC-ORTHOROMBIC')
+   case('FC-ORTHOROMBIC (b<a)')
      !
-     ! http://lamp.tu-graz.ac.at/~hadley/ss1/bzones/orthorhombic.php
+     ap=pi/a(1,1)
+     bp=pi/a(1,2)
+     cp=pi/a(3,3)
      !
-     a_=a(1,1)*2.
-     b_=a(1,2)*2.
-     c_=a(3,3)
+     call orthorombic_lengths(bp,ap)
      !
-     SPECIAL_k%nbz=6
+     SPECIAL_k%nbz=10
      !
      SPECIAL_k%pt(1,:)=(/0.,0.,0./)
      SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/pi/a_,0.,0./)
-     SPECIAL_k_label(2)='Y'
-     SPECIAL_k%pt(3,:)=(/0.,0.,c_/pi/)
-     SPECIAL_k_label(3)='Z'
-     SPECIAL_k%pt(4,:)=(/pi/a_,0.,pi/c_/)
-     SPECIAL_k_label(4)='T'
-     SPECIAL_k%pt(5,:)=(/pi/2./a_,pi/2./b_,0./)
-     SPECIAL_k_label(5)='S'
-     SPECIAL_k%pt(6,:)=(/pi/2./a_,pi/2./b_,pi/c_/)
-     SPECIAL_k_label(6)='R'
+     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0.,0.,cp/)
+     SPECIAL_k_label(2)='Z'
+     !
+     SPECIAL_k%pt(3,:)=(/ap,0.,0./)
+     SPECIAL_k_label(3)='X'
+     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0.,0.,cp/)
+     SPECIAL_k_label(4)='A'
+     !
+     SPECIAL_k_label(5)='Y'
+     SPECIAL_k%pt(5,:)=(/0.,fp,0./)
+     SPECIAL_k_label(6)='T'
+     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0.,0.,cp/)
+     !
+     SPECIAL_k_label(7)='S'
+     SPECIAL_k%pt(7,:)=(/ap/2.,bp/2.,0./)
+     SPECIAL_k_label(8)='R'
+     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0.,0.,cp/)
+     !
+     SPECIAL_k_label(9)='X1'
+     SPECIAL_k%pt(9,:)=(/ap,ep,0./)
+     SPECIAL_k_label(10)='A1'
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0.,0.,cp/)
+     !
+   case('FC-ORTHOROMBIC (b>a)')
+     !
+     ap=pi/a(1,1)
+     bp=pi/a(1,2)
+     cp=pi/a(3,3)
+     !
+     call orthorombic_lengths(ap,bp)
+     !
+     SPECIAL_k%nbz=10
+     !
+     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k_label(1)='G'
+     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0.,0.,cp/)
+     SPECIAL_k_label(2)='Z'
+     !
+     SPECIAL_k%pt(3,:)=(/fp,0.,0./)
+     SPECIAL_k_label(3)='X'
+     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0.,0.,cp/)
+     SPECIAL_k_label(4)='A'
+     !
+     SPECIAL_k_label(5)='Y'
+     SPECIAL_k%pt(5,:)=(/0.,bp,0./)
+     SPECIAL_k_label(6)='T'
+     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0.,0.,cp/)
+     !
+     SPECIAL_k_label(7)='S'
+     SPECIAL_k%pt(7,:)=(/ap/2.,bp/2.,0./)
+     SPECIAL_k_label(8)='R'
+     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0.,0.,cp/)
+     !
+     SPECIAL_k_label(9)='X1'
+     SPECIAL_k%pt(9,:)=(/ep,bp,0./)
+     SPECIAL_k_label(10)='A1'
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0.,0.,cp/)
      !
    case('CUB')
      !
@@ -180,7 +229,7 @@ subroutine k_special()
  !
  ! Report and rotation to appropriate basis
  !
- if (l_high_sym_pts) then
+ if (l_high_sym_pts.or.LIST) then
    call section("p","Special K-points list ["//trim(coo_out)//"]")
    live_timing_is_on=.false.
    do ik=1,SPECIAL_k%nbz
@@ -191,6 +240,7 @@ subroutine k_special()
      if (l_high_sym_pts) SPECIAL_k%pt(ik,:)=k_
    enddo
    live_timing_is_on=.true.
+   if (LIST) return
  else
    do ik=1,SPECIAL_k%nbz
      call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
@@ -270,4 +320,16 @@ subroutine k_special()
    !
  endif
  !
+ contains
+   !
+   subroutine orthorombic_lengths(xp,yp)
+    !
+    real(SP) :: dp,xp,yp
+    !
+    dp=sqrt(xp**2 + yp**2)/2.
+    fp=2*dp**2/xp
+    ep=xp-fp
+    !
+   end subroutine
+   !
 end subroutine

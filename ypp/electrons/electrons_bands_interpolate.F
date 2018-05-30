@@ -23,7 +23,7 @@
 !
 subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
 &                         CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_E_and_k_db,SPECIAL_k,&
@@ -51,6 +51,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
  real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
+ character(schlen)     :: coo_out_
  integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ID_dE_interp,ik_special
  integer,  allocatable :: int_distances(:)
  !
@@ -79,10 +80,17 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    USER_k%nbz =USER_k%nbz-1
    USER_k%nibz=USER_k%nbz
    !
-   coo_out="iku"
+   if (USER_k%nbz==0) then
+     call k_special(.TRUE.)
+     call error("No points given in input")
+   endif
+   !
+   coo_out_=coo_out
+   coo_out ="iku"
    do ik=1,USER_k%nbz
      call K_transform(USER_k%pt(ik,:),coo_in)
    enddo
+   coo_out =coo_out_
    !
  endif
  !

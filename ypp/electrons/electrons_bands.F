@@ -33,7 +33,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
+ use YPP,            ONLY:BANDS_steps,coo_out,K_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
 &                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
@@ -85,7 +85,7 @@ subroutine electrons_bands(Xk,Xen)
  PtsPath=BANDS_path
  n_path_pts=BANDS_steps
  !
- call k_special()
+ call k_special(.FALSE.)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  CIRCUIT_k%nibz=CIRCUIT_k%nbz
@@ -104,6 +104,7 @@ subroutine electrons_bands(Xk,Xen)
    !====================================
    if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
+   !
    call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
    !
    ! Perform interpolation of spinorial factors and magnetization
@@ -114,6 +115,8 @@ subroutine electrons_bands(Xk,Xen)
      call section('=','Interpolation@work: Spin and Magnetization')
      call electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_bands,spin_interpolated,magn_interpolated)
    endif
+   !
+   call set_real_printed_length(f_length=10,g_length=10)
    !
  endif
  !
@@ -138,11 +141,11 @@ subroutine electrons_bands(Xk,Xen)
    magn_values=0._SP
  endif
  !
- headings(1)=" |k| "
+ headings(1)=" |k| (a.u.) "
  do ib=BANDS_bands(1),BANDS_bands(2)
    headings(1+ib-BANDS_bands(1)+1)=' b'//intc(ib)
  enddo
- headings(nbands+2:nbands+4)=(/" kx  "," ky  "," kz  "/)
+ headings(nbands+2:nbands+4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
  !
  file_name_bands= " "
  file_name_grid = " "
@@ -247,7 +250,6 @@ subroutine electrons_bands(Xk,Xen)
  ! Bands on USER_k using the energy of the nearest in the internal list 
  !======================================================================
  !
- coo_out=coo_in
  values(1)=0._SP
  !
  if (BANDS_internal) then
@@ -293,14 +295,12 @@ subroutine electrons_bands(Xk,Xen)
    !
    values(1)=0._SP
    !
-   call set_real_printed_length(f_length=10,g_length=10)
-   !
    do ik=1,CIRCUIT_k%nbz
      !
      if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-tmp_k)
      if (ik<CIRCUIT_k%nbz) tmp_k=CIRCUIT_k%pt(ik,:)
      !
-     call K_transform(CIRCUIT_k%pt(ik,:),"iku")
+     call K_transform(CIRCUIT_k%pt(ik,:),'iku')
      !
      if(n_spinor==2) then
        spin_values(1,:)=values(1)

@@ -64,10 +64,12 @@ subroutine crystal_lattice()
  latt_a(2,:,4) = (/ 0.    , 1.      , 0.     /)*alat(1)
  latt_a(3,:,4) = (/ 0.    , 0.      , 1.     /)*alat(1)
  !
- lattice_name(5)='FC-ORTHOROMBIC'
+ if (a(1,2)<a(1,1)) lattice_name(5)='FC-ORTHOROMBIC (b<a)'
+ if (a(1,2)>a(1,1)) lattice_name(5)='FC-ORTHOROMBIC (b>a)'
  latt_a(1,:,5) = (/ a(1,1) , a(1,2) , 0.      /)
  latt_a(2,:,5) = (/-a(1,1) , a(1,2) , 0.      /)
  latt_a(3,:,5) = (/ 0.     , 0.     , alat(3) /)
+ !
  !
  call m3inv(a,a_m1)
  !

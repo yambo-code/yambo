@@ -26,6 +26,7 @@ module pseudo
  use pars,      ONLY:SP,DP,LP
  use electrons, ONLY:n_sp_pol
  use D_lattice, ONLY:n_atomic_species
+ use qe_pseudo_m, ONLY: qe_pseudo_deallocate
 #include <memory.h>
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
@@ -38,15 +39,23 @@ module pseudo
  integer,  allocatable:: pp_n_l_comp(:)
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
  !
- ! ABINIT and PWSCF KB & NLCC
+ ! ABINIT and PWSCF KB
  !=====================
  real(SP), allocatable:: pp_kbs(:,:)
  real(SP), allocatable:: pp_kb(:,:,:,:)
  real(SP), allocatable:: pp_kbd(:,:,:,:)
+ ! 
+ ! NLCC 
+ !=====================
+ logical                 :: pp_has_nlcc=.FALSE. 
  complex(SP), allocatable:: pp_rhog_nlcc(:)
  complex(DP), allocatable:: pp_rho_nlcc(:)
  integer(LP), allocatable:: pp_has_nlcc_atom(:)
- logical                 :: pp_has_nlcc=.FALSE. 
+ ! 
+ ! USPP
+ !=====================
+ logical                 :: pp_is_uspp=.FALSE. 
+ logical                 :: qe_pseudo_alloc=.FALSE. 
  !
  ! PW (OLD)
  !=========
@@ -99,6 +108,11 @@ module pseudo
      YAMBO_FREE(pp_rho_nlcc)
      YAMBO_FREE(pp_has_nlcc_atom)
      pp_has_nlcc=.FALSE.
+   end subroutine
+   !
+   subroutine PP_uspp_free()
+     if (.not.qe_pseudo_alloc) return
+     call qe_pseudo_deallocate()
    end subroutine
    !
 end module pseudo

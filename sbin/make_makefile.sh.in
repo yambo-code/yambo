@@ -75,12 +75,12 @@ llibinclude="\$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ipetsc) \
 #
 case $target in
   yambo*)
-   llibs="$llibs -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-   llibs="$llibs \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
+   llibs="$llibs -lqe_pseudo -lmath77 -lslatec -llocal \$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
+   llibs="$llibs \$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft)"
     ;;
   a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
+   llibs="-lint_modules $llibs -lqe_pseudo -lmath77 -llocal \$(lscalapack) \$(llapack) \$(lblacs) \$(lblas) \$(lnetcdff) \$(lnetcdf) \$(lhdf5) \$(llibxc) \$(lfft) -lm"
    linclude="$linclude \$(inetcdff) \$(inetcdf) \$(ihdf5) \$(ilibxc)"
     ;;
   p2y*)

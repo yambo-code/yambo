@@ -28,5 +28,14 @@ MODULE us
   REAL(DP), ALLOCATABLE :: &
        tab_d2y(:,:,:)    ! for cubic splines
   !
+contains
+
+  subroutine us_deallocate()
+    if (allocated(qrad))    deallocate(qrad)
+    if (allocated(tab))     deallocate(tab)
+    if (allocated(tab_at))  deallocate(tab_at)
+    if (allocated(tab_d2y)) deallocate(tab_d2y)
+  end subroutine
+
 END MODULE us
 !

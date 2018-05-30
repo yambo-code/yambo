@@ -110,6 +110,12 @@ module pseudo
      pp_has_nlcc=.FALSE.
    end subroutine
    !
+   subroutine PP_uspp_alloc()
+     if (qe_pseudo_alloc) call PP_uspp_free()
+     call allocate_nlpot()
+     qe_pseudo_alloc=.true.
+! XXX
+   end subroutine
    subroutine PP_uspp_free()
      if (.not.qe_pseudo_alloc) return
      call qe_pseudo_deallocate()

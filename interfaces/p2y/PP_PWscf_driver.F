@@ -41,6 +41,7 @@ subroutine PP_PWscf_driver(k)
  use LIVE_t,                ONLY:live_timing
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index
+ use read_pseudo_mod,       ONLY: readpp
  implicit none
  !
  type(bz_samp),    intent(in)  :: k      ! K/Q points
@@ -53,8 +54,10 @@ subroutine PP_PWscf_driver(k)
  !
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
+ character(64)  :: input_dft="none"
  integer, external :: io_KB_pwscf
  integer, external :: io_NLCC_pwscf
+ integer, external :: io_USPP_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -140,6 +143,24 @@ subroutine PP_PWscf_driver(k)
    !
  endif
  !
+ ! write USPP data
+ !
+ if ( any(atoms%pseudo(:)%is_uspp) ) then
+   !
+   call qe_pseudo_init()
+   call readpp(input_dft)
+   !
+   call pre_init()
+   call allocate_nlpot()
+   call init_us_1()
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_USPP_pwscf(ID)
+   !
+!   call PP_uspp_free()
+   !
+ endif
+ !
  ! cleanup
  !
  call PP_free()
@@ -184,12 +205,10 @@ subroutine fill_atoms(atoms,struct)
  use pw_pseudo_module
  use D_lattice,         ONLY: n_atoms_species_max,n_atomic_species,n_atoms_species, &
 &                             atom_pos, Z_species,atomic_number
- use read_pseudo_mod,   ONLY: readpp
  implicit none
  type(pw_struct), intent(in) :: struct
  type(pw_atoms) :: atoms
  integer        :: i
- character(64)  :: input_dft="none"
  !
  ! Initialize atoms% types
  !
@@ -204,19 +223,6 @@ subroutine fill_atoms(atoms,struct)
  do i =1,n_atomic_species
    call fill_a_pseudo(psfile(i),atoms%pseudo(i))
  enddo
- !
- ! USPP data
- !
- if ( any(atoms%pseudo(:)%is_uspp) ) then
-   !
-   call qe_pseudo_init()
-   call readpp(input_dft)
-   !
-   call pre_init()
-   call allocate_nlpot()
-   call init_us_1()
-   !
- endif
  !
  return
  !

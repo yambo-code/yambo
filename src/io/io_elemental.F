@@ -22,10 +22,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                       DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
- use pars,    ONLY:SP,schlen,lchlen,nf90_SP
+ use pars,    ONLY:SP,DP,schlen,lchlen,nf90_SP
  use pointers,ONLY:linkC2R
  use netcdf
  use drivers, ONLY:list_dbs
@@ -44,6 +44,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
                                ! MENU = 1 (on) 0 (off)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+ real(DP),    optional :: D0,DB_D0
  complex(SP), optional :: C0,DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0,CH1(:)
@@ -56,6 +57,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  character(3)      :: MODE_
  integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
  real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
+ real(DP):: d_db(MAX_DB_ELEMENTS)
  complex(SP) :: c_db(MAX_DB_ELEMENTS)
  real(SP), pointer  :: RC0(:)
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
@@ -275,6 +277,43 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+size(R1)
  endif
  !
+ if (present(D0)) then
+   if (write_is_on(ID)) then
+     nf_error=nf90_put_var(io_unit(ID),io_netcdf_var(ID),D0,(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
+     if (present(DB_D0)) DB_D0=D0
+     if (present(VAR)) call msg(msg_where,VAR,real(D0)*local_unit)
+   else if (read_is_on(ID)) then
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),d_db(1),(/io_rec_pos(ID)/))
+     call netcdf_call(nf_error,ID)
+     if (DUMP_)          D0=d_db(1)
+     if (present(DB_D0)) DB_D0=d_db(1)
+     ch=""
+     if (io_mode(ID)==VERIFY.and.present(OP)) then
+       i_err=r_verify((/real(D0)/),(/real(d_db(1))/))
+       if (CHECK_) then
+         if (io_status(ID)==0) io_status(ID)=i_err
+         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+       else if (present(WARN)) then
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+       endif
+     endif
+     if (len_trim(ch)>0) then
+       call msg(msg_where,trim(ch),real(d_db(1))*local_unit)
+     else if (present(VAR)) then
+       call msg(msg_where,VAR,real(d_db(1))*local_unit)
+     endif
+   endif
+   !
+   ! DESCRIPTION
+   !
+   if (present(DESCRIPTION)) then
+     DESCRIPTION=VAR//trim(real2ch(real(D0)*local_unit))
+   endif
+   !
+   io_rec_pos(ID)=io_rec_pos(ID)+1
+   !
+ endif
  !
  if (present(C0)) then
    if (write_is_on(ID)) then

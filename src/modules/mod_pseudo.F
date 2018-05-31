@@ -26,7 +26,7 @@ module pseudo
  use pars,      ONLY:SP,DP,LP
  use electrons, ONLY:n_sp_pol
  use D_lattice, ONLY:n_atomic_species
- use qe_pseudo_m, ONLY: qe_pseudo_deallocate
+ use qe_pseudo_m, ONLY: qe_pseudo_deallocate, upf
 #include <memory.h>
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
@@ -113,8 +113,8 @@ module pseudo
    subroutine PP_uspp_alloc()
      if (qe_pseudo_alloc) call PP_uspp_free()
      call allocate_nlpot()
+     allocate(upf(n_atomic_species))
      qe_pseudo_alloc=.true.
-! XXX
    end subroutine
    subroutine PP_uspp_free()
      if (.not.qe_pseudo_alloc) return

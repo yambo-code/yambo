@@ -23,7 +23,7 @@
 !
 integer function io_USPP_pwscf(ID)
  !
- use pars,             ONLY: DP,SP,IP
+ use pars,             ONLY: DP,SP,LP
  use stderr,           ONLY: intc
  use IO_m,             ONLY: io_connect,io_disconnect,io_sec, &
 &                            io_elemental,io_bulk,io_header,&
@@ -43,8 +43,9 @@ integer function io_USPP_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: ik
- !
+ integer :: ik,i
+ integer(LP), allocatable :: lvar(:)
+
  ik=maxval(io_sec(ID,:))-1
  !
  io_USPP_pwscf=io_connect(desc="uspp_pp_pwscf",type=0,ID=ID)
@@ -107,7 +108,23 @@ integer function io_USPP_pwscf(ID)
  ! uspp_param
  call io_bulk(ID,VAR="nh",VAR_SZ=shape(nh))
  call io_bulk(ID,I1=nh)
- ! XXX add UPF data
+ !
+ allocate(lvar(nsp))
+ if (read_is_on(ID)) then
+   call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
+   call io_bulk(ID,L1=lvar)
+   do i = 1, nsp
+     upf(i)%tvanp= (lvar(i)==1)
+   enddo
+ else
+   lvar=0
+   do i = 1, nsp
+     if (upf(i)%tvanp) lvar(i)=1
+   enddo
+   call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
+   call io_bulk(ID,L1=lvar)
+ endif
+ deallocate(lvar)
  !
  ! uspp
  call io_bulk(ID,VAR="indv",VAR_SZ=shape(indv))

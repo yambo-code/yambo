@@ -44,23 +44,30 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  ! Same procedure for the current
  !
- use pars,          ONLY:SP
- use com,           ONLY:warning
+ use pars,          ONLY:SP,DP
+ use com,           ONLY:warning,error
+ use vec_operate,   ONLY:c2a
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,b
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
- use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
- use wave_func,     ONLY:WF
+ use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
+ use wave_func,     ONLY:WF,wf_nc_k,wf_igk,wf_ncx
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
+ use qe_pseudo_m,   ONLY:qe_ngm=>ngm, nkb,vkb,becp,becsum,tpiba,&
+&                        allocate_bec_type,deallocate_bec_type,calbec
 #if defined _RT
  use drivers,       ONLY:l_real_time
- use timing_m,       ONLY:timing
+ use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
  use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)::k
  type(levels) ::E       
@@ -75,8 +82,11 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
- real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ integer    :: npwk,ig
+ real(SP)   :: xk(3),f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
  complex(SP):: WF_der(fft_size,n_spinor,3)
+ complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:)
+ complex(SP), allocatable :: wf_SP(:,:)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
 #if defined _RT
@@ -98,6 +108,28 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !  J         =0._SP
  !  J_no_sym  =0._SP
  !endif
+ 
+ !
+ ! USPP contribution
+ ! 
+ if (l_rho.and.pp_is_uspp) then
+   !
+   if (.not. qe_pseudo_alloc) call error(' [PP] qe_pseudo not alloc in XC driver')
+   !
+   YAMBO_ALLOC(rhog_aug_DP,(fft_size,n_sp_pol))
+   YAMBO_ALLOC(wf_DP,(fft_size))
+   YAMBO_ALLOC(wf_SP,(wf_ncx,n_spinor))
+   !
+   ! allocate becp for 1 band at a time, 
+   ! this should be ideally improved, but requires to rearrange
+   ! the loop below over wfcs
+   !
+   call allocate_bec_type(nkb, 1, becp)
+   !
+   becsum=0.0
+   rhog_aug_DP=0.0
+   !
+ endif
  !
  warn_done=.false.
  !
@@ -106,6 +138,18 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,k%nibz
+     !
+     ! compuute < beta_j | psi_n >
+     if (l_rho.and.pp_is_uspp) then
+       !
+       call c2a(b,k%pt(ik,:),xk,mode="ki2a")
+       xk=xk/tpiba
+       !
+       npwk=wf_nc_k(ik)
+       call init_us_2(npwk,wf_igk(1:npwk,ik),xk,vkb)
+       !
+     endif
+     !
      do ib=bands_range(1),bands_range(2)
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
@@ -143,6 +187,29 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          do i_spinor=1,n_spinor
            rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
          enddo
+         !
+         ! uspp becsum
+         !
+         if (pp_is_uspp) then
+           !
+           do i_spinor = 1, n_spinor
+             wf_DP(:)=WF%c(:,i_spinor,i_wf)
+#if defined _FFTW
+             call fft_3d(wf_DP,fft_dim,-1,fftw_plan)
+#else
+             call fft_3d(wf_DP,fft_dim,-2)
+#endif
+             do ig = 1, npwk
+               wf_SP(ig,i_spinor)=wf_DP(fft_g_table(wf_igk(ig,ik),1))
+             enddo
+             !
+           enddo
+           !
+           call calbec(npwk,vkb,wf_SP,becp,1)
+           call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/) )
+           !
+         endif
+         !
        endif
        !
        !if (l_J) then
@@ -162,6 +229,30 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
      enddo
    enddo
  enddo
+ !
+ ! finalize USPP contribution
+ !
+ if (l_rho.and.pp_is_uspp) then
+   !
+   rhog_aug_DP=0.0
+   call addusdens(qe_ngm,n_sp_pol,fft_size,rhog_aug_DP)
+   !
+   do i_sp_pol=1,n_sp_pol
+#if defined _FFTW
+      call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1,fftw_plan)
+#else
+      call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1)
+#endif
+      rho_no_sym(:)=rho_no_sym(:)+real(rhog_aug_DP(:,i_sp_pol),SP)
+   enddo
+   !
+   YAMBO_FREE(rhog_aug_DP)
+   YAMBO_FREE(wf_DP)
+   YAMBO_FREE(wf_SP)
+   !
+   call deallocate_bec_type(becp)
+   !
+ endif
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)

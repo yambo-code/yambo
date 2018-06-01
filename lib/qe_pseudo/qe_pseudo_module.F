@@ -41,6 +41,7 @@ module qe_pseudo_m
   use uspp_param
   use uspp
   use pseudo_types
+  use becmod
   implicit none
 
 contains

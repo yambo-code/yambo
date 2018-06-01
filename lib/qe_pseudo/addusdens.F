@@ -7,7 +7,7 @@
 !
 !
 !----------------------------------------------------------------------
-SUBROUTINE addusdens(ngm,nspin_mag,rhog)
+SUBROUTINE addusdens(ngm,nspin_mag,ldrho,rhog)
   !----------------------------------------------------------------------
   !
   ! ... Add US contribution to the charge density to rho(G)
@@ -20,13 +20,13 @@ SUBROUTINE addusdens(ngm,nspin_mag,rhog)
   IMPLICIT NONE
   !
   !
-  INTEGER,          INTENT(in)    :: ngm,nspin_mag
-  COMPLEX(kind=DP), INTENT(inout) :: rhog(ngm,nspin_mag)
+  INTEGER,          INTENT(in)    :: ngm,nspin_mag,ldrho
+  COMPLEX(kind=DP), INTENT(inout) :: rhog(ldrho,nspin_mag)
   !
 !  IF ( tqr ) THEN
 !     CALL addusdens_r(rhog)
 !  ELSE
-     CALL addusdens_g(ngm,nspin_mag,rhog)
+     CALL addusdens_g(ngm,nspin_mag,ldrho,rhog)
 !  ENDIF
   !
   RETURN
@@ -34,7 +34,7 @@ SUBROUTINE addusdens(ngm,nspin_mag,rhog)
 END SUBROUTINE addusdens
 !
 !----------------------------------------------------------------------
-SUBROUTINE addusdens_g(ngm,nspin_mag,rho)
+SUBROUTINE addusdens_g(ngm,nspin_mag,ldrho,rho)
   !----------------------------------------------------------------------
   !
   !  This routine adds to the charge density rho(G) in reciprocal space
@@ -55,8 +55,8 @@ SUBROUTINE addusdens_g(ngm,nspin_mag,rho)
   !
   IMPLICIT NONE
   !
-  INTEGER,     INTENT(in)    :: ngm,nspin_mag
-  COMPLEX(DP), INTENT(inout) :: rho(ngm,nspin_mag)
+  INTEGER,     INTENT(in)    :: ngm,nspin_mag,ldrho
+  COMPLEX(DP), INTENT(inout) :: rho(ldrho,nspin_mag)
   !
   !     here the local variables
   !

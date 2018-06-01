@@ -262,7 +262,15 @@ subroutine k_special(LIST)
  enddo
  if (n_lines==0) n_lines=1
  !
- if (n_lines==1.and..not.l_high_sym_pts) return
+ if (n_lines==1.and..not.l_high_sym_pts) then
+   !
+   do ik=1,SPECIAL_k%nbz
+     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+   enddo
+   !
+   return
+   !
+ endif
  !
  CIRCUIT_k%nbz=n_path_pts* ( n_lines -1 )
  !
@@ -296,6 +304,9 @@ subroutine k_special(LIST)
    do ik=1,CIRCUIT_k%nbz
      call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
    enddo
+   do ik=1,SPECIAL_k%nbz
+     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
+   enddo
    !
    if (l_high_sym_pts) then
      !
@@ -322,11 +333,9 @@ subroutine k_special(LIST)
      YAMBO_FREE(SPECIAL_k%pt)
      YAMBO_FREE(CIRCUIT_k%pt)
      !
-   endif
-   !
-   if (l_high_sym_pts) then
      call of_open_close(k_f_name(1))
      call of_open_close(k_f_name(2))
+     !
    endif
    !
  endif

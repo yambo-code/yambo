@@ -30,7 +30,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close,error,file_exists
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands
+&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
@@ -49,7 +49,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Work space
  !
  type(bz_samp)         :: RT_k
- type(levels)          :: RT_E,CIRCUIT_E
+ type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
@@ -92,7 +92,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E)
+ call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
@@ -241,6 +241,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
        values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
+       if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV
+       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
+         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
+       endif
+       !
        if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
        if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then

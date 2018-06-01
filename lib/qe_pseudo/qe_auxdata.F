@@ -47,6 +47,7 @@ end module
 module noncollin_module
   logical :: noncolin
   integer :: npol
+  integer :: nspin_mag
 end module
 
 module ions_base

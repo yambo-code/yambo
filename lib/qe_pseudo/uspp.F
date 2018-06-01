@@ -139,9 +139,9 @@ MODULE uspp
   !
   COMPLEX(SP), ALLOCATABLE, TARGET :: &
        vkb(:,:)                ! all beta functions in reciprocal space
-  REAL(DP), ALLOCATABLE :: &
+  REAL(SP), ALLOCATABLE :: &
        becsum(:,:,:)           ! \sum_i f(i) <psi(i)|beta_l><beta_m|psi(i)>
-  REAL(DP), ALLOCATABLE :: &
+  REAL(SP), ALLOCATABLE :: &
        ebecsum(:,:,:)          ! \sum_i f(i) et(i) <psi(i)|beta_l><beta_m|psi(i)>
   REAL(DP), ALLOCATABLE :: &
        dvan(:,:,:),           &! the D functions of the solid

@@ -36,6 +36,7 @@ module qe_pseudo_m
   use klist
   use wvfct
   use gvecw
+  use gvect
   use us
   use uspp_param
   use uspp

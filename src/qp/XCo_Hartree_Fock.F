@@ -106,6 +106,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  endif
  !
+ ! USPP init
+ !
+ call PP_uspp_init()
+ !
  call timing('HF',OPR='start')
  !
  ! allocation again

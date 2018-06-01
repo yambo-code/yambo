@@ -117,6 +117,7 @@ subroutine qe_pseudo_init()
  allocate(strf(ngm_,nsp_))
  !
  bmat=bmat/qe_tpiba
+ !
  call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,bmat,nr1_,nr2_,nr3_, &
 &                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
  deallocate(strf)

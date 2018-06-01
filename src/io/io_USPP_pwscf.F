@@ -27,14 +27,16 @@ integer function io_USPP_pwscf(ID)
  use stderr,           ONLY: intc
  use IO_m,             ONLY: io_connect,io_disconnect,io_sec, &
 &                            io_elemental,io_bulk,io_header,&
-&                            read_is_on
+&                            read_is_on,io_mode,DUMP
+ use D_lattice,        ONLY: n_atoms,n_atomic_species
+ use electrons,        ONLY: l_spin_orbit,n_spinor
+ !
  use pseudo,           ONLY: pp_is_uspp,PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
  use qe_pseudo_m,      ONLY: nspin, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
 &                            npwx, gcutw, ecutwfc, lspinorb, tpiba
-! use gvect,            ONLY: eigts1, eigts2, eigts3, g, ngm, mill
- use us,               ONLY: nqxq, dq, nqx, tab, qrad
+ use us,               ONLY: nqxq, nqx, tab, qrad
  use uspp,             ONLY: nhtol, nhtoj, nhtolm, ijtoh, dvan, qq_at, indv,&
-&                            qq_so, dvan_so, okvan, indv_ijkb0, nkb, nkbus
+&                            qq_so, dvan_so, indv_ijkb0, nkb, nkbus, okvan
  use uspp_param,       ONLY: upf, lmaxq, nbetam, nh, nhm, lmaxkb 
  !
  implicit none
@@ -43,59 +45,99 @@ integer function io_USPP_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: ik,i
+ integer :: i
  integer(LP), allocatable :: lvar(:)
+ logical :: ltmp
 
- ik=maxval(io_sec(ID,:))-1
- !
+
  io_USPP_pwscf=io_connect(desc="uspp_pp_pwscf",type=0,ID=ID)
+ if (io_USPP_pwscf/=0) goto 1
+ !
+ io_USPP_pwscf=io_header(ID,IMPOSE_SN=.true.)
  if (io_USPP_pwscf/=0) goto 1
  !
  ! Dimensions
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_USPP_pwscf=io_header(ID,IMPOSE_SN=.true.)
-   if (io_USPP_pwscf/=0) goto 1
+   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   call io_elemental(ID,L0=l_spin_orbit,DB_L0=lspinorb,CHECK=.true.,OP=(/"=="/))
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
-   call io_elemental(ID,L0=lspinorb,VAR="lspinorb")
-   call io_elemental(ID,L0=noncolin,VAR="noncolin")
-   call io_elemental(ID,I0=npol,VAR="npol")
-   call io_elemental(ID,I0=nspin,VAR="nspin")
-   call io_elemental(ID,I0=nat,VAR="nat")
-   call io_elemental(ID,I0=nsp,VAR="nsp")
-   call io_elemental(ID,I0=npwx,VAR="npwx")
-   call io_elemental(ID,D0=omega,VAR="omega")
-   call io_elemental(ID,D0=tpiba,VAR="tpiba")
-   call io_elemental(ID,D0=gcutw,VAR="gcutw")
-   call io_elemental(ID,D0=ecutwfc,VAR="ecutwfc")
-   !
-   call io_elemental(ID,VAR="USPP_PARAM",VAR_SZ=4,MENU=0)
-   call io_elemental(ID,I0=lmaxq,VAR="lmaxq")
-   call io_elemental(ID,I0=lmaxkb,VAR="lmaxkb")
-   call io_elemental(ID,I0=nbetam,VAR="nbetam")
-   call io_elemental(ID,I0=nhm,VAR="nhm")
-   !
-   call io_elemental(ID,VAR="USPP",VAR_SZ=3,MENU=0)
-   call io_elemental(ID,I0=nkb,VAR="nkb")
-   call io_elemental(ID,I0=nkbus,VAR="nkbus")
-   call io_elemental(ID,L0=okvan,VAR="okvan")
-   !
-   call io_elemental(ID,VAR="US",VAR_SZ=3,MENU=0)
-   call io_elemental(ID,I0=nqxq,VAR="nqxq")
-   call io_elemental(ID,I0=nqx,VAR="nqx")
-   call io_elemental(ID,D0=dq,VAR="dq")
-   !
+   ltmp=(n_spinor==2)
+   call io_elemental(ID,L0=ltmp,DB_L0=noncolin,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=nspin,DB_I0=nspin)
+   call io_elemental(ID,I0=n_atoms,DB_I0=nat,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,I0=n_atomic_species,DB_I0=nsp,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
+!   call io_elemental(ID,I0=npwx,DB_I0=npwx,VAR="npwx")
+!   call io_elemental(ID,D0=omega,DB_D0=omega,VAR="omega")
+!   call io_elemental(ID,D0=tpiba,DB_D0=tpiba,VAR="tpiba")
+!   call io_elemental(ID,D0=gcutw,DB_D0=gcutw,VAR="gcutw")
+!   call io_elemental(ID,D0=ecutwfc,DB_D0=ecutwfc,VAR="ecutwfc")
+!   call io_elemental(ID,VAR="",VAR_SZ=0)
+   !
+!   call io_elemental(ID,VAR="USPP_PARAM",VAR_SZ=4,MENU=0)
+!   call io_elemental(ID,I0=lmaxq,DB_I0=lmaxq,VAR="lmaxq")
+!   call io_elemental(ID,I0=lmaxkb,DB_I0=lmaxkb,VAR="lmaxkb")
+!   call io_elemental(ID,I0=nbetam,DB_I0=nbetam,VAR="nbetam")
+!   call io_elemental(ID,I0=nhm,DB_I0=nhm,VAR="nhm")
+!   call io_elemental(ID,VAR="",VAR_SZ=0)
+   !
+!   call io_elemental(ID,VAR="USPP",VAR_SZ=3,MENU=0)
+!   call io_elemental(ID,I0=nkb,DB_I0=nkb,VAR="nkb")
+!   call io_elemental(ID,I0=nkbus,DB_I0=nkbus,VAR="nkbus")
+!   call io_elemental(ID,L0=okvan,DB_L0=okvan,VAR="okvan")
+!   call io_elemental(ID,VAR="",VAR_SZ=0)
+   !
+!   call io_elemental(ID,VAR="US",VAR_SZ=3,MENU=0)
+!   call io_elemental(ID,I0=nqxq,DB_I0=nqxq,VAR="nqxq")
+!   call io_elemental(ID,I0=nqx,DB_I0=nqx,VAR="nqx")
+!   call io_elemental(ID,D0=dq,DB_D0=dq,VAR="dq")
+!   call io_elemental(ID,VAR="",VAR_SZ=0)
+   !
  endif
+ !
+ ! system and lattice
+ call io_bulk(ID,VAR="npol",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=npol)
+ call io_bulk(ID,VAR="npwx",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=npwx)
+ call io_bulk(ID,VAR="omega",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=omega)
+ call io_bulk(ID,VAR="tpiba",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=tpiba)
+ call io_bulk(ID,VAR="gcutw",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=gcutw)
+ call io_bulk(ID,VAR="ecutwfc",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=ecutwfc)
+
+ !
+ ! USPP param
+ call io_bulk(ID,VAR="USPP_param",VAR_SZ=(/4/))
+ call io_bulk(ID,I1=(/lmaxq,lmaxkb,nbetam,nhm/))
+
+ !
+ ! USPP module
+ call io_bulk(ID,VAR="nkb",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nkb)
+ call io_bulk(ID,VAR="nkbus",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nkbus)
+ !
+ if (read_is_on(ID)) okvan=.true.
+ !
+ ! US module
+ call io_bulk(ID,VAR="nqxq",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nqxq)
+ call io_bulk(ID,VAR="nqx",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nqx)
  !
  if (read_is_on(ID)) then
    if (qe_pseudo_alloc) call PP_uspp_free()
    call PP_uspp_alloc()
    pp_is_uspp=.true.
  endif
+
  !
  ! qe_pseudo_m
  call io_bulk(ID,VAR="ityp",VAR_SZ=shape(ityp))

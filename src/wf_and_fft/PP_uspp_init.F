@@ -1,0 +1,108 @@
+!
+!        Copyright (C) 2000-2017 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AF, IM
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine PP_uspp_init()
+ !
+ ! checks and reads USPP DB, and, in case, initialize
+ ! general USPP vars
+ !
+ use pars,          ONLY:SP,DP
+ use vec_operate,   ONLY:c2a
+ use R_lattice,     ONLY:b,g_vec,ng_vec
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP
+ !
+ use qe_pseudo_m,   ONLY:qe_tpiba=>tpiba,qe_nat=>nat,qe_tau=>tau,qe_nsp=>nsp,qe_ityp=>ityp
+ use qe_pseudo_m,   ONLY:omega,ecutwfc,gcutw,npwx
+ use gvect,         ONLY:qe_eigts1=>eigts1, qe_eigts2=>eigts2, qe_eigts3=>eigts3,&
+&                        qe_g=>g, qe_ngm=>ngm, qe_mill=>mill
+ !
+#include<memory.h>
+ !
+ ! Work Space 
+ !
+ integer  :: io_err,ID
+ integer  :: gv_min,gv_max,i,ig,nfft(3)
+ real(SP) :: v1(3),qe_b(3,3)
+ complex(DP), allocatable :: strf(:,:)
+ !
+ integer, external :: io_USPP_pwscf
+
+ !
+ ! in case, assume qe_pseudo already alloc and init
+ !
+ if (qe_pseudo_alloc) return
+
+ !
+ ! perform main data IO
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ io_err=io_USPP_pwscf(ID)
+ !
+ pp_is_uspp=(io_err==0)
+ !
+ if (.not.pp_is_uspp) then
+   call PP_uspp_free()
+   return
+ endif
+ 
+ !
+ ! init g vectors and structure factors
+ !
+ qe_ngm=ng_vec
+ !
+ YAMBO_ALLOC(qe_g,(3,qe_ngm))
+ YAMBO_ALLOC(qe_mill,(3,qe_ngm))
+ !
+ do ig = 1, ng_vec
+    !
+    !qe_g(:,ig)=g_vec(ig,:)
+    call c2a(b,g_vec(ig,:),v1,'ki2c')
+    qe_g(:,ig)=v1/qe_tpiba
+    !
+    call c2a(b,g_vec(ig,:),v1,'ki2a')
+    qe_mill(:,ig)=nint(v1)
+    !
+ enddo
+ !
+ do i = 1, 3
+   gv_min=minval(qe_mill(i,:))
+   gv_max=maxval(qe_mill(i,:))
+   nfft(i)=gv_max-gv_min+1
+ enddo
+ !
+ YAMBO_ALLOC(qe_eigts1,(-nfft(1):nfft(1),qe_nat))
+ YAMBO_ALLOC(qe_eigts2,(-nfft(2):nfft(2),qe_nat))
+ YAMBO_ALLOC(qe_eigts3,(-nfft(3):nfft(3),qe_nat))
+ YAMBO_ALLOC(strf,(qe_ngm,qe_nsp))
+ !
+ qe_b=transpose(b)/qe_tpiba
+ !
+ call struc_fact(qe_nat,qe_tau,qe_nsp,qe_ityp,qe_ngm,qe_g,qe_b,&
+&                nfft(1),nfft(2),nfft(3), &
+&                .false.,strf,.true.,qe_eigts1,qe_eigts2,qe_eigts3)
+ YAMBO_FREE(strf)
+ !
+ return
+ !
+end subroutine PP_uspp_init

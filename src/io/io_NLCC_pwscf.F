@@ -38,10 +38,7 @@ integer function io_NLCC_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: ik
- !
- ik=maxval(io_sec(ID,:))-1
- !
+ 
  io_nlcc_pwscf=io_connect(desc="nlcc_pp_pwscf",type=0,ID=ID)
  if (io_nlcc_pwscf/=0) goto 1
  !

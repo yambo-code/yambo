@@ -284,13 +284,13 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(DB_D0)) DB_D0=D0
      if (present(VAR)) call msg(msg_where,VAR,real(D0)*local_unit)
    else if (read_is_on(ID)) then
-     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),d_db(1),(/io_rec_pos(ID)/))
+     nf_error=nf90_get_var(io_unit(ID),io_netcdf_var(ID),r_db(1),(/io_rec_pos(ID)/))
      call netcdf_call(nf_error,ID)
-     if (DUMP_)          D0=d_db(1)
-     if (present(DB_D0)) DB_D0=d_db(1)
+     if (DUMP_)          D0=r_db(1)
+     if (present(DB_D0)) DB_D0=r_db(1)
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=r_verify((/real(D0)/),(/real(d_db(1))/))
+       i_err=r_verify((/real(D0,SP)/),(/r_db(1)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
@@ -299,16 +299,16 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
        endif
      endif
      if (len_trim(ch)>0) then
-       call msg(msg_where,trim(ch),real(d_db(1))*local_unit)
+       call msg(msg_where,trim(ch),r_db(1)*local_unit)
      else if (present(VAR)) then
-       call msg(msg_where,VAR,real(d_db(1))*local_unit)
+       call msg(msg_where,VAR,r_db(1)*local_unit)
      endif
    endif
    !
    ! DESCRIPTION
    !
    if (present(DESCRIPTION)) then
-     DESCRIPTION=VAR//trim(real2ch(real(D0)*local_unit))
+     DESCRIPTION=VAR//trim(real2ch(real(D0,SP)*local_unit))
    endif
    !
    io_rec_pos(ID)=io_rec_pos(ID)+1

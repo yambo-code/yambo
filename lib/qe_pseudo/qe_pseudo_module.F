@@ -39,15 +39,28 @@ module qe_pseudo_m
   use us
   use uspp_param
   use uspp
+  use pseudo_types
   implicit none
 
 contains
 
+  subroutine qe_pseudo_allocate()
+    implicit none
+    integer :: i
+    !
+    allocate(upf(nsp))
+    do i = 1, nsp
+      call nullify_pseudo_upf(upf(i))
+    enddo
+    !
+    allocate(ityp(nsp))
+    allocate(tau(3,nat))
+    !
+    call allocate_nlpot()
+    ! 
+  end subroutine
+
   subroutine qe_pseudo_deallocate()
-    use us
-    use uspp
-    use uspp_param,    only : upf
-    use pseudo_types
     use atom,          only : rgrid, msh
     use radial_grids
     implicit none
@@ -63,6 +76,9 @@ contains
       deallocate(upf)
     endif
     !
+    if (allocated(ityp)) deallocate(ityp)
+    if (allocated(tau))  deallocate(tau)
+    !
     if (allocated(rgrid)) then
       do i = 1, size(rgrid)
         call deallocate_radial_grid(rgrid(i))
@@ -70,6 +86,13 @@ contains
       deallocate(rgrid)
     endif
     if (allocated(msh)) deallocate(msh)
+    !
+    if (allocated(g))      deallocate(g)
+    if (allocated(gg))     deallocate(gg)
+    if (allocated(mill))   deallocate(mill)
+    if (allocated(eigts1)) deallocate(eigts1)
+    if (allocated(eigts2)) deallocate(eigts2)
+    if (allocated(eigts3)) deallocate(eigts3)
     !
   end subroutine qe_pseudo_deallocate
 

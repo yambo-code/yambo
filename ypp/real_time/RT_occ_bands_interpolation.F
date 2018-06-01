@@ -69,6 +69,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    call error('Occupations for spin polarized systems not implemented')
  endif
  !
+ if (l_RT_lifetimes .and. .not.allocated(RT_carriers%NEQ_Lifetime)  ) then
+   call error('No scattering => no Lifetimes')
+ endif
+ !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
  if (file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) BANDS_path= " "

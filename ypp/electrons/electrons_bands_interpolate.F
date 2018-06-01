@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
+subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
  !
  use pars,           ONLY:SP,schlen
  use YPP,            ONLY:BANDS_steps,coo_in,coo_out,K_transform,INTERP_grid,&
@@ -34,7 +34,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  use com,            ONLY:msg,error,warning
  use vec_operate,    ONLY:c2a,v_norm
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ
+ use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,&
+&                         INTERP_dE_id,INTERP_E_id
  use interfaces,     ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
@@ -43,7 +44,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  type(levels),  intent(in)  :: Xen
  type(levels),  intent(out) :: CIRCUIT_E
  integer      , intent(in)  :: BANDS_range(2)
- integer      , intent(out) :: ID_E_interp
  type(levels),  intent(out), optional :: CIRCUIT_dE
  type(levels),  intent(out), optional :: INTERP_E
  !
@@ -52,7 +52,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
  real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
  character(schlen)     :: coo_out_
- integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ID_dE_interp,ik_special
+ integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ik_special
  integer,  allocatable :: int_distances(:)
  !
  ! Input file parsing
@@ -190,8 +190,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
    call INTERPOLATION_grid(INTERP_k,'i',INTERP_grid)
  endif
  !
- ! Brillouine zone setup
- !========================
+ ! Brillouin zone setup
+ !======================
  call INTERPOLATION_BZ_setup(Xk)
  !
  ! Energies to be interpolated
@@ -222,18 +222,18 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- call INTERPOLATION_coefficients(R2D=E_in,k=Xk,Nk=Xk%nibz,ID=ID_E_interp)
+ call INTERPOLATION_coefficients(R2D=E_in,k=Xk,Nk=Xk%nibz,ID=INTERP_E_id)
  !
  if (allocated(dE_in).and.present(CIRCUIT_dE)) then
-   call INTERPOLATION_coefficients(R2D=dE_in,k=Xk,Nk=Xk%nibz,ID=ID_dE_interp)
+   call INTERPOLATION_coefficients(R2D=dE_in,k=Xk,Nk=Xk%nibz,ID=INTERP_dE_id)
  endif
  !
  if (BANDS_steps> 0) then
    YAMBO_ALLOC(CIRCUIT_E%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
-   call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=ID_E_interp)
+   call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_E%E,ID=INTERP_E_id)
    if (allocated(dE_in).and.present(CIRCUIT_dE)) then
      YAMBO_ALLOC(CIRCUIT_dE%E,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nbz,n_sp_pol))
-     call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=ID_dE_interp)
+     call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=CIRCUIT_dE%E,ID=INTERP_dE_id)
    endif
    YAMBO_ALLOC(CIRCUIT_k%weights,(CIRCUIT_k%nbz))
    CIRCUIT_k%weights=1./real( CIRCUIT_k%nbz )
@@ -241,7 +241,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,ID_E_interp,BANDS_range,CIRCUIT_E,
  !
  if(all(INTERP_grid>0)) then
    YAMBO_ALLOC(INTERP_E%E,(BANDS_range(1):BANDS_range(2),INTERP_k%nibz,n_sp_pol))
-   call INTERPOLATION_BZ(K=INTERP_k,R2D=INTERP_E%E,ID=ID_E_interp)
+   call INTERPOLATION_BZ(K=INTERP_k,R2D=INTERP_E%E,ID=INTERP_E_id)
  endif
  !
  ! Alignement

@@ -1,5 +1,1 @@
-RT_obj =
-#if defined _YPP_RT
-RT_obj = RT_DBs_initialize.o
-#endif
-objs = INIT_ypp.o INIT_load_ypp.o QP_DBs_initialize.o ${RT_obj}
+objs = INIT_ypp.o INIT_load_ypp.o QP_DBs_initialize.o

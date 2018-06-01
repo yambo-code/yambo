@@ -227,7 +227,7 @@ subroutine k_special(LIST)
    return
  endif
  !
- ! Report and rotation to appropriate basis
+ ! Report 
  !
  if (l_high_sym_pts.or.LIST) then
    call section("p","Special K-points list ["//trim(coo_out)//"]")
@@ -237,15 +237,16 @@ subroutine k_special(LIST)
      call K_transform(k_,'cc')
      write (dumb_ch,'(3f12.7,2x,a)') k_,SPECIAL_k_label(ik)
      call msg("s",trim(dumb_ch))
-     if (l_high_sym_pts) SPECIAL_k%pt(ik,:)=k_
    enddo
    live_timing_is_on=.true.
-   if (LIST) return
- else
-   do ik=1,SPECIAL_k%nbz
-     call c2a(v_in=SPECIAL_k%pt(ik,:),mode='kc2i')
-   enddo
  endif
+ !
+ if (LIST) then
+   YAMBO_FREE(SPECIAL_k%pt)
+   return
+ endif
+ !
+ ! Path builder
  !
  call string_split(PtsPath,Path_strings)
  !
@@ -292,6 +293,10 @@ subroutine k_special(LIST)
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
    CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
    !
+   do ik=1,CIRCUIT_k%nbz
+     call c2a(v_in=CIRCUIT_k%pt(ik,:),mode='kc2i')
+   enddo
+   !
    if (l_high_sym_pts) then
      !
      k_f_name(1)="path_points"
@@ -303,6 +308,9 @@ subroutine k_special(LIST)
      call msg('o path PWSCF',"#"," ",INDENT=0)
      !
      do ik=1,CIRCUIT_k%nbz
+       !
+       call K_transform(CIRCUIT_k%pt(ik,:3),'iku')
+       !
        call msg('o  path',"",CIRCUIT_k%pt(ik,:),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
        call msg_deliver('path',trim(of_string))
@@ -310,6 +318,9 @@ subroutine k_special(LIST)
        if (len_trim(CIRCUIT_k_label(ik))>0) of_string= trim(of_string)//' ['// CIRCUIT_k_label(ik)//']'
        call msg_deliver('PWSCF',trim(of_string))
      enddo
+     !
+     YAMBO_FREE(SPECIAL_k%pt)
+     YAMBO_FREE(CIRCUIT_k%pt)
      !
    endif
    !

@@ -45,7 +45,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  real(SP), allocatable     :: all_vec(:,:),all_vec_mod(:),lattice_vec_mod(:),tmp_vec(:,:)
  integer,  allocatable     :: indx(:)
  integer                   :: i1,i2,i3,is,R_max(3),nR_max,n_vec,istart,iend,nstar
- logical                   :: add_vec,vec_in_star
+ logical                   :: add_vec,INTERPOLATION_vec_in_star
  real(SP),  parameter      :: zero=2e-05
  !
  YAMBO_ALLOC(int_sop,(3,3,nsym))
@@ -132,7 +132,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
      !
      do i3=istart,iend
        !
-       if(vec_in_star(lattice_vectors(:,i3),nstar,star_vec)) then
+       if(INTERPOLATION_vec_in_star(lattice_vectors(:,i3),nstar,star_vec)) then
          add_vec=.false.
          continue
        endif
@@ -166,20 +166,3 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  YAMBO_FREE(indx)
  !
 end subroutine INTERPOLATION_BZ_setup
-
-logical function vec_in_star(vec,nstar,star_vec)
-  use pars,         ONLY:SP
-  use vec_operate,  ONLY:v_is_zero
-  implicit none
-  integer,  intent(in)  :: nstar
-  real(SP), intent(in)  :: vec(3),star_vec(3,nstar)
-  !
-  ! Work Space
-  !
-  integer         :: i1
-  !---------------------------------------------------------------------  
-  vec_in_star=.FALSE.
-  do i1=1,nstar
-    if(v_is_zero(star_vec(:,i1)-vec(:))) vec_in_star=.TRUE.
-  enddo
-end function vec_in_star

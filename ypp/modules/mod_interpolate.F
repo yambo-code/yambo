@@ -39,6 +39,12 @@ module interpolate
  !
  character(schlen) :: INTERPOLATION_name = " "
  !
+ ! ID's
+ !
+ integer :: INTERP_E_id =0
+ integer :: INTERP_dE_id=0
+ integer :: INTERP_RT_id=0
+ !
  ! Interpolation type
  !
  character(schlen), parameter :: REAL1D   = "REAL1D"
@@ -83,14 +89,13 @@ module interpolate
      integer,       intent(in)            :: ID
    end subroutine INTERPOLATION_BZ
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
+   subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
      type(bz_samp), intent(in)  :: Xk
      type(levels),  intent(in)  :: Xen
      integer      , intent(in)  :: BANDS_range(2)
-     integer      , intent(out) :: ID_interp
      type(levels),  intent(out) :: CIRCUIT_E
      type(levels),  intent(out), optional  :: INTERP_E
      type(levels),  intent(out), optional  :: CIRCUIT_dE
@@ -100,15 +105,26 @@ module interpolate
  !  
  contains
    !
-   subroutine reset_interpolation(ID)
+   subroutine INTERPOLATION_reset(ID)
      implicit none
-     integer, intent(in) :: ID
+     integer, intent(in), optional :: ID
      !
+     if (present(ID)) then
+       if (ID>0) call elemental_reset(ID)
+     else
+       if (INTERP_E_id >0) call elemental_reset(INTERP_E_id)
+       if (INTERP_dE_id>0) call elemental_reset(INTERP_dE_id)
+       if (INTERP_RT_id>0) call elemental_reset(INTERP_RT_id)
+     endif
+     !
+   end subroutine INTERPOLATION_reset
+   !
+   subroutine elemental_reset(ID)
+     integer, intent(in) :: ID
      interpls(ID)%ndim=0
      interpls(ID)%interp_type=""
      if(allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
-     !
-   end subroutine reset_interpolation
+   end subroutine
    !
    subroutine get_ID(ID)
      implicit none

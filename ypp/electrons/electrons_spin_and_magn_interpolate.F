@@ -68,7 +68,7 @@ subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_out
    MSG='SPIN'
    if(i_sp>1) MSG='QUIET'
    call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nbz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
-&                                   Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,i_sp),tmp_factor_out,trim(MSG),.false.)
+&                                 Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,i_sp),tmp_factor_out,trim(MSG),.false.)
    do ik=1,CIRCUIT_k%nbz
      spin_output(:,ik,i_sp)=tmp_factor_out(:,ik)
    enddo
@@ -79,7 +79,7 @@ subroutine electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_out
    MSG='MAG'
    if(i_dir>1) MSG='QUIET'
    call Nearest_kpt_interpolation(Xk%nibz,CIRCUIT_k%nbz,BANDS_range,n_states,1,1,tmp_table,Xk%pt,CIRCUIT_k%pt, &
-&                                   Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,2+i_dir),tmp_factor_out,trim(MSG),.false.)
+&                                 Xk%weights,CIRCUIT_k%weights,tmp_factor_in(:,2+i_dir),tmp_factor_out,trim(MSG),.false.)
    do ik=1,CIRCUIT_k%nbz
      magn_output(:,ik,i_dir)=tmp_factor_out(:,ik)
    enddo

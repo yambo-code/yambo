@@ -440,10 +440,29 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
  !
+#if defined _YPP_RT
+ if (l_bands.or.l_RT_bands) then
+#else
  if (l_bands) then
-   call initactivate(1,"cooIn cooOut NormN NelFac DOSERange DOSESteps DOS_broad")
-   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+#endif
+   !
+   call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
+   !
+   if (l_bands) then
+     !
+     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+     call initactivate(1,"DOSERange DOSESteps DOS_broad ")
+     !
+#if defined _YPP_RT
+   else if (l_RT_bands) then
+     !
+     call initactivate(1,"NNInterp")
+#endif
+     !
+   endif
+   !
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_bands BANDS_built_in")
+   !
  endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
@@ -536,7 +555,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
-   if (l_RT_bands)       call initactivate(1,"cooIn BANDS_kpts BANDS_steps NNInterp")
    if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
    if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
@@ -603,9 +621,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
- if (.not.l_init_QP) l_init_QP=l_RT_occupations.or.l_RT_lifetimes
+ if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands
  if (     l_init_QP) call INIT_QP(" ")
- if (l_RT_DBs)  call RT_DBs_initialize()
 #else
  ! GPL_EXCLUDE_END
  if (l_init_QP) call INIT_QP(" ")
@@ -685,13 +702,16 @@ contains
      if (nk==0) U_k_pts=0.
      call PARSER_array(mode="write",VAR=field,DESC='K points list',N=n_u_k_pts,M=3,R_v=U_k_pts)
    else if (field=="BANDS_kpts") then
-     if (nk> 0) n_u_interp_pts=nk
-     if (nk==0) n_u_interp_pts=1
-     YAMBO_ALLOC(U_interp_pts,(n_u_interp_pts,3))
-     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_interp_pts)
-     if (nk==0) U_interp_pts=0.
-     call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',&
-&                      N=n_u_interp_pts,M=3,R_v=U_interp_pts)
+     if (nk> 0) then 
+       n_u_interp_pts=nk
+       YAMBO_ALLOC(U_interp_pts,(n_u_interp_pts,3))
+       call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_interp_pts)
+       call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',&
+&                        N=n_u_interp_pts,M=3,R_v=U_interp_pts)
+     else
+       n_u_interp_pts=0
+       call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',N=0,M=3)
+     endif
    else if (field=="Qpts") then
      if (nk> 0) n_u_q_pts=nk
      if (nk==0) n_u_q_pts=1

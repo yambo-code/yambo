@@ -292,7 +292,7 @@ subroutine ypp_INIT_load(defs)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'GammaRadius','[a.u.] Maximum distance from gamma',gamma_radius,verb_level=V_general)
- call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output,verb_level=V_general)
+ call it(defs,'OutputAlat','[a.u.] Lattice constant used for "alat" ouput format',alat_used_for_output)
  !
  ! GPL_EXCLUDE_END
  !

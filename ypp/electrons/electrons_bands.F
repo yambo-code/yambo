@@ -44,7 +44,7 @@ subroutine electrons_bands(Xk,Xen)
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc,set_real_printed_length
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
+ use interpolate,    ONLY:INTERPOLATION_reset,electrons_bands_interpolate
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
@@ -57,7 +57,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
- integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp,i_f
+ integer               :: i1,is,ik,ikbz,ib,nbands,i_f
  real(SP)              :: tmp_k(3),delta_Ef
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
@@ -105,7 +105,7 @@ subroutine electrons_bands(Xk,Xen)
    if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
    !
-   call electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
+   call electrons_bands_interpolate(Xen,Xk,BANDS_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
    !
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
@@ -120,7 +120,7 @@ subroutine electrons_bands(Xk,Xen)
    !
  endif
  !
- call reset_interpolation(ID_interp)
+ call INTERPOLATION_reset( )
  !
  ! HEADINGS...
  !
@@ -215,8 +215,8 @@ subroutine electrons_bands(Xk,Xen)
    enddo
    !
    do ikbz=1,INTERP_k%nbz
-     call K_transform(INTERP_k%ptbz(ikbz,:),"iku")
      values(2:4)=INTERP_k%ptbz(ikbz,:)
+     call K_transform(values(2:4),"iku")
      ik=INTERP_k%sstar(ikbz,1)
      values(1)=real(ik,SP)
      do is=1,n_sp_pol
@@ -297,10 +297,11 @@ subroutine electrons_bands(Xk,Xen)
    !
    do ik=1,CIRCUIT_k%nbz
      !
-     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-tmp_k)
-     if (ik<CIRCUIT_k%nbz) tmp_k=CIRCUIT_k%pt(ik,:)
+     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
      !
-     call K_transform(CIRCUIT_k%pt(ik,:),'iku')
+     tmp_k=CIRCUIT_k%pt(ik,:)
+     !
+     call K_transform(tmp_k,'iku')
      !
      if(n_spinor==2) then
        spin_values(1,:)=values(1)
@@ -317,7 +318,7 @@ subroutine electrons_bands(Xk,Xen)
          values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+&
 &                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
-       values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:)
+       values(nbands+2:nbands+4)=tmp_k
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) then
          of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
@@ -341,7 +342,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          do i1=1,2
            spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
-           spin_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
+           spin_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
          !
@@ -349,7 +350,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          do i1=1,3
            magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
-           magn_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
+           magn_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
        endif

@@ -55,7 +55,7 @@ contains
       call nullify_pseudo_upf(upf(i))
     enddo
     !
-    allocate(ityp(nsp))
+    allocate(ityp(nat))
     allocate(tau(3,nat))
     !
     call allocate_nlpot()

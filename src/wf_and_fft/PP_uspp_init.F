@@ -35,7 +35,7 @@ subroutine PP_uspp_init()
  use qe_pseudo_m,   ONLY:qe_tpiba=>tpiba,qe_nat=>nat,qe_tau=>tau,qe_nsp=>nsp,qe_ityp=>ityp
  use qe_pseudo_m,   ONLY:omega,ecutwfc,gcutw,npwx
  use gvect,         ONLY:qe_eigts1=>eigts1, qe_eigts2=>eigts2, qe_eigts3=>eigts3,&
-&                        qe_g=>g, qe_ngm=>ngm, qe_mill=>mill
+&                        qe_g=>g, qe_gg=>gg, qe_ngm=>ngm, qe_mill=>mill
  !
 #include<memory.h>
  !
@@ -72,6 +72,7 @@ subroutine PP_uspp_init()
  qe_ngm=ng_vec
  !
  YAMBO_ALLOC(qe_g,(3,qe_ngm))
+ YAMBO_ALLOC(qe_gg,(qe_ngm))
  YAMBO_ALLOC(qe_mill,(3,qe_ngm))
  !
  do ig = 1, ng_vec
@@ -79,6 +80,8 @@ subroutine PP_uspp_init()
     !qe_g(:,ig)=g_vec(ig,:)
     call c2a(b,g_vec(ig,:),v1,'ki2c')
     qe_g(:,ig)=v1/qe_tpiba
+    !
+    qe_gg(ig)=sum(qe_g(:,ig)**2)
     !
     call c2a(b,g_vec(ig,:),v1,'ki2a')
     qe_mill(:,ig)=nint(v1)

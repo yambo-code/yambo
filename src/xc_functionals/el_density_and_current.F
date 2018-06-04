@@ -124,8 +124,6 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    ! this should be ideally improved, but requires to rearrange
    ! the loop below over wfcs
    !
-   call allocate_bec_type(nkb, 1, becp)
-   !
    becsum=0.0
    rhog_aug_DP=0.0
    !
@@ -144,6 +142,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !
        call c2a(b,k%pt(ik,:),xk,mode="ki2a")
        xk=xk/tpiba
+       !
+       call allocate_bec_type(nkb, bands_range(2), becp)
+       becp%k=0.0
        !
        npwk=wf_nc_k(ik)
        call init_us_2(npwk,wf_igk(1:npwk,ik),xk,vkb)
@@ -227,6 +228,11 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !endif
        !
      enddo
+     !
+     if (l_rho.and.pp_is_uspp) then
+        call deallocate_bec_type(becp)
+     endif
+     !
    enddo
  enddo
  !
@@ -249,8 +255,6 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    YAMBO_FREE(rhog_aug_DP)
    YAMBO_FREE(wf_DP)
    YAMBO_FREE(wf_SP)
-   !
-   call deallocate_bec_type(becp)
    !
  endif
  !

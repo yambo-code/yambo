@@ -88,8 +88,14 @@ integer function io_USPP_pwscf(ID)
 
  !
  ! USPP param
- call io_bulk(ID,VAR="USPP_param",VAR_SZ=(/4/))
- call io_bulk(ID,I1=(/lmaxq,lmaxkb,nbetam,nhm/))
+ call io_bulk(ID,VAR="lmaxq",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=lmaxq) 
+ call io_bulk(ID,VAR="lmaxkb",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=lmaxkb) 
+ call io_bulk(ID,VAR="nbetam",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nbetam) 
+ call io_bulk(ID,VAR="nhm",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nhm) 
 
  !
  ! USPP module

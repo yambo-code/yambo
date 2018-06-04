@@ -70,32 +70,6 @@ integer function io_USPP_pwscf(ID)
    call io_elemental(ID,I0=n_atomic_species,DB_I0=nsp,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
-!   call io_elemental(ID,I0=npwx,DB_I0=npwx,VAR="npwx")
-!   call io_elemental(ID,D0=omega,DB_D0=omega,VAR="omega")
-!   call io_elemental(ID,D0=tpiba,DB_D0=tpiba,VAR="tpiba")
-!   call io_elemental(ID,D0=gcutw,DB_D0=gcutw,VAR="gcutw")
-!   call io_elemental(ID,D0=ecutwfc,DB_D0=ecutwfc,VAR="ecutwfc")
-!   call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
-!   call io_elemental(ID,VAR="USPP_PARAM",VAR_SZ=4,MENU=0)
-!   call io_elemental(ID,I0=lmaxq,DB_I0=lmaxq,VAR="lmaxq")
-!   call io_elemental(ID,I0=lmaxkb,DB_I0=lmaxkb,VAR="lmaxkb")
-!   call io_elemental(ID,I0=nbetam,DB_I0=nbetam,VAR="nbetam")
-!   call io_elemental(ID,I0=nhm,DB_I0=nhm,VAR="nhm")
-!   call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
-!   call io_elemental(ID,VAR="USPP",VAR_SZ=3,MENU=0)
-!   call io_elemental(ID,I0=nkb,DB_I0=nkb,VAR="nkb")
-!   call io_elemental(ID,I0=nkbus,DB_I0=nkbus,VAR="nkbus")
-!   call io_elemental(ID,L0=okvan,DB_L0=okvan,VAR="okvan")
-!   call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
-!   call io_elemental(ID,VAR="US",VAR_SZ=3,MENU=0)
-!   call io_elemental(ID,I0=nqxq,DB_I0=nqxq,VAR="nqxq")
-!   call io_elemental(ID,I0=nqx,DB_I0=nqx,VAR="nqx")
-!   call io_elemental(ID,D0=dq,DB_D0=dq,VAR="dq")
-!   call io_elemental(ID,VAR="",VAR_SZ=0)
-   !
  endif
  !
  ! system and lattice
@@ -158,12 +132,25 @@ integer function io_USPP_pwscf(ID)
    do i = 1, nsp
      upf(i)%tvanp= (lvar(i)==1)
    enddo
+   !
+   call io_bulk(ID,VAR="has_so",VAR_SZ=shape(lvar))
+   call io_bulk(ID,L1=lvar)
+   do i = 1, nsp
+     upf(i)%has_so= (lvar(i)==1)
+   enddo
  else
    lvar=0
    do i = 1, nsp
      if (upf(i)%tvanp) lvar(i)=1
    enddo
    call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
+   call io_bulk(ID,L1=lvar)
+   !
+   lvar=0
+   do i = 1, nsp
+     if (upf(i)%has_so) lvar(i)=1
+   enddo
+   call io_bulk(ID,VAR="has_so",VAR_SZ=shape(lvar))
    call io_bulk(ID,L1=lvar)
  endif
  deallocate(lvar)

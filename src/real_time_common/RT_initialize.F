@@ -72,33 +72,40 @@ subroutine RT_initialize(E,k,q)
  ! Logicals
  !==========
  !
+ ! GPL_EXCLUDE_START
+ !
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ !
+ !...updates
  call parser('RTUpdateE',            l_RT_update_Energies)
+ call parser('RTUpdateSOC',          l_update_SOC)
  l_RT_rotate_DM                     =l_RT_update_Energies
  !
- ! GPL_EXCLUDE_START
- !
+ !...imposes
  call parser('RTskipImposeN',        l_skip_it)
+ if (l_skip_it) l_RT_impose_N_dN=.FALSE.
+ call parser('RTskipImposeE',        l_skip_it)
+ if (l_skip_it) l_RT_impose_E=.FALSE.
+ call parser('RTImpForMet',          l_RT_impose_for_metals)
+ !
+ !..lifetimes
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)
- if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
  call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
  call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
  call parser('RTEqScatt',            l_RT_include_eq_scatt)
- call parser('RTImpForMet',          l_RT_impose_for_metals)
  !
- call parser('RTskipImposeE',        l_skip_it)
- if (l_skip_it) l_RT_impose_E=.FALSE.
  !
+ !...evals
  call parser('RTEvalEnergy',         eval_energy)
  call parser('RTEvalEntropy',        eval_entropy)
  if(.not.eval_energy) eval_entropy=.false.
- !
  call parser('SaveGhistory',         SAVE_G_history)
- call parser('RTUpdateSOC',          l_update_SOC)
+ !
+ !...drivers
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
  !

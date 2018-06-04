@@ -41,7 +41,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  type(levels),  intent(inout) :: en
  type(bz_samp), intent(in)    :: k
  complex(SP),   intent(in)    :: dG_lesser(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
- real(SP),      intent(inout) :: OBSERVABLES(23)
+ real(SP),      intent(inout) :: OBSERVABLES(25)
  !
  ! Workspace
  !

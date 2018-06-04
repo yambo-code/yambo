@@ -69,7 +69,7 @@ subroutine RT_driver(E,X,k,q)
  !
  integer           :: io_REF
  character(schlen) :: sec_title(3)
- real(SP)          :: OBSERVABLES(23)
+ real(SP)          :: OBSERVABLES(25)
  !
  integer, external :: io_RT_components
  !
@@ -285,7 +285,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:23))
+   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================

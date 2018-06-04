@@ -187,7 +187,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('BGR')
-       data_to_dump(2:3) = VALUES(1:2)*HA2EV*1000._SP
+       data_to_dump(2:5) = VALUES(1:4)*HA2EV*1000._SP
      case('energy')
        if(     l_use_Hxc_collisions) data_to_dump(2:5) = VALUES(1:4)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)

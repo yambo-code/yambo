@@ -357,4 +357,56 @@ module stderr
      !
   end function
   !
+  subroutine STRING_to_LOWER(strIn)
+    character(len=*), intent(inout) :: strIn
+    integer :: i,j
+    do i = 1, len(strIn)
+      j = iachar(strIn(i:i))
+      if (j>= iachar("A") .and. j<=iachar("Z") ) j=j+32
+      strIn(i:i) = achar(j)
+    enddo
+  end subroutine
+  !
+  subroutine STRING_to_UPPER(strIn)
+    character(len=*), intent(inout) :: strIn
+    integer :: i,j
+    do i = 1, len(strIn)
+      j = iachar(strIn(i:i))
+      if (j>= iachar("a") .and. j<=iachar("z") ) j=j-32
+      strIn(i:i) = achar(j)
+    enddo
+  end subroutine
+  !
+  logical function STRING_match(strIn,MATCH)
+    !
+    ! Adapted from http://www.star.le.ac.uk/~cgp/fortran.html (25 May 2012)
+    ! Original author: Clive Page
+    !
+    character(len=*), intent(in) :: strIn
+    character(len=*), intent(in) :: MATCH
+    !
+    character(len=len(strIn)) :: str_
+    character(len=len(MATCH)) :: MATCH_
+    integer :: i,j
+    !
+    STRING_match=.FALSE.
+    !
+    if (len(strIn)/=len(MATCH)) return
+    !
+    do i = 1, len(strIn)
+      !
+      j = iachar(strIn(i:i))
+      if (j>= iachar("a") .and. j<=iachar("z") ) j=j-32
+      str_(i:i) = achar(j)
+      !
+      j = iachar(MATCH(i:i))
+      if (j>= iachar("a") .and. j<=iachar("z") ) j=j-32
+      MATCH_(i:i) = achar(j)
+      !
+    end do
+    !
+    STRING_match=trim(str_)==trim(MATCH_)
+    !
+  end function STRING_match
+  !
 end module stderr

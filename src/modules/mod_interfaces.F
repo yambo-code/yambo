@@ -27,12 +27,13 @@ module interfaces
  !
  interface
    !
-  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
      type(bz_samp) ::K
      character(*), OPTIONAL ::mode,OBJ
+     integer,      OPTIONAL ::n_bands
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )

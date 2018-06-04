@@ -506,7 +506,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
- H_potential="default"
+ H_potential="NONE"
  !
 #endif
  !
@@ -518,7 +518,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  SC_cycle_mixing=0.5_SP
  SC_rho_threshold=1.E-5_SP
  SC_up_W_iters=0
- SC_potential='default'
+ SC_potential='NONE'
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.

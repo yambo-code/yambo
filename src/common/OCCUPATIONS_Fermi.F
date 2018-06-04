@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  ! Mode = "FERMI" 
  !  Update the Fermi energy
@@ -53,10 +53,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  type(levels)  ::E
  type(bz_samp) ::K
  character(*), OPTIONAL ::mode,OBJ
+ integer,      OPTIONAL ::n_bands
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size
+ integer :: i1,is,ib,ik,ikbz,ik_rand,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero
  logical :: Fermi_is_converged
@@ -71,9 +72,12 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  !
  ! All energies are stored in E_sorted...
  !
+ nb_here=E%nb
+ if (present(n_bands)) nb_here=n_bands
+ !
  i1=0
  do ik=1,E%nk
-   do ib=1,E%nb
+   do ib=1,nb_here
      do is=1,n_sp_pol
        i1=i1+1
        index(i1,:)=(/ib,ik,is/)
@@ -81,11 +85,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
      enddo
    enddo
  enddo
- n_total_states=E%nk*E%nb*n_sp_pol
+ n_total_states=E%nk*nb_here*n_sp_pol
  !
  ! ... and sorted
  !
- call sort(arrin=E_sorted,indx=index_E_sorted)
+ call sort(arrin=E_sorted(:n_total_states),indx=index_E_sorted(:n_total_states))
  !
  ! First guess
  !
@@ -97,7 +101,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  !
  n_b_full_guess= nint( real(nel)/2.0_SP*real(n_spinor)+.1)
  !
- if (n_b_full_guess+1 > E%nb ) call error(' Too few states. Include more states in the DFT run.')
+ if (n_b_full_guess+1 > nb_here ) call error(' Too few states. Include more states in the DFT run.')
  !
  Ef(1)=maxval(E%E(n_b_full_guess,:,:))
  Ef(2)=minval(E%E(n_b_full_guess+1,:,:))
@@ -235,7 +239,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
   if (.not.allocated(E%f)) then  
-   YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+   YAMBO_ALLOC(E%f,(nb_here,E%nk,n_sp_pol))
  endif
  Efdist=1.E5_SP
  !

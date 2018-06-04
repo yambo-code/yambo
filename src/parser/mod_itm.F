@@ -608,14 +608,16 @@ module it_m
      endif
    end subroutine
    !
-   subroutine loadchvar(defs,name,description,defval,verb_level,protect)
+   subroutine loadchvar(defs,name,description,defval,verb_level,protect,case)
      use drivers,        ONLY:infile_editing
      use parser_m,       ONLY:parser
+     use stderr,         ONLY:STRING_to_UPPER,STRING_to_LOWER
      character(*)::name,description,defval
-     type(initdefs)::defs
-     integer::v_id
-     integer, optional::verb_level 
-     logical, optional::protect
+     type(initdefs)        ::defs
+     integer               ::v_id
+     integer,      optional::verb_level 
+     logical,      optional::protect
+     character(1), optional::case
      if (initmode==0) then
        chst=0
        nchv=nchv+1
@@ -623,6 +625,10 @@ module it_m
        chvars(nchv,1)=name
        chvars(nchv,2)=description
        defs%chdef(nchv)=trim(defval)
+       if (present(case)) then
+         if (case=="A") call STRING_to_UPPER(defs%chdef(nchv))
+         if (case=="a") call STRING_to_LOWER(defs%chdef(nchv))
+       endif
        v_id=nchv
      else
        do i1=1,nchv
@@ -634,7 +640,13 @@ module it_m
              endif
              call parser(trim(name),defs%chdef(i1))
            endif
-           if (initmode<=3) defs%chdef(i1)=defval
+           if (initmode<=3) then
+             defs%chdef(i1)=defval
+             if (present(case)) then
+               if (case=="A") call STRING_to_UPPER(defs%chdef(i1))
+               if (case=="a") call STRING_to_LOWER(defs%chdef(i1))
+             endif
+           endif
            defval=defs%chdef(i1)
            exit
          endif

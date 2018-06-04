@@ -378,13 +378,16 @@ subroutine RT_start_and_restart(E,k,q)
              Width     = 0._SP
              if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
              if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
+             !
            else
+             !
              Energy    = E%E(ib,ik,1)
              f_occ     = E%f(ib,ik,1)
              f_occ_ref = f_occ
              Width     = 0._SP
              if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
+             !
            endif
            !
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy

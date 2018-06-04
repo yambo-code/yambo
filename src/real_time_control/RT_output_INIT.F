@@ -113,7 +113,9 @@ subroutine RT_output_INIT( )
    call RT_FILE_add(TITLES=(/"e-e val","e-e con"/))
  endif
  !
- call RT_FILE_add('BGR',(/"Time[fs]  ","DGap [meV]","IGap [meV]"/))
+ call RT_FILE_add('BGR',(/"Time[fs]  "/))
+ call RT_FILE_add(TITLES=(/"DirGap [meV]","IndGap [meV]"/))
+ call RT_FILE_add(TITLES=(/"DeltaDirGap [meV]","DeltaIndGap [meV]"/))
  !
  ! ... energy resolved ...
  !=========================

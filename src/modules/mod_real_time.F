@@ -219,7 +219,7 @@ module real_time
    real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),save  :: RT_E_and_k
+ type(RT_DbGd),SAVE  :: RT_E_and_k
  !
  ! Locks, reference & Logicals
  !-----------------------------

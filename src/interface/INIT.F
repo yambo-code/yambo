@@ -56,7 +56,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
- use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
+ use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -938,8 +938,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField UpdateSOC SaveGhistory')
-   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTEvalEnergy RTEvalEntropy')
    call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
 &    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
@@ -1174,7 +1174,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
        ! Davide: Why this ? Can't I do SC-IP calculation with v_HXC=0 ?
-       if (trim(H_potential)=="IP") H_potential="default"
+       if (trim(H_potential)=="IP") H_potential="DEFAULT"
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
@@ -1222,14 +1222,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Setup logicals which are not runlevels
      !
-     l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
-     l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     l_alda_fxc   = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-     l_lrc_fxc    = trim(Chi_mode)=='LRC' 
-     l_bs_fxc     = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
+     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP")
+     l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
+     l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
+     l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")
+     l_bs_fxc     = STRING_match(trim(Chi_mode),"BSFXC").or.STRING_match(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
-     l_td_hf      = trim(BSK_mode)=="HF"
-     l_W_eh       = trim(BSK_mode)=="SEX"
+     l_td_hf      = STRING_match(trim(BSK_mode),"HF")
+     l_W_eh       = STRING_match(trim(BSK_mode),"SEX")
      !
    end subroutine logicalson
    !
@@ -1333,8 +1333,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
-     if (len_trim(BSE_mode)==0   ) BSE_mode="retarded"
-     if (trim(BSE_mode)=="causal") BSE_mode="retarded"
+     if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
+     if (STRING_match(trim(BSE_mode),"causal")) BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
@@ -1481,8 +1481,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
 &             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
-&             runlevel_is_on('cohsex')  &
-&           ) Chi_mode='hartree'
+&             runlevel_is_on('life')         .or.  runlevel_is_on('cohsex') .or. &
+&             runlevel_is_on('ppa')) &
+&           Chi_mode='HARTREE'
          !
          ! BSE/LLR
          !
@@ -1523,8 +1524,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              if (l_bse) call initactivate(1,'bse')
            end if
            !
-           BSK_mode='Hartree'
-           Chi_mode='Hartree'
+           BSK_mode='HARTREE'
+           Chi_mode='HARTREE'
            !
            if(l_bse)  then
              if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
@@ -1533,7 +1534,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
            else if(l_chi) then
-             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='HARTREE'
              if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
              if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')    Chi_mode='BSfxc'
@@ -1561,7 +1562,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
            if (BSK_mode==' ') then
              BSK_mode="SEX"
-             Chi_mode="Hartree"
+             Chi_mode="HARTREE"
            endif
            !
          endif
@@ -1641,7 +1642,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             H_potential='default'
+             H_potential='DEFAULT'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then
@@ -1679,7 +1680,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             H_potential='default'
+             H_potential='DEFAULT'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then

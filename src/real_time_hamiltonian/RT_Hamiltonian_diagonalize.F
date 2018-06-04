@@ -33,8 +33,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  !  1. Ho_plus_Sigma
  !  2. Ho_plus_Sigma-RT_Vnl_xc+Z*RT_Vnl_xc
  !
- ! The point 2 is done only of l_update_QP_Energies=.TRUE. and
- ! if Z_bgr/=1.
+ ! The point 2 is done only if l_RT_update_Energies=.TRUE. and if Z_bgr/=1.
  !
  use pars,           ONLY:SP,rZERO
  use R_lattice,      ONLY:nkibz
@@ -54,7 +53,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  !
  type(levels)                 :: E
  type(bz_samp), intent(in)    :: k
- real(SP),      intent(out)   :: BGR(2)
+ real(SP),      intent(out)   :: BGR(4)
  !
  ! Work Space
  !
@@ -88,9 +87,10 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
    !
    if (.not.l_do_E) cycle
    !
-   do ib=RT_bands(1),RT_bands(2)
+   do ib=RT_bands(2),1,-1
      !
-     dE=Ed(ib)-E_reference%E(ib,ik,1)
+     if (ib>=RT_bands(1)) dE=Ed(ib)-E_reference%E(ib,ik,1)
+     if (ib< RT_bands(1)) dE=Ed(RT_bands(1))-E_reference%E(RT_bands(1),ik,1)
      !
      do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
        !
@@ -100,7 +100,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
          E%E_DbGd(ib,ik_DbGd,1)   =E_reference%E_DbGd(ib,ik_DbGd,1)+dE
          RT_E_and_k%E(ib,ik_RT,1) =E%E_DbGd(ib,ik_DbGd,1)
        else
-         E%E(ib,ik_DbGd,1)        =E_reference%E(ib,ik,1)+dE
+         E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE
          RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik_DbGd,1)
        endif
        !
@@ -114,13 +114,13 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  call PP_redux_wait(RT_E_and_K%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! Evaluation of the contribution to the minimal gap
- 
- call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS")
  !
- !call OCCUPATIONS_Gaps(E)
+ call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS",n_bands=RT_bands(2))
  !
  BGR(1)=E%E_dir_gap(1)
  BGR(2)=E%E_ind_gap(1)
+ BGR(3)=BGR(1)-E_reference%E_dir_gap(1)
+ BGR(4)=BGR(2)-E_reference%E_ind_gap(1)
  !
  call timing('RT H diago',OPR='stop')
  !

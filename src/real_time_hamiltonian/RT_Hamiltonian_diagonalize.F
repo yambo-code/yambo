@@ -98,10 +98,10 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
        !
        if(l_RT_uses_E_DbGd) then
          E%E_DbGd(ib,ik_DbGd,1)   =E_reference%E_DbGd(ib,ik_DbGd,1)+dE
-         RT_E_and_k%E(ib,ik_RT,1) =E%E_DbGd(ib,ik_DbGd,1)
+         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E_DbGd(ib,ik_DbGd,1)
        else
          E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE
-         RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik_DbGd,1)
+         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik_DbGd,1)
        endif
        !
      enddo

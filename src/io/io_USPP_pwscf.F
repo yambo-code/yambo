@@ -47,6 +47,7 @@ integer function io_USPP_pwscf(ID)
  !
  integer :: i
  integer(LP), allocatable :: lvar(:)
+ integer,     allocatable :: ivar(:)
  logical :: ltmp
 
 
@@ -132,6 +133,8 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,I1=nh)
  !
  allocate(lvar(nsp))
+ allocate(ivar(nsp))
+ !
  if (read_is_on(ID)) then
    call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
    call io_bulk(ID,L1=lvar)
@@ -143,6 +146,12 @@ integer function io_USPP_pwscf(ID)
    call io_bulk(ID,L1=lvar)
    do i = 1, nsp
      upf(i)%has_so= (lvar(i)==1)
+   enddo
+   !
+   call io_bulk(ID,VAR="nbeta",VAR_SZ=shape(ivar))
+   call io_bulk(ID,I1=ivar)
+   do i = 1, nsp
+     upf(i)%nbeta=ivar(i)
    enddo
  else
    lvar=0
@@ -158,8 +167,17 @@ integer function io_USPP_pwscf(ID)
    enddo
    call io_bulk(ID,VAR="has_so",VAR_SZ=shape(lvar))
    call io_bulk(ID,L1=lvar)
+   !
+   do i = 1, nsp
+     ivar(i)=upf(i)%nbeta
+   enddo
+   call io_bulk(ID,VAR="nbeta",VAR_SZ=shape(ivar))
+   call io_bulk(ID,I1=ivar)
+   !
  endif
+ !
  deallocate(lvar)
+ deallocate(ivar)
  !
  ! uspp
  call io_bulk(ID,VAR="indv",VAR_SZ=shape(indv))

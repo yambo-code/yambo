@@ -43,7 +43,8 @@ subroutine PP_uspp_init()
  !
  integer  :: io_err,ID
  integer  :: gv_min,gv_max,i,ig,nfft(3)
- real(SP) :: v1(3),qe_b(3,3)
+ real(SP) :: v1(3)
+ real(DP) :: qe_b(3,3)
  complex(DP), allocatable :: strf(:,:)
  !
  integer, external :: io_USPP_pwscf

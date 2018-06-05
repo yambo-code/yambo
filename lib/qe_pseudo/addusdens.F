@@ -87,8 +87,10 @@ SUBROUTINE addusdens_g(ngm,nspin_mag,ldrho,rho)
   ! ngm_l = local number of G-vectors 
   !
 !  CALL divide (inter_pool_comm, ngm, ngm_s, ngm_e)
-!  ngm_l = ngm_e-ngm_s+1
-  ngm_l=ngm
+  ngm_s=1
+  ngm_e=ngm
+  !
+  ngm_l = ngm_e-ngm_s+1
   !
   ! for the extraordinary unlikely case of more processors than G-vectors
   IF ( ngm_l <= 0 ) GO TO 10
@@ -162,7 +164,7 @@ SUBROUTINE addusdens_g(ngm,nspin_mag,ldrho,rho)
   !
   !     add aux to the charge density in reciprocal space
   !
-  rho(:,:) = rho(:,:) + aux (:,:)
+  rho(1:ngm,1:nspin_mag) = rho(1:ngm,1:nspin_mag) + aux(:,:)
   !
   DEALLOCATE (aux)
   !

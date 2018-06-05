@@ -85,7 +85,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  integer    :: npwk,ig
  real(SP)   :: xk(3),f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
  complex(SP):: WF_der(fft_size,n_spinor,3)
- complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:)
+ complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
  complex(SP), allocatable :: wf_SP(:,:)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
@@ -127,6 +127,12 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    becsum=0.0
    rhog_aug_DP=0.0
    !
+#if defined _FFTW
+   call dfftw_destroy_plan(fftw_plan)
+   fftw_plan = 0
+#endif
+
+   !
  endif
  !
  warn_done=.false.
@@ -140,8 +146,8 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
      ! compuute < beta_j | psi_n >
      if (l_rho.and.pp_is_uspp) then
        !
-       call c2a(b,k%pt(ik,:),xk,mode="ki2a")
-       xk=xk/tpiba
+       call c2a(b,k%pt(ik,:),xk,mode="ki2c")
+       xk=xk/real(tpiba,SP)
        !
        call allocate_bec_type(nkb, bands_range(2), becp)
        becp%k=0.0
@@ -194,6 +200,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          if (pp_is_uspp) then
            !
            do i_spinor = 1, n_spinor
+             !
              wf_DP(:)=WF%c(:,i_spinor,i_wf)
 #if defined _FFTW
              call fft_3d(wf_DP,fft_dim,-1,fftw_plan)
@@ -201,7 +208,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
              call fft_3d(wf_DP,fft_dim,-2)
 #endif
              do ig = 1, npwk
-               wf_SP(ig,i_spinor)=wf_DP(fft_g_table(wf_igk(ig,ik),1))
+               wf_SP(ig,i_spinor)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
              enddo
              !
            enddo
@@ -241,18 +248,30 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  if (l_rho.and.pp_is_uspp) then
    !
    rhog_aug_DP=0.0
-   call addusdens(qe_ngm,n_sp_pol,fft_size,rhog_aug_DP)
+   call addusdens(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
+   !
+   YAMBO_ALLOC(aux_DP,(fft_size))
+   aux_DP=0.0
    !
    do i_sp_pol=1,n_sp_pol
+      !
+      do ig = 1, qe_ngm
+         aux_DP(fft_g_table(ig,1)) = rhog_aug_DP(ig,i_sp_pol)
+      enddo
+      !
 #if defined _FFTW
+      call dfftw_destroy_plan(fftw_plan)
+      fftw_plan = 0
       call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1,fftw_plan)
 #else
       call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1)
 #endif
-      rho_no_sym(:)=rho_no_sym(:)+real(rhog_aug_DP(:,i_sp_pol),SP)
+      rho_no_sym(:)=rho_no_sym(:)+real(aux_DP(:),SP)
+      !
    enddo
    !
    YAMBO_FREE(rhog_aug_DP)
+   YAMBO_FREE(aux_DP)
    YAMBO_FREE(wf_DP)
    YAMBO_FREE(wf_SP)
    !

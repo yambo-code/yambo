@@ -91,9 +91,9 @@ subroutine qe_pseudo_init()
  qe_npwx = npwx_
  qe_ngm = ngm_
  qe_ecutwfc = ecutwfc_ * Ha2Ry
- qe_gcutw = ecutwfc_ / qe_tpiba**2
+ qe_gcutw = qe_ecutwfc / qe_tpiba**2
  qe_ecutrho = ecutrho_ * Ha2Ry
- qe_gcutm = ecutrho_/qe_tpiba**2
+ qe_gcutm = qe_ecutrho /qe_tpiba**2
  !
  allocate(qe_g(3,ngm_),qe_gg(ngm_))
  allocate(qe_mill(3,ngm_))

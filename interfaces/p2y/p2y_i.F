@@ -46,7 +46,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use becmod,        ONLY:calbec,bec_type,becp,allocate_bec_type
  use uspp,          ONLY:nkb,vkb
  use wave_func,     ONLY:wf_nc_k,wf_igk
-! XXX
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
 #endif
@@ -293,7 +292,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_nc_k(ik),(1.0_SP,0.0_SP), &
              wf_disk(:,1,:), wf_ncx, wf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
              ovp, wf_nb_io) 
- !ovp=matmul(conjg(transpose(wf_disk(:,1,:))),wf_disk(:,1,:))
  !
  write(0,"(/,'< wfc | wfc >')")
  do j = 1, wf_nb_io

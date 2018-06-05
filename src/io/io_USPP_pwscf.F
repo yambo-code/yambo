@@ -33,10 +33,11 @@ integer function io_USPP_pwscf(ID)
  !
  use pseudo,           ONLY: pp_is_uspp,PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
  use qe_pseudo_m,      ONLY: nspin, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
-&                            npwx, gcutw, ecutwfc, lspinorb, tpiba
+&                            npwx, gcutw, gcutm, ecutwfc, ecutrho, lspinorb, tpiba
  use us,               ONLY: nqxq, nqx, tab, qrad
  use uspp,             ONLY: nhtol, nhtoj, nhtolm, ijtoh, dvan, qq_at, indv,&
-&                            qq_so, dvan_so, indv_ijkb0, nkb, nkbus, okvan
+&                            qq_so, dvan_so, indv_ijkb0, nkb, nkbus, okvan,&
+                             lpl, lpx, ap
  use uspp_param,       ONLY: upf, lmaxq, nbetam, nh, nhm, lmaxkb 
  !
  implicit none
@@ -45,7 +46,7 @@ integer function io_USPP_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: i
+ integer :: i, nlx
  integer(LP), allocatable :: lvar(:)
  integer,     allocatable :: ivar(:)
  logical :: ltmp
@@ -86,6 +87,10 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,D0=gcutw)
  call io_bulk(ID,VAR="ecutwfc",VAR_SZ=(/1/))
  call io_bulk(ID,D0=ecutwfc)
+ call io_bulk(ID,VAR="gcutm",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=gcutm)
+ call io_bulk(ID,VAR="ecutrho",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=ecutrho)
 
  !
  ! USPP param
@@ -195,6 +200,12 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,D3=qq_at)
  call io_bulk(ID,VAR="nhtoj",VAR_SZ=shape(nhtoj))
  call io_bulk(ID,D2=nhtoj)
+ call io_bulk(ID,VAR="lpx",VAR_SZ=shape(lpx))
+ call io_bulk(ID,I2=lpx)
+ call io_bulk(ID,VAR="lpl",VAR_SZ=shape(lpl))
+ call io_bulk(ID,I3=lpl)
+ call io_bulk(ID,VAR="ap",VAR_SZ=shape(ap))
+ call io_bulk(ID,D3=ap)
  !
  if (lspinorb) then
    call io_bulk(ID,VAR="dvan_so",VAR_SZ=shape(dvan_so))

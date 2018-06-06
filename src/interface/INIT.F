@@ -59,7 +59,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir,cp_file
  use TDDFT,          ONLY:io_BS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
@@ -87,13 +87,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #include<memory.h>
  !
- type(levels) ::en        
+ type(levels)    ::en        
 #if defined _SC
- type(levels) ::en_sc
+ type(levels)    ::en_sc
 #endif
- type(bz_samp)::q,k   
- type(X_t)    ::X(4)
- type(w_samp) ::Xw(4)
+ type(bz_samp)   ::q,k   
+ type(X_t)       ::X(4)
+ type(w_samp)    ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -226,6 +226,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Dump the input file
  !
  if (file_exists(trim(infile))) then
+   if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
+     call mk_dir(com_path)
+     call cp_file(trim(infile),trim(com_path)//"/"//trim(infile),io_err)
+     infile=trim(com_path)//"/"//trim(infile)
+   endif
    call infile_dump()
  else if (.not.infile_editing) then
    infile='(none)'

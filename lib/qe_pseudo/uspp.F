@@ -108,7 +108,7 @@ MODULE uspp
   SAVE
   PUBLIC :: nlx, lpx, lpl, ap, aainit, indv, nhtol, nhtolm, indv_ijkb0, &
             nkb, nkbus, vkb, dvan, deeq, qq_at, qq_nt, nhtoj, ijtoh, beta, &
-            becsum, ebecsum, deallocate_uspp
+            becsum, ebecsum, becprod, deallocate_uspp
        
   PUBLIC :: okvan, nlcc_any
   PUBLIC :: qq_so, dvan_so, deeq_nc 
@@ -143,6 +143,8 @@ MODULE uspp
        becsum(:,:,:)           ! \sum_i f(i) <psi(i)|beta_l><beta_m|psi(i)>
   REAL(SP), ALLOCATABLE :: &
        ebecsum(:,:,:)          ! \sum_i f(i) et(i) <psi(i)|beta_l><beta_m|psi(i)>
+  COMPLEX(SP), ALLOCATABLE :: &
+       becprod(:,:,:,:)        ! <psi(i)|beta_l><beta_m|psi(j)>
   REAL(DP), ALLOCATABLE :: &
        dvan(:,:,:),           &! the D functions of the solid
        deeq(:,:,:,:),         &! the integral of V_eff and Q_{nm} 
@@ -329,6 +331,7 @@ CONTAINS
     IF( ALLOCATED( ijtoh ) )      DEALLOCATE( ijtoh )
     IF( ALLOCATED( vkb ) )        DEALLOCATE( vkb )
     IF( ALLOCATED( becsum ) )     DEALLOCATE( becsum )
+    IF( ALLOCATED( becprod ) )    DEALLOCATE( becprod )
     IF( ALLOCATED( ebecsum ) )    DEALLOCATE( ebecsum )
     IF( ALLOCATED( qq_at ) )      DEALLOCATE( qq_at )
     IF( ALLOCATED( qq_nt ) )      DEALLOCATE( qq_nt )

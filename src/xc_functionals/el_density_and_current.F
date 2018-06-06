@@ -45,7 +45,8 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  ! Same procedure for the current
  !
  use pars,          ONLY:SP,DP
- use com,           ONLY:warning,error
+ use com,           ONLY:warning,error,msg
+ use stderr,        ONLY:real2ch
  use vec_operate,   ONLY:c2a
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b
@@ -82,7 +83,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
- integer    :: npwk,ig
+ integer    :: npwk,ig,igs
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
  real(SP)   :: xk(3),raux
  complex(SP):: WF_der(fft_size,n_spinor,3)
@@ -117,16 +118,10 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    !
    if (.not. qe_pseudo_alloc) call error(' [PP] qe_pseudo not alloc in XC driver')
    !
-   YAMBO_ALLOC(rhog_aug_DP,(fft_size,n_sp_pol))
    YAMBO_ALLOC(wf_DP,(fft_size))
-   YAMBO_ALLOC(wf_SP,(wf_ncx,n_spinor))
-   !
-   ! allocate becp for 1 band at a time, 
-   ! this should be ideally improved, but requires to rearrange
-   ! the loop below over wfcs
+   YAMBO_ALLOC(wf_SP,(wf_ncx*n_spinor,1))
    !
    becsum=0.0
-   rhog_aug_DP=0.0
    !
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
@@ -150,8 +145,11 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        call c2a(b,k%pt(ik,:),xk,mode="ki2c")
        xk=xk/real(tpiba,SP)
        !
-       call allocate_bec_type(nkb, bands_range(2), becp)
-       becp%k=0.0
+       ! allocate becp for 1 band at a time, 
+       ! this should be ideally improved, but requires to rearrange
+       ! the loop below over wfcs
+       !
+       call allocate_bec_type(nkb, 1, becp)
        !
        npwk=wf_nc_k(ik)
        call init_us_2(npwk,wf_igk(1:npwk,ik),xk,vkb)
@@ -208,13 +206,16 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #else
              call fft_3d(wf_DP,fft_dim,-2)
 #endif
+             igs=(i_spinor-1)*wf_ncx
              do ig = 1, npwk
-               wf_SP(ig,i_spinor)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
+               wf_SP(igs+ig,1)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
              enddo
              !
            enddo
            !
-           becp%k=0.0
+           if(allocated(becp%k)) becp%k=0.0
+           if(allocated(becp%nc))becp%nc=0.0
+           !
            call calbec(npwk,vkb,wf_SP,becp,1)
            call sum_bec(ik,i_sp_pol, 1,1,1, (/f_occ*k%weights(ik)/) )
            !
@@ -249,10 +250,14 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  if (l_rho.and.pp_is_uspp) then
    !
-   rhog_aug_DP=0.0
-   call addusdens(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
+   YAMBO_FREE(wf_DP)
+   YAMBO_FREE(wf_SP)
    !
    YAMBO_ALLOC(aux_DP,(fft_size))
+   YAMBO_ALLOC(rhog_aug_DP,(qe_ngm,n_sp_pol))
+   rhog_aug_DP=0.0
+   !
+   call addusdens(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
    !
    do i_sp_pol=1,n_sp_pol
       !
@@ -270,20 +275,15 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #endif
       !
       aux_DP=aux_DP*qe_omega/real(fft_size,DP)
-! XXX
-raux=sum(rho_no_sym)
-write(0,*) "rhosum before", raux
-      !
       rho_no_sym(:)=rho_no_sym(:)+real(aux_DP(:),SP)
       !
-raux=sum(rho_no_sym)
-write(0,*) "rhosum after ", raux
    enddo
    !
    YAMBO_FREE(rhog_aug_DP)
    YAMBO_FREE(aux_DP)
-   YAMBO_FREE(wf_DP)
-   YAMBO_FREE(wf_SP)
+   !
+   raux = sum(rho_no_sym)
+   call msg('nr','[PP] Charge normalization :  '//trim(real2ch(raux))//' [el/cell]')
    !
  endif
  !

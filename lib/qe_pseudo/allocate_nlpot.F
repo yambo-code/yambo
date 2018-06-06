@@ -35,7 +35,7 @@ SUBROUTINE allocate_nlpot
                                nqxq!, spline_ps
   USE uspp,             ONLY : indv, nhtol, nhtolm, ijtoh, qq_at, qq_nt, dvan, deeq, &
                                vkb, indv_ijkb0, okvan, nkb, nkbus, nhtoj, &
-                               becsum, ebecsum, qq_so,dvan_so, deeq_nc
+                               becsum, ebecsum, becprod, qq_so,dvan_so, deeq_nc
   USE uspp_param,       ONLY : upf, lmaxq, lmaxkb, nh, nhm, nbetam
   USE spin_orb,         ONLY : lspinorb, fcoef
   !
@@ -90,6 +90,8 @@ SUBROUTINE allocate_nlpot
   ALLOCATE (vkb( npwx,  nkb))
   ALLOCATE (becsum( nhm * (nhm + 1)/2, nat, nspin))
   if (tqr) ALLOCATE (ebecsum( nhm * (nhm + 1)/2, nat, nspin))
+  !
+  ALLOCATE (becprod( nhm, nhm, nat, nspin))
   !
   ! Calculate dimensions for array tab (including a possible factor
   ! coming from cell contraction during variable cell relaxation/MD)

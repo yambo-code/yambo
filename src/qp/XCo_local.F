@@ -31,10 +31,11 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:E_xc,E_xc_val,V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
+ use xc_functionals,ONLY:E_xc,V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
+ use pseudo,        ONLY:pp_is_uspp
 #if defined _RT || defined _SC
  use drivers,       ONLY:l_real_time,l_sc_run
  use hamiltonian,   ONLY:H_ref_bands
@@ -168,6 +169,10 @@ subroutine XCo_local(E,Xk)
 !$omp end parallel do
      !
      QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+     !
+     if (pp_is_uspp) then
+       call PP_vloc_augment(QP_Vxc(i1),V_xc,Xk,ik,ib,ibp,WF%c(:,:,iwf),WF%c(:,:,iwf))
+     endif
      !
    enddo
    !

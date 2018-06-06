@@ -283,7 +283,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    YAMBO_FREE(aux_DP)
    !
    raux = sum(rho_no_sym)
-   call msg('nr','[PP] Charge normalization :  '//trim(real2ch(raux))//' [el/cell]')
+   call msg('nr','[PP] USPP charge normalization :  '//trim(real2ch(raux))//' [el/cell]')
    !
  endif
  !

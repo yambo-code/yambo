@@ -67,9 +67,9 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
 ! XXX
- complex(SP), allocatable :: swf_disk(:,:,:)
+ complex(SP), allocatable :: wfc(:,:),swfc(:,:)
  complex(SP), allocatable :: ovp(:,:)
- integer                  :: i,j
+ integer                  :: i,j,i_spinor,igs
 ! XXX
  type(PP_indexes)      :: PAR_IND_wfc_io
  integer, external     :: io_DB1
@@ -263,22 +263,29 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  WRITE(0,"('     nkb = ',i5)") nkb
  WRITE(0,*) "shape(wf_disk)", SHAPE(wf_disk)
  !
- YAMBO_ALLOC(swf_disk,(wf_ncx,n_spinor,wf_nb_io))
+ YAMBO_ALLOC(wfc,(wf_ncx*n_spinor,wf_nb_io))
+ YAMBO_ALLOC(swfc,(wf_ncx*n_spinor,wf_nb_io))
  YAMBO_ALLOC(ovp,(wf_nb_io,wf_nb_io))
  ik = nkibz
+ !
+ wfc=0.0
+ do i_spinor=1,n_spinor
+    igs=(i_spinor-1)*wf_ncx
+    wfc(igs+1:igs+wf_ncx,1:wf_nb_io)=wf_disk(:,i_spinor,:)
+ enddo
+ 
  !
  if (nkb > 0 ) then
    !
    call allocate_bec_type(nkb, wf_nb_io, becp)
    !
    call init_us_2(wf_nc_k(ik),wf_igk(1:wf_nc_k(ik),ik),real(xk_(:,ik),SP),vkb)
-   call calbec(wf_nc_k(ik),vkb,wf_disk(:,1,:),becp,wf_nb_io) 
+   call calbec(wf_nc_k(ik),vkb,wfc,becp,wf_nb_io) 
    !
-   call s_psi(wf_ncx,wf_nc_k(ik),wf_nb_io,wf_disk(:,1,:),swf_disk(:,1,:))
+   call s_psi(wf_ncx,wf_nc_k(ik),wf_nb_io,wfc,swfc)
    !
-   call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_nc_k(ik),(1.0_SP,0.0_SP), &
-               wf_disk(:,1,:), wf_ncx, swf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
-               ovp, wf_nb_io) 
+   call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx*n_spinor,(1.0_SP,0.0_SP), &
+               wfc, wf_ncx*n_spinor, swfc, wf_ncx*n_spinor, (0.0_SP,0.0_SP), ovp, wf_nb_io) 
    !
    write(0,"(/,'< wfc | S | wfc >')")
    do j = 1, wf_nb_io
@@ -289,9 +296,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  ovp = 0.0
- call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_nc_k(ik),(1.0_SP,0.0_SP), &
-             wf_disk(:,1,:), wf_ncx, wf_disk(:,1,:), wf_ncx, (0.0_SP,0.0_SP), &
-             ovp, wf_nb_io) 
+ call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx*n_spinor,(1.0_SP,0.0_SP), &
+             wfc, wf_ncx*n_spinor, wfc, wf_ncx*n_spinor, (0.0_SP,0.0_SP), ovp, wf_nb_io) 
  !
  write(0,"(/,'< wfc | wfc >')")
  do j = 1, wf_nb_io
@@ -300,7 +306,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  enddo
  !
  YAMBO_FREE(wf_disk)
- YAMBO_FREE(swf_disk)
+ YAMBO_FREE(wfc)
+ YAMBO_FREE(swfc)
  YAMBO_FREE(ovp)
 !================
  !

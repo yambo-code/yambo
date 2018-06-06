@@ -7,7 +7,7 @@
 !
 !
 !----------------------------------------------------------------------
-SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
+SUBROUTINE addus_vloc_aug(ngm,nspin_mag,ldrho,rhog)
   !----------------------------------------------------------------------
   !
   ! ... Add US contribution to the matrix elements of a local operator
@@ -21,8 +21,8 @@ SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
   !
   IMPLICIT NONE
   !
-  INTEGER,     INTENT(in)    :: ngm,nspin,ldrho
-  COMPLEX(DP), INTENT(inout) :: rhog(ldrho,nspin)
+  INTEGER,     INTENT(in)    :: ngm,nspin_mag,ldrho
+  COMPLEX(DP), INTENT(inout) :: rhog(ldrho,nspin_mag)
   !
   !     here the local variables
   !
@@ -42,7 +42,7 @@ SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
 
   IF (.not.okvan) RETURN
   !
-  ALLOCATE (aux (ngm, nspin) )
+  ALLOCATE (aux (ngm, nspin_mag) )
   aux (:,:) = (0.d0, 0.d0)
   !
   ! With k-point parallelization, distribute G-vectors across processors
@@ -81,13 +81,13 @@ SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
            IF ( ityp(na) == nt ) nab = nab + 1
         ENDDO
         !
-        ALLOCATE ( skk(ngm_l,nab), tbecprod(nh_l,nh_l,nab,nspin), aux2(ngm_l,nh_l,nh_l) )
+        ALLOCATE ( skk(ngm_l,nab), tbecprod(nh_l,nh_l,nab,nspin_mag), aux2(ngm_l,nh_l,nh_l) )
         !
         nb = 0
         DO na = 1, nat
            IF ( ityp(na) == nt ) THEN
               nb = nb + 1
-              tbecprod(:,:,nb,:) = becprod(1:nh_l,1:nh_l,na,1:nspin)
+              tbecprod(:,:,nb,:) = becprod(1:nh_l,1:nh_l,na,1:nspin_mag)
 !$omp parallel do default(shared) private(ig)
               DO ig = 1, ngm_l
                  skk(ig,nb) = eigts1 (mill (1,ngm_s+ig-1), na) * &
@@ -98,7 +98,7 @@ SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
            ENDIF
         ENDDO
 
-        DO is = 1, nspin
+        DO is = 1, nspin_mag
            ! sum over atoms
            CALL zgemm( 'N', 'T', ngm_l, nh_l*nh_l, nab, (1.0_dp,0.0_dp), skk, ngm_l,&
                 tbecprod(1,1,1,is), nh_l*nh_l, (0.0_dp,0.0_dp), aux2, ngm_l )
@@ -129,7 +129,7 @@ SUBROUTINE addus_vloc_aug(ngm,nspin,ldrho,rhog)
   !
   !     add aux to the charge density in reciprocal space
   !
-  rhog(1:ngm,1:nspin) = rhog(1:ngm,1:nspin) + aux(:,:)
+  rhog(1:ngm,1:nspin_mag) = rhog(1:ngm,1:nspin_mag) + aux(:,:)
   !
   DEALLOCATE (aux)
   !

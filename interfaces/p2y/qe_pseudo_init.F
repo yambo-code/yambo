@@ -29,12 +29,14 @@ subroutine qe_pseudo_init()
  use pw_data,           ONLY: nat_, tau_, ityp_, nsp_, psfile, n_spin_pw_, noncolin_, lspinorb_, &
                               alat_, a1_, a2_, a3_, ecutwfc_, ecutrho_, npwx_, ngm_, igv_, nr1_,nr2_,nr3_
  !
+ use electrons,         ONLY: n_sp_pol
+ !
  ! qe_pseudo internal modules
  use io_files,          ONLY: pseudo_dir, qe_psfile => psfile
  use ions_base,         ONLY: qe_nsp => nsp, qe_nat => nat, qe_tau => tau, qe_ityp => ityp
  use cell_base,         ONLY: qe_omega => omega, qe_tpiba => tpiba
  use lsda_mod,          ONLY: qe_nspin => nspin
- use noncollin_module,  ONLY: qe_noncolin => noncolin, qe_npol => npol 
+ use noncollin_module,  ONLY: qe_noncolin => noncolin, qe_npol => npol, qe_nspin_mag=>nspin_mag
  use spin_orb,          ONLY: qe_lspinorb => lspinorb
  use control_flags,     ONLY: qe_gamma_only => gamma_only
  use wvfct,             ONLY: qe_npwx => npwx
@@ -68,6 +70,7 @@ subroutine qe_pseudo_init()
  enddo
  !
  qe_nspin = n_spin_pw_
+ qe_nspin_mag = n_sp_pol
  qe_noncolin = noncolin_
  qe_lspinorb = lspinorb_
  !

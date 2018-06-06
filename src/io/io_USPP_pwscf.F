@@ -29,10 +29,10 @@ integer function io_USPP_pwscf(ID)
 &                            io_elemental,io_bulk,io_header,&
 &                            read_is_on,io_mode,DUMP
  use D_lattice,        ONLY: n_atoms,n_atomic_species
- use electrons,        ONLY: l_spin_orbit,n_spinor
+ use electrons,        ONLY: l_spin_orbit,n_spinor,n_sp_pol
  !
  use pseudo,           ONLY: pp_is_uspp,PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
- use qe_pseudo_m,      ONLY: nspin, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
+ use qe_pseudo_m,      ONLY: nspin, nspin_mag, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
 &                            npwx, gcutw, gcutm, ecutwfc, ecutrho, lspinorb, tpiba
  use us,               ONLY: nqxq, nqx, tab, qrad
  use uspp,             ONLY: nhtol, nhtoj, nhtolm, ijtoh, dvan, qq_at, indv,&
@@ -67,7 +67,7 @@ integer function io_USPP_pwscf(ID)
    !
    ltmp=(n_spinor==2)
    call io_elemental(ID,L0=ltmp,DB_L0=noncolin,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,I0=nspin,DB_I0=nspin)
+   call io_elemental(ID,I0=n_sp_pol,DB_I0=nspin_mag,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=n_atoms,DB_I0=nat,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=n_atomic_species,DB_I0=nsp,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
@@ -75,6 +75,8 @@ integer function io_USPP_pwscf(ID)
  endif
  !
  ! system and lattice
+ call io_bulk(ID,VAR="nspin",VAR_SZ=(/1/))
+ call io_bulk(ID,I0=nspin)
  call io_bulk(ID,VAR="npol",VAR_SZ=(/1/))
  call io_bulk(ID,I0=npol)
  call io_bulk(ID,VAR="npwx",VAR_SZ=(/1/))

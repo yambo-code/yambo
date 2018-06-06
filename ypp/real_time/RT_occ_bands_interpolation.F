@@ -30,7 +30,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close,error,file_exists
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db
+&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db,INTERP_k
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
@@ -51,7 +51,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(bz_samp)         :: RT_k
  type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
-&                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
+&                         spin_interpolated(:,:,:),magn_interpolated(:,:,:),fit_on_grid(:,:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(3)          :: message
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save
@@ -115,6 +115,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),RT_carriers%nk,n_sp_pol))
  !
  YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_sp_pol,n_T_steps))
+ if (all(INTERP_grid>0)) then
+   YAMBO_ALLOC(fit_on_grid,(RT_bands(1):RT_bands(2),INTERP_k%nibz,n_sp_pol,n_T_steps))
+ endif
  !
  do i_T=1,n_T_steps
    !
@@ -146,9 +149,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      call INTERPOLATION_coefficients(R2D=variable_to_fit,k=RT_k,Nk=RT_k%nibz,ID=INTERP_RT_id)
      !
      ! STEP 2
-     ! 1: interpolate on the circuit      if (BANDS_steps>0)
+     ! 1: interpolate on the circuit if (BANDS_steps>0)
      !
-     if (BANDS_steps> 0) call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=INTERP_RT_id)
+     if (BANDS_steps> 0)    call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=INTERP_RT_id)
+     !
+     ! STEP 3
+     ! interpolate on the grid if (all(INTERP_grid>0))
+     !
+     if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=INTERP_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
      !
      call INTERPOLATION_reset(INTERP_RT_id)
      !
@@ -263,6 +271,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  enddo
  !
  YAMBO_FREE(fit_on_circuit)
+ YAMBO_FREE(fit_on_grid)
  !
  call E_reset(CIRCUIT_E)
  if(n_spinor==2) then

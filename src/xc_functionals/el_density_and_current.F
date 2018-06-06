@@ -57,7 +57,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  use wave_func,     ONLY:WF,wf_nc_k,wf_igk,wf_ncx
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
- use qe_pseudo_m,   ONLY:qe_ngm=>ngm, nkb,vkb,becp,becsum,tpiba,&
+ use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, nkb,vkb,becp,becsum,tpiba,&
 &                        allocate_bec_type,deallocate_bec_type,calbec
 #if defined _RT
  use drivers,       ONLY:l_real_time
@@ -83,7 +83,8 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
  integer    :: npwk,ig
- real(SP)   :: xk(3),f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ real(SP)   :: xk(3),raux
  complex(SP):: WF_der(fft_size,n_spinor,3)
  complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
  complex(SP), allocatable :: wf_SP(:,:)
@@ -213,8 +214,9 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
              !
            enddo
            !
+           becp%k=0.0
            call calbec(npwk,vkb,wf_SP,becp,1)
-           call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/) )
+           call sum_bec(ik,i_sp_pol, 1,1,1, (/f_occ*k%weights(ik)/) )
            !
          endif
          !
@@ -251,10 +253,10 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    call addusdens(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
    !
    YAMBO_ALLOC(aux_DP,(fft_size))
-   aux_DP=0.0
    !
    do i_sp_pol=1,n_sp_pol
       !
+      aux_DP=0.0
       do ig = 1, qe_ngm
          aux_DP(fft_g_table(ig,1)) = rhog_aug_DP(ig,i_sp_pol)
       enddo
@@ -262,12 +264,20 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #if defined _FFTW
       call dfftw_destroy_plan(fftw_plan)
       fftw_plan = 0
-      call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1,fftw_plan)
+      call fft_3d(aux_DP,fft_dim,+1,fftw_plan)
 #else
-      call fft_3d(rhog_aug_DP(:,i_sp_pol),fft_dim,+1)
+      call fft_3d(aux_DP,fft_dim,+1)
 #endif
+      !
+      aux_DP=aux_DP*qe_omega/real(fft_size,DP)
+! XXX
+raux=sum(rho_no_sym)
+write(0,*) "rhosum before", raux
+      !
       rho_no_sym(:)=rho_no_sym(:)+real(aux_DP(:),SP)
       !
+raux=sum(rho_no_sym)
+write(0,*) "rhosum after ", raux
    enddo
    !
    YAMBO_FREE(rhog_aug_DP)

@@ -499,7 +499,7 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
     do ibeta=1,nbeta
       call iotk_scan_dat(iun, 'PP_BETA.'//intc(ibeta), beta_tmp(:,ibeta), attr=attr,ierr=ierr)
       if (ierr/=0) return
-      call iotk_scan_attr(attr, 'size',  mesh_beta(ibeta),ierr=ierr)
+      call iotk_scan_attr(attr, 'size',  mesh_beta(ibeta), default=size(mesh),ierr=ierr)
       if (ierr/=0) return
       call iotk_scan_attr(attr, 'angular_momentum',  lbeta(ibeta),ierr=ierr)
       if (ierr/=0) return
@@ -507,6 +507,7 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
     !
     call iotk_scan_dat(iun, 'PP_DIJ', dmat, attr=attr,ierr=ierr)
     if (ierr/=0) return
+    !
     d_tmp=dmat
     !
     if(nbeta>1) then

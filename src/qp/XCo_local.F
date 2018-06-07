@@ -222,6 +222,10 @@ subroutine XCo_local(E,Xk)
        !
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
        !
+       if (pp_is_uspp) then
+         ! XXX 
+       endif
+       !
      else
        !
        iwf=WF%index(ib,ik,1)
@@ -231,6 +235,10 @@ subroutine XCo_local(E,Xk)
        c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
        !
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       !
+       if (pp_is_uspp) then
+         ! XXX 
+       endif
        !
      endif
      !

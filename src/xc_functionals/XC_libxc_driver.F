@@ -42,7 +42,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
- use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,pp_is_uspp,qe_pseudo_alloc
+ use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
  use IO_m,           ONLY:io_control,OP_RD_CL,REP
 #include<memory.h>
  !

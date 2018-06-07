@@ -123,8 +123,8 @@ MODULE uspp
        ap(lqmax*lqmax,nlx,nlx)
   ! Clebsch-Gordan coefficients for spherical harmonics
   !
-  INTEGER :: nkb,        &! total number of beta functions, with struct.fact.
-             nkbus        ! as above, for US-PP only
+  INTEGER :: nkb=0,        &! total number of beta functions, with struct.fact.
+             nkbus=0        ! as above, for US-PP only
   !
   INTEGER, ALLOCATABLE ::&
        indv(:,:),        &! indes linking  atomic beta's to beta's in the solid

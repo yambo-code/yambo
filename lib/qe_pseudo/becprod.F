@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE becprod_calc ( ik, current_spin, mb, nb )
+SUBROUTINE becprod_calc ( ik, current_spin, mb, nb, becp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes
@@ -19,15 +19,16 @@ SUBROUTINE becprod_calc ( ik, current_spin, mb, nb )
   ! output written in becprod
   !
   USE kinds,         ONLY : DP, SP
-  USE becmod,        ONLY : becp
   USE control_flags, ONLY : gamma_only, tqr
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp
   USE uspp,          ONLY : nkb, vkb, becprod, indv_ijkb0
   USE uspp_param,    ONLY : upf, nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
+  USE becmod,        ONLY : bec_type
   !
   IMPLICIT NONE
-  INTEGER,  INTENT(IN) :: ik, current_spin, mb, nb
+  INTEGER,        INTENT(IN) :: ik, current_spin, mb, nb
+  TYPE(bec_type), INTENT(IN) :: becp
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)

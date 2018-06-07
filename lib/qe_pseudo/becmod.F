@@ -24,7 +24,8 @@ MODULE becmod
   TYPE bec_type
      REAL(SP),   ALLOCATABLE :: r(:,:)    ! appropriate for gammaonly
      COMPLEX(SP),ALLOCATABLE :: k(:,:)    ! appropriate for generic k
-     COMPLEX(SP),ALLOCATABLE :: nc(:,:,:)   ! appropriate for noncolin
+     COMPLEX(SP),ALLOCATABLE :: nc(:,:,:) ! appropriate for noncolin
+     LOGICAL,    ALLOCATABLE :: init(:)   ! whether a given band has been filled in
      INTEGER :: comm
      INTEGER :: nbnd
      INTEGER :: nproc
@@ -55,17 +56,17 @@ MODULE becmod
   !
 CONTAINS
   !-----------------------------------------------------------------------
-  SUBROUTINE calbec_bec_type ( npw, beta, psi, betapsi, nbnd )
+  SUBROUTINE calbec_bec_type ( npw, beta, psi, betapsi, ibnd_s, nbnd)
     !-----------------------------------------------------------------------
     !_
 !    USE mp_bands, ONLY: intra_bgrp_comm
 !    USE mp,       ONLY: mp_get_comm_null
     !
     IMPLICIT NONE
-    COMPLEX (SP), INTENT (in) :: beta(:,:), psi(:,:)
+    COMPLEX (SP),    INTENT (in) :: beta(:,:), psi(:,:)
     TYPE (bec_type), INTENT (inout) :: betapsi ! NB: must be INOUT otherwise
                                                !  the allocatd array is lost
-    INTEGER, INTENT (in) :: npw
+    INTEGER, INTENT (in) :: npw, ibnd_s
     INTEGER, OPTIONAL :: nbnd
     !
     INTEGER :: local_nbnd
@@ -84,7 +85,7 @@ CONTAINS
 !       IF( betapsi%comm == mp_get_comm_null() ) THEN
 !          !
 !          CALL calbec_gamma ( npw, beta, psi, betapsi%r, local_nbnd, intra_bgrp_comm )
-           CALL calbec_gamma ( npw, beta, psi, betapsi%r, local_nbnd )
+           CALL calbec_gamma ( npw, beta, psi, betapsi%r, ibnd_s, local_nbnd )
 !          !
 !       ELSE
 !          !
@@ -108,11 +109,11 @@ CONTAINS
        !
     ELSEIF ( noncolin) THEN
        !
-       CALL  calbec_nc ( npw, beta, psi, betapsi%nc, local_nbnd )
+       CALL  calbec_nc ( npw, beta, psi, betapsi%nc, ibnd_s, local_nbnd )
        !
     ELSE
        !
-       CALL  calbec_k ( npw, beta, psi, betapsi%k, local_nbnd )
+       CALL  calbec_k ( npw, beta, psi, betapsi%k, ibnd_s, local_nbnd )
        !
     ENDIF
     !
@@ -141,8 +142,7 @@ CONTAINS
 ! END SUBROUTINE calbec_gamma_nocomm
 
   !-----------------------------------------------------------------------
-!  SUBROUTINE calbec_gamma ( npw, beta, psi, betapsi, nbnd, comm )
-  SUBROUTINE calbec_gamma ( npw, beta, psi, betapsi, nbnd )
+  SUBROUTINE calbec_gamma ( npw, beta, psi, betapsi, ibnd_s, nbnd )
     !-----------------------------------------------------------------------
     !
     ! ... matrix times matrix with summation index (k=1,npw) running on
@@ -155,7 +155,7 @@ CONTAINS
     COMPLEX (SP), INTENT (in) :: beta(:,:), psi(:,:)
     REAL (SP), INTENT (out) :: betapsi(:,:)
     INTEGER, INTENT (in) :: npw
-    INTEGER, INTENT (in) :: nbnd
+    INTEGER, INTENT (in) :: nbnd, ibnd_s
 !    INTEGER, INTENT (in) :: comm 
     !
     INTEGER :: nkb, npwx, m
@@ -166,7 +166,7 @@ CONTAINS
     IF ( nkb == 0 ) RETURN
     !
 !    CALL start_clock( 'calbec' )
-    IF ( npw == 0 ) betapsi(:,:)=0.0_SP
+    IF ( npw == 0 ) betapsi(:,ibnd_s:)=0.0_SP
     npwx= size (beta, 1)
     IF ( npwx /= size (psi, 1) ) CALL errore ('calbec', 'size mismatch', 1)
     IF ( npwx < npw ) CALL errore ('calbec', 'size mismatch', 2)
@@ -174,32 +174,32 @@ CONTAINS
     WRITE (*,*) 'calbec gamma'
     WRITE (*,*)  nkb,  size (betapsi,1) , m , size (betapsi, 2)
 #endif
-    IF ( nkb /= size (betapsi,1) .or. m > size (betapsi, 2) ) &
+    IF ( nkb /= size (betapsi,1) .or. ibnd_s+m-1 > size (betapsi, 2) ) &
       CALL errore ('calbec', 'size mismatch', 3)
     !
     IF ( m == 1 ) THEN
         !
 #if defined _DOUBLE
         CALL DGEMV( 'C', 2*npw, nkb, 2.0_DP, beta, 2*npwx, psi, 1, 0.0_DP, &
-                     betapsi, 1 )
+                     betapsi(:,ibnd_s:ibnd_s), 1 )
 #else
         CALL SGEMV( 'C', 2*npw, nkb, 2.0_SP, beta, 2*npwx, psi, 1, 0.0_SP, &
-                     betapsi, 1 )
+                     betapsi(:,ibnd_s:ibnd_s), 1 )
 #endif
-        IF ( gstart == 2 ) betapsi(:,1) = betapsi(:,1) - beta(1,:)*psi(1,1)
+        IF ( gstart == 2 ) betapsi(:,ibnd_s) = betapsi(:,ibnd_s) - beta(1,:)*psi(1,1)
         !
     ELSE
         !
 #if defined _DOUBLE
         CALL DGEMM( 'C', 'N', nkb, m, 2*npw, 2.0_DP, beta, 2*npwx, psi, &
-                    2*npwx, 0.0_DP, betapsi, nkb )
+                    2*npwx, 0.0_DP, betapsi(:,ibnd_s:), nkb )
         IF ( gstart == 2 ) &
-           CALL DGER( nkb, m, -1.0_DP, beta, 2*npwx, psi, 2*npwx, betapsi, nkb )
+           CALL DGER( nkb, m, -1.0_DP, beta, 2*npwx, psi, 2*npwx, betapsi(:,ibnd_s:), nkb )
 #else
         CALL SGEMM( 'C', 'N', nkb, m, 2*npw, 2.0_SP, beta, 2*npwx, psi, &
-                    2*npwx, 0.0_SP, betapsi, nkb )
+                    2*npwx, 0.0_SP, betapsi(:,ibnd_s:), nkb )
         IF ( gstart == 2 ) &
-           CALL SGER( nkb, m, -1.0_SP, beta, 2*npwx, psi, 2*npwx, betapsi, nkb )
+           CALL SGER( nkb, m, -1.0_SP, beta, 2*npwx, psi, 2*npwx, betapsi(:,ibnd_s:), nkb )
 #endif
         !
     ENDIF
@@ -212,7 +212,7 @@ CONTAINS
   END SUBROUTINE calbec_gamma
   !
   !-----------------------------------------------------------------------
-  SUBROUTINE calbec_k ( npw, beta, psi, betapsi, nbnd )
+  SUBROUTINE calbec_k ( npw, beta, psi, betapsi, ibnd_s, nbnd )
     !-----------------------------------------------------------------------
     !
     ! ... matrix times matrix with summation index (k=1,npw) running on
@@ -224,7 +224,7 @@ CONTAINS
     IMPLICIT NONE
     COMPLEX (SP), INTENT (in) :: beta(:,:), psi(:,:)
     COMPLEX (SP), INTENT (out) :: betapsi(:,:)
-    INTEGER, INTENT (in) :: npw
+    INTEGER, INTENT (in) :: npw, ibnd_s
     INTEGER, OPTIONAL :: nbnd
     !
     INTEGER :: nkb, npwx, m
@@ -246,27 +246,27 @@ CONTAINS
     WRITE (*,*) 'calbec k'
     WRITE (*,*)  nkb,  size (betapsi,1) , m , size (betapsi, 2)
 #endif
-    IF ( nkb /= size (betapsi,1) .or. m > size (betapsi, 2) ) &
+    IF ( nkb /= size (betapsi,1) .or. ibnd_s+m-1 > size (betapsi, 2) ) &
       CALL errore ('calbec', 'size mismatch', 3)
     !
     IF ( m == 1 ) THEN
        !
 #if defined _DOUBLE
        CALL ZGEMV( 'C', npw, nkb, (1.0_DP,0.0_DP), beta, npwx, psi, 1, &
-                   (0.0_DP, 0.0_DP), betapsi, 1 )
+                   (0.0_DP, 0.0_DP), betapsi(:,ibnd_s:ibnd_s), 1 )
 #else
        CALL CGEMV( 'C', npw, nkb, (1.0_SP,0.0_SP), beta, npwx, psi, 1, &
-                   (0.0_SP, 0.0_SP), betapsi, 1 )
+                   (0.0_SP, 0.0_SP), betapsi(:,ibnd_s:ibnd_s), 1 )
 #endif
        !
     ELSE
        !
 #if defined _DOUBLE
        CALL ZGEMM( 'C', 'N', nkb, m, npw, (1.0_DP,0.0_DP), &
-                 beta, npwx, psi, npwx, (0.0_DP,0.0_DP), betapsi, nkb )
+                 beta, npwx, psi, npwx, (0.0_DP,0.0_DP), betapsi(:,ibnd_s:), nkb )
 #else
        CALL CGEMM( 'C', 'N', nkb, m, npw, (1.0_SP,0.0_SP), &
-                 beta, npwx, psi, npwx, (0.0_SP,0.0_SP), betapsi, nkb )
+                 beta, npwx, psi, npwx, (0.0_SP,0.0_SP), betapsi(:,ibnd_s:), nkb )
 #endif
        !
     ENDIF
@@ -279,7 +279,7 @@ CONTAINS
   END SUBROUTINE calbec_k
   !
   !-----------------------------------------------------------------------
-  SUBROUTINE calbec_nc ( npw, beta, psi, betapsi, nbnd )
+  SUBROUTINE calbec_nc ( npw, beta, psi, betapsi, ibnd_s, nbnd )
     !-----------------------------------------------------------------------
     !
     ! ... matrix times matrix with summation index (k below) running on
@@ -293,7 +293,7 @@ CONTAINS
     IMPLICIT NONE
     COMPLEX (SP), INTENT (in) :: beta(:,:), psi(:,:)
     COMPLEX (SP), INTENT (out) :: betapsi(:,:,:)
-    INTEGER, INTENT (in) :: npw
+    INTEGER, INTENT (in) :: npw, ibnd_s
     INTEGER, OPTIONAL :: nbnd
     !
     INTEGER :: nkb, npwx, npol, m
@@ -316,15 +316,15 @@ CONTAINS
     WRITE (*,*) 'calbec nc'
     WRITE (*,*)  nkb,  size (betapsi,1) , m , size (betapsi, 3)
 #endif
-    IF ( nkb /= size (betapsi,1) .or. m > size (betapsi, 3) ) &
+    IF ( nkb /= size (betapsi,1) .or. ibnd_s+m-1 > size (betapsi, 3) ) &
       CALL errore ('calbec', 'size mismatch', 3)
     !
 #if defined _DOUBLE
     CALL ZGEMM ('C', 'N', nkb, m*npol, npw, (1.0_DP, 0.0_DP), beta, &
-              npwx, psi, npwx, (0.0_DP, 0.0_DP),  betapsi, nkb)
+              npwx, psi, npwx, (0.0_DP, 0.0_DP),  betapsi(:,:,ibnd_s:), nkb)
 #else
     CALL CGEMM ('C', 'N', nkb, m*npol, npw, (1.0_SP, 0.0_SP), beta, &
-              npwx, psi, npwx, (0.0_SP, 0.0_SP),  betapsi, nkb)
+              npwx, psi, npwx, (0.0_SP, 0.0_SP),  betapsi(:,:,ibnd_s:), nkb)
 #endif
     !
 !    CALL mp_sum( betapsi( :, :, 1:m ), intra_bgrp_comm )
@@ -349,10 +349,8 @@ CONTAINS
   !-----------------------------------------------------------------------
   !
   !-----------------------------------------------------------------------
-!  SUBROUTINE allocate_bec_type ( nkb, nbnd, bec, comm )
   SUBROUTINE allocate_bec_type ( nkb, nbnd, bec )
     !-----------------------------------------------------------------------
-!    USE mp, ONLY: mp_size, mp_rank, mp_get_comm_null
     IMPLICIT NONE
     TYPE (bec_type) :: bec
     INTEGER, INTENT (in) :: nkb, nbnd
@@ -407,6 +405,10 @@ CONTAINS
        !
     ENDIF
     !
+    allocate(bec%init(nbnd_siz), STAT=ierr)
+    if (ierr/=0) CALL errore( ' allocate_bec_type ', ' cannot allocate bec%init ', ABS(ierr) )
+    bec%init(:)=.FALSE.
+    !
     RETURN
     !
   END SUBROUTINE allocate_bec_type
@@ -426,6 +428,7 @@ CONTAINS
     IF (allocated(bec%r))  DEALLOCATE(bec%r)
     IF (allocated(bec%nc)) DEALLOCATE(bec%nc)
     IF (allocated(bec%k))  DEALLOCATE(bec%k)
+    IF (allocated(bec%init))  DEALLOCATE(bec%init)
     !
     RETURN
     !
@@ -454,7 +457,9 @@ CONTAINS
        CALL CCOPY(nkb*nbnd, bec%k, 1, bec1%k, 1)
     ENDIF
 #endif
-
+    !
+    bec1%init(:)=bec%init(:)
+    !
     RETURN
   END SUBROUTINE beccopy
 

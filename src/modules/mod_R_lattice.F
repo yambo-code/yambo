@@ -49,6 +49,8 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ real(SP),allocatable :: kibz_vec(:,:)
+ !
  type bz_samp
    integer           :: nibz,nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star

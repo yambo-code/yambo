@@ -171,7 +171,7 @@ subroutine XCo_local(E,Xk)
      QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
      !
      if (pp_is_uspp) then
-       call PP_vloc_augment(QP_Vxc(i1),V_xc,Xk,ik,ib,ibp,WF%c(:,:,iwf),WF%c(:,:,iwf))
+       call PP_vloc_augment(QP_Vxc(i1),V_xc,ik,ib,ibp)
      endif
      !
    enddo

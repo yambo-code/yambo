@@ -21,24 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PP_vloc_augment(QP_Vloc,Vloc,k,ik,ib,ibp,wf,wfp)
+subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  !
- ! Add the UPSS augmentation to the matrix element of a local potential
+ ! Add the USPP augmentation to the matrix element of a local potential
  ! All quantities given in real space.
  !
  use pars,          ONLY:SP,DP
  use com,           ONLY:error
- use vec_operate,   ONLY:c2a
- use electrons,     ONLY:n_spinor,n_sp_pol
- use R_lattice,     ONLY:bz_samp,b
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
+ use electrons,     ONLY:n_sp_pol
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use wave_func,     ONLY:wf_nc_k,wf_igk,wf_ncx!,WF
- use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, nkb,vkb,becp,becprod,tpiba,&
-&                        allocate_bec_type,deallocate_bec_type,calbec
+ use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm,becprod
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -46,21 +42,14 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,k,ik,ib,ibp,wf,wfp)
  ! vars
  !
  complex(SP), intent(inout) :: QP_Vloc
- type(bz_samp), intent(in)  ::k
  integer,     intent(in)    :: ik,ib,ibp
  real(SP),    intent(in)    :: Vloc(fft_size,n_sp_pol)
- complex(SP), intent(in)    :: wf(fft_size,n_spinor)
- complex(SP), intent(in)    :: wfp(fft_size,n_spinor)
  !
  ! Workspace
  !
- integer :: ig,igs,ifft,i_sp_pol,i_spinor
- integer :: npwk
- real(SP)   :: xk(3)
+ integer :: ig,ifft,i_sp_pol
  complex(SP):: QP_aug
- complex(DP), allocatable :: wf_DP(:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
- complex(SP), allocatable :: wf_g(:,:)
  
 
  !
@@ -72,98 +61,13 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,k,ik,ib,ibp,wf,wfp)
  if (n_sp_pol/=1) call error(" [PP] n_spin>1 not implemented in PP_Vloc_augment")
  
  !
- ! allocations
- !----------------------
- !
- YAMBO_ALLOC(wf_DP,(fft_size))
- YAMBO_ALLOC(wf_g,(wf_ncx*n_spinor,2))
+ ! compute becprod
+ !--------------------------------
  !
  becprod=0.0
  !
-#if defined _FFTW
- call dfftw_destroy_plan(fftw_plan)
- fftw_plan = 0
-#endif
-
- !
- ! get beta projectors
- !----------------------
- !
- call c2a(b,k%pt(ik,:),xk,mode="ki2c")
- xk=xk/real(tpiba,SP)
- !
- ! allocate becp for 2 bands at a time, 
- ! this should be ideally improved, 
- ! but requires rearranging ahead
- !
- call allocate_bec_type(nkb, 2, becp)
- becp%k=0.0
- !
- npwk=wf_nc_k(ik)
- call init_us_2(npwk,wf_igk(1:npwk,ik),xk,vkb)
- !
-
- !
- ! wfc to reciprocal space
- !--------------------------------
- !
- do i_spinor = 1, n_spinor
-   !
-   wf_DP(:)=wf(:,i_spinor)
-#if defined _FFTW
-   call fft_3d(wf_DP,fft_dim,-1,fftw_plan)
-#else
-   call fft_3d(wf_DP,fft_dim,-2)
-#endif
-   !
-   igs= (i_spinor-1)*wf_ncx
-   do ig = 1, npwk
-      wf_g(igs+ig,1)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
-   enddo
-   !
- enddo
- !
- if (ib==ibp) then
-   !
-   wf_g(:,2)=wf_g(:,1)
-   !
- else
-   !
-   do i_spinor = 1, n_spinor
-     !
-     wf_DP(:)=wfp(:,i_spinor)
-#if defined _FFTW
-     call fft_3d(wf_DP,fft_dim,-1,fftw_plan)
-#else
-     call fft_3d(wf_DP,fft_dim,-2)
-#endif
-     !
-     igs= (i_spinor-1)*wf_ncx
-     do ig = 1, npwk
-       wf_g(igs+ig,2)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
-     enddo
-     !
-   enddo
-   !
- endif
-
-
- !
- ! calbec and becprod
- !--------------------------------
- !
- if (allocated(becp%k))  becp%k=0.0
- if (allocated(becp%nc)) becp%nc=0.0
- !
- call calbec(npwk,vkb,wf_g,becp,2)
- !
  i_sp_pol=1
- call becprod_calc(ik, i_sp_pol, 1, 2 )
- !
- call deallocate_bec_type(becp)
- !
- YAMBO_FREE(wf_DP)
- YAMBO_FREE(wf_g)
+ call becprod_calc(ik, i_sp_pol, ib, ibp, becp(ik,i_sp_pol) )
  
  !
  ! augmentation

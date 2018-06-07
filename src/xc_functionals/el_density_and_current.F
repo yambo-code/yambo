@@ -57,9 +57,8 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
 #endif
  use wave_func,     ONLY:WF,wf_nc_k,wf_igk,wf_ncx
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc
- use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, nkb,vkb,becp,becsum,tpiba,&
-&                        allocate_bec_type,deallocate_bec_type,calbec
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
+ use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
  use drivers,       ONLY:l_real_time
  use timing_m,      ONLY:timing
@@ -118,16 +117,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
    !
    if (.not. qe_pseudo_alloc) call error(' [PP] qe_pseudo not alloc in XC driver')
    !
-   YAMBO_ALLOC(wf_DP,(fft_size))
-   YAMBO_ALLOC(wf_SP,(wf_ncx*n_spinor,1))
-   !
    becsum=0.0
-   !
-#if defined _FFTW
-   call dfftw_destroy_plan(fftw_plan)
-   fftw_plan = 0
-#endif
-
    !
  endif
  !
@@ -138,23 +128,6 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,k%nibz
-     !
-     ! compuute < beta_j | psi_n >
-     if (l_rho.and.pp_is_uspp) then
-       !
-       call c2a(b,k%pt(ik,:),xk,mode="ki2c")
-       xk=xk/real(tpiba,SP)
-       !
-       ! allocate becp for 1 band at a time, 
-       ! this should be ideally improved, but requires to rearrange
-       ! the loop below over wfcs
-       !
-       call allocate_bec_type(nkb, 1, becp)
-       !
-       npwk=wf_nc_k(ik)
-       call init_us_2(npwk,wf_igk(1:npwk,ik),xk,vkb)
-       !
-     endif
      !
      do ib=bands_range(1),bands_range(2)
        !
@@ -198,26 +171,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          !
          if (pp_is_uspp) then
            !
-           do i_spinor = 1, n_spinor
-             !
-             wf_DP(:)=WF%c(:,i_spinor,i_wf)
-#if defined _FFTW
-             call fft_3d(wf_DP,fft_dim,-1,fftw_plan)
-#else
-             call fft_3d(wf_DP,fft_dim,-2)
-#endif
-             igs=(i_spinor-1)*wf_ncx
-             do ig = 1, npwk
-               wf_SP(igs+ig,1)=cmplx(wf_DP(fft_g_table(wf_igk(ig,ik),1)),kind=SP)/sqrt(real(fft_size,SP))
-             enddo
-             !
-           enddo
-           !
-           if(allocated(becp%k)) becp%k=0.0
-           if(allocated(becp%nc))becp%nc=0.0
-           !
-           call calbec(npwk,vkb,wf_SP,becp,1)
-           call sum_bec(ik,i_sp_pol, 1,1,1, (/f_occ*k%weights(ik)/) )
+           call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/), becp(ik,i_sp_pol) )
            !
          endif
          !
@@ -239,19 +193,12 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !
      enddo
      !
-     if (l_rho.and.pp_is_uspp) then
-        call deallocate_bec_type(becp)
-     endif
-     !
    enddo
  enddo
  !
  ! finalize USPP contribution
  !
  if (l_rho.and.pp_is_uspp) then
-   !
-   YAMBO_FREE(wf_DP)
-   YAMBO_FREE(wf_SP)
    !
    YAMBO_ALLOC(aux_DP,(fft_size))
    YAMBO_ALLOC(rhog_aug_DP,(qe_ngm,n_sp_pol))

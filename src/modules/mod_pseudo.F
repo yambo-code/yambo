@@ -23,10 +23,12 @@
 !
 module pseudo
  !
- use pars,      ONLY:SP,DP,LP
- use electrons, ONLY:n_sp_pol
- use D_lattice, ONLY:n_atomic_species
- use qe_pseudo_m, ONLY: qe_pseudo_deallocate, qe_pseudo_allocate
+ use pars,        ONLY:SP,DP,LP
+ use electrons,   ONLY:n_sp_pol
+ use R_lattice,   ONLY:nkibz
+ use D_lattice,   ONLY:n_atomic_species
+ use qe_pseudo_m, ONLY:qe_pseudo_deallocate, qe_pseudo_allocate,&
+&                      bec_type, deallocate_bec_type
 #include <memory.h>
  !
  ! *** Non-Local pseudo. The [r,Vnl] commutator ***
@@ -56,6 +58,7 @@ module pseudo
  !=====================
  logical                 :: pp_is_uspp=.FALSE. 
  logical                 :: qe_pseudo_alloc=.FALSE. 
+ type(bec_type), allocatable :: becp(:,:)
  !
  ! PW (OLD)
  !=========
@@ -114,12 +117,32 @@ module pseudo
      implicit none
      if (qe_pseudo_alloc) call PP_uspp_free()
      call qe_pseudo_allocate() 
+     allocate(becp(nkibz,n_sp_pol))
      qe_pseudo_alloc=.true.
    end subroutine
    !
-   subroutine PP_uspp_free()
+   subroutine PP_uspp_free(becp_only)
+     implicit none
+     logical, optional, intent(in) :: becp_only
+     integer :: ik,is
+     logical :: becp_only_
+     !
+     becp_only_=.false.
+     if (present(becp_only)) becp_only_=becp_only 
+     !
      if (.not.qe_pseudo_alloc) return
-     call qe_pseudo_deallocate()
+     if (.not.becp_only_) call qe_pseudo_deallocate()
+     !
+     if (allocated(becp)) then
+       do is = 1, n_sp_pol
+       do ik = 1, nkibz
+         call deallocate_bec_type(becp(ik,is))
+       enddo
+       enddo
+       deallocate(becp)
+     endif
+     !
+     if (.not.becp_only_) qe_pseudo_alloc=.false.
    end subroutine
    !
 end module pseudo

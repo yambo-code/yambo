@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg )
+SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg, becp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes the sum over bands
@@ -18,12 +18,11 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg 
   ! Routine used in sum_band (if okvan) and in compute_becsum, called by hinit1 (if okpaw)
   !
   USE kinds,         ONLY : DP, SP
-!  USE becmod,        ONLY : becp, calbec, allocate_bec_type
-  USE becmod,        ONLY : becp
   USE control_flags, ONLY : gamma_only, tqr
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp
   USE uspp,          ONLY : nkb, vkb, becsum, ebecsum, indv_ijkb0
   USE uspp_param,    ONLY : upf, nh, nhm
+  USE becmod,        ONLY : bec_type
 !  USE wvfct,         ONLY : nbnd, wg, et, current_k
 !  USE klist,         ONLY : ngk
   USE noncollin_module,     ONLY : noncolin, npol
@@ -38,6 +37,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg 
   IMPLICIT NONE
   INTEGER,  INTENT(IN) :: ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd
   REAL(SP), INTENT(IN) :: wg(ibnd_start:ibnd_end)
+  TYPE(bec_type), INTENT(IN) :: becp
   !
   COMPLEX(SP), ALLOCATABLE :: becsum_nc(:,:,:,:)
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)

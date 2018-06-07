@@ -113,7 +113,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 #else
  call msg('r','Precision      is   ','SINGLE')
 #endif
- if (log_as_a_file      ) call msg('r','Log files      in ',trim(trim(com_path)//"/LOG"))
+ if (log_as_a_file      ) call msg('r','Log files      in   ',trim(trim(com_path)//"/LOG"))
  !
  if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time is   ',trim(USER_wall_time_string))
  !

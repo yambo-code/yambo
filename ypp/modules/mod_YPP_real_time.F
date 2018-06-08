@@ -50,7 +50,7 @@ module YPP_real_time
  logical  :: l_RT_bands
  logical  :: l_RT_time
  logical  :: l_RT_energy
- logical  :: l_RT_2D_dos
+ logical  :: l_RT_dos
  !
  ! (RT) Retarded Green's functions
  !

@@ -31,7 +31,7 @@ subroutine RT_occupations_driver(k,en)
  use YPP_real_time,  ONLY:RT_conf
  use RT_control,     ONLY:RT_apply,OBS_RT_IO_t
  use real_time,      ONLY:RT_bands
- use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_2D_dos
+ use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos
  !
  implicit none
  !
@@ -65,7 +65,7 @@ subroutine RT_occupations_driver(k,en)
  !
  ! Occupations 2D dos plot 
  !=========================
- if (l_RT_2D_dos) call RT_occ_2D_dos_plot(en,k,RT_conf%T_n_steps)
+ if (l_RT_dos)    call RT_dos_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
  !=========================

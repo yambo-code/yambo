@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
+subroutine RT_dos_time_plot(En,kpt,n_T_steps)
  !
  use units,          ONLY:HA2EV,AUT2FS
  use pars,           ONLY:SP
@@ -163,4 +163,4 @@ subroutine RT_occ_2D_dos_plot(En,kpt,n_T_steps)
  !
  YAMBO_FREE(spin_factors)
  !
-end subroutine RT_occ_2D_dos_plot
+end subroutine RT_dos_time_plot

@@ -52,7 +52,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions
  use real_time,      ONLY:RT_bands
@@ -288,7 +288,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_bands       =trim(rstr_piece(i1+2))=='b'
      l_RT_time        =trim(rstr_piece(i1+2))=='t'
      l_RT_energy      =trim(rstr_piece(i1+2))=='e'
-     l_RT_2D_dos      =trim(rstr_piece(i1+2))=='d'
+     l_RT_dos         =trim(rstr_piece(i1+2))=='d'
      !
      ! GPL_EXCLUDE_END
      !
@@ -341,7 +341,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RT_bands)       call initactivate(1,'RTfitbands')
      if (l_RT_time)        call initactivate(1,'RTtime')
      if (l_RT_energy)      call initactivate(1,'RTenergy')
-     if (l_RT_2D_dos)      call initactivate(1,'RTdos')
+     if (l_RT_dos)         call initactivate(1,'RTdos')
      !
      ! GPL_EXCLUDE_END
      !
@@ -397,7 +397,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RT_bands         = runlevel_is_on('RTfitbands')
  l_RT_time          = runlevel_is_on('RTtime')
  l_RT_energy        = runlevel_is_on('RTenergy')
- l_RT_2D_dos        = runlevel_is_on('RTdos')
+ l_RT_dos           = runlevel_is_on('RTdos')
  !
  ! GPL_EXCLUDE_END
  !
@@ -558,8 +558,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
-   if (l_RT_2D_dos)      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
-   if ((l_RT_2D_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
+   if (l_RT_dos)        call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+   if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
    ! GPL_EXCLUDE_END
    !

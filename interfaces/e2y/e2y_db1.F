@@ -48,7 +48,8 @@ subroutine e2y_db1(en,k,ncid)
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz
- use D_lattice,            only : nsym, n_atomic_species
+ use D_lattice,            only : nsym, n_atoms, n_atomic_species
+ use pseudo,               only : pp_n_l_times_proj_max
  use mod_com2y,            only : print_interface_dimensions
  !
  implicit none
@@ -84,8 +85,14 @@ subroutine e2y_db1(en,k,ncid)
  netcdf_error = nf90_inq_dimid(ncid, "number_of_atom_species", dimid)
  netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_atomic_species)
 
+ netcdf_error = nf90_inq_dimid(ncid, "number_of_atoms", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_atoms)
+
  netcdf_error = nf90_inq_dimid(ncid, "max_number_of_coefficients", dimid)
  netcdf_error = nf90_inquire_dimension(ncid, dimid, len = wf_ncx)
+
+ netcdf_error = nf90_inq_dimid(ncid, "max_number_of_angular_momenta", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = pp_n_l_times_proj_max)
 
  call etsf_io_dims_get(ncid, dims, lstat, error_data)
  !
@@ -219,7 +226,7 @@ contains
     ! Determine n_atoms_max
     !
     n_atoms_species(:) = 0 
-    do i1 = 1, dims%number_of_atoms
+    do i1 = 1, n_atoms
       n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
     enddo
     n_atoms_species_max = maxval(n_atoms_species)
@@ -228,7 +235,7 @@ contains
     !
     n_atoms_species(:) = 0 
     allocate( atom_pos(3, n_atoms_species_max, n_atomic_species) )
-    do i1 = 1, dims%number_of_atoms
+    do i1 = 1, n_atoms
       n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
       atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
@@ -591,8 +598,6 @@ contains
 &                                  pp_table,l_many_proj,pp_n_l_max
     implicit none
     type(etsf_gwdata)            :: gwdata_group
-
-    pp_n_l_times_proj_max = dims%max_number_of_angular_momenta
 
 !   call allocate_gwdata_group
 

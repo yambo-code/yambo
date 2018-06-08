@@ -570,13 +570,13 @@ contains
     use R_lattice,            only : b
     use D_lattice,            only : alat
     implicit none
-    type(etsf_kpoints)            :: kpoints_group
+    integer :: varid
 
-    call allocate_kpoints_group
+    allocate(reduced_coordinates_of_kpoints_(3, k%nibz))
 
-    kpoints_group%reduced_coordinates_of_kpoints => reduced_coordinates_of_kpoints_
+    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_kpoints", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints_)
 
-    call etsf_io_kpoints_get(ncid, kpoints_group, lstat, error_data)
     !
     ! Note here the indices are reversed in YAMBO.
     ! However, could map directly using low level
@@ -587,7 +587,6 @@ contains
       k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints_(:,ik))*alat(:)/2.0_SP/pi
     enddo
 
-    call deallocate_kpoints_group
     return
   end subroutine import_kpoints_group
 

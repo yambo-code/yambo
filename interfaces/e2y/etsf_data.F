@@ -92,20 +92,6 @@ module etsf_data
 
 contains
   !
-  ! kpoints group
-  !
-  subroutine allocate_kpoints_group
-    allocate(reduced_coordinates_of_kpoints_(dims%number_of_reduced_dimensions, &
-&                                            dims%number_of_kpoints))
-    return
-  end subroutine allocate_kpoints_group
-
-  subroutine deallocate_kpoints_group
-    if(allocated(reduced_coordinates_of_kpoints_)) &
-&                               deallocate(reduced_coordinates_of_kpoints_)
-    return
-  end subroutine deallocate_kpoints_group
-  !
   ! geometry group
   !
   subroutine allocate_geometry_group

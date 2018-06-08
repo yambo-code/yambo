@@ -174,7 +174,6 @@ contains
 &                                  n_atoms_species_max,atom_pos, Z_species
     use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
-    type(etsf_geometry)           :: geometry_group
     logical                       :: l_identity, l_inversion
     real(SP)                      :: lsop(3,3), cp(3)
     integer                       :: a_nsym
@@ -270,13 +269,16 @@ contains
   subroutine import_electrons_group
     use electrons,            only : default_nel
     implicit none
-    type(etsf_electrons)          :: electrons_group
+    integer :: varid
 
     call allocate_electrons_group
-    electrons_group%number_of_electrons      => number_of_electrons_
-    electrons_group%eigenvalues%data3d => eigenvalues_ 
 
-    call etsf_io_electrons_get(ncid, electrons_group, lstat, error_data)
+    netcdf_error = nf90_inq_varid(ncid, "number_of_electrons", varid)
+    netcdf_error = nf90_get_var(ncid, varid, number_of_electrons_)
+
+    netcdf_error = nf90_inq_varid(ncid, "eigenvalues", varid)
+    netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
+
     if (.not. lstat) call etsf_long_error(error_data)
     default_nel = number_of_electrons_
     default_nel = -1  ! Until fixed in ETSF file. Is calculated later.

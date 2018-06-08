@@ -33,7 +33,7 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  !
  use pars,          ONLY:SP
  use pseudo,        ONLY:pp_is_uspp
- use D_lattice,     ONLY:nsym,spin_sop,i_time_rev,idt_index
+ use D_lattice,     ONLY:nsym,spin_sop,dl_sop,i_time_rev,idt_index,i_space_inv,inv_index
  use R_lattice,     ONLY:rl_sop
  use qe_pseudo_m,   ONLY:bec_type,allocate_bec_type,deallocate_bec_type,&
 &                        beccopy,d1,d2,d3
@@ -49,17 +49,37 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  !
  ! Workspace
  !
+ integer     :: isym
  real(SP)    :: rvkpt_c(3), arg
  complex(SP) :: c1(3,3), c2(5,5), c3(7,7), phase
  
 
  if (.not.pp_is_uspp) return
  !
- if (isc(3)==idt_index) then
+ isym=isc(3)
+ !
+ if (isym==idt_index) then
    call beccopy(ibec, obec)
    return
  endif
  !
+!! XXX
+! write(0,*) "shape dl_sop", shape(dl_sop)
+! write(0,*) "shape spin_sop", shape(spin_sop)
+! write(0,"(/,2x,'DL_SOP')") 
+! do isym = 1, nsym
+!   write(0,*) "   isym = ", isym
+!   write(0,*) "spin_op = ", spin_sop(:,:,isym)
+!   write(0,"(3f15.9)") dl_sop(:,:,isym)
+!   write(0,*)
+! enddo
+! write(0,"(/,2x,'RL_SOP')") 
+! do isym = 1, nsym
+!   write(0,*) "   isym = ", isym
+!   write(0,*) "spin_op = ", spin_sop(:,:,isym)
+!   write(0,"(3f15.9)") rl_sop(:,:,isym)
+!   write(0,*)
+! enddo
  
  !
  return

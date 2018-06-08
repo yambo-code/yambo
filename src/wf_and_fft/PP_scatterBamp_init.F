@@ -44,9 +44,15 @@ subroutine PP_scatterBamp_init(isc)
  !
  ngm_l=isc%ngrho
  !
- YAMBO_ALLOC( isc%qmod,(ngm_l))
- YAMBO_ALLOC( isc%qgm,(ngm_l))
- YAMBO_ALLOC( isc%ylmk0,(ngm_l, lmaxq*lmaxq) )
+ if (.not.allocated(isc%qmod)) then
+   YAMBO_ALLOC( isc%qmod,(ngm_l))
+ endif
+ if (.not.allocated(isc%qgm)) then
+   YAMBO_ALLOC( isc%qgm,(ngm_l))
+ endif
+ if (.not.allocated(isc%ylmk0)) then
+   YAMBO_ALLOC( isc%ylmk0,(ngm_l, lmaxq*lmaxq) )
+ endif
  !
  call ylmr2(lmaxq*lmaxq, ngm_l, g, gg, isc%ylmk0)
  do ig = 1, ngm_l

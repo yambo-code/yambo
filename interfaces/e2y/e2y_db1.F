@@ -49,7 +49,7 @@ subroutine e2y_db1(en,k,ncid)
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz
  use D_lattice,            only : nsym, n_atomic_species
- use mod_com2y,            only : print_interface_dimensions,ng_vec_abinit
+ use mod_com2y,            only : print_interface_dimensions
  !
  implicit none
  !
@@ -60,25 +60,34 @@ subroutine e2y_db1(en,k,ncid)
  ! Work Space
  !
  integer                       :: i1,i2,ik,ib,is
+ integer                       :: dimid, netcdf_error
  !ETSF library stuff
  logical                       :: lstat ! to get informed on error
  type(etsf_io_low_error)       :: error_data ! to store informations about errors
 
  call msg('s','Header/K-points/Energies...')
  !
- ! Dimensions
- !
- call etsf_io_dims_get(ncid, dims, lstat, error_data)
- !
  ! Directly read dimensions
  !
- en%nb    = dims%max_number_of_states
- k%nibz   = dims%number_of_kpoints 
- n_spinor = dims%number_of_spinor_components 
- n_sp_pol = dims%number_of_spins
- n_atomic_species = dims%number_of_atom_species
- if(trim(ETSF_kind)=='KSS') ng_vec_abinit = dims%max_number_of_coefficients
- if(trim(ETSF_kind)=='WFK') wf_ncx        = dims%max_number_of_coefficients
+ netcdf_error = nf90_inq_dimid(ncid, "max_number_of_states", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = en%nb)
+
+ netcdf_error = nf90_inq_dimid(ncid, "number_of_kpoints", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = k%nibz)
+
+ netcdf_error = nf90_inq_dimid(ncid, "number_of_spinor_components", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_spinor)
+
+ netcdf_error = nf90_inq_dimid(ncid, "number_of_spins", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_sp_pol)
+
+ netcdf_error = nf90_inq_dimid(ncid, "number_of_atom_species", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_atomic_species)
+
+ netcdf_error = nf90_inq_dimid(ncid, "max_number_of_coefficients", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = wf_ncx)
+
+ call etsf_io_dims_get(ncid, dims, lstat, error_data)
  !
  ! Derived YAMBO dimensions
  !
@@ -307,12 +316,12 @@ contains
 
     if(trim(ETSF_kind)=='KSS') then
       !
-      allocate( g_vec(ng_vec_abinit,3) )
-      do i1=1,ng_vec_abinit
+      allocate( g_vec(wf_ncx,3) )
+      do i1=1,wf_ncx
         g_vec(i1,:)=matmul(b_transpose,reduced_coordinates_of_plane_waves_(:,i1,1))*alat(:)/2.0_SP/pi
       enddo
       !
-      ng_vec=ng_vec_abinit
+      ng_vec=wf_ncx
       !
       gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
       !
@@ -320,7 +329,7 @@ contains
         call msg('s','Closing shells against inversion...')
         call G_rot_grid(-1,'extend_grid')
         call msg('l','done')
-        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+        if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
       endif
       !
     endif

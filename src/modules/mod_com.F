@@ -360,6 +360,18 @@ module com
      inquire(file=name,exist=file_exists)
    end function
    !
+   character(lchlen) function filename(name)
+     use stderr,     ONLY:string_split,string_remove
+     character(*)      :: name
+     integer           :: N
+     character(schlen) :: names(20)
+     character(lchlen) :: name_
+     name_=name
+     name_=string_remove(name_,"/",replace=" ")
+     call string_split(name_,names,n_non_empty_strings=N)
+     filename=trim(names(N))
+   end function
+   !
    subroutine rename_file(name)
      character(lchlen):: name
      character(lchlen):: ch 

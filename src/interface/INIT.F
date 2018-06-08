@@ -50,7 +50,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         switch_off_runlevel,check_verbosity
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
-&                         write_the_logo,file_exists,rename_file,write_to_report
+&                         write_the_logo,file_exists,rename_file,write_to_report,filename
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
@@ -226,10 +226,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Dump the input file
  !
  if (file_exists(trim(infile))) then
-   if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
-     call mk_dir(com_path)
-     call cp_file(trim(infile),trim(com_path)//"/"//trim(infile),io_err)
-     infile=trim(com_path)//"/"//trim(infile)
+  if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
+    call mk_dir(com_path)
+    call cp_file(trim(filename(infile)),trim(com_path)//"/"//trim(filename(infile)),io_err)
+     infile=trim(com_path)//"/"//trim(filename(infile))
    endif
    call infile_dump()
  else if (.not.infile_editing) then

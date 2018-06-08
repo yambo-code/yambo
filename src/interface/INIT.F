@@ -226,12 +226,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Dump the input file
  !
  if (file_exists(trim(infile))) then
-  if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
-    call mk_dir(com_path)
-    call cp_file(trim(filename(infile)),trim(com_path)//"/"//trim(filename(infile)),io_err)
+   call infile_dump()
+   if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
+     call mk_dir(com_path)
+     call cp_file(trim(infile),trim(com_path)//"/"//trim(filename(infile)),io_err)
      infile=trim(com_path)//"/"//trim(filename(infile))
    endif
-   call infile_dump()
  else if (.not.infile_editing) then
    infile='(none)'
  endif

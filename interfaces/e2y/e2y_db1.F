@@ -102,13 +102,6 @@ subroutine e2y_db1(en,k,ncid)
  nkibz   = k%nibz
  n_bands = en%nb
  call msg("l","done")
- !>>>DEBUG
- ! call msg('s',':: K-points              :',k%nibz)
- ! call msg('s',':: Bands                 :',en%nb)
- ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
- ! call msg('s',':: Max WF components     :',wf_ncx) 
- ! call msg('s',':: Atomic species        :',n_atom_species)
- !<<<DEBUG
  !
  ! Geometry (must appear first, in order to define alat)
  !
@@ -188,16 +181,28 @@ contains
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
 
+    integer :: varid
+
     call allocate_geometry_group
 
-    geometry_group%primitive_vectors         => primitive_vectors_
-    geometry_group%reduced_symmetry_matrices => reduced_symmetry_matrices_
-    geometry_group%reduced_atom_positions    => reduced_atom_positions_
-    geometry_group%atom_species              => atom_species_
-    geometry_group%chemical_symbols          => chemical_symbols_
-    geometry_group%atomic_numbers            => atomic_numbers_
+    netcdf_error = nf90_inq_varid(ncid, "primitive_vectors", varid)
+    netcdf_error = nf90_get_var(ncid, varid, primitive_vectors_)
 
-    call etsf_io_geometry_get(ncid, geometry_group, lstat, error_data)
+    netcdf_error = nf90_inq_varid(ncid, "reduced_symmetry_matrices", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_symmetry_matrices_)
+
+    netcdf_error = nf90_inq_varid(ncid, "reduced_atom_positions", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
+
+    netcdf_error = nf90_inq_varid(ncid, "atom_species", varid)
+    netcdf_error = nf90_get_var(ncid, varid, atom_species_)
+
+    netcdf_error = nf90_inq_varid(ncid, "chemical_symbols", varid)
+    netcdf_error = nf90_get_var(ncid, varid, chemical_symbols_)
+
+    netcdf_error = nf90_inq_varid(ncid, "atomic_numbers", varid)
+    netcdf_error = nf90_get_var(ncid, varid, atomic_numbers_)
+
     !
     ! Lattice vectors
     !

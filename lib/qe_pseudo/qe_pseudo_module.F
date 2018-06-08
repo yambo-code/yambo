@@ -42,6 +42,7 @@ module qe_pseudo_m
   use uspp
   use pseudo_types
   use becmod
+  use symm_base
   implicit none
 
 contains

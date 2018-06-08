@@ -46,6 +46,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
+ use pseudo,        ONLY:becp, pp_is_uspp
+ use qe_pseudo_m,   ONLY:beccopy,bec_type
  !
 #include<memory.h>
  type(levels) ::E       
@@ -63,6 +65,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !QP list
  !
  integer              :: ig,i4(4)
+ integer              :: ikibz,i_sp_pol
  integer, external    :: QP_state_extract
  !
  ! Resets & basis setup
@@ -140,6 +143,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
+! XXX
+! USPP, get ik, i_sp_pol, becp
    !
 #if defined _SC  
    !
@@ -176,6 +181,21 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      !
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iq,2)
      iscp%qs=isc%qs
+     !
+     if (pp_is_uspp) then
+        !
+        call beccopy( becp(isc%is(2),isc%is(4)),   isc%ibec )
+        call beccopy( becp(iscp%is(2),iscp%is(4)), iscp%ibec )
+        !
+        ikibz=isc%os(2)
+        i_sp_pol=isc%os(4)
+        call PP_rotate_becp(isc%os, becp(ikibz,i_sp_pol), isc%obec)
+        call beccopy( isc%obec, iscp%obec)
+        !
+        call PP_scatterBamp_init(isc)
+        call PP_scatterBamp_init(iscp)
+        !
+     endif
      !
      do jb=Sx_lower_band,Sx_upper_band
        !

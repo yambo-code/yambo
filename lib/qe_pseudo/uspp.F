@@ -108,7 +108,7 @@ MODULE uspp
   SAVE
   PUBLIC :: nlx, lpx, lpl, ap, aainit, indv, nhtol, nhtolm, indv_ijkb0, &
             nkb, nkbus, vkb, dvan, deeq, qq_at, qq_nt, nhtoj, ijtoh, beta, &
-            becsum, ebecsum, becprod, deallocate_uspp
+            becsum, ebecsum, becprod, deallocate_uspp, randy
        
   PUBLIC :: okvan, nlcc_any
   PUBLIC :: qq_so, dvan_so, deeq_nc 

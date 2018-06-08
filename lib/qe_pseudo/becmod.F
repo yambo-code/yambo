@@ -27,11 +27,13 @@ MODULE becmod
      COMPLEX(SP),ALLOCATABLE :: nc(:,:,:) ! appropriate for noncolin
      LOGICAL,    ALLOCATABLE :: init(:)   ! whether a given band has been filled in
      INTEGER :: comm
+     INTEGER :: nkb
      INTEGER :: nbnd
      INTEGER :: nproc
      INTEGER :: mype
      INTEGER :: nbnd_loc
      INTEGER :: ibnd_begin
+     LOGICAL :: alloc=.false.
   END TYPE bec_type
   !
   TYPE (bec_type) :: becp  ! <beta|psi>
@@ -341,7 +343,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE (bec_type) :: bec
     LOGICAL :: isalloc
-    isalloc = (allocated(bec%r) .or. allocated(bec%nc) .or. allocated(bec%k))
+    isalloc = bec%alloc
     RETURN
     !
     !-----------------------------------------------------------------------
@@ -361,11 +363,13 @@ CONTAINS
     nbnd_siz = nbnd
 !    bec%comm = mp_get_comm_null()
     bec%comm = 0
+    bec%nkb = nkb
     bec%nbnd = nbnd
     bec%mype = 0
     bec%nproc = 1
     bec%nbnd_loc = nbnd
     bec%ibnd_begin = 1
+    bec%alloc=.true.
     !
 !    IF( PRESENT( comm ) .AND. gamma_only .AND. smallmem ) THEN
 !       bec%comm = comm
@@ -424,6 +428,8 @@ CONTAINS
 !    bec%comm = mp_get_comm_null()
     bec%comm = 0
     bec%nbnd = 0
+    bec%nkb = 0
+    bec%alloc=.false.
     !
     IF (allocated(bec%r))  DEALLOCATE(bec%r)
     IF (allocated(bec%nc)) DEALLOCATE(bec%nc)
@@ -434,31 +440,36 @@ CONTAINS
     !
   END SUBROUTINE deallocate_bec_type
 
-  SUBROUTINE beccopy(bec, bec1, nkb, nbnd)
+  SUBROUTINE beccopy(bec_in, bec_out)
     IMPLICIT NONE
-    TYPE(bec_type), INTENT(in) :: bec
-    TYPE(bec_type)  :: bec1
-    INTEGER, INTENT(in) :: nkb, nbnd
+    TYPE(bec_type), INTENT(in) :: bec_in
+    TYPE(bec_type)  :: bec_out
+    integer :: nkb, nbnd
 
+    nkb=bec_in%nkb
+    nbnd=bec_in%nbnd
+    if (bec_out%alloc) call deallocate_bec_type(bec_out)
+    call allocate_bec_type(nkb, nbnd, bec_out)
+    !
 #if defined _DOUBLE
     IF (gamma_only) THEN
-       CALL DCOPY(nkb*nbnd, bec%r, 1, bec1%r, 1)
+       CALL DCOPY(nkb*nbnd, bec_in%r, 1, bec_out%r, 1)
     ELSEIF (noncolin) THEN
-       CALL ZCOPY(nkb*npol*nbnd, bec%nc, 1, bec1%nc,  1)
+       CALL ZCOPY(nkb*npol*nbnd, bec_in%nc, 1, bec_out%nc,  1)
     ELSE
-       CALL ZCOPY(nkb*nbnd, bec%k, 1, bec1%k, 1)
+       CALL ZCOPY(nkb*nbnd, bec_in%k, 1, bec_out%k, 1)
     ENDIF
 #else
     IF (gamma_only) THEN
-       CALL SCOPY(nkb*nbnd, bec%r, 1, bec1%r, 1)
+       CALL SCOPY(nkb*nbnd, bec_in%r, 1, bec_out%r, 1)
     ELSEIF (noncolin) THEN
-       CALL CCOPY(nkb*npol*nbnd, bec%nc, 1, bec1%nc,  1)
+       CALL CCOPY(nkb*npol*nbnd, bec_in%nc, 1, bec_out%nc,  1)
     ELSE
-       CALL CCOPY(nkb*nbnd, bec%k, 1, bec1%k, 1)
+       CALL CCOPY(nkb*nbnd, bec_in%k, 1, bec_out%k, 1)
     ENDIF
 #endif
     !
-    bec1%init(:)=bec%init(:)
+    bec_out%init(:)=bec_in%init(:)
     !
     RETURN
   END SUBROUTINE beccopy

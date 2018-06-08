@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -52,15 +52,15 @@ module interpolate
  character(schlen), parameter :: CMPLX1D  = "CMPLX1D"
  character(schlen), parameter :: CMPLX2D  = "CMPLX2D"
  ! 
- type interp_coeff
+ type INTERP_coeff
    character(schlen)        :: interp_type = " "
    complex(DP), allocatable :: engre(:,:)
    integer                  :: ndim = 0
- end type interp_coeff
+ end type INTERP_coeff
  !
  integer, parameter :: max_interpls=10
  !
- type(interp_coeff) :: interpls(max_interpls)
+ type(INTERP_coeff) :: interpls(max_interpls)
  !
  interface
    !

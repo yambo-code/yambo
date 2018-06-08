@@ -519,7 +519,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
-   if (l_dos) call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands PrtOccOnly")
+   if (l_dos) then
+     call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands PrtOccOnly")
+     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   endif
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then

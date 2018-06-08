@@ -280,7 +280,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call allocate_bec_type(nkb, wf_nb_io, becp)
    !
    call init_us_2(wf_nc_k(ik),wf_igk(1:wf_nc_k(ik),ik),real(xk_(:,ik),SP),vkb)
-   call calbec(wf_nc_k(ik),vkb,wfc,becp,wf_nb_io) 
+   call calbec(wf_nc_k(ik),vkb,wfc,becp,1,wf_nb_io) 
    !
    call s_psi(wf_ncx,wf_nc_k(ik),wf_nb_io,wfc,swfc)
    !

@@ -33,7 +33,7 @@ module mod_com2y
  logical :: artificial_spin_pol
  logical :: verboseIO
  !
- integer :: wf_nb_io_user
+ integer :: ng_vec_abinit, wf_nb_io_user
  !
  real(SP):: alat_mult_factor
  !

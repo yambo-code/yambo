@@ -23,25 +23,7 @@
 !
 subroutine e2y_db1(en,k,ncid)
  !
- ! For version 1.0.3 of ETSF library, downloadable from
- ! http://www.etsf.eu/system/files/etsf_io-1.0.3.tar.gz
- !
- ! Note: Current version returns only double precision 
- ! reals, hence local copies are required. Later version
- ! may return reals generated on the fly by netCDF.
- ! The ETSF specs specify double precision storage in the -etsf.nc file.
- ! --------------------------------------------------
- ! Note:
- ! electrons_group%eigenvalues%data3d => en%E ! Not allowed due to type mismatch
- ! forall(ib=1:en%nb,ik=1:k%nibz,is=1:n_sp_pol) en%E(ib,ik,is) = eigenvalues_(ib,ik,is)
- ! For splitting (verion 0.5)
- ! electrons_group%eigenvalues%k_splitted = .false.
- ! electrons_group%eigenvalues%spin_splitted = .false.
- ! electrons_group%eigenvalues%k_id =
- ! electrons_group%eigenvalues%spin_id = 
- !
- use etsf_io
- use etsf_io_low_level
+ use netcdf
  use etsf_data
  use pars,                 only : SP, DP, PI, schlen
  use com,                  only : msg, error, warning
@@ -62,9 +44,6 @@ subroutine e2y_db1(en,k,ncid)
  !
  integer                       :: i1,i2,ik,ib,is
  integer                       :: dimid, netcdf_error
- !ETSF library stuff
- logical                       :: lstat ! to get informed on error
- type(etsf_io_low_error)       :: error_data ! to store informations about errors
 
  call msg('s','Header/K-points/Energies...')
  !
@@ -94,7 +73,9 @@ subroutine e2y_db1(en,k,ncid)
  netcdf_error = nf90_inq_dimid(ncid, "max_number_of_angular_momenta", dimid)
  netcdf_error = nf90_inquire_dimension(ncid, dimid, len = pp_n_l_times_proj_max)
 
- call etsf_io_dims_get(ncid, dims, lstat, error_data)
+ !netcdf_error = nf90_inq_dimid(ncid, "max_number_of_projectors", dimid)
+ !netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_projectors)
+
  !
  ! Derived YAMBO dimensions
  !
@@ -151,9 +132,9 @@ contains
     use vec_operate,          only : cross_product
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                  DL_vol, a, alat, &
-&                                  n_atomic_species,n_atoms_species,&
-&                                  n_atoms_species_max,atom_pos, Z_species
+&                                    DL_vol, a, alat, &
+&                                    n_atomic_species,n_atoms_species,&
+&                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
     use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
     logical                       :: l_identity, l_inversion
@@ -163,8 +144,6 @@ contains
     character(3), allocatable     :: atom_species_names(:)
 
     integer :: varid
-
-    call allocate_geometry_group
 
     !
     ! Lattice vectors
@@ -193,24 +172,24 @@ contains
     ! n_atoms         n_atoms(n_atom_species) : number of atoms for each atom species
     ! atom_pos        the positions
     !
+    allocate( atom_species_(n_atoms) )
+    allocate( reduced_atom_positions_(3,n_atoms ) )
+    allocate( n_atoms_species(n_atomic_species) )
+
     netcdf_error = nf90_inq_varid(ncid, "atom_species", varid)
     netcdf_error = nf90_get_var(ncid, varid, atom_species_)
 
     netcdf_error = nf90_inq_varid(ncid, "reduced_atom_positions", varid)
     netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
 
-    allocate( n_atoms_species(n_atomic_species) )
-    !
     ! Determine n_atoms_max
-    !
     n_atoms_species(:) = 0 
     do i1 = 1, n_atoms
       n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
     enddo
     n_atoms_species_max = maxval(n_atoms_species)
-    !
+
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
-    !
     n_atoms_species(:) = 0 
     allocate( atom_pos(3, n_atoms_species_max, n_atomic_species) )
     do i1 = 1, n_atoms
@@ -218,6 +197,10 @@ contains
       atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
     enddo
+
+    deallocate( reduced_atom_positions_ )
+    deallocate( atom_species_ )
+
     !
     ! Atomic species data
     !
@@ -238,7 +221,6 @@ contains
 
     call symmetries_check_and_load(asop,a_nsym)
 
-    call deallocate_geometry_group
     return
   end subroutine import_geometry_group
 
@@ -248,7 +230,7 @@ contains
     implicit none
     integer :: varid
 
-    call allocate_electrons_group
+    allocate( eigenvalues_(n_bands, nkibz, n_sp_pol ) )
 
     netcdf_error = nf90_inq_varid(ncid, "number_of_electrons", varid)
     netcdf_error = nf90_get_var(ncid, varid, number_of_electrons_)
@@ -265,8 +247,8 @@ contains
     en%E(:,:,1:n_sp_pol) = eigenvalues_(:,:,1:n_sp_pol)     ! Type conversion
     if(n_spinor==2) en%E(:,:,2) = en%E(:,:,1)
 
-    call deallocate_electrons_group
-    ! Note that functional information is read in 'miscellaneous' section
+    deallocate(eigenvalues_)
+
     return
   end subroutine import_electrons_group
 
@@ -578,7 +560,6 @@ contains
 &                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                  pp_table,l_many_proj,pp_n_l_max
     implicit none
-    type(etsf_gwdata)            :: gwdata_group
 
     l_many_proj=.false.
     pp_n_l_max=abs(pp_n_l_times_proj_max)
@@ -615,7 +596,7 @@ contains
     !
     netcdf_error = nf90_inq_varid(ncid, "tphysel", varid)
     netcdf_error = nf90_get_var(ncid, varid, temperature_)
-    if(lstat) then
+    if(netcdf_error==0) then
       input_GS_Tel = temperature_ ! type conversion
     else
       input_GS_Tel = 0.0_SP
@@ -627,7 +608,7 @@ contains
     netcdf_error = nf90_inq_varid(ncid, "valence_charges", varid)
     netcdf_error = nf90_get_var(ncid, varid, valence_charges_)
 
-    if(lstat) then
+    if(netcdf_error==0) then
       default_nel = 0.
       do i1 = 1,n_atomic_species
         default_nel = default_nel + n_atoms_species(i1)*valence_charges_(i1)

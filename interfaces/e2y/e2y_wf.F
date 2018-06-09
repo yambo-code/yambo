@@ -24,8 +24,7 @@
 subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
 !==============================================
   ! Reads and returns wf_disk for both spins!
-  use etsf_io
-  use etsf_io_low_level
+  use netcdf
   use etsf_data,             only : dims,ETSF_kind
   use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
@@ -41,7 +40,6 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   !
   double precision, allocatable  :: wavefunction_section_(:,:,:,:)
   logical                        :: lstat
-  type(etsf_io_low_error)        :: error_data 
   ! 
   ! Work Space
   !
@@ -50,12 +48,6 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
   integer        :: varid, netcdf_error
   !
-  type(etsf_main)   :: main_group
-!
-!---------------------------------------------------------------------*
-!    Main data                                                        *
-!---------------------------------------------------------------------*
-
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
   !
   ! Initialize the mapping

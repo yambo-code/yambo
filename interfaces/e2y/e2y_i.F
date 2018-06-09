@@ -22,8 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
- use etsf_io
- use etsf_io_low_level
+ use netcdf
  use etsf_data
  use pars,                only : SP,lchlen
  use LOGO,                only : pickup_a_random
@@ -55,7 +54,6 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  integer                      :: ID,io_err,i_sp_pol,ik,ifrag,icycle, ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
- logical                      :: letsf_file, lwrite_PP, force_kbpp
  ! 
  ! Work Space
  !

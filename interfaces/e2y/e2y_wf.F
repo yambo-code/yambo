@@ -26,7 +26,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! Reads and returns wf_disk for both spins
   !
   use netcdf
-  use etsf_data,             only : dims,ETSF_kind
+  use etsf_data,             only : ETSF_kind
   use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
   use com,                   only : msg, error

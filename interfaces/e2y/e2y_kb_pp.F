@@ -23,23 +23,6 @@
 !
 subroutine e2y_kb_pp( ikibz, ncid )
   !
-  ! Structure of ETSF library data: (fortran order, opp to netcdf order)
-  !   allocate( kb_formfactors_(    dims%max_number_of_coefficients,    &
-  !   &                             dims%number_of_kpoints,            &
-  !   &                             dims%max_number_of_projectors,      &
-  !   &                             dims%max_number_of_angular_momenta, &
-  !   &                             dims%number_of_atom_species ))
-  !   allocate( kb_formfactor_derivative_( &
-  !   &                             dims%max_number_of_coefficients,    &
-  !   &                             dims%number_of_kpoints,            &
-  !   &                             dims%max_number_of_projectors,      &
-  !   &                             dims%max_number_of_angular_momenta, &
-  !   &                             dims%number_of_atom_species ))
-  ! Structure of YAMBO arrays, from PP_alloc:
-  !   allocate( pp_kbs ( n_atom_species, pp_n_l_comp_max ),stat=alloc_err(1))
-  !   allocate( pp_kb  ( ng_vec, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(2))
-  !   allocate( pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max ),stat=alloc_err(3)
-  !
   use etsf_io
   use etsf_io_low_level
   use etsf_data
@@ -56,19 +39,14 @@ subroutine e2y_kb_pp( ikibz, ncid )
   ! Work Space
   !
   integer                       :: ig, ib, ip, ia
-  integer                       :: pp_kbs_( &
-&           dims%max_number_of_angular_momenta,  dims%number_of_atom_species )
-  double precision              :: pp_section(dims%max_number_of_coefficients, &
-&           dims%max_number_of_angular_momenta, dims%number_of_atom_species )
+  integer                       :: pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species )
+  double precision              :: pp_section(wf_ncx, pp_n_l_times_proj_max, n_atomic_species )
 !ETSF library stuff
   logical                       :: lstat      ! to get informed on error
   type(etsf_io_low_error)       :: error_data ! to store informations about errors
   integer                       :: start(5), count(5), ncvarid ! must be size of netcdf array!
 
   !
-  ! Initialize the mapping: read for one k point (and one projector)
-  ! k is the *second* dimension of the netcdf variable in *Fortran* order
-  ! From Abinit: dims%max_number_of_projectors = 1 always
   !
   start(:) = 1     ; count(:) = 0
   start(2) = ikibz ; count(2) = 1   ! Split on k always

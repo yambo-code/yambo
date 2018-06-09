@@ -23,25 +23,8 @@
 !
 module etsf_data
   !
-  ! Compatible with version 0.8 of ETSF_io
-  ! Local copy of targets for reading *higher* level etsf_io libs.
-  ! Variables are (1) targets: which might hurt performance inside main code,
-  !               (2) double precision: since YAMBO uses SP in some calculations.
-  ! Hence, local copies are generally unavoidable.
-  ! ETSF specs for float/double may be modified in future for wfcs, but
-  ! this is not critical.
-  ! Variable names are those of ETSF specs, with an appended underscore.
-  !
-  ! To do: add ierr after allocates
-  !
-  use etsf_io,            only : etsf_charlen, etsf_dims, etsf_chemlen
-  !
-  ! Dimensions, as defined by the ETSF specifications
-  !
-  type(etsf_dims), save :: dims
-  !
-  ! 
   ! ETSF kind can be KSS or WFK at the moment
+  !
   character(3) :: ETSF_kind
   !
   ! Geometry group
@@ -53,8 +36,6 @@ module etsf_data
   ! Electrons
   !
   integer,                       target :: number_of_electrons_ 
-  character(len=etsf_charlen),   target :: exchange_functional_ 
-  character(len=etsf_charlen),   target :: correlation_functional_ 
   integer,          allocatable, target :: number_of_states_(:)
   double precision, allocatable, target :: eigenvalues_(:,:,:)
   !
@@ -64,7 +45,6 @@ module etsf_data
   !
   ! Wave function data (basis data)
   !
-  character(len=etsf_charlen),   target :: basis_set_ 
   integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
   !
   ! Wave function coefficients

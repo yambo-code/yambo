@@ -295,9 +295,9 @@ contains
     integer                       :: varid
     character(len=15)             :: format1
     !
-    call allocate_basisdata_group
     allocate( istwfk(k%nibz) )
     allocate( wf_nc_k(k%nibz) )
+    allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
 
     netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
@@ -458,8 +458,6 @@ contains
       wf_ng=maxval(wf_igk)
       !
     endif
-    !
-    call deallocate_basisdata_group
     !
     return
     !

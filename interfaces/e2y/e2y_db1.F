@@ -284,14 +284,13 @@ contains
     implicit none
     !
     integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
-    real(SP)                      :: ecut, norm_2, b_transpose(3,3)
-    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3)
+    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
     integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
-    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
-    integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
+    integer,     allocatable      :: G_mod_indx(:)
     logical                       :: gamma_only,l_new
     logical,     allocatable      :: l_g_mapped(:)
-    integer                       :: varid
+    real(SP)                      :: ecut, norm_2, b_transpose(3,3)
+    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
     character(len=15)             :: format1
     !
     allocate( istwfk(k%nibz) )
@@ -357,7 +356,6 @@ contains
       !
 
       ! 1.
-
       ! Get dimensions of sphere
       ecut = 1
 
@@ -439,7 +437,7 @@ contains
         end do
         call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
         ! 4.
-        ! Do the mapping
+        ! Do the wf_igk mapping
         do ic=1,wf_nc_k(ik)
           i1 = inv_map_k(1,ic)
           i2 = inv_map_k(2,ic)

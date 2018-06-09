@@ -256,7 +256,6 @@ contains
     netcdf_error = nf90_inq_varid(ncid, "eigenvalues", varid)
     netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
 
-    if (.not. lstat) call etsf_long_error(error_data)
     default_nel = number_of_electrons_
     default_nel = -1  ! Until fixed in ETSF file. Is calculated later.
     !
@@ -559,16 +558,12 @@ contains
     netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_kpoints", varid)
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints_)
 
-    !
-    ! Note here the indices are reversed in YAMBO.
-    ! However, could map directly using low level
-    ! etsf_io_low_read_var routine, if type conversion problem was absent
-    !
     allocate(k%pt(k%nibz,3))
     do ik = 1,k%nibz
       k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints_(:,ik))*alat(:)/2.0_SP/pi
     enddo
 
+    deallocate(reduced_coordinates_of_kpoints_)
     return
   end subroutine import_kpoints_group
 
@@ -587,14 +582,6 @@ contains
     implicit none
     type(etsf_gwdata)            :: gwdata_group
 
-!   call allocate_gwdata_group
-
-!   gwdata_group%kb_formfactors%data5d => kb_formfactors_
-!   gwdata_group%kb_formfactor_derivative%data5d => kb_formfactor_derivative_
-!   gwdata_group%kb_formfactor_sign%data3d => kb_formfactor_sign_
-
-!   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
-
     l_many_proj=.false.
     pp_n_l_max=abs(pp_n_l_times_proj_max)
     allocate(pp_n_l_comp(n_atomic_species),&
@@ -610,7 +597,6 @@ contains
       enddo
     endif
     !
-    call deallocate_gwdata_group
     return
   end subroutine import_gwdata_group
   !
@@ -653,17 +639,9 @@ contains
     !
     ! Spin orbit splitting (Abinit)
     !
-    !allocate(spin_orbit_atom_(n_atomic_species))
-    !call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
-    !if(lstat) then
-      l_spin_orbit = .false.
-      !if(any(spin_orbit_atom_.eq.2).or.any(spin_orbit_atom_.eq.3)) then
-      !  l_spin_orbit = .true.
-      !endif
-    !else
-    !  l_spin_orbit = .false.
-    !endif
-    !deallocate(spin_orbit_atom_)
+    ! TODO
+    l_spin_orbit = .false.
+
     !
     ! XC functional (Abinit)
     !

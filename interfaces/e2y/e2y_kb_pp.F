@@ -80,6 +80,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
 &                             start = start, count =  count )
   forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
+
   !
   ! Form factor derivatives 
   !

@@ -52,7 +52,6 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  type(levels)                 :: en
  type(bz_samp)                :: k
  !
- character(lchlen)            :: KSS_filename,WFK_filename
  integer                      :: ID,io_err,i_sp_pol,ik,ifrag,icycle, ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
@@ -60,9 +59,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! Work Space
  !
- logical                     :: lstat      ! to get informed on error
- type(etsf_io_low_error)     :: error_data ! to store informations about errors
- integer                     :: ncid
+ integer                     :: ncid, netcdf_error
  !
  ! Presets
  !=========
@@ -88,31 +85,22 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! LOGO
  !
  call write_the_logo(6,' ')
- !
  call msg('s','E(TSF) 2 Y(ambo)')
  !
  ! Check input filenames 
  !
  call msg('s','Checking input file ...')
  !
- if(index(trim(inf),'KSS')/=0) ETSF_kind='KSS'
- if(index(trim(inf),'WFK')/=0) ETSF_kind='WFK'
- !
- if(trim(ETSF_kind)=='KSS') then
-   KSS_filename=trim(inf)
-   call msg('s','ETSF KSS file ',trim(KSS_filename))
- endif
- !
- if(trim(ETSF_kind)=='WFK') then
-   WFK_filename=trim(inf)
-   call msg('s','ETSF WFK file ',trim(WFK_filename))
- endif
- !
- if(trim(ETSF_kind)/='KSS'.and.trim(ETSF_kind)/='WFK') then
+ if      (index(trim(inf),'KSS')/=0) then
+   ETSF_kind='KSS'
+ else if (index(trim(inf),'WFK')/=0) then
+   ETSF_kind='WFK'
+ else
    call msg('ln','File kind not supported! Use either KSS or WFK filename.')
-   return
- endif
-
+ end if
+ !
+ call msg('s','ETSF file ',trim(inf))
+ !
  if(.not.file_exists(trim(inf))) then
    call msg('ln','File not found! Specify -F filename.')
    return
@@ -120,10 +108,8 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Open ETSF file for reading
  !
- if(trim(ETSF_kind)=='KSS') call etsf_io_low_open_read(ncid, trim(KSS_filename), lstat, error_data = error_data)
- if(trim(ETSF_kind)=='WFK') call etsf_io_low_open_read(ncid, trim(WFK_filename), lstat, error_data = error_data)
+ netcdf_error = nf90_open(path = trim(inf), mode = NF90_NOWRITE, ncid = ncid)
  !
- if (.not. lstat) call etsf_long_error(error_data)
  call msg('s','DBs path set to :',trim(core_io_path))
  !
  ! DB1
@@ -204,14 +190,6 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Close file
  !
- call etsf_io_low_close(ncid, lstat, error_data = error_data)
+ netcdf_error = nf90_close(ncid)
  !
 end function
-
- subroutine etsf_long_error(error_data)
-   use etsf_io_low_level, only : etsf_io_low_error, etsf_io_low_error_handle
-   use com, only : error
-   type(etsf_io_low_error), intent(in)     :: error_data
-   call etsf_io_low_error_handle(error_data)
-   call error('YAMBO dies')
- end subroutine etsf_long_error

@@ -292,18 +292,23 @@ contains
     integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
     logical                       :: gamma_only,l_new
     logical,     allocatable      :: l_g_mapped(:)
+    integer                       :: varid
     character(len=15)             :: format1
     !
     call allocate_basisdata_group
     allocate( istwfk(k%nibz) )
     allocate( wf_nc_k(k%nibz) )
-    call etsf_io_low_read_var(ncid, "number_of_coefficients", wf_nc_k, lstat)
+
+    netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
+    netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
+
     wf_ncx = maxval(wf_nc_k) 
     allocate( wf_igk(wf_ncx,k%nibz) )
     !
     b_transpose = transpose(b)
 
-    call etsf_io_low_read_var(ncid, "reduced_coordinates_of_plane_waves", reduced_coordinates_of_plane_waves_, lstat)
+    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_plane_waves", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
 
     if(trim(ETSF_kind)=='KSS') then
       !
@@ -422,7 +427,9 @@ contains
       ! 3.
       ! Same thing but for the K-dependent G-spheres     
       ! Get storage type of the wavefunctions
-      call etsf_io_low_read_var(ncid, "istwfk", istwfk, lstat)
+      netcdf_error = nf90_inq_varid(ncid, "istwfk", varid)
+      netcdf_error = nf90_get_var(ncid, varid, istwfk)
+
       wf_igk = -1
       do ik=1,k%nibz
         npw = wf_nc_k(ik)
@@ -620,11 +627,12 @@ contains
     use electrons,            only : l_spin_orbit, default_nel
     use xc_functionals,       only : GS_xc_KIND,GS_xc_FUNCTIONAL
     use mod_xc2y,             only : XC_yamboID, XC_yamboID2kind
-    integer                       :: i1
+    integer                       :: i1, varid
     !
     ! Temperature (Abinit)
     !
-    call etsf_io_low_read_var(ncid, "tphysel", temperature_, lstat)
+    netcdf_error = nf90_inq_varid(ncid, "tphysel", varid)
+    netcdf_error = nf90_get_var(ncid, varid, temperature_)
     if(lstat) then
       input_GS_Tel = temperature_ ! type conversion
     else
@@ -634,7 +642,9 @@ contains
     ! Number of electrons (Abinit)
     !
     allocate(valence_charges_(n_atomic_species))
-    call etsf_io_low_read_var(ncid, "valence_charges", valence_charges_, lstat)
+    netcdf_error = nf90_inq_varid(ncid, "valence_charges", varid)
+    netcdf_error = nf90_get_var(ncid, varid, valence_charges_)
+
     if(lstat) then
       default_nel = 0.
       do i1 = 1,n_atomic_species
@@ -659,7 +669,9 @@ contains
     !
     ! XC functional (Abinit)
     !
-    call etsf_io_low_read_var(ncid, "ixc", ixc_, lstat)
+    netcdf_error = nf90_inq_varid(ncid, "ixc", varid)
+    netcdf_error = nf90_get_var(ncid, varid, ixc_)
+
     GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ixc_)
     GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
     return

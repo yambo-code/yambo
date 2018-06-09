@@ -22,8 +22,9 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
-!==============================================
-  ! Reads and returns wf_disk for both spins!
+  !
+  ! Reads and returns wf_disk for both spins
+  !
   use netcdf
   use etsf_data,             only : dims,ETSF_kind
   use pars,                  only : SP,cZERO

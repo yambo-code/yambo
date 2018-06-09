@@ -47,12 +47,10 @@ module etsf_data
   ! Geometry group
   !
   double precision, allocatable, target :: primitive_vectors_(:,:)
-  integer,          allocatable, target :: reduced_symmetry_matrices_(:,:,:)
   integer,          allocatable, target :: atom_species_(:)
   double precision, allocatable, target :: reduced_atom_positions_(:,:)
   double precision, allocatable, target :: valence_charges_(:) 
   double precision, allocatable, target :: atomic_numbers_(:) 
-  character(len=etsf_chemlen), allocatable, target :: chemical_symbols_(:) 
   !
   ! Electrons
   !
@@ -96,13 +94,9 @@ contains
   !
   subroutine allocate_geometry_group
     allocate( atomic_numbers_(dims%number_of_atom_species) )
-    allocate( chemical_symbols_(dims%number_of_atom_species) )
     allocate( atom_species_(dims%number_of_atoms) )
     allocate( primitive_vectors_ (dims%number_of_cartesian_directions, &
 &                                 dims%number_of_vectors ) )
-    allocate( reduced_symmetry_matrices_(dims%number_of_reduced_dimensions,&
-&                                        dims%number_of_reduced_dimensions, &
-&                                        dims%number_of_symmetry_operations) )
     allocate( reduced_atom_positions_(dims%number_of_reduced_dimensions, &
 &                                     dims%number_of_atoms ) )
     return
@@ -111,9 +105,7 @@ contains
   subroutine deallocate_geometry_group
     if(allocated(atom_species_))              deallocate(atom_species_)
     if(allocated(atomic_numbers_))            deallocate(atomic_numbers_)
-    if(allocated(chemical_symbols_))          deallocate(chemical_symbols_)
     if(allocated(primitive_vectors_))         deallocate(primitive_vectors_)
-    if(allocated(reduced_symmetry_matrices_)) deallocate(reduced_symmetry_matrices_)
     if(allocated(reduced_atom_positions_))    deallocate(reduced_atom_positions_)
     return 
   end subroutine deallocate_geometry_group

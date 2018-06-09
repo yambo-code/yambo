@@ -144,24 +144,6 @@ subroutine e2y_db1(en,k,ncid)
 
 contains
  
-  !=------------------------------------------------------------------!
-  ! All import blocks have the following structure:                   !
-  !                                                                   !
-  ! 1 - Allocate targets for data to be read according to dimensions  !
-  !     in specifications                                             ! 
-  !                       [call allocate_XXX_group ]                  !
-  !                                                                   !
-  ! 2 - Point library variable to local target variables              !
-  !                       [ group%x => x_ ]                           !
-  !                                                                   !
-  ! 3 - Call the library for this group of variables                  !
-  !                       [ call etsf_io_XXX_get ]                    !
-  !                                                                   !
-  ! 4 - Copy target variables to YAMBO variables, allocating and       !
-  !     processing where representations differ                       !
-  !                       [ yambo_x = x_ ]                             !
-  !=------------------------------------------------------------------!
-
   !
   ! Geometry group subroutines
   !
@@ -184,32 +166,16 @@ contains
 
     call allocate_geometry_group
 
-    netcdf_error = nf90_inq_varid(ncid, "primitive_vectors", varid)
-    netcdf_error = nf90_get_var(ncid, varid, primitive_vectors_)
-
-    netcdf_error = nf90_inq_varid(ncid, "reduced_symmetry_matrices", varid)
-    netcdf_error = nf90_get_var(ncid, varid, reduced_symmetry_matrices_)
-
-    netcdf_error = nf90_inq_varid(ncid, "reduced_atom_positions", varid)
-    netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
-
-    netcdf_error = nf90_inq_varid(ncid, "atom_species", varid)
-    netcdf_error = nf90_get_var(ncid, varid, atom_species_)
-
-    netcdf_error = nf90_inq_varid(ncid, "chemical_symbols", varid)
-    netcdf_error = nf90_get_var(ncid, varid, chemical_symbols_)
-
-    netcdf_error = nf90_inq_varid(ncid, "atomic_numbers", varid)
-    netcdf_error = nf90_get_var(ncid, varid, atomic_numbers_)
-
     !
     ! Lattice vectors
     !
-    a(:,:) = transpose(primitive_vectors_(:,:))
+    netcdf_error = nf90_inq_varid(ncid, "primitive_vectors", varid)
+    netcdf_error = nf90_get_var(ncid, varid, a)
+
+    a(:,:) = transpose(a(:,:))
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
-!   call msg('s',':: Lattice factors [a.u.]:',alat)
     cp = cross_product(a(2,:),a(3,:))
     do i1 = 1,3
       DL_vol = DL_vol+a(1,i1)*cp(i1)
@@ -217,6 +183,8 @@ contains
     b(1,:) = cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
     b(2,:) = cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
     b(3,:) = cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
+
+
     !
     ! Atomic position data
     !
@@ -225,6 +193,12 @@ contains
     ! n_atoms         n_atoms(n_atom_species) : number of atoms for each atom species
     ! atom_pos        the positions
     !
+    netcdf_error = nf90_inq_varid(ncid, "atom_species", varid)
+    netcdf_error = nf90_get_var(ncid, varid, atom_species_)
+
+    netcdf_error = nf90_inq_varid(ncid, "reduced_atom_positions", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
+
     allocate( n_atoms_species(n_atomic_species) )
     !
     ! Determine n_atoms_max
@@ -248,17 +222,20 @@ contains
     ! Atomic species data
     !
     allocate( Z_species(n_atomic_species) )
-    do i1 = 1, n_atomic_species
-      Z_species(i1) = atomic_numbers_( i1 )
-    enddo
+    netcdf_error = nf90_inq_varid(ncid, "atomic_numbers", varid)
+    netcdf_error = nf90_get_var(ncid, varid, Z_species)
+
     !
     ! Symmetry 
     !
-    a_nsym   = dims%number_of_symmetry_operations
+    netcdf_error = nf90_inq_dimid(ncid, "number_of_symmetry_operations", dimid)
+    netcdf_error = nf90_inquire_dimension(ncid, dimid, len = a_nsym)
+
     allocate( asop(3,3,a_nsym) )
-    do is=1,a_nsym
-      asop(:,:,is) = reduced_symmetry_matrices_(:,:,is) 
-    enddo
+
+    netcdf_error = nf90_inq_varid(ncid, "reduced_symmetry_matrices", varid)
+    netcdf_error = nf90_get_var(ncid, varid, asop)
+
     call symmetries_check_and_load(asop,a_nsym)
 
     call deallocate_geometry_group

@@ -33,8 +33,6 @@
 #
 # [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
-# [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
-#                 @ETSF_INCS@
 # [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @NETCDF_info@
 #                 @NETCDFF_INCS@ @NETCDF_INCS@
 # [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@

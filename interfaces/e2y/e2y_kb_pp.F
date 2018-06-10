@@ -23,8 +23,29 @@
 !
 subroutine e2y_kb_pp( ikibz, ncid )
   !
-  use etsf_io
-  use etsf_io_low_level
+  !
+  ! Structure of ETSF library data: (fortran order, opp to netcdf order)
+  !   kb_formfactors(  dims%max_number_of_coefficients,    &
+  !   &                dims%number_of_kpoints,             &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  !   kb_formfactor_derivative( &
+  !   &                dims%max_number_of_coefficients,    &
+  !   &                dims%number_of_kpoints,             &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  !   kb_formfactor_sign( &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  ! Structure of YAMBO arrays, from PP_alloc:
+  !   pp_kbs ( n_atom_species, pp_n_l_comp_max )
+  !   pp_kb  ( ng_vec, n_atom_species, pp_n_l_comp_max )
+  !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max )
+  !
+  use netcdf
   use etsf_data
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
@@ -41,40 +62,34 @@ subroutine e2y_kb_pp( ikibz, ncid )
   integer                       :: ig, ib, ip, ia
   integer                       :: pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species )
   double precision              :: pp_section(wf_ncx, pp_n_l_times_proj_max, n_atomic_species )
-!ETSF library stuff
-  logical                       :: lstat      ! to get informed on error
-  type(etsf_io_low_error)       :: error_data ! to store informations about errors
-  integer                       :: start(5), count(5), ncvarid ! must be size of netcdf array!
-
-  !
-  !
-  start(:) = 1     ; count(:) = 0
-  start(2) = ikibz ; count(2) = 1   ! Split on k always
+  integer                       :: start(5), count(5), varid, netcdf_error
   !
   ! Form factors 
   !
-  call etsf_io_low_read_var(ncid, "kb_formfactors", &
-                            & pp_section, lstat, error_data = error_data, &
-&                             start = start, count =  count )
+  start = [1,ikibz,1,1,1]
+  count = [wf_ncx,1,pp_n_l_times_proj_max,max_number_of_angular_momenta_,n_atomic_species]
+  !
+  ! Form factors 
+  !
+  netcdf_error = nf90_inq_varid(ncid, "kb_formfactors", varid)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section)
   forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
 
   !
   ! Form factor derivatives 
   !
-  call etsf_io_low_read_var(ncid, "kb_formfactor_derivative", &
-                            & pp_section, lstat, error_data = error_data, &
-&                             start = start, count = count)
+  netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_derivative", varid)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section)
   forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
+
   !
   ! Form factor signs
   !
   if(ikibz.gt.1) return
-  call etsf_io_low_read_var(ncid, "kb_formfactor_sign", &
-                            & pp_kbs_, lstat,          &
-                            & error_data = error_data)
-
+  netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_sign", varid)
+  netcdf_error = nf90_get_var(ncid, varid, pp_kbs)
   forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
 

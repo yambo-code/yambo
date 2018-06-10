@@ -31,7 +31,7 @@ subroutine e2y_db1(en,k,ncid)
  use wave_func,            only : wf_ncx
  use R_lattice,            only : bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
- use pseudo,               only : pp_n_l_times_proj_max
+ use pseudo,               only : pp_n_l_times_proj_max, pp_n_l_max
  use mod_com2y,            only : print_interface_dimensions
  !
  implicit none
@@ -50,10 +50,10 @@ subroutine e2y_db1(en,k,ncid)
  ! Directly read dimensions
  !
  netcdf_error = nf90_inq_dimid(ncid, "max_number_of_states", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = en%nb)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_bands)
 
  netcdf_error = nf90_inq_dimid(ncid, "number_of_kpoints", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = k%nibz)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = nkibz)
 
  netcdf_error = nf90_inq_dimid(ncid, "number_of_spinor_components", dimid)
  netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_spinor)
@@ -71,17 +71,21 @@ subroutine e2y_db1(en,k,ncid)
  netcdf_error = nf90_inquire_dimension(ncid, dimid, len = wf_ncx)
 
  netcdf_error = nf90_inq_dimid(ncid, "max_number_of_angular_momenta", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = pp_n_l_times_proj_max)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_angular_momenta_)
 
- !netcdf_error = nf90_inq_dimid(ncid, "max_number_of_projectors", dimid)
- !netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_projectors)
+ netcdf_error = nf90_inq_dimid(ncid, "max_number_of_projectors", dimid)
+ netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_projectors_)
+
 
  !
  ! Derived YAMBO dimensions
  !
+ pp_n_l_times_proj_max = max_number_of_projectors_
+ pp_n_l_max            = max_number_of_angular_momenta_
+
  n_spin  = max(n_spinor, n_sp_pol)
- nkibz   = k%nibz
- n_bands = en%nb
+ k%nibz = nkibz
+ en%nb  = n_bands
  call msg("l","done")
  !
  ! Geometry (must appear first, in order to define alat)

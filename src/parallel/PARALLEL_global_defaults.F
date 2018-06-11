@@ -56,7 +56,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" b","qp"," k"," q"/))
    case("Non_Linear") 
-     call GIMME_a_parallel_proposal(4,(/" b"," k"," q"," w"/))
+     call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu

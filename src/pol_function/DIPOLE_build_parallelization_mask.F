@@ -55,7 +55,11 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
    do ic=ic_min,X%ib(2)
      !
 #if defined _RT
-     if (l_par_RT.or.l_par_NL) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+     if (l_par_RT) then
+         eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+     elseif(l_par_NL) then 
+         eval_DIP(ic,iv)=.true.
+     endif
 #endif
      !
      if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_SE/))) then

@@ -33,7 +33,7 @@ subroutine e2y_db1(en,k,ncid)
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
  use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit
  !
- implicit none
+#include<memory.h>
  !
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
@@ -155,9 +155,9 @@ contains
     ! n_atoms         n_atoms(n_atom_species) : number of atoms for each atom species
     ! atom_pos        the positions
     !
-    allocate( atom_species_(n_atoms) )
-    allocate( reduced_atom_positions_(3,n_atoms ) )
-    allocate( n_atoms_species(n_atomic_species) )
+    YAMBO_ALLOC( atom_species_, (n_atoms) )
+    YAMBO_ALLOC( reduced_atom_positions_, (3,n_atoms ) )
+    YAMBO_ALLOC( n_atoms_species, (n_atomic_species) )
 
     varid = netcdf_inquire_varid(ncid, "atom_species")
     netcdf_error = nf90_get_var(ncid, varid, atom_species_)
@@ -174,20 +174,19 @@ contains
 
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
     n_atoms_species(:) = 0 
-    allocate( atom_pos(3, n_atoms_species_max, n_atomic_species) )
+    YAMBO_ALLOC( atom_pos, (3, n_atoms_species_max, n_atomic_species) )
     do i1 = 1, n_atoms
       n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
       atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
     enddo
-
-    deallocate( reduced_atom_positions_ )
-    deallocate( atom_species_ )
+    YAMBO_FREE( reduced_atom_positions_ )
+    YAMBO_FREE( atom_species_ )
 
     !
     ! Atomic species data
     !
-    allocate( Z_species(n_atomic_species) )
+    YAMBO_ALLOC( Z_species, (n_atomic_species) )
     varid = netcdf_inquire_varid(ncid, "atomic_numbers")
     netcdf_error = nf90_get_var(ncid, varid, Z_species)
 
@@ -197,8 +196,7 @@ contains
     netcdf_error = nf90_inq_dimid(ncid, "number_of_symmetry_operations", dimid)
     netcdf_error = nf90_inquire_dimension(ncid, dimid, len = a_nsym)
 
-    allocate( asop(3,3,a_nsym) )
-
+    YAMBO_ALLOC( asop, (3,3,a_nsym) )
     varid = netcdf_inquire_varid(ncid, "reduced_symmetry_matrices")
     netcdf_error = nf90_get_var(ncid, varid, asop)
 
@@ -214,7 +212,7 @@ contains
     integer :: varid
     double precision, allocatable, target :: eigenvalues_(:,:,:)
 
-    allocate( eigenvalues_(n_bands, nkibz, n_sp_pol ) )
+    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol ) )
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)
@@ -225,11 +223,11 @@ contains
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
     !
-    allocate( en%E(en%nb, k%nibz, n_spin) )
+    YAMBO_ALLOC( en%E, (en%nb, k%nibz, n_spin) )
     en%E(:,:,1:n_sp_pol) = eigenvalues_(:,:,1:n_sp_pol)     ! Type conversion
     if(n_spinor==2) en%E(:,:,2) = en%E(:,:,1)
 
-    deallocate(eigenvalues_)
+    YAMBO_FREE(eigenvalues_)
 
     return
   end subroutine import_electrons_group
@@ -252,22 +250,22 @@ contains
     logical,   allocatable         :: l_g_mapped(:)
     real(SP)                       :: ecut, norm_2
     real(SP),  allocatable         :: G_mod(:), g_vec_tmp(:,:)
-    integer,   allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
+    integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
     !
-    allocate( istwfk(k%nibz) )
-    allocate( wf_nc_k(k%nibz) )
-    allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
-    allocate( wf_igk(wf_ncx,k%nibz) )
+    YAMBO_ALLOC( istwfk, (k%nibz) )
+    YAMBO_ALLOC( wf_nc_k, (k%nibz) )
+    allocate( reduced_coordinates_of_plane_waves(3,wf_ncx,k%nibz) )
+    YAMBO_ALLOC( wf_igk, (wf_ncx,k%nibz) )
     !
     varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
     !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
     !
-    allocate( g_vec(wf_ncx,3) )
+    YAMBO_ALLOC( g_vec, (wf_ncx,3) )
     do i1=1,wf_ncx
-      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_(:,i1,1))*alat(:)/2.0_SP/pi
+      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves(:,i1,1))*alat(:)/2.0_SP/pi
     enddo
     !
     ng_vec=wf_ncx
@@ -307,23 +305,22 @@ contains
     integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     integer,     allocatable      :: G_mod_indx(:)
     logical                       :: gamma_only,l_new
-    logical,     allocatable      :: l_g_mapped(:)
     real(SP)                      :: ecut, norm_2, b_transpose(3,3)
     real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
-    integer,   allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
+    integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
     !
-    allocate( istwfk(k%nibz) )
-    allocate( wf_nc_k(k%nibz) )
-    allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
+    YAMBO_ALLOC( istwfk, (k%nibz) )
+    YAMBO_ALLOC( wf_nc_k, (k%nibz) )
+    allocate( reduced_coordinates_of_plane_waves(3,wf_ncx,k%nibz) )
     !
     varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
     !
     wf_ncx = maxval(wf_nc_k) 
-    allocate( wf_igk(wf_ncx,k%nibz) )
+    YAMBO_ALLOC( wf_igk, (wf_ncx,k%nibz) )
     !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
     !
     ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
     ! a gamma centered G-vector sphere
@@ -351,9 +348,9 @@ contains
     max_nz = 0
     do ik=1,k%nibz
       !write(*,*) ik, wf_nc_k(ik)
-      max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_(1,:,ik)))
-      max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_(2,:,ik)))
-      max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_(3,:,ik)))
+      max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves(1,:,ik)))
+      max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves(2,:,ik)))
+      max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves(3,:,ik)))
     end do
     !write(*,*) max_nx, max_ny, max_nz
     n1 = 4*max_nx
@@ -363,8 +360,8 @@ contains
     ! Calculate G-vectors inside the sphere
     b_transpose = transpose(b)
     max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
-    allocate( g_vec_tmp(max_size,3) )
-    allocate( igk_tmp(3,max_size) )
+    YAMBO_ALLOC( g_vec_tmp, (max_size,3) )
+    YAMBO_ALLOC( igk_tmp, (3,max_size) )
     npw = 0
     do i1=-n1,n1
       do i2=-n2,n2
@@ -389,17 +386,20 @@ contains
     ng_vec = npw
    
     ! can sort the G vectors in whatever way here
-    allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+    YAMBO_ALLOC(G_mod,(ng_vec))
+    YAMBO_ALLOC(G_mod_indx,(ng_vec))
     do ig=1,ng_vec
       G_mod(ig)=iku_v_norm(g_vec_tmp(ig,:))
     enddo
     call sort(G_mod,indx_m1=G_mod_indx)
-    deallocate(G_mod)
+    YAMBO_FREE(G_mod)
     !
-    allocate(g_vec(ng_vec,3), igk(3,ng_vec))
+    YAMBO_ALLOC(g_vec,(ng_vec,3))
+    YAMBO_ALLOC(igk,(3,ng_vec))
     g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
     igk(:3,G_mod_indx(:ng_vec))=igk_tmp(:3,:ng_vec)
-    deallocate(g_vec_tmp,igk_tmp)
+    YAMBO_FREE(g_vec_tmp)
+    YAMBO_FREE(igk_tmp)
    
     ! 2.
     allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
@@ -421,9 +421,9 @@ contains
       write(2,*)
       write(2,*)
       do ic=1,npw
-        write(2,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
+        write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
       end do
-      call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
+      call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
       ! 4.
       ! Do the wf_igk mapping
       do ic=1,wf_nc_k(ik)
@@ -537,19 +537,19 @@ contains
     use D_lattice,            only : alat
     implicit none
     integer :: varid
-    double precision, allocatable, target :: reduced_coordinates_of_kpoints_(:,:)
+    double precision, allocatable, target :: reduced_coordinates_of_kpoints(:,:)
 
-    allocate(reduced_coordinates_of_kpoints_(3, k%nibz))
+    allocate(reduced_coordinates_of_kpoints(3, k%nibz))
 
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints_)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints)
 
-    allocate(k%pt(k%nibz,3))
+    YAMBO_ALLOC(k%pt,(k%nibz,3))
     do ik = 1,k%nibz
-      k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints_(:,ik))*alat(:)/2.0_SP/pi
+      k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints(:,ik))*alat(:)/2.0_SP/pi
     enddo
 
-    deallocate(reduced_coordinates_of_kpoints_)
+    deallocate(reduced_coordinates_of_kpoints)
     return
   end subroutine import_kpoints_group
 
@@ -604,7 +604,7 @@ contains
     forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
 
-    deallocate(pp_kbs_)
+    YAMBO_FREE(pp_kbs_)
     !
     return
   end subroutine import_gwdata_group

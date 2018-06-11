@@ -29,17 +29,30 @@ module etsf_data
   !
   contains
 
+  function netcdf_inquire_varid(ncid, var_name) result(varid)
+    use netcdf
+    implicit none
+    character (len = *), intent(in)  :: var_name
+    integer,             intent(in)  :: ncid
+    integer                          :: varid
+    integer                          :: netcdf_error
+
+    netcdf_error = nf90_inq_varid(ncid, var_name, varid)
+    call netcdf_check(ncid,netcdf_error, varid, var_name)
+  end function
+
   function netcdf_get_dimension(ncid,dim_name) result(dim_value)
     use netcdf
     implicit none
-    character (len = *), intent(in) :: dim_name
-    integer,             intent(in) :: ncid
-    integer                         :: netcdf_error, varid, dimid, dim_value
+    character (len = *), intent(in)  :: dim_name
+    integer,             intent(in)  :: ncid
+    integer                          :: dim_value
+    integer                          :: netcdf_error, varid, dimid
     
-    netcdf_error = nf90_inq_dimid(ncid, dim_name, dimid)
-    call netcdf_check(ncid,netcdf_error,dimid,dim_name)
+    netcdf_error = nf90_inq_dimid(ncid,dim_name,dimid)
+    call netcdf_check(ncid,netcdf_error, dimid, dim_name)
     netcdf_error = nf90_inquire_dimension(ncid, dimid, len = dim_value)
-    call netcdf_check(ncid,netcdf_error,dimid)
+    call netcdf_check(ncid,netcdf_error, dimid)
   end function
 
   subroutine netcdf_check(ncid,netcdf_error,varid,var_name)
@@ -47,12 +60,10 @@ module etsf_data
     use pars, only:lchlen
     use com,  only:error
     implicit none
-    integer,     intent (in) :: ncid,varid
-    integer                  :: netcdf_error
-    character (lchlen)       :: msg
+    integer,     intent (in) :: ncid,varid,netcdf_error
     character (len = *), optional, intent(in) :: var_name
+    character (lchlen)       :: msg
 
-    netcdf_error = nf90_inquire_dimension(ncid, varid)
     if(netcdf_error /= nf90_noerr) then
         if (present(var_name)) then
             write(msg,*) 'variable: ', var_name, ' ', trim(nf90_strerror(netcdf_error))

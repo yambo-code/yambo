@@ -131,7 +131,7 @@ contains
     !
     ! Lattice vectors
     !
-    netcdf_error = nf90_inq_varid(ncid, "primitive_vectors", varid)
+    varid = netcdf_inquire_varid(ncid, "primitive_vectors")
     netcdf_error = nf90_get_var(ncid, varid, a)
 
     a(:,:) = transpose(a(:,:))
@@ -159,10 +159,10 @@ contains
     allocate( reduced_atom_positions_(3,n_atoms ) )
     allocate( n_atoms_species(n_atomic_species) )
 
-    netcdf_error = nf90_inq_varid(ncid, "atom_species", varid)
+    varid = netcdf_inquire_varid(ncid, "atom_species")
     netcdf_error = nf90_get_var(ncid, varid, atom_species_)
 
-    netcdf_error = nf90_inq_varid(ncid, "reduced_atom_positions", varid)
+    varid = netcdf_inquire_varid(ncid, "reduced_atom_positions")
     netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
 
     ! Determine n_atoms_max
@@ -188,7 +188,7 @@ contains
     ! Atomic species data
     !
     allocate( Z_species(n_atomic_species) )
-    netcdf_error = nf90_inq_varid(ncid, "atomic_numbers", varid)
+    varid = netcdf_inquire_varid(ncid, "atomic_numbers")
     netcdf_error = nf90_get_var(ncid, varid, Z_species)
 
     !
@@ -199,7 +199,7 @@ contains
 
     allocate( asop(3,3,a_nsym) )
 
-    netcdf_error = nf90_inq_varid(ncid, "reduced_symmetry_matrices", varid)
+    varid = netcdf_inquire_varid(ncid, "reduced_symmetry_matrices")
     netcdf_error = nf90_get_var(ncid, varid, asop)
 
     call symmetries_check_and_load(asop,a_nsym)
@@ -216,10 +216,10 @@ contains
 
     allocate( eigenvalues_(n_bands, nkibz, n_sp_pol ) )
 
-    netcdf_error = nf90_inq_varid(ncid, "number_of_electrons", varid)
+    varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)
 
-    netcdf_error = nf90_inq_varid(ncid, "eigenvalues", varid)
+    varid = netcdf_inquire_varid(ncid, "eigenvalues")
     netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
 
     !
@@ -259,10 +259,10 @@ contains
     allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
     allocate( wf_igk(wf_ncx,k%nibz) )
     !
-    netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
+    varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
     !
-    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_plane_waves", varid)
+    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
     !
     allocate( g_vec(wf_ncx,3) )
@@ -316,13 +316,13 @@ contains
     allocate( wf_nc_k(k%nibz) )
     allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
     !
-    netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
+    varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
     !
     wf_ncx = maxval(wf_nc_k) 
     allocate( wf_igk(wf_ncx,k%nibz) )
     !
-    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_plane_waves", varid)
+    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
     !
     ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
@@ -412,7 +412,7 @@ contains
     ! 3.
     ! Same thing but for the K-dependent G-spheres     
     ! Get storage type of the wavefunctions
-    netcdf_error = nf90_inq_varid(ncid, "istwfk", varid)
+    varid = netcdf_inquire_varid(ncid, "istwfk")
     netcdf_error = nf90_get_var(ncid, varid, istwfk)
    
     wf_igk = -1
@@ -541,7 +541,7 @@ contains
 
     allocate(reduced_coordinates_of_kpoints_(3, k%nibz))
 
-    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_kpoints", varid)
+    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints_)
 
     allocate(k%pt(k%nibz,3))
@@ -557,6 +557,7 @@ contains
   ! GW data
   !===========================================================
   subroutine import_gwdata_group
+    use etsf_data
     use D_lattice,             only : n_atomic_species
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
@@ -596,14 +597,13 @@ contains
 
     start = [1,1,1]
     count = [1,pp_n_l_times_proj_max,n_atomic_species]
-    netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_sign", varid)
+    
+    varid = netcdf_inquire_varid(ncid, "kb_formfactor_sign")
     netcdf_error = nf90_get_var(ncid, varid, pp_kbs_, start=start, count=count)
+    call netcdf_check(ncid, netcdf_error, varid, "kb_formfactor_sign")
     forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
 
-    write(*,*)
-    write(*,*) pp_kbs_
-    write(*,*) pp_kbs
     deallocate(pp_kbs_)
     !
     return
@@ -624,7 +624,7 @@ contains
     !
     ! Temperature (Abinit)
     !
-    netcdf_error = nf90_inq_varid(ncid, "tphysel", varid)
+    varid = netcdf_inquire_varid(ncid, "tphysel")
     netcdf_error = nf90_get_var(ncid, varid, input_GS_Tel)
 
     !
@@ -636,7 +636,7 @@ contains
     !
     ! XC functional (Abinit)
     !
-    netcdf_error = nf90_inq_varid(ncid, "ixc", varid)
+    varid = netcdf_inquire_varid(ncid, "ixc")
     netcdf_error = nf90_get_var(ncid, varid, ixc_)
 
     GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ixc_)

@@ -27,37 +27,6 @@ module etsf_data
   !
   character(3) :: ETSF_kind
   !
-  ! Electrons
-  !
-  integer,                       target :: number_of_electrons_ 
-  integer,          allocatable, target :: number_of_states_(:)
-  double precision, allocatable, target :: eigenvalues_(:,:,:)
-  !
-  ! K-points
-  !
-  double precision, allocatable, target :: reduced_coordinates_of_kpoints_(:,:)
-  !
-  ! Wave function data (basis data)
-  !
-  integer,          allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
-  !
-  ! Wave function coefficients
-  !
-  double precision, allocatable, target :: coefficients_of_wavefunctions_(:,:,:,:,:,:)
-  !
-  ! GWdata (KB PP)
-  !
-  integer                               :: max_number_of_projectors_
-  integer                               :: max_number_of_angular_momenta_
-  double precision, allocatable, target :: kb_formfactor_derivative_(:,:,:,:,:)
-  double precision, allocatable, target :: kb_formfactors_(:,:,:,:,:)
-  integer, allocatable, target          :: kb_formfactor_sign_(:,:,:)
-  !
-  ! Miscellaneous data, not in ETSF specs, that might appear in ETSF file.
-  !
-  integer                               :: ixc_
-  integer,          allocatable, target :: spin_orbit_atom_(:)
-  !
   contains
 
   function netcdf_get_dimension(ncid,dim_name) result(dim_value)

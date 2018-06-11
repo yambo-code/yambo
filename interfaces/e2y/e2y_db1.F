@@ -212,6 +212,7 @@ contains
     use electrons,            only : default_nel
     implicit none
     integer :: varid
+    double precision, allocatable, target :: eigenvalues_(:,:,:)
 
     allocate( eigenvalues_(n_bands, nkibz, n_sp_pol ) )
 
@@ -243,14 +244,15 @@ contains
     !
     implicit none
     !
-    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
-    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
-    integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
-    integer,     allocatable      :: G_mod_indx(:)
-    logical                       :: gamma_only,l_new
-    logical,     allocatable      :: l_g_mapped(:)
-    real(SP)                      :: ecut, norm_2
-    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
+    integer                        :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
+    integer                        :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
+    integer,   allocatable         :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
+    integer,   allocatable         :: G_mod_indx(:)
+    logical                        :: gamma_only,l_new
+    logical,   allocatable         :: l_g_mapped(:)
+    real(SP)                       :: ecut, norm_2
+    real(SP),  allocatable         :: G_mod(:), g_vec_tmp(:,:)
+    integer,   allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
     !
     allocate( istwfk(k%nibz) )
     allocate( wf_nc_k(k%nibz) )
@@ -308,6 +310,7 @@ contains
     logical,     allocatable      :: l_g_mapped(:)
     real(SP)                      :: ecut, norm_2, b_transpose(3,3)
     real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
+    integer,   allocatable, target :: reduced_coordinates_of_plane_waves_(:,:,:)
     !
     allocate( istwfk(k%nibz) )
     allocate( wf_nc_k(k%nibz) )
@@ -534,6 +537,7 @@ contains
     use D_lattice,            only : alat
     implicit none
     integer :: varid
+    double precision, allocatable, target :: reduced_coordinates_of_kpoints_(:,:)
 
     allocate(reduced_coordinates_of_kpoints_(3, k%nibz))
 
@@ -616,7 +620,7 @@ contains
     use electrons,            only : l_spin_orbit, default_nel
     use xc_functionals,       only : GS_xc_KIND,GS_xc_FUNCTIONAL
     use mod_xc2y,             only : XC_yamboID, XC_yamboID2kind
-    integer                       :: i1, varid
+    integer                       :: i1, varid, ixc_
     !
     ! Temperature (Abinit)
     !

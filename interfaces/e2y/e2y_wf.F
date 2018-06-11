@@ -47,6 +47,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
   integer        :: varid, netcdf_error
+  double precision, allocatable, target :: coefficients_of_wavefunctions_(:,:,:,:,:,:)
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
   !

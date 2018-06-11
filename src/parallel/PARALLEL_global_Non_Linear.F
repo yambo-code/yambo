@@ -64,9 +64,9 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  !
  if (ENVIRONMENT=="Non_Linear") then
    !
-   CALL PARALLEL_structure(4,(/"w ","k "/))
+   CALL PARALLEL_structure(2,(/"w ","k "/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_freqs_INDEX, &
+   call PARALLEL_assign_chains_and_COMMs(2,COMM_index_1=PAR_COM_freqs_INDEX, &
 &                                          COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
 &                                          COMM_A2A_1=PAR_COM_freqs_A2A)
    !

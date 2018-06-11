@@ -54,7 +54,7 @@ subroutine e2y_db1(en,k,ncid)
  n_spinor = netcdf_get_dimension(ncid,"number_of_spinor_components")
  n_sp_pol = netcdf_get_dimension(ncid,"number_of_spins")
  n_atoms  = netcdf_get_dimension(ncid,"number_of_atoms")
- wf_ncx   =  netcdf_get_dimension(ncid,"max_number_of_coefficients")
+ wf_ncx   = netcdf_get_dimension(ncid,"max_number_of_coefficients")
  n_atomic_species = netcdf_get_dimension(ncid,"number_of_atom_species")
 
  !
@@ -93,7 +93,8 @@ subroutine e2y_db1(en,k,ncid)
  !
  ! G-vectors grids and indices
  !
- call import_basisdata_group
+ if(trim(ETSF_kind)=='KSS') call import_basisdata_group_kss
+ if(trim(ETSF_kind)=='WFK') call import_basisdata_group_wfk
  call msg('s','RL vectors...done')
  !
  ! All other data
@@ -237,10 +238,64 @@ contains
   end subroutine import_electrons_group
 
 
-  !
-  ! Wavefunction grids: l_KSS == (k-dependent = no)
-  !
-  subroutine import_basisdata_group
+  subroutine import_basisdata_group_kss
+    !
+    use vec_operate,          only : sort, iku_v_norm
+    use R_lattice,            only : g_vec, b, ng_vec
+    use D_lattice,            only : alat, i_space_inv, i_time_rev
+    use wave_func,            only : wf_nc_k, wf_igk, wf_ncx, wf_ng
+    !
+    implicit none
+    !
+    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
+    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
+    integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
+    integer,     allocatable      :: G_mod_indx(:)
+    logical                       :: gamma_only,l_new
+    logical,     allocatable      :: l_g_mapped(:)
+    real(SP)                      :: ecut, norm_2
+    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
+    !
+    allocate( istwfk(k%nibz) )
+    allocate( wf_nc_k(k%nibz) )
+    allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
+    allocate( wf_igk(wf_ncx,k%nibz) )
+    !
+    netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
+    netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
+    !
+    netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_plane_waves", varid)
+    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
+    !
+    allocate( g_vec(wf_ncx,3) )
+    do i1=1,wf_ncx
+      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_(:,i1,1))*alat(:)/2.0_SP/pi
+    enddo
+    !
+    ng_vec=wf_ncx
+    gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
+    if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
+      call msg('s','Closing shells against inversion...')
+      call G_rot_grid(-1,'extend_grid')
+      call msg('l','done')
+      if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
+    endif
+    !
+    wf_igk=-1
+    do ik=1,nkibz
+      do ig=1,wf_nc_k(ik)
+        wf_igk(ig,ik)=ig
+      enddo
+    enddo
+    wf_ng=maxval(wf_igk)
+    !
+    return
+    !
+  end subroutine import_basisdata_group_kss
+
+
+
+  subroutine import_basisdata_group_wfk
     !
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
@@ -257,174 +312,141 @@ contains
     logical,     allocatable      :: l_g_mapped(:)
     real(SP)                      :: ecut, norm_2, b_transpose(3,3)
     real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
-    character(len=15)             :: format1
     !
     allocate( istwfk(k%nibz) )
     allocate( wf_nc_k(k%nibz) )
     allocate( reduced_coordinates_of_plane_waves_(3,wf_ncx,k%nibz) )
-
+    !
     netcdf_error = nf90_inq_varid(ncid, "number_of_coefficients", varid)
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
-
+    !
     wf_ncx = maxval(wf_nc_k) 
     allocate( wf_igk(wf_ncx,k%nibz) )
     !
-    b_transpose = transpose(b)
-
     netcdf_error = nf90_inq_varid(ncid, "reduced_coordinates_of_plane_waves", varid)
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves_)
-
-    if(trim(ETSF_kind)=='KSS') then
-      !
-      allocate( g_vec(wf_ncx,3) )
-      do i1=1,wf_ncx
-        g_vec(i1,:)=matmul(b_transpose,reduced_coordinates_of_plane_waves_(:,i1,1))*alat(:)/2.0_SP/pi
-      enddo
-      !
-      ng_vec=wf_ncx
-      !
-      gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
-      !
-      if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
-        call msg('s','Closing shells against inversion...')
-        call G_rot_grid(-1,'extend_grid')
-        call msg('l','done')
-        if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
-      endif
-      !
-    endif
     !
-    wf_igk=-1
-    do ik=1,nkibz
-      do ig=1,wf_nc_k(ik)
-        wf_igk(ig,ik)=ig
-      enddo
+    ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
+    ! a gamma centered G-vector sphere
+    !
+    ! the mapping is found by:
+    !   1. Generate a G-sphere that accomodates all the G components
+    !   2. Put this G-sphere into a big box using the 'gsphere_abinit' 
+    !      routine and obtain mapping G-sphere to components
+    !      map_gamma :  xyz -> npw
+    !   3. Put the G-vectors associated to each K-point in the same big box 
+    !      using 'gsphere_abinit' and obtain mapping G-sphere to components
+    !      inv_map_k :  npw -> xyz
+    !   4. Use the mappings 2 and 3 to generate wf_igk mapping
+    !       inv_map_k    map_gamma
+    !      npw -> xyz   xyz -> npw
+    ! TODO: handle the istwfk /= 1 cases
+    !
+   
+    ! 1.
+    ! Get dimensions of sphere
+    ecut = 1
+   
+    max_nx = 0
+    max_ny = 0
+    max_nz = 0
+    do ik=1,k%nibz
+      !write(*,*) ik, wf_nc_k(ik)
+      max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_(1,:,ik)))
+      max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_(2,:,ik)))
+      max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_(3,:,ik)))
+    end do
+    !write(*,*) max_nx, max_ny, max_nz
+    n1 = 4*max_nx
+    n2 = 4*max_ny
+    n3 = 4*max_nz
+   
+    ! Calculate G-vectors inside the sphere
+    b_transpose = transpose(b)
+    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
+    allocate( g_vec_tmp(max_size,3) )
+    allocate( igk_tmp(3,max_size) )
+    npw = 0
+    do i1=-n1,n1
+      do i2=-n2,n2
+        do i3=-n3,n3
+          igv = [i1,i2,i3]
+          g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
+          norm_2 = g_vec_tmp1(1)**2.0_SP + &
+                   g_vec_tmp1(2)**2.0_SP + &
+                   g_vec_tmp1(3)**2.0_SP
+          if (ecut .gt. 0.25_SP*norm_2) then
+              npw = npw+1
+              igk_tmp(:,npw) = igv
+              g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
+          end if
+          !this check is not needed anymore in principle
+          if (npw > max_size) then
+              write(*,*) 'an error has occurred: npw > max_size', max_size
+          end if
+        end do
+      end do
+    end do
+    ng_vec = npw
+   
+    ! can sort the G vectors in whatever way here
+    allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+    do ig=1,ng_vec
+      G_mod(ig)=iku_v_norm(g_vec_tmp(ig,:))
     enddo
+    call sort(G_mod,indx_m1=G_mod_indx)
+    deallocate(G_mod)
+    !
+    allocate(g_vec(ng_vec,3), igk(3,ng_vec))
+    g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
+    igk(:3,G_mod_indx(:ng_vec))=igk_tmp(:3,:ng_vec)
+    deallocate(g_vec_tmp,igk_tmp)
+   
+    ! 2.
+    allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
+    open(2,file='gs.dat')
+    do ic=1,ng_vec
+      write(2,*) igk(:,ic)
+    end do
+    call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
+   
+    ! 3.
+    ! Same thing but for the K-dependent G-spheres     
+    ! Get storage type of the wavefunctions
+    netcdf_error = nf90_inq_varid(ncid, "istwfk", varid)
+    netcdf_error = nf90_get_var(ncid, varid, istwfk)
+   
+    wf_igk = -1
+    do ik=1,k%nibz
+      npw = wf_nc_k(ik)
+      write(2,*)
+      write(2,*)
+      do ic=1,npw
+        write(2,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
+      end do
+      call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
+      ! 4.
+      ! Do the wf_igk mapping
+      do ic=1,wf_nc_k(ik)
+        i1 = inv_map_k(1,ic)
+        i2 = inv_map_k(2,ic)
+        i3 = inv_map_k(3,ic)
+        npw = map_gamma(i1,i2,i3)
+        !write(*,*) ic, npw
+        if (npw .eq. -1) then
+            write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
+            call exit(0)
+        end if
+        wf_igk(ic,ik) = npw
+      end do
+    end do
+    !
     wf_ng=maxval(wf_igk)
     !
-    if(trim(ETSF_kind)=='WFK') then
-      !
-      ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
-      ! a gamma centered G-vector sphere
-      !
-      ! the mapping is found by:
-      !   1. Generate a G-sphere that accomodates all the G components
-      !   2. Put this G-sphere into a big box using the 'gsphere_abinit' 
-      !      routine and obtain mapping G-sphere to components
-      !      map_gamma :  xyz -> npw
-      !   3. Put the G-vectors associated to each K-point in the same big box 
-      !      using 'gsphere_abinit' and obtain mapping G-sphere to components
-      !      inv_map_k :  npw -> xyz
-      !   4. Use the mappings 2 and 3 to generate wf_igk mapping
-      !       inv_map_k    map_gamma
-      !      npw -> xyz   xyz -> npw
-      ! TODO: handle the istwfk /= 1 cases
-      !
-
-      ! 1.
-      ! Get dimensions of sphere
-      ecut = 1
-
-      max_nx = 0
-      max_ny = 0
-      max_nz = 0
-      do ik=1,k%nibz
-        !write(*,*) ik, wf_nc_k(ik)
-        max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves_(1,:,ik)))
-        max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves_(2,:,ik)))
-        max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves_(3,:,ik)))
-      end do
-      !write(*,*) max_nx, max_ny, max_nz
-      n1 = 4*max_nx
-      n2 = 4*max_ny
-      n3 = 4*max_nz
-
-      ! Calculate G-vectors inside the sphere
-      max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
-      allocate( g_vec_tmp(max_size,3) )
-      allocate( igk_tmp(3,max_size) )
-      npw = 0
-      do i1=-n1,n1
-        do i2=-n2,n2
-          do i3=-n3,n3
-            igv = [i1,i2,i3]
-            g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
-            norm_2 = g_vec_tmp1(1)**2.0_SP + &
-                     g_vec_tmp1(2)**2.0_SP + &
-                     g_vec_tmp1(3)**2.0_SP
-            if (ecut .gt. 0.25_SP*norm_2) then
-                npw = npw+1
-                igk_tmp(:,npw) = igv
-                g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
-            end if
-            !this check is not needed anymore in principle
-            if (npw > max_size) then
-                write(*,*) 'an error has occurred: npw > max_size', max_size
-            end if
-          end do
-        end do
-      end do
-      ng_vec = npw
-
-      ! can sort the G vectors in whatever way here
-      allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
-      do ig=1,ng_vec
-        G_mod(ig)=iku_v_norm(g_vec_tmp(ig,:))
-      enddo
-      call sort(G_mod,indx_m1=G_mod_indx)
-      deallocate(G_mod)
-      !
-      allocate(g_vec(ng_vec,3), igk(3,ng_vec))
-      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
-      igk(:3,G_mod_indx(:ng_vec))=igk_tmp(:3,:ng_vec)
-      deallocate(g_vec_tmp,igk_tmp)
-
-      ! 2.
-      allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-      open(2,file='gs.dat')
-      do ic=1,ng_vec
-        write(2,*) igk(:,ic)
-      end do
-      call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
-
-      ! 3.
-      ! Same thing but for the K-dependent G-spheres     
-      ! Get storage type of the wavefunctions
-      netcdf_error = nf90_inq_varid(ncid, "istwfk", varid)
-      netcdf_error = nf90_get_var(ncid, varid, istwfk)
-
-      wf_igk = -1
-      do ik=1,k%nibz
-        npw = wf_nc_k(ik)
-        write(2,*)
-        write(2,*)
-        do ic=1,npw
-          write(2,*) reduced_coordinates_of_plane_waves_(:,ic,ik)
-        end do
-        call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves_(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
-        ! 4.
-        ! Do the wf_igk mapping
-        do ic=1,wf_nc_k(ik)
-          i1 = inv_map_k(1,ic)
-          i2 = inv_map_k(2,ic)
-          i3 = inv_map_k(3,ic)
-          npw = map_gamma(i1,i2,i3)
-          !write(*,*) ic, npw
-          if (npw .eq. -1) then
-              write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
-              call exit(0)
-          end if
-          wf_igk(ic,ik) = npw
-        end do
-      end do
-      !
-      wf_ng=maxval(wf_igk)
-      !
-    endif
     !
     return
     !
-  end subroutine import_basisdata_group
+  end subroutine import_basisdata_group_wfk
 
 
   !

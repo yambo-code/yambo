@@ -49,33 +49,13 @@ subroutine e2y_db1(en,k,ncid)
  !
  ! Directly read dimensions
  !
- netcdf_error = nf90_inq_dimid(ncid, "max_number_of_states", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_bands)
-
- netcdf_error = nf90_inq_dimid(ncid, "number_of_kpoints", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = nkibz)
-
- netcdf_error = nf90_inq_dimid(ncid, "number_of_spinor_components", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_spinor)
-
- netcdf_error = nf90_inq_dimid(ncid, "number_of_spins", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_sp_pol)
-
- netcdf_error = nf90_inq_dimid(ncid, "number_of_atom_species", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_atomic_species)
-
- netcdf_error = nf90_inq_dimid(ncid, "number_of_atoms", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = n_atoms)
-
- netcdf_error = nf90_inq_dimid(ncid, "max_number_of_coefficients", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = wf_ncx)
-
- netcdf_error = nf90_inq_dimid(ncid, "max_number_of_angular_momenta", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_angular_momenta_)
-
- netcdf_error = nf90_inq_dimid(ncid, "max_number_of_projectors", dimid)
- netcdf_error = nf90_inquire_dimension(ncid, dimid, len = max_number_of_projectors_)
-
+ n_bands  = netcdf_get_dimension(ncid,"max_number_of_states")
+ nkibz    = netcdf_get_dimension(ncid,"number_of_kpoints")
+ n_spinor = netcdf_get_dimension(ncid,"number_of_spinor_components")
+ n_sp_pol = netcdf_get_dimension(ncid,"number_of_spins")
+ n_atoms  = netcdf_get_dimension(ncid,"number_of_atoms")
+ wf_ncx   =  netcdf_get_dimension(ncid,"max_number_of_coefficients")
+ n_atomic_species = netcdf_get_dimension(ncid,"number_of_atom_species")
 
  !
  ! Derived YAMBO dimensions

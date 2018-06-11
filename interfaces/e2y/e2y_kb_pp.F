@@ -63,6 +63,13 @@ subroutine e2y_kb_pp( ikibz, ncid )
   integer                       :: pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species )
   double precision              :: pp_section(wf_ncx, pp_n_l_times_proj_max, n_atomic_species )
   integer                       :: start(5), count(5), varid, netcdf_error
+
+  !
+  ! Get kb related dimensions
+  !
+  max_number_of_angular_momenta_ = netcdf_get_dimension(ncid,"max_number_of_angular_momenta")
+  max_number_of_projectors_      = netcdf_get_dimension(ncid,"max_number_of_projectors")
+
   !
   ! Form factors 
   !

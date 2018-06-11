@@ -26,7 +26,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! Reads and returns wf_disk for both spins
   !
   use netcdf
-  use etsf_data,             only : ETSF_kind
+  use etsf_data,             only : ETSF_kind,netcdf_check
   use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
   use com,                   only : msg, error
@@ -49,8 +49,6 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer        :: varid, netcdf_error
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
-  !
-  ! Initialize the mapping
   !
   start = [1,1,1,1,ikibz,i_sp_pol]
   count = [2,wf_ncx,n_spinor,n_bands,1,1]

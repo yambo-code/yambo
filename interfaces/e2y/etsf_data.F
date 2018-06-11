@@ -65,4 +65,39 @@ module etsf_data
   integer                               :: ixc_
   integer,          allocatable, target :: spin_orbit_atom_(:)
   !
+  contains
+
+  function netcdf_get_dimension(ncid,dim_name) result(dim_value)
+    use netcdf
+    implicit none
+    character (len = *), intent(in) :: dim_name
+    integer,             intent(in) :: ncid
+    integer                         :: netcdf_error, varid, dimid, dim_value
+    
+    netcdf_error = nf90_inq_dimid(ncid, dim_name, dimid)
+    call netcdf_check(ncid,netcdf_error,dimid,dim_name)
+    netcdf_error = nf90_inquire_dimension(ncid, dimid, len = dim_value)
+    call netcdf_check(ncid,netcdf_error,dimid)
+  end function
+
+  subroutine netcdf_check(ncid,netcdf_error,varid,var_name)
+    use netcdf
+    use pars, only:lchlen
+    use com,  only:error
+    implicit none
+    integer,     intent (in) :: ncid,varid
+    integer                  :: netcdf_error
+    character (lchlen)       :: msg
+    character (len = *), optional, intent(in) :: var_name
+
+    netcdf_error = nf90_inquire_dimension(ncid, varid)
+    if(netcdf_error /= nf90_noerr) then
+        if (present(var_name)) then
+            write(msg,*) 'variable: ', var_name, ' ', trim(nf90_strerror(netcdf_error))
+        else
+            write(msg,*) nf90_strerror(netcdf_error)
+        end if
+        call error(msg)
+    end if
+  end subroutine netcdf_check
 end module etsf_data

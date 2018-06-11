@@ -27,12 +27,6 @@ module etsf_data
   !
   character(3) :: ETSF_kind
   !
-  ! Geometry group
-  !
-  integer,          allocatable, target :: atom_species_(:)
-  double precision, allocatable, target :: reduced_atom_positions_(:,:)
-  double precision, allocatable, target :: valence_charges_(:) 
-  !
   ! Electrons
   !
   integer,                       target :: number_of_electrons_ 
@@ -61,7 +55,6 @@ module etsf_data
   !
   ! Miscellaneous data, not in ETSF specs, that might appear in ETSF file.
   !
-  double precision                      :: temperature_
   integer                               :: ixc_
   integer,          allocatable, target :: spin_orbit_atom_(:)
   !

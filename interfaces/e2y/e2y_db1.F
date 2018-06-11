@@ -29,10 +29,9 @@ subroutine e2y_db1(en,k,ncid)
  use com,                  only : msg, error, warning
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
- use R_lattice,            only : bz_samp, nkibz
+ use R_lattice,            only : ng_vec, bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
- use pseudo,               only : pp_n_l_times_proj_max, pp_n_l_max
- use mod_com2y,            only : print_interface_dimensions
+ use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit
  !
  implicit none
  !
@@ -57,15 +56,10 @@ subroutine e2y_db1(en,k,ncid)
  wf_ncx   = netcdf_get_dimension(ncid,"max_number_of_coefficients")
  n_atomic_species = netcdf_get_dimension(ncid,"number_of_atom_species")
 
- !
- ! Derived YAMBO dimensions
- !
- pp_n_l_times_proj_max = max_number_of_projectors_
- pp_n_l_max            = max_number_of_angular_momenta_
-
  n_spin  = max(n_spinor, n_sp_pol)
  k%nibz = nkibz
  en%nb  = n_bands
+ ng_vec = wf_ncx
  call msg("l","done")
  !
  ! Geometry (must appear first, in order to define alat)
@@ -88,8 +82,10 @@ subroutine e2y_db1(en,k,ncid)
  !
  ! PP 
  !
+ call msg('s','Pseudopotential...')
  if(trim(ETSF_kind)=='KSS') call import_gwdata_group
  if(trim(ETSF_kind)=='WFK') call warning('Commutator not supported. You need a KSS file to include it.')
+ call msg('l','done')
  !
  ! G-vectors grids and indices
  !
@@ -120,13 +116,15 @@ contains
 &                                    DL_vol, a, alat, &
 &                                    n_atomic_species,n_atoms_species,&
 &                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
-    use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
+    use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor
     implicit none
     logical                       :: l_identity, l_inversion
     real(SP)                      :: lsop(3,3), cp(3)
     integer                       :: a_nsym
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
+    integer,          allocatable, target :: atom_species_(:)
+    double precision, allocatable, target :: reduced_atom_positions_(:,:)
 
     integer :: varid
 
@@ -218,13 +216,11 @@ contains
     allocate( eigenvalues_(n_bands, nkibz, n_sp_pol ) )
 
     netcdf_error = nf90_inq_varid(ncid, "number_of_electrons", varid)
-    netcdf_error = nf90_get_var(ncid, varid, number_of_electrons_)
+    netcdf_error = nf90_get_var(ncid, varid, default_nel)
 
     netcdf_error = nf90_inq_varid(ncid, "eigenvalues", varid)
     netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
 
-    default_nel = number_of_electrons_
-    default_nel = -1  ! Until fixed in ETSF file. Is calculated later.
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
     !
@@ -556,31 +552,55 @@ contains
   !
   ! GW data
   !===========================================================
-  ! Note that kbpp data is read and converted separately (split) over k-point,
-  ! therefore is not done here. Use of pointers is left here for completeness.
-  ! This routine must be called, however, to set pp_n_l_comp array.
-  !
   subroutine import_gwdata_group
     use D_lattice,             only : n_atomic_species
-    use pseudo,                only : pp_n_l_times_proj_max,&
-&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
-&                                  pp_table,l_many_proj,pp_n_l_max
+    use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
+&                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
+&                                     pp_table,l_many_proj,pp_n_l_max
     implicit none
+    integer,allocatable :: pp_kbs_(:,:)
+    integer :: max_number_of_angular_momenta,max_number_of_projectors
+    integer :: ia, nproj, ip, il, varid, start(3), count(3)
+    !
+    ! Get kb related dimensions
+    !
+    max_number_of_angular_momenta = netcdf_get_dimension(ncid,"max_number_of_angular_momenta")
+    max_number_of_projectors      = netcdf_get_dimension(ncid,"max_number_of_projectors")
 
-    l_many_proj=.false.
-    pp_n_l_max=abs(pp_n_l_times_proj_max)
-    allocate(pp_n_l_comp(n_atomic_species),&
-&            pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+    pp_n_l_max            = max_number_of_angular_momenta
+    pp_n_l_times_proj_max = max_number_of_angular_momenta!max_number_of_projectors
+
+    call PP_alloc_abinit()
+    allocate(pp_n_l_comp(n_atomic_species))
+    allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
     pp_n_l_comp(:)=pp_n_l_max
     !
-    ! if "l_many_proj" the table is readen in a2y_wf
-    if(.not.l_many_proj) then
-      do i1=1,pp_n_l_times_proj_max
-        pp_table(1,:,i1)=i1  !  l+1
-        pp_table(2,:,i1)=1   !  n_proj
-        pp_table(3,:,i1)=1   !  i_spin
+    nproj = pp_n_l_times_proj_max/pp_n_l_max
+    do ia=1,n_atomic_species
+      do il=1,pp_n_l_max ! loop over l
+        do ip=1,nproj ! loop over nproj
+          pp_table(1,ia,il*(nproj-1)+ip)=il  !  l+1
+          pp_table(2,ia,il*(nproj-1)+ip)=ip  !  n_proj
+          pp_table(3,ia,il*(nproj-1)+ip)=1   !  i_spin
+        enddo
       enddo
-    endif
+    enddo
+    !
+    ! Form factor signs
+    !
+    allocate(pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species ))
+
+    start = [1,1,1]
+    count = [1,pp_n_l_times_proj_max,n_atomic_species]
+    netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_sign", varid)
+    netcdf_error = nf90_get_var(ncid, varid, pp_kbs_, start=start, count=count)
+    forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
+
+    write(*,*)
+    write(*,*) pp_kbs_
+    write(*,*) pp_kbs
+    deallocate(pp_kbs_)
     !
     return
   end subroutine import_gwdata_group
@@ -601,26 +621,8 @@ contains
     ! Temperature (Abinit)
     !
     netcdf_error = nf90_inq_varid(ncid, "tphysel", varid)
-    netcdf_error = nf90_get_var(ncid, varid, temperature_)
-    if(netcdf_error==0) then
-      input_GS_Tel = temperature_ ! type conversion
-    else
-      input_GS_Tel = 0.0_SP
-    endif
-    !
-    ! Number of electrons (Abinit)
-    !
-    allocate(valence_charges_(n_atomic_species))
-    netcdf_error = nf90_inq_varid(ncid, "valence_charges", varid)
-    netcdf_error = nf90_get_var(ncid, varid, valence_charges_)
+    netcdf_error = nf90_get_var(ncid, varid, input_GS_Tel)
 
-    if(netcdf_error==0) then
-      default_nel = 0.
-      do i1 = 1,n_atomic_species
-        default_nel = default_nel + n_atoms_species(i1)*valence_charges_(i1)
-      enddo
-    endif
-    deallocate(valence_charges_)
     !
     ! Spin orbit splitting (Abinit)
     !

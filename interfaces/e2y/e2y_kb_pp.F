@@ -47,11 +47,11 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !
   use netcdf
   use etsf_data
+  use R_lattice,            only : ng_vec
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
-&                                  pp_kbs,pp_kb,pp_kbd
+&                                  pp_kbs,pp_kb,pp_kbd,pp_n_l_max
   use wave_func,            only : wf_ncx,wf_nc_k
-  use mod_com2y,            only : ng_vec_abinit
   !
   implicit none
   !
@@ -60,27 +60,21 @@ subroutine e2y_kb_pp( ikibz, ncid )
   ! Work Space
   !
   integer                       :: ig, ib, ip, ia
-  integer                       :: pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species )
-  double precision              :: pp_section(wf_ncx, pp_n_l_times_proj_max, n_atomic_species )
+  double precision,allocatable  :: pp_section(:,:,:)
   integer                       :: start(5), count(5), varid, netcdf_error
-
   !
-  ! Get kb related dimensions
-  !
-  max_number_of_angular_momenta_ = netcdf_get_dimension(ncid,"max_number_of_angular_momenta")
-  max_number_of_projectors_      = netcdf_get_dimension(ncid,"max_number_of_projectors")
-
+  allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
   !
   ! Form factors 
   !
   start = [1,ikibz,1,1,1]
-  count = [wf_ncx,1,pp_n_l_times_proj_max,max_number_of_angular_momenta_,n_atomic_species]
+  count = [wf_ncx,1,1,pp_n_l_times_proj_max,n_atomic_species]
   !
   ! Form factors 
   !
   netcdf_error = nf90_inq_varid(ncid, "kb_formfactors", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section)
-  forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
 
   !
@@ -88,17 +82,9 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !
   netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_derivative", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section)
-  forall( ig=1:ng_vec_abinit, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
-
-  !
-  ! Form factor signs
-  !
-  if(ikibz.gt.1) return
-  netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_sign", varid)
-  netcdf_error = nf90_get_var(ncid, varid, pp_kbs)
-  forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
-&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
+  deallocate(pp_section)
 
   return
 end subroutine e2y_kb_pp

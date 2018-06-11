@@ -30,7 +30,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use parallel_m,          only : ncpu,myid
  use electrons,           only : levels,E_reset,n_bands,n_spinor,n_sp_pol
  use D_lattice,           only : n_atoms_species_max
- use pseudo,              only : PP_alloc_abinit, PP_free
+ use pseudo,              only : PP_alloc_abinit, PP_free, pp_n_l_times_proj_max, pp_n_l_max
  use R_lattice,           only : bz_samp,bz_samp_reset,nkibz
  use LIVE_t,              only : live_timing_is_on
  use wave_func,           only : wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
@@ -133,11 +133,11 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if(trim(ETSF_kind)=='KSS') then
    call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
-   call PP_alloc_abinit()
  endif
  !
- if(trim(ETSF_kind)=='WFK') &
-&  call msg('s',' == Writing DB2 (wavefunctions) ...') 
+ if(trim(ETSF_kind)=='WFK') then
+   call msg('s',' == Writing DB2 (wavefunctions) ...') 
+ endif
  !
  allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
  !

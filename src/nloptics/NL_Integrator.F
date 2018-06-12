@@ -575,6 +575,7 @@ end subroutine NL_Integrator
      use wrapper,        ONLY:M_by_M,M_by_V
      use pars,           ONLY:SP,cI,cZERO,cONE
      use nl_optics,      ONLY:NL_bands,NL_nbands
+     use openmp,         ONLY:OPENMP_update,master_thread
      !
      implicit none
      !
@@ -596,7 +597,9 @@ end subroutine NL_Integrator
      l_use_inv=.false.
      l_use_lin=.true.
      !
-!$omp parallel do default(shared), private(ib,Hp,Hm)
+!$omp parallel default(shared), private(ib,Hp,Hm)
+     call OPENMP_update(master_thread)
+!$omp do
      do ib=1,nbf
        !
        Hp=cZERO
@@ -622,7 +625,10 @@ end subroutine NL_Integrator
        if(NL_bands(1)/=1) V_out(:NL_bands(1)-1,ib)=V_in(:NL_bands(1)-1,ib)
        !
      enddo
-!$omp end parallel do
+!$omp end do
+!$omp end parallel
+     !
+     call OPENMP_update(master_thread)
      !
    end subroutine INVINT_step
    !

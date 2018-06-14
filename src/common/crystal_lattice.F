@@ -26,7 +26,7 @@ subroutine crystal_lattice()
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:a,alat,lattice,dl_sop,nsym
  use vec_operate   , ONLY:v_norm
- use matrix_operate, ONLY:m3inv
+ use matrix_operate, ONLY:m3inv,m3det
  use com,            ONLY:warning
  implicit none
  !
@@ -70,7 +70,6 @@ subroutine crystal_lattice()
  latt_a(2,:,5) = (/-a(1,1) , a(1,2) , 0.      /)
  latt_a(3,:,5) = (/ 0.     , 0.     , alat(3) /)
  !
- !
  call m3inv(a,a_m1)
  !
  pre_factor=(/.5,1.,2./)
@@ -86,6 +85,11 @@ subroutine crystal_lattice()
        do i=1,3
          latt_a_rot(i,:)=matmul(dl_sop(:,:,i_s),latt_a(i,:,i_l)*pre_factor(i_p))
        enddo
+       !
+       if (abs(m3det(latt_a_rot))<=1.E-7) then
+         lattice_test_failed(i_l,i_p)=.FALSE.
+         cycle
+       endif
        !
        call m3inv(latt_a_rot,latt_a_m1)
        !

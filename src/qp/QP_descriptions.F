@@ -157,7 +157,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &         string_pack('(a,2(',gen_fmt( QP_n_G_bands ),',1x))')))&
 &         ' Sc/G bands             :',QP_n_G_bands
    endif
-   if (.not.l_cohsex) then
+   if (l_cohsex) then
+     if (ver_is_gt_or_eq(-1,(/4,3,1/))) then
+       qp%n_descs=qp%n_descs+1
+       if (     COHSEX_use_empties) qp%description(qp%n_descs)=' Sc Empty Bands         : yes'
+       if (.not.COHSEX_use_empties) qp%description(qp%n_descs)=' Sc Empty Bands         : no'   
+     endif
+   else
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
 &         string_pack('(a,',gen_fmt( r_v=(/QP_G_damp*HA2EV /) ),')')))&

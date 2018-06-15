@@ -460,7 +460,7 @@ static void usage(int verbose)
   char* OMP_string="";
 #endif
 #if defined _SLEPC
-  char* SLEPC_string="+SLEPC+PETSC";
+  char* SLEPC_string="+SLEPC";
 #else
   char* SLEPC_string="";
 #endif

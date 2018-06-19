@@ -28,8 +28,7 @@ subroutine QP_DBs_manipulate( E )
  use stderr,        ONLY:intc,real2ch
  use com,           ONLY:msg,warning
  use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
- use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states,&
-&                        report_Vnlxc,report_Sc,report_dSc,l_extended_output
+ use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
  use interfaces,    ONLY:QP_DBs_merge
  use electrons,     ONLY:levels,n_sp_pol
  !
@@ -117,7 +116,7 @@ subroutine QP_DBs_manipulate( E )
  do i_qp=1,n_GROUNDS
    call QP_reset(qp(i_qp))
  enddo
- call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp,QP_db_operation,QP_db_prefactor)
+ call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp=qp,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
  !
  call msg('l','done')
  !
@@ -144,11 +143,7 @@ subroutine QP_DBs_manipulate( E )
    YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1))
    QP_table=qp(i_qp)%table
    !
-   QP_solver="n"
-   report_Sc=.FALSE.
-   report_Vnlxc=.FALSE.
-   report_dSc=.FALSE.
-   l_extended_output=.TRUE.
+   QP_solver="mixed"
    if (allocated(qp(i_qp)%GreenF)) QP_solver="g"
    call QP_of(qp(i_qp),E,0,"qp"//trim(QP_db_kind))
    !

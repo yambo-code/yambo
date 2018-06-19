@@ -83,7 +83,8 @@ subroutine QP_DBs_initialize()
    else
      n_QP_dbs=1
      allocate(QP_db_input_control(n_QP_dbs,4))
-     QP_db_input_control(1,1)=' "E" | "+" | "1" | "none" |'
+     QP_db_input_control(1,1:3)=(/"E","+","1"/)
+     QP_db_input_control(1,4:4)=(/"none"/)
    endif
    call PARSER_array(mode="write",VAR="Actions_and_names",&
 &                    DESC='[QPDB] Format is "what"|"OP"|"prefactor"|"DB"|. OP can be +/-/x(only for Z)',&

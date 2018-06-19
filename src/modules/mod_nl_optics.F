@@ -80,6 +80,14 @@ module nl_optics
  !
  integer                      :: Integrator
  !
+ ! Verbosity
+ !
+ integer, parameter :: VERB_HIGH = 1
+ integer, parameter :: VERB_LOW  = 2
+ !
+ integer :: NL_verbosity
+ character(schlen)            :: NL_verb_name
+ !
  ! Correlation
  !
  character(schlen)            :: NL_correlation

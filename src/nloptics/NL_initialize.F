@@ -38,7 +38,7 @@ subroutine NL_initialize(E,k,q)
  use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  !
@@ -92,6 +92,17 @@ subroutine NL_initialize(E,k,q)
         Integrator=CRANK_NICOLSON
     case default
         call error("Unknow integrator")
+ end select
+ !
+ ! Verbosity Level
+ ! 
+ select case (trim(NL_verb_name))
+   case('low')
+      NL_verbosity=VERB_LOW
+   case('high')
+      NL_verbosity=VERB_HIGH
+   case default
+      call error("Unknow verbosity level")
  end select
  !
  ! Important in the Time-dependent Schrodinger Eq.

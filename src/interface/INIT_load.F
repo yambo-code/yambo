@@ -85,7 +85,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha
+ use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
+&                        NL_verb_name                         
 #endif 
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
@@ -514,6 +515,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! Non liner optics
  !
  call it(defs,'NLBands',      '[NL] Bands',NL_bands)
+ call it(defs,'NLverbosity', '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name,&

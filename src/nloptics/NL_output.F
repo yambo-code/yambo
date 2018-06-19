@@ -29,7 +29,7 @@ subroutine NL_output(i_time,i_freq)
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step,l_RT_induced_field,RT_P
- use nl_optics,    ONLY:NL_er,NL_estep
+ use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity
  use stderr,       ONLY:set_real_printed_length
  !
  implicit none
@@ -42,6 +42,8 @@ subroutine NL_output(i_time,i_freq)
  character(schlen)  :: headings(3,10)
  real(SP)           :: data_to_dump(3,11)
  integer            :: n_files,n_headings(3),i_f
+ !
+ if(NL_verbosity==VERB_LOW) return
  !
  call set_real_printed_length(f_length=18,g_length=18)
  !

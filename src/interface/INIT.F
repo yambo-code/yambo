@@ -987,7 +987,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _NL
  if (l_nl_optics) then
-   call initactivate(1,'FFTGvecs NLBands NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
+   call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
    call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd InducedField') 
    call initactivate(1,'ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Damp ExtF_kind ExtF_Tstart')
    call init_QP_ctl_switch('G')

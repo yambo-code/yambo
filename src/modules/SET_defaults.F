@@ -118,7 +118,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,NL_verb_name
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
+&                     NL_verb_name,NL_bands
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -623,6 +624,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'
+ NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/0.2_SP,8._SP/)/HA2EV
  n_frequencies =80

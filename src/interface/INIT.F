@@ -82,7 +82,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
 #if defined _OPENMP
- use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K
+ use openmp,         ONLY:n_threads,n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
 #endif
  !
 #include<memory.h>
@@ -1373,12 +1373,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
+     if (l_nl_optics)                                     n_threads_NL=0
 #endif
-#if defined _OPENMP && defined _SC && !defined _RT
+#if defined _OPENMP && defined _SC && !defined _RT && !defined_NL
      if (l_eval_collisions)    n_threads_SE=0
 #endif
 #if defined _OPENMP && defined _SC && defined _RT
      if (l_eval_collisions)    n_threads_RT=0
+#endif
+#if defined _OPENMP && defined _SC && defined _NL
+     if (l_eval_collisions)    n_threads_NL=0
 #endif
      !
    end subroutine before_infile_write_setup 

@@ -39,7 +39,7 @@ integer function io_HF_and_locXC(ID)
  ! Work Space
  !
  integer           :: QP_table_disk(3+n_sp_pol-1,1),QP_nb_disk,QP_nk_disk,&
-&                     QP_n_states_disk,bands(2),i1,i2,i_found
+&                     QP_n_states_disk,bands(2),i_qp1,i_qp2,i_found,MAP(QP_n_states)
  character(schlen) :: QP_xc_FUNCTIONAL
  !
  if (.not.io_HF) then
@@ -112,9 +112,9 @@ integer function io_HF_and_locXC(ID)
    call io_bulk(ID,VAR="QP_table",VAR_SZ=(/3+n_sp_pol-1,QP_n_states_disk/))
    !
    if(write_is_on(ID)) then
-     do i1=1,QP_n_states_disk
-       QP_table_disk(:,1)=QP_table(i1,:)
-       call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
+     do i_qp1=1,QP_n_states_disk
+       QP_table_disk(:,1)=QP_table(i_qp1,:)
+       call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i_qp1/))
      enddo
    endif
    !
@@ -123,17 +123,18 @@ integer function io_HF_and_locXC(ID)
        YAMBO_FREE(QP_state)
        YAMBO_ALLOC(QP_state,(QP_nb_disk,QP_nk_disk))
        QP_state=.false.
-       do i1=1,QP_n_states_disk
-         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
+       do i_qp1=1,QP_n_states_disk
+         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i_qp1/))
          QP_state(QP_table_disk(1,1),QP_table_disk(3,1))=.true.
        enddo
      else
        i_found=0
-       do i1=1,QP_n_states_disk
-         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i1/))
-         do i2=1,QP_n_states
-           if (.not.all((/QP_table_disk(:,1)==QP_table(i2,:)/))) cycle
+       do i_qp1=1,QP_n_states_disk
+         call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,i_qp1/))
+         do i_qp2=1,QP_n_states
+           if (.not.all((/QP_table_disk(:,1)==QP_table(i_qp2,:)/))) cycle
            i_found=i_found+1
+           MAP(i_qp2)=i_qp1  
          enddo
        enddo
        if (i_found/=QP_n_states) io_status(ID)=IO_INCOMPATIBLE_VAR
@@ -142,13 +143,28 @@ integer function io_HF_and_locXC(ID)
    !
    io_HF_and_locXC=io_status(ID)
    if (io_HF_and_locXC/=0) goto 1
-   !  
-   call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_Vnl_xc)
    !
-   call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
-   call io_bulk(ID,C1=QP_Vxc)
-   !
+   if (QP_n_states==QP_n_states_disk) then
+     !  
+     call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_Vnl_xc)
+     !
+     call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,QP_n_states_disk/))
+     call io_bulk(ID,C1=QP_Vxc)
+     !
+   else
+     !
+     do i_qp1=1,QP_n_states
+       !  
+       call io_bulk(ID,VAR="Sx",VAR_SZ=(/2/),IPOS=(/2*MAP(i_qp1)/))
+       call io_bulk(ID,C1=QP_Vnl_xc)
+       !
+       call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2/),IPOS=(/2*MAP(i_qp1)/))
+       call io_bulk(ID,C1=QP_Vxc)
+       !
+     enddo
+     !
+   endif
    io_HF_and_locXC=io_status(ID)
    if (io_HF_and_locXC/=0) goto 1
    !

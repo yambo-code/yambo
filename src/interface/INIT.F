@@ -115,6 +115,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included
+ character(lchlen) :: infile_copy
  !
  integer, external :: io_Double_Grid
  !
@@ -229,8 +230,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call infile_dump()
    if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
      call mk_dir(com_path)
-     call cp_file(trim(infile),trim(com_path)//"/"//trim(filename(infile)),io_err)
-     infile=trim(com_path)//"/"//trim(filename(infile))
+     infile_copy=trim(com_path)//"/"//trim(filename(infile)//".in")
+     if (trim(jobstr)=='') infile_copy=trim(com_path)//"/"//trim(filename(infile)//"_"//trim(jobstr)//".in")
+     call cp_file(trim(infile),trim(infile_copy),io_err)
+     infile=infile_copy
    endif
  else if (.not.infile_editing) then
    infile='(none)'

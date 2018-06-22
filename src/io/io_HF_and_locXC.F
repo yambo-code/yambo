@@ -156,11 +156,11 @@ integer function io_HF_and_locXC(ID)
      !
      do i_qp1=1,QP_n_states
        !  
-       call io_bulk(ID,VAR="Sx",VAR_SZ=(/2/),IPOS=(/2*MAP(i_qp1)/))
-       call io_bulk(ID,C1=QP_Vnl_xc)
+       call io_bulk(ID,VAR="Sx",VAR_SZ=(/2,1/))
+       call io_bulk(ID,C1=QP_Vnl_xc(i_qp1:i_qp1),IPOS=(/1,MAP(i_qp1)/))
        !
-       call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2/),IPOS=(/2*MAP(i_qp1)/))
-       call io_bulk(ID,C1=QP_Vxc)
+       call io_bulk(ID,VAR="Vxc",VAR_SZ=(/2,1/))
+       call io_bulk(ID,C1=QP_Vxc(i_qp1:i_qp1),IPOS=(/1,MAP(i_qp1)/))
        !
      enddo
      !

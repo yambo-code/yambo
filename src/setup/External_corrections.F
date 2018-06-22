@@ -79,7 +79,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
-&    (     ((l_em1s.or.l_ppa).and..not.l_real_time)   &
+&    (     ((l_em1s.or.l_ppa.or.l_gw0).and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
  if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
 #endif
@@ -121,7 +121,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- l_apply_RT_corrections=l_cohsex.or.l_ppa
+ l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
 #endif
  !

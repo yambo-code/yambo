@@ -62,11 +62,19 @@ subroutine K_slepc_driver(iq,W)
 #include <slepc/finclude/slepceps.h>
  !
  Mat           slepc_mat ! Slepc matrix where the hamiltonian will be stored
- Vec           vin,vout
  type(w_samp)  :: W
  integer       :: iq
  logical       :: K_is_not_hermitian
- integer       :: ierr
+ !
+ PetscErrorCode        :: ierr
+ PetscFortranInt       :: slepc_ncv
+#if defined _DOUBLE
+ PetscFortranDouble    :: slepc_tol
+ PetscFortranDouble    :: slepc_target_E
+#else
+ PetscFortranFloat     :: slepc_tol
+ PetscFortranFloat     :: slepc_target_E
+#endif
  !
  ! Residuals & Energies
  !
@@ -83,9 +91,6 @@ subroutine K_slepc_driver(iq,W)
  complex(SP),allocatable :: BS_V_right(:,:)     ! Coupling
  !
  integer              ::io_err,ID  ! I/O
- !
- PetscFortranInt     :: vec_index(4)
- PetscFortranComplex :: vec_value(4)
  !
  call timing('Slepc Solver',OPR='start')
  !  
@@ -120,6 +125,9 @@ subroutine K_slepc_driver(iq,W)
    BSS_n_eig = 1
  endif
  !
+ slepc_ncv      = BSS_slepc_ncv
+ slepc_tol      = BSS_slepc_tol
+ slepc_target_E = BSS_target_E
  !
  ! Eigenstates 2 DB ?
  !====================
@@ -190,15 +198,15 @@ subroutine K_slepc_driver(iq,W)
      !
      call MATRIX_slepc(slepc_mat,BSS_n_eig,E_cmpl=BS_E,&
 &                      V_right=BS_V_right,V_left=BS_V_left,&
-&                      target_energy=BSS_target_E, extraction=BSS_slepc_extraction,&
-&                      slepc_ncv=BSS_slepc_ncv,slepc_tol=BSS_slepc_tol)
+&                      target_energy=slepc_target_E, extraction=BSS_slepc_extraction,&
+&                      slepc_ncv=slepc_ncv,slepc_tol=slepc_tol)
      !
    else
      !
      call MATRIX_slepc(slepc_mat,BSS_n_eig,E_real=BS_E_real,&
 &                      V_right=BS_mat,&
-&                      target_energy=BSS_target_E, extraction=BSS_slepc_extraction,&
-&                      slepc_ncv=BSS_slepc_ncv,slepc_tol=BSS_slepc_tol)
+&                      target_energy=slepc_target_E, extraction=BSS_slepc_extraction,&
+&                      slepc_ncv=slepc_ncv,slepc_tol=slepc_tol)
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
@@ -357,10 +365,10 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !
  !
  use pars,           ONLY:SP,DP,cI,cONE
- use electrons,      ONLY:n_sp_pol,E_SOC_nbands
- use BS,             ONLY:BS_K_dim,BS_H_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
- use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,&
-&                         BSS_eh_E_SOC_corr,BSS_perturbative_width,BSS_alloc
+ use electrons,      ONLY:n_sp_pol
+ use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,&
+&                         BSS_perturbative_width,BSS_alloc
  use com,            ONLY:error,msg
  !
  implicit none
@@ -373,15 +381,19 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
 #include <slepc/finclude/slepceps.h>
  !
  complex(SP) :: E_plus_W
- integer     :: iq,i_c,i_r,H_pos(2),i_Tk,i_Tp,i_B,i_g,i_k_bz,i_v,i_cond,i_spin
- integer     :: ierr
+ integer     :: iq,i_c,i_r,i_Tk,i_Tp,i_B
  Mat   :: slepc_mat
  PetscFortranComplex :: val
+ PetscFortranInt     :: H_pos(2),SL_K_dim,SL_H_dim
+ PetscErrorCode      :: ierr
+ !
+ SL_K_dim=BS_K_dim
+ SL_H_dim=BS_H_dim
  !
  ! Allocate the slepc Matrix
  !
  call MatCreate(PETSC_COMM_WORLD,slepc_mat,ierr)
- call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,ierr)
+ call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
  call MatSetUp(slepc_mat,ierr)
  ! 
@@ -390,6 +402,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  call fill_eh_dipoles()
  ! 
  ! filling of the slepc_mat
+ !
  !
  do i_B=1,n_BS_blks
    !
@@ -412,7 +425,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
          call MatSetValue( slepc_mat, H_pos(1),          H_pos(1), val, INSERT_VALUES, ierr )
        else
          val = BS_blk(i_B)%mat(i_r,i_r)
-         call MatSetValue( slepc_mat, H_pos(1)+BS_K_dim, H_pos(1), val, INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim, H_pos(1), val, INSERT_VALUES, ierr )
        endif
        !
      endif
@@ -432,8 +445,8 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
        endif
        !
        if (BS_blk(i_B)%mode=="A") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+BS_K_dim,       val , INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2)+BS_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim,       val , INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
        endif
        !
      enddo
@@ -477,13 +490,13 @@ subroutine K_shell_matrix(iq,slepc_mat)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- !REMOVE
- integer        i_g
- !REMOVE 
  integer        iq, i_B, i_r, i_c, i_Tk, i_Tp
- Mat            slepc_mat
- PetscErrorCode ierr
+ PetscFortranInt  :: SL_H_dim,SL_K_dim
+ Mat              :: slepc_mat
+ PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ !
+ SL_H_dim=BS_H_dim
  !
  ! Allocate haydock vectors
  ! 
@@ -499,7 +512,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! TODO: In the future it should be done acording to the BS parallelization
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
- call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,BS_H_dim,BS_H_dim,0,slepc_mat,ierr)
+ call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
  call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
@@ -546,8 +559,6 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- PetscFortranComplex   :: tmp_value(1)
- !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -555,11 +566,16 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
+ PetscFortranComplex  :: tmp_value(1)
+ PetscFortranInt      :: H_pos(1)
+ PetscErrorCode       :: ierr
+ !
  VecScatter           :: ctx
  PetscScalar, pointer :: xx(:)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
- integer              :: n, i_g, i_c, ierr, H_pos, start_index, low, high
+ !
+ integer              :: n, i_g, i_c, start_index, low, high
  !
  ! create scattering context vi (distributed) -> x (local)
  !

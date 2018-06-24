@@ -29,7 +29,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      PARALLEL_CPU_role,PARALLEL_CPU_used,PARALLEL_n_structures_active,&
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                      PAR_EH_range,PAR_n_G_vectors
+&                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
  use interfaces,  ONLY:PARALLEL_check_phase_space
  !
  implicit none
@@ -80,6 +80,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="b" ) PHASE_space=PAR_n_bands(2)-PAR_n_bands(1)+1
        if (trim(ROLE(i_order))=="c" ) PHASE_space=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+       if (trim(ROLE(i_order))=="w" ) PHASE_space=PAR_n_freqs
        !
        if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&

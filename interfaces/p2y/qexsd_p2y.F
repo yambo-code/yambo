@@ -867,8 +867,9 @@ CONTAINS
       CALL iotk_scan_end( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
       !
-      ! XXX to be checked
-      trevsym_=.not.(noncolin.and.domag)
+      ! XXX to be further checked
+      !trevsym_=.not.(noncolin.and.domag)
+      trevsym_=any(t_rev_(1:nsym_)==1)
       !
       !
       IF ( PRESENT(nsym) )        nsym          = nsym_

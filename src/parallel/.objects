@@ -1,3 +1,7 @@
+NL_objs =
+#if defined _NL | defined _ELECTRIC
+NL_objs = PARALLEL_global_Non_Linear.o
+#endif
 #if  _RT
 RT_objs = PARALLEL_global_Real_Time.o
 #endif
@@ -20,4 +24,4 @@ objs =  check_for_a_redundant_IO.o \
         PARALLEL_global_Response_G.o PARALLEL_global_Self_Energy.o PARALLEL_global_Response_T.o PARALLEL_global_Response_IO.o \
         PARALLEL_global_indexes.o \
         PARALLEL_index.o PARALLEL_WF_distribute.o \
-        PARALLEL_Haydock_VEC_COMMs.o PARALLEL_FREQS_setup.o $(RT_objs)
+        PARALLEL_Haydock_VEC_COMMs.o PARALLEL_FREQS_setup.o $(RT_objs) $(NL_objs)

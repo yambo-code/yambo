@@ -34,7 +34,7 @@ subroutine qe_pseudo_init()
  ! qe_pseudo internal modules
  use io_files,          ONLY: pseudo_dir, qe_psfile => psfile
  use ions_base,         ONLY: qe_nsp => nsp, qe_nat => nat, qe_tau => tau, qe_ityp => ityp
- use cell_base,         ONLY: qe_omega => omega, qe_tpiba => tpiba
+ use cell_base,         ONLY: qe_omega => omega, qe_tpiba => tpiba, qe_alat=>alat
  use lsda_mod,          ONLY: qe_nspin => nspin
  use noncollin_module,  ONLY: qe_noncolin => noncolin, qe_npol => npol, qe_nspin_mag=>nspin_mag
  use spin_orb,          ONLY: qe_lspinorb => lspinorb
@@ -89,6 +89,7 @@ subroutine qe_pseudo_init()
  bmat=transpose(bmat)
  bmat=bmat*2.0_DP * pi_DP
  !
+ qe_alat = alat_
  qe_tpiba = 2.0_DP * pi_DP / alat_
  !
  qe_npwx = npwx_

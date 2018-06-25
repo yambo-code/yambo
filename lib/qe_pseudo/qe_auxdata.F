@@ -67,11 +67,12 @@ end module
 module cell_base
   use kinds, only : DP
   private
-  ! bohr^3 units
+  ! bohr units
+  real(DP) :: alat
   real(DP) :: omega
   ! bohr^-1 units
   real(DP) :: tpiba
-  public :: omega, tpiba
+  public :: omega, tpiba, alat
 end module
 
 module cellmd

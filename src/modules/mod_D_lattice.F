@@ -23,8 +23,9 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen,cONE,cZERO,cI
- use com,       ONLY:error
+ use pars,        ONLY:SP,lchlen,cONE,cZERO,cI
+ use vec_operate, ONLY:c2a
+ use com,         ONLY:error
  !
 #include<memory.h>
  !
@@ -95,9 +96,9 @@ module D_lattice
  contains
    !
    subroutine symmetry_group_table(msg_where)
-     !
      use pars,           ONLY:SP,IP
      use com,            ONLY:error,msg
+     implicit none
      !
      character(*) :: msg_where
      !
@@ -128,11 +129,12 @@ module D_lattice
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'[SYMs] Group table built correctly')
      !
-   end subroutine
+   end subroutine symmetry_group_table
    !
    subroutine atoms_spatial_inversion()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv
+     implicit none
      !
      ! Work Space
      !
@@ -165,11 +167,12 @@ module D_lattice
        enddo atoms_loop
      enddo
      !
-   end subroutine
+   end subroutine atoms_spatial_inversion
    !
    subroutine symmetry_equiv_atoms()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv
+     implicit none
      !
      ! Work Space
      !
@@ -228,6 +231,64 @@ module D_lattice
      !
    end subroutine symmetry_equiv_atoms
 
+   subroutine atom_mapper(nat,tau,tau_units,map)
+     use pars,           ONLY:zero_dfl
+     implicit none
+     !
+     integer, intent(in) :: nat
+     real(SP),intent(in) :: tau(3,nat)
+     character(*), intent(in) :: tau_units  ! "c" | "a" | "i"
+     integer, intent(out):: map(maxval(n_atoms_species),n_atomic_species)
+     !
+     ! Work Space
+     !
+     integer  :: ia,iap,is
+     real(SP), allocatable :: tau_(:,:)
+     real(SP) :: at_diff(3)
+     !
+     YAMBO_ALLOC(tau_,(3,nat))
+     !
+     select case(trim(tau_units))
+     case("c","cc") ! cartesian units in bohr
+       tau_=tau
+     case("a","rlu") 
+       do ia = 1, nat
+         call c2a(a,tau(:,ia),tau_(:,ia),"a2c")
+       enddo
+     case("i","iku")
+       do ia = 1, nat
+         call c2a(a,tau(:,ia),tau_(:,ia),"i2c")
+       enddo
+     case default
+       call error(' [Atoms] Invalid tau_units = '//trim(tau_units))
+     end select
+     !
+     do is=1,n_atomic_species
+     do ia=1,n_atoms_species(is)
+        !
+        map(ia,is)=0
+        !
+        search_loop:&
+        do iap = 1, nat
+          !
+          at_diff=atom_pos(:,ia,is)-tau_(:,iap)
+          !
+          if (all(abs(at_diff)<=zero_dfl)) then
+            map(ia,is)=iap
+            exit search_loop
+          endif
+          !
+        enddo search_loop
+        !
+        if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
+        !
+     enddo
+     enddo
+     !
+     YAMBO_FREE(tau_)
+     !
+   end subroutine atom_mapper
+   !
    integer function atomic_number(atom_name)
      character(len=2) :: atom_name
      integer  :: ia ! Work Space

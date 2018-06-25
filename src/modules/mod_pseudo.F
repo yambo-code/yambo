@@ -26,7 +26,7 @@ module pseudo
  use pars,        ONLY:SP,DP,LP
  use electrons,   ONLY:n_sp_pol
  use R_lattice,   ONLY:nkibz
- use D_lattice,   ONLY:n_atomic_species
+ use D_lattice,   ONLY:n_atomic_species,n_atoms_species
  use qe_pseudo_m, ONLY:qe_pseudo_deallocate, qe_pseudo_allocate,&
 &                      bec_type, deallocate_bec_type
 #include <memory.h>
@@ -58,7 +58,8 @@ module pseudo
  !=====================
  logical                 :: pp_is_uspp=.FALSE. 
  logical                 :: qe_pseudo_alloc=.FALSE. 
- type(bec_type), allocatable :: becp(:,:)
+ integer,     allocatable:: qe_atoms_map(:,:)
+ type(bec_type), allocatable:: becp(:,:)
  !
  ! PW (OLD)
  !=========
@@ -118,6 +119,7 @@ module pseudo
      if (qe_pseudo_alloc) call PP_uspp_free()
      call qe_pseudo_allocate() 
      allocate(becp(nkibz,n_sp_pol))
+     allocate(qe_atoms_map(maxval(n_atoms_species),n_atomic_species))
      qe_pseudo_alloc=.true.
    end subroutine
    !
@@ -131,7 +133,11 @@ module pseudo
      if (present(becp_only)) becp_only_=becp_only 
      !
      if (.not.qe_pseudo_alloc) return
-     if (.not.becp_only_) call qe_pseudo_deallocate()
+     !
+     if (.not.becp_only_) then
+       call qe_pseudo_deallocate()
+       if(allocated(qe_atoms_map)) deallocate(qe_atoms_map)
+     endif
      !
      if (allocated(becp)) then
        do is = 1, n_sp_pol

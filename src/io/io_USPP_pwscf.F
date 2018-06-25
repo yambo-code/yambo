@@ -33,7 +33,7 @@ integer function io_USPP_pwscf(ID)
  !
  use pseudo,           ONLY: pp_is_uspp,PP_uspp_alloc,PP_uspp_free,qe_pseudo_alloc
  use qe_pseudo_m,      ONLY: nspin, nspin_mag, noncolin, npol, nat, nsp, ityp, tau, zv, omega, &
-&                            npwx, gcutw, gcutm, ecutwfc, ecutrho, lspinorb, tpiba
+&                            npwx, gcutw, gcutm, ecutwfc, ecutrho, lspinorb, tpiba, alat
  use us,               ONLY: nqxq, nqx, tab, qrad
  use uspp,             ONLY: nhtol, nhtoj, nhtolm, ijtoh, dvan, qq_at, indv,&
 &                            qq_so, dvan_so, indv_ijkb0, nkb, nkbus, okvan,&
@@ -83,6 +83,8 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,I0=npwx)
  call io_bulk(ID,VAR="omega",VAR_SZ=(/1/))
  call io_bulk(ID,D0=omega)
+ call io_bulk(ID,VAR="alat",VAR_SZ=(/1/))
+ call io_bulk(ID,D0=alat)
  call io_bulk(ID,VAR="tpiba",VAR_SZ=(/1/))
  call io_bulk(ID,D0=tpiba)
  call io_bulk(ID,VAR="gcutw",VAR_SZ=(/1/))

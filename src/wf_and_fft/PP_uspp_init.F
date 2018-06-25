@@ -28,12 +28,12 @@ subroutine PP_uspp_init()
  !
  use pars,          ONLY:SP,DP
  use vec_operate,   ONLY:c2a
- use D_lattice,     ONLY:nsym,dl_sop
+ use D_lattice,     ONLY:nsym,dl_sop,atom_mapper
  use R_lattice,     ONLY:b,g_vec,ng_vec
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free,qe_atoms_map
  use IO_m,          ONLY:io_control,OP_RD_CL,REP
  !
- use qe_pseudo_m,   ONLY:qe_tpiba=>tpiba,qe_nat=>nat,qe_tau=>tau,qe_nsp=>nsp,qe_ityp=>ityp
+ use qe_pseudo_m,   ONLY:qe_alat=>alat,qe_tpiba=>tpiba,qe_nat=>nat,qe_tau=>tau,qe_nsp=>nsp,qe_ityp=>ityp
  use qe_pseudo_m,   ONLY:nkb,qe_nsym=>nsym,d1,d2,d3
  use gvect,         ONLY:qe_eigts1=>eigts1, qe_eigts2=>eigts2, qe_eigts3=>eigts3,&
 &                        qe_g=>g, qe_gg=>gg, qe_ngm=>ngm, qe_mill=>mill
@@ -77,6 +77,11 @@ subroutine PP_uspp_init()
  !
  qe_nsym=nsym
  call d_matrix(nsym,real(dl_sop,DP),d1,d2,d3)
+
+ !
+ ! atom mapping
+ !
+ call atom_mapper(qe_nat,real(qe_tau*qe_alat,SP),"cc",qe_atoms_map)
  
  !
  ! init g vectors and structure factors

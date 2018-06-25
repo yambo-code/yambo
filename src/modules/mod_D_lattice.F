@@ -24,6 +24,7 @@
 module D_lattice
  !
  use pars,      ONLY:SP,lchlen,cONE,cZERO,cI
+ use com,       ONLY:error
  !
 #include<memory.h>
  !
@@ -52,6 +53,8 @@ module D_lattice
  complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
+ integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
+ integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
  !
  ! Pauli matrices
  !
@@ -127,7 +130,6 @@ module D_lattice
      !
    end subroutine
    !
-   !
    subroutine atoms_spatial_inversion()
      use pars,           ONLY:zero_dfl
      use matrix_operate, ONLY:m3inv
@@ -165,6 +167,67 @@ module D_lattice
      !
    end subroutine
    !
+   subroutine symmetry_equiv_atoms()
+     use pars,           ONLY:zero_dfl
+     use matrix_operate, ONLY:m3inv
+     !
+     ! Work Space
+     !
+     integer  :: ia,iap,is,isym,itmp(3)
+     real(SP) :: v1(3),at_diff(3),a_m1(3,3)
+     logical  :: lfound
+     !
+     if (n_atoms_species_max==0) return
+     !
+     YAMBO_FREE(irt)
+     YAMBO_FREE(icell)
+     YAMBO_ALLOC(irt,(nsym,maxval(n_atoms_species),n_atomic_species))
+     YAMBO_ALLOC(icell,(3,nsym,maxval(n_atoms_species),n_atomic_species))
+     !
+     call m3inv(transpose(a),a_m1)
+     !
+     do isym=1,nsym
+         !
+         ! handle time-reversal
+         if(isym>nsym/(1+i_time_rev)) then
+           !
+           irt(isym,:,:)=irt(isym-nsym/(1+i_time_rev),:,:)
+           icell(:,isym,:,:)=icell(:,isym-nsym/(1+i_time_rev),:,:)
+           !
+           cycle
+         endif
+         !
+         do is=1,n_atomic_species
+         do ia=1,n_atoms_species(is)
+           !
+           v1=matmul(dl_sop(:,:,isym),atom_pos(:,ia,is))
+           !
+           lfound=.false.
+           !
+           search_loop:&
+           do iap=1,n_atoms_species(is)
+             !
+             at_diff=matmul(a_m1,atom_pos(:,iap,is)-v1(:))
+             itmp=nint(at_diff)
+             !
+             if (all(abs(at_diff-itmp)<=zero_dfl)) then
+                lfound=.true.
+                irt(isym,ia,is)=iap
+                icell(:,isym,ia,is)=itmp(:)
+                exit search_loop
+             endif
+             !
+           enddo search_loop
+           !
+           if (.not.lfound) call error(' [SYMs] equivalent atom not found')
+           !
+         enddo
+         enddo
+         !
+     enddo
+     !
+   end subroutine symmetry_equiv_atoms
+
    integer function atomic_number(atom_name)
      character(len=2) :: atom_name
      integer  :: ia ! Work Space

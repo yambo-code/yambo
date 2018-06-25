@@ -123,8 +123,8 @@ subroutine PP_rotate_becp(isc,ibec,obec)
     !
     iaeq = irt(isym_,ia,is)
     !
-    ibs   = indv_ijkb0( qe_atoms_map(ia,is) )
-    ibseq = indv_ijkb0( qe_atoms_map(iaeq,is) )
+    ibs   = indv_ijkb0( qe_atoms_map(ia,is) )+1
+    ibseq = indv_ijkb0( qe_atoms_map(iaeq,is) )+1
     !
     ibsn  = 0
     iben  = 0
@@ -133,7 +133,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
       !
       ibsn = iben+1 
       ll   = upf(is)%lll(n)
-      jj   = upf(is)%jjj(n)
       iben = ibsn+(2*ll+1) -1
       !
       select case (ll)

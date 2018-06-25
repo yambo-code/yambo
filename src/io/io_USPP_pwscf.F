@@ -27,7 +27,7 @@ integer function io_USPP_pwscf(ID)
  use stderr,           ONLY: intc
  use IO_m,             ONLY: io_connect,io_disconnect,io_sec, &
 &                            io_elemental,io_bulk,io_header,&
-&                            read_is_on,io_mode,DUMP
+&                            read_is_on,write_is_on,io_mode,DUMP
  use D_lattice,        ONLY: n_atoms,n_atomic_species
  use electrons,        ONLY: l_spin_orbit,n_spinor,n_sp_pol
  !
@@ -46,9 +46,9 @@ integer function io_USPP_pwscf(ID)
  ! 
  ! Work Space
  !
- integer :: i, nlx
- integer(LP), allocatable :: lvar(:)
- integer,     allocatable :: ivar(:)
+ integer :: i,is
+ integer :: ivar
+ integer(LP) :: lvar
  logical :: ltmp
 
 
@@ -141,52 +141,43 @@ integer function io_USPP_pwscf(ID)
  call io_bulk(ID,VAR="nh",VAR_SZ=shape(nh))
  call io_bulk(ID,I1=nh)
  !
- allocate(lvar(nsp))
- allocate(ivar(nsp))
- !
- if (read_is_on(ID)) then
-   call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
-   call io_bulk(ID,L1=lvar)
-   do i = 1, nsp
-     upf(i)%tvanp= (lvar(i)==1)
-   enddo
+ specie_loop:&
+ do is = 1, nsp
    !
-   call io_bulk(ID,VAR="has_so",VAR_SZ=shape(lvar))
-   call io_bulk(ID,L1=lvar)
-   do i = 1, nsp
-     upf(i)%has_so= (lvar(i)==1)
-   enddo
+   if (write_is_on(ID)) then
+     lvar=0
+     if (upf(is)%tvanp) lvar=1
+   endif
+   call io_bulk(ID,VAR="tvanp_"//trim(intc(is)),VAR_SZ=(/1/))
+   call io_bulk(ID,L0=lvar)
+   if (read_is_on(ID)) upf(is)%tvanp= (lvar==1)
    !
-   call io_bulk(ID,VAR="nbeta",VAR_SZ=shape(ivar))
-   call io_bulk(ID,I1=ivar)
-   do i = 1, nsp
-     upf(i)%nbeta=ivar(i)
-   enddo
- else
-   lvar=0
-   do i = 1, nsp
-     if (upf(i)%tvanp) lvar(i)=1
-   enddo
-   call io_bulk(ID,VAR="tvanp",VAR_SZ=shape(lvar))
-   call io_bulk(ID,L1=lvar)
+   if (write_is_on(ID)) then
+     lvar=0
+     if (upf(is)%has_so) lvar=1
+   endif
+   call io_bulk(ID,VAR="has_so_"//trim(intc(is)),VAR_SZ=(/1/))
+   call io_bulk(ID,L0=lvar)
+   if (read_is_on(ID)) upf(is)%has_so= (lvar==1)
    !
-   lvar=0
-   do i = 1, nsp
-     if (upf(i)%has_so) lvar(i)=1
-   enddo
-   call io_bulk(ID,VAR="has_so",VAR_SZ=shape(lvar))
-   call io_bulk(ID,L1=lvar)
+   call io_bulk(ID,VAR="nbeta_"//trim(intc(is)),VAR_SZ=(/1/))
+   call io_bulk(ID,I0=upf(is)%nbeta)
    !
-   do i = 1, nsp
-     ivar(i)=upf(i)%nbeta
-   enddo
-   call io_bulk(ID,VAR="nbeta",VAR_SZ=shape(ivar))
-   call io_bulk(ID,I1=ivar)
+   if (read_is_on(ID)) then
+     allocate(upf(is)%lll(upf(is)%nbeta))
+   endif
+   call io_bulk(ID,VAR="lll_"//trim(intc(is)),VAR_SZ=shape(upf(is)%lll))
+   call io_bulk(ID,I1=upf(is)%lll)
    !
- endif
- !
- deallocate(lvar)
- deallocate(ivar)
+   if (l_spin_orbit) then
+     if (read_is_on(ID)) then
+       allocate(upf(is)%jjj(upf(is)%nbeta))
+     endif
+     call io_bulk(ID,VAR="jjj_"//trim(intc(is)),VAR_SZ=shape(upf(is)%jjj))
+     call io_bulk(ID,D1=upf(is)%jjj)
+   endif
+   !
+ enddo specie_loop
  !
  ! uspp
  call io_bulk(ID,VAR="indv",VAR_SZ=shape(indv))

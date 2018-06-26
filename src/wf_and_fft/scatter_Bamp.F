@@ -51,6 +51,7 @@ subroutine scatter_Bamp(isc)
  type(elemental_collision)::isc
  !
  integer     :: qs,iGo
+ integer     :: ib,ibp
 #if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir
 #endif
@@ -173,7 +174,10 @@ subroutine scatter_Bamp(isc)
  !
  if (pp_is_uspp) then
    !
-!   call PP_becprod_calc(isc%becprod)
+   ib=isc%is(1)
+   ibp=isc%os(1)
+   call PP_becprod_calc(isc%becprod,1,1,.false.,ib,ibp,isc%ibec,isc%obec)
+   !
 !   call PP_addus_rhotw_aug(isc%ngrho,isc%rhotw,isc%becprod)
    !
  endif

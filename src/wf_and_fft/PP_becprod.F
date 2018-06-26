@@ -6,7 +6,7 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
+SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, becpp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes
@@ -19,14 +19,16 @@ SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
   USE kinds,         ONLY : DP, SP
   USE control_flags, ONLY : gamma_only, tqr
   USE ions_base,     ONLY : nat, ntyp => nsp, ityp
-  USE uspp,          ONLY : nkb, vkb, becprod, indv_ijkb0
+  USE uspp,          ONLY : nkb, vkb, indv_ijkb0
   USE uspp_param,    ONLY : upf, nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
   USE becmod,        ONLY : bec_type
   !
   IMPLICIT NONE
-  INTEGER,        INTENT(IN) :: current_spin, mb, nb
-  TYPE(bec_type), INTENT(IN) :: becp
+  COMPLEX(SP),    INTENT(OUT):: becprod(nhm,nhm,nat,nspin)
+  INTEGER,        INTENT(IN) :: nspin, current_spin, mb, nb
+  LOGICAL,        INTENT(IN) :: domag
+  TYPE(bec_type), INTENT(IN) :: becp, becpp
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)
@@ -65,7 +67,7 @@ SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
                        ikb = indv_ijkb0(na) + ih
                        !
                        auxk1(1,ih+(is-1)*nh(np))= becp%nc(ikb,is,mb)
-                       auxk2(1,ih+(is-1)*nh(np))= becp%nc(ikb,is,nb)
+                       auxk2(1,ih+(is-1)*nh(np))= becpp%nc(ikb,is,nb)
                        !
                     END DO
                  END DO
@@ -92,7 +94,7 @@ SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
                     ikb = indv_ijkb0(na) + ih
                     !
                     auxk1(1,ih) = becp%k(ikb,mb) 
-                    auxk2(1,ih) = becp%k(ikb,nb)
+                    auxk2(1,ih) = becpp%k(ikb,nb)
                     !
                  END DO
 !$omp end parallel do
@@ -114,9 +116,9 @@ SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
               ! copy output from GEMM into desired format
               !
               IF (noncolin .AND. .NOT. upf(np)%has_so) THEN
-                 CALL add_becprod_nc (na, np, aux_nc, becprod )
+                 CALL add_becprod_nc (na, np, aux_nc, becprod, nspin, domag )
               ELSE IF (noncolin .AND. upf(np)%has_so) THEN
-                 CALL add_becprod_so (na, np, aux_nc, becprod )
+                 CALL add_becprod_so (na, np, aux_nc, becprod, nspin, domag )
               ELSE
                  
                  DO jh = 1, nh(np)
@@ -141,10 +143,10 @@ SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
      !
   END DO
   !
-END SUBROUTINE becprod_calc
+END SUBROUTINE PP_becprod_calc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod )
+SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
 !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_nc by the identity and the Pauli matrices,
@@ -154,13 +156,12 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod )
   USE kinds,                ONLY : SP
   USE ions_base,            ONLY : nat, ntyp => nsp, ityp
   USE uspp_param,           ONLY : nh, nhm
-  USE lsda_mod,             ONLY : nspin
-  USE noncollin_module,     ONLY : npol, nspin_mag
-  USE spin_orb,             ONLY : domag
+  USE noncollin_module,     ONLY : npol
   !
   IMPLICIT NONE
   !
-  INTEGER, INTENT(IN) :: na, np
+  INTEGER, INTENT(IN) :: na, np, nspin_mag
+  LOGICAL, INTENT(IN) :: domag
   COMPLEX(SP), INTENT(IN)    :: aux_nc(nh(np),npol,nh(np),npol)
   COMPLEX(SP), INTENT(INOUT) :: becprod(nhm,nhm,nat,nspin_mag)
   !
@@ -186,7 +187,7 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod )
 END SUBROUTINE add_becprod_nc
 !
 !----------------------------------------------------------------------------
-SUBROUTINE add_becprod_so( na, np, aux_so, becprod )
+SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
   !----------------------------------------------------------------------------
   !
   ! This routine multiplies aux_so by the identity and the Pauli matrices,
@@ -197,12 +198,13 @@ SUBROUTINE add_becprod_so( na, np, aux_so, becprod )
   USE ions_base,            ONLY : nat, ntyp => nsp, ityp
   USE uspp_param,           ONLY : nh, nhm
   USE uspp,                 ONLY : ijtoh, nhtol, nhtoj, indv
-  USE noncollin_module,     ONLY : npol, nspin_mag
-  USE spin_orb,             ONLY : fcoef, domag
+  USE noncollin_module,     ONLY : npol
+  USE spin_orb,             ONLY : fcoef
   !
   IMPLICIT NONE
   
-  INTEGER, INTENT(IN) :: na, np
+  INTEGER, INTENT(IN) :: na, np, nspin_mag
+  LOGICAL, INTENT(IN) :: domag
   COMPLEX(SP), INTENT(IN)    :: aux_so(nh(np),npol,nh(np),npol)
   COMPLEX(SP), INTENT(INOUT) :: becprod(nhm,nhm,nat,nspin_mag)
   !

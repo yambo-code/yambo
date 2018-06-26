@@ -67,7 +67,7 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  becprod=0.0
  !
  i_sp_pol=1
- call becprod_calc(i_sp_pol, ib, ibp, becp(ik,i_sp_pol) )
+ call PP_becprod_calc(becprod, 1, i_sp_pol, .false., ib, ibp, becp(ik,i_sp_pol), becp(ik,i_sp_pol) )
  
  !
  ! augmentation
@@ -77,7 +77,7 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  YAMBO_ALLOC(rhog_aug_DP,(qe_ngm,n_sp_pol))
  rhog_aug_DP=0.0
  !
- call addus_vloc_aug(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
+ call PP_addus_vloc_aug(becprod,qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
  !
  QP_aug=0.0
  !

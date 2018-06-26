@@ -7,20 +7,20 @@
 !
 !
 !----------------------------------------------------------------------
-SUBROUTINE addus_vloc_aug(ngm,nspin_mag,ldrho,rhog)
+SUBROUTINE PP_addus_vloc_aug(becprod,ngm,nspin_mag,ldrho,rhog)
   !----------------------------------------------------------------------
   !
   ! ... Add US contribution to the matrix elements of a local operator
   !
-  USE kinds,                ONLY : DP
-  USE ions_base,            ONLY : nat, ntyp => nsp, ityp
-  USE gvect,                ONLY : gg, g, &
-                                   eigts1, eigts2, eigts3, mill
-  USE uspp,                 ONLY : becprod, okvan
-  USE uspp_param,           ONLY : upf, lmaxq, nh
+  USE pars,       ONLY : SP,DP
+  USE ions_base,  ONLY : nat, ntyp => nsp, ityp
+  USE gvect,      ONLY : gg, g, eigts1, eigts2, eigts3, mill
+  USE uspp,       ONLY : okvan
+  USE uspp_param, ONLY : upf, lmaxq, nh, nhm
   !
   IMPLICIT NONE
   !
+  COMPLEX(SP), INTENT(in)    :: becprod(nhm,nhm,nat,nspin_mag)
   INTEGER,     INTENT(in)    :: ngm,nspin_mag,ldrho
   COMPLEX(DP), INTENT(inout) :: rhog(ldrho,nspin_mag)
   !
@@ -134,5 +134,5 @@ SUBROUTINE addus_vloc_aug(ngm,nspin_mag,ldrho,rhog)
   DEALLOCATE (aux)
   !
   RETURN
-END SUBROUTINE addus_vloc_aug
+END SUBROUTINE PP_addus_vloc_aug
 

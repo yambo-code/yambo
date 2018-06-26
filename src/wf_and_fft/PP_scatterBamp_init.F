@@ -26,7 +26,7 @@ subroutine PP_scatterBamp_init(isc)
  ! init USPP workspace in isc scatterBamp argument
  !
  use pars,          ONLY:SP
- use qe_pseudo_m,   ONLY:lmaxq,g,gg
+ use qe_pseudo_m,   ONLY:lmaxq,g,gg,nhm,nat,nspin
  use collision_el,  ONLY:elemental_collision
  !
 #include<memory.h>
@@ -52,6 +52,9 @@ subroutine PP_scatterBamp_init(isc)
  endif
  if (.not.allocated(isc%ylmk0)) then
    YAMBO_ALLOC( isc%ylmk0,(ngm_l, lmaxq*lmaxq) )
+ endif
+ if (.not.allocated(isc%becprod)) then
+   YAMBO_ALLOC( isc%becprod,(nhm,nhm,nat,nspin) )
  endif
  !
  call ylmr2(lmaxq*lmaxq, ngm_l, g, gg, isc%ylmk0)

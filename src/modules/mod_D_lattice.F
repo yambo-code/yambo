@@ -24,7 +24,6 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI
- use vec_operate, ONLY:c2a
  use com,         ONLY:error
  !
 #include<memory.h>
@@ -216,7 +215,9 @@ module D_lattice
              if (all(abs(at_diff-itmp)<=zero_dfl)) then
                 lfound=.true.
                 irt(isym,ia,is)=iap
-                icell(:,isym,ia,is)=itmp(:)
+                ! The - sign comes from a convention definition
+                ! shared with WanT
+                icell(:,isym,ia,is)=-itmp(:)
                 exit search_loop
              endif
              !
@@ -251,14 +252,14 @@ module D_lattice
      select case(trim(tau_units))
      case("c","cc") ! cartesian units in bohr
        tau_=tau
-     case("a","rlu") 
-       do ia = 1, nat
-         call c2a(a,tau(:,ia),tau_(:,ia),"a2c")
-       enddo
-     case("i","iku")
-       do ia = 1, nat
-         call c2a(a,tau(:,ia),tau_(:,ia),"i2c")
-       enddo
+     !case("a","rlu") 
+     !  do ia = 1, nat
+     !    call c2a(a,tau(:,ia),tau_(:,ia),"a2c")
+     !  enddo
+     !case("i","iku")
+     !  do ia = 1, nat
+     !    call c2a(a,tau(:,ia),tau_(:,ia),"i2c")
+     !  enddo
      case default
        call error(' [Atoms] Invalid tau_units = '//trim(tau_units))
      end select

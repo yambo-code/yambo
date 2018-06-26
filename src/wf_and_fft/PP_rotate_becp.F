@@ -177,14 +177,13 @@ subroutine PP_rotate_becp(isc,ibec,obec)
     ! add a phase in case atom ia is shifted into a different cell
     !
     arg = 2.0_SP*pi*dot_product(xk,real(icell(:,isym_,ia,is),SP))
-    !
-    if (.not.use_trev) then
-      phase = cmplx(cos(arg), sin(arg), SP)
-    else
-      phase = cmplx(cos(arg),-sin(arg), SP)
-    endif
+    phase = cmplx(cos(arg), sin(arg), SP)
     !
     obec%k(ibs:ibs+nh(is)-1,:) = obec%k(ibs:ibs+nh(is)-1,:) * phase
+    !
+    if (use_trev) then
+      obec%k(ibs:ibs+nh(is)-1,:) = conjg(obec%k(ibs:ibs+nh(is)-1,:)) 
+    endif
     !
  enddo
  enddo

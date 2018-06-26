@@ -88,9 +88,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #include<memory.h>
  !
  type(levels)    ::en        
-#if defined _SC
- type(levels)    ::en_sc
-#endif
  type(bz_samp)   ::q,k   
  type(X_t)       ::X(4)
  type(w_samp)    ::Xw(4)
@@ -103,6 +100,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     io_BS_Fxc_err,io_QINDX_err
 #if defined _SC
+ type(levels)      :: en_sc
  integer           :: io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
@@ -187,12 +185,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(4),type=4)
  endif
  !
- ! Presets (local)
- !
- call QP_reset(qp)
- call W_reset(Xxcw)
- call X_reset(Xbsk)
- !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    call initinfio(defs,11)
@@ -205,6 +197,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call logicalson
    return
  endif
+ !
+ ! Presets (local)
+ !
+ call QP_reset(qp)
+ call W_reset(Xxcw)
+ call X_reset(Xbsk)
  !
  ! First vars loading
  ! 
@@ -230,8 +228,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call infile_dump()
    if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
      call mk_dir(com_path)
-     infile_copy=trim(com_path)//"/"//trim(filename(infile)//".in")
-     if (trim(jobstr)=='') infile_copy=trim(com_path)//"/"//trim(filename(infile)//"_"//trim(jobstr)//".in")
+     infile_copy=trim(com_path)//"/"//trim(filename(infile))//".in"
+     if (trim(jobstr)/='') infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)//".in"
      call cp_file(trim(infile),trim(infile_copy),io_err)
      infile=infile_copy
    endif
@@ -1584,6 +1582,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if !defined  _ELPH && !defined _QED
            l_elel_corr=.true.
 #endif
+           !
+           if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
            !
          endif
          !

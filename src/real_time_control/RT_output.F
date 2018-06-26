@@ -25,7 +25,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! 
  use units,          ONLY:HA2EV,HA2KEL,SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT,AU2VMm1
  use pars,           ONLY:SP,schlen
- use com,            ONLY:msg,of_open_close
+ use com,            ONLY:msg,of_open_close,warning
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt,l_use_Hxc_collisions
  use QP_m,           ONLY:Time_of
  use fields,         ONLY:A_tot,A_ind,A_ext
@@ -41,6 +41,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
  use LIVE_t,         ONLY:what_is_running
+ use functions,      ONLY:NAN
  !
  implicit none
  !
@@ -52,9 +53,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  ! Work space
  !
  character(schlen)        :: orders(20),dumb_ch
- integer                  :: i_f,n_orders,i_o,i_desc,il,N
+ integer                  :: i_f,n_orders,i_o,i_desc,il,N,i_v
  logical                  :: file_is_todo(N_MAX_RT_o_files)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
+ logical, external        :: STOP_now
  !
  call string_split(what,orders,n_non_empty_strings=n_orders)
  !
@@ -108,6 +110,18 @@ subroutine RT_output(what,VALUES,TIME,E)
  endif
  !
  if (.not.RT_do_it('OUT')) return
+ !
+ ! Check for NAN's in the VALUES and eventually stop
+ !
+ if (present(VALUES)) then
+   N=size(VALUES)
+   do i_v=1,N
+     if (NAN(VALUES(i_v))) then
+       call warning("Found NaN in "//trim(what)//". Dynamics stopped")
+       if (STOP_now(.TRUE.)) stop
+     endif
+   enddo
+ endif
  !
  call timing('RT output',OPR='start')
  !

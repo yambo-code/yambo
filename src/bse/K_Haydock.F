@@ -77,7 +77,7 @@ subroutine K_Haydock(iq,W)
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
- logical, external  ::stop_now
+ logical, external  ::STOP_now
  !
  ! I/O
  !
@@ -541,7 +541,7 @@ subroutine K_Haydock(iq,W)
 !   end if
 !   !
    if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
-&       stop_now(.FALSE.)) then
+&       STOP_now(.FALSE.)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_treshold)
      call msg('r','Iterations                :',it)
      exit

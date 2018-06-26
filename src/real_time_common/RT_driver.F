@@ -62,7 +62,7 @@ subroutine RT_driver(E,X,k,q)
  type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
- logical, external :: stop_now
+ logical, external :: STOP_now
  ! 
  ! Work Space
  !
@@ -284,11 +284,11 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
+   !call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
+   !call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
@@ -300,7 +300,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Write DBs and output
    !=====================
-   call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
+   !call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
    ! Time step update
    !=======================
@@ -315,7 +315,7 @@ subroutine RT_driver(E,X,k,q)
    !
    call PP_redux_wait()
    !
-   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.stop_now(.FALSE.)
+   l_Dynamics_is_over=NE_i_time==NE_steps.or.NE_i_time+nint(RT_dyn_step/RT_step)>NE_steps.or.STOP_now(.FALSE.)
    !
    if (l_Dynamics_is_over) cycle
    !

@@ -82,7 +82,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
- logical, external        :: stop_now
+ logical, external        :: STOP_now
  !
  ! ws for states spread evaluation
  !
@@ -530,7 +530,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold) .or.&
-&       stop_now(.FALSE.) ) exit
+&       STOP_now(.FALSE.) ) exit
    !
  end do
  !

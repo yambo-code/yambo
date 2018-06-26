@@ -93,7 +93,10 @@ MODULE qexsd_module
   PUBLIC :: qe_current_version
   !
   PUBLIC :: qexsd_init, qexsd_openfile, qexsd_closefile
-  PUBLIC :: qexsd_open_output, qexsd_close_output
+  PUBLIC :: qexsd_open_section, qexsd_close_section
+  PUBLIC :: qexsd_rewind
+  !
+  PUBLIC :: qexsd_read_symmetry_input
   !
   PUBLIC :: qexsd_read_header, qexsd_read_cell, qexsd_read_ions, &
             qexsd_read_symmetry, qexsd_read_planewaves, qexsd_read_spin, &
@@ -193,27 +196,28 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_open_output(ierr)
+    SUBROUTINE qexsd_open_section(label,ierr)
       !------------------------------------------------------------------------
       IMPLICIT NONE
+      CHARACTER(*) :: label
       INTEGER :: ierr
       !
-      call iotk_scan_begin(iunit,"output",IERR=ierr)
+      call iotk_scan_begin(iunit,trim(label),IERR=ierr)
       if (ierr/=0) return
       !
-    END SUBROUTINE qexsd_open_output
-    !  
+    END SUBROUTINE qexsd_open_section
     !  
     !------------------------------------------------------------------------
-    SUBROUTINE qexsd_close_output(ierr)
+    SUBROUTINE qexsd_close_section(label,ierr)
       !------------------------------------------------------------------------
       IMPLICIT NONE
+      CHARACTER(*) :: label
       INTEGER :: ierr
       !
-      call iotk_scan_end(iunit,"output",IERR=ierr)
+      call iotk_scan_end(iunit,trim(label),IERR=ierr)
       if (ierr/=0) return
       !
-    END SUBROUTINE qexsd_close_output
+    END SUBROUTINE qexsd_close_section
     !
     !
     !------------------------------------------------------------------------
@@ -243,6 +247,25 @@ CONTAINS
 #endif
       !
     END SUBROUTINE qexsd_closefile
+    !
+    !
+    !------------------------------------------------------------------------
+    SUBROUTINE qexsd_rewind( ierr)
+      !------------------------------------------------------------------------
+      IMPLICIT NONE
+      INTEGER,       INTENT(OUT) :: ierr
+      !
+      ierr = 0
+      rewind(iunit, IOSTAT=ierr)
+      if (ierr/=0) return
+      !
+      read(iunit,*,IOSTAT=ierr)
+      if (ierr/=0) return
+      read(iunit,*,IOSTAT=ierr)
+      if (ierr/=0) return
+      !
+    END SUBROUTINE qexsd_rewind
+    !
     !
     !------------------------------------------------------------------------
     SUBROUTINE qexsd_scan_logical0( iun, label, lval, attr, lfound, ierr)
@@ -763,6 +786,52 @@ CONTAINS
     !
     !
     !------------------------------------------------------------------------
+    SUBROUTINE qexsd_read_symmetry_input( nosym, nosym_evc, noinv, no_t_rev, &
+                                          force_symmorphic, use_all_frac, ierr)
+      !------------------------------------------------------------------------
+      IMPLICIT NONE
+      !
+      LOGICAL,          OPTIONAL, INTENT(OUT) :: nosym, nosym_evc, noinv, no_t_rev
+      LOGICAL,          OPTIONAL, INTENT(OUT) :: force_symmorphic, use_all_frac
+      INTEGER,                    INTENT(OUT) :: ierr
+      !
+      ierr=0
+      !
+      call iotk_scan_begin( iunit, "symmetry_flags", IERR=ierr )
+      if (ierr/=0) RETURN
+      !
+      if (present(nosym)) then
+        call iotk_scan_dat(iunit, "nosym", nosym, IERR=ierr)
+        if (ierr/=0) RETURN
+      endif
+      !
+      if (present(noinv)) then
+        call iotk_scan_dat(iunit, "noinv", noinv, IERR=ierr)
+        if (ierr/=0) RETURN
+      endif
+      !
+      if (present(no_t_rev)) then
+        call iotk_scan_dat(iunit, "no_t_rev", no_t_rev, IERR=ierr)
+        if (ierr/=0) RETURN
+      endif
+      !
+      if (present(force_symmorphic)) then
+        call iotk_scan_dat(iunit, "force_symmorphic", force_symmorphic, IERR=ierr)
+        if (ierr/=0) RETURN
+      endif
+      !
+      if (present(use_all_frac)) then
+        call iotk_scan_dat(iunit, "use_all_frac", use_all_frac, IERR=ierr)
+        if (ierr/=0) RETURN
+      endif
+      !
+      call iotk_scan_end( iunit, "symmetry_flags", IERR=ierr )
+      if (ierr/=0) RETURN
+      !
+    END SUBROUTINE qexsd_read_symmetry_input
+    !
+    !
+    !------------------------------------------------------------------------
     SUBROUTINE qexsd_read_symmetry( nsym, invsym, trevsym, trasl, s, sname, s_units, t_rev, &
                                     irt, nat, ierr )
       !------------------------------------------------------------------------
@@ -868,8 +937,7 @@ CONTAINS
       IF (ierr/=0) RETURN
       !
       ! XXX to be further checked
-      !trevsym_=.not.(noncolin.and.domag)
-      trevsym_=any(t_rev_(1:nsym_)==1)
+      trevsym_=.not.(noncolin.and.domag)
       !
       !
       IF ( PRESENT(nsym) )        nsym          = nsym_

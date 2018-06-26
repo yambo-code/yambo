@@ -138,7 +138,7 @@ contains
       call qexsd_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
-      call qexsd_open_output(ierr)
+      call qexsd_open_section("output",ierr)
       if (ierr/=0) call errore('p2y_init','opening output tag',10)
       !
    case default
@@ -165,7 +165,7 @@ contains
       !
    case("qexsd","qexsd-hdf5")
       !
-      call qexsd_close_output(ierr)
+      call qexsd_close_section("output",ierr)
       call qexsd_closefile("read",ierr)
       !
    case default
@@ -505,6 +505,23 @@ contains
       enddo
       !
       ! definition of t_rev & trevsym  need to be further checked in qexsd_p2y.F
+      !
+      call qexsd_rewind(ierr)
+      if (ierr/=0) call errore('qexml_read_symmetry','iduring qexsd_rewind',ABS(ierr))
+      !
+      call qexsd_open_section("input",ierr) 
+      if (ierr/=0) call errore('qexml_read_symmetry','opening sec input locally',ABS(ierr))
+      !
+      call qexsd_read_symmetry_input(noinv=noinv_,nosym=nosym_,ierr=ierr)
+      if (ierr/=0) call errore('qexml_read_symmetry','reading input data',ABS(ierr))
+      !
+      call qexsd_close_section("input",ierr) 
+      if (ierr/=0) call errore('qexml_read_symmetry','closing sec input locally',ABS(ierr))
+      !
+      call qexsd_open_section("output",ierr) 
+      if (ierr/=0) call errore('qexml_read_symmetry','opening sec output locally',ABS(ierr))
+      !
+      trevsym_=trevsym_.and..not.noinv_
       !
    case default
      call errore("get_symmetries"," Invalid dftdata fmt "//trim(dftdata_fmt),1)

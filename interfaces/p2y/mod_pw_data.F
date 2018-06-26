@@ -43,6 +43,7 @@ module pw_data
   integer                    :: t_rev_(48)
   logical                    :: invsym_
   logical                    :: trevsym_
+  logical                    :: nosym_,noinv_
 
 ! Planewaves
   integer                    :: npwx_

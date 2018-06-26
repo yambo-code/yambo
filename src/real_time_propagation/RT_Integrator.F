@@ -133,7 +133,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! final step @ T+dt
  !
- call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),T_step,T_step*RWA_table(i_step))
+ call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,Integrator_nsteps),&
+&                       dG_tmp(:,:,:,Integrator_nsteps+1),T_step,T_step*RWA_table(Integrator_nsteps+1))
  !
  call RT_build_dG_new()
  !
@@ -141,7 +142,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Rotate the G_lesser in the instaneous basis
  !
- call RT_Glesser_rotate(dG_new)
+ !call RT_Glesser_rotate(dG_new)
  !
  ! Occupations @ T+dT
  !
@@ -151,7 +152,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Fields @ T+dT
  !
- call RT_propagate_fields(E,k,A_old,A_tmp(i_step),dG_new,Time,T_step)
+ call RT_propagate_fields(E,k,A_old,A_tmp(Integrator_nsteps+1),dG_new,Time,T_step)
  !
  call RT_build_A_new()
  !
@@ -180,7 +181,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
          if (a_tableau(i_step)==0._SP) cycle 
          dG_tmp(:,:,ik,i_step)=(dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik))/a_tableau(i_step)
        enddo
-       dG_tmp(:,:,ik,i_step)=dG_tmp(:,:,ik,i_step)-dG_old(:,:,ik)
+       dG_tmp(:,:,ik,Integrator_nsteps+1)=dG_tmp(:,:,ik,Integrator_nsteps+1)-dG_old(:,:,ik)
        !
        ! Finally I average using b_tableau
        !
@@ -201,9 +202,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        A_tmp(i_step)%vecpot_vel=(A_tmp(i_step)%vecpot_vel-A_old%vecpot_vel)/a_tableau(i_step)
        A_tmp(i_step)%vecpot_acc=(A_tmp(i_step)%vecpot_acc-A_old%vecpot_acc)/a_tableau(i_step)
      enddo
-     A_tmp(i_step)%vecpot    =A_tmp(i_step)%vecpot    -A_old%vecpot
-     A_tmp(i_step)%vecpot_vel=A_tmp(i_step)%vecpot_vel-A_old%vecpot_vel
-     A_tmp(i_step)%vecpot_acc=A_tmp(i_step)%vecpot_acc-A_old%vecpot_acc
+     A_tmp(Integrator_nsteps+1)%vecpot    =A_tmp(Integrator_nsteps+1)%vecpot    -A_old%vecpot
+     A_tmp(Integrator_nsteps+1)%vecpot_vel=A_tmp(Integrator_nsteps+1)%vecpot_vel-A_old%vecpot_vel
+     A_tmp(Integrator_nsteps+1)%vecpot_acc=A_tmp(Integrator_nsteps+1)%vecpot_acc-A_old%vecpot_acc
      !
      ! Finally I average using b_tableau
      !

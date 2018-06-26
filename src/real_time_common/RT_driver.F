@@ -66,7 +66,7 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: io_REF
+ integer           :: io_REF,LT_steps,LT_duration
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
@@ -261,7 +261,14 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1)
+ LT_steps   =NE_steps-NE_i_start_time+1
+ LT_duration=1
+ if (LT_steps/100>100) then
+   LT_steps   =LT_steps/100
+   LT_duration=100
+ endif
+ !
+ call live_timing('[RT] Dynamics :',LT_steps)
  !
  do while (.not.l_Dynamics_is_over)
    !
@@ -284,11 +291,11 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   !call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
+   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
-   !call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
+   call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_collision),OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
@@ -300,7 +307,7 @@ subroutine RT_driver(E,X,k,q)
    !
    ! Write DBs and output
    !=====================
-   !call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
+   call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
    ! Time step update
    !=======================
@@ -335,7 +342,7 @@ subroutine RT_driver(E,X,k,q)
    !	
    ! Timing
    !========
-   call live_timing(steps=nint(RT_dyn_step/RT_step))
+   if (mod(NE_i_time,LT_duration)==0) call live_timing(steps=1)
    !
  enddo
  !

@@ -146,7 +146,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
  else
    !
-   A_new=A_ext
+   A_new%vecpot_acc=A_ext%vecpot_acc
+   A_new%vecpot_vel=A_ext%vecpot_vel
+   A_new%vecpot    =A_ext%vecpot    
    !
  endif
  !

@@ -41,6 +41,7 @@ subroutine scatter_Bamp(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+ use pseudo,         ONLY:pp_is_uspp
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
@@ -168,9 +169,20 @@ subroutine scatter_Bamp(isc)
 #  endif
 #endif
  !
+ ! add USPP augmentation
+ !
+ if (pp_is_uspp) then
+   !
+!   call PP_becprod_calc(isc%becprod)
+!   call PP_addus_rhotw_aug(isc%ngrho,isc%rhotw,isc%becprod)
+   !
+ endif
+ !
+ !
  ! q=0, G=0 case
  !
  if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
 end subroutine
+

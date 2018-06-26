@@ -67,7 +67,7 @@ subroutine PP_vloc_augment(QP_Vloc,Vloc,ik,ib,ibp)
  becprod=0.0
  !
  i_sp_pol=1
- call becprod_calc(ik, i_sp_pol, ib, ibp, becp(ik,i_sp_pol) )
+ call becprod_calc(i_sp_pol, ib, ibp, becp(ik,i_sp_pol) )
  
  !
  ! augmentation

@@ -6,14 +6,12 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !----------------------------------------------------------------------------
-SUBROUTINE becprod_calc ( ik, current_spin, mb, nb, becp )
+SUBROUTINE becprod_calc ( current_spin, mb, nb, becp )
   !----------------------------------------------------------------------------
   !
   ! This routine computes
   !
   !     becprod_mn_Iij =  <\psi_m|\beta_iI> <\beta_jI|\psi_n>
-  !
-  ! for point "ik" and, for LSDA, spin "current_spin" 
   !
   ! Calls to calbec to compute "becp"=<beta_i|psi_m> are supposed to be already done 
   ! output written in becprod
@@ -27,7 +25,7 @@ SUBROUTINE becprod_calc ( ik, current_spin, mb, nb, becp )
   USE becmod,        ONLY : bec_type
   !
   IMPLICIT NONE
-  INTEGER,        INTENT(IN) :: ik, current_spin, mb, nb
+  INTEGER,        INTENT(IN) :: current_spin, mb, nb
   TYPE(bec_type), INTENT(IN) :: becp
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)

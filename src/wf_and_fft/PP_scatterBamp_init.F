@@ -26,7 +26,7 @@ subroutine PP_scatterBamp_init(isc)
  ! init USPP workspace in isc scatterBamp argument
  !
  use pars,          ONLY:SP,DP
- use qe_pseudo_m,   ONLY:lmaxq,g,gg,nhm,nat,nspin,tpiba
+ use qe_pseudo_m,   ONLY:lmaxq,g,nhm,nh,upf,nat,nsp,nspin,tpiba,omega
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:q_pt,b,rl_sop
  use vec_operate,   ONLY:c2a
@@ -40,7 +40,7 @@ subroutine PP_scatterBamp_init(isc)
  !
  ! Workspace
  !
- integer :: ngm, ig
+ integer :: ngm,ig,nt,ih,jh
  integer :: iGo,iq,isym
  real(SP):: q(3),q_rot(3)
  real(DP), allocatable :: q_plus_g(:,:)
@@ -54,7 +54,7 @@ subroutine PP_scatterBamp_init(isc)
    YAMBO_ALLOC( isc%qmod,(ngm))
  endif
  if (.not.allocated(isc%qgm)) then
-   YAMBO_ALLOC( isc%qgm,(ngm))
+   YAMBO_ALLOC( isc%qgm,(ngm,nhm,nhm,nsp))
  endif
  if (.not.allocated(isc%ylmk0)) then
    YAMBO_ALLOC( isc%ylmk0,(ngm, lmaxq*lmaxq) )
@@ -90,6 +90,25 @@ subroutine PP_scatterBamp_init(isc)
  !
  YAMBO_FREE(q_plus_g)
  YAMBO_FREE(q_plus_g_m)
+ !
+ ! precompute Q_ij(q+G)
+ !
+ do nt = 1, nsp
+   !
+   isc%qgm(:,:,:,nt)=0.0
+   if ( .not.upf(nt)%tvanp ) cycle
+   !
+   do jh = 1, nh(nt)
+   do ih = 1, nh(nt)
+      !
+      call qvan2(ngm, ih, jh, nt, isc%qmod, isc%qgm(:,ih,jh,nt), isc%ylmk0)
+      !
+   enddo
+   enddo
+   !
+   isc%qgm(:,:,:,nt)=isc%qgm(:,:,:,nt)*omega
+   !
+ enddo
  !
  return
  !

@@ -64,7 +64,7 @@ module collision_el
    type(bec_type) :: obec      ! contains:  < beta_j | wf_om>
    real(DP),    allocatable :: ylmk0(:,:)
    real(DP),    allocatable :: qmod(:)
-   complex(DP), allocatable :: qgm(:)
+   complex(DP), allocatable :: qgm(:,:,:,:)
    complex(SP), allocatable :: becprod(:,:,:,:)
    !
  end type elemental_collision

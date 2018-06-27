@@ -13,7 +13,7 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
   ! ... Add US contribution to the rhotw matrix elements
   !
   USE pars,         ONLY: SP,DP
-  USE ions_base,    ONLY: nat, ntyp => nsp, ityp
+  USE ions_base,    ONLY: nat, nsp, ityp
   USE gvect,        ONLY: eigts1, eigts2, eigts3, mill
   USE uspp,         ONLY: okvan
   USE uspp_param,   ONLY: upf, nh, nhm
@@ -40,7 +40,7 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
   ngm_e=isc%ngrho
   ngm_l=ngm_e-ngm_s+1
   !
-  DO nt = 1, ntyp
+  DO nt = 1, nsp
      IF ( upf(nt)%tvanp ) THEN
         !
         ! nij = max number of (ih,jh) pairs per atom type nt
@@ -78,10 +78,9 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
         DO jh = 1, nh (nt)
         DO ih = 1, nh (nt)
            !
-           CALL qvan2 (ngm_l, ih, jh, nt, isc%qmod, isc%qgm, isc%ylmk0)
            DO ig = 1, ngm_l
-              isc%rhotw(ngm_s+ig-1) = isc%rhotw(ngm_s+ig-1) &
-&                                   + aux2(ig,ih,jh)*isc%qgm(ig)*omega
+              isc%rhotw(ngm_s+ig-1) = isc%rhotw(ngm_s+ig-1) + aux2(ig,ih,jh)* &
+&                                     isc%qgm(ig,ih,jh,nt)
            ENDDO
            !
         ENDDO

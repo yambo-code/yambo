@@ -28,6 +28,8 @@ subroutine PP_scatterBamp_init(isc)
  use pars,          ONLY:SP,DP
  use qe_pseudo_m,   ONLY:lmaxq,g,gg,nhm,nat,nspin,tpiba
  use collision_el,  ONLY:elemental_collision
+ use R_lattice,     ONLY:q_pt,b,rl_sop
+ use vec_operate,   ONLY:c2a
  !
 #include<memory.h>
  !
@@ -40,7 +42,7 @@ subroutine PP_scatterBamp_init(isc)
  !
  integer :: ngm, ig
  integer :: iGo,iq,isym
- real(DP):: q(3)
+ real(SP):: q(3),q_rot(3)
  real(DP), allocatable :: q_plus_g(:,:)
  real(DP), allocatable :: q_plus_g_m(:)
 
@@ -69,11 +71,14 @@ subroutine PP_scatterBamp_init(isc)
  iq=isc%qs(2)
  isym=isc%qs(3)
  !
- q(:)=0.0
+ ! q,g in cartesian, tpiba units
  !
- ! g in tpiba units
+ q_rot=matmul(rl_sop(:,:,isym),q_pt(iq,:))
+ call c2a(b,q_rot,q,'ki2c')
+ q=q/tpiba
+ !
  do ig = 1, ngm
-   q_plus_g(:,ig) = q(:) + g(:,ig)
+   q_plus_g(:,ig) = real(q(:),DP) + g(:,ig)
    q_plus_g_m(ig) = sum(q_plus_g(:,ig)**2)
  enddo
  !

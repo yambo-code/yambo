@@ -25,8 +25,8 @@ subroutine PP_scatterBamp_init(isc)
  !
  ! init USPP workspace in isc scatterBamp argument
  !
- use pars,          ONLY:SP
- use qe_pseudo_m,   ONLY:lmaxq,g,gg,nhm,nat,nspin
+ use pars,          ONLY:SP,DP
+ use qe_pseudo_m,   ONLY:lmaxq,g,gg,nhm,nat,nspin,tpiba
  use collision_el,  ONLY:elemental_collision
  !
 #include<memory.h>
@@ -38,29 +38,53 @@ subroutine PP_scatterBamp_init(isc)
  !
  ! Workspace
  !
- integer :: ngm_l, ig
+ integer :: ngm, ig
+ integer :: iGo,iq,isym
+ real(DP):: q(3)
+ real(DP), allocatable :: q_plus_g(:,:)
+ real(DP), allocatable :: q_plus_g_m(:)
 
  if (isc%ngrho<=0) return
  !
- ngm_l=isc%ngrho
+ ngm=isc%ngrho
  !
  if (.not.allocated(isc%qmod)) then
-   YAMBO_ALLOC( isc%qmod,(ngm_l))
+   YAMBO_ALLOC( isc%qmod,(ngm))
  endif
  if (.not.allocated(isc%qgm)) then
-   YAMBO_ALLOC( isc%qgm,(ngm_l))
+   YAMBO_ALLOC( isc%qgm,(ngm))
  endif
  if (.not.allocated(isc%ylmk0)) then
-   YAMBO_ALLOC( isc%ylmk0,(ngm_l, lmaxq*lmaxq) )
+   YAMBO_ALLOC( isc%ylmk0,(ngm, lmaxq*lmaxq) )
  endif
  if (.not.allocated(isc%becprod)) then
    YAMBO_ALLOC( isc%becprod,(nhm,nhm,nat,nspin) )
+   isc%becprod=0.0
  endif
  !
- call ylmr2(lmaxq*lmaxq, ngm_l, g, gg, isc%ylmk0)
- do ig = 1, ngm_l
-    isc%qmod(ig) = sqrt(gg(ig))
+ YAMBO_ALLOC(q_plus_g,(3,ngm))
+ YAMBO_ALLOC(q_plus_g_m,(ngm))
+ !
+ iGo=isc%qs(1)
+ iq=isc%qs(2)
+ isym=isc%qs(3)
+ !
+ q(:)=0.0
+ !
+ ! g in tpiba units
+ do ig = 1, ngm
+   q_plus_g(:,ig) = q(:) + g(:,ig)
+   q_plus_g_m(ig) = sum(q_plus_g(:,ig)**2)
+ enddo
+ !
+ call ylmr2(lmaxq*lmaxq, ngm, q_plus_g, q_plus_g_m, isc%ylmk0)
+ !
+ do ig = 1, ngm
+    isc%qmod(ig) = sqrt(q_plus_g_m(ig))
  enddO
+ !
+ YAMBO_FREE(q_plus_g)
+ YAMBO_FREE(q_plus_g_m)
  !
  return
  !

@@ -178,10 +178,9 @@ subroutine scatter_Bamp(isc)
    ibp=isc%os(1)
    call PP_becprod_calc(isc%becprod,1,1,.false.,ib,ibp,isc%ibec,isc%obec)
    !
-!   call PP_addus_rhotw_aug(isc%ngrho,isc%rhotw,isc%becprod)
+   call PP_addus_rhotw_aug(isc)
    !
  endif
- !
  !
  ! q=0, G=0 case
  !

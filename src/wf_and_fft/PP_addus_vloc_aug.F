@@ -12,11 +12,11 @@ SUBROUTINE PP_addus_vloc_aug(becprod,ngm,nspin_mag,ldrho,rhog)
   !
   ! ... Add US contribution to the matrix elements of a local operator
   !
-  USE pars,       ONLY : SP,DP
-  USE ions_base,  ONLY : nat, ntyp => nsp, ityp
-  USE gvect,      ONLY : gg, g, eigts1, eigts2, eigts3, mill
-  USE uspp,       ONLY : okvan
-  USE uspp_param, ONLY : upf, lmaxq, nh, nhm
+  USE pars,         ONLY: SP,DP
+  USE ions_base,    ONLY: nat, ntyp => nsp, ityp
+  USE gvect,        ONLY: gg, g, eigts1, eigts2, eigts3, mill
+  USE uspp,         ONLY: okvan
+  USE uspp_param,   ONLY: upf, lmaxq, nh, nhm
   !
   IMPLICIT NONE
   !

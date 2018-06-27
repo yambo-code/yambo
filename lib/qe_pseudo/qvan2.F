@@ -76,17 +76,17 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
   endif
   ivl = nhtolm(ih, np)
   jvl = nhtolm(jh, np)
-  if (nb > nbetam .OR. mb > nbetam) &
-       call errore (' qvan2 ', ' wrong dimensions (1)', MAX(nb,mb))
-  if (ivl > nlx .OR. jvl > nlx) &
-       call errore (' qvan2 ', ' wrong dimensions (2)', MAX(ivl,jvl))
+!  if (nb > nbetam .OR. mb > nbetam) &
+!       call errore (' qvan2 ', ' wrong dimensions (1)', MAX(nb,mb))
+!  if (ivl > nlx .OR. jvl > nlx) &
+!       call errore (' qvan2 ', ' wrong dimensions (2)', MAX(ivl,jvl))
   qg = 0.d0
   !
   !    and make the sum over the non zero LM
   !
   do lm = 1, lpx (ivl, jvl)
      lp = lpl (ivl, jvl, lm)
-     if ( lp < 1 .or. lp > 49 ) call errore ('qvan2', ' lp wrong ', max(lp,1))
+!     if ( lp < 1 .or. lp > 49 ) call errore ('qvan2', ' lp wrong ', max(lp,1))
      !
      !     find angular momentum l corresponding to combined index lp
      !     (l is actually l+1 because this is the way qrad is stored, check init_us_1)
@@ -124,14 +124,14 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
 
      qm1 = -1.0_dp !  any number smaller than qmod(1)
 
-!$omp parallel do default(shared), private(qm,px,ux,vx,wx,i0,i1,i2,i3,uvx,pwx,work)
+!!!!!$omp parallel do default(shared), private(qm,px,ux,vx,wx,i0,i1,i2,i3,uvx,pwx,work)
      do ig = 1, ngy
         !
         ! calculate quantites depending on the module of G only when needed
         !
-#if ! defined _OPENMP
+!#if ! defined _OPENMP
         IF ( ABS( qmod(ig) - qm1 ) > 1.0D-6 ) THEN
-#endif
+!#endif
            !
            qm = qmod (ig) * dqi
            px = qm - int (qm)
@@ -148,13 +148,13 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
                   qrad (i1, ijv, l, np) * pwx * vx - &
                   qrad (i2, ijv, l, np) * pwx * ux + &
                   qrad (i3, ijv, l, np) * px * uvx
-#if ! defined _OPENMP
+!#if ! defined _OPENMP
            qm1 = qmod(ig)
         END IF
-#endif
+!#endif
         qg (ind,ig) = qg (ind,ig) + sig * ylmk0 (ig, lp) * work
      enddo
-!$omp end parallel do
+!!!!!!$omp end parallel do
 
   enddo
 

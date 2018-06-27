@@ -29,5 +29,5 @@ objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) $(QED_more) \
        WF_load.o WF_symm.o WF_apply_symm.o $(WF_rot_object) \
        $(WF_der_objects) eval_R_minus_R.o scatter_Modscr.o load_cc.o \
        PP_uspp_init.o PP_addus_vloc_aug.o PP_vloc_augment.o PP_compute_becp.o \
-       PP_becprod.o PP_scatterBamp_init.o PP_rotate_becp.o
+       PP_becprod.o PP_scatterBamp_init.o PP_rotate_becp.o PP_addus_rhotw_aug.o
 

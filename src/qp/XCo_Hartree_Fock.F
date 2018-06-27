@@ -143,8 +143,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
-! XXX
-! USPP, get ik, i_sp_pol, becp
    !
 #if defined _SC  
    !

@@ -23,6 +23,7 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   USE uspp_param,    ONLY : upf, nh, nhm
   USE noncollin_module,     ONLY : noncolin, npol
   USE becmod,        ONLY : bec_type
+  use timing_m,      ONLY : timing
   !
   IMPLICIT NONE
   COMPLEX(SP),    INTENT(OUT):: becprod(nhm,nhm,nat,nspin)
@@ -33,7 +34,7 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)
   INTEGER :: ikb, ih, jh, na, np, is, js
-  ! counters on beta functions, atoms, atom types, spin
+  
   !
   DO np = 1, ntyp
      !
@@ -61,7 +62,6 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
               !
               IF ( noncolin ) THEN
                  !
-!$omp parallel do default(shared), private(is,ih,ikb)
                  DO is = 1, npol
                     DO ih = 1, nh(np)
                        ikb = indv_ijkb0(na) + ih
@@ -71,7 +71,6 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
                        !
                     END DO
                  END DO
-!$omp end parallel do
                  !
 #if defined _DOUBLE
                  CALL ZGEMM ( 'C', 'N', npol*nh(np), npol*nh(np), 1, &
@@ -89,7 +88,6 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
                  !
               ELSE
                  !
-!$omp parallel do default(shared), private(ih,ikb)
                  DO ih = 1, nh(np)
                     ikb = indv_ijkb0(na) + ih
                     !
@@ -97,7 +95,6 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
                     auxk2(1,ih) = becpp%k(ikb,nb)
                     !
                  END DO
-!$omp end parallel do
                  !
                  ! only the real part is computed
                  !

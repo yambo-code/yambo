@@ -28,14 +28,15 @@ subroutine PP_scatterBamp_init(isc)
  use pars,          ONLY:SP,DP
  use qe_pseudo_m,   ONLY:lmaxq,g,nhm,nh,upf,nat,nsp,nspin,tpiba,omega
  use collision_el,  ONLY:elemental_collision
- use R_lattice,     ONLY:q_pt,b,rl_sop
+ use R_lattice,     ONLY:k_pt,q_pt,b,rl_sop
  use vec_operate,   ONLY:c2a
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
  ! vars
  !
- type(elemental_collision)  ::isc
+ type(elemental_collision) :: isc
 
  !
  ! Workspace
@@ -47,6 +48,7 @@ subroutine PP_scatterBamp_init(isc)
  real(DP), allocatable :: q_plus_g_m(:)
 
  if (isc%ngrho<=0) return
+ call timing("PP_scatterBamp_init","start")
  !
  ngm=isc%ngrho
  !
@@ -61,7 +63,6 @@ subroutine PP_scatterBamp_init(isc)
  endif
  if (.not.allocated(isc%becprod)) then
    YAMBO_ALLOC( isc%becprod,(nhm,nhm,nat,nspin) )
-   isc%becprod=0.0
  endif
  !
  YAMBO_ALLOC(q_plus_g,(3,ngm))
@@ -74,8 +75,8 @@ subroutine PP_scatterBamp_init(isc)
  ! q,g in cartesian, tpiba units
  !
  q_rot=matmul(rl_sop(:,:,isym),q_pt(iq,:))
- call c2a(b,q_rot,q,'ki2c')
- q=q/tpiba
+ call c2a(b,q_rot,mode='ki2c')
+ q=q_rot/tpiba
  !
  do ig = 1, ngm
    q_plus_g(:,ig) = real(q(:),DP) + g(:,ig)
@@ -99,9 +100,10 @@ subroutine PP_scatterBamp_init(isc)
    if ( .not.upf(nt)%tvanp ) cycle
    !
    do jh = 1, nh(nt)
-   do ih = 1, nh(nt)
+   do ih = 1, jh
       !
       call qvan2(ngm, ih, jh, nt, isc%qmod, isc%qgm(:,ih,jh,nt), isc%ylmk0)
+      isc%qgm(:,jh,ih,nt) = isc%qgm(:,ih,jh,nt)
       !
    enddo
    enddo
@@ -110,6 +112,7 @@ subroutine PP_scatterBamp_init(isc)
    !
  enddo
  !
+ call timing("PP_scatterBamp_init","stop")
  return
  !
 end subroutine PP_scatterBamp_init

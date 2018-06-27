@@ -38,9 +38,9 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  use stderr,        ONLY:intc
  use pseudo,        ONLY:pp_is_uspp,qe_atoms_map
  use electrons,     ONLY:l_spin_orbit,n_spinor
- use D_lattice,     ONLY:nsym,spin_sop,dl_sop,i_time_rev,idt_index,i_space_inv,inv_index,&
+ use D_lattice,     ONLY:nsym,i_time_rev,idt_index,i_space_inv,inv_index,&
 &                        irt,icell,atom_pos,n_atoms_species,n_atomic_species
- use R_lattice,     ONLY:rl_sop,kibz_vec,b
+ use R_lattice,     ONLY:kibz_vec,b
  use qe_pseudo_m,   ONLY:bec_type,allocate_bec_type,deallocate_bec_type,&
 &                        beccopy,d1,d2,d3,nh,upf,indv_ijkb0
  !

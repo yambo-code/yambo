@@ -202,7 +202,7 @@ subroutine RT_initialize(E,k,q)
    !
    NE_time_step_update_jump = NE_time_step_update_jump_SAVE
    !
-   if (RT_MAX_step<1.E-5) RT_MAX_step=100.*RT_step
+   if (RT_MAX_step<1.E-5) RT_MAX_step=10.*RT_step
    !
  else
  !
@@ -364,7 +364,7 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r','---Time Step Update---')
    call msg( 'r', 'Initial time           [fs]:',NE_initial_time_step_update*AUT2FS)
    call msg( 'r', 'Time Interval          [fs]:',NE_time_step_update_jump*AUT2FS)
-   call msg( 'r', 'Treshold              [o/o]:',NE_step_update_treshold/100.)
+   call msg( 'r', 'Treshold              [o/o]:',NE_step_update_treshold)
    call msg( 'r',  'dT maximum value      [fs]:',RT_MAX_step*AUT2FS)
  endif
  !

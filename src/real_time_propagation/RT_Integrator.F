@@ -142,7 +142,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Rotate the G_lesser in the instaneous basis
  !
- !call RT_Glesser_rotate(dG_new)
+ call RT_Glesser_rotate(dG_new)
  !
  ! Occupations @ T+dT
  !
@@ -185,9 +185,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        !
        ! Finally I average using b_tableau
        !
-       dG_new(:,:,ik)=dG_old(:,:,ik)
        do i_step=1,Integrator_nsteps
-         dG_new(:,:,ik)=dG_new(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
+         dG_new(:,:,ik)=dG_old(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
        enddo
        !
      enddo

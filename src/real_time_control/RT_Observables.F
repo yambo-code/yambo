@@ -45,8 +45,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Workspace
  !
- real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3)
- real(SP) :: E_IP
+ real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
  !
  call timing('RT observables',OPR='start')
  !

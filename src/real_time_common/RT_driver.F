@@ -25,7 +25,7 @@ subroutine RT_driver(E,X,k,q)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
- use stderr,         ONLY:set_real_printed_length
+ use stderr,         ONLY:set_real_printed_length,real2ch
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
@@ -45,15 +45,16 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_RT_update_Energies
+&                         l_RT_update_Energies,l_NE_with_fields
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
- use fields,          ONLY:A_tot
+ use fields,          ONLY:A_tot,Efield
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
+ use units,           ONLY:FS2AUT
  !
 #include<memory.h>
  !
@@ -66,9 +67,15 @@ subroutine RT_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: io_REF,LT_steps,LT_duration
+ integer           :: io_REF
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
+ !
+ ! Timing windows
+ !
+ integer           :: LT_pump_steps
+ logical           :: LT_pump
+ real(SP)          :: LT_pump_duration
  !
  integer, external :: io_RT_components
  !
@@ -261,14 +268,18 @@ subroutine RT_driver(E,X,k,q)
  call section('=','Real-Time dynamics')
  !######################################
  !
- LT_steps   =NE_steps-NE_i_start_time+1
- LT_duration=1
- if (LT_steps/100>100) then
-   LT_steps   =LT_steps/100
-   LT_duration=100
+ LT_pump=l_NE_with_fields
+ if (l_NE_with_fields) then
+   LT_pump_duration=maxval(Efield(:)%width)*8
+   LT_pump_steps=LT_pump_duration/RT_step
  endif
- !
- call live_timing('[RT] Dynamics :',LT_steps)
+ if (NE_i_start_time<LT_pump_steps) then
+   call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT)))//" fs) :",&
+&                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01)
+ else
+   LT_pump=.FALSE.
+   call live_timing('[RT] Dynamics :',NE_steps-NE_i_start_time+1,DEPTH=0.01)
+ endif
  !
  do while (.not.l_Dynamics_is_over)
    !
@@ -342,7 +353,15 @@ subroutine RT_driver(E,X,k,q)
    !	
    ! Timing
    !========
-   if (mod(NE_i_time,LT_duration)==0) call live_timing(steps=1)
+   if (NE_i_time>=LT_pump_steps.and.LT_pump) then
+     !
+     LT_pump=.FALSE.
+     call live_timing( )
+     call live_timing('[RT] Dynamics (pump-free region) :',NE_steps-LT_pump_steps-NE_i_start_time+1,DEPTH=0.01) 
+     !
+   endif
+   !
+   call live_timing(steps=nint(RT_dyn_step/RT_step))
    !
  enddo
  !

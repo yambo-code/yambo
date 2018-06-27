@@ -185,15 +185,20 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      if (pp_is_uspp) then
         !
         call beccopy( becp(isc%is(2),isc%is(4)),   isc%ibec )
-        call beccopy( becp(iscp%is(2),iscp%is(4)), iscp%ibec )
         !
         ikibz=isc%os(2)
         i_sp_pol=isc%os(4)
         call PP_rotate_becp(isc%os, becp(ikibz,i_sp_pol), isc%obec)
-        call beccopy( isc%obec, iscp%obec)
         !
         call PP_scatterBamp_init(isc)
-        call PP_scatterBamp_init(iscp)
+        !
+        if (isc%is(1)/=iscp%is(1)) then
+           !
+           call beccopy( becp(iscp%is(2),iscp%is(4)), iscp%ibec )
+           call beccopy( isc%obec, iscp%obec)
+           call PP_scatterBamp_init(iscp)
+           !
+        endif
         !
      endif
      !

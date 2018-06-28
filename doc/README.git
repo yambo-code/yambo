@@ -5,6 +5,10 @@ Clone
 =====
 git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
 
+Branches list clean-up
+=======================
+git remote prune origin
+
 status
 ==========
 >git status #show status of local branch

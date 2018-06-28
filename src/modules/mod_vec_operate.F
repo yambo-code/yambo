@@ -418,6 +418,26 @@ module vec_operate
      deallocate(l_indx,l_arrout)
    end subroutine r_sort
    !
+   integer function GreatestCommonDivisor(a,b)
+     !
+     implicit  none
+     integer :: a, b, c
+     if (a < b) then       ! since a >= b must be true, they
+       c = a               ! are swapped if a < b
+       a = b
+       b = c
+     end if
+     do                    ! now we have a <= b
+       c = mod(a, b)       !    compute c, the reminder
+       if (c == 0) exit    !    if c is zero, we are done.  gcd = b
+       a = b               !    otherwise, b becomes a
+       b = c               !    and c becomes b
+     end do                !    go back
+     !
+     GreatestCommonDivisor = b
+     !
+   end function GreatestCommonDivisor
+   !
    subroutine i_sort(arrin,arrout,indx,indx_m1)                             
      !
      ! Sort integer values from arrin into array 

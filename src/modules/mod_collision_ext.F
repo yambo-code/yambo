@@ -136,7 +136,7 @@ module collision_ext
        local_name(4)="HARTREE+FOCK"
        local_name(5)="HARTREE+SEX"
        local_name(6)="GS_xc"
-       local_name(7)="HARTREE+GS_xc"
+       local_name(7)="HARTREE+GS_XC"
        !
        do i_c=1,nc
          if (H_SE_kind==local_kind(i_c).or.H_SE_kind==local_kind(i_c)+H_SE_COH) then

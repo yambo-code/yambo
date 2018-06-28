@@ -136,7 +136,7 @@ subroutine XC_switch()
        case('HARTREE')
          l_sc_hartree=.true.
          H_kind=H_kind+H_SE_HARTREE
-       case('GS_xc')
+       case('GS_XC','GS_xc')
          l_sc_is_libDFT=.true.
          H_kind=H_kind+GS_xc_KIND
          if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')

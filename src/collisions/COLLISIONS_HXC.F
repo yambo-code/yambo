@@ -90,11 +90,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Setup
  !
- l_loc_HXC_collisions = index(H_potential,"HARTREE")>0 .or. index(H_potential,"GS_xc")>0 .or. index(H_potential,"default")>0
+ l_loc_HXC_collisions = index(H_potential,"HARTREE")>0 .or. index(H_potential,"GS_XC")>0 .or. index(H_potential,"default")>0
  l_MBPT_XC_collisions = index(H_potential,"FOCK")>0    .or. index(H_potential,"SEX")>0
  l_COH_collisions     = index(H_potential,"COH")>0
  l_compute_screening  = index(H_potential,"COH")>0   .or. index(H_potential,"SEX")>0
- l_tddft              = index(H_potential,"GS_xc")>0 .or. index(H_potential,"default")>0 
+ l_tddft              = index(H_potential,"GS_XC")>0 .or. index(H_potential,"default")>0 
  !
  l_HXC_collisions     = l_loc_HXC_collisions .or. l_MBPT_XC_collisions 
  !

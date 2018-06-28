@@ -87,7 +87,7 @@ subroutine crystal_lattice()
        enddo
        !
        if (abs(m3det(latt_a_rot))<=1.E-7) then
-         lattice_test_failed(i_l,i_p)=.FALSE.
+         lattice_test_failed(i_l,i_p)=.TRUE.
          cycle
        endif
        !

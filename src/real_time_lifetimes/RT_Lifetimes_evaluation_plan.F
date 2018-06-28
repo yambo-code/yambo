@@ -88,13 +88,14 @@ integer function RT_Lifetimes_evaluation_plan( )
    !
    if (NE_steps-it+1<N_inter_steps) then
      !
-     N_inter_steps=NE_steps-it+1
-     N_intra_steps=N_inter_steps/(N_blocks-1)
-     call BUILD_up_group(N_inter_steps,N_intra_steps)
+     !N_inter_steps=NE_steps-it+1
+     !N_intra_steps=N_inter_steps/(N_blocks-1)
+     !call BUILD_up_group(N_inter_steps,N_intra_steps)
      !
-     RT_TIME_status(NE_steps)=N_blocks
+     !RT_TIME_status(NE_steps)=N_blocks
      !
-     exit
+     !exit
+     call BUILD_up_group(N_inter_steps/N_intra_steps,1)
      !
    else
      call BUILD_up_group(N_inter_steps,N_intra_steps)

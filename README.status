@@ -1,3 +1,7 @@
+
+LIFE k parallelization files
+=============================
+
 ./src/real_time_common/RT_start_and_restart.F:         !if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
 ./src/real_time_lifetimes/RT_Lifetimes_merge.F:   !if(.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
 ./src/real_time_lifetimes/RT_Lifetimes_save_and_extrap.F:     !if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
@@ -9,4 +13,8 @@ In addition to check
 
 RT_databases_IO
 RT_output_and_IO_driver
+
+Temp. Modifications that alter the comparison with the bug-fixes
+================================================================
+src/real_time_lifetimes/RT_Lifetimes_evaluation_plan.F
 

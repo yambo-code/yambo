@@ -88,8 +88,8 @@ subroutine SET_logicals()
    if (str_check(5,(/"COLLS","COLLs","colls","ALL  ","all  "/),&
 &                                               ch_piece(i_ch)) ) io_COLLs      =.FALSE.
    if (str_check(4,(/"GF ","gf ","ALL","all"/),ch_piece(i_ch)) ) io_GF          =.FALSE.
-   if (str_check(4,(/"J  ","j  ","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE.
-   if (str_check(4,(/"OBS","obs","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE. ! Back Compatibility
+   if (str_check(4,(/"J  ","j  ","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE. ! Back Compatibility
+   if (str_check(4,(/"OBS","obs","ALL","all"/),ch_piece(i_ch)) ) io_OBSERVABLES =.FALSE. 
    if (str_check(5,(/"CARRIERs","carriers","CARRIERS","ALL     ","all     "/),&
 &                                               ch_piece(i_ch)) ) io_CARRIERs=.FALSE.
    if (str_check(4,(/"SC ","sc ","ALL","all"/),ch_piece(i_ch)) ) io_SC      =.FALSE.

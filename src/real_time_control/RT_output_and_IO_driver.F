@@ -32,7 +32,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
-&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased
+&                         l_RT_induced_field,l_RT_impose_N_dN,l_RT_impose_E,RT_is_dynamically_dephased,NE_i_time
+ use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
@@ -87,12 +88,15 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   !call RT_databases_IO(E)
+   call RT_databases_IO(E)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)
    !
    ! OUTPUT(s)
    !###########
+   !
+   if (.not.RT_do_it('OUT')) return
+   !
    call RT_output('curr pol',TIME=NE_time*AUT2FS)
    !
    ! GPL_EXCLUDE_START

@@ -248,6 +248,7 @@ subroutine RT_initialize(E,k,q)
      Efield(i1)%amplitude=Efield_strength(Efield(i1)%intensity,'AU')
      !
      Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+     !
      if ( mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)/=0 ) then
        call warning('Field starting time corrected to be a mutiple of the I/O step.')
        Efield(i1)%t_initial_indx=Efield(i1)%t_initial_indx-mod(Efield(i1)%t_initial_indx-1,OBS_RT_IO_t%INTERVAL_steps)
@@ -256,6 +257,7 @@ subroutine RT_initialize(E,k,q)
        call warning('Field starting time corrected to respect the I/O times.')
        Efield(i1)%t_initial_indx=OBS_RT_IO_t%INTERVAL_steps+1
      endif
+     !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
      call Check_symmetries(Efield(i1)%versor)

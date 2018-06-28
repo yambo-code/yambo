@@ -359,7 +359,6 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          !
-         !DEBUG
          !if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
          !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)

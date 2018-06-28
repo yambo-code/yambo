@@ -66,7 +66,7 @@ subroutine RT_databases_IO(E)
  !
  ! Observables (J, P, M ...)
  !===========================
- if(RT_do_it('OBS')) then
+ if (RT_do_it('OBS')) then
    !
    OBS_RT_IO_t%N=OBS_RT_IO_t%N+1
    OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=NE_time
@@ -85,22 +85,22 @@ subroutine RT_databases_IO(E)
      !
      ! All 2 All
      !
-     if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-       call PP_redux_wait(REF_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       if (l_elphoton_scatt) then
-         call PP_redux_wait(E_PHOT_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-         call PP_redux_wait(E_PHOT_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       endif
-       if (l_elel_scatt) then
-         call PP_redux_wait(E_E_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-         call PP_redux_wait(E_E_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       endif
-       if (l_elph_scatt) then
-         call PP_redux_wait(E_P_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-         call PP_redux_wait(E_P_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-         call PP_redux_wait(E_P_Ho_abs_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       endif
-     endif
+     !if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
+     !  call PP_redux_wait(REF_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !  if (l_elphoton_scatt) then
+     !    call PP_redux_wait(E_PHOT_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !    call PP_redux_wait(E_PHOT_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !  endif
+     !  if (l_elel_scatt) then
+     !    call PP_redux_wait(E_E_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !    call PP_redux_wait(E_E_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !  endif
+     !  if (l_elph_scatt) then
+     !    call PP_redux_wait(E_P_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !    call PP_redux_wait(E_P_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !    call PP_redux_wait(E_P_Ho_abs_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !  endif
+     !endif
      !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      !

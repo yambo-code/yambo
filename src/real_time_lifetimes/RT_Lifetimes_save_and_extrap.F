@@ -69,7 +69,7 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
    !
    do ik=1,RT_nk
      !
-     if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     !if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
      !
      do ib=RT_bands(1),RT_bands(2)
        !
@@ -89,7 +89,7 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
    !
    do ik=1,RT_nk
      !
-     if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     !if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
      !
      do ib=RT_bands(1),RT_bands(2)
        !
@@ -116,4 +116,3 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
  endif
  !
 end subroutine RT_Lifetimes_save_and_extrap
-

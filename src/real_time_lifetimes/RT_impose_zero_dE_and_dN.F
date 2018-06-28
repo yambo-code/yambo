@@ -256,7 +256,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !
  do ik=1,k%nibz
    !
-   if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
+   !if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    !
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      !

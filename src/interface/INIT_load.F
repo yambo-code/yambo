@@ -233,7 +233,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! I/O
  !
  call it(defs,'DBsIOoff', &
-&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,W,SC,BS,ALL)',&
+&             '[IO] Space-separated list of DB with NO I/O. DB=(DIP,X,HF,COLLs,J,GF,CARRIERs,OBS,W,SC,BS,ALL)',&
 &             DBs_IO_control_string,verb_level=V_io)
  call it(defs,'DBsFRAGpm', &
 &             '[IO] Space-separated list of +DB to FRAG and -DB to NOT FRAG. DB=(DIP,X,W,HF,COLLS,K,BS,QINDX,RT,ELPH,SC,ALL)',&
@@ -432,7 +432,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &              Integrator_name)
  !
  IO_times=(/OBS_RT_IO_t%INTERVAL_time_SAVE,GF_RT_IO_t%INTERVAL_time_SAVE,OUTPUT_RT_IO_t%INTERVAL_time_SAVE/)
- call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (J,P,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
+ call it(defs,'IOtime',      '[RT] Time between to consecutive I/O (OBSERVABLEs,CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
  OBS_RT_IO_t%INTERVAL_time_SAVE   =IO_times(1)
  GF_RT_IO_t%INTERVAL_time_SAVE    =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_SAVE=IO_times(3)

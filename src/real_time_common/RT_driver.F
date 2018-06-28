@@ -43,7 +43,7 @@ subroutine RT_driver(E,X,k,q)
 &                         RT_alloc,RT_free,NE_i_time,eval_energy,&
 &                         G_lesser_reference,rho_reference,magn_reference, &
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
-&                         dG_lesser,l_initial_equilibrium,&
+&                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
 &                         l_RT_update_Energies,l_NE_with_fields
  use plasma,          ONLY:PLASMA_free,EH_gas
@@ -270,7 +270,7 @@ subroutine RT_driver(E,X,k,q)
  !
  LT_pump=l_NE_with_fields
  if (l_NE_with_fields) then
-   LT_pump_duration=maxval(Efield(:)%width)*8
+   LT_pump_duration=min(maxval(Efield(:)%width)*8,NE_tot_time)
    LT_pump_steps=LT_pump_duration/RT_step
  endif
  if (NE_i_start_time<LT_pump_steps) then

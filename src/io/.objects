@@ -6,9 +6,11 @@ SC_objects =
 #if defined _SC
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o
 #endif
-RT_objects = 
-#if defined _RT || defined _MAGNETIC
-RT_objects = io_RT_components.o variables_RT.o  io_KB_real_space.o
+#if defined _MAGNETIC
+SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o
+#endif
+#if defined _RT 
+RT_objects = io_RT_components.o variables_RT.o io_KB_real_space.o
 #endif
 NL_objects =
 #if defined _NL 

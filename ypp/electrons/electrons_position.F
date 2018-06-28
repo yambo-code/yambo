@@ -66,7 +66,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  if(.not.any((/l_cartesian,l_cylindrical,l_spherical/)) ) return
  !
  x_zero=(/0._SP,0._SP,0._SP/)
- YAMBO_ALLOC(x_cc,(fft_size,3))
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
  if(power<0) call load_cc(.true. ,x_zero,1)
  if(power>0) call load_cc(.false.,x_zero,1)
  call logical_init()
@@ -182,8 +182,8 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          do ir=1,fft_size
            tmp_var=sqrt((x_cc(ir,1,1)**2+x_cc(ir,2,1)**2+x_cc(ir,3,1)**2))
            r_tmp(ir)=tmp_var**power*WF%c(ir,1,ifft)
-           tmp_var=sqrt(x_cc(ir,1)**2+x_cc(ir,2)**2)
-           theta_tmp(ir)=atan(x_cc(ir,3)/tmp_var)*WF%c(ir,1,ifft)
+           tmp_var=sqrt(x_cc(ir,1,1)**2+x_cc(ir,2,1)**2)
+           theta_tmp(ir)=atan(x_cc(ir,3,1)/tmp_var)*WF%c(ir,1,ifft)
            if ( x_cc(ir,1,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
            if ( x_cc(ir,1,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
          enddo

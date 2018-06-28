@@ -25,7 +25,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! Prepare X and wv types for a TDDFT calculation
  !
- use drivers,       ONLY:l_bss,l_tddft,l_bs_fxc,l_alda_fxc,l_lrc_fxc
+ use drivers,       ONLY:l_bss,l_tddft,l_bs_fxc,l_alda_fxc,l_lrc_fxc,l_pf_fxc
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
@@ -64,6 +64,14 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  if (l_alda_fxc) then
    FXC_type='alda'
    X%f_xc='ALDA '//trim(intc(FXC_n_g_corr))//'(Gs)'
+   return
+ endif
+ !
+ ! PF setup
+ !
+ if (l_pf_fxc) then
+   FXC_type='pf'
+   X%f_xc='PF '
    return
  endif
  !

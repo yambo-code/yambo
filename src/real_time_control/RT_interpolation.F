@@ -44,6 +44,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
+ real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd

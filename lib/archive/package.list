@@ -17,8 +17,7 @@ keep_fftqe=no
 #
 # tarball names
 #
-#tarball_iotk=iotk-y1.2.1.tar.gz
-tarball_iotk=iotk-y1.2.2tar.gz
+tarball_iotk=iotk-y1.2.2.tar.gz
 tarball_netcdf=netcdf-4.4.1.1.tar.gz
 tarball_netcdff=netcdf-fortran-4.4.4.tar.gz
 tarball_hdf5=hdf5-1.8.18.tar.gz

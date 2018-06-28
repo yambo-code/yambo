@@ -31,6 +31,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_wannier,l_wavefunction,MAX_FineGd_DBs,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position
  use pars,           ONLY:pi,SP,schlen
+ use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:i_time_rev
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
@@ -52,10 +53,15 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
-&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,n_regions
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_NL_X,&
+&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,l_RTpump_Fermi,n_regions,&
+&                         RT_conf
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
+ use fields,         ONLY:n_ext_fields
+#endif
+#if defined _YPP_NL
+ use nl_optics,      ONLY:NL_damping
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH
@@ -82,7 +88,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,io_KB_abinit_err,ID
+#endif
+#if defined _YPP_NL
+ integer, external::io_NL
+ integer          ::io_NonLinear
 #endif
  integer, external::parse_character_arrays
  !
@@ -97,6 +107,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
+#endif
+#if defined _YPP_NL
+ what_is_running='YPP_NL'
 #endif
  !
  if (FINALIZE) then
@@ -139,6 +152,17 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_abinit_err=io_KB_abinit(ID)
+ !
+#endif        
+ !
+#if defined _YPP_NL
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_Nonlinear=io_NL(ID)
+ !
+ if(io_Nonlinear==0) then
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
+ endif
  !
 #endif
  !
@@ -271,6 +295,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
      l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
+     l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
    endif
    !
    ! GPL_EXCLUDE_END
@@ -328,6 +353,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
      if (l_RTpump_manual) call initactivate(1,'Select_manual')
+     if (l_RTpump_Fermi)  call initactivate(1,'Select_Fermi')
    endif
    !
    ! GPL_EXCLUDE_END
@@ -392,6 +418,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
  l_RTpump_manual    = runlevel_is_on('Select_manual')
+ l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
@@ -405,6 +432,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
+#endif
+#if defined _YPP_NL
+ l_NL_X  =runlevel_is_on('nonlinear')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -508,14 +538,16 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then
-   call initactivate(1,'RTpumpNel RTBands')
-   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
+   call initactivate(1,'RTBands')
+   if (l_RTpump_energy) call initactivate(1,'RTpumpNel RTpumpEhEn RTpumpEhWd')
    if (l_RTpump_kspace) then
-     call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd')
+     call initactivate(1,'RTpumpNel RTpumpDE RTpumpEhWd RTpumpBZWd')
      do i1=1,n_regions
        call initactivate(1,'RTpumpBZ'//trim(intc(i1)))
      enddo
    endif
+   if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
+   !if (l_RTpump_manual) call initactivate(1,'Manually_edit')
  endif
  if (l_RealTime) then
    !
@@ -538,6 +570,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
+ endif
+#endif
+ !
+#if defined _YPP_NL
+ if(l_NL_X) then
+   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
  endif
 #endif
  !
@@ -712,7 +750,7 @@ contains
    !
    nflines=nflines+1
    do i_p=1,n_points
-     write (flines(nflines+1),'(4(f7.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
+     write (flines(nflines+1),'(4(f8.5,1x,a))') real_v(i_p,1),'|', real_v(i_p,2),'|', real_v(i_p,3),'|'
      nflines=nflines+1
    enddo
    write (flines(nflines+1),'(a)') '%'

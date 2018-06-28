@@ -28,7 +28,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_E_and_k,EE_prefactor,EP_prefactor,EP_abs_prefactor, &
-&                         RT_E_occupations,RT_H_occupations,REF_lifetime,G_lesser_reference&
+&                         RT_E_occupations,RT_H_occupations,REF_lifetime,G_lesser_reference,&
 &                         l_initial_equilibrium,RT_delta0_occupations,&
 &                         l_RT_impose_E,RT_E_occupations_reference,l_RT_impose_for_metals,&
 &                         RT_H_occupations_reference,RT_nk,RT_ibz_coo,RT_Nk_ibz,&

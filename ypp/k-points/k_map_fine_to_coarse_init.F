@@ -74,7 +74,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_E)
  i_err=0
  if (n_FineGd_DBs>0) then
    do i_db=1,n_FineGd_DBs
-     i_err(i_db)=io_DB1_selective_scan(FineGd_io_E(i_db),FineGd_io_k(i_db),trim(FineGd_DB1_paths(i_db,1)),'all')
+     i_err(i_db)=io_DB1_selective_scan("all",trim(FineGd_DB1_paths(i_db,1)),FineGd_io_E(i_db),FineGd_io_k(i_db))
      if (i_err(i_db)/=0) call msg("s",'FineGd database NOT FOUND @'//trim(FineGd_DB1_paths(i_db,1)))
      if (i_err(i_db)==0) call msg("s",'FineGd database FOUND @'//trim(FineGd_DB1_paths(i_db,1)))
      !

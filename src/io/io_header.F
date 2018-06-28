@@ -256,6 +256,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
    if (trim(PARALLEL_STRUCTURE)=="Self_Energy") p_structure=5
    if (trim(PARALLEL_STRUCTURE)=="Real_Time") p_structure=6
    if (trim(PARALLEL_STRUCTURE)=="ScaLapacK") p_structure=7
+   if (trim(PARALLEL_STRUCTURE)=="Non_Linear") p_structure=8
    !
    call io_elemental(ID,VAR="PARALLEL_CPUs",CH0='',VAR_SZ=1,MENU=MENU)
    call io_elemental(ID,CH0=CPU_structure(p_structure)%CPU_string,&

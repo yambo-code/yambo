@@ -41,8 +41,6 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  integer          :: ik
  !
- if (SAVE_index<=2.and..not.l_initial_equilibrium) return
- !
  call timing('RT life merge',OPR='start')
  !
  do ik=1,RT_nk

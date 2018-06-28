@@ -46,7 +46,8 @@ subroutine RT_carriers_number_and_temperature(en,k,Ncarr,Tfit,EfFit)
  !
  ! Electrons and holes temperatures
  !
- Tfit=0._SP
+ Tfit =0._SP
+ Effit=0._SP
  !
  if ( (l_elel_scatt.or.l_elph_scatt)) then
    !

@@ -23,15 +23,18 @@
 !                  
 subroutine RT_databases_IO(E)
  !
- use drivers,        ONLY:l_elph_scatt
+ use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,IO_OBS_cache_steps
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
- use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_APP, &
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn,&
+&                         REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,E_P_Electron_lifetime,&
+&                         E_P_Ho_abs_lifetime,E_P_Hole_lifetime,E_PHOT_Electron_lifetime,&
+&                         E_PHOT_Hole_lifetime
+ use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid,PAR_COM_Xk_ibz_INDEX
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
  !
@@ -79,7 +82,28 @@ subroutine RT_databases_IO(E)
    ! GPL_EXCLUDE_START
    !
    if (io_CARRIERs) then
+     !
+     ! All 2 All
+     !
+     if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
+       call PP_redux_wait(REF_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       if (l_elphoton_scatt) then
+         call PP_redux_wait(E_PHOT_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+         call PP_redux_wait(E_PHOT_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       endif
+       if (l_elel_scatt) then
+         call PP_redux_wait(E_E_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+         call PP_redux_wait(E_E_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       endif
+       if (l_elph_scatt) then
+         call PP_redux_wait(E_P_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+         call PP_redux_wait(E_P_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+         call PP_redux_wait(E_P_Ho_abs_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       endif
+     endif
+     !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/NE_i_time+1/),ID=ID(6))

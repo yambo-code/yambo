@@ -87,7 +87,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call set_real_printed_length()
    call IO_and_Messaging_switch("-fragments_IO_log")
-   call RT_databases_IO(E)
+   !call RT_databases_IO(E)
    call IO_and_Messaging_switch("+fragments_IO_log")
    call set_real_printed_length(f_length=10,g_length=10)
    !

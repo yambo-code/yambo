@@ -30,7 +30,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
  use real_time,      ONLY:SAVED_times,Life_MEM_steps,SAVED_lifetime,RT_nk,&
 &                         ADD_to_saved_values,RT_E_occupations,RT_E_occupations_reference,&
 &                         RT_H_occupations,RT_H_occupations_reference,RT_bands,&
-&                         l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes
+&                         l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes,RT_all2ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
  implicit none
  !
@@ -66,9 +67,14 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
    !
    ! ... and the lifetimes themeselves ...
    !
-   do ib=RT_bands(1),RT_bands(2)
-     do ik=1,RT_nk
+   do ik=1,RT_nk
+     !
+     if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     !
+     do ib=RT_bands(1),RT_bands(2)
+       !
        call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
+       !
      enddo
    enddo
    !
@@ -79,29 +85,33 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
      RT_H_occupations_reference=RT_H_occupations
    endif
    !
- else
+ else if (l_RT_extrapolate_lifetimes.or.l_RT_constant_lifetimes) then 
    !
-   if (l_RT_extrapolate_lifetimes) then
+   do ik=1,RT_nk
      !
-     !==============
-     ! EXTRAPOLATE 
-     !=============
+     if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
      !
      do ib=RT_bands(1),RT_bands(2)
-       do ik=1,RT_nk
+       !
+       !==============
+       ! EXTRAPOLATE 
+       !=============
+       !
+       if (l_RT_extrapolate_lifetimes) then
          call RT_Lifetimes_Extrapolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
-       enddo
+       endif
+       !
+       !===============
+       ! KEEP CONSTANT 
+       !===============
+       !
+       if (l_RT_constant_lifetimes) then
+         LIFE(ib,ik)=SAVED_lifetime(ib,ik,SAVE_index,Life_MEM_steps)
+       endif
+       !
      enddo
      !
-   else if (l_RT_constant_lifetimes) then
-     !
-     !===============
-     ! KEEP CONSTANT 
-     !===============
-     !
-     LIFE=SAVED_lifetime(:,:,SAVE_index,Life_MEM_steps)
-     !
-   endif
+   enddo
    !
  endif
  !

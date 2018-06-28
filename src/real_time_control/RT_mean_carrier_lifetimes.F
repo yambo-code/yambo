@@ -30,10 +30,11 @@ subroutine RT_mean_carrier_lifetimes(E,k)
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
 &                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands,           &
 &                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime,             &
-&                         l_lftm_fit_temperatures
+&                         l_lftm_fit_temperatures,RT_all2ibz
  use RT_control,     ONLY:RT_do_it
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
  !
@@ -57,11 +58,14 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  if (allocated(E_P_Ho_abs_lifetime))   LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+E_P_Ho_abs_lifetime
  if (allocated(E_P_El_abs_lifetime))   LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+E_P_El_abs_lifetime
  !
- n_states=0._SP
- !
+ n_states         =0._SP
  RT_mean_lifetimes=0._SP
+ EE_occupations   =0._SP
+ EP_occupations   =0._SP
  !
  do ik=1,RT_nk
+   !
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
    !
    pre_factor=k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
    !
@@ -105,6 +109,10 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    enddo
    !
  enddo
+ !
+ call PP_redux_wait(RT_mean_lifetimes,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(EE_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(EP_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  RT_Tfit_lifetimes=0._SP
  if(allocated(E_P_Hole_lifetime).and.l_lftm_fit_temperatures) then

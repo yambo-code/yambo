@@ -35,20 +35,20 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk
+&                         G_lesser_reference,RT_nk,RT_all2ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
  implicit none
  !
  ! Work Space
  !
  integer :: ik,ib
- real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
+ real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference
  !
  if (l_RT_relaxation_update_reference) then
    !
-   df_max=0._SP
-   !
    do ik=1,RT_nk
+     !
      do ib=RT_bands(1),RT_bands(2)
        !
        f_E_occ=RT_E_occupations(ib,ik)
@@ -59,27 +59,22 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
        if(f_E_occ<=0.5*spin_occ) RT_life_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
        if(f_E_occ> 0.5*spin_occ) RT_life_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
        !
-       df_max=max(df_max,abs(RT_life_delta_occupations(ib,ik)))
-       !
      enddo
    enddo
    !
  endif
  !
  do ik=1,RT_nk
+   !
    do ib=RT_bands(1),RT_bands(2)
      !
      RT_occupations_locked(ib,ik)=.FALSE. 
      !
      if (l_RT_relaxation_update_reference) then
        !
-       !DEBUG<
-       !if (abs( RT_delta_occupations(ib,ik) )<1.E-4*df_max) RT_occupations_locked(ib,ik)=.TRUE.
-       !DEBUG>
+       ! _lifetime(ib,ik) are never used at different k-points. While occupations are
        !
-       !DEBUG<
-       !if( RT_occupations_locked(ib,ik) ) write(*,*) 'state= ',ib,ik,' locked'
-       !DEBUG>
+       if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
        ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
        ! an ALL2ALL later. BUT the e-p & e-g lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.

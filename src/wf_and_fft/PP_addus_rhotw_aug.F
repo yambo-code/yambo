@@ -78,7 +78,7 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
         ! sum over lm indices of Q_{lm}
         !
         DO jh = 1, nh(nt)
-        DO ih = 1, nh(nt)
+        DO ih = 1, jh
            !
            DO ig = 1, ngm_l
               isc%rhotw(ngm_s+ig-1) = isc%rhotw(ngm_s+ig-1) + aux2(ig,ih,jh)* &

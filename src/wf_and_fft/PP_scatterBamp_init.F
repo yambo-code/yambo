@@ -103,7 +103,6 @@ subroutine PP_scatterBamp_init(isc)
    do ih = 1, jh
       !
       call qvan2(ngm, ih, jh, nt, isc%qmod, isc%qgm(:,ih,jh,nt), isc%ylmk0)
-      isc%qgm(:,jh,ih,nt) = isc%qgm(:,ih,jh,nt)
       !
    enddo
    enddo

@@ -88,31 +88,32 @@ SUBROUTINE PP_addus_vloc_aug(becprod,ngm,nspin_mag,ldrho,rhog)
            IF ( ityp(na) == nt ) THEN
               nb = nb + 1
               tbecprod(:,:,nb,:) = becprod(1:nh_l,1:nh_l,na,1:nspin_mag)
-!$omp parallel do default(shared) private(ig)
+              !
               DO ig = 1, ngm_l
                  skk(ig,nb) = eigts1 (mill (1,ngm_s+ig-1), na) * &
                               eigts2 (mill (2,ngm_s+ig-1), na) * &
                               eigts3 (mill (3,ngm_s+ig-1), na)
               ENDDO
-!$omp end parallel do
+              !
            ENDIF
         ENDDO
 
         DO is = 1, nspin_mag
+           !
            ! sum over atoms
+           !
            CALL zgemm( 'N', 'T', ngm_l, nh_l*nh_l, nab, (1.0_dp,0.0_dp), skk, ngm_l,&
                 tbecprod(1,1,1,is), nh_l*nh_l, (0.0_dp,0.0_dp), aux2, ngm_l )
+           !
            ! sum over lm indices of Q_{lm}
            !
            DO jh = 1, nh (nt)
-              DO ih = 1, nh (nt)
+              DO ih = 1, jh
                  !
                  CALL qvan2 (ngm_l, ih, jh, nt, qmod, qgm, ylmk0)
-!$omp parallel do default(shared) private(ig)
                  DO ig = 1, ngm_l
                     aux(ngm_s+ig-1,is) = aux(ngm_s+ig-1,is)+aux2(ig,ih,jh)*qgm(ig)
                  ENDDO
-!$omp end parallel do
              ENDDO
            ENDDO
            !
@@ -125,7 +126,6 @@ SUBROUTINE PP_addus_vloc_aug(becprod,ngm,nspin_mag,ldrho,rhog)
   DEALLOCATE (qgm, qmod)
   !
   10 CONTINUE
-!  CALL mp_sum( aux, inter_pool_comm )
   !
   !     add aux to the charge density in reciprocal space
   !

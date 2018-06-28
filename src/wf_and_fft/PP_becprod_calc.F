@@ -119,9 +119,10 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
               ELSE
                  
                  DO jh = 1, nh(np)
-                 DO ih = 1, nh(np)
-                    becprod(ih,jh,na,current_spin) = aux_gk(ih,jh)
-                 ENDDO
+                    DO ih = 1, jh
+                       becprod(ih,jh,na,current_spin) = aux_gk(ih,jh)+aux_gk(jh,ih)
+                    ENDDO
+                    becprod(jh,jh,na,current_spin)=becprod(jh,jh,na,current_spin)*0.5_SP
                  ENDDO
                  !
               ENDIF
@@ -178,6 +179,12 @@ SUBROUTINE add_becprod_nc ( na, np, aux_nc, becprod, nspin_mag, domag )
         becprod(ih,jh,na,4)= aux_nc(ih,1,jh,1) - aux_nc(ih,2,jh,2)
      ENDIF
      !
+  ENDDO
+  ENDDO
+  !
+  DO jh = 1, nh(np)
+  DO ih = 1, jh-1
+     becprod(ih,jh,na,:) = becprod(ih,jh,na,:) + becprod(jh,ih,na,:)
   ENDDO
   ENDDO
   
@@ -253,7 +260,13 @@ SUBROUTINE add_becprod_so( na, np, aux_so, becprod, nspin_mag, domag )
      !
   ENDDO
   ENDDO
- !
+  !
+  DO jh = 1, nh(np)
+  DO ih = 1, jh-1
+     becprod(ih,jh,na,:) = becprod(ih,jh,na,:) + becprod(jh,ih,na,:)
+  ENDDO
+  ENDDO
+  !
 CONTAINS
    LOGICAL FUNCTION same_lj(ih,jh,np)
    INTEGER :: ih, jh, np

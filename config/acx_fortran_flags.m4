@@ -74,7 +74,7 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *ifort*)
     DEBUG_FLAGS="-CA -CB -fpe0"
@@ -130,7 +130,7 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fno-second-underscore -mtune=pentium4"
@@ -178,7 +178,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
@@ -247,7 +247,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"

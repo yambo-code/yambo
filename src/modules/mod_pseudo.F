@@ -49,6 +49,7 @@ module pseudo
  ! 
  ! NLCC 
  !=====================
+ logical                 :: use_nlcc=.FALSE.
  logical                 :: pp_has_nlcc=.FALSE. 
  complex(SP), allocatable:: pp_rhog_nlcc(:)
  complex(DP), allocatable:: pp_rho_nlcc(:)

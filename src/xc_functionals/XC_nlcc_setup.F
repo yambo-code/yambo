@@ -35,7 +35,8 @@ subroutine XC_nlcc_setup()
  use FFT_m,         ONLY:fftw_plan
 #endif
  use pseudo,        ONLY:PP_nlcc_free,pp_rho_nlcc,pp_rhog_nlcc,&
-&                        pp_has_nlcc,pp_has_nlcc_atom
+&                        use_nlcc,pp_has_nlcc,pp_has_nlcc_atom
+ use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_RD_CL,REP
  !
  implicit none
@@ -49,10 +50,13 @@ subroutine XC_nlcc_setup()
  !
  ! perform main data IO
  !
+ call parser("UseNLCC", use_nlcc)
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_NLCC_pwscf(ID)
  !
  pp_has_nlcc=(io_err==0)
+ if (.not.use_nlcc) pp_has_nlcc=.false.
  !
  if (.not.pp_has_nlcc) then
    call PP_nlcc_free()

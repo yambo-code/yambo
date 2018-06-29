@@ -569,6 +569,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !XX
  !
  if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
+ if (l_HF_and_locXC) call initactivate(1,'UseNLCC')  
  !
  ! Kernels
  !

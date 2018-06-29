@@ -26,14 +26,14 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,iw_ref,skip_cond_sum_rule
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:spin_occ,E_SOC_nbands,nel,n_sp_pol
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor
+ use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz
  !
@@ -66,7 +66,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  type(PP_indexes)     ::px
  !
  integer              :: i1,i_pert_SOC,n_SOC
- complex(SP)          :: factor_jj,EXC_E(2/n_sp_pol)
+ complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol)
  !
  ! GPL_EXCLUDE_START
  !
@@ -88,6 +88,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  Joint_DOS(:,2) =cZERO
  !
  ! GPL_EXCLUDE_START
+ !
+ para_term_w0=cZERO
  !
 #if defined _KERR
  if(l_kerr) then
@@ -143,6 +145,9 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+&
 &      conjg(BS_R_left(i1)*BS_R_right(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
+     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/q_norm(1)**2
+     if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)/EXC_E(i_pert_SOC)
+     !
      Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
      if (BSS_add_antiresonant) Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
@@ -173,6 +178,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  call PP_redux_wait(Epsilon_ii(:,2))
  call PP_redux_wait(Joint_DOS(:,2) )
+ call PP_redux_wait(para_term_w0)
+ if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
 #if defined _PL
  call PP_redux_wait(PL(:,2))
 #endif
@@ -182,7 +189,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #if defined _KERR
  if(l_kerr) then
    call PP_redux_wait(Epsilon_ij(:,2))
-   if(l_anomalous_Hall) call PP_redux_wait(B_Hall)
+   if(l_anomalous_Hall) call PP_redux_wait(B_Hall(2))
  endif
 #endif
  !
@@ -190,17 +197,19 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  call PP_indexes_reset(px)
  !
- ! GPL_EXCLUDE_START
- !
- if(trim(global_gauge)=='velocity') then
-   if (.not.skip_cond_sum_rule) factor_jj=Epsilon_ii(iw_ref,2)
-   if (     skip_cond_sum_rule) factor_jj=cmplx(nel*real(nkbz,SP)/spin_occ,0._SP,SP)
+ if (trim(global_gauge)=='velocity') then
+   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
  endif
  !
- ! GPL_EXCLUDE_END
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-diam_term_used)*Co_factor/ W%p(:)  **2
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)          +X_drude_term(:))*Co_factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-factor_jj+X_drude_term(:))*Co_factor/ W%p(:)  **2
+ ! Drude term
+ !============
+ if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
+ !
+ Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
  !

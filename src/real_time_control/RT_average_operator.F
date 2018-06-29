@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -36,9 +36,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -67,9 +65,7 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &               Hk_vec_tmp(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  logical     :: l_rim_energy,l_rim_dipole
  !
-#if defined _TIMING
  call timing('RT average Op',OPR='start')
-#endif
  !
  l_rim_energy=.false.
  l_rim_dipole=.false.
@@ -164,6 +160,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  ! NOTE, however, that the all2all procedure are not at all general and must be changed if the
  ! input array is distributed in another way.
  !
+ call timing('RT avg redux',OPR='start')
+ !
  if (present(O_QP).or.present(O_REAL)) then
    if (OUTPUT_dim==1) call PP_redux_wait(O_VALUE)
    if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE)
@@ -172,9 +170,8 @@ subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
    if (OUTPUT_dim==3) call PP_redux_wait(V_VALUE,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  endif
  !
-#if defined _TIMING
+ call timing('RT avg redux',OPR='stop')
  call timing('RT average Op',OPR='stop')
-#endif
  !
  contains 
    !

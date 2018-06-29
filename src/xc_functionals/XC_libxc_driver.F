@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -32,7 +32,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol, alat
 #if defined _RT
- use drivers,        ONLY:l_real_time
+ use drivers,        ONLY:l_real_time,l_nl_optics
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
@@ -99,7 +99,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !==========================
  !
 #if defined _RT
- if (l_real_time) then
+ if (l_real_time.or.l_nl_optics) then
    rho=rho_n
    if(n_spin> 1) magn=magn_n
  else
@@ -113,16 +113,20 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    if (n_spinor==1) then
+!$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-magn(ifft,3))
      enddo
+!$omp end parallel do
    else
+!$omp parallel do default(shared), private(ifft,mod_magn)
      do ifft=1,fft_size
        mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
      enddo
+!$omp end parallel do
    endif
  endif
  !
@@ -134,9 +138,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  if (EvaluateDGradient) then 
    !
-   YAMBO_ALLOC(drho,(3,n_spin,fft_size))
+   YAMBO_ALLOC(drho,(fft_size,n_spin,3))
    YAMBO_ALLOC(sigma,(n_spin*(n_spin+1)/2,fft_size))
-   YAMBO_ALLOC(drho_cmplx,(3,fft_size))
+   YAMBO_ALLOC(drho_cmplx,(fft_size,3))
    YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
    if (ORDER==1) then
      YAMBO_ALLOC(vdrho,(3,fft_size))
@@ -146,17 +150,17 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
      !
-     call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,"density")
+     call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,1,"density")
      !
      drho(:,is1,:)=real(drho_cmplx)
-     forall (i1=1:fft_size) drho(:,is1,i1) = drho(:,is1,i1)*fft_size/DL_vol*2._SP*pi/alat(:)
+     forall (i1=1:fft_size) drho(i1,is1,:) = drho(i1,is1,:)*fft_size/DL_vol*2._SP*pi/alat(:)
    end do
    !
    do i1 = 1,fft_size
      do is1 = 1,n_spin
        do is2 = is1,n_spin
          is = is2*(is1+1)/2
-         sigma(is,i1) = real(real_V_dot_V(3,drho(:,is1,i1),drho(:,is2,i1)),DP)
+         sigma(is,i1) = real(real_V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
        end do
      end do
    end do
@@ -206,7 +210,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
            do is2 = 1,n_spin
              is = max(is2*(is1+1)/2,is1*(is2+1)/2)
              forall(ic=1:3,i1=1:fft_size) vdrho(ic,i1) = vdrho(ic,i1) + &
- &                                        2._SP*real(vsigma(is,i1),SP)*drho(ic,is2,i1)
+ &                                        2._SP*real(vsigma(is,i1),SP)*drho(i1,is2,ic)
            end do
            call XC_eval_gga_potential(V_xc(:,is1),real(tmp_vxc(is1,:),SP),vdrho)
          end do

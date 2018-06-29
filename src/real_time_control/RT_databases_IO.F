@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -21,19 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_databases_IO( )
+subroutine RT_databases_IO(E)
  !
  use drivers,        ONLY:l_elph_scatt
- use electrons,      ONLY:n_spin
- use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,M_cache,JPC_RT_IO_t,&
+ use electrons,      ONLY:n_spin,levels
+ use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,&
 &                         GF_RT_IO_t,IO_JPSM_cache_steps,SAVE_G_history
  use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_J,OP_IF_START_WR_CL_IF_END
  use parallel_m,     ONLY:PP_redux_wait
- use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time
+ use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,NE_steps
  !
  implicit none
+ !
+ type(levels)      :: E
  !
  ! Work Space
  !
@@ -50,8 +52,10 @@ subroutine RT_databases_IO( )
      P_cache(2*i_c-1,i_time)= real(  RT_P(i_c)  )
      P_cache(2*i_c  ,i_time)=aimag(  RT_P(i_c)  )
      if(n_spin>1) then
-       M_cache(2*i_c-1,i_time)= real(RT_magn(i_c) )
-       M_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c) )
+       Ms_cache(2*i_c-1,i_time)= real(RT_magn(i_c,1) )
+       Ms_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,1) )
+       Ml_cache(2*i_c-1,i_time)= real(RT_magn(i_c,2) )
+       Ml_cache(2*i_c  ,i_time)=aimag(RT_magn(i_c,2) )
      endif
    enddo
  endif

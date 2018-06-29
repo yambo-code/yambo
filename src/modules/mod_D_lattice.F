@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,8 @@
 !
 module D_lattice
  !
- use pars,      ONLY:SP,lchlen
+ use pars,      ONLY:SP,lchlen,cONE,cZERO,cI
+ !
 #include<memory.h>
  !
  ! Non periodic directions
@@ -51,6 +52,13 @@ module D_lattice
  complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
+ !
+ ! Pauli matrices
+ !
+ complex(SP), dimension(2,2), parameter :: sigma_0=reshape((/ cONE , cZERO, cZERO, cONE /),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
  !
  ! Cell & atoms
  !

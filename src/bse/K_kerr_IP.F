@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -55,6 +55,7 @@ subroutine K_kerr_IP(iq,w)
  !
  n_SOC=1
  !
+ if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
  !
  B_Hall=cZERO
  !
@@ -81,6 +82,7 @@ subroutine K_kerr_IP(iq,w)
      !
      if (E_SOC_nbands==0) E_plus_W=E_plus_W0
      !
+     if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp_pol))
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp_pol)
@@ -99,7 +101,7 @@ subroutine K_kerr_IP(iq,w)
        endif
        !
        ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res
+       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res/           q_norm(1)**2
        if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res/E_plus_W(i_pert_SOC)**2
        !
      enddo
@@ -120,20 +122,15 @@ subroutine K_kerr_IP(iq,w)
  call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
+ B_Hall(1)=B_Hall(1)*Co_factor
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length'   ) then
-   B_Hall(1)=B_Hall(1)*Co_factor/q_norm(1)**2
-   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(1)**2
-   ! I add the term describing the Anomalous Hall effect which is
-   ! missing in the length gauge (this should be zero for systems with a gap)
-   if (l_anomalous_Hall) Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/w(:)
- endif
+ if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(1)**2
+ if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/  w(:)   **2
  !
- if(trim(global_gauge)=='velocity' ) then
-   B_Hall(1)=B_Hall(1)*Co_factor
-   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/w(:)**2
- endif
+ ! I add the term describing the Anomalous Hall effect which is
+ ! missing in the length gauge (this should be zero for systems with a gap)
+ if (l_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/w(:)
  !
  ! CLEAN
  !

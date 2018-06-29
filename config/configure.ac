@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -41,6 +41,7 @@ m4_include([config/acx_cpp.m4])
 m4_include([config/acx_fpp.m4])
 m4_include([config/ax_f90_module_flag.m4])
 m4_include([config/acx_get_fc_kind.m4])
+m4_include([config/acx_get_mpi_kind.m4])
 m4_include([config/acx_fortran_flags.m4])
 m4_include([config/acx_mpi.m4])
 # 
@@ -207,10 +208,16 @@ AC_COMPILE_IFELSE(AC_LANG_PROGRAM([],[       integer ierr]),
 [acx_f77_ok="no"; AC_MSG_RESULT(no);
 AC_MSG_ERROR(Fortran 77 compiler does not work. Impossible to continue.)])
 AC_LANG_POP(Fortran 77)
+# 
+# ============================================================================
+#  Scripts
+#
+m4_include([config/scripts.m4])
 #
 # ============================================================================
 # MPI
 m4_include([config/mpi.m4])
+m4_include([config/repos.list])
 # 
 # ============================================================================
 #  Libs
@@ -226,6 +233,9 @@ m4_include([config/scalapack.m4])
 m4_include([config/petsc_slepc.m4])
 #
 AC_LANG_PUSH(Fortran)
+# ============================================================================
+# YDB/YAMBOpy
+ACX_SCRIPTS
 # ============================================================================
 # BLAS/Lapack
 ACX_BLAS 
@@ -256,15 +266,21 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
-AC_CONFIG_FILES([config/setup config/Makefile config/report
+AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh
+                 sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])
 #
 AC_OUTPUT
 #
-# yambo folders
+# Folders
 #
 m4_include([config/yambo_folders.m4])
 #
 cat config/report
+#
+# Messages
+#
+if test "x$enable_ydb" = "xyes"; then
+ cat config/msg_ydb
+fi

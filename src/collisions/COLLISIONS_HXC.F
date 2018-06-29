@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2014 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -30,7 +30,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:error
+ use com,           ONLY:error,warning
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -41,9 +41,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,Io_and_Messaging_switch,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
@@ -78,9 +76,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='start')
-#endif
  !
  ! Reset
  !
@@ -105,6 +101,21 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  call k_expand(k)
+ !
+ if (l_compute_screening) then
+   !
+   ! Plasmon-Pole/Static interaction DB I/O
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
+   io_err=io_X(X,Xw,ID)
+   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
+   !
+   if (X%ng<QP_ng_Sc) then
+     QP_ng_Sc=X%ng
+     call warning('SEX size (CORRLvcs) reduced to match the Screening size (NGsBlkXs)')
+   endif 
+   !
+ endif
  !
  ! Dimensions
  !
@@ -168,14 +179,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  call elemental_collision_alloc(iscp_XC,NG=NG_XC,NG_GAMP=(/N_g_vecs_X,  1  /),TITLE=trim(H_potential))
  !
  if (l_compute_screening) then
-   !
-   ! Plasmon-Pole/Static interaction DB I/O
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_X(X,Xw,ID)
-   if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
-   !
-   if (X%ng<N_g_vecs_C) call error(' Screening size (NGsBlkXs) cannot be smaller than SEX size (CORRLvcs)')
    !
    ! Test the spatial Inversion
    !   
@@ -297,7 +300,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! CLEAN
  !
- if(l_compute_screening) then
+ if (l_compute_screening) then
    YAMBO_FREE(EM1s)
    call X_alloc('X')
    call elemental_collision_free(isc_H)
@@ -311,9 +314,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    YAMBO_FREE(magn)
  endif
  !
-#if defined _TIMING
  call timing(trim(H_potential)//' Collisions',OPR='stop')
-#endif
  !
  contains
    !
@@ -377,7 +378,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
              !$omp parallel do default(shared), private(ig1)
 #endif
              do ig1=2,N_g_vecs_H
-               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(sop_inv(i_p_s),ig1))
+               rhotw_tmp(ig1)=rhotw_tmp(ig1)+iscp_H%rhotw(g_rot(ig1,sop_inv(i_p_s)))
              enddo
 #if defined _OPENMP
              !$omp end parallel do

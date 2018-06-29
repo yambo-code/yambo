@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -85,7 +85,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
    YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
    !
-   if (index(BSS_mode,'h')/=0) then
+   if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
      YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
      PAR_IND_T_Haydock%element_1D=.FALSE.
    endif
@@ -172,7 +172,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
              PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
              !
-             if (index(BSS_mode,'h')/=0) PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+                PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
+             endif
              !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
@@ -185,6 +187,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
+             if (E_SOC_nbands/=0) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
              !
            enddo ! spin
          enddo ! symmetries
@@ -232,6 +235,17 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
      !
+     if(E_SOC_nbands/=0) then
+       if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
+       if(n_sp_pol==2) pert_range=reshape((/i_sp,1 /),(/1,2/))
+       iv_SOC(pert_range(:,2))=E_SOC_table(pert_range(:,1),iv,ikp)
+       ic_SOC(pert_range(:,2))=E_SOC_table(pert_range(:,1),ic,ik )
+       if(     all(iv_SOC/=0)) E_v_SOC(:)=Ken%E_SOC(iv_SOC(:),ikp)
+       if(     all(ic_SOC/=0)) E_c_SOC(:)=Ken%E_SOC(ic_SOC(:),ik )
+       if(.not.all(iv_SOC/=0)) E_v_SOC(:)=Ken%E(iv,ikp,i_sp)
+       if(.not.all(ic_SOC/=0)) E_c_SOC(:)=Ken%E(ic,ik ,i_sp)
+       E_eh_SOC_corr(:)=E_c_SOC(:)-E_v_SOC(:)-Eo_eh
+     endif
      !
      ! Occupations Factors
      !=====================

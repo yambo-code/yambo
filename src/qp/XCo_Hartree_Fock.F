@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,9 +37,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
@@ -104,9 +102,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  endif
  !
-#if defined _TIMING
  call timing('HF',OPR='start')
-#endif
  !
  ! allocation again
  !
@@ -209,15 +205,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  call elemental_collision_free(iscp) 
  YAMBO_FREE(local_rhotw)
  !
-#if defined _TIMING
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')
-#endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
-#if defined _TIMING
  call timing('HF(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -331,7 +331,7 @@ module LIVE_t
      ! Work Space
      !
      character(schlen)  :: xtch,etch
-     real(DP),parameter :: rts=5.
+     real(DP),parameter :: rts=5._DP
      real(DP) :: lts
      logical  :: time_report
      !

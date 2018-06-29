@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -27,9 +27,9 @@ subroutine K_diago_driver(iq,W)
  ! Hamiltonians.
  !
  use pars,           ONLY:SP
- use BS,             ONLY:BS_K_coupling,BS_H_dim
+ use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
-&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat
+&                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -38,11 +38,12 @@ subroutine K_diago_driver(iq,W)
  use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
- !
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:BSS_KERR_free
 #endif
+ !
  !
 #include<memory.h>
  !
@@ -77,11 +78,10 @@ subroutine K_diago_driver(iq,W)
  !
  ! I/O
  !
- integer              ::io_err,ID
+ integer                 :: io_err,ID
  !
-#if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
-#endif
+ BSS_n_eig = BS_H_dim
  !  
  ! Sectioning
  !============
@@ -103,7 +103,7 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel and/or BSS components loading
  !======================================
@@ -120,6 +120,17 @@ subroutine K_diago_driver(iq,W)
  call K_output_file(iq,"open Diago")
  !
  if (io_err<0) then
+   !
+#if defined _SCALAPACK
+   !
+   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
+   !
+   ! This line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+   ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
+   !=========================
+   !if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+   !
+#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
@@ -147,16 +158,42 @@ subroutine K_diago_driver(iq,W)
      !
      call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
+#if defined _KERR
+     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+#endif
+     !
      !
    else
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
      !
      !
+#if defined _KERR
+     if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+#endif
+     !
    endif
    !
  endif
  !
+ ! Define perturbative corrections
+ !=================================
+ if(E_SOC_nbands/=0) then
+   !
+   ! To check if the expression for the non hermitian case is correct
+   if (     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections,2/n_sp_pol,'SOC')
+   if (.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections,2/n_sp_pol,'SOC')
+   BS_E_SOC_corr=real(BS_corrections)
+   !
+ endif
+ !
+ if(BSS_perturbative_width) then
+   !
+   if(     K_is_not_hermitian) call K_diago_perturbative(transpose(BS_V_left)*BS_V_right,BS_corrections(1,:),1,'WID')
+   if(.not.K_is_not_hermitian) call K_diago_perturbative(    conjg(BS_mat)   *BS_mat    ,BS_corrections(1,:),1,'WID')
+   BS_E=BS_E-aimag(BS_corrections(1,:))
+   !
+ endif
  !
  ! Now I calculate epsilon
  !=========================
@@ -171,7 +208,7 @@ subroutine K_diago_driver(iq,W)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
    !
  endif
  !
@@ -180,9 +217,11 @@ subroutine K_diago_driver(iq,W)
  call local_free( )
  !
  !
-#if defined _TIMING
- call timing('Diagonalization Solver',OPR='stop')
+#if defined _KERR
+ call BSS_KERR_free( )
 #endif
+ !
+ call timing('Diagonalization Solver',OPR='stop')
  !
  contains
    !
@@ -200,6 +239,10 @@ subroutine K_diago_driver(iq,W)
        endif
        YAMBO_ALLOC(BS_R_left,(BS_H_dim))
        YAMBO_ALLOC(BS_R_right,(BS_H_dim))
+       !
+#if defined _KERR
+       YAMBO_ALLOC_P(BS_R_right_kerr,(BS_H_dim))
+#endif
        !
        !
      case("V")

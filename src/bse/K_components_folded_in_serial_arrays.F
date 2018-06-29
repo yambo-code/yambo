@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -35,10 +35,14 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
  use electrons,      ONLY:n_sp_pol,E_SOC_nbands
  use parallel_m,     ONLY:PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                         PAR_COM_Xk_ibz_INDEX
- use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,run_inversion,run_Haydock,&
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_E_SOC_corr,BSS_perturbative_width,run_inversion,run_Haydock,K_slk,&
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim,BS_blks_free
- use SLK_m,          ONLY:BLACS_structure_in_use 
+ !
+#if defined _KERR
+ use drivers,        ONLY:l_kerr
+ use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
+#endif
  !
  !
 #include <memory.h>
@@ -61,6 +65,10 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
    !============
    ! 
    call BSS_alloc( )
+   !
+#if defined _KERR
+   call BSS_KERR_alloc( )
+#endif
    !
    !
    ! FILLING BSS_eh_* and BSS_dipoles
@@ -90,6 +98,15 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
        BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
        if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
        !
+       if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
+       !
+#if defined _KERR
+       if (l_kerr) then
+         BSS_dipoles_kerr(H_pos(1))=BS_T_grp(i_g)%dipoles_R_kerr(i_c)
+         if (BS_K_coupling) BSS_dipoles_kerr(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A_kerr(i_c)
+       endif
+#endif
+       !
        !
      enddo
    enddo
@@ -117,6 +134,14 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
    call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_eh_INDEX%COMM)
    !
+#if defined _KERR
+   call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
+#endif
+   if (E_SOC_nbands/=0) then
+     call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
+   endif
    !
  endif
  !
@@ -124,8 +149,8 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
  ! BS_mat SECTION
  !================
  !
- if (allocated(BS_mat)) return
- if (BLACS_structure_in_use) return
+ if (allocated(BS_mat)                ) return
+ if (what=="INV".and.K_slk%kind=="SLK") return
  !
  YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
  BS_mat    = cZERO

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,7 @@ subroutine eval_minus_G()
  !
  if (inv_index>0) then
    do ig=1,ng_closed
-     minus_G(ig)=g_rot(inv_index,ig)
+     minus_G(ig)=g_rot(ig,inv_index)
    enddo
  else
    minus_G(1)=1

@@ -1,0 +1,56 @@
+#
+# Main doc
+#
+http://aiida-core.readthedocs.io/en/stable/user_guide/index.html
+#
+# Aiida & Yambo plugin
+#
+git clone https://bitbucket.org/aiida_team/aiida_core.git aiida  #Public repository  of aiida_core (MIT license)
+cd aiida
+git checkout develop   #Most recent develop branch
+cd aiida/aiida/orm/calculation/job # Input plugin folder
+git clone https://username@bitbucket.org/prandini/yambo_input.git yambo #The folder HAS to be called yambo
+cd yambo
+#
+#Now you do the same for the parser plugin
+#
+cd aiida/aiida/parsers/plugins # Parser plugin folder
+git clone https://username@bitbucket.org/prandini/yambo_parser.git yambo #The folder HAS to be called yambo
+cd yambo
+#
+# Database
+#
+sudo apt-get install postgresql-(latest)
+sudo apt-get install postgresql-server-dev-(latest)
+sudo apt-get install postgresql-client-(latest)
+aptitude install ipyhton 
+aptitude install pyhton-pip
+su - postgres
+psql template1
+CREATE USER aiida WITH PASSWORD 'the_aiida_password'
+CREATE DATABASE aiidadb OWNER aiida
+GRANT ALL PRIVILEGES ON DATABASE aiidadb to aiida
+\q
+exit
+#
+sudo pip install -U pip
+cd  /home/marini/Yambo/sources/git # or the folder where you downloaded AiiDA
+pip install --user -U -r requirements.txt # I had to run it also as root
+pip install --user psycopg2==2.6
+#
+# PATHS
+#
+(tcsh)
+set path=($path  /home/marini/Yambo/sources/git/aiida/bin )
+set path=($path  /home/marini/.local/bin)
+setenv PYTHONPATH /home/marini/Yambo/sources/git/aiida/
+#
+# Computer setup
+#
+ssh-keygen -t rsa
+ssh-copy-id YOURUSERNAME@YOURCLUSTERADDRESS
+verdi install
+verdi daemon configureuser
+verdi daemon start
+verdi computer setup
+

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,6 +24,7 @@
 integer function io_HF_and_locXC(ID)
  !
  use pars,           ONLY:schlen
+ use drivers,        ONLY:l_col_cut
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
@@ -31,9 +32,7 @@ integer function io_HF_and_locXC(ID)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
 &                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
 &                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  integer :: ID
  !
@@ -49,9 +48,7 @@ integer function io_HF_and_locXC(ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_HF',OPR='start')
-#endif
  !
  io_HF_and_locXC=io_connect(desc="HF_and_locXC",type=2,ID=ID,no_full_RESET=.TRUE.)
  if (io_HF_and_locXC/=0) then
@@ -64,7 +61,7 @@ integer function io_HF_and_locXC(ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,&
-&                               XC_KIND="G_WF force",CUTOFF=.true.,FRAG=frag_HF)
+&                               XC_KIND="G_WF force",CUTOFF=l_col_cut,FRAG=frag_HF)
    !
    if (io_HF_and_locXC/=0) goto 1
    !
@@ -159,8 +156,6 @@ integer function io_HF_and_locXC(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  if (io_HF) call timing('io_HF',OPR='stop')
-#endif
  !
 end function

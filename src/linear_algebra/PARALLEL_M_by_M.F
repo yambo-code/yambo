@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AF
+! Authors (see AUTHORS file for details): AF, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,49 +21,38 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_M_by_M(ORTHO,POOL,A_slk,B_slk,C_slk,transa,transb,m,n,k,C)
+subroutine PARALLEL_M_by_M(A,B,C,transa,transb,m,n,k)
  !
  !  Perform the parallel matrix multiplication
  !
- !          C = A B 
+ !          A x B = C
  !
  !  where A(m,k), B(k,n), C(m,n)
  !
- use pars,           ONLY:SP,cONE,cZERO
- use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_matrix
- !
-#if defined _TIMING
+ use pars,           ONLY:cONE,cZERO
+ use SLK_m,          ONLY:SLK_ORTHO
+ use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
-#endif
  implicit none
  !
  integer           :: n,m,k
- type(POOL_group)  :: POOL
- type(ORTHO_group) :: ORTHO
- type(SLK_matrix)  :: A_slk, B_slk, C_slk
+ type(PAR_matrix)  :: A, B, C
  character         :: transa,transb
- complex(SP)       :: C(n,m)
  !
  character(64) :: subname="PARALLEL_M_by_M"
  !
- C=0.0_SP
+ if (SLK_ORTHO%coordinate(1)==-1) return
  !
- if (ORTHO%coordinate(1)==-1) return
- !
-#if defined _TIMING
  call timing('PARALLEL_M_by_M',OPR='start')
-#endif
  !
 #if defined _DOUBLE
- CALL PZGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PZGEMM&
 #else
- CALL PCGEMM( transa, transb, m, n, k, cONE, A_slk%blc, 1, 1, A_slk%desc, &
-              B_slk%blc, 1, 1, B_slk%desc, cZERO, C_slk%blc, 1, 1, C_slk%desc)
+ CALL PCGEMM&
 #endif
+& ( transa, transb, m, n, k, cONE, A%blc(:,:,A%I), 1, 1, A%desc, &
+    B%blc(:,:,B%I), 1, 1, B%desc, cZERO, C%blc(:,:,C%I), 1, 1, C%desc)
  !
-#if defined _TIMING
  call timing('PARALLEL_M_by_M',OPR='stop')
-#endif
  !
 end subroutine

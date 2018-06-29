@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,11 +25,15 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  use com,           ONLY:secnm
  use parallel_m,    ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
-&                        PAR_EH_range,PAR_X_ib,PAR_X_iq
+&                        PAR_EH_range,PAR_X_ib,PAR_X_iq,PAR_n_freqs,PAR_n_G_vectors
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k
+ use X_m,           ONLY:X_ng
 #if defined _ELPH
  use ELPH,          ONLY:elph_nDBs_used,QP_PH_n_G_bands,elph_use_q_grid
+#endif
+#if defined _NL
+ use nl_optics,     ONLY:n_frequencies,NL_bands,eval_OVERLAPS
 #endif
 #if defined _RT
  use real_time,     ONLY:RT_bands
@@ -59,6 +63,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="Response_T_space"                ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="Real_Time"                       ) PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="Non_Linear"                      ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="Response_G_space"                ) PAR_K_range=Xk%nbz
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_K_range=Xk%nbz
  !
@@ -75,6 +80,12 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  if (ENVIRONMENT=="Response_G_space"                ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
  if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),E%nbm/)
+ !
+ ! # G vectors 
+ !-------------
+ if (ENVIRONMENT=="Response_G_space_Zero_Momentum"  ) PAR_n_G_vectors= X_ng
+ if (ENVIRONMENT=="Response_G_space"                ) PAR_n_G_vectors= X_ng
+ if (ENVIRONMENT=="Response_G_space_Finite_Momentum") PAR_n_G_vectors= X_ng
  !
  ! Q-pts
  !-------
@@ -119,9 +130,19 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
    PAR_QP_range=QP_n_states
  endif
 #endif
+#if defined _NL
+ if (ENVIRONMENT=="Non_Linear") then 
+   if(     eval_OVERLAPS) PAR_n_bands=(/    1,      NL_bands(2)/)
+   if(.not.eval_OVERLAPS) PAR_n_bands=(/NL_bands(1),NL_bands(2)/)
+ endif
+#endif
  !
  ! QP states
  !-----------
  if (ENVIRONMENT=="Self_Energy"                     ) PAR_QP_range=QP_n_states
+ !
+#if defined _NL
+ if (ENVIRONMENT=="Non_Linear"                      ) PAR_n_freqs =n_frequencies
+#endif
  !
 end subroutine PARALLEL_global_dimensions

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -40,7 +40,7 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
+ use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk

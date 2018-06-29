@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ module X_m
  !
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
+ use matrix,         ONLY:PAR_matrix
  !
 #include <memory.h>
  !
@@ -52,10 +53,16 @@ module X_m
  !
  logical                  :: Vnl_commutator_warning
  !
+ ! Double Grid
+ !
  ! Logical used to decid how to use the double grid in X_os
  ! and in particular in X_GreenF_analytical, when the DbGd is used
  !
- logical                  :: X_is_integrated
+ integer              :: X_DbGd_nkpts
+ logical              :: use_X_DbGd
+ real(SP)             :: X_DbGd_percentual=0.5
+ integer ,allocatable :: X_DbGd_nkpt_at_q(:)
+ integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !
  ! Dipole M.E.
  !
@@ -72,7 +79,9 @@ module X_m
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  ! Absorption & Polarizability
@@ -94,13 +103,10 @@ module X_m
  real(SP),    allocatable :: X_Ein_poles(:)
  integer ,    allocatable :: X_poles_tab(:,:)
  integer ,    allocatable :: X_RLcomp_ig(:)
- complex(SP), allocatable :: X_mat(:,:,:)
+ integer :: X_ng = 0
  integer :: current_iq
- integer :: iw_ref
- integer :: X_DbGd_nkpts
  logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
- logical :: use_X_DbGd
  real(SP):: X_terminator_E
  real(SP):: X_term_E
  logical :: l_X_terminator=.false.
@@ -116,6 +122,15 @@ module X_m
  !
  integer          :: n_X_descs
  character(lchlen):: X_description(100)
+ !
+ ! PARALLEL distribution
+ !
+ type(PAR_matrix), allocatable :: X_par(:)
+ type(PAR_matrix)              :: X_par_lower_triangle
+ logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
+ integer                       :: X_rows(2) = 0
+ integer                       :: X_cols(2) = 0
+ complex(SP)     , allocatable :: X_mat(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -152,7 +167,7 @@ module X_m
    !
    subroutine X_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol
+     use electrons, ONLY:n_sp_pol,n_spinor
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
@@ -176,10 +191,18 @@ module X_m
          if (allocated(DIP_S)) return
          YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
          DIP_S=cZERO
+       case('DIP_orbital')
+         if (allocated(DIP_orbital)) return
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
+         DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
          YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_spin=cZERO
+       case('DIP_P_spinor')
+         if (allocated(DIP_P_spinor).or.n_spinor==1) return
+         YAMBO_ALLOC(DIP_P_spinor,(d(1),n_spinor,n_spinor,d(2):d(3),d(4):d(5),d(6)))
+         DIP_P_spinor=cZERO
        case('DIP_projected')
          if (allocated(DIP_projected)) return
          YAMBO_ALLOC(DIP_projected,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
@@ -210,9 +233,15 @@ module X_m
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          YAMBO_FREE(DIP_S)
+       case('DIP_orbital')
+         if (.not.allocated(DIP_orbital)) return
+         YAMBO_FREE(DIP_orbital)
        case('DIP_spin')
          if (.not.allocated(DIP_spin)) return
          YAMBO_FREE(DIP_spin)
+       case('DIP_P_spinor')
+         if (.not.allocated(DIP_P_spinor)) return
+         YAMBO_FREE(DIP_P_spinor)
        case('DIP_projected')
          if (.not.allocated(DIP_projected)) return
          YAMBO_FREE(DIP_projected)

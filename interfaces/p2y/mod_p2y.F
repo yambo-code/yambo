@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -433,7 +433,7 @@ contains
  !
  subroutine get_symmetries
    use pars
-   use mod_com2y,  ONLY : symmetries_check_and_load
+   use mod_com2y,  ONLY : symmetries_check_and_load,force_noWFs
    use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
    use D_lattice,  ONLY : a
@@ -441,6 +441,7 @@ contains
 
    real(DP) :: trasl_(3,48)
    real     :: rmat1(3,3),rmat2(3,3)
+   logical  :: warn=.FALSE.
 
    trasl_=0._SP
 
@@ -474,7 +475,10 @@ contains
    !
    do i1=1,nsym_
      if (.not.v_is_zero(real(trasl_(:,i1),SP)) ) then 
-       call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
+       warn=.TRUE.
+       if (.not.force_noWFs) then
+         call error(' Non-symmorphic symmetry operations are not supported! Use force_symmorphic=.true. in PWSCF')
+       endif
      endif
    enddo
    !
@@ -483,6 +487,8 @@ contains
      isym_(:,:,i1) = transpose(isym_(:,:,i1))
    enddo
    call symmetries_check_and_load(isym_(:,:,1:nsym_),nsym_,trevsym=trevsym_, t_rev=t_rev_)
+   !
+   if (warn) call warning(' Non-symmorphic symmetry operations are not supported!')
    !
  end subroutine get_symmetries
  !

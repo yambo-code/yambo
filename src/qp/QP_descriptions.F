@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
 &                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:BZ_DbGd_tot_nk_levels
  use IO_m,          ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
@@ -135,8 +135,8 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      if (use_X_DbGd) qp%description(qp%n_descs)=' X BZ energy Double Grid: yes'
      qp%n_descs=qp%n_descs+1
      write (qp%description(qp%n_descs),trim(&
-&          string_pack('(a,',gen_fmt( (/BZ_DbGd_tot_nkpts/) ),')'))) &
-&          ' X BZ Double Grid points:',BZ_DbGd_tot_nkpts
+&          string_pack('(a,',gen_fmt( (/BZ_DbGd_tot_nk_levels/) ),')'))) &
+&          ' X BZ Double Grid points:',BZ_DbGd_tot_nk_levels
    endif
  endif
  !

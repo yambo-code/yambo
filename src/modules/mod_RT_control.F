@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -59,13 +59,14 @@ module RT_control
  !
  real(SP), allocatable    :: J_cache(:,:)
  real(SP), allocatable    :: P_cache(:,:)
- real(SP), allocatable    :: M_cache(:,:)
+ real(SP), allocatable    :: Ms_cache(:,:)
+ real(SP), allocatable    :: Ml_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
  logical                 :: NEQ_Kernel
  logical                 :: NEQ_Residuals
- !
+ ! 
  interface
    !
    subroutine RT_output(what,VALUEs,TIME,E)
@@ -119,8 +120,10 @@ module RT_control
        YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
        P_cache=rZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(M_cache,(6,IO_JPSM_cache_steps))
-         M_cache=rZERO
+         YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
+         Ms_cache=rZERO
+         YAMBO_ALLOC(Ml_cache,(6,IO_JPSM_cache_steps))
+         Ml_cache=rZERO
        endif
        !
      endif
@@ -141,7 +144,8 @@ module RT_control
      !
      YAMBO_FREE(J_cache)
      YAMBO_FREE(P_cache)
-     YAMBO_FREE(M_cache)
+     YAMBO_FREE(Ms_cache)
+     YAMBO_FREE(Ml_cache)
      YAMBO_FREE(JPC_RT_IO_t%Time)
      YAMBO_FREE(GF_RT_IO_t%Time)
      !

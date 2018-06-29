@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,6 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  integer             ::i1,FXC_n_g_db,w_group
  character (schlen)  ::db_name,ch
  character (lchlen)  ::local_description(100)
- complex(SP),allocatable ::FXC_disk(:,:)
  type(X_t)           ::X_dummy
  !
  w_group=1
@@ -160,28 +159,10 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
  if (maxval(io_sec(ID,:))==2) goto 1
  !
- if (write_is_on(ID)) FXC_n_g_db=FXC_n_g_corr
- !
- call io_bulk(ID,VAR='FXC_RL_SIZE',VAR_SZ=(/1/))
- call io_bulk(ID,I0=FXC_n_g_db)
- !
- YAMBO_ALLOC(FXC_disk,(FXC_n_g_db,FXC_n_g_db))
- !
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !
- call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,FXC_n_g_db,FXC_n_g_db,FXC_n_mem_freqs/))
- !
- do i1=1,FXC_n_mem_freqs
-   !
-   if (write_is_on(ID)) FXC_disk=FXC(:,:,i1)
-   !
-   call io_bulk(ID,C2=FXC_disk,IPOS=(/1,1,1,i1/))
-   !
-   if (read_is_on(ID)) FXC(:,:,i1)=FXC_disk(:FXC_n_g_corr,:FXC_n_g_corr)
-   !
- enddo
- !
- YAMBO_FREE(FXC_disk)
+ call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs/))
+ call io_bulk(ID,C3=FXC)
  !
 1 call io_disconnect(ID)
  !

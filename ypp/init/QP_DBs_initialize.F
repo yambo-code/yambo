@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -115,7 +115,7 @@ subroutine QP_DBs_initialize()
    if  ( infile_editing ) then
      !
      nflines=nflines+1
-     write (flines(nflines),'(a,t30,a)') '%Actions_and_names',&
+     write (flines(nflines),'(a,t32,a)') '%Actions_and_names',&
 &                           '# [QPDB] Format is "what"|"OP"|"prefactor"|"DB"|. OP can be +/-/x(ony for Z). '
      !
      if (n_QP_dbs==0) then

@@ -1,4 +1,4 @@
 #if defined _YPP_ELPH
 ELPH_objs = ELPH_format_converter.o
 #endif
-objs = WANNIER_driver.o bxsf_read.o WF_format_converter.o $(ELPH_objs)
+objs = WANNIER_driver.o bxsf_read.o WF_map_perturbative_SOC.o WF_format_converter.o $(ELPH_objs)

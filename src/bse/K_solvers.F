@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,12 +30,18 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use X_m,            ONLY:X_t,Epsilon_ii,Joint_DOS,X_drude_term
  use BS_solvers,     ONLY:BSS_mode,BSS_n_descs,BSS_eval_JDOS,BSS_free,BS_mat,&
 &                         run_Haydock,run_inversion,run_Diago
+#if defined _SLEPC
+ use BS_solvers,     ONLY:run_Slepc
+#endif
  use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,BS_blks_free
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
  !
- !
+#if defined _KERR
+ use X_m,            ONLY:Epsilon_ij
+ use KERR,           ONLY:BSS_KERR_free
+#endif
  !
 #include<memory.h>
  type(levels) ::Ken
@@ -46,7 +52,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- logical      ::stop_Haydock
+ logical           ::stop_Haydock
  !
  ! Check first if the BS database has been calculated/loaded in K.F
  !
@@ -60,6 +66,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  run_Diago     = index(BSS_mode,'d')/=0
  run_Haydock   = index(BSS_mode,'h')/=0
  run_inversion = index(BSS_mode,'i')/=0
+#if defined _SLEPC
+ run_Slepc     = index(BSS_mode,'s')/=0
+#endif
  !
  !
  ! I/O. All read. Only master writes.
@@ -80,6 +89,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    call K_diago_driver(iq,W_bss)
    !
  endif
+ !
+#if defined _SLEPC
+ if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+#endif
  !
  ! No JDOS in Inversion/Hadydock
  !
@@ -123,6 +136,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  YAMBO_FREE(X_drude_term)
  YAMBO_FREE(Epsilon_ii)
  !
+#if defined _KERR
+ YAMBO_FREE(Epsilon_ij)
+ call BSS_KERR_free( )
+#endif
  !
  call BS_blks_free( )
  !

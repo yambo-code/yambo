@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -67,6 +67,7 @@ fi
 if test "$mpibuild" = "yes"; then
   #
   def_mpi="-D_MPI"
+  ACX_GET_MPI_KIND()
   #
 else
   #
@@ -160,7 +161,6 @@ if test "$mpibuild" = "yes"; then
       if ! test -e "$MPI_INC_DIR"; then continue; fi
       AC_CHECK_FILE($MPI_INC_DIR/mpif.h,[mpif_found_tmp="yes"],[mpif_found_tmp="no"])
       if test "$mpif_found_tmp" = "yes" ; then
-        AC_MSG_CHECKING([mpif.h was found in folder $MPI_INC_DIR]);
         mpif_found="$mpif_found_tmp" ;
         MPI_INCS="${MPI_INCS}${IFLAG}${MPI_INC_DIR} "
         break;

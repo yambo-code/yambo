@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -46,6 +46,9 @@ subroutine QP_DBs_create_and_modify(en,k)
  logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
+ call section("=",'QP databases creation')
+ !========================================
+ !
  call QP_reset(qp)
  !
  YAMBO_FREE(QP_state)
@@ -78,16 +81,19 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ic=1
  do i1=1,k_rng_lines
+   !
    ikrange(1:2)=int(QP_r_corrections(i1,1:2))
    ibrange(1:2)=int(QP_r_corrections(i1,3:4))
+   !
+   if (QP_r_corrections(i1,7)<epsilon(1._SP)) QP_r_corrections(i1,7)=1.
    !
    if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
    !
    do is=1,n_sp_pol
      do ik=ikrange(1),ikrange(2)
        do ib=ibrange(1),ibrange(2)
-         qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_r_corrections(i1,6)/HA2EV,kind=SP)
          qp%E_bare(ic) =en%E(ib,ik,is)
+         qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_r_corrections(i1,6)/HA2EV,kind=SP)
          qp%Z(ic)      =cmplx(QP_r_corrections(i1,7),0.,kind=SP)
          qp%table(ic,1)=ib
          qp%table(ic,2)=ib

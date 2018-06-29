@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,6 +28,7 @@ module IO_m
  use parallel_m, ONLY:myid
  use com,        ONLY:error
  use netcdf
+ !
  implicit none
  !
  ! World known variables
@@ -110,6 +111,7 @@ module IO_m
  integer :: io_com(max_io_units)
  integer :: io_mode(max_io_units)
  integer :: io_status(max_io_units)
+ integer :: io_type(max_io_units)
  integer :: io_sec(max_io_units,max_active_sections)
  integer :: io_rec_pos(max_io_units)
  integer :: io_unit(max_io_units)
@@ -128,7 +130,6 @@ module IO_m
                                                               ! It differs from io_extension as it does not contain any
                                                               ! i_fragment/j_fragment.
  character(schlen)          :: io_extension(max_io_units)
- integer                    :: io_type(max_io_units)
  !
  ! Save variables (to try different DB locations at the same time)
  !
@@ -161,7 +162,7 @@ module IO_m
    !
    subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                       &             R0,R1,R2,R3,R4,R5,&
-                      &             C0,C1,C2,C3,C4,   &
+                      &             C0,C1,C2,C3,C4,C5,&
                       &             L0,L1,L2,L3,L4,   &
                       &                            IPOS)
      !
@@ -171,7 +172,7 @@ module IO_m
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine
@@ -223,18 +224,18 @@ module IO_m
    logical function read_is_on(ID)
      !
      integer :: ID
-     read_is_on=any((/io_action(ID)==OP_RD_CL,io_action(ID)==OP_RD,&
-&                     io_action(ID)==RD_CL,   io_action(ID)==RD,&
-&                     io_action(ID)==RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
+     read_is_on=any((/io_action(ID)==OP_RD_CL,       io_action(ID)==OP_RD,&
+&                     io_action(ID)==   RD_CL,       io_action(ID)==   RD,&
+&                     io_action(ID)==   RD_CL_IF_END,io_action(ID)==OP_IF_START_RD_CL_IF_END/))
    end function
    !
    logical function write_is_on(ID)
      !
      integer :: ID
-     write_is_on=any((/io_action(ID)==OP_WR_CL,io_action(ID)==OP_APP_WR_CL,&
-&                      io_action(ID)==WR      ,io_action(ID)==OP_APP,&
-&                      io_action(ID)==OP_WR   ,io_action(ID)==WR_CL,&
-&                      io_action(ID)==WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
+     write_is_on=any((/io_action(ID)==OP_WR_CL       ,io_action(ID)==OP_APP_WR_CL,&
+&                      io_action(ID)==   WR          ,io_action(ID)==OP_APP      ,&
+&                      io_action(ID)==OP_WR          ,io_action(ID)==       WR_CL,&
+&                      io_action(ID)==   WR_CL_IF_END,io_action(ID)==OP_IF_START_WR_CL_IF_END/))
    end function
    ! 
    logical function DB_is_OK(ID)
@@ -407,17 +408,14 @@ module IO_m
      logical, optional :: FORCE
      logical           :: I_OPEN
      !
+     logical :: FORCE_
+     !
      I_OPEN=.FALSE.
      !
-     if (present(FORCE)) then
-       !
-       if (.not.FORCE.and..not.close_is_on(ID).and.io_status(ID)>=0) return
-       !
-     else
-       !
-       if (.not.close_is_on(ID).and.io_status(ID)>=0) return
-       !
-     endif
+     FORCE_=.FALSE.
+     if (present(FORCE)) FORCE_=FORCE
+     !
+     if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
      !
      if (io_type(ID)==-2) then
        I_OPEN=PLAIN_file_is_open(IO_file(ID))
@@ -476,19 +474,15 @@ module IO_m
      integer :: start_,end_
      !
      if (read_is_on(ID)) then
-       if (io_action(ID)==RD_CL_IF_END.and.start_==end_) io_action(ID)=RD_CL
-     else  if (write_is_on(ID)) then
-       if (io_action(ID)==WR_CL_IF_END.and.start_==end_) io_action(ID)=WR_CL
-     endif
-     !
-     if (read_is_on(ID)) then
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_RD_CL
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_RD
        if (io_action(ID)==OP_IF_START_RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
+       if (io_action(ID)==            RD_CL_IF_END.and.              start_==end_) io_action(ID)=   RD_CL
      else  if (write_is_on(ID)) then
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1.and.start_==end_) io_action(ID)=OP_WR_CL
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.start_==1                 ) io_action(ID)=OP_WR
        if (io_action(ID)==OP_IF_START_WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
+       if (io_action(ID)==            WR_CL_IF_END.and.              start_==end_) io_action(ID)=   WR_CL
      endif
      !
    end subroutine
@@ -622,7 +616,7 @@ module IO_m
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=nf90_noerr) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
+     if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
    logical function variable_exist(ID,var_name,var_ID)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -29,15 +29,21 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! j(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) p \psi_j(k) - e^2/(cm) n(r) A(r,t)
  ! p(r,t) = -\sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
+ ! 2017/06/23 DS WARNING
+ !  Running TD-IP simulations this subroutine becomes one of the most time
+ !  consuming one because the dipoles are defined in the IBZ and are expanded at
+ !  each time step. When devel-dipoles will be finally merged inside the master
+ !  this will be avoided by expanding the dipoles once for all
+ !
  use pars,           ONLY:SP,cI
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
- use electrons,      ONLY:nel,levels,n_spin
+ use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk
+&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,global_gauge
+ use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
@@ -51,6 +57,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! Work Space
  !
  !complex(SP)   :: RT_P_tmp(3)
+ complex(SP)   :: RT_M_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !

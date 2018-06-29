@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,10 +34,7 @@ integer function io_KB_pwscf(ID)
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer,intent(in) :: ID
@@ -46,9 +43,7 @@ integer function io_KB_pwscf(ID)
  !
  integer :: ifrag,ik,i_sp_pol
  !
-#if defined _TIMING
  call timing('io_KB_pwscf',OPR='start')
-#endif
  !
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then
@@ -137,8 +132,6 @@ integer function io_KB_pwscf(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_KB_pwscf',OPR='stop')
-#endif
  !
 end function io_KB_pwscf

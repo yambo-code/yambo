@@ -1,8 +1,11 @@
 FFT_more =
-#if defined _YPP_RT
+#if defined _YPP_RT || defined _YPP_NL
 FFT_more = fft_1d.o
 #endif
 #if defined _YPP_RT && !defined _FFTW
+FFT_more = fft_1d.o fft_singleton.o
+#endif
+#if defined _YPP_NL && !defined _FFTW
 FFT_more = fft_1d.o fft_singleton.o
 #endif
 FFT_object = fft_3d_qe.o fft_desc_init.o
@@ -12,8 +15,8 @@ FFT_object = fft_3d_fftw.o
 #if defined _FFTSG
 FFT_object = fft_3d_sg.o sgfft.o 
 #endif
-objs = fft_setup.o $(FFT_object) $(FFT_more)  \
-       fft_check_size.o WF_free.o WF_alloc.o  \
+objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) \
+       fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint.o  \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_inversion.o \
        WF_load.o WF_symm.o WF_apply_symm.o \
        eval_R_minus_R.o scatter_Modscr.o load_cc.o

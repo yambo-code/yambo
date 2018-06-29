@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -144,9 +144,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !
  use interfaces,    ONLY:PARALLEL_live_message
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC,l_par_NL
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
+ use interfaces,    ONLY:PARALLEL_check_phase_space
+ !
 #include<memory.h>
  !
  type(bz_samp)          :: k
@@ -181,6 +183,10 @@ subroutine PARALLEL_collisions( k, COLL )
      if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
    endif
    !
+   if (l_par_NL) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
+   endif
+   !
    ! l_par_SE is for LAMB
    if (l_par_SE.or.l_par_SC) then
      if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
@@ -192,7 +198,7 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    PAR_IND_G_k%element_1D(i_k)=.TRUE.
    !
-   if (.not.l_par_SE) then
+   if ( (.not.l_par_SE) .and. (.not.l_PAR_NL) ) then
      !
      do i_q=1,nqbz
        !
@@ -210,5 +216,7 @@ subroutine PARALLEL_collisions( k, COLL )
  enddo
  !
  call PARALLEL_live_message(trim(COLL%name)//" Number of Collisions",LOADED=COLL%PAR_N,TOTAL=NC_tot)
+ !
+ call PARALLEL_check_phase_space(COLL%PAR_N,MSG=trim(COLL%name)//" COLLISIONS")
  !
 end subroutine

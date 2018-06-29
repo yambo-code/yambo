@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -50,7 +50,7 @@ subroutine INIT_q_points(io_QINDX_err,l_WRITE)
  !
  if (l_WRITE.and. (infile_verbosity==V_kpt.or.infile_verbosity==V_all)) then
    nflines_save=nflines
-   write (flines(nflines+1),'(a,t30,a)') '% QptCoord',&
+   write (flines(nflines+1),'(a,t32,a)') '% QptCoord',&
 &        '# [KPT] [iku] Q-points coordinates (compatibility)'
    nflines=nflines+1
    if (nqibz>0) then

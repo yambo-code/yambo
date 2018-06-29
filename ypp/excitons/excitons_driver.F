@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -32,7 +32,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat
+ use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr
 #if defined _YPP_ELPH
@@ -130,15 +130,16 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
+
  !
  ! Sort energies and write to output
  !===================================
@@ -150,7 +151,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 &    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
 &               ' Re-run yambo using the WRbsWF flag in the input file.')
    !
-   YAMBO_ALLOC(BS_E_degs,(BS_H_dim))
+   YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
    !
    ! Sort energies to find degenerate states
    !========================================
@@ -159,10 +160,10 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    ! Loading tables and eigenvectors
    !
    YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
-   YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
+   YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table

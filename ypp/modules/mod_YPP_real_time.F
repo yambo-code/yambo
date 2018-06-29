@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -37,6 +37,7 @@ module YPP_real_time
  logical  :: l_RTpump_energy
  logical  :: l_RTpump_kspace
  logical  :: l_RTpump_manual
+ logical  :: l_RTpump_Fermi
  !
  ! RT Post-processing (what)
  !
@@ -44,6 +45,7 @@ module YPP_real_time
  logical  :: l_RT_lifetimes
  logical  :: l_RT_density
  logical  :: l_RT_X
+ logical  :: l_NL_X
  logical  :: l_RT_abs
  !
  ! RT post-processing (kind)
@@ -71,6 +73,12 @@ module YPP_real_time
  real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
  integer     :: n_regions
  !
+ ! Fermi function pump
+ !
+ real(SP) :: Eh_mu(2)            ! chemical potential for holes, electrons
+ real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
+ real(SP) :: h_mu_autotune_thr   ! threshold for matching number of pumped holes / electrons
+ !
  ! (RT) optics
  !
  logical  :: Use_FFT
@@ -89,6 +97,8 @@ module YPP_real_time
  !
  complex(DP),    allocatable :: RT_J_t(:,:)
  complex(DP),    allocatable :: RT_P_t(:,:)
+ !
+ character(3) :: RT_p_format   
  !
  ! (RT) carriers
  !

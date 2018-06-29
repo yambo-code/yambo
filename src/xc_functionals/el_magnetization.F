@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -36,11 +36,12 @@ subroutine el_magnetization(en,Xk,magn)
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
- use electrons,      ONLY:Total_magn
+ use electrons,      ONLY:Spin_magn
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
 #if defined _RT
  use drivers,       ONLY:l_real_time
+ use timing_m,       ONLY:timing
 #endif
  !
  implicit none
@@ -54,10 +55,14 @@ subroutine el_magnetization(en,Xk,magn)
  integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
+#if defined _RT
+ call timing('el_magnetization',OPR='start')
+#endif
+ !
  magn=0._SP
  cv=0._SP
  !
- Total_magn=0._SP
+ Spin_magn=0._SP
  !
  if (n_spin==1) return
  !
@@ -136,7 +141,11 @@ subroutine el_magnetization(en,Xk,magn)
  enddo
  !
  do ifft=1,fft_size
-   Total_magn(:)=Total_magn(:)+magn(ifft,:)
+   Spin_magn(:)=Spin_magn(:)+magn(ifft,:)
  enddo
+ !
+#if defined _RT
+ call timing('el_magnetization',OPR='stop')
+#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine INIT_barriers()
  !
  use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,&
-&                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft
+&                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft,l_nl_optics
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform

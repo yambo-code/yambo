@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr,l_nl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -42,14 +42,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
+ use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use frequency,     ONLY:w_samp
 #if defined _MEM_CHECK 
  use memory,        ONLY:MEM_manager
 #endif
-#if defined _TIMING
- use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
-#endif
- use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use frequency,     ONLY:w_samp
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -273,14 +271,17 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
  endif
  !
+#if defined _NL
+ if (     l_nl_optics) call NL_driver(en,X(:2),k,q)
+#endif
  !
-#if defined _TIMING
+ !
+
  !
  ! Timing Overview
  !=================
  call section('*','Timing Overview')
  call timing_overview(LIST=global_list,MAIN_NAME="yambo")
-#endif
  !
  ! Memory Overview
  !=================
@@ -301,9 +302,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
  ! Finalize
-#if defined _TIMING
  call timing_deallocate( )
-#endif
  call it_reset(-1)
  !
 end function

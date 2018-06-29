@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,18 +26,19 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
- use com,           ONLY:warning
- use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,COMM_copy,PAR_INDEX_copy,&
-&                        PAR_Q_range,PAR_build_index
+ use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
+ ! SLK
+ use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,PAR_build_index
+ !
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A, &
 &                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q,PAR_IND_OVLP_ibz
  ! INDEX
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_DIPk_ibz_index,PAR_Q_index
  ! DIMENSIONS
@@ -60,16 +61,27 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  if (ENVIRONMENT=="Response_G_space_Zero_Momentum") then
    !====================================================
    !
-   CALL PARALLEL_structure(3,(/"k","c","v"/))
+   CALL PARALLEL_structure(4,(/"g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(3,COMM_index_1=PAR_COM_Xk_ibz_INDEX,&
-&                                          COMM_index_2=PAR_COM_CON_INDEX(X_type),&
-&                                          COMM_index_3=PAR_COM_VAL_INDEX(X_type),&
-&                                          COMM_A2A_1=PAR_COM_Xk_ibz_A2A)
+   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_RL_INDEX,&
+&                                          COMM_index_2=PAR_COM_Xk_ibz_INDEX,&
+&                                          COMM_index_3=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
+&                                          COMM_A2A_1=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_2=PAR_COM_Xk_ibz_A2A)
    !
    ! COMMs setup
    !
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)   
+   ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
+   ! It is rather an additional level of parallelization.
+   !
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   if (PAR_COM_RL_INDEX%n_CPU> 1) then
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   endif
+   call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Xk_bz_A2A)
    !
    ! K-points (IBZ)
    !
@@ -97,9 +109,15 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !
+#if defined _NL | defined _ELECTRIC
+   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
+   call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz_ID,&
+&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,PAR_Q_range,Xk,q)
+#endif
+   !
    ! I/O privileges
    !
-   if (ncpu>1) then
+   if (PARALLEL_n_structures_active>1) then
      call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%my_CHAIN==1.or.&
 &                                                     PAR_COM_Xk_ibz_INDEX%n_CPU==ncpu)
    else
@@ -114,14 +132,16 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  if (ENVIRONMENT=="Response_G_space_Finite_Momentum".or.ENVIRONMENT=="Response_G_space") then
    !=========================================================================================
    !
-   CALL PARALLEL_structure(4,(/"q","k","c","v"/))
+   CALL PARALLEL_structure(5,(/"q","g","k","c","v"/))
    !
-   call PARALLEL_assign_chains_and_COMMs(4,COMM_index_1=PAR_COM_Q_INDEX,&
-&                                          COMM_index_2=PAR_COM_Xk_bz_INDEX,&
-&                                          COMM_index_3=PAR_COM_CON_INDEX(X_type),&
-&                                          COMM_index_4=PAR_COM_VAL_INDEX(X_type),&
+   call PARALLEL_assign_chains_and_COMMs(5,COMM_index_1=PAR_COM_Q_INDEX,&
+&                                          COMM_index_2=PAR_COM_RL_INDEX,&
+&                                          COMM_index_3=PAR_COM_Xk_bz_INDEX,&
+&                                          COMM_index_4=PAR_COM_CON_INDEX(X_type),&
+&                                          COMM_index_5=PAR_COM_VAL_INDEX(X_type),&
 &                                          COMM_A2A_1=PAR_COM_Q_A2A,&
-&                                          COMM_A2A_2=PAR_COM_Xk_bz_A2A)
+&                                          COMM_A2A_2=PAR_COM_RL_A2A,&
+&                                          COMM_A2A_3=PAR_COM_Xk_bz_A2A)
    !
    ! COMMs setup
    !
@@ -130,7 +150,16 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    ! The COMM is anyway the one for the all2all of each q.
    !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
+   call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
+   !
+   ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
+   ! It is rather an additional level of parallelization.
+   !
+   if (PAR_COM_RL_INDEX%n_CPU>1) then
+     call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
+   endif
    !
    ! K-points 
    !
@@ -209,23 +238,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (ENVIRONMENT=="Response_G_space") then
-     !
-     ! io_RESPONSE check
-     !
-     ! No X I/O is possible ONLY when the number of cpu's allocated with the "q" field
-     ! in the response function string is the same of the SE/RT/SC...string
-     !  
-     if (.not.io_RESPONSE) then
-       !
-       call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
-       !
-       if (CPU_structure(3)%CPU(1)/=CPU_structure(5)%CPU(1)) io_RESPONSE=.TRUE.
-       !
-       if (io_RESPONSE) call warning('Response function I/O forced. Different CPU for the "q" field in X and SE')
-       !
-     endif
-   endif
+   if (ENVIRONMENT=="Response_G_space") call PARALLEL_global_Response_IO( )
    !
  endif
  !

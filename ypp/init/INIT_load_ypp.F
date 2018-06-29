@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,12 +28,12 @@ subroutine ypp_INIT_load(defs)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
- use interpolate,   ONLY:lpfac
+ use interpolate,   ONLY:INTERP_shell_factor
  use YPP
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width
+&                               n_regions,Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -76,7 +76,8 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
- call it('r',defs,'WFs_map',      '[R] WF map WFs with SOC to present WFs')
+ call it('r',defs,'WFs',          '[R] WF operations')
+ call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -90,6 +91,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
  !
 #endif
  !
@@ -101,10 +103,10 @@ subroutine ypp_INIT_load(defs)
  !
  ! DOS
  !
- call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
- call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
- call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit) 
- call it(defs,'DOSESteps', 'Energy steps',dos_E_steps) 
+ call it(defs,'DOS_broad', 'Broadening of the DOS',DOS_broadening,E_unit) 
+ call it(defs,'DOS_bands', 'DOS bands',DOS_bands) 
+ call it(defs,'DOSERange', 'Energy range',DOS_E_range,unit=E_unit) 
+ call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
@@ -112,9 +114,13 @@ subroutine ypp_INIT_load(defs)
  !
  ! BANDS
  !
- call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
- call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ call it(defs,'BANDS_bands',   'Number of bands',BANDS_bands) 
+ call it(defs,'BANDS_steps',   'Number of divisions',BANDS_steps) 
+ call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
+ call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
+ call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
+ call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
+ call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
  !
  ! Wannier interface

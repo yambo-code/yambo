@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,9 +30,13 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
  use wave_func,      ONLY:wf_ng
+#if defined _FFTW
+ use FFT_m,          ONLY:fftw_plan
+#endif
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
+ use timing_m,       ONLY:timing
 #include<memory.h>
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
@@ -44,7 +48,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3)
- !
+
+ call timing("FFT_setup",opr="start")
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  !
  if (.not.ONLY_SIZE) then
@@ -83,7 +88,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    ln=ln*fft_multiplier
    !
    call fft_best_size(ln)
-   if (i4>0) return
+   if (i4>0) then
+      call timing("FFT_setup",opr="stop")
+      return
+   endif
    fft_dim=ln
    fft_size=product(fft_dim)
    fft_norm=sqrt(1._SP/real(fft_size,SP))
@@ -144,7 +152,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
  enddo
- 
+ ! 
+#if defined _FFTW
+ fftw_plan=0
+#endif
+ !
+ call timing("FFT_setup",opr="stop")
  !
  contains
    !

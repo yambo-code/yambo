@@ -5,9 +5,9 @@ if [ $1 = "-h" ] ; then
  exit 0
 fi
 
-BASE="@abs_top_srcdir@/../max-release"
-PREV="/home/marini/Yambo/sources/git/gpl"
-TARGET="@abs_top_srcdir@/../max-release-GPL"
+BASE="@abs_top_srcdir@"
+PREV="/home/sangalli/data/Lavoro/Codici/yambo/the_wole_project_gpl/branches/4.2"
+TARGET="@abs_top_srcdir@/../../the_whole_project_gpl/master"
 WORK="/tmp/YAMBO"
 ACTION="update"
 if [ $# = 1 ] ; then  ACTION=$1 ; fi

@@ -32,7 +32,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
- use drivers,        ONLY:l_real_time
+ use drivers,        ONLY:l_real_time,l_nl_optics
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
@@ -102,7 +102,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !==========================
  !
 #if defined _RT
- if (l_real_time) then
+ if (l_real_time.or.l_nl_optics) then
    rho=rho_n
    if(n_spin> 1) magn=magn_n
  else
@@ -118,16 +118,20 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if(n_spin==1) spin_rho_SP(:,1)=rho(:)
  if(n_spin> 1) then
    if (n_spinor==1) then
+!$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+magn(ifft,3))
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-magn(ifft,3))
      enddo
+!$omp end parallel do
    else
+!$omp parallel do default(shared), private(ifft,mod_magn)
      do ifft=1,fft_size
        mod_magn=sqrt(magn(ifft,1)**2+magn(ifft,2)**2+magn(ifft,3)**2)
        spin_rho_SP(ifft,1)=0.5*(rho(ifft)+mod_magn)
        spin_rho_SP(ifft,2)=0.5*(rho(ifft)-mod_magn)
      enddo
+!$omp end parallel do
    endif
  endif
  !

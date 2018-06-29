@@ -223,7 +223,7 @@ subroutine XCo_local(E,Xk)
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
        !
        if (pp_is_uspp) then
-         ! XXX 
+         call error('[PPs] USPP: nspin=2 and n_spinor=1 not implemented')
        endif
        !
      else
@@ -237,7 +237,7 @@ subroutine XCo_local(E,Xk)
        QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
        !
        if (pp_is_uspp) then
-         ! XXX 
+         call error('[PPs] USPP: nspin=2 and n_spinor>1 not implemented')
        endif
        !
      endif

@@ -26,7 +26,13 @@ subroutine PP_uspp_init()
  ! checks and reads USPP DB, and, in case, initialize
  ! general USPP vars
  !
+ use drivers,       ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
+&                        l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim, l_pf_fxc,&
+&                        l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
+&                        l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,l_nl_optics,&
+&                        l_sc_magnetic
  use pars,          ONLY:SP,DP
+ use com,           ONLY:error
  use vec_operate,   ONLY:c2a
  use D_lattice,     ONLY:nsym,dl_sop,atom_mapper
  use R_lattice,     ONLY:b,g_vec,ng_vec
@@ -70,6 +76,14 @@ subroutine PP_uspp_init()
    call PP_uspp_free()
    call timing("PP_uspp_init","stop")
    return
+ endif
+ 
+ !
+ ! checks
+ !
+ if (.not.( l_setup.or.l_col_cut.or.l_rim.or.list_dbs.or. &
+            l_HF_and_locXC) ) then
+    call error("[PPs] USPP not implemented for current runlevel")
  endif
 
  !

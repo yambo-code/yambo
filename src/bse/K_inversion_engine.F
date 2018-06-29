@@ -66,7 +66,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
    !
    iw=i2+iw_2start-1
    !
-   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/q_norm(1)**2
+   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/bare_qpg(1,1)**2
    if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
    !
    ! The parallel loop is controlled in the manin body loop 

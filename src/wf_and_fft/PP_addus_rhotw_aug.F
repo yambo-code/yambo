@@ -65,14 +65,14 @@ SUBROUTINE PP_addus_rhotw_aug(isc)
               DO ig = 1, ngm_l
                  skk(ig,nb) = eigts1( -mill(1,ngm_s+ig-1), na) * &
                               eigts2( -mill(2,ngm_s+ig-1), na) * &
-                              eigts3( -mill(3,ngm_s+ig-1), na)
+                              eigts3( -mill(3,ngm_s+ig-1), na) * isc%eiqtau(na)
               ENDDO
            ENDIF
         ENDDO
         !
         ! sum over atoms
         !
-        CALL zgemm( 'N', 'T', ngm_l, nh_l*nh_l, nab, (1.0_dp,0.0_dp), skk, ngm_l,&
+        CALL ZGEMM( 'N', 'T', ngm_l, nh_l*nh_l, nab, (1.0_dp,0.0_dp), skk, ngm_l,&
                     becprod_DP, nh_l*nh_l, (0.0_dp,0.0_dp), aux2, ngm_l )
         !
         ! sum over lm indices of Q_{lm}

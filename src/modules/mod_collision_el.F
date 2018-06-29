@@ -66,6 +66,7 @@ module collision_el
    real(DP),    allocatable :: qmod(:)
    complex(DP), allocatable :: qgm(:,:,:,:)
    complex(SP), allocatable :: becprod(:,:,:,:)
+   complex(SP), allocatable :: eiqtau(:)
    !
  end type elemental_collision
  !
@@ -101,6 +102,7 @@ module collision_el
        YAMBO_FREE(ggw%qmod)
        YAMBO_FREE(ggw%qgm)
        YAMBO_FREE(ggw%becprod)
+       YAMBO_FREE(ggw%eiqtau)
      endif
    end subroutine
    !

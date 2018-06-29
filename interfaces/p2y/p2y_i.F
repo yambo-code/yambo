@@ -39,13 +39,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use stderr,              ONLY : intc,logfile,log_as_a_file
  use interfaces,          ONLY : PARALLEL_index,PARALLEL_live_message
  use qexml_module
-! XXX
- use wrapper,       ONLY:M_by_M
- use pw_data,       ONLY:xk_
- use cell_base,     ONLY:tpiba
- use becmod,        ONLY:calbec,bec_type,becp,allocate_bec_type
- use uspp,          ONLY:nkb,vkb
- use wave_func,     ONLY:wf_nc_k,wf_igk
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
 #endif
@@ -66,11 +59,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(lchlen)     :: lch
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
-! XXX
- complex(SP), allocatable :: wfc(:,:),swfc(:,:)
- complex(SP), allocatable :: ovp(:,:)
- integer                  :: i,j,i_spinor,igs
-! XXX
  type(PP_indexes)      :: PAR_IND_wfc_io
  integer, external     :: io_DB1
  logical               :: IO_write_save,IO_read_save
@@ -228,8 +216,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (ncpu>1) call PARALLEL_wait()
  call live_timing()
  !
-! XXXX
-! YAXXXMBO_FREE(wf_disk)
+ YAMBO_FREE(wf_disk)
  !
  if(verboseIO) then
    call msg('s','== DB2 (wavefunctions)  ... done ==')
@@ -249,67 +236,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  else
    call msg('s','Vnl support only with QE v5.0 or later (QEXML, QEXSD).')
  endif
- !
-! XXX
-!================
- !
- ! DEBUG
- !
- WRITE(0,"(/,'DEBUG')")
- WRITE(0,"('    npwk = ',i5)") wf_ncx
- WRITE(0,"('n_spinor = ',i5)") n_spinor
- WRITE(0,"(' n_bands = ',i5)") n_bands
- WRITE(0,"('wf_nb_io = ',i5)") wf_nb_io
- WRITE(0,"('     nkb = ',i5)") nkb
- WRITE(0,*) "shape(wf_disk)", SHAPE(wf_disk)
- !
- YAMBO_ALLOC(wfc,(wf_ncx*n_spinor,wf_nb_io))
- YAMBO_ALLOC(swfc,(wf_ncx*n_spinor,wf_nb_io))
- YAMBO_ALLOC(ovp,(wf_nb_io,wf_nb_io))
- ik = nkibz
- !
- wfc=0.0
- do i_spinor=1,n_spinor
-    igs=(i_spinor-1)*wf_ncx
-    wfc(igs+1:igs+wf_ncx,1:wf_nb_io)=wf_disk(:,i_spinor,:)
- enddo
- 
- !
- if (nkb > 0 ) then
-   !
-   call allocate_bec_type(nkb, wf_nb_io, becp)
-   !
-   call init_us_2(wf_nc_k(ik),wf_igk(1:wf_nc_k(ik),ik),real(xk_(:,ik),SP),vkb)
-   call calbec(wf_nc_k(ik),vkb,wfc,becp,1,wf_nb_io) 
-   !
-   call s_psi(wf_ncx,wf_nc_k(ik),wf_nb_io,wfc,swfc)
-   !
-   call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx*n_spinor,(1.0_SP,0.0_SP), &
-               wfc, wf_ncx*n_spinor, swfc, wf_ncx*n_spinor, (0.0_SP,0.0_SP), ovp, wf_nb_io) 
-   !
-   write(0,"(/,'< wfc | S | wfc >')")
-   do j = 1, wf_nb_io
-     write(0,"(8f12.6)") ovp(:,j)
-     write(0,*)
-   enddo
-   !
- endif
- !
- ovp = 0.0
- call M_by_M('C','N',wf_nb_io,wf_nb_io,wf_ncx*n_spinor,(1.0_SP,0.0_SP), &
-             wfc, wf_ncx*n_spinor, wfc, wf_ncx*n_spinor, (0.0_SP,0.0_SP), ovp, wf_nb_io) 
- !
- write(0,"(/,'< wfc | wfc >')")
- do j = 1, wf_nb_io
-   write(0,"(8f12.6)") ovp(:,j)
-   write(0,*)
- enddo
- !
- YAMBO_FREE(wf_disk)
- YAMBO_FREE(wfc)
- YAMBO_FREE(swfc)
- YAMBO_FREE(ovp)
-!================
  !
  !
  call PARALLEL_wait()

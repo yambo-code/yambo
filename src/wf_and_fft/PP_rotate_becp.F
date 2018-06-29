@@ -38,7 +38,7 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  use stderr,        ONLY:intc
  use pseudo,        ONLY:pp_is_uspp,qe_atoms_map
  use electrons,     ONLY:l_spin_orbit,n_spinor
- use D_lattice,     ONLY:nsym,i_time_rev,idt_index,i_space_inv,inv_index,&
+ use D_lattice,     ONLY:nsym,i_time_rev,idt_index,dl_sop,sop_inv,a,&
 &                        irt,icell,atom_pos,n_atoms_species,n_atomic_species
  use R_lattice,     ONLY:kibz_vec,b
  use qe_pseudo_m,   ONLY:bec_type,allocate_bec_type,deallocate_bec_type,&
@@ -57,12 +57,11 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  !
  integer     :: ikibz,isym,isym_,ia,is
  integer     :: nbnd,nkb
- real(SP)    :: xk(3),arg
+ real(SP)    :: xk(3),arg,tau(3),tau_rot(3)
  complex(SP) :: c1(3,3),c2(5,5),c3(7,7),phase
  logical     :: use_trev
  integer     :: iaeq,ll,jj,ibs,ibseq,ibsn,iben,n
  integer,     allocatable :: check(:)
-
 
  if (.not.pp_is_uspp) return
  !
@@ -70,17 +69,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
  isym=isc(3)
  nbnd=ibec%nbnd
  nkb=ibec%nkb
- !
- if (isym==idt_index) then
-   call beccopy(ibec, obec)
-   return
- endif
- 
- !
- ! checks
- !
- if (l_spin_orbit) call error("[PPs] SO not implementd in PP_rotate_becp")
- if (n_spinor>1)   call error("[PPs] NC not implementd in PP_rotate_becp")
 
  !
  ! whether to use time-reversal
@@ -93,18 +81,33 @@ subroutine PP_rotate_becp(isc,ibec,obec)
    use_trev = .TRUE.
  endif
  !
+ if (isym>1) call error("[PPs] Currently, USPP does not support symmetrization")
+ !
  if ( isym_ <= 0 .or. isym_ > nsym/(1+i_time_rev) ) &
 &  call error("[PPs] invalid isym index in becp rotate")
+ !
+ if (isym_==idt_index) then
+   call beccopy(ibec, obec)
+   if (use_trev) obec%k=conjg(obec%k)
+   return
+ endif
+
+ !
+ ! checks
+ !
+ if (l_spin_orbit) call error("[PPs] SO not implementd in PP_rotate_becp")
+ if (n_spinor>1)   call error("[PPs] NC not implementd in PP_rotate_becp")
+
 
  !
  ! kpt
  ! get xk in crystal units (rlu) 
- call c2a(b,kibz_vec(ikibz,:),xk,mode="ki2a")
+ call c2a(b,kibz_vec(ikibz,:),xk,mode="ki2c")
 
  !
  ! local workspace
  !
- YAMBO_ALLOC( check,(nkb))
+ YAMBO_ALLOC( check,(nkb) )
 
  !
  ! main loop
@@ -146,8 +149,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
          CALL M_by_M( "N","N", 3, nbnd, 3,  cONE, c1, 3, &
 &                      ibec%k(ibseq+ibsn-1:ibseq+ibsn+1,:), 3, cZERO, &
 &                      obec%k(ibs+ibsn-1:ibs+ibsn+1,:), 3)
-         !CALL mat_mul( obec%k(ibs+ibsn-1:ibs+ibsn+1,:), c1, "N", &
-         !              ibec%k(ibseq+ibsn-1:ibseq+ibsn+1,:), "N", 3, nbnd, 3)
          check(ibs+ibsn-1:ibs+ibsn+1) = check(ibs+ibsn-1:ibs+ibsn+1)+1
          !
       case ( 2 )
@@ -155,8 +156,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
          CALL M_by_M( "N","N", 5, nbnd, 5,  cONE, c2, 5, &
 &                      ibec%k(ibseq+ibsn-1:ibseq+ibsn+3,:), 5, cZERO, &
 &                      obec%k(ibs+ibsn-1:ibs+ibsn+3,:), 5)
-         !CALL mat_mul( obec%k(ibs+ibsn-1:ibs+ibsn+3,:), c2, "N", &
-         !              ibec%k(ibseq+ibsn-1:ibseq+ibsn+3,:), "N", 5, nbnd, 5)
          check(ibs+ibsn-1:ibs+ibsn+3)  = check(ibs+ibsn-1:ibs+ibsn+3)+1
          !
       case ( 3 )
@@ -164,8 +163,6 @@ subroutine PP_rotate_becp(isc,ibec,obec)
          CALL M_by_M( "N","N", 7, nbnd, 7,  cONE, c3, 7, &
 &                      ibec%k(ibseq+ibsn-1:ibseq+ibsn+5,:), 7, cZERO, &
 &                      obec%k(ibs+ibsn-1:ibs+ibsn+5,:), 7)
-         !CALL mat_mul( obec%k(ibs+ibsn-1:ibs+ibsn+5,:), c3, "N", &
-         !              ibec%k(ibseq+ibsn-1:ibseq+ibsn+5,:), "N", 7, nbnd, 7)
          check(ibs+ibsn-1:ibs+ibsn+5)  = check(ibs+ibsn-1:ibs+ibsn+5)+1
          !
       case default
@@ -176,17 +173,18 @@ subroutine PP_rotate_becp(isc,ibec,obec)
     !
     ! add a phase in case atom ia is shifted into a different cell
     !
-    arg = 2.0_SP*pi*dot_product(xk,real(icell(:,isym_,ia,is),SP))
+    call c2a(a,atom_pos(:,ia,is),tau,mode="ri2c")
+    tau_rot(:) = matmul(dl_sop(:,:,sop_inv(isym_)),tau)
+    ! 
+    arg = dot_product(xk,tau_rot-tau)
     phase = cmplx(cos(arg), sin(arg), SP)
     !
     obec%k(ibs:ibs+nh(is)-1,:) = obec%k(ibs:ibs+nh(is)-1,:) * phase
     !
-    if (use_trev) then
-      obec%k(ibs:ibs+nh(is)-1,:) = conjg(obec%k(ibs:ibs+nh(is)-1,:)) 
-    endif
-    !
  enddo
  enddo
+ !
+ if (use_trev) obec%k(:,:) = conjg(obec%k(:,:)) 
  !
  if(any(check(:)== 0)) call error("[PPs] unexpected error in PP beta mapping")
 

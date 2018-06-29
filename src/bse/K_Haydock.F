@@ -28,7 +28,7 @@ subroutine K_Haydock(iq,W)
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_treshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&

@@ -29,7 +29,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,d3k_factor,q_norm
+ use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&

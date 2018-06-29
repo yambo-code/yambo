@@ -168,7 +168,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
  ! GPL_INCLUDE_START
- call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
+ !call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
  ! GPL_INCLUDE_END
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
@@ -311,11 +311,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
- call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
  call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
+ call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)

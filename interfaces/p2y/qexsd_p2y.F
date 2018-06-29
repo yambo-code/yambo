@@ -936,7 +936,7 @@ CONTAINS
       CALL iotk_scan_end( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
       !
-      ! XXX to be further checked
+      ! definition of TREV symm to be further checked
       trevsym_=.not.(noncolin.and.domag)
       !
       !

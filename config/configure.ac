@@ -217,7 +217,6 @@ m4_include([config/scripts.m4])
 # ============================================================================
 # MPI
 m4_include([config/mpi.m4])
-m4_include([config/repos.list])
 # 
 # ============================================================================
 #  Libs
@@ -266,7 +265,7 @@ ACX_LIBXC
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_HEADERS([include/c_defs.h:include/c_defs.h.in])
-AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
+AC_CONFIG_FILES([config/setup config/Makefile config/report
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
                  driver/codever.h driver/editor.h src/external_c/.objects])

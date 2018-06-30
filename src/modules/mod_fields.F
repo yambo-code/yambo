@@ -352,8 +352,6 @@ module fields
      E%ef_pol       ='none'
      E%versor       =(/1._SP,0._SP,0._SP/)
      E%versor_circ  =(/0._SP,1._SP,0._SP/)
-     E%ef_name      ='DELTA'
-     E%ef_pol       ='linear'
    end subroutine
    !
    subroutine A_vecpot_reset(A)

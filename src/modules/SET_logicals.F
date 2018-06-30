@@ -68,7 +68,6 @@ subroutine SET_logicals()
  io_SCREEN  =.FALSE.
  io_HF      =.TRUE.
  io_COLLs   =.TRUE.
- io_COLLs   =.FALSE.
  io_GF      =.TRUE.
  io_J       =.TRUE.
  io_CARRIERs=.TRUE.

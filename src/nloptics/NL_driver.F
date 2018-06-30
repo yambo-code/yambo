@@ -154,7 +154,24 @@ subroutine NL_driver(E,X,k,q)
  !===================
  if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
  !
- !
+ ! Load Collisions if necessary
+ ! ============================
+ if(io_COLLs) then
+   !      
+   ! check if they exist      
+   !
+   call COLLISIONS_load(.true.)
+   !
+   eval_dG=l_use_Hxc_collisions
+   !
+   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
+&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
+   !
+   ! and load ....
+   !
+   if(l_use_Hxc_collisions)  call COLLISIONS_load(.false.)
+   !
+ endif
  !
  ! Allocation
  ! ==================

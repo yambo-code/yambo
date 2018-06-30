@@ -154,7 +154,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- !
+ ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
+ ! ======================================================
+ if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
+ if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
  !
  ! Build the Hamiltonian
  ! =====================
@@ -202,8 +205,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif                                                         
    !
-   !
-   !
+   if(l_use_Hxc_collisions) then
+     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
+&                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
+
+   endif
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================

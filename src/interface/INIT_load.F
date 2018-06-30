@@ -138,7 +138,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
- call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
@@ -491,6 +490,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call INIT_QP_ctl_load(defs,3)
  !
  !
+ ! DIPOLES
+ !
+ call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
+&                                                                               verb_level=V_resp,unit=E_unit)
+ call it(defs,'DipApproach',    '[Xd] [G-space v/R-space x/Covariant/Shifted grids]',Dipole_approach,verb_level=V_resp)
+#if defined _NL
+ call it('f',defs,'EvPolarization',    '[Xd] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+#endif
+ call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
+ call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
+ !
  ! El-Ph
  !
 #if defined _ELPH 
@@ -514,6 +524,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_mirror_bands( )
  !
+ call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
@@ -536,8 +547,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      name='Field'//trim(intc(i_field))
      !
+     call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
+&            Efield(i_field)%frequency,unit=E_unit)
+     call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
+&            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
+     call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
+&            Efield(i_field)%width,unit=Time_unit(1))
+     call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
+&            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
+&            Efield(i_field)%ef_name,verb_level=0)
+     call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
+&            Efield(i_field)%ef_pol,verb_level=0)
+     call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
+&            Efield(i_field)%versor,verb_level=0)
+     call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
+&            Efield(i_field)%versor_circ,verb_level=0)
+     call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
+&            Efield(i_field)%t_initial,unit=Time_unit(1))
      !
      if (initmode==4) then
        call parser(trim(name)//'_Int',is_def)

@@ -58,6 +58,17 @@ module KERR
      endif
    end subroutine
    !
+   subroutine BSS_KERR_alloc( )
+     use pars,       ONLY:cZERO
+     use BS,         ONLY:BS_H_dim,BS_K_dim
+     if (.not.l_kerr) return
+     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
+     BSS_dipoles_kerr = cZERO
+   end subroutine
    !
+   subroutine BSS_KERR_free( )
+     if (.not.l_kerr) return
+     YAMBO_FREE(BSS_dipoles_kerr)
+   end subroutine
    !
 end module

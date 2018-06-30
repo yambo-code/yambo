@@ -19,4 +19,6 @@ objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) \
        fft_check_size.o WF_free.o WF_alloc.o WF_shift_kpoint.o WF_symm_kpoint.o  \
        scatter_Bamp.o scatter_Gamp.o WF_spatial_inversion.o \
        WF_load.o WF_symm.o WF_apply_symm.o \
-       eval_R_minus_R.o scatter_Modscr.o load_cc.o
+       eval_R_minus_R.o scatter_Modscr.o load_cc.o \
+       PP_uspp_init.o PP_addus_vloc_aug.o PP_vloc_augment.o PP_compute_becp.o \
+       PP_becprod_calc.o PP_scatterBamp_init.o PP_rotate_becp.o PP_addus_rhotw_aug.o

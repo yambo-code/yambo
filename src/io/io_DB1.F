@@ -32,7 +32,7 @@ integer function io_DB1(E,k,ID)
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
 &                           Z_species, n_atoms, mag_syms
- use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
+ use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,kibz_vec,&
 &                           QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
  use LIVE_t,           ONLY:live_timing_is_on
@@ -269,6 +269,7 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(g_vec,(ng_vec,3))
    YAMBO_ALLOC(dl_sop,(3,3,nsym))
    YAMBO_ALLOC(k%pt,(k%nibz,3))
+   YAMBO_ALLOC(kibz_vec,(k%nibz,3))
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
@@ -320,6 +321,10 @@ integer function io_DB1(E,k,ID)
  !
  call io_bulk(ID, VAR="K-POINTS", VAR_SZ=shape(k%pt) )
  call io_bulk(ID, R2=k%pt)
+ !
+ if (read_is_on(ID)) then
+   kibz_vec(:,:)=k%pt(:,:)
+ endif
  !
  ! Eigenvalues
  !

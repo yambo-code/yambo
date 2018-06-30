@@ -38,6 +38,8 @@ subroutine XCo_driver(E,k,Xk,q)
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening
+ use xc_functionals,ONLY:E_xc_val
+ use pseudo,        ONLY:PP_nlcc_free
  !
 #include<memory.h>
  type(levels) ::E       
@@ -125,6 +127,10 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (.not.l_sc_run.and..not.l_real_time) then
    !
+   ! non-linear core corrections (NLCC)
+   !
+   call XC_nlcc_setup()
+   !
    call XCo_local(E,Xk)
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
@@ -132,6 +138,8 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      YAMBO_FREE(QP_Vnl_sex)
    endif
+   !
+   call PP_nlcc_free()
    !
  endif
  !
@@ -145,6 +153,9 @@ subroutine XCo_driver(E,k,Xk,q)
    subroutine XCo_report_and_IO()
      !
      Vxc_kind='DFT'
+     !
+     call msg('nr','[xc] E_xc :  '//trim(real2ch(E_xc_val))//' [Ha]')
+     call msg( 'r','     E_xc :  '//trim(real2ch(E_xc_val*2.0))//' [Ry]')
      !
      call QP_reset(qp)
      call E_reset(E_dummy)

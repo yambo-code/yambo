@@ -23,12 +23,14 @@
 !
 subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                    &             R0,R1,R2,R3,R4,R5,&
+                   &             D0,D1,D2,D3,D4,D5,&
                    &             C0,C1,C2,C3,C4,C5,&
+                   &             Z0,Z1,Z2,Z3,Z4,Z5,&
                    &             L0,L1,L2,L3,L4,   &
                    &                            IPOS)
  !
- use pars,    ONLY:SP,LP,nf90_SP
- use pointers,ONLY:linkC2R
+ use pars,    ONLY:SP,DP,LP,nf90_SP
+ use pointers,ONLY:linkC2R,linkZ2D
  use com,     ONLY:warning,error
  use netcdf
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
@@ -41,7 +43,9 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  integer,     optional :: VAR_SZ(:),IPOS(:)
  integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
  real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+ real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
  complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
+ complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
  !
  ! These types can be used instead of logical that 
  ! are not supported by NetCdf
@@ -51,6 +55,7 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  ! Work Space
  !
  real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:)
+ real(DP), pointer    :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
  integer, allocatable :: var_dim(:),ipos_loc(:),isize_loc(:)
  integer              :: j1,dims,dims_db
  integer, allocatable :: var_dim_db(:)
@@ -105,12 +110,12 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
  nf_error=0
  dims =0
  !
- if (present(L1).or.present(I1).or.present(R1)               ) dims=1
- if (present(L2).or.present(I2).or.present(R2).or.present(C1)) dims=2
- if (present(L3).or.present(I3).or.present(R3).or.present(C2)) dims=3
- if (present(L4).or.present(I4).or.present(R4).or.present(C3)) dims=4
- if (               present(I5).or.present(R5).or.present(C4)) dims=5
- if (                                             present(C5)) dims=6
+ if (present(L1).or.present(I1).or.present(R1).or.present(D1)) dims=1
+ if (present(L2).or.present(I2).or.present(R2).or.present(D2).or.present(C1).or.present(Z1)) dims=2
+ if (present(L3).or.present(I3).or.present(R3).or.present(D3).or.present(C2).or.present(Z2)) dims=3
+ if (present(L4).or.present(I4).or.present(R4).or.present(D4).or.present(C3).or.present(Z3)) dims=4
+ if (               present(I5).or.present(R5).or.present(D5).or.present(C4).or.present(Z4)) dims=5
+ if (                                             present(C5).or.present(Z5)) dims=6
  !
  if(dims>0) then
    allocate(ipos_loc(dims),isize_loc(dims))
@@ -223,6 +228,43 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), R5, ipos_loc, isize_loc)
  endif
  !
+ ! Double precision numbers / vectors / matricies
+ !
+ if (present(D0)) then
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D0, (/1/))
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D0, (/1/))
+ endif
+ !
+ if (present(D1)) then
+   isize_loc=(/size(D1)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D1, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D1, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(D2)) then
+   isize_loc=(/size(D2,1),size(D2,2)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D2, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D2, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(D3)) then
+   isize_loc=(/size(D3,1),size(D3,2),size(D3,3)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D3, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D3, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(D4)) then
+   isize_loc=(/size(D4,1),size(D4,2),size(D4,3),size(D4,4)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D4, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D4, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(D5)) then
+   isize_loc=(/size(D5,1),size(D5,2),size(D5,3),size(D5,4),size(D5,5)/)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), D5, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), D5, ipos_loc, isize_loc)
+ endif
+ !
  ! Complex numbers / vectors / matricies
  !
  if (present(C0)) then
@@ -265,6 +307,50 @@ subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RC5, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RC5, ipos_loc, isize_loc)
  endif
+ !
+ ! Complex numbers / vectors / matricies
+ !
+ if (present(Z0)) then
+   RZ0 => linkZ2D(Z0,(/2/))
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ0, (/1/), (/2/))
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ0, (/1/), (/2/))
+ endif
+ !
+ if (present(Z1)) then
+   isize_loc=(/2,size(Z1)/)
+   RZ1 => linkZ2D(Z1,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ1, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ1, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(Z2)) then
+   isize_loc=(/2,size(Z2,1),size(Z2,2)/)
+   RZ2 => linkZ2D(Z2,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ2, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ2, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(Z3)) then
+   isize_loc=(/2,size(Z3,1),size(Z3,2),size(Z3,3)/)
+   RZ3 => linkZ2D(Z3,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ3, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ3, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(Z4)) then
+   isize_loc=(/2,size(Z4,1),size(Z4,2),size(Z4,3),size(Z4,4)/)
+   RZ4 => linkZ2D(Z4,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ4, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ4, ipos_loc, isize_loc)
+ endif
+ !
+ if (present(Z5)) then
+   isize_loc=(/2,size(Z5,1),size(Z5,2),size(Z5,3),size(Z5,4),size(Z5,5)/)
+   RZ5 => linkZ2D(Z5,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID), RZ5, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID), RZ5, ipos_loc, isize_loc)
+ endif
+ !
  !
  call netcdf_call(nf_error,ID)
  !

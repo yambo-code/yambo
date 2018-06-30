@@ -1,5 +1,8 @@
 #if defined _KERR
-KERR_objects = K_kerr_IP.o
+KERR_objects = K_kerr_IP.o K_diago_kerr_residual.o
+#endif
+#if defined _SLEPC
+SLEPC_objects = K_slepc_driver.o
 #endif
 #if defined _SCALAPACK
 SLK_objects = K_inversion_do_it_SLK.o
@@ -12,4 +15,4 @@ objs =	K_blocks.o K_driver.o K_IP.o K_Transitions_setup.o K_WF_phases.o \
         K_diago_driver.o K_diago_non_hermitian_residuals.o K_diago_hermitian_residuals.o \
         K_diago_perturbative.o K_diago_compute_epsilon.o K_eps_interpolate.o \
         K_output_file.o K_multiply_by_V.o K_dot_product.o K_components_folded_in_serial_arrays.o \
-        $(KERR_objects) $(SLK_objects)
+        $(KERR_objects) $(SLEPC_objects) $(SLK_objects)

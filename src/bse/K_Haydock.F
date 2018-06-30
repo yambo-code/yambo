@@ -40,15 +40,10 @@ subroutine K_Haydock(iq,W)
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
  use timing_m,       ONLY:timing
- !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  !
@@ -62,14 +57,10 @@ subroutine K_Haydock(iq,W)
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  type(Haydock_vector),allocatable :: V0_kerr(:)
  complex(SP),allocatable :: Cf_kerr(:)
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  real(SP)           ::reached_treshold
  real(SP)           ::Bf(Max_iterations),Af(Max_iterations)
@@ -101,13 +92,9 @@ subroutine K_Haydock(iq,W)
  ! Which approach
  use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use_cpl_scheme=BS_K_Coupling.or.l_kerr
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  !
  ! Allocate Haydock vectors:
@@ -119,8 +106,6 @@ subroutine K_Haydock(iq,W)
    call BS_HAYVEC_alloc(V_tmp)
  endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  if(l_kerr) then
    allocate(V0_kerr(BS_nT_grps))
@@ -128,19 +113,13 @@ subroutine K_Haydock(iq,W)
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  !
  if (use_cpl_scheme) then
    YAMBO_ALLOC(Cf,(Max_iterations+1))
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    YAMBO_ALLOC(Cf_kerr,(Max_iterations+1))
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  end if
  !
@@ -159,8 +138,6 @@ subroutine K_Haydock(iq,W)
  ! if (use_cpl_scheme) then 
  !  !
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  !  if(l_kerr) then
  !    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),  &
@@ -168,18 +145,12 @@ subroutine K_Haydock(iq,W)
  !  else
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2)&
  !        &,Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:2))   
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  !  endif
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! else
  !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_treshold,Af(1),Bf(:2),Vmm1,Vm)
@@ -194,8 +165,6 @@ subroutine K_Haydock(iq,W)
  !   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
  !   if (use_cpl_scheme) then 
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  !    if(l_kerr) then
  !      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
@@ -203,18 +172,12 @@ subroutine K_Haydock(iq,W)
  !    else
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  !      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
  !      &                   Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  !    endif
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  !   else
  !     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_treshold,Af(:it_on_disk),&
@@ -252,13 +215,9 @@ subroutine K_Haydock(iq,W)
      !
      V0(i_g)%fragment  = cZERO
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr) V0_kerr(i_g)%fragment  = cZERO
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
    enddo
    !
@@ -276,8 +235,6 @@ subroutine K_Haydock(iq,W)
      call K_multiply_by_V(V_tmp,V0,1)
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    if(l_kerr) then
      V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
@@ -287,8 +244,6 @@ subroutine K_Haydock(iq,W)
      endif
    endif
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  enddo
  !
@@ -303,13 +258,9 @@ subroutine K_Haydock(iq,W)
    call PP_bcast(V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif    
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR && defined _MPI
    if(l_kerr) call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  end do
  !
@@ -324,20 +275,14 @@ subroutine K_Haydock(iq,W)
    if (it_on_disk==0) then
       Cf= cZERO
       !
-      ! GPL_EXCLUDE_START
-      !
 #if defined _KERR
       if(l_kerr) Cf_kerr= cZERO
 #endif
-      !
-      ! GPL_EXCLUDE_END
       !
       call K_multiply_by_V(V0,Vnp1,ItParity)
       call K_dot_product(v0_mod_,V0,Vnp1)
       Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
       Cf(1) = cZERO
-      !
-      ! GPL_EXCLUDE_START
       !
 #if defined _KERR
       if(l_kerr) then
@@ -345,8 +290,6 @@ subroutine K_Haydock(iq,W)
         Cf_kerr(1)= 2._SP*cI*aimag(v0_mod_)/Haydock_v0_mod**2._SP
       endif
 #endif
-      !
-      ! GPL_EXCLUDE_END
       !
       do i_g=1,BS_nT_grps
         if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -479,16 +422,12 @@ subroutine K_Haydock(iq,W)
      call K_dot_product(v0_mod_,V0,Vn) 
      Cf(it+1)= ((1._SP-real(ItParity,SP))*real(v0_mod_,SP))/Haydock_v0_mod
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr) then
        call K_dot_product(v0_mod_,V0_kerr,Vn) 
        Cf_kerr(it+1)= ((1._SP+real(ItParity,SP))*cI*aimag(v0_mod_))/Haydock_v0_mod
      endif
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -500,13 +439,9 @@ subroutine K_Haydock(iq,W)
        call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,1)
      end if
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
      BSS_description(BSS_n_descs-1)='        |Accuracy (reached)   [o/o]:'//&
 &                                    trim(real2ch(reached_treshold))
@@ -533,8 +468,6 @@ subroutine K_Haydock(iq,W)
 !   if (use_cpl_scheme) then
 !     Bf(1) = Haydock_v0_mod
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
 !     if(l_kerr) then
 !       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
@@ -542,18 +475,12 @@ subroutine K_Haydock(iq,W)
 !     else 
 #endif
  !
- ! GPL_EXCLUDE_END
- !
 !      io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
 ! &                          Af(:it),Bf(:it+1),Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:it+1))
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _KERR
 !     endif
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 !     Bf(1) = 0._SP
 !   else
@@ -582,13 +509,9 @@ subroutine K_Haydock(iq,W)
    if (allocated(V0)) deallocate(V0)
    YAMBO_FREE(Cf)
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    YAMBO_FREE(Cf_kerr)
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
  end if
  !
@@ -703,15 +626,11 @@ subroutine K_Haydock(iq,W)
          X_o(:2,1) = YbyX(:)
        endif
        !
-       ! GPL_EXCLUDE_START
-       ! 
        if(trim(global_gauge)=='velocity'.and.iw==0) then
          if (.not.retarded) para_term_w0(:)=X_o(1:2,1)
          if (     retarded) para_term_w0(:)=X_o(1:2,1)-X_o(3:4,1)
          cycle
        endif
-       !
-       ! GPL_EXCLUDE_END
        !
        Epsilon_ii(iw,1)=W%p(iw)
        !
@@ -733,25 +652,12 @@ subroutine K_Haydock(iq,W)
      !
      do iw=1,W%n_freqs
        !
-       ! GPL_EXCLUDE_START
-       !
        if (trim(global_gauge)=='velocity') gauge_factor=Co/W%p(iw)**2
        !
        if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        !
-       ! GPL_EXCLUDE_END
-       !
-       ! GPL_INCLUDE_START
-       !
-       !if (ii==1) Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))*gauge_factor
-       !if (ii==2) Epsilon_ij(iw,i_eps(:))=Epsilon_ij(iw,i_eps(:))*gauge_factor
-       !
-       ! GPL_INCLUDE_END
-       !
        if (ii==1) Epsilon_ii(iw,i_eps(:))=1._SP+Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*gauge_factor
-       !
-       ! GPL_EXCLUDE_START
        !
 #if defined _KERR
        !
@@ -768,8 +674,6 @@ subroutine K_Haydock(iq,W)
        endif
        !
 #endif
-       !
-       ! GPL_EXCLUDE_END
        !
        select case(ii)
        case(1)

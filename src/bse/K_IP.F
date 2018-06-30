@@ -132,8 +132,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
      Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
    endif
    !
-   ! GPL_EXCLUDE_START 
-   !
    if( E_SOC_nbands/=0.and.n_sp_pol==1) then
      n_SOC=2
      Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
@@ -142,8 +140,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    diam_term_exact=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
    !
    para_term_w0=cZERO
-   !
-   ! GPL_EXCLUDE_END
    !
    call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0)
    !
@@ -172,11 +168,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        !
        if (E_SOC_nbands==0) E_plus_W=E_plus_W0
        !
-       ! GPL_EXCLUDE_START
-       !
        if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
-       !
-       ! GPL_EXCLUDE_END
        !
        ! *length*   : DIP_projected(c,v,k) is    iq*<v|r|c> while I need    iq*<c|r|v> = -conjg(   iq*<v|r|c>)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
@@ -228,8 +220,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
            if (BSS_eval_JDOS) Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
-         ! GPL_EXCLUDE_START
-         !
          if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res*E_plus_W(i_pert_SOC)/bare_qpg(1,1)**2
          if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res/E_plus_W(i_pert_SOC)
          if (BSS_add_antiresonant.or.BS_K_coupling) then
@@ -245,8 +235,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
            endif
          endif
 #endif
-         !
-         ! GPL_EXCLUDE_END
          !
        enddo
        !
@@ -265,12 +253,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    if (BSS_eval_JDOS) call PP_redux_wait( Joint_DOS(:,3)  ,COMM=PAR_COM_eh_INDEX%COMM )
    !
-   ! GPL_EXCLUDE_START
-   !
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
-   !
-   ! GPL_EXCLUDE_END
    !
 #if defined _PL
    if (l_photolum) then

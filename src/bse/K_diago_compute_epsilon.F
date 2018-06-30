@@ -36,8 +36,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use interfaces,     ONLY:PARALLEL_index
  use R_lattice,      ONLY:nkbz,bare_qpg
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use KERR,           ONLY:B_Hall
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
@@ -47,8 +45,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use drivers,        ONLY:l_photolum
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  implicit none
  !
@@ -67,26 +63,16 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  integer              :: i1,i_pert_SOC,n_SOC
  complex(SP)          :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  complex(SP)          :: gauge_factor
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  n_SOC=1
- !
- ! GPL_EXCLUDE_START
  !
  if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
  !
- ! GPL_EXCLUDE_END
- !
  Epsilon_ii(:,2)=cZERO
  Joint_DOS(:,2) =cZERO
- !
- ! GPL_EXCLUDE_START
  !
  para_term_w0=cZERO
  !
@@ -100,9 +86,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #if defined _PL
  if (l_photolum) PL(:,2) = rZERO
 #endif
- !
- ! GPL_EXCLUDE_END
- !
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
  !
@@ -119,8 +102,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    !
    if (.not.px%element_1D(i1)) cycle
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    if (l_kerr.and.l_anomalous_Hall) then
      if (trim(global_gauge)=='length'  ) gauge_factor=cONE
@@ -130,8 +111,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
 #endif
    !
    if (E_SOC_nbands/=0) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
-   !
-   ! GPL_EXCLUDE_END
    !
    if (E_SOC_nbands==0) EXC_E(1)=BS_E(i1)
    !
@@ -150,8 +129,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
      if (BSS_add_antiresonant) Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr) then
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-BS_R_left(i1)*BS_R_right_kerr(i1)/(W%p(:)-EXC_E(i_pert_SOC))
@@ -167,8 +144,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      endif
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    enddo
    !
    call live_timing(steps=1)
@@ -179,11 +154,10 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  call PP_redux_wait(Joint_DOS(:,2) )
  call PP_redux_wait(para_term_w0)
  if (BSS_add_antiresonant) para_term_w0=para_term_w0+conjg(para_term_w0)
+ !
 #if defined _PL
  call PP_redux_wait(PL(:,2))
 #endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  if(l_kerr) then
@@ -191,8 +165,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    if(l_anomalous_Hall) call PP_redux_wait(B_Hall(2))
  endif
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  call PP_indexes_reset(px)
  !
@@ -209,8 +181,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _KERR
  !
@@ -232,7 +202,5 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine K_diago_compute_epsilon

@@ -30,7 +30,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table,mag_syms,idt_index
+&                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -198,6 +198,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')
+ call symmetry_equiv_atoms()
  !
  call section('=','RL shells')
  !============================

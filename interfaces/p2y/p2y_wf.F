@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH
+! Authors (see AUTHORS file for details): CH, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -26,6 +26,7 @@
  ! Reads the WFs for single k-point ikibz and group of bands
  ! associated with group ib_grp
  !
+ use P2Y
  use pars,                  ONLY: SP,DP,cZERO
  use electrons,             ONLY: n_bands,n_spinor
  use wave_func,             ONLY: wf_ncx,wf_nc_k, wf_igk, wf_nb_io
@@ -63,85 +64,91 @@
  !
  call set_band_block
 
- !---------------------------------------------------------------------*
- !    PW > 4.x
- !---------------------------------------------------------------------*
-#if defined _P2Y_QEXML
-
- do i_spinor = 1, n_spinor
-
-     select case(n_spin_pw_)
-     case(1)
-       !
-       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
-&                          igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
-       !
-     case(2) ! note ipol=i_sp_pol
-       !
-       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ipol=i_sp_pol, &
-&                          igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexml_read_wfc','Check i_sp_pol/PWscf version!',ierr)
-       !
-     case(4) ! note ispin=i_spinor
-       !
-       call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spinor, &
-&                          igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexml_read_wfc','Check ispinor/PWscf version!',ierr)
-       !
-     end select
-     !
-     call sort_wf_disk
-     !
- enddo
-
- !---------------------------------------------------------------------*
- !    QEXSD   (available for > QE-6.2)
- !---------------------------------------------------------------------*
-#elif defined _P2Y_QEXSD
-
- YAMBO_ALLOC(igkv_,(3,npwk))
-
- do i_spinor = 1, n_spinor
+ select case (trim(dftdata_fmt))
+ case ("pw_export")
     !
-    if (n_spin_pw_==1.and..not.noncolin_) then
-       !
-       call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=1, nspin=1, &
-&                          igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexsd_read_wfc','fmt error I',ierr)
-       !
-    else if (n_spin_pw_==2.and..not.noncolin_) then
-       !
-       call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_sp_pol, nspin=2, &
-&                          igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexsd_read_wfc','fmt error II',ierr)
-       !
-    else if (noncolin_) then   
-       !
-       call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=1, nspin=1, ipol=i_spinor, &
-&                          igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
-       if(ierr/=0) call errore('qexsd_read_wfc','fmt error III',ierr)
-       !
-    else
-       call errore('qexsd_read_wfc','invalid spinor conf',10)
-    endif
+    ! nothing to do ?
     !
-    ! take care of gamma_only and spinors
-    !
-    call sort_wf_disk()
-    !
- enddo
- !
- YAMBO_FREE(igkv_)
+ !---------------------------------------------------------------------*
+ !    PW > 4.x   (QEXML)
+ !---------------------------------------------------------------------*
+ case ("qexml")
 
-#endif
+    do i_spinor = 1, n_spinor
+
+       select case(n_spin_pw_)
+       case(1)
+         !
+         call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, &
+&                            igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexml_read_wfc','Check version of PW data!',ierr)
+         !
+       case(2) ! note ipol=i_sp_pol
+         !
+         call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ipol=i_sp_pol, &
+&                            igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexml_read_wfc','Check i_sp_pol/PWscf version!',ierr)
+         !
+       case(4) ! note ispin=i_spinor
+         !
+         call qexml_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_spinor, &
+&                            igk = wf_igk(1:npwk,ikibz), wf = wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexml_read_wfc','Check ispinor/PWscf version!',ierr)
+         !
+       end select
+       !
+       call sort_wf_disk
+       !
+    enddo
+
+ !---------------------------------------------------------------------*
+ !    QEXSD   (available for >= QE-6.2)
+ !---------------------------------------------------------------------*
+ case ("qexsd","qexsd-hdf5")
+
+    YAMBO_ALLOC(igkv_,(3,npwk))
+
+    do i_spinor = 1, n_spinor
+      !
+      if (n_spin_pw_==1.and..not.noncolin_) then
+         !
+         call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=1, nspin=1, &
+&                            igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexsd_read_wfc','fmt error I',ierr)
+         !
+      else if (n_spin_pw_==2.and..not.noncolin_) then
+         !
+         call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=i_sp_pol, nspin=2, &
+&                            igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexsd_read_wfc','fmt error II',ierr)
+         !
+      else if (noncolin_) then   
+         !
+         call qexsd_read_wfc(ibnds=ib1, ibnde=ib2, ik=ikibz, ispin=1, nspin=1, ipol=i_spinor, &
+&                            igkv=igkv_, wfc=wf_disk_DP(1:npwk,1:n_b), ierr=ierr)
+         if(ierr/=0) call errore('qexsd_read_wfc','fmt error III',ierr)
+         !
+      else
+         call errore('qexsd_read_wfc','invalid spinor conf',10)
+      endif
+      !
+      ! take care of gamma_only and spinors
+      !
+      call sort_wf_disk()
+      !
+    enddo
+    !
+    YAMBO_FREE(igkv_)
+    !
+ case default
+    call errore("p2y_wf","Invalid dftdata_fmt "//trim(dftdata_fmt),2)
+ end select
  ! 
  ! clobal clean 
  ! 
  YAMBO_FREE(wf_disk_DP)
  !
  return
-
 
  contains
 
@@ -162,33 +169,33 @@
    end subroutine set_band_block
 
    subroutine sort_wf_disk
-    
-#if !defined _P2Y_EXPORT
-     if(gamma_only_) then
+     if (trim(dftdata_fmt)/="pw_export") then
+       !
+       if(gamma_only_) then
 
-       do ib=1, n_b
-         wf_disk(1,i_spinor,ib) = cmplx(wf_disk_DP(1,ib) ,kind=SP)
-         do ic=2,npwk
-           wf_disk(2*ic-2,i_spinor,ib) = cmplx(      wf_disk_DP(ic,ib) , kind=SP)
-           wf_disk(2*ic-1,i_spinor,ib) = cmplx(conjg(wf_disk_DP(ic,ib)), kind=SP)
+         do ib=1, n_b
+           wf_disk(1,i_spinor,ib) = cmplx(wf_disk_DP(1,ib) ,kind=SP)
+           do ic=2,npwk
+             wf_disk(2*ic-2,i_spinor,ib) = cmplx(      wf_disk_DP(ic,ib) , kind=SP)
+             wf_disk(2*ic-1,i_spinor,ib) = cmplx(conjg(wf_disk_DP(ic,ib)), kind=SP)
+           enddo
          enddo
-       enddo
 
-     else
+       else
 
-       do ib=1,n_b
-         forall(ic=1:npwk) wf_disk(ic,i_spinor,ib) = cmplx( wf_disk_DP(ic,ib) , kind=SP)
-       enddo
+         do ib=1,n_b
+           forall(ic=1:npwk) wf_disk(ic,i_spinor,ib) = cmplx( wf_disk_DP(ic,ib) , kind=SP)
+         enddo
 
+       endif
+       !
+       !   Lines relating to real WF workaround
+       !
+       !do ib=1,n_bands
+       !  call make_real_wf(ib,ikibz,wf_disk(:,:wf_nc_k(ikibz),i_spinor,ib),wf_nc_k(ikibz))
+       !enddo
+       !
      endif
-     !
-     !   Lines relating to real WF workaround
-     !
-     !do ib=1,n_bands
-     !  call make_real_wf(ib,ikibz,wf_disk(:,:wf_nc_k(ikibz),i_spinor,ib),wf_nc_k(ikibz))
-     !enddo
-     !
-#endif
    end subroutine sort_wf_disk
 
  end subroutine p2y_wf

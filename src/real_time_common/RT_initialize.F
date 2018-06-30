@@ -186,6 +186,18 @@ subroutine RT_initialize(E,k,q)
  RT_nk=RT_k_grid(E,k,q)
  !
  !
+ ! Checking extended COLLISIONS
+ !==============================
+ !
+ if (l_elel_scatt.or.l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_is_libDFT) then
+   !
+   call section('=','Electronic Collisions loading and setup')
+   !
+   !
+   if (io_COLLs) call COLLISIONS_load(.TRUE.)
+   !
+ endif
+ !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
  !

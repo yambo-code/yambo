@@ -309,6 +309,8 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -316,16 +318,16 @@ subroutine RT_initialize(E,k,q)
    !
    call section('=','Electronic Collisions loading and setup')
    !
+   ! GPL_EXCLUDE_START
    if (l_elel_scatt) then
      call PLASMA_build_up(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
+   ! GPL_EXCLUDE_END
    !
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)

@@ -387,12 +387,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      endif
 #endif
      !
+     ! GPL_EXCLUDE_END
+     !
      if(use_covariant_approach) then
        call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
    end subroutine DIPOLES_alloc
    !

@@ -112,12 +112,16 @@ integer function io_HF_and_locXC(ID)
    !
    ! QP_table
    !
-   allocate(QP_table_disk(3+n_sp_pol-1,QP_n_states))
+   allocate(QP_table_disk(3+n_sp_pol-1,QP_n_states_disk))
    !
-   if(write_is_on(ID)) QP_table_disk(:,i_qp1)=QP_table(i_qp1,:)
+   if(write_is_on(ID)) then
+     do i_qp1=1,QP_n_states_disk
+       QP_table_disk(:,i_qp1)=QP_table(i_qp1,:)
+     enddo
+   endif
    !
-   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/3+n_sp_pol-1,QP_n_states_disk/))
-   call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,1/))
+   call io_bulk(ID,VAR="QP_table",VAR_SZ=shape(QP_table_disk))
+   call io_bulk(ID,I2=QP_table_disk)
    !
    if (read_is_on(ID)) then
      if(io_mode(ID)==DUMP) then
@@ -126,6 +130,7 @@ integer function io_HF_and_locXC(ID)
        QP_state=.false.
        do i_qp1=1,QP_n_states_disk
          QP_state(QP_table_disk(1,i_qp1),QP_table_disk(3,i_qp1))=.true.
+         MAP(i_qp1)=i_qp1
        enddo
      else
        i_found=0

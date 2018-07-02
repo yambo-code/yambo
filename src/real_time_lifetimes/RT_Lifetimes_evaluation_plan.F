@@ -86,6 +86,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  do while (it<NE_steps)
    !
+   ! Final part
+   !
    if (NE_steps-it+1<N_inter_steps) then
      !
      !N_inter_steps=NE_steps-it+1
@@ -104,10 +106,6 @@ integer function RT_Lifetimes_evaluation_plan( )
    it=it+N_inter_steps
    !
  enddo
- !
- ! First Life_MEM_steps elements must be calculated
- !
- RT_TIME_status(NE_i_start_time:NE_i_start_time+Life_MEM_steps-1)=1
  !
  RT_Lifetimes_evaluation_plan = count( RT_TIME_status >0 )
  !

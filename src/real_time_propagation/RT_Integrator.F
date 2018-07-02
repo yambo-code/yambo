@@ -103,6 +103,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
+   write (*,*) "INT",dG_tmp(2,2,1,i_step)
    ! ... Update of logicals before the occupations update
    !
    call RT_relaxation_logicals( )
@@ -185,8 +186,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        !
        ! Finally I average using b_tableau
        !
+       dG_new(:,:,ik)=dG_old(:,:,ik)
        do i_step=1,Integrator_nsteps
-         dG_new(:,:,ik)=dG_old(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
+         dG_new(:,:,ik)=dG_new(:,:,ik)+dG_tmp(:,:,ik,i_step+1)*b_tableau(i_step)
        enddo
        !
      enddo

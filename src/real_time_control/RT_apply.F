@@ -29,7 +29,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,      ONLY:bz_samp,nkibz
- use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control
+ use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t
@@ -58,6 +58,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  local_Time=0._SP
  if (present(Time)) local_Time=Time
+ ! 
+ if (     present(IO_COM)) COM_=IO_COM
+ if (.not.present(IO_COM)) COM_=NONE
  !
  l_verbose=.false.
  if (present(VERBOSE)) l_verbose=VERBOSE
@@ -137,13 +140,19 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    !
    what_='YPP'
    !
-   db_name=trim(jobdir)//'/'//trim(jobstr)//'/ndb.RT_carriers'
+   db_name=DB_path(jobdir,jobstr,'ndb.RT_carriers')
+   if (COM_/=NONE) call msg('s','Searching the carriers database in '//trim(db_name)//'...')
    if (.not.file_exists(trim(db_name))) then
      job_loop: do i_j=1,n_alt_jobstr
-       db_name=trim(alt_jobdir(i_j))//'/'//trim(alt_jobstr(i_j))//'/ndb.RT_carriers'
+       db_name=DB_path(alt_jobdir(i_j),alt_jobstr(i_j),'ndb.RT_carriers')
+       if (COM_/=NONE) call msg('l',trim(db_name)//'...')
        if (file_exists(trim(db_name))) exit job_loop
      enddo job_loop
    endif 
+   if (COM_/=NONE) then
+     if (     file_exists(trim(db_name))) call msg('l','found')
+     if (.not.file_exists(trim(db_name))) call msg('l','not found')
+   endif
    !
  endif
  !
@@ -158,9 +167,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  ! 
  ! CARRIERS I/O (I)
  !====================
- ! 
- if (     present(IO_COM)) COM_=IO_COM
- if (.not.present(IO_COM)) COM_=NONE
  !
  call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=DUMP,SEC=(/1/),ID=ID) 
  io_err=io_RT_components(trim(db_name),ID)
@@ -169,7 +175,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  nkibz            =nkibz_save
  l_elel_corr      =l_elel_corr_save
  !
- if (io_err< 0) then
+ if (io_err< 0 .and. trim(what_)/='YPP') then
    call warning (' Carriers database '//trim(db_name)//' not found')
    return
  endif

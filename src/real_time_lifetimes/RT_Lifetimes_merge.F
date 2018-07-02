@@ -54,7 +54,11 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  call PP_redux_wait(LIFE)
  !
- if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
+ do ik=1,RT_nk
+   !
+   if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
+   !
+ enddo 
  !
  call timing('RT life merge',OPR='stop')
  !

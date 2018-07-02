@@ -28,7 +28,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg,of_open_close,error,file_exists
+ use com,            ONLY:msg,of_open_close,error,file_exists,warning
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db,INTERP_k
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
@@ -53,8 +53,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:),fit_on_grid(:,:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
- character(3)          :: message
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,message
  logical               :: l_normalize_Nel,l_nearest_neig_interp
  integer               :: ib,ik,i_sp_pol,i_RT,i_T,n_values
  !
@@ -73,6 +72,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    call error('No scattering => no Lifetimes')
  endif
  !
+ if (BANDS_bands(1)<RT_bands(1).or.BANDS_bands(2)>RT_bands(2)) then
+   BANDS_bands(1)=max(BANDS_bands(1),RT_bands(1))
+   BANDS_bands(2)=min(BANDS_bands(2),RT_bands(2))
+   call warning("User bands restricted to "//trim(intc(RT_bands(1)))//" - "//trim(intc(RT_bands(2))))
+ endif
+ !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
  if (file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) BANDS_path= " "
@@ -84,6 +89,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
  CIRCUIT_k%nibz=CIRCUIT_k%nbz
+ !
+ call section('=',"Interpolation")
+ !================================
  !
  ! Map RT_carriers%kpt ==> RT_k%kpt
  !     RT_carriers%E   ==> RT_E%E 
@@ -162,20 +170,20 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    elseif(l_nearest_neig_interp) then
      !
-     message='RT '
-     if(i_T==1) message='RT0'
+     message=' '
+     if(i_T==1) message='RT setup'
      !
      if(l_RT_occupations)  then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
 &                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),trim(message),l_normalize_Nel)
      endif
      if(l_RT_lifetimes) then
        call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
 &                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
 &                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
+&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),trim(message),.false.)
      endif
      !
    endif

@@ -563,6 +563,15 @@ module IO_m
    
    end subroutine
    !
+   character(lchlen) function DB_path(dir_,job_,db_)
+     implicit none
+     character(*)      :: dir_,job_,db_
+     DB_path=" "
+     if (len_trim(dir_)>0) DB_path=trim(dir_)//"/"
+     if (len_trim(job_)>0) DB_path=trim(DB_path)//trim(job_)//"/"
+      DB_path=trim(DB_path)//trim(db_)
+   end function
+   !
    subroutine cp_file(file_,dest_,ierr_)
      use stderr,         ONLY:cstr
      implicit none

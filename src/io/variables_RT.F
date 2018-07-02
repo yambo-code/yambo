@@ -55,7 +55,7 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc
- logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic,l_disk_flag
  real(SP)              :: RT_life_extrap_decay_time
  character(lchlen)     :: ch
  !
@@ -179,7 +179,7 @@ integer function variables_RT(ID,local_description,what)
    ! GPL_EXCLUDE_END
    !
    if (l_OBS.or.l_carriers) call LOCAL_IO_variables(OBS_RT_IO_t)
-   if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
+   if (l_G)                 call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -204,21 +204,23 @@ integer function variables_RT(ID,local_description,what)
    !   
    call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_Update_Time_Step,DB_L0=l_disk_flag,VAR=' [dT] Time-Dependent Time step   :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   if (ver_is_gt_or_eq(ID,revision=14112)) then
+   if (l_disk_flag) then
      i_desc=i_desc+1
-     call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     if (ver_is_gt_or_eq(ID,revision=14112)) then
+       i_desc=i_desc+1
+       call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     endif
    endif
    ! ... for RESTART purposes...
    call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)

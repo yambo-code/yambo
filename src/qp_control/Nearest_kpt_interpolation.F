@@ -63,7 +63,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
 #endif
  !
 #if defined _YPP_RT
- write_message=what=="RT0"
+ write_message=what=="RT setup"
 #endif
  !
  if (what=="QUIET") write_message=.FALSE.
@@ -124,7 +124,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  if(write_message) then
    call msg('nrs','['//trim(what)//'] Kpts covered exactly  [o/o]:',real(nk_exact)/real(Nko)*100._SP)
    if (nk_interpolated>0) then
-     call msg('sr','['//what//'] Nighbours         :',n_neigh)
+     call msg('sr','['//what//'] Neighbours        :',n_neigh)
      call msg('sr','['//what//'] Kpts covered [o/o]:',real(nk_interpolated)/real(Nko)*100._SP)
    endif
  endif

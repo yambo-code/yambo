@@ -193,15 +193,8 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
            endif
            !
-#if defined _RT
-           if (l_real_time_magn_dipoles) then
-             if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
-             if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
-               if (abs(Ev_m_Ec)<=Dipole_Energy_treshold_) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=cZERO
-               if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor*Ev_m_Ec_QP/Ev_m_Ec
-             endif
-           endif
-#endif
+           !
+           !
            !
          endif
          !

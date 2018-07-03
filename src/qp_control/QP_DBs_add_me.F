@@ -134,7 +134,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
              dE=qp_to_add%E(i_sp)-qp_to_add%E_bare(i_sp)
              qp%E(i_s)=qp%E(i_s)-dE+qp_to_add%Z(i_sp)*dE
            endif
-           qp%Z(i_s)=qp%Z(i_s)+qp_to_add%Z(i_sp) 
+           qp%Z(i_s)=1.+(qp%Z(i_s)-1.)+(qp_to_add%Z(i_sp)-1.)
          endif
        else
          if (plan_EWZG(4)) then

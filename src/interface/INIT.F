@@ -1228,7 +1228,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Setup logicals which are not runlevels
      !
-     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP")
+     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP").or.STRING_match(trim(BSK_mode),"IP")
      l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
      l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
      l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")

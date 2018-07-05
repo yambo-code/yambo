@@ -79,8 +79,6 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      do i_d=1,qp2merge(i_db)%n_descs
        qp( n_GROUNDS )%description( i_d+1 )= qp2merge(i_db)%description(i_d)
      enddo
-     do i_d=1,qp( n_GROUNDS )%n_descs
-     enddo
      !
    endif
    !

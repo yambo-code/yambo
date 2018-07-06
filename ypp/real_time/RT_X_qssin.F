@@ -23,7 +23,7 @@
 !
 subroutine RT_X_qssin
  !
- use YPP_real_time,  ONLY:Pol%F_t,RT_conf,Use_FFT,i_t_start,i_t_end
+ use YPP_real_time,  ONLY:RT_P_t,RT_conf,Use_FFT,i_t_start,i_t_end
  use pars,           ONLY:SP,DP,pi,schlen
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1
  use com,            ONLY:error
@@ -49,7 +49,8 @@ subroutine RT_X_qssin
  call section("=",'Second order susceptibility')
  !
  ! Implementation based on JCP 127, 154114 (2007)
- !=================================================
+ !
+ !=========================
  !
  ! Field: Definitions & Allocation
  i_Probe=1
@@ -85,20 +86,18 @@ subroutine RT_X_qssin
  do i_w = 1, RT_conf%W_n_steps
    freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)-((i_w-1)*W_step+RT_conf%W_range(1)),0._SP)
  enddo
- !
-! call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),RT_conf%W_n_steps,&
-!&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
-!&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
+ call RT_1D_Fourier_Transform('T2W',' (E_m field)',freqs,E_m(:),RT_conf%W_n_steps,&
+&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
  !
  E_p=(0._DP,0._DP) ! E(Wo+W), where Wo is the field frequency   
  freqs=(0._SP,0._SP)
  do i_w = 1, RT_conf%W_n_steps
    freqs(i_w)=cmplx(Efield(i_Probe)%frequency(1)+(i_w-1)*W_step+RT_conf%W_range(1),0._SP)
  enddo
- !
-! call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),RT_conf%W_n_steps,&
-!&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
-!&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
+ call RT_1D_Fourier_Transform('T2W',' (E_p field)',freqs,E_p(:),RT_conf%W_n_steps,&
+&                             E_t(i_t_start:i_t_end),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                             (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
  !
  ! Field: Convolution
  !
@@ -129,9 +128,9 @@ subroutine RT_X_qssin
    if (i_c==2) FT_title=' (Y axis)'
    if (i_c==3) FT_title=' (Z axis)'
    !
-!   call RT_1D_Fourier_Transform('T2W',FT_title,outfreqs,X_irrep(:,i_c),nfreqs,&
-!&                               RT_P_t(i_t_start:i_t_end,i_c),RT_conf%T_n_steps,RT_conf%delta_T,&
-!&                               (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
+   call RT_1D_Fourier_Transform('T2W',FT_title,outfreqs,X_irrep(:,i_c),nfreqs,&
+&                               RT_P_t(i_t_start:i_t_end,i_c),RT_conf%T_n_steps,RT_conf%delta_T,&
+&                               (i_t_start-1)*RT_conf%delta_T,Use_FFT,1)
    !
  enddo
  !

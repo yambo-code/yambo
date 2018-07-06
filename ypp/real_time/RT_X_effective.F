@@ -24,9 +24,9 @@
 subroutine RT_X_effective(en)
  !
  use pars,           ONLY:SP,lchlen,pi,schlen,cZERO
- use YPP_real_time,  ONLY:Pol%F_t,Pump_path,N_probes,Probe_path,RT_OBSERVABLES_IO,&
+ use YPP_real_time,  ONLY:RT_P_t,Pump_path,N_probes,Probe_path,RT_IO_J_and_P,&
 &                         max_n_of_paths,Use_FFT,RT_conf,N_pumps,N_probe_frequencies,X_order,&
-&                         l_RT_X_inversion,l_skip_OBS_IO
+&                         l_RT_X_inversion,l_skip_pol_and_curr_IO
  use units,          ONLY:HA2EV,SVCMm12VMm1,AU2VMm1,AUT2FS
  use electrons,      ONLY:levels
  use com,            ONLY:jobstr,msg,error
@@ -106,8 +106,8 @@ subroutine RT_X_effective(en)
  !
  if (N_pumps>0) then
    jobstr=trim(Pump_path)
-   call RT_OBSERVABLES_IO(what='JP',IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
-   RT_P_pump=real(Pol%F_t(:,1:3),SP)
+   call RT_IO_J_and_P(IO_error=IO_error,COM_=NONE,mesg=trim(Pump_path))
+   RT_P_pump=real(RT_P_t(:,1:3),SP)
    Pump_Frequency=Efield(i_Pump)%frequency(1)
    min_X_order=0
  endif
@@ -123,8 +123,8 @@ subroutine RT_X_effective(en)
  do i_f=1,N_probes
    !
    jobstr=trim(Probe_path(i_f))
-   if (i_f==1) call RT_OBSERVABLES_IO(what='JP',IO_error=IO_error,COM_=LOG, mesg=trim(jobstr))
-   if (i_f> 1) call RT_OBSERVABLES_IO(what='JP',IO_error=IO_error,COM_=NONE,mesg=trim(jobstr))
+   if (i_f==1) call RT_IO_J_and_P(IO_error=IO_error,COM_=LOG, mesg=trim(jobstr))
+   if (i_f> 1) call RT_IO_J_and_P(IO_error=IO_error,COM_=NONE,mesg=trim(jobstr))
    !
    if (IO_error) call error("J_and_P databases I/O error")
    !
@@ -137,7 +137,7 @@ subroutine RT_X_effective(en)
 &                 abs(Efield_probe%intensity-Efield(i_Probe)%intensity)>1.E-5/))) Probe_consistency_error=.TRUE.
    endif
    !
-   RT_P_probe(:,i_f,:)=real(Pol%F_t(:,1:3),SP)-RT_P_pump(:,:)
+   RT_P_probe(:,i_f,:)=real(RT_P_t(:,1:3),SP)-RT_P_pump(:,:)
    !
    do i_fp=1,Efield(i_Probe)%n_frequencies
      if (N_probes==1) Probe_Frequency(i_fp)=field_frequency(Efield(i_Probe),i_fp)
@@ -151,7 +151,7 @@ subroutine RT_X_effective(en)
  ! In the case of a PUMPED P(t) I rwite on file the difference
  ! P(t)-P_pump(t) to see the oscillations of the Probe induced component
  !
- if (N_pumps>0.and.N_probes==1.and..not.l_skip_OBS_IO) then
+ if (N_pumps>0.and.N_probes==1.and..not.l_skip_pol_and_curr_IO) then
    !
    call RT_output("open P_minus")
    !
@@ -238,9 +238,9 @@ subroutine RT_X_effective(en)
    !
    RT_conf%W_range=RT_conf%W_range(2)*(/-1.,1./)
    !
-   Pol%F_t(:,1:3)=RT_P_probe(:,1,:)
+   RT_P_t(:,1:3)=RT_P_probe(:,1,:)
    !
-   call RT_OBSERVABLES_damp_and_write()
+   call RT_dump_and_write_JP()
    !
    call RT_X_LRR_real_field(en)
    !
@@ -402,6 +402,7 @@ subroutine RT_X_effective(en)
          !
          ! Note that the X are plotted as a function of the DETUNING=W_probe-W_pump
          !
+         call RT_output(what="initialize")
          call RT_output(what="open "//trim(X_file_name) )
          !
          do i_fp=1,N_probe_frequencies

@@ -57,8 +57,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,l_RTpump_manual,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,RT_conf
- use nl_optics,      ONLY:NL_damping
  use real_time,      ONLY:RT_bands
+#endif
+#if defined _YPP_NL 
+ use nl_optics,      ONLY:NL_damping
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH

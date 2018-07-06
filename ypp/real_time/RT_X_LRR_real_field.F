@@ -27,7 +27,7 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP_real_time,  ONLY:Pol,RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
+ use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
  use pars,           ONLY:SP,pi,cI,cZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
@@ -122,7 +122,7 @@ subroutine RT_X_LRR_real_field(en)
  !--------------------------------
  if (maxval( abs(ElField%F_w(:,:)) )<epsilon(1._SP)) call error("Null Electric Field in this time-range. Increase it.")
  !
- ! Damp and (eventually) remove the asymptotic limit of RT_P_t
+ ! Damp and (eventually) remove the asymptotic limit of Pol
  !
  do i_p_dir=1,3
    if (l_rm_asympt_limit) Pol%F_t(:,i_p_dir)= Pol%F_t(:,i_p_dir)-Pol%F_t(RT_conf%T_n_steps,i_p_dir)

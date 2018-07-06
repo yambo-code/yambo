@@ -23,6 +23,7 @@
 !
 subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
+ use units,          ONLY:FS2AUT
  use YPP,            ONLY:l_plot,l_map_WFs,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,&
 &                         l_free_hole,l_fix_syms,l_excitons,l_exc_wf,l_fix_save,&
 &                         l_amplitude,l_bands,l_bxsf,l_bz_grids,l_current,BANDS_bands,&
@@ -53,8 +54,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
-&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,l_RTpump_manual,&
+&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
+&                         l_NL_X,RT_conf
+ use nl_optics,      ONLY:NL_damping
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_ELPH
@@ -82,7 +85,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
 #if defined _YPP_NL
  integer, external::io_NL

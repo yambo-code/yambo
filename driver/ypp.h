@@ -84,7 +84,6 @@
   {"DESC",    " ","         opt#1 l => opt#2 [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
   {"DESC",    " ","         opt#1 d => opt#2 [(t)ime]",0,0,0,0,0}, 
 #endif
-if
 #if defined _YPP_NL
   {"nonlinear","u","Non-linear response analysis",0,0,0,0,0}, 
 #endif

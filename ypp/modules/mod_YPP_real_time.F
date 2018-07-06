@@ -94,6 +94,8 @@ module YPP_real_time
  integer, parameter:: max_n_of_paths=100
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
+ character(3) :: RT_p_format   
+ !
  !
  ! (RT) carriers
  !

@@ -42,7 +42,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
  use parallel_m,     ONLY:master_cpu
- use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
+ use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD_CL
 
  !
  implicit none
@@ -116,7 +116,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      io_err=io_Overlaps(X,ID)
    endif
    !
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2/),ID=ID)
    io_err=io_Overlaps(X,ID)
    !
  endif

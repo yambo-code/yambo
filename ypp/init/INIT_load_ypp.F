@@ -33,7 +33,7 @@ subroutine ypp_INIT_load(defs)
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               Eh_pumped_pair_BZ_width
+&                               Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
 #endif
 #if defined _YPP_ELPH

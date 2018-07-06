@@ -41,7 +41,8 @@ subroutine YPP_SET_defaults()
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
 &                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes   ,l_RT_occupations,&
-&                         l_RT_time  ,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order
+&                         l_RT_time  ,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
+&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
@@ -209,9 +210,11 @@ subroutine YPP_SET_defaults()
  Eh_pumped_Nel=1._SP
  !
  !FERMI FUNCTION PUMP
+ !
  Eh_mu   =(/-0.001_SP/HA2EV,0.001_SP/HA2EV/)
  Eh_temp =(/0._SP/HA2EV,0._SP/HA2EV/)
  h_mu_autotune_thr = 0._SP
+ !
  !TR abs
  !
  RT_p_format="3col" 

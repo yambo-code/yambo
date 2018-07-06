@@ -27,7 +27,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO
- use units,      ONLY:HA2EV,FS2AUT
+ use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
@@ -109,7 +109,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,                                                  &
+&                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
@@ -593,7 +593,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
  OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
  SAVE_G_history=.FALSE.
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT

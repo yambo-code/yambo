@@ -146,7 +146,7 @@ module fields
        !
        select case( trim(E_field%ef_name) )
        case('STATIC')
-         if (order==0 ) f_t(i_field)=T_i
+         if (order==0 ) f_t(i_field)=T
          if (order==1 ) f_t(i_field)=1._SP
          if (order==2 ) f_t(i_field)=0._SP
        case('SIN')
@@ -165,16 +165,16 @@ module fields
          c =  6._SP/T_0**2
          !
          damp_func=1._SP
-         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
          !
          do i_fr=1,E_field%n_frequencies     
            !
-           W_i=field_frequency(E_field,i_fr)
-           WT_i=W_i*T_i+fr_shift(i_field)
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
            !
-           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WT_i)-1._SP)/W_i
-           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WT_i)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WT_i)
+           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WtimesT)-1._SP)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WtimesT)
            if (order==-1) f_t(i_field)=-2
            !
          enddo 
@@ -188,9 +188,9 @@ module fields
          c =  6._SP/T_0**2
          !
          damp_func=1._SP
-         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
          !
-         if (order==0 ) f_t(i_field)=damp_func*T_i
+         if (order==0 ) f_t(i_field)=damp_func*T
          if (order==1 ) f_t(i_field)=damp_func
          if (order==2 ) f_t(i_field)=0._SP
          !

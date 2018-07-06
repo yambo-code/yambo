@@ -145,7 +145,8 @@ subroutine PARALLEL_collisions( k, COLL )
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_live_message
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,&
+&                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  use interfaces,    ONLY:PARALLEL_check_phase_space

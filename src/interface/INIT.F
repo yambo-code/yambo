@@ -150,8 +150,14 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
  what_is_running='YAMBO_RT'
 #endif
+#if defined _NL
+ what_is_running='YAMBO_NL'
+#endif
 #if defined _MAGNETIC
  what_is_running='YAMBO_MAGNETIC'
+#endif
+#if defined _ELECTRIC
+ what_is_running='YAMBO_ELECTRIC'
 #endif
 #if defined _QED
  what_is_running='YAMBO_QED'
@@ -185,6 +191,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(4),type=4)
  endif
  !
+ ! Presets (local)
+ !
+ call QP_reset(qp)
+ call W_reset(Xxcw)
+ call X_reset(Xbsk)
+ !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
    call initinfio(defs,11)
@@ -197,12 +209,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call logicalson
    return
  endif
- !
- ! Presets (local)
- !
- call QP_reset(qp)
- call W_reset(Xxcw)
- call X_reset(Xbsk)
  !
  ! First vars loading
  ! 
@@ -523,6 +529,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
+ if(l_sc_run) then
+   call CPU_activate("X_q_0")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
+ endif
+ !
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then
    call CPU_activate("SE")
    call initactivate(1,'SE_Threads')
@@ -546,6 +556,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_eval_collisions .or. l_real_time) then
    call CPU_activate("RT")
    call initactivate(1,'RT_Threads')
+ endif
+#endif
+ !
+#if defined _NL
+ if (l_nl_optics) then
+   call CPU_activate("NL")
+   call initactivate(1,'NL_Threads')
  endif
 #endif
  !
@@ -596,6 +613,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! ALDA/LRC Tddft
    if (l_alda_fxc) call initactivate(1,'FxcGRLc')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
+   if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
  endif
  !
@@ -606,6 +624,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+   call initactivate(1,'DrClassic')
    !
    call INIT_QP_ctl_switch('X')
    !
@@ -618,6 +637,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_END
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
+#if defined _NL | defined _ELECTRIC
+   call initactivate(1,'EvPolarization FrSndOrd')
+#endif
    !
  endif
  !
@@ -969,6 +991,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
+#if defined _NL
+ if (l_nl_optics) then
+   call initactivate(1,'FFTGvecs NLBands NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
+   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd InducedField') 
+   call initactivate(1,'ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Damp ExtF_kind ExtF_Tstart')
+   call init_QP_ctl_switch('G')
+ endif
+#endif
+ !
 #if defined _MAGNETIC
  !
  ! Magnetic
@@ -1180,10 +1211,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
        ! Davide: Why this ? Can't I do SC-IP calculation with v_HXC=0 ?
-       if (trim(H_potential)=="IP") H_potential="DEFAULT"
+       if (STRING_match(H_potential,"IP")) H_potential="DEFAULT"
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
+#endif
+#if defined _NL
+       l_nl_optics=runlevel_is_on('nloptics')
 #endif
 #if defined  _ELPH  
        if (.not.CLOSE_Gs) then
@@ -1232,10 +1266,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
      l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
      l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")
+     l_pf_fxc     = STRING_match(Chi_mode,'PF')      
      l_bs_fxc     = STRING_match(trim(Chi_mode),"BSFXC").or.STRING_match(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
-     l_td_hf      = STRING_match(trim(BSK_mode),"HF")
-     l_W_eh       = STRING_match(trim(BSK_mode),"SEX")
+     l_td_hf      = trim(BSK_mode)=="HF"
+     l_W_eh       = trim(BSK_mode)=="SEX"
      !
    end subroutine logicalson
    !
@@ -1453,6 +1488,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          ! V_resp=7
          ! V_real_time=8
          ! V_parallel=9
+         ! V_nl_optics=10
          ! V_all=99
          !
          if ( trim(rstr_piece(i1)) == 'infver' ) then
@@ -1473,6 +1509,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
                infile_verbosity=V_resp
              case ('rt')
                infile_verbosity=V_real_time
+             case ('nl')
+               infile_verbosity=V_nl_optics
              case ('par')
                infile_verbosity=V_parallel
              case ('all')
@@ -1548,6 +1586,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            !
            if((trim(rstr_piece(i1+1)) == 'alda').or.&
 &             (trim(rstr_piece(i1+1)) == 'lrc').or.&
+&             (trim(rstr_piece(i1+1)) == 'pf').or.&
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
            if(l_bse)   call initactivate(1,'bsk')

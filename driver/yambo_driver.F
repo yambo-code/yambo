@@ -32,7 +32,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr,l_nl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -282,6 +282,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
    !
  endif
+ !
+#if defined _NL
+ if (     l_nl_optics) call NL_driver(en,X(:2),k,q)
+#endif
  !
  ! GPL_EXCLUDE_START
  !

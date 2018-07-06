@@ -67,15 +67,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD,&
+&                         l_X_terminator,DIP_S
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
-#if defined _RT || defined _SC
- use drivers,        ONLY:l_real_time,l_sc_run
+#if defined _RT || defined _SC || defined _NL
+ use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
  use com,            ONLY:secnm
 #endif
 #if defined _RT
@@ -110,8 +110,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! I/O
  !
- integer           :: ID,io_err
+ integer           :: ID,ID_S,io_err
  integer, external :: io_DIPOLES
+ integer, external :: io_Overlaps
  !
  call timing('Dipoles',OPR='start')
  !
@@ -155,7 +156,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.l_evaluating_em1s)
  !
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) &
+&   Dipole_bands_ordered=.false.
 #endif
 #if defined _QED 
  if (l_elphoton_corr) Dipole_bands_ordered=.false.
@@ -226,8 +228,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  call timing('Dipoles',OPR='stop')
  !
-#if defined _SC || defined _RT
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
+#if defined _SC || defined _RT || defined _NL
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) return
 #endif
 #if defined _QED
  if (l_elphoton_corr) return
@@ -255,6 +257,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! GPL_EXCLUDE_START
  !
+ if (use_covariant_approach) call X_alloc('DIP_S')
+ !
 #if defined _RT
  if (l_real_time_magn_dipoles) then
    call X_alloc('DIP_orbital')
@@ -273,6 +277,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    subroutine DIPOLES_IO(read_or_write)
      !
      use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu,PAR_COM_RL_INDEX
+     use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -283,11 +288,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (.not.io_DIP) return 
      !
+     if (trim(global_gauge)=="velocity") return
+     !
      reading=trim(read_or_write)=="read"
      writing=trim(read_or_write)=="write".and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0.and.&
 &                                             PAR_COM_RL_INDEX%CPU_id==0
      !
      ID=0
+     ID_S=0
+     !
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
@@ -306,6 +315,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_Overlaps(X,ID_S)
+       endif
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -314,6 +327,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_err+io_Overlaps(X,ID_S)
+       endif
      endif
      !
      ! In case io_err is /=0 all CPU have to sincronize before starting
@@ -324,7 +341,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (io_err==0) then
        !
        if (reading) IO_ACTION=OP_RD_CL
-       if (writing) IO_ACTION=OP_APP_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
@@ -335,6 +352,14 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           enddo
          endif
        enddo
+       if(use_covariant_approach.and.(write_header.or.reading)) then
+         do ik=1,Xk%nbz
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
+             io_err=io_err+io_Overlaps(X,ID_S)
+           enddo
+         enddo
+       endif
        !
      endif
      !
@@ -363,13 +388,17 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        endif
      endif
 #endif
-     !
-#if defined _SC || defined _RT
-     if (l_sc_run.or.l_real_time) then
+#if defined _SC || defined _RT || defined _NL
+     if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
 #endif
+     !
+     if(use_covariant_approach) then
+       call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
+       DIP_S=cZERO
+     endif
      !
      ! GPL_EXCLUDE_END
      !

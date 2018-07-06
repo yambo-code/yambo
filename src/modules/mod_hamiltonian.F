@@ -99,6 +99,7 @@ module hamiltonian
    !
    subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
+     use drivers,        ONLY:l_nl_optics
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc

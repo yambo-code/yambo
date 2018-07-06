@@ -185,6 +185,10 @@ subroutine PARALLEL_collisions( k, COLL )
      if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
    endif
    !
+   if (l_par_NL) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
+   endif
+   !
    ! l_par_SE is for LAMB
    if (l_par_SE.or.l_par_SC) then
      if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
@@ -198,7 +202,7 @@ subroutine PARALLEL_collisions( k, COLL )
      !
      PAR_IND_G_k%element_1D(i_k)=.TRUE.
      !
-     if (.not.l_par_SE) then
+     if ( (.not.l_par_SE) .and. (.not.l_PAR_NL) ) then
        !
        do i_q=1,nqbz
          !

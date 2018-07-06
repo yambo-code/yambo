@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_start_and_restart(X,E)
+subroutine SC_start_and_restart(X,E,Xk)
  !
  use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_sp_pol,n_spin
@@ -30,7 +30,7 @@ subroutine SC_start_and_restart(X,E)
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:nkibz
+ use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
 &                         WF_G_max,WF_Go_indx,E_reference,l_sc_V_is_local,      &
@@ -41,15 +41,17 @@ subroutine SC_start_and_restart(X,E)
 &                         l_oep_iterative,rho_convergence,E_convergence,        &
 &                         SC_rho_threshold,SC_iterations,l_SC_cycle,            &
 &                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,  &
-&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence
+&                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use X_m,            ONLY:X_t
  use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  !
 #include<memory.h>
+ !
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
+ type(bz_samp)::Xk
  !
  ! Workspace I/O
  !
@@ -65,6 +67,7 @@ subroutine SC_start_and_restart(X,E)
  call parser('Mean_Potential', l_Mean_Potential)
  call parser('SCdiag',         l_SC_diagonal)
  call parser('SCnlMix',        l_SC_nl_mix)
+ call parser('FrozeDensity',   l_froze_density)
  !
  ! Preconditioning
  !=================
@@ -78,6 +81,14 @@ subroutine SC_start_and_restart(X,E)
 #if defined _MAGNETIC
  !
  if (l_sc_magnetic) call MAG_initial_check()
+ !
+#endif
+ !
+#if defined _ELECTRIC
+ !
+ call ELECTR_initial_check(Xk)
+ !
+ if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
 #endif
  !

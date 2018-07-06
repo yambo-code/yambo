@@ -82,7 +82,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_JPSM_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+#endif
+#if defined _YPP_NL
+ integer, external::io_NL
+ integer          ::io_NonLinear
 #endif
  !
  ! What is running ?
@@ -96,6 +100,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
+#endif
+#if defined _YPP_NL
+ what_is_running='YPP_NL'
 #endif
  !
  if (FINALIZE) then
@@ -138,6 +145,17 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! 
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_KB_abinit_err=io_KB_abinit(ID)
+ !
+#endif        
+ !
+#if defined _YPP_NL
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_Nonlinear=io_NL(ID)
+ !
+ if(io_Nonlinear==0) then
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
+ endif
  !
 #endif
  !
@@ -269,6 +287,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
+     l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
+     l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
    endif
    !
    ! GPL_EXCLUDE_END
@@ -325,6 +345,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
+     if (l_RTpump_manual) call initactivate(1,'Select_manual')
    endif
    !
    ! GPL_EXCLUDE_END
@@ -388,6 +409,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
+ l_RTpump_manual    = runlevel_is_on('Select_manual')
+ l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
@@ -544,6 +567,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                      R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
      !
    endif
+   if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
  endif
  if (l_RealTime) then
    !
@@ -565,6 +589,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
+ endif
+#endif
+ !
+#if defined _YPP_NL
+ if(l_NL_X) then
+   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
  endif
 #endif
  !

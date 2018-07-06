@@ -54,6 +54,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
+  case("Non_Linear") 
+     call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu
@@ -97,7 +99,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      use stderr,      ONLY:string_remove
      use vec_operate, ONLY:sort
      use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
-&                          PAR_EH_range,PAR_K_range,PAR_n_G_vectors,&
+&                          PAR_EH_range,PAR_K_range,PAR_n_freqs,PAR_n_G_vectors,&
 &                          PARALLEL_default_mode,master_cpu
      !
      ! "c" -> PAR_n_c_bands(2)-PAR_n_c_bands(1)+1
@@ -107,6 +109,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      ! "q" -> PAR_Q_range(2)- PAR_Q_range(1)+1
      ! "qp"-> PAR_QP_range
      ! "eh"-> PAR_EH_range
+     ! "w" -> PAR_n_freqs
      ! "g" -> PAR_n_G_vectors
      !
      integer      :: N_fields,i_f,VALS(N_fields),VALS_sorted(N_fields),&
@@ -131,6 +134,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
        if (trim(ch)=="q" ) VALS(i_f)=PAR_Q_range(2)-PAR_Q_range(1)+1
        if (trim(ch)=="qp") VALS(i_f)=PAR_QP_range
        if (trim(ch)=="eh") VALS(i_f)=PAR_EH_range
+       if (trim(ch)=="w ") VALS(i_f)=PAR_n_freqs
      enddo
      !
      VALS_sorted=VALS

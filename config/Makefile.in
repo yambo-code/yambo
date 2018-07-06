@@ -74,13 +74,14 @@ PH_PROJ  = yambo_ph ypp_ph
 SC_PROJ  = yambo_sc ypp_sc
 MAG_PROJ = yambo_magnetic ypp_magnetic
 RT_PROJ  = yambo_rt ypp_rt
+NL_PROJ  = yambo_nl ypp_nl
 RTE_PROJ = yambo_rt yambo_qed yambo_pl ypp_rt
 KERR_PROJ= yambo_kerr
-ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(TESTS)
-BROKEN   =
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS)
+BROKEN   = yambo_electric
 TESTS    = 
 SCRIPTS  = ydb.pl
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -110,6 +111,9 @@ PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
 PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian sc \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+
+PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
+PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
@@ -135,6 +139,10 @@ YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control s
                      pol_function qp bse collisions hamiltonian 
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
+YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+                     pol_function qp bse collisions hamiltonian nloptics 
+YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+                     pol_function qp bse collisions hamiltonian nloptics 
 
 .PHONY: interfaces
 
@@ -154,6 +162,8 @@ magn-project:
 	for target in $(MAG_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rt-project:
 	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+nl-project:
+	for target in $(NL_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rtext-project:
 	for target in $(RTE_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
@@ -223,6 +233,9 @@ yambo: libs
 yambo_magnetic: libs
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_MAGNETIC -D_SC"; $(mksrc)
 	@+X2DO="yambo_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_MAGNETIC -D_SC"; $(mkx)
+yambo_electric: libs
+	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELECTRIC -D_SC"; $(mksrc)
+	@+X2DO="yambo_electric"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_ELECTRIC -D_SC"; $(mkx)
 yambo_kerr: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mksrc)
 	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_ELPH -D_KERR"; $(mkx)
@@ -235,6 +248,9 @@ yambo_pl: libs
 yambo_rt: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH"; $(mkx)
+yambo_nl: libs
+	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
+	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT -D_ELPH"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; ADF="-D_ELPH"; $(mkx)
@@ -279,6 +295,11 @@ ypp_rt: libs
 	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
 	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
+ypp_nl: libs
+	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
+	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
+	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF=" -D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
 ypp_sc: libs
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC"; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; $(mk_ypp_src)
@@ -326,6 +347,7 @@ define make_message
  for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
+ for target in $(NL_PROJ);   do echo " [nl-project] $$target"   ; done;echo;\
  for target in $(RTE_PROJ);  do echo " [rtext-project] $$target"; done;echo;\
  for target in $(KERR_PROJ); do echo " [kerr-project] $$target" ; done;echo;\
  for target in $(UTILS);     do echo " [utils] $$target"        ; done;echo;\

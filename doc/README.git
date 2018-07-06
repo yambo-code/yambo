@@ -9,6 +9,10 @@ Branches list clean-up
 =======================
 git remote prune origin
 
+Tags list update
+================
+git fetch --tags --all
+
 status
 ==========
 >git status #show status of local branch

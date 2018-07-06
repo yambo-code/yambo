@@ -98,6 +98,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
  !
 #endif
  !
@@ -110,6 +111,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
  !
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
@@ -122,7 +124,11 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'RTdos',        '[R] Post-Processing kind: 2D DOS, function of time and energy')
  !
 #endif
- !
+!
+#if defined _YPP_NL
+ call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+#endif
+!
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
@@ -159,6 +165,11 @@ subroutine ypp_INIT_load(defs)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
  call it(defs,'RTpumpBZWd', '[RT] Size if the K reagion width',Eh_pumped_pair_BZ_width)
+ !
+ ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
+ call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
+ call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
+ call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')

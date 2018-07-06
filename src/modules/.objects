@@ -1,4 +1,4 @@
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
 COMMON_objects = mod_hamiltonian.o mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o
 #endif
 #if defined _SC
@@ -6,6 +6,12 @@ SC_objects       = mod_SC.o
 #endif
 #if defined _RT
 RT_objects       = mod_real_time.o mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o
+#endif
+#if defined _NL
+NL_objects       = mod_real_time.o mod_fields.o mod_electric.o mod_nl_optics.o
+#endif
+#if defined _ELECTRIC
+ELECTRIC_objects =  mod_real_time.o mod_fields.o mod_electric.o 
 #endif
 #if defined _MAGNETIC
 MAGNETIC_objects = mod_real_time.o mod_magnetic.o
@@ -30,5 +36,5 @@ objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_paralle
        mod_QP.o mod_collision_el.o \
        mod_BS.o mod_BS_solvers.o mod_QP_CTL.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
        mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \
-       $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) \
+       $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) $(NL_objects) $(ELECTRIC_objects) \
        mod_debug.o mod_interfaces.o SET_logicals.o SET_defaults.o $(PL_objects)

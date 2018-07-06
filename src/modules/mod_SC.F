@@ -58,7 +58,7 @@ module SC
  logical           :: l_SC_update_W
  logical           :: l_SC_diagonal
  logical           :: l_SC_nl_mix
-
+ logical           :: l_froze_density
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -98,7 +98,7 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use drivers,        ONLY:l_sc_srpa,l_sc_sex,l_sc_coh
      use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
@@ -118,7 +118,6 @@ module SC
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc

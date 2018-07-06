@@ -75,7 +75,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
-&                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
+&                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
@@ -97,7 +97,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
 #endif
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -115,6 +115,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
+#endif
+#if defined _NL
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+ use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -457,6 +461,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP
+ FXC_PF_alpha="CUR"
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
  FXC_is_retarded=.FALSE.
@@ -545,6 +550,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! RT dynamics 
  !
  l_RT_CCA_Kernel=.FALSE.
+ l_update_SOC=.FALSE.
  !
  ! RT current 
  !
@@ -587,7 +593,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
  OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
  SAVE_G_history=.FALSE.
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
@@ -600,6 +606,23 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  RT_o_file_short= " "
  RT_headings= " "
  YPP_append=" "
+ !
+#endif
+ !
+#if defined _NL
+ !
+ NE_tot_time   =  -1._SP*FS2AUT 
+ Integrator_name='INVINT'
+ NL_correlation="IPA"
+ NL_er         =(/0.3_SP,8._SP/)/HA2EV
+ n_frequencies =80
+ NL_damping    =0.2_SP/HA2EV
+ NL_LRC_alpha  =0._SP
+ call Efield_reset(Efield(1))
+ Efield(1)%frequency=0.1_SP/HA2EV
+ Efield(1)%intensity=1000._SP*kWCMm22AU
+ Efield(1)%FWHM=2._SP*FS2AUT
+ Efield(1)%ef_name="SOFTSIN"
  !
 #endif
  !

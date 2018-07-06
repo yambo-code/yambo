@@ -77,12 +77,16 @@
   {"WFs",     "w","WFs:(p)erturbative SOC mapping or (c)onvertion to new I/O format",0,0,1,0,0},
   {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0},
 #if defined _YPP_RT
-  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space]",0,0,1,0,0}, 
+  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(m)anual,(f)ermi]",0,0,1,0,0}, 
   {"RealTime","t","TD-polarization [(X)response,Tr(a)bs]",0,0,1,0,0}, 
   {"RealTime","n","NEQ plot opt#1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
   {"DESC",    " ","         opt#1 o => opt#2 [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
   {"DESC",    " ","         opt#1 l => opt#2 [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
   {"DESC",    " ","         opt#1 d => opt#2 [(t)ime]",0,0,0,0,0}, 
+#endif
+if
+#if defined _YPP_NL
+  {"nonlinear","u","Non-linear response analysis",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

@@ -114,7 +114,7 @@ integer function io_HF_and_locXC(ID)
    !
    allocate(QP_table_disk(3+n_sp_pol-1,QP_n_states_disk))
    !
-   if(write_is_on(ID)) then
+   if (write_is_on(ID)) then
      do i_qp1=1,QP_n_states_disk
        QP_table_disk(:,i_qp1)=QP_table(i_qp1,:)
      enddo
@@ -149,7 +149,7 @@ integer function io_HF_and_locXC(ID)
    deallocate(QP_table_disk)
    !
    io_HF_and_locXC=io_status(ID)
-   if (io_HF_and_locXC/=0.or.io_mode(ID)==DUMP) goto 1
+   if (io_HF_and_locXC/=0) goto 1
    !
    allocate(QP_disk(QP_n_states_disk))
    !

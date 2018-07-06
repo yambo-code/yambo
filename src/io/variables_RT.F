@@ -86,7 +86,7 @@ integer function variables_RT(ID,local_description,what)
  call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
  i_desc=i_desc+1
  call io_elemental(ID,CH0=RT_potential,&
-&     VAR=' [RT] Potential                  :',CHECK=.true.,OP=(/"=="/),&
+&     VAR=' [RT] Potential                  :',WARN=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

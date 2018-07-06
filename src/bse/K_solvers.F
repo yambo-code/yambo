@@ -42,14 +42,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use X_m,            ONLY:Epsilon_ij
  use KERR,           ONLY:BSS_KERR_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels) ::Ken
@@ -161,14 +157,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  YAMBO_FREE(X_drude_term)
  YAMBO_FREE(Epsilon_ii)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  YAMBO_FREE(Epsilon_ij)
  call BSS_KERR_free( )
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _PL
  call BSS_PL_free( )

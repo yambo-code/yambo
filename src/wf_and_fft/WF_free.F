@@ -23,7 +23,8 @@
 !
 subroutine WF_free(WF,keep_fft)
  !
- use wave_func,ONLY:WAVEs,QUIET_free
+ use wave_func,  ONLY:WAVEs,QUIET_free
+ use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
  !
 #include<memory.h>
  !
@@ -36,6 +37,9 @@ subroutine WF_free(WF,keep_fft)
  !
  keep_fft_=.false.
  if (present(keep_fft)) keep_fft_=keep_fft
+ !
+ ! USPP
+ if (pp_is_uspp) call PP_uspp_free()
  !
  if (.not.allocated(WF%c)) return
  !

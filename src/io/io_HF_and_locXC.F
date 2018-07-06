@@ -39,10 +39,10 @@ integer function io_HF_and_locXC(ID)
  ! Work Space
  !
  integer           :: QP_nb_disk,QP_nk_disk,&
-&                     QP_n_states_disk,bands(2),i_qp1,i_qp2,i_found,MAP(QP_n_states)
+&                     QP_n_states_disk,bands(2),i_qp1,i_qp2,i_found
  character(schlen) :: QP_xc_FUNCTIONAL
  !
- integer,     allocatable :: QP_table_disk(:,:)
+ integer,     allocatable :: QP_table_disk(:,:),MAP(:)
  complex(SP), allocatable :: QP_disk(:)
  !
  if (.not.io_HF) then
@@ -112,24 +112,26 @@ integer function io_HF_and_locXC(ID)
    !
    ! QP_table
    !
-   allocate(QP_table_disk(3+n_sp_pol-1,QP_n_states))
+   allocate(QP_table_disk(3+n_sp_pol-1,QP_n_states_disk))
    !
-   if (write_is_on(ID)) then
+   if(write_is_on(ID)) then
      do i_qp1=1,QP_n_states_disk
        QP_table_disk(:,i_qp1)=QP_table(i_qp1,:)
      enddo
    endif
    !
-   call io_bulk(ID,VAR="QP_table",VAR_SZ=(/3+n_sp_pol-1,QP_n_states_disk/))
-   call io_bulk(ID,I2=QP_table_disk,IPOS=(/1,1/))
+   call io_bulk(ID,VAR="QP_table",VAR_SZ=shape(QP_table_disk))
+   call io_bulk(ID,I2=QP_table_disk)
    !
    if (read_is_on(ID)) then
+     allocate(MAP(QP_n_states))
      if(io_mode(ID)==DUMP) then
        YAMBO_FREE(QP_state)
        YAMBO_ALLOC(QP_state,(QP_nb_disk,QP_nk_disk))
        QP_state=.false.
        do i_qp1=1,QP_n_states_disk
          QP_state(QP_table_disk(1,i_qp1),QP_table_disk(3,i_qp1))=.true.
+         MAP(i_qp1)=i_qp1
        enddo
      else
        i_found=0
@@ -147,7 +149,7 @@ integer function io_HF_and_locXC(ID)
    deallocate(QP_table_disk)
    !
    io_HF_and_locXC=io_status(ID)
-   if (io_HF_and_locXC/=0) goto 1
+   if (io_HF_and_locXC/=0.or.io_mode(ID)==DUMP) goto 1
    !
    allocate(QP_disk(QP_n_states_disk))
    !
@@ -168,7 +170,9 @@ integer function io_HF_and_locXC(ID)
    !
  endif
  !
-1 call io_disconnect(ID=ID)
+1 if(allocated(MAP)) deallocate(MAP)
+ !
+ call io_disconnect(ID=ID)
  !
  if (io_HF) call timing('io_HF',OPR='stop')
  !

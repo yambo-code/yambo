@@ -57,9 +57,14 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
+#if defined _RT
+  {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
+  {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(d)ef,(ip)",0,0,0,0,0},
+  {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
+#endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/(p/f)i]",0,0,1,0,0},                      
+  {"bss",    "y","BSE solver [opt=h/d/s/(p/f)i]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
   {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
@@ -70,15 +75,17 @@
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
   {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
-#if defined _RT
-  {"tdBSE", "q","Real-time Bethe-Salpter Equation ",0,0,0,0,0}, 
+#if defined _NL
+  {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
 #endif
-#if defined _ELPH 
-  {"corrtp", "c","Correlation [opt=e(lectrons)/p(honons)/b(oth)]",0,0,1,0,0},    
-  {"ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0,0},    
+#if defined _RT
+  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
 #endif
 #if defined _RT
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
+#endif
+#if defined _SCALAPACK
+  {"slktest",  "s","ScaLapacK test",0,0,0,0,0},
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };

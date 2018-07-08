@@ -214,6 +214,7 @@ subroutine K_Haydock(iq,W)
      Vnp1(i_g)%fragment= cZERO
      !
      V0(i_g)%fragment  = cZERO
+     if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment = cZERO
      !
 #if defined _KERR
      if(l_kerr) V0_kerr(i_g)%fragment  = cZERO

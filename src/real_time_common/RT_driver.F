@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,NE_tot_time,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_RT_update_Energies,l_NE_with_fields
+&                         l_RT_update_Energies,l_NE_with_fields,l_update_SOC
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot,Efield

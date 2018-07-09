@@ -23,7 +23,7 @@
 !
 module D_lattice
  !
- use pars,        ONLY:SP,lchlen,cONE,cZERO,cI
+ use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
  use com,         ONLY:error
  !
 #include<memory.h>

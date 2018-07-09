@@ -1,4 +1,4 @@
-!
+
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -230,40 +230,45 @@ subroutine K_Haydock(iq,W)
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
-   !
-   if(trim(global_gauge)=="velocity") then
-     V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
-     call K_multiply_by_V(V_tmp,V0,1)
-   endif
-   !
-#if defined _KERR
-   if(l_kerr) then
-     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
-     if(trim(global_gauge)=="velocity") then
-       V_tmp(i_g)%fragment(:) = V0_kerr(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
-       call K_multiply_by_V(V_tmp,V0_kerr,1)
-     endif
-   endif
-#endif
-   !
+   if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
  enddo
+ ! 
+ do i_g = 1,BS_nT_grps
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+#if defined _MPI
+   if(trim(global_gauge)=="velocity") call PP_bcast(V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+   if(trim(global_gauge)=="length")   call PP_bcast(   V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+#endif
+ enddo
+ !
+ if(trim(global_gauge)=="velocity") call K_multiply_by_V(V_tmp,V0,1)
+ !
+#if defined _KERR
+ if(l_kerr) then
+   !
+   do i_g=1,BS_nT_grps
+     if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
+     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
+     if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0_kerr(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+   enddo
+   !
+   do i_g = 1,BS_nT_grps
+     if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+#if defined _MPI
+     if(trim(global_gauge)=="velocity") call PP_bcast(  V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(trim(global_gauge)=="length")   call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+#endif
+   enddo
+   !
+   if(trim(global_gauge)=="velocity") call K_multiply_by_V(V_tmp,V0_kerr,1)
+   !
+ endif
+#endif
  !
  if(trim(global_gauge)=="velocity") then
    call BS_HAYVEC_free(V_tmp)
    deallocate(V_tmp)
  endif
- !
- do i_g = 1,BS_nT_grps
-   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-#if defined _MPI
-   call PP_bcast(V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-#endif    
-   !
-#if defined _KERR && defined _MPI
-   if(l_kerr) call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-#endif
-   !
- end do
  !
  if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
    !

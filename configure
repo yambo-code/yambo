@@ -2774,7 +2774,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 SVERSION="4"
 SSUBVERSION="3"
 SPATCHLEVEL="0"
-SREVISION="122"
+SREVISION="123"
 BASE_REV="15593"
 SHASH="2a68ced"
 
@@ -13227,7 +13227,7 @@ fi
 # ============================================================================
 ac_config_headers="$ac_config_headers include/c_defs.h:include/c_defs.h.in"
 
-ac_config_files="$ac_config_files config/setup config/Makefile config/report src/wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh driver/codever.h driver/editor.h src/external_c/.objects"
+ac_config_files="$ac_config_files config/setup config/Makefile config/report src/wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/objects_store.sh driver/codever.h driver/editor.h src/external_c/.objects"
 
 #
 cat >confcache <<\_ACEOF
@@ -13929,7 +13929,6 @@ do
     "src/wf_and_fft/sgfft.F") CONFIG_FILES="$CONFIG_FILES src/wf_and_fft/sgfft.F" ;;
     "sbin/make_makefile.sh") CONFIG_FILES="$CONFIG_FILES sbin/make_makefile.sh" ;;
     "sbin/objects_store.sh") CONFIG_FILES="$CONFIG_FILES sbin/objects_store.sh" ;;
-    "sbin/generate_gpl.sh") CONFIG_FILES="$CONFIG_FILES sbin/generate_gpl.sh" ;;
     "driver/codever.h") CONFIG_FILES="$CONFIG_FILES driver/codever.h" ;;
     "driver/editor.h") CONFIG_FILES="$CONFIG_FILES driver/editor.h" ;;
     "src/external_c/.objects") CONFIG_FILES="$CONFIG_FILES src/external_c/.objects" ;;

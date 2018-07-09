@@ -32,16 +32,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
  !
- ! GPL_EXCLUDE_START 
- !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
- ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
+ ! 3) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
- ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
+ ! 4) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
- !
- ! GPL_EXCLUDE_END 
  !
  ! PARALLEL structure: The dipoles are based on a "derived" structure. 
  !                     K-points are driven by these communicators and indexes:
@@ -192,15 +188,11 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call DIPOLES_alloc()
    !
-   ! GPL_EXCLUDE_START 
-   !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
-   !
-   ! GPL_EXCLUDE_END 
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
    !
@@ -255,9 +247,9 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  call X_alloc('DIP_P')
 #endif
  !
- ! GPL_EXCLUDE_START
- !
  if (use_covariant_approach) call X_alloc('DIP_S')
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _RT
  if (l_real_time_magn_dipoles) then
@@ -395,12 +387,12 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      endif
 #endif
      !
+     ! GPL_EXCLUDE_END
+     !
      if(use_covariant_approach) then
        call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
    end subroutine DIPOLES_alloc
    !

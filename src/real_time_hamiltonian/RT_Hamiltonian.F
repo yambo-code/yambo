@@ -136,6 +136,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      V_xc_sc=V_xc-REF_V_xc_sc
    endif
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Update of SOC term
    !
    if(n_spinor==2 .and. l_update_SOC ) then
@@ -155,6 +157,8 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
    endif
    !
+   ! GPL_EXCLUDE_END
+   !
    ! Add H_nl_sc to Ho_plus_Sigma 
    !---------------------------------
    do ik=1,nXkibz 
@@ -167,7 +171,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      if (n_spinor==2 ) then
        if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
        if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
+       ! GPL_EXCLUDE_START
        if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
+       ! GPL_EXCLUDE_END    
      endif
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)

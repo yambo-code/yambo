@@ -1,9 +1,9 @@
 MAGNETIC_objects = 
-NL_objects = 
 #if defined _MAGNETIC
 MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MAG_A_phase.o \
                    MAG_pseudo_nl.o MAG_H_pseudo.o
 #endif
+NL_objects = 
 #if defined _NL
 NL_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 
 #endif

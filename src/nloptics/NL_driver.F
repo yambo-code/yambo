@@ -154,8 +154,6 @@ subroutine NL_driver(E,X,k,q)
  !===================
  if(l_use_DIPOLES) call Build_DIP_bz(k,E,X(1))
  !
- ! GPL_EXCLUDE_START
- !
  ! Load Collisions if necessary
  ! ============================
  if(io_COLLs) then
@@ -174,8 +172,6 @@ subroutine NL_driver(E,X,k,q)
    if(l_use_Hxc_collisions)  call COLLISIONS_load(.false.)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Allocation
  ! ==================

@@ -126,6 +126,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! CURRENT
  !=========
  if (l_current) call electrons_current(Xk,Xen)

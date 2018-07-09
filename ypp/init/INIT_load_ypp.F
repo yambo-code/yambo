@@ -125,15 +125,15 @@ subroutine ypp_INIT_load(defs)
  !
 #endif
 !
-#if defined _YPP_NL
- call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
-#endif
-!
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+#if defined _YPP_NL
+ call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+#endif
  !
  ! Temperatures
  !

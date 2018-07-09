@@ -55,11 +55,7 @@ subroutine K_kerr_IP(iq,w)
  !
  n_SOC=1
  !
- ! GPL_EXCLUDE_START
- !
  if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
- !
- ! GPL_EXCLUDE_END
  !
  B_Hall=cZERO
  !
@@ -86,11 +82,7 @@ subroutine K_kerr_IP(iq,w)
      !
      if (E_SOC_nbands==0) E_plus_W=E_plus_W0
      !
-     ! GPL_EXCLUDE_START
-     !
      if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
-     !
-     ! GPL_EXCLUDE_END
      !
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp_pol))
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp_pol)

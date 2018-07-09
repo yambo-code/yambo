@@ -26,7 +26,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  ! The subroutine calculate Ho + V + Sigma and the fields E_tot, E_ext, E_ks
  !
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[rho_ref]+V_xc[rho]
- !
+ !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels,n_sp_pol,n_spinor
@@ -153,15 +153,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
  endif
  !
- !
- ! GPL_EXCLUDE_START
- !
  ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
  ! ======================================================
  if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
  if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
- !
- ! GPL_EXCLUDE_END
  !
  ! Build the Hamiltonian
  ! =====================
@@ -210,6 +205,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
        !
      endif                                                         
      !
+     call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !
      ! GPL_EXCLUDE_START
      !

@@ -334,8 +334,6 @@ subroutine k_grids(en,k,Xk,q)
    !
  end if
  !
- ! GPL_EXCLUDE_START
- !
  if (l_high_sym_pts) then
    !
    call section('+',"== Special Points for the "//trim(lattice)//" lattice ==")
@@ -344,8 +342,6 @@ subroutine k_grids(en,k,Xk,q)
    call k_special(.FALSE.)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  live_timing_is_on=.true.
  !

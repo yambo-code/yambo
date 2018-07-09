@@ -83,6 +83,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !==================================
  call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
  !
+ ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
  !
@@ -95,6 +96,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2

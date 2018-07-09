@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_relaxation_logicals( )
+subroutine RT_relaxation_logicals( )
  !
  ! Here I define the logicals the govermns the relaxation procedure
  !
@@ -62,4 +62,4 @@ integer function RT_relaxation_logicals( )
  !========================
  l_RT_relaxation_update_reference=RT_TIME_status(NE_i_time)> 1
  !
-end function RT_relaxation_logicals
+end subroutine RT_relaxation_logicals

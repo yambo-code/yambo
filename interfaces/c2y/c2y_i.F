@@ -60,7 +60,7 @@ integer function c2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  c2y_i =0
  ncpu  =np
  myid  =pid
- call SET_defaults(instr,od,od,'','')
+ call SET_defaults(instr,od,od,'')
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)

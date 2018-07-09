@@ -127,7 +127,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! Initial Start & Restart 
  !==========================
  ! 
- call SC_start_and_restart(X,E)
+ call SC_start_and_restart(X,E,Xk)
  !
 #if defined _ELECTRIC
  !

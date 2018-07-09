@@ -84,6 +84,7 @@ subroutine K_slepc_driver(iq,W)
  real(SP),   pointer     :: BS_R_PL(:,:)       => null()
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),pointer     :: BS_R_right_kerr(:) => null()
+ complex(SP),pointer     :: BS_overlap(:,:) => null()
  !
  real(SP),allocatable    :: BS_E_real(:)        ! Resonant K
  complex(SP),allocatable :: BS_corrections(:,:) ! Perturbative BSE
@@ -221,7 +222,7 @@ subroutine K_slepc_driver(iq,W)
    !====================================
    if (K_is_not_hermitian) then
      !
-     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right)
+     call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
    else
      !

@@ -415,8 +415,7 @@ module com
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
-     if(ncpu>1) call MPI_Abort( )
-!mpi_comm_world,1)
+     if(ncpu>1) call MPI_Abort(mpi_comm_world,1)
 #endif
      stop
      !

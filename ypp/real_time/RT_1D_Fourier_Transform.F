@@ -62,7 +62,7 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
    !
    if (l_live_timing) call live_timing('FT@'//trim(FT%title)//':',RT%W_n_steps*FT%N)
    !
-   FT%F_w=(0._DP,0._DP)
+   FT%F_w=cZERO_DP
    !
    ! Numerical FT
    !
@@ -74,12 +74,14 @@ subroutine RT_1D_Fourier_Transform(mode,FT,RT,I_sign)
        fft_sign =-1
        !
 #if defined _FFTW
-        call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign,fftw_plan)
+       call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign,fftw_plan)
 #else
-        call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign)
+       call fft_1d(FT%F_t(:,i_c),RT%T_n_steps,fft_sign)
 #endif
        !
        FT%F_w(:,i_c)=conjg(FT%F_t(:RT%W_n_steps,i_c))
+       !
+       if (l_live_timing) call live_timing(steps=RT%W_n_steps)
        !
      else
        !

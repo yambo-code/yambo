@@ -135,6 +135,7 @@ module LIVE_t
      !
      call live_timing_activate(message,steps)
      memory_steps=0
+     !
      if (present(DEPTH)) then
        memory_steps=int(steps*DEPTH)
      endif

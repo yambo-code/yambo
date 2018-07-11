@@ -17,11 +17,6 @@
 # [@TIME_profile_check@] Run-Time timing profile 
 # [@MEM_profile_check@] Run-Time memory profile 
 #
-# - SCRIPTS -
-#
-# [@YDB_str@] YDB: Yambo DataBase
-# [@YPY_str@] YAMBOpy: Yambo Python scripts
-# 
 # - PARALLEL SUPPORT -
 #
 # [@MPI_check@] MPI

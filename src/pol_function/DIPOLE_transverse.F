@@ -194,8 +194,6 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
            endif
            !
            !
-           !
-           !
          endif
          !
          !======

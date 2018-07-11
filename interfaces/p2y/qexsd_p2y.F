@@ -2000,12 +2000,9 @@ CONTAINS
       endif
 
       !
-      ! wfc readin
+      ! wfc reading
       !
       if ( present(wfc) ) then
-         !
-         !npwx = SIZE( wfc, 1 ) / npol_
-         !npwx = igwx
          !
          if (npol_ >2 .and. .not. present(ipol) ) then
             ierr=71 ; return
@@ -2025,6 +2022,15 @@ CONTAINS
          !
          if ( ibnde-ibnds+1 > size(wfc,2) .or. ibnds < 1 .or. ibnde > nbnd_ ) then
             ierr=80 ; return
+         endif
+         !
+         ! skip initial wfcs if needed
+         !
+         if (file_is_forbin) then
+            do jj = 1, ibnds-1
+               read (iuni,iostat=ierr)
+               if (ierr/=0) return
+            enddo
          endif
          !
          ! actual read

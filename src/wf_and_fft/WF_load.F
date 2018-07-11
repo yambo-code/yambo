@@ -30,7 +30,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
- use R_lattice,     ONLY:nkibz,kibz_vec,b
+ use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
 #if defined _FFTW
@@ -302,7 +302,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if (pp_is_uspp) then
        !
-       call c2a(b,kibz_vec(ikibz,:),xk,mode="ki2c")
+       call c2a(b,k_pt(ikibz,:),xk,mode="ki2c")
        xk=xk/real(tpiba,SP)
        !
        npwk=wf_nc_k(ikibz)

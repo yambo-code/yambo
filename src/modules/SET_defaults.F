@@ -227,7 +227,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !stderr
  !
  repfile=" "
- write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
+ write (logfile,'(2a)') trim(com_path),'/l_stderr'
+ write (*,*) trim(logfile),trim(com_path)
+ stop
  !
  !Timing
  !

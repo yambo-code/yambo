@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -32,13 +32,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db,INTERP_k
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
- use stderr,         ONLY:real2ch,intc
+ use stderr,         ONLY:real2ch,intc,write_to_log,write_to_log_default
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,INTERPOLATION_reset, &
 &                         electrons_bands_interpolate,INTERP_RT_id
+ use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
  !
@@ -127,15 +128,19 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    YAMBO_ALLOC(fit_on_grid,(RT_bands(1):RT_bands(2),INTERP_k%nibz,n_sp_pol,n_T_steps))
  endif
  !
+ call live_timing('Interpolation procedure',n_T_steps)
+ !
  do i_T=1,n_T_steps
+   !
+   write_to_log=.FALSE.
    !
    call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    Real_Nhole=0._SP
    Real_Nel=0._SP
    do i_RT=1,RT_carriers%nstates
+     !
      ib      =RT_carriers%table(i_RT,1)
-     !ik_small_grid=RT%table(i_RT,2)
      ik      =RT_carriers%table(i_RT,3)
      i_sp_pol=RT_carriers%table(i_RT,4)
      !
@@ -206,7 +211,13 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    endif
    !
+   write_to_log=write_to_log_default
+   !
+   call live_timing(steps=1)
+   !
  enddo 
+ !
+ call live_timing( )
  !
  if (.not.l_nearest_neig_interp) call INTERPOLATION_reset( )
  !
@@ -227,6 +238,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    headings(5)='occ(dw)'
    n_values=5
  endif
+ !
+ call live_timing('Output',n_T_steps)
  !
  do i_T=1,n_T_steps
    !
@@ -276,7 +289,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call of_open_close(file_name_rt)
    !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing( )
  !
  YAMBO_FREE(fit_on_circuit)
  YAMBO_FREE(fit_on_grid)

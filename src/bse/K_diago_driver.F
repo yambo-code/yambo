@@ -38,22 +38,15 @@ subroutine K_diago_driver(iq,W)
  use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
- !
- ! GPL_EXCLUDE_START
- !
+ use timing_m,       ONLY:timing
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_KERR_free
 #endif
+ !
 #if defined _PL
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
- !
- ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
  !
 #include<memory.h>
@@ -91,9 +84,7 @@ subroutine K_diago_driver(iq,W)
  !
  integer                 :: io_err,ID
  !
-#if defined _TIMING
  call timing('Diagonalization Solver',OPR='start')
-#endif
  BSS_n_eig = BS_H_dim
  !  
  ! Sectioning
@@ -171,8 +162,6 @@ subroutine K_diago_driver(iq,W)
      !
      call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
 #endif
@@ -181,13 +170,9 @@ subroutine K_diago_driver(iq,W)
      if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    else
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
-     !
-     ! GPL_EXCLUDE_START
      !
 #if defined _PL
      if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
@@ -197,13 +182,9 @@ subroutine K_diago_driver(iq,W)
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    endif
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
  ! Define perturbative corrections
  !=================================
@@ -223,8 +204,6 @@ subroutine K_diago_driver(iq,W)
    BS_E=BS_E-aimag(BS_corrections(1,:))
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Now I calculate epsilon
  !=========================
@@ -247,20 +226,15 @@ subroutine K_diago_driver(iq,W)
  !=======
  call local_free( )
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _PL
  call BSS_PL_free( )
 #endif
+ !
 #if defined _KERR
  call BSS_KERR_free( )
 #endif
  !
- ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
  call timing('Diagonalization Solver',OPR='stop')
-#endif
  !
  contains
    !
@@ -279,16 +253,13 @@ subroutine K_diago_driver(iq,W)
        YAMBO_ALLOC(BS_R_left,(BS_H_dim))
        YAMBO_ALLOC(BS_R_right,(BS_H_dim))
        !
-       ! GPL_EXCLUDE_START
-       !
 #if defined _KERR
        YAMBO_ALLOC_P(BS_R_right_kerr,(BS_H_dim))
 #endif
+       !
 #if defined _PL
        YAMBO_ALLOC_P(BS_R_PL,(2,BS_H_dim))
 #endif
-       !
-       ! GPL_EXCLUDE_END
        !
      case("V")
        !

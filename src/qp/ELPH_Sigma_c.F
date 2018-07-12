@@ -56,9 +56,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        elph_branches,E_k_plus_q,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
  use interfaces,    ONLY:PARALLEL_global_indexes
  use functions,     ONLY:Fermi_fnc_derivative
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
 #include<memory.h>
  type(levels)  ::en
@@ -80,9 +78,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
-#if defined _TIMING
  call timing('GW(e-p)',OPR='start')
-#endif
  !
  ! Zeroing
  !
@@ -503,8 +499,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))
  enddo
-#if defined _TIMING
  call timing('GW(e-p)',OPR='stop')
-#endif
  !
 end subroutine

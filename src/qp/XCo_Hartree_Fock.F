@@ -41,13 +41,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use drivers,       ONLY:l_sc_exx
  use SC,            ONLY:it_now
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
+ use pseudo,        ONLY:becp, pp_is_uspp
+ use qe_pseudo_m,   ONLY:beccopy,bec_type
  !
 #include<memory.h>
  type(levels) ::E       
@@ -65,6 +65,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !QP list
  !
  integer              :: ig,i4(4)
+ integer              :: ikibz,i_sp_pol
  integer, external    :: QP_state_extract
  !
  ! Resets & basis setup
@@ -108,9 +109,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  endif
  !
-#if defined _TIMING
  call timing('HF',OPR='start')
-#endif
  !
  ! allocation again
  !
@@ -181,6 +180,26 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      isc%qs(1)=qindx_S(QP_table(i_qp,3),iq,2)
      iscp%qs=isc%qs
      !
+     if (pp_is_uspp) then
+        !
+        call beccopy( becp(isc%is(2),isc%is(4)),   isc%ibec )
+        !
+        ikibz=isc%os(2)
+        i_sp_pol=isc%os(4)
+        call PP_rotate_becp(isc%os, becp(ikibz,i_sp_pol), isc%obec)
+        !
+        call PP_scatterBamp_init(isc)
+        !
+        if (isc%is(1)/=iscp%is(1)) then
+           !
+           call beccopy( becp(iscp%is(2),iscp%is(4)), iscp%ibec )
+           call beccopy( isc%obec, iscp%obec)
+           call PP_scatterBamp_init(iscp)
+           !
+        endif
+        !
+     endif
+     !
      do jb=Sx_lower_band,Sx_upper_band
        !
        if (.not.PAR_IND_G_b%element_1D(jb)) cycle
@@ -223,15 +242,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  call elemental_collision_free(iscp) 
  YAMBO_FREE(local_rhotw)
  !
-#if defined _TIMING
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')
-#endif
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
-#if defined _TIMING
  call timing('HF(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

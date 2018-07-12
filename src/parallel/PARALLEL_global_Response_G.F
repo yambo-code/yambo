@@ -26,8 +26,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
- use com,           ONLY:warning
- use IO_m,          ONLY:io_RESPONSE,IO_and_Messaging_switch
+ use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
@@ -39,7 +38,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 &                        PAR_COM_Q_A2A,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Xk_bz_A2A, &
 &                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX,PAR_COM_VAL_INDEX
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q,PAR_IND_OVLP_ibz
  ! INDEX
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_DIPk_ibz_index,PAR_Q_index
  ! DIMENSIONS
@@ -81,6 +80,8 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_DIPOLES)
      call COMM_copy(PAR_COM_RL_A2A,PAR_COM_X_WORLD_RL_resolved)
    endif
+   call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
+   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_Xk_bz_A2A)
    !
    ! K-points (IBZ)
    !
@@ -107,6 +108,12 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
    YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   !
+#if defined _NL | defined _ELECTRIC
+   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
+   call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz_ID,&
+&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,PAR_Q_range,Xk,q)
+#endif
    !
    ! I/O privileges
    !
@@ -231,23 +238,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call OPENMP_set_threads(n_threads_in=n_threads_X)
    !
-   if (ENVIRONMENT=="Response_G_space") then
-     !
-     ! io_RESPONSE check
-     !
-     ! No X I/O is possible ONLY when the number of cpu's allocated with the "q" field
-     ! in the response function string is the same of the SE/RT/SC...string
-     !  
-     if (.not.io_RESPONSE) then
-       !
-       call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
-       !
-       if (CPU_structure(3)%CPU(1)/=CPU_structure(5)%CPU(1)) io_RESPONSE=.TRUE.
-       !
-       if (io_RESPONSE) call warning('Response function I/O forced. Different CPU for the "q" field in X and SE')
-       !
-     endif
-   endif
+   if (ENVIRONMENT=="Response_G_space") call PARALLEL_global_Response_IO( )
    !
  endif
  !

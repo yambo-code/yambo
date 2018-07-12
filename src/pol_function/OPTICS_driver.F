@@ -30,13 +30,14 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc,set_real_printed_length
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -58,7 +59,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! Work Space
  !
  integer          :: iw,iq,i_G_shift,n_output
- real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
+ real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,eval_eels,Macroscopic_CPU
  !
  integer,external :: O_select_q_and_G
@@ -101,6 +102,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,wv)
+   !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !
@@ -190,8 +195,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! BZ Double Grid
    !
    if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait
@@ -231,6 +235,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
      !
    endif
+   !
+   if (l_pf_fxc) then
+     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
+     if (abs(b_xc).le.1.e-5) then
+       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
+     else
+       forall(iw=1:wv%n_freqs) Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&               (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+     end if
+   end if
    !
    call of_open_close(eps_file_name,'oa')
    call of_open_close(eel_file_name,'oa')
@@ -331,6 +345,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    call FREQUENCIES_reset(wv,"all")
    call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q_table)
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+   endif
    !
  enddo
  !

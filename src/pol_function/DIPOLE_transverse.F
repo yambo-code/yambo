@@ -42,15 +42,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:error,msg
+ use timing_m,            ONLY:timing
 #if defined _RT
  use drivers,             ONLY:l_real_time
-#endif
-#if defined _SC || defined _RT
- use com,                 ONLY:secnm
-#endif
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -62,9 +56,6 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  ! Work Space
  !
  character(schlen)            :: live_t_string
-#if defined _SC || defined _RT
- logical                      :: l_evaluating_em1s 
-#endif
  logical                      :: l_eval_DIP_iR,l_eval_DIP_P,l_eval_DIP_P2,&
 &                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
@@ -79,12 +70,7 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  integer                      :: ID,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
-#if defined _TIMING
  call timing('DIPOLE_transverse',OPR='start')
-#endif
-#if defined _SC || defined _RT
- l_evaluating_em1s=index(secnm,"Dielectric")/=0
-#endif
  !
  call DIPOLE_kb_init(Xen,X,io_err,ID)
  !
@@ -224,6 +210,8 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
              if (abs(Ev_m_Ec)> Dipole_Energy_treshold_) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
            endif
            !
+           ! GPL_EXCLUDE_START
+           !
 #if defined _RT
            if (l_real_time_magn_dipoles) then
              if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
@@ -233,6 +221,8 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
              endif
            endif
 #endif
+           !
+           ! GPL_EXCLUDE_END
            !
          endif
          !
@@ -301,8 +291,6 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  call WF_free(WF)
  !
-#if defined _TIMING
  call timing('DIPOLE_transverse',OPR='stop')
-#endif
  !
 end subroutine Dipole_transverse

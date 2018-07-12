@@ -24,7 +24,7 @@
 subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  use pars,           ONLY:SP,schlen
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nkpts,BZ_DbGd_kpts,BZ_DbGd_nbands
+ use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nk_levels,BZ_DbGd_kpts,BZ_DbGd_nbands
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
@@ -44,11 +44,12 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
+ real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
  !
- l_DbGd=BZ_DbGd_tot_nkpts>0 .and. .not.l_RT_abs_yambo
+ l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -70,9 +71,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
-     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nkpts,n_sp_pol))
+     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
      E%f_DbGd=E%f_DbGd+E%df_DbGd
    endif
    !
@@ -91,7 +92,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
    call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
    !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nkpts)
+   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
    !
  endif
  !
@@ -143,7 +144,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     !
     l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
-    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nkpts,SP)
+    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &

@@ -65,9 +65,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
 #endif
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  type(PAR_matrix)     :: X_par
  type(levels)         :: Xen
@@ -121,9 +119,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
-#if defined _TIMING
  call timing('Xo (procedure)',OPR='start')
-#endif
  !
  ! Poles tabulation
  !==================
@@ -141,7 +137,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    YAMBO_ALLOC(X_poles_tab,(n_poles,4))
    !
    if (.not.force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,X%cg_percentual,X_Ein_poles,l_X_terminator)
-   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,0.0_SP,.FALSE.)
+   if (     force_bare_X_G) call FREQUENCIES_coarse_grid('X',X_poles,n_poles,0._SP,(/0.0_SP/),.FALSE.)
    !
    minmax_ehe=0._SP
    !
@@ -168,8 +164,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
 #if defined _ELPH
  !
- ! Green Functions must be all mapped to the Xw range so
- ! to be easily convoluted
+ ! Green Functions must be all mapped to the Xw range so to be easily convoluted
  !
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
@@ -192,7 +187,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- call msg('s','[X] NESTED openmp parallelism off')
+ !call msg('s','[X] NESTED openmp parallelism off')
 #  endif
  if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
@@ -336,10 +331,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  current_iq=iq
  n_threads_FFT=0
  !
-#if defined _TIMING
  call timing('Xo (procedure)',OPR='stop')
  call timing('Xo (REDUX)',OPR='start')
-#endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
@@ -348,9 +341,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    endif
  enddo
  !
-#if defined _TIMING
  call timing('Xo (REDUX)',OPR='stop')
-#endif
  !
  ! Populate the lower triangle/piece of Xo 
  !=========================================

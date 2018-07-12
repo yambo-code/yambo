@@ -31,9 +31,10 @@ module xc_functionals
  use libxc_funcs_m
  implicit none
  !
- integer     , public :: GS_xc_KIND
- integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public :: GS_exx_FRACTION, GS_exx_SCREENING
+ integer,  public:: GS_xc_KIND
+ integer,  public:: GS_xc_FUNCTIONAL
+ real(SP), public:: GS_exx_FRACTION, GS_exx_SCREENING
+ real(SP), public:: E_xc_val=0.0
  real(SP), public, allocatable:: magn(:,:)
  real(SP), public, allocatable:: F_xc(:,:,:)
  real(SP), public, allocatable:: V_xc(:,:)

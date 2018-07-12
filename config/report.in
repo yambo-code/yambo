@@ -17,6 +17,10 @@
 # [@TIME_profile_check@] Run-Time timing profile 
 # [@MEM_profile_check@] Run-Time memory profile 
 #
+# - SCRIPTS -
+#
+# [@YDB_str@] YDB: Yambo DataBase
+# [@YPY_str@] YAMBOpy: Yambo Python scripts
 # 
 # - PARALLEL SUPPORT -
 #
@@ -25,7 +29,7 @@
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
-#  I/O LIBS
+# > I/O
 #
 # [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
@@ -35,8 +39,7 @@
 #                 @NETCDFF_INCS@ @NETCDF_INCS@
 # [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@
 #                 @HDF5_INCS@
-#
-#  MATH LIBS
+# > MATH
 #
 # [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
 #                   @FFT_INCS@
@@ -48,15 +51,14 @@
 #                   @PETSC_INCS@ 
 # [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
-#
-#  OTHER LIBS
+# > OTHERs
 #
 # [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
 #                   @LIBXC_INCS@
 # [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
 #
-# - COMPILERS
+# - COMPILERS -
 #
 # FC kind = @FCKIND@ 
 # MPI kind= @MPIKIND@

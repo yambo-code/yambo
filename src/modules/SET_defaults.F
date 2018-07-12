@@ -22,20 +22,20 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
- !
+ ! 
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO,schlen
- use units,      ONLY:HA2EV,FS2AUT
+ use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
 &                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,X_is_integrated,&
+&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
 &                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys
+&                     X_use_lin_sys,X_DbGd_percentual
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -53,7 +53,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,&
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,&
 &                     filled_tresh,l_spin_orbit,n_spin_den,BZ_ASSOCIATED_nkpts,&
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
@@ -77,7 +77,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
 &                     BS_K_is_ALDA,BSE_mode
  use TDDFT,      ONLY:FXC_description,FXC_type,FXC_n_descs,FXC_n_g_corr,&
-&                     FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits,&
+&                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
@@ -99,8 +99,9 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
 &                     l_SC_nl_mix
 #endif
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
+ use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
  use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
@@ -109,20 +110,22 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
 &                     NE_tot_time,NE_MEM_treshold,EE_prefactor,EP_prefactor,              &
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
-&                     RT_Efit_lifetimes,                                                  &
+&                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
 &                     RT_ctl_db,RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
+#if defined _NL
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+ use fields,     ONLY:Efield,Efield_reset
+#endif
 #if defined _MAGNETIC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
 #endif
-#if defined _TIMING
  use timing_m,    ONLY:timing_allocate,nclockx
-#endif
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
  !
  implicit none
@@ -167,9 +170,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! Clocks
  !
-#if defined _TIMING
  call timing_allocate(nclockx)
-#endif
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
@@ -303,15 +304,13 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
  !
- ! Electrons
- !
  n_spin=1
  n_sp_pol=1
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
  BZ_DbGd_nbands=0
- BZ_DbGd_tot_nkpts=0
+ BZ_DbGd_tot_nk_levels=0
  BZ_ASSOCIATED_nkpts=0
  E_SOC_nbands=0
  filled_tresh=0.00001
@@ -363,6 +362,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use_g_space_approach       = .TRUE.
  force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
+ X_DbGd_percentual=1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
@@ -370,7 +370,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  skip_cond_sum_rule=.FALSE.
  eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
- X_is_integrated=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
  n_X_descs=0
@@ -480,6 +479,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  FXC_n_g_corr=1
  FXC_per_memstps=100._SP
  FXC_LRC_alpha=0._SP
+ FXC_PF_alpha="CUR"
  FXC_LRC_beta=0._SP
  FXC_SVD_digits=0
  FXC_is_retarded=.FALSE.
@@ -529,6 +529,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
+ H_potential="default"
  !
 #endif
  !
@@ -567,6 +568,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! RT dynamics 
  !
  l_RT_CCA_Kernel=.FALSE.
+ l_update_SOC=.FALSE.
  !
  ! RT current 
  !
@@ -614,6 +616,23 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
  SAVE_G_history=.FALSE.
+ !
+#endif
+ !
+#if defined _NL
+ !
+ NE_tot_time   =  -1._SP*FS2AUT 
+ Integrator_name='INVINT'
+ NL_correlation="IPA"
+ NL_er         =(/0.3_SP,8._SP/)/HA2EV
+ n_frequencies =80
+ NL_damping    =0.2_SP/HA2EV
+ NL_LRC_alpha  =0._SP
+ call Efield_reset(Efield(1))
+ Efield(1)%frequency=0.1_SP/HA2EV
+ Efield(1)%intensity=1000._SP*kWCMm22AU
+ Efield(1)%FWHM=2._SP*FS2AUT
+ Efield(1)%ef_name="SOFTSIN"
  !
 #endif
  !

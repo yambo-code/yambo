@@ -28,10 +28,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_m,            ONLY:io_control,REP,OP_APP_WR_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
-#if defined _TIMING
  use timing_m,        ONLY:timing
-#endif
- !
  implicit none                                              
  !
  character(*)                            :: what
@@ -46,18 +43,14 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  real(SP)  :: COLLISIONS_max
  !
  if (i_coll==0) then
-   ! GPL_EXCLUDE_START
    if(io_COLLs.and.master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
-   ! GPL_EXCLUDE_END
    return
  endif
  !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='start')
-#endif
  !
  l_COH      = index(what,"COH")     >0 
  l_HXC      = index(what,"HXC")     >0
@@ -111,8 +104,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    !
  enddo
  !
- ! GPL_EXCLUDE_START
- !
  if (IO_colls) then
    !
    call io_control(ACTION=OP_APP_WR_CL,SEC=(/2,3/),ID=ID)
@@ -122,10 +113,6 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
-#if defined _TIMING
  call timing('COLLISIONS_linearize_and_IO',OPR='stop')
-#endif
  !
 end subroutine COLLISIONS_linearize_and_IO

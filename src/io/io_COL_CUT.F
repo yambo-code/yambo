@@ -29,10 +29,7 @@ integer function io_COL_CUT(ID)
 &                         ng_closed,nqibz,bare_qpg,cut_description
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
 &                         io_elemental,io_status,io_bulk
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  integer :: ID
@@ -41,9 +38,7 @@ integer function io_COL_CUT(ID)
  !
  integer             ::CUT_RIM_ng,CUT_RIM_npts,wf_ng_db
  !
-#if defined _TIMING
  call timing('io_COL_CUT',OPR='start')
-#endif
  io_COL_CUT=io_connect(desc="cutoff",type=2,ID=ID)
  !
  if (io_COL_CUT/=0) goto 1
@@ -101,8 +96,6 @@ integer function io_COL_CUT(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_COL_CUT',OPR='stop')
-#endif
  !
 end function

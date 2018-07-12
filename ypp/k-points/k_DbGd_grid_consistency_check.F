@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
+subroutine k_DbGd_grid_consistency_check(iK_ref,k,E,k_DbGd,E_DbGd)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -29,6 +29,7 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
  use vec_operate,    ONLY:v_is_zero
  implicit none
  !
+ integer                      :: iK_ref(2)
  type(bz_samp), intent(in)    :: k,k_DbGd
  type(levels),  intent(in)    :: E
  type(levels),  intent(inout) :: E_DbGd
@@ -36,9 +37,9 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
  ! Work Space
  !
  integer :: ik,ik_DbGd,nb
- real(SP):: shifts(2)
+ real(SP):: shifts(2)=0.
  !
- k_DbGd_grid_consistency_check=-1
+ iK_ref=-1
  !
  nb=min(E%nb,E_DbGd%nb)
  !
@@ -50,6 +51,8 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
        shifts(1)=E%E(1,ik,1)-E_DbGd%E(1,ik_DbGd,1)
        shifts(2)=E%E(nb,ik,1)-E_DbGd%E(nb,ik_DbGd,1)
        !
+       iK_ref=(/ik,ik_DbGd/)
+       !
        exit  ik_loop
        !
      endif
@@ -57,13 +60,14 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_DbGd==E_DbGd%nk+1 ) return
- !
- k_DbGd_grid_consistency_check=ik_DbGd
+ if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) ) then
+   iK_ref=-1
+   return
+ endif
  !
  ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
  ! called without the DbGd loaded so the Fermi level has not been applied to E_DbGd.
  !
  E_DbGd%E(:,:,:)=E_DbGd%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
  !
-end function
+end subroutine

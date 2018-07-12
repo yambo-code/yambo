@@ -32,6 +32,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  use X_m,            ONLY:X_FILL_UP_matrix_only
  use D_lattice,      ONLY:i_space_inv
  use matrix,         ONLY:PAR_matrix,I_do_SND,I_do_RCV,TRANSFER_world,PAR_to_PAR_comm_NAME
+ use timing_m,       ONLY:timing
 #include<memory.h>
  !
  type(PAR_matrix), optional :: M_in
@@ -94,6 +95,8 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    PAR_to_PAR_comm_NAME="NONE"
  endif
  !
+ call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='start')
+ !
  ! Transfer World
  !
  if (present(COMM)) then
@@ -141,5 +144,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  endif
  !
  call COMM_reset(TRANSFER_world)
+ !
+ call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='stop')
  !
 end SUBROUTINE

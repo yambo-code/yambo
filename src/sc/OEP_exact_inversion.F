@@ -80,7 +80,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! 2:
  call IO_and_Messaging_switch("-report") 
- call X_irredux(X_mat,1,E,k,Xw,X)
+ !call X_irredux(X_mat,1,E,k,Xw,X)
  call IO_and_Messaging_switch("+report")
  ! 3:
  YAMBO_ALLOC(Xo_inverse,(X%ng-1,X%ng-1))

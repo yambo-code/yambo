@@ -83,12 +83,14 @@ integer function variables_RT(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
- i_desc=i_desc+1
- call io_elemental(ID,CH0=RT_potential,&
-&     VAR=' [RT] Potential                  :',WARN=.true.,OP=(/"=="/),&
-&     DESCRIPTION=local_description(i_desc))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ if (ver_is_gt_or_eq(ID,revision=15410)) then
+   call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
+   i_desc=i_desc+1
+   call io_elemental(ID,CH0=RT_potential,&
+&       VAR=' [RT] Potential                  :',WARN=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  ! GPL_EXCLUDE_START
  !

@@ -224,12 +224,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ID_logo=-1
  ID_logo_stderr=-1
  !
- !stderr
+ !LOG/REP files
  !
  repfile=" "
- write (logfile,'(2a)') trim(com_path),'/l_stderr'
- write (*,*) trim(logfile),trim(com_path)
- stop
+ logfile=" "
  !
  !Timing
  !

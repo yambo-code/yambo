@@ -48,7 +48,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
 &                         switch_off_runlevel,check_verbosity,V_nl_optics
- use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report,filename
  use vec_operate,    ONLY:v_norm
@@ -131,7 +131,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(initdefs)   ::defs
- character(lchlen)::jch,rch
  integer          ::i1
  !
  ! What is running ?
@@ -1037,32 +1036,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Report/Log Files
  !
- if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
- if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- if (log_as_a_file) then
-  if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
-  if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
-  if (ncpu>1) then
-    if (trim(jobstr)=='') write (logfile,'(a)')  trim(com_path)//'/LOG/l'
-    if (trim(jobstr)/='') write (logfile,'(2a)') trim(com_path)//'/LOG/l-',trim(jobstr)
-  endif
- endif
- do i1=1,nrnlvls
-   rch=repfile
-   if (rstatus(i1)/=0) then
-     write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
-     repfile=rch
-   endif
-   if (log_as_a_file) then
-     jch=logfile
-     if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
-     logfile=jch
-   endif
- enddo
- if (ncpu>1) then
-   jch=logfile
-   logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
- endif
+ call INIT_report_and_log_files()
  !
  ! Finalize
  !

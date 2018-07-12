@@ -138,6 +138,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    return
  endif
  !
+ ! LOG/REP files
+ !
+ call INIT_report_and_log_files()
+ !
  ! PARALLEL and I/O Setup 
  !=======================
  !

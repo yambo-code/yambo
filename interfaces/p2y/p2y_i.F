@@ -87,7 +87,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    endif
    !
  endif
-
  !
  ! LOGO
  !

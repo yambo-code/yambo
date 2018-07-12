@@ -40,7 +40,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
- use pars,           ONLY:schlen,lchlen
+ use pars,           ONLY:schlen
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spinor
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
@@ -50,7 +50,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         switch_off_runlevel,check_verbosity,V_nl_optics
  use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
-&                         write_the_logo,file_exists,rename_file,write_to_report,filename
+&                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
@@ -59,7 +59,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir,cp_file
+ use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:io_BS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
@@ -113,7 +113,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
  logical           :: OSTNTS_Vnl_included
- character(lchlen) :: infile_copy
  !
  integer, external :: io_Double_Grid
  !
@@ -226,14 +225,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Dump the input file
  !
  if (file_exists(trim(infile))) then
+   !
    call infile_dump()
-   if (len_trim(com_path)>0.and..not.infile_editing.and.trim(com_path)/=".") then
-     call mk_dir(com_path)
-     infile_copy=trim(com_path)//"/"//trim(filename(infile))//".in"
-     if (trim(jobstr)/='') infile_copy=trim(com_path)//"/"//trim(filename(infile))//"_"//trim(jobstr)//".in"
-     call cp_file(trim(infile),trim(infile_copy),io_err)
-     infile=infile_copy
-   endif
+   !
+   call INIT_input_file( )
+   !
  else if (.not.infile_editing) then
    infile='(none)'
  endif

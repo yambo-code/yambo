@@ -2,5 +2,5 @@ RT_objects=
 #if defined _RT
 RT_objects=INIT_DephMatrix.o
 #endif
-objs = INIT_load.o INIT.o INIT_QP.o  \
+objs = INIT_load.o INIT.o INIT_QP.o INIT_report_and_log_files.o INIT_input_file.o \
        INIT_q_points.o INIT_barriers.o INIT_QP_ctl_load.o INIT_QP_ctl_switch.o $(RT_objects)

@@ -174,6 +174,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    call infile_dump()
    !
+   call INIT_input_file( )
+   !
  endif
  !
  ! RunLevels on

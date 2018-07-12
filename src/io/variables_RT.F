@@ -30,6 +30,7 @@ integer function variables_RT(ID,local_description,what)
  use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
 &                         n_TIME_STEP_CONF_descriptions,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
+ use IO_m,           ONLY:variable_exist,write_is_on
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
@@ -83,7 +84,7 @@ integer function variables_RT(ID,local_description,what)
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
- if (ver_is_gt_or_eq(ID,revision=15410)) then
+ if (variable_exist(ID,"POTENTIAL").or.write_is_on(ID)) then
    call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
    i_desc=i_desc+1
    call io_elemental(ID,CH0=RT_potential,&

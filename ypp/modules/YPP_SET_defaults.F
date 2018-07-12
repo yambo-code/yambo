@@ -34,6 +34,9 @@ subroutine YPP_SET_defaults()
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
  use electrons,      ONLY:n_bands
+ use com,            ONLY:write_to_report
+ use stderr,         ONLY:write_to_log  
+ use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
@@ -52,6 +55,12 @@ subroutine YPP_SET_defaults()
 #endif
  !
  implicit none
+ !
+ ! Switch off all kind of logs (will be reactivated in INIT_ypp)
+ !
+ write_to_report   =.FALSE.   
+ live_timing_is_on =.FALSE.   
+ write_to_log      =.FALSE.   
  !
  ! DOS
  !

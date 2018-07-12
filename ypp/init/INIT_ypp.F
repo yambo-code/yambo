@@ -39,10 +39,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
- use stderr,         ONLY:string_split
+ use stderr,         ONLY:string_split,write_to_log  
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
- use LIVE_t,         ONLY:what_is_running
+ use LIVE_t,         ONLY:what_is_running,live_timing_is_on
  use parser_m,       ONLY:PARSER_array
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
@@ -700,6 +700,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call PARSER_array(mode="write",VAR="DbGd_DB1_paths",DESC="Paths to the SAVE folders with the Double Grid DB1",&
 &                    N=n_DbGd_DBs,M=1,CH_v=DbGd_DB1_paths(:n_DbGd_DBs,:))
  endif
+ !
+ ! LOG/REP files
+ !
+ call INIT_report_and_log_files()
+ live_timing_is_on =master_cpu
+ write_to_log      =master_cpu
+ !
+ ! Input file
  !
  if (infile_editing) then
    open(unit=12,file=trim(infile))

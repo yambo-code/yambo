@@ -30,12 +30,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 &                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
- use com,                 ONLY:msg,write_to_report,more_io_path,com_path
+ use com,                 ONLY:msg,more_io_path,com_path
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
- use LIVE_t,              ONLY:live_timing_is_on
- use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
 #if defined _YPP_RT
@@ -89,12 +87,6 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 #endif
  call SET_job_strings_and_dirs(js)
  !
- ! Switch off report file support
- !
- write_to_report   =.FALSE.
- live_timing_is_on =myid==0
- write_to_log      =myid==0
- !
  ! DB1
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
@@ -129,7 +121,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    return
  endif
  !
- ! INPUT FILE
+ ! INPUT FILE parsing
  !
  call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
@@ -137,10 +129,6 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    call ypp_finalize(" ")
    return
  endif
- !
- ! LOG/REP files
- !
- call INIT_report_and_log_files()
  !
  ! PARALLEL and I/O Setup 
  !=======================

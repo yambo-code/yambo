@@ -243,8 +243,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
       endif
 #endif
      !
-     ! GPL_EXCLUDE_END 
-     !
 #if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
@@ -255,6 +253,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
        call DIP_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
+     !
+     ! GPL_EXCLUDE_END 
      !
    end subroutine DIPOLES_alloc
    !
@@ -288,8 +288,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #endif
         !
-        ! GPL_EXCLUDE_END 
-        !
 #if defined _SC || defined _RT
         !
         if (l_sc_run.or.l_real_time) then
@@ -298,6 +296,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
           !
         endif
 #endif
+        !
+        ! GPL_EXCLUDE_END 
         !
       enddo
       !
@@ -321,13 +321,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &               DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)
             endif
 #endif
-            !
-            ! GPL_EXCLUDE_END  
-            !
 #if defined _SC || defined _RT
             if (l_sc_run.or.l_real_time) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
+            ! GPL_EXCLUDE_END  
             !
           endif
           do ic=iv+1,Dip%ib(2)
@@ -345,13 +343,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                 DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
               endif
 #endif
-              !
-              ! GPL_EXCLUDE_END 
-              !
 #if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif
+              !
+              ! GPL_EXCLUDE_END 
               !
             endif
           enddo

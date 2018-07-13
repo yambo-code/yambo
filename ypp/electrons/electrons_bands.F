@@ -297,10 +297,10 @@ subroutine electrons_bands(Xk,Xen)
    !
    do ik=1,CIRCUIT_k%nbz
      !
-     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-tmp_k)
-     if (ik<CIRCUIT_k%nbz) tmp_k=CIRCUIT_k%pt(ik,:)
+     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-tmp_k)
+     if (ik<CIRCUIT_k%nbz) tmp_k=CIRCUIT_k%pt(ik,:3)
      !
-     call k_transform(CIRCUIT_k%pt(ik,:),"iku")
+     call k_transform(CIRCUIT_k%pt(ik,:3),"iku")
      !
      if(n_spinor==2) then
        spin_values(1,:)=values(1)
@@ -317,7 +317,7 @@ subroutine electrons_bands(Xk,Xen)
          values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+&
 &                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
        endif
-       values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:)
+       values(nbands+2:nbands+4)=CIRCUIT_k%pt(ik,:3)
        call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) then
          of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
@@ -341,7 +341,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          do i1=1,2
            spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
-           spin_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
+           spin_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:3)
            call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
          !
@@ -349,7 +349,7 @@ subroutine electrons_bands(Xk,Xen)
          !
          do i1=1,3
            magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
-           magn_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:)
+           magn_values(nbands+2:nbands+4,i1)=CIRCUIT_k%pt(ik,:3)
            call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
        endif

@@ -418,8 +418,7 @@ module parallel_m
  end interface PP_redux_wait
  !
  interface PP_bcast
-   module procedure c0bcast,c1bcast,c2bcast,&
-&                   i0bcast
+   module procedure c0bcast,c1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
  end interface PP_bcast
  !
  interface PP_send_and_receive
@@ -1191,6 +1190,25 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine i1bcast(ival,node,COMM)
+     integer  :: ival(:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     call mpi_bcast(ival(1),size(ival),mpi_integer,node,LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
    subroutine c0bcast(cval,node,COMM)
      complex(SP):: cval
      integer, intent(in) :: node
@@ -1232,6 +1250,34 @@ module parallel_m
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
      !
      call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
+#endif
+   end subroutine
+   !
+   subroutine ch0bcast(chval,node,COMM)
+     character(len=*):: chval
+     integer, intent(in) :: node
+     integer, optional :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     integer::imsg(len(chval)), i
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     do i = 1, len(chval)
+       imsg(i) = ichar(chval(i:i))
+     enddo
+     !
+     call i1bcast(imsg,node,LOCAL_COMM)
+     !
+     do i = 1, len(chval)
+       chval(i:i) = char(imsg(i))
+     enddo
 #endif
    end subroutine
    !

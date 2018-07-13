@@ -32,7 +32,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
- use parallel_m,        ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
+ !use parallel_m,        ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
  !
  implicit none
  !
@@ -57,11 +57,12 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  DIP_S=cZERO
  !
- call live_timing("Overlaps:",PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
+ call live_timing("Overlaps:",Xk%nbz)
+ !call live_timing("Overlaps:",PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
  !
  do ikbz=1,Xk%nbz
    !
-   if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+   !if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
    !
    idx_k=k_map%k_map_inv(ikbz,:)
    !
@@ -113,7 +114,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          !
          do ib=1,Dip%ib(2)
            do ibp=1,Dip%ib(2)
-            !DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)=DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)+ &
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
                        &  Vstar_dot_V_omp(wf_ng*n_spinor,WF_ik(:wf_ng,:,ib,i_sp_pol),WF_shifted(:wf_ng,:,ibp,i_sp_pol)) 
            enddo ! ibp
@@ -130,8 +130,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call live_timing()
  !
- do i_sp_pol=1,n_sp_pol
-   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- enddo
+ !do i_sp_pol=1,n_sp_pol
+ !  call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !enddo
  !
 end subroutine Dipole_Overlaps

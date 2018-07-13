@@ -59,12 +59,6 @@ module electrons
  real(SP)                 :: Orbital_magn(3)
  real(SP)                 :: Itinerant_magn(3)
  !
- ! Minimum of the electronic density
- !
- logical :: eval_rho_max
- logical :: rho_max_is_def
- integer :: ir_rho_max
- !
  type levels
    integer         :: nb
    integer         :: nk

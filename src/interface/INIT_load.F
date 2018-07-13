@@ -170,9 +170,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
- ! GPL_INCLUDE_START
- call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
- ! GPL_INCLUDE_END
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
@@ -260,6 +257,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
  call it(defs,'HARRLvcs', '[HA] Hartree     RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange    RL components',QP_ng_Sx,G_unit)
+ call it('f',defs,'UseNLCC',  '[XC] If present, add NLCC contributions to the charge density ',verb_level=V_qp)
  call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
@@ -314,11 +312,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
- call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
  call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
+ call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
@@ -616,6 +614,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
  !
+ ! GPL_EXCLUDE_END
+ !
  ! DIPOLES
  !
  call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib)
@@ -631,8 +631,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  !
  call DIP_mirror_bands( )
- !
- ! GPL_EXCLUDE_END
  !
  ! El-Ph
  !
@@ -686,9 +684,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call TMP_mirror_bands( )
  !
- ! GPL_EXCLUDE_START
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
- ! GPL_EXCLUDE_END
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
@@ -714,15 +710,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      name='Field'//trim(intc(i_field))
      !
-     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
-     ! GPL_EXCLUDE_END
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
-     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
      call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
@@ -737,7 +730,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
-     ! GPL_EXCLUDE_END
      !
      if (initmode==4) then
        call parser(trim(name)//'_Int',is_def)

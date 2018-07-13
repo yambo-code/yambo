@@ -31,17 +31,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
- !
- ! GPL_EXCLUDE_START 
- !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
  ! 3) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
  ! 4) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
- !
- ! GPL_EXCLUDE_END 
  !
  use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                         l_gw0,l_elel_corr,l_life
@@ -167,15 +162,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    call DIPOLES_alloc()
    !
-   ! GPL_EXCLUDE_START 
-   !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,Dip)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
-   !
-   ! GPL_EXCLUDE_END 
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    !
@@ -252,6 +243,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
       endif
 #endif
      !
+     ! GPL_EXCLUDE_END 
+     !
 #if defined _SC || defined _RT
      if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
@@ -262,8 +255,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
        call DIP_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
-     !
-     ! GPL_EXCLUDE_END 
      !
    end subroutine DIPOLES_alloc
    !
@@ -297,6 +288,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #endif
         !
+        ! GPL_EXCLUDE_END 
+        !
 #if defined _SC || defined _RT
         !
         if (l_sc_run.or.l_real_time) then
@@ -305,8 +298,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
           !
         endif
 #endif
-        !
-        ! GPL_EXCLUDE_END 
         !
       enddo
       !
@@ -330,11 +321,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &               DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)
             endif
 #endif
+            !
+            ! GPL_EXCLUDE_END  
+            !
 #if defined _SC || defined _RT
             if (l_sc_run.or.l_real_time) &
 &             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #endif
-            ! GPL_EXCLUDE_END  
             !
           endif
           do ic=iv+1,Dip%ib(2)
@@ -352,12 +345,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                 DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
               endif
 #endif
+              !
+              ! GPL_EXCLUDE_END 
+              !
 #if defined _SC || defined _RT
               if (l_sc_run.or.l_real_time) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
 #endif
-              !
-              ! GPL_EXCLUDE_END 
               !
             endif
           enddo

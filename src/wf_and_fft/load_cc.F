@@ -35,7 +35,6 @@ subroutine load_cc(manage_zero,center_cc)
  use pars,        ONLY:SP
  use FFT_m,       ONLY:fft_size,fft_dim
  use D_lattice,   ONLY:x_cc,a
- use electrons,   ONLY:rho_max_is_def,ir_rho_max
  !
 #include<memory.h>
  !
@@ -53,33 +52,12 @@ subroutine load_cc(manage_zero,center_cc)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3))
  !
- if( .not.rho_max_is_def ) then
-   if(     center_cc) x_center_point=(/   0._SP    ,   0._SP    ,   0._SP    /)
-   if(.not.center_cc) x_center_point=(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/)
- else
-   ir1=mod(mod(ir_rho_max-1,fft_dim(1)*fft_dim(2)),fft_dim(1))
-   ir2=mod(ir_rho_max-1-ir1,fft_dim(1)*fft_dim(2))/fft_dim(1)
-   ir3=   (ir_rho_max-1-ir1-ir2*fft_dim(1))/(fft_dim(2)*fft_dim(3))
-   rir1=real(ir1,SP)/real(fft_dim(1),SP)
-   rir2=real(ir2,SP)/real(fft_dim(2),SP)
-   rir3=real(ir3,SP)/real(fft_dim(3),SP)
-   x_center_point(:) = a(1,:)*rir1 + a(2,:)*rir2 + a(3,:)*rir3
- endif
+ if(     center_cc) x_center_point=(/   0._SP    ,   0._SP    ,   0._SP    /)
+ if(.not.center_cc) x_center_point=(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/)
  !
  do i_dir=1,3
    x_jump(i_dir)=a(i_dir,i_dir)/2._SP+x_center_point(i_dir)
  enddo
- !
- ! DEBUG <
- !write(*,*) ir_rho_max,fft_size,rho_max_is_def
- !write(*,*) ir1,ir2,ir3
- !write(*,*) fft_dim
- !write(*,*) x_center_point
- !do i_dir=1,3
- !  write(*,*) a(i_dir,:)
- !enddo
- ! DEBUG >
- !
  !
  do ir1 = 0, fft_dim(1)-1         ! x 
    rir1=real(ir1,SP)/real(fft_dim(1),SP)

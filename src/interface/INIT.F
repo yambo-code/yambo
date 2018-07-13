@@ -160,15 +160,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_PL'
 #endif
  !
- ! Global Logicals
- !
- call SET_logicals()
- !
- ! Presets (input)
+ ! Presets
  !
  INIT = 0
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
+   !
+   ! Global Logicals
+   !
+   call SET_logicals()
+   !
    call E_reset(en)
 #if defined _SC
    call E_reset(en_sc)
@@ -1034,11 +1035,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- ! Finalize
- !
  if (log_as_a_file) call rename_file(logfile)
+ !
  call rename_file(repfile)
+ !
+ ! Finalize
  call PP_redux_wait
+ !
  if (master_cpu) then
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')

@@ -46,20 +46,23 @@ subroutine SET_logicals()
  !
  master_cpu                =myid==0
  !
- if (n_log_CPUs==0) write_to_log = .TRUE.
- if (n_log_CPUs> 0) write_to_log = (mod(myid,(ncpu-1)/n_log_CPUs+1)==0)
+ if (n_log_CPUs==0) write_to_log_default = .TRUE.
+ if (n_log_CPUs> 0) write_to_log_default = (mod(myid,(ncpu-1)/n_log_CPUs+1)==0)
  !
  ! Write permissions 
  !===================
  !
- write_to_log_default      =write_to_log
- write_fragments_IO_log    =write_to_log
+ write_fragments_IO_log    =write_to_log_default
  IO_write_default(myid+1)  =master_cpu
  IO_write                  =master_cpu
  write_to_of               =master_cpu
  write_to_report           =master_cpu
  IO_read                   =.TRUE.
- live_timing_is_on         =write_to_log
+ !
+ ! Both set to write_to_log_default after the log file is initialized
+ !
+ write_to_log              =.FALSE. 
+ live_timing_is_on         =.FALSE.
  !
  ! DBs IO
  !========

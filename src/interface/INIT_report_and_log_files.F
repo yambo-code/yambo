@@ -24,10 +24,11 @@
 subroutine INIT_report_and_log_files()
  !
  use pars,           ONLY:lchlen
- use stderr,         ONLY:logfile,log_as_a_file,intc
+ use stderr,         ONLY:logfile,log_as_a_file,intc,write_to_log,write_to_log_default
  use it_m,           ONLY:rstatus,nrnlvls,rnlvls
  use com,            ONLY:repfile,com_path,jobstr
  use parallel_m,     ONLY:myid,ncpu
+ use LIVE_t,         ONLY:live_timing_is_on
  !
  implicit none
  !
@@ -60,5 +61,8 @@ subroutine INIT_report_and_log_files()
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
  endif
+ !
+ write_to_log      = write_to_log_default
+ live_timing_is_on = write_to_log_default
  !
 end subroutine

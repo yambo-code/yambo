@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  ! LOGICALS
- use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_DIP
+ use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_NL
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -41,7 +41,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
- use drivers,       ONLY:l_elphoton_corr,l_life
+ use drivers,       ONLY:l_life,l_elphoton_corr
+#if defined _QED
+ use parallel_m,    ONLY:l_par_SC
+#endif
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
@@ -95,6 +98,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_RT           =ENVIRONMENT=="Real_Time"
+ l_par_NL           =ENVIRONMENT=="Non_Linear"
 #if defined _QED
  l_par_SC           =ENVIRONMENT=="Self_Energy"
 #endif
@@ -154,6 +158,11 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
 #if defined _RT
  if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,X_type)
 #endif
+ !
+#if defined _NL
+ if (      ENVIRONMENT=="Non_Linear")          call PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
+#endif
+ !
 #if defined _SCALAPACK
  if (      ENVIRONMENT=="ScaLapacK")           call PARALLEL_global_ScaLapack( )
 #endif

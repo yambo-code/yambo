@@ -133,10 +133,19 @@ module interfaces
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
      real(SP),     optional      :: E_real(:)    ! real eigenvalues
-     real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
-     real(SP),     optional      :: slepc_tol    ! tolerance of the iterative solver
+     !real(SP),     optional      :: target_energy! energy near where to find the eigenvalues
+     !real(SP),     optional      :: slepc_tol    ! tolerance of the iterative solver
      character(schlen), optional :: extraction   ! extraction method for the eigenvalues
-     integer,optional            :: slepc_ncv    ! dimension of the subspace
+     ! integer,optional            :: slepc_ncv    ! dimension of the subspace
+     !
+#if defined _DOUBLE
+     PetscFortranDouble, optional :: target_energy
+     PetscFortranDouble, optional :: slepc_tol
+#else
+     PetscFortranFloat, optional  :: target_energy
+     PetscFortranFloat, optional  :: slepc_tol
+#endif
+     PetscFortranInt,   optional  :: slepc_ncv
      !
    end subroutine
 #endif

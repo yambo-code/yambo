@@ -58,14 +58,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P
+&                         use_shifted_grids_approach,DIP_P,DIP_S
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
 &                         mpi_comm_world
  use parser_m,       ONLY:parser
-#if defined _RT || defined _SC
- use drivers,        ONLY:l_real_time,l_sc_run
+#if defined _RT || defined _SC || defined _NL
+ use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
  use com,            ONLY:secnm
 #endif
 #if defined _RT
@@ -126,7 +126,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  endif
  !
 #if defined _SC || defined _RT
- Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time
+ Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
  Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
  use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
@@ -216,6 +216,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')
+ if (use_covariant_approach) call DIP_alloc('DIP_S')
 #if defined _RT
  if (l_real_time_magn_dipoles) then
    call DIP_alloc('DIP_orbital')
@@ -252,11 +253,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #endif
      !
 #if defined _SC || defined _RT
-     if (l_sc_run.or.l_real_time) then
+     if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
 #endif
+     if(use_covariant_approach) then
+       call DIP_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
+       DIP_S=cZERO
+     endif
      !
      ! GPL_EXCLUDE_END 
      !

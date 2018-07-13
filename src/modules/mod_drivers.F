@@ -41,10 +41,12 @@ module drivers
  logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
+ logical :: l_sc_electric        =.FALSE.
  logical :: l_rt_carriers_in_use =.FALSE.
  logical :: l_sc_magnetic        =.FALSE.
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
+ logical :: l_nl_optics          =.FALSE.  
  !
  ! The self-energy correlation "kind"
  !
@@ -91,6 +93,7 @@ module drivers
  logical :: l_alda_fxc           =.FALSE.
  logical :: l_bs_fxc             =.FALSE.
  logical :: l_lrc_fxc            =.FALSE.
+ logical :: l_pf_fxc             =.FALSE.
  logical :: l_td_hf              =.FALSE.
  logical :: l_W_eh               =.FALSE.
  logical :: l_W_eh_diag          =.FALSE.

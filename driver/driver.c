@@ -52,13 +52,13 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _QED
+#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL
  #define _YAMBO_MAIN
 #endif
 #if defined _MAGNETIC || _KERR || _SURF
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_SURF
+#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC || _YPP_SURF
  #define _YPP_MAIN
 #endif
 /* 
@@ -460,7 +460,7 @@ static void usage(int verbose)
   char* OMP_string="";
 #endif
 #if defined _SLEPC
-  char* SLEPC_string="+SLEPC+PETSC";
+  char* SLEPC_string="+SLEPC";
 #else
   char* SLEPC_string="";
 #endif

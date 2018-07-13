@@ -74,7 +74,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel run only the head CPU in the q and b chains can do 
  ! (b,k) loops
@@ -192,6 +192,9 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
  !
+ ! ... Overlaps
+ type(PP_indexes),SAVE :: PAR_IND_OVLP_ibz
+ !
  ! ... linear response & BSK
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
@@ -222,6 +225,9 @@ module parallel_m
  type(PP_indexes)            ,SAVE :: PAR_IND_T_groups
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
+ !
+ ! .... Frequencies non-linear optics
+ type(PP_indexes),SAVE :: PAR_IND_freqs
  !
  ! Specific MPI ID's ...
  !======================
@@ -265,6 +271,9 @@ module parallel_m
  !
  ! ... RL
  integer            :: PAR_IND_RL_ID
+ !
+ ! .... Frequencies
+ integer            :: PAR_IND_freqs_ID
  !
  ! ... Freqs
  integer            :: PAR_IND_FREQ_ID
@@ -337,6 +346,11 @@ module parallel_m
  ! ... density
  type(MPI_comm),SAVE :: PAR_COM_density
  !
+ ! ... Frequencies 
+ type(MPI_comm),SAVE :: PAR_COM_freqs
+ type(MPI_comm),SAVE :: PAR_COM_freqs_A2A
+ type(MPI_comm),SAVE :: PAR_COM_freqs_INDEX
+ !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
  integer            :: PAR_K_range      = 0
@@ -391,17 +405,21 @@ module parallel_m
  integer, private   :: local_type
  !
  interface PP_redux_wait
-   module procedure l1share,i1share,i18share,i2share,i3share,&
-&                   r0share,r1share,r2share,r3share,&
-&                   c0share,c1share,c2share,c3share,c4share,c5share,&
-&                   ch0share,PARALLEL_wait
+   module procedure l1share,                                         &
+&                   i1share,i2share,i3share,                         &
+&                   i81share,                                        &
+&                   r0share,r1share,r2share,r3share,                 &
+&                   c0share,c1share,c2share,c3share,c4share,c5share, &
+&                   ch0share,                                        &
 #if ! defined _DOUBLE
-   module procedure d0share,d1share,d2share
+&                   d0share,d1share,d2share,                         &
 #endif
+&                   PARALLEL_wait
  end interface PP_redux_wait
  !
  interface PP_bcast
-   module procedure c0bcast,c1bcast,c2bcast,i0bcast
+   module procedure c0bcast,c1bcast,c2bcast,&
+&                   i0bcast
  end interface PP_bcast
  !
  interface PP_send_and_receive
@@ -438,6 +456,7 @@ module parallel_m
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err
      type(MPI_comm):: COMM
+     if (ncpu==1) return
 #if defined _MPI
      call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
      call MPI_COMM_RANK(COMM%COMM,COMM%CPU_id,i_err)
@@ -453,7 +472,8 @@ module parallel_m
    !
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
-     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads
+     use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
+&                     n_threads_NL,n_threads
      integer :: i_s
      !
      PARALLEL_message=" "
@@ -473,6 +493,7 @@ module parallel_m
        if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
        if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
        if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
+       if (n_threads_NL>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -496,6 +517,8 @@ module parallel_m
      CPU_structure(6)%Short_Description="RT"
      CPU_structure(7)%Long_Description="ScaLapacK"
      CPU_structure(7)%Short_Description="SLK"
+     CPU_structure(8)%Long_Description="Non_Linear"
+     CPU_structure(8)%Short_Description="NL"
    end subroutine
    !
    subroutine COMM_reset(COMM)
@@ -584,6 +607,8 @@ module parallel_m
      if (present(imode)) then
        if (imode==1) omode=MPI_LOR
        if (imode==2) omode=MPI_LAND
+       if (imode==3) omode=mpi_lor
+       if (imode==4) omode=mpi_land
      else
        omode=MPI_LOR
      endif
@@ -633,7 +658,7 @@ module parallel_m
 #endif
    end subroutine
    !
-   subroutine i18share(array,imode,COMM)
+   subroutine i81share(array,imode,COMM)
      integer(8)        :: array(:)
      integer, optional :: imode,COMM
 #if defined _MPI

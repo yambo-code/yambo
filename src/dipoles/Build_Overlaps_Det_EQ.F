@@ -40,6 +40,7 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,S_det)
  integer,      intent(in) :: ikbz,i_sp_pol
  type(levels), intent(in) :: Xen
  type(DIPOLE_t),intent(in) :: Dip
+ !
  complex(SP), intent(out) :: S_det(6)
  complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
  complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbm,6)

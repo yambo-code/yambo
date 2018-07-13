@@ -57,7 +57,7 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-#if defined _SC | defined _MAGNETIC | defined _RT
+#if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
   {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0,0},
   {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
@@ -78,6 +78,9 @@
   {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
 #if defined _PL
   {"photolum", "u","Photo-Luminescence",0,0,0,0,0}, 
+#endif
+#if defined _NL
+  {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
 #endif
 #if defined _RT
   {"negf",   "n","NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
@@ -103,6 +106,9 @@
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
+#endif
+#if defined _ELECTRIC 
+  {"electric", "m","Static Electric Field",0,0,0,0,0}, 
 #endif
 #if defined _SURF
   {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},

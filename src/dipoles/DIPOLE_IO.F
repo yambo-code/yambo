@@ -28,7 +28,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
- use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square
+ use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square,DIP_S,use_covariant_approach
  use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD
  use parallel_m, ONLY:master_cpu,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,ncpu,&
 &                     PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PP_redux_wait,myid,PAR_IND_Xk_ibz
@@ -45,8 +45,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
  ! Work space
  !
  logical           :: write_header,read_header,check,reading,writing,l_vnl(1)
- integer           :: ID,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
+ integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
+ integer, external :: io_Overlaps
  real(SP)          :: Dipole_Energy_treshold,Ev_m_Ec,Ev_m_Ec_QP,W_
  !
  if (.not.IO_dip) return
@@ -56,6 +57,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
  writing=trim(check_read_or_write)=="write"
  !
  ID=0
+ ID_S=0
  write_header  =(     master_cpu.and.writing)
  read_header   =(.not.master_cpu.and.writing).or.reading.or.check
  !
@@ -69,6 +71,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
    call msg('s','[DIP] Writing dipoles header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
+   if(use_covariant_approach) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+     io_err=io_Overlaps(Dip,ID_S)
+   endif
  endif
  !
  call PP_redux_wait(COMM=LOCAL_COMM)
@@ -77,6 +83,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
    call msg('s','[DIP] Checking dipoles header ')
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
+   if(use_covariant_approach) then
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+     io_err=io_err+io_Overlaps(Dip,ID_S)
+   endif
  endif
  !
  if (check.or.io_err/=0) return
@@ -91,6 +101,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,LOCAL_COMM)
      if (.not.PAR_COM_DIPk_ibz_A2A%CPU_id==0 .and. writing) cycle
      call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)
+     if(use_covariant_approach) then
+       call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
+       io_err=io_err+io_Overlaps(Dip,ID_S)
+     endif
    enddo
  enddo
  !

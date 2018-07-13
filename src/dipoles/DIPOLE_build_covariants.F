@@ -27,8 +27,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  ! in PRB 69, 085106 (2004)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
+ use drivers,        ONLY:l_nl_optics
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:WF_load,WF_free
+ use interfaces,     ONLY:WF_load,PARALLEL_WF_distribute,WF_free
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P
@@ -39,9 +40,10 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
 &                         PAR_DIPk_nbz,PP_redux_wait
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
- use drivers,        ONLY:l_sc_run
+ use parser_m,       ONLY:parser
  use parallel_m,     ONLY:master_cpu
  use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
+
  !
  implicit none
  !
@@ -52,6 +54,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  ! Work Space
  !
  logical     :: idir_not_done(3)
+ logical     :: l_eval_polarization,l_force_SndOrd
  integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec
@@ -66,56 +69,46 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
+ call parser('EvPolarization'  ,l_eval_polarization)
+ call parser('FrSndOrd'        ,l_force_SndOrd)
+ !
  ! WF load 
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
- !
- call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ ! I force the system to load all the WF distribution not implemented yet
  !
  call k_map_nearest_by_dir(Xk,k_map)
+ !
+ call k_build_up_BZ_tables(Xk)
+ !
+#if defined _NL
+ if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_OVLP_ibz,CLEAN_UP=.TRUE.)
+#endif
+ !
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+&               keep_states_to_load=.TRUE.)
+ !
  ! In the covariat approach I do need the overlap. 
  ! So as a first thing I check if they exist
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
  io_err=io_Overlaps(Dip,ID)
  !
  ! If they do not I have to compute them
- if(io_err/=0) then
-   ! Notice that DIP_S is defined in the BZ       
-   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
-   DIP_S=cZERO
-   !
-   call DIPOLE_overlaps(Xk,Dip)
-   !
-   if (     master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(Dip,ID)
-   endif
-   call PP_redux_wait()
-   if (.not.master_cpu) then
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(Dip,ID)
-   endif
-   !
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err=io_Overlaps(Dip,ID)
-   !
- endif
  !
- call k_build_up_BZ_tables(Xk)
+ if(io_err/=0) call DIPOLE_overlaps(Xk,Dip)
  !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !
  if(any(idir_not_done)) call warning(' Covariant Dipoles not in 3d. Assuming non periodic system.')
  !
- if(any(k_map%max_kdir(:)>=6)) &
-&   call msg('rs','Using second order approximation for covariant dipoles')
+ if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
+ &   call msg('rs','Using forth order approximation for covariant dipoles')
  !
  call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_P are defined only in the IBZ
  ! while the overlaps are in the BZ 
- !
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -136,7 +129,11 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
        if(k_map%max_kdir(id_red)==1) cycle
        !
        max_step=1
-       if(k_map%max_kdir(id_red)>=6) max_step=2
+       !
+       ! I need at leat 5 k-points in the line to
+       ! use the second order formula
+       !
+       if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
        !
        do istep=1,max_step 
          !
@@ -152,7 +149,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          forall(i1=Xen%nbm+1:Dip%ib(2),i2=1:Xen%nbf) 
            Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
-&                     sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
+&                           sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
          end forall
          !
          Wop(:,:,istep)=Wop(:,:,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
@@ -169,6 +166,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          do idir=1,3
            DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(Wop(:,:,1))*a(id_red,idir)
          enddo
+         !
        else
          !      
          ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
@@ -185,7 +183,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      ! <iR>
      !======
      do iv=Dip%ib(1),Dip%ib_lim(1)
-       do ic=Dip%ib_lim(2),Dip%ib(2)
+       do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          do idir=1,3
            DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
          enddo
@@ -203,8 +201,10 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
            do idir=1,3
              DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
            enddo
+           !
          enddo
        enddo
+       !
      endif
      !
      call live_timing(steps=1)
@@ -214,7 +214,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call live_timing()
  !
- call DIP_alloc('DIP_S')
+#if defined _NL
+ if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,X)
+#endif
  !
  call WF_free(WF)
  !

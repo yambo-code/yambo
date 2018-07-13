@@ -1,3 +1,3 @@
 objs = setup.o  PARALLEL_and_IO_Setup.o check_periodic_directions.o  \
        G_shells_finder.o  eval_minus_G.o QP_state_table_setup.o  \
-       External_corrections.o build_spin_sop.o RHOmax_and_Mtot.o 
+       External_corrections.o build_spin_sop.o eval_Mtot.o 

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RHOmax_and_Mtot(en,k,q)
+subroutine eval_Mtot(en,k,q)
  !
  use pars,           ONLY:SP,pi,schlen
  use FFT_m,          ONLY:fft_size
@@ -29,7 +29,7 @@ subroutine RHOmax_and_Mtot(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use com,            ONLY:msg
- use electrons,      ONLY:eval_magn,eval_rho_max
+ use electrons,      ONLY:eval_magn
  use interfaces,     ONLY:WF_load,el_density_and_current,&
 &                         PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
@@ -41,11 +41,11 @@ subroutine RHOmax_and_Mtot(en,k,q)
  !
  ! Work Space
  !
- real(SP), allocatable :: rho_tmp(:),magn_tmp(:,:)
+ real(SP), allocatable :: magn_tmp(:,:)
  !
- if (.not.(eval_magn.or.eval_rho_max)) return
+ if (eval_magn) return
  !
- call msg('r','DL Density and Magnetization [cc]')
+ call msg('r','DL Magnetization [cc]')
  !
  call PARALLEL_global_indexes(en,k,q," ",RESET=.TRUE.)
  call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
@@ -53,18 +53,10 @@ subroutine RHOmax_and_Mtot(en,k,q)
  !
  call WF_load(WF,0,1,(/1,en%nbm/),(/1,k%nibz/),space='R',title='-WF')
  !
- if (eval_rho_max) then
-   YAMBO_ALLOC(rho_tmp,(fft_size))
-   call el_density_and_current(en,k,rho=rho_tmp)
-   YAMBO_FREE(rho_tmp)
- endif
- !
- if (eval_magn) then
-   YAMBO_ALLOC(magn_tmp,(fft_size,3))
-   call el_magnetization(en,k,magn_tmp)
-   YAMBO_FREE(magn_tmp)
- endif
+ YAMBO_ALLOC(magn_tmp,(fft_size,3))
+ call el_magnetization(en,k,magn_tmp)
+ YAMBO_FREE(magn_tmp)
  !
  call WF_free(WF)
  !
-end subroutine RHOmax_and_Mtot
+end subroutine eval_Mtot

@@ -23,14 +23,15 @@
 !
 subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
- use pars,           ONLY:SP,schlen
+ use pars,           ONLY:SP,schlen,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
- use com,            ONLY:msg,of_open_close,error,file_exists,warning
+ use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,CIRCUIT_E_db,INTERP_k
+&                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
+&                         CIRCUIT_E_db,INTERP_k,CIRCUIT_k_label
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc,write_to_log,write_to_log_default
  use vec_operate,    ONLY:iku_v_norm
@@ -55,6 +56,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:),fit_on_grid(:,:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,message
+ character(lchlen)     :: of_string
  logical               :: l_normalize_Nel,l_nearest_neig_interp
  integer               :: ib,ik,i_sp_pol,i_RT,i_T,n_values
  !
@@ -266,6 +268,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
      do ik=1,CIRCUIT_k%nbz
        !
+       if (len_trim(CIRCUIT_k_label(ik))>0) then
+         write (*,*) CIRCUIT_k_label(ik)
+       endif   
+       !
        if (ik==1) values(1)=0._SP
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
@@ -281,7 +287,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
        endif
-       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.)
+       call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       if (len_trim(CIRCUIT_k_label(ik))>0) then
+         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+       endif
+       call msg_deliver('bands',of_string)  
        !
      enddo
      !

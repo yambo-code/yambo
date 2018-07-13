@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): CH
@@ -102,6 +102,7 @@ while($line = <VER>) {
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;
+$Revision++;
 $Hash    =`git rev-parse --short HEAD`;
 $Revision+=10000 ;
 #

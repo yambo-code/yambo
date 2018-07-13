@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DK CA
@@ -30,13 +30,13 @@ subroutine bxsf_read(Xk,Xen)
  use YPP,                 ONLY:wannier_bands, ord_dgrid_ipol
  use electrons,           ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,&
                                BZ_DbGd_max_filling,BZ_DbGd_nbands, &
-                               BZ_DbGd_tot_nkpts,BZ_DbGd_ipol_weight,n_spin
+                               BZ_DbGd_tot_nk_levels,BZ_DbGd_weight,n_spin
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:file_exists,msg,error
  use vec_operate,         ONLY:c2a,rlu_k2bz,k2bz,v_is_zero
  use IO_m,                ONLY:io_control,NONE,OP_WR_CL
  !
- implicit none
+#include<memory.h>
  type(bz_samp) :: Xk
  type(levels)  :: Xen
  !
@@ -63,9 +63,9 @@ subroutine bxsf_read(Xk,Xen)
 
  real(SP) :: efermitest
 
- allocate(nkpoints_gengrid(3))
- allocate(nkpoints(3))
- allocate(startkpoint(3))
+ YAMBO_ALLOC(nkpoints_gengrid,(3))
+ YAMBO_ALLOC(nkpoints,(3))
+ YAMBO_ALLOC(startkpoint,(3))
  
  nkpoints_gengrid = 0
  nkpoints = 0
@@ -107,14 +107,14 @@ subroutine bxsf_read(Xk,Xen)
   if(nkpoints(ii) >= 1) ndim = ndim + 1 
  enddo
  !
- allocate(recip_lattice(ndim,ndim))
+ YAMBO_ALLOC(recip_lattice,(ndim,ndim))
  ! set nbands
  !wannier_bands(2)=min(wannier_bands(2),bxsf_bands-wannier_bands(1)+1)
  wannier_bands(2)=min(wannier_bands(2),bxsf_bands)
  nbands=wannier_bands(2)-wannier_bands(1)+1
  !
- allocate(ene(nbands, product(nkpoints)))
- allocate(kpoints( product(nkpoints), ndim))
+ YAMBO_ALLOC(ene,(nbands,product(nkpoints)))
+ YAMBO_ALLOC(kpoints,(product(nkpoints),ndim))
  ene = 0.0_SP
  kpoints = 0.0_SP
  recip_lattice = 0.0_SP 
@@ -194,8 +194,8 @@ subroutine bxsf_read(Xk,Xen)
  ! DbGd_k are in reciproc unit cell, not Brillouin zone
  DbGd_k%nbz=size(kpoints, 1)
  DbGd_k%nibz=DbGd_k%nbz
- allocate(DbGd_k%ptbz(DbGd_k%nbz,3))
- allocate(DbGd_k%weights(DbGd_k%nibz))
+ YAMBO_ALLOC(DbGd_k%ptbz,(DbGd_k%nbz,3))
+ YAMBO_ALLOC(DbGd_k%weights,(DbGd_k%nibz))
  DbGd_k%ptbz = 0_SP
  DbGd_k%weights = 1_SP
  ! map read kpoints to BZ 
@@ -212,10 +212,10 @@ subroutine bxsf_read(Xk,Xen)
    call k2bz(v_in=DbGd_k%ptbz(ii,:))
  enddo
  !
- allocate(BZ_DbGd_nkpt(Xk%nbz))
+ YAMBO_ALLOC(BZ_DbGd_nkpt,(Xk%nbz))
  BZ_DbGd_nkpt = 0
  BZ_DbGd_nbands=nbands
- BZ_DbGd_tot_nkpts=DbGd_k%nbz
+ BZ_DbGd_tot_nk_levels=DbGd_k%nbz
  !
  if (ord_dgrid_ipol .eq. 0) then
    !
@@ -228,7 +228,7 @@ subroutine bxsf_read(Xk,Xen)
    !
    do while(.not.allocated(BZ_DbGd_table)) 
      if (maxval(BZ_DbGd_nkpt)>0) then
-       allocate(BZ_DbGd_table(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
+       YAMBO_ALLOC(BZ_DbGd_table,(Xk%nbz,maxval(BZ_DbGd_nkpt),2))
        BZ_DbGd_table=0
      endif
      BZ_DbGd_nkpt=0
@@ -247,8 +247,8 @@ subroutine bxsf_read(Xk,Xen)
    call live_timing()
    ! 
    BZ_DbGd_max_filling=maxval(BZ_DbGd_nkpt)
-   allocate(BZ_DbGd_ipol_weight(BZ_DbGd_max_filling))
-   BZ_DbGd_ipol_weight = 1.0_SP
+   YAMBO_ALLOC(BZ_DbGd_weight,(BZ_DbGd_max_filling))
+   BZ_DbGd_weight = 1.0_SP
  else
    call section('*','Employ double grid method' )
    call msg('s',':: Perform polynomial interpolation of order :',ord_dgrid_ipol)
@@ -273,7 +273,7 @@ subroutine bxsf_read(Xk,Xen)
  !
  call section('*','Create & write BZ_DbGd')
  !
- allocate(Xen%E_DbGd(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_spin))
+ YAMBO_ALLOC(Xen%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_spin))
  Xen%E_DbGd(:,:DbGd_k%nbz,1)=ene(:,:DbGd_k%nbz)/HA2EV+Xen%E_Fermi
  ! align last (partly) filled band at gamma.
  nearest_to_g=k_the_nearest(DbGd_k%ptbz(1,:),Xk%ptbz(:,:),Xk%nbz) 
@@ -295,12 +295,14 @@ subroutine bxsf_read(Xk,Xen)
  ! clean up
  ! 
  call k_ibz2bz(Xk,'d',.false.)  
- deallocate(ene)
- deallocate(kpoints)
- deallocate(nkpoints)
- deallocate(nkpoints_gengrid)
- deallocate(startkpoint)
- deallocate(recip_lattice)
- deallocate(BZ_DbGd_nkpt,BZ_DbGd_table,BZ_DbGd_ipol_weight)
+ YAMBO_FREE(ene)
+ YAMBO_FREE(kpoints)
+ YAMBO_FREE(nkpoints)
+ YAMBO_FREE(nkpoints_gengrid)
+ YAMBO_FREE(startkpoint)
+ YAMBO_FREE(recip_lattice)
+ YAMBO_FREE(BZ_DbGd_nkpt)
+ YAMBO_FREE(BZ_DbGd_table)
+ YAMBO_FREE(BZ_DbGd_weight)
  !
 end subroutine

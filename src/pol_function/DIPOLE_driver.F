@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -29,12 +29,13 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! DIP_iR=i<r>
  ! DIP_P = <v>   (should be called DIP_V ... )
  !
- ! For each of the two gauges there exist three approaches of computing the dipoles
+ ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
+ !
  ! 2) real space approach   --> directly computes <r> and then <v>=<r>*DeltaE (only for non periodic directions)
- ! 2) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
+ ! 3) shifted kpts approach --> computes q*<nk|r|mk> as <nk|r|mk+q> with small q (phases not defined)
  !                              and then <v> as <r>*DeltaE
- ! 3) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
+ ! 4) covariant approach    --> computes <nk|r|mk> in reciprocal space as <nk|partial_k|mk>
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
@@ -62,30 +63,29 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  use X_m,            ONLY:X_alloc,X_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
-&                         l_X_terminator
+&                         l_X_terminator,DIP_S
  use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
 &                         PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,l_par_RT
  use parser_m,       ONLY:parser
-#if defined _RT || defined _SC
- use drivers,        ONLY:l_real_time,l_sc_run
+#if defined _RT || defined _SC || defined _NL
+ use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
  use com,            ONLY:secnm
 #endif
 #if defined _RT
- use X_m,            ONLY:DIP_spin
- use electrons,      ONLY:n_spin
+ use X_m,            ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
+ use electrons,      ONLY:n_spinor
 #endif
 #if defined _SC || defined _RT
  use X_m,            ONLY:P_square
+ use electrons,      ONLY:n_spin
 #endif
 #if defined _QED
  use drivers,        ONLY:l_elphoton_corr
 #endif
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -97,19 +97,20 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Work Space
  !
  integer           :: ik,i_sp_pol
- logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3)
+ logical           :: use_dipole_transverse,Dipole_bands_ordered,idir_not_done(3),&
+&                     l_real_time_magn_dipoles
 #if defined _SC || defined  _RT
+ real(SP)          :: par_factor
  logical           :: l_evaluating_em1s
 #endif
  !
  ! I/O
  !
- integer           :: ID,io_err
+ integer           :: ID,ID_S,io_err
  integer, external :: io_DIPOLES
+ integer, external :: io_Overlaps
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='start')
-#endif
  !
  ! Setup logicals 
  !================
@@ -144,10 +145,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !       3 - In real-time simulations P and P^2 are ALWAYS calculated => no band ordering
  !
  Dipole_bands_ordered=.true.
+ l_real_time_magn_dipoles=.false.
  !
 #if defined _SC  || defined _RT
  l_evaluating_em1s=index(secnm,"Dielectric")/=0
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) Dipole_bands_ordered=.false.
+ !
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1.and.(.not.l_evaluating_em1s)
+ !
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) &
+&   Dipole_bands_ordered=.false.
 #endif
 #if defined _QED 
  if (l_elphoton_corr) Dipole_bands_ordered=.false.
@@ -182,21 +188,23 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
    call DIPOLES_alloc()
    !
-   ! GPL_EXCLUDE_START 
-   !
    if (use_shifted_grids_approach) call DIPOLE_shifted_grids(Xen,Xk,X)
    !
    if (use_covariant_approach)     call DIPOLE_build_covariants(Xen,Xk,X)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
    !
-   ! GPL_EXCLUDE_END 
+   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
    !
-   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,X)
+   ! GPL_EXCLUDE_START 
    !
 #if defined _RT
-   if (l_real_time.and.n_spin>1)   call DIPOLE_magnetization(Xk,X)
+   if (l_real_time_magn_dipoles)   call DIPOLE_orbital_magnetization(Xen,Xk,X)
+   !
+   if (l_real_time_magn_dipoles)   call DIPOLE_spin_magnetization(Xk,X)
 #endif
+   !
+   ! GPL_EXCLUDE_END 
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
@@ -210,12 +218,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
    !
  endif
  !
-#if defined _TIMING
  call timing('Dipoles',OPR='stop')
-#endif
  !
-#if defined _SC || defined _RT
- if ((l_sc_run.or.l_real_time).and..not.l_evaluating_em1s) return
+#if defined _SC || defined _RT || defined _NL
+ if ((l_sc_run.or.l_real_time.or.l_nl_optics).and..not.l_evaluating_em1s) return
 #endif
 #if defined _QED
  if (l_elphoton_corr) return
@@ -240,18 +246,30 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 #else
  call X_alloc('DIP_P')
 #endif
+ !
+ if (use_covariant_approach) call X_alloc('DIP_S')
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _RT
- if (l_real_time.and.n_spin>1) call X_alloc('DIP_spin')
+ if (l_real_time_magn_dipoles) then
+   call X_alloc('DIP_orbital')
+   call X_alloc('DIP_spin')
+   if(n_spinor==2) call X_alloc('DIP_P_spinor')
+ endif
 #endif
 #if defined _SC || defined _RT
- call X_alloc('P_square') 
+ if(l_real_time.or.l_sc_run) call X_alloc('P_square') 
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  contains
    !
    subroutine DIPOLES_IO(read_or_write)
      !
-     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu
+     use parallel_m, ONLY:master_cpu,PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup,ncpu,PAR_COM_RL_INDEX
+     use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
      !
@@ -262,10 +280,15 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (.not.io_DIP) return 
      !
+     if (trim(global_gauge)=="velocity") return
+     !
      reading=trim(read_or_write)=="read"
-     writing=trim(read_or_write)=="write"
+     writing=trim(read_or_write)=="write".and.PAR_COM_DIPOLES_k_subgroup%CPU_id==0.and.&
+&                                             PAR_COM_RL_INDEX%CPU_id==0
      !
      ID=0
+     ID_S=0
+     !
      write_header  =(     master_cpu.and.writing)
      read_header   =(.not.master_cpu.and.writing).or.reading
      !
@@ -284,6 +307,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Writing dipoles header ')
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_Overlaps(X,ID_S)
+       endif
      endif
      !
      call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
@@ -292,6 +319,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
        call msg('s','[DIP] Checking dipoles header ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
        io_err=io_DIPOLES(X,ID)
+       if(use_covariant_approach) then
+         call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
+         io_err=io_err+io_Overlaps(X,ID_S)
+       endif
      endif
      !
      ! In case io_err is /=0 all CPU have to sincronize before starting
@@ -301,19 +332,30 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      !
      if (io_err==0) then
        !
-       if(reading) IO_ACTION=OP_RD_CL
-       if(writing) IO_ACTION=OP_APP_WR_CL
+       if (reading) IO_ACTION=OP_RD_CL
+       if (writing) IO_ACTION=OP_APP_WR_CL
        !
        do ik=1,Xk%nibz
-         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)        ) cycle
-         if (.not.PAR_COM_DIPOLES_k_subgroup%CPU_id==0 .and. writing) cycle
-         do i_sp_pol=1,n_sp_pol
-           call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
-           io_err=io_DIPOLES(X,ID)
-        enddo
+         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle
+         if (writing.or.reading) then
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
+             io_err=io_DIPOLES(X,ID)
+          enddo
+         endif
        enddo
+       if(use_covariant_approach.and.(write_header.or.reading)) then
+         do ik=1,Xk%nbz
+           do i_sp_pol=1,n_sp_pol
+             call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
+             io_err=io_err+io_Overlaps(X,ID_S)
+           enddo
+         enddo
+       endif
        !
      endif
+     !
+     call PP_redux_wait(COMM=PAR_COM_DIPOLES%COMM)
      !
    end subroutine DIPOLES_IO
    !
@@ -324,113 +366,168 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      DIP_iR=cZERO
      DIP_P=cZERO
      !
+     ! GPL_EXCLUDE_START 
+     !
 #if defined _RT
-     if (l_real_time.and.n_spin>1) then
+     if (l_real_time_magn_dipoles) then
+       call X_alloc('DIP_orbital',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz,2/))
+       DIP_orbital=cZERO
        call X_alloc('DIP_spin',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
+       if (n_spinor==2) then
+         call X_alloc('DIP_P_spinor',(/3,X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
+         DIP_P_spinor=cZERO
+       endif
      endif
 #endif
-
-     !
-#if defined _SC || defined _RT
-     if (l_sc_run.or.l_real_time) then
+#if defined _SC || defined _RT || defined _NL
+     if (l_sc_run.or.l_real_time.or.l_nl_optics) then
        call X_alloc('P_square',(/X%ib_lim(2),X%ib(2),X%ib(1),X%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
 #endif
      !
+     ! GPL_EXCLUDE_END
+     !
+     if(use_covariant_approach) then
+       call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
+       DIP_S=cZERO
+     endif
+     !
    end subroutine DIPOLES_alloc
    !
    subroutine DIPOLES_ppredux_and_symmetrize()
-    !
-    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup
-    !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
-    !
-    do ik=1,Xk%nibz
-      !
-      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-      !
-      ik_mem=PAR_DIPk_ibz_index(ik)
-      ! 
-      do i_sp_pol=1,n_sp_pol
-        !
-        call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        !
+     !
+     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPOLES_k_subgroup,PAR_COM_DIPOLES
+     !
+     integer  :: ic,iv,i_sp_pol,ik,ik_mem
+     !
+     do ik=1,Xk%nibz
+       !
+       if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+       !
+       ik_mem=PAR_DIPk_ibz_index(ik)
+       ! 
+       do i_sp_pol=1,n_sp_pol
+         !
+         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
+         ! GPL_EXCLUDE_START
+         !
 #if defined _RT
-        !
-        if (l_real_time.and.n_spin>1) then
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-        endif
-        !
+         !
+         if (l_real_time_magn_dipoles) then
+           call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+           if (n_spinor==2) &
+&            call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         endif
+         !
 #endif
-        !
+         !
 #if defined _SC || defined _RT
-        !
-        if (l_sc_run.or.l_real_time) then
-          !
-          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
-          !
-        endif
+         !
+         if (l_sc_run.or.l_real_time) &
+&          call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPOLES_k_subgroup%COMM)
+         !
 #endif
-        !
-        if (l_par_RT) then
-          !
+         !
+         ! GPL_EXCLUDE_END
+         !
+         if (l_par_RT) then
+           !
 #if defined _RT
-          DIP_iR(:,:,:,ik_mem,:)= DIP_iR(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          DIP_P(:,:,:,ik_mem,:)= DIP_P(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
-          if (l_real_time.and.n_spin>1) &
-&           DIP_spin(:,:,:,ik_mem,:)= DIP_spin(:,:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           par_factor=real(PAR_COM_PLASMA_INDEX%n_CPU*PAR_COM_Q_INDEX%n_CPU,SP)
+           !
+           DIP_iR(:,:,:,ik_mem,i_sp_pol)= DIP_iR(:,:,:,ik_mem,i_sp_pol)/par_factor
+           DIP_P(:,:,:,ik_mem,i_sp_pol) = DIP_P(:,:,:,ik_mem,i_sp_pol)/par_factor
+           !
+           ! GPL_EXCLUDE_START
+           !
+           if (l_real_time_magn_dipoles) then
+             DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)= DIP_orbital(:,:,:,ik_mem,i_sp_pol,:)/par_factor
+             DIP_spin(:,:,:,ik_mem,i_sp_pol)     = DIP_spin(:,:,:,ik_mem,i_sp_pol)/par_factor
+             if(n_spinor==2) &
+&              DIP_P_spinor(:,:,:,:,:,ik_mem)= DIP_P_spinor(:,:,:,:,:,ik_mem)/par_factor
+           endif
+           !
+           ! GPL_EXCLUDE_END
+           !
 #endif
+           !
+           ! GPL_EXCLUDE_START
+           !
 #if defined _SC || defined _RT
-          if (l_sc_run.or.l_real_time) &
-&           P_square(:,:,ik_mem,:)= P_square(:,:,ik_mem,:)/PAR_COM_PLASMA_INDEX%n_CPU/PAR_COM_Q_INDEX%n_CPU
+           if (l_sc_run.or.l_real_time) &
+&            P_square(:,:,ik_mem,i_sp_pol)= P_square(:,:,ik_mem,i_sp_pol)/par_factor
 #endif
-          !
-        endif
-        !
-      enddo
-      !
-      ! Symmetrization 
-      !================
-      ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
-      !
-      do i_sp_pol=1,n_sp_pol
-        do iv=X%ib(1),X%ib_lim(1)
-          if(iv>=X%ib_lim(2)) then
-            DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
-            DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+           !
+           ! GPL_EXCLUDE_END
+           !
+         endif
+         !
+       enddo
+       !
+       ! Symmetrization 
+       !================
+       ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
+       !
+       do i_sp_pol=1,n_sp_pol
+         do iv=X%ib(1),X%ib_lim(1)
+           if(iv>=X%ib_lim(2)) then
+             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
+             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             !
+             ! GPL_EXCLUDE_START
+             !
 #if defined _RT
-            if (l_real_time.and.n_spin>1) then
-              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-            endif
+             if (l_real_time_magn_dipoles) then
+               DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
+               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+               if (n_spinor==2) &
+&                DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
+             endif
 #endif
 #if defined _SC || defined _RT
-            if (l_sc_run.or.l_real_time) &
-&             P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             if (l_sc_run.or.l_real_time) then
+               P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+             endif
 #endif
-          endif
-          do ic=iv+1,X%ib(2)
-            if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
-              DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
-              DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+             !
+             ! GPL_EXCLUDE_END
+             !
+           endif
+           do ic=iv+1,X%ib(2)
+             if( iv>=X%ib_lim(2) .and. ic<=X%ib_lim(1) ) then
+               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
+               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+               !
+               ! GPL_EXCLUDE_START
+               !
 #if defined _RT
-              if (l_real_time.and.n_spin>1) then
-                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
-              endif
+               if (l_real_time_magn_dipoles) then
+                 DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
+                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+                 if (n_spinor==2) &
+&                  DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
+               endif
 #endif
 #if defined _SC || defined _RT
-              if (l_sc_run.or.l_real_time) &
-&               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+               if (l_sc_run.or.l_real_time) then
+                 P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
+               endif
 #endif
-            endif
-          enddo
-        enddo
-      enddo
-      !
-    enddo
-    !
+               !
+               ! GPL_EXCLUDE_END
+               !
+             endif
+           enddo
+         enddo
+       enddo
+       !
+     enddo
+     !
    end subroutine DIPOLES_ppredux_and_symmetrize
    !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -24,6 +24,9 @@
 module hamiltonian
  !
  use pars,       ONLY:SP,schlen
+ use electrons,  ONLY:levels
+ !
+#include<memory.h>
  !
  integer           :: H_ref_bands(2)
  !
@@ -35,7 +38,7 @@ module hamiltonian
  integer           :: H_xc_functional
  integer           :: H_perturbation
  !
- complex(SP), allocatable :: Ho(:,:,:,:)
+ complex(SP), allocatable :: Hzero(:,:,:,:)
  !
  ! Non-Local part (sigma_x, sigma_cohsex)
  !
@@ -49,10 +52,14 @@ module hamiltonian
  !
  ! Kinetic Energy and Ionic potential energy
  !
- real(SP),    allocatable :: E_bare(:,:,:)
+ type(levels),save        :: E_reference
  !
  real(SP),    allocatable :: rho_n(:)
  real(SP),    allocatable :: magn_n(:,:)
+ !
+ ! Rotation matrix which diagonalize the hamiltonian
+ !
+ complex(SP), allocatable :: SC_R(:,:,:,:)
  !
  ! Wavefunction indexes
  !
@@ -71,9 +78,6 @@ module hamiltonian
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
-     use memory_m,       ONLY:mem_est
-     !
-     implicit none
      !
      type(levels) :: E
      !
@@ -84,94 +88,76 @@ module hamiltonian
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     if (allocated(QP_state)) deallocate(QP_state)
+     YAMBO_FREE(QP_state)
      !
-     allocate(QP_state(QP_nb,QP_nk))
-     call mem_est("QP_state",(/QP_nb*QP_nk/))
+     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
      QP_state=.TRUE.
      call QP_state_table_setup(E)
      !
    end subroutine
    !
-   subroutine H_alloc(E)
+   subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
-     use electrons,      ONLY:n_spin,n_sp_pol,levels
+     use drivers,        ONLY:l_nl_optics
+     use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      !
      implicit none
      !
-     type(levels) :: E
+     type(levels), intent(in) :: E
+     logical,      intent(in) :: l_real_space,l_rotation_matrix
      !
-     allocate(rho_n(fft_size))
-     call mem_est("rho",(/fft_size/),(/SP/))
+     ! Store the reference energies
      !
-     if(n_spin>1) then
-       allocate(magn(fft_size,3))
-       allocate(magn_n(fft_size,3))
-       call mem_est("magn",(/2*fft_size*3/),(/SP/))
+     call E_reset(E_reference)
+     call E_duplicate(E,E_reference)
+     !
+     YAMBO_ALLOC(Hzero,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
+     !
+     YAMBO_ALLOC(H_nl_sc,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)))
+     !
+     if(l_rotation_matrix) then
+       YAMBO_ALLOC(SC_R,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      endif
      !
-     allocate(Ho(H_ref_bands(2),H_ref_bands(2),E%nk,n_sp_pol))
-     call mem_est("Ho",(/size(Ho)/),(/2*SP/))
+     if (.not.l_real_space) return
      !
-     allocate(V_xc_sc(fft_size,n_spin))
-     call mem_est('V_xc_sc',(/size(V_xc_sc)/),(/SP/))
+     YAMBO_ALLOC(rho_n,(fft_size))
      !
-     allocate(V_xc(fft_size,n_spin))
-     call mem_est('V_xc',(/size(V_xc)/),(/SP/))
+     if(n_spin>1) then
+       YAMBO_ALLOC(magn,(fft_size,3))
+       YAMBO_ALLOC(magn_n,(fft_size,3))
+     endif
      !
-     allocate(V_hartree_sc(fft_size,n_spin))
-     call mem_est("Hartree_Potential",(/size(V_hartree_sc)/))
+     YAMBO_ALLOC(V_xc_sc,(fft_size,n_spin))
      !
-     allocate(H_nl_sc(H_ref_bands(2),H_ref_bands(2)))
-     call mem_est("H_nl_sc",(/size(H_nl_sc)/),(/2*SP/))
+     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+     !
+     YAMBO_ALLOC(V_hartree_sc,(fft_size,n_spin))
      !
    end subroutine
    !
    subroutine H_free()
      use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
-     use memory_m,       ONLY:mem_est
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !
      implicit none
      !
-     if(allocated(rho_n)) then
-       deallocate(rho_n)
-       call mem_est("rho")
-     endif
+     YAMBO_FREE(Hzero)
+     YAMBO_FREE(H_nl_sc)
+     YAMBO_FREE(SC_R)
      !
-     if(allocated(magn_n)) then
-       deallocate(magn_n)
-       call mem_est("magn")
-     endif
+     YAMBO_FREE(rho_n)
+     YAMBO_FREE(magn_n)
+     YAMBO_FREE(magn)
      !
-     if(allocated(magn)) then
-       deallocate(magn)
-       call mem_est("magn")
-     endif
-     !
-     deallocate(Ho)
-     call mem_est("Ho")
-     !
-     deallocate(H_nl_sc)
-     call mem_est("H_nl_sc")
-     !
-     if(allocated(V_xc)) then 
-       deallocate(V_xc)
-       call mem_est('V_xc')
-     endif
-     !
-     deallocate(V_xc_sc)
-     call mem_est('V_xc_sc')
-     !
-     deallocate(V_hartree_sc)
-     call mem_est("Hartree_Potential")
+     YAMBO_FREE(V_xc)
+     YAMBO_FREE(V_xc_sc)
+     YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
    !

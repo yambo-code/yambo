@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -25,22 +25,23 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,core_io_path,more_io_path
- use memory_m,            ONLY:mem_est
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_WR_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
- use electrons,           ONLY:n_spin,n_sp_pol
+ use electrons,           ONLY:n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
  use LIVE_t,              ONLY:live_timing
  use X_m,                 ONLY:X_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_ng,wf_ncx
- use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nXkibz,ng_vec
+ use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nkibz,ng_vec
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
- use YPP_symm
+ use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
+&                              wf_nc_k_new,wf_igk_new,&
+&                              wf_nc_k_new,wf_ncx_new,wf_ncx_save
  !
- implicit none
+#include<memory.h>
  !
  type(levels),intent(in)  :: E
  !
@@ -59,7 +60,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  type(X_t)             :: X_Vnl
  !
- character(lchlen)     :: core_io_path_save,fragment_name
+ character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
  integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
  integer               :: ng_vec_tmp
@@ -71,7 +72,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  ! Dummies
  !
- integer               :: is,ik,ik_save
+ integer               :: is,i_sp_pol,ik,ik_save,ifrag,ifrag_new
  integer               :: ic,ic_rot,ig,ig_rot
  integer               :: ib,ibm,i_spin
  !
@@ -92,7 +93,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ! PWscf (old)
  X_Vnl%ib=(/1,E%nb/)       ! full bands range
  X_Vnl%ngostnts=1          ! to overcome check for io
- nXkibz=k_save%nibz
+ nkibz=k_save%nibz
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_Vnl_err=io_Vnl(X_Vnl,E,ID)
  !
@@ -124,20 +125,23 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_KB_abinit_err=io_KB_abinit(ID) 
    !  
-   allocate(pp_kb_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
-   allocate(pp_kbd_store(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_spin,k_save%nibz))
-   allocate(pp_kbs_store(n_atomic_species,pp_n_l_times_proj_max))
-   call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
+   YAMBO_ALLOC(pp_kb_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
+   YAMBO_ALLOC(pp_kbd_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
+   YAMBO_ALLOC(pp_kbs_store,(n_atomic_species,pp_n_l_times_proj_max))
    !
+   do i_sp_pol=1,n_sp_pol
    do ik=1,k_save%nibz
      !
-     if (ik< k_save%nibz) call io_control(ACTION=RD,SEC=(/ik+1/),ID=ID)
-     if (ik==k_save%nibz) call io_control(ACTION=RD_CL,SEC=(/ik+1/),ID=ID)      
+     ifrag=ik+(i_sp_pol-1)*k_save%nibz
+     !
+     if (ifrag< n_sp_pol*k_save%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
+     if (ifrag==n_sp_pol*k_save%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
      !
      pp_kb_store(:,:,:,:,ik) =pp_kb(:,:,:,:)
      pp_kbd_store(:,:,:,:,ik)=pp_kbd(:,:,:,:)
      !
+   enddo
    enddo
    !
    pp_kbs_store=pp_kbs
@@ -153,10 +157,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_KB_pwscf_err=io_KB_pwscf(ID) 
    !  
-   allocate(pp_kb_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
-   allocate(pp_kbd_store(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
-   allocate(pp_kbs_store(n_atomic_species,pp_n_l_times_proj_max))
-   call mem_est("pp_kb_store pp_kbd_store",(/size(pp_kb),size(pp_kbd)/),elements_kind=(/SP,SP/))
+   YAMBO_ALLOC(pp_kb_store,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
+   YAMBO_ALLOC(pp_kbd_store,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1,k_save%nibz))
+   YAMBO_ALLOC(pp_kbs_store,(n_atomic_species,pp_n_l_times_proj_max))
    !
    do ik=1,k_save%nibz
      !
@@ -176,16 +179,15 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  endif
  !
  if(io_Vnl_err==0) then
-   allocate( Vnl_store(3,E%nb,E%nbm,k_save%nibz,n_sp_pol) )
+   YAMBO_ALLOC(Vnl_store,(3,E%nb,E%nbm,k_save%nibz,n_sp_pol))
    Vnl_store=(0._SP,0._SP)
-   call mem_est("Vnl_store",(/size(Vnl_store)/),elements_kind=(/SP/))
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
    io_Vnl_err=io_Vnl(X_Vnl,E,ID)
    !
    Vnl_store=Vnl
    !
-   deallocate(Vnl)
+   YAMBO_FREE(Vnl)
    !   
  endif
  !
@@ -201,11 +203,19 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
      call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+     do i_sp_pol=1,n_sp_pol
      do ik=1,k_save%nibz
-       fragment_name='ns.kb_pp_fragment_'//trim(intc(ik))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
-       fragment_name='s.kb_pp_fragment_'//trim(intc(ik))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
+       ifrag=ik+(i_sp_pol-1)*k_save%nibz
+       ifrag_new=ik+(i_sp_pol-1)*k%nibz
+       fragment_name    ='ns.kb_pp_fragment_'//trim(intc(ifrag))
+       fragment_name_new='ns.kb_pp_fragment_'//trim(intc(ifrag_new))
+       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
+&                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
+       fragment_name='s.kb_pp_fragment_'//trim(intc(ifrag))
+       fragment_name_new='s.kb_pp_fragment_'//trim(intc(ifrag_new))
+       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
+&                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
+     enddo
      enddo
      !
      call msg('l','done')
@@ -232,6 +242,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      endif
      !
    endif
+   !    
+   nkibz=k%nibz
    !
    ! Pseudo-potentials
    !
@@ -242,23 +254,28 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      if(n_steps>0) call live_timing('PPs rotation',n_steps)
      !
+     do i_sp_pol=1,n_sp_pol
      do ik=k_save%nibz+1,k%nibz
+       !
+       ifrag=ik+(i_sp_pol-1)*k%nibz
        !
        ik_save=kpoints_map(1,ik)
        is=kpoints_map(2,ik)
        !
-       pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
-       pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(old_sop_inv(is),1:ng_closed),:,:,:,ik_save)
+       pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
+       pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
        !
-       call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
+       call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)      
        io_KB_abinit_err=io_KB_abinit(ID)
        !
        call live_timing(steps=1)
        !
      enddo
+     enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
+     YAMBO_FREE(pp_kb_store)
+     YAMBO_FREE(pp_kbd_store)
+     YAMBO_FREE(pp_kbs_store)
      !
      call PP_free()
      !
@@ -311,7 +328,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        is=kpoints_map(2,ik)
        !
        do ic=1,wf_nc_k_reduced(ik_save)
-         ig_rot=g_rot(is,wf_igk_reduced(ic,ik_save))
+         ig_rot=g_rot(wf_igk_reduced(ic,ik_save),is)
          do ic_rot=1,wf_nc_k_new(ik)
            ig=wf_igk_new(ic_rot,ik)
            if(ig==ig_rot) exit
@@ -329,8 +346,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
+     YAMBO_FREE(pp_kb_store)
+     YAMBO_FREE(pp_kbd_store)
+     YAMBO_FREE(pp_kbs_store)
      !
      call PP_free()
      !
@@ -340,7 +358,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    if(io_Vnl_err==0) then 
      !
-     allocate(Vnl(3,E%nb,E%nbm,k%nibz,n_sp_pol))
+     YAMBO_ALLOC(Vnl,(3,E%nb,E%nbm,k%nibz,n_sp_pol))
      !
      Vnl(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)=&
   &       Vnl_store(1:3, 1:E%nb, 1:E%nbm, 1:k_save%nibz, 1:n_sp_pol)
@@ -362,12 +380,11 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      !
      X_Vnl%ngostnts=wf_ng
-     nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !
-     deallocate(Vnl,Vnl_store)
-     call mem_est("Vnl Vnl_store")
+     YAMBO_FREE(Vnl)
+     YAMBO_FREE(Vnl_store)
      !
      if(n_steps>0) call live_timing()
      !
@@ -398,8 +415,9 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
+     YAMBO_FREE(pp_kb_store)
+     YAMBO_FREE(pp_kbd_store)
+     YAMBO_FREE(pp_kbs_store)
      call PP_free()
      !
    endif
@@ -425,25 +443,25 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     deallocate(pp_kb_store,pp_kbd_store,pp_kbs_store)
-     call mem_est("pp_kb_store pp_kbd_store")
+     YAMBO_FREE(pp_kb_store)
+     YAMBO_FREE(pp_kbd_store)
+     YAMBO_FREE(pp_kbs_store)
      call PP_free()
      !
    endif
    !
    if(io_Vnl_err==0) then
      !
-     allocate(Vnl(3,E%nb,E%nbm,k%nibz,n_sp_pol))
+     YAMBO_ALLOC(Vnl,(3,E%nb,E%nbm,k%nibz,n_sp_pol))
      !
      forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
      !
      X_Vnl%ngostnts=wf_ng
-     nXkibz=k%nibz
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
      io_Vnl_err=io_Vnl(X_Vnl,E,ID)
      !
-     deallocate(Vnl_store,Vnl)
-     call mem_est("Vnl_store Vnl") 
+     YAMBO_FREE(Vnl_store)
+     YAMBO_FREE(Vnl)
      !
    endif
    !
@@ -451,9 +469,12 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
  end select
  !
- deallocate(wf_nc_k_reduced,wf_igk_reduced)
- deallocate(wf_nc_k_save,   wf_igk_save   )
- deallocate(wf_nc_k_new,    wf_igk_new    )
+ YAMBO_FREE(wf_nc_k_reduced)
+ YAMBO_FREE(wf_igk_reduced)
+ YAMBO_FREE(wf_nc_k_save)
+ YAMBO_FREE(wf_igk_save)
+ YAMBO_FREE(wf_nc_k_new)
+ YAMBO_FREE(wf_igk_new)
  !
  core_io_path=core_io_path_save
  !

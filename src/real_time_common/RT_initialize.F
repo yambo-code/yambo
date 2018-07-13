@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -23,39 +23,43 @@
 !
 subroutine RT_initialize(E,k,q)
  ! 
- use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,&
+ use drivers,        ONLY:l_use_collisions,l_elph_scatt,l_elel_scatt,l_sc_hartree,l_use_Hxc_collisions,&
 &                         l_sc_is_libDFT,l_sc_sex,l_sc_fock,l_elphoton_scatt,l_rt_carriers_in_use
  use pars,           ONLY:SP,pi
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg,warning,error
+ use QP_CTL_m,       ONLY:QP_ctl_user
  use vec_operate,    ONLY:normalize_v
  use plasma,         ONLY:EH_gas
  use X_m,            ONLY:global_gauge
- use electrons,      ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,      ONLY:levels
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:JPC_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,RT_carriers_object,   &
 &                         SETUP_RT_IO_type,IO_JPSM_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
-&                         NE_MEM_treshold,G_MEM_steps,Gr_kind,l_RT_uses_E_DbGd,               &
-&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,             &
-&                         l_RT_impose_N_dN,Integrator_name,l_RT_EULER,l_RT_RK2,l_RT_RWA,      &
-&                         l_RT_EXP,l_RT_impose_E,DbGd_EE_percent,DbGd_EE_Nk_table,            &
-&                         l_BGR,l_RT_HEUN,eval_HARTREE,eval_DFT,l_NE_dynamics,                &
+&                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
+&                         RT_life_extrap_times_SAVE,l_RT_lifetimes_extrapolation,Gr_kind,     &
+&                         l_RT_impose_N_dN,Integrator_name,l_RT_impose_E,DbGd_EE_percent,     &
+&                         l_update_QP_Energies,eval_HARTREE,eval_DFT,l_NE_dynamics,           &
 &                         NE_time_step_update_jump,NE_initial_time_step_update,RT_carriers,   &
 &                         RAD_magnification,NE_step_update_treshold,l_lftm_fit_temperatures,  &
 &                         NE_time_step_update_jump_SAVE,NE_initial_time_step_update,          &
-&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step
+&                         RT_is_dynamically_dephased,RT_is_statically_dephased,RT_MAX_step,   &
+&                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,RT_DbGd_nk,    &
+&                         l_RT_relax_time_approx,l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
+&                         l_RT_impose_for_metals
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:Efield,n_ext_fields,field_is_ok,EtoT,Efield_strength
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  !
- type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: q,k
+ type(levels), intent(inout) :: E
+ type(bz_samp),intent(in)    :: q,k
  !
  ! Work space
  !
@@ -69,49 +73,45 @@ subroutine RT_initialize(E,k,q)
  !==========
  !
  call parser('RAD_prefactor',        RAD_magnification)
- call parser('BGR',                  l_BGR)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ call parser('RTUpdateEqp',          l_update_QP_Energies)
+ !
+ ! GPL_EXCLUDE_START
+ !
  call parser('RTskipImposeN',        l_skip_it)
  call parser('LifeExtrapolation',    l_RT_lifetimes_extrapolation)
  call parser('LifeFitTemp',          l_lftm_fit_temperatures)
  if (l_skip_it) l_RT_impose_N_dN=.FALSE.
  !
+ call parser('RelaxTimeApprox',      l_RT_relax_time_approx)
+ call parser('RTzeroTempRef',        l_RT_eq_is_zero_temp)
+ call parser('RTEqScatt',            l_RT_include_eq_scatt)
+ call parser('RTImpForMet',          l_RT_impose_for_metals)
+ !
  call parser('RTskipImposeE',        l_skip_it)
  if (l_skip_it) l_RT_impose_E=.FALSE.
  !
+ call parser('RTEvalEnergy',         eval_energy)
+ call parser('RTEvalEntropy',        eval_entropy)
+ if(.not.eval_energy) eval_entropy=.false.
+ !
  call parser('SaveGhistory',         SAVE_G_history)
+ call parser('UpdateSOC',            l_update_SOC)
  !
  l_RT_CCA_Kernel       =.not.l_Full_RT_T_evolution.and.l_elph_scatt
+ !
+ ! GPL_EXCLUDE_END
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
  !
  ! Integrator FLAGS
  !==================
+ call RT_Integrator_init()
  !
- l_RT_EULER=index(Integrator_name,'EULER')/=0.or.index(Integrator_name,'euler')/=0
- !
- l_RT_RK2  =index(Integrator_name,'RK2'  )/=0.or.index(Integrator_name,'rk2'  )/=0
- !
- l_RT_HEUN =index(Integrator_name,'HEUN' )/=0.or.index(Integrator_name,'heun' )/=0
- !
- l_RT_RWA  =index(Integrator_name,'RWA'  )/=0.or.index(Integrator_name,'rwa'  )/=0
- !
- l_RT_EXP  =index(Integrator_name,'EXP'  )/=0.or.index(Integrator_name,'exp'  )/=0
- !
- Integrator_name=""
- if ((     l_RT_EULER).and.(.not.l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "EULER"
- if ((.not.l_RT_EULER).and.(     l_RT_RK2).and.(.not.l_RT_HEUN)) Integrator_name = "RK2"
- if ((.not.l_RT_EULER).and.(.not.l_RT_RK2).and.(     l_RT_HEUN)) Integrator_name = "HEUN"
- if(trim(Integrator_name)=="") then
-   call warning("Bad integrator. Using default RK2")
-   l_RT_RK2=.true.
-   Integrator_name = "RK2"
- endif
- if (l_RT_RWA)         Integrator_name = trim(Integrator_name)//" + RWA"
- if (l_RT_EXP)         Integrator_name = trim(Integrator_name)//" + EXP"
- !
+ ! Global gauge
+ !==============
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
    call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
@@ -138,6 +138,8 @@ subroutine RT_initialize(E,k,q)
  call section('=','Dephasing matrix setup')
  !
  call RT_Dephasing_Matrix(E) 
+ !
+ ! GPL_EXCLUDE_START
  !
  if (.not.RT_is_statically_dephased) then
    !
@@ -195,12 +197,19 @@ subroutine RT_initialize(E,k,q)
    if (RT_MAX_step<1.E-5) RT_MAX_step=100.*RT_step
    !
  else
-   !
+ !
+ ! GPL_EXCLUDE_END
+ !
    ! J, P and M (spin) cache Time size (is switched off when an adaptative time step is used)
    !=========================
    IO_JPSM_cache_steps=JPC_RT_IO_t%INTERVAL_steps
    !
+ !
+ ! GPL_EXCLUDE_START
+ !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! External fields checks
  !========================
@@ -259,15 +268,21 @@ subroutine RT_initialize(E,k,q)
  !
  l_NE_dynamics= l_NE_with_fields .or. l_rt_carriers_in_use
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Check on the PROBE/PUMP frequencies
  !====================================
  call RT_Field_Commensurable_Frequencies()
+ !
+ ! GPL_EXCLUDE_END
  !
  if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
  ! Number of K-points
  !====================
  RT_nk=RT_k_grid(E,k,q)
+ !
+ ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
  !
@@ -287,12 +302,14 @@ subroutine RT_initialize(E,k,q)
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
-   if (.not.associated(E%W)) then
+   if (.not.allocated(E%W)) then
      call warning("NO QP damping provided. E-E and/or E-P switched off")
      l_elph_scatt=.FALSE.
      l_elel_scatt=.FALSE.
    endif
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Checking extended COLLISIONS
  !==============================
@@ -301,23 +318,30 @@ subroutine RT_initialize(E,k,q)
    !
    call section('=','Electronic Collisions loading and setup')
    !
+   ! GPL_EXCLUDE_START
    if (l_elel_scatt) then
      call PLASMA_build_up(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
+   ! GPL_EXCLUDE_END
    !
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
  !
+ l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
+&                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
+ !
+ ! GPL_EXCLUDE_START
+ !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !
- if (RT_is_dynamically_dephased) N_T_samplings =RT_Lifetimes_evaluation_plan( )
+ if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
+ if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
  !
- ! Initial allocation and basic definitions of the RT_carriers object
- !====================================================================
+ call RT_adjust_equilibrium()
  !
- call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ ! GPL_EXCLUDE_END
  !
  ! LOG
  ! ===
@@ -328,8 +352,11 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time*AUT2FS)
  call msg( 'r', 'Basic time step        [fs]:',RT_step*AUT2FS)
- call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
  call msg( 'r', '           steps           :',NE_steps)
+ !
+ ! GPL_EXCLUDE_START
+ !
+ call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
  !
  if (NE_initial_time_step_update>0.) then
    call msg( 'r','---Time Step Update---')
@@ -349,16 +376,26 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Extrapolation                  :',l_RT_lifetimes_extrapolation)
    call msg( 'r', 'Memory steps                   :',Life_MEM_steps)
    call msg( 'r', 'Evaluated Time points          :',N_T_samplings)
+   call msg( 'r', 'Relaxation time approximation  :',l_RT_relax_time_approx)
+   call msg( 'r', 'Equilibrium is zero temperature:',l_RT_eq_is_zero_temp)
+   call msg( 'r', 'Equilibrium scattering included:',l_RT_include_eq_scatt)
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---Flags (if any)---')
  !
  call msg( 'r','Hxc approximation          :',trim(RT_potential))
  !
- if (l_elph_scatt)        call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
- if (l_elel_scatt)        call msg( 'r','El-El         scattering   :',l_elel_scatt)
- if (l_elphoton_scatt)    call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
- if (l_BGR)               call msg( 'r','On-the-fly BGR added       :',l_BGR)
+ ! GPL_EXCLUDE_START
+ !
+ if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   :',l_elph_scatt)
+ if (l_elel_scatt)         call msg( 'r','El-El         scattering   :',l_elel_scatt)
+ if (l_elphoton_scatt)     call msg( 'r','El-Photon     scattering   :',l_elphoton_scatt)
+ if (l_update_QP_Energies) call msg( 'r','Update QP Energies         :',l_update_QP_Energies)
+ if (l_update_SOC)         call msg( 'r','Update SOC Interaction     :',l_update_SOC)
+ !
+ ! GPL_EXCLUDE_END
  !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T between I/O of J,P,f [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
@@ -366,10 +403,16 @@ subroutine RT_initialize(E,k,q)
  call                          msg('r', '               outputs [fs]:',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS)
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]:',io_COLLs)
  !
+ ! GPL_EXCLUDE_START
+ !
  call msg( 'nr','---Damping and retarded GF---')
  call msg( 'r','Retarded Green`s function   :',Gr_kind)
  call msg( 'r', 'Damping (Phase)    [fs/meV]:',(/Phase_LifeTime*AUT2FS,HBAR_eVfs/Phase_LifeTime*AUT2FS*1000._SP/))
- call msg( 'r', 'Damping (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ call msg( 'r', '        (Radiative)[fs/meV]:',(/RAD_LifeTime*AUT2FS,   HBAR_eVfs/RAD_LifeTime*AUT2FS*1000._SP/))
+ call msg( 'r', '        Energy ref  (c)[eV]:',QP_ctl_user(3,1)%Wc_E_ref*HA2EV)
+ call msg( 'r', '                    (v)[eV]:',QP_ctl_user(3,1)%Wv_E_ref*HA2EV)
+ call msg( 'r', '        Analytic term (c)[eV,adim,eV^-1]:',QP_ctl_user(3,1)%Wc)
+ call msg( 'r', '                      (v)[eV,adim,eV^-1]:',QP_ctl_user(3,1)%Wv)
  !
  if ((l_elel_scatt.or.l_elph_scatt).and.(.not.l_RT_impose_N_dN.or.l_RT_impose_E)) then
    call msg( 'nr','---Conservation Rules---')
@@ -380,13 +423,15 @@ subroutine RT_initialize(E,k,q)
  call msg( 'nr','---Double Grid---')
  call msg( 'r', 'Double Grid support          :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
-   call msg( 'r', 'K-points            (TOTAL):',BZ_DbGd_tot_nkpts)
+   call msg( 'r', 'K-points            (TOTAL):',RT_DbGd_nk)
    call msg( 'r', '                     (USED):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r', 'Percentual used in e-e[o/o]:',DbGd_EE_percent)
      call msg( 'r', 'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
    endif
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')
@@ -417,4 +462,61 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ contains
+   !
+   subroutine RT_adjust_equilibrium()
+     !
+     use electrons,          ONLY:spin_occ,n_sp_pol,BZ_DbGd_tot_nk_levels
+     use real_time,          ONLY:RT_ibz_coo,DbGd_ibz_coo
+     !
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
+     !
+     if(.not.l_RT_eq_is_zero_temp) return
+     !
+     if(.not.allocated(E%fo)) then
+       YAMBO_ALLOC(E%fo,(E%nb,E%nk,n_sp_pol))
+       E%fo=E%f
+     endif
+     !
+     if(.not.allocated(E%df)) then
+       YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
+       E%df=0._SP
+     endif
+     !
+     if (l_RT_uses_E_DbGd.and..not.allocated(E%df_DbGd)) then
+       YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
+       E%df_DbGd=0._SP
+     endif
+     !
+     ! Defined from occupations %f
+     ! In case RT_apply has been used the reference is
+     ! defined from the %fo occupations
+     !
+     do ib=RT_bands(1),RT_bands(2)
+       do ik=1,k%nibz
+         do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
+           !
+           if (l_RT_uses_E_DbGd) then
+             if(E%E_DbGd(ib,ik_E_DbGd,1)<=E%E_Fermi) then
+               E%df_DbGd(ib,ik_E_DbGd,1)=(E%f_DbGd(ib,ik_E_DbGd,1)-spin_occ)
+             else
+               E%df_DbGd(ib,ik_E_DbGd,1)= E%f_DbGd(ib,ik_E_DbGd,1)
+             endif
+           else
+             if(E%E(ib,ik,1)<=E%E_Fermi) then
+               E%df(ib,ik,1)=(E%f(ib,ik,1)-spin_occ)
+               E%fo(ib,ik,1)= spin_occ
+             else
+               E%df(ib,ik,1)= E%f(ib,ik,1)
+               E%fo(ib,ik,1)= 0._SP
+             endif
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine RT_adjust_equilibrium
+   !
 end subroutine RT_initialize

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -53,8 +53,8 @@ subroutine RT_manual_excitation(E,k)
  !
  ! Shift energy with respect to VBM/CBm
  !
- local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM
- local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm
+ local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM(1)
+ local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm(1)
  !
  if (l_RTpump_energy.and.abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5_SP &
 &                   .and.Eh_pumped_pair_energy(1)<0._SP) return

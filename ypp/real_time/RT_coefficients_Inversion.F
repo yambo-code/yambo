@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -21,77 +21,69 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period,use_LRR)
+subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  !
- use pars,            ONLY:SP,cI
- use YPP_real_time,   ONLY:i_t_start,X_order
+ ! BROKEN AS i_t_start not in YPP module anymore
+ !
+ use pars,            ONLY:SP,cI,cONE,cZERO
+ use YPP_real_time,   ONLY:X_order,RT_conf,RT_time
  use real_time,       ONLY:RT_step,NE_steps
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
- implicit none
+#include<memory.h>
  !
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
  complex(SP), intent(out)  :: X(NX)
- logical,     intent(in)   :: use_LRR
- !
+  !
  ! Work space
  !
- integer                 :: i_t,i_n,i_deltaT,nP_components,M_size
+ integer                 :: i_t,i_n,i_deltaT,nP_components,M_size,i_t_start
  real(SP)   ,allocatable :: P_i(:),T_i(:)
  complex(SP),allocatable :: M(:,:),X_here(:)
  !
- if (use_LRR) then
-   M_size        =2*NW+1
-   nP_components =NW+1
- else
-   M_size        =2*X_order+1
-   nP_components =X_order+1 
- endif
+ M_size        =2*X_order+1
+ nP_components =X_order+1 
  !
- i_deltaT=int(T_period/RT_step)/M_size
+ i_t_start=nint(RT_conf%T_range(1)/RT_step)+1
+ i_deltaT=nint(T_period/RT_step)/M_size
  !
- allocate(M(M_size,M_size),P_i(M_size),T_i(M_size),X_here(nP_components))
+ YAMBO_ALLOC(M,(M_size,M_size))
+ YAMBO_ALLOC(P_i,(M_size))
+ YAMBO_ALLOC(T_i,(M_size))
+ YAMBO_ALLOC(X_here,(nP_components))
  !
- M=(0._SP,0._SP)
+ M=cZERO
  !
  do i_t=1,M_size
-   T_i(i_t)= ((i_t_start-1)+i_deltaT*(i_t-1))*RT_step
+   T_i(i_t)= ((i_t_start-1._SP)+i_deltaT*(i_t-1._SP))*RT_step
    P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
  enddo
  !
- if (use_LRR) then
-   do i_t=1,M_size
-     M(i_t,1) = 1.
-     do i_n=2,nP_components
-       M(i_t,i_n   ) = exp( cI*W(i_n-1)*T_i(i_t))
-       M(i_t,i_n+NW) = exp(-cI*W(i_n-1)*T_i(i_t))
-     end do
-   end do
- else
-   do i_t=1,M_size
-     M(i_t,1) = 1.
-     do i_n=2, nP_components
-       M(i_t,i_n        ) = exp( cI*W(i_n)*T_i(i_t))
-       M(i_t,i_n+X_order) = exp(-cI*W(i_n)*T_i(i_t))
-     end do
-   end do
- endif
- !
- call LINEAR_ALGEBRA_driver(INV,M=M)
- !
- X = (0._SP,0._SP)
- X_here = (0._SP,0._SP)
- do i_n =1, nP_components
-   do i_t = 1,M_size
-     X_here(i_n)=X_here(i_n)+M(i_n,i_t)*P_i(i_t)
+ do i_t=1,M_size
+   M(i_t,1) = cONE
+   do i_n=2,nP_components
+     M(i_t,i_n        ) = exp( cI*W(i_n)*T_i(i_t))
+     M(i_t,i_n+X_order) = exp(-cI*W(i_n)*T_i(i_t))
    end do
  end do
  !
- if (use_LRR     ) X(:)=X_here(2:)
- if (.not.use_LRR) X(:)=X_here(:)
+ call LINEAR_ALGEBRA_driver(INV,M=M)
  !
- deallocate(M,P_i,T_i,X_here)
+ X = cZERO
+ X_here = cZERO
+ do i_n =1, nP_components
+   do i_t = 1,M_size
+     X_here(i_n)=X_here(i_n)+M(i_n,i_t)*P_i(i_t) 
+   end do
+ end do
+ !
+ X(:)=X_here(:)
+ !
+ YAMBO_FREE(M)
+ YAMBO_FREE(P_i)
+ YAMBO_FREE(T_i)
+ YAMBO_FREE(X_here)
  ! 
 end subroutine RT_coefficients_Inversion
 

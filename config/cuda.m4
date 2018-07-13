@@ -24,9 +24,9 @@
 AC_DEFUN([AC_HAVE_CUDA],[
 #
 AC_ARG_ENABLE(cuda,
-        [AC_HELP_STRING([--enavle-cuda=<opt>], [Enable CUDA support])],[],[])
+        [AC_HELP_STRING([--enable-cuda=<opt>], [Enable CUDA support])],[],[])
 #
-cuda_cpp="-D_CUDA"
+def_cuda="-D_CUDA"
 CUDA_LIBS="-Mcudalib=cufft,cublas"
 
 if test x"$enable_cuda" = "xyes" ; then
@@ -34,11 +34,11 @@ if test x"$enable_cuda" = "xyes" ; then
 elif ! test x"$enable_cuda" = "x" ; then
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
 else
-   cuda_cpp=
+   def_cuda=
    CUDA_FLAGS=
 fi
 #
-AC_SUBST(cuda_cpp)
+AC_SUBST(def_cuda)
 AC_SUBST(CUDA_FLAGS)
 #
 ])

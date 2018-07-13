@@ -1,7 +1,7 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -31,9 +31,10 @@ module xc_functionals
  use libxc_funcs_m
  implicit none
  !
- integer     , public :: GS_xc_KIND
- integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public :: GS_exx_FRACTION, GS_exx_SCREENING
+ integer,  public:: GS_xc_KIND
+ integer,  public:: GS_xc_FUNCTIONAL
+ real(SP), public:: GS_exx_FRACTION, GS_exx_SCREENING
+ real(SP), public:: E_xc_val=0.0
  real(SP), public, allocatable:: magn(:,:)
  real(SP), public, allocatable:: F_xc(:,:,:)
  real(SP), public, allocatable:: V_xc(:,:)
@@ -67,7 +68,7 @@ module xc_functionals
  !
  interface
    !
-   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,MUTE,unMUTE,EXX_SCREENING)
+   subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      use pars,          ONLY:SP,DP,RZERO
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
@@ -79,8 +80,6 @@ module xc_functionals
      integer,       intent(inout)    :: KIND,FUNCTIONAL
      integer,       intent(in)       :: ORDER
      real(SP),      intent(inout),optional :: EXX_FRACTION,EXX_SCREENING
-     character(*),  intent(in),   optional :: MUTE
-     logical,       intent(in),   optional :: unMUTE
    end subroutine XC_potential_driver
    !
    subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)

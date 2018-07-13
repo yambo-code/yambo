@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -51,9 +51,7 @@ subroutine cutoff_driver(q)
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  implicit none
  type(bz_samp) :: q
  !
@@ -219,10 +217,7 @@ subroutine cutoff_driver(q)
  ! since it should be both started and stopped in order not
  ! to break the clock
  !
-#if defined _TIMING
  call timing('Coulomb Cutoff',OPR='start')
-#endif
-
  !
  ! I/O + Specific geometry calls
  !
@@ -241,9 +236,7 @@ subroutine cutoff_driver(q)
    if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
  endif
  !
-#if defined _TIMING
  call timing('Coulomb Cutoff',OPR='stop')
-#endif
  !
  contains
    !

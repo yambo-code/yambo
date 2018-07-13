@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,33 +25,28 @@ subroutine build_spin_sop()
  !
  use pars,           ONLY:SP,pi,cI,cONE,cZERO
  use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev
+ use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
+&                         sigma_0,sigma_x,sigma_y,sigma_z
 #if defined _CUDA
  use D_lattice,      ONLY:spin_sop_d
 #endif
  use electrons,      ONLY:n_spinor
  !
- implicit none
+#include<memory.h>
  !
- complex(SP)    ::sigma_0(2,2),sigma_x(2,2),sigma_y(2,2),sigma_z(2,2),t_rev(2,2)
+ complex(SP)    ::t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)
  real(SP)       ::alpha,beta,delta,tmp_sop(3,3)
  integer        ::is,i1,i2
  !
- if(allocated(spin_sop)) deallocate(spin_sop)
+ YAMBO_FREE(spin_sop)
  !
- allocate(spin_sop(n_spinor,n_spinor,nsym))
+ YAMBO_ALLOC(spin_sop,(n_spinor,n_spinor,nsym))
  !
  if(n_spinor==1) then
    spin_sop(1,1,:)=cONE
    return
  endif
- !
- ! Pauli matrices
- sigma_0=reshape((/ cONE , cZERO, cZERO, cONE /),(/2,2/))
- sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
- sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
- sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
  !
  ! T_rev=(-i sigma_y K0 ) with K0 the complex conjugation.
  t_rev=-cI*sigma_y

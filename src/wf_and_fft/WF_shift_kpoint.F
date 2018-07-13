@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -24,7 +24,7 @@
 subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  use pars,          ONLY:SP,cZERO
- use electrons,     ONLY:n_spin
+ use electrons,     ONLY:n_spinor,n_sp_pol
  use R_lattice,     ONLY:G_m_G,k_map,bz_samp
  use wave_func,     ONLY:wf_ng
  use interfaces,    ONLY:eval_G_minus_G
@@ -33,13 +33,13 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
  !
  integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
  type(bz_samp), intent(in) :: Xk
- complex(SP), intent(out)  :: WF_k_out(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
- complex(SP), intent(in)   :: WF_k_in(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
+ complex(SP), intent(out)  :: WF_k_out(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP), intent(in)   :: WF_k_in(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
  !
  ! Work space
  !
  integer :: id,ik,is
- complex(SP) :: WF_tmp(wf_ng,b_to_shift(1):b_to_shift(2),n_spin)
+ complex(SP) :: WF_tmp(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
  integer           :: ig,igp,iG0,ng_max
  integer           :: g0_idx(3,2)
  real(SP)          :: g0_length(3)
@@ -76,7 +76,7 @@ subroutine WF_shift_kpoint(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
        if(ig>ng_max) cycle
        igp=G_m_G(ig,g0_idx(id,WF_shift(id)))
        if(igp>wf_ng.or.ig>wf_ng) cycle
-       WF_k_out(igp,:,:)=WF_tmp(ig,:,:)
+       WF_k_out(igp,:,:,:)=WF_tmp(ig,:,:,:)
      enddo
    else
      WF_k_out=WF_tmp

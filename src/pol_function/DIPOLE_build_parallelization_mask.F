@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,7 +27,7 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
  use electrons,           ONLY:n_sp_pol
  use parallel_m,          ONLY:PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
 &                              PAR_IND_DIPk_ibz,PAR_IND_DIPk_ID,l_par_SE,&
-&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q
+&                              l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_NL
 #if defined _RT
  use parallel_m,          ONLY:PAR_IND_B_mat,l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_RT
  use hamiltonian,         ONLY:B_mat_index
@@ -55,7 +55,11 @@ subroutine DIPOLE_build_parallelization_mask(X,eval_DIP,n_LT_steps)
    do ic=ic_min,X%ib(2)
      !
 #if defined _RT
-     if (l_par_RT) eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+     if (l_par_RT) then
+         eval_DIP(ic,iv)=PAR_IND_B_mat%element_1D( B_mat_index(ic,iv,X%ib))
+     elseif(l_par_NL) then 
+         eval_DIP(ic,iv)=.true.
+     endif
 #endif
      !
      if (any((/l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q,l_par_SE/))) then

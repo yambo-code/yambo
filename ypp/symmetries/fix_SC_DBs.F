@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -25,15 +25,15 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
- use memory_m,            ONLY:mem_est
  use com,                 ONLY:core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
- use SC,                  ONLY:l_sc_V_is_local,SC_R,H_nl_sc,SC_bands
+ use SC,                  ONLY:l_sc_V_is_local,H_nl_sc,SC_bands
+ use hamiltonian,         ONLY:SC_R
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp),intent(in) :: k
  type(bz_samp),intent(in) :: k_save
@@ -84,7 +84,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  en_sc%nb=SC_bands(2)
  en_sc%nk=k_save%nibz
- allocate(en_sc%E(en_sc%nb,en_sc%nk,n_sp_pol))  
+ YAMBO_ALLOC(en_sc%E,(en_sc%nb,en_sc%nk,n_sp_pol))
  !
  nkibz=k_save%nibz
  !
@@ -101,8 +101,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  !  Wave-function
  !
- allocate(SC_R(SC_bands(2),SC_bands(2),k%nibz,n_sp_pol))
- call mem_est("SC_R",(/size(SC_R)/))
+ YAMBO_ALLOC(SC_R,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k%nibz,n_sp_pol))
  !
  nkibz=k_save%nibz
  !
@@ -132,19 +131,16 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    io_SC_WF_err=io_SC_components('WF',en_sc,ID)
  enddo
  !
- deallocate(SC_R)
- call mem_est("SC_R")
+ YAMBO_FREE(SC_R)
  !
  ! Copy the potential
  !
  call XC_switch()
  if(.not.l_sc_V_is_local) then
    !
-   allocate(H_nl_sc(SC_bands(2),SC_bands(2)))
-   call mem_est("H_nl_sc",(/size(H_nl_sc)/))
+   YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
    !
-   allocate(full_H(SC_bands(2),SC_bands(2),k_save%nibz,n_sp_pol))
-   call mem_est("full_H",(/size(full_H)/))
+   YAMBO_ALLOC(full_H(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k_save%nibz,n_sp_pol))
    !
    nkibz=k_save%nibz
    !
@@ -182,11 +178,9 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    enddo    
    enddo    
    !
-   deallocate(H_nl_sc)
-   call mem_est("H_nl_sc")
+   YAMBO_FREE(H_nl_sc)
    !
-   deallocate(full_H)
-   call mem_est("full_H")
+   YAMBO_FREE(full_H)
    !
  endif
  !

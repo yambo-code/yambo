@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -25,8 +25,7 @@ module KERR
  !
  use drivers, ONLY:l_kerr
  use pars,    ONLY:SP
- !
- implicit none
+#include<memory.h>
  !
  complex(SP)              :: A_drude(2)
  complex(SP)              :: B_Hall(2)
@@ -38,7 +37,6 @@ module KERR
    subroutine KERR_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
-     use memory_m,  ONLY:mem_est
      character(*)      :: what
      integer, optional :: d(:)
      !
@@ -50,41 +48,27 @@ module KERR
        select case(what)
        case('DIP_projected')
          if (allocated(DIP_projected_r90)) return
-         allocate(DIP_projected_r90(d(1):d(2),d(3):d(4),d(5),n_sp_pol),stat=err)
-         call mem_est(what,(/product(d)*n_sp_pol/),errors=(/err/))
+         YAMBO_ALLOC(DIP_projected_r90,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
        end select
      else
        select case(what)
        case('DIP_projected')
-         if (.not.allocated(DIP_projected_r90)) return
-         deallocate(DIP_projected_r90)
+         YAMBO_FREE(DIP_projected_r90)
        end select
-       call mem_est(what)
      endif
    end subroutine
    !
-   !
-   ! GPL_EXCLUDE_START
-   !
-   subroutine BS_KERR_alloc( )
+   subroutine BSS_KERR_alloc( )
      use pars,       ONLY:cZERO
-     use memory_m,   ONLY:mem_est
      use BS,         ONLY:BS_H_dim,BS_K_dim
      if (.not.l_kerr) return
-     allocate(BSS_dipoles_kerr(BS_H_dim))
-     call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
+     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
      BSS_dipoles_kerr = cZERO
    end subroutine
    !
-   subroutine BS_KERR_free( )
-     use memory_m,   ONLY:mem_est
+   subroutine BSS_KERR_free( )
      if (.not.l_kerr) return
-     if (allocated(BSS_dipoles_kerr)) then
-       deallocate(BSS_dipoles_kerr)
-       call mem_est('BSS_dipoles_kerr',(/size(BSS_dipoles_kerr)/))
-     endif
+     YAMBO_FREE(BSS_dipoles_kerr)
    end subroutine
-   !
-   ! GPL_EXCLUDE_END
    !
 end module

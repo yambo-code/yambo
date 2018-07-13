@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,7 +31,7 @@ subroutine MAG_A_phase()
  use magnetic,       ONLY:Bz,MAG_radius,n_loops
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
  !
  implicit none
@@ -54,11 +54,11 @@ subroutine MAG_A_phase()
  ib_ref=1
  is_ref=1
  !
- call WF_load(WF,0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),title='-MAG_GAUGE',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),(/is_ref,is_ref/),title='-MAG_GAUGE',impose_free_and_alloc=.TRUE.)
  !
  iwf=WF%index(ib_ref,ik_ref,is_ref)
- wf_r2(:)=r2_cyl(:)*WF%c(:,iwf)
- r2_ref=real(Vstar_dot_V(fft_size,WF%c(:,iwf),wf_r2))
+ wf_r2(:)=r2_cyl(:)*WF%c(:,is_ref,iwf)
+ r2_ref=real(Vstar_dot_V(fft_size,WF%c(:,is_ref,iwf),wf_r2))
  !
  n_loops=int(r2_ref*Bz/(2*SPEED_OF_LIGHT)+0.5)
  !

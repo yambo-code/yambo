@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -36,7 +36,7 @@ subroutine load_cc(manage_zero,center_cc)
  use FFT_m,       ONLY:fft_size,fft_dim
  use D_lattice,   ONLY:x_cc,a,x_zero_point
  !
- implicit none
+#include<memory.h>
  !
  ! input variable
  !
@@ -49,7 +49,7 @@ subroutine load_cc(manage_zero,center_cc)
  !
  call fft_setup(0,1,.true.)      ! FFT size
  !
- allocate(x_cc(fft_size,3))
+ YAMBO_ALLOC(x_cc,(fft_size,3))
  !
  ! Not implemented. Option to set the jump elsewhere
  x_zero_point=0._SP

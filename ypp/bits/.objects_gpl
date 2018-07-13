@@ -1,1 +1,0 @@
-objs = WANNIER_driver.o bxsf_read.o

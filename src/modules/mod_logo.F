@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -84,7 +84,8 @@ module LOGO
      ! GPL_INCLUDE_START
 !     comment(1)='GPL Version '//&
 !&                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))
+!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))//&
+!&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
      ! GPL_INCLUDE_END
      !
      MPI_string="Serial"

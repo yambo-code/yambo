@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -276,8 +276,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !=================
  if (do_IO) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
-   if (.not.associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
-   if (     associated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
+   if (.not.allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp,ID)
+   if (     allocated(qp_expanded%E)) io_err=io_QP_and_GF('QP',qp_expanded,ID)
  endif
  !
  call QP_reset(qp_expanded)

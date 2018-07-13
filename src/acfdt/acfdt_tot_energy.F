@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,11 +29,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use FFT_m,          ONLY:fft_size
  use frequency,      ONLY:w_samp,W_reset
  use wave_func,      ONLY:WF
- use memory_m,       ONLY:mem_est
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use linear_algebra, ONLY:INV,USE_LK
- use interfaces,     ONLY:PARALLEL_index,WF_load,el_density_and_current,LINEAR_ALGEBRA_driver 
+ use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
@@ -45,7 +44,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
- implicit none
+#include<memory.h>
+ !
  type(levels) ::Xen,En
  type(bz_samp)::Xk,q,k
  type(X_t)    ::X
@@ -95,7 +95,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  call WF_load(WF,0,1,(/1,Xen%nbm/),(/1,Xk%nibz/),title='-Density')
  !
- allocate(E_xc(fft_size),rho(fft_size))
+ YAMBO_ALLOC(E_xc,(fft_size))
+ YAMBO_ALLOC(rho,(fft_size))
  call el_density_and_current(Xen,Xk,rho=rho)
  !
  KIND_=XC_EXCHANGE_CORRELATION
@@ -124,7 +125,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  Ec_LDA=sdot(fft_size,rho,1,E_xc,1)
 #endif
  !
- deallocate(E_xc,rho)
+ YAMBO_FREE(E_xc)
+ YAMBO_FREE(rho)
  call WF_free(WF)
  !
  ! Correlatin Setup
@@ -138,7 +140,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (energy)
    !
-   allocate(freq(2*ACFDT_n_freqs+1),freq_weight(2*ACFDT_n_freqs+1))
+   YAMBO_ALLOC(freq,(2*ACFDT_n_freqs+1))
+   YAMBO_ALLOC(freq_weight,(2*ACFDT_n_freqs+1))
    !
    call gauss_leg_grid(0._SP,ACFDT_E_range(1),freq(:ACFDT_n_freqs),&
 &                      freq_weight(:ACFDT_n_freqs),ACFDT_n_freqs)
@@ -153,7 +156,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    !GL-grid setup (coupling)
    !
-   allocate(lambda(ACFDT_n_lambda),lambda_weight(ACFDT_n_lambda))
+   YAMBO_ALLOC(lambda,(ACFDT_n_lambda))
+   YAMBO_ALLOC(lambda_weight,(ACFDT_n_lambda))
    call gauss_leg_grid(0._SP,1._SP,lambda,lambda_weight,ACFDT_n_lambda)
    lambda_weight(:)=lambda_weight(:)*2.*pi
    !
@@ -179,9 +183,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
      Xw%n_freqs=ACFDT_n_freqs
      Xw%er=0.
      Xw%dr=(/freq(1),freq(ACFDT_n_freqs)/)
-     allocate(Xw%p(ACFDT_n_freqs))
+     YAMBO_ALLOC(Xw%p,(ACFDT_n_freqs))
      Xw%p(:)=(0.,1.)*freq(:)
-     call mem_est("W-p",(/ACFDT_n_freqs/))
      i_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,iqibz>1)
      if (i_err==0) exit
    enddo
@@ -190,8 +193,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    !
    call msg('r','[Ec] RL components :',X%ng)
    !
-   allocate(X_s(X%ng,X%ng),isc%gamp(X%ng,1),tddftk(X%ng,X%ng),dX(X%ng))
-   call mem_est("X_WS",(/2*size(X_s)+3*X%ng/))
+   YAMBO_ALLOC(X_s,(X%ng,X%ng))
+   YAMBO_ALLOC(isc%gamp,(X%ng,1))
+   YAMBO_ALLOC(tddftk,(X%ng,X%ng))
+   YAMBO_ALLOC(dX,(X%ng))
    call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
    !
    ACFDT_Ec=0.
@@ -241,8 +246,9 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
    call X_alloc('X')
    call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
-   deallocate(X_s,tddftk,dX)
-   call mem_est("X_WS")
+   YAMBO_FREE(X_s)
+   YAMBO_FREE(dX)
+   YAMBO_FREE(dX)
    !
  endif
  !
@@ -250,8 +256,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  QP_nb=En%nbm
  QP_nk=k%nibz
- if (allocated(QP_state)) deallocate(QP_state)
- allocate(QP_state(QP_nb,QP_nk))
+ YAMBO_FREE(QP_state)
+ YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
  QP_state=.TRUE.
  !
  call XCo_driver(En,k,Xk,q)
@@ -287,9 +293,14 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X)
  !
  ! CLEAN
  !
- if (do_Ec) deallocate(freq,freq_weight,lambda,lambda_weight)
- if (do_Ec) deallocate(Xw%p)
- deallocate(QP_Vnl_xc,QP_Vxc,QP_table,QP_state)
- call mem_est("QP_table QP_state QP_Vnl_xc QP_Vxc W-p")
+ YAMBO_FREE(freq)
+ YAMBO_FREE(freq_weight)
+ YAMBO_FREE(lambda)
+ YAMBO_FREE(lambda_weight)
+ YAMBO_FREE(Xw%p)
+ YAMBO_FREE(QP_Vnl_xc)
+ YAMBO_FREE(QP_Vxc)
+ YAMBO_FREE(QP_table)
+ YAMBO_FREE(QP_state)
  !
 end subroutine

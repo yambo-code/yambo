@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,8 +23,7 @@
 !
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
- use pars,           ONLY:SP,pi,IP
- use memory_m,       ONLY:mem_est
+ use pars,           ONLY:SP,pi
  use vec_operate,    ONLY:c2a
  use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
  use R_lattice,      ONLY:b,g_vec,ng_vec
@@ -34,10 +33,14 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
 #endif
  use wave_func,      ONLY:wf_ng
+#if defined _FFTW
+ use FFT_m,          ONLY:fftw_plan
+#endif
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
- implicit none
+ use timing_m,       ONLY:timing
+#include<memory.h>
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
 #if defined _FFTQE
@@ -48,16 +51,15 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3)
- !
+
+ call timing("FFT_setup",opr="start")
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
-     call mem_est('FFT_g_tab')
-     deallocate(fft_g_table)
+     YAMBO_FREE(fft_g_table)
    endif
-   allocate(fft_g_table(max(iG_max,wf_ng),iGo_max))
-   call mem_est('FFT_g_tab',(/size(fft_g_table)/),(/IP/))
+   YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
  endif
  !
  ! SIZE estimation
@@ -89,7 +91,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    ln=ln*fft_multiplier
    !
    call fft_best_size(ln)
-   if (i4>0) return
+   if (i4>0) then
+      call timing("FFT_setup",opr="stop")
+      return
+   endif
    fft_dim=ln
    fft_size=product(fft_dim)
    fft_norm=sqrt(1._SP/real(fft_size,SP))
@@ -99,14 +104,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    !
    if (allocated(fft_rot_r)) then
-     deallocate(fft_rot_r)
-     call mem_est('FFT_rot')
+     YAMBO_FREE(fft_rot_r)
    endif
-   allocate(fft_rot_r(fft_size,nsym))
-   call mem_est('FFT_rot',(/size(fft_rot_r)/),(/IP/))
+   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
    !
-   if (allocated(fft_rot_r_inv)) deallocate(fft_rot_r_inv)
-   allocate(fft_rot_r_inv(fft_size))
+   YAMBO_FREE(fft_rot_r_inv)
+   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
 
    !
    !Remember
@@ -129,7 +132,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      if( is<=nsym/(1+i_time_rev) )                M1=matmul( dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is==nsym+1 )                             M1=matmul( space_inv,transpose(a))
-     M2=matmul(b,M1)/2./pi
+     M2=matmul(b,M1)/2.0_SP/pi
      forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
      !
      do i1=0,fft_dim(1)-1
@@ -160,7 +163,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    allocate(fft_rot_r_inv_d,source=fft_rot_r_inv)
 #endif
  enddo
- 
+ ! 
+#if defined _FFTW
+ fftw_plan=0
+#endif
+ !
+ call timing("FFT_setup",opr="stop")
  !
  contains
    !

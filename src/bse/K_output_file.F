@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -487,7 +487,7 @@ subroutine K_output_file(iq,mode)
      endif
 #endif
      !
-     if(.not.l_Haydock) call of_open_close(jdos_file_name)
+     if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name)
      !
    end subroutine
    !

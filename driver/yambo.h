@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2018 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -40,15 +40,16 @@
   {"lhelp",  "H","Long Help",0,0,0,0,0},               
   {"jobstr", "J","Job string identifier",0,0,1,0,1},   
   {"infver", "V","Input file verbosity",0,0,1,0,0},    
-  {"DESC",   " ","opt=RL,kpt,sc,qp,io,gen,resp,rt,all,par",0,0,0,0,0},
+  {"DESC",   " ","[opt=RL,kpt,sc,qp,io,gen,resp,all,par]",0,0,0,0,0},
   {"ifile",  "F","Input file",0,0,1,0,1},              
   {"idir",   "I","Core I/O directory",0,0,1,0,1},         
   {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
-  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},  
+  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},
   {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
   {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
   {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
 #if defined _MPI
+  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
   {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
 #endif
 #if defined _OPENMP
@@ -56,14 +57,14 @@
 #endif
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-#if defined _SC | defined _MAGNETIC | defined _RT
+#if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
   {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0,0},
   {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
 #endif
   {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0,0},
   {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/(p/f)i/t]",0,0,1,0,0},                      
+  {"bss",    "y","BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0,0},                      
   {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
   {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
@@ -77,8 +78,11 @@
 #if defined _PL
   {"photolum", "u","Photo-Luminescence",0,0,0,0,0}, 
 #endif
+#if defined _NL
+  {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
+#endif
 #if defined _RT
-  {"negf",   "q","Real-time dynamic [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _QED && !defined _ELPH
@@ -96,11 +100,14 @@
 #if defined _SC | defined _RT
   {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
 #endif
-#if defined _SC && !defined _RT
+#if defined _SC
   {"scrun",      "s","Self-Consistent Single-Particle Calculations",0,0,0,0,0}, 
 #endif
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
+#endif
+#if defined _ELECTRIC 
+  {"electric", "m","Static Electric Field",0,0,0,0,0}, 
 #endif
 #if defined _SURF
   {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},

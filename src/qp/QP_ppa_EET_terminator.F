@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AF
@@ -62,8 +62,8 @@ function QP_ppa_EET_terminator(W,E,vs,Ep,ig1,ig2,iq,cutoff0,cutoff1)
  !
  if (trim(GW_terminator_Kind)=="BRS") then
    !
-   q_plus_G =iku_v_norm(q_pt(iq,:)+G_vec(ig1,:))
-   q_plus_Gp=iku_v_norm(q_pt(iq,:)+G_vec(ig2,:))
+   q_plus_G =iku_v_norm(q_pt(iq,:)+g_vec(ig1,:))
+   q_plus_Gp=iku_v_norm(q_pt(iq,:)+g_vec(ig2,:))
    !
    if(iq==1.and.ig1==1) q_plus_G =q_norm(1)
    if(iq==1.and.ig2==1) q_plus_Gp=q_norm(1)

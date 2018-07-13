@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,10 +27,11 @@ module collision_el
  ! ELEMENTAL COLLISION
  !=====================
  !
- use pars,       ONLY:DP,SP,LP,schlen
- use parallel_m, ONLY:PP_indexes
+ use pars,        ONLY:DP,SP,LP,schlen
+ use parallel_m,  ONLY:PP_indexes
+ use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  !
- implicit none
+#include<memory.h>
  !
  type elemental_collision
    !
@@ -48,20 +49,30 @@ module collision_el
    !
    character(schlen) :: name="El_Coll"
    !
-   complex(SP), pointer :: gamp(:,:) => null()
-   complex(SP), pointer :: rhotw(:)  => null()
+   complex(SP), allocatable :: gamp(:,:)
+   complex(SP), allocatable :: rhotw(:)
    !
    ! scatter bamp workspace
    !
-   complex(DP), pointer :: rho_tw_rs(:) => null()
-   complex(SP), pointer :: WF_symm_i(:,:) => null()
-   complex(SP), pointer :: WF_symm_o(:,:) => null()
+   complex(DP), allocatable :: rho_tw_rs(:)
+   complex(SP), allocatable :: WF_symm_i(:,:)
+   complex(SP), allocatable :: WF_symm_o(:,:)
+   !
+   ! USPP workspace
+   !
+   type(bec_type) :: ibec      ! contains:  < beta_j | wf_in>
+   type(bec_type) :: obec      ! contains:  < beta_j | wf_om>
+   real(DP),    allocatable :: ylmk0(:,:)
+   real(DP),    allocatable :: qmod(:)
+   complex(DP), allocatable :: qgm(:,:,:,:)
+   complex(SP), allocatable :: becprod(:,:,:,:)
+   complex(SP), allocatable :: eiqtau(:)
    !
 #if defined(_CUDA)
-   complex(SP), pointer, device :: rhotw_d(:)  => null()
-   complex(DP), pointer, device :: rho_tw_rs_d(:) => null()
-   complex(SP), pointer, device :: WF_symm_i_d(:,:) => null()
-   complex(SP), pointer, device :: WF_symm_o_d(:,:) => null()
+   complex(SP), allocatable, device :: rhotw_d(:)
+   complex(DP), allocatable, device :: rho_tw_rs_d(:)
+   complex(SP), allocatable, device :: WF_symm_i_d(:,:)
+   complex(SP), allocatable, device :: WF_symm_o_d(:,:)
 #endif
    !
  end type elemental_collision
@@ -78,33 +89,39 @@ module collision_el
    subroutine elemental_collision_free(ggw,INIT_ONLY)
      type(elemental_collision)::ggw
      logical,optional::INIT_ONLY
-     logical::init_only_=.false.
+     logical         ::init_only_
      !
-     if(present(INIT_ONLY)) init_only_=INIT_ONLY
-     if(.not.init_only_) then
-       if(associated(ggw%gamp))      deallocate(ggw%gamp)
-       if(associated(ggw%rhotw))     deallocate(ggw%rhotw)
-       if(associated(ggw%rho_tw_rs)) deallocate(ggw%rho_tw_rs)
-       if(associated(ggw%WF_symm_i)) deallocate(ggw%WF_symm_i)
-       if(associated(ggw%WF_symm_o)) deallocate(ggw%WF_symm_o)
+     init_only_=.false.
+     if (present(INIT_ONLY)) then
+       init_only_=INIT_ONLY
+     endif
+     if (.not.init_only_) then
+       YAMBO_FREE(ggw%gamp)
+       YAMBO_FREE(ggw%rhotw)
+       YAMBO_FREE(ggw%rho_tw_rs)
+       YAMBO_FREE(ggw%WF_symm_i)
+       YAMBO_FREE(ggw%WF_symm_o)
+       ! 
 #if defined(_CUDA)
        if(associated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
        if(associated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
        if(associated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
        if(associated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
 #endif
+       ! USPP workspace
+       call deallocate_bec_type(ggw%ibec)
+       call deallocate_bec_type(ggw%obec)
+       YAMBO_FREE(ggw%ylmk0)
+       YAMBO_FREE(ggw%qmod)
+       YAMBO_FREE(ggw%qgm)
+       YAMBO_FREE(ggw%becprod)
+       YAMBO_FREE(ggw%eiqtau)
      endif
-     nullify(ggw%gamp,ggw%rhotw,ggw%rho_tw_rs,ggw%WF_symm_i,ggw%WF_symm_o)
-#if defined(_CUDA)
-     nullify(ggw%rhotw_d,ggw%rho_tw_rs_d,ggw%WF_symm_i_d,ggw%WF_symm_o_d)
-#endif
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
      use electrons,      ONLY:n_spinor
      use FFT_m,          ONLY:fft_size
-     use memory_m,       ONLY:mem_est
-     implicit none
      type(elemental_collision) ::ggw
      integer,         OPTIONAL :: NG
      integer,         OPTIONAL :: NG_GAMP(2)
@@ -115,24 +132,24 @@ module collision_el
        ggw%name=TITLE
      endif
      !
-     allocate(ggw%rho_tw_rs(fft_size))
-     allocate(ggw%WF_symm_i(fft_size,n_spinor))
-     allocate(ggw%WF_symm_o(fft_size,n_spinor))
+     if (fft_size>0) then
+       YAMBO_ALLOC(ggw%rho_tw_rs,(fft_size))
+       YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
+       YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
 #if defined _CUDA
-     allocate(ggw%rho_tw_rs_d(fft_size))
-     allocate(ggw%WF_symm_i_d(fft_size,n_spinor))
-     allocate(ggw%WF_symm_o_d(fft_size,n_spinor))
+       allocate(ggw%rho_tw_rs_d(fft_size))
+       allocate(ggw%WF_symm_i_d(fft_size,n_spinor))
+       allocate(ggw%WF_symm_o_d(fft_size,n_spinor))
 #endif
-     !
-     call mem_est(trim(ggw%name)//"-rho_tw_rs",(/fft_size/),(/2*SP/))
-     call mem_est(trim(ggw%name)//"-WF_symm_i",(/fft_size*n_spinor/),(/2*SP/))
-     call mem_est(trim(ggw%name)//"-WF_symm_o",(/fft_size*n_spinor/),(/2*SP/))
+     endif
      !
      if (present(NG)) then
-       if (present(GRADIENT)) then
-         if (GRADIENT) allocate(ggw%rhotw(3*NG))
-       else
-         allocate(ggw%rhotw(NG))
+       if (NG>0) then
+         if (present(GRADIENT)) then
+           YAMBO_ALLOC(ggw%rhotw,(3*NG))
+         else
+           YAMBO_ALLOC(ggw%rhotw,(NG))
+         endif
        endif
 #if defined _CUDA
        if (present(GRADIENT)) then
@@ -142,11 +159,11 @@ module collision_el
        endif
 #endif
        ggw%ngrho=NG
-       call mem_est(trim(ggw%name)//"-rhotw",(/size(ggw%rhotw)/),(/2*SP/))
      endif
      if (present(NG_GAMP)) then
-       allocate(ggw%gamp(NG_GAMP(1),NG_GAMP(2)))
-       call mem_est(trim(ggw%name)//"-gamp",(/size(ggw%gamp)/),(/2*SP/))
+       if (all((/NG_GAMP>0/))) then
+         YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+       endif
      endif
      !
    end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,13 +30,16 @@ integer function io_BSS_invert(iq,W,ID)
  use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
 &                        io_header,read_is_on
- implicit none
+ use timing_m,      ONLY:timing
+#include<memory.h>
  integer      :: iq
  type(w_samp) :: W
  !
  ! Work Space
  !
  integer     :: ID
+ !
+ call timing('io_BSS_invert',OPR='start')
  !
  io_BSS_invert=io_connect(desc='BS_invert_Q'//trim(intc(iq)),type=2,ID=ID)
  !
@@ -98,8 +101,8 @@ integer function io_BSS_invert(iq,W,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if (read_is_on(ID).and..not.associated(W%p)) then
-     allocate(W%p(K_INV_EPS%n_freqs))
+   if (read_is_on(ID).and..not.allocated(W%p)) then
+     YAMBO_ALLOC(W%p,(K_INV_EPS%n_freqs))
      W%n_freqs=K_INV_EPS%n_freqs
    endif
    !
@@ -129,5 +132,7 @@ integer function io_BSS_invert(iq,W,ID)
  endif
  !
 1 call io_disconnect(ID)
+ !
+ call timing('io_BSS_invert',OPR='stop')
  !
 end function

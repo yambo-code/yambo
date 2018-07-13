@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,14 +32,13 @@ subroutine PARALLEL_WF_index(COMM)
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
  use parallel_m,      ONLY:PP_redux_wait
- !
- implicit none
+#include<memory.h>
  !
  type(MPI_comm), optional :: COMM
  !
  ! Work Space
  !
- integer              :: ik,ib,NB,NK,NC,ID
+ integer              :: ik,ib,NS,NK,NB,NC,ID
  type(PP_indexes)     :: WF_linear,WF_linear_no_overlaps
  integer, allocatable :: b_filling(:)
  !
@@ -59,9 +58,11 @@ subroutine PARALLEL_WF_index(COMM)
  !
  NB=size(states_to_load,1)
  NK=size(states_to_load,2)
+ NS=size(states_to_load,3)
  !
- allocate(WF_linear%element_1D(NB*NK),WF_linear%n_of_elements(NC))
- allocate(PAR_IND_WF_linear%element_2D(NB,NK),PAR_IND_WF_linear%n_of_elements(NC))
+ YAMBO_ALLOC(WF_linear%element_1D,(NB*NK))
+ YAMBO_ALLOC(WF_linear%n_of_elements,(NC))
+ YAMBO_ALLOC(PAR_IND_WF_linear%element_2D,(NB,NK))
  !
  WF_linear%element_1D=.FALSE.
  PAR_IND_WF_linear%element_2D=.FALSE.
@@ -82,27 +83,27 @@ subroutine PARALLEL_WF_index(COMM)
    call PP_redux_wait(b_filling,COMM=PAR_COM_density%COMM)
    !
    do ib=1,NB
-     if (b_filling(ib)==0.and.PAR_COM_density%CPU_id==0)  states_to_load(ib,ik,1)=.TRUE.
-   enddo
-   !
-   do ib=1,NB
+     if (b_filling(ib)==0.and.PAR_COM_density%CPU_id==0)  states_to_load(ib,ik,:)=.TRUE.
+     !if (states_to_load(ib,ik,1)) WF_linear%element_1D(ib+(ik-1)*NB)=.TRUE.                           ! this should be more correct
      if (states_to_load(ib,ik,1)) WF_linear%element_1D(NK*(ib-1)+ik)=.TRUE.
    enddo
+   !
  enddo
  !
  deallocate(b_filling)
  !
  call PARALLEL_minimal_index_from_overlaping(WF_linear,WF_linear_no_overlaps,PAR_COM_density)
  !
+
  do ik=1,NK
    do ib=1,NB
+     !if (WF_linear_no_overlaps%element_1D(ib+(ik-1)*NB)) PAR_IND_WF_linear%element_2D(ib,ik)=.TRUE.   ! this should be more correct
      if (WF_linear_no_overlaps%element_1D(NK*(ib-1)+ik)) PAR_IND_WF_linear%element_2D(ib,ik)=.TRUE.
    enddo
  enddo
  !
- PAR_IND_WF_linear%n_of_elements(ID+1)=count(PAR_IND_WF_linear%element_2D)
- !
- call PP_indexes_reset(WF_linear)
+ YAMBO_FREE(WF_linear%element_1D)
+ YAMBO_FREE(WF_linear%n_of_elements)
  call PP_indexes_reset(WF_linear_no_overlaps)
  !
 end subroutine PARALLEL_WF_index

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -52,7 +52,7 @@ integer function parse_character_arrays(CH_v,N,VAR_NAME,VAR_DESC,READ_it)
    parse_character_arrays=i_pointer-1
  else
    nflines_save=nflines
-   write (flines(nflines+1),'(a,t30,a)') '%'//trim(VAR_NAME),'#'//VAR_DESC
+   write (flines(nflines+1),'(a,t32,a)') '%'//trim(VAR_NAME),'#'//VAR_DESC
    nflines=nflines+1
    do i1=1,N
      flines(nflines+1)='"'//trim(CH_v(i1,1))//'"'

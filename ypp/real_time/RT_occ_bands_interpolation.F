@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,20 +25,20 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  use pars,           ONLY:SP,schlen
  use units,          ONLY:HA2EV,AUT2FS
- use electrons,      ONLY:levels,n_sp_pol,n_spinor
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use com,            ONLY:msg,of_open_close,error
- use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,interp_grid
+ use YPP,            ONLY:BANDS_steps,Nel_fac,coo_in,coo_out,INTERP_grid,CIRCUIT_k
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:eval_interpolation_coeff,bz_interpolation,reset_interpolation, &
+ use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,reset_interpolation, &
 &                         electrons_bands_interpolate
  !
- implicit none
+#include<memory.h>
  !
  integer,       intent(in) :: n_T_steps
  type(bz_samp), intent(in) :: kpt
@@ -47,11 +47,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Work space
  !
  type(bz_samp)         :: k_bands
- type(levels)          :: E_bands
- !
- type(bz_samp)         :: USER_k,CIRCUIT_k,INTERP_k
- real(SP), pointer     :: bands_interpolated(:,:,:) => null()
- !
+ type(levels)          :: E_bands,CIRCUIT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
@@ -60,15 +56,16 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  logical               :: l_normalize_Nel,l_g_space_interp,l_nearest_neig_interp
  integer               :: ib,ik,i_sp_pol,i_RT,i_T,ID_interp,n_values
  !
- !
  call section('*','Interpolation tool')
  !=====================================
  !
- if(all(interp_grid>0).or.BANDS_steps<=0) &
-&  call error(" Interpolation of occupations/lifetimes only on a band circuit")
+ if(all(INTERP_grid>0).or.BANDS_steps<=0) then
+   call error(" Interpolation of occupations/lifetimes only on a band circuit")
+ endif
  !
- if(n_sp_pol>1) &
-&  call error('Occupations for spin polarized systems not implemented')
+ if(n_sp_pol>1) then
+   call error('Occupations for spin polarized systems not implemented')
+ endif
  !
  ! Map RT_carriers%kpt ==> k_bands%kpt
  !     RT_carriers%E   ==> E_bands%E 
@@ -77,13 +74,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(E_bands,K_bands,ID_interp,USER_k,INTERP_k,CIRCUIT_k,RT_bands,bands_interpolated)
+ call electrons_bands_interpolate(E_bands,K_bands,ID_interp,RT_bands,CIRCUIT_E)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
  if(n_spinor>1 .and. BANDS_steps> 0) then
-   allocate(spin_interpolated(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nibz,n_spinor))
-   allocate(magn_interpolated(RT_bands(1):RT_bands(2),CIRCUIT_k%nibz,3))
+   YAMBO_ALLOC(spin_interpolated,(RT_BANDS(1):RT_bands(2),CIRCUIT_k%nbz,n_spinor))
+   YAMBO_ALLOC(magn_interpolated,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,3))
    call electrons_spin_and_magn_interpolate(kpt,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
  endif
  !
@@ -98,9 +95,9 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
  !
- allocate(variable_to_fit(RT_bands(1):RT_bands(2),1:n_sp_pol,RT_carriers%nk))
+ YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),RT_carriers%nk,n_sp_pol))
  !
- allocate(fit_on_circuit(RT_bands(1):RT_bands(2),1:n_sp_pol,CIRCUIT_k%nibz,n_T_steps))
+ YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_sp_pol,n_T_steps))
  !
  do i_T=1,n_T_steps
    !
@@ -130,17 +127,17 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        ik      =RT_carriers%table(i_RT,3)
        i_sp_pol=RT_carriers%table(i_RT,4)
        !
-       if (l_RT_occupations) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%delta_f(i_RT)
-       if (l_RT_lifetimes  ) variable_to_fit(ib,i_sp_pol,ik)= RT_carriers%NEQ_Lifetime(i_RT) 
+       if (l_RT_occupations) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%delta_f(i_RT)
+       if (l_RT_lifetimes  ) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%NEQ_Lifetime(i_RT) 
        !
      enddo
      !
-     call eval_interpolation_coeff(R2D=variable_to_fit,k=k_bands,Nk=k_bands%nibz,ID=ID_interp)
+     call INTERPOLATION_coefficients(R2D=variable_to_fit,k=k_bands,Nk=k_bands%nibz,ID=ID_interp)
      !
      ! STEP 2
      ! 1: interpolate on the circuit      if (BANDS_steps>0)
      !
-     if (BANDS_steps> 0) call bz_interpolation(USER_k=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=ID_interp)
+     if (BANDS_steps> 0) call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=ID_interp)
      !
      call reset_interpolation(ID_interp)
      !
@@ -150,16 +147,16 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      if(i_T==1) message='RT0'
      !
      if(l_RT_occupations)  then
-       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,RT_carriers%nb,&
-&                                       RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
+       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
+&                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),message,l_normalize_Nel)
      endif
      if(l_RT_lifetimes) then
-       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nibz,&
-&                                       RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                       CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                       RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
+       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
+&                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),message,.false.)
      endif
      !
    endif
@@ -167,8 +164,8 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    ! Normilize the occupations
    !
    if(l_RT_occupations) then
-     Nhole=-sum(fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T))/real(CIRCUIT_k%nibz)
-     Nel=   sum(fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nibz)
+     Nhole=-sum(fit_on_circuit(RT_bands(1):E_bands%nbf,:,:,i_T))/real(CIRCUIT_k%nbz)
+     Nel=   sum(fit_on_circuit(E_bands%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nbz)
      !
      if(.not.l_nearest_neig_interp) then
        if(Nhole>0.and.l_normalize_Nel) &
@@ -187,7 +184,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  call RT_carriers_object(RT_carriers,WHAT='free')
  !
- deallocate(variable_to_fit)
+ YAMBO_FREE(variable_to_fit)
  !
  ! Output: bands on circuit
  !==========================
@@ -226,14 +223,14 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      call msg('o bands',"#",headings(:n_values),INDENT=0,USE_TABS=.true.)
      call msg('o bands',"#"," ",INDENT=0)
      !
-     do ik=1,CIRCUIT_K%nibz
+     do ik=1,CIRCUIT_k%nbz
        !
        if (ik==1) values(1)=0._SP
-       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-CIRCUIT_K%pt(ik-1,:))
+       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
        !
-       values(2)=bands_interpolated(ib,1,ik)*HA2EV
-       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,1,ik,i_T)*HA2EV*1000._SP
-       if (l_RT_occupations) values(3)=fit_on_circuit(ib,1,ik,i_T)/Max_occ*Nel_fac
+       values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
+       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
+       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
@@ -248,10 +245,12 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
  enddo
  !
- deallocate(fit_on_circuit)
+ YAMBO_FREE(fit_on_circuit)
  !
- deallocate(bands_interpolated)
- nullify(bands_interpolated)
- if(n_spinor==2) deallocate(spin_interpolated,magn_interpolated)
+ call E_reset(CIRCUIT_E)
+ if(n_spinor==2) then
+   YAMBO_FREE(spin_interpolated)
+   YAMBO_FREE(magn_interpolated)
+ endif
  !
 end subroutine RT_occ_bands_interpolation

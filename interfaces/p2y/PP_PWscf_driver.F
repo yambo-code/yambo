@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH
+! Authors (see AUTHORS file for details): CH, AF, IM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -30,17 +30,18 @@ subroutine PP_PWscf_driver(k)
  !
  use pars,                  ONLY:SP,DP
  use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
- use R_lattice,             ONLY:bz_samp
+ use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
  use X_m,                   ONLY:X_t
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
-&                                pp_n_l_times_proj_max,pp_n_l_max,pp_table
+&                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
+&                                PP_nlcc_alloc,PP_nlcc_free
  use com,                   ONLY:msg,warning
  use LIVE_t,                ONLY:live_timing
- use memory_m,              ONLY:mem_est
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_WR_CL,REP
  use interfaces,            ONLY:PARALLEL_index
+ use read_pseudo_mod,       ONLY: readpp
  implicit none
  !
  type(bz_samp),    intent(in)  :: k      ! K/Q points
@@ -53,16 +54,29 @@ subroutine PP_PWscf_driver(k)
  !
  integer :: ik, ngmax,io_err,ID
  integer :: ibeta,itype
+ character(64)  :: input_dft="none"
  integer, external :: io_KB_pwscf
+ integer, external :: io_NLCC_pwscf
+ integer, external :: io_USPP_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
-    use pw_struct_module
-    use pw_basis_module
-    type(pw_struct), target :: struct
-    type(pw_basis)  :: basis
-    integer, intent(in) :: ik, ngmax
+      use pw_struct_module
+      use pw_basis_module
+      implicit none
+      type(pw_struct), target :: struct
+      type(pw_basis)  :: basis
+      integer, intent(in) :: ik, ngmax
     end subroutine fill_basis
+    !
+    subroutine fill_basis_rho(basis,struct,ngmax)
+      use pw_struct_module
+      use pw_basis_module
+      implicit none
+      type(pw_struct), target :: struct
+      type(pw_basis)      :: basis
+      integer, intent(in) :: ngmax
+    end subroutine fill_basis_rho
  end interface
  !
  call k_expand(k)
@@ -92,7 +106,7 @@ subroutine PP_PWscf_driver(k)
      pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
      pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1
      pp_table(2,itype,ibeta) = 0
-     if(atoms%pseudo(itype)%psp_has_so) &
+     if(atoms%pseudo(itype)%has_so) &
 &      pp_table(2,itype,ibeta) = nint(2._SP*atoms%pseudo(itype)%jbeta(ibeta))   ! 2j
    enddo
  enddo
@@ -112,6 +126,42 @@ subroutine PP_PWscf_driver(k)
    io_err=io_KB_pwscf(ID)
    !
  end do
+ !
+ ! write NLCC info if needed
+ !
+ if( any(atoms%pseudo(:)%has_nlcc) ) then
+   !
+   call PP_nlcc_alloc()
+   !
+   call fill_basis_rho(basis_con,struct,ng_vec)
+   call PP_PWscf_comp_nlcc(basis_con,atoms)
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_NLCC_pwscf(ID)
+   !
+   call PP_nlcc_free()
+   !
+ endif
+ !
+ ! write USPP data
+ !
+ if ( any(atoms%pseudo(:)%is_uspp) ) then
+   !
+   call qe_pseudo_init()
+   call readpp(input_dft)
+   !
+   call pre_init()
+   call allocate_nlpot()
+   call init_us_1()
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_USPP_pwscf(ID)
+   !
+!   call PP_uspp_free()
+   !
+ endif
+ !
+ ! cleanup
  !
  call PP_free()
  deallocate(pp_table,pp_n_l_comp)
@@ -149,11 +199,12 @@ subroutine fill_atoms(atoms,struct)
  !  integer,          pointer :: type_map(:)
  !  real                      :: cutoff_vloc
  !end type pw_atoms
- use pw_data, only : psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
+ use pw_data,           ONLY: psfile, nbeta, nmesh, nat_, atm_, tau_, ityp_
  use pw_struct_module
  use pw_atoms_module
- use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                       atom_pos, Z_species,atomic_number
+ use pw_pseudo_module
+ use D_lattice,         ONLY: n_atoms_species_max,n_atomic_species,n_atoms_species, &
+&                             atom_pos, Z_species,atomic_number
  implicit none
  type(pw_struct), intent(in) :: struct
  type(pw_atoms) :: atoms
@@ -170,40 +221,34 @@ subroutine fill_atoms(atoms,struct)
  ! Fill the atoms%pseudo type for each type
  !
  do i =1,n_atomic_species
-   call fill_a_pseudo(atoms%pseudo(i),psfile(i),nbeta(i),nmesh(i))
+   call fill_a_pseudo(psfile(i),atoms%pseudo(i))
  enddo
  !
  return
  !
 end subroutine fill_atoms
 !
-subroutine fill_a_pseudo(pseudo,psfile,nbeta, nmesh)
+subroutine fill_a_pseudo(psfile,pseudo)
  !
  ! Allocate and fill a single pseudo
  !
- use pars,     ONLY:SP
+ use pars,             only:SP
  use pw_pseudo_module
- use qexml_module
- use pw_data, only : ecutwfc_
+ use pw_pseudo_read_m, only: pseudo_read_data
+ use pw_data,          only: ecutwfc_,ecutrho_
  implicit none
- type(pw_pseudo), intent(out) :: pseudo
- integer, intent(inout)       :: nbeta, nmesh
- character(256), intent(in)   :: psfile
- !
- ! Allocates pseudo% types and Inizializes pseudo%interpolation table
- !
- call pw_pseudo_set_dim(pseudo,nbeta,nmesh)
+ type(pw_pseudo), intent(inout) :: pseudo
+ character(256),  intent(in)    :: psfile
+ 
  !
  ! Read data from UPF files, fill pseudo% types
  !
- call read_pseudo_data(psfile,nmesh,nbeta,pseudo%z,pseudo%mesh,&
-&                      pseudo%wmesh,pseudo%vloc,pseudo%lbeta,pseudo%jbeta,&
-&                      pseudo%mesh_beta,pseudo%beta,pseudo%d,pseudo%psp_has_so)
+ call pseudo_read_data(psfile,pseudo)
  !
- ! Fill the pseudo%interpolation table
+ ! Fill the pseudo%interp table
  ! ecutwfc(Ha) -> cutoff(Ry)
  !
- call pw_pseudo_set_table(pseudo,real(ecutwfc_,SP)*2._SP)
+ call pw_pseudo_set_table(pseudo,real(ecutwfc_,SP)*2._SP,real(ecutrho_,SP)*2._SP)
  !
  return
  !
@@ -252,3 +297,31 @@ subroutine fill_basis(basis,struct,ik,ngmax)
  ! 
  return
 end subroutine fill_basis
+
+subroutine fill_basis_rho(basis,struct,ngmax)
+ use pw_struct_module
+ use pw_basis_module
+ use pw_data,               ONLY : igv_, ngm_
+ implicit none
+ type(pw_struct), target :: struct
+ type(pw_basis)      :: basis   
+ integer, intent(in) :: ngmax
+ real :: at(3,3)
+ integer :: npw, ic, i
+ !
+ npw = min(ngm_,ngmax)
+ basis%struct => struct
+ !
+ ! Allocates basis%g(npw) and sets basis%npw
+ !
+ call pw_basis_set_npw(basis,npw)
+ !
+ do ic=1,npw
+   basis%g(1:3,ic) =  igv_(1:3,ic)  
+ enddo
+ basis%r0 = (/ 0.0, 0.0, 0.0 /)  ! not used
+ ! unused
+ basis%k  = 0.0
+ ! 
+ return
+end subroutine fill_basis_rho

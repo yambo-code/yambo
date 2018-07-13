@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ subroutine ELPH_atomic_amplitude(q)
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,      ONLY:DIAGO,USE_LK
- implicit none
+#include<memory.h>
  type(bz_samp)::q
  !
  ! Work Space 
@@ -77,7 +77,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  ! ... and to 1/q divergence using the RIM integration
  !
- allocate(q_weight(nq_to_sum))
+ YAMBO_ALLOC(q_weight,(nq_to_sum))
  !
  RIM_n_rand_pts=100000
  if (elph_use_q_grid) then
@@ -139,7 +139,7 @@ subroutine ELPH_atomic_amplitude(q)
  !
  !CLEAN
  !
- deallocate(q_weight)
+ YAMBO_FREE(q_weight)
  call elph_global_free()
  !
 end subroutine

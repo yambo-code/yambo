@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM 
@@ -26,10 +26,11 @@ subroutine RT_time_step_update( )
  use pars,           ONLY:SP
  use stderr,         ONLY:real2ch
  use units,          ONLY:AUT2FS
- use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,&
+ use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,l_Update_Time_Step,&
 &                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
-&                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step
+&                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
+&                         NE_initial_time_step_update
  use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
  use com,            ONLY:msg
@@ -41,6 +42,10 @@ subroutine RT_time_step_update( )
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous,dT_next
  integer, external :: RT_Lifetimes_evaluation_plan
+ !
+ l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
+ !
+ if (.not.l_Update_Time_Step) return
  !
  if (.not.RT_do_it('deltaT')) return
  !

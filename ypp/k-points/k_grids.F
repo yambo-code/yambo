@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,18 +33,18 @@ subroutine k_grids(en,k,Xk,q)
  use YPP,                 ONLY:coo_in,coo_out,l_k_grid,l_q_grid,&
 &                              l_shifted_grid,l_high_sym_pts,K_transform,&
 &                              n_u_k_pts,n_u_q_pts,l_random_grid,&
-&                              U_k_pts,U_q_pts,U_q_shifts
+&                              U_k_pts,U_q_pts,U_q_shifts,USER_k
  use LIVE_t,              ONLY:live_timing_is_on
  use zeros,               ONLY:k_iku_zero
  use stderr,              ONLY:set_real_printed_length
  !
- implicit none
+#include<memory.h>
  type(levels) ::en       
  type(bz_samp)::k,Xk,q
  !
  ! Work Space
  !
- type(bz_samp)::USER_K,Final_K,Q_user
+ type(bz_samp)::FINAL_k,Q_user
  real(SP)     ::real_ctl,v(3),ka(3),q0(3),kout(Xk%nibz,3),k_plus_q(Xk%nibz,3)
  integer      ::i1,i2,is,ik,iq
  integer,  allocatable :: int_ctl(:)
@@ -52,9 +52,9 @@ subroutine k_grids(en,k,Xk,q)
  character(schlen)     :: ch
  logical               :: No_Weight,Force_User_points,List_internal_points,Expand_internal_points
  !
- call bz_samp_reset(USER_K)
+ call bz_samp_reset(USER_k)
  call bz_samp_reset(Q_user)
- call bz_samp_reset(Final_K)
+ call bz_samp_reset(FINAL_k)
  !
  call section('*',"BZ grid analyzer/generator") 
  !
@@ -91,7 +91,7 @@ subroutine k_grids(en,k,Xk,q)
    if (l_k_grid) then
      if (Expand_internal_points) then
        call k_expand(Xk)
-       allocate(BZ_weights(Xk%nbz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nbz))
        BZ_weights=1._SP
        call msg("s",'K-points (BZ) formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -99,9 +99,9 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'K-points (BZ) PW-formatted')
        call print_the_grid(Xk%ptbz,Xk%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      else
-       allocate(BZ_weights(Xk%nibz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nibz))
        BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
        call msg("s",'K-points (IBZ) formatted')
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -109,14 +109,14 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'K-points (BZ) PW-formatted')
        call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      endif
    endif
    !
    if (l_q_grid) then
      if (Expand_internal_points) then
        call k_expand(q)
-       allocate(BZ_weights(q%nbz))
+       YAMBO_ALLOC(BZ_weights,(q%nbz))
        BZ_weights=1._SP
        call msg("s",'Q-points (BZ) formatted')
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -124,9 +124,9 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'Q-points (BZ) PW-formatted')
        call print_the_grid(q%ptbz,q%nbz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      else
-       allocate(BZ_weights(q%nibz))
+       YAMBO_ALLOC(BZ_weights,(q%nibz))
        BZ_weights(:)=q%weights(:)*real(q%nbz,SP)
        call msg("s",'Q-points (IBZ) formatted')
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.TRUE.,.FALSE.)
@@ -134,7 +134,7 @@ subroutine k_grids(en,k,Xk,q)
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
        call msg("s",'Q-points (IBZ) PW-formatted')
        call print_the_grid(q%pt,q%nibz,BZ_weights,'iku',.FALSE.,.TRUE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
      endif
    endif
    !
@@ -147,10 +147,10 @@ subroutine k_grids(en,k,Xk,q)
    write(ch,'(a,a,a)') "== Built-in IBZ K-grid [",trim(coo_out),"] =="
    !==================================================================
    call section('+',trim(ch))
-   allocate(BZ_weights(Xk%nibz))
+   YAMBO_ALLOC(BZ_weights,(Xk%nibz))
    BZ_weights(:)=Xk%weights(:)*real(Xk%nbz,SP)
    call print_the_grid(Xk%pt,Xk%nibz,BZ_weights,'iku',.FALSE.,.FALSE.)
-   deallocate(BZ_weights)
+   YAMBO_FREE(BZ_weights)
    !
  endif
  !
@@ -162,59 +162,59 @@ subroutine k_grids(en,k,Xk,q)
    !Input file parsing
    !
    real_ctl=0.
-   USER_K%nibz=1
+   USER_k%nbz=1
    gw_main_loop: do ik=1,n_u_k_pts
      !
-     if (associated(USER_K%pt)) deallocate(USER_K%pt)
-     allocate(USER_K%pt(USER_K%nibz,3))
-     USER_K%pt(USER_K%nibz,:)=U_k_pts(ik,:)
+     YAMBO_FREE(USER_k%pt)
+     YAMBO_ALLOC(USER_k%pt,(USER_k%nbz,3))
+     USER_k%pt(USER_k%nbz,:)=U_k_pts(ik,:)
      !
      ! Transform the user_k_points in iku
      !
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(USER_K%nibz,:),mode="ka2i")
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_k%pt(USER_k%nbz,:),mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_k%pt(USER_k%nbz,:),mode="ka2i")
      !
      if (real_ctl/=999._SP) then
        !
        do i1=1,Xk%nbz
-         if (v_is_zero(Xk%ptbz(i1,:)-USER_K%pt(USER_K%nibz,:),zero_=k_iku_zero)) then
+         if (v_is_zero(Xk%ptbz(i1,:)-USER_k%pt(USER_k%nbz,:),zero_=k_iku_zero)) then
            call warning(' Point already in the grid')
            exit gw_main_loop
          endif
        enddo
        !
-       USER_K%nibz=USER_K%nibz+1
+       USER_k%nbz=USER_k%nbz+1
        !
      endif
    enddo gw_main_loop
-   USER_K%nibz=USER_K%nibz-1
+   USER_k%nbz=USER_k%nbz-1
    !
-   do i1=1,USER_K%nibz
+   do i1=1,USER_k%nbz
      !      
-     v=USER_K%pt(i1,:)
-     if (trim(coo_in)=="cc")  call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="kc2i")
-     if (trim(coo_in)=="rlu") call c2a(v_in=USER_K%pt(i1,:),v_out=v,mode="ka2i")
-     USER_K%pt(i1,:)=v      
+     v=USER_k%pt(i1,:)
+     if (trim(coo_in)=="cc")  call c2a(v_in=USER_k%pt(i1,:),v_out=v,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=USER_k%pt(i1,:),v_out=v,mode="ka2i")
+     USER_k%pt(i1,:)=v      
      !
    enddo
    !
-   call msg("s",'User K-points :',USER_K%nibz)
+   call msg("s",'User K-points :',USER_k%nbz)
    !
    ! Extended grid
    !
-   allocate(Final_K%ptbz(Xk%nibz+USER_K%nibz*q%nbz,3))
-   Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
-   Final_K%nbz=Xk%nibz
-   do i1=1,USER_K%nibz
+   YAMBO_ALLOC(FINAL_k%ptbz,(Xk%nibz+USER_k%nbz*q%nbz,3))
+   FINAL_k%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
+   FINAL_k%nbz=Xk%nibz
+   do i1=1,USER_k%nbz
      do i2=1,q%nbz
-       Final_K%nbz=Final_K%nbz+1
-       Final_K%ptbz(Final_K%nbz,:)=USER_K%pt(i1,:)-q%ptbz(i2,:)
+       FINAL_k%nbz=FINAL_k%nbz+1
+       FINAL_k%ptbz(FINAL_k%nbz,:)=USER_k%pt(i1,:)-q%ptbz(i2,:)
      enddo
    enddo
    !
-   if (USER_K%nibz>0) call reduce_and_print(Final_K,.TRUE.)
+   if (USER_k%nbz>0) call reduce_and_print(FINAL_k,.TRUE.)
    !
-   call bz_samp_reset(Final_K)
+   call bz_samp_reset(FINAL_k)
    !
  endif
  !
@@ -229,8 +229,8 @@ subroutine k_grids(en,k,Xk,q)
    Q_user%nibz=1
    q_main_loop: do iq=1,n_u_q_pts
      !
-     if (associated(Q_user%pt)) deallocate(Q_user%pt)
-     allocate(Q_user%pt(Q_user%nibz,3))
+     YAMBO_FREE(Q_user%pt)
+     YAMBO_ALLOC(Q_user%pt,(Q_user%nibz,3))
      Q_user%pt(Q_user%nibz,:)=U_q_pts(iq,:)
      !
      do i1=1,q%nbz
@@ -251,31 +251,31 @@ subroutine k_grids(en,k,Xk,q)
    if (Q_user%nibz>=1) call msg("s",'User Q-points :',Q_user%nibz)
    !
    if (Force_User_points) then
-     allocate(BZ_weights(Q_user%nibz))
+     YAMBO_ALLOC(BZ_weights,(Q_user%nibz))
      BZ_weights=0._SP
      call print_the_grid(Q_user%pt,Q_user%nibz,BZ_weights,coo_in,.TRUE.,.FALSE.)
-     deallocate(BZ_weights)
+     YAMBO_FREE(BZ_weights)
      goto 1
    endif
    !
    ! Extended grid
    !
-   allocate(Final_K%ptbz(Xk%nibz+Xk%nbz*Q_user%nibz,3))
-   Final_K%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
-   Final_K%nbz=Xk%nibz
+   YAMBO_ALLOC(FINAL_k%ptbz,(Xk%nibz+Xk%nbz*Q_user%nibz,3))
+   FINAL_k%ptbz(:Xk%nibz,:)=k%pt(:Xk%nibz,:)
+   FINAL_k%nbz=Xk%nibz
    do i1=1,Q_user%nibz
      v=Q_user%pt(i1,:)
      if (trim(coo_in)=="cc")  call c2a(v_in=Q_user%pt(i1,:),v_out=v,mode="kc2i")
      if (trim(coo_in)=="rlu") call c2a(v_in=Q_user%pt(i1,:),v_out=v,mode="ka2i")
      do i2=1,Xk%nbz
-       Final_K%nbz=Final_K%nbz+1
-       Final_K%ptbz(Final_K%nbz,:)=v(:)-Xk%ptbz(i2,:)
+       FINAL_k%nbz=FINAL_k%nbz+1
+       FINAL_k%ptbz(FINAL_k%nbz,:)=v(:)-Xk%ptbz(i2,:)
      enddo
    enddo
    !
-   if (Q_user%nibz>0) call reduce_and_print(Final_K,.FALSE.)
+   if (Q_user%nibz>0) call reduce_and_print(FINAL_k,.FALSE.)
    !
-   call bz_samp_reset(Final_K)
+   call bz_samp_reset(FINAL_k)
    !
  endif
  !
@@ -332,10 +332,10 @@ subroutine k_grids(en,k,Xk,q)
        !
        call set_real_printed_length(f_length=10,g_length=10)
        !
-       allocate(BZ_weights(Xk%nibz))
+       YAMBO_ALLOC(BZ_weights,(Xk%nibz))
        BZ_weights=1._SP
        call print_the_grid(k_plus_q,Xk%nibz,BZ_weights,coo_out,.FALSE.,.FALSE.)
-       deallocate(BZ_weights)
+       YAMBO_FREE(BZ_weights)
        !
        call set_real_printed_length( )
        !
@@ -344,8 +344,6 @@ subroutine k_grids(en,k,Xk,q)
    endif
    !
  end if
- !
- ! GPL_EXCLUDE_START
  !
  if (l_high_sym_pts) then
    !
@@ -356,15 +354,13 @@ subroutine k_grids(en,k,Xk,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  live_timing_is_on=.true.
  !
 1 continue
  !
  ! CLEAN
  !
- call bz_samp_reset(USER_K)
+ call bz_samp_reset(USER_k)
  call bz_samp_reset(Q_user)
  call k_ibz2bz(q,'d',.false.)
  call k_ibz2bz(Xk,'d',.false.)
@@ -401,7 +397,7 @@ subroutine k_grids(en,k,Xk,q)
            write(ch,'(4(f12.'//trim(intc(f_format_length))//',1x,a,1x))') v(1),'|',v(2),'|',v(3),'|',nk_replica
          endif
        else if (PW_format) then
-           write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
+         write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
        else
          if(No_Weight) then
            write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x))') v(:)
@@ -446,7 +442,7 @@ subroutine k_grids(en,k,Xk,q)
      ! position in the final grid of the given QP k-points 
      ! (read from the input file)
      !
-     allocate(int_ctl(K_grid%nibz))
+     YAMBO_ALLOC(int_ctl,(K_grid%nibz))
      int_ctl=0
      !
      ! int_ctl =0 -> nothing
@@ -455,8 +451,8 @@ subroutine k_grids(en,k,Xk,q)
      if (GW_grid) then
        do i1=1,K_grid%nibz
          call c2a(v_in=K_grid%pt(i1,:),v_out=ka,mode='ki2a')
-         do i2=1,USER_K%nibz
-           call c2a(v_in=USER_K%pt(i2,:),v_out=v,mode="ki2a")
+         do i2=1,USER_k%nbz
+           call c2a(v_in=USER_k%pt(i2,:),v_out=v,mode="ki2a")
            do is=1,nsym
              if (rlu_v_is_zero(v(:)-ka(:))) then
                if (int_ctl(i1)/=0) cycle
@@ -470,12 +466,12 @@ subroutine k_grids(en,k,Xk,q)
        int_ctl=0
      endif
      !
-     allocate(GWK_table(USER_K%nibz))
+     YAMBO_ALLOC(GWK_table,(USER_k%nbz))
      !
      live_timing_is_on=.false.
      call msg("s","       ---------- Reduced K-grid ----------")
      GWK_table=0
-     do i2=0,USER_K%nibz
+     do i2=0,USER_k%nbz
        do i1=1,K_grid%nibz
          if (int_ctl(i1)/=i2.and..not.( i2==0.and.int_ctl(i1)/=0.and.i1<nXkibz )) cycle
          if (int_ctl(i1)/=0) then
@@ -498,8 +494,8 @@ subroutine k_grids(en,k,Xk,q)
      enddo
      live_timing_is_on=.true.
      !
-     deallocate(GWK_table)
-     deallocate(int_ctl)
+     YAMBO_FREE(GWK_table)
+     YAMBO_FREE(int_ctl)
      !
    end subroutine
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,7 +40,7 @@ subroutine cutoff_box(q,is_cut)
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
  use zeros,         ONLY:k_iku_zero,G_iku_zero
- use openmp,        ONLY:OPENMP_update,n_threads_now,master_thread
+ use openmp,        ONLY:OPENMP_update,n_threads,master_thread,OPENMP_set_threads
  !
  implicit none
  logical      ::is_cut(3)
@@ -100,8 +100,10 @@ subroutine cutoff_box(q,is_cut)
  !
  call PARALLEL_index(px,(/q%nibz,wf_ng/))
  !
+ call OPENMP_set_threads( )
+ !
 #if defined _OPENMP
-!$omp parallel default(shared), &
+!$omp parallel num_threads(n_threads) default(shared), &
 !$omp &    private(ig,iq, v1,nq_looped, iqbz,iqibz,is,i1,V_cut_tmp, &
 !$omp &            ig_p,ig_r,v2)
 #endif
@@ -110,7 +112,7 @@ subroutine cutoff_box(q,is_cut)
  !
  call OPENMP_update(master_thread)
  !
- call live_timing('Box',px%n_of_elements(myid+1)/n_threads_now)
+ call live_timing('Box',px%n_of_elements(myid+1)/n_threads)
  !
 #if defined _OPENMP
 !$omp do
@@ -144,8 +146,8 @@ subroutine cutoff_box(q,is_cut)
 &              abs(g_vec(ig,i1)-g_vec(ig_p,i1))>G_iku_zero(i1)) cycle g_loop
          enddo
          !
-         ig_r=g_rot( sop_inv(is), ig_p )
-         v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2.*pi/alat(:)
+         ig_r=g_rot( ig_p, sop_inv(is) )
+         v2= ( q%ptbz(iqbz,:)+g_vec(ig_p,:) )*2._SP*pi/alat(:)
          !
          V_cut_tmp=V_cut_tmp+V_bare(iqibz,ig_r)*F_box(v1,v2)
          !

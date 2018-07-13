@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2016 the YAMBO team
+         Copyright (C) 2000-2018 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -52,13 +52,13 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _QED
+#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL
  #define _YAMBO_MAIN
 #endif
 #if defined _MAGNETIC || _KERR || _SURF
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_SURF
+#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC || _YPP_SURF
  #define _YPP_MAIN
 #endif
 /* 
@@ -85,6 +85,7 @@ typedef struct
 /* 
  Declarations 
 */
+static void load_environments(char *file_name);
 static void usage(int verbose);
 static void title(FILE *file_name,char *cmnt);
 /*
@@ -112,7 +113,7 @@ int main(int argc, char *argv[])
  int iv[4];
  double rv[4];
  char *cv[4]; 
- char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL;
+ char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL,*env_file=NULL;
  extern int optind;
  extern int guess_winsize();
  char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
@@ -200,6 +201,15 @@ int main(int argc, char *argv[])
        if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
        if (opts[j].nr!=0 && k==0) {lnr++;rv[lnr]=atof(argv[optind-1+i]);opts[j].nr--;k=1;};
        if (opts[j].nc!=0 && k==0) {lnc++;cv[lnc]=argv[optind-1+i];opts[j].nc--;k=1; };
+     };
+/* 
+ ...Parallel environments
+*/
+     if (strcmp(opts[j].ln,"parenv")==0) {
+       free(env_file);
+       env_file = malloc(strlen(cv[1])+1);
+       strcpy(env_file,cv[1]);
+       load_environments(env_file);
      };
  /* 
    Input File, i/o directory 
@@ -373,12 +383,88 @@ int main(int argc, char *argv[])
 #endif 
  exit(0);
 }
+static void load_environments(char *file_name)
+{
+ FILE *fp;
+ char edit_line[100]={'\0'},str[100];
+ char* pch;
+ char* token;
+ char* var;
+ char* value;
+ fp = fopen(file_name, "r");
+ if (fp) {
+  while(fgets(str, 100, fp)) {
+    pch=strchr(str,'#');
+    if (!pch) {
+      /* get the first token */
+      token=strtok(str," ");
+      /* walk through other tokens */
+      if ( token != NULL ) 
+      {
+        token = strtok(NULL," ");
+        var=token;
+        token = strtok(NULL," ");
+        value=token;
+        /* printf( " %s %s %s \n", var, value, token ); */
+      }
+      setenv(var,value,1);
+    }
+  }
+  /*exit(0);*/
+ }else{
+  fp = fopen(file_name, "w+");
+  fputs("#\n",fp);
+  fputs("# Edit it and use with -E during runtime\n#\n",fp);
+  fputs("# CPU section (just edit, do not remove fields)\n",fp);
+  fputs("setenv YAMBO_X_q_0_CPU 1.1.1.1\n",fp);
+  fputs("setenv YAMBO_X_finite_q_CPU 1.1.1.1.1\n",fp);
+  fputs("setenv YAMBO_X_all_q_CPU 1.1.1.1.1\n",fp);
+  fputs("setenv YAMBO_BS_CPU 1.1.1\n",fp);
+  fputs("setenv YAMBO_SE_CPU 1.1.1\n",fp);
+  fputs("setenv YAMBO_RT_CPU 1.1.1.1\n",fp);
+  fputs("# Scalapack section (leave unchanged if you wish)\n",fp);
+  fputs("setenv YAMBO_X_q_0_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_X_finite_q_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_X_all_q_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_BS_nCPU_LinAlg_INV 1\n",fp);
+  fputs("setenv YAMBO_BS_nCPU_LinAlg_DIAGO 1\n",fp);
+  fputs("# ROLEs section (leave unchanged if you wish)\n",fp);
+  fputs("setenv YAMBO_X_q_0_ROLEs g.k.c.v\n",fp);
+  fputs("setenv YAMBO_X_finite_q_ROLEs q.g.k.c.v\n",fp);
+  fputs("setenv YAMBO_X_all_q_ROLEs q.g.k.c.v\n",fp);
+  fputs("setenv YAMBO_BS_ROLEs k.eh.t\n",fp);
+  fputs("setenv YAMBO_SE_ROLEs q.qp.b\n",fp);
+  fputs("setenv YAMBO_RT_ROLEs k.b.q.qp\n",fp);
+  fclose(fp);
+  strcpy(edit_line,editor);
+  strncat(edit_line,file_name,strlen(file_name));
+  system(edit_line);
+  exit(0);
+ }
+};
 static void usage(int verbose)
 {
  int i,j,nr=0;
  while(opts[nr].ln!=NULL) {nr++;};
  if (verbose==1) {
-  fprintf(stderr,"\nThis is %s %s\n",tool,codever); 
+  char* MPI_string="Serial";
+#if defined _MPI
+  MPI_string="MPI";
+#endif
+#if defined _SCALAPACK
+  MPI_string="MPI+SLK";
+#endif
+#if defined _OPENMP
+  char* OMP_string="+OpenMP";
+#else
+  char* OMP_string="";
+#endif
+#if defined _SLEPC
+  char* SLEPC_string="+SLEPC";
+#else
+  char* SLEPC_string="";
+#endif
+  fprintf(stderr,"\nThis is %s %s - %s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 
@@ -419,6 +505,6 @@ static void title(FILE *file_name,char *cmnt)
  fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
- fprintf(file_name,"%s\n%s Tool: %s %s\n",cmnt,cmnt,tool,codever);
- fprintf(file_name,"%s Description: %s \n\n",cmnt,tdesc);
+ fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,tool,codever);
+ fprintf(file_name,"%s %s \n\n",cmnt,tdesc);
 };

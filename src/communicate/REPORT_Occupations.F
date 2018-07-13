@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,16 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine REPORT_Occupations(E)
+subroutine REPORT_Occupations(what,E)
  !
- use pars,          ONLY:SP,lchlen
- use units,         ONLY:HA2EV
+ use pars,          ONLY:SP,lchlen,schlen
+ use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
+ use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
+ use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,warning
  use electrons,     ONLY:levels,n_sp_pol,nel,spin_occ
  use interfaces,    ONLY:OCCUPATIONS_Gaps
  !
  implicit none
  !
+ character(*)::what
  type(levels)::E
  ! 
  ! Work Space
@@ -39,16 +42,33 @@ subroutine REPORT_Occupations(E)
  integer           ::first_occ_state
  integer           ::Nbf(n_sp_pol)
  integer           ::Nbm(n_sp_pol)
- character(lchlen) ::ch_
- character(23)     ::prefix_
+ character(lchlen) ::ch_,prefix_
+ character(schlen) ::title
  real(SP)          ::N_met
  real(SP)          ::f_met
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
  !
+ ! Title
+ !
+ title=""
+ if (len_trim(what)>0) title="["//trim(what)//"]"
+ !
+ ! Gaps, VBM/CBM
+ !
  call OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm)
  !
- call msg('r','States summary         : Full        Metallic    Empty')
+ ! Initial Report
+ !
+ call msg('r',trim(title)//'Fermi Level        [ev]: ',E%E_Fermi*HA2EV)
+ do i_sp_pol=1,n_sp_pol
+   call msg('r',trim(title)//'VBM / CBm          [ev]: ',(/E%E_VBM(i_sp_pol),E%E_CBm(i_sp_pol)/)*HA2EV)
+ enddo
+ call msg('r',trim(title)//'Electronic Temp. [ev K]: ',(/Tel*HA2EV,Tel*HA2KEL/))
+ call msg('r',trim(title)//'Bosonic    Temp. [ev K]: ',(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/))
+ call msg('r',trim(title)//'Finite Temperature mode: ',Finite_Tel)
+ call msg('r',trim(title)//'El. density      [cm-3]: ',(/nel/(DL_vol*BO2ANG**3*1.E-24)/))
+ call msg('r',trim(title)//'States summary         : Full        Metallic    Empty')
  !
  ! [1] States occupations
  !
@@ -56,52 +76,51 @@ subroutine REPORT_Occupations(E)
    first_occ_state=1
    !
    prefix_=''
-   if (n_sp_pol>1.and.i_sp_pol==1) prefix_='             [spin up]'
-   if (n_sp_pol>1.and.i_sp_pol==2) prefix_='                  [dn]'
+   if (n_sp_pol>1.and.i_sp_pol==1) prefix_=trim(title)//'             [spin up]'
+   if (n_sp_pol>1.and.i_sp_pol==2) prefix_=trim(title)//'                  [dn]'
    !
    if (Nbf(i_sp_pol)==0) first_occ_state=0
    if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) then
      write (ch_,'(3(i4.4,a,i4.4,3x))') first_occ_state,'-',Nbf(i_sp_pol),&
 &          Nbf(i_sp_pol)+1,'-',Nbm(i_sp_pol),Nbm(i_sp_pol)+1,'-',E%nb
-     call msg('r',prefix_//'  '//trim(ch_))
    else
      write (ch_,'(2(i4.4,a,i4.4,15x))') first_occ_state,'-',Nbf(i_sp_pol),Nbf(i_sp_pol)+1,'-',E%nb
-     call msg('r',prefix_//'  '//trim(ch_))
    endif
+   call msg('r',prefix_(1:25+len_trim(what))//repeat(" ",len_trim(title))//'  '//trim(ch_))
    !
  enddo
  !
  ! [2] Indirect Gaps (min/max)
  !
  if(all(Nbf==Nbm)) then
-   prefix_=                               'Indirect Gaps      [ev]'
-   call msg('r',prefix_//':',E_g_ind(1,:)*HA2EV)
+   prefix_=                               trim(title)//'Indirect Gaps      [ev]'
+   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(1,:)*HA2EV)
  endif
  !
  if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
    do i_sp_pol=1,n_sp_pol
      if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
      if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_='              [spin up]'
-     if (i_sp_pol==2) prefix_='              [spin dn]'
-     call msg('r',prefix_//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
+     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
+     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
+     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_ind(i_sp_pol+1,:)*HA2EV)
    enddo
  endif
  !
  ! [3] Direct Gaps (min/max)
  !
  if(all(Nbf==Nbm)) then
-   prefix_='Direct Gaps        [ev]'
-   call msg('r',prefix_//':',E_g_dir(1,:)*HA2EV)
+   prefix_=trim(title)//'Direct Gaps        [ev]'
+   call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(1,:)*HA2EV)
  endif
  !
  if(n_sp_pol==2.and.any(Nbf==Nbm)) then 
    do i_sp_pol=1,n_sp_pol
      if (Nbf(i_sp_pol)/=Nbm(i_sp_pol)) cycle
      if (Nbf(i_sp_pol)==0) cycle
-     if (i_sp_pol==1) prefix_='              [spin up]'
-     if (i_sp_pol==2) prefix_='              [spin dn]'
-     call msg('r',prefix_//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
+     if (i_sp_pol==1) prefix_=trim(title)//'              [spin up]'
+     if (i_sp_pol==2) prefix_=trim(title)//'              [spin dn]'
+     call msg('r',prefix_(1:25+len_trim(what))//':',E_g_dir(i_sp_pol+1,:)*HA2EV)
    enddo
  endif
  !
@@ -110,15 +129,6 @@ subroutine REPORT_Occupations(E)
  !
  if (.not.all(Nbf==Nbm)) then
    !
-   if(n_sp_pol==1) call warning('Metallic system')
-   !
-   if(n_sp_pol==2) then
-     if(all(Nbf/=Nbm)) call warning('Metallic system')
-     if(any(Nbf==Nbm)) call warning('System is an half-metal')
-   endif
-   !
-   call msg('r',' ')
-   !
    N_met=0
    f_met=0
    do i_sp_pol=1,n_sp_pol
@@ -126,8 +136,14 @@ subroutine REPORT_Occupations(E)
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
    enddo
    !
-   call msg('r','N of el / N of met el: ',       (/nel,N_met/))
-   call msg('r','Average metallic occ.:            ',(/f_met/))
+   call msg('r',trim(title)//'N of el / N of met el  : ',       (/nel,N_met/))
+   call msg('r',trim(title)//'Average metallic occ.  :            ',(/f_met/))
+   !
+   if (n_sp_pol==1) call warning(trim(title)//' Metallic system')
+   if(n_sp_pol==2) then
+     if(all(Nbf/=Nbm)) call warning(trim(title)//' Metallic system')
+     if(any(Nbf==Nbm)) call warning(trim(title)//' System is an half-metal')
+   endif
    !
  endif
  !

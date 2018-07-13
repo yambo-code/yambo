@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,8 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
-&                        io_bulk,io_status,io_sec,io_header,&
-&                        read_is_on,write_is_on
+&                        io_bulk,io_status,io_sec,io_header
+ use timing_m,      ONLY:timing
  !
  ! GPL_EXCLUDE_START
  !
@@ -50,6 +50,8 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  ! Work Space
  !
  integer  :: it_on_disk
+ !
+ call timing('io_BSS_Haydock',OPR='start')
  !
  io_BSS_Haydock=io_connect(desc='Haydock_restart',type=2,ID=ID)
  !
@@ -131,5 +133,7 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  end if
  !
 1 call io_disconnect(ID=ID)
+ !
+ call timing('io_BSS_Haydock',OPR='stop')
  !
 end function

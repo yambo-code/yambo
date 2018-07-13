@@ -1,6 +1,6 @@
 #! /bin/tcsh -f
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -36,14 +36,22 @@ endif
 #
 # Get current version & revision
 #
-set dir=`git branch | grep 'master' |wc -l`
-set dummy=`git rev-list --count HEAD`
-set revision_HEAD=`echo $dummy`
-@ revision_HEAD= $revision_HEAD + 10000 
-set hash_HEAD=`git rev-parse --short HEAD`
-#
+set repo=`git remote -v | grep push | head -c -7`
 set gpl="yes"
-if ( "$dir" == "1" ) set gpl="no"
+if ( "$repo" =~ *yambo-devel* ) set gpl="no"
+#
+if ( "$gpl" == "no" ) then
+  set dummy1=`git rev-list --count HEAD`
+  @ dummy1= $dummy1 + 10000 
+  set dummy2=`cat include/version.inc | grep code_revision | tail -c 6`
+  if ( "$dummy1" >= "$dummy2" ) set revision_HEAD=`echo $dummy1`
+  if ( "$dummy1" <  "$dummy2" ) set revision_HEAD=`echo $dummy2`
+else
+  set dummy=`git rev-list --all --count HEAD`
+  set revision_HEAD=`echo $dummy`
+  @ revision_HEAD= $revision_HEAD + 74
+endif
+set hash_HEAD=`git rev-parse --short HEAD`
 #
 set dummy=`cat include/version.inc | grep 'code_version(1)'`
 set version_old=`echo $dummy | $awk '{gsub("code_version\\(1\\)=","");print $0}'`
@@ -65,7 +73,8 @@ set hash_old=`echo $dummy | sed -e "s/'//g" `
 set version_new = $version_old
 set subver_new = $subver_old
 set patch_new = $patch_old
-set revision_new = $revision_old
+if ( "$gpl" == "no"  ) set revision_new = $revision_old
+if ( "$gpl" == "yes" ) set revision_new = $GPL_revision_old
 set hash_new = $hash_old
 #
 if ( "$argv[1]" == "v" ) then
@@ -120,7 +129,8 @@ if( "$update" == "0" ) then
   echo 'code_version(1)='$version_new  >  include/version.inc
   echo 'code_version(2)='$subver_new   >> include/version.inc
   echo 'code_version(3)='$patch_new    >> include/version.inc
-  echo "code_hash='"$hash_new"'"       >> include/version.inc
+  if ( "$gpl" == "no"  )  echo "code_hash='"$hash_new"'"  >> include/version.inc
+  if ( "$gpl" == "yes" )  echo "code_hash='"$hash_old"'"  >> include/version.inc
   #
   # Revision strings
   #
@@ -142,6 +152,24 @@ if ( "$gpl" == "yes" ) then
   set use_rev_new=$revision_new
 endif
 #
+if ( "$gpl" == "no" ) then
+cat << EOF > ss.awk
+{
+ gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
+      "$version_new.$subver_new.$patch_new r.$use_rev_new h.$hash_new",\$0)
+ gsub("based on r.$use_rev_old h.$hash_old","based on r.$use_rev_new h.$hash_new",\$0)
+ #version
+ gsub("SVERSION=\"$version_old\""  ,"SVERSION=\"$version_new\""  ,\$0)
+ gsub("SSUBVERSION=\"$subver_old\"","SSUBVERSION=\"$subver_new\""   ,\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
+ #revision
+ gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
+ gsub("BASE_REV=\"$use_rev_old\"" ,"BASE_REV=\"$use_rev_new\"" ,\$0)
+ gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)
+ print \$0 > "NEW"
+}
+EOF
+else
 cat << EOF > ss.awk
 {
  gsub("$version_old.$subver_old.$patch_old r.$use_rev_old h.$hash_old",
@@ -152,15 +180,19 @@ cat << EOF > ss.awk
  gsub("SPATCHLEVEL=\"$patch_old\"","SPATCHLEVEL=\"$patch_new\"",\$0)
  #revision
  gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
- gsub("SHASH=\"$hash_old\""        ,"SHASH=\"$hash_new\""        ,\$0)
  print \$0 > "NEW"
 }
 EOF
+endif
 #
 #
 if ( "$argv[1]" != "save" ) then
   $awk -f ss.awk ./config/version.m4
   mv NEW ./config/version.m4
+  if ( "$gpl" == "no" ) then
+    $awk -f ss.awk ./config/version.m4_gpl
+    mv NEW ./config/version.m4_gpl
+  endif
   $awk -f ss.awk configure
   mv NEW configure
   chmod a+x configure

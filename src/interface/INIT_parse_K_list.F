@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine init_parse_K_list(k,variable)
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  !
- implicit none
+#include<memory.h>
  type(bz_samp)::k
  character(*) ::variable
  !
@@ -38,8 +38,8 @@ subroutine init_parse_K_list(k,variable)
  real_ctl=0.
  k%nibz=1
  K_loop: do while(real_ctl/=999.)
-   if (associated(k%pt)) deallocate(k%pt)
-   allocate(k%pt(k%nibz,3))
+   YAMBO_FREE(k%pt)
+   YAMBO_ALLOC(k%pt,(k%nibz,3))
    k%pt(k%nibz,:)=(/0.,0.,999./)
    call parser('QptCoord',k%pt)
    real_ctl=k%pt(k%nibz,3)

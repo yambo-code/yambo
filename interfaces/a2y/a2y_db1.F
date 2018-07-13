@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,7 +42,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
 &                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
  use vec_operate,           ONLY: v_is_zero
  !
- implicit none
+#include<memory.h>
  character(*)                   :: KSS_file_name
  type(levels),     intent(out)  :: en
  type(bz_samp),    intent(out)  :: k  
@@ -128,7 +128,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz
- allocate(k%pt(k%nibz,3))
+ YAMBO_ALLOC(k%pt,(k%nibz,3))
  do ik = 1,k%nibz
    k%pt(ik,:)=matmul(transpose(b),ahdr%kptns(:,ik))*alat(:)/2._SP/pi
  enddo
@@ -151,8 +151,9 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  n_atomic_species=ahdr%ntypat
  !
- allocate(n_atoms_species(n_atomic_species),pp_n_l_comp(n_atomic_species),&
-&         pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+ YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
+ YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
+ YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
  pp_n_l_comp(:)=pp_n_l_max
  !
  ! if "l_many_proj" the table is readen in a2y_wf
@@ -169,7 +170,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
  enddo
  n_atoms_species_max=maxval(n_atoms_species)
- allocate(atom_pos(3,n_atoms_species_max,n_atomic_species),Z_species(n_atomic_species))
+ YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
+ YAMBO_ALLOC(Z_species,(n_atomic_species))
  n_atoms_species(:)=0
  do i1=1,ahdr%natom
    n_atoms_species( ahdr%typat(i1) ) = n_atoms_species( ahdr%typat(i1) ) +1
@@ -183,8 +185,11 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! ALLOCATION
  !
- allocate(wf_nc_k(k%nibz),g_vec(ng_vec_abinit,3),rstr(en%nb))
- allocate(en%E(en%nb,k%nibz,n_sp_pol),rel_gvec(3,ng_vec_abinit))
+ YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(rel_gvec,(3,ng_vec_abinit))
+ YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_sp_pol))
+ YAMBO_ALLOC(g_vec,(ng_vec_abinit,3))
+ YAMBO_ALLOC(rstr,(en%nb))
  !
  call msg('s','Symmetries...')
  !============================
@@ -231,8 +236,8 @@ subroutine a2y_db1(en,k,KSS_file_name)
  call msg('s','Energies...')
  !==========================
  !
- allocate(wf_disk_DP(ng_vec_abinit,n_spinor))
- allocate(wf_igk_tmp(ng_vec_abinit,k%nibz))
+ YAMBO_ALLOC(wf_disk_DP,(ng_vec_abinit,n_spinor))
+ YAMBO_ALLOC(wf_igk_tmp,(ng_vec_abinit,k%nibz))
  wf_igk_tmp=-1
  WF_disk_DP=0._DP
  !
@@ -271,7 +276,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
    wf_ncx=maxval(wf_nc_k)
    wf_ng=maxval(wf_igk_tmp)
    !
-   allocate(wf_igk(wf_ncx,k%nibz))
+   YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    do ik=1,k%nibz
      wf_igk(1:wf_ncx,ik)=wf_igk_tmp(1:wf_ncx,ik)
    enddo
@@ -279,9 +284,10 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  ! CLEAN
  !
- deallocate(wf_igk_tmp)
- deallocate(wf_disk_DP)
- deallocate(rel_gvec,rstr)
+ YAMBO_FREE(wf_igk_tmp)
+ YAMBO_FREE(wf_disk_DP)
+ YAMBO_FREE(rel_gvec)
+ YAMBO_FREE(rstr)
  !
  close(11)
  !

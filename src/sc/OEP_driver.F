@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -50,13 +50,12 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  use SC,              ONLY:it_now,l_oep_iterative,l_oep_EWeight 
  use frequency,       ONLY:w_samp
  !
- implicit none
+#include<memory.h>
  real(SP),intent(inout)  :: V_oep(fft_size)
  type(X_t),intent(in)    :: X(2)  
  type(w_samp),intent(in) :: Xw
  type(levels),intent(in) :: E
  type(bz_samp),intent(in):: k,q
- integer                 :: alloc_err
  !
  ! Work Space
  !
@@ -70,7 +69,8 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  call OEP_ApplySigmaX(E,k,q,W)
  if (l_sc_srpa) call OEP_ApplySigmaCSX(X(2),Xw,E,k,q,W)
  if (l_oep_iterative.or.(.not.l_oep_exact)) then
-   allocate(rho(fft_size),V_slt(fft_size),stat=alloc_err)
+   YAMBO_ALLOC(rho,(fft_size))
+   YAMBO_ALLOC(V_slt,(fft_size))
    if (l_oep_EWeight) then
      call OEP_Weighted_Density(E,k,rho)
    else
@@ -90,6 +90,9 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
    endif
  end if
  if (l_oep_iterative.or.l_oep_slater) V_oep = V_io
- if (allocated(rho).and.allocated(V_slt)) deallocate(rho,V_slt)
+ if (allocated(rho).and.allocated(V_slt)) then
+   YAMBO_FREE(rho)
+   YAMBO_FREE(V_slt)
+ endif
  !
 end subroutine OEP_driver

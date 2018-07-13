@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -64,6 +64,11 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  PAR_COM_WORLD%COMM  =mpi_comm_world
  PAR_COM_WORLD%CPU_id=myid
  PAR_COM_WORLD%n_CPU =ncpu
+ !
+ ! GET ENVIROMENT definitions
+ !============================
+ !
+ call PARALLEL_get_ENVIRONMENT_structure("ALL")
  !
 #endif
  !

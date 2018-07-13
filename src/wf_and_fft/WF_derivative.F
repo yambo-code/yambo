@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,22 +27,22 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !  is the periodic part of the derivative
  !
  use pars,           ONLY:SP,DP,pi,cZERO
- use interfaces,     ONLY:WF_load
+ use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,n_spinor
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use R_lattice,      ONLY:g_vec,nkibz
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
- use memory_m,       ONLY:mem_est
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
+ use parallel_m,     ONLY:PAR_IND_WF_linear
 #if defined _MAGNETIC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
  use com,            ONLY:warning
  !
- implicit none
+#include<memory.h>
  ! Input variables
  integer :: derivative_bands(2)
  integer :: derivative_kpt(2)
@@ -51,17 +51,17 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  ! Internal variables
  integer :: bands_to_load(2)
  logical :: use_live_timing
- complex(SP), allocatable  :: wf_der(:)
+ complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
- integer :: i1,i_spin,ib,ik,ifft
+ integer :: i1,i_wf,i_sp_pol,i_spinor,ib,ik
  !
  ! wf_load could change bands_to_load(:) if it founds an SC-database 
  bands_to_load(:)=derivative_bands(:)
  !
  ! Wavefunctions in G space 
  !==========================
- call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.)
+ call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
@@ -76,10 +76,8 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  call WF_derivative_alloc(do_derivative)
  !
- allocate(wf_der(wf_ng))                              ! G space
- call mem_est("wf_der",(/wf_ng/))
- allocate(wf_DP(fft_size))                            ! real space
- call mem_est("wf_DP",(/fft_size/),(/DP/))
+ YAMBO_ALLOC(wf_der,(wf_ng,n_spinor))   ! reciprocal space
+ YAMBO_ALLOC(wf_DP,(fft_size))          ! direct     space
  !
  use_live_timing=.false.
  if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
@@ -88,37 +86,42 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  fftw_plan = 0
 #endif
  !
- do ik=derivative_kpt(1),derivative_kpt(2)
-   do ib=bands_to_load(1),bands_to_load(2)
-     do i_spin=1,n_sp_pol   
-       ifft=WF%index(ib,ik,i_spin)
+ do i_sp_pol=1,n_sp_pol
+   do ik=derivative_kpt(1),derivative_kpt(2)
+     do ib=bands_to_load(1),bands_to_load(2)
+       !
+       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       !
+       i_wf=WF%index(ib,ik,i_sp_pol)
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y
        ! wf_derivative(G,i)= (k_i+G_i) wf(:)
        ! wf_z is not needed
        !
-       do i1=1,3
-         if (.not.do_derivative(i1)) cycle
-         wf_der=cZERO
-         wf_der(:)=WF%c(:,ifft)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
-         !
-         ! Here we FFT wf_derivative to real space
-         wf_DP=(0._DP,0._DP)
-         wf_DP(fft_g_table(1:wf_ng,1))= wf_der(1:wf_ng)*fft_norm
+       do i_spinor=1,n_spinor
+         do i1=1,3
+           if (.not.do_derivative(i1)) cycle
+           wf_der=cZERO
+           wf_der(:,i_spinor)=WF%c(:,i_spinor,i_wf)*(k_pt(ik,i1)+g_vec(: wf_ng ,i1))*2.0_SP*pi/alat(i1)
+           !
+           ! Here we FFT wf_derivative to real space
+           wf_DP=(0._DP,0._DP)
+           wf_DP(fft_g_table(1:wf_ng,1))= wf_der(1:wf_ng,i_spinor)*fft_norm
 #if defined _FFTW
-         call fft_3d(wf_DP,fft_dim,1,fftw_plan)
+           call fft_3d(wf_DP,fft_dim,1,fftw_plan)
 #else
-         !call fft_3d(wf_DP,fft_dim,1)
-         !
-         ! here we use +2 in order to exploit the wfc cutoff 
-         ! when using FFTQE
-         call fft_3d(wf_DP,fft_dim,2)
+           !call fft_3d(wf_DP,fft_dim,1)
+           !
+           ! here we use +2 in order to exploit the wfc cutoff 
+           ! when using FFTQE
+           call fft_3d(wf_DP,fft_dim,2)
 #endif
-         if(i1==1) wf_x(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         if(i1==2) wf_y(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         if(i1==3) wf_z(:,ifft)=cmplx(wf_DP(:),kind=SP)
-         !
+           if(i1==1) wf_x(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
+           if(i1==2) wf_y(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
+           if(i1==3) wf_z(:,i_spinor,i_wf)=cmplx(wf_DP(:),kind=SP)
+           !
+         enddo
        enddo
        if(use_live_timing) call live_timing(steps=1)
        !
@@ -129,9 +132,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  if(use_live_timing) call live_timing()
  call WF_free(WF)
  !
- deallocate(wf_DP)
- call mem_est("wf_DP")
- deallocate(wf_der)
- call mem_est("wf_der")
+ YAMBO_FREE(wf_DP)
+ YAMBO_FREE(wf_der)
  !
 end subroutine

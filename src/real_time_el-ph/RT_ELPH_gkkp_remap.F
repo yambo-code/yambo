@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ subroutine RT_ELPH_gkkp_remap(k,q)
  use vec_operate,    ONLY:v_is_zero,rlu_v_is_zero,c2a
  use zeros,          ONLY:k_rlu_zero
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) ::k,q
  !
@@ -44,7 +44,8 @@ subroutine RT_ELPH_gkkp_remap(k,q)
  if (elph_nk_bz/=k%nbz) call error('Number of k-points does not match')
  !
  if (.not.allocated(Q_io_map)) then
-   allocate(Q_io_map(q%nbz),K_io_map(k%nbz))
+   YAMBO_ALLOC(Q_io_map,(q%nbz))
+   YAMBO_ALLOC(K_io_map,(k%nbz))
  endif
  !
  ! Q-points map

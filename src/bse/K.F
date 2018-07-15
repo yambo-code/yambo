@@ -58,16 +58,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use timing_m,      ONLY:timing
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels)  ::Ken 
@@ -222,16 +218,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      n_BS_blks=0
      call BS_blks_free()
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _PL
      call BSS_PL_free( )
 #endif
 #if defined _KERR
      call BSS_KERR_free( )
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !

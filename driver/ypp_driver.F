@@ -198,11 +198,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
- !
- ! GPL_EXCLUDE_END
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !

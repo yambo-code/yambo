@@ -30,7 +30,8 @@ module BS_solvers
  !
  ! Epsilon factor
  !==================
- real(SP) :: Co_factor
+ real(SP)    :: Co_factor
+ complex(SP) :: diam_term_exact
  !
  ! Haydock
  !========== 

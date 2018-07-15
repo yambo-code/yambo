@@ -189,7 +189,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- call msg('s','[X] NESTED openmp parallelism off')
+ !call msg('s','[X] NESTED openmp parallelism off')
 #  endif
  if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif

@@ -219,11 +219,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
              !
              if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)=abs(Ken%W(ic,ik,i_sp))+abs(Ken%W(iv,ikp,i_sp))
              !
-             ! GPL_EXCLUDE_START
-             !
              if ( BS_pert_soc ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
-             !
-             ! GPL_EXCLUDE_END
              !
            enddo ! spin
          enddo ! symmetries
@@ -271,8 +267,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
      !
-     ! GPL_EXCLUDE_START
-     !
      if( BS_pert_soc ) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
        if(n_sp_pol==2) pert_range=reshape((/i_sp,1 /),(/1,2/))
@@ -284,8 +278,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
        if(.not.all(ic_SOC/=0)) E_c_SOC(:)=Ken%E(ic,ik ,i_sp)
        E_eh_SOC_corr(:)=E_c_SOC(:)-E_v_SOC(:)-Eo_eh
      endif
-     !
-     ! GPL_EXCLUDE_END
      !
      ! Occupations Factors
      !=====================

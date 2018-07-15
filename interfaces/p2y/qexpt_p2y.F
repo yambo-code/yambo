@@ -21,34 +21,42 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module pw_export
+module pw_export_module
   use pw_data
   use pars
   use iotk_module
   implicit none
+  private
   save
 
-  integer, parameter, private:: nstrx = 300
+  integer, parameter :: nstrx = 300
 
 ! PWSCF data
   complex(SP),allocatable :: pw_evec(:,:) ! check 
   public                  :: pw_evec
+ 
+  CHARACTER(iotk_attlenx) :: attr
 
   public :: pw_openindex, pw_closeindex, pw_dimensions
   public :: pw_cell, pw_symmetry, pw_kpoints, pw_other
   public :: pw_gvectors, pw_igkindex, pw_eigenvalues
-  public :: pw_wfcstart, pw_wfcstop, pw_wfck
+  public :: pw_wfcstart, pw_wfcstop, pw_wfck, pw_atoms
+  public :: qexpt_read_planewaves, qexpt_read_header
+  public :: fmt_is_pwexport
 
 contains 
 
-  subroutine pw_openindex(pwunit,pwfilename)
+  subroutine pw_openindex(pwunit,pwfilename,ierr)
     implicit none
 
-    integer, intent(in) :: pwunit  
-    integer :: ierr 
+    integer,      intent(in) :: pwunit  
     character(*), intent(in) :: pwfilename
+    integer, optional, intent(out) :: ierr 
+    !
+    integer :: ierr_
 
-    call iotk_open_read(pwunit,file=pwfilename,ierr=ierr)
+    call iotk_open_read(pwunit,file=pwfilename,ierr=ierr_)
+    if (present(ierr)) ierr=ierr_
 
     return
   end subroutine pw_openindex
@@ -308,9 +316,6 @@ contains
        call iotk_scan_attr(attr,"npw",npw,IERR=ierr)
        if ( ierr/= 0) call errore("Wrong input format in NPW","read_kgrid",ABS(ierr) )
        pw_npwk_(ik) = npw
-!DEBUG
-!      write(*,*) "CDH:",ik,pw_npwk_(ik)
-!END DEBUG
        allocate( kindex(npw), STAT=ierr )
        if ( ierr/=0 ) call errore('pw_igkindex','Unable allocate kindex',ABS(ierr))
        call iotk_scan_dat(pwunit,'index',kindex(:),IERR=ierr)
@@ -465,7 +470,169 @@ contains
     return
   end subroutine pw_kpoints
 
-end module pw_export
+
+  logical function fmt_is_pwexport(dirname)
+     implicit none
+     character(len=*)  :: dirname
+     !
+     integer :: iun, ierr
+     character(256) :: filename, fmt_name
+     
+     fmt_is_pwexport=.false.
+     call iotk_free_unit(iun)
+     !
+     filename=trim(dirname)//"/index.xml"
+     ! 
+     call pw_openindex(iun,filename,ierr=ierr)
+     if (ierr/=0) return
+     !
+     call qexpt_read_header(iun, format_name=fmt_name, ierr=ierr)
+     if (ierr/=0) return
+     !
+     if (trim(fmt_name)/="QEXPT") return
+     !
+     call pw_closeindex(iun)
+     !
+     fmt_is_pwexport=.true.
+     return
+  end function
+
+    !------------------------------------------------------------------------
+    SUBROUTINE qexpt_read_header( iunit, creator_name, creator_version, &
+                                  format_name, format_version, ierr )
+      !------------------------------------------------------------------------
+      !
+      IMPLICIT NONE
+      INTEGER,                     INTENT(IN)  :: iunit
+      CHARACTER(LEN=*),  OPTIONAL, INTENT(OUT) :: creator_name, creator_version
+      CHARACTER(LEN=*),  OPTIONAL, INTENT(OUT) :: format_name, format_version
+      INTEGER,                     INTENT(OUT) :: ierr
+
+      CHARACTER(256) :: creator_name_, creator_version_
+      CHARACTER(256) :: format_name_,     format_version_
+      CHARACTER(nstrx)    :: attr
+
+      ierr = 0
+      !
+      !
+      CALL iotk_scan_begin( iunit, "Header", IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "format", ATTR=attr, IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr(attr, "name", format_name_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr(attr, "version", format_version_, IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "creator", ATTR=attr, IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr(attr, "name", creator_name_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr(attr, "version", creator_version_, IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_end( iunit, "Header", IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      !
+      IF ( PRESENT(creator_name) )     creator_name    = TRIM(creator_name_)
+      IF ( PRESENT(creator_version) )  creator_version = TRIM(creator_version_)
+      IF ( PRESENT(format_name) )      format_name     = TRIM(format_name_)
+      IF ( PRESENT(format_version) )   format_version  = TRIM(format_version_)
+      !
+    END SUBROUTINE qexpt_read_header
+
+    !------------------------------------------------------------------------
+    SUBROUTINE qexpt_read_planewaves( iunit, ecutwfc, ecutrho, npwx, &
+                                      nr1, nr2, nr3, ngm, igv, cutoff_units, ierr )
+      !------------------------------------------------------------------------
+      !
+      INTEGER,                INTENT(IN)  :: iunit
+      INTEGER,      OPTIONAL, INTENT(OUT) :: npwx, nr1, nr2, nr3, ngm
+      INTEGER,      OPTIONAL, INTENT(OUT) :: igv(:,:)
+      REAL(DP),     OPTIONAL, INTENT(OUT) :: ecutwfc, ecutrho
+      CHARACTER(*), OPTIONAL, INTENT(OUT) :: cutoff_units
+      INTEGER,                INTENT(OUT) :: ierr
+      !
+      INTEGER        :: npwx_, nr1_, nr2_, nr3_, ngm_
+      REAL(DP)       :: ecutwfc_, ecutrho_
+      CHARACTER(256) :: cutoff_units_
+      !
+
+      ierr = 0
+      !
+      ! ... dimensions
+      !
+      CALL iotk_scan_begin( iunit, "Other_parameters", IERR=ierr )
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "Cutoff", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "wfc", ecutwfc_ ,IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "rho", ecutrho_ ,IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "units", cutoff_units_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_empty( iunit, "Space_grid", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "nr1", nr1_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "nr2", nr2_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "nr3", nr3_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_end( iunit, 'Other_parameters', IERR=ierr)
+      IF (ierr/=0) RETURN
+
+      !
+      !
+      ! ... Main G grid (density)
+      !
+      CALL iotk_scan_begin( iunit, "Main_grid", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_attr( attr, "npw", ngm_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      IF ( PRESENT( igv ) ) THEN
+          !
+          CALL iotk_scan_dat( iunit, "g", igv(1:3, 1:ngm_) , IERR=ierr)
+          IF (ierr/=0) RETURN
+          !
+      ENDIF
+      !
+      CALL iotk_scan_end( iunit, "Main_grid", IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      CALL iotk_scan_begin( iunit, "Wfc_grids", ATTR=attr, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_attr( attr, "npwx", npwx_, IERR=ierr)
+      IF (ierr/=0) RETURN
+      CALL iotk_scan_end( iunit, "Wfc_grids", IERR=ierr)
+      IF (ierr/=0) RETURN
+      !
+      !
+      IF ( PRESENT( ecutwfc ) )           ecutwfc      = ecutwfc_
+      IF ( PRESENT( ecutrho ) )           ecutrho      = ecutrho_
+      IF ( PRESENT( npwx ) )              npwx         = npwx_
+      IF ( PRESENT( nr1 ) )               nr1          = nr1_
+      IF ( PRESENT( nr2 ) )               nr2          = nr2_
+      IF ( PRESENT( nr3 ) )               nr3          = nr3_
+      IF ( PRESENT( ngm ) )               ngm          = ngm_
+      IF ( PRESENT( cutoff_units ) )      cutoff_units = TRIM( cutoff_units_ )
+      !
+    END SUBROUTINE qexpt_read_planewaves
+
+end module pw_export_module
+
 ! pw_export XML format and subroutine output format:
 ! --------------------------------------------------
 ! alat             : au                           

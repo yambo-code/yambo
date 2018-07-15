@@ -311,11 +311,7 @@ subroutine fill_eh_dipoles()
      BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
      if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
      !
-     ! GPL_EXCLUDE_START
-     !
      if (BS_pert_soc) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
-     !
-     ! GPL_EXCLUDE_END
      !
    enddo
  enddo
@@ -343,14 +339,10 @@ subroutine fill_eh_dipoles()
  call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_eh_INDEX%COMM)
  !
- ! GPL_EXCLUDE_START
- !
  if (BS_pert_soc) then
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
  endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine
  

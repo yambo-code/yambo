@@ -129,7 +129,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      if( is<=nsym/(1+i_time_rev) )                M1=matmul( dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is==nsym+1 )                             M1=matmul( space_inv,transpose(a))
-     M2=matmul(b,M1)/2./pi
+     M2=matmul(b,M1)/2.0_SP/pi
      forall (i1=1:3,i2=1:3) M2(i1,i2)=M2(i1,i2)*fft_dim(i1)/fft_dim(i2)
      !
      do i1=0,fft_dim(1)-1

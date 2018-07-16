@@ -39,7 +39,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
  logical  :: UNIFORM,l_use_non_uniform_time_grid
- real(SP) :: STEP,TIME,TIME_diff
+ real(SP) :: STEP,TIME,TIME_diff,STEP_running
  !
  ! Definitions
  !==============
@@ -90,8 +90,12 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  ! Uniform time sampling?
  !========================
- if (GENERAL_RT_IO_t%N==nint(TIME/STEP)+1) UNIFORM=.TRUE.
- if (GENERAL_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
+ !
+ UNIFORM=.TRUE.
+ do i_t=1,GENERAL_RT_IO_t%N-1
+   TIME_diff= abs ( GENERAL_RT_IO_t%Time(i_t+1)-GENERAL_RT_IO_t%Time(i_t) - STEP )
+   if (TIME_diff>RT_step) UNIFORM=.FALSE.
+ enddo
  !
  l_use_non_uniform_time_grid=.not.what=="CURRENT".and..not.what=="PH_DISPLACEMENT"
  !
@@ -100,7 +104,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! N.B.: This is needed for the carriers post-processing only
  !============================================================
  !
- if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. l_use_non_uniform_time_grid) then
+ if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. .not.l_use_non_uniform_time_grid) then
    !
    if (.not.UNIFORM) STEP = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
    !

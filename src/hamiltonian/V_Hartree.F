@@ -28,10 +28,10 @@ subroutine V_Hartree(rho,vhr)
   !
  use pars,          ONLY: pi,SP,DP
  use electrons,     ONLY: n_spin
- use R_lattice,     ONLY: bare_qpg
+ use R_lattice,     ONLY: bare_qpg,ng_vec
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
- use wave_func,     ONLY: wf_ng
+! use wave_func,     ONLY: wf_ng
  use timing_m,      ONLY:timing
  ! 
  implicit none
@@ -41,7 +41,7 @@ subroutine V_Hartree(rho,vhr)
  !
  ! Work Space
  !
- complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(wf_ng)
+ complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(ng_vec)
  !
  call timing('V_Hartree',OPR='start')
  !
@@ -59,9 +59,9 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(rhog,fft_dim,-1)
 #endif
  !
- vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))/bare_qpg(1,2:wf_ng)**2
+ vhg(2:ng_vec)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:ng_vec,1))))/bare_qpg(1,2:ng_vec)**2
  !
- vhtmp(fft_g_table(1:wf_ng,1))=vhg(1:wf_ng)
+ vhtmp(fft_g_table(1:ng_vec,1))=vhg(1:ng_vec)
  !
  ! FFT call: vhr in direct space
  !

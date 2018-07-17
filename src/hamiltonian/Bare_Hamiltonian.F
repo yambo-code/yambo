@@ -25,7 +25,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
- use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states,QP_ng_SH
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
@@ -108,6 +108,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !========================================
  !
  ! V_hartree
+ call fft_setup(QP_ng_SH,1,.false.)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc

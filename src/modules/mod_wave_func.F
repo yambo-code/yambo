@@ -40,7 +40,7 @@ module wave_func
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
 #if defined _CUDA
-   complex(SP), allocatable, device :: c_d(:,:)
+   complex(SP), allocatable, device :: c_d(:,:,:)
 #endif
  end type WAVEs
  !
@@ -51,7 +51,7 @@ module wave_func
  !
  ! Actual WFs
  !
- type (WAVEs), save :: WF
+ type (WAVEs), save, target :: WF
  !
  ! Real components ?
  !

@@ -214,7 +214,7 @@ subroutine scatter_Bamp_gpu(isc)
  !
  implicit none
  !
- type(elemental_collision)::isc
+ type(elemental_collision), target::isc
  
  integer     :: qs,iGo
  integer     :: ig, ir

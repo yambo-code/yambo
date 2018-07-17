@@ -56,7 +56,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !Work Space
  !
- type(elemental_collision)::isc,iscp
+ type(elemental_collision), target::isc,iscp
  integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx
  complex(SP),allocatable  ::local_rhotw(:)

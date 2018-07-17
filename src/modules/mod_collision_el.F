@@ -80,14 +80,14 @@ module collision_el
  contains
    !
    subroutine elemental_collision_copy(I,O)
-     type(elemental_collision)::I,O
+     type(elemental_collision), target::I,O
      O%is=I%is
      O%os=I%os
      O%qs=I%qs
    end subroutine
    !
    subroutine elemental_collision_free(ggw,INIT_ONLY)
-     type(elemental_collision)::ggw
+     type(elemental_collision), target::ggw
      logical,optional::INIT_ONLY
      logical         ::init_only_
      !
@@ -103,10 +103,10 @@ module collision_el
        YAMBO_FREE(ggw%WF_symm_o)
        ! 
 #if defined(_CUDA)
-       if(associated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
-       if(associated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
-       if(associated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
-       if(associated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
+       if(allocated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
+       if(allocated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
+       if(allocated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
+       if(allocated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
 #endif
        ! USPP workspace
        call deallocate_bec_type(ggw%ibec)
@@ -122,7 +122,7 @@ module collision_el
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)
      use electrons,      ONLY:n_spinor
      use FFT_m,          ONLY:fft_size
-     type(elemental_collision) ::ggw
+     type(elemental_collision), target ::ggw
      integer,         OPTIONAL :: NG
      integer,         OPTIONAL :: NG_GAMP(2)
      logical,         OPTIONAL :: GRADIENT

@@ -34,8 +34,8 @@ subroutine WF_apply_symm(isc,WF_symm)
  !
  implicit none
  !
- integer,     intent(in)  :: isc(4)
- complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
+ integer, target, intent(in) :: isc(4)
+ complex(SP),    intent(out) :: WF_symm(fft_size,n_spinor)
  !
  integer     :: i_wf
 #if defined _OPENMP
@@ -129,69 +129,54 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  !
  implicit none
  !
- integer,     intent(in)  :: isc(4)
+ integer, target,     intent(in)  :: isc(4)
  complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)
  !
- integer         :: i_wf(n_spinor)
- integer, device :: i_wf_d(n_spinor)
- complex(SP), device, pointer :: WF_p(:,:)
- integer         :: i, isp, isymm
+ complex(SP), device, pointer :: WF_p(:,:,:)
+ integer  :: i_wf
+ integer  :: ifft,i_spinor,isymm
 
  !
- i_wf(1)=WF%index(isc(1),isc(2),isc(4))
+ i_wf=WF%index(isc(1),isc(2),isc(4))
  !
 #if defined _MPI
- if (i_wf(1)==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
-&                           trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
-&                          ' ID:'//trim(intc(myid)))
+ if (i_wf==0) call error('EMPTY WF index @ b:'//trim(intc(isc(1)))//' k:'//&
+&                         trim(intc(isc(2)))//' spin:'//trim(intc(isc(4)))//&
+&                         ' ID:'//trim(intc(myid)))
 #endif
- if(n_spinor==2)  i_wf(n_spinor)=WF%index(isc(1),isc(2),n_spinor)
- !
- i_wf_d=i_wf
  !
  WF_p => WF%c_d
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
-   !$cuf kernel do(1) <<<*,*>>>
-   do i = 1, fft_size
-     WF_symm_d(i,1)=WF_p(i,i_wf_d(1))
-   enddo
-   if(n_spinor==2) then
-     !$cuf kernel do(1) <<<*,*>>>
-     do i = 1, fft_size
-       WF_symm_d(i,2)=WF_p(i,i_wf_d(2))
+   !$cuf kernel do(2) <<<*,*>>>
+   do i_spinor=1,n_spinor
+     do ifft = 1, fft_size
+       WF_symm_d(ifft,i_spinor)=WF_p(ifft,i_spinor,i_wf)
      enddo
-   endif
+   enddo
    return
  endif
  !
  if(n_spinor==1) then
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do i = 1, fft_size
-     WF_symm_d(i,1)=WF_p(fft_rot_r_d(i,isymm),i_wf_d(1))
+   do ifft = 1, fft_size
+     WF_symm_d(ifft,1)=WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)
    enddo
  endif
  !
  if (n_spinor==2) then
    !$cuf kernel do(1) <<<*,*>>>
-   do i = 1, fft_size
-     WF_symm_d(i,1)=spin_sop_d(1,1,isymm)*WF_p(fft_rot_r_d(i,isymm),i_wf_d(1))+ &
-                    spin_sop_d(1,2,isymm)*WF_p(fft_rot_r_d(i,isymm),i_wf_d(2))
-     WF_symm_d(i,2)=spin_sop_d(2,1,isymm)*WF_p(fft_rot_r_d(i,isymm),i_wf_d(1))+ &
-                    spin_sop_d(2,2,isymm)*WF_p(fft_rot_r_d(i,isymm),i_wf_d(2))
+   do ifft = 1, fft_size
+     WF_symm_d(ifft,1)=spin_sop_d(1,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
+                       spin_sop_d(1,2,isymm)*WF_p(fft_rot_r_d(ifft,isymm),2,i_wf)
+     WF_symm_d(ifft,2)=spin_sop_d(2,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
+                       spin_sop_d(2,2,isymm)*WF_p(fft_rot_r_d(ifft,isymm),2,i_wf)
    enddo
  endif
  !
- if(isc(3)>nsym/(i_time_rev+1)) then
-   !$cuf kernel do(2) <<<*,*>>>
-   do isp = 1, n_spinor
-     do i = 1, fft_size
-       WF_symm_d(i,isp)=conjg(WF_symm_d(i,isp))
-     enddo
-   enddo
- endif
+ if(isc(3)>nsym/(i_time_rev+1)) WF_symm_d=conjg(WF_symm_d)
  !
 end subroutine WF_apply_symm_gpu
 #endif

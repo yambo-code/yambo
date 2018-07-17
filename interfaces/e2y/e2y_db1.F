@@ -83,8 +83,8 @@ subroutine e2y_db1(en,k,ncid)
  ! PP 
  !
  call msg('s','Pseudopotential...')
- if(trim(ETSF_kind)=='KSS') call import_gwdata_group
- if(trim(ETSF_kind)=='WFK') call warning('Commutator not supported. You need a KSS file to include it.')
+ if(trim(ETSF_kind)=='KSS') call import_gwdata_group_kss
+ if(trim(ETSF_kind)=='WFK') call import_gwdata_group_wfk
  call msg('l','done')
  !
  ! G-vectors grids and indices
@@ -554,15 +554,15 @@ contains
   end subroutine import_kpoints_group
 
   !
-  ! GW data
+  ! GW data from KSS file
   !===========================================================
-  subroutine import_gwdata_group
+  subroutine import_gwdata_group_kss
     use etsf_data
     use D_lattice,             only : n_atomic_species
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                     pp_table,l_many_proj,pp_n_l_max
-    implicit none
+#include<memory.h>
     integer,allocatable :: pp_kbs_(:,:)
     integer :: max_number_of_angular_momenta,max_number_of_projectors
     integer :: ia, nproj, ip, il, varid, start(3), count(3)
@@ -576,9 +576,11 @@ contains
     pp_n_l_times_proj_max = max_number_of_angular_momenta!max_number_of_projectors
 
     call PP_alloc_abinit()
-    allocate(pp_n_l_comp(n_atomic_species))
-    allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+    YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
+    YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
     pp_n_l_comp(:)=pp_n_l_max
+    !
+    ! [TODO: RECOVER THIS]
     !
     nproj = pp_n_l_times_proj_max/pp_n_l_max
     do ia=1,n_atomic_species
@@ -590,24 +592,95 @@ contains
         enddo
       enddo
     enddo
+
     !
     ! Form factor signs
     !
     allocate(pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species ))
-
     start = [1,1,1]
     count = [1,pp_n_l_times_proj_max,n_atomic_species]
-    
     varid = netcdf_inquire_varid(ncid, "kb_formfactor_sign")
     netcdf_error = nf90_get_var(ncid, varid, pp_kbs_, start=start, count=count)
     call netcdf_check(ncid, netcdf_error, varid, "kb_formfactor_sign")
     forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
-
     YAMBO_FREE(pp_kbs_)
     !
     return
-  end subroutine import_gwdata_group
+  end subroutine import_gwdata_group_kss
+
+
+  !
+  ! GW data from WFK file
+  !===========================================================
+  subroutine import_gwdata_group_wfk
+    use etsf_data
+    use D_lattice,             only : n_atomic_species
+    use wave_func,             only : wf_ncx
+    use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
+&                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
+&                                     pp_table,l_many_proj,pp_n_l_max
+#include<memory.h>
+    integer,allocatable :: pp_kbs_(:,:)
+    integer :: lmnmax
+    integer, allocatable :: indlmn(:,:,:)
+    integer :: ia, nproj, ip, il, varid, start(3), count(3)
+    !
+    ! Get kb related dimensions
+    !
+    lmnmax                = netcdf_get_dimension(ncid,"lmnmax")
+    pp_n_l_times_proj_max = lmnmax
+
+    !
+    ! read abinit indlmn
+    !
+    allocate(indlmn(6,lmnmax,n_atomic_species))
+    varid = netcdf_inquire_varid(ncid, "indlmn")
+    netcdf_error = nf90_get_var(ncid, varid, indlmn)
+    call netcdf_check(ncid, netcdf_error, varid, "indlmn")
+
+    !calculate max_number of angular momenta
+    pp_n_l_max = maxval(indlmn(1,:,:))
+
+    call PP_alloc_abinit()
+    YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
+    YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
+    pp_n_l_comp(:)=pp_n_l_max
+    !
+    !
+    nproj = pp_n_l_times_proj_max/pp_n_l_max
+    !write(*,*) pp_n_l_times_proj_max
+    !write(*,*) pp_n_l_max
+    !write(*,*) nproj 
+    do ia=1,n_atomic_species
+      do il=1,pp_n_l_max ! loop over l
+        do ip=1,nproj ! loop over nproj
+          !write(*,*) il,nproj,ip
+          pp_table(1,ia,(il-1)*(nproj-1)+ip)=il  !  l+1
+          pp_table(2,ia,(il-1)*(nproj-1)+ip)=ip  !  n_proj
+          pp_table(3,ia,(il-1)*(nproj-1)+ip)=1   !  i_spin
+        enddo
+      enddo
+    enddo
+
+    !
+    ! Form factor signs
+    !
+    allocate(pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species ))
+    varid = netcdf_inquire_varid(ncid, "vkbsign")
+    netcdf_error = nf90_get_var(ncid, varid, pp_kbs_)
+    call netcdf_check(ncid, netcdf_error, varid, "vkbsign")
+    forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
+    YAMBO_FREE(pp_kbs_)
+    !
+    return
+  end subroutine import_gwdata_group_wfk
+
+
+
+
+
   !
   ! Miscellaneous data 
   !===========================================================

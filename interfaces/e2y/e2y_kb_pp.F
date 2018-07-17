@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH
+! Authors (see AUTHORS file for details): CH HM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -88,3 +88,73 @@ subroutine e2y_kb_pp( ikibz, ncid )
 
   return
 end subroutine e2y_kb_pp
+
+
+
+subroutine e2y_kb_pp_wfk( ikibz, ncid )
+  !
+  !
+  ! Structure of ETSF library data: (fortran order, opp to netcdf order)
+  !   kb_formfactors(  dims%max_number_of_coefficients,    &
+  !   &                dims%number_of_kpoints,             &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  !   kb_formfactor_derivative( &
+  !   &                dims%max_number_of_coefficients,    &
+  !   &                dims%number_of_kpoints,             &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  !   kb_formfactor_sign( &
+  !   &                dims%max_number_of_projectors,      &
+  !   &                dims%max_number_of_angular_momenta, &
+  !   &                dims%number_of_atom_species )
+  ! Structure of YAMBO arrays, from PP_alloc:
+  !   pp_kbs ( n_atom_species, pp_n_l_comp_max )
+  !   pp_kb  ( ng_vec, n_atom_species, pp_n_l_comp_max )
+  !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max )
+  !
+  use netcdf
+  use etsf_data
+  use R_lattice,            only : ng_vec
+  use D_lattice,            only : n_atomic_species,n_atoms_species_max
+  use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
+&                                  pp_kbs,pp_kb,pp_kbd,pp_n_l_max
+  use wave_func,            only : wf_ncx,wf_nc_k
+  !
+  implicit none
+  !
+  integer,        intent(in)    :: ncid, ikibz
+  ! 
+  ! Work Space
+  !
+  integer                       :: ig, ib, ip, ia
+  double precision,allocatable  :: pp_section(:,:,:)
+  integer                       :: start(5), count(5), varid, netcdf_error
+  !
+  allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
+  !
+  ! Form factors 
+  !
+  start = [1,ikibz,1,1,1]
+  count = [wf_ncx,1,1,pp_n_l_times_proj_max,n_atomic_species]
+  !
+  ! Form factors 
+  !
+  netcdf_error = nf90_inq_varid(ncid, "vkb", varid)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+&          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
+
+  !
+  ! Form factor derivatives 
+  !
+  netcdf_error = nf90_inq_varid(ncid, "vkbd", varid)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
+&          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
+  deallocate(pp_section)
+
+  return
+end subroutine e2y_kb_pp_wfk

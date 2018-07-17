@@ -31,7 +31,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:v_norm,c2a
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_kbs,&
 &                        pp_kb,pp_kbd,pp_table,pp_n_l_max
@@ -56,7 +56,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  !
  kbv=cZERO
  !
- do ig=1,wf_ng
+ do ig=1,wf_nc_k(ik)
    call c2a(b,(Xk%pt(ik,:)+g_vec(ig,:)),KpG_cc,'ki2c')
    call c2a(b,g_vec(ig,:),G_cc,'ki2c')
    KpG_norm=v_norm(KpG_cc)

@@ -166,6 +166,13 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
            if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
            io_err=io_KB_abinit(ID) 
          endif
+       else
+         call e2y_kb_pp_wfk(ik,ncid) 
+         if (n_atoms_species_max>0.and.ib_grp==1) then
+           if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+           if (ifrag> 1) call io_control(ACTION=OP_APP_WR_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+           io_err=io_KB_abinit(ID) 
+         endif
        endif
        !
      enddo

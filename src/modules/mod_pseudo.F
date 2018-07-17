@@ -32,10 +32,20 @@ module pseudo
  !
  logical :: l_many_proj
  integer :: pp_n_l_max
+ ! max number of angular momentum channel
+
  integer :: pp_n_l_times_proj_max
+ ! max number of angular momentum channel times number of projectors
+
  integer :: pp_kbv_dim
- integer,  allocatable:: pp_table(:,:,:)
+
+ integer,  allocatable:: pp_table(:,:,:)  
+ ! (3,n_atomic_species,pp_n_l_times_proj_max)
+ ! the first dimension contains (angular_momentum,nprojectors,spin)
+
  integer,  allocatable:: pp_n_l_comp(:)
+ !
+
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
  !
  ! ABINIT and PWSCF KB
@@ -52,10 +62,13 @@ module pseudo
    !
    ! Abinit
    subroutine PP_alloc_abinit()
-     use R_lattice,  ONLY:ng_vec
+!     use R_lattice,  ONLY:ng_vec
+     use wave_func,  ONLY:wf_ncx
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
-     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
-     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+!     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+!     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
      pp_kbs =0._SP
      pp_kb  =0._SP
      pp_kbd =0._SP

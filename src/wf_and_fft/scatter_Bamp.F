@@ -211,16 +211,19 @@ subroutine scatter_Bamp_gpu(isc)
  use R_lattice,      ONLY:g_rot_d
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table_d
  use FFT_m,          ONLY:cufft_plan
+ use cudafor
  !
  implicit none
  !
  type(elemental_collision), target::isc
  
  integer     :: qs,iGo
- integer     :: ig, ir
+ integer     :: ig,ir,istat,ngrho
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
+! XXX
+integer, allocatable :: g_rot_tmp(:,:)
 
  !
  ! define pointer to enable CUF kernels
@@ -262,18 +265,42 @@ subroutine scatter_Bamp_gpu(isc)
  !
  iGo=isc%qs(1)
  qs =isc%qs(3)
+ ngrho=isc%ngrho
  !
+istat = cudaDeviceSynchronize()
+WRITE(0,*)  "Istat before 4 = ", istat
  if (qs==idt_index) then 
    !$cuf kernel do(1) <<<*,*>>>
    do ig = 1, isc%ngrho
      rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(ig,iGo)),kind=SP)
    enddo
  else
+   !
+! XXX
+   if (allocated(g_rot_tmp)) deallocate(g_rot_tmp)
+   allocate(g_rot_tmp(size(g_rot_d,1),size(g_rot_d,2)) )
+   g_rot_tmp=g_rot_d
+   write(200,"(6i5)") g_rot_tmp
+
+  write(0,*) "sum(g_rot_d)", sum(g_rot_d)
+  write(0,*) "min(g_rot_d)", minval(g_rot_d)
+  write(0,*) "max(g_rot_d)", maxval(g_rot_d)
+  write(0,*) "shape(g_rot_d)", shape(g_rot_d)
+  write(0,*) "sum(fft_g_table_d)", sum(fft_g_table_d)
+  write(0,*) "min(fft_g_table_d)", minval(fft_g_table_d)
+  write(0,*) "max(fft_g_table_d)", maxval(fft_g_table_d)
+  write(0,*) "shape(fft_g_table_d)", shape(fft_g_table_d)
+  write(0,*) "shape(rho_tw_rs_d)", shape(rho_tw_rs_d)
+  write(0,*) "qs, iGo", qs, iGo
+! XXX
    !$cuf kernel do(1) <<<*,*>>>
-   do ig = 1, isc%ngrho
+   do ig = 1, ngrho
      rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(g_rot_d(qs,ig),iGo)),kind=SP)
    enddo
  endif
+
+istat = cudaDeviceSynchronize()
+WRITE(0,*)  "Istat after 4 = ", istat
 
  !
  ! Dev 2 Host

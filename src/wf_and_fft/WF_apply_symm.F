@@ -129,7 +129,7 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  !
  implicit none
  !
- integer, target,     intent(in)  :: isc(4)
+ integer,             intent(in)  :: isc(4)
  complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)
  !
  complex(SP), device, pointer :: WF_p(:,:,:)
@@ -149,6 +149,7 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
+   !
    !$cuf kernel do(2) <<<*,*>>>
    do i_spinor=1,n_spinor
      do ifft = 1, fft_size
@@ -156,6 +157,7 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
      enddo
    enddo
    return
+   !
  endif
  !
  if(n_spinor==1) then
@@ -164,9 +166,11 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
    do ifft = 1, fft_size
      WF_symm_d(ifft,1)=WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)
    enddo
+   !
  endif
  !
  if (n_spinor==2) then
+   !
    !$cuf kernel do(1) <<<*,*>>>
    do ifft = 1, fft_size
      WF_symm_d(ifft,1)=spin_sop_d(1,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
@@ -174,9 +178,19 @@ subroutine WF_apply_symm_gpu(isc,WF_symm_d)
      WF_symm_d(ifft,2)=spin_sop_d(2,1,isymm)*WF_p(fft_rot_r_d(ifft,isymm),1,i_wf)+ &
                        spin_sop_d(2,2,isymm)*WF_p(fft_rot_r_d(ifft,isymm),2,i_wf)
    enddo
+   !
  endif
  !
- if(isc(3)>nsym/(i_time_rev+1)) WF_symm_d=conjg(WF_symm_d)
+ ! take care of time reversal if needed
+ !
+ if(isc(3)>nsym/(i_time_rev+1)) then
+   !$cuf kernel do(2) <<<*,*>>>
+   do i_spinor = 1, n_spinor
+     do ifft = 1, fft_size
+       WF_symm_d(ifft,i_spinor)=conjg(WF_symm_d(ifft,i_spinor))
+     enddo
+   enddo
+ endif
  !
 end subroutine WF_apply_symm_gpu
 #endif

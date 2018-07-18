@@ -30,7 +30,7 @@ def_cuda="-D_CUDA"
 CUDA_LIBS="-Mcudalib=cufft,cublas"
 
 if test x"$enable_cuda" = "xyes" ; then
-   CUDA_FLAGS="-Mcuda=cuda8.0,cc35 $CUDA_LIBS"
+   CUDA_FLAGS="-Mcuda=cuda8.0,cc35,nollvm $CUDA_LIBS"
 elif ! test x"$enable_cuda" = "x" ; then
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
 else

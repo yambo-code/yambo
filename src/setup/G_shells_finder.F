@@ -32,6 +32,9 @@ subroutine G_shells_finder()
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
+#ifdef _CUDA
+ use R_lattice,    ONLY:g_rot_d
+#endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
@@ -58,6 +61,11 @@ subroutine G_shells_finder()
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err=io_GROT(ID)
  !
+#ifdef _CUDA
+     if (allocated(g_rot_d)) deallocate(g_rot_d)
+     allocate(g_rot_d,source=g_rot)
+#endif
+ !
  if (io_err==0) then
    if(inv_index<0) then
      YAMBO_FREE(ng_in_shell)
@@ -66,6 +74,12 @@ subroutine G_shells_finder()
      YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
+     !
+#ifdef _CUDA
+     if (allocated(g_rot_d)) deallocate(g_rot_d)
+     allocate(g_rot_d,source=g_rot)
+#endif
+     !
    endif
    return
  else
@@ -74,6 +88,9 @@ subroutine G_shells_finder()
      YAMBO_FREE(E_of_shell)
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
+#ifdef _CUDA
+     if (allocated(g_rot_d)) deallocate(g_rot_d)
+#endif
    endif
  endif
  !
@@ -155,6 +172,10 @@ subroutine G_shells_finder()
  !
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
+ !
+#ifdef _CUDA
+ allocate(g_rot_d,source=g_rot)
+#endif
  !
  ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group

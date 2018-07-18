@@ -88,6 +88,13 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      enddo
    enddo
    !
+#ifdef _CUDA
+   if (i4>0.and..not.ONLY_SIZE) then
+     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
+     allocate(fft_g_table_d,source=fft_g_table)
+   endif
+#endif
+   !
    ln=ln*fft_multiplier
    !
    call fft_best_size(ln)
@@ -155,10 +162,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
 #if defined _CUDA
-   if (allocated(fft_g_table)) deallocate(fft_g_table)
    if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)
    if (allocated(fft_rot_r_inv_d)) deallocate(fft_rot_r_inv_d)
-   allocate(fft_g_table_d,source=fft_g_table)
    allocate(fft_rot_r_d,source=fft_rot_r)
    allocate(fft_rot_r_inv_d,source=fft_rot_r_inv)
 #endif

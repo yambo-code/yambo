@@ -309,6 +309,8 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -316,10 +318,12 @@ subroutine RT_initialize(E,k,q)
    !
    call section('=','Electronic Collisions loading and setup')
    !
+   ! GPL_EXCLUDE_START
    if (l_elel_scatt) then
      call PLASMA_build_up(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
+   ! GPL_EXCLUDE_END
    !
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
@@ -327,6 +331,8 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
+ !
+ ! GPL_EXCLUDE_START
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt
  !
@@ -346,11 +352,11 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Integrator                 :',trim(Integrator_name))
  call msg( 'r', 'Simulation time        [fs]:',NE_tot_time*AUT2FS)
  call msg( 'r', 'Basic time step        [fs]:',RT_step*AUT2FS)
+ call msg( 'r', '           steps           :',NE_steps)
  !
  ! GPL_EXCLUDE_START
  !
  call msg( 'r', '      time step   (now)[fs]:',RT_dyn_step*AUT2FS)
- call msg( 'r', '           steps           :',NE_steps)
  !
  if (NE_initial_time_step_update>0.) then
    call msg( 'r','---Time Step Update---')

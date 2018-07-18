@@ -58,16 +58,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use timing_m,      ONLY:timing
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels)  ::Ken 
@@ -148,6 +144,24 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call section('=',trim(section_title))
  !
+ ! Exchange
+ !==========
+ !
+ load_O_X=BS_res_K_exchange.or.l_bs_fxc
+ !
+ if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
+ !
+ ! PP/Epsm1S DBs
+ !
+ W_is_em1s=X%whoami==2
+ W_is_pp  =X%whoami==4
+ !
+ ! Oscillators Setup
+ !===================
+ O_ng=maxval(G_m_G)
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
+ !
  ! GPL_EXCLUDE_START
  !
  if (l_bs_fxc)      call section('=','Bethe-Salpeter Kernel -> xc-kernel')
@@ -185,18 +199,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- !
- ! Exchange
- !==========
- !
- load_O_X=BS_res_K_exchange.or.l_bs_fxc
- !
- if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
- !
- ! PP/Epsm1S DBs
- !
- W_is_em1s=X%whoami==2
- W_is_pp  =X%whoami==4
  ! 
  if (BS_res_K_corr.and..not.l_td_hf) then
    !
@@ -216,16 +218,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      n_BS_blks=0
      call BS_blks_free()
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _PL
      call BSS_PL_free( )
 #endif
 #if defined _KERR
      call BSS_KERR_free( )
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -252,12 +250,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    FXC=cZERO
    !
  endif
- !
- ! Oscillators Setup
- !===================
- O_ng=maxval(G_m_G)
- !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
  !
  ! Wave Functions
  !================

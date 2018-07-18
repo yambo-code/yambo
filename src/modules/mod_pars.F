@@ -77,6 +77,7 @@ module pars
 #else
  integer, parameter  :: SP = selected_real_kind(6,30)
 #endif
+ integer, parameter  :: IP16= selected_int_kind(16)
  integer, parameter  :: IP  = selected_int_kind(8)
  integer, parameter  :: IP4 = selected_int_kind(4)
  integer, parameter  :: IP2 = selected_int_kind(2)

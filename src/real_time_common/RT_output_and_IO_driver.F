@@ -53,6 +53,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output(what="initialize")
    call RT_output(what="open curr pol")
+   if (l_NE_with_fields) then
+     call RT_output(what="open ext")
+     if(l_RT_induced_field) call RT_output(what="open tot ind")
+   endif
    !
    ! GPL_EXCLUDE_START
    !
@@ -60,10 +64,6 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    if(eval_energy)  call RT_output(what="open energy")
    if(eval_entropy) call RT_output(what="open therm")
    if(l_update_QP_Energies) call RT_output(what="open BGR")
-   if (l_NE_with_fields) then
-     call RT_output(what="open ext")
-     if(l_RT_induced_field) call RT_output(what="open tot ind")
-   endif
    if (l_elph_scatt)     call RT_output('open EPlife')
    if (l_elel_scatt)     call RT_output('open EElife')
    if (l_elphoton_scatt) call RT_output('open RADlife')

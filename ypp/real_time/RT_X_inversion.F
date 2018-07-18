@@ -33,8 +33,8 @@ subroutine RT_X_inversion(RT_P_Probe,Susceptibility,Harmonic_Frequency,X_effecti
  use LIVE_t,         ONLY:live_timing
 #include<memory.h>
  !
- real(SP)      :: RT_P_probe(RT_conf%T_n_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
- complex(SP)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
+ real(SP)),    intent(in)    :: RT_P_probe(RT_conf%T_n_steps,N_probes,3),Harmonic_Frequency(0:X_order,N_probe_frequencies)
+ complex(SP),  intent(out)   :: Susceptibility(0:X_order,N_probe_frequencies),X_effective(0:X_order,N_probe_frequencies,3)
  !
  ! Work Space
  !

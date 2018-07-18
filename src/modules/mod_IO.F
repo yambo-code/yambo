@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,lchlen,schlen,max_io_units,max_active_sections
+ use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid
  use com,        ONLY:error
@@ -144,7 +144,7 @@ module IO_m
  interface 
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                          DB_R0,R0,R1,DB_R1,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
+&                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                          DESCRIPTION,DO_NOT_DUMP)
      !
      use pars
@@ -153,6 +153,7 @@ module IO_m
      integer,     optional :: VAR_SZ,MENU
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),    optional :: D0,DB_D0
      complex(SP), optional :: C0,DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
@@ -162,7 +163,9 @@ module IO_m
    !
    subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
                       &             R0,R1,R2,R3,R4,R5,&
+                      &             D0,D1,D2,D3,D4,D5,&
                       &             C0,C1,C2,C3,C4,C5,&
+                      &             Z0,Z1,Z2,Z3,Z4,Z5,&
                       &             L0,L1,L2,L3,L4,   &
                       &                            IPOS)
      !
@@ -172,7 +175,9 @@ module IO_m
      integer,     optional :: VAR_SZ(:),IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+     real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
      complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
+     complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
    end subroutine

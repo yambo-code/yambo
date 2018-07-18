@@ -108,7 +108,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !========================================
  !
  ! V_hartree
- call fft_setup(QP_ng_SH,1,.false.)
+ call fft_setup(QP_ng_SH,WF_Go_indx,.false.)
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc

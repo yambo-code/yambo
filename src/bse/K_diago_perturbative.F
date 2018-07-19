@@ -30,15 +30,15 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
- use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E
+ use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,BSS_eh_W,BSS_eh_E,BSS_n_eig
  use BS,             ONLY:BS_H_dim
  !
  implicit none
  !
  character(3),intent(in) :: what
  integer,     intent(in) :: pert_dim
- complex(SP), intent(in) :: BS_mat_eigen(BS_H_dim,BS_H_dim)
- complex(SP),intent(out) :: BS_corrections(pert_dim,BS_H_dim)
+ complex(SP), intent(in) :: BS_mat_eigen(BS_H_dim,BSS_n_eig)
+ complex(SP),intent(out) :: BS_corrections(pert_dim,BSS_n_eig)
  !
  ! Workspace
  !
@@ -46,12 +46,12 @@ subroutine K_diago_perturbative(BS_mat_eigen,BS_corrections,pert_dim,what)
  integer              ::i1,i2
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_corrections=cZERO
  call live_timing('Perturb.    '//what//' ',px%n_of_elements(myid+1))
  !
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    !
    if (.not.px%element_1D(i1)) cycle
    !

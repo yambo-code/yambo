@@ -63,9 +63,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
  call MatSetUp(slepc_mat,ierr)
  ! 
- call BSS_alloc()
- !
- call K_components_folded_in_serial_arrays(1,"SLEPC")
+ call K_components_folded_in_serial_arrays(iq)
  ! 
  ! filling of the slepc_mat
  !

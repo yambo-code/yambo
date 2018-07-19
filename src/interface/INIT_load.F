@@ -34,7 +34,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
- use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
+ use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,QP_ng_Vxc,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode

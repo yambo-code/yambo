@@ -80,7 +80,7 @@ subroutine K_shell_matrix(iq,slepc_mat)
  !
  call BSS_alloc()
  !
- call K_components_folded_in_serial_arrays(1,"SLEPC")
+ call K_components_folded_in_serial_arrays(1)
  ! 
  do i_B=1,n_BS_blks
    !

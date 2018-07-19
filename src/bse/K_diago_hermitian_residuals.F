@@ -40,17 +40,17 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !
  implicit none
  !
- real(SP)   ,intent(in)  :: BS_E_real(BS_H_dim)
- complex(SP),intent(out) :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+ real(SP)   ,intent(in)  :: BS_E_real(BSS_n_eig)
+ complex(SP),intent(out) :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
  integer              ::i_eh
- complex(SP)          ::tmp_res(BS_H_dim)
+ complex(SP)          ::tmp_res(BSS_n_eig)
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_R_left =cZERO
  BS_R_right=cZERO

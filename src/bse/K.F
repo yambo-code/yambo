@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,l_BSE_minimize_memory
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -179,7 +179,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
-#if _PAR_IO 
+#if defined _PAR_IO
 #else
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -377,7 +377,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
-#ifdef _PAR_IO
+#if defined _PAR_IO
+ call io_control(ACTION=OP_WR,COM=REP,ID=ID)
+ call io_BS_PAR_init(iq,X,ID)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
@@ -632,7 +634,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
-#if _PAR_IO
+#if defined _PAR_IO
 #else
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)

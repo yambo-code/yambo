@@ -205,21 +205,21 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! OpenMP setup
  !==============
  !
-!$omp parallel num_threads(n_outthr) default(shared), &
-!$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,ig_row_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
+ !$omp parallel num_threads(n_outthr) default(shared), &
+ !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,ig_row_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)
  !
  ! memory estimate and local alloc
  !=================================
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
+ call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
  ! MAIN LOOP
  !===========
  !
-!$omp do
+ !$omp do
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -313,7 +313,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
  enddo 
  !
-!$omp end do
+ !$omp end do
  !
  ! CLEAN
  !=======

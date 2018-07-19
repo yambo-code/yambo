@@ -25,21 +25,28 @@ subroutine io_BS_init(iq,X,ID)
  !
  ! Intialize BSE netcdf parallel file
  !
- use netcdf
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,io_connect,io_header,io_mode
  use BS_solvers,    ONLY:variables_BS
-#include<memory.h>
  !
+#include<memory.h>
+ include 'netcdf.inc'
+ include 'mpif.h'
+  !
  type(X_t) :: X 
- integer :: io_BS, iq, ID
+ integer :: io_BS, iq, mode_flag, ncid, stat, ID
  character(schlen) :: db_name,PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
+ ! Create parallel netCDF file.
+ ! Not using ID (yet!)
+ !
  db_name='BS_Q'//trim(intc(iq))
- io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
+ mode_flag = IOR(nf_netcdf4, nf_mpiio)
+ stat = nf_create_par(db_name,mode_flag,MPI_COMM_WORLD,MPI_INFO_NULL,ncid)
+ call netcdf_call(stat,ncid)
  !
  PARALLEL_STRUCTURE="NONE"
  if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"

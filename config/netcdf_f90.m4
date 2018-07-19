@@ -69,6 +69,12 @@ AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
 #
+#
+# HDF5 PAR IO
+#
+AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
+             [Activate the HDF5 parallel io. Default is no.]))
+#
 enable_netcdf="no"
 enable_hdf5="no"
 compile_netcdf="no"
@@ -348,6 +354,12 @@ fi
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+fi
+#
+# NETCDF-HDF5 PAR IO
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_PAR_IO";
 fi
 #
 AC_SUBST(NETCDF_LIBS)

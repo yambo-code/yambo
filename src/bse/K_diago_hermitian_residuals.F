@@ -47,7 +47,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  !
  type(PP_indexes)     ::px
  integer              ::i_eh
- complex(SP)          ::tmp_res(BSS_n_eig)
+ complex(SP)          ::tmp_res(BS_H_dim)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))

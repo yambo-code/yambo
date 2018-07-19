@@ -210,7 +210,7 @@ subroutine K_diago_driver(iq,W)
      if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
 #if defined _SLEPC
      if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
-&                                  BS_V_right,E_real=BS_E_real)
+&                                  BS_mat,E_real=BS_E_real)
 #endif
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
@@ -339,6 +339,11 @@ subroutine K_diago_driver(iq,W)
          YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BSS_n_eig))
        else
          YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
+#if defined _SLEPC
+         if(l_slepc) then
+           YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+         endif
+#endif
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
            YAMBO_ALLOC(BS_corrections,(1,BSS_n_eig))
          endif

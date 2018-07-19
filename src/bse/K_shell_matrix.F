@@ -26,9 +26,9 @@ subroutine K_shell_matrix(iq,slepc_mat)
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
  !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
@@ -78,10 +78,6 @@ subroutine K_shell_matrix(iq,slepc_mat)
  !
  ! Allocate BS stuff
  !
- call BSS_alloc()
- !
- call K_components_folded_in_serial_arrays(1)
- ! 
  do i_B=1,n_BS_blks
    !
    i_Tk  =BS_blk(i_B)%iT_k

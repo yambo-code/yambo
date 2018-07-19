@@ -26,9 +26,9 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
  !
  !
  use pars,           ONLY:SP,cI,cONE,cZERO
@@ -60,7 +60,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !========================
  ! BSS COMPONENTS SECTION
  !========================
- !
+ ! 
  if (.not.allocated(BSS_dipoles)) then
    !
    ! ALLOCATION

@@ -26,9 +26,9 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use pars,           ONLY:SP,cI,cZERO,cONE
  use parallel_m,     ONLY:PP_redux_wait

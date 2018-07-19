@@ -26,9 +26,9 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (K_c)    |  
- !  K = |                    |
- !      | (-K_c^*)  (-K_r^*) |
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
  !
  use pars,           ONLY:SP,DP,cI,cONE
  use electrons,      ONLY:n_sp_pol
@@ -62,8 +62,6 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  call MatSetSizes(slepc_mat,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,ierr)
  call MatSetType(slepc_mat, MATMPIDENSE,ierr)
  call MatSetUp(slepc_mat,ierr)
- ! 
- call K_components_folded_in_serial_arrays(iq)
  ! 
  ! filling of the slepc_mat
  !

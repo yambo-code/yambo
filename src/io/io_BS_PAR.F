@@ -30,6 +30,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
+ use BS,            ONLY:BS_H_dim
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
 &                        io_connect,io_header,io_mode,io_unit
  use BS_solvers,    ONLY:variables_BS
@@ -37,7 +38,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  include 'netcdf.inc'
  !
  type(X_t) :: X 
- integer :: io_BS, iq, mode_flag, ncid, stat, ID
+ integer :: io_BS, iq, mode_flag, ncid, varid, stat, ID
+ integer :: resonant_block_size,resonant_block_size_dim
  character(schlen) :: db_name,PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
@@ -45,15 +47,39 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
  mode_flag = IOR(nf_netcdf4, nf_mpiio)
- stat = nf_create_par(db_name,mode_flag,MPI_COMM_WORLD,MPI_INFO_NULL,io_unit(ID))
- write(*,*) stat
+ stat = nf90_create(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  call netcdf_call(stat,ID)
+ !
+ resonant_block_size = BS_H_dim*(BS_H_dim-1)/2
+ stat = nf_def_dim(io_unit(ID), "flattened_upper_triangular_size", &
+&                  resonant_block_size, resonant_block_size_dim)
+ call netcdf_call(stat,ID) 
+ !
+ ! Intialize the variables where the matrix will be stored (resonant only FTM)
+ !
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_double, 1, [resonant_block_size_dim], varid)
+ call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
+ call netcdf_call(stat,ID)
+ !
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 1, [resonant_block_size_dim], varid)
+ call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(id), varid, nf_collective)
+ call netcdf_call(stat,ID)
+ !
+ !
+ ! Stop define mode
+ !
+ stat = nf_enddef(io_unit(ID))
+ call netcdf_call(stat,ID)
+ !
+ ! Write some metadata
  !
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS=variables_BS(ID,local_description,X=X)
- !
+
 end subroutine
 
 

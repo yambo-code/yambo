@@ -93,6 +93,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
  !
  ! I/O. All read. Only master writes.
+ ! 
+ ! NB: this needs to be changed for Haydock
  !
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !

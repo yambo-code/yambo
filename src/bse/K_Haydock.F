@@ -468,31 +468,41 @@ subroutine K_Haydock(iq,W)
      !
    endif
    !
-   ! Haydock Coefficients and restart vectors on disk
-   !--------------------------------------------------
-   !call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-!   if (use_cpl_scheme) then
-!     Bf(1) = Haydock_v0_mod
- !
+   ! Notes: (a) to define IO_Haydock_it variable in input, with default of (?) 100
+   !
+   if ( mod(it,IO_Haydock_it)=0 .or. &
+&       (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
+&       stop_now(.FALSE.)    ) then
+     !
+     ! Haydock Coefficients and restart vectors on disk
+     !--------------------------------------------------
+     call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
+     if (use_cpl_scheme) then
+       Bf(1) = Haydock_v0_mod
 #if defined _KERR
-!     if(l_kerr) then
-!       io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
-!       &                    Af(:it),Bf(:it+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
-!     else 
+       if(l_kerr) then
+         io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_treshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+       else 
 #endif
- !
-!      io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,  &
-! &                          Af(:it),Bf(:it+1),Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:it+1))
- !
-#if defined _KERR
-!     endif
-#endif
- !
-!     Bf(1) = 0._SP
-!   else
-!     io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Vmm1,Vm)
-!   end if
-!   !
+         io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1),Cf=Cf(:it+1))
+       endif
+       Bf(1) = 0._SP
+     else
+       io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_treshold,Af(:it),Bf(:it+1))
+     end if
+     !
+     do i_g=1,BS_nT_grps
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       call io_control(ACTION=OP_WR_CL,SEC=(/1+ig/),ID=ID)
+       if (use_cpl_scheme) then
+           io_err=ioBSS_Haydock(ID,Vnm1,Vn,Vnp1=Vnp1)
+         else 
+           io_err=io_BSS_Haydock(ID,Vmm1,Vm)
+       endif
+     enddo
+     !
+   endif
+   !
    if ( (reached_treshold>0.and.reached_treshold<abs(Haydock_treshold)) .or. &
 &       stop_now(.FALSE.)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_treshold)

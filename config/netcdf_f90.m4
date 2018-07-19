@@ -323,7 +323,8 @@ if test x"$enable_hdf5" = "xyes"; then
     netcdf=yes ;
     hdf5=yes ;
     #
-    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" &&
+       test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a"; then
       compile_netcdf="no" ;
       compile_hdf5="no" ;
       AC_MSG_RESULT([already compiled]) ;

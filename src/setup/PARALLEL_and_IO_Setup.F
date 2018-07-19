@@ -96,6 +96,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
  call msg('r', '* I/O NODES       :',n_nodes)
+#ifdef _CUDA
+ call msg('r', '* CUDA support    :',"yes")
+#endif
+
  !
  ! I/O and more
  !===============

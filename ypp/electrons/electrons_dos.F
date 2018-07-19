@@ -59,11 +59,7 @@ subroutine electrons_dos(Xk,Xen,mode)
  ! E Double Grid
  !===============
  !
- l_DbGd=.FALSE.
- if (BZ_DbGd_nbands>0) then
-   l_DbGd=.TRUE.
-   call OCCUPATIONS_Extend(Xen,Xen)
- endif
+ l_DbGD=BZ_DbGd_nbands>0
  !
  if (n_spinor==2.and.mode=="NORMAL") then
    YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
@@ -125,12 +121,12 @@ subroutine electrons_dos(Xk,Xen,mode)
    if(     allocated(WF_fac)) then
      call el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,1),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
      if (all(INTERP_grid>0)) then
-       call el_density_of_states(INTERP_k,INTERP_E,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,2),USE_the_DbGd=l_DbGd,WF_fac=WF_fac)
+       call el_density_of_states(INTERP_k,INTERP_E,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,2),WF_fac=WF_fac)
      endif
    else
      call el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,1),USE_the_DbGd=l_DbGd)
      if (all(INTERP_grid>0)) then
-       call el_density_of_states(INTERP_k,INTERP_E,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,2),USE_the_DbGd=l_DbGd)
+       call el_density_of_states(INTERP_k,INTERP_E,dos_E,DOS_broadening,DOS_bands,el_dos(i_E,:,2))
      endif
    endif
    !

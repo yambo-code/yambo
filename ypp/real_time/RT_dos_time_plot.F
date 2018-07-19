@@ -30,13 +30,13 @@ subroutine RT_dos_time_plot(En,kpt,n_T_steps)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use YPP,            ONLY:DOS_broadening,DOS_E_range,DOS_E_steps
  use YPP_real_time,  ONLY:RT_time
- use com,            ONLY:msg,error
+ use com,            ONLY:msg
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply
  use real_time,      ONLY:RT_carriers,RT_bands
  use interfaces,     ONLY:PARALLEL_index
- use parallel_m,     ONLY:PP_indexes,PP_redux_wait
+ use parallel_m,     ONLY:PP_indexes,PP_redux_wait,myid
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -56,8 +56,6 @@ subroutine RT_dos_time_plot(En,kpt,n_T_steps)
  !
  call section('*','Electr. Time-dependent DOS')
  !
- if (n_T_steps==1) call error(' Only one time step. Use standard dos instead')
- !
  call msg('s','Energy steps   :',DOS_E_steps)
  call msg('s','Bands          :',RT_carriers%nb)
  !
@@ -69,7 +67,8 @@ subroutine RT_dos_time_plot(En,kpt,n_T_steps)
  !
  ! Output files headers
  !
- call RT_output("open 2D_occ_dos")
+ if (n_T_steps==1) call RT_output("open single_time_dos")
+ if (n_T_steps> 1) call RT_output("open TD_dos")
  !
  if (DOS_E_range(1)>DOS_E_range(2)) then
    DOS_E_range(1)=minval(RT_carriers%E_bare)-5._SP*DOS_broadening
@@ -88,7 +87,7 @@ subroutine RT_dos_time_plot(En,kpt,n_T_steps)
  !================================
  !
  call PARALLEL_index(px,(/DOS_E_steps/))
- call live_timing('DOS',n_T_steps)
+ call live_timing('DOS',px%n_of_elements(myid+1)*n_T_steps)
  !
  do i_T=1,n_T_steps
    !
@@ -137,21 +136,24 @@ subroutine RT_dos_time_plot(En,kpt,n_T_steps)
      !
      if ( dos_E>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
      &    dos_E<En%E_CBm(1)-DOS_broadening-epsilon(1._SP)         ) then
-       if(l_separate_eh.and.(.not.space_printed)) call RT_output("space 2D_occ_dos")
+       if(l_separate_eh.and.(.not.space_printed)) call RT_output("space TD_dos")
        space_printed=.true.
        cycle
      endif
      !
-     if(n_spin==1) then
-       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+     if (n_T_steps> 1) then
+       if (n_spin==1) call RT_output("TD_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+       if (n_spin >1) call RT_output("TD_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
+&                                             E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      else
-       call RT_output("2D_occ_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
-&                                  E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+       if (n_spin==1) call RT_output("single_time_dos",VALUEs=(/el_dos(i_E,1)/),E=dos_E*HA2EV)
+       if (n_spin >1) call RT_output("single_time_dos",VALUEs=(/el_dos(i_E,1)+el_dos(i_E,2),el_dos(i_E,1),el_dos(i_E,2)/),&
+&                                                      E=dos_E*HA2EV)
      endif
      !
    enddo
    !
-   call RT_output("space 2D_occ_dos")
+   if (n_T_steps> 1) call RT_output("space TD_dos")
    !
    call live_timing(steps=1)
    !

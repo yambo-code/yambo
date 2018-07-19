@@ -228,8 +228,10 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
-     case('YPP-X_effective','YPP-2D_occ_dos')
+     case('YPP-X_effective','YPP-TD_dos')
        data_to_dump(3:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-2)
+     case('YPP-single_time_dos')
+       data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
      case('YPP-eps_eq','YPP-refl_eq','YPP-transm_eq')
        data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
      case('YPP-trans_eps_real' ,'YPP-trans_eps_imag',&

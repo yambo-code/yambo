@@ -171,6 +171,7 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
  !
  if (allocated(BS_mat)                ) return
  if (what=="INV".and.K_slk%kind=="SLK") return
+ if (what=="SLEPC"                    ) return
  !
  YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
  BS_mat    = cZERO

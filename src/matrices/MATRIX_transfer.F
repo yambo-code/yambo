@@ -95,7 +95,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
    PAR_to_PAR_comm_NAME="NONE"
  endif
  !
- call timing('MATRIX transfer ('//PAR_to_PAR_comm_NAME//')',OPR='start')
+ call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='start')
  !
  ! Transfer World
  !
@@ -145,6 +145,6 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  call COMM_reset(TRANSFER_world)
  !
- call timing('MATRIX transfer ('//PAR_to_PAR_comm_NAME//')',OPR='stop')
+ call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='stop')
  !
 end SUBROUTINE

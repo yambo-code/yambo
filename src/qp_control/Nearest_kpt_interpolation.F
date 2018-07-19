@@ -63,8 +63,10 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
 #endif
  !
 #if defined _YPP_RT
- write_message=(what=="RT0")
+ write_message=what=="RT0"
 #endif
+ !
+ if (what=="QUIET") write_message=.FALSE.
  !
  nk_exact=0
  nk_interpolated=0

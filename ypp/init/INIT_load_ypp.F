@@ -28,12 +28,12 @@ subroutine ypp_INIT_load(defs)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
- use interpolate,   ONLY:lpfac
+ use interpolate,   ONLY:INTERP_shell_factor
  use YPP
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width
+&                               n_regions,Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -85,7 +85,8 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'spin',         '[R] Spin')
  call it('r',defs,'magnetization','[R] Magnetization')
  call it('r',defs,'kpts_map',     '[R] BZ map fine grid to coarse')
- call it('r',defs,'WFs_map',      '[R] WF map WFs with SOC to present WFs')
+ call it('r',defs,'WFs',          '[R] WF operations')
+ call it('r',defs,'WFs_map',      '[R] Creat a SOC/WFs <-> noSOC/WFs map')
  call it('r',defs,'QPDBs', '[R] Quasi-particle databases')
  call it('r',defs,'QPDB_edit', '[R] Generation/editing')
  call it('r',defs,'QPDB_merge','[R] Mergering')
@@ -99,6 +100,7 @@ subroutine ypp_INIT_load(defs)
  !
  call it('r',defs,'RealTime',     '[R] Real-Time Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
+ call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
  !
 #endif
  !
@@ -111,6 +113,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
  !
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
@@ -123,12 +126,16 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'RTdos',        '[R] Post-Processing kind: 2D DOS, function of time and energy')
  !
 #endif
- !
+!
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+#if defined _YPP_NL
+ call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+#endif
  !
  ! Temperatures
  !
@@ -137,10 +144,10 @@ subroutine ypp_INIT_load(defs)
  !
  ! DOS
  !
- call it(defs,'DOS_broad', 'Broadening of the DOS',dos_broadening,E_unit) 
- call it(defs,'DOS_bands', 'DOS bands',dos_bands) 
- call it(defs,'DOSERange', 'Energy range',dos_E_range,unit=E_unit) 
- call it(defs,'DOSESteps', 'Energy steps',dos_E_steps) 
+ call it(defs,'DOS_broad', 'Broadening of the DOS',DOS_broadening,E_unit) 
+ call it(defs,'DOS_bands', 'DOS bands',DOS_bands) 
+ call it(defs,'DOSERange', 'Energy range',DOS_E_range,unit=E_unit) 
+ call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'PrtOccOnly', 'Occupied states only') 
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
@@ -165,6 +172,11 @@ subroutine ypp_INIT_load(defs)
    if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
  enddo
  !
+ ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
+ call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
+ call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
+ call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
+ !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
@@ -184,9 +196,13 @@ subroutine ypp_INIT_load(defs)
  !
  ! BANDS
  !
- call it(defs,'BANDS_steps', 'Number of divisions',BANDS_steps) 
- call it(defs,'INTERPGrid', 'Interpolation BZ Grid',interp_grid)
- call it(defs,'ShellFac','The bigger it is a higher number of shells is used',lpfac)
+ call it(defs,'BANDS_bands',   'Number of bands',BANDS_bands) 
+ call it(defs,'BANDS_steps',   'Number of divisions',BANDS_steps) 
+ call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
+ call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
+ call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
+ call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
+ call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
  ! GPL_EXCLUDE_START
  !
@@ -207,14 +223,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
- !
- ! GPL_EXCLUDE_START 
- !
- call it(defs,'PtsPath','Series of Points for path generation',PtsPath)
+ call it(defs,'PtsPath','Path points labels (G,M,K,L...)',PtsPath)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
- !
- ! GPL_EXCLUDE_END
- !
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 

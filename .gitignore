@@ -11,12 +11,15 @@
 *.f90
 *.s
 *.sw*
+*dSYM
+*bk
 
 # source #
 ##########
 config.status
 config/report
 config/setup
+config/msg_ydb
 driver/codever.h
 driver/editor.h
 include/netcdf.h
@@ -49,6 +52,7 @@ sbin/objects_store.sh
 sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
+bin-libs/*
 
 # source #
 ##########
@@ -90,3 +94,4 @@ ehthumbs.db
 Thumbs.db
 myconfig*
 nohup.out
+autom4te.cache

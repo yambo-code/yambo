@@ -31,7 +31,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
- use pars,          ONLY:SP,DP,cI,cZERO
+ use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
  use com,           ONLY:error
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
@@ -65,7 +65,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  YAMBO_ALLOC(Vr,(fft_size))
  YAMBO_ALLOC(V3g,(ng_,3))
- V3g(:,:) = cZERO
+ V3g(:,:) = cZERO_DP
  !
  f_gradient = cZERO
  !
@@ -84,7 +84,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
    !
    do ic = 1,3
-     Vr = cZERO
+     Vr = cZERO_DP
      Vr(fft_g_table(1:ng_,1)) = V3g(1:ng_,ic)
 #if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)

@@ -39,8 +39,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
 &                         BSS_dipoles,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc,BS_mat
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling,BS_H_dim,BS_blks_free
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_dipoles_kerr,BSS_KERR_alloc
@@ -50,8 +48,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include <memory.h>
  !
@@ -74,8 +70,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
    ! 
    call BSS_alloc( )
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    call BSS_KERR_alloc( )
 #endif
@@ -83,8 +77,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
 #if defined _PL
    call BSS_PL_alloc( )
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
    ! FILLING BSS_eh_* and BSS_dipoles
    !==================================
@@ -113,8 +105,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
        BSS_dipoles(H_pos(1))=BS_T_grp(i_g)%dipoles_R(i_c)
        if (BS_K_coupling) BSS_dipoles(H_pos(1)+BS_K_dim)=BS_T_grp(i_g)%dipoles_A(i_c)
        !
-       ! GPL_EXCLUDE_START
-       !
        if (E_SOC_nbands/=0) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
        !
 #if defined _KERR
@@ -131,8 +121,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
          if (BS_K_coupling) BSS_dipoles_PL(H_pos(1)+BS_K_dim,:)=BS_T_grp(i_g)%dipoles_A_PL(i_c,:)*PL_weights(:)
        endif
 #endif
-       !
-       ! GPL_EXCLUDE_END
        !
      enddo
    enddo
@@ -160,8 +148,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
    call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles,COMM=PAR_COM_eh_INDEX%COMM)
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _KERR
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait(BSS_dipoles_kerr,COMM=PAR_COM_eh_INDEX%COMM)
@@ -177,8 +163,6 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
      call PP_redux_wait(BSS_eh_E_SOC_corr,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
  endif
  !
  !================
@@ -187,6 +171,7 @@ subroutine K_components_folded_in_serial_arrays(iq,what)
  !
  if (allocated(BS_mat)                ) return
  if (what=="INV".and.K_slk%kind=="SLK") return
+ if (what=="SLEPC"                    ) return
  !
  YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
  BS_mat    = cZERO

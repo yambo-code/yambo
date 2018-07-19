@@ -34,8 +34,10 @@ module interpolate
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
  real(SP), pointer     :: lattice_vectors(:,:)
- real(SP) :: lpfac
+ real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
+ !
+ character(schlen) :: INTERPOLATION_name = " "
  !
  ! Interpolation type
  !
@@ -45,9 +47,9 @@ module interpolate
  character(schlen), parameter :: CMPLX2D  = "CMPLX2D"
  ! 
  type interp_coeff
-   character(schlen)     :: interp_type
+   character(schlen)        :: interp_type = " "
    complex(DP), allocatable :: engre(:,:)
-   integer               :: ndim
+   integer                  :: ndim = 0
  end type interp_coeff
  !
  integer, parameter :: max_interpls=10
@@ -56,7 +58,7 @@ module interpolate
  !
  interface
    !
-   subroutine eval_interpolation_coeff(R1D,R2D,C1D,C2D,E,k,Nk,ID)
+   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -67,21 +69,21 @@ module interpolate
      type(levels),  intent(in), optional :: E
      integer,       intent(in), optional :: Nk
      integer,       intent(out)          :: ID
-   end subroutine  eval_interpolation_coeff
+   end subroutine  INTERPOLATION_coefficients
    !
-   subroutine bz_interpolation(R1D,R2D,C1D,C2D,E,USER_k,ID)
+   subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
      implicit none
-     type(bz_samp), intent(in)            :: USER_k
+     type(bz_samp), intent(in)            :: K
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
      integer,       intent(in)            :: ID
-   end subroutine bz_interpolation
+   end subroutine INTERPOLATION_BZ
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_output)
+   subroutine electrons_bands_interpolate(Xen,Xk,ID_interp,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
@@ -89,8 +91,9 @@ module interpolate
      type(levels),  intent(in)  :: Xen
      integer      , intent(in)  :: BANDS_range(2)
      integer      , intent(out) :: ID_interp
-     type(bz_samp), intent(out) :: USER_K,CIRCUIT_K,INTERP_K
-     real(SP)     , pointer     :: bands_output(:,:,:)
+     type(levels),  intent(out) :: CIRCUIT_E
+     type(levels),  intent(out), optional  :: INTERP_E
+     type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
  end interface  
@@ -124,13 +127,12 @@ module interpolate
        i1=i1+1
      enddo
      !
-     if(.not.done) call error("Error too many interpolations!!! ")
+     if(.not.done) call error("Error too many simultaneous interpolations.")
      !
    end subroutine get_ID
    !
    subroutine make_star(R_vec,nsym,symop,nstar,star_vec)
      use vec_operate,    ONLY:v_is_zero
-     use D_lattice,      ONLY:i_time_rev
      !
      implicit none
      !
@@ -149,7 +151,6 @@ module interpolate
      star_vec(1:3,1)=R_vec(1:3)
      !
      do is=1,nsym 
-       if(is>nsym/(i_time_rev+1)) cycle
        try(1:3)=matmul(symop(:,:,is),R_vec(:))
        add_vec=.TRUE.
        do i1=1,nstar

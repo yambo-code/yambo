@@ -39,7 +39,8 @@ public :: num_interpolation
 type num_interpolation
   integer      :: n
   real(SP)         :: xmin,xmax
-  real(SP),pointer :: y(:),x(:)
+  real(SP),pointer :: x(:) => null()
+  real(SP),pointer :: y(:) => null()
   integer      :: parity
 end type num_interpolation
 !@ END MANUAL
@@ -53,7 +54,7 @@ subroutine num_interpolation_init(interpolation,xmin,xmax,delta,parity)
 ! (the point are equally spaced and span the interval [xmin,xmax]).
 ! If parity/=0, then xmin should be 0.0 and xmax should be positive.
   type (num_interpolation), intent(out) :: interpolation
-  real(SP),                     intent(in)  :: xmin,xmax,delta
+  real(SP),                 intent(in)  :: xmin,xmax,delta
   integer, optional,        intent(in)  :: parity
 !@ END MANUAL
   integer :: i
@@ -84,8 +85,8 @@ subroutine num_interpolation_destroy(interpolation)
 
   type (num_interpolation), intent(inout) :: interpolation
 !@ END MANUAL
-  deallocate(interpolation%x)
-  deallocate(interpolation%y)
+  if (associated(interpolation%x)) deallocate(interpolation%x)
+  if (associated(interpolation%y)) deallocate(interpolation%y)
 end subroutine num_interpolation_destroy
 
 subroutine num_interpolation_little_table(interpolation,x,order,tab_x,tab_y)

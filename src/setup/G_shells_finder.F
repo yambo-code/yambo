@@ -61,11 +61,6 @@ subroutine G_shells_finder()
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err=io_GROT(ID)
  !
-#ifdef _CUDA
-     if (allocated(g_rot_d)) deallocate(g_rot_d)
-     allocate(g_rot_d,source=g_rot)
-#endif
- !
  if (io_err==0) then
    if(inv_index<0) then
      YAMBO_FREE(ng_in_shell)
@@ -75,14 +70,16 @@ subroutine G_shells_finder()
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
      io_err=io_GROT(ID)
      !
-#ifdef _CUDA
-     if (allocated(g_rot_d)) deallocate(g_rot_d)
-     allocate(g_rot_d,source=g_rot)
-#endif
-     !
    endif
+   !
+#ifdef _CUDA
+   if (allocated(g_rot_d)) deallocate(g_rot_d)
+   allocate(g_rot_d,source=g_rot)
+#endif
    return
+   !
  else
+   !
    if (allocated(g_rot)) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
@@ -92,6 +89,7 @@ subroutine G_shells_finder()
      if (allocated(g_rot_d)) deallocate(g_rot_d)
 #endif
    endif
+   !
  endif
  !
  ! Re-ordering by increasing module

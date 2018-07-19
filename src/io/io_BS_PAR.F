@@ -21,35 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_BS_init(iq,X,ID)
+subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Intialize BSE netcdf parallel file
  !
+ use netcdf
+ use parallel_m
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,io_connect,io_header,io_mode
+ use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
+&                        io_connect,io_header,io_mode,io_unit
  use BS_solvers,    ONLY:variables_BS
- !
 #include<memory.h>
  include 'netcdf.inc'
- include 'mpif.h'
-  !
+ !
  type(X_t) :: X 
  integer :: io_BS, iq, mode_flag, ncid, stat, ID
  character(schlen) :: db_name,PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
  ! Create parallel netCDF file.
- ! Not using ID (yet!)
  !
- db_name='BS_Q'//trim(intc(iq))
+ db_name='BS_Q'//trim(intc(iq))//'.nc'
  mode_flag = IOR(nf_netcdf4, nf_mpiio)
- stat = nf_create_par(db_name,mode_flag,MPI_COMM_WORLD,MPI_INFO_NULL,ncid)
- call netcdf_call(stat,ncid)
- !
- PARALLEL_STRUCTURE="NONE"
- if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+ stat = nf_create_par(db_name,mode_flag,MPI_COMM_WORLD,MPI_INFO_NULL,io_unit(ID))
+ write(*,*) stat
+ call netcdf_call(stat,ID)
  !
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
@@ -59,7 +57,7 @@ subroutine io_BS_init(iq,X,ID)
 end subroutine
 
 
-subroutine io_BS_free(ID)
+subroutine io_BS_PAR_free(ID)
  !
  ! close BSE netcdf parallel file
  !
@@ -73,7 +71,7 @@ subroutine io_BS_free(ID)
 end subroutine
 
 
-integer function io_BS_write_block(iq,ID)
+integer function io_BS_PAR_write_block(iq,ID)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables

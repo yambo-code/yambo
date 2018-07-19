@@ -823,7 +823,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -906,6 +905,7 @@ with_hdf5_includedir
 enable_netcdf_classic
 enable_netcdf_hdf5
 enable_hdf5_compression
+enable_hdf5_par_io
 enable_iotk
 with_iotk_libs
 with_iotk_path
@@ -978,7 +978,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1231,15 +1230,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1377,7 +1367,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1530,7 +1520,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1593,6 +1582,7 @@ Optional Features:
   --enable-netcdf-hdf5    Activate the HDF5 support. Default is no.
   --enable-hdf5-compression
                           Activate the HDF5 data compression. Default is no.
+  --enable-hdf5-par-io    Activate the HDF5 parallel io. Default is no.
   --enable-iotk           Activate the IOTK support
   --enable-p2y-hdf5-support
                           Activate HDF5 support in p2y. Default is no.
@@ -11830,6 +11820,15 @@ if test "${enable_hdf5_compression+set}" = set; then :
 fi
 
 #
+#
+# HDF5 PAR IO
+#
+# Check whether --enable-hdf5_par_io was given.
+if test "${enable_hdf5_par_io+set}" = set; then :
+  enableval=$enable_hdf5_par_io;
+fi
+
+#
 enable_netcdf="no"
 enable_hdf5="no"
 compile_netcdf="no"
@@ -12449,6 +12448,12 @@ fi
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+fi
+#
+# NETCDF-HDF5 PAR IO
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_PAR_IO";
 fi
 #
 

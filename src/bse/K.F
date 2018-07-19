@@ -179,6 +179,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
+#if _PAR_IO 
+#else
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    !
@@ -190,6 +192,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
+#endif
    !
    if (io_BS_err==0) return
    !
@@ -374,8 +377,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
+#ifdef _PAR_IO
+#else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
+#endif
  !
  call section('=','Kernel loop')
  !==============================
@@ -626,8 +632,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
+#if _PAR_IO
+#else
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
+#endif
    !
    call live_timing(steps=BS_Block_size(i_block))
    !

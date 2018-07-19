@@ -176,7 +176,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,"open Diago")
+ call K_output_file(iq,"open "//trim(Solver))
  !
  if (io_err<0) then
    !

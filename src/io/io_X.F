@@ -38,6 +38,14 @@ integer function io_X(X,Xw,ID)
 &                        IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
+#if defined _PAR_IO
+ use netcdf
+ use X_m,           ONLY:X_par
+ use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_WORLD,MPI_INFO_NULL,mpi_comm_world, &
+&                        PAR_Q_index,PAR_COM_Q_A2A
+#endif
+ !
 #include<memory.h>
  type(X_t)   :: X
  type(w_samp):: Xw
@@ -45,6 +53,11 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
+#if defined _PAR_IO
+ integer             ::mode_flag,iq_mem
+ logical             ::close_is_on_save
+ character (schlen)  ::db_name
+#endif
  integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
  logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
@@ -71,10 +84,12 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
- io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
- if (io_X/=0) goto 1
+ if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
+   if (io_X/=0) goto 1
+ endif
  !
- if (any((/io_sec(ID,:)==1/))) then
+ if (any((/io_sec(ID,:)==1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    ! Header
    !
@@ -132,17 +147,32 @@ integer function io_X(X,Xw,ID)
  enddo
  if (iq==0) goto 1
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
- !
- ! Fragmentation
- !
- call io_fragment(ID,i_fragment=iq,ierr=io_err)
+#if defined _PAR_IO
+ if(write_is_on(ID)) then
+   close_is_on_save=close_is_on(ID)
+   io_resetable(ID)=.false.
+   call io_disconnect(ID)
+   write(*,*) 'pippo2',PAR_COM_X_WORLD%COMM,mpi_comm_world,PAR_COM_WORLD%COMM,PAR_COM_Q_A2A%COMM
+   io_file(ID)='ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
+   db_name='04_BSE/ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
+   mode_flag = IOR(nf90_netcdf4, nf90_mpiio)
+   call netcdf_call(nf90_create_par(db_name,mode_flag,comm=mpi_comm_world,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+   call netcdf_call(nf90_enddef(io_unit(ID)),ID)
+   if (close_is_on_save) io_resetable(ID)=.true.
+   !call netcdf_call(nf90_create_par(db_name,mode_flag,comm=PAR_COM_X_WORLD%COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+ else
+#endif
+   if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+     call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
+     call io_fragment(ID,i_fragment=iq,ierr=io_err)
+   endif
+#if defined _PAR_IO
+ endif
+#endif
  !
  !  type(X_t)    ::X(4)  x s d p
  !
- if (any((/io_sec(ID,:)==2*iq/))) then
+ if (any((/io_sec(ID,:)==2*iq/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    sec_size=6
    !
@@ -177,7 +207,7 @@ integer function io_X(X,Xw,ID)
    !
  endif
  !
- if (any((/io_sec(ID,:)==2*iq+1/))) then
+ if (any((/io_sec(ID,:)==2*iq+1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    ! Xw%p
    !
@@ -196,8 +226,26 @@ integer function io_X(X,Xw,ID)
    !
    if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
    !
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-   call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+ endif
+ !
+ if (any((/io_sec(ID,:)==2*iq+1/))) then
+#if defined _PAR_IO
+   if(write_is_on(ID)) then
+     iq_mem=PAR_Q_index(iq)
+     if (io_RESPONSE) iq_mem=1
+     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+     call netcdf_call(nf90_par_access())
+     call io_bulk(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+   else if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+#endif
+     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+     call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+#if defined _PAR_IO
+   endif
+#endif
+ endif
+ !
+ if (any((/io_sec(ID,:)==2*iq+1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
@@ -213,12 +261,14 @@ integer function io_X(X,Xw,ID)
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
- if (io_mode(ID)/=DUMP) then
-   io_X=IO_NO_DATABASE
-   if (io_err==0) io_X=iq
+ if (PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+   if (io_mode(ID)/=DUMP) then
+     io_X=IO_NO_DATABASE
+     if (io_err==0) io_X=iq
+   endif
+   !
+1  call io_disconnect(ID)
  endif
- !
-1 call io_disconnect(ID)
  !
  if (io_RESPONSE) call timing('io_X',OPR='stop')
  !

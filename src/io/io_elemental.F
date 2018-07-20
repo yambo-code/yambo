@@ -23,7 +23,7 @@
 !
 subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                       DESCRIPTION,DO_NOT_DUMP)
+&                       DESCRIPTION,DO_NOT_DUMP,par_io_kind)
  !
  use pars,    ONLY:SP,DP,schlen,lchlen,nf90_SP
  use pointers,ONLY:linkC2R
@@ -42,6 +42,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  character(*),optional :: VAR,OP(:)
  integer,     optional :: VAR_SZ,MENU
                                ! MENU = 1 (on) 0 (off)
+ integer,     optional :: par_io_kind
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  real(DP),    optional :: D0,DB_D0
@@ -95,9 +96,9 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
          else
            nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
          endif
+         if(present(par_io_kind)) nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), par_io_kind)
          call netcdf_call(nf_error,ID,VAR=VAR)
        endif
-       call netcdf_call(nf_error,ID,VAR=VAR)
        call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
      else if (read_is_on(ID)) then
        call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)

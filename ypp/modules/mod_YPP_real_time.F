@@ -23,7 +23,7 @@
 !
 module YPP_real_time
  !
- use pars,     ONLY:schlen,SP,DP
+ use pars,     ONLY:schlen,SP,DP,rZERO
  !
 #include<memory.h>
  !
@@ -151,6 +151,53 @@ module YPP_real_time
  end interface
    !
    contains 
+     !
+     subroutine RT_carriers_to_RT_k( K )
+       use R_lattice,      ONLY:bz_samp,bz_samp_reset
+       use real_time,      ONLY:RT_carriers
+       type(bz_samp) :: K
+       integer       :: ik
+       call bz_samp_reset(K)
+       K%units='i'
+       K%description="RT_GRID"
+       K%nibz=RT_carriers%nk
+       K%nbz =RT_carriers%nk
+       YAMBO_ALLOC(K%pt,(K%nibz,3))
+       YAMBO_ALLOC(K%weights,(K%nibz))
+       YAMBO_ALLOC(K%sstar,(K%nibz,2))
+       do ik=1,K%nibz
+         K%sstar(ik,:)=(/ik,1/)
+         K%pt(ik,:)   =RT_carriers%kpt(ik,:)
+         K%weights(ik)=RT_carriers%k_weight(ik)
+       enddo
+     end subroutine
+     !
+     subroutine RT_carriers_to_RT_E( E ,what )
+       use electrons,      ONLY:levels,E_reset,n_sp_pol
+       use real_time,      ONLY:RT_carriers
+       type(levels) :: E
+       character(*) :: what
+       integer      :: i_RT,i_sp_pol,ib,ik
+       if (.not.allocated(E%E)) then
+         call E_reset(E)
+         E%nk=RT_carriers%nk
+         E%nb=RT_carriers%nb(2)
+         YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+         YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+         E%E=rZERO
+         E%f=rZERO
+       endif
+       do i_RT=1,RT_carriers%nstates
+         ib      =RT_carriers%table(i_RT,1)
+         ik      =RT_carriers%table(i_RT,3)
+         i_sp_pol=RT_carriers%table(i_RT,4)
+         if (what=="Eo") E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)
+         if (what=="E" ) E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
+         if (what=="fo") E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)
+         if (what=="f" ) E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
+         if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
+       enddo
+     end subroutine
      !
      subroutine FT_free(FT)
        type(OBS_el) :: FT

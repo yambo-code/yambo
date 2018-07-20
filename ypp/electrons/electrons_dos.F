@@ -85,15 +85,17 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in")
    !
-   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
-   !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in")
+   !
+   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in")
    !
    call INTERPOLATION_driver(operation="END")
    !
    do is=1,n_sp_pol
+     !
+     if (DOS_bands(2)-DOS_bands(1)>10) cycle
      !
      output_fname="grid"
      if (n_sp_pol>1.and.is==1) output_fname="grid_spin-up"
@@ -148,6 +150,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (i_f==1) output_fname='el_dos'
    if (i_f==2) output_fname='el_dos_INTERPOLATED'
+   !
    call of_open_close(trim(output_fname),'ot')
    if (n_spin==1) then
      titles(1)='E[eV]'

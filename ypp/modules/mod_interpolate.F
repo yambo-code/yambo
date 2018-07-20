@@ -47,6 +47,8 @@ module interpolate
  integer :: INTERP_f_id=0
  integer :: INTERP_RT_id=0
  !
+ ! K-grids
+ !
  type(bz_samp):: GRID_k
  !
  ! Interpolation type
@@ -115,7 +117,7 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,quiet)
+   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,QUIET)
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
@@ -127,7 +129,7 @@ module interpolate
      type(levels),  intent(in)   , optional :: SEED_E
      type(levels),  intent(inout), optional :: OUT_E
      character(*),  intent(in)              :: operation
-     logical,       intent(in)   , optional :: quiet
+     logical,       intent(in)   , optional :: QUIET
    end subroutine INTERPOLATION_driver
    !
  end interface  

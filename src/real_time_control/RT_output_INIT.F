@@ -158,10 +158,13 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('single_time_dos',TITLES=(/'E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
+ call RT_FILE_add('single_time_INTERPOLATED_dos',TITLES=(/'E [eV]','DOS   '/))
+ if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
+ !
  call RT_FILE_add('TD_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
- call RT_FILE_add('one_time_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
+ call RT_FILE_add('TD_INTERPOLATED_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
  if (n_spin>1) then

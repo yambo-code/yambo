@@ -245,7 +245,7 @@ module YPP
      real(SP),optional  :: S_sq(BS_H_dim)
    end subroutine
    !
-   subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac)
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -255,7 +255,7 @@ module YPP
      type(levels),  intent(in) :: E
      integer,       intent(in) :: bands(2)
      real(SP),      intent(out) :: el_dos(:,:)
-     logical,  optional, intent(in) :: USE_the_DbGd
+     logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
      real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
    end subroutine electrons_dos_elemental
    !

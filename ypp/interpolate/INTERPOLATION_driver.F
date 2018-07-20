@@ -21,16 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,quiet)
+subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,QUIET)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_t
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,n_sp_pol
- use stderr,         ONLY:write_to_log,write_to_log_default
  use YPP,            ONLY:INTERP_grid
  use interpolate,    ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
 &                         INTERPOLATION_reset,INTERPOLATION_BZ
+ use IO_m,           ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -41,21 +41,22 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
  type(levels),  intent(in)   , optional :: SEED_E
  type(levels),  intent(inout), optional :: OUT_E
  character(*),  intent(in)              :: operation
- logical,       intent(in)   , optional :: quiet
+ logical,       intent(in)   , optional :: QUIET
  !
  ! Work Space
  !
  real(SP), allocatable :: SEED_obj(:,:,:)
- integer               :: i_sp_pol,ib,ik,ID_free,ID_to_use,i_obj
- !
- logical               :: l_f,l_E,l_dE
+ integer               :: i_sp_pol,ib,ik,ID_free,ID_to_use,i_obj,i_RT
+ logical               :: l_f,l_E,l_dE,l_G,l_EQ
  !
  l_f   =operation(1:1)== "f"
  l_E   =operation(1:1)== "E"
+ l_G   =operation(1:1)== "G"
  l_dE  =operation(1:2)== "dE"
+ l_EQ  =index(operation,"EQ")>0
  !
- if (present(quiet)) then
-  if (quiet) write_to_log=.FALSE.
+ if (present(QUIET)) then
+  if (QUIET) call IO_and_Messaging_switch("-log")
  endif
  !
  if (operation=="GRID") then
@@ -99,25 +100,36 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
    ! 
  enddo
  !
- if (present(SEED_k).and.present(SEED_E)) then
+ if (present(SEED_k).and.(present(SEED_E).or.present(SEED_RT))) then
    !
    YAMBO_ALLOC(SEED_obj,(bands(1):bands(2),SEED_k%nibz,n_sp_pol))
-   !
-   do i_sp_pol=1,n_sp_pol
-     do ib=bands(1),bands(2)
-      do ik=1,SEED_k%nibz
-         !
-         if (l_f ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%f(ib,ik,i_sp_pol)
-         if (l_E ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)
-         if (l_dE) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)-SEED_E%Eo(ib,ik,i_sp_pol)
-         !
-       enddo
-     enddo
-   enddo
    !
    INTERP_obj(ID_free)%n=bands
    INTERP_obj(ID_free)%in_use=.TRUE.
    INTERP_obj(ID_free)%what=operation
+   !
+   if (present(SEED_E)) then
+     !
+     do i_sp_pol=1,n_sp_pol
+       do ib=bands(1),bands(2)
+        do ik=1,SEED_k%nibz
+           if (l_f ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%f(ib,ik,i_sp_pol)
+           if (l_E ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)
+           if (l_dE) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)-SEED_E%Eo(ib,ik,i_sp_pol)
+         enddo
+       enddo
+     enddo
+     !
+   else if (present(SEED_RT)) then
+     !
+     do i_RT=1,SEED_RT%nstates
+       ib      =SEED_RT%table(i_RT,1)
+       ik      =SEED_RT%table(i_RT,3)
+       i_sp_pol=SEED_RT%table(i_RT,4)
+       if (l_G ) SEED_obj(ib,ik,i_sp_pol)=SEED_RT%NEQ_Lifetime(i_RT) 
+     enddo
+     !
+   endif
    !
    call INTERPOLATION_coefficients(R2D=SEED_obj,k=SEED_k,Nk=SEED_k%nibz,ID=INTERP_obj(ID_free)%ID,ID_obj=ID_free)
    !
@@ -145,6 +157,6 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
    !
  endif
  !
- write_to_log=write_to_log_default
+ call IO_and_Messaging_switch("+log")
  !
 end subroutine INTERPOLATION_driver

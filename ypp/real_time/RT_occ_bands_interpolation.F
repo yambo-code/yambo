@@ -31,15 +31,15 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
-&                         CIRCUIT_E_db,GRID_k,CIRCUIT_k_label
- use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
+&                         CIRCUIT_E_db,CIRCUIT_k_label
+ use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use stderr,         ONLY:real2ch,intc,write_to_log,write_to_log_default
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,INTERPOLATION_driver, &
-&                         electrons_bands_interpolate,INTERP_RT_id
+&                         electrons_bands_interpolate,INTERP_RT_id,GRID_k
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -51,7 +51,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Work space
  !
  type(bz_samp)         :: RT_k
- type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE,RT_E
+ type(levels)          :: CIRCUIT_E,RT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:),fit_on_grid(:,:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
@@ -96,14 +96,24 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call section('=',"Interpolation")
  !================================
  !
+ ! Map the RT k in RT_k...
+ call RT_carriers_to_RT_k(RT_k)
+ !
+ ! ... and Eo in RT_E...
+ call RT_carriers_to_RT_E(RT_E,"Eo")
+ !
  ! Map RT_carriers%kpt ==> RT_k%kpt
  !     RT_carriers%E   ==> RT_E%E 
  !======================================
- call RT_occ_bands_kpts_and_En_map(en,k,RT_E,RT_k)
+ !call RT_map_carriers_in_E_and_K(RT_E,RT_k,-1)
  !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
+ call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E)
+ !
+ ! Interpolation INIT 
+ !====================
+ call INTERPOLATION_driver(operation="INIT",SEED_k=RT_k)
  !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
@@ -161,17 +171,17 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
      ! STEP 1: define coefficients for occupations/lifetimes
      !
-     call INTERPOLATION_coefficients(R2D=variable_to_fit,k=RT_k,Nk=RT_k%nibz,ID=INTERP_RT_id)
+     !call INTERPOLATION_coefficients(R2D=variable_to_fit,k=RT_k,Nk=RT_k%nibz,ID=INTERP_RT_id)
      !
      ! STEP 2
      ! 1: interpolate on the circuit if (BANDS_steps>0)
      !
-     if (BANDS_steps> 0)    call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=INTERP_RT_id)
+     !if (BANDS_steps> 0)    call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=INTERP_RT_id)
      !
      ! STEP 3
      ! interpolate on the grid if (all(INTERP_grid>0))
      !
-     if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=GRID_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
+     !if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=GRID_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
      !
      !call INTERPOLATION_reset(INTERP_RT_id)
      !
@@ -273,9 +283,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        !
        values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
        if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV
-       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
-         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
-       endif
+!       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
+!         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
+!       endif
        !
        if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
        if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac

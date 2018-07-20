@@ -46,7 +46,15 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Create parallel netCDF file.
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
- mode_flag = ior(nf_netcdf4, nf_mpiio)
+ mode_flag = ior(ior(nf_netcdf4, nf_mpiio),nf90_write)
+ !
+ ! Try to open the file 
+ !
+ stat = nf90_open(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
+ if (stat==nf90_noerr) return
+ !
+ ! If it does not work create it
+ !
  stat = nf90_create(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  call netcdf_call(stat,ID)
  !
@@ -67,10 +75,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
  call netcdf_call(stat,ID)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 2, [complex_dim,resonant_block_size_dim], varid)
- call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
- call netcdf_call(stat,ID)
 #else
  !
  ! Here is the 2D mode
@@ -89,11 +93,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
  call netcdf_call(stat,ID)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 3, &
-&                  [complex_dim,resonant_block_size_dim,resonant_block_size_dim], varid)
- call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
- call netcdf_call(stat,ID)
 #endif
  !
  !
@@ -110,7 +109,6 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=variables_BS(ID,local_description,X=X)
  !
 end subroutine
-
 
 subroutine io_BS_PAR_free(ID)
  !
@@ -293,12 +291,11 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  do i=1,n1
    do j=1,n2
      !if the value of the mat is different from the default it means the transition was computed
-     transition_done = (BS_blk(i_block)%mat(i,j) .ne. nf_fill_float)
+     transition_done = (real(BS_blk(i_block)%mat(i,j)) .ne. nf_fill_float)
      BS_blk(i_block)%done(i,j) = transition_done
    enddo
  enddo
-
- !write(*,*) 'done writting'
+ !
 #endif
  !   
  call timing('io_BS',OPR='stop')

@@ -635,6 +635,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
 #if defined _PAR_IO
+   call io_BS_PAR_write_block(iq,i_block,ID)
 #else
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)

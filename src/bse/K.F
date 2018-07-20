@@ -388,6 +388,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (     l_bs_fxc) call live_timing('Kernel->Fxc',BS_LiveTiming_steps)
  endif
  !
+ !------------------
+ ! LOOP over blocks
+ !------------------
+ !
+ block_loop:&
  do i_block=1,n_BS_blks
    !
    i_Tgrp_k=BS_blk(i_block)%iT_k
@@ -409,12 +414,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !------------------
    !
    !$omp parallel default(shared), &
-   !$omp private(i_Tk,i_Tp,&
-   !$omp         sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_spin,i_k,i_k_s,is,os,i_k_s_m1,H_pos, &
-   !$omp         sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_spin,i_p,i_p_s,isp,osp,i_k_p_s, &
-   !$omp         ig_W,iq_W,iq_W_s,H_x,H_c,&
-   !$omp         iOcc,i_block_cc,PHASE_1, &
-   !$omp         iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
+   !$omp private(i_Tk,i_Tp, &
+   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_spin,i_k,i_k_s,is,os,i_k_s_m1,H_pos, &
+   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_spin,i_p,i_p_s,isp,osp,i_k_p_s, &
+   !$omp &       ig_W,iq_W,iq_W_s,H_x,H_c, &
+   !$omp &       iOcc,i_block_cc,PHASE_1, iOcv, i_block_cv, iOvc, i_block_vc, &
+   !$omp &       iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
    !
    ! Allocations
    !-------------
@@ -429,8 +434,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    !$omp do collapse(2), schedule(dynamic)
-   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-     do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+   do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+     do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
        !
        ! the following definitions are placed here because of
        ! omp parallelism (should not trigger any performance issue)
@@ -454,6 +459,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
        !
+       !-----
        !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
@@ -473,6 +479,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_p_s  = sop_tab(i_k_s_m1,i_p_s)
        !
        H_pos(2) = sum(BS_T_grp(:I_Tgrp_p-1)%size)+i_Tp
+       !
+       !-----
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
@@ -624,8 +632,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
-     enddo 
-   enddo
+     enddo   ! i_Tk
+   enddo     ! i_Tp
    !$omp end do
    !
    if (BS_res_K_corr.or.BS_cpl_K_corr) then
@@ -651,7 +659,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call live_timing(steps=BS_Block_size(i_block))
    !
- enddo
+ enddo block_loop
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !

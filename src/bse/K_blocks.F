@@ -73,6 +73,8 @@ subroutine K_blocks( )
          do iB=n_BS_blks+1,n_BS_blks+n_new_blocks
            YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
            BS_blk(iB)%mat=cZERO
+           YAMBO_ALLOC(BS_blk(iB)%done,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+           BS_blk(iB)%done=.false.
            BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
            if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"
            if (iB-n_BS_blks==2) BS_blk(iB)%mode="A"

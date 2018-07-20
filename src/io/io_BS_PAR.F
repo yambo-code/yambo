@@ -39,7 +39,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  type(X_t) :: X 
  integer :: io_BS, iq, mode_flag, ncid, varid, stat, ID
- integer :: resonant_block_size,resonant_block_size_dim
+ integer :: resonant_block_size,resonant_block_size_dim, complex_dim
  character(schlen) :: db_name,PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
@@ -57,15 +57,17 @@ subroutine io_BS_PAR_init(iq,X,ID)
  resonant_block_size = BS_H_dim*(BS_H_dim-1)/2
  stat = nf_def_dim(io_unit(ID), "flattened_upper_triangular_size", &
 &                  resonant_block_size, resonant_block_size_dim)
+ stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim)
+ call netcdf_call(stat,ID) 
  !
  ! Intialize the variables where the matrix will be stored (resonant only FTM)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 1, [resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 2, [complex_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
  call netcdf_call(stat,ID)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 1, [resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 2, [complex_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
  call netcdf_call(stat,ID)
@@ -76,17 +78,19 @@ subroutine io_BS_PAR_init(iq,X,ID)
  resonant_block_size = BS_H_dim
  stat = nf_def_dim(io_unit(ID), "BS_H_dim", resonant_block_size, resonant_block_size_dim)
  call netcdf_call(stat,ID) 
+ stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim)
+ call netcdf_call(stat,ID) 
  !
  ! Intialize the variables where the matrix will be stored (resonant only FTM)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 2, &
-&                  [resonant_block_size_dim,resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 3, &
+&                  [complex_dim,resonant_block_size_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
  call netcdf_call(stat,ID)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 2, &
-&                  [resonant_block_size_dim,resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 3, &
+&                  [complex_dim,resonant_block_size_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
  call netcdf_call(stat,ID)
@@ -141,7 +145,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  use BS,            ONLY:BS_blk,n_BS_blks,BS_H_dim,BS_K_dim,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
-&                        read_is_on,write_is_on,io_mode,io_unit,VERIFY, &
+&                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
 #include<memory.h>
@@ -162,7 +166,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
- istat = nf90_inq_varid(io_unit(ID),ch,varid)
+ istat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
  call netcdf_call(istat,ID)
  !
  ! Get dimensions
@@ -177,7 +181,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  ! Write one block at a time in 2D
  !
  !write(*,*) myid, varid, [x1,x2], [n1,n2]
- istat = nf_put_vara_real(io_unit(ID), varid, [x1,x2], [n1,n2], BS_blk(i_block)%mat)
+ istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
  call netcdf_call(istat,ID)
  istat = nf_sync(io_unit(ID))
  call netcdf_call(istat,ID)
@@ -233,4 +237,71 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
 end subroutine
 
 
+subroutine io_BS_PAR_read_block(iq,i_block,ID)
+ !
+ ! Read one block of the BSE matrix to disk
+ !
+ use netcdf
+ use pars,          ONLY:SP,schlen,lchlen
+ use X_m,           ONLY:X_t
+ use stderr,        ONLY:intc
+ use parallel_m,    ONLY:myid
+ use pointers,      ONLY:linkM2V
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_H_dim,BS_K_dim,BS_K_has_been_calculated_loaded
+ use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
+ use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
+&                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
+ use timing_m,      ONLY:timing
+#include<memory.h>
+ include 'netcdf.inc'
+ !
+ integer  :: iq,ID,varid,istat
+ integer  :: start(1), count(1)
+ !
+ ! Work Space
+ !
+ complex(SP),pointer ::tmp_link(:)
+ integer             ::i_block,i1,n1,n2,idx,jdx,i,j,g1,g2,x1,x2,block_pos
+ character(schlen)   ::ch,PARALLEL_STRUCTURE
+ logical             ::transition_done
+ !
+ call timing('io_BS',OPR='start')
+ !
+ ! Get the type of block that we want to write 
+ !
+ if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
+ if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
+ istat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
+ call netcdf_call(istat,ID)
+ !
+ ! Get dimensions
+ x1=BS_blk(i_block)%coordinate(1)
+ x2=BS_blk(i_block)%coordinate(2)
+ n1=BS_blk(i_block)%size(1)
+ n2=BS_blk(i_block)%size(2)
+ !  
+#if 1
+ !
+ ! Write one block at a time in 2D
+ !
+ istat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ call netcdf_call(istat,ID)
+ !
+ ! fill in the done logicals
+ !
+ do i=1,n1
+   do j=1,n2
+     !if the value of the mat is different from the default it means the transition was computed
+     transition_done = (BS_blk(i_block)%mat(i,j) .ne. nf_fill_float)
+     BS_blk(i_block)%done(i,j) = transition_done
+   enddo
+ enddo
+
+ !write(*,*) 'done writting'
+#endif
+ !   
+ call timing('io_BS',OPR='stop')
+ !
+end subroutine
 

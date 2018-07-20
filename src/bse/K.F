@@ -46,7 +46,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,l_BSE_minimize_memory
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
+&                       l_BSE_minimize_memory, l_restart_bse
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_WR_CL,DUMP,&
@@ -410,6 +411,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do i_block=1,n_BS_blks
    !
+   ! Read BS_blk to check if the transition was already computed
+   !
+#ifdef _PAR_IO
+   if (l_restart_bse) call io_BS_PAR_read_block(iq,i_block,ID)
+#endif
+   !
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
    !
@@ -450,6 +457,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
      !
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       ! skip this block if already done
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)) cycle
        !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !

@@ -82,13 +82,13 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 2, &
 &                  [resonant_block_size_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
  call netcdf_call(stat,ID)
  !
  stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 2, &
 &                  [resonant_block_size_dim,resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
  call netcdf_call(stat,ID)
 #endif
  !
@@ -113,10 +113,12 @@ subroutine io_BS_PAR_free(ID)
  ! close BSE netcdf parallel file
  !
  use netcdf
- use IO_m,          ONLY:io_disconnect
+ use IO_m,          ONLY:io_disconnect,io_unit
+ include 'netcdf.inc'
  !
- integer  :: ID
+ integer  :: ID, istat
  !
+ istat = nf_close(io_unit(ID))
  call io_disconnect(ID)
  !
 end subroutine
@@ -174,9 +176,12 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  ! Write one block at a time in 2D
  !
- write(*,*) [x1,x2], [n1,n2]
+ !write(*,*) myid, varid, [x1,x2], [n1,n2]
  istat = nf_put_vara_real(io_unit(ID), varid, [x1,x2], [n1,n2], BS_blk(i_block)%mat)
  call netcdf_call(istat,ID)
+ istat = nf_sync(io_unit(ID))
+ call netcdf_call(istat,ID)
+ !write(*,*) 'done writting'
 #endif
 
 #if 0

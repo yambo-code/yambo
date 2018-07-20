@@ -645,6 +645,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo
  !
+#if defined _PAR_IO
+ call  io_BS_PAR_free(ID)
+#endif
+ !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !
  BS_K_has_been_calculated_loaded=.TRUE.

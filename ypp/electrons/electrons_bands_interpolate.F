@@ -49,7 +49,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  ! Work space
  !
  real(SP)              :: real_ctl,max_dist,v(3),db_a(3,3),db_alat(3),delta_align
- real(SP), allocatable :: distances(:),E_in(:,:,:),dE_in(:,:,:)
+ real(SP), allocatable :: distances(:)
  character(schlen)     :: coo_out_
  integer               :: i1,ic,ib,ik,i_sp_pol,i_err,ik_special
  integer,  allocatable :: int_distances(:)
@@ -198,7 +198,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
    !
    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="E_on_built_in")
    !
-   if (allocated(dE_in).and.present(CIRCUIT_dE)) then
+   if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
     call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_dE,operation="dE_on_built_in")
    endif
    !
@@ -223,11 +223,5 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
      enddo
    enddo
  endif
- !
- ! Free
- !======
- !
- YAMBO_FREE(E_in)
- YAMBO_FREE(dE_in)
  !
 end subroutine electrons_bands_interpolate

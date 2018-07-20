@@ -36,7 +36,7 @@ subroutine electrons_bands(Xk,Xen)
  use YPP,            ONLY:BANDS_steps,coo_out,K_transform,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
-&                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
+&                         BANDS_E_and_k_db,CIRCUIT_k_label
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
@@ -61,10 +61,10 @@ subroutine electrons_bands(Xk,Xen)
  real(SP)              :: tmp_k(3),delta_Ef
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
- character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
+ character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_spin_magn(5)
  character(lchlen)     :: of_string
  character(schlen), allocatable :: headings(:)
- logical               :: BANDS_internal,BANDS_interpolate,DOS_interpolate,GRID_interpolate
+ logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -76,7 +76,6 @@ subroutine electrons_bands(Xk,Xen)
  BANDS_interpolate   = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
  if (BANDS_E_and_k_db) BANDS_internal=.FALSE.
  GRID_interpolate    = all(INTERP_grid>0)
- DOS_interpolate     = GRID_interpolate.and.BANDS_bands(1)==1
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
  !============================================================================= 
@@ -146,7 +145,6 @@ subroutine electrons_bands(Xk,Xen)
  headings(nbands+2:nbands+4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
  !
  file_name_bands= " "
- file_name_grid = " "
  spin_ch        = " "
  !
  do is=1,n_sp_pol
@@ -156,9 +154,6 @@ subroutine electrons_bands(Xk,Xen)
    if (BANDS_interpolate) file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
    if (BANDS_internal   ) file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
    if (BANDS_E_and_k_db ) file_name_bands(3,is)="bands_from_DB"//trim(spin_ch)
-   if (GRID_interpolate ) file_name_grid(is)   ="grid"//trim(spin_ch)
-   !
-   call of_open_close(trim(file_name_grid(is)),'ot')
    !
  enddo
  !
@@ -185,45 +180,6 @@ subroutine electrons_bands(Xk,Xen)
  !
  call msg('o path',"#"," ",INDENT=0)
  !
- ! DOS
- !=====
- !
- if (GRID_interpolate) then
-   !
-   if (DOS_interpolate) then
-     !
-     DOS_bands=BANDS_bands
-     !
-     call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
-     !
-     call electrons_dos(GRID_k,GRID_E,"INTERP")
-     !
-   endif
-   !
-   headings(1)  =  " ik  "
-   headings(2:4)=(/" kx  "," ky  "," kz  "/)
-   do ib=BANDS_bands(1),BANDS_bands(2)
-     headings(4+ib-BANDS_bands(1)+1)=' b'//intc(ib)//' [eV]'
-   enddo
-   !
-   do is=1,n_sp_pol
-     call msg('o '//trim(file_name_grid(is)),"#",headings,INDENT=0,USE_TABS=.true.)
-     call msg('o '//trim(file_name_grid(is)),"#")
-   enddo
-   !
-   do ikbz=1,GRID_k%nbz
-     values(2:4)=GRID_k%ptbz(ikbz,:)
-     call K_transform(values(2:4),"iku")
-     ik=GRID_k%sstar(ikbz,1)
-     values(1)=real(ik,SP)
-     do is=1,n_sp_pol
-       values(1+4:nbands+4)=GRID_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
-       call msg('o '//trim(file_name_grid(is)),' ',values,INDENT=0,USE_TABS=.true.)
-     enddo
-   enddo
-   !
- endif
- !
  ! Fermi Levels
  !==============
  !
@@ -231,15 +187,17 @@ subroutine electrons_bands(Xk,Xen)
  !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
  !                  only when it can be correctly (all occupied bands) evaulated with GRID_E
  !
+ if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
+ !
  call section('=','Fermi Levels')
+ !
  call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
+ !
  delta_Ef=rZERO
  !
  if (BANDS_bands(1)==1) then
    delta_Ef=-GRID_E%E_Fermi
-   if (DOS_interpolate) then
-     call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
-   endif
+   call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
  endif
  !
  call section('=','Bands output')
@@ -249,7 +207,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  values(1)=0._SP
  !
- if (BANDS_internal) then
+ if (BANDS_internal.and.USER_k%nbz>0) then
    !
    YAMBO_ALLOC(circuit_versor,(USER_k%nbz-1,3))
    !
@@ -374,7 +332,6 @@ subroutine electrons_bands(Xk,Xen)
    do i_f=1,3
      call of_open_close(trim(file_name_bands(i_f,is)))
    enddo
-   call of_open_close(trim(file_name_grid(is)))
  enddo
  !
  if(BANDS_steps> 0.and.n_spinor==2) then

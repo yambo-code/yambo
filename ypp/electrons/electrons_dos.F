@@ -26,12 +26,13 @@ subroutine electrons_dos(Xk,Xen)
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands
- use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,&
+ use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
+ use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
 &                         DOS_E_range,DOS_E_steps,INTERP_grid,electrons_dos_elemental
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k
+ use stderr,         ONLY:intc
  !
 #include<memory.h>
  !
@@ -40,10 +41,10 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E
+ real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E,values(DOS_bands(2)+4)
  real(SP),allocatable  :: WF_fac(:,:,:)
- integer               :: i_E,i_f,N_files
- character(schlen)     :: titles(4)
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz
+ character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
  !
@@ -92,6 +93,35 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(operation="END")
    !
+   do is=1,n_sp_pol
+     !
+     output_fname="grid"
+     if (n_sp_pol>1.and.is==1) output_fname="grid_spin-up"
+     if (n_sp_pol>1.and.is==2) output_fname="grid_spin-db"
+     !
+     call of_open_close(trim(output_fname),'ot')
+     !
+     titles(1)  =  " ik  "
+     titles(2:4)=(/" kx [iku]"," ky [iku]"," kz [iku]"/)
+     do ib=DOS_bands(1),DOS_bands(2)
+       titles(4+ib-DOS_bands(1)+1)=' b'//trim(intc(ib))//' [eV]'
+     enddo
+     call msg('o grid','#',titles(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)    
+     call msg('o grid',"#")
+     !
+     do ikbz=1,GRID_k%nbz
+       values(2:4)=GRID_k%ptbz(ikbz,:)
+       call K_transform(values(2:4),"iku")
+       ik=GRID_k%sstar(ikbz,1)
+       values(1)=real(ik,SP)
+       values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
+       call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
+     enddo
+     !
+     call of_open_close(trim(output_fname))
+     !
+   enddo
+   !
    call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),.FALSE.)
    !
  endif
@@ -99,6 +129,15 @@ subroutine electrons_dos(Xk,Xen)
  ! CLEAN...
  !
  YAMBO_FREE(WF_fac)
+ !
+ if (DOS_bands(1)==1) then
+   !
+   call section('=','Fermi Levels')
+   !
+   call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
+   if (all(INTERP_grid>0)) call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
+   !
+ endif
  !
  ! Output file(s)
  !================

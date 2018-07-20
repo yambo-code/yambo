@@ -46,26 +46,51 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Create parallel netCDF file.
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
- mode_flag = IOR(nf_netcdf4, nf_mpiio)
+ mode_flag = ior(nf_netcdf4, nf_mpiio)
  stat = nf90_create(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  call netcdf_call(stat,ID)
+ !
+#if 0
+ !
+ ! This is the upper triangular mode
  !
  resonant_block_size = BS_H_dim*(BS_H_dim-1)/2
  stat = nf_def_dim(io_unit(ID), "flattened_upper_triangular_size", &
 &                  resonant_block_size, resonant_block_size_dim)
- call netcdf_call(stat,ID) 
  !
  ! Intialize the variables where the matrix will be stored (resonant only FTM)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_double, 1, [resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 1, [resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
  call netcdf_call(stat,ID)
  !
  stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 1, [resonant_block_size_dim], varid)
  call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(id), varid, nf_collective)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
  call netcdf_call(stat,ID)
+#else
+ !
+ ! Here is the 2D mode
+ ! 
+ resonant_block_size = BS_H_dim
+ stat = nf_def_dim(io_unit(ID), "BS_H_dim", resonant_block_size, resonant_block_size_dim)
+ call netcdf_call(stat,ID) 
+ !
+ ! Intialize the variables where the matrix will be stored (resonant only FTM)
+ !
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 2, &
+&                  [resonant_block_size_dim,resonant_block_size_dim], varid)
+ call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
+ call netcdf_call(stat,ID)
+ !
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf_byte, 2, &
+&                  [resonant_block_size_dim,resonant_block_size_dim], varid)
+ call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
+ call netcdf_call(stat,ID)
+#endif
  !
  !
  ! Stop define mode
@@ -79,7 +104,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS=variables_BS(ID,local_description,X=X)
-
+ !
 end subroutine
 
 
@@ -97,7 +122,7 @@ subroutine io_BS_PAR_free(ID)
 end subroutine
 
 
-integer function io_BS_PAR_write_block(iq,ID)
+subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -105,6 +130,7 @@ integer function io_BS_PAR_write_block(iq,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
+ use netcdf
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
@@ -112,13 +138,15 @@ integer function io_BS_PAR_write_block(iq,ID)
  use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_H_dim,BS_K_dim,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
- use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,&
-&                        read_is_on,write_is_on,io_mode,VERIFY, &
+ use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
+&                        read_is_on,write_is_on,io_mode,io_unit,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
 #include<memory.h>
+ include 'netcdf.inc'
  !
- integer  :: iq,ID
+ integer  :: iq,ID,varid,istat
+ integer  :: start(1), count(1)
  !
  ! Work Space
  !
@@ -128,12 +156,14 @@ integer function io_BS_PAR_write_block(iq,ID)
  !
  call timing('io_BS',OPR='start')
  !
- i_block=maxval(io_sec(ID,:))-1
+ ! Get the type of block that we want to write 
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
+ istat = nf90_inq_varid(io_unit(ID),ch,varid)
+ call netcdf_call(istat,ID)
  !
- !get dimensions
+ ! Get dimensions
  x1=BS_blk(i_block)%coordinate(1)
  x2=BS_blk(i_block)%coordinate(2)
  n1=BS_blk(i_block)%size(1)
@@ -142,44 +172,60 @@ integer function io_BS_PAR_write_block(iq,ID)
  !  
 #if 1
  !
- ! Write one element at a time
+ ! Write one block at a time in 2D
+ !
+ write(*,*) [x1,x2], [n1,n2]
+ istat = nf_put_vara_real(io_unit(ID), varid, [x1,x2], [n1,n2], BS_blk(i_block)%mat)
+ call netcdf_call(istat,ID)
+#endif
+
+#if 0
+ !
+ ! Write one element at a time in 1D upper triangular
  !
  do i=1,n1
    do j=1,n2
-     !calculate general index
-     g1 = (x1-1) + (i-1)
-     g2 = (x2-1) + (j-1)
      !convert from general index to flatten upper tridiagonal index
-     jdx = g2*BS_K_dim+g1
-     if (j<i) then 
-       idx = 0
-     else
+     if (j>=i) then 
+       !calculate general index
+       g1 = (x1-1) + (i-1)
+       g2 = (x2-1) + (j-1)
+       !calculate tridiagonal index
+       jdx = g2*BS_K_dim+g1
        idx = jdx-(g2*(g2-1)/2)
+       !write the element 
+       write(*,*)
+       write(*,*) i,j,g1,g2,idx+1
+       !istat = nf_put_vara_real(io_unit(ID), varid, [idx], [1], BS_blk(i_block)%mat(i,j))
+       !call netcdf_call(istat,ID)
      endif
-     !write(*,*) g1,g2,idx,jdx
-     !write the element 
-     !nf90_put_var1(ncid, varid, BS_blk(i_block)%mat(i,j), (g1,g2))
    enddo
  enddo
-#else
+#endif
+
+#if 0
  !
- ! Write one column at a time
+ ! Write one column at a time in 1D upper triangular
  !
  do i=1,n1
    !calculate (i,j) general index
    g1 = (x1-1) + (i-1)
    !calculate position of first element in flatten upper tridiagonal
-   idx = g2*BS_K_dim+g1
+   idx = g2*BS_K_dim+g1+1
    write(*,*) g1,idx
    !write the column
-   nf90_put_vara(ncid, varid, BS_blk(i_block)%mat(i:,i), start=(idx), count=(idx+n1-i))
+   start = [idx]
+   count = [idx+n1-i]
+   istat = nf_put_vara_real(io_unit(ID), varid, [idx], [idx+n1-i], BS_blk(i_block)%mat(:i,i))
+   write(*,*) start, count, istat
+   call netcdf_call(istat,ID)
  enddo
- !nf90_put_var()   
+ !
 #endif
  !   
  call timing('io_BS',OPR='stop')
  !
-end function
+end subroutine
 
 
 

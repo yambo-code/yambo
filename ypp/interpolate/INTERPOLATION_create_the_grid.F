@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_grid(K,units,grid_dim)
+subroutine INTERPOLATION_create_the_grid(K,units,grid_dim)
  !
  ! Generate an uniform k-point grid k[grid_dim(:)] in the BZ
  !
@@ -83,4 +83,4 @@ subroutine INTERPOLATION_grid(K,units,grid_dim)
     call c2a(v_in=K%ptbz(ic,:),mode="ka2"//units)
   enddo
   !
-end subroutine INTERPOLATION_grid
+end subroutine INTERPOLATION_create_the_grid

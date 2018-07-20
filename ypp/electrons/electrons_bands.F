@@ -28,13 +28,13 @@ subroutine electrons_bands(Xk,Xen)
  ! CIRCUIT_E    = Eo (+delta E if QP) interpolated @ CIRCUIT_k (no GS SAVE)
  !              = Eo                  interpolated @ CIRCUIT_k (if GS SAVE)
  ! CIRCUIT_dE   = delta E (if QP) interpolated @ CIRCUIT_k (eventually read from GS SAVE)
- ! INTERP_E     = interpolated @ INTERP_k (if INTERP_grid>0)
+ ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
  ! CIRCUIT_E_db = eventually read from GS SAVE
  !
  use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
  use YPP,            ONLY:BANDS_steps,coo_out,K_transform,INTERP_grid,&
-&                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,INTERP_k,&
+&                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
 &                         DOS_bands,BANDS_E_and_k_db,CIRCUIT_k_label
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
@@ -44,7 +44,7 @@ subroutine electrons_bands(Xk,Xen)
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc,set_real_printed_length
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:INTERPOLATION_reset,electrons_bands_interpolate
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
@@ -55,7 +55,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(levels)          :: INTERP_E,CIRCUIT_E,CIRCUIT_dE
+ type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  integer               :: i1,is,ik,ikbz,ib,nbands,i_f
  real(SP)              :: tmp_k(3),delta_Ef
@@ -105,7 +105,7 @@ subroutine electrons_bands(Xk,Xen)
    if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
    if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
    !
-   call electrons_bands_interpolate(Xen,Xk,BANDS_bands,CIRCUIT_E,INTERP_E=INTERP_E,CIRCUIT_dE=CIRCUIT_dE)
+   call electrons_bands_interpolate(Xen,Xk,BANDS_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
    !
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
@@ -119,8 +119,6 @@ subroutine electrons_bands(Xk,Xen)
    call set_real_printed_length(f_length=10,g_length=10)
    !
  endif
- !
- call INTERPOLATION_reset( )
  !
  ! HEADINGS...
  !
@@ -195,32 +193,31 @@ subroutine electrons_bands(Xk,Xen)
    if (DOS_interpolate) then
      !
      DOS_bands=BANDS_bands
-     INTERP_E%nk=INTERP_k%nibz
-     INTERP_E%nb=BANDS_bands(2)
      !
-     call OCCUPATIONS_Fermi(INTERP_E,INTERP_k,mode="FERMI")
+     call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
      !
-     call electrons_dos(INTERP_k,INTERP_E,"INTERP")
+     call electrons_dos(GRID_k,GRID_E,"INTERP")
      !
    endif
    !
    headings(1)  =  " ik  "
    headings(2:4)=(/" kx  "," ky  "," kz  "/)
    do ib=BANDS_bands(1),BANDS_bands(2)
-     headings(4+ib-BANDS_bands(1)+1)=' b'//intc(ib)
+     headings(4+ib-BANDS_bands(1)+1)=' b'//intc(ib)//' [eV]'
    enddo
    !
    do is=1,n_sp_pol
      call msg('o '//trim(file_name_grid(is)),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name_grid(is)),"#")
    enddo
    !
-   do ikbz=1,INTERP_k%nbz
-     values(2:4)=INTERP_k%ptbz(ikbz,:)
+   do ikbz=1,GRID_k%nbz
+     values(2:4)=GRID_k%ptbz(ikbz,:)
      call K_transform(values(2:4),"iku")
-     ik=INTERP_k%sstar(ikbz,1)
+     ik=GRID_k%sstar(ikbz,1)
      values(1)=real(ik,SP)
      do is=1,n_sp_pol
-       values(1+4:nbands+4)=INTERP_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
+       values(1+4:nbands+4)=GRID_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)*HA2EV
        call msg('o '//trim(file_name_grid(is)),' ',values,INDENT=0,USE_TABS=.true.)
      enddo
    enddo
@@ -232,16 +229,16 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! AM (March 2018): The delta_Ef must be applied in order to have consistent
  !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
- !                  only when it can be correctly (all occupied bands) evaulated with INTERP_E
+ !                  only when it can be correctly (all occupied bands) evaulated with GRID_E
  !
  call section('=','Fermi Levels')
  call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
  delta_Ef=rZERO
  !
  if (BANDS_bands(1)==1) then
-   delta_Ef=-INTERP_E%E_Fermi
+   delta_Ef=-GRID_E%E_Fermi
    if (DOS_interpolate) then
-     call msg("s",'Correction             (GRID) [eV]:',INTERP_E%E_Fermi*HA2EV)
+     call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
    endif
  endif
  !
@@ -366,7 +363,7 @@ subroutine electrons_bands(Xk,Xen)
  deallocate(headings)
  YAMBO_FREE(spin_values)
  YAMBO_FREE(magn_values)
- call E_reset(INTERP_E)
+ call E_reset(GRID_E)
  call E_reset(CIRCUIT_E)
  call E_reset(CIRCUIT_DE)
  call E_reset(CIRCUIT_E_db)

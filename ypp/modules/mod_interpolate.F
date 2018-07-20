@@ -25,6 +25,7 @@ module interpolate
  !
  use pars,       ONLY:SP,DP,schlen
  use com,        ONLY:error
+ use R_lattice,  ONLY:bz_samp
  !
  ! Interpolation according to PRB 38 p2721
  ! Code copied from BolzTraP 
@@ -43,7 +44,10 @@ module interpolate
  !
  integer :: INTERP_E_id =0
  integer :: INTERP_dE_id=0
+ integer :: INTERP_f_id=0
  integer :: INTERP_RT_id=0
+ !
+ type(bz_samp):: GRID_k
  !
  ! Interpolation type
  !
@@ -57,14 +61,22 @@ module interpolate
    complex(DP), allocatable :: engre(:,:)
    integer                  :: ndim = 0
  end type INTERP_coeff
+ ! 
+ type INTERP_element
+   integer                  :: n(2)=0
+   integer                  :: ID=0
+   logical                  :: in_use=.FALSE.
+   character(schlen)        :: what=" "
+ end type INTERP_element
  !
  integer, parameter :: max_interpls=10
  !
- type(INTERP_coeff) :: interpls(max_interpls)
+ type(INTERP_coeff)   :: interpls(max_interpls)
+ type(INTERP_element) :: INTERP_obj(max_interpls)
  !
  interface
    !
-   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
+   subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
@@ -74,6 +86,7 @@ module interpolate
      complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(in), optional :: E
      integer,       intent(in), optional :: Nk
+     integer,       intent(in)           :: ID_obj
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients
    !
@@ -89,41 +102,47 @@ module interpolate
      integer,       intent(in)            :: ID
    end subroutine INTERPOLATION_BZ
    !
-   subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,INTERP_E,CIRCUIT_dE)
+   subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)
      use pars,       ONLY:SP
      use electrons,  ONLY:levels
      use R_lattice,  ONLY:bz_samp
+     implicit none
      type(bz_samp), intent(in)  :: Xk
      type(levels),  intent(in)  :: Xen
      integer      , intent(in)  :: BANDS_range(2)
      type(levels),  intent(out) :: CIRCUIT_E
-     type(levels),  intent(out), optional  :: INTERP_E
+     type(levels),  intent(out), optional  :: GRID_E
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
+   !
+   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,quiet)
+     use real_time,   ONLY:RT_t
+     use R_lattice,   ONLY:bz_samp
+     use electrons,   ONLY:levels
+     implicit none
+     integer,       intent(in),    optional :: bands(2)
+     type(bz_samp), intent(in),    optional :: SEED_k
+     type(bz_samp), intent(inout), optional :: OUT_k
+     type(RT_t),    intent(in)   , optional :: SEED_RT
+     type(levels),  intent(in)   , optional :: SEED_E
+     type(levels),  intent(inout), optional :: OUT_E
+     character(*),  intent(in)              :: operation
+     logical,       intent(in)   , optional :: quiet
+   end subroutine INTERPOLATION_driver
    !
  end interface  
  !  
  contains
    !
    subroutine INTERPOLATION_reset(ID)
-     implicit none
-     integer, intent(in), optional :: ID
-     !
-     if (present(ID)) then
-       if (ID>0) call elemental_reset(ID)
-     else
-       if (INTERP_E_id >0) call elemental_reset(INTERP_E_id)
-       if (INTERP_dE_id>0) call elemental_reset(INTERP_dE_id)
-       if (INTERP_RT_id>0) call elemental_reset(INTERP_RT_id)
-     endif
-     !
-   end subroutine INTERPOLATION_reset
-   !
-   subroutine elemental_reset(ID)
      integer, intent(in) :: ID
      interpls(ID)%ndim=0
      interpls(ID)%interp_type=""
      if(allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
+     INTERP_obj(ID)%n=0
+     INTERP_obj(ID)%ID=0
+     INTERP_obj(ID)%in_use=.FALSE.
+     INTERP_obj(ID)%what=" "
    end subroutine
    !
    subroutine get_ID(ID)

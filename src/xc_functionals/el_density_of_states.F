@@ -51,11 +51,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,dos_norm,E
  logical   :: ik_ibz_done(Xk%nibz),l_prt_occ_only,USE_Eo_,USE_the_DbGd_
  !
- if (allocated(Xen%f)) then
-   call parser('PrtOccOnly',l_prt_occ_only)
- else
-   l_prt_occ_only=.FALSE.
- endif
+ call parser('PrtOccOnly',l_prt_occ_only)
  !
  dos_value=0._SP
  !
@@ -73,7 +69,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
      !
      ik=Xk%sstar(ik_bz,1)
      if (.not.USE_the_DbGd_) then
-       if(ik_ibz_done(ik)) cycle
+       if (ik_ibz_done(ik)) cycle
        ik_ibz_done(ik)=.true.
      endif
      !

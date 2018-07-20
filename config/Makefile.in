@@ -122,8 +122,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interpolate init qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interpolate init qp plotting electrons 
+YPP_BASIC_LIBS     = modules interpolate interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interpolate interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 

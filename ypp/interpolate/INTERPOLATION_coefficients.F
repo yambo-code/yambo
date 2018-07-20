@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
+subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  !
  ! Notice that input/output k-points for the interpolation are in iku units
  !
@@ -42,6 +42,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
  complex(SP),   intent(in), optional :: C1D(:,:),C2D(:,:,:)
  type(levels),  intent(in), optional :: E
  integer,       intent(in), optional :: Nk
+ integer,       intent(in)           :: ID_obj
  integer,       intent(inout)        :: ID
  !
  ! Work Space
@@ -59,7 +60,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
    interpls(ID)%interp_type=REAL1D
    interpls(ID)%ndim       =size(R1D(:,1))
    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
-   call INTERPOLATION_BZ_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
+   call INTERPOLATION_BZ_coeff(k,R1D,interpls(ID)%engre,interpls(ID)%ndim,Nk_local,ID_obj)
    return
    !
  endif
@@ -126,7 +127,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID)
    !
  endif
  !  
- call INTERPOLATION_BZ_coeff(k,RDATA,interpls(ID)%engre,interpls(ID)%ndim,Nk_local)
+ call INTERPOLATION_BZ_coeff(k,RDATA,interpls(ID)%engre,interpls(ID)%ndim,Nk_local,ID_obj)
  deallocate(RDATA)
  !
 end subroutine  INTERPOLATION_coefficients

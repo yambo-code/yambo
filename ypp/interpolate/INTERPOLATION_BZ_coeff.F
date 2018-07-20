@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
+subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  ! Interpolation scheme (PRB 38 p2721)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
@@ -30,7 +30,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
  use pars,           ONLY:SP,DP,pi,cI,cZERO
- use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop
+ use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop,INTERP_obj
  use D_lattice,      ONLY:nsym
  use R_lattice,      ONLY:bz_samp
  use vec_operate,    ONLY:c2a
@@ -39,7 +39,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
 #include<memory.h>
  !
  integer,       intent(in)  :: nvalues
- integer,       intent(in)  :: Nk
+ integer,       intent(in)  :: Nk,ID_obj
  type(bz_samp), intent(in)  :: Xk
  real(SP),      intent(in)  :: VALUEs(nvalues,Nk)
  complex(DP),   intent(out) :: engre(nshells,nvalues)
@@ -163,7 +163,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
   !
   subroutine k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
    use units,          ONLY:HA2EV
-   use pars,           ONLY:SP,schlen
+   use pars,           ONLY:SP,lchlen
    use R_lattice,      ONLY:bz_samp
    use com,            ONLY:warning,msg
    !
@@ -175,7 +175,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
    ! Work Space
    !
    integer :: ik,iv
-   character(schlen)     :: dump_ch
+   character(lchlen)     :: dump_ch
    real(SP), allocatable :: new_VALUEs(:,:)
    real(SP) :: ave_err,max_err,rel_ave_err
    !
@@ -198,7 +198,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk)
    ave_err=ave_err/real(nvalues*Nk)
    rel_ave_err=rel_ave_err/real(nvalues*Nk)
    !
-   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
+   write(dump_ch,'(a,3es16.8)') '[INTERPOLATION@'//trim(INTERP_obj(ID_obj)%what)//&
+&                               '] Errors: Max, Avg, Avg_rel = ',max_err,ave_err,rel_ave_err
    call msg('s',dump_ch)
    !
    deallocate (new_VALUEs)

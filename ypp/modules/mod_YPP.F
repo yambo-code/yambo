@@ -64,7 +64,6 @@ module YPP
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k
- type(bz_samp):: INTERP_k
  logical      :: CIRCUIT_made_of_SPECIAL_k
  ! 
  ! DOS
@@ -74,6 +73,7 @@ module YPP
  real(SP)     ::DOS_E_range(2) ! Energy Range
  integer      ::DOS_bands(2)   ! Bands Range
  integer      ::DOS_E_steps    ! Energy steps
+ real(SP)     ::DOS_E_step     ! Energy step
  !
  ! BANDS
  !
@@ -244,6 +244,20 @@ module YPP
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
    end subroutine
+   !
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp 
+     use electrons,      ONLY:n_spin
+     implicit none
+     type(bz_samp), intent(in) :: k
+     type(levels),  intent(in) :: E
+     integer,       intent(in) :: bands(2)
+     real(SP),      intent(out) :: el_dos(:,:)
+     logical,  optional, intent(in) :: USE_the_DbGd
+     real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
+   end subroutine electrons_dos_elemental
    !
  end interface
  !

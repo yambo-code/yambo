@@ -31,14 +31,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
-&                         CIRCUIT_E_db,INTERP_k,CIRCUIT_k_label
+&                         CIRCUIT_E_db,GRID_k,CIRCUIT_k_label
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc,write_to_log,write_to_log_default
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,INTERPOLATION_reset, &
+ use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,INTERPOLATION_driver, &
 &                         electrons_bands_interpolate,INTERP_RT_id
  use LIVE_t,         ONLY:live_timing
  !
@@ -127,7 +127,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_sp_pol,n_T_steps))
  if (all(INTERP_grid>0)) then
-   YAMBO_ALLOC(fit_on_grid,(RT_bands(1):RT_bands(2),INTERP_k%nibz,n_sp_pol,n_T_steps))
+   YAMBO_ALLOC(fit_on_grid,(RT_bands(1):RT_bands(2),GRID_k%nibz,n_sp_pol,n_T_steps))
  endif
  !
  call live_timing('Interpolation procedure',n_T_steps)
@@ -171,9 +171,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      ! STEP 3
      ! interpolate on the grid if (all(INTERP_grid>0))
      !
-     if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=INTERP_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
+     if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=GRID_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
      !
-     call INTERPOLATION_reset(INTERP_RT_id)
+     !call INTERPOLATION_reset(INTERP_RT_id)
      !
    elseif(l_nearest_neig_interp) then
      !
@@ -221,7 +221,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  call live_timing( )
  !
- if (.not.l_nearest_neig_interp) call INTERPOLATION_reset( )
+ !if (.not.l_nearest_neig_interp) call INTERPOLATION_reset( )
  !
  call RT_carriers_object(RT_carriers,WHAT='free')
  !
@@ -267,10 +267,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      call msg('o bands',"#"," ",INDENT=0)
      !
      do ik=1,CIRCUIT_k%nbz
-       !
-       if (len_trim(CIRCUIT_k_label(ik))>0) then
-         write (*,*) CIRCUIT_k_label(ik)
-       endif   
        !
        if (ik==1) values(1)=0._SP
        if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))

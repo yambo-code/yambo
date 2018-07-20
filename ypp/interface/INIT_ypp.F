@@ -589,7 +589,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
-   if (l_RT_dos)        call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+   if (l_RT_dos)  then
+     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+     call INIT_QP_ctl_switch('G')
+   endif
    if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
    ! GPL_EXCLUDE_END
@@ -661,7 +665,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
- if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands
+ if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands.and..not.l_RT_dos
  if (     l_init_QP) call INIT_QP(" ")
 #else
  ! GPL_EXCLUDE_END

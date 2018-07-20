@@ -42,6 +42,7 @@ subroutine RT_occ_bands_kpts_and_En_map(En,kpt,E_bands,K_bands)
  K_bands%units='i'
  K_bands%description='k'
  K_bands%nibz=RT_carriers%nk
+ K_bands%nbz =RT_carriers%nk
  YAMBO_ALLOC(K_bands%pt,(K_bands%nibz,3))
  YAMBO_ALLOC(K_bands%weights,(K_bands%nibz))
  do ik=1,K_bands%nibz

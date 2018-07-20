@@ -237,6 +237,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
+#if !defined _PAR_IO
+   !
    ! PAR => SER for I/O
    !
    do iw=1,Xw%n_freqs
@@ -256,6 +258,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
      !
    enddo
+   !
+#endif
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus

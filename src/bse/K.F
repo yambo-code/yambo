@@ -56,6 +56,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
+ use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
  use timing_m,      ONLY:timing
  !
 #if defined _KERR
@@ -420,6 +421,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       ig_W,iq_W,iq_W_s,H_x,H_c, &
    !$omp &       iOcc,i_block_cc,PHASE_1, iOcv, i_block_cv, iOvc, i_block_vc, &
    !$omp &       iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
+   !
+   call OPENMP_update(master_thread)   
    !
    ! Allocations
    !-------------

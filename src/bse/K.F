@@ -380,18 +380,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call section('=','Kernel loop')
  !==============================
  !
- ! Allocations
- !-------------
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   YAMBO_ALLOC(Ovv,(BS_n_g_W))
-   YAMBO_ALLOC(Occ,(BS_n_g_W))
-   YAMBO_ALLOC(O_times_W,(BS_n_g_W))
-   if (BS_cpl_K_corr) then
-     YAMBO_ALLOC(Ovc,(BS_n_g_W))
-     YAMBO_ALLOC(Ocv,(BS_n_g_W))
-   endif
- endif
- !
  ! Timing
  !========
  !
@@ -417,31 +405,55 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! 
    call K_correlation_collisions(i_block,Xk,q)
    !
-   ! Transitions Loop
+   ! Transition Loops
    !------------------
    !
-   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-     !
-     sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
-     !
-     i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
-     i_v_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
-     i_c_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
-     i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
-     !
-     i_k  = Xk%sstar(i_k_bz,1)
-     i_k_s= Xk%sstar(i_k_bz,2)
-     !
-     if (BS_K_is_ALDA) then
-       is=(/i_c_k,i_k,i_k_s,i_k_spin/)
-       os=(/i_v_k,i_k,i_k_s,i_k_spin/)
+   !$omp parallel default(shared), &
+   !$omp private(i_Tk,i_Tp,&
+   !$omp         sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_spin,i_k,i_k_s,is,os,i_k_s_m1,H_pos, &
+   !$omp         sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_spin,i_p,i_p_s,isp,osp,i_k_p_s, &
+   !$omp         ig_W,iq_W,iq_W_s,H_x,H_c,&
+   !$omp         iOcc,i_block_cc,PHASE_1, &
+   !$omp         iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
+   !
+   ! Allocations
+   !-------------
+   if (BS_res_K_corr.or.BS_cpl_K_corr) then
+     YAMBO_ALLOC(Ovv,(BS_n_g_W))
+     YAMBO_ALLOC(Occ,(BS_n_g_W))
+     YAMBO_ALLOC(O_times_W,(BS_n_g_W))
+     if (BS_cpl_K_corr) then
+       YAMBO_ALLOC(Ovc,(BS_n_g_W))
+       YAMBO_ALLOC(Ocv,(BS_n_g_W))
      endif
-     !
-     i_k_s_m1 = sop_inv(i_k_s)
-     !
-     H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
-     !
+   endif
+   !
+   !$omp do collapse(2), schedule(dynamic)
+   do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       ! the following definitions are placed here because of
+       ! omp parallelism (should not trigger any performance issue)
+       !
+       sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
+       !
+       i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
+       i_v_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,2)
+       i_c_k   = BS_T_grp(i_Tgrp_k)%table(i_Tk,3)
+       i_k_spin= BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
+       !
+       i_k  = Xk%sstar(i_k_bz,1)
+       i_k_s= Xk%sstar(i_k_bz,2)
+       !
+       if (BS_K_is_ALDA) then
+         is=(/i_c_k,i_k,i_k_s,i_k_spin/)
+         os=(/i_v_k,i_k,i_k_s,i_k_spin/)
+       endif
+       !
+       i_k_s_m1 = sop_inv(i_k_s)
+       !
+       H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
+       !
        !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
@@ -526,15 +538,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
-           !$omp parallel default(shared), private(i_g1,i_g2)
-           !$omp do
+           !$omp parallel do default(shared), private(i_g1,i_g2)
            do i_g1=1,BS_n_g_W
              i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W),i_k_s_m1)
              Occ(i_g1)=BS_blk(i_block_cc)%O_c(i_g2,iOcc)*PHASE_1
              Ovv(i_g1)=BS_blk(i_block_vv)%O_c(i_g2,iOvv)*PHASE_2
            enddo
-           !$omp end do
-           !$omp end parallel
+           !$omp end parallel do
            !
            if (i_k_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
            if (i_k_s>nsym/(i_time_rev+1)) Occ=conjg(Occ)
@@ -578,15 +588,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
-           !$omp parallel default(shared), private(i_g1,i_g2)
-           !$omp do
+           !$omp parallel do default(shared), private(i_g1,i_g2)
            do i_g1=1,BS_n_g_W
              i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W),i_k_s_m1)
              Ocv(i_g1)=BS_blk(i_block_cv)%O_c(i_g2,iOcv)*PHASE_1
              Ovc(i_g1)=BS_blk(i_block_vc)%O_c(i_g2,iOvc)*PHASE_2
            enddo
-           !$omp end do
-           !$omp end parallel
+           !$omp end parallel do
            !
            if (i_k_s>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
            if (i_k_s>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
@@ -617,8 +625,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
      enddo 
-     !
    enddo
+   !$omp end do
+   !
+   if (BS_res_K_corr.or.BS_cpl_K_corr) then
+     YAMBO_FREE(Ovv)
+     YAMBO_FREE(Occ)
+     YAMBO_FREE(O_times_W)
+     if (BS_cpl_K_corr) then
+       YAMBO_FREE(Ovc)
+       YAMBO_FREE(Ocv)
+     endif
+   endif
+   !
+   !$omp end parallel
    !
    call BS_oscillators_free(0,i_block)
    if(l_BSE_minimize_memory) then
@@ -644,13 +664,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_res_K_corr.or.BS_cpl_K_corr) then
    YAMBO_FREE(WF_phase)
-   YAMBO_FREE(Ovv)
-   YAMBO_FREE(O_times_W)
-   YAMBO_FREE(Occ)
-   if (BS_cpl_K_corr) then
-     YAMBO_FREE(Ovc)
-     YAMBO_FREE(Ocv)
-   endif
  endif
  !
  if (l_bs_fxc) then

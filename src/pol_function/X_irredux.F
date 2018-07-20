@@ -48,7 +48,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PP_redux_wait,PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
-&                        n_threads_DIP,n_outthr,n_innthr,OPENMP_locks_reset,n_threads_FFT
+&                        n_threads_DIP,n_out_threads,n_inn_threads,OPENMP_locks_reset,n_threads_FFT
 #if defined _OPENMP
  use openmp,        ONLY:OPENMP_compute_mutex,omp_locks
 #endif
@@ -182,12 +182,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #if defined _OPENMP
 #  if defined _NESTING
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
- n_threads_FFT=n_innthr
- call msg('s','[X] NESTED openmp parallelism on: n_outthr/n_innthr = ',(/n_outthr,n_innthr/))
+ n_threads_FFT=n_inn_threads
+ call msg('s','[X] NESTED openmp parallelism on: n_out_threads/n_inn_threads = ',(/n_out_threads,n_inn_threads/))
 #  else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
- !call msg('s','[X] NESTED openmp parallelism off')
 #  endif
  if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
 #endif
@@ -200,12 +199,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
  !
- if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_outthr)
+ if(coarse_grid_N>0) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
  ! OpenMP setup
  !==============
  !
- !$omp parallel num_threads(n_outthr) default(shared), &
+ !$omp parallel num_threads(n_out_threads) default(shared), &
  !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,ig_row_transp,iw,mutexid,X_rows,X_cols_transp,X_nrows)
  !
  call OPENMP_update(master_thread)

@@ -41,9 +41,10 @@ integer function io_X(X,Xw,ID)
 #if defined _PAR_IO
  use netcdf
  use X_m,           ONLY:X_par
- use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE
+ use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
+&                        io_netcdf_var,io_define_variable,io_variable,io_action,OP_WR_CL
  use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_WORLD,MPI_INFO_NULL,mpi_comm_world, &
-&                        PAR_Q_index,PAR_COM_Q_A2A
+&                        PAR_Q_index,PAR_COM_Q_A2A,PP_redux_wait
 #endif
  !
 #include<memory.h>
@@ -88,6 +89,8 @@ integer function io_X(X,Xw,ID)
    io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
    if (io_X/=0) goto 1
  endif
+ !
+ write(*,*) 'Check ',PAR_COM_Q_A2A%CPU_id,read_is_on(ID)
  !
  if (any((/io_sec(ID,:)==1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
@@ -149,17 +152,24 @@ integer function io_X(X,Xw,ID)
  !
 #if defined _PAR_IO
  if(write_is_on(ID)) then
-   close_is_on_save=close_is_on(ID)
-   io_resetable(ID)=.false.
-   call io_disconnect(ID)
-   write(*,*) 'pippo2',PAR_COM_X_WORLD%COMM,mpi_comm_world,PAR_COM_WORLD%COMM,PAR_COM_Q_A2A%COMM
-   io_file(ID)='ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
-   db_name='04_BSE/ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
-   mode_flag = IOR(nf90_netcdf4, nf90_mpiio)
-   call netcdf_call(nf90_create_par(db_name,mode_flag,comm=mpi_comm_world,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-   call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-   if (close_is_on_save) io_resetable(ID)=.true.
+   write(*,*) 'disconnecting'
+   if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+     close_is_on_save=close_is_on(ID)
+     io_resetable(ID)=.false.
+     call io_disconnect(ID)
+     io_file(ID)=' '
+   endif
+   if (write_is_on(ID)) io_action(ID)=OP_WR_CL
+   !   write(*,*) 'pippo2',PAR_COM_X_WORLD%COMM,mpi_comm_world,PAR_COM_WORLD%COMM,PAR_COM_Q_A2A%COMM
+   !io_file(ID)='ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
+   db_name=trim(db_desc)//'_fragment_'//trim(intc(iq))
+   !mode_flag = IOR(nf90_netcdf4, nf90_mpiio)
    !call netcdf_call(nf90_create_par(db_name,mode_flag,comm=PAR_COM_X_WORLD%COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+   !call netcdf_call(nf90_create_par(db_name,mode_flag,comm=mpi_comm_world,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+   !call netcdf_call(nf90_enddef(io_unit(ID)),ID)
+   io_X=io_connect(desc=trim(db_name),type=2,ID=ID,COMM=mpi_comm_world)
+   write(*,*) 're-connecting',io_X
+   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)).and.close_is_on_save) io_resetable(ID)=.true.
  else
 #endif
    if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
@@ -170,18 +180,22 @@ integer function io_X(X,Xw,ID)
  endif
 #endif
  !
+ write(*,*) 'Check2 ',PAR_COM_Q_A2A%CPU_id,read_is_on(ID)
+ !
  !  type(X_t)    ::X(4)  x s d p
  !
  if (any((/io_sec(ID,:)==2*iq/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    sec_size=6
    !
+     write(*,*) 'writing1',PAR_COM_Q_A2A%CPU_id
    if (X%whoami==4) sec_size=1
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
-   call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1)
+   call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1,par_io_kind=nf90_independent)
+     write(*,*) 'writing2',PAR_COM_Q_A2A%CPU_id
    !
    if (X%whoami==4) then
      call io_elemental(ID,UNIT=HA2EV,&
@@ -197,7 +211,8 @@ integer function io_X(X,Xw,ID)
      call io_elemental(ID,&
 &         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
    endif
-   !
+      write(*,*) 'writing3',PAR_COM_Q_A2A%CPU_id
+  !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    io_X=io_status(ID)
    !
@@ -216,33 +231,44 @@ integer function io_X(X,Xw,ID)
      YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
+     write(*,*) 'writing',PAR_COM_Q_A2A%CPU_id
    ch="FREQ_sec_iq"//trim(intc(iq))
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,Xw%n_freqs/))
-   call io_bulk(ID,C1=Xw%p)
-   !
-   ! X_mat @iq
-   !
-   ch="X_Q_"//trim(intc(iq))
-   !
-   if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+   call io_define_variable(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
+   call io_variable(ID,C1=Xw%p)
    !
  endif
  !
  if (any((/io_sec(ID,:)==2*iq+1/))) then
+   !
+   ! X_mat @iq
+   !
 #if defined _PAR_IO
    if(write_is_on(ID)) then
+     !
+     ch="X_Q_"//trim(intc(iq))
      iq_mem=PAR_Q_index(iq)
      if (io_RESPONSE) iq_mem=1
-     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-     call netcdf_call(nf90_par_access())
-     call io_bulk(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     write(*,*) 'pippo1',PAR_COM_Q_A2A%CPU_id
+     call PP_redux_wait()
+     write(*,*) 'pippo2',io_netcdf_var(ID),io_unit(ID)
+     call io_define_variable(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
+     write(*,*) 'pippo3'
+     call io_variable(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(iq_mem)%rows(1),X_par(iq_mem)%cols(1),1/))
+     write(*,*) 'pippo4'
+     !
    else if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
 #endif
-     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-     call io_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     !
+     ch="X_Q_"//trim(intc(iq))
+     if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+     call io_define_variable(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+     call io_variable(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     !
 #if defined _PAR_IO
    endif
 #endif
+   !
+   !
  endif
  !
  if (any((/io_sec(ID,:)==2*iq+1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then

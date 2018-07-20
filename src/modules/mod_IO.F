@@ -25,7 +25,7 @@ module IO_m
  !
  use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
- use parallel_m, ONLY:myid
+ use parallel_m, ONLY:myid,MPI_INFO_NULL
  use com,        ONLY:error
  use netcdf
  !
@@ -145,12 +145,13 @@ module IO_m
    !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP)
+&                          DESCRIPTION,DO_NOT_DUMP,par_io_kind)
      !
      use pars
      integer      :: ID
      character(*),optional :: VAR,OP(:)
      integer,     optional :: VAR_SZ,MENU
+     integer,     optional :: par_io_kind
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
@@ -170,9 +171,36 @@ module IO_m
                       &                            IPOS)
      !
      use pars
-     integer      :: ID, error
+     integer      :: ID
      character(*),optional :: VAR
      integer,     optional :: VAR_SZ(:),IPOS(:)
+     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
+     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
+     real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
+     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
+     complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
+     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
+     !
+   end subroutine
+   !
+   subroutine io_define_variable(ID,VAR,VAR_SZ,par_io_kind)
+     integer      :: ID
+     character(*) :: VAR
+     integer      :: VAR_SZ(:)
+     integer,     optional :: par_io_kind
+   end subroutine
+   !
+   subroutine io_variable(ID,I0,I1,I2,I3,I4,I5,&
+                      &      R0,R1,R2,R3,R4,R5,&
+                      &      D0,D1,D2,D3,D4,D5,&
+                      &      C0,C1,C2,C3,C4,C5,&
+                      &      Z0,Z1,Z2,Z3,Z4,Z5,&
+                      &      L0,L1,L2,L3,L4,   &
+                      &                     IPOS)
+     !
+     use pars
+     integer      :: ID
+     integer,     optional :: IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
      real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
      real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
@@ -250,7 +278,7 @@ module IO_m
      !
    end function
    !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
@@ -259,6 +287,7 @@ module IO_m
      integer                :: type,ID
      character(*), optional :: subfolder
      logical,      optional :: no_full_RESET
+     integer,      optional :: COMM
      !
      ! Work Space
      !
@@ -323,6 +352,8 @@ module IO_m
      !
      ! Open if to open and to write
      !
+     write(*,*) 'io_connect ',myid,open_is_on(ID),present(COMM),file_exists(trim(io_file(ID))),trim(io_file(ID))
+
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
@@ -330,7 +361,11 @@ module IO_m
          if( file_exists(trim(io_file(ID))) ) then
            call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
          else
-           call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+           if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+           if(     present(COMM)) then
+             call netcdf_call(nf90_create_par(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+             &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+           endif
            call netcdf_call(nf90_enddef(io_unit(ID)),ID)
            if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
            if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
@@ -338,7 +373,11 @@ module IO_m
          !
        else
          !
-         call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+         if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+         if(     present(COMM)) then
+           call netcdf_call(nf90_create_par(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+           &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+         endif
          call netcdf_call(nf90_enddef(io_unit(ID)),ID)
          !
        endif

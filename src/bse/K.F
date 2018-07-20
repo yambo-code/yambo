@@ -414,7 +414,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Read BS_blk to check if the transition was already computed
    !
 #ifdef _PAR_IO
-   if (l_restart_bse) call io_BS_PAR_read_block(iq,i_block,ID)
+   if (l_restart_bse) then
+     call io_BS_PAR_read_block(iq,i_block,ID)
+     if (all(BS_blk(i_block)%done)) cycle
+   endif
 #endif
    !
    i_Tgrp_k=BS_blk(i_block)%iT_k

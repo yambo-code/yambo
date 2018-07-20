@@ -90,8 +90,6 @@ integer function io_X(X,Xw,ID)
    if (io_X/=0) goto 1
  endif
  !
- write(*,*) 'Check ',PAR_COM_Q_A2A%CPU_id,read_is_on(ID)
- !
  if (any((/io_sec(ID,:)==1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    ! Header
@@ -152,67 +150,55 @@ integer function io_X(X,Xw,ID)
  !
 #if defined _PAR_IO
  if(write_is_on(ID)) then
-   write(*,*) 'disconnecting'
-   if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+   if(PAR_COM_Q_A2A%CPU_id==0) then
      close_is_on_save=close_is_on(ID)
      io_resetable(ID)=.false.
      call io_disconnect(ID)
      io_file(ID)=' '
    endif
    if (write_is_on(ID)) io_action(ID)=OP_WR_CL
-   !   write(*,*) 'pippo2',PAR_COM_X_WORLD%COMM,mpi_comm_world,PAR_COM_WORLD%COMM,PAR_COM_Q_A2A%COMM
-   !io_file(ID)='ndb.'//trim(db_desc)//'_fragment_'//trim(intc(iq))
    db_name=trim(db_desc)//'_fragment_'//trim(intc(iq))
-   !mode_flag = IOR(nf90_netcdf4, nf90_mpiio)
-   !call netcdf_call(nf90_create_par(db_name,mode_flag,comm=PAR_COM_X_WORLD%COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-   !call netcdf_call(nf90_create_par(db_name,mode_flag,comm=mpi_comm_world,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-   !call netcdf_call(nf90_enddef(io_unit(ID)),ID)
    io_X=io_connect(desc=trim(db_name),type=2,ID=ID,COMM=mpi_comm_world)
-   write(*,*) 're-connecting',io_X
-   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)).and.close_is_on_save) io_resetable(ID)=.true.
+   if((PAR_COM_Q_A2A%CPU_id==0).and.close_is_on_save) io_resetable(ID)=.true.
  else
 #endif
-   if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
-     call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
-     call io_fragment(ID,i_fragment=iq,ierr=io_err)
-   endif
+   call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
+   call io_fragment(ID,i_fragment=iq,ierr=io_err)
 #if defined _PAR_IO
  endif
 #endif
  !
- write(*,*) 'Check2 ',PAR_COM_Q_A2A%CPU_id,read_is_on(ID)
- !
  !  type(X_t)    ::X(4)  x s d p
  !
- if (any((/io_sec(ID,:)==2*iq/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
+ if (any((/io_sec(ID,:)==2*iq/)) ) then
    !
    sec_size=6
    !
-     write(*,*) 'writing1',PAR_COM_Q_A2A%CPU_id
    if (X%whoami==4) sec_size=1
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
    call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1,par_io_kind=nf90_independent)
-     write(*,*) 'writing2',PAR_COM_Q_A2A%CPU_id
    !
-   if (X%whoami==4) then
-     call io_elemental(ID,UNIT=HA2EV,&
-&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
+   if (PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+		 if (X%whoami==4) then
+		   call io_elemental(ID,UNIT=HA2EV,&
+	&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
+		 endif
+		 if (X%whoami/=4) then
+		   call io_elemental(ID,&
+	&         VAR=" :: Current Q-pt index     :",I0=iq)
+		   call io_elemental(ID,UNIT=HA2EV,&
+	&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
+		   call io_elemental(ID,UNIT=HA2EV,&
+	&         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+		   call io_elemental(ID,&
+	&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+		 endif
+     !
    endif
-   if (X%whoami/=4) then
-     call io_elemental(ID,&
-&         VAR=" :: Current Q-pt index     :",I0=iq)
-     call io_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
-     call io_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
-     call io_elemental(ID,&
-&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
-   endif
-      write(*,*) 'writing3',PAR_COM_Q_A2A%CPU_id
-  !
+   !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    io_X=io_status(ID)
    !
@@ -222,7 +208,7 @@ integer function io_X(X,Xw,ID)
    !
  endif
  !
- if (any((/io_sec(ID,:)==2*iq+1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
+ if (any((/io_sec(ID,:)==2*iq+1/))) then
    !
    ! Xw%p
    !
@@ -231,14 +217,9 @@ integer function io_X(X,Xw,ID)
      YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
-     write(*,*) 'writing',PAR_COM_Q_A2A%CPU_id
    ch="FREQ_sec_iq"//trim(intc(iq))
    call io_define_variable(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
-   call io_variable(ID,C1=Xw%p)
-   !
- endif
- !
- if (any((/io_sec(ID,:)==2*iq+1/))) then
+   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) call io_variable(ID,C1=Xw%p)
    !
    ! X_mat @iq
    !
@@ -248,13 +229,9 @@ integer function io_X(X,Xw,ID)
      ch="X_Q_"//trim(intc(iq))
      iq_mem=PAR_Q_index(iq)
      if (io_RESPONSE) iq_mem=1
-     write(*,*) 'pippo1',PAR_COM_Q_A2A%CPU_id
-     call PP_redux_wait()
-     write(*,*) 'pippo2',io_netcdf_var(ID),io_unit(ID)
+     !call PP_redux_wait()
      call io_define_variable(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
-     write(*,*) 'pippo3'
      call io_variable(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(iq_mem)%rows(1),X_par(iq_mem)%cols(1),1/))
-     write(*,*) 'pippo4'
      !
    else if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
 #endif
@@ -267,11 +244,6 @@ integer function io_X(X,Xw,ID)
 #if defined _PAR_IO
    endif
 #endif
-   !
-   !
- endif
- !
- if (any((/io_sec(ID,:)==2*iq+1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
@@ -287,14 +259,12 @@ integer function io_X(X,Xw,ID)
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
- if (PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
-   if (io_mode(ID)/=DUMP) then
-     io_X=IO_NO_DATABASE
-     if (io_err==0) io_X=iq
-   endif
-   !
-1  call io_disconnect(ID)
+ if (io_mode(ID)/=DUMP) then
+   io_X=IO_NO_DATABASE
+   if (io_err==0) io_X=iq
  endif
+ !
+1 call io_disconnect(ID)
  !
  if (io_RESPONSE) call timing('io_X',OPR='stop')
  !

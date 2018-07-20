@@ -352,8 +352,6 @@ module IO_m
      !
      ! Open if to open and to write
      !
-     write(*,*) 'io_connect ',myid,open_is_on(ID),present(COMM),file_exists(trim(io_file(ID))),trim(io_file(ID))
-
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
        if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
@@ -363,7 +361,7 @@ module IO_m
          else
            if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
            if(     present(COMM)) then
-             call netcdf_call(nf90_create_par(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+             call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
              &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
            endif
            call netcdf_call(nf90_enddef(io_unit(ID)),ID)
@@ -375,7 +373,7 @@ module IO_m
          !
          if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
          if(     present(COMM)) then
-           call netcdf_call(nf90_create_par(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+           call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
            &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
          endif
          call netcdf_call(nf90_enddef(io_unit(ID)),ID)

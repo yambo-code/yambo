@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_variable(ID,I0,I1,I2,I3,I4,I5,&
-                   &  R0,R1,R2,R3,R4,R5,&
-                   &  D0,D1,D2,D3,D4,D5,&
-                   &  C0,C1,C2,C3,C4,C5,&
-                   &  Z0,Z1,Z2,Z3,Z4,Z5,&
-                   &  L0,L1,L2,L3,L4,   &
-                   &                IPOS)
+subroutine io_variable_bulk(ID,I0,I1,I2,I3,I4,I5,&
+                             & R0,R1,R2,R3,R4,R5,&
+                             & D0,D1,D2,D3,D4,D5,&
+                             & C0,C1,C2,C3,C4,C5,&
+                             & Z0,Z1,Z2,Z3,Z4,Z5,&
+                             & L0,L1,L2,L3,L4,   &
+                             &                    IPOS)
  !
  use pars,    ONLY:SP,DP,LP,nf90_SP
  use pointers,ONLY:linkC2R,linkZ2D
@@ -306,4 +306,4 @@ subroutine io_variable(ID,I0,I1,I2,I3,I4,I5,&
  if (allocated(ipos_loc))  deallocate(ipos_loc)
  if (allocated(isize_loc)) deallocate(isize_loc)
  !
-end subroutine io_variable
+end subroutine io_variable_bulk

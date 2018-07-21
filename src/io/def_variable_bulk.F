@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_define_variable(ID,VAR,VAR_SZ,par_io_kind)
+subroutine def_variable_bulk(ID,VAR,VAR_SZ,par_io_kind)
  !
  use pars,    ONLY:nf90_SP
  use com,     ONLY:warning,error
@@ -98,4 +98,4 @@ subroutine io_define_variable(ID,VAR,VAR_SZ,par_io_kind)
  !
  return
  !
-end subroutine io_define_variable
+end subroutine def_variable_bulk

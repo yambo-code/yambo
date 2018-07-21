@@ -143,15 +143,16 @@ module IO_m
  !
  interface 
    !
+   ! OLD: def and IO in the same subroutine
+   !
    subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTION,DO_NOT_DUMP,par_io_kind)
+&                          DESCRIPTION,DO_NOT_DUMP)
      !
      use pars
      integer      :: ID
      character(*),optional :: VAR,OP(:)
      integer,     optional :: VAR_SZ,MENU
-     integer,     optional :: par_io_kind
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
@@ -183,22 +184,55 @@ module IO_m
      !
    end subroutine
    !
-   subroutine io_define_variable(ID,VAR,VAR_SZ,par_io_kind)
-     integer      :: ID
-     character(*) :: VAR
-     integer      :: VAR_SZ(:)
-     integer,     optional :: par_io_kind
-   end subroutine
+   !  NEW: def and IO subroutines split in two
    !
-   subroutine io_variable(ID,I0,I1,I2,I3,I4,I5,&
-                      &      R0,R1,R2,R3,R4,R5,&
-                      &      D0,D1,D2,D3,D4,D5,&
-                      &      C0,C1,C2,C3,C4,C5,&
-                      &      Z0,Z1,Z2,Z3,Z4,Z5,&
-                      &      L0,L1,L2,L3,L4,   &
-                      &                     IPOS)
+   subroutine def_variable_elemental(ID,VAR,VAR_SZ,MENU,CH0,CH1,par_io_kind)
+     integer               :: ID
+     character(*)          :: VAR
+     integer               :: VAR_SZ
+     integer               :: MENU          ! MENU = 1 (on) 0 (off)
+     character(*),optional :: CH0,CH1(:)
+     integer,     optional :: par_io_kind
+   end subroutine def_variable_elemental
+   !
+   subroutine def_variable_bulk(ID,VAR,VAR_SZ,par_io_kind)
+     integer               :: ID
+     character(*)          :: VAR
+     integer               :: VAR_SZ(:)
+     integer,     optional :: par_io_kind
+   end subroutine def_variable_bulk
+   !
+   subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
+        &                       I0, DB_I0, I1, DB_I1, &
+        &                       R0, DB_R0, R1, DB_R1, &
+        &                       D0, DB_D0, C0, DB_C0, &
+        &                       L0, DB_L0,            &
+        &                       CH0,DB_CH0,           &
+        &                       UNIT,DESCRIPTION,DO_NOT_DUMP)
      !
-     use pars
+     use pars,   ONLY:SP,DP,LP,lchlen
+     integer               :: ID
+     character(*),optional :: VAR
+     character(*),optional :: OP(:)
+     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
+     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
+     real(DP),    optional :: D0,DB_D0
+     complex(SP), optional :: C0,DB_C0
+     logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
+     character(*),optional :: CH0,DB_CH0
+     character(lchlen),optional :: DESCRIPTION
+     !
+   end subroutine io_variable_elemental
+   !
+   subroutine io_variable_bulk(ID,I0,I1,I2,I3,I4,I5,&
+                      &           R0,R1,R2,R3,R4,R5,&
+                      &           D0,D1,D2,D3,D4,D5,&
+                      &           C0,C1,C2,C3,C4,C5,&
+                      &           Z0,Z1,Z2,Z3,Z4,Z5,&
+                      &           L0,L1,L2,L3,L4,   &
+                      &                              IPOS)
+     !
+     use pars,   ONLY:SP,DP,LP
      integer      :: ID
      integer,     optional :: IPOS(:)
      integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
@@ -208,7 +242,7 @@ module IO_m
      complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
      integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
      !
-   end subroutine
+   end subroutine io_variable_bulk
    !
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
 &                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)

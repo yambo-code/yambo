@@ -35,14 +35,15 @@ integer function io_X(X,Xw,ID)
 &                        ver_is_gt_or_eq,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
-&                        IO_NO_DATABASE,io_mode,DUMP
+&                        IO_NO_DATABASE,io_mode,DUMP,&
+&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
 #if defined _PAR_IO
  use netcdf
  use X_m,           ONLY:X_par
  use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
-&                        io_netcdf_var,io_define_variable,io_variable,io_action,OP_WR_CL
+&                        io_netcdf_var,io_action,OP_WR_CL
  use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_WORLD,MPI_INFO_NULL,mpi_comm_world, &
 &                        PAR_Q_index,PAR_COM_Q_A2A,PP_redux_wait
 #endif
@@ -179,27 +180,27 @@ integer function io_X(X,Xw,ID)
    !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
-   call io_elemental(ID,VAR=trim(ch),VAR_SZ=sec_size,MENU=1,par_io_kind=nf90_independent)
+   call def_variable_elemental(ID,trim(ch),sec_size,1,par_io_kind=nf90_independent)
    !
    if (PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
-		 if (X%whoami==4) then
-		   call io_elemental(ID,UNIT=HA2EV,&
-	&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
-		 endif
-		 if (X%whoami/=4) then
-		   call io_elemental(ID,&
-	&         VAR=" :: Current Q-pt index     :",I0=iq)
-		   call io_elemental(ID,UNIT=HA2EV,&
-	&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
-		   call io_elemental(ID,UNIT=HA2EV,&
-	&         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
-		   call io_elemental(ID,&
-	&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
-		 endif
+     if (X%whoami==4) then
+       call io_variable_elemental(ID,UNIT=HA2EV,&
+&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
+     endif
+     if (X%whoami/=4) then
+       call io_variable_elemental(ID,&
+&         VAR=" :: Current Q-pt index     :",I0=iq)
+       call io_variable_elemental(ID,UNIT=HA2EV,&
+&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,&
+&         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,&
+&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+     endif
      !
    endif
    !
-   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+   call def_variable_elemental(ID,"",0,1)
    io_X=io_status(ID)
    !
    io_com(ID)=io_com_save
@@ -218,28 +219,27 @@ integer function io_X(X,Xw,ID)
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
-   call io_define_variable(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
-   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) call io_variable(ID,C1=Xw%p)
+   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
+   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) call io_variable_bulk(ID,C1=Xw%p)
    !
    ! X_mat @iq
+   !
+   ch="X_Q_"//trim(intc(iq))
    !
 #if defined _PAR_IO
    if(write_is_on(ID)) then
      !
-     ch="X_Q_"//trim(intc(iq))
      iq_mem=PAR_Q_index(iq)
      if (io_RESPONSE) iq_mem=1
-     !call PP_redux_wait()
-     call io_define_variable(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
-     call io_variable(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(iq_mem)%rows(1),X_par(iq_mem)%cols(1),1/))
+     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
+     call  io_variable_bulk(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(iq_mem)%rows(1),X_par(iq_mem)%cols(1),1/))
      !
    else if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
 #endif
      !
-     ch="X_Q_"//trim(intc(iq))
      if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-     call io_define_variable(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
-     call io_variable(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+     call  io_variable_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
      !
 #if defined _PAR_IO
    endif

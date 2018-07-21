@@ -27,6 +27,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use timing_m,       ONLY:timing
+ use openmp,         ONLY:OPENMP_update,master_thread
+ use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
  implicit none
  !
  type(bz_samp) :: Xk
@@ -47,6 +49,17 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  call BS_oscillators_alloc(.TRUE.,i_T_grp,.FALSE.,0)
  !
+ !$omp parallel default(shared), private( K_EXCH_collision, &
+ !$omp &        i_T_el,i_k_bz,i_k,i_s, i_p_bz,i_p,i_sp, i_v,i_c,i_spin, &
+ !$omp &        i_T_grp_last_with_identity_sym, i_T_el_last_with_identity_sym, &
+ !$omp &        i_T_grp_p, N_T_el_p, i_T_el_p, i_g1, i_g2)
+ !
+ call OPENMP_update(master_thread)
+ !
+ !call elemental_collision_free(K_EXCH_collision)
+ call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
+ !
+ !$omp do
  T_loop: do i_T_el=1,BS_T_grp(i_T_grp)%size
    !
    i_k_bz=BS_T_grp(i_T_grp)%table(i_T_el,1)
@@ -116,6 +129,10 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
    endif
    !
  enddo T_loop
+ !$omp end do
+ !
+ call elemental_collision_free(K_EXCH_collision) 
+ !$omp end parallel
  !
  call timing('T_space EXX Osc.',OPR='stop')
  !

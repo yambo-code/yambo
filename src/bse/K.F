@@ -275,7 +275,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !=================================
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng,       TITLE="CORR_COLL")
- call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
+! call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
+! XXX
  !
  ! Wave Functions Phases
  !=======================
@@ -694,8 +695,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)
+ !
  call elemental_collision_free(K_CORR_collision)
- call elemental_collision_free(K_EXCH_collision)
+! call elemental_collision_free(K_EXCH_collision)
+! XXX
  !
  call timing('X T_space Kernel',OPR='stop')
  !

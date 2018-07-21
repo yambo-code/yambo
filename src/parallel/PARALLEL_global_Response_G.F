@@ -224,7 +224,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 #if defined _PAR_IO
      call IO_and_Messaging_switch("+io_out +output",CONDITION=.TRUE.)
 #else
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
 #endif
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)

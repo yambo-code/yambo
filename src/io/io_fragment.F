@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  ! This routine closes the main DB and opens the fragment. 
  !
@@ -30,7 +30,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  ! the properties of the DB that have been read previously 
  ! (like io_nectdf_support or io_code_version/revision).
  !
- use pars,       ONLY:schlen
+ use pars,       ONLY:schlen,lchlen
  use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
 &                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
 &                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
@@ -38,20 +38,36 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
- use parallel_m, ONLY:ncpu
+ use parallel_m, ONLY:ncpu,myid,PP_bcast
  use timing_m,   ONLY:timing
  implicit none
  !
  integer           :: ID
  integer, optional :: i_fragment,j_fragment,ierr
+ integer, optional :: COMM,cpu_id
  !
  ! Work Space
  !
  integer           :: ierr_,i_frag
- logical           :: close_is_on_save
+ logical           :: close_is_on_save,disconnect,par_IO
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
+ !
+ disconnect=.true.
+ if (present(cpu_id)) disconnect=(cpu_id==0).or.read_is_on(ID)
+ !
+ par_IO=.false.
+#if defined _PAR_IO
+ if (present(COMM)) par_IO=present(COMM).and.write_is_on(ID)
+#endif
+ !
+ if (par_IO) then
+   call PP_bcast(io_raw_extension(ID),0,COMM=COMM)
+   call PP_bcast(    io_extension(ID),0,COMM=COMM)
+   call PP_bcast(       io_folder(ID),0,COMM=COMM)
+   call PP_bcast(         io_type(ID),0,COMM=COMM)
+ endif
  !
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
@@ -88,7 +104,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
  !
  io_resetable(ID)=.false.
  !
- call io_disconnect(ID)
+ if(disconnect) call io_disconnect(ID)
  !
  ! io_file is redefined by io_connect
  !
@@ -100,7 +116,8 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
  endif
  !
- ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
+ if(     par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID,comm=COMM)
+ if(.not.par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID)
  if (present(ierr)) ierr=ierr_
  !
  if (ncpu>1.and.write_fragments_IO_log.and.index(logfile,"stderr")==0) then

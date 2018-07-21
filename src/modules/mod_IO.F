@@ -261,9 +261,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr)
+   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
      integer           :: ID
-     integer, optional :: i_fragment,j_fragment,ierr
+     integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
    !
  end interface
@@ -318,7 +318,7 @@ module IO_m
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                            num_of_alternative_locations,n_alt_jobstr
      character(*)           :: desc
-     integer                :: type,ID
+     integer,      optional :: type,ID
      character(*), optional :: subfolder
      logical,      optional :: no_full_RESET
      integer,      optional :: COMM
@@ -394,10 +394,14 @@ module IO_m
            call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
          else
            if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+#if defined _PAR_IO
            if(     present(COMM)) then
              call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
              &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
            endif
+#else
+           if(     present(COMM)) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+#endif
            call netcdf_call(nf90_enddef(io_unit(ID)),ID)
            if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
            if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
@@ -406,10 +410,14 @@ module IO_m
        else
          !
          if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+#if defined _PAR_IO
          if(     present(COMM)) then
            call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
            &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
          endif
+#else
+         if(     present(COMM)) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+#endif
          call netcdf_call(nf90_enddef(io_unit(ID)),ID)
          !
        endif

@@ -173,14 +173,18 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
- if (.not.allocated(X_mat)) then
+ if (.not.allocated(X_par)) then
    !
    if (io_RESPONSE) then
      allocate(X_par(1))
+#if !defined _PAR_IO
      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
    else
      allocate(X_par(PAR_nq))
+#if !defined _PAR_IO
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
+#endif
    endif
    !
  endif
@@ -298,7 +302,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (3)
  !
  if (io_RESPONSE) then
+#if !defined _PAR_IO
    YAMBO_FREE(X_mat)
+#endif
    deallocate(X_par)
  endif
  if (allocated(FXC)) then

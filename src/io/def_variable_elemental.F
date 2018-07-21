@@ -66,8 +66,13 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,MENU,CH0,CH1,par_io_kind)
        else
          nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
        endif
-       if(present(par_io_kind)) nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
+#if defined _PAR_IO
+       if(present(par_io_kind)) then
+         nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), par_io_kind)
+         call netcdf_call(nf_error,ID,VAR=VAR)
+       endif
+#endif
      endif
      call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
    else if (read_is_on(ID)) then

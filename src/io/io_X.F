@@ -40,12 +40,11 @@ integer function io_X(X,Xw,ID)
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
 #if defined _PAR_IO
- use netcdf
+ use netcdf,        ONLY:nf90_independent,nf90_collective
  use X_m,           ONLY:X_par
  use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
 &                        io_netcdf_var,io_action,OP_WR_CL
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_WORLD,MPI_INFO_NULL,mpi_comm_world, &
-&                        PAR_Q_index,PAR_COM_Q_A2A,PP_redux_wait
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_Q_index
 #endif
  !
 #include<memory.h>
@@ -55,13 +54,8 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
-#if defined _PAR_IO
- integer             ::mode_flag,iq_mem
- logical             ::close_is_on_save
- character (schlen)  ::db_name
-#endif
  integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
- logical             ::different_db_RL_order
+ logical             ::different_db_RL_order,perform_IO
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
@@ -86,12 +80,18 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
  !
- if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+#if defined _PAR_IO
+ perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
+#else
+ perform_IO=.true.
+#endif
+ !
+ if(perform_IO) then
    io_X=io_connect(desc=trim(db_desc),type=2,ID=ID) 
    if (io_X/=0) goto 1
  endif
  !
- if (any((/io_sec(ID,:)==1/)).and.(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) then
+ if (any((/io_sec(ID,:)==1/)).and.perform_IO) then
    !
    ! Header
    !
@@ -149,24 +149,11 @@ integer function io_X(X,Xw,ID)
  enddo
  if (iq==0) goto 1
  !
+ call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
 #if defined _PAR_IO
- if(write_is_on(ID)) then
-   if(PAR_COM_Q_A2A%CPU_id==0) then
-     close_is_on_save=close_is_on(ID)
-     io_resetable(ID)=.false.
-     call io_disconnect(ID)
-     io_file(ID)=' '
-   endif
-   if (write_is_on(ID)) io_action(ID)=OP_WR_CL
-   db_name=trim(db_desc)//'_fragment_'//trim(intc(iq))
-   io_X=io_connect(desc=trim(db_name),type=2,ID=ID,COMM=mpi_comm_world)
-   if((PAR_COM_Q_A2A%CPU_id==0).and.close_is_on_save) io_resetable(ID)=.true.
- else
-#endif
-   call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
-   call io_fragment(ID,i_fragment=iq,ierr=io_err)
-#if defined _PAR_IO
- endif
+ call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+#else
+ call io_fragment(ID,i_fragment=iq,ierr=io_err)
 #endif
  !
  !  type(X_t)    ::X(4)  x s d p
@@ -178,11 +165,18 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==4) sec_size=1
    ch="FREQ_PARS_sec_iq"//trim(intc(iq))
    !
+   ! Important: once the file has been opend in PAR mode all the CPUs belonging to the COMM
+   !            must go through the definitions of the variables although only one is writing
+   !
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
+#if defined _PAR_IO
    call def_variable_elemental(ID,trim(ch),sec_size,1,par_io_kind=nf90_independent)
+#else
+   call def_variable_elemental(ID,trim(ch),sec_size,1)
+#endif
    !
-   if (PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+   if (perform_IO) then
      if (X%whoami==4) then
        call io_variable_elemental(ID,UNIT=HA2EV,&
 &         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
@@ -219,8 +213,12 @@ integer function io_X(X,Xw,ID)
    endif
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
+#if defined _PAR_IO
    call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
-   if((PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID))) call io_variable_bulk(ID,C1=Xw%p)
+#else
+   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/))
+#endif
+   if(perform_IO) call io_variable_bulk(ID,C1=Xw%p)
    !
    ! X_mat @iq
    !
@@ -229,12 +227,10 @@ integer function io_X(X,Xw,ID)
 #if defined _PAR_IO
    if(write_is_on(ID)) then
      !
-     iq_mem=PAR_Q_index(iq)
-     if (io_RESPONSE) iq_mem=1
      call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
-     call  io_variable_bulk(ID,C3=X_par(iq_mem)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(iq_mem)%rows(1),X_par(iq_mem)%cols(1),1/))
+     call  io_variable_bulk(ID,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
      !
-   else if(PAR_COM_Q_A2A%CPU_id==0.or.read_is_on(ID)) then
+   else if(read_is_on(ID)) then
 #endif
      !
      if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))

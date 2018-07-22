@@ -27,10 +27,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
+ use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_H_dim
+ use BS,            ONLY:BS_H_dim, l_restart_bse
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
 &                        io_connect,io_header,io_mode,io_unit,io_netcdf_var
  use BS_solvers,    ONLY:variables_BS
@@ -52,7 +53,12 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Try to open the file 
  !
  stat = nf90_open(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
- if (stat==nf90_noerr) return
+ if (stat.eq.nf90_noerr) then
+    call msg("s","BSE file found. Restarting calculation." )
+    return
+ endif
+ l_restart_bse = .false.
+ call msg("s","BSE file not found. Creating an empty one." )
  !
  ! If it does not work create it
  !
@@ -72,7 +78,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! This is the upper triangular mode
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  !
@@ -108,9 +114,9 @@ subroutine io_BS_PAR_free(ID)
  use IO_m,          ONLY:io_disconnect,io_unit
  include 'netcdf.inc'
  !
- integer  :: ID, istat
+ integer  :: ID, stat
  !
- istat = nf_close(io_unit(ID))
+ stat = nf_close(io_unit(ID))
  call io_disconnect(ID)
  !
 end subroutine
@@ -139,13 +145,13 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
 #include<memory.h>
  include 'netcdf.inc'
  !
- integer  :: iq,ID,varid,istat
+ integer  :: iq,ID,varid,stat
  integer  :: start(1), count(1)
  !
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,n1,n2,idx,jdx,i,j,g1,g2,x1,x2,block_pos
+ integer             ::i_block,i1,i2,n1,n2,idx,jdx,start_idx,end_idx,i,j,g1,g2,x1,x2
  character(schlen)   ::ch,PARALLEL_STRUCTURE
  !
  call timing('io_BS',OPR='start')
@@ -154,8 +160,6 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
- istat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
- call netcdf_call(istat,ID)
  !
  ! Get dimensions
  x1=BS_blk(i_block)%coordinate(1)
@@ -164,49 +168,35 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  n2=BS_blk(i_block)%size(2)
  !  
 #ifdef UPLO
-#if 1
  !
  ! Write one element at a time in 1D upper triangular
  !
- do j=1,n2
-   do i=1,n1
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',io_netcdf_var(ID))
+ call netcdf_call(stat,ID)
+ do i2=1,n2
+   do i1=1,n1
      !calculate general index
-     g1 = (x1-1) + (i-1)
-     g2 = (x2-1) + (j-1)
+     g1 = (x1-1) + (i1-1)
+     g2 = (x2-1) + (i2-1)
      !ignore elements not in upper triangular part
      if (g1>g2) cycle
      !calculate tridiagonal index
-     jdx = g1*BS_H_dim+g2
-     idx = jdx-g1*(g1+1)/2+1
+     jdx = g1*BS_H_dim+g2    ! position in full matrix
+     idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
-     istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i,j))
-     call netcdf_call(istat,ID)
+     !write(*,*) i1,i2,g1,g2,idx
+     stat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
    enddo
  enddo
 #else
  !
- ! Write one column at a time in 1D upper triangular
- !
- do i=1,n1
-   !calculate (i,j) general index
-   g1 = (x1-1) + (i-1)
-   !calculate position of first element in flatten upper tridiagonal
-   idx = g2*BS_H_dim+g1+1
-   write(*,*) g1,idx
-   !write the column
-   istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,idx+n1-i], BS_blk(i_block)%mat(:i,i))
-   call netcdf_call(istat,ID)
- enddo
- !
-#endif
-#else
- !
  ! Write one block at a time in 2D
  !
- istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
- call netcdf_call(istat,ID)
- istat = nf_sync(io_unit(ID))
- call netcdf_call(istat,ID)
+ stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
+ call netcdf_call(stat,ID)
+ stat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ call netcdf_call(stat,ID)
+ stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
 #endif
  !   
  call timing('io_BS',OPR='stop')
@@ -233,13 +223,13 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
 #include<memory.h>
  include 'netcdf.inc'
  !
- integer  :: iq,ID,varid,istat
+ integer  :: iq,ID,varid,stat
  integer  :: start(1), count(1)
  !
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,n1,n2,idx,jdx,i,j,g1,g2,x1,x2,block_pos
+ integer             ::i_block,i1,i2,n1,n2,idx,jdx,i,j,g1,g2,x1,x2
  character(schlen)   ::ch,PARALLEL_STRUCTURE
  logical             ::transition_done
  !
@@ -249,8 +239,6 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
- istat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
- call netcdf_call(istat,ID)
  !
  ! Get dimensions
  x1=BS_blk(i_block)%coordinate(1)
@@ -259,15 +247,35 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  n2=BS_blk(i_block)%size(2)
  !  
 #ifdef UPLO
+ !
+ ! Read one block from upper triangular
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',io_netcdf_var(ID))
+ call netcdf_call(stat,ID)
+ do i2=1,n2
+   do i1=1,n1
+     !calculate general index
+     g1 = (x1-1) + (i1-1)
+     g2 = (x2-1) + (i2-1)
+     !ignore elements not in upper triangular part
+     if (g1>g2) cycle
+     !calculate tridiagonal index
+     jdx = g1*BS_H_dim+g2    ! position in full matrix
+     idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
+     !write the element 
+     !write(*,*) i1,i2,g1,g2,idx
+     stat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
+   enddo
+ enddo
 #else
  !
  ! Write one block at a time in 2D
+ stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID)); call netcdf_call(stat,ID)
+ stat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ call netcdf_call(stat,ID)
  !
- istat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
- call netcdf_call(istat,ID)
+#endif
  !
- ! fill in the done logicals
- !
+ ! Fill in the done logicals
  do i=1,n1
    do j=1,n2
      !if the value of the mat is different from the default it means the transition was computed
@@ -275,8 +283,6 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
      BS_blk(i_block)%done(i,j) = transition_done
    enddo
  enddo
- !
-#endif
  !   
  call timing('io_BS',OPR='stop')
  !

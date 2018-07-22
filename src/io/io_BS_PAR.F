@@ -59,23 +59,28 @@ subroutine io_BS_PAR_init(iq,X,ID)
     !
     ! If we are restarting check if the variables are present otherwise create them
     !
-    stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
-    stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
-    stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
-    !
 #ifdef UPLO
-    if (BS_K_coupling) then
+    stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
+#else
+    stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
+#endif
+    !
+    if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
+      !
+      stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
+      stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
+      stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
+      !
+#ifdef UPLO
       stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
       call netcdf_call(stat,ID)
       stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-    endif
 #else
-    if (BS_K_coupling) then 
       stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
       call netcdf_call(stat,ID)
       stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-    end if
 #endif
+    end if
     !
     return
  endif

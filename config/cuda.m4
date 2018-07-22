@@ -29,6 +29,11 @@ AC_ARG_ENABLE(cuda,
 def_cuda="-D_CUDA"
 CUDA_LIBS="-Mcudalib=cufft,cublas"
 
+#
+# cc35  for Kepler cards (eg K20, K40, K80)
+# cc60  for Pascal cards (eg P100)
+# cc70  for Volta  cards (eg V100)
+#
 if test x"$enable_cuda" = "xyes" ; then
    CUDA_FLAGS="-Mcuda=cuda8.0,cc35,nollvm $CUDA_LIBS"
 elif ! test x"$enable_cuda" = "x" ; then

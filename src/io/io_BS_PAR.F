@@ -32,14 +32,15 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_H_dim
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
-&                        io_connect,io_header,io_mode,io_unit
+&                        io_connect,io_header,io_mode,io_unit,io_netcdf_var
  use BS_solvers,    ONLY:variables_BS
 #include<memory.h>
+#define UPLO
  include 'netcdf.inc'
  !
  type(X_t) :: X 
  integer :: io_BS, iq, mode_flag, ncid, varid, stat, ID
- integer :: resonant_block_size,resonant_block_size_dim, complex_dim
+ integer :: resonant_block_size,flattened_block_size_dim,block_size_dim,complex_dim
  character(schlen) :: db_name,PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
@@ -58,43 +59,32 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_create(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  call netcdf_call(stat,ID)
  !
-#if 0
+ ! Initialize dimensions
  !
- ! This is the upper triangular mode
- !
- resonant_block_size = BS_H_dim*(BS_H_dim-1)/2
- stat = nf_def_dim(io_unit(ID), "flattened_upper_triangular_size", &
-&                  resonant_block_size, resonant_block_size_dim)
- stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim)
+ stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim); call netcdf_call(stat,ID) 
+ stat = nf_def_dim(io_unit(ID), "BS_H_dim", BS_H_dim, block_size_dim); call netcdf_call(stat,ID)
+ stat = nf_def_dim(io_unit(ID), "flat_BS_H_dim",BS_H_dim*(BS_H_dim+1)/2, flattened_block_size_dim)
  call netcdf_call(stat,ID) 
  !
  ! Intialize the variables where the matrix will be stored (resonant only FTM)
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 2, [complex_dim,resonant_block_size_dim], varid)
+#ifdef UPLO
+ !
+ ! This is the upper triangular mode
+ !
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
  call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_collective)
- call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  !
 #else
  !
  ! Here is the 2D mode
- ! 
- resonant_block_size = BS_H_dim
- stat = nf_def_dim(io_unit(ID), "BS_H_dim", resonant_block_size, resonant_block_size_dim)
- call netcdf_call(stat,ID) 
- stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim)
- call netcdf_call(stat,ID) 
  !
- ! Intialize the variables where the matrix will be stored (resonant only FTM)
- !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT",   nf_float, 3, &
-&                  [complex_dim,resonant_block_size_dim,resonant_block_size_dim], varid)
+ stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
  call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), varid, nf_independent)
- call netcdf_call(stat,ID)
+ stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  !
 #endif
- !
  !
  ! Stop define mode
  !
@@ -172,45 +162,28 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  x2=BS_blk(i_block)%coordinate(2)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
- !write(*,*) x1,x2,n1,n2
  !  
+#ifdef UPLO
 #if 1
- !
- ! Write one block at a time in 2D
- !
- !write(*,*) myid, varid, [x1,x2], [n1,n2]
- istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
- call netcdf_call(istat,ID)
- istat = nf_sync(io_unit(ID))
- call netcdf_call(istat,ID)
- !write(*,*) 'done writting'
-#endif
-
-#if 0
  !
  ! Write one element at a time in 1D upper triangular
  !
- do i=1,n1
-   do j=1,n2
-     !convert from general index to flatten upper tridiagonal index
-     if (j>=i) then 
-       !calculate general index
-       g1 = (x1-1) + (i-1)
-       g2 = (x2-1) + (j-1)
-       !calculate tridiagonal index
-       jdx = g2*BS_K_dim+g1
-       idx = jdx-(g2*(g2-1)/2)
-       !write the element 
-       write(*,*)
-       write(*,*) i,j,g1,g2,idx+1
-       !istat = nf_put_vara_real(io_unit(ID), varid, [idx], [1], BS_blk(i_block)%mat(i,j))
-       !call netcdf_call(istat,ID)
-     endif
+ do j=1,n2
+   do i=1,n1
+     !calculate general index
+     g1 = (x1-1) + (i-1)
+     g2 = (x2-1) + (j-1)
+     !ignore elements not in upper triangular part
+     if (g1>g2) cycle
+     !calculate tridiagonal index
+     jdx = g1*BS_H_dim+g2
+     idx = jdx-g1*(g1+1)/2+1
+     !write the element 
+     istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i,j))
+     call netcdf_call(istat,ID)
    enddo
  enddo
-#endif
-
-#if 0
+#else
  !
  ! Write one column at a time in 1D upper triangular
  !
@@ -218,16 +191,22 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
    !calculate (i,j) general index
    g1 = (x1-1) + (i-1)
    !calculate position of first element in flatten upper tridiagonal
-   idx = g2*BS_K_dim+g1+1
+   idx = g2*BS_H_dim+g1+1
    write(*,*) g1,idx
    !write the column
-   start = [idx]
-   count = [idx+n1-i]
-   istat = nf_put_vara_real(io_unit(ID), varid, [idx], [idx+n1-i], BS_blk(i_block)%mat(:i,i))
-   write(*,*) start, count, istat
+   istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,idx+n1-i], BS_blk(i_block)%mat(:i,i))
    call netcdf_call(istat,ID)
  enddo
  !
+#endif
+#else
+ !
+ ! Write one block at a time in 2D
+ !
+ istat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ call netcdf_call(istat,ID)
+ istat = nf_sync(io_unit(ID))
+ call netcdf_call(istat,ID)
 #endif
  !   
  call timing('io_BS',OPR='stop')
@@ -279,7 +258,8 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
  !  
-#if 1
+#ifdef UPLO
+#else
  !
  ! Write one block at a time in 2D
  !

@@ -27,16 +27,16 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
- use com,           ONLY:msg
+ use com,           ONLY:msg,get_name
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_H_dim, l_restart_bse
+ use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
-&                        io_connect,io_header,io_mode,io_unit,io_netcdf_var
+&                        io_connect,io_header,io_mode,io_unit,io_netcdf_var,io_file
  use BS_solvers,    ONLY:variables_BS
 #include<memory.h>
-#define UPLO
+!#define UPLO
  include 'netcdf.inc'
  !
  type(X_t) :: X 
@@ -48,13 +48,35 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Create parallel netCDF file.
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
+ io_file(ID)=get_name(db_name,' ',2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
  mode_flag = ior(ior(nf_netcdf4, nf_mpiio),nf90_write)
  !
  ! Try to open the file 
  !
- stat = nf90_open(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
+ stat = nf90_open(io_file(ID),mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  if (stat.eq.nf90_noerr) then
-    call msg("s","BSE file found. Restarting calculation." )
+    call msg("s","BSE file found in "//trim(io_file(ID))//" Restarting calculation." )
+    !
+    ! If we are restarting check if the variables are present otherwise create them
+    !
+    stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
+    stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
+    stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
+    !
+#ifdef UPLO
+    if (BS_K_coupling) then
+      stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
+      call netcdf_call(stat,ID)
+      stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+    endif
+#else
+    if (BS_K_coupling) then 
+      stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
+      call netcdf_call(stat,ID)
+      stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+    end if
+#endif
+    !
     return
  endif
  l_restart_bse = .false.
@@ -62,14 +84,14 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! If it does not work create it
  !
- stat = nf90_create(db_name,mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
+ stat = nf90_create(io_file(ID),mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
  call netcdf_call(stat,ID)
  !
  ! Initialize dimensions
  !
  stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim); call netcdf_call(stat,ID) 
- stat = nf_def_dim(io_unit(ID), "BS_H_dim", BS_H_dim, block_size_dim); call netcdf_call(stat,ID)
- stat = nf_def_dim(io_unit(ID), "flat_BS_H_dim",BS_H_dim*(BS_H_dim+1)/2, flattened_block_size_dim)
+ stat = nf_def_dim(io_unit(ID), "BS_K_dim", BS_K_dim, block_size_dim); call netcdf_call(stat,ID)
+ stat = nf_def_dim(io_unit(ID), "flat_BS_K_dim",BS_K_dim*(BS_K_dim+1)/2, flattened_block_size_dim)
  call netcdf_call(stat,ID) 
  !
  ! Intialize the variables where the matrix will be stored (resonant only FTM)
@@ -81,6 +103,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ if (BS_K_coupling) then 
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
+   call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ end if
  !
 #else
  !
@@ -89,6 +116,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
  call netcdf_call(stat,ID)
  stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ if (BS_K_coupling) then 
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
+   call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ end if
  !
 #endif
  !
@@ -136,7 +168,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_H_dim,BS_K_dim,BS_K_has_been_calculated_loaded
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_K_dim,BS_K_dim,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
 &                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
@@ -173,6 +205,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',io_netcdf_var(ID))
  call netcdf_call(stat,ID)
+ !
  do i2=1,n2
    do i1=1,n1
      !calculate general index
@@ -181,7 +214,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
      !ignore elements not in upper triangular part
      if (g1>g2) cycle
      !calculate tridiagonal index
-     jdx = g1*BS_H_dim+g2    ! position in full matrix
+     jdx = g1*BS_K_dim+g2    ! position in full matrix
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
@@ -214,7 +247,7 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_H_dim,BS_K_dim,BS_K_has_been_calculated_loaded
+ use BS,            ONLY:BS_blk,n_BS_blks,BS_K_dim,BS_K_dim,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
 &                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
@@ -259,7 +292,7 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
      !ignore elements not in upper triangular part
      if (g1>g2) cycle
      !calculate tridiagonal index
-     jdx = g1*BS_H_dim+g2    ! position in full matrix
+     jdx = g1*BS_K_dim+g2    ! position in full matrix
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx

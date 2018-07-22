@@ -94,7 +94,8 @@ module BS_solvers
  ! Solvers (Haydock)
  !=========
  logical  :: Haydock_terminator
- real(SP) :: Haydock_treshold
+ integer  :: Hatdock_iterIO
+ real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
 #if defined _SLEPC
  !

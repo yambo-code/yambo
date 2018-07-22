@@ -221,7 +221,7 @@ subroutine K_diago_driver(iq,W)
    !
    ! Destroy the matrix
    !============================
-   call MatDestroy(slepc_mat,ierr)
+   if(l_slepc) call MatDestroy(slepc_mat,ierr)
 #endif
    !
    call live_timing( )

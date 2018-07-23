@@ -173,7 +173,7 @@ if test x"$acx_libxc_ok" = xno; then
   # version y2.0.3
   #LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxc"
   # version 2.2.3 is used
-  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxcf90 -lxc"
+  LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
   LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a"; then
     compile_libxc="no"

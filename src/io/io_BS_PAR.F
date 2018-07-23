@@ -35,7 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_RD,&
 &                        io_connect,io_elemental,io_header,io_mode,io_unit,io_netcdf_var,io_file
  use BS_solvers,    ONLY:variables_BS
-#include<memory.h>
+ implicit none
 #define UPLO
 #if defined DOUBLE
 #define NF_PUT_VARA nf_put_vara_double
@@ -47,9 +47,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  include 'netcdf.inc'
  !
  type(X_t) :: X 
- integer :: io_BS, iq, mode_flag, ncid, varid, stat, ID, dims(3)
- integer :: resonant_block_size,flattened_block_size_dim,block_size_dim,complex_dim
- character(schlen) :: db_name,PARALLEL_STRUCTURE
+ integer :: io_BS, iq, mode_flag, stat, ID, dims(3)
+ integer :: flattened_block_size_dim,block_size_dim,complex_dim
+ character(schlen) :: db_name, PARALLEL_STRUCTURE
  character(lchlen) ::local_description(100)
  !
  ! Create parallel netCDF file.
@@ -170,7 +170,7 @@ subroutine io_BS_PAR_free(ID)
 end subroutine
 
 
-subroutine io_BS_PAR_write_block(iq,i_block,ID)
+subroutine io_BS_PAR_write_block(i_block,ID)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -178,29 +178,20 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  ! For each block only the upper triangular part is written
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
- use netcdf
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use parallel_m,    ONLY:myid
- use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_dim,BS_K_dim,BS_K_has_been_calculated_loaded
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
- use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
-&                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
+ use BS,            ONLY:BS_blk
+ use IO_m,          ONLY:io_bulk,io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
-#include<memory.h>
- include 'netcdf.inc'
+ implicit none
  !
- integer  :: iq,ID,varid,stat
- integer  :: start(1), count(1)
+ integer  :: ID
  !
  ! Work Space
  !
- complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,i2,n1,n2,idx,jdx,start_idx,end_idx,i,j,g1,g2,x1,x2
- character(schlen)   ::ch,PARALLEL_STRUCTURE
+ integer             ::i_block,x1,x2,n1,n2
+ character(schlen)   ::ch
  !
  call timing('io_BS',OPR='start')
  !
@@ -215,6 +206,29 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
  !  
+ call io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat)
+ !   
+ call timing('io_BS',OPR='stop')
+ !
+end subroutine
+
+subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat)
+ !
+ ! Given coordinates and dimensions of the blocks write them from the file
+ ! (This will be used to create the matrix distributed among the cpus)
+ !
+ use netcdf
+ use pars,          ONLY:SP,schlen
+ use BS,            ONLY:BS_K_dim
+ use IO_m,          ONLY:io_unit, io_netcdf_var, netcdf_call
+ implicit none
+ include 'netcdf.inc'
+ !
+ character(schlen)   ::ch
+ integer, intent(in) ::ID,x1,x2,n1,n2
+ integer             ::idx,jdx,stat,g1,g2,i1,i2
+ complex(SP)         ::mat(n1,n2) 
+ ! 
 #ifdef UPLO
  !
  ! Write one element at a time in 1D upper triangular
@@ -234,7 +248,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
+     stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], mat(i1,i2))
    enddo
  enddo
 #else
@@ -243,17 +257,15 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
  call netcdf_call(stat,ID)
- stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], mat)
  call netcdf_call(stat,ID)
  stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
-#endif
- !   
- call timing('io_BS',OPR='stop')
  !
+#endif
+
 end subroutine
 
-
-subroutine io_BS_PAR_read_block(iq,i_block,ID)
+subroutine io_BS_PAR_read_block(i_block,ID)
  !
  ! Read one block of the BSE matrix to disk
  !
@@ -261,26 +273,20 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
- use parallel_m,    ONLY:myid
- use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,n_BS_blks,BS_K_dim,BS_K_dim,BS_K_has_been_calculated_loaded
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
- use IO_m,          ONLY:io_sec,io_elemental,io_bulk,frag_BS_K,netcdf_call,&
-&                        read_is_on,write_is_on,io_mode,io_unit,io_netcdf_var,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
+ use BS,            ONLY:BS_blk,BS_K_dim
+ use IO_m,          ONLY:io_elemental,io_bulk,netcdf_call,&
+&                        read_is_on,write_is_on,io_unit,io_netcdf_var,VERIFY, &
+&                        io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
-#include<memory.h>
+ implicit none
  include 'netcdf.inc'
  !
- integer  :: iq,ID,varid,stat
- integer  :: start(1), count(1)
+ integer  :: ID,stat
  !
  ! Work Space
  !
- complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,i2,n1,n2,idx,jdx,i,j,g1,g2,x1,x2
- character(schlen)   ::ch,PARALLEL_STRUCTURE
- logical             ::transition_done
+ integer             ::i_block,i1,i2,n1,n2,idx,jdx,g1,g2,x1,x2
+ character(schlen)   ::ch
  !
  call timing('io_BS',OPR='start')
  !
@@ -295,6 +301,31 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
  !  
+ call io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat,BS_blk(i_block)%done)
+ !   
+ call timing('io_BS',OPR='stop')
+ !
+end subroutine
+
+subroutine io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
+ !
+ ! Given coordinates and dimensions of the blocks read them from the file
+ ! (This will be used to create the matrix distributed among the cpus)
+ !
+ use netcdf
+ use pars,          ONLY:SP,schlen
+ use BS,            ONLY:BS_K_dim
+ use IO_m,          ONLY:io_unit, io_netcdf_var, netcdf_call
+ implicit none
+ include 'netcdf.inc'
+ !
+ character(schlen)       ::ch
+ integer, intent(in)     ::ID,x1,x2,n1,n2
+ integer                 ::idx,jdx,stat,g1,g2,i1,i2
+ complex(SP),intent(out) ::mat(n1,n2) 
+ logical,intent(out)     ::done(n1,n2)
+ logical                 ::transition_done 
+ !
 #ifdef UPLO
  !
  ! Read one block from upper triangular
@@ -312,28 +343,26 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
+     stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], mat(i1,i2))
    enddo
  enddo
 #else
  !
  ! Write one block at a time in 2D
  stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID)); call netcdf_call(stat,ID)
- stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], mat)
  call netcdf_call(stat,ID)
  !
 #endif
  !
  ! Fill in the done logicals
- do i=1,n1
-   do j=1,n2
+ do i2=1,n2
+   do i1=1,n1
      !if the value of the mat is different from the default it means the transition was computed
-     transition_done = (real(BS_blk(i_block)%mat(i,j)) .ne. nf_fill_float)
-     BS_blk(i_block)%done(i,j) = transition_done
+     transition_done = (real(mat(i1,i2)) .ne. nf_fill_float)
+     done(i1,i2) = transition_done
    enddo
  enddo
- !   
- call timing('io_BS',OPR='stop')
  !
 end subroutine
 

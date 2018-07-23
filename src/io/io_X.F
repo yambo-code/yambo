@@ -40,7 +40,6 @@ integer function io_X(X,Xw,ID)
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
 #if defined _PAR_IO
- use netcdf,        ONLY:nf90_independent,nf90_collective
  use X_m,           ONLY:X_par
  use IO_m,          ONLY:io_unit,netcdf_call,io_file,close_is_on,io_resetable,io_RESPONSE,&
 &                        io_netcdf_var,io_action,OP_WR_CL
@@ -171,30 +170,25 @@ integer function io_X(X,Xw,ID)
    io_com_save=io_com(ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
 #if defined _PAR_IO
-   call def_variable_elemental(ID,trim(ch),sec_size,1,par_io_kind=nf90_independent)
+   call def_variable_elemental(ID,trim(ch),sec_size,SP,1,par_io_kind='independent')
 #else
-   call def_variable_elemental(ID,trim(ch),sec_size,1)
+   call def_variable_elemental(ID,trim(ch),sec_size,SP,1)
 #endif
    !
    if (perform_IO) then
      if (X%whoami==4) then
-       call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR=" PPA Im  energy     [ev]:",R0=X%ppaE,CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" PPA Im  energy     [ev]:",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
      if (X%whoami/=4) then
-       call io_variable_elemental(ID,&
-&         VAR=" :: Current Q-pt index     :",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X energy range     [ev]:",R1=Xw%er,CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,UNIT=HA2EV,&
-&         VAR=" :: X damping range    [ev]:",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,&
-&         VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif
      !
    endif
    !
-   call def_variable_elemental(ID,"",0,1)
+   call def_variable_elemental(ID,"",0,0,1)
    io_X=io_status(ID)
    !
    io_com(ID)=io_com_save
@@ -214,9 +208,9 @@ integer function io_X(X,Xw,ID)
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
 #if defined _PAR_IO
-   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/),par_io_kind=nf90_independent)
+   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/),SP,par_io_kind='independent')
 #else
-   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/))
+   call def_variable_bulk(ID,trim(ch),(/2,Xw%n_freqs/),SP)
 #endif
    if(perform_IO) call io_variable_bulk(ID,C1=Xw%p)
    !
@@ -227,14 +221,14 @@ integer function io_X(X,Xw,ID)
 #if defined _PAR_IO
    if(write_is_on(ID)) then
      !
-     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),par_io_kind=nf90_collective)
+     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
      call  io_variable_bulk(ID,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
      !
    else if(read_is_on(ID)) then
 #endif
      !
      if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/))
+     call def_variable_bulk(ID,trim(ch),(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
      call  io_variable_bulk(ID,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
      !
 #if defined _PAR_IO

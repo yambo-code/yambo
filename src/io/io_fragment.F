@@ -40,6 +40,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  use interfaces, ONLY:PARALLEL_live_message
  use parallel_m, ONLY:ncpu,myid,PP_bcast
  use timing_m,   ONLY:timing
+ !
  implicit none
  !
  integer           :: ID
@@ -59,7 +60,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  par_IO=.false.
 #if defined _PAR_IO
- if (present(COMM)) par_IO=present(COMM).and.write_is_on(ID)
+ if (present(COMM)) par_IO=present(COMM).and.write_is_on(ID).and.ncpu>1
 #endif
  !
  if (par_IO) then

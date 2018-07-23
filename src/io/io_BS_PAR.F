@@ -170,7 +170,7 @@ subroutine io_BS_PAR_free(ID)
 end subroutine
 
 
-subroutine io_BS_PAR_write_block(i_block,ID)
+subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -190,7 +190,7 @@ subroutine io_BS_PAR_write_block(i_block,ID)
  !
  ! Work Space
  !
- integer             ::i_block,x1,x2,n1,n2
+ integer             ::i_block,x1,x2,n1,n2,iq
  character(schlen)   ::ch
  !
  call timing('io_BS',OPR='start')
@@ -265,7 +265,7 @@ subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat)
 
 end subroutine
 
-subroutine io_BS_PAR_read_block(i_block,ID)
+subroutine io_BS_PAR_read_block(iq,i_block,ID)
  !
  ! Read one block of the BSE matrix to disk
  !
@@ -285,7 +285,7 @@ subroutine io_BS_PAR_read_block(i_block,ID)
  !
  ! Work Space
  !
- integer             ::i_block,i1,i2,n1,n2,idx,jdx,g1,g2,x1,x2
+ integer             ::i_block,i1,i2,n1,n2,idx,jdx,g1,g2,x1,x2,iq
  character(schlen)   ::ch
  !
  call timing('io_BS',OPR='start')

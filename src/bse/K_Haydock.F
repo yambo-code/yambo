@@ -32,13 +32,13 @@ subroutine K_Haydock(iq,W)
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
-&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod
+&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO
  use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock
+ use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu
  use timing_m,       ONLY:timing
 #if defined _KERR
  use KERR,           ONLY:B_Hall
@@ -56,6 +56,7 @@ subroutine K_Haydock(iq,W)
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
+ complex(SP),allocatable :: Vn_f(:)
  !
 #if defined _KERR
  type(Haydock_vector),allocatable :: V0_kerr(:)
@@ -468,29 +469,31 @@ subroutine K_Haydock(iq,W)
      !
    endif
    !
-   if ( mod(it,Haydock_iterIO)=0 .or. &
+   ! Haydock Coefficients and restart vectors on disk
+   !--------------------------------------------------
+   if ( mod(it,Haydock_iterIO)==0 .or. &
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       stop_now(.FALSE.)    ) then
      !
      ! DS: Here  PP redux required to get the vector
-     !
-     ! Haydock Coefficients and restart vectors on disk
-     !--------------------------------------------------
-     call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
-     if (use_cpl_scheme) then
-       Bf(1) = Haydock_v0_mod
+     ! TEST
+     !call HAYVEC_gather(Vn,Vn_f) 
+     !    
+     !call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
+     !if (use_cpl_scheme) then
+     !  Bf(1) = Haydock_v0_mod
 #if defined _KERR
-       if(l_kerr) io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+     !  if(l_kerr) io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
 #endif
-       if(.not.l_kerr) io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Cf=Cf(:it+1))
-       Bf(1) = 0._SP
-     else
-       io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1))
-     end if
+     !  if(.not.l_kerr) io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Cf=Cf(:it+1))
+     !  Bf(1) = 0._SP
+     !else
+     !  io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1))
+     !end if
      !
-     call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
-     if (     (use_cpl_scheme.or.l_kerr)) io_err=ioBSS_Haydock(ID,Vnm1,Vn,Vnp1=Vnp1)
-     if (.not.(use_cpl_scheme.or.l_kerr)) io_err=io_BSS_Haydock(ID,Vmm1,Vm)
+     !call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
+     !if (     (use_cpl_scheme.or.l_kerr)) io_err=ioBSS_Haydock(ID,Vnm1,Vn,Vnp1=Vnp1)
+     !if (.not.(use_cpl_scheme.or.l_kerr)) io_err=io_BSS_Haydock(ID,Vmm1,Vm)
      !
    endif
    !
@@ -699,6 +702,31 @@ subroutine K_Haydock(iq,W)
      if (use_cpl_scheme) deallocate(X_i)
      !
    end subroutine
+   !
+    subroutine HAYVEC_gather(V,fullV)
+     use BS,            ONLY:BS_K_dim
+     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX,master_cpu,PP_redux_wait
+     type(Haydock_vector),intent(in) :: V(BS_nT_grps)
+     complex(SP),allocatable,intent(out) :: fullV(:)
+     ! ws: 
+     integer                 :: istart_g,istop_g
+     !
+     allocate(fullV(BS_K_dim))
+     fullV = cZERO
+     istop_g = 0
+       
+     do i_g=1,BS_nT_grps
+       istart_g = istop_g + 1 
+       istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
+     enddo
+     !
+     call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+     call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
+     !
+     if (.not.master_cpu) deallocate(fullV)
+    end subroutine
    !
    function terminator(x,c1,c2,which)
      !

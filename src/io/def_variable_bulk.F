@@ -21,30 +21,48 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine def_variable_bulk(ID,VAR,VAR_SZ,par_io_kind)
+subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
  !
- use pars,    ONLY:nf90_SP
- use com,     ONLY:warning,error
  use netcdf
- use IO_m,    ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
-&                  netcdf_dim,io_file
+ use pars,       ONLY:SP,DP,IP,LP,nf90_SP
+ use com,        ONLY:warning,error
+ use parallel_m, ONLY:ncpu
+ use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
+&                     netcdf_dim,io_file
  !
  implicit none
  !
  integer      :: ID
  character(*) :: VAR
  integer      :: VAR_SZ(:)
- integer, optional  :: par_io_kind
+ integer      :: VAR_KIND
+ character(*), optional  :: par_io_kind
  !
  ! Work Space
  !
  integer, allocatable :: var_dim(:),var_dim_db(:)
- integer              :: j1,dims_db,nf_error
+ integer              :: j1,dims_db,nf_error,netcdf_par_io_kind,netcdf_var_kind
 #if defined _HDF5_COMPRESSION
  integer              :: shuffle,deflate,deflate_level
 #endif
  !
- ! Variable definition and ID
+ ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
+ !
+ if(VAR_KIND==SP)     netcdf_var_kind=nf90_float
+ if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
+ if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
+ if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
+ !if(VAR_KIND==0 ) netcdf_var_kind=nf90_char
+ !
+#if defined _PAR_IO
+ !
+ ! Define par IO kind
+ !
+ if(present(par_io_kind).and.ncpu>1) then
+   if(trim(par_io_kind)=="independent") netcdf_par_io_kind=nf90_independent
+   if(trim(par_io_kind)=="collective")  netcdf_par_io_kind=nf90_collective
+ endif
+#endif
  !
  if (write_is_on(ID)) then
    !
@@ -67,11 +85,11 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,par_io_kind)
    endif
    !
    if (nf_error/=NF90_NOERR) then
-     nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,var_dim,io_netcdf_var(ID)) 
+     nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)
 #if defined _PAR_IO
-     if(present(par_io_kind)) then
-       nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), par_io_kind)
+     if(present(par_io_kind).and.ncpu>1) then
+       nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), netcdf_par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
      endif
 #endif

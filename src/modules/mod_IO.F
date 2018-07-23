@@ -186,20 +186,21 @@ module IO_m
    !
    !  NEW: def and IO subroutines split in two
    !
-   subroutine def_variable_elemental(ID,VAR,VAR_SZ,MENU,CH0,CH1,par_io_kind)
+   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
      integer               :: ID
      character(*)          :: VAR
      integer               :: VAR_SZ
-     integer               :: MENU          ! MENU = 1 (on) 0 (off)
-     character(*),optional :: CH0,CH1(:)
-     integer,     optional :: par_io_kind
+     integer               :: VAR_KIND
+     integer               :: MENU
+     character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_SZ,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
      integer               :: ID
      character(*)          :: VAR
      integer               :: VAR_SZ(:)
-     integer,     optional :: par_io_kind
+     integer               :: VAR_KIND
+     character(*),optional :: par_io_kind
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -314,6 +315,7 @@ module IO_m
    !
    integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
+     use parallel_m,    ONLY:ncpu
      use stderr,        ONLY:string_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                            num_of_alternative_locations,n_alt_jobstr
@@ -328,9 +330,10 @@ module IO_m
      integer          ::CREATE_MODE,i_jobstr
      character(lchlen)::alternative_file(num_of_alternative_locations),folder
      character(schlen)::subfolder_
-     logical          ::file_found
+     logical          ::file_found,par_IO
      !
      io_connect=0
+     par_IO=present(COMM).and.ncpu>1
      !
      if ( (read_is_on(ID).and..not.IO_read).or.&
 &         (write_is_on(ID).and..not.IO_write) ) then
@@ -393,14 +396,14 @@ module IO_m
          if( file_exists(trim(io_file(ID))) ) then
            call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
          else
-           if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+           if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO
-           if(     present(COMM)) then
+           if(     par_IO) then
              call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
              &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
            endif
 #else
-           if(     present(COMM)) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+           if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
 #endif
            call netcdf_call(nf90_enddef(io_unit(ID)),ID)
            if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
@@ -409,14 +412,14 @@ module IO_m
          !
        else
          !
-         if(.not.present(COMM)) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+         if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO
-         if(     present(COMM)) then
+         if(     par_IO) then
            call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
            &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
          endif
 #else
-         if(     present(COMM)) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+         if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
 #endif
          call netcdf_call(nf90_enddef(io_unit(ID)),ID)
          !

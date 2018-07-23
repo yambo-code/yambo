@@ -31,7 +31,7 @@ case "${FC}" in
   #  does not work properly
   #
   *ifort*)
-    if test -z "$FPP";     then FPP="ifort -E -free"; fi
+    if test -z "$FPP";     then FPP="fpp -free -P"; fi
      ;;
   *gfortran | *g95)
      if test -z "$FPP";    then FPP="${FC} -E -P -cpp"; fi

@@ -30,6 +30,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use YPP,            ONLY:DOS_broadening,DOS_E_range,DOS_E_steps,electrons_dos_elemental,INTERP_grid,DOS_E_step
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
+ use IO_m,           ONLY:IO_and_Messaging_switch
  use com,            ONLY:msg
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
@@ -110,18 +111,20 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
+   call IO_and_Messaging_switch("-log")
+   !
    call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    call RT_carriers_to_RT_E(RT_E,"E")
-   !
-   if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"df")
-   if(     l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"f")
    !
    ! Built-in
    !----------
    ! QP corrections
    if (i_T==1) call QP_state_table_setup(RT_E)
    call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='s')
+   !
+   if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"df")
+   if(     l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"f")
    !... DOS
    call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.)
    !
@@ -180,6 +183,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      !
    enddo
    !
+   call IO_and_Messaging_switch("+log")
    !
    call live_timing(steps=1)
    !

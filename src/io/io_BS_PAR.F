@@ -28,7 +28,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use netcdf
  use parallel_m
  use com,           ONLY:msg,get_name,error
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:SP,schlen,lchlen,nf90_SP
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
@@ -37,6 +37,13 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS
 #include<memory.h>
 #define UPLO
+#if defined DOUBLE
+#define NF_PUT_VARA nf_put_vara_double
+#define NF_GET_VARA nf_get_vara_double
+#else
+#define NF_PUT_VARA nf_put_vara_real
+#define NF_GET_VARA nf_get_vara_real
+#endif
  include 'netcdf.inc'
  !
  type(X_t) :: X 
@@ -93,7 +100,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT_FLAT',io_netcdf_var(ID))
  if (stat.ne.nf90_noerr) then
    dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf_float, 2, dims, io_netcdf_var(ID))
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
@@ -101,7 +108,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
  if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
    dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, dims, io_netcdf_var(ID))
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
@@ -113,7 +120,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT',io_netcdf_var(ID))
  if (stat.ne.nf90_noerr) then 
    dims(:) = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 3, dims, io_netcdf_var(ID))
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf90_SP, 3, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent);
    call netcdf_call(stat,ID)
@@ -122,7 +129,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
  if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then 
    dims = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, dims, io_netcdf_var(ID))
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf90_SP, 3, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); 
    call netcdf_call(stat,ID)
@@ -227,7 +234,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
+     stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
    enddo
  enddo
 #else
@@ -236,7 +243,7 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  !
  stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
  call netcdf_call(stat,ID)
- stat = nf_put_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
  call netcdf_call(stat,ID)
  stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
 #endif
@@ -305,14 +312,14 @@ subroutine io_BS_PAR_read_block(iq,i_block,ID)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
+     stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], BS_blk(i_block)%mat(i1,i2))
    enddo
  enddo
 #else
  !
  ! Write one block at a time in 2D
  stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID)); call netcdf_call(stat,ID)
- stat = nf_get_vara_real(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
+ stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], BS_blk(i_block)%mat)
  call netcdf_call(stat,ID)
  !
 #endif

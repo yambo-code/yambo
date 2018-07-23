@@ -51,6 +51,7 @@ subroutine K_blocks( )
  !
  call section('=','CPU-dependent Block structure')
  !                 =============================
+ !
  do i_loop=1,2
    !
    if (i_loop==2) then

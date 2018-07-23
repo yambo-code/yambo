@@ -1,4 +1,4 @@
-objs = eval_G_minus_G.o G_rot_grid.o G_index.o \
+objs = eval_G_minus_G.o G_rot_grid.o G_index.o eval_Gradient.o \
        FREQUENCIES_damping.o FREQUENCIES_setup.o FREQUENCIES_coarse_grid.o \
        FREQUENCIES_Green_Function.o FREQUENCIES_reset.o FREQUENCIES_set_reference_point.o FREQUENCIES_merge.o \
        Kramers_Kronig.o Convolve.o RIntegrate.o Laplace_transform.o \

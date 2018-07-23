@@ -36,8 +36,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
 &                        io_connect,io_elemental,io_header,io_mode,io_unit,io_netcdf_var,io_file
  use BS_solvers,    ONLY:variables_BS
  implicit none
-#define UPLO
-#if defined DOUBLE
+!#define UPLO
+#if defined _DOUBLE
 #define NF_PUT_VARA nf_put_vara_double
 #define NF_GET_VARA nf_get_vara_double
 #else
@@ -100,16 +100,18 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT_FLAT',io_netcdf_var(ID))
  if (stat.ne.nf90_noerr) then
    dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID))
-   call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT_DONE", nf90_char, 1, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
  !
  stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
  if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
    dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID))
-   call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT_DONE", nf90_char, 1, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
  !
@@ -119,20 +121,20 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT',io_netcdf_var(ID))
  if (stat.ne.nf90_noerr) then 
-   dims(:) = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf90_SP, 3, dims, io_netcdf_var(ID))
-   call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent);
-   call netcdf_call(stat,ID)
+   dims = [complex_dim,block_size_dim,block_size_dim]
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf90_SP, 3, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf90_char, 2, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
  !
  stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
  if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then 
    dims = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf90_SP, 3, dims, io_netcdf_var(ID))
-   call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); 
-   call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf90_SP, 3, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_DONE", nf90_char, 2, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
  !
 #endif
@@ -206,13 +208,13 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
  !  
- call io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat)
+ call io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat,BS_blk(i_block)%done)
  !   
  call timing('io_BS',OPR='stop')
  !
 end subroutine
 
-subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat)
+subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
  !
  ! Given coordinates and dimensions of the blocks write them from the file
  ! (This will be used to create the matrix distributed among the cpus)
@@ -224,17 +226,18 @@ subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat)
  implicit none
  include 'netcdf.inc'
  !
- character(schlen)   ::ch
- integer, intent(in) ::ID,x1,x2,n1,n2
- integer             ::idx,jdx,stat,g1,g2,i1,i2
- complex(SP)         ::mat(n1,n2) 
+ character(schlen)     ::ch
+ integer, intent(in)   ::ID,x1,x2,n1,n2
+ integer               ::idx,jdx,stat,g1,g2,i1,i2,matid,doneid
+ complex(SP),intent(in)::mat(n1,n2) 
+ character,intent(in)  ::done(n1,n2)
  ! 
 #ifdef UPLO
  !
  ! Write one element at a time in 1D upper triangular
  !
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',io_netcdf_var(ID))
- call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',matid); call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT_DONE',doneid); call netcdf_call(stat,ID)
  !
  do i2=1,n2
    do i1=1,n1
@@ -248,21 +251,24 @@ subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], mat(i1,i2))
+     stat = NF_PUT_VARA(io_unit(ID), matid, [1,idx], [2,1], mat(i1,i2))
+     stat = nf_put_vara_text(io_unit(ID), doneid, [idx], [1], done(i1,i2))
    enddo
  enddo
 #else
  !
  ! Write one block at a time in 2D
  !
- stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID))
- call netcdf_call(stat,ID)
- stat = NF_PUT_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], mat)
- call netcdf_call(stat,ID)
- stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),ch,matid); call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_DONE',doneid); call netcdf_call(stat,ID)
+ !
+ stat = NF_PUT_VARA(io_unit(ID), matid, [1,x1,x2], [2,n1,n2], mat); call netcdf_call(stat,ID)
+ stat = nf_put_vara_text(io_unit(ID), doneid, [x1,x2], [n1,n2], done); call netcdf_call(stat,ID)
  !
 #endif
-
+ !
+ stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
+ !
 end subroutine
 
 subroutine io_BS_PAR_read_block(iq,i_block,ID)
@@ -321,16 +327,18 @@ subroutine io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
  !
  character(schlen)       ::ch
  integer, intent(in)     ::ID,x1,x2,n1,n2
- integer                 ::idx,jdx,stat,g1,g2,i1,i2
- complex(SP),intent(out) ::mat(n1,n2) 
- logical,intent(out)     ::done(n1,n2)
- logical                 ::transition_done 
+ integer                 ::idx,jdx,stat,g1,g2,i1,i2,matid,doneid
+ complex(SP),intent(inout) ::mat(n1,n2) 
+ character,intent(inout)   ::done(n1,n2)
+ !
+ ! First read the done/not done logicals
  !
 #ifdef UPLO
  !
  ! Read one block from upper triangular
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',io_netcdf_var(ID))
- call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',matid); call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT_DONE',doneid); call netcdf_call(stat,ID)
+ !
  do i2=1,n2
    do i1=1,n1
      !calculate general index
@@ -343,26 +351,20 @@ subroutine io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,idx], [2,1], mat(i1,i2))
+     stat = nf_get_vara_text(io_unit(ID), doneid, [idx], [1], done(i1,i2))
+     stat = NF_GET_VARA(io_unit(ID), matid, [1,idx], [2,1], mat(i1,i2))
    enddo
  enddo
 #else
  !
- ! Write one block at a time in 2D
- stat = nf90_inq_varid(io_unit(ID),ch,io_netcdf_var(ID)); call netcdf_call(stat,ID)
- stat = NF_GET_VARA(io_unit(ID), io_netcdf_var(ID), [1,x1,x2], [2,n1,n2], mat)
- call netcdf_call(stat,ID)
+ ! Read one block at a time in 2D
+ stat = nf90_inq_varid(io_unit(ID),trim(ch),matid); call netcdf_call(stat,ID)
+ stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_DONE',doneid); call netcdf_call(stat,ID)
+ !
+ stat = nf_get_vara_text(io_unit(ID), doneid, [x1,x2], [n1,n2], done); call netcdf_call(stat,ID)
+ stat = NF_GET_VARA(io_unit(ID), matid, [1,x1,x2], [2,n1,n2], mat); call netcdf_call(stat,ID)
  !
 #endif
- !
- ! Fill in the done logicals
- do i2=1,n2
-   do i1=1,n1
-     !if the value of the mat is different from the default it means the transition was computed
-     transition_done = (real(mat(i1,i2)) .ne. nf_fill_float)
-     done(i1,i2) = transition_done
-   enddo
- enddo
  !
 end subroutine
 

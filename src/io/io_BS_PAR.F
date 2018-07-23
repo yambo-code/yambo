@@ -27,16 +27,16 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
- use com,           ONLY:msg,get_name
+ use com,           ONLY:msg,get_name,error
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
- use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
-&                        io_connect,io_header,io_mode,io_unit,io_netcdf_var,io_file
+ use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_RD,&
+&                        io_connect,io_elemental,io_header,io_mode,io_unit,io_netcdf_var,io_file
  use BS_solvers,    ONLY:variables_BS
 #include<memory.h>
-!#define UPLO
+#define UPLO
  include 'netcdf.inc'
  !
  type(X_t) :: X 
@@ -60,6 +60,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
     ! If we are restarting check if the variables are present otherwise create them
     call msg("s","BSE file found in "//trim(io_file(ID))//" Restarting calculation." )
     !
+    io_action(ID) = OP_RD
+    io_mode(ID)=VERIFY
     ! Read dimensions
     stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
     stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
@@ -137,6 +139,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS=variables_BS(ID,local_description,X=X)
+ if (io_BS/=0) then
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
+ &            ' Remove the file or change the input file')
+ endif
  !
 end subroutine
 

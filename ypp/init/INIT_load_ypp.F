@@ -223,14 +223,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
- !
- ! GPL_EXCLUDE_START 
- !
  call it(defs,'PtsPath','Path points labels (G,M,K,L...)',PtsPath)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
- !
- ! GPL_EXCLUDE_END
- !
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 

@@ -31,7 +31,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
+ use BS,            ONLY:BS_K_dim, l_restart_bse
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
 &                        io_connect,io_header,io_mode,io_unit,io_netcdf_var,io_file
  use BS_solvers,    ONLY:variables_BS
@@ -54,35 +54,17 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ! Try to open the file 
  !
  stat = nf90_open(io_file(ID),mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
+ !
+ ! If we are restarting check if the variables are present otherwise create them
+ !
  if (stat.eq.nf90_noerr) then
+    !
     call msg("s","BSE file found in "//trim(io_file(ID))//" Restarting calculation." )
-    !
-    ! If we are restarting check if the variables are present otherwise create them
-    !
-#ifdef UPLO
-    stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
-#else
-    stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
-#endif
-    !
-    if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
-      !
-      stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
-      stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
-      stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
-      !
-#ifdef UPLO
-      stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
-      call netcdf_call(stat,ID)
-      stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-#else
-      stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
-      call netcdf_call(stat,ID)
-      stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-#endif
-    end if
-    !
+    stat = nf_redef(io_unit(ID)); call netcdf_call(stat,ID)
+    call io_BS_create_empty_vars(ID)
+    stat = nf_enddef(io_unit(ID)); call netcdf_call(stat,ID)
     return
+    !
  endif
  l_restart_bse = .false.
  call msg("s","BSE file not found. Creating an empty one." )
@@ -99,17 +81,54 @@ subroutine io_BS_PAR_init(iq,X,ID)
  stat = nf_def_dim(io_unit(ID), "flat_BS_K_dim",BS_K_dim*(BS_K_dim+1)/2, flattened_block_size_dim)
  call netcdf_call(stat,ID) 
  !
- ! Intialize the variables where the matrix will be stored (resonant only FTM)
+ call io_BS_create_empty_vars(ID)
+ stat = nf_enddef(io_unit(ID)); call netcdf_call(stat,ID)
+ !
+ ! Write some metadata
+ !
+ PARALLEL_STRUCTURE="NONE"
+ if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
+ io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
+ &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
+ !
+ io_BS=variables_BS(ID,local_description,X=X)
+ !
+end subroutine
+
+subroutine io_BS_create_empty_vars(ID)
+ !
+ ! Intialize the variables where the matrix will be stored
+ !
+ use netcdf
+ use BS,            ONLY:BS_K_coupling
+ use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,&
+&                        io_connect,io_header,io_mode,io_unit,io_netcdf_var,io_file
+#include<memory.h>
+ include 'netcdf.inc'
+ !
+ integer :: ID,stat,dims(3)
+ integer :: resonant_block_size,flattened_block_size_dim,block_size_dim,complex_dim
+ !
+ stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
+ stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
+ stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
  !
 #ifdef UPLO
  !
  ! This is the upper triangular mode
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
- call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- if (BS_K_coupling) then 
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, [complex_dim,flattened_block_size_dim], io_netcdf_var(ID))
+ stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT_FLAT',io_netcdf_var(ID))
+ if (stat.ne.nf90_noerr) then
+   dims(:2) = [complex_dim,flattened_block_size_dim]
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf_float, 2, dims, io_netcdf_var(ID))
+   call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ end if
+ !
+ stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
+ if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
+   dims(:2) = [complex_dim,flattened_block_size_dim]
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf_float, 2, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
@@ -118,28 +137,23 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  ! Here is the 2D mode
  !
- stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
- call netcdf_call(stat,ID)
- stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- if (BS_K_coupling) then 
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, [complex_dim,block_size_dim,block_size_dim], io_netcdf_var(ID))
+ stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT',io_netcdf_var(ID))
+ if (stat.ne.nf90_noerr) then 
+   dims(:) = [complex_dim,block_size_dim,block_size_dim]
+   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf_float, 3, dims, io_netcdf_var(ID))
+   call netcdf_call(stat,ID)
+   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
+ end if
+ !
+ stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
+ if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then 
+   dims = [complex_dim,block_size_dim,block_size_dim]
+   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf_float, 3, dims, io_netcdf_var(ID))
    call netcdf_call(stat,ID)
    stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
  end if
  !
 #endif
- !
- ! Stop define mode
- !
- stat = nf_enddef(io_unit(ID))
- call netcdf_call(stat,ID)
- !
- ! Write some metadata
- !
- io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
- &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
- !
- io_BS=variables_BS(ID,local_description,X=X)
  !
 end subroutine
 

@@ -51,9 +51,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Work space
  !
  type(bz_samp)         :: RT_k
- type(levels)          :: CIRCUIT_E,RT_E
- real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
-&                         spin_interpolated(:,:,:),magn_interpolated(:,:,:),fit_on_grid(:,:,:,:)
+ type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
+ real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,message
  character(lchlen)     :: of_string
@@ -102,14 +101,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! ... and Eo in RT_E...
  call RT_carriers_to_RT_E(RT_E,"Eo")
  !
- ! Map RT_carriers%kpt ==> RT_k%kpt
- !     RT_carriers%E   ==> RT_E%E 
- !======================================
- !call RT_map_carriers_in_E_and_K(RT_E,RT_k,-1)
- !
  ! Perform the energies interpolation
  !======================================
- call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E)
+ call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
  !
  ! Interpolation INIT 
  !====================
@@ -133,57 +127,35 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
  !
- YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),RT_carriers%nk,n_sp_pol))
- !
- YAMBO_ALLOC(fit_on_circuit,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_sp_pol,n_T_steps))
- if (all(INTERP_grid>0)) then
-   YAMBO_ALLOC(fit_on_grid,(RT_bands(1):RT_bands(2),GRID_k%nibz,n_sp_pol,n_T_steps))
- endif
- !
  call live_timing('Interpolation procedure',n_T_steps)
  !
  do i_T=1,n_T_steps
-   !
-   write_to_log=.FALSE.
    !
    call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
    Real_Nhole=0._SP
    Real_Nel=0._SP
    do i_RT=1,RT_carriers%nstates
-     !
-     ib      =RT_carriers%table(i_RT,1)
-     ik      =RT_carriers%table(i_RT,3)
-     i_sp_pol=RT_carriers%table(i_RT,4)
-     !
      if(ib<=RT_E%nbf) Real_Nhole=Real_Nhole-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
      if(ib> RT_E%nbf) Real_Nel  =Real_Nel  +RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
-     !
-     if (.not.l_nearest_neig_interp) then
-       if (l_RT_occupations) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%delta_f(i_RT)
-       if (l_RT_lifetimes  ) variable_to_fit(ib,ik,i_sp_pol)= RT_carriers%NEQ_Lifetime(i_RT) 
-     endif
-     !
    enddo
    Max_occ=maxval((/Max_occ,RT_carriers%delta_f/))
    !
+   ! RT_carriers -> RT_E
+   !
+   call RT_carriers_to_RT_E(RT_E,"E")
+   call RT_carriers_to_RT_E(RT_E,"df")
+   !
    if (.not.l_nearest_neig_interp) then
      !
-     ! STEP 1: define coefficients for occupations/lifetimes
-     !
-     !call INTERPOLATION_coefficients(R2D=variable_to_fit,k=RT_k,Nk=RT_k%nibz,ID=INTERP_RT_id)
-     !
-     ! STEP 2
-     ! 1: interpolate on the circuit if (BANDS_steps>0)
-     !
-     !if (BANDS_steps> 0)    call INTERPOLATION_BZ(K=CIRCUIT_k,R2D=fit_on_circuit(:,:,:,i_T),ID=INTERP_RT_id)
-     !
-     ! STEP 3
-     ! interpolate on the grid if (all(INTERP_grid>0))
-     !
-     !if(all(INTERP_grid>0)) call INTERPOLATION_BZ(K=GRID_k,R2D=fit_on_grid(:,:,:,i_T),ID=INTERP_RT_id)
-     !
-     !call INTERPOLATION_reset(INTERP_RT_id)
+     if (l_RT_occupations) then
+       call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.)
+       call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="f_on_RT_grid",QUIET=.TRUE.)
+     else if (l_RT_lifetimes) then
+       !call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.)
+       !call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="f_on_RT_grid",QUIET=.TRUE.)
+     endif
+     call INTERPOLATION_driver(operation="END",QUIET=.TRUE.)
      !
    elseif(l_nearest_neig_interp) then
      !
@@ -191,39 +163,37 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      if(i_T==1) message='RT setup'
      !
      if(l_RT_occupations)  then
-       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
-&                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),trim(message),l_normalize_Nel)
+!       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
+!&                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+!&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+!&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),trim(message),l_normalize_Nel)
      endif
      if(l_RT_lifetimes) then
-       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
-&                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),trim(message),.false.)
+!       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
+!&                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
+!&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
+!&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),trim(message),.false.)
      endif
      !
    endif
    !
-   ! Normilize the occupations
+   ! Normalize the occupations
    !
    if(l_RT_occupations) then
      !
-     Nhole=-sum(fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T))/real(CIRCUIT_k%nbz)
-     Nel=   sum(fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nbz)
-     !
-     if(.not.l_nearest_neig_interp.and.l_normalize_Nel) then
-       if (Nhole>0) then
-         fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)=fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)/Nhole*Real_Nhole
-       endif
-       if (Nel>0) then
-         fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)=fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)/Nel*Real_Nel
-       endif
-     endif
+!     Nhole=-sum(fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T))/real(CIRCUIT_k%nbz)
+!     Nel=   sum(fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nbz)
+!     !
+!     if(.not.l_nearest_neig_interp.and.l_normalize_Nel) then
+!       if (Nhole>0) then
+!         fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)=fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)/Nhole*Real_Nhole
+!       endif
+!       if (Nel>0) then
+!         fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)=fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)/Nel*Real_Nel
+!       endif
+!     endif
      !
    endif
-   !
-   write_to_log=write_to_log_default
    !
    call live_timing(steps=1)
    !
@@ -231,11 +201,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  call live_timing( )
  !
- !if (.not.l_nearest_neig_interp) call INTERPOLATION_reset( )
- !
  call RT_carriers_object(RT_carriers,WHAT='free')
- !
- YAMBO_FREE(variable_to_fit)
  !
  ! Output: bands on circuit
  !==========================
@@ -283,12 +249,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
        !
        values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
        if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV
-!       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
-!         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
-!       endif
+       if (allocated(RT_E%Eo).and.allocated(CIRCUIT_E_db%E)) then
+         values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
+       endif
        !
-       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
-       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
+!       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
+!       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
@@ -311,10 +277,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  call live_timing( )
  !
- YAMBO_FREE(fit_on_circuit)
- YAMBO_FREE(fit_on_grid)
- !
  call E_reset(CIRCUIT_E)
+ call E_reset(RT_E)
  if(n_spinor==2) then
    YAMBO_FREE(spin_interpolated)
    YAMBO_FREE(magn_interpolated)

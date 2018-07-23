@@ -120,7 +120,7 @@ module BS
    ! Matrix Block
    !--------------
    complex(SP), allocatable      :: mat(:,:)
-   logical, allocatable          :: done(:,:)
+   character, allocatable        :: done(:,:)
    !
    ! Oscillators...
    !

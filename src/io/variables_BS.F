@@ -54,7 +54,9 @@ integer function variables_BS(ID,local_description,X)
  i_local_desc=1
  local_description=' '
  !
+ write(*,*) 'read'
  call io_elemental(ID,VAR="PARS1",VAR_SZ=var_size,MENU=0)
+ write(*,*) 'here'
  call io_elemental(ID,&
 &     VAR=" BSK|Identifier              :",I0=BS_identifier,&
 &     DESCRIPTION=local_description(i_local_desc))

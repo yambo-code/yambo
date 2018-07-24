@@ -33,7 +33,7 @@ subroutine K_Haydock(iq,W)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO
- use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps
+ use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
@@ -52,7 +52,7 @@ subroutine K_Haydock(iq,W)
  !
  ! Work Space
  !
- integer            ::it,it_on_disk,i_g
+ integer            ::it,it_on_disk,i_g,ID,io_err
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
@@ -474,28 +474,30 @@ subroutine K_Haydock(iq,W)
    if ( mod(it,Haydock_iterIO)==0 .or. &
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       stop_now(.FALSE.)    ) then
-     ! 
+     !
      call HAYVEC_gather(Vn,Vn_f) 
-     call HAYVEC_gather(Vnp1,Vnp1_f) 
      call HAYVEC_gather(Vnm1,Vnm1_f) 
-     !    
-     !call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
-     !if (use_cpl_scheme) then
-     !  Bf(1) = Haydock_v0_mod
+     if (use_cpl_scheme) call HAYVEC_gather(Vnp1,Vnp1_f) 
+     !  
+     call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
+     if (use_cpl_scheme) then
+       Bf(1) = Haydock_v0_mod
 #if defined _KERR
-     !  if(l_kerr) io_err=ioBSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+!
+!       MG: to check        
+!
+!       if(l_kerr) io_err=&
+!       io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
 #endif
-     !  if(.not.l_kerr) io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Cf=Cf(:it+1))
-     !  Bf(1) = 0._SP
-     !else
-     !  io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1))
-     !end if
+       io_err=&
+            io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
+       Bf(1) = 0._SP
+     else
+       io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
+     end if
      !
-     !call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
-     !if (     (use_cpl_scheme.or.l_kerr)) io_err=ioBSS_Haydock(ID,Vnm1,Vn,Vnp1=Vnp1)
-     !if (.not.(use_cpl_scheme.or.l_kerr)) io_err=io_BSS_Haydock(ID,Vmm1,Vm)
-     !
-     if (master_cpu) deallocate(Vn_f, Vnp1_f, Vnm1_f)
+     if (master_cpu) deallocate(Vn_f, Vnm1_f)
+     if (master_cpu.and.use_cpl_scheme) deallocate(Vnp1_f) 
    endif
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
@@ -710,7 +712,6 @@ subroutine K_Haydock(iq,W)
      ! large vector of full dimension  
      ! on the master for I/O 
      ! 
-     use BS,            ONLY:BS_K_dim
      use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
                              PAR_COM_eh_INDEX,master_cpu,PP_redux_wait
      type(Haydock_vector),intent(in) :: V(BS_nT_grps)

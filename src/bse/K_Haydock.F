@@ -56,7 +56,7 @@ subroutine K_Haydock(iq,W)
  integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
  complex(SP),allocatable :: Cf(:)
- complex(SP),allocatable :: Vn_f(:)
+ complex(SP),allocatable :: Vn_f(:),Vnm1_f(:),Vnp1_f(:) 
  !
 #if defined _KERR
  type(Haydock_vector),allocatable :: V0_kerr(:)
@@ -474,10 +474,10 @@ subroutine K_Haydock(iq,W)
    if ( mod(it,Haydock_iterIO)==0 .or. &
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       stop_now(.FALSE.)    ) then
-     !
-     ! DS: Here  PP redux required to get the vector
-     ! TEST
-     !call HAYVEC_gather(Vn,Vn_f) 
+     ! 
+     call HAYVEC_gather(Vn,Vn_f) 
+     call HAYVEC_gather(Vnp1,Vnp1_f) 
+     call HAYVEC_gather(Vnm1,Vnm1_f) 
      !    
      !call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID)
      !if (use_cpl_scheme) then
@@ -495,6 +495,7 @@ subroutine K_Haydock(iq,W)
      !if (     (use_cpl_scheme.or.l_kerr)) io_err=ioBSS_Haydock(ID,Vnm1,Vn,Vnp1=Vnp1)
      !if (.not.(use_cpl_scheme.or.l_kerr)) io_err=io_BSS_Haydock(ID,Vmm1,Vm)
      !
+     if (master_cpu) deallocate(Vn_f, Vnp1_f, Vnm1_f)
    endif
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
@@ -703,9 +704,15 @@ subroutine K_Haydock(iq,W)
      !
    end subroutine
    !
-    subroutine HAYVEC_gather(V,fullV)
+   subroutine HAYVEC_gather(V,fullV)
+     !
+     ! Gather the Haydock vector fragments into one 
+     ! large vector of full dimension  
+     ! on the master for I/O 
+     ! 
      use BS,            ONLY:BS_K_dim
-     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX,master_cpu,PP_redux_wait
+     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
+                             PAR_COM_eh_INDEX,master_cpu,PP_redux_wait
      type(Haydock_vector),intent(in) :: V(BS_nT_grps)
      complex(SP),allocatable,intent(out) :: fullV(:)
      ! ws: 
@@ -714,11 +721,13 @@ subroutine K_Haydock(iq,W)
      allocate(fullV(BS_K_dim))
      fullV = cZERO
      istop_g = 0
-       
+     !
+     ! In this loop I need T_groups indexes since I do not want duplicates 
+     !
      do i_g=1,BS_nT_grps
        istart_g = istop_g + 1 
        istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
        fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
      enddo
      !
@@ -726,7 +735,7 @@ subroutine K_Haydock(iq,W)
      call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
      !
      if (.not.master_cpu) deallocate(fullV)
-    end subroutine
+   end subroutine HAYVEC_gather  
    !
    function terminator(x,c1,c2,which)
      !

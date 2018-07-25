@@ -65,7 +65,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  if (stat.eq.nf90_noerr) then
     !
     ! If we are restarting check if the variables are present otherwise create them
-    call msg("s","BSE file found in "//trim(io_file(ID))//" Restarting calculation." )
+    call msg("s","BSE file found in "//trim(io_file(ID))//" Reading for restart/ypp." )
     !
     io_action(ID) = OP_RD
     io_mode(ID)=VERIFY
@@ -150,8 +150,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=variables_BS(ID,local_description,X=X)
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
-!   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
-! &            ' Remove the file or change the input file')
+   call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
+ &            ' Remove the file or change the input file')
  endif
  !
 end subroutine

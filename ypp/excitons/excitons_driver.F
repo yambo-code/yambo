@@ -92,8 +92,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Here I read information from the BS database
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- !io_err=io_BS(1,Xbsk,io_ID)
- db_name='BS_Q'//trim(intc(iq))
+ db_name='BS_Q'//trim(intc(iq))//'.nc'
  io_err=io_connect(desc=trim(db_name),type=2,ID=io_ID)
  io_err=variables_BS(io_ID,local_description,X=Xbsk)
  !

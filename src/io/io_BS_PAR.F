@@ -27,13 +27,14 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
- use com,           ONLY:msg,get_name,error
+ use com,           ONLY:msg,get_name,error,file_exists
  use pars,          ONLY:SP,schlen,lchlen,nf90_SP
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
- use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_RD,&
-&                        io_connect,io_elemental,io_header,io_mode,io_unit,io_netcdf_var,io_file
+ use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_WR,&
+&                        io_connect,io_disconnect,io_elemental,&
+&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,rm_file
  use BS_solvers,    ONLY:variables_BS
  implicit none
 !#define UPLO
@@ -49,13 +50,24 @@ subroutine io_BS_PAR_init(iq,X,ID)
  type(X_t) :: X 
  integer :: io_BS, iq, mode_flag, stat, ID, dims(3)
  integer :: flattened_block_size_dim,block_size_dim,complex_dim
- character(schlen) :: db_name, PARALLEL_STRUCTURE
- character(lchlen) ::local_description(100)
+ character(schlen) :: db_name, file_to_use, PARALLEL_STRUCTURE
+ character(lchlen) :: local_description(100)
  !
  ! Create parallel netCDF file.
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
- io_file(ID)=get_name(db_name,' ',2,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+ ! I use the io_connect logic to create the folder
+ ! then I close the file and create it again in parallel
+ ! should use io_connect in parallel once merged with devel-par-io
+ io_action(ID) = OP_WR
+ if (myid == 0 .and. .not. file_exists(io_file(ID))) then
+   io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
+   file_to_use = io_file(ID)
+   call io_disconnect(ID)
+   call rm_file(file_to_use)
+   io_file(ID) = file_to_use
+ end if
+ !
  mode_flag = ior(ior(nf_netcdf4, nf_mpiio),nf90_write)
  !
  ! Try to open the file 
@@ -65,9 +77,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  if (stat.eq.nf90_noerr) then
     !
     ! If we are restarting check if the variables are present otherwise create them
-    call msg("s","BSE file found in "//trim(io_file(ID))//" Reading for restart/ypp." )
+    call msg("s","BSE file found in "//trim(io_file(ID)))
     !
-    io_action(ID) = OP_RD
     io_mode(ID)=VERIFY
     ! Read dimensions
     stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 

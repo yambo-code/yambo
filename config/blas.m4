@@ -135,7 +135,7 @@ elif (test -d "$with_blas_libs" && test "$with_blas_libs" = "") || test x"$enabl
 fi
   
 if test "$internal_blas" = "yes"; then
-  BLAS_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lblas";
+  BLAS_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.a";
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.a; then
     compile_blas="no";
   else

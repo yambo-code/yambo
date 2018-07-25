@@ -38,7 +38,8 @@ subroutine K_Haydock(iq,W)
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu
+ use parallel_m,     ONLY:PAR_IND_T_groups,PP_bcast,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu,PAR_COM_Xk_ibz_INDEX, &
+                             PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
 #if defined _KERR
  use KERR,           ONLY:B_Hall
@@ -131,13 +132,14 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_alloc(Vnm1)
  call BS_HAYVEC_alloc(Vnp1)
  !
- ! Haydock Coefficients and restart vector on disk
+ ! Haydock Coefficients and restart vector from disk
  !=================================================
  it_on_disk=0
- ! call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- ! !
- ! if (use_cpl_scheme) then 
- !  !
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
+ allocate(Vn_f(BS_K_dim),Vnm1_f(BS_K_dim))
+ !
+ if (use_cpl_scheme) then
+   allocate(Vnp1_f(BS_K_dim))
  !
 #if defined _KERR
  !  if(l_kerr) then
@@ -146,25 +148,25 @@ subroutine K_Haydock(iq,W)
  !  else
 #endif
  !
- !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2)&
- !        &,Vmm1,Vm,Vnp1=Vmp1,Cf=Cf(:2))   
+ io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),&
+&       Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:2))   
  !
 #if defined _KERR
  !  endif
 #endif
  !
- ! else
- !   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),Vmm1,Vm)
- !endif
+ else
+   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),Vnm1_f,Vn_f)
+ endif
  !
  !
- ! if (io_err>0) call error('K_Haydock: restart of Haydock temporary disabled') 
+ !if (io_err>0) call error('K_Haydock: restart of Haydock temporary disabled') 
  !
- ! if (io_err>0) then 
- !   !
- !   it_on_disk=io_err 
- !   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
- !   if (use_cpl_scheme) then 
+ if (io_err>0) then 
+   !
+   it_on_disk=io_err 
+   call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
+   if (use_cpl_scheme) then 
  !
 #if defined _KERR
  !    if(l_kerr) then
@@ -172,21 +174,35 @@ subroutine K_Haydock(iq,W)
  !      &                    Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
  !    else
 #endif
- !
- !      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
- !      &                   Bf(:it_on_disk+1),Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1))
+ 
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
+&                   Bf(:it_on_disk+1),Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:it_on_disk+1))
  !
 #if defined _KERR
  !    endif
 #endif
  !
- !   else
- !     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
- !     &      Bf(:it_on_disk+1),Vmm1,Vm)
- !     call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
- !   end if
- !   !
- ! endif
+   else
+     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
+     &      Bf(:it_on_disk+1),Vnm1_f,Vn_f)
+     call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
+   end if
+   !  
+   call PP_bcast(Af,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
+   call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)  
+   call PP_bcast(Bf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
+   call PP_bcast(Bf,0,COMM=PAR_COM_eh_INDEX%COMM)  
+   call HAYVEC_scatter(Vn,Vn_f)
+   call HAYVEC_scatter(Vnm1,Vnm1_f)
+   if (use_cpl_scheme) then
+     call PP_bcast(Cf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
+     call HAYVEC_scatter(Vnp1,Vnp1_f)
+     deallocate(Vnp1_f)
+   endif
+   !
+   deallocate(Vnm1_f,Vn_f)
+ end if
  !
  ! Update Descriptions
  !=====================
@@ -469,7 +485,7 @@ subroutine K_Haydock(iq,W)
      !
    endif
    !
-   ! Haydock Coefficients and restart vectors on disk
+   ! Haydock Coefficients and restart vectors to disk
    !--------------------------------------------------
    if ( mod(it,Haydock_iterIO)==0 .or. &
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
@@ -484,14 +500,19 @@ subroutine K_Haydock(iq,W)
        Bf(1) = Haydock_v0_mod
 #if defined _KERR
 !
-!       MG: to check        
+!       MG: DS to check        
 !
-!       if(l_kerr) io_err=&
-!       io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+!       if(l_kerr) then
+!         io_err=&
+!         io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+!       else 
 #endif
-       io_err=&
-            io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
-       Bf(1) = 0._SP
+         io_err=&
+           io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
+         Bf(1) = 0._SP
+#if defined _KERR
+!        endif
+#endif 
      else
        io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
      end if
@@ -713,7 +734,7 @@ subroutine K_Haydock(iq,W)
      ! on the master for I/O 
      ! 
      use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
-                             PAR_COM_eh_INDEX,master_cpu,PP_redux_wait
+                             PAR_COM_eh_INDEX,PP_redux_wait
      type(Haydock_vector),intent(in) :: V(BS_nT_grps)
      complex(SP),allocatable,intent(out) :: fullV(:)
      ! ws: 
@@ -737,6 +758,33 @@ subroutine K_Haydock(iq,W)
      !
      if (.not.master_cpu) deallocate(fullV)
    end subroutine HAYVEC_gather  
+   !
+   subroutine HAYVEC_scatter(V,fullV)
+     !
+     ! Scatter the full dimension vector on the master (read from disk/restart)
+     ! into Haydock vector fragments 
+     ! 
+     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX, &
+                             PAR_COM_eh_INDEX
+     complex(SP),intent(in) :: fullV(BS_K_dim)
+     type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
+     ! ws: 
+     integer                 :: istart_g,istop_g
+     !
+     ! In this loop I need T_groups Haydock since I do need duplicates 
+     !
+     call PP_bcast(fullV,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
+     call PP_bcast(fullV,0,COMM=PAR_COM_eh_INDEX%COMM)  
+     istop_g = 0
+     !
+     do i_g=1,BS_nT_grps
+       istart_g = istop_g + 1 
+       istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       V(i_g)%fragment(1:BS_T_grp(i_g)%size) = fullV(istart_g:istop_g)  
+     enddo
+     !
+   end subroutine HAYVEC_SCATTER
    !
    function terminator(x,c1,c2,which)
      !

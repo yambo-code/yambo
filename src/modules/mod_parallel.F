@@ -399,7 +399,7 @@ module parallel_m
  end interface PP_redux_wait
  !
  interface PP_bcast
-   module procedure c0bcast,c1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
+   module procedure c0bcast,c1bcast,r1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
  end interface PP_bcast
  !
  interface PP_send_and_receive
@@ -1229,6 +1229,28 @@ module parallel_m
      !
      local_type=MPI_COMPLEX
      if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
+#endif
+   end subroutine
+   !
+   subroutine r1bcast(array,node,COMM)
+     real(SP):: array(:)
+     integer, intent(in) :: node
+     integer, optional :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
      !
      call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
 #endif

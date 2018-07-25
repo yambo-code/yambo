@@ -146,7 +146,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'DOS_bands', 'DOS bands',DOS_bands) 
  call it(defs,'DOSERange', 'Energy range',DOS_E_range,unit=E_unit) 
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
- call it('f',defs,'DOSUsesOcc', 'Use occupation factors only') 
+ call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !

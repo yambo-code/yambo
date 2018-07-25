@@ -41,14 +41,14 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  use X_m,            ONLY:global_gauge
  use linear_algebra, ONLY:INV
  use BS,             ONLY:BS_K_dim,BS_H_dim
- use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
  !
  implicit none
  !
- complex(SP),intent(in)  :: BS_E(BS_H_dim)
- complex(SP),intent(out) :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
- complex(SP),intent(out) :: BS_overlap(BS_H_dim,BS_H_dim)
- complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim)
+ complex(SP),intent(in)  :: BS_E(BSS_n_eig)
+ complex(SP),intent(out) :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
+ complex(SP),intent(out) :: BS_overlap(BSS_n_eig,BSS_n_eig)
+ complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BSS_n_eig),BS_V_right(BS_H_dim,BSS_n_eig)
  !
  ! Workspace
  !
@@ -56,10 +56,10 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  integer              ::i1
  !
  complex(SP) :: tmp_res(BS_H_dim)
- complex(SP) :: BS_R_tmp(BS_H_dim)       
+ complex(SP) :: BS_R_tmp(BSS_n_eig)       
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
  ! [1] BS_R_right(i)=<q0|j><j|i_R>
  !                  =conjg(BSS_dipoles(j))*BS_V_right(j,i)
@@ -73,7 +73,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    if (.not.px%element_1D(i1)) cycle
    !
    BS_R_right(i1)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))
@@ -104,7 +104,7 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
    !
  enddo
  !
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    !
    if (.not.px%element_1D(i1)) cycle
    !
@@ -135,10 +135,10 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  BS_R_left=cZERO
  !
  call live_timing('EPS L x overlap',px%n_of_elements(myid+1))
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    if (.not.px%element_1D(i1)) cycle
    !
-   BS_R_left(i1)=V_dot_V_omp(BS_H_dim,BS_overlap(i1,:),BS_R_tmp)
+   BS_R_left(i1)=V_dot_V_omp(BSS_n_eig,BS_overlap(i1,:),BS_R_tmp)
    !
    call live_timing(steps=1)
  enddo

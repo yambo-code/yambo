@@ -25,10 +25,11 @@ subroutine electrons_dos(Xk,Xen)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,schlen
+ use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
  use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
-&                         DOS_E_range,DOS_E_steps,INTERP_grid,electrons_dos_elemental
+&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k
@@ -41,14 +42,19 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E,values(DOS_bands(2)+4)
+ real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP),allocatable  :: WF_fac(:,:,:)
  integer               :: i_E,i_f,N_files,is,ib,ik,ikbz
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
+ real(SP), external    :: RIntegrate
  !
  call section('*','Electronic DOS')
+ !
+ ! Setup
+ !=======
+ call electrons_dos_setup( Xen, dos_E, DOS_bands )  
  !
  ! E Double Grid
  !===============
@@ -66,9 +72,9 @@ subroutine electrons_dos(Xk,Xen)
  if (n_spinor==2) then
    YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),l_DbGD,WF_fac)
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,l_DbGD,WF_fac)
  else
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),l_DbGD)
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,l_DbGD)
  endif
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
@@ -124,13 +130,11 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),.FALSE.)
+   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,.FALSE.)
    !
  endif
  !
- ! CLEAN...
- !
- YAMBO_FREE(WF_fac)
+ ! Fermi Level
  !
  if (DOS_bands(1)==1) then
    !
@@ -139,6 +143,20 @@ subroutine electrons_dos(Xk,Xen)
    call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
    if (all(INTERP_grid>0)) call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
    !
+ endif
+ !
+ ! Integrated DOS
+ !
+ if (n_spin==1) then
+   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)
+   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) 
+ else
+   dos_integral(1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)+RIntegrate(el_dos(:,2,1),dos_E,DOS_E_steps)
+   if (N_files==2) dos_integral(2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps) + RIntegrate(el_dos(:,2,2),dos_E,DOS_E_steps)
+ endif
+ call msg("s",'Integrated DOS                    :',dos_integral(1)*DL_vol)
+ if (N_files==2) then
+   call msg("s",'                    [interpolated]:',dos_integral(2)*DL_vol)
  endif
  !
  ! Output file(s)
@@ -169,10 +187,8 @@ subroutine electrons_dos(Xk,Xen)
    !
    do i_E=1,DOS_E_steps
      !
-     dos_E=DOS_E_range(1)+i_E*DOS_E_step
-     !
-     if (n_spin==1) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)
-     if (n_spin==2) call msg('o dos','',(/dos_E*HA2EV,el_dos(i_E,:,i_f),  &
+     if (n_spin==1) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,1,i_f)/),INDENT=-2,USE_TABS=.true.)
+     if (n_spin==2) call msg('o dos','',(/dos_E(i_E)*HA2EV,el_dos(i_E,:,i_f),  &
 &                                         el_dos(i_E,1,i_f)+el_dos(i_E,2,i_f)/),INDENT=-2,USE_TABS=.true.)
      !
    enddo
@@ -180,5 +196,9 @@ subroutine electrons_dos(Xk,Xen)
    call of_open_close(trim(output_fname))
    !
  enddo
+ !
+ ! CLEAN...
+ !
+ YAMBO_FREE(WF_fac)
  !
 end subroutine

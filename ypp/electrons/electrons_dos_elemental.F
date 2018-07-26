@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
+subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp 
- use YPP,            ONLY:DOS_broadening,DOS_E_range,DOS_E_step
+ use YPP,            ONLY:DOS_broadening,DOS_E_step,DOS_E_steps
  use interfaces,     ONLY:PARALLEL_index,el_density_of_states
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
@@ -38,14 +38,13 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac,QUIET,FO
  type(bz_samp),     intent(in)  :: k
  type(levels),      intent(in)  :: E
  integer,           intent(in)  :: bands(2)
- real(SP),        intent(inout) :: el_dos(:,:)
+ real(SP),        intent(inout) :: el_dos(:,:),dos_E(:)
  logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
  real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
  !
  ! Work Space
  ! 
- real(SP)              :: dos_E
- integer               :: i_E,steps(2)
+ integer               :: i_E
  logical               :: LIVE_t_,USE_occ
  type(PP_indexes)      :: px
  !
@@ -57,16 +56,6 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac,QUIET,FO
    USE_occ=FORCE_occ
  endif
  !
- ! Energy Range
- !================================
- !
- steps=shape(el_dos)
- if (DOS_E_range(1)>DOS_E_range(2)) then
-   DOS_E_range(1)=minval(E%E(bands(1):bands(2),:,:))-5._SP*DOS_broadening
-   DOS_E_range(2)=maxval(E%E(bands(1):bands(2),:,:))+5._SP*DOS_broadening
- endif
- DOS_E_step=(DOS_E_range(2)-DOS_E_range(1))/steps(1)
- !
  ! Parallel setup and live_timing
  !================================
  !
@@ -77,32 +66,30 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,USE_the_DbGd,WF_fac,QUIET,FO
  endif
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/steps(1)/))
+ call PARALLEL_index(px,(/DOS_E_steps/))
  !
  if (LIVE_t_) call live_timing('DOS',px%n_of_elements(myid+1))
  !
  el_dos=rZERO
  !
- do i_E=1,steps(1)
+ do i_E=1,DOS_E_steps
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   dos_E=DOS_E_range(1)+i_E*DOS_E_step
-   !
    if (present(WF_fac)) then
      if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E,DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
+       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
 &                                WF_fac=WF_fac,USE_occupations=USE_occ)
      else
-       call el_density_of_states(k,E,dos_E,DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
+       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
 &                                WF_fac=WF_fac,USE_occupations=USE_occ)
      endif
    else
      if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E,DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
+       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
 &                                USE_occupations=USE_occ)
      else
-       call el_density_of_states(k,E,dos_E,DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
+       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
 &                                USE_occupations=USE_occ)
      endif
    endif

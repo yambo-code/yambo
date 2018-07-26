@@ -81,7 +81,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
          !
          do i1=1,BZ_DbGd_nkpt(ik_bz)
            ik_rand=BZ_DbGd_table(ik_bz,i1,1)
-           if ( abs(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*DOS_broadening ) cycle
+           !if ( abs(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E)>20._SP*DOS_broadening ) cycle
            if (USE_occ) f_occ=Xen%f_DbGd(ib,ik_rand,i_sp_pol)
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*&
 &                      Fermi_fnc_derivative(Xen%E_DbGd(ib,ik_rand,i_sp_pol)-dos_E,DOS_broadening)
@@ -94,7 +94,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
            E=Xen%Eo(ib,ik,i_sp_pol)
          endif
          !
-         if ( abs(E-dos_E)>20._SP*DOS_broadening ) cycle
+         !if ( abs(E-dos_E)>20._SP*DOS_broadening ) cycle
          if (USE_occ ) f_occ=Xen%f(ib,ik,i_sp_pol)
          el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
          !

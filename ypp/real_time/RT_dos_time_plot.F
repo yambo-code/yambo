@@ -25,9 +25,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  use units,          ONLY:HA2EV,AUT2FS
  use pars,           ONLY:SP,schlen
+ use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor
- use YPP,            ONLY:DOS_broadening,DOS_E_range,DOS_E_steps,electrons_dos_elemental,INTERP_grid,DOS_E_step
+ use YPP,            ONLY:DOS_broadening,DOS_E_steps,electrons_dos_elemental,INTERP_grid,DOS_E_step
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -47,9 +48,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Work Space
  ! 
- real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E,el_dos_max(2)
- real(SP),allocatable  :: spin_factors(:,:,:)
- integer               :: i_E,i_T,ib,N_files,i_f
+ real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
+ real(SP),allocatable  :: spin_factors(:,:,:),RT_spin_factors(:,:,:)
+ real(SP),   external  :: RIntegrate
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT
  logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -58,6 +60,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  call section('*','Electr. Time-dependent DOS')
  !
  ! Setup
+ !
+ call electrons_dos_setup( En, dos_E, RT_bands )  
  !
  call parser('SeparateEH',l_separate_eh)
  call parser('IncludeEQocc',l_sum_equilibrium)
@@ -85,7 +89,11 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  if (n_spinor==2) then
    YAMBO_ALLOC(spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_spinor))
+   YAMBO_ALLOC(RT_spin_factors,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_spinor))
    call electrons_spin_factors((/1,k%nibz/),RT_carriers%nb,spin_factors)
+   do i_RT=1,RT_carriers%nstates
+     RT_spin_factors(:,RT_carriers%table(i_RT,3),:)=spin_factors(:, RT_carriers%table(i_RT,2), :)
+   enddo
  endif 
  !
  ! Map the RT k in RT_k
@@ -126,7 +134,15 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"df")
    if(     l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"f")
    !... DOS
-   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.)
+   if (n_spinor==2) then
+     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
+&                                 dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.,WF_fac=RT_spin_factors)
+   else
+     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.)
+   endif
+   !
+   if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
+   if (n_spin==2) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1)+el_dos(:,2,1),dos_E,DOS_E_steps)*DL_vol
    !
    if (l_interp) then
      call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="E_on_RT_grid",QUIET=.TRUE.)
@@ -134,7 +150,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_RT_grid",QUIET=.TRUE.)
      call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_RT_grid",QUIET=.TRUE.)
      !... DOS
-     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
+     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
+     !
+     if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
+     if (n_spin==2) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2)+el_dos(:,2,2),dos_E,DOS_E_steps)*DL_vol
    endif
    !
    el_dos_max(1)=maxval(abs(el_dos(:,:,1)))
@@ -148,38 +167,38 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    do i_E=1,DOS_E_steps
      !
-     dos_E=DOS_E_range(1)+real(i_E,SP)*DOS_E_step
-     !
-     if ( dos_E>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
-&         dos_E<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) .and. n_T_steps> 1) then
-       !
-       if(l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(trim(file_n(1))))
-       !
-       space_printed=.true.
-       !
-       cycle
-       !
-     endif
+!     if ( dos_E(i_E)>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
+!&         dos_E(i_E)<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) ) then
+!       !
+!       do i_f=1,N_files
+!         if (l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(file_n(i_f)))
+!       enddo
+!       !
+!       space_printed=.true.
+!       !
+!       cycle
+!       !
+!     endif
      !
      do i_f=1,N_files
        !
        if (n_T_steps> 1) then
          if (n_spin==1) call RT_output(trim(file_n(i_f)),&
-&                                      VALUEs=(/el_dos(i_E,1,i_f)/),E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+&                                      VALUEs=(/el_dos(i_E,1,i_f)/),E=dos_E(i_E)*HA2EV,TIME=RT_time(i_T)*AUT2FS)
          if (n_spin >1) call RT_output(trim(file_n(i_f)),&
 &                                      VALUEs=(/el_dos(i_E,1,i_f)+el_dos(i_E,2,i_f),el_dos(i_E,1,i_f),el_dos(i_E,2,i_f)/),&
-&                                      E=dos_E*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+&                                      E=dos_E(i_E)*HA2EV,TIME=RT_time(i_T)*AUT2FS)
        else
          if (n_spin==1) call RT_output(trim(file_n(i_f)),&
-&                                      VALUEs=(/el_dos(i_E,1,i_f)/),E=dos_E*HA2EV)
+&                                      VALUEs=(/el_dos(i_E,1,i_f)/),E=dos_E(i_E)*HA2EV)
          if (n_spin >1) call RT_output(trim(file_n(i_f)),&
 &                                      VALUEs=(/el_dos(i_E,1,i_f)+el_dos(i_E,2,i_f),el_dos(i_E,1,i_f),el_dos(i_E,2,i_f)/),&
-&                                      E=dos_E*HA2EV)
+&                                      E=dos_E(i_E)*HA2EV)
        endif
        !
+       if (n_T_steps> 1.and.i_E==DOS_E_steps) call RT_output("space "//trim(file_n(i_f)))
+       !
      enddo
-     !
-     call RT_output(trim(file_n(i_f)))
      !
    enddo
    !
@@ -189,8 +208,14 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
  enddo
  !
- call               msg('s','DOS max value      [RT grid]:',el_dos_max(1))
- if (l_interp) call msg('s','               [INTERP grid]:',el_dos_max(2))
+ do i_f=1,N_files
+   call RT_output(trim(file_n(i_f)))
+ enddo
+ !
+ call               msg('s','DOS max value            [RT grid]:',el_dos_max(1))
+ if (l_interp) call msg('s','                     [INTERP grid]:',el_dos_max(2))
+ call               msg('s','Integrated dos (min/max) [RT grid]:',(/minval(el_dos_integral(:,1)),maxval(el_dos_integral(:,1))/))
+ if (l_interp) call msg('s','                     [INTERP grid]:',(/minval(el_dos_integral(:,2)),maxval(el_dos_integral(:,2))/))
  !
  call live_timing()
  !

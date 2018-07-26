@@ -23,7 +23,7 @@
 !
 subroutine io_BS_PAR_init(iq,X,ID)
  !
- ! Intialize BSE netcdf parallel file
+ ! Intialize variables on BSE netcdf parallel file
  !
  use netcdf
  use parallel_m
@@ -33,8 +33,8 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_WR,&
-&                        io_connect,io_disconnect,io_elemental,&
-&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,rm_file
+&                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
+&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,io_control,RD_CL,OP_WR_CL
  use BS_solvers,    ONLY:variables_BS
  implicit none
 !#define UPLO
@@ -52,107 +52,26 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer :: flattened_block_size_dim,block_size_dim,complex_dim
  character(schlen) :: db_name, file_to_use, PARALLEL_STRUCTURE
  character(lchlen) :: local_description(100)
+ character(schlen) :: dim_names(3), dim_names_done(2)
  !
- ! Create parallel netCDF file.
+ ! Connect to parallel netCDF file.
  !
  db_name='BS_Q'//trim(intc(iq))//'.nc'
- ! I use the io_connect logic to create the folder
- ! then I close the file and create it again in parallel
- ! should use io_connect in parallel once merged with devel-par-io
- io_action(ID) = OP_WR
- if (myid == 0 .and. .not. file_exists(io_file(ID))) then
-   io_BS=io_connect(desc=trim(db_name),type=2,ID=ID)
-   file_to_use = io_file(ID)
-   call io_disconnect(ID)
-   call rm_file(file_to_use)
-   io_file(ID) = file_to_use
- end if
- !
- mode_flag = ior(ior(nf_netcdf4, nf_mpiio),nf90_write)
- !
- ! Try to open the file 
- !
- stat = nf90_open(io_file(ID),mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
- !
- if (stat.eq.nf90_noerr) then
-    !
-    ! If we are restarting check if the variables are present otherwise create them
+ ! Hack to find if the name exists
+ call io_control(ACTION=RD_CL,ID=ID)
+ io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ if (file_exists(io_file(ID))) then
     call msg("s","BSE file found in "//trim(io_file(ID)))
-    !
-    io_mode(ID)=VERIFY
-    ! Read dimensions
-    stat = nf90_inq_dimid(io_unit(ID), "complex", complex_dim); call netcdf_call(stat,ID) 
-    stat = nf90_inq_dimid(io_unit(ID), "BS_K_dim", block_size_dim); call netcdf_call(stat,ID)
-    stat = nf90_inq_dimid(io_unit(ID), "flat_BS_K_dim",flattened_block_size_dim); call netcdf_call(stat,ID)
-    stat = nf_redef(io_unit(ID)); call netcdf_call(stat,ID)
-    !
+    l_restart_bse = .true.
  else
-    !
-    ! If it does not work create it
-    l_restart_bse = .false.
     call msg("s","BSE file not found. Creating an empty one." )
-    stat = nf90_create(io_file(ID),mode_flag,comm=MPI_COMM_WORLD,info=MPI_INFO_NULL,ncid=io_unit(ID))
-    call netcdf_call(stat,ID)
-    !
-    ! Initialize dimensions
-    stat = nf_def_dim(io_unit(ID), "complex", 2, complex_dim); call netcdf_call(stat,ID) 
-    stat = nf_def_dim(io_unit(ID), "BS_K_dim", BS_K_dim, block_size_dim); call netcdf_call(stat,ID)
-    stat = nf_def_dim(io_unit(ID), "flat_BS_K_dim",BS_K_dim*(BS_K_dim+1)/2, flattened_block_size_dim)
-    call netcdf_call(stat,ID) 
-    !
  endif
+ call io_disconnect(ID)
  !
- ! Write empty vars
+ call io_control(ACTION=OP_WR_CL,ID=ID)
+ io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  !
-#ifdef UPLO
- !
- ! This is the upper triangular mode
- !
- stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT_FLAT',io_netcdf_var(ID))
- if (stat.ne.nf90_noerr) then
-   dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_FLAT_DONE", nf90_char, 1, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- end if
- !
- stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING_FLAT',io_netcdf_var(ID))
- if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then
-   dims(:2) = [complex_dim,flattened_block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT", nf90_SP, 2, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_FLAT_DONE", nf90_char, 1, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- end if
- !
-#else
- !
- ! Here is the 2D mode
- !
- stat = nf90_inq_varid(io_unit(ID),'BSE_RESONANT',io_netcdf_var(ID))
- if (stat.ne.nf90_noerr) then 
-   dims = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT", nf90_SP, 3, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-   stat = nf_def_var(io_unit(ID), "BSE_RESONANT_DONE", nf90_char, 2, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- end if
- !
- stat = nf90_inq_varid(io_unit(ID),'BSE_COUPLING',io_netcdf_var(ID))
- if (BS_K_coupling .and. (stat.ne.nf90_noerr)) then 
-   dims = [complex_dim,block_size_dim,block_size_dim]
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING", nf90_SP, 3, dims, io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
-   stat = nf_def_var(io_unit(ID), "BSE_COUPLING_DONE", nf90_char, 2, dims(2:), io_netcdf_var(ID)); call netcdf_call(stat,ID)
-   stat = nf_var_par_access(io_unit(ID), io_netcdf_var(ID), nf_independent); call netcdf_call(stat,ID)
- end if
- !
-#endif
- stat = nf_enddef(io_unit(ID)); call netcdf_call(stat,ID)
- !
- ! Write some metadata
- !
+ ! Check if the file already contains data and it its consistent
  PARALLEL_STRUCTURE="NONE"
  if (io_mode(ID)==VERIFY.or.write_is_on(ID)) PARALLEL_STRUCTURE="Response_T_space"
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
@@ -164,6 +83,39 @@ subroutine io_BS_PAR_init(iq,X,ID)
    call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&
  &            ' Remove the file or change the input file')
  endif
+ ! 
+ ! Define vars
+ !
+#ifdef UPLO
+ !
+ ! This is the upper triangular mode
+ !
+ dim_names =      [character(schlen) :: 'complex', 'BS_K_flat_dim']
+ dim_names_done = [character(schlen) :: 'BS_K_flat_dim']
+ flattened_block_size_dim = BS_K_dim*(BS_K_dim+1)/2
+ call def_variable_bulk( ID, "BSE_RESONANT_FLAT", [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT_FLAT_DONE", [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
+ !
+ if (BS_K_coupling) then
+   call def_variable_bulk( ID, "BSE_COUPLING_FLAT", [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING_FLAT_DONE", [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
+ end if
+ !
+#else
+ !
+ ! Here is the 2D mode
+ !
+ dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
+ dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
+ call def_variable_bulk( ID, "BSE_RESONANT", [2,BS_K_dim,BS_K_dim], SP, dim_names(:3), par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT_DONE", [BS_K_dim,BS_K_dim], 0, dim_names_done(:2), par_io_kind='independent')
+ !
+ if (BS_K_coupling) then
+   call def_variable_bulk( ID, "BSE_COUPLING", [2,BS_K_dim,BS_K_dim], SP, dim_names(:3), par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING_DONE", [BS_K_dim,BS_K_dim], 0, dim_names_done(:2), par_io_kind='independent')
+ end if
+ !
+#endif
  !
 end subroutine
 

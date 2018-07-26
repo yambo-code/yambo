@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
+subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
  !
  use netcdf
- use pars,       ONLY:SP,DP,IP,LP,nf90_SP
+ use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
  use com,        ONLY:warning,error
  use parallel_m, ONLY:ncpu
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
@@ -36,7 +36,8 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
  character(*) :: VAR
  integer      :: VAR_SZ(:)
  integer      :: VAR_KIND
- character(*), optional  :: par_io_kind
+ character(schlen), optional :: dim_names(:)
+ character(*), optional      :: par_io_kind
  !
  ! Work Space
  !
@@ -52,7 +53,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
  if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
  if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
  if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
- !if(VAR_KIND==0 ) netcdf_var_kind=nf90_char
+ if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
  !
 #if defined _PAR_IO
  !
@@ -69,7 +70,11 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
    call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
    allocate(var_dim(size(VAR_SZ)))
    do j1=1,size(VAR_SZ)
-     var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
+     if (present(dim_names)) then
+       var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1),dim_names(j1))
+     else
+       var_dim(j1)=netcdf_dim(ID,VAR_SZ(j1))
+     endif
    enddo
    !
    nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))

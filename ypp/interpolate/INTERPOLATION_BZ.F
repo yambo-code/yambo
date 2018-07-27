@@ -24,7 +24,7 @@
 subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
   use pars,        ONLY:SP
   use R_lattice,   ONLY:bz_samp
-  use electrons,   ONLY:levels,n_sp_pol
+  use electrons,   ONLY:levels
   use com,         ONLY:error
   use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D
   implicit none
@@ -67,7 +67,7 @@ subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
   elseif(interpls(ID)%interp_type==REAL2D.and.present(E)) then
     !
     outdim(1)               =E%nb
-    outdim(2)               =n_sp_pol
+    outdim(2)               =size( E%E(1,1,:) )
     do i1=1,outdim(2)
       E%E(1:outdim(1),1:K%nibz,i1)=RDATA((i1-1)*outdim(1)+1:i1*outdim(1),1:K%nibz)
     enddo

@@ -29,7 +29,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  !
  use pars,        ONLY:SP
  use R_lattice,   ONLY:bz_samp
- use electrons,   ONLY:levels,n_sp_pol
+ use electrons,   ONLY:levels
  use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
 #if defined _RT
  use real_time,   ONLY:DbGd_ibz_coo,RT_ibz_coo
@@ -79,7 +79,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
    !
    interpls(ID)%interp_type=REAL2D
    inpdim(1)               =E%nb
-   inpdim(2)               =n_sp_pol
+   inpdim(2)               =size( E%E(1,1,:) )
    interpls(ID)%ndim       =inpdim(1)*inpdim(2)
    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
    allocate(RDATA(interpls(ID)%ndim,Nk_local))

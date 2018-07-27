@@ -41,7 +41,9 @@ module mod_com2y
    !
    subroutine interface_presets(in_string)
      !
-     use stderr,     ONLY:string_split
+     use stderr,         ONLY:string_split
+     use LIVE_t,         ONLY:live_timing_is_on
+     use parallel_m,     ONLY:master_cpu
      !
      implicit none
      !
@@ -49,6 +51,8 @@ module mod_com2y
      !
      character(schlen)::str_piece(100)
      integer          ::i1
+     !
+     live_timing_is_on=master_cpu
      !
      ! Split the string in pieces
      !

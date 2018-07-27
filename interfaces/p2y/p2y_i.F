@@ -23,21 +23,21 @@
 !
 integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use P2Y,                 ONLY : pw_init, pw_close, dftdata_fmt
- use LOGO,                ONLY : pickup_a_random
- use pars,                ONLY : SP,lchlen
- use com,                 ONLY : msg,write_to_report,core_io_path,error,write_the_logo,com_path
- use LIVE_t,              ONLY : live_timing
- use parallel_m,          ONLY : ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
- use electrons,           ONLY : levels,E_reset,n_bands,n_sp_pol,n_spinor
- use R_lattice,           ONLY : bz_samp,bz_samp_reset,nkibz
- use wave_func,           ONLY : wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY : io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP,&
-&                                IO_and_Messaging_switch,mk_dir,IO_write,IO_read
- use mod_com2y,           ONLY : interface_presets,force_noWFs,verboseIO
- use mod_wf2y,            ONLY : wf_splitter
- use stderr,              ONLY : intc,logfile,log_as_a_file
- use interfaces,          ONLY : PARALLEL_index,PARALLEL_live_message
+ use P2Y,                 ONLY:pw_init, pw_close, dftdata_fmt
+ use LOGO,                ONLY:pickup_a_random
+ use pars,                ONLY:SP,lchlen
+ use com,                 ONLY:msg,core_io_path,write_the_logo,com_path
+ use LIVE_t,              ONLY:live_timing
+ use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
+ use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
+ use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
+ use mod_wf2y,            ONLY:WF_splitter
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP,&
+&                              IO_and_Messaging_switch,mk_dir,IO_write,IO_read
+ use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
+ use stderr,              ONLY:intc,logfile,log_as_a_file
+ use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
 #if defined _MEM_CHECK 
  use memory,              ONLY : MEM_manager
@@ -69,6 +69,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ncpu  =np
  myid  =pid
  call SET_defaults(instr,od,od,'')
+ call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
  call E_reset(en)
@@ -88,6 +89,10 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    !
  endif
  !
+ ! Switch off report file support & Handle logs
+ !
+ call IO_and_Messaging_switch("-report +log +fragments_IO_log " )
+ !
  ! LOGO
  !
  call write_the_logo(6,' ')
@@ -95,11 +100,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! S/N
  !
  serial_number=pickup_a_random(10000._SP)
- !
- ! Switch off report file support
- ! Handle logs
- !
- call IO_and_Messaging_switch("-report +log +fragments_IO_log " )
  !
  lch='P(W) 2 Y(ambo) - multi-fmt version'
  !

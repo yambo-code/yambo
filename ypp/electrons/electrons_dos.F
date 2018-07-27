@@ -32,7 +32,7 @@ subroutine electrons_dos(Xk,Xen)
 &                         DOS_E_steps,INTERP_grid,electrons_dos_elemental
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
- use interpolate,    ONLY:INTERPOLATION_driver,GRID_k
+ use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
  !
 #include<memory.h>
@@ -44,7 +44,7 @@ subroutine electrons_dos(Xk,Xen)
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP),allocatable  :: WF_fac(:,:,:)
- integer               :: i_E,i_f,N_files,is,ib,ik,ikbz
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,ID
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
@@ -72,9 +72,9 @@ subroutine electrons_dos(Xk,Xen)
  if (n_spinor==2) then
    YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,l_DbGD,WF_fac)
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD,WF_fac=WF_fac)
  else
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,l_DbGD)
+   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD)
  endif
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
@@ -93,9 +93,13 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in")
    !
+   if (n_spinor==2) call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=WF_fac,SEED_k=Xk,operation="SPIN_factors_on_built_in",ID=ID)
+   !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in")
+   !
+   if (n_spinor==2) call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
    !
    call INTERPOLATION_driver(operation="END")
    !
@@ -130,7 +134,12 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,.FALSE.)
+   if (n_spinor==2) then
+     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
+&                                 WF_fac=INTERP_obj(ID)%R3_interp)
+   else
+     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
+   endif
    !
  endif
  !

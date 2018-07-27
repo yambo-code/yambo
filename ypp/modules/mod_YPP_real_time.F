@@ -161,12 +161,9 @@ module YPP_real_time
        K%units='i'
        K%description="RT_GRID"
        K%nibz=RT_carriers%nk
-       K%nbz =RT_carriers%nk
        YAMBO_ALLOC(K%pt,(K%nibz,3))
        YAMBO_ALLOC(K%weights,(K%nibz))
-       YAMBO_ALLOC(K%sstar,(K%nibz,2))
        do ik=1,K%nibz
-         K%sstar(ik,:)=(/ik,1/)
          K%pt(ik,:)   =RT_carriers%kpt(ik,:)
          K%weights(ik)=RT_carriers%k_weight(ik)
        enddo

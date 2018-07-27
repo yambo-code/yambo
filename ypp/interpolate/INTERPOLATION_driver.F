@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,QUIET)
+subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
+&                               OUT_k,OUT_E,operation,QUIET,ID)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_t
@@ -29,7 +30,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
  use electrons,      ONLY:levels,n_sp_pol
  use YPP,            ONLY:INTERP_grid
  use interpolate,    ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
-&                         INTERPOLATION_reset,INTERPOLATION_BZ
+&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -39,14 +40,16 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
  type(bz_samp), intent(inout), optional :: OUT_k
  type(RT_t),    intent(in)   , optional :: SEED_RT
  type(levels),  intent(in)   , optional :: SEED_E
+ real(SP),      intent(in)   , optional :: SEED_R3(:,:,:)
  type(levels),  intent(inout), optional :: OUT_E
  character(*),  intent(in)              :: operation
  logical,       intent(in)   , optional :: QUIET
+ integer,       intent(out),   optional :: ID
  !
  ! Work Space
  !
  real(SP), allocatable :: SEED_obj(:,:,:)
- integer               :: i_sp_pol,ib,ik,ID_free,ID_to_use,i_obj,i_RT
+ integer               :: i_spin,ib,ik,ID_to_use,i_obj,i_RT,n(2)
  logical               :: l_f,l_E,l_dE,l_G,l_EQ
  !
  l_f   =operation(1:1)== "f"
@@ -54,6 +57,9 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
  l_G   =operation(1:1)== "G"
  l_dE  =operation(1:2)== "dE"
  l_EQ  =index(operation,"EQ")>0
+ !
+ ! SETUP
+ !=======
  !
  if (present(QUIET)) then
   if (QUIET) call IO_and_Messaging_switch("-log")
@@ -87,35 +93,42 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
    !
  endif
  !
- do i_obj=1,max_interpls
+ ! SEED
+ !======
+ !
+ if (present(SEED_k).and.(present(SEED_E).or.present(SEED_RT).or.present(SEED_R3))) then
    !
-   if (.not.INTERP_obj(i_obj)%in_use) then 
-     ID_free=i_obj
-     exit
+   do i_obj=1,max_interpls
+     if (.not.INTERP_obj(i_obj)%in_use) then 
+       ID_to_use=i_obj
+       exit
+     endif
+   enddo
+   !
+   INTERP_obj(ID_to_use)%nb=bands
+   if (present(SEED_E).or.present(SEED_RT)) INTERP_obj(ID_to_use)%ns=n_sp_pol
+   if (present(SEED_R3))                    INTERP_obj(ID_to_use)%ns=size(SEED_R3(1,1,:))
+   INTERP_obj(ID_to_use)%in_use=.TRUE.
+   INTERP_obj(ID_to_use)%what=operation
+   !
+   if (present(ID)) then
+     ID=ID_to_use
    endif
    !
-   if (operation==trim(INTERP_obj(i_obj)%what)) then 
-     ID_to_use=i_obj
-   endif
-   ! 
- enddo
+ endif
  !
  if (present(SEED_k).and.(present(SEED_E).or.present(SEED_RT))) then
    !
-   YAMBO_ALLOC(SEED_obj,(bands(1):bands(2),SEED_k%nibz,n_sp_pol))
-   !
-   INTERP_obj(ID_free)%n=bands
-   INTERP_obj(ID_free)%in_use=.TRUE.
-   INTERP_obj(ID_free)%what=operation
+   YAMBO_ALLOC(SEED_obj,(bands(1):bands(2),SEED_k%nibz,INTERP_obj(ID_to_use)%ns))
    !
    if (present(SEED_E)) then
      !
-     do i_sp_pol=1,n_sp_pol
+     do i_spin=1,INTERP_obj(ID_to_use)%ns
        do ib=bands(1),bands(2)
         do ik=1,SEED_k%nibz
-           if (l_f ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%f(ib,ik,i_sp_pol)
-           if (l_E ) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)
-           if (l_dE) SEED_obj(ib,ik,i_sp_pol)=SEED_E%E(ib,ik,i_sp_pol)-SEED_E%Eo(ib,ik,i_sp_pol)
+           if (l_f ) SEED_obj(ib,ik,i_spin)=SEED_E%f(ib,ik,i_spin)
+           if (l_E ) SEED_obj(ib,ik,i_spin)=SEED_E%E(ib,ik,i_spin)
+           if (l_dE) SEED_obj(ib,ik,i_spin)=SEED_E%E(ib,ik,i_spin)-SEED_E%Eo(ib,ik,i_spin)
          enddo
        enddo
      enddo
@@ -125,35 +138,54 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operatio
      do i_RT=1,SEED_RT%nstates
        ib      =SEED_RT%table(i_RT,1)
        ik      =SEED_RT%table(i_RT,3)
-       i_sp_pol=SEED_RT%table(i_RT,4)
-       if (l_G ) SEED_obj(ib,ik,i_sp_pol)=SEED_RT%NEQ_Lifetime(i_RT) 
+       i_spin  =SEED_RT%table(i_RT,4)
+       if (l_G ) SEED_obj(ib,ik,i_spin)=SEED_RT%NEQ_Lifetime(i_RT) 
      enddo
      !
    endif
    !
-   call INTERPOLATION_coefficients(R2D=SEED_obj,k=SEED_k,Nk=SEED_k%nibz,ID=INTERP_obj(ID_free)%ID,ID_obj=ID_free)
+   call INTERPOLATION_coefficients(R2D=SEED_obj,k=SEED_k,ID=INTERP_obj(ID_to_use)%ID,ID_obj=ID_to_use)
    !
    YAMBO_FREE(SEED_obj)
    !
  endif
  !
- if (present(OUT_k).and.present(OUT_E)) then
+ if (present(SEED_k).and.present(SEED_R3)) then
    !
-   if (l_E.or.l_dE) then
-     YAMBO_ALLOC(OUT_E%E,(INTERP_obj(ID_to_use)%n(1):INTERP_obj(ID_to_use)%n(2),OUT_k%nbz,n_sp_pol))
-     call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%E,ID=INTERP_obj(ID_to_use)%ID)
-   else if (l_f) then
-     YAMBO_ALLOC(OUT_E%f,(INTERP_obj(ID_to_use)%n(1):INTERP_obj(ID_to_use)%n(2),OUT_k%nbz,n_sp_pol))
-     call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%f,ID=INTERP_obj(ID_to_use)%ID)
+   call INTERPOLATION_coefficients(R2D=SEED_R3,k=SEED_k,ID=INTERP_obj(ID_to_use)%ID,ID_obj=ID_to_use)
+   !
+ endif
+ !
+ ! INTERPOLATION
+ !===============
+ !
+ if (present(OUT_k)) then
+   !
+   do i_obj=1,max_interpls
+     if (operation==trim(INTERP_obj(i_obj)%what)) ID_to_use=i_obj
+   enddo
+   !
+   if (present(OUT_E)) then
+     !
+     if (l_E.or.l_dE) then
+       YAMBO_ALLOC(OUT_E%E,(INTERP_obj(ID_to_use)%nb(1):INTERP_obj(ID_to_use)%nb(2),OUT_k%nibz,INTERP_obj(ID_to_use)%ns))
+       call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%E,ID=INTERP_obj(ID_to_use)%ID)
+     else if (l_f) then
+       YAMBO_ALLOC(OUT_E%f,(INTERP_obj(ID_to_use)%nb(1):INTERP_obj(ID_to_use)%nb(2),OUT_k%nibz,INTERP_obj(ID_to_use)%ns))
+       call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%f,ID=INTERP_obj(ID_to_use)%ID)
+     endif
+     !
+     OUT_E%nk=OUT_k%nibz
+     OUT_E%nb=INTERP_obj(ID_to_use)%nb(2)
+     !
+   else
+     !
+     n=INTERP_obj(ID_to_use)%nb
+     !
+     YAMBO_ALLOC(INTERP_obj(ID_to_use)%R3_interp,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID_to_use)%ns))
+     call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID_to_use)%R3_interp,ID=INTERP_obj(ID_to_use)%ID)
+     !
    endif
-   !
-   if (.not.allocated(OUT_k%weights)) then
-     YAMBO_ALLOC(OUT_k%weights,(OUT_k%nbz))
-     OUT_k%weights=1./real( OUT_k%nbz )
-   endif
-   !
-   OUT_E%nk=OUT_k%nibz
-   OUT_E%nb=INTERP_obj(ID_to_use)%n(2)
    !
  endif
  !

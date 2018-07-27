@@ -65,10 +65,12 @@ module interpolate
  end type INTERP_coeff
  ! 
  type INTERP_element
-   integer                  :: n(2)=0
+   integer                  :: nb(2)=0
+   integer                  :: ns=0
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    character(schlen)        :: what=" "
+   real(SP),    allocatable :: R3_interp(:,:,:)
  end type INTERP_element
  !
  integer, parameter :: max_interpls=10
@@ -117,7 +119,8 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,OUT_k,OUT_E,operation,QUIET)
+   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,OUT_k,OUT_E,operation,QUIET,ID)
+     use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
@@ -125,11 +128,13 @@ module interpolate
      integer,       intent(in),    optional :: bands(2)
      type(bz_samp), intent(in),    optional :: SEED_k
      type(bz_samp), intent(inout), optional :: OUT_k
+     real(SP),      intent(in)   , optional :: SEED_R3(:,:,:)
      type(RT_t),    intent(in)   , optional :: SEED_RT
      type(levels),  intent(in)   , optional :: SEED_E
      type(levels),  intent(inout), optional :: OUT_E
      character(*),  intent(in)              :: operation
      logical,       intent(in)   , optional :: QUIET
+     integer,       intent(out)  , optional :: ID
    end subroutine INTERPOLATION_driver
    !
  end interface  
@@ -141,7 +146,8 @@ module interpolate
      interpls(ID)%ndim=0
      interpls(ID)%interp_type=""
      if(allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
-     INTERP_obj(ID)%n=0
+     INTERP_obj(ID)%nb=0
+     INTERP_obj(ID)%ns=0
      INTERP_obj(ID)%ID=0
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%what=" "

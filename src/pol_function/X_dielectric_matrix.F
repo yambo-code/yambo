@@ -182,9 +182,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #endif
    else
      allocate(X_par(PAR_nq))
-#if !defined _PAR_IO
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
-#endif
    endif
    !
  endif
@@ -241,9 +239,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
-#if !defined _PAR_IO
+#if defined _PAR_IO
+   if(.not.io_RESPONSE) then
+#endif
    !
-   ! PAR => SER for I/O
+   ! PAR => SER for I/O or for cases where I/O is not done
    !
    do iw=1,Xw%n_freqs
      !
@@ -263,6 +263,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    enddo
    !
+#if defined _PAR_IO
+   endif
 #endif
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 

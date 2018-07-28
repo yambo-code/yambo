@@ -1,4 +1,3 @@
-
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -136,10 +135,10 @@ subroutine K_Haydock(iq,W)
  !=================================================
  it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- if (master_cpu) allocate(Vn_f(BS_K_dim),Vnm1_f(BS_K_dim))
+ allocate(Vn_f(BS_K_dim),Vnm1_f(BS_K_dim))
  !
  if (use_cpl_scheme) then
-   if (master_cpu) allocate(Vnp1_f(BS_K_dim))
+   allocate(Vnp1_f(BS_K_dim))
  !
 #if defined _KERR
  !  if(l_kerr) then
@@ -192,17 +191,17 @@ subroutine K_Haydock(iq,W)
    call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)  
    call PP_bcast(Bf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
    call PP_bcast(Bf,0,COMM=PAR_COM_eh_INDEX%COMM)  
-   call HAYVEC_scatterV(Vn,Vn_f)
-   call HAYVEC_scatterV(Vnm1,Vnm1_f)
+   call HAYVEC_scatter(Vn,Vn_f)
+   call HAYVEC_scatter(Vnm1,Vnm1_f)
    if (use_cpl_scheme) then
      call PP_bcast(Cf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
-     call HAYVEC_scatterV(Vnp1,Vnp1_f)
+     call HAYVEC_scatter(Vnp1,Vnp1_f)
    endif
    !
  end if
- if (master_cpu) deallocate(Vnm1_f,Vn_f)
- if (use_cpl_scheme.and.master_cpu)    deallocate(Vnp1_f)
+ deallocate(Vnm1_f,Vn_f)
+ if (use_cpl_scheme) deallocate(Vnp1_f)
  !
  ! Update Descriptions
  !=====================
@@ -491,9 +490,9 @@ subroutine K_Haydock(iq,W)
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
 &       stop_now(.FALSE.)    ) then
      !
-     call HAYVEC_gatherV(Vnm1,Vnm1_f)
-     call HAYVEC_gatherV(Vn,Vn_f)
-     if (use_cpl_scheme) call HAYVEC_gatherV(Vnp1,Vnp1_f) 
+     call HAYVEC_gather(Vnm1,Vnm1_f)
+     call HAYVEC_gather(Vn,Vn_f)
+     if (use_cpl_scheme) call HAYVEC_gather(Vnp1,Vnp1_f) 
      !  
      call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
      if (use_cpl_scheme) then
@@ -759,48 +758,6 @@ subroutine K_Haydock(iq,W)
      if (.not.master_cpu) deallocate(fullV)
    end subroutine HAYVEC_gather  
    !
-   subroutine HAYVEC_gatherV(V,fullV)
-     !
-     ! Gather the Haydock vector fragments into one 
-     ! large vector of full dimension  
-     ! on the master for I/O - using mpi_gatherV
-     ! 
-     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
-          PAR_COM_eh_INDEX,PP_send_and_receive
-     type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
-     complex(SP),allocatable,intent(out) :: fullV(:)
-     ! ws: 
-     integer                 :: istart_g,istop_g
-     !
-     if (master_cpu) then
-       allocate(fullV(BS_K_dim))       
-       fullV = cZERO
-       do i_g=1,BS_nT_grps
-         if (.not.PAR_IND_T_Haydock%element_1D(i_g)) &
-           & allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
-       enddo
-     endif
-     !
-     istop_g = 0
-     !
-     do i_g=1,BS_nT_grps
-       if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-       call PP_send_and_receive("send",V(i_g)%fragment,0,PAR_COM_Xk_ibz_INDEX%COMM)
-       call PP_send_and_receive("send",V(i_g)%fragment,0,PAR_COM_eh_INDEX%COMM)
-     enddo
-     !
-     if (master_cpu) then
-       do i_g=1,BS_nT_grps
-         istart_g = istop_g + 1 
-         istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-         fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
-         if (.not.PAR_IND_T_Haydock%element_1D(i_g)) &
-&         deallocate(V(i_g)%fragment)
-       end do
-     end if
-     !
-   end subroutine HAYVEC_gatherV  
-   !
    subroutine HAYVEC_scatter(V,fullV)
      !
      ! Scatter the full dimension vector on the master (read from disk/restart)
@@ -827,44 +784,6 @@ subroutine K_Haydock(iq,W)
      enddo
      !
    end subroutine HAYVEC_SCATTER
-   !
-   subroutine HAYVEC_scatterV(V,fullV)
-     !
-     ! Scatter the full dimension vector on the master (read from disk/restart)
-     ! into Haydock vector fragments 
-     ! 
-     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX, &
-                             PAR_COM_eh_INDEX,PP_send_and_receive
-     complex(SP),intent(in) :: fullV(BS_K_dim)
-     type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
-     ! ws: 
-     integer                 :: istart_g,istop_g
-     !
-     ! In this loop I need T_groups Haydock since I do need duplicates 
-     !
-     istop_g = 0
-     do i_g=1,BS_nT_grps
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) &
-            & allocate(V(i_g)%fragment(BS_T_grp(i_g)%size))
-       istart_g = istop_g + 1 
-       istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-       V(i_g)%fragment(1:BS_T_grp(i_g)%size) = fullV(istart_g:istop_g)  
-     enddo
-     !
-     do i_g=1,BS_nT_grps
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call PP_send_and_receive("receive",V(i_g)%fragment,0,PAR_COM_Xk_ibz_INDEX%COMM)
-       call PP_send_and_receive("receive",V(i_g)%fragment,0,PAR_COM_eh_INDEX%COMM)
-     enddo
-     !
-     if (master_cpu) then
-       do i_g=1,BS_nT_grps
-         if (.not.PAR_IND_T_Haydock%element_1D(i_g)) &
-           & deallocate(V(i_g)%fragment)
-       enddo
-     endif    
-     !
-   end subroutine HAYVEC_SCATTERV
    !
    function terminator(x,c1,c2,which)
      !

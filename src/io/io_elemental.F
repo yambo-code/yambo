@@ -97,7 +97,6 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
          endif
          call netcdf_call(nf_error,ID,VAR=VAR)
        endif
-       call netcdf_call(nf_error,ID,VAR=VAR)
        call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
      else if (read_is_on(ID)) then
        call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)

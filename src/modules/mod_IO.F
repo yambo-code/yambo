@@ -192,7 +192,8 @@ module IO_m
      integer               :: VAR_SZ
      integer               :: VAR_KIND
      integer               :: MENU
-     character(*),optional :: par_io_kind
+     character(schlen),optional :: dim_names(:)
+     character(*),optional      :: par_io_kind
    end subroutine def_variable_elemental
    !
    subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)

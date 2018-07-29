@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,11 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                       DESCRIPTION,DO_NOT_DUMP)
+subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
+&                       I0, DB_I0, I1, DB_I1, &
+&                       R0, DB_R0, R1, DB_R1, &
+&                       D0, DB_D0, C0, DB_C0, &
+&                       L0, DB_L0,            &
+&                       CH0,DB_CH0,           &
+&                       UNIT,DESCRIPTION,DO_NOT_DUMP)
  !
- use pars,    ONLY:SP,DP,schlen,lchlen,nf90_SP
+ use pars,    ONLY:SP,DP,schlen,lchlen
  use pointers,ONLY:linkC2R
  use netcdf
  use drivers, ONLY:list_dbs
@@ -38,24 +42,22 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  implicit none
  !
  integer               :: ID
- integer,parameter     :: MAX_DB_ELEMENTS=100
- character(*),optional :: VAR,OP(:)
- integer,     optional :: VAR_SZ,MENU
-                               ! MENU = 1 (on) 0 (off)
+ character(*),optional :: VAR
+ character(*),optional :: OP(:)
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  real(DP),    optional :: D0,DB_D0
  complex(SP), optional :: C0,DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
- character(*),optional :: CH0,DB_CH0,CH1(:)
+ character(*),optional :: CH0,DB_CH0
  character(lchlen),optional :: DESCRIPTION
  !
  ! Work Space
  !
+ integer,parameter     :: MAX_DB_ELEMENTS=100
  character(lchlen) :: ch
  character(1)      :: msg_where
- character(3)      :: MODE_
- integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
+ integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error
  real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
  real(DP):: d_db(MAX_DB_ELEMENTS)
  complex(SP) :: c_db(MAX_DB_ELEMENTS)
@@ -69,58 +71,12 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  CHECK_=.false.
  if (present(CHECK)) CHECK_=CHECK
  !
- MENU_=1
- if (present(MENU)) MENU_=MENU
- !
- if (write_is_on(ID)) MODE_="[WR"
- if ( read_is_on(ID)) MODE_="[RD"
- !
  local_unit=1._SP
  if (present(UNIT)) local_unit=UNIT
  !
  msg_where=""
  if (io_com(ID)==REP            ) msg_where="r"
  if (io_com(ID)==LOG.or.list_dbs) msg_where="s"
- !
- if (present(VAR).and.present(VAR_SZ)) then
-   io_rec_pos(ID)=1
-   if (VAR_SZ>0) then
-     ch=string_pack(MODE_,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
-     if (write_is_on(ID)) then
-       call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
-       nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
-       if (nf_error/=NF90_NOERR) then
-         if (present(CH0).or.present(CH1) ) then
-           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_char,(/netcdf_dim(ID,schlen),netcdf_dim(ID,VAR_SZ)/),io_netcdf_var(ID))
-         else
-           nf_error=nf90_def_var(io_unit(ID),VAR,nf90_SP,netcdf_dim(ID,VAR_SZ),io_netcdf_var(ID))
-         endif
-         call netcdf_call(nf_error,ID,VAR=VAR)
-       endif
-       call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
-     else if (read_is_on(ID)) then
-       call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
-     endif
-   else
-     !
-     ! GPL_EXCLUDE_START
-     !
-     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
-&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,1),' -'
-     !
-     ! GPL_EXCLUDE_END
-     !
-     ! GPL_INCLUDE_START
-!     write (ch,'(a,i6.6,2a,3(a,i2.2),a,i5.5,a)')  '- S/N ',io_serial_number(ID),' ',&
-!&          repeat('-',25),'- v.',io_code_version(ID,1),'.',io_code_version(ID,2),&
-!&          '.',io_code_version(ID,3),' r.',io_code_revision(ID,2),' -'
-     ! GPL_INCLUDE_END
-     !
-   endif
-   if (MENU_==1) call msg(msg_where,trim(ch))
-   return
- endif
  !
  if (present(I0)) then
    if (write_is_on(ID)) then
@@ -357,6 +313,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
    io_rec_pos(ID)=io_rec_pos(ID)+2
    !
  endif
+ !
  !
  if (present(L0)) then
    i_db(1)=0

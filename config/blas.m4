@@ -147,7 +147,7 @@ BLAS_info=""
 def_openmp_int_linalg=""
 if test x"$enable_openmp_int_linalg" = "xyes" ; then
   if test x"$enable_openmp_int_linalg" = "xyes" ; then
-    BLAS_info="(With some operations internally OpenMP distributed)"
+    BLAS_info="(Blas with some operations internally OpenMP distributed)"
     def_openmp_int_linalg="-D_OPENMP_INT_LINALG"
   else
     enable_openmp_int_linalg="no"

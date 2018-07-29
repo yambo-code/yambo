@@ -96,10 +96,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
-   call msg('l','not found')
+   call msg('s','not found')
    return
  endif
- call msg('l','sane')
+ call msg('s','sane')
  !
  ! Energy range
  !

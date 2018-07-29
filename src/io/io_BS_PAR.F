@@ -123,13 +123,10 @@ subroutine io_BS_PAR_free(ID)
  !
  ! close BSE netcdf parallel file
  !
- use netcdf
- use IO_m,          ONLY:io_disconnect,io_unit
- include 'netcdf.inc'
+ use IO_m,          ONLY:io_disconnect
  !
  integer  :: ID, stat
  !
- stat = nf_close(io_unit(ID))
  call io_disconnect(ID)
  !
 end subroutine

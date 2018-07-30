@@ -186,13 +186,12 @@ module IO_m
    !
    !  NEW: def and IO subroutines split in two
    !
-   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_kind)
+   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
      integer               :: ID
      character(*)          :: VAR
      integer               :: VAR_SZ
      integer               :: VAR_KIND
      integer               :: MENU
-     character(schlen),optional :: dim_names(:)
      character(*),optional      :: par_io_kind
    end subroutine def_variable_elemental
    !

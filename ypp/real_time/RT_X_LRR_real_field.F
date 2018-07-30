@@ -102,17 +102,21 @@ subroutine RT_X_LRR_real_field(en)
  !
  !... Analytic ...
  !
- do i_w = 1, RT_conf%W_n_steps
-   !
-   if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
-   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=ElField%W(i_w)-cI*RT_conf%Field_damp_factor
-   !
-   ElField%F_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)*&
-&                     exp(cI*ElField%W(i_w)*Efield(i_Probe)%t_initial)
-   !
-   if (iE_err<0) exit
-   !
- enddo 
+ iE_err=-1
+ if (n_fields==1) then
+   iE_err=0
+   do i_w = 1, RT_conf%W_n_steps
+     !
+     if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
+     if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=ElField%W(i_w)-cI*RT_conf%Field_damp_factor
+     !
+     ElField%F_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)*&
+&                       exp(cI*ElField%W(i_w)*Efield(i_Probe)%t_initial)
+     !
+     if (iE_err<0) exit
+     !
+   enddo 
+ endif
  !
  !... Numerical ...
  !

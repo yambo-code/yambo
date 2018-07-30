@@ -24,11 +24,12 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  use pars,            ONLY:SP
- use parallel_m,      ONLY:master_cpu
+ use parallel_m,      ONLY:master_cpu,PP_redux
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_m,            ONLY:io_control,REP,OP_APP_WR_CL,OP_WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
  use timing_m,        ONLY:timing
+ !
  implicit none                                              
  !
  character(*)                            :: what
@@ -47,6 +48,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
+   call PP_redux()
    return
  endif
  !

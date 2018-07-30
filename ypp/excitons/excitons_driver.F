@@ -93,7 +93,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  iq = 1
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- db_name='BS_Q'//trim(intc(iq))//'.nc'
+ write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
  io_err=io_connect(desc=trim(db_name),type=2,ID=io_ID)
  io_err=variables_BS(io_ID,local_description,X=Xbsk)
  !

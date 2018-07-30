@@ -97,6 +97,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Map the RT k in RT_k...
  call RT_carriers_to_RT_k(RT_k)
+ call k_build_up_BZ_tables(RT_k)
+ call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
  ! ... and Eo in RT_E...
  call RT_carriers_to_RT_E(RT_E,"Eo")

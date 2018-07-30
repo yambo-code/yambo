@@ -27,7 +27,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
  use pars,           ONLY:SP,pi
- use interpolate,    ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,nshells,make_star,metric,int_sop
+ use interpolate,    ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,make_star,metric,int_sop
  use D_lattice,      ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,      ONLY:bz_samp,b
  use vec_operate,    ONLY:sort

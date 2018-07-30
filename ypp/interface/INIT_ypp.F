@@ -480,8 +480,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    if (l_bands) then
      !
-     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
      call initactivate(1,"DOSERange DOSESteps DOS_broad ")
+     call initactivate(1,"BANDS_bands")
      !
 #if defined _YPP_RT
    else if (l_RT_bands) then
@@ -491,7 +491,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
    endif
    !
-   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_bands BANDS_built_in")
+   call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
    !
  endif
  !	   

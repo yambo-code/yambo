@@ -236,7 +236,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
      !
      call msg('s','Found '//trim(intc(NK_found))//" Double-Grid k-point(s) already in the built-in grid")
      !
-     if (NK_found==Xk%nibz) then
+     if (NK_found==DbGd_k(i_db_merge)%nibz) then
        call warning("Empty group of k-points to be written in the DbGd DB")
        l_skip_check=.TRUE.
      else

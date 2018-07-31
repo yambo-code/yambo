@@ -34,7 +34,7 @@ subroutine K_dot_product(dot,V,W)
  implicit none
  !
  complex(SP),          intent(out):: dot
- type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps) 
+ type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps)
  !
  ! Workspace
  !

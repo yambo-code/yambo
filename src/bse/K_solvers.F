@@ -107,12 +107,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !
-   call K_diago_driver(iq,W_bss)
+   call K_diago_driver(iq,W_bss,X_static)
    !
  endif
  !
 #if defined _SLEPC
- if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+ if (run_Slepc)           call K_diago_driver(iq,W_bss,X_static)
 #endif
  !
  ! No JDOS in Inversion/Hadydock

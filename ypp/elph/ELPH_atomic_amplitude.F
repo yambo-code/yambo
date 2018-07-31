@@ -63,10 +63,10 @@ subroutine ELPH_atomic_amplitude(q)
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
-   call msg('l','not found')
+   call msg('s','not found')
    return
  endif
- call msg('l','sane')
+ call msg('s','sane')
  !
  nq_to_sum=elph_nDBs
  if (elph_use_q_grid) nq_to_sum=q%nibz

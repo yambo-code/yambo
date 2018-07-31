@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0 && np>1) { MPI_Abort(MPI_COMM_WORLD,1); };
+  if (mpi_init==0) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  };
  /* 

@@ -172,11 +172,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
- if (.not.allocated(X_mat)) then
+ if (.not.allocated(X_par)) then
    !
    if (io_RESPONSE) then
      allocate(X_par(1))
+#if !defined _PAR_IO
      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
    else
      allocate(X_par(PAR_nq))
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
@@ -236,7 +238,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
-   ! PAR => SER for I/O
+#if defined _PAR_IO
+   if(.not.io_RESPONSE) then
+#endif
+   !
+   ! PAR => SER for I/O or for cases where I/O is not done
    !
    do iw=1,Xw%n_freqs
      !
@@ -255,6 +261,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
      call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
      !
    enddo
+   !
+#if defined _PAR_IO
+   endif
+#endif
    !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus
@@ -293,7 +303,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  ! CLEAN (3)
  !
  if (io_RESPONSE) then
+#if !defined _PAR_IO
    YAMBO_FREE(X_mat)
+#endif
    deallocate(X_par)
  endif
  if (allocated(FXC)) then

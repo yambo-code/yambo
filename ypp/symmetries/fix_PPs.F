@@ -219,7 +219,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      enddo
      enddo
      !
-     call msg('l','done')
+     call msg('s','done')
      !
    endif
    !
@@ -238,7 +238,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
          call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),trim(more_io_path)//"/SAVE/",ierr)
        enddo
        !
-       call msg('l','done')
+       call msg('s','done')
        !
      endif
      !
@@ -468,7 +468,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
    endif
    !
-   call msg('l','done')
+   call msg('s','done')
    !
  end select
  !

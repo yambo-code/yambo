@@ -33,13 +33,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
- use stderr,         ONLY:real2ch,intc,write_to_log,write_to_log_default
+ use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:INTERPOLATION_coefficients,INTERPOLATION_BZ,INTERPOLATION_driver, &
-&                         electrons_bands_interpolate,INTERP_RT_id,GRID_k
+ use interpolate,    ONLY:INTERPOLATION_driver,electrons_bands_interpolate,INTERP_obj
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -54,13 +53,19 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
  real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
- character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,message
+ character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
- logical               :: l_normalize_Nel,l_nearest_neig_interp
- integer               :: ib,ik,i_sp_pol,i_RT,i_T,n_values
+ logical               :: l_normalize_Nel,l_nearest_neig_interp,l_Nel_fac
+ integer               :: ib,ik,i_RT,i_T,n_values,ID
  !
  call section('*','Interpolation tool')
  !=====================================
+ !
+ ! Define the kind of interpolation
+ call parser('NNInterp',l_nearest_neig_interp)
+ !
+ ! Nel renomarlization?
+ call parser('NelFac',  l_Nel_fac)
  !
  if(all(INTERP_grid>0).or.BANDS_steps<=0) then
    call error(" Interpolation of occupations/lifetimes only on a band circuit")
@@ -101,7 +106,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
  ! ... and Eo in RT_E...
- call RT_carriers_to_RT_E(RT_E,"Eo")
+ call RT_carriers_to_RT_E(en,RT_E,"Eo")
  !
  ! Perform the energies interpolation
  !======================================
@@ -119,92 +124,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    call electrons_spin_and_magn_interpolate(k,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
  endif
  !
- ! Perform the occupations interpolation
- !======================================
- Max_occ=0._SP
- !
- ! Define the kind of interpolation
- call parser('NNInterp',l_nearest_neig_interp)
- !
- ! Check if Nel has to be renormalized
- call parser('NormN',l_normalize_Nel)
- !
- call live_timing('Interpolation procedure',n_T_steps)
- !
- do i_T=1,n_T_steps
-   !
-   call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
-   !
-   Real_Nhole=0._SP
-   Real_Nel=0._SP
-   do i_RT=1,RT_carriers%nstates
-     if(ib<=RT_E%nbf) Real_Nhole=Real_Nhole-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
-     if(ib> RT_E%nbf) Real_Nel  =Real_Nel  +RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
-   enddo
-   Max_occ=maxval((/Max_occ,RT_carriers%delta_f/))
-   !
-   ! RT_carriers -> RT_E
-   !
-   call RT_carriers_to_RT_E(RT_E,"E")
-   call RT_carriers_to_RT_E(RT_E,"df")
-   !
-   if (.not.l_nearest_neig_interp) then
-     !
-     if (l_RT_occupations) then
-       call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.)
-       call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="f_on_RT_grid",QUIET=.TRUE.)
-     else if (l_RT_lifetimes) then
-       !call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.)
-       !call INTERPOLATION_driver(OUT_k=CIRCUIT_k,OUT_E=CIRCUIT_E,operation="f_on_RT_grid",QUIET=.TRUE.)
-     endif
-     call INTERPOLATION_driver(operation="END",QUIET=.TRUE.)
-     !
-   elseif(l_nearest_neig_interp) then
-     !
-     message=' '
-     if(i_T==1) message='RT setup'
-     !
-     if(l_RT_occupations)  then
-!       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,RT_carriers%nb,&
-!&                                     RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-!&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-!&                                     RT_carriers%delta_f,fit_on_circuit(:,:,:,i_T),trim(message),l_normalize_Nel)
-     endif
-     if(l_RT_lifetimes) then
-!       call Nearest_kpt_interpolation(RT_carriers%nk,CIRCUIT_k%nbz,&
-!&                                     RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table,RT_carriers%kpt, &
-!&                                     CIRCUIT_k%pt,RT_carriers%k_weight,CIRCUIT_k%weights,&
-!&                                     RT_carriers%NEQ_Lifetime,fit_on_circuit(:,:,:,i_T),trim(message),.false.)
-     endif
-     !
-   endif
-   !
-   ! Normalize the occupations
-   !
-   if(l_RT_occupations) then
-     !
-!     Nhole=-sum(fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T))/real(CIRCUIT_k%nbz)
-!     Nel=   sum(fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T))/real(CIRCUIT_k%nbz)
-!     !
-!     if(.not.l_nearest_neig_interp.and.l_normalize_Nel) then
-!       if (Nhole>0) then
-!         fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)=fit_on_circuit(RT_bands(1):RT_E%nbf,:,:,i_T)/Nhole*Real_Nhole
-!       endif
-!       if (Nel>0) then
-!         fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)=fit_on_circuit(RT_E%nbf+1:RT_bands(2),:,:,i_T)/Nel*Real_Nel
-!       endif
-!     endif
-     !
-   endif
-   !
-   call live_timing(steps=1)
-   !
- enddo 
- !
- call live_timing( )
- !
- call RT_carriers_object(RT_carriers,WHAT='free')
- !
  ! Output: bands on circuit
  !==========================
  !
@@ -219,9 +138,56 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    n_values=5
  endif
  !
- call live_timing('Output',n_T_steps)
+ ! Perform the occupations interpolation
+ !======================================
+ !
+ call live_timing('Interpolation',n_T_steps)
  !
  do i_T=1,n_T_steps
+   !
+   call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   !
+   ! RT_carriers -> RT_E (E components)
+   !
+   call RT_carriers_to_RT_E(en,RT_E,"E")
+   !
+   Real_Nhole=0._SP
+   Real_Nel=0._SP
+   do i_RT=1,RT_carriers%nstates
+     ib      =RT_carriers%table(i_RT,1)
+     ik      =RT_carriers%table(i_RT,3)
+     if(ib<=RT_E%nbf) Real_Nhole=Real_Nhole-RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
+     if(ib> RT_E%nbf) Real_Nel  =Real_Nel  +RT_carriers%delta_f(i_RT)*RT_k%weights(ik)
+   enddo
+   Max_occ=maxval(abs(RT_carriers%delta_f))
+   !
+   if (l_RT_occupations) operation="df_on_RT_grid"
+   if (l_RT_lifetimes)   operation="G_on_RT_grid"
+   !
+   call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
+&                            QUIET=.TRUE.,NEAREST=l_nearest_neig_interp,ID=ID)
+   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,SEED_RT=RT_carriers,operation=trim(operation),QUIET=.TRUE.)
+   !
+   ! Normalize the occupations
+   !
+   if(l_RT_occupations) then
+     !
+     Nhole=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:))/real(CIRCUIT_k%nbz)
+     Nel=   sum(INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/real(CIRCUIT_k%nbz)
+     !
+     if(.not.l_nearest_neig_interp.and.l_normalize_Nel) then
+       if (Nhole>0) then
+         INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)=INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)/Nhole*Real_Nhole
+       endif
+       if (Nel>0) then
+         INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)=INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)/Nel*Real_Nel
+       endif
+     endif
+     !
+   endif
+   !
+   ! OUTPUT
+   !=======
    !
    if (l_RT_lifetimes  ) file_name_rt="YPP-RT_NEQ_LIFE_bands_iT"//intc(i_T)
    if (l_RT_occupations) file_name_rt="YPP-RT_occ_bands_iT"//intc(i_T)
@@ -255,12 +221,14 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
        endif
        !
-!       if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
-!       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
+       values(3)=INTERP_obj(ID)%INTERP(ib,ik,1)
+       if (l_RT_lifetimes   ) values(3)=values(3)*HA2EV*1000._SP
+       if (l_RT_occupations .and. Max_occ>0. .and. l_Nel_fac ) values(3)=values(3)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
          values(4)=values(3)*spin_interpolated(ib,ik,1)
          values(5)=values(3)*spin_interpolated(ib,ik,2)
        endif
+       !
        call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
        if (len_trim(CIRCUIT_k_label(ik))>0) then
          of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
@@ -279,6 +247,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  call live_timing( )
  !
+ ! Clean
+ !
+ call INTERPOLATION_driver(operation="END")
+ call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
  if(n_spinor==2) then

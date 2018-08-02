@@ -125,7 +125,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
-   call RT_carriers_to_RT_E(RT_E,"E")
+   call RT_carriers_to_RT_E(En,RT_E,"E")
    !
    ! Built-in
    !----------
@@ -133,8 +133,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    if (i_T==1) call QP_state_table_setup(RT_E)
    call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='s')
    !
-   if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"df")
-   if(     l_sum_equilibrium) call RT_carriers_to_RT_E(RT_E,"f")
+   if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"df")
+   if(     l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"f")
    !... DOS
    if (n_spinor==2) then
      call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
@@ -156,7 +156,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
        call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_RT_grid")
        !... DOS
        call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&
-&                                   FORCE_occ=.TRUE.,WF_fac=INTERP_obj(ID)%R3_interp)
+&                                   FORCE_occ=.TRUE.,WF_fac=INTERP_obj(ID)%INTERP)
      else
        !... DOS
        call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&

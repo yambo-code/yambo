@@ -28,6 +28,7 @@ subroutine Nearest_kpt_interpolation(Nki,Nko,Nb,Nstates,N_int,n_neigh,table,k_pt
  ! The input values are known on the k_pti kgrid and there can be N_int quantities to
  ! be interpolated. The quantities to be interpolated are on a vector which is mapped to the 
  ! kpts, bands and spin indexes by the table.
+ !
  ! what is used just for the message
  !
  use pars,           ONLY:SP

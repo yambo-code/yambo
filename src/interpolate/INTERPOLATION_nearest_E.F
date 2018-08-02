@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine Nearest_level_interpolation(Energy,E_reference,N_qp,E_diff_tresh,i_qp_ref)
+subroutine INTERPOLATION_nearest_E(Energy,E_reference,N_qp,E_diff_tresh,i_qp_ref)
  !
  use pars,           ONLY:SP
  use vec_operate,    ONLY:sort
@@ -55,4 +55,4 @@ subroutine Nearest_level_interpolation(Energy,E_reference,N_qp,E_diff_tresh,i_qp
    !
  enddo
  !
-end subroutine Nearest_level_interpolation
+end subroutine INTERPOLATION_nearest_E

@@ -101,7 +101,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      do iband=bands(1),bands(2)
        do i_spin=1,n_sp_pol
          !
-         call Nearest_level_interpolation(En%Eo(iband,ik,i_spin),qp%E_bare(:),qp%n_states,E_diff,i_qp_ref)
+         call INTERPOLATION_nearest_E(En%Eo(iband,ik,i_spin),qp%E_bare(:),qp%n_states,E_diff,i_qp_ref)
          !
          if (                        E_diff<1.E-5_SP    ) N_exact=N_exact+1
          if (E_diff>1.E-5_SP    .and.E_diff<0.1_SP/HA2EV) N_close=N_close+1

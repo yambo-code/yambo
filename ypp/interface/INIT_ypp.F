@@ -91,20 +91,19 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_NL
  integer, external::io_NL
- integer          ::io_NonLinear
 #endif
  !
  ! What is running ?
  !
  what_is_running='YPP'
-#if defined _YPP_RT
- what_is_running='YPP_RT'
-#endif
 #if defined _YPP_MAGNETIC
  what_is_running='YPP_MAGNETIC'
 #endif
 #if defined _YPP_ELPH
  what_is_running='YPP_PH'
+#endif
+#if defined _YPP_RT
+ what_is_running='YPP_RT'
 #endif
 #if defined _YPP_NL
  what_is_running='YPP_NL'

@@ -169,16 +169,24 @@ module YPP_real_time
        enddo
      end subroutine
      !
-     subroutine RT_carriers_to_RT_E( E ,what )
+     subroutine RT_carriers_to_RT_E(E_eq,E,what)
        use electrons,      ONLY:levels,E_reset,n_sp_pol
        use real_time,      ONLY:RT_carriers
-       type(levels) :: E
+       type(levels) :: E,E_eq
        character(*) :: what
        integer      :: i_RT,i_sp_pol,ib,ik
        if (.not.allocated(E%E)) then
          call E_reset(E)
          E%nk=RT_carriers%nk
          E%nb=RT_carriers%nb(2)
+         E%nb=RT_carriers%nb(2)
+         E%nk=RT_carriers%nk
+         E%nbf=E_eq%nbf
+         E%nbm=E_eq%nbm
+         E%E_Fermi  =E_eq%E_Fermi
+         E%E_VBM    =E_eq%E_VBM
+         E%E_CBm    =E_eq%E_CBm
+         E%E_dir_gap=E_eq%E_dir_gap
          YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
          YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
          E%E=rZERO

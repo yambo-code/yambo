@@ -136,7 +136,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (n_spinor==2) then
      call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
-&                                 WF_fac=INTERP_obj(ID)%R3_interp)
+&                                 WF_fac=INTERP_obj(ID)%INTERP)
    else
      call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
    endif

@@ -30,7 +30,7 @@ module interpolate
  ! Interpolation according to PRB 38 p2721
  ! Code copied from BolzTraP 
  !
- implicit none
+#include<memory.h>
  !
  integer               :: nshells
  real(SP), allocatable :: int_sop(:,:,:)
@@ -66,11 +66,13 @@ module interpolate
  ! 
  type INTERP_element
    integer                  :: nb(2)=0
-   integer                  :: ns=0
+   integer                  :: D=0  ! 3rd dimension of SEED
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
+   logical                  :: use_NN=.FALSE.
    character(schlen)        :: what=" "
-   real(SP),    allocatable :: R3_interp(:,:,:)
+   real(SP),    allocatable :: SEED(:,:,:)
+   real(SP),    allocatable :: INTERP(:,:,:)
  end type INTERP_element
  !
  integer, parameter :: max_interpls=10
@@ -119,7 +121,7 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,OUT_k,OUT_E,operation,QUIET,ID)
+   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,OUT_k,OUT_E,operation,QUIET,ID,NEAREST)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -133,7 +135,7 @@ module interpolate
      type(levels),  intent(in)   , optional :: SEED_E
      type(levels),  intent(inout), optional :: OUT_E
      character(*),  intent(in)              :: operation
-     logical,       intent(in)   , optional :: QUIET
+     logical,       intent(in)   , optional :: QUIET,NEAREST
      integer,       intent(out)  , optional :: ID
    end subroutine INTERPOLATION_driver
    !
@@ -145,12 +147,14 @@ module interpolate
      integer, intent(in) :: ID
      interpls(ID)%ndim=0
      interpls(ID)%interp_type=""
-     if(allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
+     if (allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
      INTERP_obj(ID)%nb=0
-     INTERP_obj(ID)%ns=0
+     INTERP_obj(ID)%D=0
      INTERP_obj(ID)%ID=0
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%what=" "
+     YAMBO_FREE(INTERP_obj(ID)%SEED)
+     YAMBO_FREE(INTERP_obj(ID)%INTERP)
    end subroutine
    !
    subroutine get_ID(ID)

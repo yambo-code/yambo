@@ -54,6 +54,7 @@ subroutine NL_driver(en,k)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
  logical  :: Probe_consistency_error
  type(ext_field)   :: Efield_probe
+ logical, allocatable :: runs_ok(:)
  !
  call section("*",'NL Post Processing')
  !
@@ -66,15 +67,25 @@ subroutine NL_driver(en,k)
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
  YAMBO_ALLOC(Probe_frequency,(n_frequencies))
+ RT_P_probe=0._SP
+ Probe_frequency=0._SP
  !
  ! Reads the polarization from dbs containing simulation at different frequencies 
  !
  Probe_consistency_error=.FALSE.
  i_Probe=1
  !
+ allocate(runs_ok(n_runs))
+ runs_ok=.true.
+ !
  do i_f=1,n_frequencies
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
    io_Nonlinear=io_NL(ID)
+   !
+   if(io_Nonlinear/=0) then
+     runs_ok(i_f)=.false.
+     cycle
+   endif
    !
    Efield(i_Probe)%amplitude=Efield_strength(Efield(i_Probe)%intensity,'AU')
    !
@@ -96,6 +107,7 @@ subroutine NL_driver(en,k)
  enddo
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
+ if (any(runs_ok.eqv..false.)) call warning(' Incomplete runs')
  !
  ! Time Initialization
  !
@@ -144,6 +156,8 @@ subroutine NL_driver(en,k)
      !
      do i_f = 1, n_frequencies
        !
+       if(.not.runs_ok(i_f)) cycle
+       !
        T_period=T_range(1,i_f)
        !
        do i_d = 1,3
@@ -164,6 +178,8 @@ subroutine NL_driver(en,k)
      do i_order=0,X_order
        !
        do i_f=1,n_frequencies
+         !
+         if(.not.runs_ok(i_r)) cycle
          !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
@@ -254,6 +270,8 @@ contains
        do i_fp=1,n_frequencies
          !
          i_f=f_indx(i_fp)
+         !
+         if(.not.runs_ok(i_f)) cycle
          !
          Unit_of_Measure = 1._SP
          !

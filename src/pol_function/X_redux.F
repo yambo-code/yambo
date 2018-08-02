@@ -169,7 +169,9 @@ subroutine X_redux(iq,X_par,Xw,X)
      ! ALDA Fxc
      !
      if (Xo%kind=="SLK") then
+#if defined _SCALAPACK
        call PARALLEL_M_by_M(Xo,K_FXC,KERNEL,"N","N",X%ng,FXC_n_g_corr,FXC_n_g_corr)
+#endif
      else
        call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
 &                  FXC(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)

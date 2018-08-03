@@ -99,7 +99,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ! Map the RT k in RT_k
  !
  call RT_carriers_to_RT_k(RT_k)
- call k_build_up_BZ_tables(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
  ! Interpolation INIT 
@@ -108,7 +107,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    call INTERPOLATION_driver(operation="INIT",SEED_k=RT_k)
    !
-   call INTERPOLATION_driver(operation="GRID")
+   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
    !
  endif
  !
@@ -178,18 +177,18 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    do i_E=1,DOS_E_steps
      !
-!     if ( dos_E(i_E)>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
-!&         dos_E(i_E)<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) ) then
-!       !
-!       do i_f=1,N_files
-!         if (l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(file_n(i_f)))
-!       enddo
-!       !
-!       space_printed=.true.
-!       !
-!       cycle
-!       !
-!     endif
+     if ( dos_E(i_E)>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
+&         dos_E(i_E)<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) ) then
+       !
+       do i_f=1,N_files
+         if (l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(file_n(i_f)))
+       enddo
+       !
+       space_printed=.true.
+       !
+       cycle
+       !
+     endif
      !
      do i_f=1,N_files
        !

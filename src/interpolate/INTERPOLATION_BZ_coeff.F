@@ -27,7 +27,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  ! Aug2002 Georg Madsen : First version based on subroutine from D.Singh
  ! Apr2004 Georg Madsen : blocked dgemm version
  ! Code take from BoltzTrap
- ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
+ !
+ ! https://www.imc.tuwien.ac.at//forschungsbereich_theoretische_chemie/forschungsgruppen/prof_dr_gkh_madsen_theoretical_materials_chemistry/boltztrap/
  !
  use pars,           ONLY:SP,DP,pi,cI,cZERO
  use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop,INTERP_obj

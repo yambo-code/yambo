@@ -52,10 +52,6 @@ subroutine electrons_dos(Xk,Xen)
  !
  call section('*','Electronic DOS')
  !
- ! Setup
- !=======
- call electrons_dos_setup( Xen, dos_E, DOS_bands )  
- !
  ! E Double Grid
  !===============
  !
@@ -65,6 +61,10 @@ subroutine electrons_dos(Xk,Xen)
  !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
+ !
+ ! Setup
+ !=======
+ call electrons_dos_setup( Xen, dos_E, DOS_bands )  
  !
  ! DOS on the built-in grid
  !===================================================================
@@ -87,7 +87,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(operation="INIT",SEED_k=Xk)
    !
-   call INTERPOLATION_driver(operation="GRID")
+   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in")
    !

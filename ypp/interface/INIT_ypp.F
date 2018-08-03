@@ -90,7 +90,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
 #endif
 #if defined _YPP_NL
- integer, external::io_NL
+ integer, external::io_NL,io_Nonlinear
 #endif
  !
  ! What is running ?

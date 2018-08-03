@@ -22,17 +22,16 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
-&                               OUT_k,OUT_E,operation,QUIET,ID_out,NEAREST)
+&                               OUT_k,OUT_E,operation,QUIET,ID_out,&
+&                               NEAREST,N_near,GRID)
  !
  use pars,           ONLY:SP
  use real_time,      ONLY:RT_t
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,n_sp_pol
- use YPP,            ONLY:INTERP_grid
  use parser_m,       ONLY:parser
- use y_interpolate,  ONLY:INTERPOLATION_nearest_k
  use interpolate,    ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
-&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls
+&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -46,7 +45,8 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  type(levels),  intent(inout), optional :: OUT_E
  character(*),  intent(in)              :: operation
  logical,       intent(in)   , optional :: QUIET,NEAREST
- integer,       intent(out),   optional :: ID_out
+ integer,       intent(in)   , optional :: GRID(3),N_near
+ integer,       intent(out)  , optional :: ID_out
  !
  ! Work Space
  !
@@ -78,7 +78,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
   !
   call bz_samp_reset(GRID_k)
   GRID_k%description="INTERP_GRID"
-  call INTERPOLATION_create_the_grid(GRID_k,'i',INTERP_grid)
+  call INTERPOLATION_create_the_grid(GRID_k,'i',GRID)
   !
   return
   !
@@ -102,19 +102,32 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    !
  endif
  !
+ ! ID to use
+ !===========
+ !
+ if (present(SEED_k)) then
+   !
+   do i_obj=1,max_interpls
+     if (.not.INTERP_obj(i_obj)%in_use) then 
+       ID=i_obj
+       exit
+     endif
+   enddo
+   !
+ else if (present(OUT_k)) then
+   !
+   do i_obj=1,max_interpls
+     if (operation==trim(INTERP_obj(i_obj)%what)) ID=i_obj
+   enddo
+   !
+ endif
+ !
  ! SEED
  !======
  !
  if (present(SEED_k)) then
    !
    if (present(SEED_E).or.present(SEED_RT).or.present(SEED_R3)) then
-     !
-     do i_obj=1,max_interpls
-       if (.not.INTERP_obj(i_obj)%in_use) then 
-         ID=i_obj
-         exit
-       endif
-     enddo
      !
      INTERP_obj(ID)%nb=bands
      !
@@ -186,14 +199,6 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  ! INTERPOLATION...
  !==================
  !
- if (present(OUT_k)) then
-   !
-   do i_obj=1,max_interpls
-     if (operation==trim(INTERP_obj(i_obj)%what)) ID=i_obj
-   enddo
-   !
- endif
- !
  ! ... Using SEED and coefficients
  !
  if (present(OUT_k).and..not.INTERP_obj(ID)%use_NN) then
@@ -230,22 +235,23 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    !
    YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
    !
-   call INTERPOLATION_nearest_k(K_in=SEED_RT%kpt,SHAPE_in=(/n(1),n(2)/),&
-&                               K_out=OUT_k%pt,V_out=INTERP_obj(ID)%INTERP,SHAPE_out=(/n(1),n(2)/),&
-&                               V_in=INTERP_obj(ID)%SEED,SAME_SUM=l_normalize_Nel)
+!   call INTERPOLATION_nearest_k(K_in=SEED_RT%kpt,SHAPE_in=(/n(1),n(2)/),&
+!&                               K_out=OUT_k%pt,V_out=INTERP_obj(ID)%INTERP,SHAPE_out=(/n(1),n(2)/),&
+!&                               V_in=INTERP_obj(ID)%SEED,SAME_SUM=l_normalize_Nel)
+   if (l_df) then
    !
-!    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
-!&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-!&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-!&                                  SEED_RT%delta_f,INTERP_obj(ID)%INTERP,&
-!&                                  "QUIET",l_normalize_Nel)
-!   else if (l_G) then
-!    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
-!&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-!&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-!&                                  SEED_RT%NEQ_Lifetime,INTERP_obj(ID)%INTERP,&
-!&                                  "QUIET",.FALSE.)
-!  endif
+    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
+&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
+&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
+&                                  SEED_RT%delta_f,INTERP_obj(ID)%INTERP,&
+&                                  "QUIET",l_normalize_Nel)
+   else if (l_G) then
+    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
+&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
+&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
+&                                  SEED_RT%NEQ_Lifetime,INTERP_obj(ID)%INTERP,&
+&                                  "QUIET",.FALSE.)
+  endif
    !
  endif
  !

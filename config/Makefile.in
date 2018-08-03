@@ -122,8 +122,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interpolate interface qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interpolate interface qp plotting electrons 
+YPP_BASIC_LIBS     = modules interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
@@ -466,7 +466,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \

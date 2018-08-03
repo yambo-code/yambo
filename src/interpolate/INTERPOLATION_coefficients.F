@@ -84,7 +84,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
    allocate(interpls(ID)%engre(nshells,interpls(ID)%ndim))
    allocate(RDATA(interpls(ID)%ndim,Nk_local))
 #if defined _RT
-   if(associated(E%E_DbGd)) then
+   if(allocated(E%E_DbGd)) then
      do i1=1,inpdim(2)
        do ik=1,k%nibz
          RDATA((i1-1)*inpdim(1)+1:i1*inpdim(1),RT_ibz_coo(ik,1):RT_ibz_coo(ik,2)) =&

@@ -51,7 +51,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
  real(SP),allocatable  :: spin_factors(:,:,:),RT_spin_factors(:,:,:)
  real(SP),   external  :: RIntegrate
- integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin
  logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -146,16 +146,17 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    if (n_spin==2) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1)+el_dos(:,2,1),dos_E,DOS_E_steps)*DL_vol
    !
    if (l_interp) then
-     call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="E_on_RT_grid",QUIET=.TRUE.)
-     call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.)
+     call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="E_on_RT_grid",QUIET=.TRUE.,ID_op=ID_E)
+     call INTERPOLATION_driver(bands=RT_bands,SEED_E=RT_E,SEED_k=RT_k,operation="f_on_RT_grid",QUIET=.TRUE.,ID_op=ID_f)
      call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_RT_grid",QUIET=.TRUE.)
      call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_RT_grid",QUIET=.TRUE.)
      if (n_spinor==2) then
-       call INTERPOLATION_driver(bands=RT_bands,SEED_R3=RT_spin_factors,SEED_k=RT_k,operation="SPIN_factors_on_RT_grid",ID=ID)
+       call INTERPOLATION_driver(bands=RT_bands,SEED_R3=RT_spin_factors,SEED_k=RT_k,&
+&                                operation="SPIN_factors_on_RT_grid",ID_op=ID_spin)
        call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_RT_grid")
        !... DOS
        call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&
-&                                   FORCE_occ=.TRUE.,WF_fac=INTERP_obj(ID)%INTERP)
+&                                   FORCE_occ=.TRUE.,WF_fac=INTERP_obj(ID_spin)%INTERP)
      else
        !... DOS
        call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&
@@ -164,6 +165,11 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
      if (n_spin==2) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2)+el_dos(:,2,2),dos_E,DOS_E_steps)*DL_vol
+     !
+     call INTERPOLATION_driver(operation="END",ID_op=ID_E)
+     call INTERPOLATION_driver(operation="END",ID_op=ID_f)
+     call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
+     !
    endif
    !
    el_dos_max(1)=maxval(abs(el_dos(:,:,1)))

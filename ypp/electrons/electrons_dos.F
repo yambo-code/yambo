@@ -93,7 +93,8 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in")
    !
-   if (n_spinor==2) call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=WF_fac,SEED_k=Xk,operation="SPIN_factors_on_built_in",ID=ID)
+   if (n_spinor==2) call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=WF_fac,SEED_k=Xk,&
+&                                             operation="SPIN_factors_on_built_in",ID_op=ID)
    !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !

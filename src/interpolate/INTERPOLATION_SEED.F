@@ -21,19 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_treshold_estimate( )
- !
- use pars,         ONLY:SP
- use units,        ONLY:Kilobyte
- use electrons,    ONLY:n_spin,n_bands
- use R_lattice,    ONLY:nkibz
- use wave_func,    ONLY:wf_ng
- use memory,       ONLY:MEM_treshold
- !
- implicit none
- !
- ! In Kb!
- !
- MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),10000)
- !
+subroutine INTERPOLATION_SEED
+
 end subroutine

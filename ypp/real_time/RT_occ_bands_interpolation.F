@@ -164,7 +164,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
    call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
-&                            QUIET=.TRUE.,NEAREST=l_nearest_neig_interp,ID=ID)
+&                            QUIET=.TRUE.,NEAREST=l_nearest_neig_interp,ID_op=ID)
    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,SEED_RT=RT_carriers,operation=trim(operation),QUIET=.TRUE.)
    !
    ! Normalize the occupations
@@ -237,6 +237,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      enddo
      !
    enddo
+   !
+   call INTERPOLATION_driver(operation="END",ID_op=ID)
    !
    call of_open_close(file_name_rt)
    !

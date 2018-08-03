@@ -151,7 +151,7 @@ module interpolate
    end subroutine electrons_bands_interpolate
    !
    subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,OUT_k,&
-&                                  OUT_E,operation,QUIET,ID,NEAREST,N_near,GRID)
+&                                  OUT_E,operation,QUIET,ID_op,NEAREST,N_near,GRID)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
@@ -167,7 +167,7 @@ module interpolate
      character(*),  intent(in)              :: operation
      logical,       intent(in)   , optional :: QUIET,NEAREST
      integer,       intent(in)   , optional :: GRID(3),N_near
-     integer,       intent(out)  , optional :: ID
+     integer,       intent(inout), optional :: ID_op
    end subroutine INTERPOLATION_driver
    !
  end interface  

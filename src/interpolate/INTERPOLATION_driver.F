@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
-&                               OUT_k,OUT_E,operation,QUIET,ID_out,&
+&                               OUT_k,OUT_E,operation,QUIET,ID_op,&
 &                               NEAREST,N_near,GRID)
  !
  use pars,           ONLY:SP
@@ -31,7 +31,8 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  use electrons,      ONLY:levels,n_sp_pol
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
-&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k
+&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
+&                         lattice_vectors
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -46,7 +47,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  character(*),  intent(in)              :: operation
  logical,       intent(in)   , optional :: QUIET,NEAREST
  integer,       intent(in)   , optional :: GRID(3),N_near
- integer,       intent(out)  , optional :: ID_out
+ integer,       intent(inout), optional :: ID_op
  !
  ! Work Space
  !
@@ -86,9 +87,19 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  !
  if (operation=="END") then
    !
-   do i_obj=1,max_interpls
-     call INTERPOLATION_reset(i_obj)
-   enddo
+   if (present(ID_op)) then
+     !
+     if (.not.INTERP_obj(ID_op)%in_use) return 
+     !
+     call INTERPOLATION_reset(ID_op)
+     !
+   else
+     do i_obj=1,max_interpls
+       call INTERPOLATION_reset(i_obj)
+     enddo
+     !
+     YAMBO_FREE_P(lattice_vectors)
+   endif
    !
    return
    !
@@ -141,8 +152,8 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
      endif
      INTERP_obj(ID)%what=operation
      !
-     if (present(ID_out)) then
-       ID_out=ID
+     if (present(ID_op)) then
+       ID_op=ID
      endif
      !
    endif

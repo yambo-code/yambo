@@ -54,7 +54,7 @@ subroutine NL_driver(E,X,k,q)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  !
- logical, external :: stop_now
+ logical, external :: STOP_now
  integer, external :: eval_G_minus_G
  ! 
  ! Work Space
@@ -236,13 +236,13 @@ subroutine NL_driver(E,X,k,q)
      !
      call live_timing(steps=1)
      !
-     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
+     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. STOP_now(.false.)
      !
    enddo
    !
    call NL_databases_IO(i_f,'write')
    !
-   if(stop_now(.false.)) exit
+   if(STOP_now(.false.)) exit
    !
  enddo
  !

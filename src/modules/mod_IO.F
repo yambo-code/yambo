@@ -193,15 +193,17 @@ module IO_m
      integer               :: VAR_SZ
      integer               :: VAR_KIND
      integer               :: MENU
-     character(*),optional :: par_io_kind
+     character(*),optional      :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,par_io_kind)
-     integer               :: ID
-     character(*)          :: VAR
-     integer               :: VAR_SZ(:)
-     integer               :: VAR_KIND
-     character(*),optional :: par_io_kind
+   subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+     use pars,              ONLY:schlen
+     integer                :: ID
+     character(*)           :: VAR
+     integer                :: VAR_SZ(:)
+     integer                :: VAR_KIND
+     character(schlen),optional :: dim_names(:)
+     character(*),optional      :: par_io_kind
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
@@ -754,12 +756,14 @@ module IO_m
      end if
    end subroutine
    !
-   integer function netcdf_dim(ID,DIM)
-     integer, intent ( in) :: ID,DIM
-     integer       :: dim_found
-     character(12) :: dim_strng
+   integer function netcdf_dim(ID,DIM,dim_name)
+     integer,intent(in)       :: ID,DIM
+     integer                  :: dim_found
+     character(schlen)          :: dim_strng
+     character(schlen),optional :: dim_name
      netcdf_dim=0
      write (dim_strng,'(a,i10.10)') 'D_',dim
+     if (present(dim_name)) dim_strng = dim_name
      dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
      if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function

@@ -261,12 +261,12 @@ module nl_optics
      W%ison = .false.
      if (n > 0) then
        W%ison = .true.
-       W%n_order = max(n,7)
-       W%n_size = 2*W%n_size + 1
+       W%n_order = min(n,7)
+       W%n_size = 2*W%n_order + 1
        YAMBO_ALLOC(W%indx_T,(W%n_size))
        i_t_start = nint(Trange(1)/Tstep)+1
        i_deltaT=nint((Trange(2)-Trange(1))/Tstep)/W%n_size
-       forall(i_t=0:W%n_size) W%indx_T(1+i_t) = i_t_start + i_t*i_deltaT 
+       forall(i_t=0:W%n_size-1) W%indx_T(1+i_t) = i_t_start + i_t*i_deltaT 
      end if
      !
    end subroutine NL_set_WF_sample

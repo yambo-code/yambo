@@ -38,7 +38,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use parser_m,       ONLY:parser
  use RT_control,     ONLY:RT_apply,RT_carriers_object
  use real_time,      ONLY:RT_carriers,RT_bands
- use interpolate,    ONLY:INTERPOLATION_driver,electrons_bands_interpolate,INTERP_obj
+ use interpolate,    ONLY:INTERPOLATION_driver,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -55,14 +55,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
- logical               :: l_normalize_Nel,l_nearest_neig_interp,l_Nel_fac
+ logical               :: l_normalize_Nel,l_Nel_fac
  integer               :: ib,ik,i_RT,i_T,n_values,ID
  !
  call section('*','Interpolation tool')
  !=====================================
- !
- ! Define the kind of interpolation
- call parser('NNInterp',l_nearest_neig_interp)
  !
  ! Nel renomarlization?
  call parser('NelFac',  l_Nel_fac)
@@ -164,7 +161,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
    call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
-&                            QUIET=.TRUE.,NEAREST=l_nearest_neig_interp,ID_op=ID)
+&                            QUIET=.TRUE.,ID_op=ID)
    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,SEED_RT=RT_carriers,operation=trim(operation),QUIET=.TRUE.)
    !
    ! Normalize the occupations
@@ -174,7 +171,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      Nhole=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:))/real(CIRCUIT_k%nbz)
      Nel=   sum(INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/real(CIRCUIT_k%nbz)
      !
-     if(.not.l_nearest_neig_interp.and.l_normalize_Nel) then
+     if(.not.trim(INTERP_mode)=="NN".and.l_normalize_Nel) then
        if (Nhole>0) then
          INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)=INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)/Nhole*Real_Nhole
        endif

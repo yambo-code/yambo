@@ -38,7 +38,12 @@ module interpolate
  real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
  !
+ character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
+ !
+ ! NN method
+ !
+ integer :: NN_nk_exact=0
  !
  ! ID's
  !
@@ -82,34 +87,17 @@ module interpolate
  !
  interface
    !
-   subroutine INTERPOLATION_nearest_k(K_in,K_out,V_out,SHAPE_out,&
-&                                     Kw_in,QP_in,RT_in,V_in,V1_in,SHAPE_in,Kw_out,&
-&                                     SAME_SUM,N_neigh,QUIET)
-     use real_time,      ONLY:RT_t
-     use QP_m,           ONLY:QP_t
-     use pars,           ONLY:SP
+   subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out,N_neigh)
+     !
+     use pars,       ONLY:SP
      !
      real(SP)                :: K_in(:,:)
      real(SP)                :: K_out(:,:)
+     real(SP)                :: V_in(:,:,:) 
      real(SP)                :: V_out(:,:,:) 
-     integer                 :: SHAPE_out(2)
-     !
-     ! Possible IN's
-     real(SP)     , optional :: V_in(:,:,:)
-     real(SP)     , optional :: V1_in(:)
-     type(RT_t)   , optional :: RT_in
-     type(QP_t)   , optional :: QP_in
-     integer      , optional :: SHAPE_in(2)
-     !
-     ! Weights
-     real(SP)     , optional :: Kw_in(:)
-     real(SP)     , optional :: Kw_out(:)
-     !
-     logical      , optional :: SAME_SUM,QUIET
-     integer      , optional :: N_neigh
+     integer,        optional:: N_neigh
      !
    end subroutine
-   !
    !
    subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
      use pars,       ONLY:SP
@@ -173,6 +161,10 @@ module interpolate
  end interface  
  !  
  contains
+   !
+   subroutine INTERPOLATION_nearest_k_report( )
+     !
+   end subroutine
    !
    subroutine INTERPOLATION_reset(ID)
      integer, intent(in) :: ID

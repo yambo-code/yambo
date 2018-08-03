@@ -189,10 +189,10 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  if(all(INTERP_grid>0)) call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
  !
  if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then
-   call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="dE_on_built_in")
+   call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="dE_on_built_in",NEAREST=.FALSE.)
  endif
  !
- call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in")
+ call INTERPOLATION_driver(bands=BANDS_range,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",NEAREST=.FALSE.)
  !
  if (BANDS_steps> 0) then
    !

@@ -28,7 +28,7 @@ subroutine ypp_INIT_load(defs)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
- use interpolate,   ONLY:INTERP_shell_factor
+ use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode
  use YPP
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -195,13 +195,13 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
  call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
+ call it(defs,'INTERP_mode', 'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
  call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
  ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
- call it('f',defs,'NNInterp','Use nearest neigbor interpolation scheme')
  call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
  call it(defs,'NelFac'   ,'Rescale the total number of electrons',Nel_fac)
 #endif

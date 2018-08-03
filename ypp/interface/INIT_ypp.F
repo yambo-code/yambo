@@ -54,7 +54,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
-&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,l_RTpump_manual,&
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,RT_conf
  use real_time,      ONLY:RT_bands
@@ -294,7 +294,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      l_RTpump_energy=trim(rstr_piece(i1+1))=='e'
      l_RTpump_kspace=trim(rstr_piece(i1+1))=='k'
-     l_RTpump_manual=trim(rstr_piece(i1+1))=='m'
      l_RTpump_Fermi =trim(rstr_piece(i1+1))=='f'
    endif
    !
@@ -352,7 +351,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if ( trim(rstr_piece(i1)) == 'RTDBs') then
      if (l_RTpump_energy) call initactivate(1,'Select_energy')
      if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
-     if (l_RTpump_manual) call initactivate(1,'Select_manual')
    endif
    !
    ! GPL_EXCLUDE_END
@@ -416,7 +414,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
- l_RTpump_manual    = runlevel_is_on('Select_manual')
  l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
  l_RT_abs           = runlevel_is_on('RTabs')
@@ -476,20 +473,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_bands) then
 #endif
    !
-   call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
+   call initactivate(1,"INTERP_mode OutputAlat cooIn cooOut NormN NelFac")
    !
-   if (l_bands) then
-     !
-     call initactivate(1,"DOSERange DOSESteps DOS_broad ")
-     call initactivate(1,"BANDS_bands")
-     !
-#if defined _YPP_RT
-   else if (l_RT_bands) then
-     !
-     call initactivate(1,"NNInterp")
-#endif
-     !
-   endif
+   if (l_bands) call initactivate(1,"BANDS_bands")
    !
    call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
@@ -552,7 +538,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
-     call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac")
    endif
  endif
 #if defined _YPP_RT

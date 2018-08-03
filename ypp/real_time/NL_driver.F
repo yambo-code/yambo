@@ -75,7 +75,7 @@ subroutine NL_driver(en,k)
  Probe_consistency_error=.FALSE.
  i_Probe=1
  !
- allocate(runs_ok(n_runs))
+ allocate(runs_ok(n_frequencies))
  runs_ok=.true.
  !
  do i_f=1,n_frequencies
@@ -179,7 +179,7 @@ subroutine NL_driver(en,k)
        !
        do i_f=1,n_frequencies
          !
-         if(.not.runs_ok(i_r)) cycle
+         if(.not.runs_ok(i_f)) cycle
          !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&

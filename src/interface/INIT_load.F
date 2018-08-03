@@ -85,7 +85,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha
+ use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha,n_order
 #endif 
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
@@ -533,6 +533,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &    verb_level=V_nl_optics)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
 &    verb_level=V_nl_optics)
+ call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
  !
 #endif
  !

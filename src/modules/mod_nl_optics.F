@@ -60,10 +60,10 @@ module nl_optics
  !
  complex(SP) :: E_xc_0(3)
  !
- ! WFs and Densityt
+ ! WFs and Density
  !
  complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
- real(SP),    allocatable :: full_rho(:)               ! density of all bands from 1:SC_bands(2)
+ real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
  complex(SP), allocatable :: dG(:,:,:) 
  !
  ! Integrator Variables
@@ -106,6 +106,18 @@ module nl_optics
  integer  :: NL_nbands
  integer  :: n_frequencies
  integer  :: n_freqs_todo
+ !
+ ! Wavefunction sampling
+ !
+ type NLsampleWF
+   integer              :: n_order   ! Sampling NL order
+   integer              :: n_size    ! Size of sampling
+   logical              :: ison      ! WF sample logical switch 
+   integer, allocatable :: indx_T(:) ! indexes of time sampling
+ end type NLsampleWF
+ !
+ integer  :: n_order
+ type(NLsampleWF) :: WF_sample 
  !
  ! Databases input/output
  !
@@ -236,5 +248,27 @@ module nl_optics
      beta = NL_LRC_alpha/Egap**2
      Alpha_ED = NL_LRC_alpha + beta*omega**2
    end function
+   !
+   subroutine NL_set_WF_sample(W,n,Tstep,Trange)
+     !
+     type(NLsampleWF),intent(out) :: W
+     integer         ,intent(in)  :: n 
+     real(SP)        ,intent(in)  :: Tstep
+     real(SP)        ,intent(in)  :: Trange(2)
+     ! ws:
+     integer :: i_t,i_t_start,i_deltaT     
+     !
+     W%ison = .false.
+     if (n > 0) then
+       W%ison = .true.
+       W%n_order = max(n,7)
+       W%n_size = 2*W%n_size + 1
+       YAMBO_ALLOC(W%indx_T,(W%n_size))
+       i_t_start = nint(Trange(1)/Tstep)+1
+       i_deltaT=nint((Trange(2)-Trange(1))/Tstep)/W%n_size
+       forall(i_t=0:W%n_size) W%indx_T(1+i_t) = i_t_start + i_t*i_deltaT 
+     end if
+     !
+   end subroutine NL_set_WF_sample
    !
 end module

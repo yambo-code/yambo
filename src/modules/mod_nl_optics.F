@@ -131,7 +131,7 @@ module nl_optics
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
- complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:)
+ complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
  complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: freqs_done(:)
  integer                   :: n_NL_descriptions
@@ -188,6 +188,10 @@ module nl_optics
      YAMBO_ALLOC(E_ext_t,(NE_steps,3))
      YAMBO_ALLOC(E_ks_t,(NE_steps,3))
      !
+     if (WF_sample%ison) then
+       YAMBO_ALLOC(V_bands_t,(WF_sample%n_size,1:NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     endif
+     !
    end subroutine NL_alloc
    
    subroutine NL_free
@@ -205,22 +209,11 @@ module nl_optics
      YAMBO_FREE(I_relax)
      YAMBO_FREE(V_bands)
      !
-     if(allocated(rho_reference)) then
-       YAMBO_FREE(rho_reference)
-     endif
-     !
-     if(allocated(full_rho)) then
-       YAMBO_FREE(full_rho)
-     endif
-     !
-     if(allocated(E_full)) then
-       YAMBO_FREE(E_full)
-     endif
-     !
-     if(allocated(V_xc_0)) then
-       YAMBO_FREE(V_xc_0)
-     endif
-     !
+     YAMBO_FREE(rho_reference)
+     YAMBO_FREE(full_rho)
+     YAMBO_FREE(E_full)
+     YAMBO_FREE(V_xc_0)
+
      if(l_use_DIPOLES) then
        YAMBO_FREE(DIP_bz)
      else
@@ -231,6 +224,7 @@ module nl_optics
      YAMBO_FREE(E_tot_t)
      YAMBO_FREE(E_ext_t)
      YAMBO_FREE(E_ks_t)
+     YAMBO_FREE(V_bands_t)
      !
      if(l_use_Hxc_collisions) then
        YAMBO_FREE(dG)

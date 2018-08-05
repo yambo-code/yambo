@@ -40,7 +40,7 @@ subroutine NL_driver(E,X,k,q)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,&
-&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands
+&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -229,6 +229,8 @@ subroutine NL_driver(E,X,k,q)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
+     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time))&
+          V_bands_t(NE_i_time,:,:,:,:) = V_bands(:,:,:,:)
      !
      call NL_output(NE_i_time,i_f) 
      !

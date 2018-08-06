@@ -466,7 +466,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*.dep' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*make.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \

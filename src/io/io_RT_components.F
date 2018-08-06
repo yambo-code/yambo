@@ -97,7 +97,7 @@ integer function io_RT_components(what,ID)
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
  if (l_G     .or.l_THETA) then
-   if (allocated(PAR_IND_Xk_ibz%element_1D)) then
+   if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
      call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
    else
      call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)

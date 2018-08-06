@@ -103,7 +103,6 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    call RT_Glesser_evolve(E,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
-   write (*,*) "INT",dG_tmp(2,2,1,i_step)
    ! ... Update of logicals before the occupations update
    !
    call RT_relaxation_logicals( )

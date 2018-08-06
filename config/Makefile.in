@@ -534,7 +534,7 @@ endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
  @if test -d $(bindir); then \
-  rmdir $(bindir); \
+  cd $(bindir) ; rm -f * ; cd .. ; rmdir $(bindir); \
  fi
  echo "[CLEAN] Targets ... done" 
 endef

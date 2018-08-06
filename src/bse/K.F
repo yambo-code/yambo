@@ -385,7 +385,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=OP_RD_CL,ID=ID)
  call io_BS_PAR_check(iq,ID)
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,ID=ID)
+ call io_control(ACTION=OP_APP_WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)

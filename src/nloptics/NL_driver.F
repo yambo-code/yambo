@@ -214,6 +214,7 @@ subroutine NL_driver(E,X,k,q)
    l_dynamics_is_over=.false.
    !
    NE_i_time=0
+   N_sample_size=0
    !
    do while(.not.l_dynamics_is_over)
      !
@@ -229,8 +230,10 @@ subroutine NL_driver(E,X,k,q)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
-     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time))&
-          V_bands_t(NE_i_time,:,:,:,:) = V_bands(:,:,:,:)
+     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time)) then
+       N_sample_size=N_sample_size + 1
+       V_bands_t(N_sample_size,:,:,:,:) = V_bands(:,:,:,:)
+     end if
      !
      call NL_output(NE_i_time,i_f) 
      !

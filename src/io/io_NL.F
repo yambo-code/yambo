@@ -26,11 +26,13 @@ integer function io_NL(ID)
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_correlation,NL_er,NL_correlation,n_frequencies
+&                        NL_correlation,NL_er,NL_correlation,n_frequencies,
+&                        WF_sample,V_bands_t
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step
  use RT_control,    ONLY:JPC_RT_IO_t
  use fields,        ONLY:Efield
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_sp_pol
+ use QP_m,          ONLY:QP_nk
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
@@ -160,6 +162,24 @@ integer function io_NL(ID)
  write (VAR_name,'(a,i4.4)') 'E_ks_freq_',i_fragment
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
  call io_bulk(ID,C2=E_ks_t)
+ !
+ ! WF_sample:  if not switched on skip this variable 
+ ! (is that legal or do I need a sec as in io_BSS_diago?)
+ !
+ if (.not.WF_sample%ison) then
+   io_NL=-1
+   goto 1
+ endif
+ !
+ ! Indexes of the time sampled
+ !
+ call io_bulk(ID,'INDX_T',VAR_SZ=(/WF_sample%n_size/))
+ call io_bulk(ID,I2=WF_sample%indx_T(:))
+ !
+ ! V_bands at samping times
+ !
+ call io_bulk(ID,'V_BANDS_T',VAR_SZ=(/WF_sample%n_size,NL_bands(2),WF_sample%n_val,QP_nk,n_sp_pol/))
+ call io_bulk(ID,C2=V_bands_t,IPOS=(/1,1,1,1,1/))
  !
 1 call io_disconnect(ID=ID)
  !

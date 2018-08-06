@@ -251,7 +251,7 @@ subroutine NL_initialize(E,k,q)
  ! =========================
  !
  WF_sample_range  = (/Time - EtoT(E=NL_er(1))+5._SP*RT_step, Time/)
- call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range)
+ call NL_set_WF_sample(WF_sample,n_order,E%nbf,RT_step,WF_sample_range)
  if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
  if (n_order > 0) then
    if (WF_sample%ison == .false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')

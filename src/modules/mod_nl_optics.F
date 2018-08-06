@@ -110,10 +110,10 @@ module nl_optics
  ! Wavefunction sampling
  !
  type NLsampleWF
-   integer              :: n_order   ! Sampling NL order
-   integer              :: n_size    ! Size of sampling
-   logical              :: ison      ! WF sample logical switch 
-   integer, allocatable :: indx_T(:) ! indexes of time sampling
+   integer              :: n_order     ! Sampling NL order
+   integer              :: n_size      ! Size of sampling
+   logical              :: ison        ! WF sample logical switch 
+   integer, allocatable :: indx_T(:)   ! indexes of time sampling
  end type NLsampleWF
  !
  integer  :: n_order

@@ -112,12 +112,14 @@ module nl_optics
  type NLsampleWF
    integer              :: n_order     ! Sampling NL order
    integer              :: n_size      ! Size of sampling
+   integer              :: n_val       ! Number of valence
+   integer              :: n_k         ! Number of kpoints
    logical              :: ison        ! WF sample logical switch 
    integer, allocatable :: indx_T(:)   ! indexes of time sampling
  end type NLsampleWF
  !
  integer  :: n_order
- type(NLsampleWF) :: WF_sample 
+ type(NLsampleWF) :: WF_sample, WF_sample_ondisk 
  !
  ! Databases input/output
  !
@@ -188,9 +190,7 @@ module nl_optics
      YAMBO_ALLOC(E_ext_t,(NE_steps,3))
      YAMBO_ALLOC(E_ks_t,(NE_steps,3))
      !
-     if (WF_sample%ison) then
-       YAMBO_ALLOC(V_bands_t,(WF_sample%n_size,1:NL_bands(2),en%nbf,QP_nk,n_sp_pol))
-     endif
+     call NL_ALLOC_WF_sample(WF_sample,NL_bands(2),n_sp_pol)
      !
    end subroutine NL_alloc
    
@@ -243,12 +243,13 @@ module nl_optics
      Alpha_ED = NL_LRC_alpha + beta*omega**2
    end function
    !
-   subroutine NL_set_WF_sample(W,n,Tstep,Trange)
+   subroutine NL_set_WF_sample(W,n,Tstep,Trange,v,k)
      !
      type(NLsampleWF),intent(out) :: W
      integer         ,intent(in)  :: n 
      real(SP)        ,intent(in)  :: Tstep
      real(SP)        ,intent(in)  :: Trange(2)
+     integer         ,optional    :: v,k 
      ! ws:
      integer :: i_t,i_t_start,i_deltaT     
      !
@@ -257,6 +258,8 @@ module nl_optics
        W%ison = .true.
        W%n_order = min(n,7)
        W%n_size = 2*W%n_order + 1
+       if (present(v)) W%n_val = v
+       if (present(k)) W%n_k = k
        YAMBO_ALLOC(W%indx_T,(W%n_size))
        i_t_start = nint(Trange(1)/Tstep)+1
        i_deltaT=nint((Trange(2)-Trange(1))/Tstep)/W%n_size
@@ -264,5 +267,44 @@ module nl_optics
      end if
      !
    end subroutine NL_set_WF_sample
+   !
+   subroutine NL_COPY_WF_sample(W1,W2)
+     !
+     type(NLsampleWF),intent(in) :: W1
+     type(NLsampleWF),intent(out) :: W2
+     !
+     W2%ison = W1%ison
+     if (W1%ison) then
+       W2%n_order = W1%n_order
+       W2%n_size  = W1%n_size
+       W2%n_val   = W1%n_val 
+       W2%n_k     = W1%n_k
+       YAMBO_ALLOC(W2%indx_T,(W2%n_size))
+       W2%indx_T(:) = W1%indx_T(:)
+     end if
+     !
+   end subroutine NL_COPY_WF_sample
+   !
+   subroutine NL_INIT_WF_sample(W)
+     !
+     type(NLsampleWF),intent(inout) :: W
+     !
+     W%ison = .false.
+     W%n_order = 0
+     W%n_size = 0
+     W%n_val  = 0
+     W%n_k    = 0
+     !
+   end subroutine NL_INIT_WF_sample
+   !
+   subroutine NL_ALLOC_WF_sample(W,nb,ns)
+     !
+     type(NLsampleWF),intent(in) :: W
+     integer,         intent(in) :: nb,ns
+     !
+     if (W%ison) then
+       YAMBO_ALLOC(V_bands_t,(W%n_size,nb,W%n_val,W%n_k,ns))
+     endif
+   end subroutine NL_ALLOC_WF_sample
    !
 end module

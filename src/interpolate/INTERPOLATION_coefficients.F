@@ -27,12 +27,13 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  !
  ! Also note that K index is the the second in R2D
  !
- use pars,        ONLY:SP
- use R_lattice,   ONLY:bz_samp
- use electrons,   ONLY:levels
- use interpolate, ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,get_ID
+ use pars,              ONLY:SP
+ use R_lattice,         ONLY:bz_samp
+ use electrons,         ONLY:levels
+ use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells
+ use interpolate_tools, ONLY:get_ID
 #if defined _RT
- use real_time,   ONLY:DbGd_ibz_coo,RT_ibz_coo
+ use real_time,         ONLY:DbGd_ibz_coo,RT_ibz_coo
 #endif
  !
  implicit none

@@ -23,17 +23,19 @@
 !
 subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
 &                               OUT_k,OUT_E,operation,QUIET,ID_op,&
-&                               NEAREST,N_near,GRID)
+&                               NEAREST,GRID)
  !
- use pars,           ONLY:SP
- use real_time,      ONLY:RT_t
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use electrons,      ONLY:levels,n_sp_pol
- use parser_m,       ONLY:parser
- use interpolate,    ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
-&                         INTERPOLATION_reset,INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
-&                         lattice_vectors
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use pars,                 ONLY:SP
+ use real_time,            ONLY:RT_t
+ use R_lattice,            ONLY:bz_samp,bz_samp_reset
+ use electrons,            ONLY:levels,n_sp_pol
+ use parser_m,             ONLY:parser
+ use interpolate_tools,    ONLY:INTERPOLATION_reset,init_ID,FILL_SEED_E,FILL_SEED_RT
+ use interpolate,          ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
+&                               INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
+&                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_G,&
+&                               l_INTERP_EQ,l_INTERP_df
+ use IO_m,                 ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -46,13 +48,13 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  type(levels),  intent(inout), optional :: OUT_E
  character(*),  intent(in)              :: operation
  logical,       intent(in)   , optional :: QUIET,NEAREST
- integer,       intent(in)   , optional :: GRID(3),N_near
+ integer,       intent(in)   , optional :: GRID(3)
  integer,       intent(inout), optional :: ID_op
  !
  ! Work Space
  !
- integer               :: i_s,ib,ik,ID,i_obj,i_RT,n(2)
- logical               :: l_f,l_E,l_dE,l_G,l_EQ,l_df,l_normalize_Nel
+ integer               :: ib,ID,i_obj,n(2),nk
+ logical               :: l_normalize_Nel
  !
  ! Actions
  !=========
@@ -61,12 +63,12 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  !
  call parser('NormN',l_normalize_Nel)
  !
- l_f   =operation(1:1)== "f"
- l_E   =operation(1:1)== "E"
- l_G   =operation(1:1)== "G"
- l_dE  =operation(1:2)== "dE"
- l_df  =operation(1:2)== "df"
- l_EQ  =index(operation,"EQ")>0
+ l_INTERP_f   =operation(1:1)== "f"
+ l_INTERP_E   =operation(1:1)== "E"
+ l_INTERP_G   =operation(1:1)== "G"
+ l_INTERP_dE  =operation(1:2)== "dE"
+ l_INTERP_df  =operation(1:2)== "df"
+ l_INTERP_EQ =index(operation,"EQ")>0
  !
  ! SETUP
  !=======
@@ -138,133 +140,124 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  !
  if (present(SEED_k)) then
    !
-   if (present(SEED_E).or.present(SEED_RT).or.present(SEED_R3)) then
-     !
-     INTERP_obj(ID)%nb=bands
-     !
-     if (present(SEED_E).or.present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
-     if (present(SEED_R3))                    INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
-     !
-     INTERP_obj(ID)%in_use=.TRUE.
-     INTERP_obj(ID)%use_NN=.FALSE.
-     if (present(NEAREST)) then
-       INTERP_obj(ID)%use_NN=NEAREST 
-     endif
-     INTERP_obj(ID)%what=operation
-     !
-     if (present(ID_op)) then
-       ID_op=ID
-     endif
-     !
+   if (present(SEED_E).or.present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
+   if (present(SEED_R3))                    INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
+   !
+   if (present(ID_op)) then
+     ID_op=ID
+   endif
+   !
+   call init_ID(ID,bands,SEED_k,operation)
+   !
+   if (present(NEAREST)) then
+     INTERP_obj(ID)%use_NN=NEAREST 
    endif
    !
    ! I asssume here that SEED_E and SEED_RT lives on the same grid of SEED_k
    !
-   if (present(SEED_E).or.present(SEED_RT)) then
-     !
-     YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),SEED_k%nibz,n_sp_pol))
-     !
-     if (present(SEED_E)) then
-       !
-       do i_s=1,n_sp_pol
-         do ib=bands(1),bands(2)
-          do ik=1,SEED_k%nibz
-             if (l_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_E%f(ib,ik,i_s)
-             if (l_E ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_E%E(ib,ik,i_s)
-             if (l_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_E%E(ib,ik,i_s)-SEED_E%Eo(ib,ik,i_s)
-           enddo
-         enddo
-       enddo
-       !
-     else if (present(SEED_RT)) then
-       !
-       do i_RT=1,SEED_RT%nstates
-         ib   =SEED_RT%table(i_RT,1)
-         ik   =SEED_RT%table(i_RT,3)
-         i_s  =SEED_RT%table(i_RT,4)
-         if (l_df) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
-         if (l_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
-         !
-       enddo
-       !
-     endif
+   if (present(SEED_E)) then
+     call FILL_SEED_E(ID,SEED_E)
+   endif
+   !
+   if (present(SEED_RT)) then
+     call FILL_SEED_RT(ID,SEED_RT)
+   endif
+   !
+   if (present(SEED_R3)) then
+     INTERP_obj(ID)%SEED(bands(1):bands(2),:,:)=SEED_R3(bands(1):bands(2),:,:)
+   endif
+   !
+   if (.not.INTERP_obj(ID)%use_NN) then
      !
      call INTERPOLATION_coefficients(R2D=INTERP_obj(ID)%SEED,k=SEED_k,ID=INTERP_obj(ID)%ID,ID_obj=ID)
      !
-     if (.not.INTERP_obj(ID)%use_NN) then
-       !
-       YAMBO_FREE(INTERP_obj(ID)%SEED)
-       !
-     endif
-     !
-   else if (present(SEED_R3)) then
-     !
-     if (.not.INTERP_obj(ID)%use_NN) then
-       call INTERPOLATION_coefficients(R2D=SEED_R3,k=SEED_k,ID=INTERP_obj(ID)%ID,ID_obj=ID)
-     endif
+     YAMBO_FREE(INTERP_obj(ID)%SEED)
      !
    endif
+   !
+   return
    !
  endif
  !
  ! INTERPOLATION...
  !==================
  !
- ! ... Using SEED and coefficients
- !
- if (present(OUT_k).and..not.INTERP_obj(ID)%use_NN) then
+ if (present(OUT_k)) then
+   !
+   ! ... Allocation
+   !
+   n =INTERP_obj(ID)%nb
+   nk=INTERP_obj(ID)%nk
    !
    if (present(OUT_E)) then
-     !
-     if (l_E.or.l_dE) then
-       YAMBO_ALLOC(OUT_E%E,(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),OUT_k%nibz,INTERP_obj(ID)%D))
-       call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%E,ID=INTERP_obj(ID)%ID)
-     else if (l_f) then
-       YAMBO_ALLOC(OUT_E%f,(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),OUT_k%nibz,INTERP_obj(ID)%D))
-       call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%f,ID=INTERP_obj(ID)%ID)
+     if (l_INTERP_E.or.l_INTERP_dE) then
+       YAMBO_ALLOC(OUT_E%E,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+     else if (l_INTERP_f) then
+       YAMBO_ALLOC(OUT_E%f,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
      endif
-     !
      OUT_E%nk=OUT_k%nibz
      OUT_E%nb=INTERP_obj(ID)%nb(2)
+   else
+     YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+   endif
+   !
+   ! ... Interpolation...
+   !
+   if (INTERP_obj(ID)%use_NN) then
+     !
+     ! ... Using the Nearest point method
+     if (present(OUT_E)) then
+       if (l_INTERP_E.or.l_INTERP_dE) then
+         call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
+&                                     OUT_k%pt,        OUT_E%E)
+       else if (l_INTERP_f) then
+         call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
+&                                     OUT_k%pt,        OUT_E%f)
+       endif
+     else
+       call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
+&                                   OUT_k%pt,        INTERP_obj(ID)%INTERP)
+     endif
      !
    else
      !
-     n=INTERP_obj(ID)%nb
-     !
-     YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
-     call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
-     !
+     ! ... Using BOLTZ method
+     if (present(OUT_E)) then
+       if (l_INTERP_E.or.l_INTERP_dE) then
+         call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%E,ID=INTERP_obj(ID)%ID)
+       else if (l_INTERP_f) then
+         call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%f,ID=INTERP_obj(ID)%ID)
+       endif
+     else
+       call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
+     endif
    endif
    !
  endif
  !
- ! ... Using the Nearest point method (ONLY RT)
- !
- if (present(OUT_k).and.INTERP_obj(ID)%use_NN) then
-   !
-   n=INTERP_obj(ID)%nb
-   !
-   YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
-   !
-!   call INTERPOLATION_nearest_k(K_in=SEED_RT%kpt,SHAPE_in=(/n(1),n(2)/),&
-!&                               K_out=OUT_k%pt,V_out=INTERP_obj(ID)%INTERP,SHAPE_out=(/n(1),n(2)/),&
-!&                               V_in=INTERP_obj(ID)%SEED,SAME_SUM=l_normalize_Nel)
-   if (l_df) then
-   !
-    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
-&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-&                                  SEED_RT%delta_f,INTERP_obj(ID)%INTERP,&
-&                                  "QUIET",l_normalize_Nel)
-   else if (l_G) then
-    call Nearest_kpt_interpolation(SEED_RT%nk,OUT_k%nibz,n,&
-&                                  SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-&                                  OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-&                                  SEED_RT%NEQ_Lifetime,INTERP_obj(ID)%INTERP,&
-&                                  "QUIET",.FALSE.)
-  endif
-   !
- endif
+! if (present(OUT_k).and.INTERP_obj(ID)%use_NN) then
+!   !
+!   n =INTERP_obj(ID)%nb
+!   !
+!   YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+!   !
+!   !
+!   if (l_INTERP_df) then
+!     !
+!     call Nearest_kpt_interpolation(nk,OUT_k%nibz,n,&
+!&                                   SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
+!&                                   OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
+!&                                   SEED_RT%delta_f,INTERP_obj(ID)%INTERP,&
+!&                                   "QUIET",l_normalize_Nel)
+!   else if (l_INTERP_G) then
+!     call Nearest_kpt_interpolation(nk,OUT_k%nibz,n,&
+!&                                   SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
+!&                                   OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
+!&                                   SEED_RT%NEQ_Lifetime,INTERP_obj(ID)%INTERP,&
+!&                                   "QUIET",.FALSE.)
+!   endif
+!   !
+! endif
  !
  call IO_and_Messaging_switch("+log")
  !

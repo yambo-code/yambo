@@ -23,11 +23,12 @@
 !
 subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
  !
- use pars,           ONLY:SP,pi,cI,cZERO,DP
- use interpolate,    ONLY:nshells,lattice_vectors,make_star,int_sop
- use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:nsym
- use vec_operate,    ONLY:c2a
+ use pars,              ONLY:SP,pi,cI,cZERO,DP
+ use interpolate,       ONLY:nshells,lattice_vectors,int_sop
+ use interpolate_tools, ONLY:make_star
+ use R_lattice,         ONLY:bz_samp
+ use D_lattice,         ONLY:nsym
+ use vec_operate,       ONLY:c2a
  !
 #include<memory.h>
  !

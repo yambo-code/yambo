@@ -28,7 +28,7 @@ subroutine ypp_INIT_load(defs)
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
- use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode
+ use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPP
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
@@ -196,6 +196,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
  call it(defs,'INTERP_mode', 'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
+ call it(defs,'INTERP_NofNN', 'Number of Nearest sites in the NN method',NN_n_of_nearest)
  call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !

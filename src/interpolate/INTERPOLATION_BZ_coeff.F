@@ -30,12 +30,13 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  ! https://www.imc.tuwien.ac.at//forschungsbereich_theoretische_chemie/forschungsgruppen/prof_dr_gkh_madsen_theoretical_materials_chemistry/boltztrap/
  !
- use pars,           ONLY:SP,DP,pi,cI,cZERO
- use interpolate,    ONLY:nshells,lattice_vectors,make_star,metric,int_sop,INTERP_obj
- use D_lattice,      ONLY:nsym
- use R_lattice,      ONLY:bz_samp
- use vec_operate,    ONLY:c2a
- use com,            ONLY:error
+ use pars,              ONLY:SP,DP,pi,cI,cZERO
+ use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj
+ use interpolate_tools, ONLY:make_star
+ use D_lattice,         ONLY:nsym
+ use R_lattice,         ONLY:bz_samp
+ use vec_operate,       ONLY:c2a
+ use com,               ONLY:error
  !
 #include<memory.h>
  !

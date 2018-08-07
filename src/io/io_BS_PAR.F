@@ -122,8 +122,12 @@ subroutine io_BS_par_check(iq,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_file
  use com,           ONLY:msg,file_exists
  !
+ implicit none
+ !
  integer  :: iq,ID
  character(schlen) :: db_name
+ !
+ integer :: io_BS
  !
  ! Hack to find if the name exists
  ! DS warning. Here if file is found in alternative -J folder code will not work ...

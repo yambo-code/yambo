@@ -98,11 +98,15 @@ module IO_m
  integer, parameter:: IO_READ_MODE  =               nf90_nowrite
  !
 #if defined _NC_CLASSIC
- integer, parameter:: IO_CREATE_MODE=    nf90_share
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic_model)
 #elif defined _HDF5_IO
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_netcdf4)
 #else
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#endif
+ !
+#if defined _PAR_IO && defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
 #endif
  !
  ! Units
@@ -404,7 +408,7 @@ module IO_m
            if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO
            if(     par_IO) then
-             call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+             call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
              &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
            endif
 #else

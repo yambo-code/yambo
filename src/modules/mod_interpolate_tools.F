@@ -45,10 +45,13 @@ module interpolate_tools
      interpls(ID)%interp_type=""
      if (allocated(interpls(ID)%engre)) deallocate(interpls(ID)%engre)
      INTERP_obj(ID)%nb=0
+     INTERP_obj(ID)%nk=0
      INTERP_obj(ID)%D=0
      INTERP_obj(ID)%ID=0
+     INTERP_obj(ID)%use_NN=.FALSE.
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%what=" "
+     YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_FREE(INTERP_obj(ID)%SEED)
      YAMBO_FREE(INTERP_obj(ID)%INTERP)
      !

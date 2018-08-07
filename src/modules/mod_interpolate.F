@@ -39,6 +39,7 @@ module interpolate
  !
  character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
+ logical           :: INTERPOLATE_initialized=.FALSE.
  !
  ! NN method
  !
@@ -47,12 +48,12 @@ module interpolate
  !
  ! What
  !
- logical               :: l_INTERP_f
- logical               :: l_INTERP_E
- logical               :: l_INTERP_dE
- logical               :: l_INTERP_G
- logical               :: l_INTERP_EQ
- logical               :: l_INTERP_df
+ logical :: l_INTERP_f
+ logical :: l_INTERP_E
+ logical :: l_INTERP_dE
+ logical :: l_INTERP_G
+ logical :: l_INTERP_EQ
+ logical :: l_INTERP_df
  !
  ! ID's
  !

@@ -101,15 +101,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  call RT_carriers_to_RT_k(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
- ! Interpolation INIT 
+ ! Interpolation GRID INIT 
  !
- if (l_interp) then
-   !
-   call INTERPOLATION_driver(operation="INIT",SEED_k=RT_k)
-   !
-   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
-   !
- endif
+ if (l_interp) call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
  !
  ! T-D DOS
  !=========

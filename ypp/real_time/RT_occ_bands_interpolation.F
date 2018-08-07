@@ -51,12 +51,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
- real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
  real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation
  character(lchlen)     :: of_string
  logical               :: l_normalize_Nel,l_Nel_fac
- integer               :: ib,ik,i_RT,i_T,n_values,ID
+ integer               :: ib,ik,i_RT,i_T,n_values,ID_df_or_G,ID_spin,ID_magn
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -108,16 +107,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !======================================
  call electrons_bands_interpolate(RT_E,RT_k,RT_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
  !
- ! Interpolation INIT 
- !====================
- call INTERPOLATION_driver(operation="INIT",SEED_k=RT_k)
- !
  ! Perform interpolation of spinorial factors and magnetization
  !==============================================================
  if(n_spinor>1 .and. BANDS_steps> 0) then
-   YAMBO_ALLOC(spin_interpolated,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,n_spinor))
-   YAMBO_ALLOC(magn_interpolated,(RT_bands(1):RT_bands(2),CIRCUIT_k%nbz,3))
-   call electrons_spin_and_magn_interpolate(k,CIRCUIT_k,RT_bands,spin_interpolated,magn_interpolated)
+   call electrons_spin_and_magn_interpolate("S",k,CIRCUIT_k,RT_bands,ID_spin,ID_magn)
  endif
  !
  ! Output: bands on circuit
@@ -161,22 +154,24 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    if (l_RT_lifetimes)   operation="G_on_RT_grid"
    !
    call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
-&                            QUIET=.TRUE.,ID_op=ID)
+&                            QUIET=.TRUE.,ID_op=ID_df_or_G)
    call INTERPOLATION_driver(OUT_k=CIRCUIT_k,operation=trim(operation),QUIET=.TRUE.)
    !
    ! Normalize the occupations
    !
    if(l_RT_occupations) then
      !
-     Nhole=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:))/real(CIRCUIT_k%nbz)
-     Nel=   sum(INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/real(CIRCUIT_k%nbz)
+     Nhole=-sum(INTERP_obj(ID_df_or_G)%INTERP(RT_bands(1):RT_E%nbf,:,:))/real(CIRCUIT_k%nbz)
+     Nel=   sum(INTERP_obj(ID_df_or_G)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/real(CIRCUIT_k%nbz)
      !
      if(.not.trim(INTERP_mode)=="NN".and.l_normalize_Nel) then
        if (Nhole>0) then
-         INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)=INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:)/Nhole*Real_Nhole
+         INTERP_obj(ID_df_or_G)%INTERP(RT_bands(1):RT_E%nbf,:,:)=&
+&          INTERP_obj(ID_df_or_G)%INTERP(RT_bands(1):RT_E%nbf,:,:)/Nhole*Real_Nhole
        endif
        if (Nel>0) then
-         INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)=INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)/Nel*Real_Nel
+         INTERP_obj(ID_df_or_G)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)=&
+&          INTERP_obj(ID_df_or_G)%INTERP(RT_E%nbf+1:RT_bands(2),:,:)/Nel*Real_Nel
        endif
      endif
      !
@@ -217,12 +212,12 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
          values(2)=(CIRCUIT_E_db%E(ib,ik,1)+CIRCUIT_dE%E(ib,ik,1))*HA2EV
        endif
        !
-       values(3)=INTERP_obj(ID)%INTERP(ib,ik,1)
+       values(3)=INTERP_obj(ID_df_or_G)%INTERP(ib,ik,1)
        if (l_RT_lifetimes   ) values(3)=values(3)*HA2EV*1000._SP
        if (l_RT_occupations .and. Max_occ>0. .and. l_Nel_fac ) values(3)=values(3)/Max_occ*Nel_fac
        if (l_RT_occupations .and. n_spinor==2) then
-         values(4)=values(3)*spin_interpolated(ib,ik,1)
-         values(5)=values(3)*spin_interpolated(ib,ik,2)
+         values(4)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,1)
+         values(5)=values(3)*INTERP_obj(ID_spin)%INTERP(ib,ik,2)
        endif
        !
        call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
@@ -235,7 +230,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    enddo
    !
-   call INTERPOLATION_driver(operation="END",ID_op=ID)
+   call INTERPOLATION_driver(operation="END",ID_op=ID_df_or_G)
    !
    call of_open_close(file_name_rt)
    !
@@ -251,9 +246,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)
  call E_reset(RT_E)
- if(n_spinor==2) then
-   YAMBO_FREE(spin_interpolated)
-   YAMBO_FREE(magn_interpolated)
- endif
+ if(n_spinor>1 .and. BANDS_steps> 0) call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
  !
 end subroutine RT_occ_bands_interpolation

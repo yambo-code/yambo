@@ -184,8 +184,6 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
  ! 1: interpolate on the circuit      if (BANDS_steps>0)
  ! 2: interpolate on the regular grid if (interp_grid>0)
  !
- call INTERPOLATION_driver(operation="INIT",SEED_k=Xk)
- !
  if(all(INTERP_grid>0)) call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
  !
  if (allocated(Xen%Eo).and.BANDS_E_and_k_db) then

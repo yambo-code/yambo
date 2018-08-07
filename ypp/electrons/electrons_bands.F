@@ -44,7 +44,7 @@ subroutine electrons_bands(Xk,Xen)
  use vec_operate,    ONLY:v_norm,iku_v_norm
  use stderr,         ONLY:intc,set_real_printed_length
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:electrons_bands_interpolate,GRID_k
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_obj,INTERPOLATION_driver
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
@@ -56,8 +56,7 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
- real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
- integer               :: i1,is,ik,ikbz,ib,nbands,i_f
+ integer               :: i1,is,ik,ikbz,ib,nbands,i_f,ID_spin,ID_magn
  real(SP)              :: tmp_k(3),delta_Ef
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
@@ -109,10 +108,8 @@ subroutine electrons_bands(Xk,Xen)
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
    if(n_spinor>1 .and. BANDS_steps> 0) then
-     YAMBO_ALLOC(spin_interpolated,(BANDS_bands(1):BANDS_bands(2),CIRCUIT_k%nbz,n_spinor))
-     YAMBO_ALLOC(magn_interpolated,(BANDS_bands(1):BANDS_bands(2),CIRCUIT_k%nbz,3))
      call section('=','Interpolation@work: Spin and Magnetization')
-     call electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_bands,spin_interpolated,magn_interpolated)
+     call electrons_spin_and_magn_interpolate("S M",Xk,CIRCUIT_k,BANDS_bands,ID_spin,ID_magn)
    endif
    !
    call set_real_printed_length(f_length=10,g_length=10)
@@ -258,10 +255,11 @@ subroutine electrons_bands(Xk,Xen)
      !
      call K_transform(tmp_k,'iku')
      !
-     if(n_spinor==2) then
+     if (n_spinor==2) then
        spin_values(1,:)=values(1)
        magn_values(1,:)=values(1)
      endif
+     !
      do is=1,n_sp_pol
        !
        ! Energies...
@@ -296,7 +294,7 @@ subroutine electrons_bands(Xk,Xen)
          ! Spins...
          !
          do i1=1,2
-           spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
+           spin_values(1+1:nbands+1,i1)=INTERP_obj(ID_spin)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
            spin_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
@@ -304,7 +302,7 @@ subroutine electrons_bands(Xk,Xen)
          ! Magnetization...
          !
          do i1=1,3
-           magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_bands(1):BANDS_bands(2),ik,i1)
+           magn_values(1+1:nbands+1,i1)=INTERP_obj(ID_magn)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
            magn_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
@@ -325,8 +323,10 @@ subroutine electrons_bands(Xk,Xen)
  call E_reset(CIRCUIT_E)
  call E_reset(CIRCUIT_DE)
  call E_reset(CIRCUIT_E_db)
- YAMBO_FREE(spin_interpolated)
- YAMBO_FREE(magn_interpolated)
+ if (n_spinor>1 .and. BANDS_steps> 0) then
+   call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
+   call INTERPOLATION_driver(operation="END",ID_op=ID_magn)
+ endif
  !
  do is=1,n_sp_pol
    do i_f=1,3

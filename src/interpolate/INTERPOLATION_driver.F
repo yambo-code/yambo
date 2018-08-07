@@ -34,7 +34,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  use interpolate,          ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
 &                               INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
 &                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_G,&
-&                               l_INTERP_EQ,l_INTERP_df
+&                               l_INTERP_EQ,l_INTERP_df,INTERPOLATE_initialized
  use IO_m,                 ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -91,25 +91,23 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    !
    if (present(ID_op)) then
      !
+write (*,*) ID_op
+     if (ID_op==0) return 
      if (.not.INTERP_obj(ID_op)%in_use) return 
      !
      call INTERPOLATION_reset(ID_op)
      !
    else
+     !
      do i_obj=1,max_interpls
        call INTERPOLATION_reset(i_obj)
      enddo
      !
      YAMBO_FREE_P(lattice_vectors)
+     !
+     INTERPOLATE_initialized=.FALSE.
+     !
    endif
-   !
-   return
-   !
- endif
- !
- if (operation=="INIT") then
-   !
-   call INTERPOLATION_BZ_setup(SEED_k) 
    !
    return
    !
@@ -153,6 +151,14 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
      INTERP_obj(ID)%use_NN=NEAREST 
    endif
    !
+   if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then
+     !
+     call INTERPOLATION_BZ_setup(SEED_k)
+     !
+     INTERPOLATE_initialized=.TRUE.
+     !
+   endif
+   !
    ! I asssume here that SEED_E and SEED_RT lives on the same grid of SEED_k
    !
    if (present(SEED_E)) then
@@ -164,7 +170,9 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    endif
    !
    if (present(SEED_R3)) then
-     INTERP_obj(ID)%SEED(bands(1):bands(2),:,:)=SEED_R3(bands(1):bands(2),:,:)
+     do ib=1,bands(2)-bands(1)+1
+       INTERP_obj(ID)%SEED(bands(1)+ib-1,:,:)=SEED_R3(ib,:,:)
+     enddo
    endif
    !
    if (.not.INTERP_obj(ID)%use_NN) then
@@ -234,30 +242,6 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    endif
    !
  endif
- !
-! if (present(OUT_k).and.INTERP_obj(ID)%use_NN) then
-!   !
-!   n =INTERP_obj(ID)%nb
-!   !
-!   YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
-!   !
-!   !
-!   if (l_INTERP_df) then
-!     !
-!     call Nearest_kpt_interpolation(nk,OUT_k%nibz,n,&
-!&                                   SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-!&                                   OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-!&                                   SEED_RT%delta_f,INTERP_obj(ID)%INTERP,&
-!&                                   "QUIET",l_normalize_Nel)
-!   else if (l_INTERP_G) then
-!     call Nearest_kpt_interpolation(nk,OUT_k%nibz,n,&
-!&                                   SEED_RT%nstates,1,1,SEED_RT%table,SEED_RT%kpt, &
-!&                                   OUT_k%pt,SEED_RT%k_weight,OUT_k%weights,&
-!&                                   SEED_RT%NEQ_Lifetime,INTERP_obj(ID)%INTERP,&
-!&                                   "QUIET",.FALSE.)
-!   endif
-!   !
-! endif
  !
  call IO_and_Messaging_switch("+log")
  !

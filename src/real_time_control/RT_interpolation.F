@@ -25,7 +25,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nk_levels,BZ_DbGd_kpts,BZ_DbGd_nbands
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
@@ -44,10 +44,10 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
- real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
+ type(bz_samp)         :: K_dbg
  !
  l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
  !
@@ -67,10 +67,14 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
+   !
    call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
+     !
+     call bz_samp_reset(K_dbg)
+     !
      YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
      call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
@@ -146,6 +150,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     ! 
     if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
     if (NK==E%nk) K_weights(:)=K%weights(:)
+    !
+    !call INTERPOLATION_driver(RT_carriers%nb,SEED_RT=RT_carriers,operation="df_from_DB",ID_op=ID,NEAREST=.TRUE.)
+    !call INTERPOLATION_driver(OUT_k=K,operation="df_from_DB")
     !
     call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
 &                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,l_renormalize)

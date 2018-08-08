@@ -54,6 +54,7 @@ module interpolate
  logical :: l_INTERP_dE
  logical :: l_INTERP_G
  logical :: l_INTERP_EQ
+ logical :: l_integral_respect=.TRUE. ! In the case of f/df keep the same integral of the SEED and of the interpolated
  !
  ! ID's
  !

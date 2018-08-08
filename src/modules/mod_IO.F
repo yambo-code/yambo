@@ -660,7 +660,7 @@ module IO_m
      DB_path=" "
      if (len_trim(dir_)>0) DB_path=trim(dir_)//"/"
      if (len_trim(job_)>0) DB_path=trim(DB_path)//trim(job_)//"/"
-      DB_path=trim(DB_path)//trim(db_)
+     DB_path=trim(DB_path)//trim(db_)
    end function
    !
    subroutine cp_file(file_,dest_,ierr_)

@@ -140,8 +140,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    !
    what_='YPP'
    !
-   db_name=DB_path(jobdir,jobstr,'ndb.RT_carriers')
+   db_name=DB_path("SAVE"," ",'ndb.RT_carriers')
    if (COM_/=NONE) call msg('s','Searching the carriers database in '//trim(db_name)//'...')
+   if (.not.file_exists(trim(db_name))) then
+     db_name=DB_path(jobdir,jobstr,'ndb.RT_carriers')
+     if (COM_/=NONE) call msg('l',trim(db_name)//'...')
+   endif
    if (.not.file_exists(trim(db_name))) then
      job_loop: do i_j=1,n_alt_jobstr
        db_name=DB_path(alt_jobdir(i_j),alt_jobstr(i_j),'ndb.RT_carriers')

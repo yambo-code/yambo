@@ -21,16 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT_E,DO_it)
+subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it)
  !
  use pars,         ONLY:SP
- use electrons,    ONLY:levels
  use R_lattice,    ONLY:bz_samp
  use interpolate,  ONLY:INTERP_obj
  !
  integer      , intent(in)    :: ID
  type(bz_samp), intent(in)    :: OUT_k
- type(levels) , intent(inout) :: OUT_E
+ real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),INTERP_obj(ID)%nk,INTERP_obj(ID)%D)
  logical,       intent(in)    :: DO_it
  !
  ! Work Space
@@ -52,14 +51,14 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT_E,DO_it)
  do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
    do ik=1,OUT_k%nibz
      do i3=1,INTERP_obj(ID)%D
-       INTERP_int(i3)=INTERP_int(i3)+OUT_E%f(i1,ik,i3)*OUT_k%weights(ik)
+       INTERP_int(i3)=INTERP_int(i3)+OUT(i1,ik,i3)*OUT_k%weights(ik)
      enddo
    enddo
  enddo
  !
  if (DO_it) then
    do i3=1,INTERP_obj(ID)%D
-     OUT_E%f(:,:,i3)=OUT_E%f(:,:,i3)*ORI_int(i3)/INTERP_int(i3)
+     if (abs(INTERP_int(i3))>0.) OUT(:,:,i3)=OUT(:,:,i3)*ORI_int(i3)/INTERP_int(i3)
    enddo
  endif
  !

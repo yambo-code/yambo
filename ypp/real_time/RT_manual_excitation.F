@@ -70,18 +70,21 @@ subroutine RT_manual_excitation(E,k)
  !
  do while(local_E_window<Eh_pumped_pair_width)
    !
-   do ik=1,E%nk
+   K_LOOP: do ik=1,E%nk
      !
      iv=0
      !
      if(l_RTpump_kspace) then
-       local_k=Eh_pumped_pair_BZ_regions(:,i_region)
-       call K_transform(local_k,'iku')
+       !
        do i_region=1,Eh_pumped_pair_n_BZ_regions
+         local_k=Eh_pumped_pair_BZ_regions(:,i_region)
+         call K_transform(local_k,'iku')
          if(.not. v_is_zero(local_k-k%pt(ik,:),zero_=(/1.,1.,1./)*Eh_pumped_pair_BZ_width) ) cycle
          do_kpt(ik)=.TRUE.
        enddo
-       if(.not.do_kpt(ik)) cycle
+       !
+       if(.not.do_kpt(ik)) cycle K_LOOP
+       !
      endif
      !
      do ibp=1,RT_bands(2)
@@ -137,7 +140,7 @@ subroutine RT_manual_excitation(E,k)
 &                                                                        sqrt(abs(real(Pump_level(ib,ik),SP)))
      enddo
      !
-   enddo
+   enddo K_LOOP
    !
    i_pump_level=i_pump_level+1
    local_E_window=local_E_window+Eh_pumped_pair_width/10._SP

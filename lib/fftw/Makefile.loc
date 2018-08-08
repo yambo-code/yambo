@@ -60,8 +60,7 @@ clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
 	@- rm -rf  package-ready-stamp configure-stamp
 
-clean_all: clean
+clean_all: 
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp 
-	
+	@- rm -rf  package-ready-stamp configure-stamp
 

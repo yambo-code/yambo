@@ -96,7 +96,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !
-   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in")
+   call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in",QUIET=.TRUE.)
    !
    if (n_spinor==2) call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
    !

@@ -30,11 +30,12 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  use R_lattice,            ONLY:bz_samp,bz_samp_reset
  use electrons,            ONLY:levels,n_sp_pol
  use parser_m,             ONLY:parser
- use interpolate_tools,    ONLY:INTERPOLATION_reset,init_ID,FILL_SEED_E,FILL_SEED_RT
+ use interpolate_tools,    ONLY:INTERPOLATION_reset,init_ID,FILL_SEED_E,FILL_SEED_RT,&
+&                               INTERPOLATION_nearest_k_report
  use interpolate,          ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
 &                               INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
 &                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_G,&
-&                               l_INTERP_EQ,l_INTERP_df,INTERPOLATE_initialized
+&                               l_INTERP_EQ,INTERPOLATE_initialized
  use IO_m,                 ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
@@ -59,15 +60,10 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  ! Actions
  !=========
  !
- ! Check if Nel has to be renormalized
- !
- call parser('NormN',l_normalize_Nel)
- !
- l_INTERP_f   =operation(1:1)== "f"
+ l_INTERP_f   =operation(1:1)== "f".or.operation(1:2)== "df"
  l_INTERP_E   =operation(1:1)== "E"
  l_INTERP_G   =operation(1:1)== "G"
  l_INTERP_dE  =operation(1:2)== "dE"
- l_INTERP_df  =operation(1:2)== "df"
  l_INTERP_EQ =index(operation,"EQ")>0
  !
  ! SETUP
@@ -91,7 +87,6 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    !
    if (present(ID_op)) then
      !
-write (*,*) ID_op
      if (ID_op==0) return 
      if (.not.INTERP_obj(ID_op)%in_use) return 
      !
@@ -179,8 +174,6 @@ write (*,*) ID_op
      !
      call INTERPOLATION_coefficients(R2D=INTERP_obj(ID)%SEED,k=SEED_k,ID=INTERP_obj(ID)%ID,ID_obj=ID)
      !
-     YAMBO_FREE(INTERP_obj(ID)%SEED)
-     !
    endif
    !
    return
@@ -227,6 +220,12 @@ write (*,*) ID_op
 &                                   OUT_k%pt,        INTERP_obj(ID)%INTERP)
      endif
      !
+     if (present(QUIET)) then
+       if (.not.QUIET) call INTERPOLATION_nearest_k_report(ID)
+     else
+                       call INTERPOLATION_nearest_k_report(ID)
+     endif
+     !
    else
      !
      ! ... Using BOLTZ method
@@ -240,6 +239,13 @@ write (*,*) ID_op
        call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
      endif
    endif
+   !
+   ! f/dF normalization
+   !====================
+   !
+   call parser('NormN',l_normalize_Nel)
+   !
+   if (l_INTERP_f) call INTERPOLATION_integral_respect(ID,OUT_k,OUT_E,l_normalize_Nel)
    !
  endif
  !

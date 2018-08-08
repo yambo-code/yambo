@@ -45,6 +45,7 @@ module interpolate
  !
  integer :: NN_nk_exact=0
  integer :: NN_n_of_nearest=1
+ integer :: NN_MAX_real_nearest=0
  !
  ! What
  !
@@ -53,7 +54,6 @@ module interpolate
  logical :: l_INTERP_dE
  logical :: l_INTERP_G
  logical :: l_INTERP_EQ
- logical :: l_INTERP_df
  !
  ! ID's
  !
@@ -87,6 +87,7 @@ module interpolate
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
    character(schlen)        :: what=" "
+   real(SP),    allocatable :: weights(:)
    real(SP),    allocatable :: k(:,:)
    real(SP),    allocatable :: SEED(:,:,:)
    real(SP),    allocatable :: INTERP(:,:,:)

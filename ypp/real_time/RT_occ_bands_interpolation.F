@@ -155,7 +155,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    call INTERPOLATION_driver(bands=RT_bands,SEED_RT=RT_carriers,SEED_k=RT_k,operation=trim(operation),&
 &                            QUIET=.TRUE.,ID_op=ID_df_or_G)
-   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,operation=trim(operation),QUIET=.TRUE.)
+   call INTERPOLATION_driver(OUT_k=CIRCUIT_k,operation=trim(operation),QUIET=i_T>1.and..not.n_T_steps==1)
    !
    ! Normalize the occupations
    !

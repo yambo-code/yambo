@@ -25,7 +25,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:k_the_nearest
- use interpolate,    ONLY:NN_nk_exact,NN_n_of_nearest
+ use interpolate,    ONLY:NN_nk_exact,NN_n_of_nearest,NN_MAX_real_nearest
  use vec_operate,    ONLY:sort
  !
 #include<memory.h>
@@ -50,6 +50,7 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
  allocate(k_near(Nk_in))
  allocate(k_dist(Nk_in))
  NN_nk_exact=0
+ NN_MAX_real_nearest=0
  V_out=0._SP
  !
  do ik=1,Nk_out
@@ -66,7 +67,10 @@ subroutine INTERPOLATION_nearest_k(K_in,V_in,K_out,V_out)
 !     if ( abs(k_dist(ik_n)-k_dist(1))>abs(k_dist(1)) ) exit
 !     Nk_to_average=Nk_to_average+1
 !   enddo
+   !
    Nk_to_average=1
+   !
+   NN_MAX_real_nearest=max(NN_MAX_real_nearest,Nk_to_average)
    !
    ! Transfer & interpolate
    !

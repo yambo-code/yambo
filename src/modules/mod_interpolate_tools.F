@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,9 +23,9 @@
 !
 module interpolate_tools
  !
- use pars,         ONLY:SP
+ use pars,         ONLY:SP,schlen
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
-&                       l_INTERP_df,l_INTERP_G
+&                       l_INTERP_G,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest
  use electrons,    ONLY:n_sp_pol
  use com,          ONLY:error
  !
@@ -33,7 +33,27 @@ module interpolate_tools
  !  
  contains
    !
-   subroutine INTERPOLATION_nearest_k_report( )
+   subroutine INTERPOLATION_nearest_k_report(ID)
+     !
+     use com,   ONLY:msg
+     !
+     integer, intent(in) :: ID
+     real(SP)            :: dummy
+     character(schlen)   :: title
+     !
+     if (ID==0) return
+     if (.not.INTERP_obj(ID)%in_use) return
+     !
+     title=trim(INTERP_obj(ID)%what)//"-Nearest K"
+     !
+     dummy=real(NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
+     call msg('nrs','['//trim(title)//'] Exact matches  [o/o]:',dummy)
+     if (NN_nk_exact<INTERP_obj(ID)%nk) then
+       call msg('sr','['//trim(title)//'] Neighbours    [user]:',NN_n_of_nearest)
+       call msg('sr','['//trim(title)//']               [real]:',NN_MAX_real_nearest)
+       dummy=real(INTERP_obj(ID)%nk-NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
+       call msg('sr','['//trim(title)//'] Interpolations [o/o]:',dummy)
+     endif
      !
    end subroutine
    !
@@ -73,6 +93,9 @@ module interpolate_tools
      !
      YAMBO_ALLOC(INTERP_obj(ID)%k,(k%nibz,3))
      INTERP_obj(ID)%k=k%pt
+     !
+     YAMBO_ALLOC(INTERP_obj(ID)%weights,(k%nibz))
+     INTERP_obj(ID)%weights=k%weights
      !
      YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
      !
@@ -167,8 +190,8 @@ module interpolate_tools
       ib   =SEED_RT%table(i_RT,1)
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
-      if (l_INTERP_df) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
-      if (l_INTERP_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
+      if (l_INTERP_f) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
+      if (l_INTERP_G) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
       !
     enddo
     !

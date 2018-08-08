@@ -150,64 +150,12 @@ module YPP_real_time
  end interface
    !
    contains 
-     !
-     subroutine RT_carriers_to_RT_k( K )
-       use R_lattice,      ONLY:bz_samp,bz_samp_reset
-       use real_time,      ONLY:RT_carriers
-       type(bz_samp) :: K
-       integer       :: ik
-       call bz_samp_reset(K)
-       K%units='i'
-       K%description="RT_GRID"
-       K%nibz=RT_carriers%nk
-       YAMBO_ALLOC(K%pt,(K%nibz,3))
-       YAMBO_ALLOC(K%weights,(K%nibz))
-       do ik=1,K%nibz
-         K%pt(ik,:)   =RT_carriers%kpt(ik,:)
-         K%weights(ik)=RT_carriers%k_weight(ik)
-       enddo
-     end subroutine
-     !
-     subroutine RT_carriers_to_RT_E(E_eq,E,what)
-       use electrons,      ONLY:levels,E_reset,n_sp_pol
-       use real_time,      ONLY:RT_carriers
-       type(levels) :: E,E_eq
-       character(*) :: what
-       integer      :: i_RT,i_sp_pol,ib,ik
-       if (.not.allocated(E%E)) then
-         call E_reset(E)
-         E%nk=RT_carriers%nk
-         E%nb=RT_carriers%nb(2)
-         E%nb=RT_carriers%nb(2)
-         E%nk=RT_carriers%nk
-         E%nbf=E_eq%nbf
-         E%nbm=E_eq%nbm
-         E%E_Fermi  =E_eq%E_Fermi
-         E%E_VBM    =E_eq%E_VBM
-         E%E_CBm    =E_eq%E_CBm
-         E%E_dir_gap=E_eq%E_dir_gap
-         YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
-         YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
-         E%E=rZERO
-         E%f=rZERO
-       endif
-       do i_RT=1,RT_carriers%nstates
-         ib      =RT_carriers%table(i_RT,1)
-         ik      =RT_carriers%table(i_RT,3)
-         i_sp_pol=RT_carriers%table(i_RT,4)
-         if (what=="Eo") E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)
-         if (what=="E" ) E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
-         if (what=="fo") E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)
-         if (what=="f" ) E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
-         if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
-       enddo
-     end subroutine
-     !
-     subroutine FT_free(FT)
-       type(OBS_el) :: FT
-       YAMBO_FREE(FT%F_w)
-       YAMBO_FREE(FT%F_t)
-       YAMBO_FREE(FT%W)
-     end subroutine
-     !
+   !
+   subroutine FT_free(FT)
+     type(OBS_el) :: FT
+     YAMBO_FREE(FT%F_w)
+     YAMBO_FREE(FT%F_t)
+     YAMBO_FREE(FT%W)
+   end subroutine
+   !
 end module YPP_real_time

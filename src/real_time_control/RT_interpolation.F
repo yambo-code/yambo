@@ -30,6 +30,8 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect
+ use RT_control,     ONLY:RT_carriers_to_RT_k
  !
 #include<memory.h>
  !
@@ -47,7 +49,7 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
- type(bz_samp)         :: K_dbg
+ type(bz_samp)         :: RT_k,DbGd_k
  !
  l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
  !
@@ -67,18 +69,25 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
+   call bz_samp_reset(RT_k)
+   call RT_carriers_to_RT_k(RT_k)
    !
-   call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
+   call Interpolate_and_transfer("df",K,.FALSE.)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
      !
-     call bz_samp_reset(K_dbg)
-     !
+     call bz_samp_reset(DbGd_k)
+     DbGd_k%nibz=BZ_DbGd_tot_nk_levels
+     YAMBO_ALLOC(DbGd_k%pt,(BZ_DbGd_tot_nk_levels,3))
+     YAMBO_ALLOC(DbGd_k%weights,(BZ_DbGd_tot_nk_levels))
+     DbGd_k%pt=BZ_DbGd_kpts
+     DbGd_k%weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
      YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
      E%df_DbGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
+     call Interpolate_and_transfer("df",DbGd_k,.TRUE.)
      E%f_DbGd=E%f_DbGd+E%df_DbGd
+     !
    endif
    !
  endif
@@ -94,9 +103,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
      E%Eo=E%E
    endif
    !
-   call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
+   call Interpolate_and_transfer("dE",K,.FALSE.)
    !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,BZ_DbGd_kpts,BZ_DbGd_tot_nk_levels)
+   if (l_DbGd) call Interpolate_and_transfer("dE",DbGd_k,.TRUE.)
    !
  endif
  !
@@ -134,31 +143,22 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  contains
   !
-  subroutine Interpolate_and_transfer(OBJ,V_in,K_in,NK)
+  subroutine Interpolate_and_transfer(OBJ,K,IS_DBGD)
     !
     character(*) :: OBJ
-    integer      :: NK
-    real(SP)     :: V_in(RT_carriers%nstates),K_in(NK,3)
+    type(bz_samp):: K
+    logical      :: IS_DBGD
     !
-    ! ws
+    ! Work Space
+    integer      :: ik,i_carr,nb_max,ID
     !
-    logical      :: l_renormalize
-    integer      :: ik,i_carr,nb_max
-    real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
-    !
-    l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
+    l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
-    if (NK/=E%nk) K_weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
-    if (NK==E%nk) K_weights(:)=K%weights(:)
+    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.TRUE.)
+    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
     !
-    !call INTERPOLATION_driver(RT_carriers%nb,SEED_RT=RT_carriers,operation="df_from_DB",ID_op=ID,NEAREST=.TRUE.)
-    !call INTERPOLATION_driver(OUT_k=K,operation="df_from_DB")
-    !
-    call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,l_renormalize)
-    !
-    if (NK==E%nk) nb_max=    nb(2)
-    if (NK/=E%nk) nb_max=min(nb(2),BZ_DbGd_nbands)
+    nb_max=    nb(2)
+    if (IS_DBGD) nb_max=min(nb(2),BZ_DbGd_nbands)
     !
     if (OBJ=="df") then
       !
@@ -167,26 +167,26 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
       E%nbf=nb(1)-1
       E%nbm=nb(2)
       !
-      if(NK==E%nk) then
-        E%df( nb(1):nb(2),:,:)=V_out(nb(1):nb(2),:,:)
-        df_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
-        i_carr=1
-      else if (NK/=E%nk) then
-        E%df_DbGd( nb(1):nb_max,:,:)=V_out(nb(1):nb_max,:,:)
+      if (IS_DBGD) then
+        E%df_DbGd( nb(1):nb_max,:,:)=INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
         i_carr=2
+      else
+        E%df( nb(1):nb(2),:,:)=INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+        df_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
+        i_carr=1
       endif
       !
-      do ik=1,NK
-        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(nb(1):nb_max,ik,:)))*K_weights(ik)/2._SP
+      do ik=1,K%nibz
+        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(INTERP_obj(ID)%INTERP(nb(1):nb_max,ik,:)))*K%weights(ik)/2._SP
       enddo
       !
     else if (OBJ=="dE") then
       !
-      if(NK==E%nk) then
-        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
-        dE_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
-      else if (NK/=E%nk) then
-        E%E_DbGd( nb(1):nb_max,:,:)=E%E_DbGd(nb(1):nb_max,:,:)+V_out(nb(1):nb_max,:,:)
+      if (IS_DBGD) then
+        E%E_DbGd( nb(1):nb_max,:,:)=E%E_DbGd(nb(1):nb_max,:,:)+INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
+      else
+        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+        dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
       endif
       !
     endif

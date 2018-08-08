@@ -89,10 +89,10 @@ MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup \
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup \
                tddft pol_function qp bse
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_common
-PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_common
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics

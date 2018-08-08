@@ -148,18 +148,20 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
-   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,OUT_k,&
+   subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,OUT_k,&
 &                                  OUT_E,operation,QUIET,ID_op,NEAREST,GRID)
      use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
+     use QP_m,        ONLY:QP_t
      implicit none
      integer,       intent(in),    optional :: bands(2)
      type(bz_samp), intent(in),    optional :: SEED_k
      type(bz_samp), intent(inout), optional :: OUT_k
      real(SP),      intent(in)   , optional :: SEED_R3(:,:,:)
      type(RT_t),    intent(in)   , optional :: SEED_RT
+     type(QP_t),    intent(in)   , optional :: SEED_QP
      type(levels),  intent(in)   , optional :: SEED_E
      type(levels),  intent(inout), optional :: OUT_E
      character(*),  intent(in)              :: operation

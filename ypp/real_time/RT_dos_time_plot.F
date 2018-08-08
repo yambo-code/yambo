@@ -30,12 +30,12 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use YPP,            ONLY:DOS_broadening,DOS_E_steps,electrons_dos_elemental,INTERP_grid,DOS_E_step
  use QP_CTL_m,       ONLY:QP_apply
- use YPP_real_time,  ONLY:RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
+ use YPP_real_time,  ONLY:RT_time
  use IO_m,           ONLY:IO_and_Messaging_switch
  use com,            ONLY:msg
  use functions,      ONLY:Fermi_fnc_derivative
  use LIVE_t,         ONLY:live_timing
- use RT_control,     ONLY:RT_output,RT_apply
+ use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:GRID_k,INTERPOLATION_driver,INTERP_obj

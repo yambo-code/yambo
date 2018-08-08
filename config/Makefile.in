@@ -98,17 +98,17 @@ MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup \
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) collisions hamiltonian sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
-PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
-PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian sc \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
-PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup \
+PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian sc \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 

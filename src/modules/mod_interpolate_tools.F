@@ -190,9 +190,32 @@ module interpolate_tools
       ib   =SEED_RT%table(i_RT,1)
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
-      if (l_INTERP_f) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
-      if (l_INTERP_G) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
+      if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
+      if (l_INTERP_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
+      if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_E(i_RT) 
       !
+    enddo
+    !
+  end subroutine
+  !
+  subroutine FILL_SEED_QP(ID,SEED_QP)
+    !
+    use electrons, ONLY:spin
+    use QP_m,      ONLY:QP_t
+    !
+    integer,    intent(in) :: ID
+    type(QP_t), intent(in) :: SEED_QP
+    !
+    integer :: i_qp,ib,ik,i_s !WS
+    !
+    do i_qp=1,SEED_QP%n_states
+      ib   =SEED_QP%table(i_qp,1)
+      ik   =SEED_QP%table(i_qp,3)
+      i_s  =spin(SEED_QP%table(i_qp,:))
+      if (l_INTERP_E ) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(SEED_QP%E(i_qp))
+      if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
+      if (l_INTERP_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=aimag(SEED_QP%E(i_qp))
+      !if (l_INTERP_Z ) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(qp%Z(:))/aimag(qp%Z(:))
     enddo
     !
   end subroutine

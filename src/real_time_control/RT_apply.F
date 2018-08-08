@@ -230,7 +230,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
  ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)
- ! Only yambo enters here. Ypp fills the RT_carriers object and directly uses it instead
+ ! Only yambo enters here. YPP fills the RT_carriers object and directly uses it instead
  !
  ! Yambo
  !=======

@@ -32,11 +32,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
- use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,RT_carriers_to_RT_k,RT_carriers_to_RT_E
+ use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time
  use stderr,         ONLY:real2ch,intc
  use vec_operate,    ONLY:iku_v_norm
  use parser_m,       ONLY:parser
- use RT_control,     ONLY:RT_apply,RT_carriers_object
+ use RT_control,     ONLY:RT_apply,RT_carriers_object,RT_carriers_to_RT_k,RT_carriers_to_RT_E
  use real_time,      ONLY:RT_carriers,RT_bands
  use interpolate,    ONLY:INTERPOLATION_driver,electrons_bands_interpolate,INTERP_obj,INTERP_mode
  use LIVE_t,         ONLY:live_timing

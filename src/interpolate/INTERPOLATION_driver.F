@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
+subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
 &                               OUT_k,OUT_E,operation,QUIET,ID_op,&
 &                               NEAREST,GRID)
  !
@@ -30,12 +30,13 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  use R_lattice,            ONLY:bz_samp,bz_samp_reset
  use electrons,            ONLY:levels,n_sp_pol
  use interpolate_tools,    ONLY:INTERPOLATION_reset,init_ID,FILL_SEED_E,FILL_SEED_RT,&
-&                               INTERPOLATION_nearest_k_report
+&                               INTERPOLATION_nearest_k_report,FILL_SEED_QP
  use interpolate,          ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
 &                               INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
 &                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_G,&
 &                               l_INTERP_EQ,INTERPOLATE_initialized,l_integral_respect
  use IO_m,                 ONLY:IO_and_Messaging_switch
+ use QP_m,                 ONLY:QP_t
  !
 #include<memory.h>
  !
@@ -44,6 +45,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  type(bz_samp), intent(inout), optional :: OUT_k
  type(RT_t),    intent(in)   , optional :: SEED_RT
  type(levels),  intent(in)   , optional :: SEED_E
+ type(QP_t),    intent(in)   , optional :: SEED_QP
  real(SP),      intent(in)   , optional :: SEED_R3(:,:,:)
  type(levels),  intent(inout), optional :: OUT_E
  character(*),  intent(in)              :: operation
@@ -131,8 +133,10 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
  !
  if (present(SEED_k)) then
    !
-   if (present(SEED_E).or.present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
-   if (present(SEED_R3))                    INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
+   if (present(SEED_E))  INTERP_obj(ID)%D=n_sp_pol
+   if (present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
+   if (present(SEED_QP)) INTERP_obj(ID)%D=n_sp_pol
+   if (present(SEED_R3)) INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
    !
    if (present(ID_op)) then
      ID_op=ID
@@ -160,6 +164,10 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_R3,&
    !
    if (present(SEED_RT)) then
      call FILL_SEED_RT(ID,SEED_RT)
+   endif
+   !
+   if (present(SEED_QP)) then
+     call FILL_SEED_QP(ID,SEED_QP)
    endif
    !
    if (present(SEED_R3)) then

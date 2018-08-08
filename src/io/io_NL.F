@@ -176,14 +176,16 @@ integer function io_NL(ID)
  !
  ! Indexes of the time sampled
  !
- call io_bulk(ID,'INDX_T',VAR_SZ=(/WF_sample_ondisk%n_size/))
+ write (VAR_name,'(a,i4.4)') 'T_indexes_',i_fragment
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/WF_sample_ondisk%n_size/))
  call io_bulk(ID,I1=WF_sample_ondisk%indx_T(:WF_sample_ondisk%n_size))
  !
  ! V_bands at samping times
  !
- call io_bulk(ID,'V_BANDS_T',VAR_SZ=(/WF_sample_ondisk%n_size,RT_bands(2),&
+ write (VAR_name,'(a,i4.4)') 'V_bands_',i_fragment
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,WF_sample_ondisk%n_size,RT_bands(2),&
       &WF_sample_ondisk%n_val,WF_sample_ondisk%n_k,n_sp_pol/))
- call io_bulk(ID,C5=V_bands_t,IPOS=(/1,1,1,1,1/))
+ call io_bulk(ID,C5=V_bands_t,IPOS=(/1,1,1,1,1,1/))
  !
 1 call io_disconnect(ID=ID)
  !

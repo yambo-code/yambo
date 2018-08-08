@@ -79,6 +79,7 @@ integer function variables_NL(ID,local_description)
  ! WF SAMPLING
  !
  if (ver_is_gt_or_eq(ID,revision=15726)) then !THIS NEEDS TO BE UPDATED IN CASE ENTERS INTO A DISTRO
+   call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=3,MENU=0)
    i_desc=i_desc+1
    call io_elemental(ID,VAR=" [NL] WF sample order  :",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTION=local_description(i_desc))

@@ -205,6 +205,7 @@ subroutine NL_driver(E,X,k,q)
    ! Re-initialization
    ! ================
    V_bands=cZERO
+   V_bands_t = cZERO
    forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
    !
    ! Efield

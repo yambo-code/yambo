@@ -52,13 +52,13 @@ typedef struct
 /* 
  Yambo/Ypp driver flag
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _QED
+#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL
  #define _YAMBO_MAIN
 #endif
 #if defined _MAGNETIC || _KERR || _SURF
  #define _YAMBO_MAIN
 #endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_MAGNETIC || _YPP_SURF
+#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC || _YPP_SURF
  #define _YPP_MAIN
 #endif
 /* 
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0 && np>1) { MPI_Abort(MPI_COMM_WORLD,1); };
+  if (mpi_init==0) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  };
  /* 
@@ -460,11 +460,16 @@ static void usage(int verbose)
   char* OMP_string="";
 #endif
 #if defined _SLEPC
-  char* SLEPC_string="+SLEPC+PETSC";
+  char* SLEPC_string="+SLEPC";
 #else
   char* SLEPC_string="";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string); 
+#if defined _PAR_IO
+  char* MPI_IO_string="+MPI_IO";
+#else
+  char* MPI_IO_string="";
+#endif
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string,MPI_IO_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 

@@ -1,4 +1,3 @@
-objs = MATRIX_empty.o
 #if defined _SCALAPACK
 SLK_objs = SLK_matrix_init.o
 #endif

@@ -33,7 +33,7 @@ subroutine ypp_INIT_load(defs)
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:Eh_pumped_pair_BZ_reagions,RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                               n_regions,Eh_pumped_pair_BZ_width
+&                               n_regions,Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
  use stderr,               ONLY:intc
 #endif
@@ -113,6 +113,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
+ call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
  !
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
@@ -125,12 +126,16 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'RTdos',        '[R] Post-Processing kind: 2D DOS, function of time and energy')
  !
 #endif
- !
+!
 #if defined _YPP_SC
  call it('r',defs,'MeanPot', '[R] Mean Potential')
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+#if defined _YPP_NL
+ call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+#endif
  !
  ! Temperatures
  !
@@ -166,6 +171,11 @@ subroutine ypp_INIT_load(defs)
    call it(defs,'RTpumpBZ'//trim(intc(i_region)), '[RT] Region in K space excited',Eh_pumped_pair_BZ_reagions(:,i_region))
    if( .not.all(Eh_pumped_pair_BZ_reagions(:,i_region)+1.0_SP<1.E-5_SP) .and. initmode==4 ) n_regions=n_regions+1
  enddo
+ !
+ ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
+ call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)
+ call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
+ call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
  !
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
@@ -213,14 +223,8 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'cooIn','Points coordinates (in) cc/rlu/iku/alat',coo_in)
  call it(defs,'cooOut','Points coordinates (out) cc/rlu/iku/alat',coo_out)
- !
- ! GPL_EXCLUDE_START 
- !
  call it(defs,'PtsPath','Path points labels (G,M,K,L...)',PtsPath)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
- !
- ! GPL_EXCLUDE_END
- !
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
  call it('f',defs,'NoWeights',    ' Do not print points weight') 

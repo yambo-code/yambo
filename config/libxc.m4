@@ -154,7 +154,7 @@ AC_LINK_IFELSE($testprog_11, [acx_libxc_version=110, acx_libxc_ok=no], [])
 AC_LINK_IFELSE($testprog_12, [acx_libxc_version=120], [])
 AC_LINK_IFELSE($testprog_20, [acx_libxc_version=200], [])
 AC_LINK_IFELSE($testprog_203, [acx_libxc_version=203, acx_libxc_ok=yes], [])
-AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210], [])
+AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210, acx_libxc_ok=yes], [])
 AC_DEFINE_UNQUOTED([LIBXC_VERSION],[$acx_libxc_version],[Defined the LIBXC version.])
 AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be >= 203)])			
 fi
@@ -173,7 +173,7 @@ if test x"$acx_libxc_ok" = xno; then
   # version y2.0.3
   #LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxc"
   # version 2.2.3 is used
-  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxcf90 -lxc"
+  LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
   LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a"; then
     compile_libxc="no"

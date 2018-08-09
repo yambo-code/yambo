@@ -47,10 +47,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,l_BSE_minimize_memory
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
+&                       l_BSE_minimize_memory, l_restart_bse
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -59,16 +60,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use timing_m,      ONLY:timing
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
 #endif
 #if defined _PL
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels)  ::Ken 
@@ -154,6 +151,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call section('=',trim(section_title))
  !
+ ! Exchange
+ !==========
+ !
+ load_O_X=BS_res_K_exchange.or.l_bs_fxc
+ !
+ if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
+ !
+ ! PP/Epsm1S DBs
+ !
+ W_is_em1s=X%whoami==2
+ W_is_pp  =X%whoami==4
+ !
+ ! Oscillators Setup
+ !===================
+ O_ng=maxval(G_m_G)
+ O_ng_shift=1
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   call fft_check_size(1,O_ng,BS_n_g_exch)
+   if(iq/=1) O_ng_shift=maxval(qindx_B(:,:,2))
+ endif
+ !
  ! GPL_EXCLUDE_START
  !
  if (l_bs_fxc)      call section('=','Bethe-Salpeter Kernel -> xc-kernel')
@@ -171,6 +190,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
+#if defined _PAR_IO
+#else
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    !
@@ -182,6 +203,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
+#endif
    !
    if (io_BS_err==0) goto 1
    !
@@ -191,18 +213,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! GPL_EXCLUDE_END
  !
- !
- ! Exchange
- !==========
- !
- load_O_X=BS_res_K_exchange.or.l_bs_fxc
- !
- if (load_O_X) call msg('r','[BSE] Exchange components :',BS_n_g_exch)
- !
- ! PP/Epsm1S DBs
- !
- W_is_em1s=X%whoami==2
- W_is_pp  =X%whoami==4
  ! 
  if (BS_res_K_corr.and..not.l_td_hf) then
    !
@@ -222,16 +232,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      n_BS_blks=0
      call BS_blks_free()
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _PL
      call BSS_PL_free( )
 #endif
 #if defined _KERR
      call BSS_KERR_free( )
 #endif
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -257,16 +263,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    FXC_K_diagonal=0._SP
    FXC=cZERO
    !
- endif
- !
- ! Oscillators Setup
- !===================
- O_ng=maxval(G_m_G)
- O_ng_shift=1
- !
- if (any((/BS_res_K_corr,BS_cpl_K_corr,iq/=1/)).and..not.l_bs_fxc) then
-   O_ng_shift=maxval(qindx_B(:,:,2))
-   call fft_check_size(1,O_ng,BS_n_g_exch)
  endif
  !
  ! Wave Functions
@@ -392,8 +388,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
+#if defined _PAR_IO
+ call io_control(ACTION=OP_WR,COM=REP,ID=ID)
+ call io_BS_PAR_init(iq,X,ID)
+#else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
+#endif
  !
  !call section('=','Kernel loop')
  !==============================
@@ -419,6 +420,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  do i_block=1,n_BS_blks
+   !
+   ! Read BS_blk to check if the transition was already computed
+   !
+#ifdef _PAR_IO
+   if (l_restart_bse) then
+     call io_BS_PAR_read_block(iq,i_block,ID)
+     if (all(BS_blk(i_block)%done=="t")) cycle
+   endif
+#endif
    !
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
@@ -469,6 +479,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
      !
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
+       !
+       ! skip this block if already done
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
        !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
@@ -670,6 +683,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
+       BS_blk(i_block)%done(i_Tk,i_Tp)="t"
+       !
      enddo 
      !
    enddo
@@ -680,12 +695,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
+#if defined _PAR_IO
+   call io_BS_PAR_write_block(iq,i_block,ID)
+#else
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
+#endif
    !
    call live_timing(steps=BS_Block_size(i_block))
    !
  enddo
+ !
+#if defined _PAR_IO
+ call  io_BS_PAR_free(ID)
+#endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !

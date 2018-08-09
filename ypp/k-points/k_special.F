@@ -187,7 +187,7 @@ subroutine k_special()
 &                trim(intc(CIRCUIT_k%nbz+1))//' points along the path: '//trim(PtsPath))
    !
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz+1,4))
-   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
+   allocate(CIRCUIT_k_label(CIRCUIT_k%nbz+1))
    CIRCUIT_k%nbz=0
    K_norm=0.
    CIRCUIT_k_label=" "

@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
+integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:string_pack
+ use parallell,     ONLY:ncpu
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
@@ -36,21 +37,24 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
  implicit none
  !
  character(*)           :: desc
- integer                :: type,ID
+ integer     , optional :: type,ID
  character(*), optional :: subfolder
  logical,      optional :: no_full_RESET
+ integer,      optional :: COMM
  !
  ! Work Space
  !
  integer          ::CREATE_MODE,i_jobstr
  character(lchlen)::alternative_file(num_of_alternative_locations),folder
  character(schlen)::subfolder_
- logical          ::file_found,full_RESET
+ logical          ::file_found,full_RESET,par_IO
  !
  full_RESET=.true.
  if (present(no_full_RESET)) full_RESET=.not.no_full_RESET
  !
  io_connect=0
+ par_IO=present(COMM).and.ncpu>1
+ !
  if ( ( read_is_on(ID).and..not.IO_read ).or.&
 &     (write_is_on(ID).and..not.IO_write)      ) then
    io_connect=IO_NOT_ALLOWED
@@ -92,7 +96,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
  if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
  io_extension(ID) =desc
  io_folder(ID)    =trim(subfolder_)
- io_type(ID)      =type
+ if (open_is_on(ID) io_type(ID)=type
  !
  ! Create Directories 
  !
@@ -115,9 +119,19 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
    else
      !
      call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+     if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
+#if defined _PAR_IO
+     if(     par_IO) then
+        call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
+        &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+     endif
+#else
+     if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+#endif
      call netcdf_call(nf90_enddef(io_unit(ID)),ID)
+     !
      if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-     if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
+     if (io_action(ID)==OP_APP)       io_action(ID)=OP_WR
      !
    endif
    !
@@ -146,7 +160,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID)
      io_file(ID)=alternative_file(i_jobstr)
      !
    endif
-   !
    !
    if (type==-2) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
    if (type/=-2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)

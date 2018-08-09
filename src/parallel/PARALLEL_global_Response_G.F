@@ -151,7 +151,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPOLES)
    call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD)
-   call COMM_copy(PAR_COM_Q_A2A, PAR_COM_X_WORLD_RL_resolved)
+   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_X_WORLD_RL_resolved)
    call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPOLES_k_subgroup)
    !
    ! AM May 2017. The _RL_ COMM is not meant to distribute the work like all other COMMs.
@@ -221,7 +221,12 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    ! I/O privileges
    !
    if (ncpu>1) then
-     call IO_and_Messaging_switch("+io_out +output",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+     call IO_and_Messaging_switch("+output",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+#if defined _PAR_IO
+     call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
+#else
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+#endif
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

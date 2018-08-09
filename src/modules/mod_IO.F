@@ -400,33 +400,15 @@ module IO_m
      !
      if (open_is_on(ID).and.write_is_on(ID)) then
        !
-       if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) ) then
+       if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
          !
-         if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
-         else
-           if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-#if defined _PAR_IO
-           if(     par_IO) then
-             call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
-             &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-           endif
-#else
-           if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
-#endif
-           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-           if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-           if (io_action(ID)==OP_APP) io_action(ID)=OP_WR
-         endif
+         call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
          !
        else
-         !
          if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO
-         if(     par_IO) then
-           call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
-           &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-         endif
+         if(     par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
+                         &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
 #else
          if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
 #endif
@@ -434,7 +416,8 @@ module IO_m
          !
        endif
        !
-       io_type(ID)=type
+       if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
+       if (io_action(ID)==OP_APP)       io_action(ID)=OP_WR
        !
      endif
      !
@@ -486,15 +469,12 @@ module IO_m
          endif
        endif
        !
-       if (type==-2) then
-         open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-       else
-         call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
-       endif
-       !
-       io_type(ID)=type
+       if (type==-2) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
+       if (type== 2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
        !
      endif
+     !
+     if (open_is_on(ID)) io_type(ID)=type
      !
    end function
    !

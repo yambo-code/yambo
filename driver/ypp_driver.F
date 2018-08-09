@@ -42,7 +42,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
@@ -227,6 +227,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 #if defined _YPP_NL
  !
  if (l_NL_X) call NL_driver(en,k)
+ if (l_NL_exc) call NL_Exc_driver(en,k)
  !   ======
 #endif
  !

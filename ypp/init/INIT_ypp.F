@@ -55,7 +55,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_NL_X,&
 &                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,l_RTpump_Fermi,n_regions,&
-&                         RT_conf
+&                         RT_conf,l_NL_exc
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
  use fields,         ONLY:n_ext_fields
@@ -321,6 +321,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
    endif
 #endif
+   !
+#if defined _YPP_NL
+   if ( trim(rstr_piece(i1)) == 'nonlinear') then
+     l_NL_X   =  trim(rstr_piece(i1+1))=='r'
+     l_NL_exc =  trim(rstr_piece(i1+1))=='e'
+   end if
+#endif   
    !    
    if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
      if (l_amplitude)      call initactivate(1,'amplitude')
@@ -378,6 +385,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
+ if (l_NL_X)         call initactivate(1,'NL_X')
+ if (l_NL_exc)         call initactivate(1,'NL_exc')
+ !
  l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
@@ -434,7 +444,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #endif
 #if defined _YPP_NL
- l_NL_X  =runlevel_is_on('nonlinear')
+ l_NL_X   =runlevel_is_on('NL_X')
+ l_NL_exc =runlevel_is_on('NL_exc')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -574,9 +585,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) then
-   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
- endif
+ if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
+ if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
 #endif
  !
 #if defined _YPP_MAGNETIC

@@ -85,7 +85,7 @@
   {"DESC",    " ","         opt#2 den. [(t)ime]",0,0,0,0,0}, 
 #endif
 #if defined _YPP_NL
-  {"nonlinear","u","Non-linear response analysis",0,0,0,0,0}, 
+  {"nonlinear","u","Non-linear (r)esponse, (e)xcitation analysis",0,0,1,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

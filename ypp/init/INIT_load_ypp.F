@@ -135,6 +135,8 @@ subroutine ypp_INIT_load(defs)
  !
 #if defined _YPP_NL
  call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+ call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
+ call it('r',defs,'NL_exc',     '[R] NonLinear Optics Excitation Post-Processing')
 #endif
  !
  ! Temperatures
@@ -329,14 +331,16 @@ subroutine ypp_INIT_load(defs)
  !
  ! RT Post-Processing
  !
- call it(defs,'Xorder','Max order of the response functions',X_order)
+ call it(defs,'Xorder','Max order of the response/exc functions',X_order)
  call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ call it('f',defs,'PrintExc','Print excited states functions')
  !
  ! GPL_EXCLUDE_START
  !

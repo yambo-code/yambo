@@ -46,7 +46,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch
- use BS_solvers,    ONLY:BSS_mode,Haydock_treshold,BSS_n_freqs,&
+ use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
 #if defined _SLEPC
@@ -86,7 +86,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _NL
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
-&                        NL_verb_name                         
+&                        NL_verb_name,n_order                         
 #endif 
 #if defined _NL | defined _ELECTRIC
  use fields,        ONLY:Efield
@@ -168,9 +168,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
 #if defined _RT
  call it('r',defs,'negf',       '[R] Real-Time dynamics') 
- ! GPL_INCLUDE_START
- call it('r',defs,'tdBSE',     '[R] Real-Time Bethe-Salpeter') 
- ! GPL_INCLUDE_END
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
@@ -258,6 +255,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'LifeTrCG', '[GW] [o/o] Lifetime transition reduction',QP_cg_percent)
  call it(defs,'HARRLvcs', '[HA] Hartree     RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange    RL components',QP_ng_Sx,G_unit)
+ call it('f',defs,'UseNLCC',  '[XC] If present, add NLCC contributions to the charge density ',verb_level=V_qp)
  call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)
@@ -312,11 +310,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  ! GPL_EXCLUDE_START
  !
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.)
- call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  !
  ! GPL_EXCLUDE_END
  !
  call it(defs,'Gauge' ,  '[BSE] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
+ call it('f',defs,'NoCondSumRule' ,'[BSE] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
@@ -325,7 +323,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock threshold. Strict(>0)/Average(<0)',Haydock_threshold)
+ call it(defs,'BSHayItr',  '[BSS] Iterations between IO for Haydock restart.',Haydock_iterIO,verb_level=V_resp)
  call it(defs,'BSEPSInvTrs', '[BSS EPS] Inversion treshold. Relative[o/o](>0)/Absolute(<0)',K_INV_EPS%treshold)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
@@ -536,6 +535,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &    verb_level=V_nl_optics)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
 &    verb_level=V_nl_optics)
+ call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
  !
 #endif
  !
@@ -615,6 +615,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
  !
+ ! GPL_EXCLUDE_END
+ !
  ! DIPOLES
  !
  call it(defs,'DipoleEtresh',   '[Xd] Treshold in the definition of R=P/deltaE',Dipole_Energy_treshold,&
@@ -625,8 +627,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 #endif
  call it(defs,'ShiftedPaths',   '[Xd] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[Xd] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
- !
- ! GPL_EXCLUDE_END
  !
  ! El-Ph
  !
@@ -680,9 +680,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  !
  call TMP_mirror_bands( )
  !
- ! GPL_EXCLUDE_START
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.)
- ! GPL_EXCLUDE_END
  call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
@@ -709,15 +707,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
      !
      name='Field'//trim(intc(i_field))
      !
-     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Freq',            '[RT '//trim(name)//'] Frequency',&
 &            Efield(i_field)%frequency,unit=E_unit)
      call it(defs,trim(name)//'_DFreq',           '[RT '//trim(name)//'] Frequency step',&
 &            Efield(i_field)%W_step,unit=E_unit,verb_level=V_real_time)
-     ! GPL_EXCLUDE_END
      call it(defs,trim(name)//'_Int',             '[RT '//trim(name)//'] Intensity',&
 &            Efield(i_field)%intensity,unit=I_unit)
-     ! GPL_EXCLUDE_START
      call it(defs,trim(name)//'_Width',           '[RT '//trim(name)//'] Width',&
 &            Efield(i_field)%width,unit=Time_unit(1))
      call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (alternative to Width)',&
@@ -732,7 +727,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &            Efield(i_field)%versor_circ,verb_level=0)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&
 &            Efield(i_field)%t_initial,unit=Time_unit(1))
-     ! GPL_EXCLUDE_END
      !
      if (initmode==4) then
        call parser(trim(name)//'_Int',is_def)

@@ -38,7 +38,8 @@ subroutine NL_initialize(E,k,q)
  use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  !
@@ -49,7 +50,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time 
+ real(SP) :: Time, WF_sample_range(2) 
  integer  :: i1
  !
  ! Parser
@@ -61,12 +62,12 @@ subroutine NL_initialize(E,k,q)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  !
- ! Check double-precision
- ! ========================
+ ! Check double-precision and other possible errors
+ ! ================================================
  !
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
- if(n_sp_pol/=1) call error(" Spin-polarized systems not full implemented")
- if(any(NL_bands(:)==0)) call error(" Error set RTBands == 0 ! ")
+ if(n_sp_pol/=1) call error(" Spin-polarized systems not yet implemented")
+ if(any(NL_bands(:)==0)) call error("Any of the NLBands limits is 0, change to nv|nc with 0<nv<fermi<nc")
  !
  ! Integrator ! ============
  !
@@ -85,7 +86,7 @@ subroutine NL_initialize(E,k,q)
         Integrator=RK4EXP
     case('HEUN')
         Integrator=HEUN
-        call error("HEUN integrator temporarily not available")
+        call error("HEUN integrator not yet available")
     case('INVINT')
         Integrator=INVINT
     case('CRANKNIC')
@@ -258,6 +259,18 @@ subroutine NL_initialize(E,k,q)
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
+ ! WFs sampling
+ ! =========================
+ !
+ call NL_INIT_WF_sample(WF_sample)
+ WF_sample_range  = (/JPC_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,JPC_RT_IO_t%Time(NE_steps)/)
+ call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
+ if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
+ if (n_order > 0) then
+   if (WF_sample%ison == .false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
+   if (WF_sample%n_order < n_order) call warning('WF sampling analysis order set to the maximum of 7')
+ end if
+ !
  ! LOG
  ! ===
  !
@@ -280,5 +293,6 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Use Dipoles                :',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              :',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    :',l_force_SndOrd)
+ call msg( 'r', 'WF sampling                :',WF_sample%ison) 
  !
 end subroutine NL_initialize

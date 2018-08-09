@@ -67,7 +67,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,mk_dir,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_n_descs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_treshold,BSS_uses_DbGd,BSS_Wd,&
+&                     BSS_q0,Haydock_threshold,Haydock_iterIO,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
 #if defined _SLEPC
@@ -119,7 +119,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 #endif
 #if defined _NL
  use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
-&                     NL_verb_name,NL_bands
+&                     NL_verb_name,NL_bands,n_order
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -454,7 +454,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.
  BS_not_const_eh_f=.FALSE.
- Haydock_treshold=-0.02_SP
+ Haydock_threshold=-0.02_SP
+ Haydock_iterIO=100
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
@@ -628,6 +629,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  NL_correlation="IPA"
  NL_er         =(/0.2_SP,8._SP/)/HA2EV
  n_frequencies =80
+ n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  call Efield_reset(Efield(1))

@@ -40,7 +40,7 @@ subroutine NL_driver(E,X,k,q)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,&
-&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands
+&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -59,7 +59,7 @@ subroutine NL_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save
+ integer           :: i_f,i1,NL_bands1_save,N_sample_size
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -154,9 +154,6 @@ subroutine NL_driver(E,X,k,q)
  !===================
  if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
  !
- !
- ! GPL_EXCLUDE_START
- !
  ! Load Collisions if necessary
  ! ============================
  if(io_COLLs) then
@@ -175,8 +172,6 @@ subroutine NL_driver(E,X,k,q)
    if(l_use_Hxc_collisions)  call COLLISIONS_load(.false.)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Allocation
  ! ==================
@@ -210,6 +205,7 @@ subroutine NL_driver(E,X,k,q)
    ! Re-initialization
    ! ================
    V_bands=cZERO
+   V_bands_t = cZERO
    forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
    !
    ! Efield
@@ -219,6 +215,7 @@ subroutine NL_driver(E,X,k,q)
    l_dynamics_is_over=.false.
    !
    NE_i_time=0
+   N_sample_size=0
    !
    do while(.not.l_dynamics_is_over)
      !
@@ -234,6 +231,10 @@ subroutine NL_driver(E,X,k,q)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
+     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time)) then
+       N_sample_size=N_sample_size + 1
+       V_bands_t(N_sample_size,:,:,:,:) = V_bands(:,:,:,:)
+     end if
      !
      call NL_output(NE_i_time,i_f) 
      !

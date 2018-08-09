@@ -24,7 +24,7 @@
 subroutine NL_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,X_order,RT_conf,RT_P_t,RT_time,&
-&                         l_skip_pol_and_curr_IO,Probe_Keyword,RT_conf
+&                         l_skip_pol_and_curr_IO,Probe_Keyword
  use pars,           ONLY:SP,pi,cZERO,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp

@@ -121,6 +121,8 @@ subroutine electrons_WFs(Xen)
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
  !
+ ! GPL_EXCLUDE_END
+ !
 #if defined _YPP_ELPH
  if (l_polaronic_wf) then
    !

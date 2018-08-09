@@ -26,11 +26,13 @@ integer function io_NL(ID)
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_correlation,NL_er,NL_correlation,n_frequencies
- use real_time,     ONLY:Integrator_name,NE_steps,RT_step
+&                        NL_correlation,NL_er,NL_correlation,n_frequencies,      & 
+&                        WF_sample,WF_sample_ondisk,V_bands_t,NL_INIT_WF_sample, &
+&                        NL_COPY_WF_sample,NL_set_WF_sample,NL_ALLOC_WF_sample,n_order
+ use real_time,     ONLY:Integrator_name,NE_steps,RT_step,RT_bands
  use RT_control,    ONLY:JPC_RT_IO_t
- use fields,        ONLY:Efield
- use electrons,     ONLY:levels
+ use fields,        ONLY:Efield,EtoT
+ use electrons,     ONLY:levels,n_sp_pol
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
 &                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
@@ -51,6 +53,7 @@ integer function io_NL(ID)
  character(lchlen)    :: local_description(100)
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
+ real(SP)             :: WF_sample_range(2) 
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
@@ -66,16 +69,17 @@ integer function io_NL(ID)
    io_NL=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,GAUGE=.true.)
    if (io_NL/=0) goto 1
    !
+   call NL_INIT_WF_sample(WF_sample_ondisk)
+   if(write_is_on(ID)) call NL_COPY_WF_sample(WF_sample,WF_sample_ondisk)
    io_NL=variables_NL(ID,local_description)
    !
    if (io_NL/=0) goto 1
    !
-   ! Time variable
-   ! (just for compatibility reasons)
+   ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
-      JPC_RT_IO_t%N         =NE_steps
-      JPC_RT_IO_t%last_point=NE_steps
+      JPC_RT_IO_t%N         =NE_steps    
+      JPC_RT_IO_t%last_point=NE_steps    ! 
    endif
    !
    call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
@@ -97,15 +101,16 @@ integer function io_NL(ID)
  !
  if(read_is_on(ID)) then
    !  
-   if(.not.allocated(NL_P_t)) then
-     !
-     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
-     !
-     YAMBO_ALLOC(E_tot_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ext_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ks_t,(NE_steps,3))
-     !
-   endif
+   YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+   !
+   YAMBO_ALLOC(E_tot_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ext_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ks_t,(NE_steps,3))
+   !
+   WF_sample_range(2)= JPC_RT_IO_t%Time(NE_steps)
+   WF_sample_range(1)= WF_sample_range(2) - EtoT(E=NL_er(1))+5._SP*RT_step
+   call NL_set_WF_sample(WF_sample_ondisk,n_order,RT_step,WF_sample_range)
+   call NL_ALLOC_WF_sample(WF_sample_ondisk,RT_bands(2),n_sp_pol) 
    !
  endif
  !
@@ -165,6 +170,27 @@ integer function io_NL(ID)
  write (VAR_name,'(a,i4.4)') 'E_ks_freq_',i_fragment
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
  call io_bulk(ID,C2=E_ks_t)
+ !
+ ! WF_sample:  if not switched on skip this variable 
+ ! (is that legal or do I need a sec as in io_BSS_diago?)
+ !
+ if (.not.WF_sample_ondisk%ison) then
+   io_NL=-1
+   goto 1
+ endif
+ !
+ ! Indexes of the time sampled
+ !
+ write (VAR_name,'(a,i4.4)') 'T_indexes_',i_fragment
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/WF_sample_ondisk%n_size/))
+ call io_bulk(ID,I1=WF_sample_ondisk%indx_T(:WF_sample_ondisk%n_size))
+ !
+ ! V_bands at samping times
+ !
+ write (VAR_name,'(a,i4.4)') 'V_bands_',i_fragment
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,WF_sample_ondisk%n_size,RT_bands(2),&
+      &WF_sample_ondisk%n_val,WF_sample_ondisk%n_k,n_sp_pol/))
+ call io_bulk(ID,C5=V_bands_t,IPOS=(/1,1,1,1,1,1/))
  !
 1 call io_disconnect(ID=ID)
  !

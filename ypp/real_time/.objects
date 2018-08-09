@@ -5,7 +5,7 @@ RT_objects = RT_driver.o \
              RT_dump_and_write_JP.o RT_1D_Fourier_Transform.o \
              RT_occupations_driver.o RT_components_energy_plot.o RT_occ_time_plot.o RT_density.o \
              RT_occ_2D_dos_plot.o RT_occ_bands_kpts_and_En_map.o RT_occ_bands_interpolation.o \
-             RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o
+             RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o RT_Fermi_excitation.o
 #endif
 #if defined _YPP_NL
 NL_objects = NL_driver.o RT_coefficients_Inversion.o

@@ -21,46 +21,70 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_driver(iq,W) 
+subroutine K_diago_driver(iq,W,X_static) 
  !
- ! Generic diagonalization method to solve resonant and non resonant
- ! Hamiltonians.
+ ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
+ !
+ ! 10/06/2015 Added by HM: Generic slepc method to solve 
  !
  use pars,           ONLY:SP
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_Blocks_symmetrize_K
- use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,&
+ use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig
+ use X_m,            ONLY:X_t
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver 
+ use interfaces,     ONLY:K_diago_compute_epsilon,LINEAR_ALGEBRA_driver
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
- !
- ! GPL_EXCLUDE_START
- !
+#if defined _SLEPC
+ use com,            ONLY:warning
+ use interfaces,     ONLY:MATRIX_slepc
+ use BS_solvers,     ONLY:BSS_slepc_extraction,Slepc_shell,BSS_slepc_ncv,&
+&                         BSS_slepc_tol,BSS_target_E
+#endif
 #if defined _KERR
  use drivers,        ONLY:l_kerr
  use KERR,           ONLY:BSS_KERR_free
 #endif
+ !
 #if defined _PL
  use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
- ! GPL_EXCLUDE_END
- !
 #include<memory.h>
+ ! 
+#if defined _SLEPC
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <petsc/finclude/petscvec.h90>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#endif
  !
  type(w_samp)  :: W
  integer       :: iq
  !
  ! Work Space
  !
- logical       :: K_is_not_hermitian
+ logical       :: K_is_not_hermitian,l_diago,l_slepc
+ character(5)  :: Solver
+ !
+ ! Slepc specific
+ !
+#if defined _SLEPC
+ Mat                   :: slepc_mat
+ PetscErrorCode        :: ierr
+ PetscFortranInt       :: slepc_ncv
+ PetscReal             :: slepc_tol
+ PetscReal             :: slepc_target_E
+#endif
  !
  ! Residuals & Energies
  !
@@ -87,17 +111,30 @@ subroutine K_diago_driver(iq,W)
  ! I/O
  !
  integer                 :: io_err,ID
+ type(X_t),intent(in)    :: X_static
  !
- call timing('Diagonalization Solver',OPR='start')
- BSS_n_eig = BS_H_dim
+ l_diago     = index(BSS_mode,'d')/=0
+#if defined _SLEPC
+ l_slepc     = index(BSS_mode,'s')/=0
+#endif
+ !
+ if(l_diago) BSS_n_eig = BS_H_dim
+ !
+ if(l_diago) Solver="Diago"
+#if defined _SLEPC
+ if(l_slepc) Solver="Slepc"
+#endif
+ !
+ call timing(trim(Solver)//' Solver',OPR='start')
  !  
  ! Sectioning
  !============
- if (isec(2)/=0) then
-   call section('=','Diagonalization solver')
- else if (isec(2)==0) then
-   call section('+','Diagonalization solver')
- endif
+ if (isec(2)/=0) call section('=',trim(Solver)//' solver')
+ if (isec(2)==0) call section('+',trim(Solver)//' solver')
+ !
+#if defined _SLEPC
+ if(l_slepc) call K_slepc_local_init()
+#endif
  !
  ! Eigenstates 2 DB ?
  !====================
@@ -111,11 +148,27 @@ subroutine K_diago_driver(iq,W)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+ io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL,X_static)
  !
  ! Kernel and/or BSS components loading
  !======================================
- if (io_err<0) call K_components_folded_in_serial_arrays(iq,"DIAGO")
+ if (io_err<0) then
+   !
+   call K_components_folded_in_serial_arrays(iq)
+   !
+   if(l_diago) call K_stored_in_a_big_matrix(iq,"DIAGO")
+   !
+#if defined _SLEPC
+   if(l_slepc) then
+     ! 1. Here we will define a PetscShell matrix and define the matrix-vector multiplication
+     ! using the K_multiply_by_V function used in the Haydock method
+     if (     Slepc_shell) call K_shell_matrix(iq,slepc_mat)
+     ! 2. Here we create a distributed PETSC matrix from the BS_blks
+     if (.not.Slepc_shell) call K_stored_in_a_slepc_matrix(iq,slepc_mat)
+   endif
+#endif
+   !
+ endif
  !
  K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
  !
@@ -125,7 +178,7 @@ subroutine K_diago_driver(iq,W)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,"open Diago")
+ call K_output_file(iq,"open "//trim(Solver))
  !
  if (io_err<0) then
    !
@@ -146,17 +199,32 @@ subroutine K_diago_driver(iq,W)
    !
    if (K_is_not_hermitian) then
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+     if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_cmpl=BS_E,V_left=BS_V_left,V_right=BS_V_right)
+#if defined _SLEPC
+     if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
+&                                  BS_V_right,V_left=BS_V_left,E_cmpl=BS_E)
+#endif
      !
      if (BSS_write_eig_2_db) BS_mat=BS_V_right
      !
    else
      !
-     call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+     if(l_diago) call LINEAR_ALGEBRA_driver(DIAGO,M=BS_mat,E_real=BS_E_real)
+#if defined _SLEPC
+     if(l_slepc) call MATRIX_slepc(slepc_mat,BSS_n_eig,slepc_target_E,BSS_slepc_extraction,slepc_ncv,slepc_tol,&
+&                                  BS_mat,E_real=BS_E_real)
+#endif
      !
      BS_E=cmplx(BS_E_real,0._SP,SP)
      !
    endif
+   !
+#if defined _SLEPC
+   !
+   ! Destroy the matrix
+   !============================
+   if(l_slepc) call MatDestroy(slepc_mat,ierr)
+#endif
    !
    call live_timing( )
    !
@@ -166,8 +234,6 @@ subroutine K_diago_driver(iq,W)
      !
      call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
      !
-     ! GPL_EXCLUDE_START
-     !
 #if defined _KERR
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
 #endif
@@ -176,13 +242,9 @@ subroutine K_diago_driver(iq,W)
      if(l_photolum     ) call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    else
      !
      call K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
-     !
-     ! GPL_EXCLUDE_START
      !
 #if defined _PL
      if(l_photolum     ) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
@@ -192,13 +254,9 @@ subroutine K_diago_driver(iq,W)
      if(l_kerr         ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
 #endif
      !
-     ! GPL_EXCLUDE_END
-     !
    endif
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
  ! Define perturbative corrections
  !=================================
@@ -219,8 +277,6 @@ subroutine K_diago_driver(iq,W)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Now I calculate epsilon
  !=========================
  call K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
@@ -234,7 +290,7 @@ subroutine K_diago_driver(iq,W)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL,X_static)
    !
  endif
  !
@@ -242,57 +298,56 @@ subroutine K_diago_driver(iq,W)
  !=======
  call local_free( )
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _PL
  call BSS_PL_free( )
 #endif
+ !
 #if defined _KERR
  call BSS_KERR_free( )
 #endif
  !
- ! GPL_EXCLUDE_END
- !
- call timing('Diagonalization Solver',OPR='stop')
+ call timing(trim(Solver)//' Solver',OPR='stop')
  !
  contains
    !
    subroutine local_alloc(what)
      !
-     character  :: what
+     character(*) :: what
      !
      select case(what)
      case("E")
        !
-       YAMBO_ALLOC(BS_E,(BS_H_dim))
+       YAMBO_ALLOC(BS_E,(BSS_n_eig))
        if(E_SOC_nbands/=0) then
-         YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BS_H_dim))
-         YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
+         YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
        endif
-       YAMBO_ALLOC(BS_R_left,(BS_H_dim))
-       YAMBO_ALLOC(BS_R_right,(BS_H_dim))
-       !
-       ! GPL_EXCLUDE_START
+       YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
+       YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
        !
 #if defined _KERR
-       YAMBO_ALLOC_P(BS_R_right_kerr,(BS_H_dim))
-#endif
-#if defined _PL
-       YAMBO_ALLOC_P(BS_R_PL,(2,BS_H_dim))
+       YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
 #endif
        !
-       ! GPL_EXCLUDE_END
+#if defined _PL
+       YAMBO_ALLOC_P(BS_R_PL,(2,BSS_n_eig))
+#endif
        !
      case("V")
        !
        if(K_is_not_hermitian) then
-         YAMBO_ALLOC(BS_V_left,(BS_H_dim,BS_H_dim))
-         YAMBO_ALLOC(BS_V_right,(BS_H_dim,BS_H_dim))
-         YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BS_H_dim))
+         YAMBO_ALLOC(BS_V_left,(BS_H_dim,BSS_n_eig))
+         YAMBO_ALLOC(BS_V_right,(BS_H_dim,BSS_n_eig))
+         YAMBO_ALLOC_P(BS_overlap,(BS_H_dim,BSS_n_eig))
        else
-         YAMBO_ALLOC(BS_E_real,(BS_H_dim))
+         YAMBO_ALLOC(BS_E_real,(BSS_n_eig))
+#if defined _SLEPC
+         if(l_slepc) then
+           YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+         endif
+#endif
          if(BSS_perturbative_width.and..not.allocated(BS_corrections)) then
-           YAMBO_ALLOC(BS_corrections,(1,BS_H_dim))
+           YAMBO_ALLOC(BS_corrections,(1,BSS_n_eig))
          endif
        endif
        !
@@ -323,5 +378,41 @@ subroutine K_diago_driver(iq,W)
      YAMBO_FREE(BS_mat)
      !
    end subroutine local_free
+   !
+#if defined _SLEPC
+   subroutine K_slepc_local_init()
+     !
+     ! Number of states for partial diagonalization
+     !================================================
+     if (BSS_n_eig==0) then
+       BSS_n_eig = nint(BS_H_dim*.01)
+       call warning(' Calculating only 1% of the eigenvalues.')
+     endif
+     !
+     ! if the number of eigenvalues to calculate is larger than matrix dimensions
+     !
+     if (BSS_n_eig>BS_H_dim) then
+       call warning(' Number of eigenvalues is larger than hamiltonian. Calculating only 1% of the eigenvalues.')
+       BSS_n_eig = nint(BS_H_dim*.01)
+     endif
+     !
+     ! if the number of eigenvalued to calculate is smaller than 1
+     !
+     if (BSS_n_eig<1) then
+       call warning(' Number of eigenvalues is smaller than hamiltonian. Calculating 1 eigenvalue.')
+       BSS_n_eig = 1
+     endif
+     !
+     ! Here we will have two options to initialize the slepc matrix:
+     call parser('BSSSlepcShell',Slepc_shell)
+     !
+     slepc_ncv      = BSS_slepc_ncv
+     slepc_tol      = BSS_slepc_tol
+     slepc_target_E = BSS_target_E
+     !
+     call PetscInitialize(PETSC_NULL_CHARACTER,ierr)
+     !
+   end subroutine K_slepc_local_init
+#endif
    !
 end subroutine

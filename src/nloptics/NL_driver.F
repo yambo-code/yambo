@@ -90,9 +90,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================
- if(allocated(qindx_S)) then
-   YAMBO_FREE(qindx_S)
- endif
+ YAMBO_FREE(qindx_S)
  !
  ! QP dimensions
  !================

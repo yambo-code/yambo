@@ -267,7 +267,7 @@ subroutine NL_initialize(E,k,q)
  call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
  if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
  if (n_order > 0) then
-   if (WF_sample%ison == .false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
+   if (WF_sample%ison.eqv..false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
    if (WF_sample%n_order < n_order) call warning('WF sampling analysis order set to the maximum of 7')
  end if
  !

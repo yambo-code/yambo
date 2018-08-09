@@ -41,7 +41,7 @@ module mod_com2y
    !
    subroutine interface_presets(in_string)
      !
-     use stderr,         ONLY:string_split
+     use stderr,         ONLY:STRING_split
      use LIVE_t,         ONLY:live_timing_is_on
      use parallel_m,     ONLY:master_cpu
      !
@@ -56,7 +56,7 @@ module mod_com2y
      !
      ! Split the string in pieces
      !
-     call string_split(in_string,str_piece)
+     call STRING_split(in_string,str_piece)
      !
      use_SI_instead_of_TR =index(in_string,'notr')>0
      force_noSYMM         =index(in_string,'nosy')>0

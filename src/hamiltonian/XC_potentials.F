@@ -33,7 +33,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,COLLISIONS_HXC_use_TDDFT
  use electrons,      ONLY:n_full_bands,n_met_bands
  use com,            ONLY:error,warning
- use stderr,         ONLY:string_split,STRING_match
+ use stderr,         ONLY:STRING_split,STRING_match
  !
  implicit none
  !
@@ -68,7 +68,7 @@ subroutine XC_potentials(POTENTIALS_string,mode)
    l_use_COH_collisions   =.FALSE.
  endif
  !
- call string_split(potential,potentials)
+ call STRING_split(potential,potentials)
  !
  do i_c=1,10
    !

@@ -32,7 +32,7 @@ subroutine k_special(LIST)
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
- use stderr,              ONLY:string_split
+ use stderr,              ONLY:STRING_split
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
  !
@@ -248,7 +248,7 @@ subroutine k_special(LIST)
  !
  ! Path builder
  !
- call string_split(PtsPath,Path_strings)
+ call STRING_split(PtsPath,Path_strings)
  !
  K_position=0
  n_lines=0

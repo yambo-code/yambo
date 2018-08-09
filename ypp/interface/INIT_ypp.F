@@ -39,7 +39,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists
- use stderr,         ONLY:string_split,write_to_log  
+ use stderr,         ONLY:STRING_split,write_to_log  
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
@@ -180,7 +180,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! RunLevels on
  !
- call string_split(instr,rstr_piece)
+ call STRING_split(instr,rstr_piece)
  do i1=1,50
    if ( trim(rstr_piece(i1))=="jobstr" ) cycle
    if ( i1>1) then

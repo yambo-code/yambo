@@ -25,14 +25,14 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use,l_real_time
  use pars,           ONLY:schlen,SP
- use stderr,         ONLY:string_split,real2ch,intc
+ use stderr,         ONLY:STRING_split,real2ch,intc,STRING_match
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
- use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free,RT_ctl_db
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t
+ use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
+ use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,OBS_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:warning,msg,jobstr,alt_jobstr,n_alt_jobstr,file_exists,depth,alt_jobdir,jobdir
  !
  implicit none
@@ -54,7 +54,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),db_name,T_unit,ch
  character(3)          :: what_
- logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers
+ logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ
  !
  local_Time=0._SP
  if (present(Time)) local_Time=Time
@@ -87,14 +87,15 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
    !
    if (.not.is_def) return
    !
-   l_E=.FALSE.
-   l_f=.FALSE.
-   l_W=.FALSE.
+   l_E    =.FALSE.
+   l_f    =.FALSE.
+   l_W    =.FALSE.
+   l_BOLTZ=.FALSE.
    !
    ! First check the DB file & Time
    !================================
    !
-   call string_split(RT_ctl_db(I_id),db_piece)
+   call STRING_split(RT_ctl_db(I_id),db_piece)
    !
    if(trim(db_piece(1))=="none") return
    !
@@ -112,10 +113,13 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
      if (trim(db_piece(i1))=="<") then
        db_name=db_piece(i1+1)
        if (len_trim(db_name)==0) return
+       do i2=i1+1,n_pieces
+         if (STRING_match(trim(db_piece(i2)),"ubi" )) l_BOLTZ=.TRUE.
+       enddo
        do i2=1,i1-1
-         if (trim(db_piece(i2))=="E") l_E=.TRUE.
-         if (trim(db_piece(i2))=="f") l_f=.TRUE.
-         if (trim(db_piece(i2))=="W") l_W=.TRUE.
+         if (STRING_match(trim(db_piece(i2)),"e" )) l_E=.TRUE.
+         if (STRING_match(trim(db_piece(i2)),"f" )) l_f=.TRUE.
+         if (STRING_match(trim(db_piece(i2)),"w" )) l_W=.TRUE.
        enddo
      endif
      if (trim(db_piece(i1))=="@") then
@@ -234,7 +238,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers)
  !
  ! Yambo
  !=======
- if (present(what))        call RT_interpolation(bands,E,K,what_,local_Time,l_f,l_E,l_W)
+ if (present(what))        call RT_interpolation(bands,E,K,what_,"NN",local_Time,&
+&                                                l_f,l_E,l_W,l_BOLTZ,RT_ctl_interp_neigh(I_id))
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !

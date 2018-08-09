@@ -361,14 +361,14 @@ module com
    end function
    !
    character(lchlen) function filename(name)
-     use stderr,     ONLY:string_split,string_remove
+     use stderr,     ONLY:STRING_split,STRING_remove
      character(*)      :: name
      integer           :: N
      character(schlen) :: names(20)
      character(lchlen) :: name_
      name_=name
-     name_=string_remove(name_,"/",replace=" ")
-     call string_split(name_,names,n_non_empty_strings=N)
+     name_=STRING_remove(name_,"/",replace=" ")
+     call STRING_split(name_,names,n_non_empty_strings=N)
      filename=trim(names(N))
    end function
    !
@@ -389,15 +389,15 @@ module com
    !
    subroutine warning(mesg)
      use LIVE_t,     ONLY:LIVE_message
-     use stderr,     ONLY:string_pack
+     use stderr,     ONLY:STRING_pack
      character(*) :: mesg
-     call msg('nr',string_pack('[WARNING] ',trim(mesg)))
-     call LIVE_message(string_pack('[WARNING] ',trim(mesg)),"n","","%s")
+     call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+     call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
    end subroutine
    !
    subroutine error(mesg)
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
-     use stderr,     ONLY:string_pack
+     use stderr,     ONLY:STRING_pack
 #if defined _MPI
      use parallel_m, ONLY:mpi_comm_world,ncpu
      integer         :: ierr
@@ -407,11 +407,11 @@ module com
      live_timing_is_on=.FALSE.
      !
      if (len_trim(secnm)>0) then
-       call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-       call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+       call msg('nr',STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)))
+       call LIVE_message(STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
      endif
-     call msg('nr',string_pack('[ERROR] ',trim(mesg)))
-     call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
+     call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+     call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
@@ -626,7 +626,7 @@ module com
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
-     use stderr, ONLY:string_pack,of_tabs
+     use stderr, ONLY:STRING_pack,of_tabs
      character(*)     :: basic_fmt
      integer          :: n,INDENT
      logical          :: USE_TABS
@@ -637,7 +637,7 @@ module com
      character(lchlen) :: lch
      !
      if (USE_TABS) then
-       composed_fmt=string_pack(terminator(1),'a,')
+       composed_fmt=STRING_pack(terminator(1),'a,')
        lch=composed_fmt
        do i1=1,n-1
          write (lch,'(2a,i3.3,3a)') trim(composed_fmt),'t',&
@@ -663,7 +663,7 @@ module com
      ! s(tderr)
      ! oN=msgunits(N) 
      !
-     use stderr,  ONLY:string_split,string_remove
+     use stderr,  ONLY:STRING_split,STRING_remove
      character(*) how
      ! 
      ! Work Space
@@ -678,12 +678,12 @@ module com
      ! o. files
      !
      if (how(:1)=="o") then
-       call string_split(how,ch_piece)
+       call STRING_split(how,ch_piece)
        do i2=2,10
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
            if (len_trim(opened_of(i1))==0) cycle
-           stripped_file_name=string_remove(opened_of(i1),trim(jobstr))
+           stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
            if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
              of_unit(i1) =-of_unit(i1)
            endif

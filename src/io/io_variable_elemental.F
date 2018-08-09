@@ -34,7 +34,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
- use stderr,  ONLY:string_pack,intc,real2ch,complex2ch
+ use stderr,  ONLY:STRING_pack,intc,real2ch,complex2ch
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,io_com,io_file,&
@@ -94,9 +94,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=i_verify((/I0/),(/i_db(1)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -130,9 +130,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=i_verify(I1,i_db(:size(I1)))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -168,9 +168,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=r_verify((/R0/),(/r_db(1)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -206,9 +206,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=r_verify(R1,r_db(:size(R1)))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -248,9 +248,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=r_verify((/real(D0,SP)/),(/r_db(1)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -292,9 +292,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=c_verify((/C0/),(/c_db(1)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -333,9 +333,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        i_err=i_verify((/i_db(1)/),(/i_db(2)/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then
@@ -373,9 +373,9 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
        if (trim(db_ch(1))/=CH0) i_err=-1
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
-         if (i_err/=0.and.present(VAR)) ch=string_pack("*ERR* ",VAR)
+         if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
        else if (present(WARN)) then
-         if (WARN.and.i_err/=0.and.present(VAR)) ch=string_pack("*WRN* ",VAR)
+         if (WARN.and.i_err/=0.and.present(VAR)) ch=STRING_pack("*WRN* ",VAR)
        endif
      endif
      if (len_trim(ch)>0) then

@@ -31,7 +31,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  use fields,         ONLY:A_tot,A_ind,A_ext
  use electrons,      ONLY:n_spin,Spin_magn
  use D_lattice,      ONLY:Bose_Temp
- use stderr,         ONLY:set_real_printed_length,string_split,real2ch
+ use stderr,         ONLY:set_real_printed_length,STRING_split,real2ch
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptions_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings
@@ -58,7 +58,7 @@ subroutine RT_output(what,VALUES,TIME,E)
  real(SP)                 :: data_to_dump(N_MAX_RT_headings)
  logical, external        :: STOP_now
  !
- call string_split(what,orders,n_non_empty_strings=n_orders)
+ call STRING_split(what,orders,n_non_empty_strings=n_orders)
  !
  ! Check which files to operate on
  !---------------------------------

@@ -67,6 +67,8 @@ module RT_control
  !
  logical                 :: NEQ_Kernel
  logical                 :: NEQ_Residuals
+ character(schlen)       :: RT_ctl_db(4)
+ integer                 :: RT_ctl_interp_neigh(4)=1
  ! 
  interface
    !

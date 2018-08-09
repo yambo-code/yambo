@@ -250,14 +250,14 @@ module it_m
    end function
    !
    subroutine switch_off_runlevel(off_name,on_name)
-     use stderr,    ONLY:string_split
+     use stderr,    ONLY:STRING_split
      character(*)     :: off_name,on_name
      !
      ! Work Space
      !
      character(schlen):: on_names(maxrnlvls)
      integer          :: i2,i3
-     call string_split(on_name,on_names)
+     call STRING_split(on_name,on_names)
      ext_loop: do i2=1,nrnlvls
        if (rstatus(i2)==0) cycle
        do i3=1,maxrnlvls

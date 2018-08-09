@@ -29,7 +29,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  use com,            ONLY:core_io_path,jobstr,file_exists,msg,error,warning
  use IO_m,           ONLY:NONE
  use fields,         ONLY:Efield
- use stderr,         ONLY:string_split,cstr,intc
+ use stderr,         ONLY:STRING_split,cstr,intc
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  !
@@ -61,7 +61,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    !
    call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
    !
-   call string_split(folder_list(:nf),Probe_path)
+   call STRING_split(folder_list(:nf),Probe_path)
    !
    nf=count( len_trim(Probe_path(:)) > 0 ) 
    !

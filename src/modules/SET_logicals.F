@@ -31,7 +31,7 @@ subroutine SET_logicals()
 &                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
 &                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
- use stderr,     ONLY:write_to_log,write_fragments_IO_log,string_split,write_to_log_default
+ use stderr,     ONLY:write_to_log,write_fragments_IO_log,STRING_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
  !
  implicit none
@@ -78,7 +78,7 @@ subroutine SET_logicals()
  io_BS_K        =.TRUE.
  !
  ch_piece=' '
- call string_split(DBs_IO_control_string,ch_piece)
+ call STRING_split(DBs_IO_control_string,ch_piece)
  !
  do i_ch=1,n_max_DB_IO_off_fields
    if (str_check(4,(/"DIP","dip","ALL","all"/),ch_piece(i_ch)) ) io_DIP     =.FALSE.
@@ -114,7 +114,7 @@ subroutine SET_logicals()
  frag_BS_K    =.FALSE.
  !
  ch_piece=' '
- call string_split(DBs_FRAG_control_string,ch_piece)
+ call STRING_split(DBs_FRAG_control_string,ch_piece)
  !
  do i_ch=1,n_max_DB_IO_off_fields
    !

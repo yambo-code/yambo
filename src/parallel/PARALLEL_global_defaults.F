@@ -96,7 +96,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    !
    subroutine GIMME_a_parallel_proposal(N_fields,FIELDS)
      !
-     use stderr,      ONLY:string_remove
+     use stderr,      ONLY:STRING_remove
      use vec_operate, ONLY:sort
      use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
 &                          PAR_EH_range,PAR_K_range,PAR_n_freqs,PAR_n_G_vectors,&
@@ -124,7 +124,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      CPU_structure(i_PAR_structure)%N_chains=N_fields
      !
      do i_f=1,N_fields
-       ch=string_remove(FIELDS(i_f)," ")
+       ch=STRING_remove(FIELDS(i_f)," ")
        CPU_structure(i_PAR_structure)%ROLE(i_f)=trim(ch)
        if (trim(ch)=="g" ) VALS(i_f)=PAR_n_G_vectors
        if (trim(ch)=="c" ) VALS(i_f)=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1

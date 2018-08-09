@@ -346,10 +346,6 @@ module real_time
  complex(SP), allocatable :: XC0(:,:,:,:)
  complex(SP), allocatable :: HARTREE0(:,:,:,:)
  !
- ! TD-ABS and RT-BSE [yambo]
- !
- character(schlen)       :: RT_ctl_db(4)
- !
  type RT_t
    !
    ! Sizes and definitions

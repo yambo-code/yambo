@@ -28,7 +28,7 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
  use drivers,    ONLY:list_dbs
  use com,        ONLY:msg
  use parallel_m, ONLY:ncpu
- use stderr,     ONLY:string_pack
+ use stderr,     ONLY:STRING_pack
  use IO_m,       ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,ver_is_gt_or_eq,&
 &                     netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                     io_status,DUMP,REP,LOG,io_com,io_file,&
@@ -113,7 +113,7 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    if (VAR_SZ>0) then
      if (write_is_on(ID)) MODE="[WR"
      if ( read_is_on(ID)) MODE="[RD"
-     ch=string_pack(MODE,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
+     ch=STRING_pack(MODE,trim(io_file(ID)),"]",repeat('-',max( 60-len_trim(io_file(ID))-4,1) ))
    else
      !
      ! GPL_EXCLUDE_START

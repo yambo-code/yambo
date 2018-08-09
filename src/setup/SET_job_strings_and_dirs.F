@@ -24,7 +24,7 @@
 subroutine SET_job_strings_and_dirs(JS)
  !
  use pars,       ONLY:schlen
- use stderr,     ONLY:string_split,string_remove
+ use stderr,     ONLY:STRING_split,STRING_remove
  use com,        ONLY:jobstr,jobdir,alt_jobstr,alt_jobdir,n_alt_jobstr,&
 &                     n_max_jobstr,com_path
  !
@@ -37,7 +37,7 @@ subroutine SET_job_strings_and_dirs(JS)
  integer           :: i_j,n_s
  character(schlen) :: string(10),dir(10),job,path,ch_tmp
  !
- call string_split(JS,string,",")
+ call STRING_split(JS,string,",")
  !
  jobstr    =" "
  alt_jobstr=" "
@@ -54,14 +54,14 @@ subroutine SET_job_strings_and_dirs(JS)
    !
    if (ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=="/") ch_tmp(len_trim(ch_tmp):len_trim(ch_tmp))=" "
    !
-   call string_split(trim(ch_tmp),dir,"/",n_non_empty_strings=n_s)
+   call STRING_split(trim(ch_tmp),dir,"/",n_non_empty_strings=n_s)
    !
    if (n_s==1) then
      job =dir(1)
      path=" "
    else
      job =dir(n_s)
-     path=trim(string_remove(ch_tmp,"/"//trim(job)))
+     path=trim(STRING_remove(ch_tmp,"/"//trim(job)))
    endif
    !
    if (i_j==1) then

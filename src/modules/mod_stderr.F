@@ -112,7 +112,7 @@ module stderr
      end do
    end subroutine clear_str
    !
-   character(lchlen) function string_pack(str1,str2,str3,str4,str5)
+   character(lchlen) function STRING_pack(str1,str2,str3,str4,str5)
      character(*)          :: str1
      character(*),optional :: str2,str3,str4,str5
      !
@@ -120,26 +120,26 @@ module stderr
      !
      character(lchlen) :: lch
      !
-     string_pack=str1
+     STRING_pack=str1
      if (present(str2)) then
-       write (lch,'(2a)') trim(string_pack),trim(str2)
-       string_pack=lch
+       write (lch,'(2a)') trim(STRING_pack),trim(str2)
+       STRING_pack=lch
      endif
      if (present(str3)) then
-       write (lch,'(2a)') trim(string_pack),trim(str3)
-       string_pack=lch
+       write (lch,'(2a)') trim(STRING_pack),trim(str3)
+       STRING_pack=lch
      endif
      if (present(str4)) then
-       write (lch,'(2a)') trim(string_pack),trim(str4)
-       string_pack=lch
+       write (lch,'(2a)') trim(STRING_pack),trim(str4)
+       STRING_pack=lch
      endif
      if (present(str5)) then
-       write (lch,'(2a)') trim(string_pack),trim(str5)
-       string_pack=lch
+       write (lch,'(2a)') trim(STRING_pack),trim(str5)
+       STRING_pack=lch
      endif
    end function 
    !
-   subroutine string_split(string_in,string_out,space,n_non_empty_strings)
+   subroutine STRING_split(string_in,string_out,space,n_non_empty_strings)
      character(*)          :: string_in
      character(schlen)     :: string_out(:)
      character(*),optional :: space
@@ -191,7 +191,7 @@ module stderr
      !
    end subroutine
    !
-   character(lchlen) function string_remove(string_in,what,replace)
+   character(lchlen) function STRING_remove(string_in,what,replace)
      !
      character(*)           :: string_in
      character(*)           :: what
@@ -202,7 +202,7 @@ module stderr
      integer          :: i_pos,i_s
      character(lchlen):: string_tmp
      !
-     string_remove=string_in
+     STRING_remove=string_in
      !
      i_pos=index(string_in,what)
      !
@@ -212,18 +212,18 @@ module stderr
      !
      do i_s=1,len_trim(string_in)
        if (present(replace)) then
-         string_remove=string_tmp(:i_pos-1)//replace//string_tmp(i_pos+len(what):)
+         STRING_remove=string_tmp(:i_pos-1)//replace//string_tmp(i_pos+len(what):)
        else
-         string_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
+         STRING_remove=string_tmp(:i_pos-1)//string_tmp(i_pos+len(what):)
        endif
-       string_tmp=string_remove
+       string_tmp=STRING_remove
        i_pos=index(string_tmp,what)
        if (i_pos==0) return
      enddo
      !
    end function
    !
-   character(lchlen) function string_add(string_in,what)
+   character(lchlen) function STRING_add(string_in,what)
      !
      character(*)     :: string_in
      character(*)     :: what
@@ -232,10 +232,10 @@ module stderr
      !
      integer          :: i_pos
      !
-     string_add=string_in
+     STRING_add=string_in
      i_pos=index(string_in,what)
      if (i_pos/=0) return
-     write (string_add,'(2a)') trim(string_in),trim(what)
+     write (STRING_add,'(2a)') trim(string_in),trim(what)
      !
    end function
    !

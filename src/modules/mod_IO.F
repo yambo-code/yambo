@@ -322,7 +322,7 @@ module IO_m
    integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
      use parallel_m,    ONLY:ncpu
-     use stderr,        ONLY:string_pack
+     use stderr,        ONLY:STRING_pack
      use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                            num_of_alternative_locations,n_alt_jobstr,jobdir
      character(*)           :: desc
@@ -393,7 +393,7 @@ module IO_m
      if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
        call mk_dir(more_io_path)
        call mk_dir(folder)
-       if (present(subfolder)) call mk_dir(string_pack(folder,"/",subfolder))
+       if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
      endif
      !
      ! Open if to open and to write
@@ -637,14 +637,14 @@ module IO_m
    !
    subroutine mk_dir(dirname)
      use pars,           ONLY:schlen
-     use stderr,         ONLY:cstr,string_split
+     use stderr,         ONLY:cstr,STRING_split
      implicit none
      character(*)      :: dirname
      integer           :: i_j,n_s
      character(schlen) :: dir(10)
      character(lchlen) :: ch_tmp
      if (len_trim(dirname)==0) return
-     call string_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
+     call STRING_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
      ch_tmp=dir(1)
      call imkdir( cstr(trim(ch_tmp)) )
      do i_j=2,n_s

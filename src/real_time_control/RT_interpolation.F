@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
+subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nk_levels,BZ_DbGd_kpts,BZ_DbGd_nbands
@@ -30,17 +30,18 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
- use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect,NN_n_of_nearest
  use RT_control,     ONLY:RT_carriers_to_RT_k
  !
 #include<memory.h>
  !
- integer,intent(in)    :: bands(2)
+ integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: K
  character(3),  intent(in)    :: what ! X,K,G,R
+ character(*),  intent(in)    :: mode ! NN,BOLTZ
  real(SP),      intent(in)    :: Time
- logical,       intent(in)    :: l_f,l_E,l_W
+ logical,       intent(in)    :: l_f,l_E,l_W,l_B
  !
  ! Work space
  !
@@ -51,7 +52,11 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  logical               :: l_DbGd
  type(bz_samp)         :: RT_k,DbGd_k
  !
+ ! Setup
+ !-------
  l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
+ l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
+ NN_n_of_nearest=NN
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -151,10 +156,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
     !
     ! Work Space
     integer      :: ik,i_carr,nb_max,ID
-    !
-    l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
-    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.TRUE.)
+    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
+&                             operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
     call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
     !
     nb_max=    nb(2)

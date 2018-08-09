@@ -56,7 +56,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
- use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove,STRING_match
+ use stderr,         ONLY:log_as_a_file,logfile,intc,STRING_add,STRING_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -1332,8 +1332,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
          call parser('WehCpl' ,l_W_eh_cpl )
-         if (     l_W_eh_diag)         BS_res_mode=trim(string_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
+         if (     l_W_eh_diag)         BS_res_mode=trim(STRING_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(STRING_remove(BS_cpl_mode,'c'))
        endif
      endif
      !
@@ -1363,7 +1363,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      use com,    ONLY:error
      use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
-     use stderr, ONLY:string_split
+     use stderr, ONLY:STRING_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
 &                     V_real_time,V_all,V_parallel
      implicit none
@@ -1390,7 +1390,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Split the string in pieces
      !
-     call string_split(rstr,rstr_piece)
+     call STRING_split(rstr,rstr_piece)
      n_pieces=0
      do i1=1,2*nrnlvls
        if (len_trim(rstr_piece(i1))>0) n_pieces=n_pieces+1

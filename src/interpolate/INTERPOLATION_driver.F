@@ -60,11 +60,17 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  ! Actions
  !=========
  !
- if (.not.l_INTERP_f)  l_INTERP_f =operation(1:1)== "f".or.operation(1:2)== "df"
- if (.not.l_INTERP_E)  l_INTERP_E =operation(1:1)== "E"
- if (.not.l_INTERP_Z)  l_INTERP_Z =operation(1:1)== "Z"
- if (.not.l_INTERP_W)  l_INTERP_W =operation(1:1)== "W"
- if (.not.l_INTERP_dE) l_INTERP_dE=operation(1:2)== "dE"
+ l_INTERP_f =operation(1:1)== "f".or.operation(1:2)== "df"
+ l_INTERP_E =operation(1:1)== "E"
+ l_INTERP_Z =operation(1:1)== "Z"
+ l_INTERP_W =operation(1:1)== "W"
+ l_INTERP_dE=operation(1:2)== "dE"
+ !
+ if (index(operation,"_from_DB")>0) then
+   l_INTERP_dE =index(operation(1:3),"dE")>0
+   l_INTERP_W  =index(operation(1:3),"W")>0
+   l_INTERP_Z  =index(operation(1:3),"Z")>0
+ endif
  !
  ! SETUP
  !=======

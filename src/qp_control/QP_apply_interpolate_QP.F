@@ -32,7 +32,7 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  ! This is true both at zero and finite temperature. Indeed also at finite temperature
  ! when the theory is causal the GF must be rotated to the real-energy axis.
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use electrons,     ONLY:n_sp_pol,spin
  use com,           ONLY:msg,warning
@@ -41,22 +41,22 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  use stderr,        ONLY:real2ch
  use QP_m,          ONLY:QP_t
  use QP_CTL_m,      ONLY:QP_action,QP_ctl_msg_fmt,QP_ctl_xc_STRING
- use interpolate,   ONLY:NN_MAX_real_nearest,l_INTERP_dE,l_INTERP_W,l_INTERP_Z,&
-&                        INTERPOLATION_driver,INTERP_obj,INTERPOLATE_msg_fmt
+ use interpolate,   ONLY:NN_MAX_real_nearest,INTERPOLATION_driver,INTERP_obj,INTERPOLATE_msg_fmt
  !
 #include<memory.h>
  !
- type(levels)::en
- type(QP_t)  ::qp
- type(bz_samp)::k
- integer :: i_ACTION,bands(2)
+ type(levels)  ::en
+ type(QP_t)    ::qp
+ type(bz_samp) ::k
+ integer       ::i_ACTION,bands(2)
  !
  ! Work Space
  !
- real(SP)       :: E_diff
- integer        :: ik,iband,i_spin,ID,i_qp_ref,N_exact,N_close,N_far,DB_bands(2)
- logical        :: wrong_width_sign_warn
- type(bz_samp)  :: QP_k
+ real(SP)         :: E_diff
+ integer          :: ik,iband,i_spin,ID,i_qp_ref,N_exact,N_close,N_far,DB_bands(2)
+ logical          :: wrong_width_sign_warn
+ character(schlen):: what
+ type(bz_samp)    :: QP_k
  !
  ! IBZ -> BZ (iku)
  !
@@ -81,8 +81,8 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
    call QP_transfer('init')
    !
    call INTERPOLATION_driver(bands=bands,SEED_k=QP_k,SEED_QP=qp,&
-&                            operation="QP_from_DB",ID_op=ID,NEAREST=QP_action(i_ACTION)%plan(4))
-   call INTERPOLATION_driver(OUT_k=k,operation="QP_from_DB")
+&                            operation=trim(what)//"_from_DB",ID_op=ID,NEAREST=QP_action(i_ACTION)%plan(4))
+   call INTERPOLATION_driver(OUT_k=k,operation=trim(what)//"_from_DB")
    !
    call QP_transfer('appl')
    !
@@ -179,9 +179,10 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
          QP_k%pt=qp%k
          QP_k%weights=qp%wk
          !
-         l_INTERP_dE=QP_action(i_ACTION)%plan(1)
-         l_INTERP_W =QP_action(i_ACTION)%plan(2)
-         l_INTERP_Z =QP_action(i_ACTION)%plan(3)
+         what=" "
+         if (QP_action(i_ACTION)%plan(1)) what="dE"//trim(what)
+         if (QP_action(i_ACTION)%plan(2)) what="W"//trim(what)
+         if (QP_action(i_ACTION)%plan(3)) what="Z"//trim(what)
          !
        case('appl')
          !

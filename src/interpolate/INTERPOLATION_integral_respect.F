@@ -57,8 +57,12 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it)
  enddo
  !
  if (DO_it) then
-   do i3=1,INTERP_obj(ID)%D
-     if (abs(INTERP_int(i3))>0.) OUT(:,:,i3)=OUT(:,:,i3)*ORI_int(i3)/INTERP_int(i3)
+   do i1=INTERP_obj(ID)%nb(1),INTERP_obj(ID)%nb(2)
+     do ik=1,OUT_k%nibz
+       do i3=1,INTERP_obj(ID)%D
+         if (abs(INTERP_int(i3))>0.) OUT(i1,ik,i3)=OUT(i1,ik,i3)*ORI_int(i3)/INTERP_int(i3)
+       enddo
+     enddo
    enddo
  endif
  !

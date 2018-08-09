@@ -96,7 +96,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
  io_extension(ID) =desc
  io_folder(ID)    =trim(subfolder_)
- if (open_is_on(ID) io_type(ID)=type
  !
  ! Create Directories 
  !
@@ -165,5 +164,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
    if (type/=-2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
    !
  endif
+ !
+ if (open_is_on(ID)) io_type(ID)=type
  !
 end function io_connect

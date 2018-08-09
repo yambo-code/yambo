@@ -142,14 +142,14 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    para_term_w0=cZERO
    !
+   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0,iq)
+   !
    BSS_Vnl_included=X_oscillators%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
    !
  !endif
-   !
-   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0,iq)
    !
    if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
@@ -300,6 +300,8 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #if defined _KERR
    !
    ! Eq.(1.12) PRB 48, 11705 (1993)
+   !
+   A_drude(1)=para_term_w0-diam_term_exact
    !
    if (l_kerr) call K_kerr_IP(iq,W_bss%p)
    !

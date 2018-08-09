@@ -33,8 +33,8 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
 &                               INTERPOLATION_nearest_k_report,FILL_SEED_QP
  use interpolate,          ONLY:GRID_k,INTERP_obj,max_interpls,INTERPOLATION_coefficients,&
 &                               INTERPOLATION_BZ,interpls,INTERPOLATION_nearest_k,&
-&                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_G,&
-&                               l_INTERP_EQ,INTERPOLATE_initialized,l_integral_respect
+&                               lattice_vectors,l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,&
+&                               INTERPOLATE_initialized,l_integral_respect,l_INTERP_Z,INTERPOLATE_msg_fmt
  use IO_m,                 ONLY:IO_and_Messaging_switch
  use QP_m,                 ONLY:QP_t
  !
@@ -60,11 +60,11 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  ! Actions
  !=========
  !
- l_INTERP_f  =operation(1:1)== "f".or.operation(1:2)== "df"
- l_INTERP_E  =operation(1:1)== "E"
- l_INTERP_G  =operation(1:1)== "G"
- l_INTERP_dE =operation(1:2)== "dE"
- l_INTERP_EQ =index(operation,"EQ")>0
+ if (.not.l_INTERP_f)  l_INTERP_f =operation(1:1)== "f".or.operation(1:2)== "df"
+ if (.not.l_INTERP_E)  l_INTERP_E =operation(1:1)== "E"
+ if (.not.l_INTERP_Z)  l_INTERP_Z =operation(1:1)== "Z"
+ if (.not.l_INTERP_W)  l_INTERP_W =operation(1:1)== "W"
+ if (.not.l_INTERP_dE) l_INTERP_dE=operation(1:2)== "dE"
  !
  ! SETUP
  !=======
@@ -101,6 +101,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
      YAMBO_FREE_P(lattice_vectors)
      !
      INTERPOLATE_initialized=.FALSE.
+     INTERPOLATE_msg_fmt="rs"
      !
    endif
    !
@@ -120,6 +121,10 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
      endif
    enddo
    !
+   if (present(ID_op)) then
+     ID_op=ID
+   endif
+   !
  else if (present(OUT_k)) then
    !
    do i_obj=1,max_interpls
@@ -135,12 +140,13 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    if (present(SEED_E))  INTERP_obj(ID)%D=n_sp_pol
    if (present(SEED_RT)) INTERP_obj(ID)%D=n_sp_pol
-   if (present(SEED_QP)) INTERP_obj(ID)%D=n_sp_pol
-   if (present(SEED_R3)) INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
-   !
-   if (present(ID_op)) then
-     ID_op=ID
+   if (present(SEED_QP)) then
+     INTERP_obj(ID)%D=0
+     if (l_INTERP_dE) INTERP_obj(ID)%D=INTERP_obj(ID)%D+n_sp_pol
+     if (l_INTERP_W ) INTERP_obj(ID)%D=INTERP_obj(ID)%D+n_sp_pol
+     if (l_INTERP_Z ) INTERP_obj(ID)%D=INTERP_obj(ID)%D+n_sp_pol*2
    endif
+   if (present(SEED_R3)) INTERP_obj(ID)%D=size(SEED_R3(1,1,:))
    !
    call init_ID(ID,bands,SEED_k,operation)
    !

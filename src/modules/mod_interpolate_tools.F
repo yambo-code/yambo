@@ -25,7 +25,8 @@ module interpolate_tools
  !
  use pars,         ONLY:SP,schlen
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
-&                       l_INTERP_G,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest
+&                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
+&                       INTERPOLATE_msg_fmt
  use electrons,    ONLY:n_sp_pol
  use com,          ONLY:error
  !
@@ -47,12 +48,12 @@ module interpolate_tools
      title=trim(INTERP_obj(ID)%what)//"-Nearest K"
      !
      dummy=real(NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-     call msg('nrs','['//trim(title)//'] Exact matches  [o/o]:',dummy)
+     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]:',dummy)
      if (NN_nk_exact<INTERP_obj(ID)%nk) then
-       call msg('sr','['//trim(title)//'] Neighbours    [user]:',NN_n_of_nearest)
-       call msg('sr','['//trim(title)//']               [real]:',NN_MAX_real_nearest)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]:',NN_n_of_nearest)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]:',NN_MAX_real_nearest)
        dummy=real(INTERP_obj(ID)%nk-NN_nk_exact)/real(INTERP_obj(ID)%nk)*100._SP
-       call msg('sr','['//trim(title)//'] Interpolations [o/o]:',dummy)
+       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]:',dummy)
      endif
      !
    end subroutine
@@ -191,7 +192,7 @@ module interpolate_tools
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
       if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
-      if (l_INTERP_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
+      if (l_INTERP_W ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
       if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_E(i_RT) 
       !
     enddo
@@ -206,16 +207,31 @@ module interpolate_tools
     integer,    intent(in) :: ID
     type(QP_t), intent(in) :: SEED_QP
     !
-    integer :: i_qp,ib,ik,i_s !WS
+    integer :: i_qp,ib,ik,i_s,i_c !WS
     !
     do i_qp=1,SEED_QP%n_states
       ib   =SEED_QP%table(i_qp,1)
       ik   =SEED_QP%table(i_qp,3)
       i_s  =spin(SEED_QP%table(i_qp,:))
-      if (l_INTERP_E ) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(SEED_QP%E(i_qp))
-      if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
-      if (l_INTERP_G ) INTERP_obj(ID)%SEED(ib,ik,i_s)=aimag(SEED_QP%E(i_qp))
-      !if (l_INTERP_Z ) INTERP_obj(ID)%SEED(ib,ik,i_s)=real(qp%Z(:))/aimag(qp%Z(:))
+      i_c  =0
+      if (l_INTERP_E ) then
+        i_c=i_c+1
+        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))
+      endif
+      if (l_INTERP_dE) then
+        i_c=i_c+1
+        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%E(i_qp))-SEED_QP%E_bare(i_qp)
+      endif
+      if (l_INTERP_W ) then
+        i_c=i_c+1
+        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%E(i_qp))
+      endif
+      if (l_INTERP_Z ) then
+        i_c=i_c+1
+        INTERP_obj(ID)%SEED(ib,ik,i_c)=real(SEED_QP%Z(i_qp))
+        i_c=i_c+1
+        INTERP_obj(ID)%SEED(ib,ik,i_c)=aimag(SEED_QP%Z(i_qp))
+      endif
     enddo
     !
   end subroutine

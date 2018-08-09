@@ -45,7 +45,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  ! Work space
  !
- integer               :: nb(2)
+ integer               :: nb(2),ID
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
@@ -146,6 +146,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
+ call INTERPOLATION_driver(operation="END",ID_op=ID)
+ !
  contains
   !
   subroutine Interpolate_and_transfer(OBJ,K,IS_DBGD)
@@ -155,7 +157,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     logical      :: IS_DBGD
     !
     ! Work Space
-    integer      :: ik,i_carr,nb_max,ID
+    integer      :: ik,i_carr,nb_max
     ! 
     call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
 &                             operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)

@@ -40,6 +40,7 @@ module interpolate
  character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
  logical           :: INTERPOLATE_initialized=.FALSE.
+ character(schlen) :: INTERPOLATE_msg_fmt
  !
  ! NN method
  !
@@ -52,8 +53,8 @@ module interpolate
  logical :: l_INTERP_f
  logical :: l_INTERP_E
  logical :: l_INTERP_dE
- logical :: l_INTERP_G
- logical :: l_INTERP_EQ
+ logical :: l_INTERP_Z
+ logical :: l_INTERP_W
  logical :: l_integral_respect=.TRUE. ! In the case of f/df keep the same integral of the SEED and of the interpolated
  !
  ! ID's

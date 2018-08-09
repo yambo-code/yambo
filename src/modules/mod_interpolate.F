@@ -40,7 +40,7 @@ module interpolate
  character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
  logical           :: INTERPOLATE_initialized=.FALSE.
- character(schlen) :: INTERPOLATE_msg_fmt
+ character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
  ! NN method
  !

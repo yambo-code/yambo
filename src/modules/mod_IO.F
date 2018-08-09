@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_active_sections
+ use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
  use parallel_m, ONLY:myid,MPI_INFO_NULL
  use com,        ONLY:error
@@ -98,11 +98,15 @@ module IO_m
  integer, parameter:: IO_READ_MODE  =               nf90_nowrite
  !
 #if defined _NC_CLASSIC
- integer, parameter:: IO_CREATE_MODE=    nf90_share
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic_model)
 #elif defined _HDF5_IO
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_netcdf4)
 #else
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#endif
+ !
+#if defined _PAR_IO && defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
 #endif
  !
  ! Units
@@ -119,7 +123,7 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units)
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open)
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -203,10 +207,11 @@ module IO_m
      character(*),optional      :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
      use pars,              ONLY:schlen
      integer                :: ID
      character(*)           :: VAR
+     integer                :: VAR_ID
      integer                :: VAR_SZ(:)
      integer                :: VAR_KIND
      character(schlen),optional :: dim_names(:)
@@ -235,23 +240,25 @@ module IO_m
      !
    end subroutine io_variable_elemental
    !
-   subroutine io_variable_bulk(ID,I0,I1,I2,I3,I4,I5,&
-                      &           R0,R1,R2,R3,R4,R5,&
-                      &           D0,D1,D2,D3,D4,D5,&
-                      &           C0,C1,C2,C3,C4,C5,&
-                      &           Z0,Z1,Z2,Z3,Z4,Z5,&
-                      &           L0,L1,L2,L3,L4,   &
-                      &                              IPOS)
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
+                                        &  R0, R1, R2, R3, R4, R5,&
+                                        &  D0, D1, D2, D3, D4, D5,&
+                                        &  C0, C1, C2, C3, C4, C5,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
+                                        &  L0, L1, L2, L3, L4,    &
+                                        & CH0,CH1,CH2,CH3,CH4,    &
+                                        &                     IPOS)
      !
      use pars,   ONLY:SP,DP,LP
-     integer      :: ID
+     integer, intent(in)   :: ID, VAR_ID
      integer,     optional :: IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
-     real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
-     complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
-     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
+     integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
+     real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
+     real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
+     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
+     complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
+     character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
    end subroutine io_variable_bulk
    !
@@ -510,19 +517,22 @@ module IO_m
      INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
    end function
    !
-   subroutine netcdf_call(status,ID,VAR)
+   subroutine netcdf_call(status,ID,VAR,ID_VAR)
      use com,           ONLY:error
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
+     integer,      intent (in), optional :: ID_VAR
      character(*), intent (in), optional :: VAR
      character(lchlen) :: msg
      character(schlen) :: VARNAME,FILENAME
-     integer           :: local_error
+     integer           :: local_error,VARNUMBER
      if(status /= NF90_NOERR) then
        FILENAME=io_file(ID)
        VARNAME=' NOT DEFINED '
        if(.not.present(VAR)) then
-         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(     present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,ID_VAR)
+         if(.not.present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,1)
+         local_error=nf90_inquire_variable(io_unit(ID),VARNUMBER,VARNAME)
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR

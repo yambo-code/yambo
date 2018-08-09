@@ -25,11 +25,11 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:string_pack
- use parallell,     ONLY:ncpu
+ use parallel_m,    ONLY:ncpu,MPI_INFO_NULL
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
-&                        IO_NOT_ALLOWED,OP_APP,OP_APP_WR_CL,io_action,OP_WR,OP_WR_CL
+&                        IO_NOT_ALLOWED,OP_APP,OP_APP_WR_CL,io_action,OP_WR,OP_WR_CL,PAR_IO_CREATE_MODE
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                        num_of_alternative_locations,n_alt_jobstr
@@ -120,10 +120,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
      if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO
-     if(     par_IO) then
-        call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
-        &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-     endif
+     if(     par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
+                     &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
 #else
      if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
 #endif

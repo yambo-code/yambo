@@ -188,6 +188,9 @@ module interpolate_tools
     integer :: i_RT,ib,ik,i_s !WS
     !
     do i_RT=1,SEED_RT%nstates
+      !
+      if (ib<INTERP_obj(ID)%nb(1).or.ib>INTERP_obj(ID)%nb(2)) cycle
+      !
       ib   =SEED_RT%table(i_RT,1)
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
@@ -211,6 +214,9 @@ module interpolate_tools
     !
     do i_qp=1,SEED_QP%n_states
       ib   =SEED_QP%table(i_qp,1)
+      !
+      if (ib<INTERP_obj(ID)%nb(1).or.ib>INTERP_obj(ID)%nb(2)) cycle
+      !
       ik   =SEED_QP%table(i_qp,3)
       i_s  =spin(SEED_QP%table(i_qp,:))
       i_c  =0

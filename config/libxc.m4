@@ -154,7 +154,7 @@ AC_LINK_IFELSE($testprog_11, [acx_libxc_version=110, acx_libxc_ok=no], [])
 AC_LINK_IFELSE($testprog_12, [acx_libxc_version=120], [])
 AC_LINK_IFELSE($testprog_20, [acx_libxc_version=200], [])
 AC_LINK_IFELSE($testprog_203, [acx_libxc_version=203, acx_libxc_ok=yes], [])
-AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210], [])
+AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210, acx_libxc_ok=yes], [])
 AC_DEFINE_UNQUOTED([LIBXC_VERSION],[$acx_libxc_version],[Defined the LIBXC version.])
 AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be >= 203)])			
 fi

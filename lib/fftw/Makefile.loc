@@ -36,8 +36,7 @@ configure-stamp: uncompress-stamp
 	      CPP="$(cpp)" \
 	      CFLAGS="$(cflags)" \
 	      FFLAGS="$(fflags)" \
-	      F77="$(f77)" \
-	      INSTALL_DIR="$(INSTALL_DIR)" ); \
+	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp
 

@@ -148,7 +148,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      !
    enddo
    !
-#if defined _NL
+#if defined _NL && !defined _YPP_NL
  else if (ZONE=="overlaps") then
    !
    call k_map_nearest_by_dir(k,k_map)   

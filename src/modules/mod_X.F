@@ -106,7 +106,6 @@ module X_m
  integer ,    allocatable :: X_RLcomp_ig(:)
  integer :: X_ng = 0
  integer :: current_iq
- integer :: iw_ref
  logical :: X_FILL_UP_matrix_only
  logical :: self_detect_E_range
  real(SP):: X_terminator_E

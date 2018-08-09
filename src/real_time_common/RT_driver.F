@@ -45,7 +45,7 @@ subroutine RT_driver(E,X,k,q)
 &                         NE_time,RT_carriers,RT_dyn_step,l_Dynamics_is_over,l_RT_is_WFfree,&
 &                         dG_lesser,l_initial_equilibrium,&
 &                         i_MEM_now,i_MEM_next,i_MEM_collision,RT_is_dynamically_dephased,&
-&                         l_update_QP_Energies,l_velocity_gauge_corr
+&                         l_update_QP_Energies,l_update_SOC,l_velocity_gauge_corr
  use plasma,          ONLY:PLASMA_free,EH_gas
  use com,             ONLY:warning,msg,error
  use fields,          ONLY:A_tot
@@ -94,16 +94,13 @@ subroutine RT_driver(E,X,k,q)
  RT_xc_functional=H_xc_functional
  RT_perturbation =H_perturbation
  !
+ call section('*',trim(RT_potential)//' Real-Time Dynamics')
+ !
  ! GPL_EXCLUDE_START
  !
- call section('*',trim(RT_potential)//' Real-Time Dynamics')
  call msg('s','Scattering(s):'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
  !
  ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !call section('*','Real-Time BSE')
- ! GPL_INCLUDE_END
  !
  call section('+','Initialization')
  !#################################
@@ -155,7 +152,9 @@ subroutine RT_driver(E,X,k,q)
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   if(n_spinor==2) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   ! GPL_EXCLUDE_START
+   if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   ! GPL_EXCLUDE_END
    call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
@@ -171,9 +170,13 @@ subroutine RT_driver(E,X,k,q)
  call RT_alloc(E)
  call RT_alloc_control()
  !
+ ! GPL_EXCLUDE_START
+ !
  ! Initial allocation and basic definitions of the RT_carriers object
  !
  call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
+ !
+ ! GPL_EXCLUDE_END
  !
  ! Restart from a previous RT run or from a SC calculation
  ! 
@@ -210,11 +213,11 @@ subroutine RT_driver(E,X,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Collisions
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
+ !
+ ! GPL_EXCLUDE_START
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
@@ -296,9 +299,13 @@ subroutine RT_driver(E,X,k,q)
    !=====================
    call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
+   ! GPL_EXCLUDE_START
+   !
    ! Time step update
    !=======================
    call RT_time_step_update( )
+   !
+   ! GPL_EXCLUDE_END
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !=========================

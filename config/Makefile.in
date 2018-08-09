@@ -203,7 +203,8 @@ ext-libs:
 #
 # Internal libs #
 #
-int-libs:
+int-libs: ext-libs
+	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)
 	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_internal)

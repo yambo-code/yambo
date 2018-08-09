@@ -152,7 +152,7 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   internal_petsc="yes"
   #
-  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib -lpetsc" ;
+  PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
@@ -251,7 +251,7 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib -lslepc" ;
+  SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes

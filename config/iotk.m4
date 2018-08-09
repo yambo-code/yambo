@@ -100,7 +100,7 @@ if test "x$enable_iotk" = "xyes" ; then
     internal_iotk="yes"
     compile_p2y="yes"
     IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
-    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
+    IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
     if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
       compile_iotk="yes"
       if test ! -d lib ; then mkdir lib ; fi
@@ -126,41 +126,18 @@ AC_SUBST(IOTK_LIBS)
 # ============================================================================
 # check for p2y versions
 #
-AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Format version for PW 2 YAMBO : <export> <qexml> <qexsd> <qexsd-hdf5>],[32]))
+AC_ARG_ENABLE(p2y_hdf5_support, AC_HELP_STRING([--enable-p2y-hdf5-support],
+ [Activate HDF5 support in p2y. Default is no.]))
 
-AC_MSG_CHECKING([for p2y version])
-
-PW_VER="qexml"
-PW_CPP="-D_P2Y_QEXML"
-if test "$compile_p2y" = "yes"; then
- if test "$with_p2y_version" = "export"; then
-  PW_VER="export"
-  PW_CPP="-D_P2Y_EXPORT"
- fi
- if test "$with_p2y_version" = "qexml" || test "$with_p2y_version" = "QEXML" ; then
-  PW_VER="qexml"
-  PW_CPP="-D_P2Y_QEXML"
- fi
- if test "$with_p2y_version" = "qexsd" || test "$with_p2y_version" = "QEXSD" ; then
-  PW_VER="qexsd"
-  PW_CPP="-D_P2Y_QEXSD"
- fi
- if test "$with_p2y_version" = "qexsd-hdf5" || test "$with_p2y_version" = "QEXSD-HDF5" ; then
-  if test "x$hdf5" = "xyes" ; then
-    PW_VER="qexsd-hdf5"
-    PW_CPP="-D_P2Y_QEXSD -D_P2Y_QEXSD_HDF5"
-  else
-    PW_VER="qexsd"
-    PW_CPP="-D_P2Y_QEXSD"
-  fi
- fi
+if test x"$enable_p2y_hdf5_support" = "xyes" && test "x$hdf5" = "xyes" ; then
+   PW_VER="hdf5-support"
+   PW_CPP="-D_P2Y_QEXSD_HDF5"
+else
+   PW_VER=
+   PW_CPP=
 fi
-
-AC_MSG_RESULT([$PW_VER])
 
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-
 
 ])

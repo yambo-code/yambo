@@ -124,7 +124,7 @@ subroutine RT_driver(E,X,k,q)
  ! before loading the WF in R-space I check and/or calculatethe optical collisions that 
  ! are done in G-space and would ! force the reloading of the WFs
  !
- call DIPOLE_driver(E,k,X(1),X(1)%q0,iq)
+ call DIPOLE_driver(E,k,X(1),X(1)%q0,1)
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !

@@ -72,7 +72,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  real(SP)          ::res_PL(2)
 #endif
  !
- call section('=','BSE - Independent Particles @q'//trim(intc(iq))) 
+ call section('=','BSE - Independent Particles absorption @q'//trim(intc(iq))) 
  !===================================================
  !
  call timing('T_space IP',OPR='start')

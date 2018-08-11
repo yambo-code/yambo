@@ -146,7 +146,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel and/or BSS components loading
  !======================================
- call K_components_folded_in_serial_arrays(iq,"INV")
+ call K_components_folded_in_serial_arrays(iq)
+ call K_stored_in_a_big_matrix(iq,"INV")
  !
  if (K_slk%kind=="SLK") then
    !

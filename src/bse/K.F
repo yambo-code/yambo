@@ -46,10 +46,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,l_BSE_minimize_memory
+&                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
+&                       l_BSE_minimize_memory, l_restart_bse
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_APP_WR_CL,DUMP,&
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_WR_CL,DUMP,&
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -180,6 +181,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! GPL_EXCLUDE_END
    !
+#if defined _PAR_IO
+#else
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    !
@@ -191,6 +194,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        io_BS_err=io_BS(iq,X,ID)
      enddo
    endif
+#endif
    !
    if (io_BS_err==0) return
    !
@@ -376,8 +380,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! BS DB description section I/O
  !===============================
  !
+#if defined _PAR_IO
+ call io_control(ACTION=OP_WR,COM=REP,ID=ID)
+ call io_BS_PAR_init(iq,X,ID)
+#else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
+#endif
  !
  call section('=','Kernel loop')
  !==============================
@@ -396,6 +405,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  block_loop:&
  do i_block=1,n_BS_blks
+   !
+   ! Read BS_blk to check if the transition was already computed
+   !
+#ifdef _PAR_IO
+   if (l_restart_bse) then
+     call io_BS_PAR_read_block(iq,i_block,ID)
+     if (all(BS_blk(i_block)%done=="t")) cycle
+   endif
+#endif
    !
    i_Tgrp_k=BS_blk(i_block)%iT_k
    i_Tgrp_p=BS_blk(i_block)%iT_p
@@ -464,6 +482,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_pos(1) = sum(BS_T_grp(:I_Tgrp_k-1)%size)+i_Tk
        !
        !-----
+       !
+       ! skip this block if already done
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
        !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
@@ -635,6 +656,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
@@ -658,12 +680,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
+#if defined _PAR_IO
+   call io_BS_PAR_write_block(iq,i_block,ID)
+#else
    call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
+#endif
    !
    call live_timing(steps=BS_Block_size(i_block))
    !
  enddo block_loop
+ !
+#if defined _PAR_IO
+ call  io_BS_PAR_free(ID)
+#endif
  !
  if (BS_LiveTiming_steps>0) call live_timing( )
  !

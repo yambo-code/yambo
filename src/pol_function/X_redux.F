@@ -49,6 +49,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -156,15 +157,11 @@ subroutine X_redux(iq,X_par,Xw,X)
      ! LRC Fxc
      !
      if (Xo%cols(1)==1) then
-#if defined _OPENMP
        !$omp parallel do default(shared), private(ig1)
-#endif
        do ig1=Xo%rows(1),Xo%rows(2)
          KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
        enddo
-#if defined _OPENMP
        !$omp end parallel do
-#endif
      endif
      !
    else if (l_alda_fxc) then
@@ -184,18 +181,14 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-#if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
-#endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
        if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
      enddo
    enddo
-#if defined _OPENMP
    !$omp end parallel do
-#endif
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -215,17 +208,13 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    endif
    !
-#if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
-#endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      enddo
    enddo
-#if defined _OPENMP
    !$omp end parallel do
-#endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
    !

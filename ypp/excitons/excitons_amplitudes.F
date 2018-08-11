@@ -97,8 +97,8 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    ! 
    ! ... first open the file.
    ! 
-   ch_dummy(1)='exc_weights_at_'//trim(intc(i_l_grp))//'_qpt'//trim(intc(iq))
-   ch_dummy(2)='exc_amplitude_at_'//trim(intc(i_l_grp))//'_qpt'//trim(intc(iq))
+   ch_dummy(1)='exc_qpt'//trim(intc(iq))//'_weights_at_'//trim(intc(i_l_grp))
+   ch_dummy(2)='exc_qpt'//trim(intc(iq))//'amplitude_at_'//trim(intc(i_l_grp))
    call of_open_close(ch_dummy(1),'ot')
    call of_open_close(ch_dummy(2),'ot')
    !

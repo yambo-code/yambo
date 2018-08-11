@@ -39,7 +39,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -111,13 +111,22 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! =========
  !
  if (.not.l_rpa_IP) then
-   if (      BS_q(1)==BS_q(2).and.BS_q(1)==1 ) Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   !
+   Max_G_m_G=eval_G_minus_G(BS_n_g_exch,maxval(qindx_X(:,:,2)))
+   if (BS_n_g_exch> Max_G_m_G ) then
+     BS_n_g_exch= Max_G_m_G
+     call warning (' Exch size reduced due to symmetry constraints')
+     call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+   endif
+   !
+   if (      BS_q(1)==BS_q(2).and.BS_q(1)==1 ) Max_G_m_G=eval_G_minus_G(BS_n_g_W,  maxval(qindx_B(:,:,2)))
    if (.not.(BS_q(1)==BS_q(2).and.BS_q(1)==1)) Max_G_m_G=eval_G_minus_G(BS_n_g_W,4*maxval(qindx_B(:,:,2)))
    if (BS_n_g_W> Max_G_m_G ) then
      BS_n_g_W= Max_G_m_G
      call warning (' W size reduced due to symmetry constraints')
      call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
    endif
+   !
  endif
  !
  ! GPL_EXCLUDE_START  

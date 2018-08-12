@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function eval_G_minus_G(iG,iGo,COMM)
+integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
  !
  ! Evaluates the  G-G' table :
  !
@@ -39,10 +39,12 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 #include<memory.h>
  !
  integer :: iG,iGo
+ logical,        optional :: force_recompute
  type(MPI_comm), optional :: COMM
  !
  ! Work Space
  !
+ logical :: force_recompute_
  integer :: i1,i2,is
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_
  real(SP):: E_iG, E_iGo, E_max
@@ -53,6 +55,13 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer, external :: G_index
  !
  ! Init
+ !
+ force_recompute_=.false.
+ if (present(force_recompute)) force_recompute_=force_recompute
+ !
+ if (force_recompute_ .and. allocated(G_m_G)) then
+   YAMBO_FREE(G_m_G)
+ endif
  !
  if (allocated(G_m_G)) then
    eval_G_minus_G=size(G_m_G,1)

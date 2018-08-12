@@ -58,7 +58,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  ! Work Space
  !
  type(X_t)         :: X_tddft,X_oscillators
- integer           :: iq,Max_G_m_G
+ integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  !
  call section('*','Response Functions in Transition space')
@@ -106,28 +106,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
  ! GPL_EXCLUDE_END
- !
- ! W RL size setup looking at the max index of G-G' 
- ! =========
- !
- if (.not.l_rpa_IP) then
-   !
-   Max_G_m_G=eval_G_minus_G(BS_n_g_exch,maxval(qindx_X(:,:,2)))
-   if (BS_n_g_exch> Max_G_m_G ) then
-     BS_n_g_exch= Max_G_m_G
-     call warning (' Exch size reduced due to symmetry constraints')
-     call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
-   endif
-   !
-   if (      BS_q(1)==BS_q(2).and.BS_q(1)==1 ) Max_G_m_G=eval_G_minus_G(BS_n_g_W,  maxval(qindx_B(:,:,2)))
-   if (.not.(BS_q(1)==BS_q(2).and.BS_q(1)==1)) Max_G_m_G=eval_G_minus_G(BS_n_g_W,4*maxval(qindx_B(:,:,2)))
-   if (BS_n_g_W> Max_G_m_G ) then
-     BS_n_g_W= Max_G_m_G
-     call warning (' W size reduced due to symmetry constraints')
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
-   endif
-   !
- endif
  !
  ! GPL_EXCLUDE_START  
  !
@@ -206,6 +184,36 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  if(iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
  if(iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
+ !
+ ! W/X RL size setup looking at the max index of G-G' 
+ ! =========
+ !
+ if (.not.l_rpa_IP) then
+   !
+   iGo_BSE=maxval(qindx_B(:,:,2))
+   iG_BSE =BS_n_g_W
+   if (.not.iq==1) then
+     iGo_BSE=maxval((/4*qindx_B(:,:,2),qindx_X(iq,:,2)/))
+     iG_BSE =max(BS_n_g_exch,BS_n_g_W)
+   endif
+   !
+   Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE,force_recompute=.true.)
+   !
+   if (.not.iq==1) then
+     if (BS_n_g_exch> Max_G_m_G ) then
+       BS_n_g_exch= Max_G_m_G
+       call warning (' Exch size reduced due to symmetry constraints')
+       call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+     endif
+   endif
+   !
+   if (BS_n_g_W> Max_G_m_G ) then
+     BS_n_g_W= Max_G_m_G
+     call warning (' W size reduced due to symmetry constraints')
+     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+   endif
+   !
+ endif
  !
  ! ... EH space (no parallelization)
  call K_Transitions_setup(iq,Ken,Xk,.FALSE.)

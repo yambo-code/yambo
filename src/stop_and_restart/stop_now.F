@@ -87,7 +87,7 @@ logical function stop_now(DO_IT_NOW)
  call it_reset(-1)
  !
 #if defined _MPI
- call MPI_Abort(mpi_comm_world,ierr,1)
+ call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
  stop
  !

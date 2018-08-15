@@ -59,7 +59,8 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,X,iq)
  !
  call WF_load(WF,1,maxval(qindx_X(:,:,2)),(/X%ib(1),X%ib(2)/),(/1,Xk%nibz/),title='-Oscillators/R space')
  !
- call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
+ !call elemental_collision_free(Xo_scatt,INIT_ONLY=.true.)
+ call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=1,TITLE="DIPOLES") 
  !
  !call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 

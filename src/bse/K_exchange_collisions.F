@@ -28,6 +28,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch,L_kind
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
  use timing_m,       ONLY:timing
+ use openmp,         ONLY:OPENMP_update,master_thread
+ use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
  !
  implicit none
  !
@@ -47,8 +49,23 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  ! Allocate
  !
+ call elemental_collision_free(K_EXCH_collision)
  call BS_oscillators_alloc(.TRUE.,i_T_grp,.FALSE.,0)
  !
+#ifdef __NOTNOW
+ !$omp parallel default(shared), private( K_EXCH_collision, &
+ !$omp &        i_T_el,i_k_bz,i_k,i_s, i_p_bz,i_p,i_sp, i_v,i_c,i_spin, &
+ !$omp &        i_T_grp_last_with_identity_sym, i_T_el_last_with_identity_sym, &
+ !$omp &        i_T_grp_p, N_T_el_p, i_T_el_p, i_g1, i_g2)
+#endif
+ !
+ call OPENMP_update(master_thread)
+ !
+ call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
+ !
+#ifdef __NOTNOW
+ !$omp do schedule(dynamic)
+#endif
  T_loop: do i_T_el=1,BS_T_grp(i_T_grp)%size
    !
    i_k_bz=BS_T_grp(i_T_grp)%table(i_T_el,1)
@@ -100,19 +117,19 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
        call scatter_Bamp(K_EXCH_collision)
        !
-!$omp parallel do default(shared), private(i_g1)
+       !$omp parallel do default(shared), private(i_g1)
        do i_g1=2,BS_n_g_exch
          BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      else
-!$omp parallel do default(shared), private(i_g1,i_g2)
+       !$omp parallel do default(shared), private(i_g1,i_g2)
        do i_g1=2,BS_n_g_exch
          i_g2=g_rot(i_g1,sop_inv(i_s))
          BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
          if (i_s>nsym/(i_time_rev+1)) BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=conjg(BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el))
        enddo
-!$omp end parallel do
+       !$omp end parallel do
      endif
      !
    else
@@ -122,15 +139,23 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      BS_T_grp(i_T_grp)%O_x(1,i_T_el)=cZERO
      if(trim(L_kind)=="full") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
-!$omp parallel do default(shared), private(i_g1)
+     !$omp parallel do default(shared), private(i_g1)
      do i_g1=i_g0,BS_n_g_exch
        BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
      enddo
-!$omp end parallel do
+     !$omp end parallel do
      !
    endif
    !
  enddo T_loop
+#ifdef __NOTNOW
+ !$omp end do
+#endif
+ !
+ call elemental_collision_free(K_EXCH_collision) 
+#ifdef _NOTNOW
+ !$omp end parallel
+#endif
  !
  call timing('T_space EXX Osc.',OPR='stop')
  !

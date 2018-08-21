@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -68,6 +68,7 @@ AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
 #
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
+#
 #
 enable_netcdf="no"
 enable_hdf5="no"
@@ -317,7 +318,8 @@ if test x"$enable_hdf5" = "xyes"; then
     netcdf=yes ;
     hdf5=yes ;
     #
-    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
+    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" &&
+       test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a"; then
       compile_netcdf="no" ;
       compile_hdf5="no" ;
       AC_MSG_RESULT([already compiled]) ;

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -1850,6 +1850,15 @@ CONTAINS
          if ( ibnde-ibnds+1 > size(wfc,2) .or. ibnds < 1 .or. ibnde > nbnd_ ) then
             ierr=80 ; return
          endif
+         !
+         ! skip initial wfcs if needed
+         !
+#if !defined(_QE_HDF5)
+         do jj = 1, ibnds-1
+               read (iuni,iostat=ierr)
+               if (ierr/=0) return
+         enddo
+#endif
          !
          ! actual read
          !

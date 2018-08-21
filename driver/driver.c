@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2017 the YAMBO team
+         Copyright (C) 2000-2018 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0 && np>1) { MPI_Abort(MPI_COMM_WORLD,1); };
+  if (mpi_init==0) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  };
  /* 

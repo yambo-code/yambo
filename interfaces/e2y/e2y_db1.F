@@ -571,10 +571,10 @@ contains
     !
     max_number_of_angular_momenta = netcdf_get_dimension(ncid,"max_number_of_angular_momenta")
     max_number_of_projectors      = netcdf_get_dimension(ncid,"max_number_of_projectors")
-
+    !
     pp_n_l_max            = max_number_of_angular_momenta
     pp_n_l_times_proj_max = max_number_of_angular_momenta!max_number_of_projectors
-
+    !
     call PP_alloc_abinit()
     YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
     YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
@@ -592,7 +592,6 @@ contains
         enddo
       enddo
     enddo
-
     !
     ! Form factor signs
     !
@@ -615,22 +614,22 @@ contains
   !===========================================================
   subroutine import_gwdata_group_wfk
     use etsf_data
+    use pars,                  only : SP
     use D_lattice,             only : n_atomic_species
     use wave_func,             only : wf_ncx
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                     pp_table,l_many_proj,pp_n_l_max
 #include<memory.h>
-    integer,allocatable :: pp_kbs_(:,:)
+    real(SP),allocatable :: pp_kbs_(:,:)
     integer :: lmnmax
     integer, allocatable :: indlmn(:,:,:)
-    integer :: ia, nproj, ip, il, varid, start(3), count(3)
+    integer :: ia, nproj, ip, varid
     !
     ! Get kb related dimensions
     !
     lmnmax                = netcdf_get_dimension(ncid,"lmnmax")
     pp_n_l_times_proj_max = lmnmax
-
     !
     ! read abinit indlmn
     !
@@ -638,31 +637,26 @@ contains
     varid = netcdf_inquire_varid(ncid, "indlmn")
     netcdf_error = nf90_get_var(ncid, varid, indlmn)
     call netcdf_check(ncid, netcdf_error, varid, "indlmn")
-
+    !
     !calculate max_number of angular momenta
-    pp_n_l_max = maxval(indlmn(1,:,:))
-
+    pp_n_l_max = maxval(indlmn(1,:,:))+1
+    !
     call PP_alloc_abinit()
     YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
     YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
     pp_n_l_comp(:)=pp_n_l_max
     !
+    !write(*,*)
+    !write(*,*) 'pp_n_l_times_proj_max:',pp_n_l_times_proj_max
+    !write(*,*) 'pp_n_l_max:           ',pp_n_l_max
     !
-    nproj = pp_n_l_times_proj_max/pp_n_l_max
-    !write(*,*) pp_n_l_times_proj_max
-    !write(*,*) pp_n_l_max
-    !write(*,*) nproj 
     do ia=1,n_atomic_species
-      do il=1,pp_n_l_max ! loop over l
-        do ip=1,nproj ! loop over nproj
-          !write(*,*) il,nproj,ip
-          pp_table(1,ia,(il-1)*(nproj-1)+ip)=il  !  l+1
-          pp_table(2,ia,(il-1)*(nproj-1)+ip)=ip  !  n_proj
-          pp_table(3,ia,(il-1)*(nproj-1)+ip)=1   !  i_spin
-        enddo
+      do ip=1,pp_n_l_times_proj_max
+        pp_table(1,ia,ip)=indlmn(1,ip,ia)+1 !  l+1
+        pp_table(2,ia,ip)=indlmn(3,ip,ia)   !  n_proj
+        pp_table(3,ia,ip)=indlmn(6,ip,ia)   !  i_spin
       enddo
     enddo
-
     !
     ! Form factor signs
     !
@@ -676,8 +670,6 @@ contains
     !
     return
   end subroutine import_gwdata_group_wfk
-
-
 
 
 

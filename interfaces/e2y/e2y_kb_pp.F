@@ -74,6 +74,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !
   netcdf_error = nf90_inq_varid(ncid, "kb_formfactors", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  call netcdf_check(ncid, netcdf_error, varid, "kb_formfactors")
   forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
 
@@ -82,10 +83,11 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !
   netcdf_error = nf90_inq_varid(ncid, "kb_formfactors_derivative", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  call netcdf_check(ncid, netcdf_error, varid, "kb_formfactors_derivative")
   forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
   deallocate(pp_section)
-
+  !
   return
 end subroutine e2y_kb_pp
 
@@ -117,6 +119,7 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   !
   use netcdf
   use etsf_data
+  use pars,                 only : SP
   use R_lattice,            only : ng_vec
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
@@ -129,32 +132,31 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   ! 
   ! Work Space
   !
-  integer                       :: ig, ib, ip, ia
-  double precision,allocatable  :: pp_section(:,:,:)
-  integer                       :: start(5), count(5), varid, netcdf_error
+  integer               :: ig, ib, ip, ia
+  real(SP),allocatable  :: pp_section(:,:,:)
+  integer               :: start(4), count(4), varid, netcdf_error
   !
+  write(*,*) wf_ncx
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
-  !
-  ! Form factors 
-  !
-  start = [1,ikibz,1,1,1]
-  count = [wf_ncx,1,1,pp_n_l_times_proj_max,n_atomic_species]
+  start = [1,1,1,ikibz]
+  count = [wf_ncx,pp_n_l_times_proj_max,n_atomic_species,1]
   !
   ! Form factors 
   !
   netcdf_error = nf90_inq_varid(ncid, "vkb", varid)
-  netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
+  call netcdf_check(ncid, netcdf_error, varid, "vkb")
   forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
-
   !
   ! Form factor derivatives 
   !
   netcdf_error = nf90_inq_varid(ncid, "vkbd", varid)
-  netcdf_error = nf90_get_var(ncid, varid, pp_section)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
+  call netcdf_check(ncid, netcdf_error, varid, "vkbd")
   forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
   deallocate(pp_section)
-
+  !
   return
 end subroutine e2y_kb_pp_wfk

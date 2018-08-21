@@ -123,8 +123,8 @@ contains
     integer                       :: a_nsym
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
-    integer,          allocatable, target :: atom_species_(:)
-    double precision, allocatable, target :: reduced_atom_positions_(:,:)
+    integer,  allocatable, target :: atom_species_(:)
+    real(SP), allocatable, target :: reduced_atom_positions_(:,:)
 
     integer :: varid
 
@@ -210,7 +210,7 @@ contains
     use electrons,            only : default_nel
     implicit none
     integer :: varid
-    double precision, allocatable, target :: eigenvalues_(:,:,:)
+    real(SP), allocatable, target :: eigenvalues_(:,:,:)
 
     YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol ) )
 
@@ -537,7 +537,7 @@ contains
     use D_lattice,            only : alat
     implicit none
     integer :: varid
-    double precision, allocatable, target :: reduced_coordinates_of_kpoints(:,:)
+    real(SP), allocatable, target :: reduced_coordinates_of_kpoints(:,:)
 
     allocate(reduced_coordinates_of_kpoints(3, k%nibz))
 

@@ -47,6 +47,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !
   use netcdf
   use etsf_data
+  use pars,                 only : SP
   use R_lattice,            only : ng_vec
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
@@ -59,9 +60,9 @@ subroutine e2y_kb_pp( ikibz, ncid )
   ! 
   ! Work Space
   !
-  integer                       :: ig, ib, ip, ia
-  double precision,allocatable  :: pp_section(:,:,:)
-  integer                       :: start(5), count(5), varid, netcdf_error
+  integer               :: ig, ib, ip, ia
+  real(SP),allocatable  :: pp_section(:,:,:)
+  integer               :: start(5), count(5), varid, netcdf_error
   !
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
   !
@@ -136,7 +137,6 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   real(SP),allocatable  :: pp_section(:,:,:)
   integer               :: start(4), count(4), varid, netcdf_error
   !
-  write(*,*) wf_ncx
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
   start = [1,1,1,ikibz]
   count = [wf_ncx,pp_n_l_times_proj_max,n_atomic_species,1]

@@ -39,7 +39,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer,           intent(in)  :: i_sp_pol,ikibz, ib_grp, ncid
   complex(SP),       intent(out) :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
   !
-  double precision, allocatable  :: wavefunction_section_(:,:,:,:)
+  real(SP), allocatable  :: wavefunction_section_(:,:,:,:)
   ! 
   ! Work Space
   !

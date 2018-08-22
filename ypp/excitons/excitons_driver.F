@@ -88,20 +88,18 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! GPL_EXCLUDE_END
  !
- !
- ! Here I read information from the BS database
- !
- iq = 1
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
- io_err=io_connect(desc=trim(db_name),type=2,ID=io_ID)
- io_err=variables_BS(io_ID,local_description,X=Xbsk)
- !
- if (io_err/=0) call error(' ndb.BS not found or not compatible with ypp input')
+ iq=BS_q(1)
  !
  ! X type. Also used in PARALLEL setup
  !
  Xbsk%whoami=2
+ !
+ ! Here I read information from the BSS_diago database
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_err=io_BSS_diago(iq,io_ID,Xbsk)
+ !
+ if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  ! Apply quasi-particle correction if presents
  ! 
@@ -130,14 +128,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  YAMBO_ALLOC(lambda_s,(n_lambda))
  n_lambda = get_lambda()
- iq=BS_q(1)
- !
- ! Here I read energies and residuum
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig)
- !
- if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
@@ -150,7 +140,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
  !
@@ -176,7 +166,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table

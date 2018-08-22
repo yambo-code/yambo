@@ -226,21 +226,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)
-       if (.not.oscillators_done(iB_oscillator)) then
-         call EVAL_collision(i_v_k,i_v_p,i_s_collision,iB_oscillator)
-         oscillators_done(iB_oscillator) = .true.
-       endif
+       call EVAL_collision(i_v_k,i_v_p,i_s_collision,i_k_sp)
        !
        ! c->c'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)
-       if (.not.oscillators_done(iB_oscillator)) then
-         call EVAL_collision(i_c_k,i_c_p,i_s_collision,iB_oscillator)
-         oscillators_done(iB_oscillator) = .true.
-       endif
+       call EVAL_collision(i_c_k,i_c_p,i_s_collision,i_k_sp)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
@@ -248,21 +240,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)
-       if (.not.oscillators_done(iB_oscillator)) then
-         call EVAL_collision(i_v_k,i_c_p,i_s_collision,iB_oscillator)
-         oscillators_done(iB_oscillator) = .true.
-       endif
+       call EVAL_collision(i_v_k,i_c_p,i_s_collision,i_k_sp)
        !
        ! c->v'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)
-       if (.not.oscillators_done(iB_oscillator)) then
-         call EVAL_collision(i_c_k,i_v_p,i_s_collision,iB_oscillator)
-         oscillators_done(iB_oscillator) = .true.
-       endif
+       call EVAL_collision(i_c_k,i_v_p,i_s_collision,i_k_sp)
        !
      endif
      !
@@ -275,12 +259,17 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !
  contains
    !
-   subroutine EVAL_collision(i_b,i_b_p,i_s_collision,iB_oscillator)
-     integer,intent(in) :: i_b,i_b_p,i_s_collision,iB_oscillator
+   subroutine EVAL_collision(i_b,i_b_p,i_s_collision,i_k_sp)
+     integer,intent(in) :: i_b,i_b_p,i_s_collision, i_k_sp
+     integer :: iB_oscillator
+     iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
+     if (oscillators_done(iB_oscillator)) return
      K_CORR_collision%is(1)=i_b
      K_CORR_collision%os(1)=i_b_p
      K_CORR_collision%os(3)=i_s_collision
      call scatter_Bamp(K_CORR_collision)
      BS_blk(iB)%O_c(:,iB_oscillator)=K_CORR_collision%rhotw(:)
+     oscillators_done(iB_oscillator) = .true.
    end subroutine
+   !
 end subroutine K_correlation_collisions

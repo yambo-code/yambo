@@ -120,7 +120,7 @@ contains
     implicit none
     logical                       :: l_identity, l_inversion
     real(SP)                      :: lsop(3,3), cp(3)
-    integer                       :: a_nsym
+    integer                       :: a_nsym, a_species
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
     integer,  allocatable, target :: atom_species_(:)
@@ -145,8 +145,6 @@ contains
     b(1,:) = cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
     b(2,:) = cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
     b(3,:) = cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
-
-
     !
     ! Atomic position data
     !
@@ -168,7 +166,8 @@ contains
     ! Determine n_atoms_max
     n_atoms_species(:) = 0 
     do i1 = 1, n_atoms
-      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
+      a_species = atom_species_(i1)
+      n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
     enddo
     n_atoms_species_max = maxval(n_atoms_species)
 
@@ -176,8 +175,9 @@ contains
     n_atoms_species(:) = 0 
     YAMBO_ALLOC( atom_pos, (3, n_atoms_species_max, n_atomic_species) )
     do i1 = 1, n_atoms
-      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
-      atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
+      a_species = atom_species_(i1)
+      n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
+      atom_pos(:, n_atoms_species( a_species ) , a_species ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
     enddo
     YAMBO_FREE( reduced_atom_positions_ )
@@ -537,18 +537,18 @@ contains
     use D_lattice,            only : alat
     implicit none
     integer :: varid
-    real(SP), allocatable, target :: reduced_coordinates_of_kpoints(:,:)
-
+    real(SP), allocatable :: reduced_coordinates_of_kpoints(:,:)
+    !
     allocate(reduced_coordinates_of_kpoints(3, k%nibz))
-
+    !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints)
-
+    !
     YAMBO_ALLOC(k%pt,(k%nibz,3))
     do ik = 1,k%nibz
       k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints(:,ik))*alat(:)/2.0_SP/pi
     enddo
-
+    !
     deallocate(reduced_coordinates_of_kpoints)
     return
   end subroutine import_kpoints_group
@@ -563,7 +563,7 @@ contains
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
 &                                     pp_table,l_many_proj,pp_n_l_max
 #include<memory.h>
-    integer,allocatable :: pp_kbs_(:,:)
+    real(SP),allocatable :: pp_kbs_(:,:)
     integer :: max_number_of_angular_momenta,max_number_of_projectors
     integer :: ia, nproj, ip, il, varid, start(3), count(3)
     !
@@ -645,10 +645,6 @@ contains
     YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
     YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
     pp_n_l_comp(:)=pp_n_l_max
-    !
-    !write(*,*)
-    !write(*,*) 'pp_n_l_times_proj_max:',pp_n_l_times_proj_max
-    !write(*,*) 'pp_n_l_max:           ',pp_n_l_max
     !
     do ia=1,n_atomic_species
       do ip=1,pp_n_l_times_proj_max

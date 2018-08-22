@@ -96,27 +96,22 @@ end subroutine e2y_kb_pp
 
 subroutine e2y_kb_pp_wfk( ikibz, ncid )
   !
+  ! Structure of KB form factors in WFK file
+  !   vkb(  max_number_of_coefficients,    
+  !         lnmax,                         
+  !         number_of_atom_species,        
+  !         number_of_kpoints ) 
+  !   vkbd( max_number_of_coefficients,    
+  !         lnmax,                         
+  !         number_of_atom_species,
+  !         number_of_kpoints )
+  !   vkbsign( lnmax,                      
+  !            number_of_atom_species )
   !
-  ! Structure of ETSF library data: (fortran order, opp to netcdf order)
-  !   kb_formfactors(  dims%max_number_of_coefficients,    &
-  !   &                dims%number_of_kpoints,             &
-  !   &                dims%max_number_of_projectors,      &
-  !   &                dims%max_number_of_angular_momenta, &
-  !   &                dims%number_of_atom_species )
-  !   kb_formfactor_derivative( &
-  !   &                dims%max_number_of_coefficients,    &
-  !   &                dims%number_of_kpoints,             &
-  !   &                dims%max_number_of_projectors,      &
-  !   &                dims%max_number_of_angular_momenta, &
-  !   &                dims%number_of_atom_species )
-  !   kb_formfactor_sign( &
-  !   &                dims%max_number_of_projectors,      &
-  !   &                dims%max_number_of_angular_momenta, &
-  !   &                dims%number_of_atom_species )
   ! Structure of YAMBO arrays, from PP_alloc:
-  !   pp_kbs ( n_atom_species, pp_n_l_comp_max )
-  !   pp_kb  ( ng_vec, n_atom_species, pp_n_l_comp_max )
-  !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max )
+  !   pp_kbs ( n_atom_species, pp_n_l_times_proj_max )
+  !   pp_kb  ( ng_vec, n_atom_species, pp_n_l_times_proj_max )
+  !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_times_proj_max )
   !
   use netcdf
   use etsf_data
@@ -136,18 +131,17 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   !
   integer               :: ig, ic, ib, ip, ia
   integer               :: wf_igk_indx(wf_nc_k(ikibz))
-  integer               :: start(4), count(4), varid, netcdf_error
+  integer               :: start(4), varid, netcdf_error
   real(SP),allocatable  :: pp_section(:,:,:)
   !
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
   call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
   start = [1,1,1,ikibz]
-  count = [wf_ncx,pp_n_l_times_proj_max,n_atomic_species,1]
   !
   ! Form factors 
   !
   netcdf_error = nf90_inq_varid(ncid, "vkb", varid)
-  netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section, start)
   call netcdf_check(ncid, netcdf_error, varid, "vkb")
   !
   ! Sort the non-local components according to the g-vectors (same as the WF coefficients)
@@ -163,7 +157,7 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   ! Form factor derivatives 
   !
   netcdf_error = nf90_inq_varid(ncid, "vkbd", varid)
-  netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
+  netcdf_error = nf90_get_var(ncid, varid, pp_section, start)
   call netcdf_check(ncid, netcdf_error, varid, "vkbd")
   !
   ! Sort the non-local components according to the g-vectors (same as the WF coefficients)

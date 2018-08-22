@@ -108,39 +108,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_ref=-1
-       do iB_p=iB,1,-1
-         if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-         if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)==0) cycle
-         iB_ref=iB_p
-         exit
-       enddo
-       if ( iB_ref==-1 ) then
-         iB_ref=iB
-         BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-         BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
-         BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_v_p,i_k_sp)=iB
-       endif
-       BS_blk(iB)%O_table(:,i_s_k_p,i_v_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_v_p,i_k_sp)
+       call EVAL_table(iB,i_v_k,i_v_p,i_s_collision)
        !
        ! c->c'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_ref=-1
-       do iB_p=iB,1,-1
-         if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-         if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)==0) cycle
-         iB_ref=iB_p
-         exit
-       enddo
-       if ( iB_ref==-1 ) then
-         iB_ref=iB
-         BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-         BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
-         BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_c_p,i_k_sp)=iB
-       endif
-       BS_blk(iB)%O_table(:,i_s_k_p,i_c_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_c_p,i_k_sp)
+       call EVAL_table(iB,i_c_k,i_c_p,i_s_collision)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
@@ -148,39 +122,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_ref=-1
-       do iB_p=iB,1,-1
-         if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-         if(BS_blk(iB_p)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)==0) cycle
-         iB_ref=iB_p
-         exit
-       enddo
-       if ( iB_ref==-1 ) then
-         iB_ref=iB
-         BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-         BS_blk(iB)%O_table(1,i_s_collision,i_v_k,i_c_p,i_k_sp)=BS_blk(iB)%N_oscillators
-         BS_blk(iB)%O_table(2,i_s_collision,i_v_k,i_c_p,i_k_sp)=iB
-       endif
-       BS_blk(iB)%O_table(:,i_s_k_p,i_v_k,i_c_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_v_k,i_c_p,i_k_sp)
+       call EVAL_table(iB,i_v_k,i_c_p,i_s_collision)
        !
        ! c->v'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       iB_ref=-1
-       do iB_p=iB,1,-1
-         if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-         if(BS_blk(iB_p)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)==0) cycle
-         iB_ref=iB_p
-         exit
-       enddo
-       if ( iB_ref==-1 ) then
-         iB_ref=iB
-         BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-         BS_blk(iB)%O_table(1,i_s_collision,i_c_k,i_v_p,i_k_sp)=BS_blk(iB)%N_oscillators
-         BS_blk(iB)%O_table(2,i_s_collision,i_c_k,i_v_p,i_k_sp)=iB
-       endif
-       BS_blk(iB)%O_table(:,i_s_k_p,i_c_k,i_v_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_c_k,i_v_p,i_k_sp)
+       call EVAL_table(iB,i_c_k,i_v_p,i_s_collision)
        !
      endif
      !
@@ -226,13 +174,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       call EVAL_collision(i_v_k,i_v_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_v_k,i_v_p,i_s_collision,i_k_sp)
        !
        ! c->c'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       call EVAL_collision(i_c_k,i_c_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_c_k,i_c_p,i_s_collision,i_k_sp)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
@@ -240,13 +188,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       call EVAL_collision(i_v_k,i_c_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_v_k,i_c_p,i_s_collision,i_k_sp)
        !
        ! c->v'
        !
        i_s_collision=i_s_star
        if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
-       call EVAL_collision(i_c_k,i_v_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_c_k,i_v_p,i_s_collision,i_k_sp)
        !
      endif
      !
@@ -259,8 +207,29 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !
  contains
    !
-   subroutine EVAL_collision(i_b,i_b_p,i_s_collision,i_k_sp)
-     integer,intent(in) :: i_b,i_b_p,i_s_collision, i_k_sp
+   subroutine EVAL_table(iB,i_b,i_b_p,i_s_collision)
+     implicit none
+     integer, intent(in) :: iB,i_b,i_b_p,i_s_collision
+     integer :: iB_ref, iB_p
+     iB_ref=-1
+     do iB_p=iB,1,-1
+       if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+       if(BS_blk(iB_p)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)==0) cycle
+       iB_ref=iB_p
+       exit
+     enddo
+     if ( iB_ref==-1 ) then
+       iB_ref=iB
+       BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
+       BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)=BS_blk(iB)%N_oscillators
+       BS_blk(iB)%O_table(2,i_s_collision,i_b,i_b_p,i_k_sp)=iB
+     endif
+     BS_blk(iB)%O_table(:,i_s_k_p,i_b,i_b_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_b,i_b_p,i_k_sp)
+   end subroutine
+   !
+   subroutine EVAL_collision(iB,i_b,i_b_p,i_s_collision,i_k_sp)
+     implicit none
+     integer,intent(in) :: iB,i_b,i_b_p,i_s_collision, i_k_sp
      integer :: iB_oscillator
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
      if (oscillators_done(iB_oscillator)) return

@@ -130,31 +130,29 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  YAMBO_ALLOC(lambda_s,(n_lambda))
  n_lambda = get_lambda()
- !
- ! Allocation of energies and residuum, then also eigenvector
- !
- YAMBO_ALLOC(BS_R_right,(BS_H_dim))
- YAMBO_ALLOC(BS_R_left,(BS_H_dim))
- YAMBO_ALLOC(BS_E,(BS_H_dim))
  iq=BS_q(1)
- !
- if(E_SOC_nbands/=0) then
-   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
- endif
  !
  ! Here I read energies and residuum
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
+ io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig)
  !
  if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
+ ! Allocation of energies and residuum, then also eigenvector
+ !
+ YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
+ YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
+ YAMBO_ALLOC(BS_E,(BSS_n_eig))
+ if(E_SOC_nbands/=0) then
+   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
+ endif
+ !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
-
  !
  ! Sort energies and write to output
  !===================================
@@ -178,7 +176,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table

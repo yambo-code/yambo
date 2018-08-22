@@ -106,28 +106,24 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        ! v->v'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_table(iB,i_v_k,i_v_p,i_s_collision)
        !
        ! c->c'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_table(iB,i_c_k,i_c_p,i_s_collision)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
        ! v->c'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_table(iB,i_v_k,i_c_p,i_s_collision)
        !
        ! c->v'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_table(iB,i_c_k,i_v_p,i_s_collision)
        !
      endif
@@ -172,28 +168,24 @@ subroutine K_correlation_collisions(iB,Xk,q)
        !
        ! v->v'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_collision(iB,i_v_k,i_v_p,i_s_collision,i_k_sp)
        !
        ! c->c'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_collision(iB,i_c_k,i_c_p,i_s_collision,i_k_sp)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
        ! v->c'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_c_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_collision(iB,i_v_k,i_c_p,i_s_collision,i_k_sp)
        !
        ! c->v'
        !
-       i_s_collision=i_s_star
-       if (WF_phase(i_p,i_s_k_p,i_v_p,i_p_sp)==-99._SP) i_s_collision=i_s_k_p
+       i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
        call EVAL_collision(iB,i_c_k,i_v_p,i_s_collision,i_k_sp)
        !
      endif
@@ -206,6 +198,13 @@ subroutine K_correlation_collisions(iB,Xk,q)
  call timing('T_space CORR Osc.',OPR='stop')
  !
  contains
+   !
+   function collision_star(i_b,i_p,i_p_sp,i_s_star,i_s_k_p)
+       integer,intent(in) :: i_b, i_p, i_p_sp, i_s_star, i_s_k_p
+       integer :: collision_star
+       collision_star=i_s_star
+       if (WF_phase(i_p,i_s_k_p,i_b,i_p_sp)==-99._SP) collision_star=i_s_k_p
+   end function
    !
    subroutine EVAL_table(iB,i_b,i_b_p,i_s_collision)
      implicit none

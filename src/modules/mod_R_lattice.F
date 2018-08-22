@@ -102,7 +102,7 @@ module R_lattice
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
-#if defined(_CUDA)
+#if defined _CUDA
  integer ,allocatable, device :: g_rot_d(:,:)
 #endif
  !

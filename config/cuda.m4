@@ -26,21 +26,33 @@ AC_DEFUN([AC_HAVE_CUDA],[
 AC_ARG_ENABLE(cuda,
         [AC_HELP_STRING([--enable-cuda=<opt>], [Enable CUDA support])],[],[])
 #
-def_cuda="-D_CUDA"
+def_cuda=""
+CUDA_FLAGS=""
 CUDA_LIBS="-Mcudalib=cufft,cublas"
 
+# Available cc options:
+#    cc20            Compile for compute capability 2.0
+#    cc30            Compile for compute capability 3.0
+#    cc35            Compile for compute capability 3.5
+#    cc50            Compile for compute capability 5.0
+#    cc60            Compile for compute capability 6.0
+#    cc70            Compile for compute capability 7.0
 #
-# cc35  for Kepler cards (eg K20, K40, K80)
+# check your card at https://en.wikipedia.org/wiki/CUDA#GPUs_supported
+#
+# cc20  for Fermi cards
+# cc30 / cc35  for Kepler cards (eg K20, K40, K80)
+# cc50  for Maxwell cards
 # cc60  for Pascal cards (eg P100)
 # cc70  for Volta  cards (eg V100)
 #
+
 if test x"$enable_cuda" = "xyes" ; then
-   CUDA_FLAGS="-Mcuda=cuda8.0,cc35,nollvm $CUDA_LIBS"
+   def_cuda="-D_CUDA"
+   CUDA_FLAGS="-Mcuda=cuda9.0,cc70,nollvm $CUDA_LIBS"
 elif ! test x"$enable_cuda" = "x" ; then
+   def_cuda="-D_CUDA"
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
-else
-   def_cuda=
-   CUDA_FLAGS=
 fi
 #
 AC_SUBST(def_cuda)

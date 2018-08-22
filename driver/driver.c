@@ -448,23 +448,26 @@ static void usage(int verbose)
  while(opts[nr].ln!=NULL) {nr++;};
  if (verbose==1) {
   char* MPI_string="Serial";
+  char* OMP_string="";
+  char* CUDA_string="";
+  char* SLK_string="";
+  char* SLEPC_string="";
 #if defined _MPI
   MPI_string="MPI";
 #endif
-#if defined _SCALAPACK
-  MPI_string="MPI+SLK";
-#endif
 #if defined _OPENMP
-  char* OMP_string="+OpenMP";
-#else
-  char* OMP_string="";
+  OMP_string="+OpenMP";
+#endif
+#if defined _CUDA
+  CUDA_string="+CUDA";
+#endif
+#if defined _SCALAPACK
+  SLK_string="+SLK";
 #endif
 #if defined _SLEPC
-  char* SLEPC_string="+SLEPC";
-#else
-  char* SLEPC_string="";
+  SLEPC_string="+SLEPC";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s -\n",tool,codever,MPI_string,OMP_string,SLEPC_string); 
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 

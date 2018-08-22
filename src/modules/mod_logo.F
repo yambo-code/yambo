@@ -66,7 +66,7 @@ module LOGO
      ! 
      ! Work Space
      !
-     character(schlen) :: comment(3),ch,MPI_string,OMP_string
+     character(schlen) :: comment(3),ch,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string
      integer           :: max_length,i1,left_space,iA,ic
      !
      ! Get version and revision
@@ -89,17 +89,26 @@ module LOGO
      ! GPL_INCLUDE_END
      !
      MPI_string="Serial"
+     OMP_string=""
+     CUDA_string=""
+     SLK_string=""
+     SLEPC_string=""
 #if defined _MPI
      MPI_string="MPI"
 #endif
-#if defined _SCALAPACK
-     MPI_string="MPI+SLK"
-#endif
-     OMP_string=" "
 #if defined _OPENMP
      OMP_string="+OpenMP"
 #endif
-     comment(2)=trim(MPI_string)//trim(OMP_string)//" Build"
+#if defined _CUDA
+     CUDA_string="+CUDA"
+#endif
+#if defined _SCALAPACK
+     SLK_string="+SLK"
+#endif
+#if defined _SLEPC
+     SLEPC_string="+SLEPC"
+#endif
+     comment(2)=trim(MPI_string)//trim(OMP_string)//trim(CUDA_string)//trim(SLK_string)//trim(SLEPC_string)//" Build"
      !
      comment(3)='http://www.yambo-code.org'
      !

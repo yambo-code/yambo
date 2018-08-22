@@ -80,11 +80,8 @@ module pseudo
    !
    ! Abinit
    subroutine PP_alloc_abinit()
-!     use R_lattice,  ONLY:ng_vec
      use wave_func,  ONLY:wf_ncx
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
-!     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
-!     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
      YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
      YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
      pp_kbs =0._SP

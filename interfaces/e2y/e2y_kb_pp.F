@@ -121,23 +121,26 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   use netcdf
   use etsf_data
   use pars,                 only : SP
+  use vec_operate,          only : sort
   use R_lattice,            only : ng_vec
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
   use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                  pp_kbs,pp_kb,pp_kbd,pp_n_l_max
-  use wave_func,            only : wf_ncx,wf_nc_k
+  use wave_func,            only : wf_ncx,wf_nc_k,wf_igk
   !
   implicit none
   !
-  integer,        intent(in)    :: ncid, ikibz
+  integer, intent(in)   :: ncid, ikibz
   ! 
   ! Work Space
   !
-  integer               :: ig, ib, ip, ia
-  real(SP),allocatable  :: pp_section(:,:,:)
+  integer               :: ig, ic, ib, ip, ia
+  integer               :: wf_igk_indx(wf_nc_k(ikibz))
   integer               :: start(4), count(4), varid, netcdf_error
+  real(SP),allocatable  :: pp_section(:,:,:)
   !
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
+  call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
   start = [1,1,1,ikibz]
   count = [wf_ncx,pp_n_l_times_proj_max,n_atomic_species,1]
   !
@@ -146,16 +149,32 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   netcdf_error = nf90_inq_varid(ncid, "vkb", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
   call netcdf_check(ncid, netcdf_error, varid, "vkb")
-  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
-&          pp_kb(ig,ia,ip,1) = pp_section(ig,ip,ia)
+  !
+  ! Sort the non-local components according to the g-vectors (same as the WF coefficients)
+  do ia=1,n_atomic_species
+    do ip=1,pp_n_l_times_proj_max
+      do ic=1,wf_nc_k(ikibz)
+        ig=wf_igk_indx(ic)
+        pp_kb(ic,ia,ip,1) = pp_section(ig,ip,ia)
+      end do
+    end do
+  end do
   !
   ! Form factor derivatives 
   !
   netcdf_error = nf90_inq_varid(ncid, "vkbd", varid)
   netcdf_error = nf90_get_var(ncid, varid, pp_section, start, count)
   call netcdf_check(ncid, netcdf_error, varid, "vkbd")
-  forall( ig=1:wf_ncx, ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
-&          pp_kbd(ig,ia,ip,1) = pp_section(ig,ip,ia)
+  !
+  ! Sort the non-local components according to the g-vectors (same as the WF coefficients)
+  do ia=1,n_atomic_species
+    do ip=1,pp_n_l_times_proj_max
+      do ic=1,wf_nc_k(ikibz)
+        ig=wf_igk_indx(ic)
+        pp_kbd(ic,ia,ip,1) = pp_section(ig,ip,ia)
+      end do
+    end do
+  end do
   deallocate(pp_section)
   !
   return

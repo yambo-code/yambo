@@ -36,18 +36,18 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   !
   implicit none
   !
-  integer,           intent(in)  :: i_sp_pol,ikibz, ib_grp, ncid
-  complex(SP),       intent(out) :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
+  integer,     intent(in)  :: i_sp_pol,ikibz, ib_grp, ncid
+  complex(SP), intent(out) :: wf_disk(wf_ncx,n_spinor,wf_nb_io)
   !
-  real(SP), allocatable  :: wavefunction_section_(:,:,:,:)
+  real(SP), allocatable    :: wavefunction_section_(:,:,:,:)
   ! 
   ! Work Space
   !
   integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
+  integer        :: wf_igk_save(wf_nc_k(ikibz))
   integer        :: varid, netcdf_error
-  double precision, allocatable, target :: coefficients_of_wavefunctions_(:,:,:,:,:,:)
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
   !
@@ -58,7 +58,8 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   netcdf_error = nf90_get_var(ncid, varid, wavefunction_section_, start, count)
   !
   if(ETSF_kind=='WFK') then
-    call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
+    wf_igk_save = wf_igk(:wf_nc_k(ikibz),ikibz)
+    call sort(wf_igk_save,indx=wf_igk_indx)
   else
     wf_igk_indx = wf_igk(:wf_nc_k(ikibz),ikibz)
   endif
@@ -68,7 +69,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
       do ic=1,wf_nc_k(ikibz)
         ig=wf_igk_indx(ic)
         wf_disk(ic,i_spinor,ib) = cmplx(wavefunction_section_(1,ig,i_spinor,ib),&
-&                                       wavefunction_section_(2,ig,i_spinor,ib),SP)
+&                                       wavefunction_section_(2,ig,i_spinor,ib))
       enddo
     enddo
   enddo

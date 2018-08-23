@@ -91,7 +91,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  endif
  !
 #if defined _SLEPC
- if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+ if (run_Slepc)           call K_diago_driver(iq,W_bss)
 #endif
  !
  ! No JDOS in Inversion/Hadydock

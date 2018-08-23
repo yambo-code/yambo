@@ -60,11 +60,12 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
 #endif
- logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_IP,l_INIT
+ logical           :: eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT
  !
  l_INIT      = index(mode,"open")/=0
  l_Haydock   = index(mode,"Haydock")/=0
  l_Diago     = index(mode,"Diago")/=0
+ l_Slepc     = index(mode,"Slepc")/=0
  l_Inversion = index(mode,"Inversion")/=0
  l_IP        = index(mode,"IP")/=0
  !
@@ -72,6 +73,7 @@ subroutine K_output_file(iq,mode)
  !
  if (l_Haydock)   name_="haydock"
  if (l_Diago)     name_="diago"
+ if (l_Slepc)     name_="slepc"
  if (l_Inversion) name_="inv"
  if (l_IP)        name_="IP"
  !
@@ -145,28 +147,28 @@ subroutine K_output_file(iq,mode)
  !
  call X_setup_headers('EPS')
  if (l_Haydock.or.l_Inversion) call msg("o eps",'#',headers,INDENT=0,USE_TABS=.TRUE.)
- if (l_Diago) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+ if (l_Diago.or.l_Slepc) call msg("o eps",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
  if (l_IP) call msg("o eps",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  !
  !
  if (eval_reflectivity) then 
    call X_setup_headers('REFL')
    if (l_Haydock.or.l_Inversion) call msg("o refl",'#',headers(:4),INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o refl",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o refl",'#',headers(:2),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_eels) then 
    call X_setup_headers('EEL')
    if (l_Haydock.or.l_Inversion) call msg("o eel",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o eel",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o eel",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_alpha) then 
    call X_setup_headers('ALPHA')
    if (l_Haydock.or.l_Inversion) call msg("o alpha",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o alpha",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o alpha",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
@@ -199,19 +201,19 @@ subroutine K_output_file(iq,mode)
    !
    call X_setup_headers('off')
    if (l_Haydock.or.l_Inversion) call msg("o off",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o off",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o off",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_alpha) then 
      call X_setup_headers('beta')
      if (l_Haydock.or.l_Inversion) call msg("o beta",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-     if (l_Diago) call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (l_Diago.or.l_Slepc) call msg("o beta",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (l_IP) call msg("o beta",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
    call X_setup_headers('moke')
    if (l_Haydock.or.l_Inversion) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
  endif
@@ -219,7 +221,7 @@ subroutine K_output_file(iq,mode)
  !
  if (.not.l_Haydock) then
    call X_setup_headers('jdos')
-   if (l_Diago) call msg("o jdos",'#',headers(:7),INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o jdos",'#',headers(:7),INDENT=0,USE_TABS=.TRUE.)
    if (l_Inversion) call msg("o jdos",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif

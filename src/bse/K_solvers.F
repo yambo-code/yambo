@@ -72,7 +72,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  !
  ! I/O. All read. Only master writes.
- !
+ ! 
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !
  if (run_Haydock.and.allocated(Ken%W)) then
@@ -86,12 +86,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !
-   call K_diago_driver(iq,W_bss)
+   call K_diago_driver(iq,W_bss,X_static)
    !
  endif
  !
 #if defined _SLEPC
- if (run_Slepc)           call K_diago_driver(iq,W_bss)
+ if (run_Slepc)           call K_diago_driver(iq,W_bss,X_static)
 #endif
  !
  ! No JDOS in Inversion/Hadydock

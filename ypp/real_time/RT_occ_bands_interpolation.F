@@ -50,10 +50,10 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  type(levels)          :: E_bands,CIRCUIT_E
  real(SP), allocatable :: fit_on_circuit(:,:,:,:),variable_to_fit(:,:,:),&
 &                         spin_interpolated(:,:,:),magn_interpolated(:,:,:)
- real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ,values(3+2*(n_spinor-1))
+ real(SP)              :: Nel,Nhole,Real_Nhole,Real_Nel,Max_occ(n_T_steps),values(3+2*(n_spinor-1))
  character(3)          :: message
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt
- logical               :: l_normalize_Nel,l_g_space_interp,l_nearest_neig_interp
+ logical               :: l_normalize_Nel,l_g_space_interp,l_nearest_neig_interp,l_Nel_fac
  integer               :: ib,ik,i_sp_pol,i_RT,i_T,ID_interp,n_values
  !
  call section('*','Interpolation tool')
@@ -86,7 +86,6 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  ! Perform the occupations interpolation
  !======================================
- Max_occ=0._SP
  !
  ! Define the kind of interpolation
  call parser('NNInterp',l_nearest_neig_interp)
@@ -94,6 +93,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
  !
  ! Check if Nel has to be renormalized
  call parser('NormN',l_normalize_Nel)
+ call parser('Nel_fac',l_Nel_fac)
  !
  YAMBO_ALLOC(variable_to_fit,(RT_bands(1):RT_bands(2),RT_carriers%nk,n_sp_pol))
  !
@@ -105,7 +105,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
    !
    Real_Nhole=0._SP
    Real_Nel=0._SP
-   do i_RT=1,RT_carriers%nk
+   do i_RT=1,RT_carriers%nstates
      ib      =RT_carriers%table(i_RT,1)
      !ik_small_grid=RT%table(i_RT,2)
      ik      =RT_carriers%table(i_RT,3)
@@ -115,7 +115,7 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
      if(ib> E_bands%nbf) Real_Nel  =Real_Nel  +RT_carriers%delta_f(i_RT)*k_bands%weights(ik)
      !
    enddo
-   Max_occ=maxval((/Max_occ,RT_carriers%delta_f/))
+   Max_occ(i_T)=maxval(abs(RT_carriers%delta_f))
    !
    if(l_g_space_interp) then
      !
@@ -230,10 +230,13 @@ subroutine RT_occ_bands_interpolation(En,kpt,n_T_steps)
        !
        values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
        if (l_RT_lifetimes  ) values(3)=fit_on_circuit(ib,ik,1,i_T)*HA2EV*1000._SP
-       if (l_RT_occupations) values(3)=fit_on_circuit(ib,ik,1,i_T)/Max_occ*Nel_fac
-       if (l_RT_occupations .and. n_spinor==2) then
-         values(4)=values(3)*spin_interpolated(ib,ik,1)
-         values(5)=values(3)*spin_interpolated(ib,ik,2)
+       if (l_RT_occupations) then
+         values(3)=fit_on_circuit(ib,ik,1,i_T)
+         if (l_Nel_fac.and.Max_occ(i_T)>0.) values(3)=values(3)/Max_occ(i_T)*Nel_fac
+         if (n_spinor==2) then
+           values(4)=values(3)*spin_interpolated(ib,ik,1)
+           values(5)=values(3)*spin_interpolated(ib,ik,2)
+         endif
        endif
        call msg('o bands',' ',values(:n_values),INDENT=0,USE_TABS=.true.)
        !

@@ -69,6 +69,12 @@ AC_ARG_ENABLE(netcdf_hdf5,AC_HELP_STRING([--enable-netcdf-hdf5],
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
 #
+#
+# HDF5 PAR IO
+#
+AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
+             [Activate the HDF5 parallel io. Default is no.]))
+#
 enable_netcdf="no"
 enable_hdf5="no"
 compile_netcdf="no"
@@ -78,7 +84,8 @@ internal_hdf5="no"
 def_netcdf=""
 NETCDF_OPT="--disable-netcdf-4"
 NETCDF_VER="v3"
-HDF5_OPT=""
+HDF5_OPT="--disable-parallel";
+HDF5_VER="serial";
 #
 # Other libs
 #
@@ -204,17 +211,19 @@ if test x"$enable_hdf5" = "xno"; then
     # the following may change if we use a different version
     # of the netcdf lib
     #
-    #NETCDF_LIBS="-L${extlibs_path}/lib -lnetcdf" ;
-    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
-    NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
-    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}"
+    #
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
     if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
     #
     netcdf=yes
-    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a"; then
+    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a"; then
       compile_netcdf="no" ;
       AC_MSG_RESULT([already compiled]) ;
     else 
@@ -301,33 +310,59 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_OPT="--enable-netcdf-4";
     NETCDF_VER="v4";
     #
-    HDF5_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ;
-    HDF5_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-    NETCDF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdf" ;
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
-    NETCDFF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib -lnetcdff" ;
-    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    if test x"$enable_hdf5_par_io" = "xyes" ; then 
+      HDF5_OPT="--enable-parallel" ;
+      HDF5_VER="parallel";
+    else 
+      HDF5_OPT="--disable-parallel";
+      HDF5_VER="serial";
+    fi ;
+    #
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}" ;
+    NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
+    #
+    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
+    HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    #
+    netcdf=yes ;
+    hdf5=yes ;
+    #
+    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PATH}/lib/libhdf5.a"; then
+      #
+      compile_netcdf="no" ;
+      compile_hdf5="no" ;
+      AC_MSG_RESULT([already compiled]) ;
+      #
+    elif test "$HDF5_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+      #
+      HDF5_OPT="--enable-parallel" ;
+      HDF5_VER="parallel";
+      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
+      NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
+      NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      AC_MSG_RESULT([already compiled (using parallel version)]) ;
+      #
+    else
+      #  
+      compile_netcdf="yes";
+      compile_hdf5="yes" ;
+      AC_MSG_RESULT([to be compiled]) ;
+      #
+    fi
+    #
     #
     if test "$use_libz"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lz"   ; fi
     if test "$use_libsz"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -lsz"  ; fi
     if test "$use_libm"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lm"   ; fi
     if test "$use_libdl"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -ldl"  ; fi
     if test "$use_libcurl" = "yes"; then HDF5_LIBS="$HDF5_LIBS -lcurl"; fi
-    #
-    netcdf=yes ;
-    hdf5=yes ;
-    #
-    if test -e ${extlibs_path}/lib/libnetcdf.a && test -e "${extlibs_path}/lib/libnetcdff.a" && test -e "${extlibs_path}/lib/libhdf5.a"; then
-      compile_netcdf="no" ;
-      compile_hdf5="no" ;
-      AC_MSG_RESULT([already compiled]) ;
-    else  
-      compile_netcdf="yes";
-      compile_hdf5="yes" ;
-      if test "$mpibuild" = "no"  ; then HDF5_OPT="--disable-parallel"; fi ;
-      if test "$mpibuild" = "yes" ; then HDF5_OPT="--enable-parallel" ; fi ;
-      AC_MSG_RESULT([to be compiled]) ;
-    fi
     #
   fi
 fi
@@ -350,6 +385,12 @@ if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_h
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
 fi
 #
+# NETCDF-HDF5 PAR IO
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_PAR_IO";
+fi
+#
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(NETCDF_INCS)
 AC_SUBST(NETCDF_OPT)
@@ -359,6 +400,7 @@ AC_SUBST(NETCDFF_INCS)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(HDF5_OPT)
+AC_SUBST(HDF5_VER)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)

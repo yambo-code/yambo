@@ -42,14 +42,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use X_m,            ONLY:Epsilon_ij
  use KERR,           ONLY:BSS_KERR_free
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #include<memory.h>
  type(levels) ::Ken
@@ -97,7 +93,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #endif
  !
  ! I/O. All read. Only master writes.
- !
+ ! 
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
  !
  if (run_Haydock.and.allocated(Ken%W)) then
@@ -111,12 +107,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    call PARALLEL_assign_LA_COMMs("Response_T_space",DIAGO,CPU_structure(4)%nCPU_lin_algebra_DIAGO)
    !
-   call K_diago_driver(iq,W_bss)
+   call K_diago_driver(iq,W_bss,X_static)
    !
  endif
  !
 #if defined _SLEPC
- if (run_Slepc)           call K_slepc_driver(iq,W_bss)
+ if (run_Slepc)           call K_diago_driver(iq,W_bss,X_static)
 #endif
  !
  ! No JDOS in Inversion/Hadydock
@@ -161,14 +157,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  YAMBO_FREE(X_drude_term)
  YAMBO_FREE(Epsilon_ii)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  YAMBO_FREE(Epsilon_ij)
  call BSS_KERR_free( )
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _PL
  call BSS_PL_free( )

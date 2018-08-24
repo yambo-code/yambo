@@ -26,10 +26,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp,q_norm
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,iw_ref,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
- use BS_solvers,     ONLY:Co_factor,BSS_dipoles,&
+ use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,&
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
 &                         BSS_n_descs,BSS_description,BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal,BSS_uses_DbGd
@@ -57,8 +57,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  ! Work Space
  !
  type(w_samp)     :: W_mins,W_plus
- integer          :: i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
- complex(SP)      :: E_plus_W,residual
+ integer          :: iw_ref,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp,ik_ibz,i_loop,n_loop,i_eps,i_Lo,transition(4)
+ complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
 #if defined _PL
  complex(SP)      :: SF(W%n_freqs,2)
 #endif
@@ -79,6 +79,12 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  call X_Double_Grid_setup(1,k)  
  !
+ ! Look for the W(iw_ref) closest 0
+ !==================================
+ call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
+ !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range
@@ -90,6 +96,8 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
@@ -195,12 +203,12 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
      !
      residual=BSS_dipoles(i_res)*conjg(BSS_dipoles(i_res))
      if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-     if (trim(global_gauge)=='velocity') Lo(i_res,:,1)=(Lo(i_res,:,1)-Lo(i_res,iw_ref,1))
+     if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
      Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        residual=conjg(BSS_dipoles(i_Lo_trans))*BSS_dipoles(i_Lo_trans)
-       if (trim(global_gauge)=='velocity') Lo(i_Lo_trans,:,i_Lo)=(Lo(i_Lo_trans,:,i_Lo)-Lo(i_Lo_trans,iw_ref,i_Lo))
+       if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
      endif
      !
@@ -226,14 +234,19 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if(i_loop==n_loop) call PP_redux_wait(Lo,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    call PP_redux_wait(Epsilon_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(para_term_w0,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
 #if defined _PL
    if (l_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
 #endif
    !
-   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/q_norm(1)**2)
-   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+Epsilon_ii(:,i_eps)*Co_factor/  W%p(:) **2)
+   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+   !
+   if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+ Epsilon_ii(:,i_eps)                *Co_factor/q_norm(1)**2)
+   if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/  W%p(:) **2)
    !
    if (l_drude) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+X_drude_term(:)*Co_factor/q_norm(1)**2
+   if (skip_cond_sum_rule) Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)+(para_term_w0-diam_term_exact)*Co_factor/ W%p(:)**2
    !
  enddo
  !

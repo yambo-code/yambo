@@ -111,6 +111,15 @@ dnl $acx_libxc_save_LIBS"
 fi
 
 dnl The following programs will only work with specific version of libxc
+testprog_4x="AC_LANG_PROGRAM([],[
+  use xc_f90_lib_m
+  use xc_f90_types_m
+  implicit none
+  type(xc_f90_pointer_t) :: p
+  real(xc_f90_kind) :: ext_params
+  call xc_f90_func_set_ext_params(p,ext_params)
+])"
+
 testprog_21="AC_LANG_PROGRAM([],[
   use xc_f90_lib_m
   implicit none
@@ -150,13 +159,14 @@ testprog_11="AC_LANG_PROGRAM([],[
 
 dnl Get libxc version
 if test x"$acx_libxc_ok" = xyes; then
-AC_LINK_IFELSE($testprog_11, [acx_libxc_version=110, acx_libxc_ok=no], [])
-AC_LINK_IFELSE($testprog_12, [acx_libxc_version=120], [])
-AC_LINK_IFELSE($testprog_20, [acx_libxc_version=200], [])
+AC_LINK_IFELSE($testprog_11,  [acx_libxc_version=110, acx_libxc_ok=no ], [])
+AC_LINK_IFELSE($testprog_12,  [acx_libxc_version=120, acx_libxc_ok=no ], [])
+AC_LINK_IFELSE($testprog_20,  [acx_libxc_version=200, acx_libxc_ok=no ], [])
 AC_LINK_IFELSE($testprog_203, [acx_libxc_version=203, acx_libxc_ok=yes], [])
-AC_LINK_IFELSE($testprog_21, [acx_libxc_version=210], [])
+AC_LINK_IFELSE($testprog_21,  [acx_libxc_version=210, acx_libxc_ok=yes], [])
+AC_LINK_IFELSE($testprog_4x,  [acx_libxc_version=400, acx_libxc_ok=no ], [])
 AC_DEFINE_UNQUOTED([LIBXC_VERSION],[$acx_libxc_version],[Defined the LIBXC version.])
-AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be >= 203)])			
+AC_MSG_RESULT([Found external LibXC version=$acx_libxc_version (should be 2xx and >= 203)])
 fi
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
@@ -173,7 +183,7 @@ if test x"$acx_libxc_ok" = xno; then
   # version y2.0.3
   #LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxc"
   # version 2.2.3 is used
-  LIBXC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lxcf90 -lxc"
+  LIBXC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a ${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a"
   LIBXC_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
   if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxc.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libxcf90.a"; then
     compile_libxc="no"

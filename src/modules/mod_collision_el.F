@@ -27,8 +27,9 @@ module collision_el
  ! ELEMENTAL COLLISION
  !=====================
  !
- use pars,       ONLY:DP,SP,LP,schlen
- use parallel_m, ONLY:PP_indexes
+ use pars,        ONLY:DP,SP,LP,schlen
+ use parallel_m,  ONLY:PP_indexes
+ use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
  !
 #include<memory.h>
  !
@@ -57,6 +58,16 @@ module collision_el
    complex(SP), allocatable :: WF_symm_i(:,:)
    complex(SP), allocatable :: WF_symm_o(:,:)
    !
+   ! USPP workspace
+   !
+   type(bec_type) :: ibec      ! contains:  < beta_j | wf_in>
+   type(bec_type) :: obec      ! contains:  < beta_j | wf_om>
+   real(DP),    allocatable :: ylmk0(:,:)
+   real(DP),    allocatable :: qmod(:)
+   complex(DP), allocatable :: qgm(:,:,:,:)
+   complex(SP), allocatable :: becprod(:,:,:,:)
+   complex(SP), allocatable :: eiqtau(:)
+   !
  end type elemental_collision
  !
  contains
@@ -68,22 +79,23 @@ module collision_el
      O%qs=I%qs
    end subroutine
    !
-   subroutine elemental_collision_free(ggw,INIT_ONLY)
+   subroutine elemental_collision_free(ggw)
      type(elemental_collision)::ggw
-     logical,optional::INIT_ONLY
-     logical         ::init_only_
      !
-     init_only_=.false.
-     if (present(INIT_ONLY)) then
-       init_only_=INIT_ONLY
-     endif
-     if (.not.init_only_) then
-       YAMBO_FREE(ggw%gamp)
-       YAMBO_FREE(ggw%rhotw)
-       YAMBO_FREE(ggw%rho_tw_rs)
-       YAMBO_FREE(ggw%WF_symm_i)
-       YAMBO_FREE(ggw%WF_symm_o)
-     endif
+     YAMBO_FREE(ggw%gamp)
+     YAMBO_FREE(ggw%rhotw)
+     YAMBO_FREE(ggw%rho_tw_rs)
+     YAMBO_FREE(ggw%WF_symm_i)
+     YAMBO_FREE(ggw%WF_symm_o)
+     !
+     ! USPP workspace
+     call deallocate_bec_type(ggw%ibec)
+     call deallocate_bec_type(ggw%obec)
+     YAMBO_FREE(ggw%ylmk0)
+     YAMBO_FREE(ggw%qmod)
+     YAMBO_FREE(ggw%qgm)
+     YAMBO_FREE(ggw%becprod)
+     YAMBO_FREE(ggw%eiqtau)
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)

@@ -133,6 +133,7 @@ contains
     !
     varid = netcdf_inquire_varid(ncid, "primitive_vectors")
     netcdf_error = nf90_get_var(ncid, varid, a)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     a(:,:) = transpose(a(:,:))
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
@@ -159,9 +160,11 @@ contains
 
     varid = netcdf_inquire_varid(ncid, "atom_species")
     netcdf_error = nf90_get_var(ncid, varid, atom_species_)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     varid = netcdf_inquire_varid(ncid, "reduced_atom_positions")
     netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     ! Determine n_atoms_max
     n_atoms_species(:) = 0 
@@ -189,6 +192,7 @@ contains
     YAMBO_ALLOC( Z_species, (n_atomic_species) )
     varid = netcdf_inquire_varid(ncid, "atomic_numbers")
     netcdf_error = nf90_get_var(ncid, varid, Z_species)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     !
     ! Symmetry 
@@ -199,6 +203,7 @@ contains
     YAMBO_ALLOC( asop, (3,3,a_nsym) )
     varid = netcdf_inquire_varid(ncid, "reduced_symmetry_matrices")
     netcdf_error = nf90_get_var(ncid, varid, asop)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     call symmetries_check_and_load(asop,a_nsym)
 
@@ -216,9 +221,11 @@ contains
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     varid = netcdf_inquire_varid(ncid, "eigenvalues")
     netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
+    call netcdf_check(ncid,netcdf_error,varid)
 
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
@@ -259,9 +266,11 @@ contains
     !
     varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
+    call netcdf_check(ncid,netcdf_error,varid)
     !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
+    call netcdf_check(ncid,netcdf_error,varid)
     !
     YAMBO_ALLOC( g_vec, (wf_ncx,3) )
     do i1=1,wf_ncx
@@ -293,6 +302,7 @@ contains
 
   subroutine import_basisdata_group_wfk
     !
+    use com,                  only : error
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
@@ -315,12 +325,14 @@ contains
     !
     varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
     netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
+    call netcdf_check(ncid,netcdf_error,varid)
     !
     wf_ncx = maxval(wf_nc_k) 
     YAMBO_ALLOC( wf_igk, (wf_ncx,k%nibz) )
     !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
+    call netcdf_check(ncid,netcdf_error,varid)
     !
     ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
     ! a gamma centered G-vector sphere
@@ -378,7 +390,7 @@ contains
           end if
           !this check is not needed anymore in principle
           if (npw > max_size) then
-              write(*,*) 'an error has occurred: npw > max_size', max_size
+              call error('an error has occurred: npw > max_size')
           end if
         end do
       end do
@@ -414,7 +426,9 @@ contains
     ! Get storage type of the wavefunctions
     varid = netcdf_inquire_varid(ncid, "istwfk")
     netcdf_error = nf90_get_var(ncid, varid, istwfk)
-   
+    call netcdf_check(ncid,netcdf_error,varid)
+    if (.not.all(istwfk==1)) call error('istwfk /= 1 found. Please set istwfk *1 in the Abinit input file and rerun') 
+ 
     wf_igk = -1
     do ik=1,k%nibz
       npw = wf_nc_k(ik)
@@ -543,6 +557,7 @@ contains
     !
     varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
     netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints)
+    call netcdf_check(ncid,netcdf_error,varid)
     !
     YAMBO_ALLOC(k%pt,(k%nibz,3))
     do ik = 1,k%nibz
@@ -601,6 +616,7 @@ contains
     varid = netcdf_inquire_varid(ncid, "kb_formfactor_sign")
     netcdf_error = nf90_get_var(ncid, varid, pp_kbs_, start=start, count=count)
     call netcdf_check(ncid, netcdf_error, varid, "kb_formfactor_sign")
+    call netcdf_check(ncid,netcdf_error,varid)
     forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
 &          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
     YAMBO_FREE(pp_kbs_)
@@ -691,8 +707,7 @@ contains
     !
     ! Spin orbit splitting (Abinit)
     !
-    ! TODO
-    l_spin_orbit = .false.
+    l_spin_orbit = (n_spin == 2)
 
     !
     ! XC functional (Abinit)

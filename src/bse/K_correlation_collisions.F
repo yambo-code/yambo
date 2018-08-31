@@ -40,6 +40,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
+ use parallel_m,    ONLY:myid
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,bz_samp
  use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
@@ -56,7 +57,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  integer     :: i_k_s,i_p_s,i_k_bz,i_p_bz,i_p,i_k,i_Tk,i_Tp,iB_ref,iB_oscillator,iB_p,&
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,i_s_collision,&
                 i_Tgrp_k,i_Tgrp_p,i_s_k_p,i_s_star,H_pos(2),i_cycle
- logical,allocatable :: oscillators_done(:)
+ logical, allocatable :: O_todo_table(:,:,:,:)
  !
  if (.not.BS_res_K_corr) return 
  !
@@ -73,9 +74,11 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !------------------
  !
  YAMBO_ALLOC(BS_blk(iB)%O_table,(2,nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ YAMBO_ALLOC(O_todo_table,(nsym,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  BS_blk(iB)%N_oscillators=0
  BS_blk(iB)%O_table=0
+ O_todo_table=.false.
  !
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
    !
@@ -107,24 +110,24 @@ subroutine K_correlation_collisions(iB,Xk,q)
        ! v->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_table(iB,i_v_k,i_v_p,i_s_collision)
+       call EVAL_table(iB,i_v_k,i_v_p,i_k_sp,i_s_collision)
        !
        ! c->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_table(iB,i_c_k,i_c_p,i_s_collision)
+       call EVAL_table(iB,i_c_k,i_c_p,i_k_sp,i_s_collision)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
        ! v->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_table(iB,i_v_k,i_c_p,i_s_collision)
+       call EVAL_table(iB,i_v_k,i_c_p,i_k_sp,i_s_collision)
        !
        ! c->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_table(iB,i_c_k,i_v_p,i_s_collision)
+       call EVAL_table(iB,i_c_k,i_v_p,i_k_sp,i_s_collision)
        !
      endif
      !
@@ -132,8 +135,6 @@ subroutine K_correlation_collisions(iB,Xk,q)
  enddo
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,iB)
- YAMBO_ALLOC(oscillators_done,(BS_blk(iB)%N_oscillators))
- oscillators_done = .false.
  !
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
    !
@@ -169,31 +170,29 @@ subroutine K_correlation_collisions(iB,Xk,q)
        ! v->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_v_k,i_v_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_v_k,i_v_p,i_k_sp,i_s_collision)
        !
        ! c->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_c_k,i_c_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_c_k,i_c_p,i_k_sp,i_s_collision)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
        ! v->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_v_k,i_c_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_v_k,i_c_p,i_k_sp,i_s_collision)
        !
        ! c->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_c_k,i_v_p,i_s_collision,i_k_sp)
+       call EVAL_collision(iB,i_c_k,i_v_p,i_k_sp,i_s_collision)
        !
      endif
      !
    enddo
  enddo
- !
- YAMBO_FREE(oscillators_done)
  !
  call timing('T_space CORR Osc.',OPR='stop')
  !
@@ -206,13 +205,14 @@ subroutine K_correlation_collisions(iB,Xk,q)
        if (WF_phase(i_p,i_s_k_p,i_b,i_p_sp)==-99._SP) collision_star=i_s_k_p
    end function
    !
-   subroutine EVAL_table(iB,i_b,i_b_p,i_s_collision)
+   subroutine EVAL_table(iB,i_b,i_b_p,i_k_sp,i_s_collision)
      implicit none
-     integer, intent(in) :: iB,i_b,i_b_p,i_s_collision
+     integer, intent(in) :: iB,i_b,i_b_p,i_k_sp,i_s_collision
      integer :: iB_ref, iB_p
      iB_ref=-1
      do iB_p=iB,1,-1
        if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
+       if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
        if(BS_blk(iB_p)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)==0) cycle
        iB_ref=iB_p
        exit
@@ -222,22 +222,23 @@ subroutine K_correlation_collisions(iB,Xk,q)
        BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
        BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)=BS_blk(iB)%N_oscillators
        BS_blk(iB)%O_table(2,i_s_collision,i_b,i_b_p,i_k_sp)=iB
+       O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)=.true.
      endif
      BS_blk(iB)%O_table(:,i_s_k_p,i_b,i_b_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_b,i_b_p,i_k_sp)
    end subroutine
    !
-   subroutine EVAL_collision(iB,i_b,i_b_p,i_s_collision,i_k_sp)
+   subroutine EVAL_collision(iB,i_b,i_b_p,i_k_sp,i_s_collision)
      implicit none
      integer,intent(in) :: iB,i_b,i_b_p,i_s_collision, i_k_sp
      integer :: iB_oscillator
+     if (.not.O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)) return 
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
-     if (oscillators_done(iB_oscillator)) return
      K_CORR_collision%is(1)=i_b
      K_CORR_collision%os(1)=i_b_p
      K_CORR_collision%os(3)=i_s_collision
      call scatter_Bamp(K_CORR_collision)
      BS_blk(iB)%O_c(:,iB_oscillator)=K_CORR_collision%rhotw(:)
-     oscillators_done(iB_oscillator) = .true.
+     O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp) = .false.
    end subroutine
    !
 end subroutine K_correlation_collisions

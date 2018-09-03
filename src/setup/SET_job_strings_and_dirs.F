@@ -26,7 +26,7 @@ subroutine SET_job_strings_and_dirs(JS)
  use pars,       ONLY:schlen
  use stderr,     ONLY:STRING_split,STRING_remove
  use com,        ONLY:jobstr,jobdir,alt_jobstr,alt_jobdir,n_alt_jobstr,&
-&                     n_max_jobstr,com_path
+&                     n_max_jobstr,com_path,more_io_path
  !
  implicit none
  !
@@ -67,7 +67,10 @@ subroutine SET_job_strings_and_dirs(JS)
    if (i_j==1) then
      jobstr=job
      jobdir=path
-     if (len_trim(path)>0) com_path=path
+     if (len_trim(path)>0) then
+       com_path=path
+       if (len_trim(more_io_path)>0) com_path=trim(more_io_path)//"/"//trim(path)
+     endif
    else
      alt_jobstr(i_j-1)=job
      alt_jobdir(i_j-1)=path

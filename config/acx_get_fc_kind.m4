@@ -28,19 +28,19 @@ FCKIND="unknown"
 case "${FC}" in
     *ftn*)
       ;;
-    *pgf9*)
-      FCKIND="pgi"
-      ;;
     *abf90*)
-      ;;
-    *ifc*)
-      FCKIND="intel"
       ;;
     *gfortran*)
       FCKIND="gfortran" 
       ;;
+    *pgf*)
+      FCKIND="pgi"
+      ;;
     *g95*)
       FCKIND="g95"
+      ;;
+    *ifc*)
+      FCKIND="intel"
       ;;
     *ifort*)
       FCKIND="intel"

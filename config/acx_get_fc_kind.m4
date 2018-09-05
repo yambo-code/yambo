@@ -30,11 +30,11 @@ case "${FC}" in
       ;;
     *abf90*)
       ;;
-    *gfortran*)
-      FCKIND="gfortran" 
-      ;;
     *pgf*)
       FCKIND="pgi"
+      ;;
+    *gfortran*)
+      FCKIND="gfortran" 
       ;;
     *g95*)
       FCKIND="g95"

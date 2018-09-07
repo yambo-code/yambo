@@ -295,6 +295,12 @@ module interfaces
      real(SP),optional :: db1_alat(3) 
    end function
    !
+   subroutine QP_state_extract_print(qp)
+     use QP_m,          ONLY:QP_t
+     implicit none
+     type(QP_t),optional ::qp              
+   end subroutine
+   !
  end interface
  !
 end module

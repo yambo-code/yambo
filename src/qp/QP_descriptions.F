@@ -36,6 +36,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_cohsex,&
 &                        l_HF_and_locXC
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
+ use interfaces,    ONLY:QP_state_extract_print
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:BZ_DbGd_tot_nk_levels
  use IO_m,          ONLY:ver_is_gt_or_eq
@@ -298,11 +299,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  !
  ! QP states
  !
- i4=(/1,1,0,0/)
- do while(QP_state_extract(i4)>0)
-   qp%n_descs=qp%n_descs+1
-   write (qp%description(qp%n_descs),&
-&        '(4(a,i3.3))') ' QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
- enddo
+ call QP_state_extract_print( qp )
  !
 end subroutine

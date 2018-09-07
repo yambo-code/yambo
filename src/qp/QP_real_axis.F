@@ -39,7 +39,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
+&                        PARALLEL_WF_distribute,QP_state_extract_print
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
@@ -69,7 +70,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          ::i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
-&                   iv4(4),io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
+&                   io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -135,13 +136,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
  call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HA2EV)
- call msg('r','')
- iv4=(/1,1,0,0/)
- do while(QP_state_extract(iv4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
+ !
+ call QP_state_extract_print( )
  !
  if (.not.l_life) then
    !

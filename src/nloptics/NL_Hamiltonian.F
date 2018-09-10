@@ -43,7 +43,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF,NL_bands
+&                         SEX,HF,NL_bands,VAL_BANDS
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -72,7 +72,13 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  if(.not.l_use_Hxc_collisions) then
  !
- if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,NL_bands(1))
+ if(eval_HARTREE .or.  eval_DFT) then
+   !
+   call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
+   !
+   call el_density_vbands(E,k,rho_n,VAL_BANDS)
+   !
+ endif
  !
  if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
  !

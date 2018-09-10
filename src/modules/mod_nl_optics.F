@@ -66,8 +66,15 @@ module nl_optics
  !
  ! WFs and Density
  !
+ ! Bands in terms of Kohn-Sham orbitals
  complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
+ ! 
+ ! Time-dependent Valence bands in real-space
+ complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
+ !
  real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
+ !
+ ! Density matrix
  complex(SP), allocatable :: dG(:,:,:) 
  !
  ! Integrator Variables
@@ -182,6 +189,8 @@ module nl_optics
        YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
      endif          
      !
+     YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,QP_nk,n_sp_pol))
+     !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
        YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
@@ -225,7 +234,8 @@ module nl_optics
      YAMBO_FREE(full_rho)
      YAMBO_FREE(E_full)
      YAMBO_FREE(V_xc_0)
-
+     YAMBO_FREE(VAL_BANDS)
+     !
      if(l_use_DIPOLES) then
        YAMBO_FREE(DIP_bz)
      else

@@ -53,6 +53,10 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Build the E_minus and E_plus
  !
+ NL_J=0._SP
+ ! 
+ return
+ !
  E_minus=cZERO
  E_plus =cZERO
  !

@@ -29,7 +29,7 @@ subroutine NL_driver(E,X,k,q)
  use com,            ONLY:error
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,Dipole_approach,X_alloc
+ use X_m,            ONLY:X_t,Dipole_approach,X_alloc,DIP_P
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
@@ -115,7 +115,7 @@ subroutine NL_driver(E,X,k,q)
  ! force the reloading of the WFs
  !
  Dipole_approach='Covariant' 
- if(l_use_DIPOLES .or. load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  eval_OVERLAPS =.false.
  NL_bands(1)=NL_bands1_save
@@ -129,7 +129,6 @@ subroutine NL_driver(E,X,k,q)
    call X_alloc('DIP_S')
  else
    call X_alloc('DIP_R')
-   call X_alloc('DIP_P')
  endif
  !
  ! Non_Linear parallization
@@ -199,7 +198,7 @@ subroutine NL_driver(E,X,k,q)
    ! Re-initialization
    ! ================
    V_bands=cZERO
-   V_bands_t = cZERO
+   if(WF_sample%ison) V_bands_t = cZERO
    forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
    !
    ! Efield
@@ -225,10 +224,10 @@ subroutine NL_driver(E,X,k,q)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks
-     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time)) then
-       N_sample_size=N_sample_size + 1
-       V_bands_t(N_sample_size,:,:,:,:) = V_bands(:,:,:,:)
-     end if
+!     if (WF_sample%ison.and.any(WF_sample%indx_T==NE_i_time)) then
+!       N_sample_size=N_sample_size + 1
+!       V_bands_t(N_sample_size,:,:,:,:) = V_bands(:,:,:,:)
+!     end if
      !
      call NL_output(NE_i_time,i_f) 
      !

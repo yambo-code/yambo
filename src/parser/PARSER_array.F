@@ -25,7 +25,7 @@ subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
  !
  use pars,      ONLY:lchlen,SP,schlen
  use parser_m,  ONLY:parser
- use stderr,    ONLY:gen_fmt
+ use stderr,    ONLY:gen_fmt,intc
  use it_m,      ONLY:nADDITIONAL_flines,ADDITIONAL_flines
  !
  implicit none
@@ -100,7 +100,7 @@ subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
      if (present(I_v)) then
        do i2=1,M
          ch=trim(ADDITIONAL_flines(nADDITIONAL_flines+1))
-         write (ADDITIONAL_flines(nADDITIONAL_flines+1),'(a,i3,a)') trim(ch),I_v(i1,i2),'|'
+         ADDITIONAL_flines(nADDITIONAL_flines+1)=trim(ch)//trim(intc(I_v(i1,i2)))//'|'
        enddo
      endif
      if (present(R_v)) then
@@ -109,7 +109,7 @@ subroutine PARSER_array(mode,VAR,N,M,DESC,CH_v,R_v,I_v,Kn)
          ch=trim(ADDITIONAL_flines(nADDITIONAL_flines+1))
          if (present(Kn)) then
            if (Kn(i2)=="i") then
-             write (ADDITIONAL_flines(nADDITIONAL_flines+1),'(a,i3,a)') trim(ch),int(R_v(i1,i2)),'|'
+             ADDITIONAL_flines(nADDITIONAL_flines+1)=trim(ch)//trim(intc(int(R_v(i1,i2))))//'|'
            else
              write (ADDITIONAL_flines(nADDITIONAL_flines+1),'(a,'//trim(fmt)//',a)') trim(ch),R_v(i1,i2),'|'
            endif

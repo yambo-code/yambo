@@ -36,6 +36,11 @@ module electric
  complex(SP), allocatable :: Sm1_plus(:,:,:,:,:)
  complex(SP), allocatable :: Sm1_minus(:,:,:,:,:)
  !
+ ! Matrix to build current
+ !
+ complex(SP), allocatable :: E_plus(:,:,:,:,:)
+ complex(SP), allocatable :: E_minus(:,:,:,:,:)
+ !
  ! Electric Field operator used in SC
  !
  complex(SP), allocatable :: W_electric(:,:,:,:)

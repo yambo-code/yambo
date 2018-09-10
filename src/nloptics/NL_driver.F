@@ -148,10 +148,6 @@ subroutine NL_driver(E,X,k,q)
  !================
  call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
  !
- ! Generate DIPOLES in all the BZ if required
- !===================
- if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
- !
  ! Load Collisions if necessary
  ! ============================
  if(io_COLLs) then

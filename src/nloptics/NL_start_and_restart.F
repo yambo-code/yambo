@@ -38,7 +38,7 @@ subroutine NL_start_and_restart(E,k,X)
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,DIP_P
  use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -48,10 +48,12 @@ subroutine NL_start_and_restart(E,k,X)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
-&                         VAL_BANDS
+&                         VAL_BANDS,NL_initial_J,NL_J,NL_initial_J
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
+ use IO_m,           ONLY:IO_and_Messaging_switch
+ use interfaces,     ONLY:NL_average_operator
  !
 #include<memory.h>
  !
@@ -99,7 +101,9 @@ subroutine NL_start_and_restart(E,k,X)
    !
    ! Calculate V_xc
    !
+   call IO_and_Messaging_switch("-report -log -io_in -io_out",CONDITION=master_cpu)
    call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+   call IO_and_Messaging_switch("+report +log +io_in +io_out")
    V_xc_0=V_xc
    !       
  endif
@@ -138,7 +142,16 @@ subroutine NL_start_and_restart(E,k,X)
    !
  endif
  !
+ call NL_average_operator(V_VALUE=NL_initial_J(4:6),V_MATRIX=-DIP_P,V_bands=V_bands,k=k,en=E, &
+& TRANS=.TRUE.,nK_mem=k%nibz)
+ if(.not.l_use_DIPOLES) then
+   call NL_Berry_current(E,k,k_map,V_bands,NL_initial_J(1:3))
+ else
+   NL_J(1:3)=NL_J(4:6)
+ endif
+ !
  call msg('r ',' Initial Polarization :',real(NL_initial_P))
+ call msg('r ',' Initial Current      :',real(NL_initial_J))
  !
  ! Restart
  ! ====================================

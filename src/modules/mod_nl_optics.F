@@ -147,7 +147,6 @@ module nl_optics
  ! Other
  !
  logical  :: l_use_DIPOLES   ! Use standard dipoles (valid only for linear response)
- complex(SP), allocatable :: DIP_bz(:,:,:,:,:)
  !
  ! IO variables
  !
@@ -200,9 +199,7 @@ module nl_optics
      !
      YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))
      !
-     if(l_use_DIPOLES) then
-       YAMBO_ALLOC(DIP_bz,(3,NL_bands(2),NL_bands(2),nXkbz,n_sp_pol))
-     else
+     if(.not.l_use_DIPOLES) then
        call  ELECTRIC_alloc(en)
      endif
      !
@@ -236,9 +233,7 @@ module nl_optics
      YAMBO_FREE(V_xc_0)
      YAMBO_FREE(VAL_BANDS)
      !
-     if(l_use_DIPOLES) then
-       YAMBO_FREE(DIP_bz)
-     else
+     if(.not.l_use_DIPOLES) then
        call ELECTRIC_free()
      endif
      !

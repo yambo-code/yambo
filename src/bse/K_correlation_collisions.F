@@ -43,9 +43,11 @@ subroutine K_correlation_collisions(iB,Xk,q)
  use parallel_m,    ONLY:myid
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,bz_samp
- use BS,            ONLY:WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
+ use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp
  use electrons,     ONLY:n_sp_pol
+ use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
+ use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
 #include<memory.h>
  !
@@ -136,8 +138,17 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,iB)
  !
+ !$omp parallel default(shared), private(i_Tk,i_Tp, &
+ !$omp &          i_k_bz,i_p_bz,i_k_s,i_p_s, i_v_k,i_c_k,i_v_p,i_c_p, &
+ !$omp &          i_k_sp, i_p_sp, i_s_k_p,i_s_star,H_pos,  &
+ !$omp &          K_CORR_collision, i_s_collision)
+ !
+ call OPENMP_update(master_thread)
+ !
+ call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
+ !
+ !$omp do collapse(2), schedule(dynamic)
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-   !
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      !
      i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1)
@@ -193,6 +204,10 @@ subroutine K_correlation_collisions(iB,Xk,q)
      !
    enddo
  enddo
+ !$omp end do
+ !
+ call elemental_collision_free(K_CORR_collision)
+ !$omp end parallel
  !
  call timing('T_space CORR Osc.',OPR='stop')
  !

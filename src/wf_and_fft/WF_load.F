@@ -21,7 +21,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
-&                     space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
+&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -228,18 +228,18 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
    if(allocated(states_to_load).and..not.force_WFo_) then
      YAMBO_FREE(states_to_load)
-     call warning(' [WF] WF-distribution turned off, not compatible with SC wave functions')
+     call warning(' [WF'//trim(wf_title)//'] WF-distribution turned off, not compatible with SC wave functions')
    endif
    !
    if (any ( WF%b/=(/1,SC_bands(2)/) )) then 
-     call warning(' [WF] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
+     call warning(' [WF'//trim(wf_title)//'] Forced '//trim(intc(SC_bands(2)))//' bands to be loaded')
      if(allocated(states_to_load)) states_to_load(WF%b(2)+1:SC_bands(2),:,:)=.TRUE.
    endif
    WF%b=(/1,SC_bands(2)/)
    !
  else if (found_SC_DB.and..not.compatible_SC_DB) then
    !
-   call error(' [WF] Too many bands required ('//&
+   call error(' [WF'//trim(wf_title)//'] Too many bands required ('//&
 &             trim(intc(bands_to_load(2)))//'). Only '//trim(intc(SC_bands(2)))//' available.')
    !
  endif
@@ -266,9 +266,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (.not.(QUIET_alloc.or.QUIET_free)) then
    if (buffer_is_ok.and.WF%space/="B") then
-     call msg('rns','[WF] Loading Wave-Functions from buffer')
+     call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else
-     call msg('rns','[WF] Performing Wave-Functions I/O from '//trim(core_io_path)//'/SAVE')
+     call msg('rns','[WF'//trim(wf_title)//'] Performing Wave-Functions I/O from '//trim(core_io_path)//'/SAVE')
    endif
  endif
  !
@@ -457,7 +457,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call load_SC_components('WF',COM_=NONE,MODE_=DUMP,kind=WF_kind,xc_functional=WF_xc_functional,&
 &                          perturbation=WF_perturbation)
    !
-   call msg('rns','[WF loader] '//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
+   call msg('rns','[WF'//trim(wf_title)//' loader] '//trim(global_XC_string(WF_kind,WF_xc_functional,WF_perturbation))//&
 &                             ' wavefunctions loaded')
    !
    if (WF%space=='R') wf_grid_size=fft_size
@@ -497,7 +497,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  enddo
  !
  wf_norm_test=.false.
- call msg('rn','[WF loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
+ call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  :',(/mndp,mxdp/))
  !
  if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
  !

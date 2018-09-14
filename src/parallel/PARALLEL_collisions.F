@@ -201,8 +201,6 @@ subroutine PARALLEL_collisions( k, COLL )
    !
    if (l_eval_collisions) then
      !
-     PAR_IND_G_k%element_1D(i_k)=.TRUE.
-     !
      if ( (.not.l_par_SE) .and. (.not.l_PAR_NL) ) then
        !
        do i_q=1,nqbz

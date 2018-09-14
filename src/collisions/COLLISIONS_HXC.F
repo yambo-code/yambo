@@ -262,12 +262,12 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      i_sp    = COH_collisions%state(i_coll,4)
    endif   
    !
-   if( l_HXC_collisions ) HXC_COLL_element(1)%v3_c=cZERO
+   if( l_HXC_collisions )     HXC_COLL_element(1)%v3_c=cZERO
    if( l_use_COH_collisions ) COH_COLL_element(1)%v3_c=cZERO
    !
    ! HARTREE collisions
    !
-   if ( COLLISIONS_HXC_local )                     call compute_loc_HXC_collisions()
+   if ( COLLISIONS_HXC_local )                      call compute_loc_HXC_collisions()
    !
    ! XC collisions within MBPT
    !
@@ -283,11 +283,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_Q_INDEX%COMM)
      endif
    else
-     if(l_HXC_collisions) call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
+     if(l_HXC_collisions)     call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
      if(l_use_COH_collisions) call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=PAR_COM_G_b_A2A%COMM)
    endif
    !
-   if (l_HXC_collisions) call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
+   if (l_HXC_collisions)     call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
    if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",i_coll,COH_collisions,COH_COLL_element)
    !
  enddo ! loop on i_coll
@@ -347,9 +347,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        !
        i_p_bz  =qindx_S(i_k,i_q_fake,1)
        i_p     =k%sstar(i_p_bz,1)
-       i_p_s   =k%sstar(i_p_bz,2)
        !
-       if (i_p_s/=1) cycle
+       if (k%sstar(i_p_bz,2)/=1) cycle
        !
        do i_mp=COLL_bands(1),COLL_bands(2)
          do i_np=i_mp,COLL_bands(2)

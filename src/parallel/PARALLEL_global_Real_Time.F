@@ -227,16 +227,20 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
  !.........................................................................
- !   "COLLISIONS"
+ !   "COLLISIONS" & "q" -> k-q
+ !.........................................................................
+ !
+ ! The k-q distribution is present both the COLL evaulation and composition
+ !
+ ! In the eval case it is driven directly by IND_Q.
+ ! IND_G_k is just used for the WF distribution
+ !
+ ! In the compose case, instead, IND_G_k is used instead of IND_Q.
  !.........................................................................
  !
  call PARALLEL_collisions( Xk,    COH_collisions )
  call PARALLEL_collisions( Xk,    HXC_collisions )
  call PARALLEL_collisions( Xk, GW_NEQ_collisions )
- !
- if (.not.l_eval_collisions) then
-   call PARALLEL_index(PAR_IND_G_k,(/Xk%nibz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
- endif
  !
  !.........................................................................
  !   "qp"  -> Bp_mat (m,m')

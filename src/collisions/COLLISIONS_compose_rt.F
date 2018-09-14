@@ -30,7 +30,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,PAR_IND_G_k,PAR_COM_Xk_ibz_INDEX,&
+ use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
 &                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat
  use hamiltonian,      ONLY:B_mat_index
  use real_time,        ONLY:RT_nk,RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
@@ -62,7 +62,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
    ! The 1/real(RT_Nk_ibz(i_k),SP) factor is needed here because I'm integrating
    ! over kmq. With the DbGd the size of the integrating factor has to be reduced
    ! 
-   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)
+   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)/real(PAR_COM_Q_INDEX%n_CPU)
    !
  enddo
  !
@@ -96,11 +96,6 @@ subroutine COLLISIONS_compose_rt(dG_in)
    i_comp=0
    !
    do i_kmq=1,nXkibz
-     !
-     if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
-       i_comp=i_comp+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),i_kmq)/=0)
-       cycle
-     endif
      !
      do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)

@@ -302,6 +302,7 @@ subroutine RT_driver(E,X,k,q)
    ! Calculate the RT Hamiltonian Ho_plus_Sigma
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
+   !call RT_Hamiltonian(G_lesser(:,:,:,i_MEM_collision)+dG_lesser(:,:,:,i_MEM_collision),A_tot,E,k)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================

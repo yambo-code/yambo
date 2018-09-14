@@ -198,7 +198,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_collisions( Xk,   P_collisions )
  endif
  !
- ! To eval/use the COLLISIONS  in RT (and SC?) I need the PAR_Bp_mat_index, built here.
+ ! To eval/use the COLLISIONS I need the PAR_Bp_mat_index, built here.
  !
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !

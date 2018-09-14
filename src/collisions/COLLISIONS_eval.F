@@ -124,7 +124,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
    !
    ! PARALLEL WF distribution ...
+   ! ... k-q + final band index...
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   ! ... COLLISION initial state...
    if (l_use_COH_collisions) then
      call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
    else if (l_use_Hxc_collisions) then

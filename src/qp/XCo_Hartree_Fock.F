@@ -93,7 +93,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    !
+   ! Final states (k-q,n')...
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   ! Initial states (k,n \in QP)...
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index()
    !

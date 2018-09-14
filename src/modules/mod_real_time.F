@@ -159,10 +159,6 @@ module real_time
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
- ! K-points parallelization
- !
- integer                 :: RT_PAR_nk
- !
  ! Equilibrium V_xc and V_hartree in real space
  ! Presently REF_V_hartree_sc is not used
  !
@@ -543,9 +539,9 @@ module real_time
      XC0=cZERO
      !
      ! G's ...
-     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk))
-     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,G_MEM_steps))
-     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_PAR_nk,G_MEM_steps))
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      !
      ! Occ's ...
      YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))

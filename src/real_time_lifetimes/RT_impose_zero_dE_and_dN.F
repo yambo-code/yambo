@@ -32,7 +32,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
 &                         l_initial_equilibrium,RT_delta_occupations,&
 &                         l_RT_impose_E,l_RT_impose_for_metals,RT_nk,RT_ibz_coo,RT_Nk_ibz,&
 &                         l_RT_impose_N_dN,RT_bands,RAD_prefactor,l_RT_include_eq_scatt
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
  implicit none
  !
@@ -48,7 +47,7 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !     It should be restored
  !real(DP), parameter :: cut_off=0.1_DP  ! 0.1 = 10%
  !
- integer      :: i1,ib,ik,ik_rim,iE_rim,iref
+ integer      :: ib,ik,ik_rim,iE_rim,iref
  real(DP)     :: f0_E,f0_H,df,k_weight,En,Hole_fac,Elec_fac,Hole_fac0,Elec_fac0,GAMMA_h,GAMMA_e,&
 &                dN_dT_h_v,dN_dT_h_c,dN_dT_e_v,dN_dT_e_c,dE_dT_h_v,dE_dT_h_c,dE_dT_e_v,dE_dT_e_c,&
 &                dN0_dT_h_v,dN0_dT_h_c,dN0_dT_e_v,dN0_dT_e_c,dE0_dT_h_v,dE0_dT_h_c,dE0_dT_e_v,dE0_dT_e_c,&
@@ -255,8 +254,6 @@ subroutine RT_impose_zero_dE_and_dN(E,k,Hole_lifetime,Electron_lifetime,Scatt_ki
  !==============================================================================
  !
  do ik=1,k%nibz
-   !
-   !if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    !
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      !

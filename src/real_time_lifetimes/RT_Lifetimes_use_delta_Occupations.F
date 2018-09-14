@@ -35,8 +35,7 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,RT_all2ibz
- use parallel_m,     ONLY:PAR_IND_Xk_ibz
+&                         G_lesser_reference,RT_nk
  !
  implicit none
  !
@@ -73,8 +72,6 @@ subroutine RT_Lifetimes_use_delta_Occupations( )
      if (l_RT_relaxation_update_reference) then
        !
        ! _lifetime(ib,ik) are never used at different k-points. While occupations are
-       !
-       !if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
        ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
        ! an ALL2ALL later. BUT the e-p & e-g lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.

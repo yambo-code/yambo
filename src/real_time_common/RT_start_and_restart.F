@@ -347,9 +347,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    subroutine RT_set_G_lesser()
      !
-     use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_RT_k_index
-     !
-     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib,ik_mem
+     integer :: ik,ik_RT_DbGd,ik_E_DbGd,ib
      real(SP):: Energy,f_occ,f_occ_ref,Width
      !
      ! Defined from occupations %f
@@ -359,13 +357,9 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
          !
-         !if( .not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
-         !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
            !
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
-           !
-           ik_mem=PAR_RT_k_index(ik_RT_DbGd)
            !
            if (l_RT_uses_E_DbGd) then
              !
@@ -392,9 +386,9 @@ subroutine RT_start_and_restart(E,k,q)
            RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
            RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
            !
-           G_lesser(ib,ib,ik_mem,1)         = cmplx(0.,f_occ    ,SP)
-           G_lesser_reference(ib,ib,ik_mem) = cmplx(0.,f_occ_ref,SP)
-           dG_lesser(ib,ib,ik_mem,1)        = G_lesser(ib,ib,ik_mem,1)-G_lesser_reference(ib,ib,ik_mem)
+           G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
+           G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
+           dG_lesser(ib,ib,ik_RT_DbGd,1)        = G_lesser(ib,ib,ik_RT_DbGd,1)-G_lesser_reference(ib,ib,ik_RT_DbGd)
            !
          enddo
        enddo

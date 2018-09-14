@@ -23,14 +23,11 @@
 !                  
 subroutine RT_databases_IO(E)
  !
- use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
+ use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,IO_OBS_cache_steps
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn,&
-&                         REF_lifetime,E_E_Electron_lifetime,E_E_Hole_lifetime,E_P_Electron_lifetime,&
-&                         E_P_Ho_abs_lifetime,E_P_Hole_lifetime,E_PHOT_Electron_lifetime,&
-&                         E_PHOT_Hole_lifetime
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END
@@ -82,25 +79,6 @@ subroutine RT_databases_IO(E)
    ! GPL_EXCLUDE_START
    !
    if (io_CARRIERs) then
-     !
-     ! All 2 All
-     !
-     !if (l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt) then
-     !  call PP_redux_wait(REF_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !  if (l_elphoton_scatt) then
-     !    call PP_redux_wait(E_PHOT_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !    call PP_redux_wait(E_PHOT_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !  endif
-     !  if (l_elel_scatt) then
-     !    call PP_redux_wait(E_E_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !    call PP_redux_wait(E_E_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !  endif
-     !  if (l_elph_scatt) then
-     !    call PP_redux_wait(E_P_Hole_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !    call PP_redux_wait(E_P_Electron_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !    call PP_redux_wait(E_P_Ho_abs_lifetime,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-     !  endif
-     !endif
      !
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      !

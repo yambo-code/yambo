@@ -370,7 +370,6 @@ module parallel_m
  integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
- integer,allocatable:: PAR_RT_k_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz

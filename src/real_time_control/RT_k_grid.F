@@ -43,9 +43,8 @@ subroutine RT_k_grid(E,k,q)
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk,RT_PAR_nk
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk,RT_nk
  use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PAR_Xk_nibz,PAR_RT_k_index,PAR_Xk_ibz_index,PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -76,18 +75,7 @@ subroutine RT_k_grid(E,k,q)
  !==============================
  if (.not.l_RT_uses_E_DbGd) then
    !
-   !DEBUG
-   !RT_PAR_nk=PAR_Xk_nibz
-   RT_PAR_nk=k%nibz
    RT_nk    =k%nibz
-   !
-   YAMBO_ALLOC(PAR_RT_k_index,(k%nibz))
-   !
-   !DEBUG
-   !PAR_RT_k_index=PAR_Xk_ibz_index
-   do ik=1,k%nibz
-     PAR_RT_k_index(ik)=ik
-   enddo
    !
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
@@ -132,18 +120,9 @@ subroutine RT_k_grid(E,k,q)
  enddo
  !
  YAMBO_ALLOC(RT_all2ibz,(RT_nk))
- YAMBO_ALLOC(PAR_RT_k_index,(RT_nk))
- PAR_RT_k_index=0
- RT_PAR_nk=0
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
      RT_all2ibz(ik_rim)    =ik
-   enddo
- !DEBUG
- !  if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     RT_PAR_nk=RT_PAR_nk+1
-     PAR_RT_k_index(ik_rim)=RT_PAR_nk
    enddo
  enddo
  !

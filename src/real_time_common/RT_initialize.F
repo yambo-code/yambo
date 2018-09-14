@@ -37,7 +37,7 @@ subroutine RT_initialize(E,k,q)
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
- use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk, RT_PAR_nk,  &
+ use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
 &                         NE_steps,NE_tot_time,l_RT_induced_field,RT_life_extrap_times,       &
 &                         RAD_LifeTime,l_RT_CCA_Kernel,Life_MEM_steps,Phase_LifeTime,         &
 &                         NE_MEM_treshold,G_MEM_steps,l_RT_uses_E_DbGd,DbGd_EE_Nk_table,      &
@@ -439,13 +439,13 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r',      'Double Grid support        :',l_RT_uses_E_DbGd)
  if (l_RT_uses_E_DbGd) then
    call msg( 'r',    'K-points            (TOTAL):',RT_DbGd_nk)
-   call msg( 'r',    '           (EVOLVED,MEMORY):',(/RT_nk,RT_PAR_nk/))
+   call msg( 'r',    '                  (EVOLVED):',RT_nk)
    if (l_elel_scatt) then
      call msg( 'r',  'Percentual used in e-e[o/o]:',DbGd_EE_percent)
      call msg( 'r',  'Max e-e scattering states  :',maxval(DbGd_EE_Nk_table))
    endif
  else
-   call msg( 'r',    'K-points   (EVOLVED,MEMORY):',(/RT_nk,RT_PAR_nk/))
+   call msg( 'r',    'K-points            (TOTAL):',RT_nk)
  endif
  !
  ! GPL_EXCLUDE_END

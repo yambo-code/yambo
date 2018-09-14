@@ -57,6 +57,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
  l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
  NN_n_of_nearest=NN
+ ID=0
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))

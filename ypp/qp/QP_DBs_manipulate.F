@@ -88,7 +88,7 @@ subroutine QP_DBs_manipulate( E )
  enddo
  call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp,QP_db_operation,QP_db_prefactor)
  !
- call msg('l','done')
+ call msg('s','done')
  !
  call msg('s','I/O...')
  !=====================

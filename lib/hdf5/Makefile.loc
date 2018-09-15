@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libhdf5.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${hdf5_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_hdf5)
@@ -42,8 +42,7 @@ configure-stamp: uncompress-stamp
 	      CXXFLAGS="$(cflags)" \
 	      FC="$(fc)" \
 	      FCFLAGS="$(fcflags)" \
-	      CPPFLAGS="$(netcdf_aux)" \
-	      INSTALL_DIR="$(INSTALL_DIR)" ); \
+	      CPPFLAGS="$(netcdf_aux)" ); \
 	fi
 	touch configure-stamp
 

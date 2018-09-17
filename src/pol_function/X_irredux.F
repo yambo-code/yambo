@@ -199,7 +199,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
 #endif
  !
- if (coarse_grid_N>n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
+ if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
  !
  ! OpenMP setup
  !==============
@@ -322,7 +322,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 !$omp end parallel
  !
  !
- if (coarse_grid_N>n_out_threads) call live_timing( )
+ if (coarse_grid_N>=n_out_threads) call live_timing( )
  !
  call OPENMP_update(master_thread) 
  call OPENMP_locks_reset()

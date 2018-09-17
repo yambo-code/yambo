@@ -234,7 +234,9 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  if (Bose_Temp<0.) Bose_Temp=Tel
  Finite_Tel=any((/Tel,Bose_Temp/)>=Tel_step*3._SP)
  !
- if (mode=="FERMI") return
+ if (present(mode)) then
+   if (mode=="FERMI") return
+ endif
  !
  ! Build the occupations and find the nearest occupied state to the Fermi level
  !
@@ -290,9 +292,11 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  ! Gaps, VBM/CBM
  !
- if (mode=="OCCUPATIONS") then
-   call OCCUPATIONS_Gaps(E)
-   return
+ if (present(mode)) then
+   if (mode=="OCCUPATIONS") then
+    call OCCUPATIONS_Gaps(E)
+     return
+   endif
  endif
  !
  if (present(OBJ)) then

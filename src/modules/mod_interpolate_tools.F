@@ -23,7 +23,7 @@
 !
 module interpolate_tools
  !
- use pars,         ONLY:SP,schlen
+ use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
 &                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
 &                       INTERPOLATE_msg_fmt
@@ -99,6 +99,7 @@ module interpolate_tools
      INTERP_obj(ID)%weights=k%weights
      !
      YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
+     INTERP_obj(ID)%SEED=rZERO
      !
    end subroutine init_ID
    !

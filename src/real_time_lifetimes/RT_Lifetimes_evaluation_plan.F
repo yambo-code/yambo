@@ -86,40 +86,33 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  do while (it<NE_steps)
    !
-   ! Final part
-   !
-   ! (AM 18/9/18)
-   !
-   ! The RT_TIME_status form is (let's assume 3 blocks)
-   !
-   !  1----2----3----
-   !  |---|
-   !  N_intra_steps
-   !
-   ! This means that N_inter_steps=N_blocks*N_intra_steps
-   !
-   ! Now, what I want here is that the last part of the simulation is made in such a way to mantain the number of blocks
-   !
-   ! If now only NT_last<N_intra_steps*(N_blocks-1) are left I will do
-   !
-   !  N_intra_steps=(NT_last-1)/(N_blocks-1)
-   !
-   if (NE_steps-it+1<N_inter_steps) then
-     !
-     N_inter_steps=NE_steps-it+1
-     N_intra_steps=N_inter_steps/N_blocks+1
-     call BUILD_up_group(N_inter_steps,N_intra_steps)
-     !
-     RT_TIME_status(NE_steps)=1
-     !
-     !call BUILD_up_group(N_inter_steps/N_intra_steps,1)
-     !
-   else
-     call BUILD_up_group(N_inter_steps,N_intra_steps)
-   endif
+   call BUILD_up_group(N_inter_steps,N_intra_steps)
    !
    it=it+N_inter_steps
    !
+ enddo
+ !
+ ! Final part
+ !
+ ! (AM 18/9/18)
+ !
+ ! The RT_TIME_status form is (let's assume 3 blocks)
+ !
+ !  1----2----3----
+ !  |---|
+ !  N_intra_steps
+ !
+ ! This means that N_inter_steps=N_blocks*N_intra_steps
+ !
+ ! What I do here is that I fill with "1" the last part of the status to be sure 
+ ! that there only (N_intra_steps-1) "-1". This is important for the averaging procedures.
+ !
+ do it=NE_steps,1,-1
+   if (RT_TIME_status(it)<0) then
+     RT_TIME_status(it)=1
+   else if (RT_TIME_status(it)>0) then
+     exit
+   endif
  enddo
  !
  RT_Lifetimes_evaluation_plan = count( RT_TIME_status >0 )

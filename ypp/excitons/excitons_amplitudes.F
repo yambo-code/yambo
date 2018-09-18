@@ -131,7 +131,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    ! Then report the detailed list of transitions & calculate the amplitude
    !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
-   titles(1:6)=(/'Band_V','Band_C','K  ibz','Symm. ', 'Kp ibz', 'Symmp '/)
+   titles(1:6)=(/'Band_V  ','Band_C  ','Kv-q ibz','Symm_kv ', 'Kc ibz  ', 'Symm_kc '/)
    if(n_sp_pol==1) then
      titles(7:8)=(/'Weight','Energy'/)
      call msg('o weight','#',titles(:8),INDENT=0,USE_TABS=.true.)
@@ -168,8 +168,8 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
      if (A_weight(neh)<min_weight) cycle
      !
      if(n_sp_pol==1) then
-       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-&                             real(ikp,SP),real(isp,SP),&
+       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikp,SP),real(isp,SP),& 
+&                              real(ikibz,SP),real(is,SP),&
 &                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
 &            INDENT=-2,USE_TABS=.FALSE.)
      else

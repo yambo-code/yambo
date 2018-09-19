@@ -93,8 +93,8 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! Switch off report file support
  !
- write_to_report   =.FALSE.
  live_timing_is_on =myid==0
+ write_to_report   =myid==0
  write_to_log      =myid==0
  !
  ! DB1

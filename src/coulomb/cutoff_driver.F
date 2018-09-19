@@ -47,7 +47,7 @@ subroutine cutoff_driver(q)
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description
- use stderr,        ONLY:string_split,string_pack
+ use stderr,        ONLY:STRING_split,STRING_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
@@ -91,7 +91,7 @@ subroutine cutoff_driver(q)
  !
  ! Parsing the cut_geometry string
  !
- call string_split(cut_geometry,str_piece)
+ call STRING_split(cut_geometry,str_piece)
  !
  cut_is_sphere=trim(str_piece(1))=='sphere'
  cut_is_box=trim(str_piece(1))=='box'
@@ -135,17 +135,17 @@ subroutine cutoff_driver(q)
    return
  endif
  !
- ch1=string_pack('Coloumb potential CutOff :',str_piece(1))
+ ch1=STRING_pack('Coloumb potential CutOff :',str_piece(1))
  call section('*',trim(ch1))
  !
  ch1=           'Cut directions       :'
  ch2=' '
- if (is_cut(1)) ch1=string_pack(ch1,'X')
- if (is_cut(1)) ch2=string_pack(ch2,'x')
- if (is_cut(2)) ch1=string_pack(ch1,'Y')
- if (is_cut(2)) ch2=string_pack(ch2,'y')
- if (is_cut(3)) ch1=string_pack(ch1,'Z')
- if (is_cut(3)) ch2=string_pack(ch2,'z')
+ if (is_cut(1)) ch1=STRING_pack(ch1,'X')
+ if (is_cut(1)) ch2=STRING_pack(ch2,'x')
+ if (is_cut(2)) ch1=STRING_pack(ch1,'Y')
+ if (is_cut(2)) ch2=STRING_pack(ch2,'y')
+ if (is_cut(3)) ch1=STRING_pack(ch1,'Z')
+ if (is_cut(3)) ch2=STRING_pack(ch2,'z')
  call msg('r',trim(ch1))
  write (cut_geometry,'(3a)') trim(str_piece(1)),' ',trim(ch2)
  if (cut_is_sphere) is_cut=.true.

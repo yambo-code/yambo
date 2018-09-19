@@ -68,7 +68,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! 
  ! A : Current
  !
- call RT_average_operator(V_VALUE=RT_ind_J, V_MATRIX=-DIP_v,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(N_V=3,V_VALUE=RT_ind_J, V_MATRIX=-DIP_v,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  ! Velocity gauge I must use the correct definition of the J operator
  !
@@ -86,7 +86,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    ! B : Polarization in terms of the off-diagonal dipoles x_ij.
    !     This expression is exact up to linear order in the field.
    !
-   call RT_average_operator(V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    !
    RT_P    =RT_P/DL_vol
    !
@@ -108,33 +108,35 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
    ! C : Spin magnetization
    !
-   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+&                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,1)=RT_M_tmp
    !
    if(NE_i_time==1) then
-     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+&                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
    !
    ! D : Orbital magentization (local and itinerant contributions)
    !
-   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
-&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
+&                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
-     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
-&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
+&                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
      Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
    endif
    !
-   call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
-&                            G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
+&                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
    RT_magn(:,3)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
-     call RT_average_operator(V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
-&                              G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
+&                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
      Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
    endif
    ! 

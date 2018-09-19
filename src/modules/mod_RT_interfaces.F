@@ -27,7 +27,7 @@ module RT_interfaces
  !
  interface
    !
-   subroutine RT_average_operator(O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
+   subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
 &                                 V_MATRIX,PV_MATRIX,G,k,en,TRANS,Double_Grid,nK_mem)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp,nXkibz
@@ -38,18 +38,18 @@ module RT_interfaces
      type(bz_samp), intent(in) :: k
      complex(SP),   intent(in) :: G(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk)
      type(levels),  intent(in) :: en
-     integer,       intent(in) :: nK_mem
-     complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(3)
-     complex(SP),     optional, intent(in) ::  V_MATRIX(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) :: PV_MATRIX(3,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) ::  O_MATRIX(  RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+     integer,       intent(in) :: nK_mem,N_V
+     complex(SP),     optional,intent(out) :: O_VALUE,V_VALUE(N_V)
+     complex(SP),     optional, intent(in) ::  V_MATRIX(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+     complex(SP),     optional, intent(in) :: PV_MATRIX(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
+     complex(SP),     optional, intent(in) ::  O_MATRIX(    RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nK_mem,n_sp_pol)
      complex(SP),     optional, intent(in) :: O_QP(QP_n_states)
      real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
      logical,         optional, intent(in) :: TRANS
      character(6),    optional, intent(in) :: Double_Grid
    end subroutine RT_average_operator
    !
-   subroutine RT_update(G_input,SC_R,it,E,k,X,up_Gref,up_DIP,an_QP)
+   subroutine RT_update(G_input,H_rotation,it,E,k,X,up_Gref,up_DIP,an_QP)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use QP_m,       ONLY:QP_nk
@@ -58,7 +58,7 @@ module RT_interfaces
      use real_time,  ONLY:RT_bands
      type(X_t),      intent(inout)        :: X
      complex(SP),    intent(inout)        :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),QP_nk)
-     complex(SP),    intent(in)           :: SC_R(RT_bands(2),RT_bands(2),QP_nk,n_sp_pol)
+     complex(SP),    intent(in)           :: H_rotation(RT_bands(2),RT_bands(2),QP_nk,n_sp_pol)
      type(bz_samp),  intent(in)           :: k
      type(levels),   intent(in)           :: E
      integer,        intent(in)           :: it

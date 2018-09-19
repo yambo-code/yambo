@@ -115,7 +115,7 @@ module QP_m
    !
  end type QP_t
  !
- ! interface
+ ! Interface
  !
  interface
    !

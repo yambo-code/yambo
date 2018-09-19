@@ -50,7 +50,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       l_BSE_minimize_memory, l_restart_bse
  use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_WR_CL,DUMP,&
+&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -683,7 +683,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #if defined _PAR_IO
    call io_BS_PAR_write_block(iq,i_block,ID)
 #else
-   call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
 #endif
    !

@@ -36,33 +36,33 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  type(RT_IO_t):: GENERAL_RT_IO_t
  !
  ! Work Space
- ! 
  !
  integer  :: i_t,i_ref(2),i_range(2),i_io(2),i_c,j_ref
- logical  :: UNIFORM
+ logical  :: UNIFORM,l_use_non_uniform_time_grid
  real(SP) :: STEP,TIME,TIME_diff
  !
+ ! Definitions
+ !==============
+ !
+ TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
+ STEP  = RT_step
  if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
- if (GENERAL_RT_IO_t%N==1) STEP  = 1._SP
- STEP  = max(TIME_adjust(STEP),STEP)
- TIME  = TIME_adjust(GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N))
  !
  ! Time range ...
  !===============
+ !
  if (any(RT_conf%T_range>0._SP)) then
    !
-   if  (RT_conf%T_range(1) < 0)  RT_conf%T_range(1) = GENERAL_RT_IO_t%Time(1)
-   if  (RT_conf%T_range(2) < 0)  RT_conf%T_range(2) = TIME
-   RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1) )
-   RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2) )
-   ! 
-   i_range(:) = nint( RT_conf%T_range(:)/RT_step )
+   RT_conf%T_range(1)=TIME_adjust( RT_conf%T_range(1), STEP )
+   RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
+   !
+   i_range(:) = nint( RT_conf%T_range(:)/STEP )
    i_ref      = 0
    !
    do i_t=1,GENERAL_RT_IO_t%N-1
      !
-     i_io(1) = nint( GENERAL_RT_IO_t%Time(i_t)/RT_step )
-     i_io(2) = nint( GENERAL_RT_IO_t%Time(i_t+1)/RT_step )
+     i_io(1) = nint( GENERAL_RT_IO_t%Time(i_t)/STEP )
+     i_io(2) = nint( GENERAL_RT_IO_t%Time(i_t+1)/STEP )
      !
      do i_c=1,2
        if (i_range(i_c)==i_io(1)) then
@@ -84,31 +84,31 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
    i_ref           = (/1,GENERAL_RT_IO_t%N/)
    !
- endif
+ endif 
  !
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?
  !========================
- if (GENERAL_RT_IO_t%N==nint(TIME/STEP)+1) UNIFORM=.TRUE.
- if (GENERAL_RT_IO_t%N/=nint(TIME/STEP)+1) UNIFORM=.FALSE.
+ !
+ UNIFORM=.TRUE.
+ do i_t=1,GENERAL_RT_IO_t%N-1
+   TIME_diff= abs ( GENERAL_RT_IO_t%Time(i_t+1)-GENERAL_RT_IO_t%Time(i_t) - STEP )
+   if (TIME_diff>RT_step) UNIFORM=.FALSE.
+ enddo
+ !
+ l_use_non_uniform_time_grid=what=="CURRENT"
  !
  ! Time step ...
  !
  ! N.B.: This is needed for the carriers post-processing only
  !============================================================
  !
- if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. what/="CURRENT") then
+ if ( (RT_conf%delta_T>0._SP.or..not.UNIFORM) .and. .not.l_use_non_uniform_time_grid) then
    !
-   if (UNIFORM) then
-     RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
-   else 
-     !
-     STEP            = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
-     RT_conf%delta_T = nint( RT_conf%delta_T/STEP )*STEP
-     if ( nint( RT_conf%delta_T/STEP ) ==0 ) RT_conf%delta_T = STEP
-     !
-   endif
+   if (.not.UNIFORM) STEP = GENERAL_RT_IO_t%Time(i_ref(2))-GENERAL_RT_IO_t%Time(i_ref(2)-1)
+   !
+   RT_conf%delta_T=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    !
    do i_c=1,2
      !
@@ -119,9 +119,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        j_ref=i_ref(2)
        !
        do i_t=i_ref(2)-1,i_ref(1),-1
-         TIME_diff=GENERAL_RT_IO_t%Time(j_ref)-GENERAL_RT_IO_t%Time(i_t)
-         i_range(1) = nint(TIME_diff/RT_step)
-         if (i_range(1) == nint(RT_conf%delta_T/RT_step)) then
+         TIME_diff= abs ( GENERAL_RT_IO_t%Time(j_ref)-GENERAL_RT_IO_t%Time(i_t) - RT_conf%delta_T )
+         if (TIME_diff<RT_step) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
          endif
@@ -138,9 +137,8 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
        RT_time(1)       =GENERAL_RT_IO_t%Time(i_ref(1))
        !
        do i_t=i_ref(1)+1,i_ref(2)
-         TIME_diff=GENERAL_RT_IO_t%Time(i_t)-GENERAL_RT_IO_t%Time(j_ref)
-         i_range(1) = nint(TIME_diff/RT_step)
-         if (i_range(1) == nint(RT_conf%delta_T/RT_step)) then
+         TIME_diff= abs ( GENERAL_RT_IO_t%Time(i_t)-GENERAL_RT_IO_t%Time(j_ref) - RT_conf%delta_T )
+         if (TIME_diff<RT_step) then
            RT_conf%T_n_steps=RT_conf%T_n_steps+1
            j_ref            = i_t
            RT_time(RT_conf%T_n_steps)=GENERAL_RT_IO_t%Time(i_t)
@@ -175,7 +173,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !
- if (what/="CURRENT") return
+ if (l_use_non_uniform_time_grid) return
  !
  call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
  call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)

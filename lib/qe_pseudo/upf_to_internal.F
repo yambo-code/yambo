@@ -102,7 +102,7 @@ subroutine set_pseudo_upf (is, upf, grid)
                     do ir = 1, upf%kkbeta
                        if (upf%r(ir) <upf%rinner (l+1) ) ilast = ir
                     enddo
-                    call setqfnew( upf%nqf,upf%qfcoef(1,l+1,nb,mb), ilast, upf%r, l, 2, upf%qfuncl(1,ijv,l) )
+                    call setqfnew( upf%nqf,upf%qfcoef(:,l+1,nb,mb), ilast, upf%r, l, 2, upf%qfuncl(:,ijv,l) )
                  end if
               end do
            end if

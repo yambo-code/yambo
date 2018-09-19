@@ -25,7 +25,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  !
  ! This routine just adds to qp_base qp with the plan plan_EWZG
  !
- use pars,           ONLY:cZERO,rZERO,cI,SP
+ use pars,           ONLY:cZERO,rZERO,cI,SP,rONE
  use QP_m,           ONLY:QP_t,QP_reset,QP_copy,QP_alloc
  use electrons,      ONLY:n_sp_pol
  !
@@ -87,11 +87,9 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  !
  qp%k =rZERO
  qp%wk=rZERO
- if (l_QP_db) then
-   qp%Z=cZERO
-   qp%E=cZERO
-   qp%E_bare=rZERO
- endif
+ qp%Z=rONE
+ qp%E=cZERO
+ qp%E_bare=rZERO
  !
  ! Copying from qp_base
  !
@@ -134,7 +132,7 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
              dE=qp_to_add%E(i_sp)-qp_to_add%E_bare(i_sp)
              qp%E(i_s)=qp%E(i_s)-dE+qp_to_add%Z(i_sp)*dE
            endif
-           qp%Z(i_s)=qp%Z(i_s)+qp_to_add%Z(i_sp) 
+           qp%Z(i_s)=1.+(qp%Z(i_s)-1.)+(qp_to_add%Z(i_sp)-1.)
          endif
        else
          if (plan_EWZG(4)) then

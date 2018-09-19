@@ -48,11 +48,11 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
 #include<memory.h>
  !
- type(w_samp),  intent(in)  :: W
- type(levels),  intent(in)  :: E
- type(bz_samp), intent(in)  :: k
- integer,       intent(in)  :: iq,Lo_dim,Lo_n_loop
- complex(SP),   intent(out) :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
+ type(w_samp),  intent(inout) :: W
+ type(levels),  intent(in)    :: E
+ type(bz_samp), intent(in)    :: k
+ integer,       intent(in)    :: iq,Lo_dim,Lo_n_loop
+ complex(SP),   intent(out)   :: Lo(BS_H_dim,W%n_freqs,Lo_dim)
  !
  ! Work Space
  !

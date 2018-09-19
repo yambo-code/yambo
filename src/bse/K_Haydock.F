@@ -69,7 +69,7 @@ subroutine K_Haydock(iq,W)
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
- logical, external  ::stop_now
+ logical, external  ::STOP_now
  !
  ! I/O
  !
@@ -488,7 +488,7 @@ subroutine K_Haydock(iq,W)
    !--------------------------------------------------
    if ( mod(it,Haydock_iterIO)==0 .or. &
 &       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       stop_now(.FALSE.)    ) then
+&       STOP_now(.FALSE.)    ) then
      !
      call HAYVEC_gather(Vnm1,Vnm1_f)
      call HAYVEC_gather(Vn,Vn_f)
@@ -521,7 +521,7 @@ subroutine K_Haydock(iq,W)
    endif
    !
    if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       stop_now(.FALSE.)) then
+&       STOP_now(.FALSE.)) then
      call msg('r','Accuracy (reached)   [o/o]:',reached_threshold)
      call msg('r','Iterations                :',it)
      exit

@@ -43,6 +43,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+ use IO_m,           ONLY:rm_file
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
@@ -114,7 +115,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
-   call initinfio(defs,11)
+   if (master_cpu) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
@@ -681,6 +682,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (master_cpu) then
+   call rm_file(trim(repfile))
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')
  endif

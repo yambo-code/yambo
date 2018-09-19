@@ -91,9 +91,6 @@
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 
   {"gkkp"  , "g","gkkp databases",0,0,0,0,0}, 
 #endif
-#if defined _YPP_RT && ! defined _YPP_ELPH
-  {"phonons","p","Phonon [(o)scillations]",0,0,1,0,0}, 
-#endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="ypp";

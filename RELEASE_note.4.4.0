@@ -1,0 +1,57 @@
+
+Yambo 4.4.0 Release Notes
+=========================
+
+GENERAL
+-------
+- bin-libs -> lib/bin
+- External libs clean-up improved
+- debugging flags coded in acx_fortran_flags 
+- SET_job_strings_and_dirs.F routine coded to handle new job string format. Example
+  -J path1/path2/job,path3/jobp
+- "js" removed from SET_defaults
+- Closing operations moved into CLOSE_the_run routine
+- GLOBAL renaming
+ > OP_APP_CL -> OP_APP_WR_CL
+ > stop_now -> STOP_now
+ > string_remove -> STRING_remove
+ > string_pack -> STRING_pack
+ > SC_R -> H_rotation
+- STRING_match routine added to compare avoiding the check on upper/lowercase.
+- PARSER now re-organized with specific file names (PARSER_*.F)
+ > Parsing of arrays better coded. Now they support memory.
+
+YAMBO
+-----
+- XC_potentials added to handle the definition of kernel potentials (collisions)
+- k-parallelization of:
+  > COLLISIONS_compose (SC and RT)
+  > G_lesser time-evolution
+- QP_state_extract_print added to modularize the QP printing operation.
+- OBS_rotate added and ready to be used.
+  > H_rotate moved to separate routine
+  > created a real_time_hamiltonian folder (includes RT-Hamiltonian related operations)
+- Added FC-ORTHOROMBIC to crystal lattice.
+- Added more PARALLEL logicals
+ > logical           :: HEAD_q_cpu =.TRUE.
+ > logical           :: HEAD_b_cpu =.TRUE.
+- Now the input file is copied (adding the JOB identifier) when a com directory is different from the PWD. 
+- INIT_report_and_log_files now defines log/report filenames
+- New INTERPOLATION module
+ > The old interpolation routines in ypp have been re-organized and modularized (now there is an INTERPOLATION_driver).
+   The two methods (NearestNeighbout and Boltzmann) are coded.
+- RT components now stored in an OBSERVABLE database.
+ > JPC_RT_IO_t -> OBS_RT_IO_t
+ > JPSM -> OBSERV
+ > Complex io_bulk used in io_RT_components
+- RT_ouput now made modular and splitted in several parts:
+ > mod_RT_outuput
+ > RT_FILE_add
+- YPP interpolate routines made available to the main code moving interpolate in src
+
+YPP
+---
+- ypp/init -> ypp/interface
+- YPP "RTDBs" manual removed
+- DEEP revision of all RT-related operations
+ > Now INTERPOLATION using Boltzman works in all sections (RT-occs, RT-dos)

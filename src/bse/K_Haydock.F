@@ -142,12 +142,12 @@ subroutine K_Haydock(iq,W)
  !
 #if defined _KERR
  !  if(l_kerr) then
- !    io_err=ioBSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),  &
+ !    io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),  &
  !    &                   Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2),Cf_kerr=Cf_kerr(:2))
  !  else
 #endif
  !
- io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),&
+ io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),&
 &       Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:2))   
  !
 #if defined _KERR
@@ -155,7 +155,7 @@ subroutine K_Haydock(iq,W)
 #endif
  !
  else
-   io_err=io_BSS_Haydock(ID,1,BS_K_dim,reached_threshold,Af(1),Bf(:2),Vnm1_f,Vn_f)
+   io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),Vnm1_f,Vn_f)
  endif
  !
  !
@@ -169,12 +169,12 @@ subroutine K_Haydock(iq,W)
  !
 #if defined _KERR
  !    if(l_kerr) then
- !      io_err=ioBSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
+ !      io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
  !      &                    Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
  !    else
 #endif
  
-     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),&
 &                   Bf(:it_on_disk+1),Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:it_on_disk+1))
  !
 #if defined _KERR
@@ -182,7 +182,7 @@ subroutine K_Haydock(iq,W)
 #endif
  !
    else
-     io_err=io_BSS_Haydock(ID,it_on_disk,BS_K_dim,reached_threshold,Af(:it_on_disk),&
+     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),&
      &      Bf(:it_on_disk+1),Vnm1_f,Vn_f)
      call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
    end if
@@ -503,17 +503,17 @@ subroutine K_Haydock(iq,W)
 !
 !       if(l_kerr) then
 !         io_err=&
-!         io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
+!         io_BSS_Haydock(ID,it,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
 !       else 
 #endif
          io_err=&
-           io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
+           io_BSS_Haydock(ID,it,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
          Bf(1) = 0._SP
 #if defined _KERR
 !        endif
 #endif 
      else
-       io_err=io_BSS_Haydock(ID,it,BS_K_dim,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
+       io_err=io_BSS_Haydock(ID,it,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
      end if
      !
      if (master_cpu) deallocate(Vn_f, Vnm1_f)

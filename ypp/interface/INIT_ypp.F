@@ -38,7 +38,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists,write_to_report
+ use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo
  use stderr,         ONLY:STRING_split,write_to_log  
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
@@ -724,6 +724,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call rm_file(trim(repfile))
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')
+   close(11)
  endif
  !
 contains

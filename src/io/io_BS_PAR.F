@@ -35,7 +35,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS_solvers,    ONLY:variables_BS
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
 &                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
-&                        io_header,io_mode,io_file,io_control
+&                        io_header,io_mode,io_file
  !
  implicit none
  !

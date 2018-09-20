@@ -17,6 +17,9 @@ TARBALL=$(tarball_libxc)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH)
+#
+# workaround for PGI compiler
+fcflags_aux=`echo $(fcflags) | sed 's/-Mnomain//'`
 
 #
 # MAIN target
@@ -35,7 +38,7 @@ configure-stamp: uncompress-stamp
 	        CC="$(cc)" \
 	        CFLAGS="$(cflags)" \
 	        FC="$(fc)" \
-	        FCFLAGS="$(fcflags)" \
+	        FCFLAGS="$(fcflags_aux)" \
 	        CPP="$(cpp)" \
 		FCCPP="$(fpp)" ); \
 	fi

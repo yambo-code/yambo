@@ -106,18 +106,17 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/include"; then mkdir    "$extlibs_pa
 if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_path/${FCKIND}/${FC}/bin";     fi
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
- FILES=$extlibs_path/${FCKIND}/${FC}/bin/*
- for file in $FILES; do
+ BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;
+ BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}/bin/* ;
+ BIN_SLEPC=$extlibs_path/${FCKIND}/${FC}/${build_precision}/bin/* ;
+ cd $exec_prefix/bin-libs ;
+ rm -f ./* ;
+ for file in $BIN_LIBRARIES $BIN_NETCDF $BIN_SLEPC; do
   if test -f $file; then 
-   cp $file $exec_prefix/bin-libs/
+   ln -s $file ./ ;
   fi
  done
- FILES=$extlibs_path/${FCKIND}/${FC}/v3/bin/*
- for file in $FILES; do
-  if test -f $file; then 
-   cp $file $exec_prefix/bin-libs/
-  fi
- done
+ cd $prefix ;
 fi
 #
 if [[ "$prefix" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then

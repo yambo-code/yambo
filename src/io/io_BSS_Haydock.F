@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
+integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)  
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_identifier
+ use BS,            ONLY:BS_identifier,BS_H_dim
  use BS_solvers,    ONLY:BSS_q0
  use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
 &                        io_bulk,io_status,io_sec,io_header
@@ -41,7 +41,7 @@ integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vn
  !
  implicit none
  !
- integer             :: ID,it,BS_H_dim
+ integer             :: ID,it
  real(SP)            :: reached_treshold,Bf(it+1),Af(it)
  complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
  complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)

@@ -110,23 +110,6 @@ subroutine RT_X_LRR_real_field(en)
  ! Electric Field...
  !-------------------
  !
- !... Analytic contribution
- !
- iE_err=0
- do i_w = 1, RT_conf%W_n_steps
-   !
-   if(trim(RT_conf%damping) /= "NONE")                      Field_freq=freqs(i_w)-cI*RT_conf%damp_factor
-   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*RT_conf%Field_damp_factor
-   !
-   E_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)
-   E_w(i_w,1)=E_w(i_w,1)*exp(cI*freqs(i_w)*RT_time(1))  
-   !
-   if (iE_err/=0) exit
-   !
- enddo 
- !
- !... FT
- !
  YAMBO_ALLOC(E_t,(RT_conf%T_n_steps,n_fields))
  !
  do i_t=1,RT_conf%T_n_steps
@@ -142,7 +125,31 @@ subroutine RT_X_LRR_real_field(en)
    !
  enddo
  !
+ ! FT... 
+ !
+ ! ... Analytic contribution
+ !
+ iE_err=-1
+ if (n_fields==1) then
+   iE_err=0
+   do i_w = 1, RT_conf%W_n_steps
+     !
+     if(trim(RT_conf%damping) /= "NONE")                      Field_freq=freqs(i_w)-cI*RT_conf%damp_factor
+     if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*RT_conf%Field_damp_factor
+     !
+     E_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)*&
+&               exp(cI*freqs(i_w)*Efield(i_Probe)%t_initial)
+     !
+     if (iE_err/=0) exit
+     !
+   enddo 
+ endif
+ !
+ ! ... Numerical
+ !
  do i_field=1,n_fields
+   !
+   if (iE_err>=0) cycle
    !
    if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) then
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,E_t(:,i_field),1)

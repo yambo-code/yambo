@@ -224,7 +224,55 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
  !
  YAMBO_ALLOC(IK_ref,(DbGd_k(i_db_merge)%nibz))
  !
+ if (.not.l_skip_check) then
+   !
+   call section('+','Internal consistency check ...')
+   !
+   call k_DbGd_grid_consistency_check(IK_ref,Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
+   !
+   NK_found=count(IK_ref>0)
+   !
+   if (NK_found>0) then
+     !
+     call msg('s','Found '//trim(intc(NK_found))//" Double-Grid k-point(s) already in the built-in grid")
+     !
+     if (NK_found==DbGd_k(i_db_merge)%nibz) then
+       !
+       call warning("Empty group of k-points to be written in the DbGd DB")
+       l_skip_check=.TRUE.
+       !
+     else
+       !
+       call section('=','Removing the reference point(s) from the Double Grid ...')
+       YAMBO_ALLOC(rand_k,(DbGd_k(i_db_merge)%nibz-NK_found,3))
+       YAMBO_ALLOC(rand_E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz-NK_found,n_sp_pol))
+       i_c=1
+       do ik=1,DbGd_k(i_db_merge)%nibz
+         if (IK_ref(ik)>0) cycle
+         rand_k(i_c,:)  =DbGd_k(i_db_merge)%pt(ik,:)
+         rand_E(:,i_c,:)=DbGd_E(i_db_merge)%E(:,ik,:)
+         i_c=i_c+1
+       enddo
+       YAMBO_FREE(DbGd_E(i_db_merge)%E)
+       YAMBO_FREE(DbGd_k(i_db_merge)%pt)
+       DbGd_k(i_db_merge)%nibz=DbGd_k(i_db_merge)%nibz-NK_found
+       YAMBO_ALLOC(DbGd_E(i_db_merge)%E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz,n_sp_pol))
+       YAMBO_ALLOC(DbGd_k(i_db_merge)%pt,(DbGd_k(i_db_merge)%nibz,3))
+       DbGd_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
+       DbGd_k(i_db_merge)%pt(:,:)=rand_k(:,:)
+       YAMBO_FREE(rand_E)
+       YAMBO_FREE(rand_k)
+       DbGd_E(i_db_merge)%nk=DbGd_k(i_db_merge)%nibz
+       !
+     endif
+   else 
+     call msg('s','failed') 
+     call error(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
+   endif
+ endif
+ !
  if (l_skip_check) then
+   !
    call warning(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
    YAMBO_ALLOC(DbGd_k(i_db_merge)%weights,( DbGd_E(i_db_merge)%nk ))
    DbGd_k(i_db_merge)%weights=1./real(DbGd_E(i_db_merge)%nk )
@@ -235,43 +283,6 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    DbGd_E(i_db_merge)%E(:,:,:)=DbGd_E(i_db_merge)%E(:,:,:)+Xen%E_Fermi-DbGd_E(i_db_merge)%E_Fermi
    !
- else
-   !
-   call section('+','Internal consistency check ...')
-   !
-   call k_DbGd_grid_consistency_check(IK_ref,Xk,Xen,DbGd_k(i_db_merge),DbGd_E(i_db_merge))
-   !
-   NK_found=count(IK_ref>0)
-   !
-   if (NK_found>0) then
-     !
-     call msg('l','Found '//trim(intc(NK_found))//" Double-Grid k-point(s) already in the built-in grid")
-     !
-     call section('=','Removing the reference point from the Double Grid ...')
-     YAMBO_ALLOC(rand_k,(DbGd_k(i_db_merge)%nibz-NK_found,3))
-     YAMBO_ALLOC(rand_E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz-NK_found,n_sp_pol))
-     i_c=1
-     do ik=1,DbGd_k(i_db_merge)%nibz
-       if (IK_ref(ik)>0) cycle
-       rand_k(i_c,:)  =DbGd_k(i_db_merge)%pt(ik,:)
-       rand_E(:,i_c,:)=DbGd_E(i_db_merge)%E(:,ik,:)
-       i_c=i_c+1
-     enddo
-     YAMBO_FREE(DbGd_E(i_db_merge)%E)
-     YAMBO_FREE(DbGd_k(i_db_merge)%pt)
-     DbGd_k(i_db_merge)%nibz=DbGd_k(i_db_merge)%nibz-NK_found
-     YAMBO_ALLOC(DbGd_E(i_db_merge)%E,(DbGd_E(i_db_merge)%nb,DbGd_k(i_db_merge)%nibz,n_sp_pol))
-     YAMBO_ALLOC(DbGd_k(i_db_merge)%pt,(DbGd_k(i_db_merge)%nibz,3))
-     DbGd_E(i_db_merge)%E(:,:,:)=rand_E(:,:,:)
-     DbGd_k(i_db_merge)%pt(:,:)=rand_k(:,:)
-     YAMBO_FREE(rand_E)
-     YAMBO_FREE(rand_k)
-     DbGd_E(i_db_merge)%nk=DbGd_k(i_db_merge)%nibz
-     !
-   else 
-     call msg('l','failed') 
-     call error(" Internal check failed. A consistent X grid k-point was not found among the Double Grid list")
-   endif
  endif
  !
  YAMBO_FREE(IK_ref)
@@ -294,7 +305,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    NK_to_process=DbGd_k(i_db_merge)%nbz
    !
-   call msg('l','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
+   call msg('s','found '//trim(intc(DbGd_k(i_db_merge)%nbz))//' ('//trim(intc(DbGd_k(i_db_merge)%nibz))//') points in the BZ (IBZ)')
    !
  endif
  !
@@ -305,7 +316,7 @@ subroutine k_map_fine_to_coarse(Xk,Xen)
    !
    NK_to_process=DbGd_k(i_db_merge)%nibz
    !
-   call msg('l','using '//trim(intc(DbGd_k(i_db_merge)%nibz))//' k-points')
+   call msg('s','using '//trim(intc(DbGd_k(i_db_merge)%nibz))//' k-points')
    !
  endif
  !GPL_EXCLUDE_END

@@ -17,6 +17,10 @@
 # [@TIME_profile_check@] Run-Time timing profile 
 # [@MEM_profile_check@] Run-Time memory profile 
 #
+# - SCRIPTS -
+#
+# [@YDB_str@] YDB: Yambo DataBase
+# [@YPY_str@] YAMBOpy: Yambo Python scripts
 # 
 # - PARALLEL SUPPORT -
 #
@@ -25,41 +29,44 @@
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
-#  I/O LIBS
+# > I/O: @NETCDF_info@ @HDF5_info@
 #
 # [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
 # [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
 #                 @ETSF_INCS@
-# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @NETCDF_info@
+# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@
 #                 @NETCDFF_INCS@ @NETCDF_INCS@
-# [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@
+# [@HDF5_str@] HDF5    : @HDF5_LIBS@
 #                 @HDF5_INCS@
 #
-#  MATH LIBS
+# > MATH: @FFT_info@ @BLAS_info@
 #
-# [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
+# [@FFT_str@] FFT       : @FFT_LIBS@
 #                   @FFT_INCS@
-# [@BLAS_str@] BLAS      : @BLAS_LIBS@ @BLAS_info@
+# [@BLAS_str@] BLAS      : @BLAS_LIBS@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@
-# [@PET_str@] PETSC     : @PETSC_LIBS@ 
+# [@PETSC_str@] PETSC     : @PETSC_LIBS@ 
 #                   @PETSC_INCS@ 
-# [@SLE_str@] SLEPC     : @SLEPC_LIBS@ 
+# [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
 #
-#  OTHER LIBS
+# > OTHERs
 #
 # [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
 #                   @LIBXC_INCS@
 # [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
 #
-# - COMPILERS (FC kind= @FCKIND@) -
+# - COMPILERS -
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# FC kind = @FCKIND@ 
+# MPI kind= @MPIKIND@
+#
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
 # [ FCUF] @FCUFLAGS@

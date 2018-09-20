@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,6 +29,10 @@ module vec_operate
  !
  interface sort
    module procedure r_sort,i_sort
+ end interface
+ !
+ interface cross_product
+   module procedure r_cross_product,c_cross_product
  end interface
  !
  contains
@@ -117,13 +121,21 @@ module vec_operate
      !
    end function rlu_v_norm
    !
-   function cross_product(a,b)
+   function r_cross_product(a,b)
      real(SP), intent(in) :: a(3),b(3)
-     real(SP)             :: cross_product(3)
-     cross_product(1) = a(2) * b(3) - a(3) * b(2)
-     cross_product(2) = a(3) * b(1) - a(1) * b(3)
-     cross_product(3) = a(1) * b(2) - a(2) * b(1)
-   end function cross_product
+     real(SP)             :: r_cross_product(3)
+     r_cross_product(1) = a(2) * b(3) - a(3) * b(2)
+     r_cross_product(2) = a(3) * b(1) - a(1) * b(3)
+     r_cross_product(3) = a(1) * b(2) - a(2) * b(1)
+   end function r_cross_product
+   !
+   function c_cross_product(a,b)
+     complex(SP), intent(in) :: a(3),b(3)
+     complex(SP)             :: c_cross_product(3)
+     c_cross_product(1) = conjg(a(2)) * b(3) - conjg(a(3)) * b(2)
+     c_cross_product(2) = conjg(a(3)) * b(1) - conjg(a(1)) * b(3)
+     c_cross_product(3) = conjg(a(1)) * b(2) - conjg(a(2)) * b(1)
+   end function c_cross_product
    !
    pure logical function v_is_zero(v,zero_)
      real(SP), intent(in) :: v(3)
@@ -405,6 +417,26 @@ module vec_operate
      if (present(indx_m1)) forall( i=1:n) indx_m1(l_indx(i))=i
      deallocate(l_indx,l_arrout)
    end subroutine r_sort
+   !
+   integer function GreatestCommonDivisor(a,b)
+     !
+     implicit  none
+     integer :: a, b, c
+     if (a < b) then       ! since a >= b must be true, they
+       c = a               ! are swapped if a < b
+       a = b
+       b = c
+     end if
+     do                    ! now we have a <= b
+       c = mod(a, b)       !    compute c, the reminder
+       if (c == 0) exit    !    if c is zero, we are done.  gcd = b
+       a = b               !    otherwise, b becomes a
+       b = c               !    and c becomes b
+     end do                !    go back
+     !
+     GreatestCommonDivisor = b
+     !
+   end function GreatestCommonDivisor
    !
    subroutine i_sort(arrin,arrout,indx,indx_m1)                             
      !

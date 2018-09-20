@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,nqbz,nXkibz
+ use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
@@ -44,6 +44,9 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ,PAR_nQ_bz,PAR_nQP
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_Q_ID,PAR_IND_QP_ID
+#if defined _ELECTRIC
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
+#endif
 #if defined _SC || defined _RT || defined _QED
  use QP_m,          ONLY:QP_n_G_bands
  use drivers,       ONLY:l_elphoton_corr,l_life,l_real_time,l_sc_run
@@ -232,6 +235,16 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    PAR_DIPk_nibz=nXkibz
    !
  endif
+ !
+#endif
+ !
+ !
+#if defined _ELECTRIC
+ !
+ ! Parallelization indexes for the Berry Polarization
+ !
+ call PARALLEL_index(PAR_IND_Xk_bz,(/nXkbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
+ call COMM_copy(PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX)
  !
 #endif
  !

@@ -1,7 +1,7 @@
 ! Self-energies and eXcitations (SaX)
 ! Copyright (C) 2006 SaX developers team
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,7 +30,7 @@ subroutine PP_PWscf_comp(basis,atoms)
   !
   use pars,                  ONLY:SP,DP
   use electrons,     ONLY:n_spinor
-  use pseudo,        ONLY:pp_table,pp_kb,pp_kbd,pp_kbs
+  use pseudo,        ONLY:pp_kb,pp_kbd,pp_kbs
   !
   implicit none
   !
@@ -62,8 +62,8 @@ subroutine PP_PWscf_comp(basis,atoms)
       dfl=0._SP
       do ipw=1,npw
         if(KpG_norm(ipw) < 1.E-5) cycle
-        fl(ipw) = num_interpolation_calc(psp%interpolation(ibeta),KpG_norm(ipw),3)
-        dfl(ipw) = num_interpolation_calc_der(psp%interpolation(ibeta),KpG_norm(ipw),3,ider=1)
+        fl(ipw) = num_interpolation_calc(psp%interp_beta(ibeta),KpG_norm(ipw),3)
+        dfl(ipw) = num_interpolation_calc_der(psp%interp_beta(ibeta),KpG_norm(ipw),3,ider=1)
       enddo
       kb_E = psp%d(ibeta)/basis%struct%a_omega*0.5_SP  ! 0.5 = Ry2Ha
       pp_kbs(itype,ibeta) = kb_E/abs(kb_E)

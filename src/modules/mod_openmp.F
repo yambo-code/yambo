@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -42,6 +42,7 @@ module openmp
  integer     :: n_threads_RT    = 0  
  integer     :: n_threads_DIP   = 0  
  integer     :: n_threads_K     = 0  
+ integer     :: n_threads_NL  = 0
  integer     :: n_threads_now   = 0
  logical     :: master_thread   = .TRUE.
  !
@@ -71,7 +72,9 @@ module openmp
  !
  ! nesting
  !
- integer       :: n_outthr, n_innthr
+ integer       :: n_out_threads = 0
+ integer       :: n_inn_threads = 0
+ !
  character(25) :: s_outthr, s_innthr
  !
  contains
@@ -89,9 +92,10 @@ module openmp
      n_threads_RT  = 1
      n_threads_K   = 1
      n_threads_DIP = 1
+     n_threads_NL  = 1
      !
-     n_outthr = 1
-     n_innthr = 1
+     n_out_threads = 1
+     n_inn_threads = 1
      !
 #endif
      !
@@ -138,8 +142,8 @@ module openmp
 #if defined _OPENMP
        call omp_set_num_threads( n_threads_now )
 #endif
-       n_outthr=1
-       n_innthr=1
+       n_out_threads=1
+       n_inn_threads=1
        !
      else
 #if defined _OPENMP
@@ -152,8 +156,8 @@ module openmp
          n_threads_now=n_threads
        endif
        !
-       n_outthr=n_threads_now
-       n_innthr=1
+       n_out_threads=n_threads_now
+       n_inn_threads=1
        !
 #  if defined _NESTING
        if (present(use_nested)) use_nested_=use_nested
@@ -163,12 +167,15 @@ module openmp
           call omp_set_nested(.true.)
           call omp_set_max_active_levels(2)
           !     
-          call getenv("YAMBO_OUTTHR",s_outthr)
-          call getenv("YAMBO_INNTHR",s_innthr)
+          call getenv("YAMBO_OUTER_THREADS",s_outthr)
+          call getenv("YAMBO_INNER_THREADS",s_innthr)
+          !
           s_outthr=trim(s_outthr)
           s_innthr=trim(s_innthr)
-          read(s_outthr,*)n_outthr
-          read(s_innthr,*)n_innthr
+          read(s_outthr,*,iostat=ierr) n_out_threads
+          if (ierr/=0) n_out_threads=0
+          read(s_innthr,*,iostat=ierr) n_inn_threads
+          if (ierr/=0) n_in_threads=0
           !
        endif
 #  endif 
@@ -181,8 +188,8 @@ module openmp
        endif
        n_threads_now=1
        !
-       n_outthr=n_threads_now
-       n_innthr=1
+       n_out_threads=n_threads_now
+       n_inn_threads=1
 #endif
      endif
      !

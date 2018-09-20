@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -35,13 +35,13 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  use interfaces,     ONLY:PARALLEL_index
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat
+ use BS_solvers,     ONLY:BSS_dipoles,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig
  use BS,             ONLY:BS_H_dim
  !
  implicit none
  !
- real(SP)   ,intent(in)  :: BS_E_real(BS_H_dim)
- complex(SP),intent(out) :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+ real(SP)   ,intent(in)  :: BS_E_real(BSS_n_eig)
+ complex(SP),intent(out) :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
  !
  ! Workspace
  !
@@ -50,7 +50,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  complex(SP)          ::tmp_res(BS_H_dim)
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_R_left =cZERO
  BS_R_right=cZERO
@@ -61,7 +61,7 @@ subroutine K_diago_hermitian_residuals(BS_E_real,BS_R_left,BS_R_right)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  if (allocated(BSS_eh_Z))            tmp_res=tmp_res*sqrt(BSS_eh_Z)
  !
- do i_eh=1,BS_H_dim
+ do i_eh=1,BSS_n_eig
    !
    if (.not.px%element_1D(i_eh)) cycle
    !

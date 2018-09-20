@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -48,6 +48,8 @@ try_libs=
 internal_fft="no"
 compile_fftqe="no"
 compile_fftw="no"
+#
+include_warn="no"
 
 #
 # first identifies lib and include dirs
@@ -70,7 +72,7 @@ if test -d "$with_fft_path" || test -d "$with_fft_libdir" ; then
   if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
   #
   if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
-  if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+  if test -z "$try_incdir" ; then include_warn="yes" ; fi
   #
 elif test x"$with_fft_libs" != "x" ; then
   #
@@ -78,6 +80,9 @@ elif test x"$with_fft_libs" != "x" ; then
   #
   AC_MSG_CHECKING([for FFT Library using $with_fft_libs])
   try_libs=$with_fft_libs
+  #
+  if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
+  if test -z "$try_incdir" ; then include_warn="yes" ; fi
   #
 else
   AC_MSG_CHECKING([for FFT])
@@ -155,7 +160,9 @@ else
   HAVE_FFT=no
 fi
 
-
+if test "$HAVE_FFT" = "yes" && test "$include_warn" = "yes" ; then
+  AC_MSG_WARN([No include-dir specified for fft library])
+fi
 #
 # check for ESSL FFT
 #
@@ -279,7 +286,7 @@ if test "$HAVE_FFTSG" = "yes" ; then HAVE_FFT=yes ; fi
 if test "$use_internal_fftw" = "yes" ; then
   FFT_info="(Internal FFTW3)";
   def_fft="-D_FFTW"
-  FFT_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lfftw3";
+  FFT_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libfftw3.a";
   FFT_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
   HAVE_FFTW=yes
   internal_fft=yes

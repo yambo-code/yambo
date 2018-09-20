@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -110,7 +110,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      is=kpoints_map(2,ik)
      !
      wf_nc_k(ik) = wf_nc_k_reduced(ik_save)
-     wf_igk(1:wf_nc_k(ik),ik) = g_rot(is,wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save))
+     wf_igk(1:wf_nc_k(ik),ik) = g_rot(wf_igk_reduced(1:wf_nc_k_reduced(ik_save),ik_save),is)
      call sort( wf_igk(1:wf_nc_k(ik),ik) )
      !
    enddo
@@ -123,8 +123,6 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
      wf_nc_k(ik)         = wf_nc_k_reduced(kpoints_map(1,ik))
    enddo
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Close the G-vectors shell
    !
    if(nsym>old_nsym) then
@@ -136,11 +134,9 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
        call G_rot_grid(is,'extend_grid')
      enddo
      !
-     call msg('l','done')
+     call msg('s','done')
      !
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
  end select
  !

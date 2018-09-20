@@ -1,0 +1,10 @@
+# = YDB post installation Instructions =
+#
+# In order to finalize the installation of ydb please move to 
+#
+# @YDB_dir@ 
+#
+# and run the setup.pl script by simply using
+#
+# > ./setup.pl
+#

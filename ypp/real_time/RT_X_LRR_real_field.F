@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -46,7 +46,7 @@ subroutine RT_X_LRR_real_field(en)
  ! Work Space
  !
  integer  :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields
- character(10):: FT_title
+ character(11):: FT_title
  logical      :: l_rm_asympt_limit
  real(SP)     :: W_step,W_reached,Field_time,outdata(6),E_ver(3,3)
  complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
@@ -110,33 +110,46 @@ subroutine RT_X_LRR_real_field(en)
  ! Electric Field...
  !-------------------
  !
- !... Analytic contribution
- !
- iE_err=0
- do i_w = 1, RT_conf%W_n_steps
-   !
-   if(trim(RT_conf%damping) /= "NONE")                      Field_freq=freqs(i_w)-cI*RT_conf%damp_factor
-   if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*RT_conf%Field_damp_factor
-   !
-   E_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)
-   E_w(i_w,1)=E_w(i_w,1)*exp(cI*freqs(i_w)*RT_time(1))  
-   !
-   if (iE_err/=0) exit
-   !
- enddo 
- !
- !... FT
- !
  YAMBO_ALLOC(E_t,(RT_conf%T_n_steps,n_fields))
- do i_field=1,n_fields
-   do i_t=1,RT_conf%T_n_steps
-     Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
-     A_of_t =small_a(Field_time,Efield(i_Probe),0)
-     E_of_t =small_a(Field_time,Efield(i_Probe),1)
-     theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
-     delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+ !
+ do i_t=1,RT_conf%T_n_steps
+   Field_time=RT_time(i_t)-Efield(i_Probe)%t_initial
+   A_of_t =small_a(Field_time,Efield(i_Probe),0)
+   E_of_t =small_a(Field_time,Efield(i_Probe),1)
+   theta  =theta_function(Field_time,RT_time(2)-RT_time(1),0)
+   delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
+   !
+   do i_field=1,n_fields
      E_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
+   !
+ enddo
+ !
+ ! FT... 
+ !
+ ! ... Analytic contribution
+ !
+ iE_err=-1
+ if (n_fields==1) then
+   iE_err=0
+   do i_w = 1, RT_conf%W_n_steps
+     !
+     if(trim(RT_conf%damping) /= "NONE")                      Field_freq=freqs(i_w)-cI*RT_conf%damp_factor
+     if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) Field_freq=freqs(i_w)-cI*RT_conf%Field_damp_factor
+     !
+     E_w(i_w,1)=Efield(i_Probe)%amplitude*small_a_frequency(Field_freq,Efield(i_Probe),iE_err)*&
+&               exp(cI*freqs(i_w)*Efield(i_Probe)%t_initial)
+     !
+     if (iE_err/=0) exit
+     !
+   enddo 
+ endif
+ !
+ ! ... Numerical
+ !
+ do i_field=1,n_fields
+   !
+   if (iE_err>=0) cycle
    !
    if(trim(RT_conf%damping) == "NONE".and.l_force_min_damp) then
      call RT_damp_it("LORENTZIAN",RT_conf%Field_damp_factor,E_t(:,i_field),1)
@@ -151,6 +164,7 @@ subroutine RT_X_LRR_real_field(en)
 &                                E_t(:RT_conf%T_n_steps,i_field),RT_conf%T_n_steps,Use_FFT,1)
    !
  enddo
+ !
  YAMBO_FREE(E_t)
  !
  ! Check of finiteness of E field
@@ -246,10 +260,10 @@ subroutine RT_X_LRR_real_field(en)
  !
  if(     l_RT_induced_field) then
    EELS(:,1) = -1._SP+EELS(:,1)
-   EPS(:,:)  = -1._SP/EELS(:,:)
+   EPS(:,1)  = -1._SP/EELS(:,1)
  else
    EPS(:,1)  =  1._SP+EPS(:,1)
-   EELS(:,:) = -1._SP/EPS(:,:)
+   EELS(:,1) = -1._SP/EPS(:,1)
  endif
  !
  do i_w = 1, RT_conf%W_n_steps

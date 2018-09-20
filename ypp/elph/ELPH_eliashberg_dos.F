@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -96,10 +96,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
-   call msg('l','not found')
+   call msg('s','not found')
    return
  endif
- call msg('l','sane')
+ call msg('s','sane')
  !
  ! Energy range
  !

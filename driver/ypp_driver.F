@@ -1,5 +1,5 @@
 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,7 +42,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
@@ -93,8 +93,8 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  ! Switch off report file support
  !
- write_to_report   =.FALSE.
  live_timing_is_on =myid==0
+ write_to_report   =myid==0
  write_to_log      =myid==0
  !
  ! DB1
@@ -198,11 +198,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
- !
- ! GPL_EXCLUDE_END
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
@@ -216,17 +212,23 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_fix_save) call WF_format_converter(en,k,q)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _YPP_RT
  !
+ ! GPL_EXCLUDE_START
+ !
  if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
+ !
+ ! GPL_EXCLUDE_END
  !
  if (l_RealTime) call RT_driver(en,k,q)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
+#if defined _YPP_NL
+ !
+ if (l_NL_X) call NL_driver(en,k)
+ !   ======
+#endif
  !
  l_flag=l_excitons
 #if defined _YPP_RT

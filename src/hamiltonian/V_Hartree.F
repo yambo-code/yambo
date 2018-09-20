@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -32,10 +32,11 @@ subroutine V_Hartree(rho,vhr)
  use D_lattice,     ONLY: DL_vol
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
+ ! 
  implicit none
+ !
+ integer  :: ig
  real(SP) :: rho(fft_size)
  real(SP) :: vhr(fft_size,n_spin)
  !
@@ -43,9 +44,7 @@ subroutine V_Hartree(rho,vhr)
  !
  complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(wf_ng)
  !
-#if defined _TIMING
  call timing('V_Hartree',OPR='start')
-#endif
  !
  vhg   = (0._DP,0._DP)
  vhtmp = (0._DP,0._DP)
@@ -61,9 +60,17 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(rhog,fft_dim,-1)
 #endif
  !
- vhg(2:wf_ng)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:wf_ng,1))))/bare_qpg(1,2:wf_ng)**2
+ !$omp parallel do default(shared), private(ig)
+ do ig=2,wf_ng
+   vhg(ig)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(ig,1))))/bare_qpg(1,ig)**2
+ enddo
+ !$omp end parallel do
  !
- vhtmp(fft_g_table(1:wf_ng,1))=vhg(1:wf_ng)
+ !$omp parallel do default(shared), private(ig)
+ do ig=1,wf_ng
+   vhtmp(fft_g_table(ig,1))=vhg(ig)
+ enddo
+ !$omp end parallel do
  !
  ! FFT call: vhr in direct space
  !
@@ -78,8 +85,6 @@ subroutine V_Hartree(rho,vhr)
  vhr(:,1) = real(vhtmp,SP)
  if(n_spin==2) vhr(:,2)=vhr(:,1)
  !
-#if defined _TIMING
  call timing('V_Hartree',OPR='stop')
-#endif
  !
 end subroutine V_hartree

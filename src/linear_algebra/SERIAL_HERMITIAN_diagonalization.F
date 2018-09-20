@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -24,24 +24,20 @@
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY:SP
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,WS,&
-&                         LINEAR_ALGEBRA_WS_clean_up
- !
-#if defined _TIMING
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
+&                         LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer     :: n
  complex(SP) :: M(n,n)
  real(SP)    :: E(n)
  !
- character(64) :: subname="SERIAL_HERMITIAN_diagonalization"
- integer :: lwork
+ character(64)     :: subname="SERIAL_HERMITIAN_diagonalization"
+ integer           :: lwork
+ type(LALGEBRA_WS) :: WS
  !
-#if defined _TIMING
  call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
-#endif
  !
  lwork=-1
  allocate(WS%v_cmplx(1))
@@ -65,12 +61,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  if(WS%i_fail.ne.0) call LINEAR_ALGEBRA_error(subname,'performing CHEEV')
 #endif
  !
- ! eigenvectors are stored in M
- !
  call LINEAR_ALGEBRA_WS_clean_up(WS)
  !
-#if defined _TIMING
  call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
-#endif
  !
 end subroutine

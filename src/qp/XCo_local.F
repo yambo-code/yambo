@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,15 +26,17 @@ subroutine XCo_local(E,Xk)
  ! Local V_xc
  !
  use pars,          ONLY:SP,pi
+ use com,           ONLY:error
  use electrons,     ONLY:levels,n_spin,n_spinor,spin
  use QP_m,          ONLY:QP_Vxc,QP_n_states,QP_table
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
+ use xc_functionals,ONLY:E_xc,V_xc,xc_string,XC_potential_driver,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_exx_fraction,WF_exx_screening
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear 
+ use pseudo,        ONLY:pp_is_uspp
 #if defined _RT || defined _SC
  use drivers,       ONLY:l_real_time,l_sc_run
  use hamiltonian,   ONLY:H_ref_bands
@@ -50,6 +52,7 @@ subroutine XCo_local(E,Xk)
  use IO_m,          ONLY:REP,VERIFY
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -62,16 +65,22 @@ subroutine XCo_local(E,Xk)
  integer     ::nb
 #endif
  integer     ::i1,ifft,iwf,iwfp,ib,ibp,ik,i_sp_pol
- complex(SP) ::c_ws(fft_size,n_spin)
+ real(SP)    ::E_xc_
+ complex(SP) ::c_ws(fft_size,n_spinor)
  !
  ! Spin support (collinear and not collinear)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
+
+ call timing('XCo_local',OPR="start")
  !
  ! Allocation 
  !
  if (.not.allocated(V_xc)) then
    YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+ endif
+ if (.not.allocated(E_xc)) then
+   YAMBO_ALLOC(E_xc,(fft_size))
  endif
  if (.not.allocated(magn)) then
    YAMBO_ALLOC(magn,(fft_size,3))
@@ -91,6 +100,10 @@ subroutine XCo_local(E,Xk)
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1)
    else
 #endif
+     ! evaluate E_xc as a double check against DFT
+     call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
+&         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
+     ! evaluate v_xc
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT
@@ -150,17 +163,17 @@ subroutine XCo_local(E,Xk)
      iwf =WF%index(ib,ik,1)
      iwfp=WF%index(ibp,ik,1)
      ! 
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ifft)
-#endif
      do ifft=1,fft_size
-         c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
      enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+     !
+     if (pp_is_uspp) then
+       call PP_vloc_augment(QP_Vxc(i1),V_xc,ik,ib,ibp)
+     endif
      !
    enddo
    !
@@ -168,6 +181,7 @@ subroutine XCo_local(E,Xk)
    !
    call LOCAL_clean( )
    !
+   call timing('XCo_local',OPR="stop")
    return
    !
  endif
@@ -187,6 +201,7 @@ subroutine XCo_local(E,Xk)
      ib =QP_table(i1,1)
      ibp=QP_table(i1,2)
      ik =QP_table(i1,3)
+     i_sp_pol=spin(QP_table(i1,:))
      !
 #if defined _RT
      if (l_real_time) then
@@ -201,13 +216,16 @@ subroutine XCo_local(E,Xk)
      !
      if (n_spinor==1) then
        !
-       i_sp_pol=spin(QP_table(i1,:))
        iwf =WF%index(ib,ik,i_sp_pol)
        iwfp=WF%index(ibp,ik,i_sp_pol)
        !
        c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%c(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       !
+       if (pp_is_uspp) then
+         call error('[PPs] USPP: nspin=2 and n_spinor=1 not implemented')
+       endif
        !
      else
        !
@@ -217,8 +235,11 @@ subroutine XCo_local(E,Xk)
        c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,1,iwfp)+V_xc_mat(:,1,2)*WF%c(:,2,iwfp)
        c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size,WF%c(:,1,iwf),c_ws(:,1))+&
-&                 Vstar_dot_V_omp(fft_size,WF%c(:,2,iwf),c_ws(:,2))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       !
+       if (pp_is_uspp) then
+         call error('[PPs] USPP: nspin=2 and n_spinor>1 not implemented')
+       endif
        !
      endif
      !
@@ -230,9 +251,10 @@ subroutine XCo_local(E,Xk)
    !
    call PP_redux_wait(QP_Vxc)
    !
-   return
-   !
  endif
+ !
+ call timing('XCo_local',OPR="stop")
+ return
  !
  contains
    !
@@ -242,6 +264,7 @@ subroutine XCo_local(E,Xk)
      if (.not.(l_sc_run.or.l_real_time)) then
 #endif
        YAMBO_FREE(V_xc)
+       YAMBO_FREE(E_xc)
        YAMBO_FREE(magn)
 #if defined _SC || defined _RT
      endif

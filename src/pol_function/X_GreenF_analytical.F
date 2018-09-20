@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,15 +27,16 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! expression as the Fourier Transform of a Lorentzian
  !
  use pars,       ONLY:SP,cZERO,cONE
- use X_m,        ONLY:use_X_DbGd,X_is_integrated,&
-&                     X_t,l_X_terminator,X_term_E
+ use X_m,        ONLY:use_X_DbGd,X_t,l_X_terminator,X_term_E,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use BS_solvers, ONLY:BSS_uses_DbGd
- use electrons,  ONLY:levels,BZ_DbGd_table,BZ_DbGd_nkpt,spin_occ,BZ_DbGd_nbands,&
+ use electrons,  ONLY:levels,BZ_DbGd_table,spin_occ,BZ_DbGd_nbands,&
                       BZ_DbGd_weight,BZ_DbGd_kpts
- use R_lattice,  ONLY:qindx_X,bz_samp,q_pt,nqibz
+ use R_lattice,  ONLY:qindx_X,bz_samp
  use frequency,  ONLY:w_samp
- use vec_operate,ONLY:iku_v_norm
+ use parallel_m, ONLY:PAR_Xk_bz_index
+ !
 #include<memory.h>
+ !
  integer      :: iq,transitions(4)
  type(w_samp) :: Xw
  type(levels) :: Xen
@@ -47,14 +48,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !Work Space
  !
  logical      :: X_os_run,K_inv_run 
- integer      :: i1,i2,iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ikbz_rand,ikpbz_rand,ik,ikp
- real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_,q_pt_shift(3),q_norm_ref,qsize_fac
+ integer      :: iw,ikbz,ikpbz,iv,ic,i_spin,ik_rand,ikp_rand,ik,ikp,ikbz_mem,i_r,ik_r,ikp_r
+ real(SP)     :: ffac,cg_ffac,f_h,weight1,weight2,W_
  complex(SP)  :: Z_,pole,pole_X_term
  !
  complex(SP),external      ::Lorentzian_FT
- !
- integer, allocatable      ::BZ_DbGd_iq_npt(:)
- logical, allocatable      ::use_kpt(:,:)
  !
  GreenF  = cZERO
  !
@@ -95,23 +93,23 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  if (X_os_run .and.(.not.use_X_DbGd.or.ic>BZ_DbGd_nbands).or. &
 &    K_inv_run.and.(.not.BSS_uses_DbGd)                       ) then
-    !
-    do iw=1,Xw%n_freqs
-      !
-      GreenF(iw)= Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
-      !
-      if (l_X_terminator.and.ic>Xen%nbm) then
-        GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
-      endif
-      !
-      if (l_X_terminator.and.ic<=Xen%nbm) then
-        GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
-      endif
-      !
-    enddo
-    !
-    return
-    !
+   !
+   do iw=1,Xw%n_freqs
+     !
+     GreenF(iw)= Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
+     !
+     if (l_X_terminator.and.ic>Xen%nbm) then
+       GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
+     endif
+     !
+     if (l_X_terminator.and.ic<=Xen%nbm) then
+       GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
+     endif
+     !
+   enddo
+   !
+   return
+   !
  endif
  !
  ! Case with DbGd
@@ -130,96 +128,47 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  !  \Omega_{anti-res} = -\Omega_{res}
  !
- allocate(BZ_DbGd_iq_npt( BZ_DbGd_nkpt(ikbz) ) )
- YAMBO_ALLOC(use_kpt,(BZ_DbGd_nkpt(ikbz),BZ_DbGd_nkpt(ikpbz)))
+ ikbz_mem  = PAR_Xk_bz_index(ikbz)
  !
- call tmp_double_grid()
- !
- do i1=1,BZ_DbGd_nkpt(ikbz)
+ do i_r=1,X_DbGd_nkpt_at_q(ikbz_mem)
    !
-   weight1   = BZ_DbGd_weight(i1)/real(BZ_DbGd_nkpt(ikbz),SP)
-   ik_rand   = BZ_DbGd_table(ikbz,i1,1)
-   ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
+   ik_r =X_DbGd_nkpt_at_q_table(ikbz_mem, i_r,1)
+   ikp_r=X_DbGd_nkpt_at_q_table(ikbz_mem, i_r,2)
+   ik_rand  = BZ_DbGd_table(ikbz, ik_r,1)
+   ikp_rand = BZ_DbGd_table(ikpbz,ikp_r,1)
+   !
+   weight1   = BZ_DbGd_weight(ik_r)/real(X_DbGd_nkpt_at_q(ikbz_mem))
    !
    if( X_os_run  ) f_h = spin_occ-Xen%f_DbGd(ic,ik_rand,i_spin)
    if( K_inv_run ) f_h =          Xen%f_DbGd(ic,ik_rand,i_spin)
    !
-   do i2=1,BZ_DbGd_nkpt(ikpbz)
+   weight2    = BZ_DbGd_weight(ikp_r)
+   !
+   if( X_os_run       ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
+   if( K_inv_run      ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
+   if( no_occupations ) ffac = 1._SP
+   !
+   ffac=ffac*weight1*weight2
+   pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP)
+   !
+   if(l_X_terminator) then 
+     pole_X_term=cmplx(X_term_E-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
+   endif
+   !
+   do iw=1,Xw%n_freqs
      !
-     if(.not.use_kpt(i1,i2)) cycle
+     GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
      !
-     weight2    = BZ_DbGd_weight(i2)/real(BZ_DbGd_iq_npt(i1),SP)
-     ikp_rand   = BZ_DbGd_table(ikpbz,i2,1)
-     ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
-     !
-     if( X_os_run       ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)*f_h)/cg_ffac
-     if( K_inv_run      ) ffac=(Xen%f_DbGd(iv,ikp_rand,i_spin)-f_h)/cg_ffac
-     if( no_occupations ) ffac = 1._SP
-     !
-     ffac=ffac*weight1*weight2
-     pole=cmplx(Xen%E_DbGd(ic,ik_rand,i_spin)-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP)
-     !
-     if(l_X_terminator) then 
-       pole_X_term=cmplx(X_term_E-Xen%E_DbGd(iv,ikp_rand,i_spin),-W_,KIND=SP) 
+     if (l_X_terminator.and.ic>Xen%nbm) then 
+       GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
      endif
      !
-     do iw=1,Xw%n_freqs
-       !
-       GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
-       !
-       if (l_X_terminator.and.ic>Xen%nbm) then 
-         GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
-       endif
-       !
-       if (l_X_terminator.and.ic<=Xen%nbm) then
-         GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
-       endif      
-       !
-     enddo
+     if (l_X_terminator.and.ic<=Xen%nbm) then
+       GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
+     endif      
      !
    enddo
    !
  enddo
  !
- YAMBO_FREE(use_kpt)
- deallocate(BZ_DbGd_iq_npt)
- !
- contains
-   !
-   subroutine tmp_double_grid()
-     !
-     ! [DAVIDE]
-     ! Define which kpts I will use in a consistent way between q=0 and q/=0
-     ! For q/=0 this change makes the code much faster as it avoids the use of all 
-     ! double-grid kpts in the two spheres (k and kp) which would smear out too much
-     ! the absorption.
-     ! For q==0 the approach can be used to properly describe the q->0 limit
-     ! This part of the code should be moved away from this subroutine as here the 
-     ! same procedure is repeated for each v -> c transition, which is a waste of CPU time.
-     !
-     q_norm_ref=100000._SP
-     do i1=2,nqibz
-       q_norm_ref=min(q_norm_ref,iku_v_norm(q_pt(i1,:)))
-     enddo
-     !
-     qsize_fac=2._SP
-     if(.not.X_is_integrated) qsize_fac=qsize_fac*10._SP
-     !
-     q_norm_ref=q_norm_ref/qsize_fac
-     !
-     BZ_DbGd_iq_npt=0
-     use_kpt=.false.
-     do i1=1,BZ_DbGd_nkpt(ikbz)
-       ikbz_rand = BZ_DbGd_table(ikbz,i1,2)
-       do i2=1,BZ_DbGd_nkpt(ikpbz)
-         ikpbz_rand = BZ_DbGd_table(ikpbz,i2,2)
-         q_pt_shift(:)=BZ_DbGd_kpts(ikbz_rand,:)-BZ_DbGd_kpts(ikpbz_rand,:)-q_pt(iq,:)
-         if ( iku_v_norm(q_pt_shift) > q_norm_ref ) cycle
-         BZ_DbGd_iq_npt(i1)=BZ_DbGd_iq_npt(i1)+1
-         use_kpt(i1,i2)=.true.
-       enddo
-     enddo
-     !
-   end subroutine
-   !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine QP_state_table_setup(en)
  !
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions
+ use drivers,       ONLY:l_sc_run,l_real_time,l_eval_collisions,l_nl_optics
  use QP_m,          ONLY:QP_nk,QP_nb,QP_state,QP_n_states,QP_table,SC_bands_mixed,SC_band_mixing 
  use electrons,     ONLY:levels,n_sp_pol
  use parser_m,      ONLY:parser
@@ -163,8 +163,6 @@ subroutine QP_state_table_setup(en)
    !
  endif
  !
- ! GPL_EXCLUDE_START SC_IGNORE
- !
  ! Band Mixing
  !=============
  !
@@ -179,7 +177,7 @@ subroutine QP_state_table_setup(en)
  !
  Mixing=.FALSE.
 #if defined _SC || defined _RT
- Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions
+ Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
  if (l_eval_collisions) Mixing=l_elel_scatt.or.trim(H_potential)=="HARTREE+FOCK".or.trim(H_potential)=="COHSEX"
 #endif
  !
@@ -193,16 +191,12 @@ subroutine QP_state_table_setup(en)
    if (SC_band_mixing>0._SP) SC_bands_mixed=nint(QP_nb*SC_band_mixing/100._SP)
    if (SC_bands_mixed==0) SC_bands_mixed=1
    !
-   ! Recalculated SC_band_mixing
+   ! Recalculated SC/RT band mixing
    !
    SC_band_mixing=float(SC_bands_mixed)*100._SP/float(QP_nb)
    bands_mixed=SC_bands_mixed
+   !
  endif
- !
- ! GPL_EXCLUDE_END SC_IGNORE
- ! GPL_INCLUDE_START SC_IGNORE
- !bands_mixed=1
- ! GPL_INCLUDE_END SC_IGNORE
  !
  ! QP_table allocation
  !

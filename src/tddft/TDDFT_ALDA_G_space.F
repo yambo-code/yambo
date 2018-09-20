@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use wave_func,     ONLY:WF
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use interfaces,    ONLY:WF_load,eval_G_minus_G
+ use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  !
 #include<memory.h>
  !

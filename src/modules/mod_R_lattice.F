@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -49,6 +49,7 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ !
  type bz_samp
    integer           :: nibz,nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star

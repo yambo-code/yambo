@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,22 +30,24 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc,set_real_printed_length
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nkpts
+ use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
+&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_DIPOLES
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_descriptions,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
+ use matrix,        ONLY:MATRIX_reset
  !
 #include<memory.h>
  !
@@ -57,8 +59,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! Work Space
  !
  integer          :: iw,iq,i_G_shift,n_output
- real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
- logical          :: l_skip_non_int_eps,eval_eels
+ real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
+ logical          :: l_skip_non_int_eps,eval_eels,Macroscopic_CPU
  !
  integer,external :: O_select_q_and_G
  !
@@ -69,6 +71,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call X_pre_setup(Xen,X)
  !
  call set_real_printed_length(f_length=10,g_length=10)
+ !
+ allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -90,7 +94,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                              CLEAN_UP=.TRUE.)
    !
-   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_DIPOLES)
+   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
    if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
@@ -98,6 +102,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! TDDFT setup
    !
    call TDDFT_do_X_W_typs(iq,X,wv)
+   !
+   ! DbGd setup
+   !
+   call X_Double_Grid_setup(iq,Xk)
    !
    ! ALDA (only once) 
    !
@@ -132,13 +140,18 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      X_fxc=cZERO
    endif
    !
-   ! X_mat allocation
-   !
-   call X_alloc('X',(/X%ng,X%ng,wv%n_freqs/))
-   !
    ! Frequencies (AFTER TDDFT SETUP!)
    !
    call FREQUENCIES_setup(wv)
+   !
+   ! Response function parallel allocation
+   !
+   call X_half_mat_check(Xen,Xk,wv)
+   !
+   call X_PARALLEL_alloc(X_par(1),X%ng,wv%n_freqs,"XUP")
+   !
+   Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
+&                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
    ! Check if EELS can be evaluated
    !
@@ -182,8 +195,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! BZ Double Grid
    !
    if (use_X_DbGd) then
-     call msg('o eps_q eel_q fxc alpha','#')
-     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nkpts,INDENT=0)
+     call msg('o eps_q eel_q fxc alpha','# BZ Energy DbGd points:',BZ_DbGd_tot_nk_levels,INDENT=0)
    endif
    !
    if (iq==1) call PP_redux_wait
@@ -203,21 +215,36 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_irredux(X_mat,iq,Xen,Xk,wv,X)     
+   call X_irredux(iq,X_par(1),Xen,Xk,wv,X)     
    !
    ! Without LF eps
    !
-   Epsilon_ii(:,1)=1.0_SP-X_mat(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   if (Macroscopic_CPU) Epsilon_ii(:,1)=1.0_SP-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
    !
-   if(l_rpa_IP) then
-     Epsilon_ii(:,2)=Epsilon_ii(:,1)
-   else
-     call X_redux(iq,X,wv,(/1,wv%n_freqs/))
+   if (l_rpa_IP) then
      !
-     Epsilon_ii(:,2)=1._SP/(X_mat(i_G_shift,i_G_shift,:)*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     !
+   else
+     !
+     call X_redux(iq,X_par(1),wv,X)
+     !
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     !
    endif
+   !
+   if (l_pf_fxc) then
+     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
+     if (abs(b_xc).le.1.e-5) then
+       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
+     else
+       forall(iw=1:wv%n_freqs) Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&               (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+     end if
+   end if
    !
    call of_open_close(eps_file_name,'oa')
    call of_open_close(eel_file_name,'oa')
@@ -311,17 +338,25 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    !
    ! CLEAN (each q)
    !
-   call X_alloc('X')
-   YAMBO_FREE(Alpha)
    YAMBO_FREE(EEL)
+   YAMBO_FREE(Alpha)
    YAMBO_FREE(Epsilon_ii)
    YAMBO_FREE(X_fxc)
    call FREQUENCIES_reset(wv,"all")
+   call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
+   YAMBO_FREE(X_par_lower_triangle%blc)
+   if (use_X_DbGd) then
+     YAMBO_FREE(X_DbGd_nkpt_at_q_table)
+     YAMBO_FREE(X_DbGd_nkpt_at_q)
+   endif
    !
  enddo
  !
  ! CLEAN
  !
+ call MATRIX_reset(X_par(1))
+ call MATRIX_reset(X_par_lower_triangle)
+ deallocate(X_par)
  call X_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait

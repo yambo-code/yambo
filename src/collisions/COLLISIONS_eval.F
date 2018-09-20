@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -53,12 +53,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use plasma,        ONLY:EH_gas
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
+ use timing_m,      ONLY:timing
  implicit none
  !
  type(levels)  :: E
@@ -68,12 +66,10 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,i_kind,IO_err
+ integer       :: ID,IO_err
  character(20) :: PAR_ch,FREE_ch
  !
-#if defined _TIMING
  call timing('COLLISIONS_eval',OPR='start')
-#endif
  !
  call section('*','Extended collisions')
  !=======================================
@@ -81,6 +77,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  ! If I am calculating the collisions then I can use them
  !
  l_use_collisions=.TRUE.
+ !
  !
  COLLISIONS_have_HARTREE=index(H_potential,"HARTREE")>0
  !
@@ -151,10 +148,11 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (IO_err/=0) then
      !
-     call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2),i_kind)
+     call COLLISIONS_HXC(X(2),Xk,E,k,q,Xw(2))
      !
      ! COHSEX clean
      !--------------
+     !
      if (io_COLLs.and.l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC","v3 table","clean",1)
      if (io_COLLs.and.l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH","v3 table","clean",1)
      !
@@ -208,7 +206,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    if (IO_err/=0) then 
      !
-     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2),i_kind) 
+     call COLLISIONS_NEQ_GW_static(X(2),Xk,E,k,q,Xw(2)) 
      !
      ! GW_NEQ clean
      !--------------
@@ -224,6 +222,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !=======
  !
  call WF_free(WF)
+ !
+ FREE_ch="v3"
  !
  if (io_COLLs) then
    !
@@ -249,10 +249,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    FREE_ch="all"
    !
- else
-   !
-   FREE_ch="v3"
-   !
  endif
  !
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
@@ -265,9 +261,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _TIMING
  call timing('COLLISIONS_eval',OPR='stop')
-#endif
  !
  contains
    !
@@ -296,12 +290,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
+       ! GPL_EXCLUDE_START
        if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
        else
+       ! GPL_EXCLUDE_END
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)
          call COLLISIONS_alloc_and_free(trim(COLL%name),"table","alloc",0)
+       ! GPL_EXCLUDE_START
        endif
+       ! GPL_EXCLUDE_END
      endif
      !
    end subroutine

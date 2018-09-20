@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -41,13 +41,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q,PAR_Q_index,PAR_PLASMA_index
  use COLL_interfaces, ONLY:io_COLLISIONS
+ use timing_m,        ONLY:timing
 #if defined _QED || defined _RT
  use global_XC,       ONLY:QP_SE_GW_QED
  use collision_ext,   ONLY:P_COLL_element,COLL_bands,P_collisions,GW_NEQ_collisions,&
 &                          GW_NEQ_COLL_element
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
  implicit none
  !
@@ -62,9 +60,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (.not.any((/l_sc_fock,l_sc_coh,l_sc_hartree,l_sc_sex,l_sc_exx,l_sc_srpa,l_elel_scatt,l_elphoton_scatt,l_elphoton_corr/))) return
  !
-#if defined _TIMING
  call timing('COLLISIONS_load',OPR='start')
-#endif
  !
  ! Initial Setup & EXISTENCE
  !============================
@@ -141,10 +137,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  if (.not.l_use_collisions.or.CHECK_EXISTENCE_ONLY) then
    !
-#if defined _TIMING
    call timing('COLLISIONS_load',OPR='stop')
-#endif
-   !
    return
    !
  endif
@@ -164,9 +157,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  if (l_elphoton_scatt.or.l_elphoton_corr)  call local_IO( P_collisions )
 #endif
  !
-#if defined _TIMING
  call timing('COLLISIONS_load',OPR='stop')
-#endif
  !
  contains
    !

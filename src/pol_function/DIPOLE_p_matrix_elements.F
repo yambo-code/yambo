@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,63 +25,53 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
+subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P2)
  !
  use pars,          ONLY:SP,cZERO,cONE,pi
- use wrapper_omp,   ONLY:M_by_V_omp
+ use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use D_lattice,     ONLY:alat
  use wave_func,     ONLY:WF,wf_ng
  use R_lattice,     ONLY:g_vec,bz_samp
  use electrons,     ONLY:n_spinor
+#if defined _RT
+ use drivers,       ONLY:l_real_time
+ use real_time,     ONLY:l_update_SOC
+#endif
  !
  implicit none
  !
  type(bz_samp), intent(in)  :: Xk
- integer,       intent(in)  :: iv_wf,ic_wf,ik,wf_dim
- complex(SP),   intent(out) :: rho(4)
+ integer,       intent(in)  :: iv_wf,ic_wf,ik
+ logical,       intent(in)  :: l_eval_P2
+ complex(SP),   intent(out) :: rho(3),rho_spinor(3,n_spinor,n_spinor),P2
  ! 
  ! Work Space
  !
-#if defined _OPENMP
  integer      :: ig
-#endif
- integer      :: i_spinor,i1
- complex(SP)  :: wf_xyz(wf_ng,wf_dim),coeff
+ logical      :: eval_spinor_matrix
+ integer      :: i_spinor,j_spinor,i1
+ complex(SP)  :: wf_grad(wf_ng,n_spinor),wf_der_sq(wf_ng,n_spinor)
  !
  rho=cZERO
+ rho_spinor=cZERO
+ P2=cZERO
+ ! 
+ eval_spinor_matrix=.false.
+#if defined _RT
+ eval_spinor_matrix=l_real_time.and.n_spinor==2.and.l_update_SOC
+#endif
  !
- do i_spinor=1,n_spinor
+ do i1=1,3
    !
-   ! wf_xyz = -i grad fdo(iv,ik)
+   ! wf_grad = -i grad fdo(iv,ik)
    !
-#if defined _OPENMP
-!$omp parallel default(shared), private(i1,ig)
-   do i1=1,3
-!$omp do
+   !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+   do i_spinor=1,n_spinor
      do ig=1,wf_ng
-       wf_xyz(ig,i1)=WF%c(ig,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+       wf_grad(ig,i_spinor)=WF%c(ig,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
      enddo
-!$omp end do
    enddo
-!$omp end parallel
-#else
-   do i1=1,3
-     wf_xyz(:,i1)=WF%c(:,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(:wf_ng,i1))*2.0_SP*pi/alat(i1)
-   enddo
-#endif
-   ! 
-   ! GPL_EXCLUDE_START 
-   !
-#if defined _SC || defined _RT
-   if (wf_dim==4) then
-     wf_xyz(1:wf_ng,4) = WF%c(1:wf_ng,i_spinor,iv_wf) *  & 
-&                        ( (Xk%pt(ik,1) + g_vec(1:wf_ng,1))**2 * (2.0_SP*pi/alat(1))**2  &
-&                        + (Xk%pt(ik,2) + g_vec(1:wf_ng,2))**2 * (2.0_SP*pi/alat(2))**2  &
-&                        + (Xk%pt(ik,3) + g_vec(1:wf_ng,3))**2 * (2.0_SP*pi/alat(3))**2 )
-   endif
-#endif
-   !
-   ! GPL_EXCLUDE_END 
+   !$omp end parallel do
    !
    ! WARNING: 
    ! ========
@@ -96,10 +86,44 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,wf_dim,rho)
    !       \sum_G -i u^*_{iv ik}(G) i ( k + G ) u_{ic ik}(G)
    !     = \sum_G u^*_{iv ik}(G) ( k + G ) u_{ic ik}(G)
    !
-   ! rho(4) =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
+   ! P2 =  \sum_G u^*_{iv ik}(G) ( k + G )^2 u_{ic ik}(G)
    !
-   coeff=cmplx(i_spinor-1,0,SP)
-   call M_by_V_omp('C',wf_ng,wf_dim,cONE,wf_xyz,wf_ng,WF%c(:,i_spinor,ic_wf),1,coeff,rho(:wf_dim),1)
+   ! spinor indexes do not follow band indexes, i.e. they are not reverted
+   !
+   if(eval_spinor_matrix) then
+     !
+     do i_spinor=1,n_spinor
+       do j_spinor=1,n_spinor
+         rho_spinor(i1,i_spinor,j_spinor)=Vstar_dot_V_omp(wf_ng,wf_grad(:,i_spinor),WF%c(:,j_spinor,ic_wf))
+       enddo
+       rho(i1)=rho(i1)+rho_spinor(i1,i_spinor,i_spinor)
+     enddo
+     !
+   else
+     !
+     rho(i1)=Vstar_dot_V_omp(wf_ng*n_spinor,wf_grad(:,:),WF%c(:,:,ic_wf))
+     !
+   endif
+   !
+   ! GPL_EXCLUDE_START 
+   !
+#if defined _SC || defined _RT
+   if(l_eval_P2) then
+     !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+     do i_spinor=1,n_spinor
+       do ig=1,wf_ng
+         wf_der_sq(ig,i_spinor) = WF%c(ig,i_spinor,iv_wf) *  & 
+&                        ( (Xk%pt(ik,1) + g_vec(ig,1))**2 * (2.0_SP*pi/alat(1))**2  &
+&                        + (Xk%pt(ik,2) + g_vec(ig,2))**2 * (2.0_SP*pi/alat(2))**2  &
+&                        + (Xk%pt(ik,3) + g_vec(ig,3))**2 * (2.0_SP*pi/alat(3))**2 )
+       enddo
+     enddo
+     !$omp end parallel do
+     P2=Vstar_dot_V_omp(wf_ng*n_spinor,wf_der_sq(:,:),WF%c(:,:,ic_wf))
+   endif
+#endif
+   !
+   ! GPL_EXCLUDE_END 
    !
  enddo
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -40,18 +40,14 @@ subroutine RT_driver(en,k,q)
  !=====================================
  if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,en)
  !
- ! GPL_EXCLUDE_END
- !
- ! Response Functions
- !====================
- if ( l_RT_X )                             call RT_X_response(en,k,q)
- !
- ! GPL_EXCLUDE_START
- !
  ! Plotting 
  !===========
  if (l_RT_density)                         call RT_density(en,k,q)
  !
  ! GPL_EXCLUDE_END
+ !
+ ! Response Functions
+ !====================
+ if ( l_RT_X )                             call RT_X_response(en,k,q)
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -34,7 +34,7 @@ subroutine K_dot_product(dot,V,W)
  implicit none
  !
  complex(SP),          intent(out):: dot
- type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps) 
+ type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps)
  !
  ! Workspace
  !
@@ -43,8 +43,9 @@ subroutine K_dot_product(dot,V,W)
  dot = cZERO
  ! 
  ! NOTE FOR DEVELOPERS:
- ! Anti-block contains the same vector components as the corrisponding res-block.
- ! Sum on all blocks will give twice the value in the case with coupling.
+ ! Anti-block contains the same vector components as the corresponding 
+ ! res-block. Sum on all blocks will give twice the value in the case
+ ! with coupling. So anti-blocks are skipped.
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle

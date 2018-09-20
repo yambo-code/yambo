@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -36,7 +36,6 @@ module SC
  integer           :: SC_X_size
  integer           :: SC_up_W_iters
  integer           :: n_SC_descriptions = 0
- real(SP)          :: E_bare_Ef
  real(SP)          :: rho_convergence
  real(SP)          :: magn_convergence
  real(SP)          :: E_convergence
@@ -59,7 +58,7 @@ module SC
  logical           :: l_SC_update_W
  logical           :: l_SC_diagonal
  logical           :: l_SC_nl_mix
-
+ logical           :: l_froze_density
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -74,9 +73,8 @@ module SC
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
  !
- ! Rotation matrices and xc potential
+ ! xc potential
  !
- complex(SP), allocatable :: SC_R(:,:,:,:)
  complex(SP), allocatable :: V_mean(:,:)
  !
  interface
@@ -100,7 +98,7 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use drivers,        ONLY:l_sc_srpa,l_sc_sex,l_sc_coh
      use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
@@ -109,7 +107,7 @@ module SC
      !
      type(levels) :: E
      !
-     call H_alloc(E)
+     call H_alloc(E,.true.,.true.)
      !
      call H_QP_table_setup(E)
      !
@@ -117,12 +115,9 @@ module SC
        YAMBO_ALLOC(QP_Sc,(QP_n_states,1))
      endif
      !
-     YAMBO_ALLOC(SC_R,(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol))
-     !
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc
@@ -138,7 +133,6 @@ module SC
      call X_alloc('P_square')
      !
      YAMBO_FREE(QP_Sc)
-     YAMBO_FREE(SC_R)
      !
    end subroutine
    !

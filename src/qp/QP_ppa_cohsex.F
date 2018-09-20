@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,11 +48,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use matrix_operate,ONLY:mat_transpose
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #if defined _SC
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
@@ -173,9 +171,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
-#if defined _TIMING
  call timing('GW(ppa)',OPR='start')
-#endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -582,9 +578,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  if(l_X_alloc) call X_alloc('X')
  !
-#if defined _TIMING
  call timing('GW(ppa)',OPR='stop')
-#endif
  !
  if (.not.l_sc_run) call WF_free(WF)
  !
@@ -593,12 +587,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! ALL 2 ALL of QP_Sc
  !
-#if defined _TIMING
  call timing('GW(REDUX)',OPR='start')
-#endif
  call PP_redux_wait(QP_Sc)
-#if defined _TIMING
  call timing('GW(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

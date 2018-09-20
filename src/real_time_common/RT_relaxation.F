@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !   - S_xc contains instead the dynamical part of the self-energy
  !     which describes relaxation and dissipation
  !
- ! 2) This subroutine calculates S^xc
+ ! 2) This subroutine calculates the lifetimes needed to build S^xc
  !    S^xc is here divided in two terms
  !    a) (S^xc)_ij with i/=j describes de-phasing and is approximated as C_ij * G_ij(t)
  !       with C_ij a constant term. C_ij is here called RT_Deph_Matrix
@@ -63,22 +63,19 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  use pars,           ONLY:SP,cI,cZERO
  use D_lattice,      ONLY:Bose_Temp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elphoton_scatt
  use R_lattice,      ONLY:bz_samp,nkibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:I_relax_static,RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
+ use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_bands,&
 &                         E_P_Electron_lifetime,E_P_Hole_lifetime,E_P_El_abs_lifetime,E_P_Ho_abs_lifetime,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,l_RT_CCA_Kernel,Life_MEM_steps,&
-&                         RT_TIME_status,REF_lifetime,RT_E_occupations,RT_H_occupations,FIRST_step,&
-&                         l_initial_equilibrium,RT_delta0_occupations,RT_is_statically_dephased,&
+&                         RT_TIME_status,REF_lifetime,FIRST_step,l_initial_equilibrium,RT_is_statically_dephased,&
 &                         RT_nk,RT_all2ibz,EE_prefactor,EP_prefactor,EP_abs_prefactor,NE_i_time,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,SAVED_times,ADD_to_saved_values,&
-&                         RT_is_dynamically_dephased
-#if defined _TIMING
+&                         RT_is_dynamically_dephased,l_RT_relax_time_approx
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -90,30 +87,14 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  ! Work Space
  !
- integer          :: ib1,ik
- real(SP)         :: f_E_k,f_H_k,df_k,dGAMMA_h,dGAMMA_e
+ integer          :: ik
  logical          :: l_eval
  !
  l_initial_equilibrium=l_equilibrium
  !
- if (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) return
- !
- I_relax_static=cZERO
- !
- ! Dephasing matrix
- !==================
- if (RT_is_statically_dephased.and. .not.l_initial_equilibrium) then
-   do ik=1,RT_nk
-     do ib1=RT_bands(1),RT_bands(2)
-       I_relax_static(ib1,ib1,ik)=-cI*RT_Deph_Matrix(ib1,ib1,RT_all2ibz(ik))*dG_in(ib1,ib1,ik)
-     enddo
-   enddo
- endif
- !
- ! Eval or not ?
- !===============
- !
- if (.not.RT_is_dynamically_dephased ) return
+ if ( (.not.RT_is_statically_dephased.and..not.l_elphoton_scatt) .or. &
+&     (.not.RT_is_dynamically_dephased)                          .or. &
+&     (.not.l_initial_equilibrium.and.l_RT_relax_time_approx)         ) return
  !
  l_eval=l_initial_equilibrium 
  !
@@ -130,9 +111,8 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  ! El-El
  !=======
  if(l_elel_scatt.and.l_eval ) then
-#if defined _TIMING
+   !
    call timing('RT relaxation (e-e)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -142,9 +122,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-e)',OPR='stop')
-#endif
    !
  endif
  !
@@ -152,9 +130,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !=======
  if(l_elph_scatt.and.l_eval) then
    !
-#if defined _TIMING
    call timing('RT relaxation (e-p)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -164,9 +140,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-p)',OPR='stop')
-#endif
    !
  endif
  !
@@ -174,9 +148,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !============
  if(l_elphoton_scatt.and.l_eval) then
    !
-#if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='start')
-#endif
    !
    do ik=1,nkibz
      !
@@ -186,9 +158,7 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
    enddo
    !
-#if defined _TIMING
    call timing('RT relaxation (e-photon)',OPR='stop')
-#endif
    !
  endif
  !
@@ -243,41 +213,6 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
  !
  if (.not.l_eval) call Impose_Conservations( )
  !
- ! Dephasing Matrix & Occupations reference
- !==========================================
- !
- do ik=1,RT_nk
-   do ib1=RT_bands(1),RT_bands(2)
-     !
-     f_E_k=RT_E_occupations(ib1,ik)
-     f_H_k=RT_H_occupations(ib1,ik)
-     !
-     df_k=RT_delta0_occupations(ib1,ik)
-     !
-     dGAMMA_e=0._SP
-     dGAMMA_h=0._SP
-     if (l_elel_scatt) then
-       dGAMMA_h=E_E_Hole_lifetime(ib1,ik)
-       dGAMMA_e=E_E_Electron_lifetime(ib1,ik)
-     endif
-     if (l_elphoton_scatt) then
-       dGAMMA_h=dGAMMA_h+E_PHOT_Hole_lifetime(ib1,ik)
-       dGAMMA_e=dGAMMA_e+E_PHOT_Electron_lifetime(ib1,ik)
-     endif
-     if (l_RT_CCA_Kernel.and.l_elph_scatt) then
-       dGAMMA_h=dGAMMA_h+ E_P_Hole_lifetime(ib1,ik)    +E_P_Ho_abs_lifetime(ib1,ik)
-       dGAMMA_e=dGAMMA_e+ E_P_Electron_lifetime(ib1,ik)+E_P_El_abs_lifetime(ib1,ik)
-     endif
-     !
-     ! This term could be moved inside RT_apply_zero_dyn.F
-     ! However it's better to keep is together with the rest of the 
-     ! relaxation term
-     !
-     I_relax_static(ib1,ib1,ik)=I_relax_static(ib1,ib1,ik) + sum(REF_lifetime(ib1,ik,:))*df_k + ( dGAMMA_e*f_E_k - dGAMMA_h*f_H_k )
-     !
-   enddo
- enddo
- !
  contains
    !
    subroutine Impose_Conservations( )
@@ -288,18 +223,11 @@ subroutine RT_relaxation(dG_in,E,k,q,Time,l_equilibrium)
      !
      ! Zero dN/dT & dE/dT & d(DeltaN)/dT
      !===================================
-     if (l_elel_scatt) then
-       call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
-     endif
-     if (l_elph_scatt) then
-       call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
-       if(Bose_Temp>0._SP) then
-         call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
-       endif
-     endif
-     if (l_elphoton_scatt) then
-       call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative') 
-     endif
+     if (l_elel_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_E_Hole_lifetime,E_E_Electron_lifetime,'elel ') 
+     if (l_elph_scatt)     call RT_impose_zero_dE_and_dN(E,k,E_P_Hole_lifetime,E_P_Electron_lifetime,'elph1')
+     if (l_elph_scatt.and.Bose_Temp>0._SP) &
+&                          call RT_impose_zero_dE_and_dN(E,k,E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,'elph2')
+     if (l_elphoton_scatt) call RT_impose_zero_dE_and_dN(E,k,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,'radiative') 
      !
    end subroutine
    !

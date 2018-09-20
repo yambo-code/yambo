@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -27,7 +27,7 @@ module real_time
  use pars,       ONLY:DP,SP,schlen,lchlen,LP
  use units,      ONLY:FS2AUT
  use global_XC,  ONLY:QP_SE_NONE
- use electrons,  ONLY:levels
+ !
 #include<memory.h>
  !
  ! CORE LOGICALS
@@ -38,6 +38,7 @@ module real_time
  logical           :: l_NE_with_fields
  logical           :: l_Dynamics_is_over   
  logical           :: l_Update_Time_Step  = .FALSE.
+ logical           :: l_RT_is_WFfree
  !
  character(schlen) :: RT_potential
  !
@@ -49,12 +50,19 @@ module real_time
  !
  ! Evaluation logicals
  !
+ logical          :: eval_energy
+ logical          :: eval_entropy
  logical          :: eval_HARTREE
  logical          :: eval_DFT
  !
  ! To include the induced field in the coupling and current
  !
  logical           :: l_RT_induced_field = .FALSE.
+ !
+ ! TMP SOLUTION FOR TR ABS
+ !
+ logical  :: l_RT_abs_YAMBO = .false.
+ !
  !
  ! ... core step length and Time-points array...
  !
@@ -82,6 +90,12 @@ module real_time
  logical  :: l_RT_lifetimes_extrapolation = .FALSE.! If .TRUE. the lifetimes not calculated are extrapolated. Otherwise are kept constant
  real(SP) :: RT_life_extrap_times(2)               ! Lifetimes are evaluated at distance RT_life_extrap_times(2) and in groups long RT_life_extrap_times(1)
  real(SP) :: RT_life_extrap_times_SAVE(2)
+ !
+ logical  :: l_RT_relax_time_approx = .FALSE.
+ real(SP) :: RT_RTA_temp(2)
+ real(SP) :: RT_RTA_chem(2)
+ real(SP), allocatable :: RT_RTA_E_occ_infty(:,:)
+ real(SP), allocatable :: RT_RTA_H_occ_infty(:,:)
  ! 
  ! Lifetimes Extrapolation Time status 
  ! 
@@ -122,7 +136,7 @@ module real_time
  !
  ! ... and magnetization
  !----------------------
- complex(SP) :: RT_magn(3)
+ complex(SP) :: RT_magn(3,3)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -147,21 +161,25 @@ module real_time
  integer                 :: RT_bands(2)
  integer                 :: RT_nbands
  !
- ! BGR
- !----------------------------
- logical                  :: l_BGR=.false.
- real(SP),    allocatable :: BGR_hartree(:,:,:)  
- real(SP),    allocatable :: BGR_V_xc(:,:,:)  
- real(SP),    allocatable :: BGR_Self_Energy(:,:,:)  
+ ! Equilibrium V_xc and V_hartree in real space
+ ! Presently REF_V_hartree_sc is not used
+ !
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
- real(SP),    allocatable :: REF_V_hartree_sc(:,:)  
- real(SP),    allocatable :: REF_Vnl_xc(:)  
- real(SP)                 :: BGR(5) ! (BGR at the minimum dir/ind gap, H contrib., xc contrib., SE contrib.)
- type(levels),save        :: E_reference
+ real(SP),    allocatable :: REF_V_hartree_sc(:,:)   
+ !
+ ! Update QP Energies and WFs
+ !----------------------------
+ logical                  :: l_update_QP_Energies
+ logical                  :: l_update_QP_WFs=.false.
+ logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
+ !
  !----------------------------
  logical                  :: l_RT_uses_E_DbGd
+ logical                  :: l_RT_eq_is_zero_temp
+ logical                  :: l_RT_include_eq_scatt
+ logical                  :: l_RT_impose_for_metals
  logical,     allocatable :: DbGd_EE_scatt_table(:,:)  
  integer,     allocatable :: DbGd_EE_Nk_table(:,:)  
  integer,     allocatable :: DbGd_ibz_coo(:,:)
@@ -179,7 +197,7 @@ module real_time
  ! ... THETA matrix
  complex(SP), allocatable :: THETA_matrix(:,:,:,:)
  ! ... Q-parallelization  and GKKP
- complex(SP), allocatable :: elph_gkkp_expanded(:,:,:,:)
+ real(SP),    allocatable :: elph_gkkp_expanded_sq(:,:,:,:,:)
  ! ... indexes ...
  integer,     allocatable :: THETA_matrix_index(:,:,:)
  integer,     allocatable :: Q_io_map(:)
@@ -189,6 +207,16 @@ module real_time
  !----------------------
  logical                  :: l_RT_impose_N_dN    = .TRUE.
  logical                  :: l_RT_impose_E    = .TRUE.
+ !
+ ! Energies
+ !---------------------
+ type RT_DbGd
+   real(SP), allocatable :: En(:,:,:)
+   real(SP), allocatable :: W(:,:,:)
+   real(SP), allocatable :: kpt(:,:)
+ end type
+ !
+ type(RT_DbGd),save  :: RT_E_and_k
  !
  ! Locks and reference
  !----------------------
@@ -240,17 +268,6 @@ module real_time
  real(SP)                 :: EP_prefactor(2)
  real(SP)                 :: EP_abs_prefactor(2) 
  !
- ! Occupations fit
- !-----------------
- real(SP)                 :: RT_Tfit_occupations(2)
- real(SP)                 :: RT_Efit_occupations(2)
- !
- ! Thermodynamics
- !-----------------
- real(SP)                 :: RT_T_thermodynamics(3)
- real(SP)                 :: RT_E_thermodynamics(3)
- real(SP)                 :: RT_S_thermodynamics(3)
- !
  ! Relaxation: Dephasing Matrix
  !------------------------------
  !
@@ -263,7 +280,7 @@ module real_time
  integer           :: two_alpha
  integer           :: N_Gr_descs
  real(SP)          :: Gr_QP_width
- character(schlen) :: Gr_kind = "QP"
+ character(schlen) :: Gr_kind
  character(lchlen) :: Gr_description(5) 
  !
  ! GFs
@@ -272,12 +289,13 @@ module real_time
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
+ complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
- complex(SP), allocatable :: I_relax_static(:,:,:)
+ !complex(SP), allocatable :: I_relax_static(:,:,:)
  !
  ! Density
  !---------
@@ -288,12 +306,27 @@ module real_time
  ! Integrators
  !
  logical  :: l_RT_EULER
- logical  :: l_RT_RK2
- logical  :: l_RT_HEUN
  logical  :: l_RT_EXP
- logical  :: l_RT_RWA
+ logical  :: l_RT_INV
  !
- integer  :: integrator_step
+ logical  :: l_RT_RWA
+ logical  :: l_RT_ACC
+ logical  :: l_RT_PERT
+ logical  :: l_RT_DIAG
+ !
+ logical  :: l_RT_SIMPLE
+ logical  :: l_RT_RK2
+ logical  :: l_RT_RK4
+ logical  :: l_RT_HEUN
+ !
+ integer  :: Integrator_step
+ integer  :: Integrator_nsteps
+ integer  :: Integrator_exp_order
+ !
+ real(SP) :: a_tableau(4)
+ real(SP) :: b_tableau(4)
+ real(SP) :: c_tableau(4)
+ real(SP) :: RWA_table(5)
  !
  ! Integrate exactly the part of the dynamics due to H_o 
  ! as it is done in Comp. Phys. Comm. 123(1999)
@@ -326,9 +359,6 @@ module real_time
    !
    real(SP)   ,allocatable:: E_bare(:)       ! equilibrium energy, i.e. the QP energy
    real(SP)   ,allocatable:: delta_E(:)      ! change in E (BGR)
-   real(SP)   ,allocatable:: dE_Hartree(:)   
-   real(SP)   ,allocatable:: dE_V_xc(:)        
-   real(SP)   ,allocatable:: dE_Self_Energy(:) 
    !
    ! Occupations
    !
@@ -366,15 +396,9 @@ module real_time
      YAMBO_ALLOC(RT%table,(RT%nstates,4))
      YAMBO_ALLOC(RT%E_bare,(RT%nstates))
      YAMBO_ALLOC(RT%f_bare,(RT%nstates))
-     YAMBO_ALLOC(RT%dE_Hartree,(RT%nstates))
-     YAMBO_ALLOC(RT%dE_V_xc,(RT%nstates))
-     YAMBO_ALLOC(RT%dE_Self_Energy,(RT%nstates))
      RT%table         =0
      RT%E_bare        =0._SP
      RT%f_bare        =0._SP
-     RT%dE_Hartree    =0._SP
-     RT%dE_V_xc       =0._SP
-     RT%dE_Self_Energy=0._SP
      if (l_elel_scatt) then
        YAMBO_ALLOC(RT%dGAMMA_E_E_Hole,(RT%nstates))
        YAMBO_ALLOC(RT%dGAMMA_E_E_Electron,(RT%nstates))
@@ -416,9 +440,6 @@ module real_time
      RT%nk=0
      RT%nb=0
      RT%nstates=0
-     YAMBO_FREE(RT%dE_Hartree)
-     YAMBO_FREE(RT%dE_V_xc)
-     YAMBO_FREE(RT%dE_Self_Energy)
      YAMBO_FREE(RT%dGAMMA_E_E_Hole)
      YAMBO_FREE(RT%dGAMMA_E_E_Electron)
      YAMBO_FREE(RT%dGAMMA_E_P_Hole)
@@ -443,16 +464,17 @@ module real_time
      !
      use pars,           ONLY:SP,LP,schlen,cZERO
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
-     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup,E_bare
+     use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
-     use QP_m,           ONLY:QP_nk,QP_n_states,QP_Vnl_xc
      use R_lattice,      ONLY:nqbz,nXkibz
+     !
+     implicit none
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en)
+     call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
      !
      call H_QP_table_setup(en)
      !
@@ -460,12 +482,14 @@ module real_time
      !
      YAMBO_ALLOC(E_xc,(fft_size))
      !
+     YAMBO_ALLOC(RT_E_and_k%En,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_E_and_k%kpt,(3,RT_nk))
+     !
      YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
      !
      YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
      YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
      YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
@@ -481,6 +505,11 @@ module real_time
      RT_lifetimes_locked=.false.
      !
      YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     !
+     if(l_RT_relax_time_approx) then
+       YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
+       YAMBO_ALLOC(RT_RTA_H_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
+     endif
      !
      if (l_elphoton_scatt) then
        YAMBO_ALLOC(E_PHOT_Hole_lifetime,(RT_bands(1):RT_bands(2),RT_nk))
@@ -519,13 +548,13 @@ module real_time
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
      if(l_use_Hxc_collisions) then
-       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+       YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-       YAMBO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     endif
+     !if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
+     !  YAMBOO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     !endif
      !
      YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      HARTREE0=cZERO
@@ -543,28 +572,22 @@ module real_time
      !
      YAMBO_ALLOC(REF_V_xc_sc,(fft_size,n_spin))
      YAMBO_ALLOC(REF_V_hartree_sc,(fft_size,n_spin))
-     YAMBO_ALLOC(REF_Vnl_xc,(QP_n_states))
      !
-     YAMBO_ALLOC(BGR_hartree,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     YAMBO_ALLOC(BGR_V_xc,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     YAMBO_ALLOC(BGR_Self_Energy,(RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
-     !
-     YAMBO_ALLOC(rho_reference,(fft_size))
-     !
-     if(n_spin>1) then
-       YAMBO_ALLOC(magn_reference,(fft_size,3))
+     if( .not.l_RT_is_WFfree ) then
+       !
+       YAMBO_ALLOC(rho_reference,(fft_size))
+       !
+       if(n_spin>1) then
+         YAMBO_ALLOC(magn_reference,(fft_size,3))
+       endif
+       !
      endif
-     !
-     ! Reference energies
-     !
-     YAMBO_ALLOC(E_bare,(1:RT_bands(2),nXkibz,n_sp_pol))
-     E_bare=en%E(:RT_bands(2),:,:)
      !
    end subroutine RT_alloc
    !   
    subroutine RT_free
      !
-     use hamiltonian,    ONLY:H_free,E_bare
+     use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
      !
      call H_free()
@@ -579,7 +602,7 @@ module real_time
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
      YAMBO_FREE(RT_TIME_status)
-     YAMBO_FREE(I_relax_static)
+     !YAMBOO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
      YAMBO_FREE(E_PHOT_Hole_lifetime)
@@ -593,12 +616,8 @@ module real_time
      YAMBO_FREE(REF_lifetime)
      YAMBO_FREE(SAVED_lifetime)
      YAMBO_FREE(SAVED_times)
-     YAMBO_FREE(REF_Vnl_xc)
      YAMBO_FREE(REF_V_xc_sc)
-     YAMBO_FREE(REF_V_hartree_sc)
-     YAMBO_FREE(BGR_hartree)
-     YAMBO_FREE(BGR_V_xc)
-     YAMBO_FREE(BGR_Self_Energy)
+     YAMBO_FREE(RT_E_occupations)
      YAMBO_FREE(RT_H_occupations)
      YAMBO_FREE(RT_delta0_occupations)
      YAMBO_FREE(RT_delta_occupations)
@@ -606,18 +625,21 @@ module real_time
      YAMBO_FREE(RT_H_occupations_reference)
      YAMBO_FREE(RT_occupations_locked)
      YAMBO_FREE(RT_lifetimes_locked)
-     YAMBO_FREE(RT_E_occupations)
+     YAMBO_FREE(REF_V_hartree_sc)
+     YAMBO_FREE(RT_E_and_k%En)
+     YAMBO_FREE(RT_E_and_k%W)
+     YAMBO_FREE(RT_E_and_k%kpt)
      YAMBO_FREE(G_lesser)
      YAMBO_FREE(MEM_pointer)
      YAMBO_FREE(q_weight_RT)
      YAMBO_FREE(THETA_matrix)
      YAMBO_FREE(THETA_matrix_index)
-     YAMBO_FREE(elph_gkkp_expanded)
+     YAMBO_FREE(elph_gkkp_expanded_sq)
      YAMBO_FREE(G_lesser_reference)
      YAMBO_FREE(dG_lesser)
+     YAMBO_FREE(I1_matrix)
      YAMBO_FREE(rho_reference)
      YAMBO_FREE(magn_reference)
-     YAMBO_FREE(E_bare)
      YAMBO_FREE(RT_Deph_Matrix)
      YAMBO_FREE(Q_io_map)
      YAMBO_FREE(K_io_map)

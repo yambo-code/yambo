@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -76,8 +76,8 @@ if test "$internal_netcdf" = "yes" ; then
 else
   NETCDF_str=" E "
 fi
-NETCDF_info="(With large files support)"
-if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(No large files support)"; fi
+NETCDF_info="(NETCDF with large files support)"
+if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(NETCDF large files support disabled)"; fi
 #
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
@@ -89,11 +89,9 @@ if test "$hdf5" = "yes" ; then
   fi
   if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
   if test "$enable_netcdf_hdf5" = "yes" ; then
-    if test "$compile_hdf5" = "yes" && test "$mpibuild" = "yes" ; then
-      HDF5_info="(HDF5-IO format, parallel lib";
-    else
-      HDF5_info="(HDF5-IO format"     ;
-    fi
+    HDF5_info="(HDF5-IO format";
+    if test "$HDF5_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib " ; fi
+    if test "$enable_hdf5_par_io" = "yes"; then HDF5_info="${HDF5_info}, parallel IO"   ; fi
     if test "$enable_hdf5_compression" = "yes"; then
       HDF5_info="${HDF5_info}, with data compression)" ;
     else
@@ -138,16 +136,22 @@ if test "$internal_blacs" = "yes" ; then
   if test "$compile_blacs" = "no" ; then BLACS_str=" If"; fi
 fi
 #
-PET_str=" - "
-if test "$enable_petsc"  = "yes" ; 
- then PET_str=" E "; 
- if test "$compile_petsc" = "yes" ; then PET_str=" I "; fi
-fi
 #
-SLE_str=" - "
-if test "$enable_slepc"  = "yes" ; 
- then SLE_str=" E "; 
- if test "$compile_slepc" = "yes" ; then SLE_str=" I "; fi
+PETSC_str=" - "
+if test "$internal_petsc" = "yes" ; then
+  if test "$compile_petsc" = "yes" ; then PETSC_str=" Ic"; fi
+  if test "$compile_petsc" = "no"  ; then PETSC_str=" If"; fi
+elif test "$enable_petsc" = "yes" ; then
+  PETSC_str=" E "
+fi
+
+#
+SLEPC_str=" - "
+if test "$internal_slepc" = "yes" ; then
+  if test "$compile_slepc" = "yes" ; then SLEPC_str=" Ic"; fi
+  if test "$compile_slepc" = "no"  ; then SLEPC_str=" If"; fi
+elif test "$enable_slepc" = "yes" ; then
+  SLEPC_str=" E "
 fi
 
 #
@@ -156,6 +160,13 @@ if test "$internal_libxc" = "yes" ; then
   if test "$compile_libxc" = "yes"; then LIBXC_str=" Ic"; fi
   if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
 fi
+
+#
+YDB_str="-";
+if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
+YPY_str="-";
+if test "$enable_yambopy" = "yes" ; then YPY_str="X"; fi
+
 #
 MPI_str=" - ";
 MPI_info=""
@@ -188,8 +199,11 @@ AC_SUBST(BLAS_str)
 AC_SUBST(LAPACK_str)
 AC_SUBST(BLACS_str)
 AC_SUBST(SLK_str)
-AC_SUBST(PET_str)
-AC_SUBST(SLE_str)
+AC_SUBST(PETSC_str)
+AC_SUBST(SLEPC_str)
+#
+AC_SUBST(YDB_str)
+AC_SUBST(YPY_str)
 #
 AC_SUBST(LIBXC_str)
 AC_SUBST(MPI_str)

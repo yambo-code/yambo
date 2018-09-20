@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -29,7 +29,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc
  use YPP,           ONLY:min_weight
- use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
@@ -38,7 +38,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !
  type(bz_samp)    :: Xk
  type(levels)     :: Xen
- integer          :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda
+ integer          :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_

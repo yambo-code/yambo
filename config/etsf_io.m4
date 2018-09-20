@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -98,7 +98,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     internal_etsf="yes"
     compile_e2y="yes"
     ETSF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include"
-    ETSF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -letsf_io"
+    ETSF_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"; then
       compile_etsf="no"
       AC_MSG_RESULT(found already compiled)

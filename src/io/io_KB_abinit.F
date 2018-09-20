@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ integer function io_KB_abinit(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
- use R_lattice,        ONLY:ng_vec,nXkibz
+ use R_lattice,        ONLY:ng_vec,nkibz
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
@@ -35,10 +35,7 @@ integer function io_KB_abinit(ID)
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
  use electrons,        ONLY:n_sp_pol
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
- !
+ use timing_m,         ONLY:timing
 #include<memory.h>
  !
  integer,       intent(in) :: ID
@@ -47,16 +44,14 @@ integer function io_KB_abinit(ID)
  !
  integer :: ik,ifrag,i1,i_sp_pol,var_size
  !
-#if defined _TIMING
  call timing('io_KB_abinit',OPR='start')
-#endif
  !
  ifrag=maxval(io_sec(ID,:))-1
- if(ifrag<=nXkibz) then
+ if(ifrag<=nkibz) then
    ik=ifrag
    i_sp_pol=1
  else
-   ik=ifrag-nXkibz
+   ik=ifrag-nkibz
    i_sp_pol=2
  endif
  !
@@ -151,8 +146,6 @@ integer function io_KB_abinit(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_KB_abinit',OPR='stop')
-#endif
  !
 end function io_KB_abinit

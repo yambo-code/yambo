@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AF, AM
@@ -29,14 +29,18 @@ module wrapper_omp
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,    ONLY:SP,cZERO,cONE
+ use pars,    ONLY:DP,SP,cZERO,cONE,cZERO_DP,cONE_DP
  use wrapper, ONLY:V_copy,MM_caxpy,vv_caxpy,vv_saxpy,Vstar_dot_V,real_V_dot_V,V_dot_V
  use openmp,  ONLY:n_threads_now
  !
  implicit none
  !
  interface M_by_M_omp
-   module procedure mm_cgemm_omp,mm_c_omp 
+#if defined _DOUBLE
+   module procedure mm_cgemm_omp,mm_c_omp
+#else
+   module procedure mm_cgemm_omp,mm_c_omp,mm_c_omp_DP
+#endif
  end interface
  !
  interface M_by_V_omp
@@ -75,6 +79,22 @@ module wrapper_omp
      call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #endif
    end subroutine mm_cgemm_omp
+   !
+#if !defined _DOUBLE
+   subroutine mm_c_omp_DP(TRANSA,TRANSB,msize,A,B,C)
+     integer,  intent(in)  :: msize
+     complex(DP), intent(in)  :: A(msize,msize),B(msize,msize)
+     complex(DP), intent(out) :: C(msize,msize)
+     character,   intent(in)  :: TRANSA,TRANSB
+     !
+     !
+#if defined _OPENMP_INT_LINALG
+     call ZGEMM_omp(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)
+#else
+     call ZGEMM(TRANSA,TRANSB,msize,msize,msize,cONE_DP,A,msize,B,msize,cZERO_DP,C,msize)
+#endif
+   end subroutine mm_c_omp_DP
+#endif
    !
    subroutine mm_c_omp(TRANSA,TRANSB,msize,A,B,C)
      integer,  intent(in)  :: msize
@@ -277,11 +297,11 @@ module wrapper_omp
      complex(SP) :: ctmp
      if (n_threads_now>1) then
        ctmp=cZERO
-!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       !$omp parallel do default(shared), private(i), reduction(+:ctmp)
        do i=1,N
          ctmp=ctmp +conjg(CX(i))*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        Vstar_dot_V_omp=ctmp
      else
        Vstar_dot_V_omp=Vstar_dot_V(N,CX,CY)
@@ -301,11 +321,11 @@ module wrapper_omp
      real(SP) :: rtmp
      if (n_threads_now>1) then
        rtmp=0.0_SP
-!$omp parallel do default(shared), private(i), reduction(+:rtmp)
+       !$omp parallel do default(shared), private(i), reduction(+:rtmp)
        do i=1,N
          rtmp=rtmp +CX(i)*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        real_V_dot_V_omp=rtmp
      else
        real_V_dot_V_omp=real_V_dot_V(N,CX,CY)
@@ -324,11 +344,11 @@ module wrapper_omp
      complex(SP) :: ctmp
      if (n_threads_now>1) then
        ctmp=0.0_SP
-!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       !$omp parallel do default(shared), private(i), reduction(+:ctmp)
        do i=1,N
          ctmp=ctmp +CX(i)*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        V_dot_V_omp=ctmp
      else
        V_dot_V_omp=V_dot_V(N,CX,CY)

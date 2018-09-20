@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -52,8 +52,6 @@ module linear_algebra
    integer                  :: dim
  end type LALGEBRA_WS
  !
- type(LALGEBRA_WS) :: WS
- !
  public :: LU_factorization
  public :: LU_inversion
  public :: SV_decomposition
@@ -82,23 +80,6 @@ module linear_algebra
      use com,     ONLY:error
      character(*) calling_subr,message_
      call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
-   end subroutine
-   !
-   subroutine MATRIX_transfer_side_crop(I,J,O)
-     !
-     integer :: I(2),J(2),O(2)
-     !
-     O=0
-     !
-     if (I(2)<J(1)) return
-     if (I(1)>J(2)) return
-     !
-     O(1)=I(1)
-     if (I(1)<=J(1)) O(1)=J(1)
-     !
-     O(2)=J(2)
-     if (I(2)<J(2)) O(2)=I(2)
-     !
    end subroutine
    !
    !============================

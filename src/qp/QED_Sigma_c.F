@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): PM AM
@@ -36,7 +36,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              elemental_collision_copy
  use collision_ext,       ONLY:P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,PARALLEL_WF_distribute
+ use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
@@ -44,9 +44,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              PAR_IND_Q,PAR_nQ,PAR_nQP
  use functions,           ONLY:theta_function
  use com,                 ONLY:warning
-#if defined _TIMING
  use timing_m,            ONLY:timing
-#endif
  !
 #include<memory.h>
  !
@@ -74,9 +72,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
    call section('=','Correlation: Photon-mediated Self-energy and Radiative Lifetimes')
  endif
  !
-#if defined _TIMING
  call timing('GW (Lamb)',OPR='start')
-#endif
  !
  ! PARALLEL distribution
  !=======================
@@ -275,9 +271,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
    !
  endif
  !
-#if defined _TIMING
  call timing('GW (Lamb)',OPR='stop')
-#endif
  !
  contains
    !

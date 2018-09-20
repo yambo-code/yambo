@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -100,7 +100,7 @@ if test "x$enable_iotk" = "xyes" ; then
     internal_iotk="yes"
     compile_p2y="yes"
     IOTK_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include/"
-    IOTK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -liotk"
+    IOTK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a"
     if ! test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libiotk.a" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_base.mod" || ! test -e "${extlibs_path}/${FCKIND}/${FC}/include/iotk_specials.h"; then
       compile_iotk="yes"
       if test ! -d lib ; then mkdir lib ; fi
@@ -126,44 +126,18 @@ AC_SUBST(IOTK_LIBS)
 # ============================================================================
 # check for p2y versions
 #
-AC_ARG_WITH(p2y_version, AC_HELP_STRING([--with-p2y-version=<flags>],
- [Version number for PW 2 YAMBO : <export> <3.1> <3.1.1> <3.2> <4.0> <5.0>],[32]))
+AC_ARG_ENABLE(p2y_hdf5_support, AC_HELP_STRING([--enable-p2y-hdf5-support],
+ [Activate HDF5 support in p2y. Default is no.]))
 
-AC_MSG_CHECKING([for p2y version])
-
-PW_VER="5.0"
-PW_CPP="_P2Y_V50"
-if test "$compile_p2y" = "yes"; then
- if test "$with_p2y_version" = "export"; then
-  PW_VER="export"
-  PW_CPP="_P2Y_EXPORT"
- fi
- if test "$with_p2y_version" = "3.1"; then
-  PW_VER="3.1"
-  PW_CPP="_P2Y_V31"
- fi
- if test "$with_p2y_version" = "3.1.1"; then
-  PW_VER="3.1.1"
-  PW_CPP="_P2Y_V311"
- fi
- if test "$with_p2y_version" = "3.2"; then
-  PW_VER="3.2"
-  PW_CPP="_P2Y_V32"
- fi
- if test "$with_p2y_version" = "4.0"; then
-  PW_VER="4.0"
-  PW_CPP="_P2Y_V40"
- fi
- if test "$with_p2y_version" = "5.0"; then
-  PW_VER="5.0"
-  PW_CPP="_P2Y_V50"
- fi
+if test x"$enable_p2y_hdf5_support" = "xyes" && test "x$hdf5" = "xyes" ; then
+   PW_VER="hdf5-support"
+   PW_CPP="-D_P2Y_QEXSD_HDF5"
+else
+   PW_VER=
+   PW_CPP=
 fi
-
-AC_MSG_RESULT([$PW_VER])
 
 AC_SUBST(PW_VER)
 AC_SUBST(PW_CPP)
-
 
 ])

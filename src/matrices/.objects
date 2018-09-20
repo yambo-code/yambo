@@ -1,4 +1,5 @@
-objs = MATRIX_empty.o
 #if defined _SCALAPACK
-objs = SLK_matrix_init.o MATRIX_transfer.o MATRIX_duplicate.o
+SLK_objs = SLK_matrix_init.o
 #endif
+objs =  $(SLK_objs) MATRIX_init.o MATRIX_duplicate.o MATRIX_transfer_side_crop.o \
+        MATRIX_BSE_to_PAR.o MATRIX_PAR_to_from_PAR.o MATRIX_transfer.o

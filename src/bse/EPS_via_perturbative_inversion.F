@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -44,7 +44,6 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  ! R_x_D_n = R_n |D>
  !
  use BS_solvers,     ONLY:K_INV_EPS,BS_mat,K_slk
- use SLK_m,          ONLY:BLACS_structure_in_use
  use pars,           ONLY:SP,cZERO,cONE
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  !
@@ -82,7 +81,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  do while (it<=BSS_inv_iter_max) 
    !
-   if (.not.BLACS_structure_in_use) then
+   if (.not.K_slk%kind=="SLK") then
      call M_by_V_omp('n',n,BS_mat,R_x_D_nm1(:,1),R_x_D_n(:,1))
      if (n_loop==2) call M_by_V_omp('n',n,conjg(BS_mat),R_x_D_nm1(:,2),R_x_D_n(:,2))
    else

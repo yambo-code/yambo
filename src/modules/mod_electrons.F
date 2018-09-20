@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,7 +55,9 @@ module electrons
  ! Average magnetization density
  !
  logical                  :: eval_magn
- real(SP)                 :: Total_magn(3)
+ real(SP)                 :: Spin_magn(3)
+ real(SP)                 :: Orbital_magn(3)
+ real(SP)                 :: Itinerant_magn(3)
  !
  type levels
    integer         :: nb
@@ -66,10 +68,10 @@ module electrons
    integer         :: kf
    integer         :: sf
    real(SP)        :: E_Fermi
-   real(SP)        :: E_dir_gap(2) ! 1-2 refers to spin polarizations
+   real(SP)        :: E_dir_gap(2)       ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)
-   real(SP)        :: E_VBM        ! Valence    Band Maximum
-   real(SP)        :: E_CBm        ! Conduction Band minimum
+   real(SP)        :: E_VBM(2)           ! Valence    Band Maximum
+   real(SP)        :: E_CBm(2)           ! Conduction Band minimum
    !
    ! QP corrections
    !
@@ -104,8 +106,8 @@ module electrons
  ! Fine energy grid Tables
  !   
  integer  :: BZ_DbGd_max_filling = 1
- integer  :: BZ_DbGd_nkpts
- integer  :: BZ_DbGd_tot_nkpts
+ integer  :: BZ_DbGd_tot_nk
+ integer  :: BZ_DbGd_tot_nk_levels
  integer  :: BZ_ASSOCIATED_nkpts
  integer  :: BZ_DbGd_nbands
  logical  :: DbGd_is_symmetry_expanded=.FALSE.
@@ -189,15 +191,15 @@ module electrons
      !
      ! E Double Grid
      !
-     if (BZ_DbGd_nbands/=0.and.Ei%nk==Eo%nk) then
-       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
-       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+     if (BZ_DbGd_nbands>0.and.Ei%nk==Eo%nk) then
+       YAMBO_ALLOC(Eo%E_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+       YAMBO_ALLOC(Eo%W_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
+       YAMBO_ALLOC(Eo%f_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
        Eo%E_DbGd=Ei%E_DbGd
        Eo%W_DbGd=Ei%W_DbGd
        Eo%f_DbGd=Ei%f_DbGd
        if(allocated(Ei%df_DbGd)) then
-         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,n_sp_pol))
+         YAMBO_ALLOC(Eo%df_DbGd,(BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,n_sp_pol))
          Eo%df_DbGd=Ei%df_DbGd
        endif
      endif
@@ -256,8 +258,8 @@ module electrons
      !
      if (.not.FULL_RESET) return
      !
-     BZ_DbGd_nkpts=0
-     BZ_DbGd_tot_nkpts=0
+     BZ_DbGd_tot_nk=0
+     BZ_DbGd_tot_nk_levels=0
      BZ_ASSOCIATED_nkpts=0
      BZ_DbGd_nbands=0
      !

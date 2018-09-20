@@ -5,6 +5,14 @@ Clone
 =====
 git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
 
+Branches list clean-up
+=======================
+git remote prune origin
+
+Tags list update
+================
+git fetch --tags --all
+
 status
 ==========
 >git status #show status of local branch
@@ -66,7 +74,7 @@ After you can also use te “git mergetool” command.
 
 Checkout a branch:
 ===================
->git worktree add ~/Yambo/yambo/branches/BRANCH BRANCH
+>git worktree add ~/Yambo/yambo/branches/BRANCH origin/BRANCH
 
 Create a new branch:
 ===================

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2016 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
- use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_bytes,N_MEM_SAVE_elements,&
+ use memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold
  use units,        ONLY:Kilobyte
  use com,          ONLY:msg
@@ -32,19 +32,19 @@ subroutine MEM_report( REPORT )
  !
  character(*) :: REPORT
  !
- character(lchlen) :: msg_,prefix
+ character(lchlen) :: msg_,PREFIX
  character(1)      :: where
  integer :: i_mem,i_el,ORPHAN_TOT,i_title
  !
  if (REPORT=="check") then
    where="s"
-   prefix="[MEMORY]"
+   PREFIX="[MEMORY]"
  else
-   prefix=" "
+   PREFIX=" "
    where="r"
    call msg("r" ,"Memory Usage: global (Only MASTER cpu here). [O] stands for group 'O'")
-   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold*int(Kilobyte)))//" (basic treshold) "//&
-&                                       trim(mem_string(MEM_SAVE_treshold*int(Kilobyte)))//" (SAVEs treshold) ")
+   call msg("rn","Memory treshold are:"//trim(mem_string(MEM_treshold))//" (basic treshold) "//&
+&                                       trim(mem_string(MEM_SAVE_treshold))//" (SAVEs treshold) ")
  endif
  !
  ORPHAN_TOT=0
@@ -55,14 +55,14 @@ subroutine MEM_report( REPORT )
    do i_mem=1,N_MEM_elements
      !
      ORPHAN_TOT=ORPHAN_TOT+MEMs(i_mem)%use
-     call plot_the_element(MEMs(i_mem),"Unallocated components:")
+     call plot_the_element(MEMs(i_mem),"Not deallocated components:")
      !
    enddo
    !
  endif
  !
  if (ORPHAN_TOT>0) then
-   WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),"TOTAL unallocated",trim(mem_string(ORPHAN_TOT*int(Kilobyte)))
+   WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),"TOTAL not deallocated",trim(mem_string(ORPHAN_TOT))
    call msg(where,msg_(1:len_trim(msg_)))
  endif
  !
@@ -75,7 +75,7 @@ subroutine MEM_report( REPORT )
    enddo
  endif
  !
- WRITE(msg_,'(a8,a," : ",a,3x)') trim(prefix),  "Max memory used  ",trim(mem_string(MAX_MEM_bytes))
+ WRITE(msg_,'(a8,a," : ",a,3x)') trim(PREFIX),  "Max memory used  ",trim(mem_string(MAX_MEM_Kb))
  call msg("nr",msg_(1:len_trim(msg_)))
  !
  contains
@@ -106,9 +106,9 @@ subroutine MEM_report( REPORT )
          endif
        else
          if (M%N>1.or.(M%N==1.and.trim(M%shelf)/=trim(M%name(1)))) then
-           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))//" "//trim(M%shelf)
+           WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))//" "//trim(M%shelf)
          else
-           WRITE(msg_,'(a8,a27)') trim(prefix),trim(M%name(i_el))
+           WRITE(msg_,'(a8,a27)') trim(PREFIX),trim(M%name(i_el))
          endif
          WRITE(msg_,'(a," : ",a)') trim(msg_),trim(mem_string(MEM))
          if (len_trim(M%desc(i_el))>0) then

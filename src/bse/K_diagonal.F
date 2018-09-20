@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine K_diagonal(iq,what)
  use parser_m,       ONLY:parser
  use BS_solvers,     ONLY:BS_mat,BSS_eh_f,BSS_eh_E,K_diago_in_BS_mat,BSS_eh_W,BS_diagonal,K_slk
  use BS,             ONLY:BS_K_dim,BSE_mode,BS_H_dim
- use SLK_m,          ONLY:BLACS_structure_in_use,SLK_POOL
+ use SLK_m,          ONLY:SLK_POOL
  use parallel_m,     ONLY:PP_redux_wait
  !
 #include<memory.h>
@@ -37,17 +37,17 @@ subroutine K_diagonal(iq,what)
  !
  ! Work Space
  !
- integer          :: i_r,i_r_slk,i_c,i_c_slk,rows(2),cols(2)
+ integer          :: i_r,i_c,rows(2),cols(2)
  real(SP)         :: f_r,f_c
  complex(SP)      :: E_plus_W,pre_factor
  !
  ! Diagonal (Energies) 
  !====================
- if ( (BLACS_structure_in_use.and.index(what,"add_E")>0) .or.&
-&     (.not.BLACS_structure_in_use.and.index(what,"rm_E")>0) ) then
+ if ( (K_slk%kind=="SLK".and.index(what,"add_E")>0) .or.&
+&     (.not.K_slk%kind=="SLK".and.index(what,"rm_E")>0) ) then
    !
    rows=(/1,BS_H_dim/)
-   if (BLACS_structure_in_use) then
+   if (K_slk%kind=="SLK") then
      rows=(/max(K_slk%rows(1),K_slk%cols(1)),min(K_slk%rows(2),K_slk%cols(2))/)
    endif
    !
@@ -56,18 +56,15 @@ subroutine K_diagonal(iq,what)
      if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_r)
      if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_r)-cI*BSS_eh_W(i_r)
      !
-     if (BLACS_structure_in_use.and.index(what,"add_E")>0)then
-       !
-       i_r_slk=i_r-K_slk%rows(1)+1
-       i_c_slk=i_r-K_slk%cols(1)+1
+     if (K_slk%kind=="SLK".and.index(what,"add_E")>0)then
        !
        if (i_r<=BS_K_dim) then
-         K_slk%blc(i_r_slk,i_c_slk)=K_slk%blc(i_r_slk,i_c_slk)+E_plus_W
+         K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)+E_plus_W
        else if (cpl(i_r)) then
-         K_slk%blc(i_r_slk,i_c_slk)=K_slk%blc(i_r_slk,i_c_slk)-conjg(E_plus_W)
+         K_slk%blc(i_r,i_r,1)=K_slk%blc(i_r,i_r,1)-conjg(E_plus_W)
        endif
        !
-     else if (.not.BLACS_structure_in_use.and.index(what,"rm_E")>0)then
+     else if (.not.K_slk%kind=="SLK".and.index(what,"rm_E")>0)then
        !
        if (i_r<=BS_K_dim) then
          BS_mat(i_r,i_r)=BS_mat(i_r,i_r)-E_plus_W
@@ -86,7 +83,7 @@ subroutine K_diagonal(iq,what)
  if ( index(what,"rm_OCC")>0) then
    rows=(/1,BS_H_dim/)
    cols=(/1,BS_H_dim/)
-   if (BLACS_structure_in_use) then
+   if (K_slk%kind=="SLK") then
      rows=K_slk%rows
      cols=K_slk%cols
    endif
@@ -104,12 +101,9 @@ subroutine K_diagonal(iq,what)
        if (.not.cpl(i_r).and..not.cpl(i_c)) pre_factor= 1
        if (     cpl(i_r).and.     cpl(i_c)) pre_factor=-1
        !
-       if (BLACS_structure_in_use) then
+       if (K_slk%kind=="SLK") then
          !
-         i_r_slk=i_r-K_slk%rows(1)+1
-         i_c_slk=i_c-K_slk%cols(1)+1
-         !
-         K_slk%blc(i_r_slk,i_c_slk)=K_slk%blc(i_r_slk,i_c_slk)/f_r/f_c*pre_factor
+         K_slk%blc(i_r,i_c,1)=K_slk%blc(i_r,i_c,1)/f_r/f_c*pre_factor
          !
        else
          !
@@ -127,7 +121,7 @@ subroutine K_diagonal(iq,what)
  if (index(what,"DIAG")/=0) then
    !
    rows=(/1,BS_H_dim/)
-   if (BLACS_structure_in_use) then
+   if (K_slk%kind=="SLK") then
      rows=(/max(K_slk%rows(1),K_slk%cols(1)),min(K_slk%rows(2),K_slk%cols(2))/)
    endif
    !
@@ -141,12 +135,9 @@ subroutine K_diagonal(iq,what)
      if (rows(1)<=rows(2)) then
        do i_r=rows(1),rows(2)
          !
-         i_r_slk=i_r-K_slk%rows(1)+1
-         i_c_slk=i_r-K_slk%cols(1)+1
-         !
-         if (BLACS_structure_in_use) then
-           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r_slk,i_c_slk)
-           K_slk%blc(i_r_slk,i_c_slk)=cZERO
+         if (K_slk%kind=="SLK") then
+           if (.not.cpl(i_r).and.SLK_POOL%ID==0) BS_diagonal(i_r)=K_slk%blc(i_r,i_r,1)
+           K_slk%blc(i_r,i_r,1)=cZERO
          else
            if (.not.cpl(i_r)) BS_diagonal(i_r)=BS_mat(i_r,i_r)
            BS_mat(i_r,i_r)=cZERO
@@ -154,7 +145,7 @@ subroutine K_diagonal(iq,what)
        enddo
      endif
      !
-     if (BLACS_structure_in_use) call PP_redux_wait(BS_diagonal)
+     if (K_slk%kind=="SLK") call PP_redux_wait(BS_diagonal)
      !
    endif
    !

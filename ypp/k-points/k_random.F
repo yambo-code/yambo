@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,14 +24,10 @@
 subroutine k_random(No_Weight)
  !
  use pars,                ONLY:SP,DP,lchlen,schlen
- use units,               ONLY:HA2EV
- use stderr,              ONLY:set_real_printed_length,intc
- use R_lattice,           ONLY:bz_samp,bz_samp_reset
- use parser_m,            ONLY:parser
- use com,                 ONLY:msg,of_open_close,error,warning
- use vec_operate,         ONLY:v_norm,c2a,k2bz,v_is_zero
+ use stderr,              ONLY:set_real_printed_length
+ use com,                 ONLY:msg,of_open_close
+ use vec_operate,         ONLY:v_norm,c2a,k2bz
  use YPP,                 ONLY:BZ_random_nkpts,gamma_radius,K_transform
- use electrons,           ONLY:levels,E_reset
  use LIVE_t,              ONLY:live_timing
  !
  implicit none
@@ -50,10 +46,6 @@ subroutine k_random(No_Weight)
  character(12)      :: ch(3)
  integer            :: iseed(8),k_counter
  logical            :: impose_gamma_radius
- !
- ! BZ DB1 I/O
- !
- integer, external :: io_DB1_selective_scan
  !
  impose_gamma_radius=gamma_radius>0.
  !

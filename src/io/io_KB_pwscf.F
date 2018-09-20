@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ integer function io_KB_pwscf(ID)
  !
  use pars,             ONLY:SP
  use stderr,           ONLY:intc
+ use R_lattice,        ONLY:nkibz
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
@@ -33,23 +34,25 @@ integer function io_KB_pwscf(ID)
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
- !
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  !
  integer,intent(in) :: ID
  ! 
  ! Work Space
  !
- integer :: ik
+ integer :: ifrag,ik,i_sp_pol
  !
-#if defined _TIMING
  call timing('io_KB_pwscf',OPR='start')
-#endif
  !
- ik=maxval(io_sec(ID,:))-1
+ ifrag=maxval(io_sec(ID,:))-1
+ if(ifrag<=nkibz) then
+   ik=ifrag
+   i_sp_pol=1
+ else
+   ik=ifrag-nkibz
+   i_sp_pol=2
+ endif
  !
  io_KB_pwscf=io_connect(desc="kb_pp_pwscf",type=0,ID=ID)
  if (io_KB_pwscf/=0) goto 1
@@ -108,7 +111,7 @@ integer function io_KB_pwscf(ID)
  !
  if (ik==0) goto 1
  !
- if (ik==1) then
+ if (ik==1.and.i_sp_pol==1) then
    if (read_is_on(ID)) call PP_alloc_pwscf()
    call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs))
    call io_bulk(ID,R2=pp_kbs)
@@ -129,8 +132,6 @@ integer function io_KB_pwscf(ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_KB_pwscf',OPR='stop')
-#endif
  !
 end function io_KB_pwscf

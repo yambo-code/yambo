@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
+subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
  !
  ! Build inverse overlaps and overlaps determinants between valence bands at
  ! equilibrium
@@ -33,12 +33,11 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,X,Sm1_plus,Sm1_minus,S_det)
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra, ONLY:INV,USE_LK
  use vec_operate,    ONLY:k_periodic_idx
- use X_m,            ONLY:X_t,DIP_S
+ use X_m,            ONLY:DIP_S
  implicit none
  !
  integer,      intent(in) :: ikbz,i_sp_pol
  type(levels), intent(in) :: Xen
- type(X_t),    intent(in) :: X
  complex(SP), intent(out) :: S_det(6)
  complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
  complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbm,6)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -40,7 +40,7 @@ integer function RT_k_grid(E,k,q)
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
  use LIVE_t,         ONLY:what_is_running
- use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nkpts,DbGd_is_symmetry_expanded
+ use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
 &                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_DbGd,RT_bands,RT_DbGd_nk
@@ -56,8 +56,13 @@ integer function RT_k_grid(E,k,q)
  !
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_bz,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
- !
- l_RT_uses_E_DbGd=BZ_DbGd_tot_nkpts>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ ! 
+ ! GPL_EXCLUDE_START
+ l_RT_uses_E_DbGd=BZ_DbGd_tot_nk_levels>0.and.BZ_DbGd_nbands>=RT_bands(2).and..not.DbGd_is_symmetry_expanded
+ ! GPL_EXCLUDE_END
+ ! GPL_INCLUDE_START
+ !l_RT_uses_E_DbGd=.FALSE.
+ ! GPL_INCLUDE_END
  !
  if (.not.allocated(DbGd_ibz_coo)) then
    YAMBO_ALLOC(DbGd_ibz_coo,(k%nibz,2))
@@ -91,10 +96,12 @@ integer function RT_k_grid(E,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
  ! DbGd support
  !=============
  !
- RT_DbGd_nk=BZ_DbGd_tot_nkpts
+ RT_DbGd_nk=BZ_DbGd_tot_nk_levels
  !
  RT_k_grid=0
  !
@@ -176,5 +183,7 @@ integer function RT_k_grid(E,k,q)
    enddo
    !
  endif
+ !
+ ! GPL_EXCLUDE_END
  !
 end function RT_k_grid

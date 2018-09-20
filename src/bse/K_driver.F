@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,9 +40,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_b_and_k
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B
- !
- ! GPL_EXCLUDE_START
- !
 #if defined _KERR
  use drivers,        ONLY:l_kerr,l_anomalous_Hall
 #endif
@@ -50,9 +47,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use drivers,        ONLY:l_rt_carriers_in_use
  use com,            ONLY:error
 #endif
- !
- ! GPL_EXCLUDE_END
- !
  !
 #include<memory.h>
  !
@@ -80,7 +74,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! Joint DOS
  !===========
- BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.l_rpa_IP
+ BSS_eval_JDOS = index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP
  !
  ! Copatibility with old inputs
  !==============================

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,9 +36,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  use collision_ext, ONLY:P_COLL_element,COLL_bands,P_collisions
  use R_lattice,     ONLY:qindx_S,bz_samp
  use QP_m,          ONLY:QP_QED_ng
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load
  use COLL_interfaces, ONLY:SCATTERING_GW_kinematics
@@ -75,9 +73,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  call WF_load(WF,QP_QED_ng,maxval(qindx_S(:,:,2)),COLL_bands,(/1,k%nibz/),space='R',title='-Momentum Collisions')
  !
-#if defined _TIMING
  call timing('Momentum Collisions',OPR='start')
-#endif
  !
  ! Allocation again
  !
@@ -169,8 +165,6 @@ subroutine COLLISIONS_momentum(E,k,q)
  call elemental_collision_free(I_grad_k) 
  call elemental_collision_free(I_grad_p) 
  !
-#if defined _TIMING
  call timing('Momentum Collisions',OPR='stop')
-#endif
  !
 end subroutine

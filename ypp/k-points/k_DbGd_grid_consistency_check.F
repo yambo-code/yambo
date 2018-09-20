@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
+subroutine k_DbGd_grid_consistency_check(IK_ref,k,E,k_DbGd,E_DbGd)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -32,13 +32,14 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
  type(bz_samp), intent(in)    :: k,k_DbGd
  type(levels),  intent(in)    :: E
  type(levels),  intent(inout) :: E_DbGd
+ integer                      :: IK_ref(E_DbGd%nk)
  !
  ! Work Space
  !
  integer :: ik,ik_DbGd,nb
- real(SP):: shifts(2)
+ real(SP):: shifts(2)=0.
  !
- k_DbGd_grid_consistency_check=-1
+ IK_ref=-1
  !
  nb=min(E%nb,E_DbGd%nb)
  !
@@ -50,20 +51,16 @@ integer function k_DbGd_grid_consistency_check(k,E,k_DbGd,E_DbGd)
        shifts(1)=E%E(1,ik,1)-E_DbGd%E(1,ik_DbGd,1)
        shifts(2)=E%E(nb,ik,1)-E_DbGd%E(nb,ik_DbGd,1)
        !
-       exit  ik_loop
+       IK_ref(ik_DbGd)=ik
        !
      endif
      !
    enddo
  enddo ik_loop
  !
- if (abs(shifts(1)-shifts(2))>max(0.01*abs(shifts(1)),1.E-5) .or. ik_DbGd==E_DbGd%nk+1 ) return
- !
- k_DbGd_grid_consistency_check=ik_DbGd
- !
  ! Here I add E_Fermi as OCCUPATIONS_Fermi in ypp has been
  ! called without the DbGd loaded so the Fermi level has not been applied to E_DbGd.
  !
  E_DbGd%E(:,:,:)=E_DbGd%E(:,:,:)+(shifts(1)+shifts(2))/2.+E%E_Fermi
  !
-end function
+end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,12 +25,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset,&
-&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nkpts
+&                         BZ_DbGd_nbands,DbGd_is_symmetry_expanded,BZ_DbGd_tot_nk_levels
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table,mag_syms,idt_index
+&                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -103,13 +103,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
  rv=cross_product(a(2,:),a(3,:))
  DL_vol=abs(dot_product(a(1,:),rv))
  call msg('r','DL volume [au]:',DL_vol)
- RL_vol=(2.*pi)**3./DL_vol
+ RL_vol=(2._SP*pi)**3/DL_vol
  !
  ! RL unit vectors 
  !
- b(1,:)=cross_product(a(2,:),a(3,:))*2.*pi/DL_vol
- b(2,:)=cross_product(a(3,:),a(1,:))*2.*pi/DL_vol
- b(3,:)=cross_product(a(1,:),a(2,:))*2.*pi/DL_vol
+ b(1,:)=cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
+ b(2,:)=cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
+ b(3,:)=cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  rv=b(1,:)
@@ -198,6 +198,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')
+ call symmetry_equiv_atoms()
  !
  call section('=','RL shells')
  !============================
@@ -234,7 +235,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=================================
  !
  i_err=k_lattice(k,Xk,1,.TRUE.)
- !
  if (i_err /= 0 ) then
    call warning('Trying to expand the k-grid')
    call msg('r','')
@@ -245,9 +245,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (i1==i2) i_err=k_lattice(k,Xk,i1,.TRUE.)
      i1=i1+1
    enddo
-   !
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
-   !
  endif
  !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
@@ -255,7 +253,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
    call section('=','Double K-grid')
    !=======================================
    !
-   call msg('r', 'K-points             :',BZ_DbGd_tot_nkpts)
+   call msg('r', 'K-points             :',BZ_DbGd_tot_nk_levels)
    call msg('r', 'Bands                :',BZ_DbGd_nbands)
    call msg('rn','Is the grid expanded :',DbGd_is_symmetry_expanded)
    !

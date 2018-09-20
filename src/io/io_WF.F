@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,15 +24,14 @@
 integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
+ use com,              ONLY:error
  use electrons,        ONLY:n_sp_pol,n_spinor
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
  use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,ver_is_gt_or_eq,&
 &                           io_fragment,io_elemental,io_resetable,frag_WF
-#if defined _TIMING
  use timing_m,         ONLY:timing
-#endif
  implicit none
  integer,       intent(in) :: ID
  complex(SP),   optional   :: wf(:,:,:)
@@ -40,9 +39,7 @@ integer function io_WF(ID,wf)
  integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io
  character(schlen)         :: VAR_NAME
  !
-#if defined _TIMING
  call timing('io_WF',OPR='start')
-#endif
  !
  head_io=0
  select case ( count((/io_sec(ID,:)/=0/)) )
@@ -56,10 +53,12 @@ integer function io_WF(ID,wf)
    case(2)
      ifrag=io_sec(ID,1)-1
      ib_grp=io_sec(ID,2)
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (1)")
    case(3)
      ifrag=io_sec(ID,2)-1
      ib_grp=io_sec(ID,3)
      head_io=1
+     if (.not. present(wf)) call error(" [WF] unexpected: wf not present (2)")
  end select
  !
  if(ifrag<=nkibz) then
@@ -147,13 +146,12 @@ integer function io_WF(ID,wf)
  call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
  !
  do ib_block=1,n_blocks
+   if(ib_grp>1) ib_lim(1,ib_block)=mod(ib_lim(1,ib_block)-1,wf_nb_io)+1
    call io_bulk(ID,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
  enddo
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_WF',OPR='stop')
-#endif
  !
 end function io_WF

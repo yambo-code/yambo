@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2018 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -74,10 +74,10 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
+    DEBUG_FLAGS="-CA -CB -fpe0"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
@@ -130,7 +130,7 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fno-second-underscore -mtune=pentium4"
@@ -139,7 +139,7 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
+    DEBUG_FLAGS="-CA -CB -fpe0"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *1*)
@@ -178,7 +178,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
@@ -196,7 +196,7 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
+    DEBUG_FLAGS="-CA -CB -fpe0"
     CPU_FLAG=""
     case "${FCVERSION}" in
       *1*)
@@ -247,7 +247,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
@@ -265,7 +265,7 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
+    DEBUG_FLAGS="-CA -CB -fpe0"
     OMPFLAGS="-openmp"
     CPU_FLAG=""
     case "${FCVERSION}" in

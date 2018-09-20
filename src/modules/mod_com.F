@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -382,19 +382,20 @@ module com
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
-     if(ncpu>1) call MPI_Abort(mpi_comm_world,ierr,1)
+     call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
      stop
      !
    end subroutine
    !
-   subroutine msg_deliver(formatted_msg)
-     character(*) :: formatted_msg
+   subroutine msg_deliver(of_name,formatted_msg)
+     character(*) :: of_name,formatted_msg
      integer      :: i_unit
      do i_unit=1,max_open_ofs
+       if (index(opened_of(i_unit),trim(of_name))==0) cycle
        if (of_unit(i_unit)<=0) cycle
        if (of_unit(i_unit)==11) open(unit=11,file=trim(repfile),position='append')
-       write (of_unit(i_unit),'(a)') formatted_msg
+       write (of_unit(i_unit),'(a)') trim(formatted_msg)
        if (of_unit(i_unit)==11) close(11)
        of_unit(i_unit)=-of_unit(i_unit)
      enddo

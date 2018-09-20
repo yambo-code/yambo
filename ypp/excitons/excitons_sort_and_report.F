@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -28,7 +28,7 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  use electrons,     ONLY:spin_occ,levels,spin,E_SOC_nbands
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_H_dim
- use BS_solvers,    ONLY:BSS_description,BSS_n_descs
+ use BS_solvers,    ONLY:BSS_description,BSS_n_descs,BSS_n_eig
  use com,           ONLY:msg,of_open_close
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
@@ -37,16 +37,16 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  implicit none 
  !
  type(levels)       :: E
- complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
+ complex(SP)        :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
  real(SP),pointer   :: BS_E_SOC_corr(:,:)
- real(SP),optional  :: S_z(BS_H_dim)
- real(SP),optional  :: S_sq(BS_H_dim)
+ real(SP),optional  :: S_z(BSS_n_eig)
+ real(SP),optional  :: S_sq(BSS_n_eig)
  !
  ! Work Space
  !
  integer            :: j1,j2,ia,is,i_mode,ic,n_elements
- integer            :: S_indx(BS_H_dim)
- real(SP)           :: Residuals(BS_H_dim),v2sort(BS_H_dim),Rmax,rv(10)
+ integer            :: S_indx(BSS_n_eig)
+ real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(10)
  character(schlen)  :: titles(7),ch_dummy(2)
  logical            :: write_widths,write_spin,write_soc_corr
  !
@@ -119,9 +119,9 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
    !
    call sort(arrin=v2sort,indx=S_indx)
    !
-   do j1=BS_H_dim,1,-1
+   do j1=BSS_n_eig,1,-1
      !
-     if (i_mode == 1) j2=S_indx(BS_H_dim-j1+1)
+     if (i_mode == 1) j2=S_indx(BSS_n_eig-j1+1)
      if (i_mode == 2) j2=S_indx(j1)
      !
      rv(:3)=(/real(BS_E(j2),SP)*HA2EV,Residuals(j2),real(j2,SP)/)

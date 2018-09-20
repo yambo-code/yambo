@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -58,6 +58,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  if (Ncpu_lin_algebra==1) then  
    !
    call SERIAL_fallback()
+   call PARALLEL_PAR_to_PAR_comms_init()
    !
    return
    !
@@ -90,6 +91,7 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
  if (Ncpu_lin_algebra<=3) linear_algebra_is_parallel=.FALSE.
  if (.not.linear_algebra_is_parallel) then
    call SERIAL_fallback( )
+   call PARALLEL_PAR_to_PAR_comms_init()
    return
  endif
  !
@@ -115,6 +117,10 @@ subroutine PARALLEL_assign_LA_COMMs(ENVIRONMENT,idriver,Ncpu_in)
 #if defined _SCALAPACK
  endif
 #endif
+ !
+ ! PAR to PAR comms init
+ !
+ call PARALLEL_PAR_to_PAR_comms_init()
  !
  contains
    !

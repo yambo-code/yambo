@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libslepc.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_slepc)
@@ -16,7 +16,6 @@ TARBALL=$(tarball_slepc)
 #
 # redefinitions
 #
-PETSC_ARCH=yambo_single_complex
 AUXFLAGS=--prefix=$(LIBPATH)
 
 
@@ -32,26 +31,35 @@ uncompress-stamp:
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then 
+	if test -d $(PACKAGE) ; then \
+	  unset PETSC_DIR; \
+	  unset PETSC_ARCH; \
 	  cd $(PACKAGE); \
-	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
-	  PETSC_ARCH=$(PETSC_ARCH) \
+	  PETSC_DIR=$(LIBPATH) \
 	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  ./configure $(AUXFLAGS) ); \
+	  ./configure $(AUXFLAGS) ; \
 	fi
 	touch configure-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	  cd $(PACKAGE);  $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  PETSC_DIR=$(PWD)/../petsc/$(pkgname_petsc) \
-	  PETSC_ARCH=$(PETSC_ARCH) ) ;
+	  unset PETSC_ARCH; \
+	  cd $(PACKAGE); \
+	  $(make) -j1 \
+	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	  PETSC_DIR=$(LIBPATH) ; \
 	fi
 	touch package-ready-stamp
 
 $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) install ) ; fi
+	  unset PETSC_ARCH; \
+	  cd $(PACKAGE); \
+	  $(make) -j1 \
+	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	  PETSC_DIR=$(LIBPATH) \
+	  install; \
+	fi
 	#
 	chmod u+x $(LIBPATH)/lib/*slepc*.a
 
@@ -59,7 +67,6 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp
 
 clean_all: 

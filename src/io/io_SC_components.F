@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,17 +30,15 @@ integer function io_SC_components(what,E_sc,ID)
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
-&                         SC_R,l_NSC_shot,SC_fft_size,V_mean
- use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local
+&                         l_NSC_shot,SC_fft_size,V_mean
+ use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,SC_R
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
 &                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
 &                         io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  integer, intent(in)      :: ID
@@ -62,9 +60,7 @@ integer function io_SC_components(what,E_sc,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_SC_components',OPR='start')
-#endif
  !
  l_E =what=="E"
  l_MP=what=="MP"
@@ -210,7 +206,7 @@ integer function io_SC_components(what,E_sc,ID)
    !======
    !
    call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
-&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+&               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
    call io_bulk(ID,C2=H_nl_sc)
    !
  endif
@@ -221,7 +217,7 @@ integer function io_SC_components(what,E_sc,ID)
    !=================
    !
    call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
-&               VAR_SZ=(/2,SC_bands(2),SC_bands(2)/))
+&               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
    call io_bulk(ID,C2=SC_R(:,:,ik,i_sp_pol))
    !
  endif
@@ -239,8 +235,6 @@ integer function io_SC_components(what,E_sc,ID)
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_SC_components',OPR='stop')
-#endif
  !
 end function

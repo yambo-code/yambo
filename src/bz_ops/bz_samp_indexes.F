@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -54,11 +54,9 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         q_sstar,coll_scattering,q_source
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
+ use timing_m,       ONLY:timing
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -103,9 +101,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    return
  endif
  !
-#if defined _TIMING
  call timing('bz_samp_indexes',OPR='start')
-#endif
  !
  !
  ! First I map the Xk grid in a simple cubic Net
@@ -286,7 +282,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_C(ikbz,iqbz,1)=okbz
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
- do ikbz=1,Xk%nbz
+ do ikbz=1,k%nbz
    !
    ikibz=k%sstar(ikbz,1)
    iks  =k%sstar(ikbz,2)
@@ -351,9 +347,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  endif
  call PP_redux_wait()
  !
-#if defined _TIMING
  call timing('bz_samp_indexes',OPR='stop')
-#endif
  !
  contains 
    !

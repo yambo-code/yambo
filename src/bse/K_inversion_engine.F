@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -31,8 +31,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  use R_lattice,      ONLY:q_norm
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk
- use SLK_m,          ONLY:BLACS_structure_in_use
+ use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk,K_slk
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
@@ -58,7 +57,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
 #endif
  integer,        external :: EPS_via_perturbative_inversion
  !
- if (do_it_full.and..not.BLACS_structure_in_use) then
+ if (do_it_full.and..not.K_slk%kind=="SLK") then
    YAMBO_ALLOC(Mm1,(BS_H_dim,BS_H_dim))
    Mm1=cZERO
  endif
@@ -104,9 +103,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        if (i_L==2) Gr="a"
        !
 #if defined _SCALAPACK
-       if (     BLACS_structure_in_use) call K_inversion_do_it_SLK (Lo(:,iw,i_L),Gr)
+       if (     K_slk%kind=="SLK") call K_inversion_do_it_SLK (Lo(:,iw,i_L),Gr)
 #endif
-       if (.not.BLACS_structure_in_use) call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
+       if (.not.K_slk%kind=="SLK") call K_inversion_do_it_full(Lo(:,iw,i_L),Mm1,Gr)
        !
        if (what=="EPS".or.what=="any") then
          call EPS_compose(i_L)
@@ -143,7 +142,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
      complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
      integer     :: i_L_,i_c,i_cv,i1,i2
      do i_c=1,3
-       if (BLACS_structure_in_use) then
+       if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
          if(i_L_==1) call PARALLEL_M_by_V('c',BS_H_dim,K_inv_slk,BSS_dipoles_PL(:,i_c),V)
          if(i_L_==2) call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_PL(:,i_c)),V)
@@ -164,7 +163,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
      integer     :: i_L_
      complex(SP) :: V(BS_H_dim)
      if(i_L_==1) then
-       if (BLACS_structure_in_use) then
+       if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
          call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles,V)
 #endif
@@ -173,7 +172,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
        endif
        Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles,V)
      else if(i_L_==2) then
-       if (BLACS_structure_in_use) then
+       if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
          call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles),V)
 #endif

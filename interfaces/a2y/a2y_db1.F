@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -187,7 +187,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  YAMBO_ALLOC(wf_nc_k,(k%nibz))
  YAMBO_ALLOC(rel_gvec,(3,ng_vec_abinit))
- YAMBO_ALLOC(wf_nc_k,(k%nibz))
+ YAMBO_ALLOC(en%E,(en%nb,k%nibz,n_sp_pol))
  YAMBO_ALLOC(g_vec,(ng_vec_abinit,3))
  YAMBO_ALLOC(rstr,(en%nb))
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -75,20 +75,33 @@ module QP_CTL_m
  !===================
  type QP_ctl_t
    !
-   ! Convention is first c then v
-   !
    integer    :: interp_neigh
    real(SP)   :: db_scissor
    real(SP)   :: fit_scissor
+   !
+   ! Convention is first (1:N) c then v (N+1:2N)
+   !
+   ! Energies...
    real(SP)   :: E(4)
-   real(SP)   :: W(6)
-   real(SP)   :: W_dos(2)
-   real(SP)   :: W_E_ref(2)
    real(SP)   :: E_err(2)
+   real(SP)   :: E_ref(2)
+   real(SP)   :: E_new_ref(2)
+   !
+   ! Widths...
+   ! ...polynomial fit
+   real(SP)   :: W(6)
+   real(SP)   :: W_E_ref(2)
    real(SP)   :: W_err(2)
+   ! ...DOS
+   real(SP)   :: W_dos(2)
    real(SP)   :: W_dos_err(2)
+   !
+   ! ...Z's
    complex(SP):: Z
+   !
+   ! ...DB (only the name)
    character(schlen):: db
+   !
  end type
  !
  ! "ACTION" type (can be a fit/interpolation/QP/...)
@@ -150,6 +163,7 @@ module QP_CTL_m
      QP_action(iA)%CTL(i_spin)%E=(/QP_ctl_user(ID,i_field)%E(1)/HA2EV,&
 &                                  QP_ctl_user(ID,i_field)%E(2),rZERO,&
 &                                  QP_ctl_user(ID,i_field)%E(3)/)
+     QP_action(iA)%CTL(i_spin)%E_new_ref=(/CBm,VBM/)
      QP_action(iA)%CTL(i_spin)%W(1:3)=(/QP_ctl_user(ID,i_field)%Wc(1)/HA2EV,&
 &                                       QP_ctl_user(ID,i_field)%Wc(2),&
 &                                       QP_ctl_user(ID,i_field)%Wc(3)*HA2EV/)
@@ -184,6 +198,8 @@ module QP_CTL_m
      ctl2%interp_neigh=ctl1%interp_neigh
      ctl2%db=ctl1%db  
      ctl2%E=ctl1%E  
+     ctl2%E_ref=ctl1%E_ref
+     ctl2%E_new_ref=ctl1%E_new_ref
      ctl2%W=ctl1%W  
      ctl2%W_dos=ctl1%W_dos
      ctl2%Z=ctl1%Z  
@@ -199,16 +215,18 @@ module QP_CTL_m
      type(QP_ctl_t)::QP_ctl
      QP_ctl%interp_neigh=1
      QP_ctl%db="none"
-     QP_ctl%E=(/0.,1.,0.,1./)
-     QP_ctl%W=0.
-     QP_ctl%W_dos=0.
-     QP_ctl%Z=(1.,0.)
-     QP_ctl%E_err=0.
-     QP_ctl%W_err=0.
-     QP_ctl%W_dos_err=0.
-     QP_ctl%W_E_ref=0.
-     QP_ctl%db_scissor=0.
-     QP_ctl%fit_scissor=0.
+     QP_ctl%E=(/0._SP,1._SP,0._SP,1._SP/)
+     QP_ctl%E_ref=(/0._SP,0._SP/)
+     QP_ctl%E_new_ref=(/0._SP,0._SP/)
+     QP_ctl%W=0._SP
+     QP_ctl%W_dos=0._SP
+     QP_ctl%Z=(1._SP,0._SP)
+     QP_ctl%E_err=0._SP
+     QP_ctl%W_err=0._SP
+     QP_ctl%W_dos_err=0._SP
+     QP_ctl%W_E_ref=0._SP
+     QP_ctl%db_scissor=0._SP
+     QP_ctl%fit_scissor=0._SP
    end subroutine
    !
 end module

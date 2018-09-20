@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,11 +41,11 @@ logical function stop_now(DO_IT_NOW)
  !
  type(levels)      ::en
  type(bz_samp)     ::q,k
- type(X_t)         ::X
- type(w_samp)      ::Xw
- integer           ::ierr,days,hours,minutes
+ type(X_t)         ::X(4)
+ type(w_samp)      ::Xw(4)
+ integer           ::ierr,days,hours,minutes,i_c
  real(SP)          ::CPU_t
- integer, external ::init
+ integer, external ::INIT
  !
  CPU_t=abs( real(cput_tot(myid+1,1),SP) )
  !
@@ -71,22 +71,23 @@ logical function stop_now(DO_IT_NOW)
  call E_reset(en)
  call bz_samp_reset(q)
  call bz_samp_reset(k)
- call W_reset(Xw)
- call X_reset(X,type=1)
+ do i_c=1,4
+   call W_reset(Xw(i_c))
+   call X_reset(X(i_c),type=i_c)
+ enddo
  !
  call section('X','USER STOP signal')
  !
  ! Update init defs
  !
- ierr=init(en,q,k,X,Xw," "," ",.false.,.true.)
+ ierr=INIT(en,q,k,X,Xw," ",1,.false.,.true.)
  !
  ! Finalize
  !
  call it_reset(-1)
  !
- 
 #if defined _MPI
- if (ncpu>1) call MPI_Abort(mpi_comm_world,ierr,1)
+ call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
  stop
  !

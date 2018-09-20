@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -33,14 +33,14 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  use LIVE_t,         ONLY:live_timing
  use KERR,           ONLY:BSS_dipoles_kerr
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
  use BS,             ONLY:BS_K_dim,BS_H_dim
  !
  implicit none
  !
- complex(SP),intent(in)  :: BS_E(BS_H_dim)
- complex(SP),intent(in)  :: BS_V_right(BS_H_dim,BS_H_dim)
- complex(SP),intent(out) :: BS_R_right_kerr(BS_H_dim)
+ complex(SP),intent(in)  :: BS_E(BSS_n_eig)
+ complex(SP),intent(in)  :: BS_V_right(BS_H_dim,BSS_n_eig)
+ complex(SP),intent(out) :: BS_R_right_kerr(BSS_n_eig)
  !
  ! Workspace
  !
@@ -50,7 +50,7 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  complex(SP) :: tmp_res(BS_H_dim)
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_R_right_kerr=cZERO
  !
@@ -61,7 +61,7 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !
- do i1=1,BS_H_dim
+ do i1=1,BSS_n_eig
    if (.not.px%element_1D(i1)) cycle
    !
    BS_R_right_kerr(i1)=V_dot_V_omp(BS_H_dim,tmp_res,BS_V_right(:,i1))

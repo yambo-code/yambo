@@ -247,7 +247,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  !stderr
  !
- repfile=" "
+ write (repfile,'(2a)') trim(more_io_path),'/r_stderr'
  write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
  !
  !Timing

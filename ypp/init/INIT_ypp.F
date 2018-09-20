@@ -38,11 +38,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists
+ use com,            ONLY:file_exists,repfile,write_the_logo
  use stderr,         ONLY:string_split
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running
+ use IO_m,           ONLY:rm_file
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
@@ -114,6 +115,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
+   if (master_cpu) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
@@ -687,6 +689,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    n_DbGd_DBs=parse_character_arrays(DbGd_DB1_paths,MAX_DbGd_DBs,"DbGd_DB1_paths"," ",.TRUE.)
    if (infile_editing) i1=parse_character_arrays(DbGd_DB1_paths,n_DbGd_DBs,&
 &              "DbGd_DB1_paths","Paths to the SAVE folders with the Double Grid DB1",.FALSE.)
+ endif
+ !
+ if (master_cpu) then
+   call rm_file(trim(repfile))
+   open(unit=11,file=trim(repfile))
+   call write_the_logo(11,' ')
  endif
  !
 contains

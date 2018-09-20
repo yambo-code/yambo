@@ -43,7 +43,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF,NL_bands,VAL_BANDS
+&                         SEX,HF,NL_bands,VAL_BANDS,NL_Po,NL_initial_Po
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -103,8 +103,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  ! Evaluate the Polarization 
  ! ===================================================================
  !
+ call DIP_polarization(E,k,V_bands,NL_Po)
+ NL_Po=NL_Po-NL_initial_Po
+ !
  if(l_use_DIPOLES) then
-   call DIP_polarization(E,k,V_bands,RT_P)
+   RT_P=NL_Po
  else
    ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
 #if defined _TIMING
@@ -115,9 +118,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  call timing('NL Hamiltonian',OPR='start')
 #endif
    !
+   RT_P=RT_P-NL_initial_P ! Subtract the initial polarization
+   !
  endif
- !
- RT_P=RT_P-NL_initial_P ! Subtract the initial polarization
  !
  ! Evaluate the external/total field
  !=================================

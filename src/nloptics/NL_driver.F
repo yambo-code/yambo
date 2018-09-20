@@ -127,8 +127,6 @@ subroutine NL_driver(E,X,k,q)
  call X_alloc('P_square')
  if(l_use_DIPOLES) then
    call X_alloc('DIP_S')
- else
-   call X_alloc('DIP_R')
  endif
  !
  ! Non_Linear parallization
@@ -216,6 +214,10 @@ subroutine NL_driver(E,X,k,q)
      !
      Time=real(NE_i_time-1,SP)*RT_step
      !
+     ! Evaluate current
+     !
+     call NL_current(k,E,V_bands)
+     !
      call NL_Hamiltonian(E,k,q,X,Time,NE_i_time,V_bands)
      !
      ! Store Variables
@@ -253,6 +255,8 @@ subroutine NL_driver(E,X,k,q)
  call WF_free(WF)
  call NL_free()
  call X_alloc('DIP_S')
+ call X_alloc('DIP_R')
+ call X_alloc('DIP_P')
  !
  call set_real_printed_length()
  !

@@ -29,7 +29,7 @@ subroutine NL_output(i_time,i_freq)
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step,RT_P
- use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J
+ use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,NL_Po
  use stderr,       ONLY:set_real_printed_length
  !
  implicit none
@@ -60,7 +60,7 @@ subroutine NL_output(i_time,i_freq)
  n_files=4
  !
  n_headings(1)=10
- n_headings(2)=4
+ n_headings(2)=7
  n_headings(3)=4
  n_headings(4)=7
  !
@@ -75,6 +75,7 @@ subroutine NL_output(i_time,i_freq)
    headings(1, 8:10)=(/"A''_x","A''_y","A''_z"/)
    !
    headings(2, 2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   headings(2, 5:7)=(/"<r_x>","<r_y>","<r_z>"/)
    !
    headings(3, 2:4)=(/"Etot_x","Etot_y","Etot_z"/)
    headings(4, 2:4)=(/"Curr_x","Curr_y","Curr_z"/)
@@ -100,6 +101,7 @@ subroutine NL_output(i_time,i_freq)
  data_to_dump(1,8:10)=real(A_ext%vecpot_acc(:))
  !
  data_to_dump(2,2:4) =real(RT_P(1:3))
+ data_to_dump(2,5:7) =real(NL_Po(1:3))
  !
  data_to_dump(3,2:4) =-real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT
  !

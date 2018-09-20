@@ -30,10 +30,10 @@ subroutine RT_mean_carrier_lifetimes(E,k)
 &                         E_P_Ho_abs_lifetime,RT_Tfit_lifetimes,RT_Efit_lifetimes,    &
 &                         REF_lifetime,RT_all2ibz,RT_Nk_ibz,RT_nk,RT_bands,           &
 &                         E_PHOT_Hole_lifetime, E_PHOT_Electron_lifetime,             &
-&                         l_lftm_fit_temperatures
- use RT_control,     ONLY:RT_do_it
+&                         l_lftm_fit_temperatures,RT_all2ibz
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin_occ
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  !
  implicit none
  !
@@ -43,12 +43,10 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  ! Work space
  !
  integer            :: ib,ik
- real(SP)           :: n_states,pre_factor,sum_lifetimes(2)
+ real(SP)           :: n_states(1),pre_factor,sum_lifetimes(2)
  real(SP)           :: EE_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      EP_occupations(RT_bands(1):RT_bands(2),RT_nk),&
 &                      LOCAL_Lifetime(RT_bands(1):RT_bands(2),RT_nk,6)
- !
- if (.not.RT_do_it('OUT')) return
  !
  if (allocated(E_E_Hole_lifetime))     LOCAL_Lifetime(:,:,1)=REF_lifetime(:,:,1)+E_E_Hole_lifetime
  if (allocated(E_E_Electron_lifetime)) LOCAL_Lifetime(:,:,2)=REF_lifetime(:,:,2)+E_E_Electron_lifetime
@@ -57,17 +55,20 @@ subroutine RT_mean_carrier_lifetimes(E,k)
  if (allocated(E_P_Ho_abs_lifetime))   LOCAL_Lifetime(:,:,5)=REF_lifetime(:,:,5)+E_P_Ho_abs_lifetime
  if (allocated(E_P_El_abs_lifetime))   LOCAL_Lifetime(:,:,6)=REF_lifetime(:,:,6)+E_P_El_abs_lifetime
  !
- n_states=0._SP
- !
+ n_states(1)      =0._SP
  RT_mean_lifetimes=0._SP
+ EE_occupations   =0._SP
+ EP_occupations   =0._SP
  !
  do ik=1,RT_nk
+   !
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
    !
    pre_factor=k%weights(RT_all2ibz(ik))/real(RT_Nk_ibz(RT_all2ibz(ik)))
    !
    do ib=RT_bands(1),RT_bands(2)
      !
-     n_states=n_states+pre_factor
+     n_states(1)=n_states(1)+pre_factor
      !
      if (allocated(E_P_Hole_lifetime)) then
        sum_lifetimes(1)= LOCAL_Lifetime(ib,ik,3)+LOCAL_Lifetime(ib,ik,5)
@@ -106,6 +107,11 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    !
  enddo
  !
+ call PP_redux_wait(RT_mean_lifetimes,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(EE_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(EP_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(n_states,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !
  RT_Tfit_lifetimes=0._SP
  if(allocated(E_P_Hole_lifetime).and.l_lftm_fit_temperatures) then
    call RT_occupations_FIT(RT_Tfit_lifetimes(1:2),RT_Efit_lifetimes(1:2),EP_occupations)
@@ -119,6 +125,6 @@ subroutine RT_mean_carrier_lifetimes(E,k)
    if (RT_Tfit_lifetimes(4)>50000/HA2KEL.or.RT_Tfit_lifetimes(4)<0._SP) RT_Tfit_lifetimes(4)=0._SP
  endif
  !
- RT_mean_lifetimes=RT_mean_lifetimes/n_states
+ RT_mean_lifetimes=RT_mean_lifetimes/n_states(1)
  !
 end subroutine RT_mean_carrier_lifetimes

@@ -27,8 +27,9 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
- use RT_control,    ONLY:JPC_RT_IO_t
- use real_time,     ONLY:RT_carriers,l_elel_scatt,l_elph_scatt,l_elphoton_scatt,NE_i_time,RT_nk,l_RT_CCA_Kernel,RT_alloc,RT_free
+ use RT_control,    ONLY:OBS_RT_IO_t
+ use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
+&                        l_elphoton_scatt,l_RT_CCA_Kernel,RT_alloc,RT_free,RT_potential
  use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
  !
  implicit none
@@ -39,7 +40,7 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  ! Work Space
  !
  integer           :: io_RT_err,ID
- integer, external :: io_RT_components,RT_k_grid
+ integer, external :: io_RT_components
  !
  call section('*','Manual carriers excitation')
  !
@@ -49,8 +50,9 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  l_elph_scatt    =.true.
  l_elphoton_scatt=.true.
  l_RT_CCA_Kernel =.true.
+ RT_potential    ="HARTREE+GS_xc"
  !
- RT_nk=RT_k_grid(en,kpt,qpt)
+ call RT_k_grid(en,kpt,qpt)
  !
  call RT_alloc(en)
  !
@@ -60,9 +62,9 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt)
  !
- JPC_RT_IO_t%N=1
- allocate(JPC_RT_IO_t%Time(1))
- JPC_RT_IO_t%Time(JPC_RT_IO_t%N)=0._SP
+ OBS_RT_IO_t%N=1
+ allocate(OBS_RT_IO_t%Time(1))
+ OBS_RT_IO_t%Time(OBS_RT_IO_t%N)=0._SP
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_RT_err=io_RT_components("carriers",ID)

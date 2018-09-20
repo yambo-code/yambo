@@ -24,15 +24,20 @@
 integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  use pars,          ONLY:schlen,lchlen
- use stderr,        ONLY:string_pack
+ use stderr,        ONLY:STRING_pack
  use parallel_m,    ONLY:ncpu,MPI_INFO_NULL
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
-&                        IO_NOT_ALLOWED,OP_APP,OP_APP_WR_CL,io_action,OP_WR,OP_WR_CL,PAR_IO_CREATE_MODE
+&                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL
+#if defined _PAR_IO && defined _HDF5_IO
+ use IO_m,          ONLY:PAR_IO_CREATE_MODE
+#else
+ use com,           ONLY:error
+#endif
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                        num_of_alternative_locations,n_alt_jobstr
+&                        num_of_alternative_locations,n_alt_jobstr,jobdir
  !
  implicit none
  !
@@ -44,7 +49,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  !
  ! Work Space
  !
- integer          ::CREATE_MODE,i_jobstr
+ integer          ::i_jobstr
  character(lchlen)::alternative_file(num_of_alternative_locations),folder
  character(schlen)::subfolder_
  logical          ::file_found,full_RESET,par_IO
@@ -100,18 +105,22 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  ! Create Directories 
  !
  write (folder,'(2a)') trim(more_io_path),'/SAVE'
- if (len_trim(jobstr)>0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
+ if (len_trim(jobstr)>0) then
+   if (len_trim(jobdir)> 0) write (folder,'(5a)') trim(more_io_path),'/',trim(jobdir),'/',trim(jobstr)
+   if (len_trim(jobdir)==0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
+ endif
+ !
  if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
    call mk_dir(more_io_path)
    call mk_dir(folder)
-   if (present(subfolder)) call mk_dir(string_pack(folder,"/",subfolder))
+   if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
  endif
  !
  ! Open if to open and to write
  !
  if (open_is_on(ID).and.write_is_on(ID)) then
    !
-   if ( (io_action(ID)==OP_APP_WR_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
+   if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
      call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
      !
@@ -119,7 +128,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
      call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
      if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-#if defined _PAR_IO
+#if defined _PAR_IO && defined _HDF5_IO
      if(     par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
                      &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
 #else
@@ -127,8 +136,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
 #endif
      call netcdf_call(nf90_enddef(io_unit(ID)),ID)
      !
-     if (io_action(ID)==OP_APP_WR_CL) io_action(ID)=OP_WR_CL
-     if (io_action(ID)==OP_APP)       io_action(ID)=OP_WR
+     if (io_action(ID)==OP_APP_CL) io_action(ID)=OP_WR_CL
+     if (io_action(ID)==OP_APP)    io_action(ID)=OP_WR
      !
    endif
    !
@@ -158,8 +167,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
    endif
    !
-   if (type==-2) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-   if (type/=-2) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
+   if (type==-2.or. type==-4) open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
+   if (type/=-2.and.type/=-4) call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
    !
  endif
  !

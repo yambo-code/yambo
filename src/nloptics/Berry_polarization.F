@@ -1,5 +1,4 @@
 !
-!
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -27,10 +26,10 @@ subroutine Berry_polarization(P_Berry,S_det,en,Xk,k_map)
  ! Evaluate polarization using Berry phase formulation
  ! from the determinants (S_det) of the valence bands overlaps
  !
- use pars,           ONLY:SP,cI,rZERO,pi,cONE,DP
- use electrons,      ONLY:n_sp_pol,levels,spin_occ
+ use pars,           ONLY:SP,rZERO,pi,cONE,DP
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_map
- use D_lattice,      ONLY:a,DL_vol
+ use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
  !
  implicit none           

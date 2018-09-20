@@ -44,11 +44,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use timing_m,      ONLY:timing
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,QP_state_extract_print
  use wrapper_omp,   ONLY:V_dot_V_omp
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
- use qe_pseudo_m,   ONLY:beccopy,bec_type
+ use qe_pseudo_m,   ONLY:beccopy
  !
 #include<memory.h>
  type(levels) ::E       
@@ -65,7 +65,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  !QP list
  !
- integer              :: ig,i4(4)
+ integer              :: ig
  integer              :: ikibz,i_sp_pol
  integer, external    :: QP_state_extract
  !
@@ -84,13 +84,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! QP_table -> report
  !
- call msg('r','')
- i4=(/1,1,0,0/)
- do while(QP_state_extract(i4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',i4(1),' - ',i4(2),' : b ',i4(3),' - ',i4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
+ call QP_state_extract_print( )
  !
  if(.not.l_sc_run .and. .not.l_real_time) then
    !
@@ -99,7 +93,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call PARALLEL_global_indexes(E,k,q,"Self_Energy")
    !
+   ! Final states (k-q,n')...
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
+   ! Initial states (k,n \in QP)...
    call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
    call PARALLEL_WF_index()
    !

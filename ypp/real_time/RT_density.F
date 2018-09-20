@@ -33,7 +33,7 @@ subroutine RT_density(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,RT_step,&
-&                         RT_dyn_step,G_MEM_steps,RT_delta0_occupations
+&                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
@@ -53,13 +53,13 @@ subroutine RT_density(en,kpt,qpt)
  character(schlen)     :: ch_ws(2)
  logical               :: load_G_history
  !
- integer, external     :: io_RT_components,RT_k_grid
+ integer, external     :: io_RT_components
  !
  call parser('LoadGhistory',load_G_history)
  !
  call section('*','Time dependent density plot')
  !
- RT_nk=RT_k_grid(en,kpt,qpt)
+ call RT_k_grid(en,kpt,qpt)
  !
  ! I/O
  !=====
@@ -79,7 +79,7 @@ subroutine RT_density(en,kpt,qpt)
  else
    ch_ws(1)="Computing the density from the occupations"
    call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
-   YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+   YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
  endif
  !
  call msg('s',trim(ch_ws(1)))
@@ -153,7 +153,7 @@ subroutine RT_density(en,kpt,qpt)
  if (load_G_history) then
    YAMBO_FREE(dG_lesser)
  else
-   YAMBO_FREE(RT_delta0_occupations)
+   YAMBO_FREE(RT_delta_occupations)
  endif
  YAMBO_FREE(drho)
  !

@@ -23,7 +23,7 @@
 !
 subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
@@ -47,6 +47,9 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk), &
 &               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
+ TEntr=rZERO
+ Entr=rZERO
+ EnEntr=rZERO
  !
  if(.not.eval_entropy) return
  !
@@ -85,7 +88,6 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  EnEntr(1)=E_IP
  call RT_energy_components(en,k,dG_lesser_h,Energies_e,EnEntr(2),'el ')
  call RT_energy_components(en,k,dG_lesser_e,Energies_h,EnEntr(3),'hol')
- !
  !
  ! Compute IP Entropy
  !

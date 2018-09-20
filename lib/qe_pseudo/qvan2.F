@@ -38,11 +38,11 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
   !
   ! output: the fourier transform of interest
   !
-  real(DP),intent(OUT) :: qg (2,ngy)
+  complex(DP),intent(OUT) :: qg (ngy)
   !
   !     here the local variables
   !
-  real (DP) :: sig
+  real (DP) :: sig,qg_here(2,ngy)
   ! the nonzero real or imaginary part of (-i)^L 
   real (DP), parameter :: sixth = 1.d0 / 6.d0
   !
@@ -80,7 +80,7 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
 !       call errore (' qvan2 ', ' wrong dimensions (1)', MAX(nb,mb))
 !  if (ivl > nlx .OR. jvl > nlx) &
 !       call errore (' qvan2 ', ' wrong dimensions (2)', MAX(ivl,jvl))
-  qg = 0.d0
+  qg_here = 0.d0
   !
   !    and make the sum over the non zero LM
   !
@@ -152,10 +152,14 @@ subroutine qvan2 (ngy, ih, jh, np, qmod, qg, ylmk0)
            qm1 = qmod(ig)
         END IF
 !#endif
-        qg (ind,ig) = qg (ind,ig) + sig * ylmk0 (ig, lp) * work
+        qg_here (ind,ig) = qg_here (ind,ig) + sig * ylmk0 (ig, lp) * work
      enddo
 !!!!!!$omp end parallel do
 
+  enddo
+  !
+  do ig = 1, ngy
+    qg(ig)=qg_here(1,ig)+CMPLX(0.0d0,1.0d0)*qg_here(2,ig)
   enddo
 
   return

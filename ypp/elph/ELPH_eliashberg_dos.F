@@ -91,7 +91,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  enddo
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- if (l_dos)        io_err=io_ELPH(ID,'no_gkkp')
+ if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
  if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
  !
  call msg('s',':: Checking database ...')
@@ -136,7 +136,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ! I/O
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   if (l_dos)        io_err=io_ELPH(ID,'no_gkkp')
+   if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
    if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(en%E_Fermi)

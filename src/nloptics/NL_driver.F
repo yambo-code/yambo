@@ -54,7 +54,7 @@ subroutine NL_driver(E,X,k,q)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  !
- logical, external :: stop_now
+ logical, external :: STOP_now
  integer, external :: eval_G_minus_G
  ! 
  ! Work Space
@@ -152,7 +152,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Generate DIPOLES in all the BZ if required
  !===================
- if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
+ if(l_use_DIPOLES) call Build_DIP_bz(k,E,X(1))
  !
  ! Load Collisions if necessary
  ! ============================
@@ -179,7 +179,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Initialization
  ! ==================
- call NL_start_and_restart(E,k,X)
+ call NL_start_and_restart(E,k,X(1))
  !
  ! Check if calculation was already done
  ! =====================================
@@ -221,7 +221,7 @@ subroutine NL_driver(E,X,k,q)
      !
      Time=real(NE_i_time-1,SP)*RT_step
      !
-     call NL_Hamiltonian(E,k,q,X,Time,NE_i_time,V_bands)
+     call NL_Hamiltonian(E,k,q,X(1),Time,NE_i_time,V_bands)
      !
      ! Store Variables
      !
@@ -232,17 +232,17 @@ subroutine NL_driver(E,X,k,q)
      !
      call NL_output(NE_i_time,i_f) 
      !
-     call NL_Integrator(E,k,q,X,Integrator,NE_i_time,V_bands)
+     call NL_Integrator(E,k,q,X(1),Integrator,NE_i_time,V_bands)
      !
      call live_timing(steps=1)
      !
-     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
+     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. STOP_now(.false.)
      !
    enddo
    !
    call NL_databases_IO(i_f,'write')
    !
-   if(stop_now(.false.)) exit
+   if(STOP_now(.false.)) exit
    !
  enddo
  !
@@ -280,14 +280,14 @@ subroutine NL_driver(E,X,k,q)
      io_err=0
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-     io_err=io_Overlaps(X,ID_S)
+     io_err=io_Overlaps(X(1),ID_S)
      !
      if(io_err==0) then
        call live_timing('[NL] Overlaps loading :',k%nbz)
        do ik=1,k%nbz
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*k%nbz/),ID=ID_S)
-           io_err=io_err+io_Overlaps(X,ID_S)
+           io_err=io_err+io_Overlaps(X(1),ID_S)
          enddo
          call live_timing(steps=1)
        enddo

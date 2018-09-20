@@ -6,4 +6,4 @@ ELPH_obj =
 #if defined _YPP_ELPH || defined _YPP_RT
 ELPH_obj = mod_YPP_ELPH.o
 #endif
-objs = mod_YPP.o mod_YPP_symm.o mod_interpolate.o $(RT_obj) $(ELPH_obj) YPP_SET_defaults.o
+objs = mod_YPP.o mod_YPP_symm.o $(RT_obj) $(ELPH_obj) YPP_SET_defaults.o

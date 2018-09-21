@@ -189,7 +189,7 @@ integer function io_DB1(E,k,ID)
    !
    ! Hybrids stuff
    !	
-   if (var_err==1) then
+   if (var_err==1.or.write_is_on(ID)) then
      !
      if (ver_is_gt_or_eq(ID,revision=2962)) then
          call io_elemental(ID, VAR="EXX_FRACTION",VAR_SZ=1,MENU=0)

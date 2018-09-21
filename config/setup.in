@@ -20,6 +20,7 @@ cpp         = @C_AS_CPP@
 cppflags    = @C_AS_CPP_FLAGS@ 
 fpp         = @FPP@
 f90         = @F90@
+fc          = @F90@
 f90flags    = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f90uflags   = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 f90suffix   = @F90SUFFIX@

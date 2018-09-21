@@ -82,8 +82,8 @@ module pseudo
    subroutine PP_alloc_abinit()
      use wave_func,  ONLY:wf_ncx
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
-     YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
-     YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,1))
+     YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
      pp_kbs =0._SP
      pp_kb  =0._SP
      pp_kbd =0._SP

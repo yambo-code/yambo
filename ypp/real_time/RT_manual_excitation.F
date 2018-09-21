@@ -30,11 +30,12 @@ subroutine RT_manual_excitation(E,k)
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
- use vec_operate,    ONLY:v_is_zero,c2a
+ use vec_operate,    ONLY:v_is_zero
  use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
+ use YPP,            ONLY:K_transform
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
-&                         Eh_pumped_pair_BZ_reagions,Eh_pumped_pair_deltaE,  &
-&                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,n_regions,   &
+&                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
+&                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,Eh_pumped_pair_n_BZ_regions,   &
 &                         l_RTpump_energy,l_RTpump_kspace
  !
  implicit none
@@ -45,7 +46,7 @@ subroutine RT_manual_excitation(E,k)
  ! Work Space
  !
  integer :: i_pump_level,i_region,ib,ibp,iv,ic,ik,i_RT,Pump_level(E%nb,E%nk)
- real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2),local_zero(3),local_k(3)
+ real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2),local_k(3)
  logical :: Pumped_state(E%nb,E%nk),do_kpt(E%nk)
  !
  ! Possibility to pump by hand one or more electrons up
@@ -60,27 +61,30 @@ subroutine RT_manual_excitation(E,k)
 &                   .and.Eh_pumped_pair_energy(1)<0._SP) return
  !
  delta_Nel=0._SP
- coeff=0._SP
+ coeff    =0._SP
  Pumped_state=.FALSE.
- do_kpt=.FALSE.
- Pump_level=0
+ do_kpt      =.FALSE.
+ Pump_level  =0
  i_pump_level=1
  local_E_window=Eh_pumped_pair_width/10._SP
- local_zero=Eh_pumped_pair_BZ_width
  !
  do while(local_E_window<Eh_pumped_pair_width)
    !
-   do ik=1,E%nk
+   K_LOOP: do ik=1,E%nk
      !
      iv=0
      !
      if(l_RTpump_kspace) then
-       call c2a(v_in=k%pt(ik,:),v_out=local_k,mode='ki2c')
-       do i_region=1,n_regions
-         if(.not. v_is_zero(local_k-Eh_pumped_pair_BZ_reagions(:,i_region),zero_=local_zero) ) cycle
+       !
+       do i_region=1,Eh_pumped_pair_n_BZ_regions
+         local_k=Eh_pumped_pair_BZ_regions(:,i_region)
+         call K_transform(local_k,'iku')
+         if(.not. v_is_zero(local_k-k%pt(ik,:),zero_=(/1.,1.,1./)*Eh_pumped_pair_BZ_width) ) cycle
          do_kpt(ik)=.TRUE.
        enddo
-       if(.not.do_kpt(ik)) cycle
+       !
+       if(.not.do_kpt(ik)) cycle K_LOOP
+       !
      endif
      !
      do ibp=1,RT_bands(2)
@@ -102,12 +106,12 @@ subroutine RT_manual_excitation(E,k)
                Pump_level(ic,ik)= i_pump_level
                Pump_level(iv,ik)=-i_pump_level
                call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
-&                   ' bands '//trim(intc(iv))//' - '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
+&                   ' bands '//trim(intc(iv))//' -> '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
                iv=0
              endif
            endif
            !
-         else if(l_RTpump_kspace) then
+         else if (l_RTpump_kspace) then
            !
            iv=ibp
            ic=ib
@@ -123,7 +127,7 @@ subroutine RT_manual_excitation(E,k)
              Pump_level(ic,ik)= i_pump_level
              Pump_level(iv,ik)=-i_pump_level
              call msg('sr','[RT] Eh pair pumped `by hand` @ k'//trim(intc(ik))//&
-&                 ' bands '//trim(intc(iv))//' - '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
+&                 ' bands '//trim(intc(iv))//' -> '//trim(intc(ic))//' (level '//trim(intc(i_pump_level))//')')
            endif
            !
          endif
@@ -133,10 +137,10 @@ subroutine RT_manual_excitation(E,k)
      !
      do ib=RT_bands(1),RT_bands(2)
        if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i_pump_level) coeff=coeff+spin_occ*k%weights(ik)/ &
-&                                                            sqrt(abs(real(Pump_level(ib,ik),SP)))
+&                                                                        sqrt(abs(real(Pump_level(ib,ik),SP)))
      enddo
      !
-   enddo
+   enddo K_LOOP
    !
    i_pump_level=i_pump_level+1
    local_E_window=local_E_window+Eh_pumped_pair_width/10._SP
@@ -166,6 +170,7 @@ subroutine RT_manual_excitation(E,k)
    !
  enddo
  !
- call msg('sr','[RT] Carrier number and density [none,cm-3]:',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+ call msg('sr','[RT] Carrier number        :',delta_Nel)
+ call msg('sr','[RT]         density [cm-3]:',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
  !
 end subroutine RT_manual_excitation

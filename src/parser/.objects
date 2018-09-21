@@ -1,3 +1,4 @@
-objs =   math.o interface.o parser.o parser_exp.o symbols.o \
-         parser_lib.o mod_parser_m.o mod_itm.o Gclose.o \
-         init_convert_i.o init_convert_r.o ps_convert.o parse_character_arrays.o
+objs =  PARSER_math.o PARSER_interface.o PARSER.o PARSER_exp.o PARSER_symbols.o \
+        PARSER_lib.o mod_parser_m.o mod_itm.o PARSER_close_G.o \
+        PARSER_convert_INT.o PARSER_convert_REAL.o PARSER_convert.o PARSER_array.o \
+        PARSER_dump_the_additional_lines.o

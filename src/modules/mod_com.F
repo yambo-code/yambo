@@ -46,6 +46,8 @@ module com
  integer            :: n_alt_jobstr
  character(lchlen)  :: jobstr
  character(lchlen)  :: alt_jobstr(n_max_jobstr)
+ character(lchlen)  :: jobdir
+ character(lchlen)  :: alt_jobdir(n_max_jobstr)
  !
  ! Sectioning
  !
@@ -68,8 +70,9 @@ module com
  !
  contains
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING)
+   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      !
+     ! -4 ----------------  -> JOBSTR/JOBFOLDER/desc (no NETCDF support)
      ! -3 ----------------  -> desc 
      ! -2 ----------------  -> desc (no NETCDF support)
      ! -1 ----------------  -> subfolder/ndesc
@@ -85,21 +88,25 @@ module com
      ! if ( COM_IO) PATH=com_path
      !
      ! Update of 27/12/2012. Added second jobstr to be used when the database of type 2 is read.
+     !           11/04/2018. Added support for jobstr and jobdir
      !
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,COM_IO
      character(*), optional ::subfolder
      character(*), optional ::ALT_JOB_STRING
+     character(*), optional ::ALT_JOB_DIR
      ! 
      ! Work Space
      !
      character(lchlen)::ch(2)
-     character(lchlen)::folder,jobstr_
+     character(lchlen)::folder,jobstr_,jobdir_
      !
      get_name=" "
      jobstr_ =jobstr
+     jobdir_ =jobdir
      if (present(ALT_JOB_STRING)) jobstr_=ALT_JOB_STRING
+     if (present(ALT_JOB_DIR)   ) jobdir_=ALT_JOB_DIR
      folder  ="SAVE"
      if (.not.CORE_IO.and..not.MORE_IO.and..not.COM_IO) return
      !
@@ -123,9 +130,12 @@ module com
          ch(2)="s."//trim(desc)
        case(1)
          ch(2)="db."//trim(desc)
-       case(2,4)
+       case(-4,2,4)
          ch(2)="db."//trim(desc)
-         if (len_trim(jobstr_)>0) folder=trim(jobstr_)
+         if (len_trim(jobstr_)>0) then
+           if (len_trim(jobdir_)> 0) folder=trim(jobdir_)//"/"//trim(jobstr_)
+           if (len_trim(jobdir_)==0) folder=trim(jobstr_)
+         endif
          if (type==4) then
            ch(2)="db."//trim(desc)//"_"//trim(folder)
            folder="RESTART"
@@ -139,6 +149,17 @@ module com
            if (CORE_IO) ch(1)=core_io_path
            if (MORE_IO) ch(1)=more_io_path
            if ( COM_IO) ch(1)=com_path
+           !
+           !
+         else if (type<0) then
+           !
+           folder="."
+           if (len_trim(jobstr_)>0) then
+             if (len_trim(jobdir_)> 0) folder=trim(jobdir_)//"/"//trim(jobstr_)
+             if (len_trim(jobdir_)==0) folder=trim(jobstr_)
+           endif
+           get_name=trim(folder)//"/"//trim(desc)
+           return
            !
          endif
        case(3)
@@ -193,10 +214,12 @@ module com
      do i_jobstr=1,n_alt_jobstr
        all_locations(3+2*i_jobstr) =get_name(desc,subfolder,2,CORE_IO=.FALSE.,&
 &                                            MORE_IO=.TRUE.,COM_IO=.FALSE.,&
-&                                            ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+&                                            ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)),&
+&                                            ALT_JOB_DIR   =trim(alt_jobdir(i_jobstr)))
        all_locations(4+2*i_jobstr)=get_name(desc,subfolder,2,CORE_IO=.TRUE.,&
 &                                           MORE_IO=.FALSE.,COM_IO=.FALSE.,&
-&                                           ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)))
+&                                           ALT_JOB_STRING=trim(alt_jobstr(i_jobstr)),&
+&                                           ALT_JOB_DIR   =trim(alt_jobdir(i_jobstr)))
      enddo
      !
    end function
@@ -210,8 +233,6 @@ module com
      !
      integer          :: i2,i3,file_index
      character(lchlen):: local_file_name
-     !
-     of_name=trim(of_name)
      !
      if (len_trim(of_name)==0) return
      !
@@ -235,7 +256,7 @@ module com
        ! Here I open the unit using file_name to define the name
        !
        if (index(mode,'a')==0.and.index(mode,'O')==0) then
-         local_file_name=get_name(desc=of_name,type=3,CORE_IO=.false.,&
+         local_file_name=get_name(desc=trim(of_name),type=3,CORE_IO=.false.,&
 &                                 MORE_IO=.false.,COM_IO=.true.)
          call rename_file(local_file_name)
        endif
@@ -268,7 +289,7 @@ module com
      else
        !
        do i2=1,max_open_ofs
-         if (index(opened_of(i2),of_name)/=0) then
+         if (index(opened_of(i2),trim(of_name))/=0) then
            close(iabs(of_unit(i2)))
            of_unit(i2)=0
            if (.not.any(of==of_name)) then
@@ -339,6 +360,18 @@ module com
      inquire(file=name,exist=file_exists)
    end function
    !
+   character(lchlen) function filename(name)
+     use stderr,     ONLY:STRING_split,STRING_remove
+     character(*)      :: name
+     integer           :: N
+     character(schlen) :: names(20)
+     character(lchlen) :: name_
+     name_=name
+     name_=STRING_remove(name_,"/",replace=" ")
+     call STRING_split(name_,names,n_non_empty_strings=N)
+     filename=trim(names(N))
+   end function
+   !
    subroutine rename_file(name)
      character(lchlen):: name
      character(lchlen):: ch 
@@ -356,15 +389,15 @@ module com
    !
    subroutine warning(mesg)
      use LIVE_t,     ONLY:LIVE_message
-     use stderr,     ONLY:string_pack
+     use stderr,     ONLY:STRING_pack
      character(*) :: mesg
-     call msg('nr',string_pack('[WARNING] ',trim(mesg)))
-     call LIVE_message(string_pack('[WARNING] ',trim(mesg)),"n","","%s")
+     call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+     call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
    end subroutine
    !
    subroutine error(mesg)
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
-     use stderr,     ONLY:string_pack
+     use stderr,     ONLY:STRING_pack
 #if defined _MPI
      use parallel_m, ONLY:mpi_comm_world,ncpu
      integer         :: ierr
@@ -374,11 +407,11 @@ module com
      live_timing_is_on=.FALSE.
      !
      if (len_trim(secnm)>0) then
-       call msg('nr',string_pack('[ERROR] STOP signal received while in :',trim(secnm)))
-       call LIVE_message(string_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
+       call msg('nr',STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)))
+       call LIVE_message(STRING_pack('[ERROR] STOP signal received while in :',trim(secnm)),"nn","","%s")
      endif
-     call msg('nr',string_pack('[ERROR] ',trim(mesg)))
-     call LIVE_message(string_pack('[ERROR] ',trim(mesg)),"n","","%s")
+     call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+     call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
@@ -593,7 +626,7 @@ module com
    end subroutine
    !
    character(lchlen) function composed_fmt(basic_fmt,n,USE_TABS,INDENT)
-     use stderr, ONLY:string_pack,of_tabs
+     use stderr, ONLY:STRING_pack,of_tabs
      character(*)     :: basic_fmt
      integer          :: n,INDENT
      logical          :: USE_TABS
@@ -604,7 +637,7 @@ module com
      character(lchlen) :: lch
      !
      if (USE_TABS) then
-       composed_fmt=string_pack(terminator(1),'a,')
+       composed_fmt=STRING_pack(terminator(1),'a,')
        lch=composed_fmt
        do i1=1,n-1
          write (lch,'(2a,i3.3,3a)') trim(composed_fmt),'t',&
@@ -630,7 +663,7 @@ module com
      ! s(tderr)
      ! oN=msgunits(N) 
      !
-     use stderr,  ONLY:string_split,string_remove
+     use stderr,  ONLY:STRING_split,STRING_remove
      character(*) how
      ! 
      ! Work Space
@@ -645,12 +678,12 @@ module com
      ! o. files
      !
      if (how(:1)=="o") then
-       call string_split(how,ch_piece)
+       call STRING_split(how,ch_piece)
        do i2=2,10
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
            if (len_trim(opened_of(i1))==0) cycle
-           stripped_file_name=string_remove(opened_of(i1),trim(jobstr))
+           stripped_file_name=STRING_remove(opened_of(i1),trim(jobstr))
            if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
              of_unit(i1) =-of_unit(i1)
            endif

@@ -71,7 +71,7 @@ subroutine XCo_local(E,Xk)
  ! Spin support (collinear and not collinear)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
-
+ !
  call timing('XCo_local',OPR="start")
  !
  ! Allocation 
@@ -182,6 +182,7 @@ subroutine XCo_local(E,Xk)
    call LOCAL_clean( )
    !
    call timing('XCo_local',OPR="stop")
+   !
    return
    !
  endif
@@ -254,6 +255,7 @@ subroutine XCo_local(E,Xk)
  endif
  !
  call timing('XCo_local',OPR="stop")
+ !
  return
  !
  contains

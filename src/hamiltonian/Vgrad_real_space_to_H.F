@@ -26,7 +26,7 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  ! Updte of SOC interaction, i.e. last term in 
  ! Eq.(1) JCTC 11, 4870 (2015)
  !
- use electrons,      ONLY:n_sp_pol,n_spin,n_spinor,spin
+ use electrons,      ONLY:n_spin,n_spinor,spin
  use pars,           ONLY:SP
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use FFT_m,          ONLY:fft_size
@@ -36,7 +36,7 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
 #if defined _RT || defined _SC
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered
 #endif
  implicit none
  !
@@ -50,10 +50,6 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  integer    :: i_spinor,j_spinor,ib,ibp,i_wf,ip_wf
  complex(SP):: c_ws(fft_size,n_spinor),c_ws_x(fft_size,n_spinor),c_ws_y(fft_size,n_spinor),c_ws_z(fft_size,n_spinor)
  !
-#if defined _RT
- if (.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu) return
-#endif
- !
  call timing('Vgrad_to_H',OPR='start')
  !
  ! Fill ...
@@ -61,7 +57,6 @@ subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.HEAD_QP_cpu) cycle
    if (.not.PAR_IND_B_mat_ordered%element_1D( UP_matrix_index(ib-H_ref_bands(1)+1,ibp-H_ref_bands(1)+1)-1 )) cycle
    !
    ! <i_wf|V|ip_wf>

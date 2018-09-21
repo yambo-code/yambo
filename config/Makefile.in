@@ -52,7 +52,7 @@ bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
-libbindir   = @prefix@/bin-libs
+libbindir   = @prefix@/lib/bin
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
@@ -85,27 +85,27 @@ BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser
 BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft 
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops qp_control setup \
+MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup \
                tddft pol_function qp acfdt bse
-MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup \
+MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup \
                tddft pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) collisions hamiltonian sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
+PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian \
-               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
-PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup \
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian \
-               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
-PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup \
+PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian sc \
-               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
-PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup \
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
                tddft pol_function qp acfdt bse collisions hamiltonian sc \
-               real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
@@ -117,8 +117,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interpolate init qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interpolate init qp plotting electrons 
+YPP_BASIC_LIBS     = modules interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
@@ -126,17 +126,17 @@ YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup interface tddft pol_function qp bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
-YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
-YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian 
-YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control qp_control setup interface \
+YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian nloptics 
-YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control qp_control setup interface \
+YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup interface \
                      pol_function qp bse collisions hamiltonian nloptics 
 
 .PHONY: interfaces
@@ -457,7 +457,7 @@ endef
 #
 define objects_clean
  find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*make.dep' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
@@ -482,6 +482,7 @@ define lib_ext_clean
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
    cd ../.. ; \
+   echo "[CLEAN] ... $$libtoclean" ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
@@ -490,7 +491,6 @@ define lib_ext_clean
   $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
   cd ../.. ; \
  fi
- echo "[CLEAN] External libraries compilation directories ... done" 
 endef
 define sysincs_clean
  @if test -d $(prefix)/include/system/; then \
@@ -523,7 +523,9 @@ define lib_mod_clean
 endef
 define xclean
  for exe in $(EXE); do rm -f $(bindir)/$$exe; done
- rmdir $(bindir)
+ @if test -d $(bindir); then \
+  cd $(bindir) ; rm -f * ; cd .. ; rmdir $(bindir); \
+ fi
  echo "[CLEAN] Targets ... done" 
 endef
 define conf_clean

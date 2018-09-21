@@ -29,7 +29,7 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it)
  !
  integer      , intent(in)    :: ID
  type(bz_samp), intent(in)    :: OUT_k
- real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),INTERP_obj(ID)%nk,INTERP_obj(ID)%D)
+ real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),OUT_k%nibz,INTERP_obj(ID)%D)
  logical,       intent(in)    :: DO_it
  !
  ! Work Space

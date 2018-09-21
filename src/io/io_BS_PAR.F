@@ -34,7 +34,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
  use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_WR,&
 &                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
-&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,io_control,RD_CL,OP_APP_WR_CL
+&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,io_control,RD_CL,OP_APP_CL
  use BS_solvers,    ONLY:variables_BS
  implicit none
 !#define UPLO
@@ -68,7 +68,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  endif
  call io_disconnect(ID)
  !
- call io_control(ACTION=OP_APP_WR_CL,ID=ID)
+ call io_control(ACTION=OP_APP_CL,ID=ID)
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  !
  ! Check if the file already contains data and it its consistent

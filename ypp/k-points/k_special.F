@@ -67,17 +67,17 @@ subroutine k_special(LIST)
      !
      SPECIAL_k%nbz=6
      !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0.5,0.5,0./)
+     SPECIAL_k%pt(2,:)=(/0.5_SP,0.5_SP,0._SP/)
      SPECIAL_k_label(2)='X'
-     SPECIAL_k%pt(3,:)=(/0.5,0.5,0.5/)
+     SPECIAL_k%pt(3,:)=(/0.5_SP,0.5_SP,0.5_SP/)
      SPECIAL_k_label(3)='L'
-     SPECIAL_k%pt(4,:)=(/0.5,0.75,0.25/)
+     SPECIAL_k%pt(4,:)=(/0.5_SP,0.75_SP,0.25_SP/)
      SPECIAL_k_label(4)='W'
-     SPECIAL_k%pt(5,:)=(/0.375,0.375,0.750/)
+     SPECIAL_k%pt(5,:)=(/0.375_SP,0.375_SP,0.750_SP/)
      SPECIAL_k_label(5)='K'
-     SPECIAL_k%pt(6,:)=(/0.375,0.375,0.750/)
+     SPECIAL_k%pt(6,:)=(/0.375_SP,0.375_SP,0.750_SP/)
      SPECIAL_k_label(6)='U'
      !
      do ik=1,SPECIAL_k%nbz
@@ -86,19 +86,19 @@ subroutine k_special(LIST)
      !
    case('BCC')
      !
-     trial_b(1,:)=(/ 0., 1., 1./)*2.*pi/alat(1)
-     trial_b(2,:)=(/ 1., 0., 1./)*2.*pi/alat(1)
-     trial_b(3,:)=(/ 1., 0.,-1./)*2.*pi/alat(1)
+     trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
+     trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
+     trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
      !
      SPECIAL_k%nbz=4
      !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=(/0.5,0.5,0./)
+     SPECIAL_k%pt(2,:)=(/0.5_SP,0.5_SP,0._SP/)
      SPECIAL_k_label(2)='N'
-     SPECIAL_k%pt(3,:)=(/0.5,0.5,0.5/)
+     SPECIAL_k%pt(3,:)=(/0.5_SP,0.5_SP,0.5_SP/)
      SPECIAL_k_label(3)='P'
-     SPECIAL_k%pt(4,:)=(/0. ,1.  ,0.  /)
+     SPECIAL_k%pt(4,:)=(/0._SP ,1._SP  ,0._SP  /)
      SPECIAL_k_label(4)='H'
      !
    case('FC-ORTHOROMBIC (b<a)')
@@ -111,30 +111,30 @@ subroutine k_special(LIST)
      !
      SPECIAL_k%nbz=10
      !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/)
      SPECIAL_k_label(2)='Z'
      !
-     SPECIAL_k%pt(3,:)=(/ap,0.,0./)
+     SPECIAL_k%pt(3,:)=(/ap,0._SP,0._SP/)
      SPECIAL_k_label(3)='X'
-     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/)
      SPECIAL_k_label(4)='A'
      !
      SPECIAL_k_label(5)='Y'
-     SPECIAL_k%pt(5,:)=(/0.,fp,0./)
+     SPECIAL_k%pt(5,:)=(/0._SP,fp,0._SP/)
      SPECIAL_k_label(6)='T'
-     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/)
      !
      SPECIAL_k_label(7)='S'
-     SPECIAL_k%pt(7,:)=(/ap/2.,bp/2.,0./)
+     SPECIAL_k%pt(7,:)=(/ap/2._SP,bp/2._SP,0._SP/)
      SPECIAL_k_label(8)='R'
-     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/)
      !
      SPECIAL_k_label(9)='X1'
-     SPECIAL_k%pt(9,:)=(/ap,ep,0./)
+     SPECIAL_k%pt(9,:)=(/ap,ep,0._SP/)
      SPECIAL_k_label(10)='A1'
-     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
      !
    case('FC-ORTHOROMBIC (b>a)')
      !
@@ -146,30 +146,30 @@ subroutine k_special(LIST)
      !
      SPECIAL_k%nbz=10
      !
-     SPECIAL_k%pt(1,:)=(/0.,0.,0./)
+     SPECIAL_k%pt(1,:)=(/0._SP,0._SP,0._SP/)
      SPECIAL_k_label(1)='G'
-     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(2,:)=SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/)
      SPECIAL_k_label(2)='Z'
      !
-     SPECIAL_k%pt(3,:)=(/fp,0.,0./)
+     SPECIAL_k%pt(3,:)=(/fp,0._SP,0._SP/)
      SPECIAL_k_label(3)='X'
-     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(4,:)=SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/)
      SPECIAL_k_label(4)='A'
      !
      SPECIAL_k_label(5)='Y'
-     SPECIAL_k%pt(5,:)=(/0.,bp,0./)
+     SPECIAL_k%pt(5,:)=(/0._SP,bp,0._SP/)
      SPECIAL_k_label(6)='T'
-     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(6,:)=SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/)
      !
      SPECIAL_k_label(7)='S'
-     SPECIAL_k%pt(7,:)=(/ap/2.,bp/2.,0./)
+     SPECIAL_k%pt(7,:)=(/ap/2._SP,bp/2._SP,0._SP/)
      SPECIAL_k_label(8)='R'
-     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(8,:)=SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/)
      !
      SPECIAL_k_label(9)='X1'
-     SPECIAL_k%pt(9,:)=(/ep,bp,0./)
+     SPECIAL_k%pt(9,:)=(/ep,bp,0._SP/)
      SPECIAL_k_label(10)='A1'
-     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0.,0.,cp/)
+     SPECIAL_k%pt(10,:)=SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/)
      !
    case('CUB')
      !
@@ -346,7 +346,7 @@ subroutine k_special(LIST)
     !
     real(SP) :: dp,xp,yp
     !
-    dp=sqrt(xp**2 + yp**2)/2.
+    dp=sqrt(xp**2 + yp**2)/2._SP
     fp=2*dp**2/xp
     ep=xp-fp
     !

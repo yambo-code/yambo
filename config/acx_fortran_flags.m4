@@ -81,7 +81,7 @@ i?86*linux*)
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* | *15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
@@ -141,7 +141,7 @@ i?86*linux*)
   *ifort*)
     DEBUG_FLAGS="-CA -CB -fpe0"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *1*)
        CPU_FLAG="-mtune=pentium4"
        ;;
@@ -198,7 +198,7 @@ ia64*linux* )
   *ifort*)
     DEBUG_FLAGS="-CA -CB -fpe0"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *1*)
        CPU_FLAG="-mtune=itanium"
        ;;
@@ -268,7 +268,7 @@ ia64*linux* )
     DEBUG_FLAGS="-CA -CB -fpe0"
     OMPFLAGS="-openmp"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "

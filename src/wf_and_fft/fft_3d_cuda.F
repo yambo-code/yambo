@@ -57,22 +57,14 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  ! Work Space
  !
  integer             :: i_sign,istat
- integer             :: STRIDE,RANK,DIST,BATCH
  !
  if (fft_sign>0) i_sign=CUFFT_INVERSE
  if (fft_sign<0) i_sign=CUFFT_FORWARD
  !
  if (cufft_plan==0) then
    !
-   RANK=3
-   STRIDE = 1
-   DIST = product(n)
-   BATCH = 1
+   istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
-   istat = cufftPlanMany( cufft_plan, RANK, n, &
-                          n, STRIDE, DIST, &
-                          n, STRIDE, DIST, &
-                          CUFFT_Z2Z, BATCH )
  endif
  !
  istat = cufftExecZ2Z( cufft_plan, c_d, c_d, i_sign )

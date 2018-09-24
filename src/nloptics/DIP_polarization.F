@@ -30,7 +30,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:DIP_iR
  use nl_optics,      ONLY:NL_bands
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_Xk_nibz
  use interfaces,     ONLY:NL_average_operator
  !
  implicit none           
@@ -50,7 +50,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  ! p(r,t) = \sum_ijk e/(2m) \psi^*_i(k) r \psi_j(k)
  !
  call NL_average_operator(V_VALUE=Polarization,V_MATRIX=cI*DIP_iR(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:), &
-     &     V_bands=V_bands,k=Xk,en=Xen,nk_mem=Xk%nibz,TRANS=.true.)
+     &     V_bands=V_bands,k=Xk,en=Xen,nk_mem=PAR_Xk_nibz,TRANS=.true.)
  !
  Polarization=Polarization/DL_Vol
  !

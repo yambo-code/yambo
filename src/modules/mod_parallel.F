@@ -77,11 +77,13 @@ module parallel_m
  logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
 &                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
- ! In a parallel run only the head CPU in the q and b chains can do 
- ! (b,k) loops
+ ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
+ ! the operations local in the cpu world
  !
  logical           :: HEAD_QP_cpu=.TRUE.
  logical           :: HEAD_k_cpu =.TRUE.
+ logical           :: HEAD_q_cpu =.TRUE.
+ logical           :: HEAD_b_cpu =.TRUE.
  !
  ! Communicators
  !
@@ -399,11 +401,11 @@ module parallel_m
  end interface PP_redux_wait
  !
  interface PP_bcast
-   module procedure c0bcast,c1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
+   module procedure c0bcast,c1bcast,r1bcast,c2bcast,i0bcast,i1bcast,ch0bcast
  end interface PP_bcast
  !
  interface PP_send_and_receive
-   module procedure PP_snd_rcv_c2
+   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1
  end interface PP_send_and_receive
  !
  contains
@@ -1234,6 +1236,28 @@ module parallel_m
 #endif
    end subroutine
    !
+   subroutine r1bcast(array,node,COMM)
+     real(SP):: array(:)
+     integer, intent(in) :: node
+     integer, optional :: COMM
+#if defined _MPI
+     integer::LOCAL_COMM  ! Work Space  
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
+#endif
+   end subroutine
+   !
    subroutine ch0bcast(chval,node,COMM)
      character(len=*):: chval
      integer, intent(in) :: node
@@ -1278,6 +1302,32 @@ module parallel_m
    subroutine PP_snd_rcv_c2(mode,array,node,COMM)
      character(*):: mode
      complex(SP) :: array(:,:)
+     integer, intent(in) :: node
+     integer, optional   :: COMM
+#if defined _MPI
+     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer::LOCAL_COMM,i_err! Work Space  
+     if (ncpu==1) return
+     !
+     local_type=MPI_COMPLEX
+     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
+     !
+#endif
+   end subroutine
+   !   
+   subroutine PP_snd_rcv_c1(mode,array,node,COMM)
+     character(*):: mode
+     complex(SP) :: array(:)
      integer, intent(in) :: node
      integer, optional   :: COMM
 #if defined _MPI

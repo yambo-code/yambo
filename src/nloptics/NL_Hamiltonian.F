@@ -42,10 +42,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
-&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF,NL_bands
+&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,NL_bands
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,master_cpu
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
 #if defined _TIMING
  use timing_m,       ONLY:timing
@@ -166,61 +165,69 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  I_relax      =cZERO
  !
  do i_sp_pol=1,n_sp_pol
- do ik=1,QP_nk
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   !
-   ! Here I fill H_nl_sc with...
-   !
-   H_nl_sc=cZERO
-   !
-   ! Correlation part Hartree + TDDFT
-   ! ================================
-   !
-   if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
-     !  
-     if(n_spinor==1) then
-        if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-     elseif (n_spinor==2) then
-        if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
+   do ik=1,QP_nk
+     !
+     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     !
+     ! Here I fill H_nl_sc with...
+     !
+     H_nl_sc=cZERO
+     !
+     ! Correlation part Hartree + TDDFT
+     ! ================================
+     !
+     if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
+       !  
+       if(n_spinor==1) then
+          if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+       elseif (n_spinor==2) then
+          if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
+          if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
+       endif
+       !
      endif
      !
-   endif
-   !
-   ! Add Ho = T+V_ion+V_h+V_xc
-   !==================
-   !
-   forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
-   !
-   if(l_use_DIPOLES) then
-     !    
-     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
+     ! Add Ho = T+V_ion+V_h+V_xc
+     !==================
      !
-   else
+     forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
      !
-     ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
+     if(l_use_DIPOLES) then
+       !    
+       call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
+       !
+     else
+       !
+       ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
+       !
+       call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
+       !
+     endif                                                         
      !
      call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !
-   endif                                                         
+     ! GPL_EXCLUDE_START
+     !
+     if(l_use_Hxc_collisions) then
+       call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
+&                                              H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
+  
+     endif
+     !
+     ! GPL_EXCLUDE_END
+     !
+     ! Damping: NL_damping fills the I_relax matrix 
+     ! ================================================
+     call NL_damping(E,V_bands,ik,i_sp_pol)
+     !
+     ! Store the Hamiltonian
+     ! =====================
+     Ho_plus_Sigma(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol)= &
+&          H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+     !
+   enddo  !---- loop on k-point
    !
-   if(l_use_Hxc_collisions) then
-     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
-&                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
-
-   endif
-   !
-   ! Damping: NL_damping fills the I_relax matrix 
-   ! ================================================
-   call NL_damping(E,V_bands,ik,i_sp_pol)
-   !
-   ! Store the Hamiltonian
-   ! =====================
-   Ho_plus_Sigma(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol)= &
-&        H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
-   !
- enddo  !---- loop on k-point
  enddo
  !
  call PP_redux_wait(Ho_plus_Sigma,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 

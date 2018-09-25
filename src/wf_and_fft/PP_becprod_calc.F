@@ -33,7 +33,7 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
   !
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   COMPLEX(SP), ALLOCATABLE :: aux_gk(:,:)
-  INTEGER :: ikb, ih, jh, na, np, is, js
+  INTEGER :: ikb, ih, jh, na, np, is, js, i_err
   
   !
   DO np = 1, ntyp
@@ -84,7 +84,7 @@ SUBROUTINE PP_becprod_calc ( becprod, nspin, current_spin, domag, mb, nb, becp, 
                  !
               ELSE IF ( gamma_only ) THEN
                  !
-                 CALL errore("becprod_calc","not implemented in Yambo")
+                 CALL errore("becprod_calc","not implemented in Yambo",i_err)
                  !
               ELSE
                  !

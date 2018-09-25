@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0 && np>1) { MPI_Abort(MPI_COMM_WORLD,1); };
+  if (mpi_init==0) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  };
  /* 
@@ -452,6 +452,7 @@ static void usage(int verbose)
   char* CUDA_string="";
   char* SLK_string="";
   char* SLEPC_string="";
+  char* MPI_IO_string="";
 #if defined _MPI
   MPI_string="MPI";
 #endif
@@ -467,7 +468,10 @@ static void usage(int verbose)
 #if defined _SLEPC
   SLEPC_string="+SLEPC";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string); 
+#if defined _PAR_IO
+  MPI_IO_string="+MPI_IO";
+#endif
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,MPI_IO_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 

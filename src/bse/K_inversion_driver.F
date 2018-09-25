@@ -74,7 +74,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  type(PP_indexes)  :: PAR_IND_freqs
  integer           :: i1,i2,iw,PAR_IND_FREQ_ID
- logical, external :: stop_now
+ logical, external :: STOP_now
  real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
  !
@@ -146,7 +146,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel and/or BSS components loading
  !======================================
- call K_components_folded_in_serial_arrays(iq,"INV")
+ call K_components_folded_in_serial_arrays(iq)
+ call K_stored_in_a_big_matrix(iq,"INV")
  !
  if (K_slk%kind=="SLK") then
    !
@@ -334,7 +335,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        call live_timing(steps=1)
        !
-       if (stop_now(.FALSE.)) then
+       if (STOP_now(.FALSE.)) then
          exit
        endif
        !

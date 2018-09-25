@@ -1,1 +1,1 @@
-objs = stop_now.o
+objs = STOP_now.o CLOSE_the_run.o

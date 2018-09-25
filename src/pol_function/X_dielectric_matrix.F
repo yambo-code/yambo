@@ -40,7 +40,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_WR_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
+ use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth,error
  use TDDFT,         ONLY:FXC
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
@@ -173,11 +173,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
- if (.not.allocated(X_mat)) then
+ if (.not.allocated(X_par)) then
    !
    if (io_RESPONSE) then
      allocate(X_par(1))
+#if !defined _PAR_IO
      call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
    else
      allocate(X_par(PAR_nq))
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nq/))
@@ -237,7 +239,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
-   ! PAR => SER for I/O
+#if defined _PAR_IO
+   if(.not.io_RESPONSE) then
+#endif
+   !
+   ! PAR => SER for I/O or for cases where I/O is not done
    !
    do iw=1,Xw%n_freqs
      !
@@ -257,13 +263,17 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      !
    enddo
    !
+#if defined _PAR_IO
+   endif
+#endif
+   !
    ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
    ! be re-initialized for all the cpus
    !
    X%ng_db=X%ng
    !
    if (iq==1) call io_control(ACTION=OP_WR_CL,    COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   if (iq> 1) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)
@@ -294,7 +304,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  ! CLEAN (3)
  !
  if (io_RESPONSE) then
+#if !defined _PAR_IO
    YAMBO_FREE(X_mat)
+#endif
    deallocate(X_par)
  endif
  if (allocated(FXC)) then

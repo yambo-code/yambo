@@ -23,7 +23,7 @@
 !
 module D_lattice
  !
- use pars,        ONLY:SP,lchlen,cONE,cZERO,cI
+ use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
  use com,         ONLY:error
  !
 #include<memory.h>
@@ -79,7 +79,7 @@ module D_lattice
  integer,  allocatable :: Z_species(:)
  real(SP), allocatable :: atom_pos(:,:,:)
  character(lchlen)     :: atoms_string
- character(7)          :: lattice
+ character(schlen)     :: lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
@@ -98,6 +98,7 @@ module D_lattice
  contains
    !
    subroutine symmetry_group_table(msg_where)
+     !
      use pars,           ONLY:SP,IP
      use com,            ONLY:error,msg
      implicit none

@@ -51,20 +51,19 @@ module YPP
  !
  integer  :: n_u_k_pts,n_u_q_pts,n_u_interp_pts
  !
- real(SP) :: U_k_pts(10,3)
- real(SP) :: U_q_pts(10,3)
- real(SP) :: U_q_shifts(3,3)
- real(SP) :: U_interp_pts(10,3)
+ real(SP), allocatable :: U_k_pts(:,:)
+ real(SP), allocatable :: U_q_pts(:,:)
+ real(SP), allocatable :: U_interp_pts(:,:)
+ real(SP)              :: U_q_shifts(3,3)
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
  integer, parameter        :: n_SPECIAL_k_MAX=20
- character(1), allocatable :: CIRCUIT_k_label(:)
- character(1) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
+ character(2), allocatable :: CIRCUIT_k_label(:)
+ character(2) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
  type(bz_samp):: SPECIAL_k
  type(bz_samp):: USER_k
  type(bz_samp):: CIRCUIT_k
- type(bz_samp):: INTERP_k
  logical      :: CIRCUIT_made_of_SPECIAL_k
  ! 
  ! DOS
@@ -74,6 +73,7 @@ module YPP
  real(SP)     ::DOS_E_range(2) ! Energy Range
  integer      ::DOS_bands(2)   ! Bands Range
  integer      ::DOS_E_steps    ! Energy steps
+ real(SP)     ::DOS_E_step     ! Energy step
  !
  ! BANDS
  !
@@ -82,7 +82,7 @@ module YPP
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
  type(levels)          ::CIRCUIT_E_db
- integer               ::interp_grid(3)  ! Interpolation Grid
+ integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
  logical               ::BANDS_E_and_k_db
@@ -168,10 +168,12 @@ module YPP
  logical     :: l_QP_DBs_create_and_modify
  logical     :: l_QP_DBs_manipulate
  integer     :: n_QP_dbs 
+ character(lchlen),  allocatable :: QP_db_input_control(:,:)
  character(lchlen),  allocatable :: QP_db_name(:)
  character(schlen),  allocatable :: QP_db_what(:)
  character(schlen),  allocatable :: QP_db_operation(:)
  real(SP),           allocatable :: QP_db_prefactor(:)
+ real(SP),           allocatable :: QP_user_corrections(:,:)
  type(QP_t),         allocatable :: QP_db(:)
  !
  ! Surface spectroscopy
@@ -220,6 +222,17 @@ module YPP
  !
  interface
    !
+   subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
+     use pars,          ONLY:SP
+     integer               ::nk
+     real(SP)              ::k(nk,3)
+     character(*)          ::coo_in
+     character(*)          ::form
+     real(SP),    optional ::wk(nk)
+     character(*),optional ::coo_out
+     !
+   end subroutine
+   !
    subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
@@ -231,6 +244,20 @@ module YPP
      real(SP),optional  :: S_z(BS_H_dim)
      real(SP),optional  :: S_sq(BS_H_dim)
    end subroutine
+   !
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp 
+     use electrons,      ONLY:n_spin
+     implicit none
+     type(bz_samp), intent(in) :: k
+     type(levels),  intent(in) :: E
+     integer,       intent(in) :: bands(2)
+     real(SP),      intent(out) :: el_dos(:,:),dos_E(:)
+     logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
+     real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
+   end subroutine electrons_dos_elemental
    !
  end interface
  !

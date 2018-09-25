@@ -47,7 +47,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use wave_func,     ONLY:WF
  use hamiltonian,   ONLY:H_potential,H_kind
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
- use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,COLLISIONS_have_HARTREE,&
+ use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
  use X_m,           ONLY:X_t
  use plasma,        ONLY:EH_gas
@@ -57,6 +57,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
  use timing_m,      ONLY:timing
+ !
  implicit none
  !
  type(levels)  :: E
@@ -78,12 +79,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  l_use_collisions=.TRUE.
  !
- !
- COLLISIONS_have_HARTREE=index(H_potential,"HARTREE")>0
- !
- l_use_Hxc_collisions  =(index(H_potential,"HARTREE")>0.or.index(H_potential,"FOCK")>0.or.index(H_potential,"SEX")>0.or.&
-&                        trim(H_potential)=="default")
- l_use_COH_collisions  =index(H_potential,"COH")>0
+ call XC_potentials(H_potential,"COLLISIONS")
  !
  ! Check for the Time Reversal Symmetry
  !
@@ -128,7 +124,9 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    call PARALLEL_global_indexes(E,k,q,trim(PAR_ch))
    !
    ! PARALLEL WF distribution ...
+   ! ... k-q + final band index...
    call PARALLEL_WF_distribute(K_index=PAR_IND_G_k,Bm_index=PAR_IND_Bp_mat,CLEAN_UP=.TRUE.)
+   ! ... COLLISION initial state...
    if (l_use_COH_collisions) then
      call COLLISIONS_basic_operations( "WF_distribute",    COH_collisions )
    else if (l_use_Hxc_collisions) then

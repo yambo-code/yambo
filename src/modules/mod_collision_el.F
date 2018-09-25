@@ -86,37 +86,31 @@ module collision_el
      O%qs=I%qs
    end subroutine
    !
-   subroutine elemental_collision_free(ggw,INIT_ONLY)
+   subroutine elemental_collision_free(ggw)
      type(elemental_collision), target::ggw
-     logical,optional::INIT_ONLY
-     logical         ::init_only_
      !
-     init_only_=.false.
-     if (present(INIT_ONLY)) then
-       init_only_=INIT_ONLY
-     endif
-     if (.not.init_only_) then
-       YAMBO_FREE(ggw%gamp)
-       YAMBO_FREE(ggw%rhotw)
-       YAMBO_FREE(ggw%rho_tw_rs)
-       YAMBO_FREE(ggw%WF_symm_i)
-       YAMBO_FREE(ggw%WF_symm_o)
-       ! 
+     YAMBO_FREE(ggw%gamp)
+     YAMBO_FREE(ggw%rhotw)
+     YAMBO_FREE(ggw%rho_tw_rs)
+     YAMBO_FREE(ggw%WF_symm_i)
+     YAMBO_FREE(ggw%WF_symm_o)
+     ! 
 #if defined _CUDA
-       if(allocated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
-       if(allocated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
-       if(allocated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
-       if(allocated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
+     if(allocated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
+     if(allocated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
+     if(allocated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
+     if(allocated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
 #endif
-       ! USPP workspace
-       call deallocate_bec_type(ggw%ibec)
-       call deallocate_bec_type(ggw%obec)
-       YAMBO_FREE(ggw%ylmk0)
-       YAMBO_FREE(ggw%qmod)
-       YAMBO_FREE(ggw%qgm)
-       YAMBO_FREE(ggw%becprod)
-       YAMBO_FREE(ggw%eiqtau)
-     endif
+     !
+     ! USPP workspace
+     call deallocate_bec_type(ggw%ibec)
+     call deallocate_bec_type(ggw%obec)
+     YAMBO_FREE(ggw%ylmk0)
+     YAMBO_FREE(ggw%qmod)
+     YAMBO_FREE(ggw%qgm)
+     YAMBO_FREE(ggw%becprod)
+     YAMBO_FREE(ggw%eiqtau)
+     !
    end subroutine
    !
    subroutine elemental_collision_alloc(ggw,NG,NG_GAMP,GRADIENT,TITLE)

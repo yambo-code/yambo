@@ -24,6 +24,7 @@
 module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
+ !
 #include<memory.h>
  !
  ! K lattice

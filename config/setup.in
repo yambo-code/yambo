@@ -63,6 +63,7 @@ netcdf_flag = @NETCDFFLAGS@
 lhdf5       = @HDF5_LIBS@
 ihdf5       = @HDF5_INCS@
 hdf5_opt    = @HDF5_OPT@
+hdf5_ver    = @HDF5_VER@
 llibxc      = @LIBXC_LIBS@
 ilibxc      = @LIBXC_INCS@
 lfft        = @FFT_LIBS@

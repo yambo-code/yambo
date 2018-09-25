@@ -169,7 +169,7 @@ module nl_optics
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use hamiltonian,    ONLY:H_alloc
-     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
+     use real_time,      ONLY:rho_reference,RT_Vnl_xc
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
@@ -181,9 +181,6 @@ module nl_optics
      !
      call H_alloc(en,.true.,.false.)
      !
-     YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
-     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(V_bands,(1:NL_bands(2),en%nbf,QP_nk,n_sp_pol))
      !
      YAMBO_ALLOC(rho_reference,(fft_size))
      YAMBO_ALLOC(full_rho,(fft_size))
@@ -191,8 +188,6 @@ module nl_optics
      if(Correlation==TDDFT.or.Correlation==JGM) then
        YAMBO_ALLOC(V_xc_0,(fft_size,n_spin))
      endif          
-     !
-     YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,QP_nk,n_sp_pol))
      !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk))
@@ -215,7 +210,29 @@ module nl_optics
      call NL_ALLOC_WF_sample(WF_sample,NL_bands(2),n_sp_pol)
      !
    end subroutine NL_alloc
-   
+   !
+   subroutine NL_alloc_k_distributed(en)
+     !  
+     use parallel_m,     ONLY:PAR_Xk_nibz,PAR_Xk_ibz_index
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels,n_spin,n_sp_pol
+     use real_time,      ONLY:Ho_plus_Sigma
+     use R_lattice,      ONLY:nXkbz
+     use QP_m,           ONLY:QP_nk
+     use FFT_m,          ONLY:fft_size
+     !
+     implicit none
+     !
+     type(levels),  intent(in) :: en
+     !
+     ! Valence bands in fft space
+     !
+     YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
+     !
+   end subroutine NL_alloc_k_distributed
+   !
    subroutine NL_free
      !
      use hamiltonian,    ONLY:H_free

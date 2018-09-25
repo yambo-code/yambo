@@ -47,8 +47,6 @@ subroutine NL_current(k,E,V_input)
  complex(SP),       intent(in) :: V_input(NL_bands(2),E%nbf,QP_nk,n_sp_pol) 
  !
  ! Work Space
- write(*,*) FS2AUT
- stop
  !
  ! A : Current
  !

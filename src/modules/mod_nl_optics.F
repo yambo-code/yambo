@@ -182,7 +182,7 @@ module nl_optics
      call H_alloc(en,.true.,.false.)
      !
      !
-     YAMBO_ALLOC(V_bands,(1:NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
      YAMBO_ALLOC(rho_reference,(fft_size))
      YAMBO_ALLOC(full_rho,(fft_size))
      !

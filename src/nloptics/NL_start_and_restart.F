@@ -34,7 +34,7 @@ subroutine NL_start_and_restart(E,k,X)
  ! [5] Initialize the fields
  !
  use pars,           ONLY:cZERO,rZERO,cONE,SP,LP
- use com,            ONLY:msg
+ use com,            ONLY:msg,error
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
@@ -77,6 +77,9 @@ subroutine NL_start_and_restart(E,k,X)
  H_nl_sc           =cZERO
  I_relax           =cZERO
  V_bands           =cZERO
+ !
+ if(NL_bands(2)<=E%nbf.or.NL_bands(1)>E%nbf) &
+     & call error(" Wrong bands range!")
  !
  forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
  !

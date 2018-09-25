@@ -38,12 +38,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists,write_to_report
+ use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo
  use stderr,         ONLY:STRING_split,write_to_log  
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
  use parser_m,       ONLY:PARSER_array
+ use IO_m,           ONLY:rm_file
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
@@ -112,6 +113,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
+   if (master_cpu) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
@@ -705,8 +707,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  call INIT_report_and_log_files()
  !
- write_to_report   =master_cpu
  live_timing_is_on =master_cpu
+ write_to_report   =master_cpu
  write_to_log      =master_cpu
  !
  ! Input file
@@ -716,6 +718,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call initinfio(defs,12)
    close(12)
    call PP_redux_wait
+ endif
+ !
+ if (master_cpu) then
+   call rm_file(trim(repfile))
+   open(unit=11,file=trim(repfile))
+   call write_the_logo(11,' ')
+   close(11)
  endif
  !
 contains

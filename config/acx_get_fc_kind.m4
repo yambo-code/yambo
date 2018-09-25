@@ -27,20 +27,25 @@ INTELVERSION="unknown"
 FCKIND="unknown"
 case "${FC}" in
     *ftn*)
+      FCVERSION=`$FC --version`
       ;;
     *abf90*)
+      FCVERSION=`$FC --version`
       ;;
     *pgf*)
       FCKIND="pgi"
+      FCVERSION=`$FC --version`
       ;;
     *gfortran*)
       FCKIND="gfortran" 
+      FCVERSION=`$FC --version`
       ;;
     *g95*)
       FCKIND="g95"
       ;;
     *ifc*)
       FCKIND="intel"
+      FCVERSION=`$FC -v`
       ;;
     *ifort*)
       FCKIND="intel"
@@ -74,6 +79,9 @@ case "${FC}" in
       ;;
     *)
 esac
+#
+FCVERSION=`echo "$FCVERSION" | sed "/^\s*$/d" | head -n 1`
+#
 AC_MSG_CHECKING([for $FC kind and version])
 AC_MSG_RESULT([$FCKIND $FCVERSION $INTELVERSION])
 

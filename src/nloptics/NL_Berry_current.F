@@ -34,7 +34,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use electric,       ONLY:Sm1_plus,Sm1_minus,E_minus,E_plus
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:NL_bands,NL_initial_J
+ use nl_optics,      ONLY:NL_bands
  use wrapper_omp,    ONLY:V_dot_V_omp
  !
  implicit none           
@@ -55,8 +55,6 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  NL_J=0._SP
  ! 
- return
- !
  E_minus=cZERO
  E_plus =cZERO
  !

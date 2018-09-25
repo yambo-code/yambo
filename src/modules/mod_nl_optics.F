@@ -49,7 +49,7 @@ module nl_optics
  !
  ! Current
  !
- complex(SP)    :: NL_J(6),NL_initial_J(6)
+ complex(SP)    :: NL_J(6)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_tilde_vbands(V_bands,en,Xk,ik,i_sp,istep,id_red,V_tilde)
+subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  !
  ! Build the \tilde Valence bands as defined in Eq. 53 of
  ! PRB 69, 085106 (2004), in terms of Kohn-Sham orbitals
@@ -42,19 +42,17 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ik,i_sp,istep,id_red,V_tilde)
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
  complex(SP),  intent(in)      :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
- integer,      intent(in)      :: ik
+ integer,      intent(in)      :: ikbz
  integer,      intent(in)      :: i_sp
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
- complex(SP),  intent(out)     :: V_tilde(en%nbf,NL_bands(2),4)
+ complex(SP),  intent(out)     :: V_tilde(en%nbf,NL_bands(2),2)
  !
  ! Work Space
  !
  integer :: i2,iv1,im,idx(3),id,ikp,ikm
- integer :: ikm_ibz,ikp_ibz,ikbz
+ integer :: ikm_ibz,ikp_ibz
  complex(SP) :: tmp_Vp(NL_bands(2),en%nbf),tmp_Vm(NL_bands(2),en%nbf)
- !
- ikbz=Xk%k_table(ik,1)
  !
  V_tilde=cZERO
  !

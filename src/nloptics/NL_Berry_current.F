@@ -92,7 +92,6 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
          ikbz=k_map%k_map_dir(idx(1),idx(2),idx(3))
          !
          do iv=1,en%nbf
-!           NL_J_red(id)=NL_J_red(id)+V_dot_V_omp(en%nbf,Sm1_plus (iv,:,id,ikbz,1),E_plus (:,iv,id,ikbz,1))  !&
            NL_J_red(id)=NL_J_red(id)+conjg(V_dot_V_omp(en%nbf,Sm1_minus(iv,:,id,ikbz,1),E_minus(:,iv,id,ikbz,1))) &
                                           +V_dot_V_omp(en%nbf,Sm1_plus (iv,:,id,ikbz,1),E_plus (:,iv,id,ikbz,1))  
          enddo

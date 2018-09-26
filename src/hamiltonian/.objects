@@ -5,7 +5,7 @@ MAGNETIC_objects = MAG_initial_check.o MAG_Hamiltonian.o MAG_common_build_A.o MA
 #endif
 NL_objects = 
 #if defined _NL
-NL_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 
+NL_objects = Build_Overlaps_det_NEQ.o Build_tilde_vbands.o Build_W_operator.o Berry_polarization_NEQ.o 
 #endif
 #if defined _ELECTRIC
 ELECTRIC_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 

@@ -122,14 +122,7 @@ AC_SUBST(internal_iotk)
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 
-
-# ============================================================================
-# check for p2y versions
-#
-AC_ARG_ENABLE(p2y_hdf5_support, AC_HELP_STRING([--enable-p2y-hdf5-support],
- [Activate HDF5 support in p2y. Default is no.]))
-
-if test x"$enable_p2y_hdf5_support" = "xyes" && test "x$hdf5" = "xyes" ; then
+if test "x$hdf5" = "xyes" ; then
    PW_VER="hdf5-support"
    PW_CPP="-D_P2Y_QEXSD_HDF5"
 else

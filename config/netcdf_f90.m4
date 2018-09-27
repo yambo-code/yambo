@@ -367,15 +367,21 @@ if test x"$enable_hdf5" = "xyes"; then
   fi
 fi
 #
-# Large File Support
+#
+# NETCDF-HDF5 LIBS
+#
+if test test x"$hdf5" = "xyes"; then
+  def_netcdf="-D_HDF5_LIB";
+fi
+#
+# Disable large File Support
 #
 if test x"$enable_netcdf_classic" = "xyes"; then
-  def_netcdf="-D_NC_CLASSIC";
-fi
+  def_netcdf="${def_netcdf} -D_NC_CLASSIC";
 #
 # NETCDF-HDF5 IO
 #
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
   def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
 #

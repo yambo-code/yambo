@@ -452,8 +452,7 @@ static void usage(int verbose)
   char* CUDA_string="";
   char* SLK_string="";
   char* SLEPC_string="";
-  char* HDF5_IO_string="";
-  char* MPI_IO_string="";
+  char* HDF5_string="";
 #if defined _MPI
   MPI_string="MPI";
 #endif
@@ -469,13 +468,16 @@ static void usage(int verbose)
 #if defined _SLEPC
   SLEPC_string="+SLEPC";
 #endif
+#if defined _HDF5_LIB
+  HDF5_string="+HDF5";
+#endif
 #if defined _HDF5_IO
-  HDF5_IO_string="+HDF5_IO";
+  HDF5_string="+HDF5_IO";
 #endif
 #if defined _PAR_IO
-  MPI_IO_string="+MPI_IO";
+  HDF5_string="+HDF5_MPI_IO";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_IO_string,MPI_IO_string); 
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
   fprintf(stderr,"Usage: %s",tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 

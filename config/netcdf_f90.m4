@@ -370,7 +370,7 @@ fi
 #
 # NETCDF-HDF5 LIBS
 #
-if test test x"$hdf5" = "xyes"; then
+if test x"$hdf5" = "xyes"; then
   def_netcdf="-D_HDF5_LIB";
 fi
 #

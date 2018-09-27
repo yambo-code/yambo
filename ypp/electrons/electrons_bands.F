@@ -249,9 +249,9 @@ subroutine electrons_bands(Xk,Xen)
    !
    do ik=1,CIRCUIT_k%nbz
      !
-     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
+     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-CIRCUIT_k%pt(ik-1,:3))
      !
-     tmp_k=CIRCUIT_k%pt(ik,:)
+     tmp_k=CIRCUIT_k%pt(ik,:3)
      !
      call K_transform(tmp_k,'iku')
      !

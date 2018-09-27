@@ -204,7 +204,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      do ik=1,CIRCUIT_k%nbz
        !
        if (ik==1) values(1)=0._SP
-       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:)-CIRCUIT_k%pt(ik-1,:))
+       if (ik> 1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-CIRCUIT_k%pt(ik-1,:3))
        !
        values(2)=CIRCUIT_E%E(ib,ik,1)*HA2EV
        if (allocated(CIRCUIT_E_db%E)) values(2)=CIRCUIT_E_db%E(ib,ik,1)*HA2EV

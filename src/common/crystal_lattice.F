@@ -45,34 +45,34 @@ subroutine crystal_lattice()
  !        http://web.mit.edu/espresso_v6.1/i386_linux26/qe-6.1/Doc/brillouin_zones.pdf 
  !
  lattice_name(1)='HCP'
- latt_a(1,:,1) = (/ 1./2. , -sqrt(3.)/2., 0./)*alat(1)
- latt_a(2,:,1) = (/ 1./2. ,  sqrt(3.)/2., 0./)*alat(1)
- latt_a(3,:,1) = (/ 0.    ,  0.         , 1./)*alat(3)
+ latt_a(1,:,1) = (/ 1._SP/2._SP , -sqrt(3._SP)/2._SP, 0._SP /)*alat(1)
+ latt_a(2,:,1) = (/ 1._SP/2._SP ,  sqrt(3._SP)/2._SP, 0._SP /)*alat(1)
+ latt_a(3,:,1) = (/ 0._SP       ,  0._SP            , 1._SP /)*alat(3)
  !
  lattice_name(2)='BCC'
- latt_a(1,:,2) = (/-1./2. , 1./2.   , 1./2.  /)*alat(1)
- latt_a(2,:,2) = (/ 1./2. ,-1./2.   , 1./2.  /)*alat(1)
- latt_a(3,:,2) = (/ 1./2. , 1./2.   ,-1./2.  /)*alat(1)
+ latt_a(1,:,2) = (/-1._SP/2._SP , 1._SP/2._SP, 1._SP/2._SP /)*alat(1)
+ latt_a(2,:,2) = (/ 1._SP/2._SP ,-1._SP/2._SP, 1._SP/2._SP /)*alat(1)
+ latt_a(3,:,2) = (/ 1._SP/2._SP , 1._SP/2._SP,-1._SP/2._SP /)*alat(1)
  !
  lattice_name(3)='FCC'
- latt_a(1,:,3) = (/ 0.    , 1./2.   , 1./2.  /)*alat(1)
- latt_a(2,:,3) = (/ 1./2. , 0.      , 1./2.  /)*alat(1)
- latt_a(3,:,3) = (/ 1./2. , 1./2.   , 0.     /)*alat(1)
+ latt_a(1,:,3) = (/ 0._SP       , 1._SP/2._SP, 1._SP/2._SP /)*alat(1)
+ latt_a(2,:,3) = (/ 1._SP/2._SP , 0._SP      , 1._SP/2._SP /)*alat(1)
+ latt_a(3,:,3) = (/ 1._SP/2._SP , 1._SP/2._SP, 0._SP       /)*alat(1)
  !
  lattice_name(4)='CUB'
- latt_a(1,:,4) = (/ 1.    , 0.      , 0.     /)*alat(1)
- latt_a(2,:,4) = (/ 0.    , 1.      , 0.     /)*alat(1)
- latt_a(3,:,4) = (/ 0.    , 0.      , 1.     /)*alat(1)
+ latt_a(1,:,4) = (/ 1._SP       , 0._SP      , 0._SP /)*alat(1)
+ latt_a(2,:,4) = (/ 0._SP       , 1._SP      , 0._SP /)*alat(1)
+ latt_a(3,:,4) = (/ 0._SP       , 0._SP      , 1._SP /)*alat(1)
  !
  if (a(1,2)<a(1,1)) lattice_name(5)='FC-ORTHOROMBIC (b<a)'
  if (a(1,2)>a(1,1)) lattice_name(5)='FC-ORTHOROMBIC (b>a)'
- latt_a(1,:,5) = (/ a(1,1) , a(1,2) , 0.      /)
- latt_a(2,:,5) = (/-a(1,1) , a(1,2) , 0.      /)
- latt_a(3,:,5) = (/ 0.     , 0.     , alat(3) /)
+ latt_a(1,:,5) = (/ a(1,1) , a(1,2) , 0.0_SP  /)
+ latt_a(2,:,5) = (/-a(1,1) , a(1,2) , 0.0_SP  /)
+ latt_a(3,:,5) = (/ 0.0_SP , 0.0_SP , alat(3) /)
  !
  call m3inv(a,a_m1)
  !
- pre_factor=(/.5,1.,2./)
+ pre_factor=(/.5_SP,1._SP,2._SP/)
  !
  lattice_test_failed=.FALSE.
  !

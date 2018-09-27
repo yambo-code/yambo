@@ -36,11 +36,6 @@ module electric
  complex(SP), allocatable :: Sm1_plus(:,:,:,:,:)
  complex(SP), allocatable :: Sm1_minus(:,:,:,:,:)
  !
- ! Matrix to build current
- !
- complex(SP), allocatable :: E_plus(:,:,:,:,:)
- complex(SP), allocatable :: E_minus(:,:,:,:,:)
- !
  ! Electric Field operator used in SC
  !
  complex(SP), allocatable :: W_electric(:,:,:,:)
@@ -62,8 +57,6 @@ module electric
      YAMBO_ALLOC(All_S_det,(6,nXkbz,n_sp_pol))
      YAMBO_ALLOC(Sm1_plus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
      YAMBO_ALLOC(Sm1_minus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(E_minus,(en%nbf,en%nbf,3,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(E_plus,(en%nbf,en%nbf,3,nXkbz,n_sp_pol))
      !
    end subroutine ELECTRIC_alloc
    
@@ -74,8 +67,6 @@ module electric
      YAMBO_FREE(All_S_det)
      YAMBO_FREE(Sm1_plus)
      YAMBO_FREE(Sm1_minus)
-     YAMBO_FREE(E_plus)
-     YAMBO_FREE(E_minus)
      !
    end subroutine ELECTRIC_free
    !

@@ -59,6 +59,9 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  complex(SP) :: V_tilde(en%nbf,NL_bands(2),2)
  complex(SP) :: E_vec_pot(3)
  !
+ complex(SP) :: tmp_Vp(NL_bands(2),en%nbf),tmp_Vm(NL_bands(2),en%nbf)
+ complex(SP) :: delta_tV_bnd(en%nbf,NL_bands(2))
+ !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  Wk=cZERO
@@ -79,7 +82,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      do istep=1,max_step
        !
        call Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
-       !  
+       !
        ! Build the W operator as
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
@@ -92,7 +95,11 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        enddo
 !$omp end parallel do
        !
-       Wop(NL_bands(1):,NL_bands(1):,istep)=Wop(NL_bands(1):,NL_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+!$omp parallel do default(shared), private(i1)
+       do i1=NL_bands(1),NL_bands(2)
+         Wop(i1,NL_bands(1):,istep)=Wop(i1,NL_bands(1):,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+       enddo
+!$omp end parallel do
        !
      enddo
      !
@@ -111,35 +118,44 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      ! First order formula D(dk)      
      ! Eq. 96 of PRB 63, 155107(2001)
      !
+!$omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,NL_bands(1):,NL_bands(1):)=Wk(id,NL_bands(1):,NL_bands(1):)+Wop(NL_bands(1):,NL_bands(1):,1)*a(id_red,id)
      enddo
+!$omp end parallel do
      !
    else
      !      
      ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
      ! Eq. 97 of PRB 63, 155107(2001)
      !
+!$omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,NL_bands(1):,NL_bands(1):)=Wk(id,NL_bands(1):,NL_bands(1):)+&
 &               (4._SP*Wop(NL_bands(1):,NL_bands(1):,1)-Wop(NL_bands(1):,NL_bands(1):,2))/3._SP*a(id_red,id)
      enddo
-
+!$omp end parallel do
+     !
    endif
    !
  enddo ! loop on id_red
  !
  ! Make an Hermitian operator
  !
+!$omp parallel do default(shared), private(id)
  do id=1,3
    Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))=(Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)) &
 &                                               +hermitian(Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))))
  enddo
+!$omp end parallel do
  !
- do id=1,3
-   H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i_sp)= &
-&  H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i_sp)-  &
-&      E_vec_pot(id)*Wk(id,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
+!$omp parallel do default(shared), private(i1,id)
+ do i1=NL_bands(1),NL_bands(2)
+   do id=1,3
+     H_nl_sc(i1,NL_bands(1):NL_bands(2),i_sp)=H_nl_sc(i1,NL_bands(1):NL_bands(2),i_sp)-            &
+&                           E_vec_pot(id)*Wk(id,i1,NL_bands(1):NL_bands(2))
+   enddo
  enddo
+!$omp end parallel do
  !
 end subroutine Build_W_operator

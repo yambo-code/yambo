@@ -56,7 +56,7 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  !
  V_tilde=cZERO
  !
- if(k_map%max_kdir(id_red)/=1) return
+ if(k_map%max_kdir(id_red)==1) return
  !
  idx=k_map%k_map_inv(ikbz,:)
  idx(id_red)=idx(id_red)-istep
@@ -102,11 +102,13 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
+!$omp parallel do default(shared), private(i2,iv1)
  do i2=NL_bands(1),NL_bands(2)
    do iv1=1,en%nbf
      V_tilde(iv1,i2,1)=sum( Sm1_plus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:)) 
      V_tilde(iv1,i2,2)=sum(Sm1_minus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:))
    enddo
  enddo
+!$omp end parallel do
  !
 end subroutine Build_tilde_vbands

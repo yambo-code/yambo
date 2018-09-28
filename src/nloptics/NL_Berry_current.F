@@ -1,6 +1,6 @@
 !
-!        Copyright (C) 2000-2018 the LUMEN team
-!              http://www.attaccalite.com/lumen/ 
+!        Copyright (C) 2000-2018 the Yambo team
+!              http://www.yambo-code.org/ 
 !
 ! Authors (see AUTHORS file for details): CA
 ! 
@@ -47,7 +47,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Work Space
  !
- integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3,idx(3),id_red
+ integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3
+ integer       :: idx(3),id_red,istep
  complex(SP)   :: NL_J_red(3)
  complex(SP)   :: VH_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
  complex(SP)   :: V_tilde(en%nbf,NL_bands(2),2)
@@ -57,7 +58,10 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  do isp=1,n_sp_pol
    do ik=1,QP_nk
      !
-     if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+     if(.not.PAR_IND_Xk_ibz%element_1D(ik)) then
+       VH_bands(:,ik,:,:)=cZERO
+       cycle
+     endif
      !
      do i1=1,NL_bands(2)
        VH_bands(i1,:,ik,isp)=en%E(i1,ik,isp)*V_bands(i1,:,ik,isp)
@@ -71,7 +75,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  NL_J     = cZERO
  NL_J_red = cZERO
  !
- isp=1
+ isp  =1
+ istep=1
  !
  do id_red=1,3
    !
@@ -85,7 +90,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
        !
        ikbz=Xk%k_table(ik,1)
        !
-       call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,1,id_red,V_tilde)
+       call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
        !
        do iv=1,en%nbf
          NL_J_red(id_red)=NL_J_red(id_red) &
@@ -96,16 +101,14 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
    endif
    !
-   NL_J_red(id_red)=real(NL_J_red(id_red))/dble(Nperpend)
+   NL_J_red(id_red)=real(NL_J_red(id_red),SP)/dble(Nperpend)
    !
  enddo
  !
  ! Transform in cartesian coordinates
  ! 
  do id=1,3
-   NL_J(id)=sum(NL_J_red(:)*a(:,id))/DL_Vol
+   NL_J(id)=sum(NL_J_red(:)*a(:,id))/DL_Vol/(4.0*pi)
  enddo
- !
- NL_J=-NL_J/(4.0*pi)
  !
 end subroutine NL_Berry_current

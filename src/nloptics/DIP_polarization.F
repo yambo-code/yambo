@@ -41,7 +41,6 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  !
  ! Work Space
  !
- integer       :: id,is,ik_bz
  complex(SP)   :: Polarization_red(3)
  !
  ! Evaluate polarization in terms of dipoles only

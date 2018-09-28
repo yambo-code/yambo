@@ -116,21 +116,23 @@ else
   AC_MSG_RESULT([no])
 fi
 #
+PW_VER="no-hdf5-support"
+PW_CPP=
+#
+#if test x"$hdf5" = "xyes" && test "$HDF5_VER" = "parallel"; then
+if test x"$hdf5" = "xyes" ; then
+  PW_VER="hdf5-support"
+  PW_CPP="-D_P2Y_QEXSD_HDF5"
+fi
+#
+#
+AC_SUBST(PW_VER)
+AC_SUBST(PW_CPP)
+#
 AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
 AC_SUBST(internal_iotk)
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
-
-if test "x$hdf5" = "xyes" ; then
-   PW_VER="hdf5-support"
-   PW_CPP="-D_P2Y_QEXSD_HDF5"
-else
-   PW_VER=
-   PW_CPP=
-fi
-
-AC_SUBST(PW_VER)
-AC_SUBST(PW_CPP)
-
+#
 ])

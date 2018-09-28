@@ -447,35 +447,39 @@ static void usage(int verbose)
  int i,j,nr=0;
  while(opts[nr].ln!=NULL) {nr++;};
  if (verbose==1) {
-  char* MPI_string="Serial";
-  char* OMP_string="";
-  char* CUDA_string="";
-  char* SLK_string="";
-  char* SLEPC_string="";
-  char* HDF5_string="";
 #if defined _MPI
-  MPI_string="MPI";
+  char* MPI_string="MPI";
+#else
+  char* MPI_string="Serial";
 #endif
 #if defined _OPENMP
-  OMP_string="+OpenMP";
+  char* OMP_string="+OpenMP";
+#else
+  char* OMP_string="";
 #endif
 #if defined _CUDA
-  CUDA_string="+CUDA";
+  char* CUDA_string="+CUDA";
+#else
+  char* CUDA_string="";
 #endif
 #if defined _SCALAPACK
-  SLK_string="+SLK";
+  char* SLK_string="+SLK";
+#else
+  char* SLK_string="";
 #endif
 #if defined _SLEPC
-  SLEPC_string="+SLEPC";
-#endif
-#if defined _HDF5_LIB
-  HDF5_string="+HDF5";
-#endif
-#if defined _HDF5_IO
-  HDF5_string="+HDF5_IO";
+  char* SLEPC_string="+SLEPC";
+#else
+  char* SLEPC_string="";
 #endif
 #if defined _PAR_IO
-  HDF5_string="+HDF5_MPI_IO";
+  char* HDF5_string="+HDF5_MPI_IO";
+#elif defined _HDF5_IO
+  char* HDF5_string="+HDF5_IO";
+#elif defined _HDF5_LIB
+  char* HDF5_string="+HDF5_LIB";
+#else
+  char* HDF5_string="";
 #endif
   fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
   fprintf(stderr,"Usage: %s",tool); 

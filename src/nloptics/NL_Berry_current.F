@@ -64,7 +64,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      endif
      !
      do i1=1,NL_bands(2)
-       VH_bands(i1,:,ik,isp)=en%E(i1,ik,isp)*V_bands(i1,:,ik,isp)
+       VH_bands(i1,:,ik,isp)=en%E(i1,ik,isp)*conjg(V_bands(i1,:,ik,isp))
      enddo
      !
    enddo
@@ -101,14 +101,14 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
    endif
    !
-   NL_J_red(id_red)=real(NL_J_red(id_red),SP)/dble(Nperpend)
+   NL_J_red(id_red)=2.0*real(NL_J_red(id_red))/dble(Nperpend)
    !
  enddo
  !
  ! Transform in cartesian coordinates
  ! 
  do id=1,3
-   NL_J(id)=sum(NL_J_red(:)*a(:,id))/DL_Vol/(4.0*pi)
+   NL_J(id)=-sum(NL_J_red(:)*a(:,id))/DL_Vol/(4.0*pi)
  enddo
  !
 end subroutine NL_Berry_current

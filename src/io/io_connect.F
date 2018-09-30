@@ -126,7 +126,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      !
    else
      !
-     call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
      if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO && defined _HDF5_IO
      if(     par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&

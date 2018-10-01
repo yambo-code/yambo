@@ -46,6 +46,7 @@ MODULE timing_m
    REAL(DP)                    :: stop              ! last stop 
    REAL(DP)                    :: total_time        ! total time up to now
    LOGICAL                     :: running           ! true if clock is counting
+   INTEGER                     :: indx              ! global clock index, if any
    LOGICAL                     :: alloc 
  END TYPE clock
  !     
@@ -233,6 +234,7 @@ MODULE timing_m
      IF ( LEN( TRIM(name)) == 0 )  CALL error('clock_allocate:  Invalid name')
      !
      nclock = nclock + 1
+     obj%indx=nclock
      obj%name=TRIM(name)
      obj%call_number=0
      obj%start=0.0
@@ -253,6 +255,7 @@ MODULE timing_m
      obj1%stop = obj2%stop
      obj1%total_time = obj2%total_time
      obj1%running = obj2%running
+     obj1%indx = obj2%indx
      obj1%alloc = .TRUE.
    END SUBROUTINE clock_assignment
    !
@@ -284,24 +287,38 @@ MODULE timing_m
    !
    SUBROUTINE clock_start(obj)
      use LIVE_t, ONLY:cti
+#ifdef _NVTX
+     use nvtx
+#endif
      IMPLICIT NONE
-     TYPE(clock),            INTENT(inout) :: obj    
+     TYPE(clock), INTENT(inout) :: obj    
+     !
      IF ( .NOT. obj%alloc  ) CALL error('clock_start:  clock not yet allocated')
      call cti(obj%start)
      obj%running = .TRUE.
      obj%call_number = obj%call_number + 1
+#ifdef _NVTX
+     call nvtxStartRange(obj%name,obj%indx)
+#endif
    END SUBROUTINE clock_start
    !
    SUBROUTINE clock_stop(obj)
      use LIVE_t, ONLY:cti
+#ifdef _NVTX
+     use nvtx
+#endif
      IMPLICIT NONE
-     TYPE(clock),           INTENT(inout) :: obj    
+     TYPE(clock), INTENT(inout) :: obj    
+     !
      IF ( .NOT. obj%alloc  )   CALL error('clock_stop:  Clock NOT allocated')
      IF ( .NOT. obj%running  ) & 
            CALL error('clock_stop:  Clock '//TRIM(obj%name)//'NOT running')
      call cti(obj%stop)
      obj%total_time = obj%total_time + real(obj%stop-obj%start,DP)
      obj%running = .FALSE.
+#ifdef _NVTX
+     call nvtxEndRange()
+#endif
    END SUBROUTINE clock_stop
    !
    SUBROUTINE clock_update(obj)

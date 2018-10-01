@@ -26,6 +26,9 @@ AC_DEFUN([AC_HAVE_CUDA],[
 AC_ARG_ENABLE(cuda,
         [AC_HELP_STRING([--enable-cuda=<opt>], [Enable CUDA support])],[],[])
 #
+AC_ARG_ENABLE(nvtx,
+        [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support])],[],[])
+#
 def_cuda=""
 CUDA_FLAGS=""
 CUDA_LIBS="-Mcudalib=cufft,cublas"
@@ -53,6 +56,18 @@ if test x"$enable_cuda" = "xyes" ; then
 elif ! test x"$enable_cuda" = "x" ; then
    def_cuda="-D_CUDA"
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+fi
+#
+if test x"$enable_cuda" = "x" -o x"$enable_cuda" = "xno" ; then
+  enable_nvtx=no
+fi
+#
+if test x"$enable_nvtx" = "xyes" ; then
+   def_cuda="$def_cuda -D_NVTX"
+   CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
+elif ! test x"$enable_nvtx" = "x" ; then
+   def_cuda="$def_cuda -D_NVTX"
+   CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
 fi
 #
 AC_SUBST(def_cuda)

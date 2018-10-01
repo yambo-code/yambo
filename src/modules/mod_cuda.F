@@ -26,7 +26,7 @@
 
 module mpiDeviceUtil
   implicit none
-#if defined(__MPI)
+#if defined(_MPI)
   INCLUDE 'mpif.h'
 #else
   integer, parameter ::MPI_MAX_PROCESSOR_NAME=20
@@ -139,7 +139,7 @@ module nvtx
   use cudafor
 #endif
   implicit none
-#ifdef USE_NVTX
+#ifdef _NVTX
   integer,private :: col(7) = [ Z'0000ff00', Z'000000ff', Z'00ffff00',Z'00ff00ff',Z'0000ffff', &
                                 Z'00ff0000', Z'00ffffff']
   character(len=256),private :: tempName
@@ -183,7 +183,7 @@ contains
   subroutine nvtxStartRange(name,id)
     character(kind=c_char,len=*) :: name
     integer, optional:: id
-#ifdef USE_NVTX
+#ifdef _NVTX
     type(nvtxEventAttributes):: event
 #ifdef _CUDA
     integer :: istat
@@ -205,7 +205,7 @@ contains
   subroutine nvtxStartRangeAsync(name,id)
     character(kind=c_char,len=*) :: name
     integer, optional:: id
-#ifdef USE_NVTX
+#ifdef _NVTX
     type(nvtxEventAttributes):: event
 
     tempName=trim(name)//c_null_char
@@ -222,7 +222,7 @@ contains
 
 
   subroutine nvtxEndRange
-#ifdef USE_NVTX
+#ifdef _NVTX
 #ifdef _CUDA
     integer :: istat
     istat = cudaDeviceSynchronize()
@@ -232,7 +232,7 @@ contains
   end subroutine nvtxEndRange
 
   subroutine nvtxEndRangeAsync
-#ifdef USE_NVTX
+#ifdef _NVTX
     call nvtxRangePop
 #endif
   end subroutine nvtxEndRangeAsync

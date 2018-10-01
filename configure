@@ -926,6 +926,7 @@ with_libxc_path
 with_libxc_libdir
 with_libxc_includedir
 enable_cuda
+enable_nvtx
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1594,6 +1595,7 @@ Optional Features:
   --enable-iotk           Activate the IOTK support
   --enable-etsf-io        Activate the ETSF_IO support
   --enable-cuda=<opt>     Enable CUDA support
+  --enable-nvtx=<path>    Enable NVTX support
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -13460,6 +13462,12 @@ if test "${enable_cuda+set}" = set; then :
 fi
 
 #
+# Check whether --enable-nvtx was given.
+if test "${enable_nvtx+set}" = set; then :
+  enableval=$enable_nvtx;
+fi
+
+#
 def_cuda=""
 CUDA_FLAGS=""
 CUDA_LIBS="-Mcudalib=cufft,cublas"
@@ -13487,6 +13495,18 @@ if test x"$enable_cuda" = "xyes" ; then
 elif ! test x"$enable_cuda" = "x" ; then
    def_cuda="-D_CUDA"
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+fi
+#
+if test x"$enable_cuda" = "x" -o x"$enable_cuda" = "xno" ; then
+  enable_nvtx=no
+fi
+#
+if test x"$enable_nvtx" = "xyes" ; then
+   def_cuda="$def_cuda -D_NVTX"
+   CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
+elif ! test x"$enable_nvtx" = "x" ; then
+   def_cuda="$def_cuda -D_NVTX"
+   CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
 fi
 #
 

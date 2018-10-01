@@ -205,7 +205,7 @@ rm_command="@rm -f \$*\$(f90suffix)"
 if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 cat << EOF >> $cdir/Makefile
 .F.o:
-	@rm -f \$*\$(f90suffix)
+	${rm_command}
 	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
 	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
 	@mv \$*.tmp_source_space \$*\$(f90suffix)

@@ -59,7 +59,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  type(elemental_collision), target::isc,iscp
  integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
- complex(DP)              ::DP_Sx
+ complex(DP)              ::DP_Sx, DP_Sx_l
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch,mode_
  !
@@ -177,7 +177,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call scatter_Gamp(isc,'x')
 #if defined _CUDA
- allocate(isc%gamp_d,source=isc%gamp)
+   allocate(isc%gamp_d,source=isc%gamp)
 #endif
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
@@ -278,12 +278,14 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc_gamp_d => isc%gamp_d
        isc_ngrho=isc%ngrho
        !
+       DP_Sx_l=0.0
+       !
        !$cuf kernel do(1) <<<*,*>>>
        do ig = 1, isc_ngrho
-         DP_Sx=DP_Sx +isc_rhotw_d(ig)* conjg(iscp_rhotw_d(ig))*isc_gamp_d(ig,1)
+         DP_Sx_l=DP_Sx_l +isc_rhotw_d(ig)* conjg(iscp_rhotw_d(ig))*isc_gamp_d(ig,1)
        enddo
        !
-       DP_Sx=DP_Sx * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
+       DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !       
 #else
        !

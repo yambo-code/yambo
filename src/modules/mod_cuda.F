@@ -128,7 +128,6 @@ contains
     res = .not. leq(s1, s2)
   end function lne
 end module mpiDeviceUtil
-#endif
 
 ! ----
 ! nvtx
@@ -239,4 +238,6 @@ contains
   end subroutine nvtxEndRangeAsync
 
 end module nvtx
+
+#endif
 

@@ -70,6 +70,7 @@ module collision_el
    !
 #if defined _CUDA
    complex(SP), allocatable, device :: rhotw_d(:)
+   complex(SP), allocatable, device :: gamp_d(:,:)
    complex(DP), allocatable, device :: rho_tw_rs_d(:)
    complex(SP), allocatable, device :: WF_symm_i_d(:,:)
    complex(SP), allocatable, device :: WF_symm_o_d(:,:)
@@ -97,6 +98,7 @@ module collision_el
      ! 
 #if defined _CUDA
      if(allocated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
+     if(allocated(ggw%gamp_d))      deallocate(ggw%gamp_d)
      if(allocated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
      if(allocated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
      if(allocated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)

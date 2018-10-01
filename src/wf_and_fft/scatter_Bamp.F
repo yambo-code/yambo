@@ -280,16 +280,22 @@ subroutine scatter_Bamp_gpu(isc)
    !
  endif
 
- !
- ! Dev 2 Host
- !
- isc%rhotw=isc%rhotw_d
+! !
+! ! Dev 2 Host
+! !
+! isc%rhotw=isc%rhotw_d
 
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
- if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
+ !if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
+ !if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
+ ! 
+ !if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) rhotw_d(1)=cONE
+ !if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) rhotw_d(1)=cZERO
+ !
+ if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_d(1)=cONE
+ if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_d(1)=cZERO
  
 end subroutine scatter_Bamp_gpu
 

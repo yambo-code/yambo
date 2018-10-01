@@ -69,6 +69,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  integer              :: ikibz,i_sp_pol
  integer, external    :: QP_state_extract
  !
+#if defined _CUDA
+ integer              :: isc_ngrho
+ complex(SP), pointer, device :: isc_rhotw_d(:)
+ complex(SP), pointer, device :: iscp_rhotw_d(:)
+ complex(SP), pointer, device :: isc_gamp_d(:,:)
+#endif
+ !
  ! Resets & basis setup
  !
  call elemental_collision_free(isc)
@@ -169,6 +176,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    isc%qs    =1
    !
    call scatter_Gamp(isc,'x')
+#if defined _CUDA
+ allocate(isc%gamp_d,source=isc%gamp)
+#endif
+   !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
    !$omp do schedule(dynamic)
@@ -179,6 +190,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
      if (isc%qs(2)/=isc%iqref) then 
        call scatter_Gamp(isc,'x')
+#ifdef _CUDA
+       isc%gamp_d=isc%gamp
+#endif
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -235,12 +249,43 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        !
        ! Normal case, the density matrix is diagonal
        !
-       iscp%rhotw=isc%rhotw
 #ifdef _CUDA
-       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp_gpu(iscp)
+       if (isc%is(1)/=iscp%is(1)) then
+         call scatter_Bamp_gpu(iscp)
+       else
+         isc_ngrho=isc%ngrho
+         isc_rhotw_d => isc%rhotw_d
+         iscp_rhotw_d => iscp%rhotw_d
+         !
+         !$cuf kernel do(1) <<<*,*>>>
+         do ig = 1, isc_ngrho
+           iscp_rhotw_d(ig)=isc_rhotw_d(ig)
+         enddo
+         !
+       endif
 #else
-       if (isc%is(1)/=iscp%is(1)) call scatter_Bamp(iscp)
+       if (isc%is(1)/=iscp%is(1)) then
+         call scatter_Bamp(iscp)
+       else
+         iscp%rhotw=isc%rhotw
+       endif
 #endif
+       !
+#ifdef _CUDA
+       !
+       isc_rhotw_d => isc%rhotw_d
+       iscp_rhotw_d => iscp%rhotw_d
+       isc_gamp_d => isc%gamp_d
+       isc_ngrho=isc%ngrho
+       !
+       !$cuf kernel do(1) <<<*,*>>>
+       do ig = 1, isc_ngrho
+         DP_Sx=DP_Sx +isc_rhotw_d(ig)* conjg(iscp_rhotw_d(ig))*isc_gamp_d(ig,1)
+       enddo
+       !
+       DP_Sx=DP_Sx * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
+       !       
+#else
        !
        !$omp parallel do default(shared), private(ig)
        do ig = 1, isc%ngrho
@@ -249,6 +294,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        !$omp end parallel do
        !
        DP_Sx=DP_Sx+V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
+#endif
        !
        if (master_thread.and.q%sstar(iq,2)==1) call live_timing(steps=1)
        !

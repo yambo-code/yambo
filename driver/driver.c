@@ -453,13 +453,9 @@ static void usage(int verbose)
   char* MPI_string="Serial";
 #endif
 #if defined _OPENMP
-  OMP_string="+OpenMP";
-#endif
-#if defined _CUDA
-  CUDA_string="+CUDA";
-#endif
-#if defined _SCALAPACK
-  SLK_string="+SLK";
+  char* OMP_string="+OpenMP";
+#else
+  char* OMP_string="";
 #endif
 #if defined _CUDA
   char* CUDA_string="+CUDA";
@@ -472,7 +468,9 @@ static void usage(int verbose)
   char* SLK_string="";
 #endif
 #if defined _SLEPC
-  SLEPC_string="+SLEPC";
+  char* SLEPC_string="+SLEPC";
+#else
+  char* SLEPC_string="";
 #endif
 #if defined _PAR_IO
   char* HDF5_string="+HDF5_MPI_IO";

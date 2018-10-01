@@ -320,7 +320,6 @@ clean:
 	@$(objects_clean)
 	@$(lib_mod_clean)
 	@$(sysincs_clean)
-	@$(conf_clean)
 	@$(xclean)
 clean_all:
 	@$(objects_clean)

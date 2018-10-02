@@ -41,7 +41,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
 #ifdef _CUDA
  use R_lattice,     ONLY:g_rot_d,G_m_G_d
- use cublas
 #endif
  !
  implicit none
@@ -66,8 +65,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  complex(SP)        :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
 #ifdef _CUDA
  attributes(device) :: rhotw_save, rhotw_save2
- complex(SP), allocatable, device :: conjg_rhotw_d(:)
- complex(SP), pointer,     device :: Xo_scatt_rhotw_d(:)
+ complex(SP), pointer, device :: Xo_scatt_rhotw_d(:)
  integer            :: sop_inv_l,X_ng
  integer            :: X_cols1,X_cols2,X_rows1,X_rows2
 #endif

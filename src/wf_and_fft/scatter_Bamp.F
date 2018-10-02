@@ -211,6 +211,7 @@ subroutine scatter_Bamp_gpu(isc)
  use R_lattice,      ONLY:g_rot_d
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table_d
  use FFT_m,          ONLY:cufft_plan
+ use timing_m
  use cudafor
  !
  implicit none
@@ -218,10 +219,11 @@ subroutine scatter_Bamp_gpu(isc)
  type(elemental_collision), target::isc
  
  integer :: qs,iGo
- integer :: ig,ir
+ integer :: ig,ir,isc_ngrho
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
+ call timing("scatter_Bamp_gpu",opr="start")
 
  !
  ! define pointers to enable CUF kernels
@@ -263,40 +265,31 @@ subroutine scatter_Bamp_gpu(isc)
  !
  iGo=isc%qs(1)
  qs =isc%qs(3)
+ isc_ngrho=isc%ngrho
  !
  if (qs==idt_index) then 
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do ig = 1, isc%ngrho
+   do ig = 1, isc_ngrho
      rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(ig,iGo)),kind=SP)
    enddo
    !
  else
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do ig = 1, isc%ngrho
+   do ig = 1, isc_ngrho
      rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(g_rot_d(ig,qs),iGo)),kind=SP)
    enddo
    !
  endif
 
-! !
-! ! Dev 2 Host
-! !
-! isc%rhotw=isc%rhotw_d
-
  !
  ! q=0, G=0 case
- !
- !if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
- !if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
- ! 
- !if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) rhotw_d(1)=cONE
- !if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) rhotw_d(1)=cZERO
  !
  if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_d(1)=cONE
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_d(1)=cZERO
  
+ call timing("scatter_Bamp_gpu",opr="stop")
 end subroutine scatter_Bamp_gpu
 
 #endif

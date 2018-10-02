@@ -25,8 +25,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  use pars,           ONLY:SP,pi
  use vec_operate,    ONLY:c2a
- use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev
+ use D_lattice,      ONLY:a,nsym,dl_sop,sop_inv,i_time_rev,alat
  use R_lattice,      ONLY:b,g_vec,ng_vec
+ use matrix_operate, ONLY:m3inv
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
 #if defined _CUDA
@@ -50,10 +51,15 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! Work Space
  !
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
- real(SP) :: v1(3),M1(3,3),M2(3,3)
+ real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
 
  call timing("FFT_setup",opr="start")
+
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
+ mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
+ call m3inv(transpose(b),mat)
+ scal(:)=2._SP*pi/alat(:)
+ 
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -75,7 +81,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
-       call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
+       !call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
+       v1=matmul(mat,(g_vec(i1,:)-g_vec(i2,:))*scal(:))
        iv=nint(v1)
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
 #if defined _FFTQE
@@ -135,6 +142,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    ! 
    ! Now I want to rewrite wf_ks(r)= wf_k(r(s^-1))
    !
+   call timing("FFT_setup_doloop",opr="start")
    do is=1,nsym+1
      if( is<=nsym/(1+i_time_rev) )                M1=matmul( dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
@@ -160,6 +168,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        enddo
      enddo
    enddo
+   call timing("FFT_setup_doloop",opr="stop")
+
    i4=1
 #if defined _CUDA
    if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)

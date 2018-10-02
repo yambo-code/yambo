@@ -105,6 +105,7 @@ module R_lattice
  real(SP),allocatable :: E_of_shell(:)
 #if defined _CUDA
  integer ,allocatable, device :: g_rot_d(:,:)
+ integer ,allocatable, device :: G_m_G_d(:,:)
 #endif
  !
  ! RIM

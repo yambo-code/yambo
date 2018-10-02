@@ -224,7 +224,7 @@ subroutine scatter_Bamp_gpu(isc)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
 
  !
- ! define pointer to enable CUF kernels
+ ! define pointers to enable CUF kernels
  !
  WF_symm_i_d => isc%WF_symm_i_d
  WF_symm_o_d => isc%WF_symm_o_d

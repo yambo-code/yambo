@@ -67,6 +67,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #endif
  use timing_m,      ONLY:timing
 #include<memory.h>
+ !
  type(PAR_matrix)     :: X_par
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
@@ -83,6 +84,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
  complex(SP),allocatable  :: Xo_res(:,:)
+#ifdef _CUDA
+ complex(SP),allocatable, device :: Xo_res_d(:,:)
+#endif
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
  !
@@ -117,7 +121,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ngrho=X%ng
  if (l_X_terminator) ngrho=maxval(G_m_G)
  !
- if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+ if(.not.skip_WF_load) then
+    call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
+#ifdef _CUDA
+    call msg('rns', '[X] Copying WF data to Device')
+    allocate(WF%c_d,source=WF%c)   
+#endif
+ endif
  !
  call timing('Xo (procedure)',OPR='start')
  !
@@ -212,6 +222,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! memory estimate and local alloc
  !=================================
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
+#ifdef _CUDA
+ allocate(Xo_res_d,mold=Xo_res)
+#endif
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
@@ -225,7 +238,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
    ! 1) First compute the residuals
    !================================
+#ifdef _CUDA
+   call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res_d,Xo_scatt)
+   Xo_res=Xo_res_d
+#else
    call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+#endif
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -317,6 +335,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! CLEAN
  !=======
  YAMBO_FREE(Xo_res)
+#ifdef _CUDA
+ if (allocated(Xo_res_d)) deallocate(Xo_res_d)
+#endif
  call elemental_collision_free(Xo_scatt)
  !
 !$omp end parallel

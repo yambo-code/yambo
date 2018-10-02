@@ -247,9 +247,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2)
-#endif
+       !
+       !$omp parallel do default(shared), private(ig1,ig2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
@@ -263,9 +262,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            endif
          enddo
        enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+       !$omp end parallel do
+       !
 #if defined _SC
      endif
 #endif
@@ -339,29 +337,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if ( HEAD_QP_cpu ) then
            if (X_is_TR_rotated) then
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2)
-#endif
+              !$omp parallel do default(shared), private(ig1,ig2)
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
                 enddo
               enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+              !$omp end parallel do
            else
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2)
-#endif
+              !$omp parallel do default(shared), private(ig1,ig2)
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
                 enddo
               enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+              !$omp end parallel do
            endif
          endif
          !
@@ -370,29 +360,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          sp_dummy = 0.0_SP
          !
          if (X_is_TR_rotated) then
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-#endif
+           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+           !$omp end parallel do
          else
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-#endif
+           !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+           !$omp end parallel do
          endif
          !
          dc(1) = sp_dummy
@@ -441,13 +423,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if(l_GW_terminator) then
 #if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2)
+           !$omp parallel do default(shared), private(ig1,ig2)
            do ig2=1,X%ng
              do ig1=1,X%ng
                  eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
              enddo
            enddo
-!$omp end parallel do
+           !$omp end parallel do
 #else
            forall(ig1=1:X%ng,ig2=1:X%ng)
              eet_factor(ig1,ig2)=eet_factor(ig1,ig2)-isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))
@@ -464,9 +446,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            sp_dummy = 0.0_SP
            !
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
-#endif
+           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
@@ -481,9 +461,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
              enddo
            enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+           !$omp end parallel do
            !
            dc(i_w) = sp_dummy
            !

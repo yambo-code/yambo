@@ -204,6 +204,10 @@ subroutine scatter_Bamp_gpu(isc)
  !                                        /:\
  !  iq_is = ik_is-ok_os-Go
  !
+ ! N.B.: in this subroutine the casting from double to signle
+ !       precision and vice versa was removed since it causes problems
+ !       with cuf kernels in PGI 18.7.
+ !
  use pars,           ONLY:cZERO,cONE,DP,SP
  use electrons,      ONLY:n_spinor
  use collision_el,   ONLY:elemental_collision
@@ -218,7 +222,7 @@ subroutine scatter_Bamp_gpu(isc)
  type(elemental_collision), target::isc
  
  integer :: qs,iGo
- integer :: ig,ir
+ integer :: ig,ir,isc_ngrho
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
@@ -243,13 +247,13 @@ subroutine scatter_Bamp_gpu(isc)
  !
  !$cuf kernel do(1) <<<*,*>>>
  do ir = 1, fft_size
-   rho_tw_rs_d(ir) = cmplx(conjg(WF_symm_i_d(ir,1))*WF_symm_o_d(ir,1),kind=DP)
+   rho_tw_rs_d(ir) = conjg(WF_symm_i_d(ir,1))*WF_symm_o_d(ir,1)
  enddo
  !
  if (n_spinor==2) then
    !$cuf kernel do(1) <<<*,*>>>
    do ir = 1, fft_size
-     rho_tw_rs_d(ir) = rho_tw_rs_d(ir)+cmplx(conjg(WF_symm_i_d(ir,2))*WF_symm_o_d(ir,2),kind=DP)
+     rho_tw_rs_d(ir) = rho_tw_rs_d(ir)+conjg(WF_symm_i_d(ir,2))*WF_symm_o_d(ir,2)
    enddo
  endif
 
@@ -263,19 +267,20 @@ subroutine scatter_Bamp_gpu(isc)
  !
  iGo=isc%qs(1)
  qs =isc%qs(3)
+ isc_ngrho=isc%ngrho
  !
  if (qs==idt_index) then 
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do ig = 1, isc%ngrho
-     rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(ig,iGo)),kind=SP)
+   do ig = 1, isc_ngrho
+     rhotw_d(ig)= rho_tw_rs_d(fft_g_table_d(ig,iGo))
    enddo
    !
  else
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do ig = 1, isc%ngrho
-     rhotw_d(ig)= cmplx(rho_tw_rs_d(fft_g_table_d(g_rot_d(ig,qs),iGo)),kind=SP)
+   do ig = 1, isc_ngrho
+     rhotw_d(ig)= rho_tw_rs_d(fft_g_table_d(g_rot_d(ig,qs),iGo))
    enddo
    !
  endif

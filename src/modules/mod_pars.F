@@ -89,7 +89,7 @@ module pars
 #if defined _DOUBLE
  integer, parameter  :: nf90_SP = nf90_double
 #else
- integer, parameter  :: nf90_SP = nf90_real
+ integer, parameter  :: nf90_SP = nf90_float
 #endif
  !
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)

@@ -26,7 +26,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:STRING_pack
  use parallel_m,    ONLY:ncpu,MPI_INFO_NULL
- use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,&
+ use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,io_type,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,io_type,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
 &                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL
@@ -158,7 +158,10 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
      if (.not.file_found) then
        io_connect=IO_NO_DATABASE
        if (.not.full_RESET) io_file(ID)=''
-       if (     full_RESET) call io_reset(ID)
+       if (     full_RESET) then
+         call io_reset(ID)
+         io_type(ID)=0
+       endif
        return
      endif
      !

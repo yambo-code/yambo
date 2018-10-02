@@ -455,7 +455,7 @@ module IO_m
    subroutine io_reset(ID)
      integer :: ID
      io_status(ID)=0
-     io_type(ID)=0
+     !io_type(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0

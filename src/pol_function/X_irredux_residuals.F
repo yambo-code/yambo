@@ -220,24 +220,15 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !-------------^^^^^---------------------------------------
 #ifdef _CUDA
    X_ng=X%ng
-   allocate(conjg_rhotw_d(X_ng))
    !
    !$cuf kernel do(1) <<<*,*>>>
-   do ig1=1,X_ng
-     conjg_rhotw_d(ig1)=conjg(Xo_scatt_rhotw_d(ig1))
+   do ig2=X_cols1,X_cols2
+     !
+     do ig1=X_rows1,min(ig2,X_rows2)
+       Xo_res(ig1,ig2) = Xo_res(ig1,ig2) + Z_eh_occ*Xo_scatt_rhotw_d(ig2) &
+&                                        * conjg(Xo_scatt_rhotw_d(ig1))
+     enddo
    enddo
-   !
-   do ig2=X_cols(1),X_cols(2)
-     ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
-#if defined _DOUBLE
-     call zaxpy(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw_d(ig2),&
-&               conjg_rhotw_d(ROWS(1)),1,Xo_res(ROWS(1),ig2),1)
-#else
-     call caxpy(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw_d(ig2),&
-&               conjg_rhotw_d(ROWS(1)),1,Xo_res(ROWS(1),ig2),1)
-#endif
-   enddo
-   deallocate(conjg_rhotw_d)
    !
 #else
    !

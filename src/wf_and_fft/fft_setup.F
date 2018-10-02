@@ -77,7 +77,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  ! SIZE estimation
  !
- call timing("FFT_setup_estimation",opr="start")
  ln=-1
  i4=-1
  if (.not.ONLY_SIZE) fft_g_table=0
@@ -126,7 +125,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      i4=1
      cycle
    endif
-   call timing("FFT_setup_estimation",opr="stop")
    !
    if (allocated(fft_rot_r)) then
      YAMBO_FREE(fft_rot_r)

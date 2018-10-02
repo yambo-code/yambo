@@ -33,15 +33,16 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _CUDA
  use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
 #endif
- use wave_func,      ONLY:wf_ng
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
+ use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
 #include<memory.h>
+ !
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
 #if defined _FFTQE
@@ -55,17 +56,17 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  real(SP), allocatable :: g_vec_rot(:,:)
 
  call timing("FFT_setup",opr="start")
+ !
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
- mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
  call m3inv(transpose(b),mat)
  scal(:)=2._SP*pi/alat(:)
- allocate(g_vec_rot,mold=g_vec)
- 
+ ! 
  mat(:,1)=scal(1)*mat(:,1)
  mat(:,2)=scal(2)*mat(:,2)
  mat(:,3)=scal(3)*mat(:,3)
+ !
+ allocate(g_vec_rot,mold=g_vec)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
-
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -88,12 +89,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
-       !call c2a(b,g_vec(i1,:)-g_vec(i2,:),v1,'ki2a')
-       !v1=matmul(mat,(g_vec(i1,:)-g_vec(i2,:))*2._SP*pi/alat(:))
-       !v1=matmul(mat,(g_vec(i1,:)-g_vec(i2,:))*scal(:))
+       !
        v1=(g_vec_rot(i1,:)-g_vec_rot(i2,:))
-       !v1=(g_vec_rot(i1,:)-g_vec_rot(i2,:))*scal(:)
        iv=nint(v1)
+       !
        if (i2==1.or.i1<=iG_max) forall(i3=1:3) ln(i3)=max(ln(i3),iv(i3))
 #if defined _FFTQE
        if (i4>0.and..not.ONLY_SIZE) fft_g_table(i1,i2)=fft_setmap(iv,dffts)
@@ -117,6 +116,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    call fft_best_size(ln)
    if (i4>0) then
       call timing("FFT_setup",opr="stop")
+      if (allocated(g_vec_rot)) deallocate(g_vec_rot)
       return
    endif
    fft_dim=ln
@@ -191,7 +191,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  fftw_plan=0
 #endif
  !
- call deallocate(g_vec_rot)
+ if (allocated(g_vec_rot)) deallocate(g_vec_rot)
  call timing("FFT_setup",opr="stop")
  !
  contains

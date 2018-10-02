@@ -78,6 +78,9 @@ module matrix
    integer :: Nb         = 1  ! # of Blocks
    !
    complex(SP), allocatable :: blc(:,:,:)
+#ifdef _CUDA
+   complex(SP), allocatable, device :: blc_d(:,:,:)
+#endif
    !
  end type PAR_matrix 
  !

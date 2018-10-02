@@ -159,6 +159,9 @@ module collision_el
      if (present(NG_GAMP)) then
        if (all((/NG_GAMP>0/))) then
          YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
+#ifdef _CUDA
+         allocate(ggw%gamp_d, mold=ggw%gamp)
+#endif
        endif
      endif
      !

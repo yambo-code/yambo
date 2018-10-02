@@ -175,9 +175,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
    isc%qs    =1
    !
+#ifdef _CUDA
+   call scatter_Gamp_gpu(isc,'x')
+#else
    call scatter_Gamp(isc,'x')
-#if defined _CUDA
-   allocate(isc%gamp_d,source=isc%gamp)
 #endif
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
@@ -189,9 +190,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      !
      isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
      if (isc%qs(2)/=isc%iqref) then 
-       call scatter_Gamp(isc,'x')
 #ifdef _CUDA
-       isc%gamp_d=isc%gamp
+       call scatter_Gamp_gpu(isc,'x')
+#else
+       call scatter_Gamp(isc,'x')
 #endif
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif

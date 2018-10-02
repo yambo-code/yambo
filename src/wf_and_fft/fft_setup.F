@@ -135,6 +135,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    ! 
    ! Now I want to rewrite wf_ks(r)= wf_k(r(s^-1))
    !
+   call timing("FFT_setup_doloop",opr="start")
    do is=1,nsym+1
      if( is<=nsym/(1+i_time_rev) )                M1=matmul( dl_sop(:,:,sop_inv(is)),transpose(a))
      if( is> nsym/(1+i_time_rev) .and. is<=nsym ) M1=matmul(-dl_sop(:,:,sop_inv(is)),transpose(a))
@@ -160,6 +161,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        enddo
      enddo
    enddo
+   call timing("FFT_setup_doloop",opr="stop")
+
    i4=1
 #if defined _CUDA
    if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)

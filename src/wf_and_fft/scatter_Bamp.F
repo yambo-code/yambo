@@ -211,6 +211,7 @@ subroutine scatter_Bamp_gpu(isc)
  use R_lattice,      ONLY:g_rot_d
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table_d
  use FFT_m,          ONLY:cufft_plan
+ use timing_m
  use cudafor
  !
  implicit none
@@ -222,6 +223,7 @@ subroutine scatter_Bamp_gpu(isc)
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
+ call timing("scatter_Bamp_gpu",opr="start")
 
  !
  ! define pointer to enable CUF kernels
@@ -287,6 +289,7 @@ subroutine scatter_Bamp_gpu(isc)
  if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_d(1)=cONE
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_d(1)=cZERO
  
+ call timing("scatter_Bamp_gpu",opr="stop")
 end subroutine scatter_Bamp_gpu
 
 #endif

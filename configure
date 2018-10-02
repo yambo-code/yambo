@@ -1561,7 +1561,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-keep-objects   Objects are not removed but saved in appropriate
                           directories. Default is yes.
-  --enable-keep-src       Keep preprocessed.f90 file. Default is no.
+  --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
@@ -2872,7 +2872,7 @@ if test "${enable_keep_src+set}" = set; then :
   enableval=$enable_keep_src;
 fi
 
-if test x"$enable_keep_src" = "x";    then enable_keep_src="no" ; fi
+if test x"$enable_keep_src" = "x";    then enable_keep_src="yes" ; fi
 if test x"$enable_keep_src" = "xyes"; then enable_keep_src="yes"; fi
 
 #
@@ -13467,6 +13467,7 @@ if test "${enable_nvtx+set}" = set; then :
   enableval=$enable_nvtx;
 fi
 
+if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
 #
 def_cuda=""
 CUDA_FLAGS=""
@@ -13499,14 +13500,19 @@ fi
 #
 if test x"$enable_cuda" = "x" -o x"$enable_cuda" = "xno" ; then
   enable_nvtx=no
+  def_cuda=""
+  CUDA_FLAGS=""
 fi
 #
-if test x"$enable_nvtx" = "xyes" ; then
-   def_cuda="$def_cuda -D_NVTX"
-   CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
-elif ! test x"$enable_nvtx" = "x" ; then
-   def_cuda="$def_cuda -D_NVTX"
-   CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
+if ! test x"$enable_nvtx" = "xno" ; then
+  #
+  if test x"$enable_nvtx" = "xyes" ; then
+     def_cuda="$def_cuda -D_NVTX"
+     CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
+  elif ! test x"$enable_nvtx" = "x" ; then
+     def_cuda="$def_cuda -D_NVTX"
+     CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
+  fi
 fi
 #
 

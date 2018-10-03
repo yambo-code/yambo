@@ -63,6 +63,7 @@ module parallel_m
 #endif
  !
  integer            :: myid
+ integer            :: mycuda_dev = 0
  integer            :: ncpu
  integer            :: n_nodes  = 1
  integer            :: n_MPI    = 1

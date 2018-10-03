@@ -42,7 +42,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg,warning
+ use com,           ONLY:msg,warning,error
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
@@ -243,7 +243,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !================================
 #ifdef _CUDA
    call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res_d,Xo_scatt)
-!   Xo_res=Xo_res_d
 #else
    call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
 #endif
@@ -253,7 +252,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
    if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
-! IF CUDA ERRORRRRRRRRR
+#ifdef _CUDA
+   call error('[X] CUDA Porting not implemented here')
+#endif
      !$omp critical
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
      !$omp end critical
@@ -326,12 +327,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
             conjg_Xo_res_d(ig1)=conjg(Xo_res_d(ig1,ig_col))
          enddo
          !
-         if (PAR_COM_RL_INDEX%n_CPU>1) then
-           call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
-&                             X_par_lower_triangle%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
-         else
-           call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
-&                             X_par%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+         if ( X_nrows>0 ) then
+           if (PAR_COM_RL_INDEX%n_CPU>1) then
+             call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
+&                               X_par_lower_triangle%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+           else
+             call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
+&                               X_par%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+           endif
          endif
          !
 #else

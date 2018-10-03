@@ -114,11 +114,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
-#ifdef _CUDA
-   call msg('rns', '[EXS] Copying WF data to Device')
-   allocate(WF%c_d,source=WF%c)
-#endif
-   !
  endif
  !
  call timing('HF',OPR='start')

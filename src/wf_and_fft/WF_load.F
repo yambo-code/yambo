@@ -401,6 +401,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
+
+#ifdef _CUDA
+ call msg('rns', '[WF] Copying WF data to GPU device')
+ WF%c_d = WF%c
+#endif
  call timing('WF_load_FFT',"stop")
  !
  ! CLEAN

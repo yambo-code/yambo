@@ -123,10 +123,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  if(.not.skip_WF_load) then
     call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
-#ifdef _CUDA
-    call msg('rns', '[X] Copying WF data to Device')
-    allocate(WF%c_d,source=WF%c)   
-#endif
  endif
  !
  call timing('Xo (procedure)',OPR='start')

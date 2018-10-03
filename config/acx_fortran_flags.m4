@@ -41,13 +41,13 @@ case "${host}" in
 i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -Mbackslash"
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
-    DEBUG_FLAGS=""
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -117,11 +117,12 @@ i?86*linux*)
 *86*apple* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -Mbackslash"
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -mtune=native"
@@ -164,12 +165,13 @@ i?86*linux*)
 ia64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -Mbackslash"
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -mtune=native"
@@ -234,12 +236,13 @@ ia64*linux* )
 *x86*64* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -Mbackslash"
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -mtune=native"

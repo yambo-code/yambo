@@ -43,9 +43,6 @@ module wrapper
  !
  interface V_by_V_plus_V
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
-#ifdef _CUDA
-   module procedure          vv_caxpy_gpu
-#endif
  end interface
  !
  public :: V_copy
@@ -179,21 +176,6 @@ module wrapper
      call CAXPY(N,CA,CX,1,CY,1)
 #endif
    end subroutine vv_caxpy
-   !
-#ifdef _CUDA
-   subroutine vv_caxpy_gpu(N, CA, CX,  CY )
-     use cublas
-     complex(SP), intent(in) :: CA
-     integer,     intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*)
-     complex(SP), device, intent(out):: CY(*)
-#if defined _DOUBLE
-     call zaxpy(N,CA,CX,1,CY,1)
-#else
-     call caxpy(N,CA,CX,1,CY,1)
-#endif
-   end subroutine vv_caxpy_gpu
-#endif
    !
    subroutine vv_saxpy(N, CA, CX, CY )
      real(SP),    intent(in) :: CA

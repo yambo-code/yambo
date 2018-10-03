@@ -89,10 +89,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
  real(SP)                     :: XppaE, bose_PPA_E
+ real(SP)                     :: sp_dummy_r, sp_dummy_i
  complex(SP)                  :: W_i_w
- complex(SP), pointer, device :: isc_rhotw_d(:)
+ complex(SP),pointer, device  :: isc_rhotw_d(:)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP), pointer, device :: isc_gamp_d(:,:)
+ complex(SP),pointer, device  :: isc_gamp_d(:,:)
 #endif
  !
  ! Reset & checks
@@ -308,6 +309,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_ppa) call mat_transpose(X_mat(:,:,X_range(2)))
      X_is_TR_rotated=.true.
    endif
+#ifdef _CUDA
+   X_mat_d = X_mat
+#endif
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
@@ -488,7 +492,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          XppaE = X%ppaE
          Xr1 = X_range(1)
          Xr2 = X_range(2)
-         X_mat_d = X_mat
 
          isc_gamp_d => isc%gamp_d
          isc_rhotw_d => isc%rhotw_d
@@ -497,7 +500,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do i_w=1,QP_dSc_steps
            W_i_w = W_(i_w)
            !
-           sp_dummy = 0.0_SP
+           ! NOTE: Split reduction done here to work around PGI bug with complex
+           ! CUF reductions.
+           sp_dummy_r = 0.0_SP
+           sp_dummy_i = 0.0_SP
            !
            !$cuf kernel do(2)
            do ig2=1,Xng
@@ -507,14 +513,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
 
                ! inline bose_f function
-               bose_PPA_E=0._SP
-               if (PPA_E<0._SP) bose_PPA_E=-spin_occ
+               bose_PPA_E=0.
+               if (PPA_E<0.) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
-                 if (abs(PPA_E)>epsilon(1._SP)) then
+                 if (abs(PPA_E)>epsilon(1.)) then
                    if (abs(PPA_E)<=bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ*Bose_Temp/PPA_E
-                   if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1._SP)
+                   if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1.)
                  else
-                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
+                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1.)
                  endif
                endif
                !
@@ -522,12 +528,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !
-               sp_dummy=sp_dummy+ctmp
+               sp_dummy_r=sp_dummy_r+real(ctmp)
+               sp_dummy_i=sp_dummy_i+imag(ctmp)
                !
                !
              enddo
            enddo
            !
+           sp_dummy%re = sp_dummy_r
+           sp_dummy%im = sp_dummy_i
            dc(i_w) = sp_dummy
            !
          enddo

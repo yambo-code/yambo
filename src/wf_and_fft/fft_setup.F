@@ -31,7 +31,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx
 #if defined _CUDA
- use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
+ use FFT_m,          ONLY:fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d,&
+&                         cufft_plan
 #endif
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
@@ -187,6 +188,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  ! 
 #if defined _FFTW
  fftw_plan=0
+#endif
+#if defined _CUDA
+ cufft_plan=0
 #endif
  !
  if (allocated(g_vec_rot)) deallocate(g_vec_rot)

@@ -131,6 +131,9 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP)     , allocatable :: X_mat(:,:,:)
+#ifdef _CUDA
+ complex(SP)     , allocatable, device :: X_mat_d(:,:,:)
+#endif
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -179,6 +182,9 @@ module X_m
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
+#ifdef _CUDA
+         allocate(X_mat_d, source=X_mat)
+#endif
        case('DIP_iR')
          if (allocated(DIP_iR)) return
          YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
@@ -223,6 +229,9 @@ module X_m
          ! and the matrix itself
          !
          YAMBO_FREE(X_mat)
+#ifdef _CUDA
+         deallocate(X_mat_d)
+#endif
          !
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return

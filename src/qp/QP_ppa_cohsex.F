@@ -56,6 +56,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
+#ifdef _CUDA
+ use drivers,       ONLY:Finite_Tel
+ use D_lattice,     ONLY:Bose_Temp
+ use functions,     ONLY:bose_E_cut
+ use X_m,           ONLY:X_mat_d
+#endif
  !
 #include<memory.h>
  !
@@ -73,13 +79,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
- type(elemental_collision)::isc,iscp
+ type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name
  logical          ::X_is_TR_rotated,l_X_alloc
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor,sp_dummy,ctmp
  !
  integer, external::io_X,QP_state_extract
+#ifdef _CUDA
+ integer                      :: Xng, Xr1, Xr2
+ real(SP)                     :: XppaE, bose_PPA_E
+ complex(SP)                  :: W_i_w
+ complex(SP), pointer, device :: isc_rhotw_d(:)
+ complex(SP), pointer, device :: iscp_rhotw_d(:)
+ complex(SP), pointer, device :: isc_gamp_d(:,:)
+#endif
  !
  ! Reset & checks
  !
@@ -222,7 +236,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
+#ifdef _CUDA
+     call scatter_Gamp_gpu(isc,'c')
+     isc%gamp = isc%gamp_d
+#else
      call scatter_Gamp(isc,'c')
+#endif
      !
      ! I/O
      !
@@ -324,7 +343,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        iscs_save(2,:3)=isc%qs
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
+
+#ifdef _CUDA
+       call scatter_Bamp_gpu(isc)
+       isc%rhotw = isc%rhotw_d
+#else
        call scatter_Bamp(isc)
+#endif
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
@@ -411,11 +436,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
+#ifdef _CUDA
+       call scatter_Bamp_gpu(isc)
+       isc%rhotw = isc%rhotw_d
+#else
        call scatter_Bamp(isc)
+#endif
        iscp%os=isc%os
        !
-       iscp%rhotw=isc%rhotw
-       if (any(isc%is/=iscp%is)) call scatter_Bamp(iscp)
+       if (any(isc%is/=iscp%is)) then
+#ifdef _CUDA
+         call scatter_Bamp_gpu(iscp)
+         iscp%rhotw = iscp%rhotw_d
+#else
+         call scatter_Bamp(iscp)
+#endif
+       else
+         iscp%rhotw=isc%rhotw
+#ifdef _CUDA
+         iscp%rhotw_d=iscp%rhotw
+#endif
+       endif
        !
        dc=cZERO
        !
@@ -442,10 +483,58 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
+#ifdef _CUDA
+         Xng = X%ng
+         XppaE = X%ppaE
+         Xr1 = X_range(1)
+         Xr2 = X_range(2)
+         X_mat_d = X_mat
+
+         isc_gamp_d => isc%gamp_d
+         isc_rhotw_d => isc%rhotw_d
+         iscp_rhotw_d => iscp%rhotw_d
+
          do i_w=1,QP_dSc_steps
+           W_i_w = W_(i_w)
            !
            sp_dummy = 0.0_SP
            !
+           !$cuf kernel do(2)
+           do ig2=1,Xng
+             do ig1=1,Xng
+               !
+               PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2))
+               PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+
+               ! inline bose_f function
+               bose_PPA_E=0._SP
+               if (PPA_E<0._SP) bose_PPA_E=-spin_occ
+               if (Finite_Tel) then
+                 if (abs(PPA_E)>epsilon(1._SP)) then
+                   if (abs(PPA_E)<=bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ*Bose_Temp/PPA_E
+                   if (abs(PPA_E)> bose_E_cut*Bose_Temp) bose_PPA_E=spin_occ/(exp(PPA_E/Bose_Temp)-1._SP)
+                 else
+                   bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
+                 endif
+               endif
+               !
+               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
+&                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
+               !
+               sp_dummy=sp_dummy+ctmp
+               !
+               !
+             enddo
+           enddo
+           !
+           dc(i_w) = sp_dummy
+           !
+         enddo
+#else
+         do i_w=1,QP_dSc_steps
+           !
+           sp_dummy = 0.0_SP
            !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
@@ -466,6 +555,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dc(i_w) = sp_dummy
            !
          enddo
+#endif
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
          !

@@ -45,6 +45,7 @@ subroutine scatter_Bamp(isc)
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
+ use timing_m
  !
  implicit none
  !
@@ -55,6 +56,7 @@ subroutine scatter_Bamp(isc)
 #if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir
 #endif
+ call timing("scatter_Bamp",opr="start")
  !
  ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,isc%WF_symm_i)
@@ -187,6 +189,7 @@ subroutine scatter_Bamp(isc)
  if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
+ call timing("scatter_Bamp",opr="stop")
 end subroutine
 
 #ifdef _CUDA

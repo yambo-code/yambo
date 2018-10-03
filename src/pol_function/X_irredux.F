@@ -68,7 +68,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use timing_m,      ONLY:timing
 #include<memory.h>
  !
- type(PAR_matrix)     :: X_par
+ type(PAR_matrix), target :: X_par
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
@@ -86,7 +86,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  complex(SP),allocatable  :: Xo_res(:,:)
 #ifdef _CUDA
  complex(SP),allocatable, device :: Xo_res_d(:,:)
- complex(SP),allocatable, device :: conjg_Xo_res_d(:)
+ complex(SP),pointer,     device :: X_par_blc_d(:,:,:)
+ complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:,:)
+ complex(SP)              :: GreenF_iw
 #endif
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
@@ -226,7 +228,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
 #ifdef _CUDA
  allocate(Xo_res_d,mold=Xo_res)
- allocate(conjg_Xo_res_d(X_par%rows(1):X_par%rows(2)))
 #endif
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
@@ -283,6 +284,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !===========================================================
    do iw=1,Xw%n_freqs
      !
+#ifdef _CUDA
+     X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
+     X_par_blc_d => X_par%blc_d
+#endif
+     !
      do ig_col=X_par%cols(1),X_par%cols(2)
 #if defined _OPENMP
        if(n_threads_X>1) then
@@ -322,18 +328,24 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          !
 #ifdef _CUDA
          !
-         !$cuf kernel do(1) <<<*,*>>>
-         do ig1=X_rows1,X_rows2
-            conjg_Xo_res_d(ig1)=conjg(Xo_res_d(ig1,ig_col))
-         enddo
-         !
          if ( X_nrows>0 ) then
+           GreenF_iw=GreenF(iw)
+           !
            if (PAR_COM_RL_INDEX%n_CPU>1) then
-             call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
-&                               X_par_lower_triangle%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+             !
+             !$cuf kernel do(1) <<<*,*>>>
+             do ig1=X_rows1,X_rows2 
+                X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+&                     GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             enddo
+             !
            else
-             call V_by_V_plus_V(X_nrows,GreenF(iw), conjg_Xo_res_d, &
-&                               X_par%blc_d(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+             !
+             !$cuf kernel do(1) <<<*,*>>>
+             do ig1=X_rows1,X_rows2 
+                X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             enddo
+             !
            endif
          endif
          !
@@ -368,7 +380,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  YAMBO_FREE(Xo_res)
 #ifdef _CUDA
  if (allocated(Xo_res_d)) deallocate(Xo_res_d)
- if (allocated(conjg_Xo_res_d)) deallocate(conjg_Xo_res_d)
 #endif
  call elemental_collision_free(Xo_scatt)
  !

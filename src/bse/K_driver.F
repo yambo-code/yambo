@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use stderr,         ONLY:string_remove,intc
+ use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
@@ -119,7 +119,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
      ! Remove the exchange from the BS_mode
      ! if TDDFT Fxc is obtained from K
      !
-     if (index(BSS_mode,'t')==0) BS_res_mode=trim( string_remove(BS_res_mode,'x') )
+     if (index(BSS_mode,'t')==0) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
      BSE_mode='retarded'
      call parser('FxcRetarded',FXC_is_retarded)
      !

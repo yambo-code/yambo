@@ -176,6 +176,7 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        i_k_sp=BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
        i_p_sp=BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
        !
+       if(i_k_sp/=i_p_sp) cycle
        !
        if (BS_blk(iB)%mode=="R") then
          !

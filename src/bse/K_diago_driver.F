@@ -152,7 +152,7 @@ subroutine K_diago_driver(iq,W,X_static)
  ! Diagonalization DB (IN)
  !========================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL,X_static)
+ io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
  ! Kernel and/or BSS components loading
  !======================================
@@ -199,7 +199,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================
-   call live_timing('BSK diagonalize',1)
+   if(l_diago) call live_timing('BSK diagonalize',1)
    !
    if (K_is_not_hermitian) then
      !
@@ -230,7 +230,7 @@ subroutine K_diago_driver(iq,W,X_static)
    if(l_slepc) call MatDestroy(slepc_mat,ierr)
 #endif
    !
-   call live_timing( )
+   if(l_diago) call live_timing( )
    !
    ! Construct the residuals of epsilon
    !====================================
@@ -294,7 +294,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (io_err/=0) then
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,MODE=VERIFY,SEC=(/1,2,3/),ID=ID)
-   io_err=io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL,X_static)
+   io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
    !
  endif
  !

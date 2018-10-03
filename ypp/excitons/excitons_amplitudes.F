@@ -29,7 +29,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
  use YPP,           ONLY:min_weight
- use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
  use vec_operate,   ONLY:sort
@@ -38,7 +38,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !
  type(bz_samp)    :: Xk
  type(levels)     :: Xen
- integer          :: BS_E_degs(BS_H_dim),lambda_s(n_lambda),n_lambda,iq
+ integer          :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda,iq
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  integer          :: ikpbz,ikp,isp

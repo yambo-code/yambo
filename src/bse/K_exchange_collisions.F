@@ -26,7 +26,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use pars,           ONLY:cZERO
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch,L_kind
- use R_lattice,      ONLY:g_rot,qindx_X,bz_samp,bare_qpg
+ use R_lattice,      ONLY:g_rot,qindx_X,bz_samp
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc

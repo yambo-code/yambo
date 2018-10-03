@@ -88,19 +88,19 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! GPL_EXCLUDE_END
  !
- ! Here I read information from the BS database
- !
+ !iq=BS_q(1)
  iq = BSiq
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
- io_err=io_connect(desc=trim(db_name),type=2,ID=io_ID)
- io_err=variables_BS(io_ID,local_description,X=Xbsk)
- !
- if (io_err/=0) call error(' ndb.BS not found or not compatible with ypp input')
  !
  ! X type. Also used in PARALLEL setup
  !
  Xbsk%whoami=2
+ !
+ ! Here I read information from the BSS_diago database
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_err=io_BSS_diago(iq,io_ID,Xbsk)
+ !
+ if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  ! Apply quasi-particle correction if presents
  ! 
@@ -132,29 +132,21 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Allocation of energies and residuum, then also eigenvector
  !
- YAMBO_ALLOC(BS_R_right,(BS_H_dim))
- YAMBO_ALLOC(BS_R_left,(BS_H_dim))
- YAMBO_ALLOC(BS_E,(BS_H_dim))
+ YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
+ YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
+ YAMBO_ALLOC(BS_E,(BSS_n_eig))
  !iq=BS_q(1)
  iq=BSiq
  YAMBO_ALLOC(BSqpts,(3,iq))
  if(E_SOC_nbands/=0) then
-   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
+   YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
  endif
- !
- ! Here I read energies and residuum
- !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
- !
- if (io_err/=0) call error(' ndb.BSS_diago not found')
  !
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
  enddo
-
  !
  ! Sort energies and write to output
  !===================================
@@ -178,7 +170,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,BS_H_dim,BSS_n_eig,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL,Xbsk)
+   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
@@ -251,7 +243,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
     integer function get_lambda()
      !
      use pars,   ONLY:schlen
-     use stderr, ONLY:string_split
+     use stderr, ONLY:STRING_split
      use YPP,    ONLY:state_ctl
      !
      implicit none
@@ -259,7 +251,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      integer          ::i_start,i_end,i_str,i_st
      character(schlen)::str_piece(50)
      !
-     call string_split(state_ctl,str_piece)
+     call STRING_split(state_ctl,str_piece)
      !
      get_lambda=0
      if (allocated(lambda_s)) lambda_s=0

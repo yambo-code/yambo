@@ -23,7 +23,7 @@
 !
 integer function io_SC_components(what,E_sc,ID)
  !
- ! what can be E WF V JPSM G
+ ! what can be E WF V OBSERVABLES (J,P,D...) G
  !
  use pars,           ONLY:SP,lchlen
  use drivers,        ONLY:l_sc_run
@@ -31,7 +31,7 @@ integer function io_SC_components(what,E_sc,ID)
  use stderr,         ONLY:intc
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
 &                         l_NSC_shot,SC_fft_size,V_mean
- use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,SC_R
+ use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,H_rotation
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
 &                         manage_OP_IF_START_and_CL_IF_END,variable_exist,io_SC,IO_NOT_ALLOWED,&
@@ -130,7 +130,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  ! 
- call manage_OP_IF_START_and_CL_IF_END(ID,ik,nkibz)
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nkibz)
  !
  ! Potential
  !===========
@@ -218,7 +218,7 @@ integer function io_SC_components(what,E_sc,ID)
    !
    call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=SC_R(:,:,ik,i_sp_pol))
+   call io_bulk(ID,C2=H_rotation(:,:,ik,i_sp_pol))
    !
  endif
  !

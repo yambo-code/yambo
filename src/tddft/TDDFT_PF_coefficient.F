@@ -1,3 +1,4 @@
+!
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -30,7 +31,7 @@ subroutine TDDFT_PF_coefficient(en,Xk,a_xc,b_xc)
  use interfaces,    ONLY:el_density_and_current
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:DL_vol
- use electrons,     ONLY:levels,nel,n_spin,n_sp_pol
+ use electrons,     ONLY:levels,nel
  use com,           ONLY:msg
  use tddft,         ONLY:Fxc_PF_alpha
  use FFT_m,         ONLY:fft_size, fft_dim,fftw_plan,fft_g_table
@@ -201,15 +202,18 @@ contains
    real function Alpha_LOC(density)
      ! Botti: only static now PRB 72, 125203, dynamic later on 
      ! Not working - seg fault in the eval_Gradient
-     real(SP) :: density(fft_size),d_density(3,fft_size)
-     real(SP) :: alpha_, mod_grad
-     integer :: ir
+     real(SP)    :: density(fft_size)
+     complex(SP) :: density_cmplx(fft_size,1),d_density(fft_size,1,3)
+     real(SP)    :: alpha_, mod_grad
+     integer     :: ir
      !
-     call eval_Gradient(density(:),d_density)
+     density_cmplx(:,1)=density(:)
+     !
+     call eval_Gradient(density_cmplx,d_density,1,"density")
      !
      alpha_ = 0._SP
      do ir = 1, fft_size
-       mod_grad = sqrt(dot_product(d_density(:,ir),d_density(:,ir)))
+       mod_grad = sqrt(dot_product(d_density(ir,1,:),d_density(ir,1,:)))
        alpha_ = alpha_ + mod_grad/density(ir)
      end do
      !

@@ -146,14 +146,10 @@ module collision_el
          else
            YAMBO_ALLOC(ggw%rhotw,(NG))
          endif
-       endif
-#if defined _CUDA
-       if (present(GRADIENT)) then
-         if (GRADIENT) allocate(ggw%rhotw_d(3*NG))
-       else
-         allocate(ggw%rhotw_d(NG))
-       endif
+#ifdef _CUDA
+         allocate(ggw%rhotw_d, mold=ggw%rhotw)
 #endif
+       endif
        ggw%ngrho=NG
      endif
      if (present(NG_GAMP)) then

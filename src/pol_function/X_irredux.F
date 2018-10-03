@@ -79,7 +79,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                            X_cols_transp(2),X_rows1,X_rows2,X_nrows
+&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -287,9 +287,17 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #ifdef _CUDA
      X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
      X_par_blc_d => X_par%blc_d
+     GreenF_iw=GreenF(iw)
+     !
+     X_rows1=X_par%rows(1)
+     X_rows2=X_par%rows(2)
+     X_cols1=X_par%cols(1)
+     X_cols2=X_par%cols(2)
 #endif
      !
-     do ig_col=X_par%cols(1),X_par%cols(2)
+     !$cuf kernel do(1)
+     do ig_col=X_cols1,X_cols2
+       !
 #if defined _OPENMP
        if(n_threads_X>1) then
          call OPENMP_compute_mutex(ig_col,mutexid)
@@ -297,9 +305,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        endif
 #endif
        !
-       X_rows1 = X_par%rows(1)
-       X_rows2 = min(ig_col,X_par%rows(2))
-       X_nrows = X_rows2-X_rows1+1
+       X_rows1_l = X_rows1
+       X_rows2_l = min(ig_col,X_rows2)
+       X_nrows   = X_rows2_l-X_rows1_l+1
        !
        ! ----    ----
        ! -xxx    -xxx
@@ -307,19 +315,20 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        ! ----    ----
        !
 #ifdef _CUDA
-       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res_d(X_rows1:X_rows2,ig_col),X_par%blc_d(X_rows1:X_rows2,ig_col,iw))
+       do ig1=X_rows1_l,X_rows2_l
+         X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
+       enddo
 #else
-       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1:X_rows2,ig_col),X_par%blc(X_rows1:X_rows2,ig_col,iw))
+       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
 #endif
        !
        if (.not.X_FILL_UP_matrix_only) then
          !
-         X_rows1 = X_par%rows(1)
-         X_rows2 = min(ig_col-1,X_par%rows(2))
-         X_nrows = X_rows2-X_rows1+1
+         X_rows1_l = X_rows1
+         X_rows2_l = min(ig_col-1,X_rows2)
+         X_nrows = X_rows2_l-X_rows1_l+1
          !
          ig_row_transp = ig_col
-         X_cols_transp = (/X_rows1,X_rows2/)
          !
          ! ----    ----
          ! -xxx    ----
@@ -328,28 +337,24 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          !
 #ifdef _CUDA
          !
-         if ( X_nrows>0 ) then
-           GreenF_iw=GreenF(iw)
+         if (PAR_COM_RL_INDEX%n_CPU>1) then
            !
-           if (PAR_COM_RL_INDEX%n_CPU>1) then
-             !
-             !$cuf kernel do(1) <<<*,*>>>
-             do ig1=X_rows1,X_rows2 
-                X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
-&                     GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             enddo
-             !
-           else
-             !
-             !$cuf kernel do(1) <<<*,*>>>
-             do ig1=X_rows1,X_rows2 
-                X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             enddo
-             !
-           endif
+           do ig1=X_rows1_l,X_rows2_l 
+              X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+           enddo
+           !
+         else
+           !
+           do ig1=X_rows1_l,X_rows2_l
+              X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+           enddo
+           !
          endif
          !
 #else
+         X_cols_transp = (/X_rows1_l,X_rows2_l/)
+         !
          if (PAR_COM_RL_INDEX%n_CPU>1) then
            call V_by_V_plus_V(X_nrows,GreenF(iw),&
 &                             conjg(Xo_res(X_rows1:X_rows2,ig_col)),&

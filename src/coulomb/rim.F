@@ -28,7 +28,7 @@ subroutine rim()
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  use interfaces,    ONLY:PARALLEL_index
  use LIVE_t,        ONLY:live_timing
- use vec_operate,   ONLY:v_norm
+ use vec_operate,   ONLY:v_norm2
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
@@ -119,9 +119,9 @@ subroutine rim()
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
    !
    v1=matmul(transpose(k_grid_b),v2) 
-   v1_norm(1)=v_norm(v1)
+   v1_norm(1)=v_norm2(v1)
    do inn1=1,26
-     v1_norm(2)=v_norm(v1-first_neighbour(inn1,:))
+     v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
      if (v1_norm(2)<v1_norm(1)) cycle loop
      !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
      !
@@ -129,7 +129,7 @@ subroutine rim()
      ! the case of large samplings.
      ! 
    enddo
-   qr(N_in,:)=v1*alat(:)/2./pi
+   qr(N_in,:)=v1*alat(:)/2._SP/pi
    N_in=N_in+1
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop
@@ -138,7 +138,7 @@ subroutine rim()
  !  
  !Integrated RL VOLUME 
  !
- RIM_RL_vol=8.*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
+ RIM_RL_vol=8._SP*k_grid_uc_vol*real(RIM_n_rand_pts)/real(N_out)*real(nqbz)
  call msg('r', 'RL volume           [au]:',RL_vol)
  call msg('rn','Integrated volume   [au]:',RIM_RL_vol)
  !

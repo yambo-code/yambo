@@ -349,7 +349,6 @@ MODULE timing_m
      !
      form_="sec "
      IF ( PRESENT(form) ) form_ = TRIM(form)
-     CALL clock_update(obj)
      !
      ! define an average over the pools
      !
@@ -424,9 +423,9 @@ MODULE timing_m
          ! time in seconds
          !
          IF ( call_number == 1) THEN
-           WRITE (local_ch, '(a40," :",f9.2,"s CPU")') TRIM(obj%name), total_time
+           WRITE (local_ch, '(a40," :",f10.4," s CPU")') TRIM(obj%name), total_time
          ELSE
-           WRITE (local_ch, '(a40," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
+           WRITE (local_ch, '(a40," :",f10.4," s CPU (", i8," calls,",f10.4," s avg)")')  &
                         TRIM(obj%name) , total_time , call_number ,   &
                         total_time / REAL( call_number, DP )
          ENDIF
@@ -490,7 +489,13 @@ MODULE timing_m
      DO i=1,list%nclock 
        !
        tmp_clock = list%clock(i)
-       CALL clock_write(tmp_clock,FORM="dhms")
+       CALL clock_update(tmp_clock)
+       !
+       IF ( tmp_clock%total_time < 600.0 ) THEN
+          CALL clock_write(tmp_clock,FORM="sec")
+       ELSE
+          CALL clock_write(tmp_clock,FORM="dhms")
+       ENDIF
        !
      ENDDO
      !

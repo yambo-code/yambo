@@ -37,7 +37,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use FFT_m,         ONLY:fftw_plan
 #endif
 #ifdef _CUDA
- use FFT_m,         ONLY:cufft_plan
+ use FFT_m,         ONLY:cufft_plan,fft_g_table_d
  use wave_func,     ONLY:wf_igk_d
 #endif
  use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
@@ -82,7 +82,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #ifdef _CUDA
  complex(DP), allocatable, device :: wf_DP_d(:)
  complex(SP), allocatable, device :: wf_disk_d(:,:,:)
- integer, allocatable, device :: fft_g_table_d(:)
  complex(SP), pointer, device :: wfcd(:,:,:)
  integer :: WFN, IWFspace
 #endif
@@ -274,14 +273,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
 #ifdef _CUDA
  allocate(wf_DP_d, mold=wf_DP)
- if(WF%space=='R') allocate(fft_g_table_d(SIZE(fft_g_table,1)))
- if(WF%space=='R') fft_g_table_d(:) = fft_g_table(:,1)
  wfcd => WF%c_d
  WFN = WF%N
  IWFspace = 0
  if (WF%space=='R') IWFspace = 1
  if (WF%space=='C'.or.WF%space=='B') IWFspace = 2
-
 #endif
  !
  ! LOG the states loaded
@@ -402,9 +398,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
            do ic=1,wf_nc_k(ikibz)
              ig=wf_igk_d(ic,ikibz)
              if (ig>wf_ng) cycle
-             igfft=fft_g_table_d(ig)
+             igfft=fft_g_table_d(ig,1)
              !igfft=ig
-             !if (IWFspace==1) igfft=fft_g_table_d(ig)
+             !if (IWFspace==1) igfft=fft_g_table_d(ig,1)
              !if (IWFspace==2) igfft=ic
              !if (buffer_is_ok) then
              !  wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
@@ -508,7 +504,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  YAMBO_FREE(wf_DP)
 #ifdef _CUDA
  deallocate(wf_DP_d)
- if(WF%space=='R') deallocate(fft_g_table_d)
 #endif
 
  !

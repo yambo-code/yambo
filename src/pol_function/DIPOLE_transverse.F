@@ -46,6 +46,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
 #if defined _RT
  use drivers,             ONLY:l_real_time
 #endif
+#ifdef _CUDA
+ use R_lattice,           ONLY:g_vec_d,g_vec
+#endif
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
@@ -87,6 +90,10 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
    allocate(kbv_d,mold=kbv)
 #endif
  endif
+ !
+#ifdef _CUDA
+ allocate(g_vec_d,source=g_vec)
+#endif
  !
  ! WF load
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
@@ -295,9 +302,6 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    YAMBO_FREE(kbv)
-#ifdef _CUDA
-   if (allocated(kbv_d)) deallocate(kbv_d)
-#endif
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
    YAMBO_FREE(pp_factor)
@@ -305,6 +309,10 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  else if (io_Vnl_err==0) then
    YAMBO_FREE(Vnl)
  endif 
+#ifdef _CUDA
+ if (allocated(kbv_d)) deallocate(kbv_d)
+ if (allocated(g_vec_d)) deallocate(g_vec_d)
+#endif
  !
  call WF_free(WF)
  !

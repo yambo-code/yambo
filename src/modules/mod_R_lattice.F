@@ -104,6 +104,7 @@ module R_lattice
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
 #ifdef _CUDA
+ real(SP),allocatable, device :: g_vec_d(:,:)
  integer ,allocatable, device :: g_rot_d(:,:)
  integer ,allocatable, device :: G_m_G_d(:,:)
 #endif

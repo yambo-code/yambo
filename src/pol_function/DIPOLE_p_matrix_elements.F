@@ -31,8 +31,11 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use D_lattice,     ONLY:alat
  use wave_func,     ONLY:WF,wf_ng
- use R_lattice,     ONLY:g_vec,bz_samp
  use electrons,     ONLY:n_spinor
+ use R_lattice,     ONLY:g_vec,bz_samp
+#ifdef _CUDA
+ use R_lattice,     ONLY:g_vec_d
+#endif
 #if defined _RT
  use drivers,       ONLY:l_real_time
  use real_time,     ONLY:l_update_SOC
@@ -47,10 +50,16 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  ! Work Space
  !
- integer      :: ig
+ integer      :: ig,ierr
  logical      :: eval_spinor_matrix
  integer      :: i_spinor,j_spinor,i1
  complex(SP)  :: wf_grad(wf_ng,n_spinor),wf_der_sq(wf_ng,n_spinor)
+#ifdef _CUDA
+ complex(SP), pointer, device :: WF_c_d(:,:,:)
+ complex(SP)  :: rho_acc
+ real(SP)     :: rho_acc_r,rho_acc_i
+ real(SP)     :: alat_i1,xk_i1
+#endif
  !
  rho=cZERO
  rho_spinor=cZERO
@@ -65,6 +74,54 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
    ! wf_grad = -i grad fdo(iv,ik)
    !
+#ifdef _CUDA
+   !
+   WF_c_d => WF%c_d
+   xk_i1=Xk%pt(ik,i1)
+   alat_i1=alat(i1)
+   !
+   if(eval_spinor_matrix) then
+     !
+     do i_spinor=1,n_spinor
+       do j_spinor=1,n_spinor
+         !
+         rho_acc_r=0.0_SP
+         rho_acc_i=0.0_SP
+         !
+         !$cuf kernel do(1)
+         do ig=1,wf_ng
+           rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
+&                         WF_c_d(ig,j_spinor,ic_wf)
+           rho_acc_r=rho_acc_r + real(rho_acc)
+           rho_acc_i=rho_acc_i + aimag(rho_acc)
+         enddo
+         !
+         rho_spinor(i1,i_spinor,j_spinor)=cmplx(rho_acc_r,rho_acc_i,SP)
+       enddo
+       rho(i1)=rho(i1)+rho_spinor(i1,i_spinor,i_spinor)
+     enddo
+     !
+   else
+     !
+     rho_acc_r=0.0_SP
+     rho_acc_i=0.0_SP
+     ! 
+     !$cuf kernel do(2)
+     do i_spinor=1,n_spinor
+     do ig=1,wf_ng
+        rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
+&                      WF_c_d(ig,i_spinor,ic_wf)
+        rho_acc_r=rho_acc_r + real(rho_acc)
+        rho_acc_i=rho_acc_i + aimag(rho_acc)
+     enddo
+     enddo
+     !
+     rho(i1)=cmplx(rho_acc_r,rho_acc_i,SP)
+     !
+   endif
+   !
+   !
+#else
    !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ig=1,wf_ng
@@ -104,6 +161,8 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      rho(i1)=Vstar_dot_V_omp(wf_ng*n_spinor,wf_grad(:,:),WF%c(:,:,ic_wf))
      !
    endif
+   !
+#endif
    !
    ! GPL_EXCLUDE_START 
    !

@@ -77,10 +77,16 @@ subroutine rim()
  !
  ! Random generator seed
  !
- call date_and_time(ch(1),ch(2),ch(3),iseed)
- iseed=iabs(iseed)
- ! iseed(4) must be odd
- iseed(4)=2*(iseed(4)/2)+1
+! call date_and_time(ch(1),ch(2),ch(3),iseed)
+! iseed=iabs(iseed)
+! ! iseed(4) must be odd
+! iseed(4)=2*(iseed(4)/2)+1
+ !
+ ! AF: fixing the seed for the sake of
+ !     data reproducibility.
+ !
+ iseed=0
+ iseed(4:8) = (/5,6,7,8,9/)
  !
  ! First neighbours of the gamma point in the k_grid_b units
  !

@@ -32,6 +32,9 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
  use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
  use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
  use wave_func,        ONLY:wf_nc_k,wf_igk
+#ifdef _CUDA
+ use wave_func,        ONLY:wf_igk_d
+#endif
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:io_control,OP_RD_CL,NONE,DUMP,io_connect,io_disconnect,&
 &                           io_elemental,io_bulk
@@ -79,6 +82,9 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
      YAMBO_FREE(rl_sop)
      YAMBO_FREE(wf_nc_k)
      YAMBO_FREE(wf_igk)
+#ifdef _CUDA
+     if(allocated(wf_igk_d)) deallocate(wf_igk_d)
+#endif
    endif
    if (allocated(n_atoms_species)) then
      YAMBO_FREE(n_atoms_species)

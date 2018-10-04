@@ -90,6 +90,9 @@ module wave_func
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer    ,allocatable:: wf_igk(:,:)
+#ifdef _CUDA
+ integer    ,allocatable, device :: wf_igk_d(:,:)
+#endif
  logical                :: wf_norm_test
  !
  ! Allocation/deallocation messaging verbosity
@@ -105,10 +108,14 @@ module wave_func
      real(SP), optional :: wf_old(:,:,:,:)
    end function
    !
-   integer function io_WF(ID,wf)
+   integer function io_WF(ID,wf,wf_d)
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
+     complex(SP), optional :: wf_d(:,:,:)
+#ifdef _CUDA
+     attributes(device) :: wf_d
+#endif
    end function
    !
    function WF_symm(ifft,isc)

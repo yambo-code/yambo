@@ -91,9 +91,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)                     :: XppaE, bose_PPA_E
  real(SP)                     :: sp_dummy_r, sp_dummy_i
  complex(SP)                  :: W_i_w
- complex(SP),pointer, device  :: isc_rhotw_d(:)
+ complex(SP), pointer, device :: isc_rhotw_d(:)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP),pointer, device  :: isc_gamp_d(:,:)
+ complex(SP), pointer, device :: isc_gamp_d(:,:)
 #endif
  !
  ! Reset & checks

@@ -56,7 +56,7 @@ subroutine scatter_Bamp(isc)
 #if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
  integer     :: ig, ir
 #endif
- call timing("scatter_Bamp",opr="start")
+ !call timing("scatter_Bamp",opr="start")
  !
  ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,isc%WF_symm_i)
@@ -189,7 +189,7 @@ subroutine scatter_Bamp(isc)
  if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
  if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
  !
- call timing("scatter_Bamp",opr="stop")
+ !call timing("scatter_Bamp",opr="stop")
 end subroutine
 
 #ifdef _CUDA
@@ -226,7 +226,7 @@ subroutine scatter_Bamp_gpu(isc)
  complex(SP), pointer, device :: WF_symm_i_d(:,:), WF_symm_o_d(:,:)
  complex(SP), pointer, device :: rhotw_d(:)
  complex(DP), pointer, device :: rho_tw_rs_d(:)
- call timing("scatter_Bamp_gpu",opr="start")
+ !call timing("scatter_Bamp_gpu",opr="start")
 
  !
  ! define pointers to enable CUF kernels
@@ -292,7 +292,7 @@ subroutine scatter_Bamp_gpu(isc)
  if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_d(1)=cONE
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_d(1)=cZERO
  
- call timing("scatter_Bamp_gpu",opr="stop")
+ !call timing("scatter_Bamp_gpu",opr="stop")
 end subroutine scatter_Bamp_gpu
 
 #endif

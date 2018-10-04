@@ -88,8 +88,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! GPL_EXCLUDE_END
  !
- !iq=BS_q(1)
  iq = BSiq
+ YAMBO_ALLOC(BSqpts,(3,iq))
  !
  ! X type. Also used in PARALLEL setup
  !
@@ -135,13 +135,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
  YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
  YAMBO_ALLOC(BS_E,(BSS_n_eig))
- !iq=BS_q(1)
- iq=BSiq
- YAMBO_ALLOC(BSqpts,(3,iq))
  if(E_SOC_nbands/=0) then
    YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
  endif
- !
+!
+!
  do i_sec=1,2
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
    io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)

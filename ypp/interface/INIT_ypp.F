@@ -616,10 +616,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States")
+   call initactivate(1,"Qpts")
    if (l_amplitude) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
-     call initactivate(1,"Qpts")
    endif
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 

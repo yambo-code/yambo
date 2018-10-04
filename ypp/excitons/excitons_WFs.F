@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
+subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
  use R_lattice,     ONLY:bz_samp
@@ -47,7 +47,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
 #include<memory.h>
  !
  type(bz_samp)     :: Xk
- integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
+ integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda,iq
  ! 
  ! Workspace
  !
@@ -201,9 +201,13 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    !
    ! PLOT
    !
-   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-   if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-   if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+
+   if (use_cube)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+   if (use_xcrysden)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
+   if (use_gnuplot)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
+!   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
+!   if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
+!   if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')

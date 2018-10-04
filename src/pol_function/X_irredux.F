@@ -89,6 +89,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  complex(SP),pointer,     device :: X_par_blc_d(:,:,:)
  complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:,:)
  complex(SP)              :: GreenF_iw
+ integer                  :: PAR_COM_X_WORLD_n_CPU
 #endif
  integer,    external     :: X_eh_setup
  type(elemental_collision):: Xo_scatt
@@ -295,7 +296,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      X_cols2=X_par%cols(2)
 #endif
      !
-     !$cuf kernel do(1)
+     !$cuf kernel do(2)
      do ig_col=X_cols1,X_cols2
        !
 #if defined _OPENMP
@@ -305,25 +306,51 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        endif
 #endif
        !
-       X_rows1_l = X_rows1
-       X_rows2_l = min(ig_col,X_rows2)
-       X_nrows   = X_rows2_l-X_rows1_l+1
-       !
        ! ----    ----
        ! -xxx    -xxx
        ! ---- => ----
        ! ----    ----
        !
 #ifdef _CUDA
-       do ig1=X_rows1_l,X_rows2_l
-         X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
+       do ig1=X_rows1,X_rows2
+         if (ig1 <= min(ig_col,X_rows2)) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
        enddo
 #else
-       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
-#endif
        !
-       if (.not.X_FILL_UP_matrix_only) then
+       X_rows1_l = X_rows1
+       X_rows2_l = min(ig_col,X_rows2)
+       X_nrows = X_rows2_l-X_rows1_l+1 
+       !
+       call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
+
+#endif
+     end do
+     !
+     if (.not.X_FILL_UP_matrix_only) then
+       PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
+       !$cuf kernel do(2)
+       do ig_col=X_cols1,X_cols2
          !
+         !
+#ifdef _CUDA
+         !
+         !
+         do ig1=X_rows1,X_rows2
+           if (ig1 <= min(ig_col-1,X_rows2)) then
+             ig_row_transp = ig_col
+             if (PAR_COM_X_WORLD_n_CPU>1) then
+               !
+               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             else
+               !
+               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             end if
+           end if
+          !
+         enddo
+         !
+#else
          X_rows1_l = X_rows1
          X_rows2_l = min(ig_col-1,X_rows2)
          X_nrows = X_rows2_l-X_rows1_l+1
@@ -334,25 +361,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          ! -xxx    ----
          ! ---- => -x--
          ! ----    -x--
-         !
-#ifdef _CUDA
-         !
-         if (PAR_COM_RL_INDEX%n_CPU>1) then
-           !
-           do ig1=X_rows1_l,X_rows2_l 
-              X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
-&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-           enddo
-           !
-         else
-           !
-           do ig1=X_rows1_l,X_rows2_l
-              X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-           enddo
-           !
-         endif
-         !
-#else
+ 
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          if (PAR_COM_RL_INDEX%n_CPU>1) then
@@ -365,13 +374,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 &                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
 #endif
+       enddo
 
-       endif
+     endif
 #if defined _OPENMP
-       if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
+     if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
-     enddo
-     !
    enddo
    !
    if (master_thread) call live_timing(steps=1)

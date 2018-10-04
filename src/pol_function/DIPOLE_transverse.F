@@ -61,6 +61,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
+#ifdef _CUDA
+ complex(SP), allocatable, device :: kbv_d(:,:,:,:)
+#endif
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ec,W_,Dipole_Energy_treshold_
  complex(SP)                  :: Ev_m_Ec_QP
@@ -80,6 +83,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
    YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
+#ifdef _CUDA
+   allocate(kbv_d,mold=kbv)
+#endif
  endif
  !
  ! WF load
@@ -156,6 +162,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
      ! 
      if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
      if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
+#ifdef _CUDA
+     if (io_KB_abinit_err==0.or.io_KB_pwscf_err ==0) kbv_d=kbv
+#endif
      !
      do iv=X%ib(1),X%ib_lim(1) 
        !
@@ -186,8 +195,13 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+#ifdef _CUDA
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv_d)
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv_d)
+#else
          if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
          if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
+#endif
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ec may become very large)
@@ -281,6 +295,9 @@ subroutine Dipole_transverse(Xen,Xk,X,l_real_time_magn_dipoles)
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    YAMBO_FREE(kbv)
+#ifdef _CUDA
+   if (allocated(kbv_d)) deallocate(kbv_d)
+#endif
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
    YAMBO_FREE(pp_factor)

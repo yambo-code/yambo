@@ -506,6 +506,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  endif
  !
  YAMBO_FREE(wf_DP)
+#ifdef _CUDA
+ deallocate(wf_DP_d)
+ if(WF%space=='R') deallocate(fft_g_table_d)
+#endif
+
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
  ! here. It is defined in PARALLEL_WF_distribute and, therefore, only by calling 

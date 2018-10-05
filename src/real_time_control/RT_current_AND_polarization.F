@@ -46,6 +46,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use X_m,            ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital,global_gauge
  use parallel_m,     ONLY:PAR_Xk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
+ use RT_control,     ONLY:RT_do_it
  !
  implicit none
  !
@@ -93,6 +94,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
  !
  !RT_P=RT_P_tmp
+ !
+ if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
  !
  if(n_spin>1) then
    !

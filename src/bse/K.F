@@ -26,6 +26,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W>
  !
  use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
+ use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_td_hf,l_bss
  use frequency,    ONLY:w_samp
@@ -220,7 +221,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
-   if (io_X_err<0) then
+2  if (io_X_err<0) then
      call deliver_IO_error_message(io_X_err,'PP/Em1s')
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
      n_BS_blks=0
@@ -330,6 +331,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
      io_X_err=io_X(X,Xw,XID)
+     if (io_X_err<0) then
+       call warning('Reading of io_X heared failed depite previous check.')
+       goto 2
+     endif
    endif
    !
    do iq_W=1,q%nibz
@@ -341,6 +346,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        io_X_err=io_X(X,Xw,XID)
+       if (io_X_err<0) then
+         call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed depite previous check.')
+         goto 2
+       endif
        !
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
        if (BS_W_is_diagonal) then

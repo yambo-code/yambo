@@ -387,8 +387,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
+#if defined _YPP_NL
  if (l_NL_X)         call initactivate(1,'NL_X')
  if (l_NL_exc)         call initactivate(1,'NL_exc')
+#endif
  !
  l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH

@@ -47,7 +47,7 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  integer            :: j1,j2,ia,is,i_mode,ic,n_elements
  integer            :: S_indx(BSS_n_eig)
  real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(10)
- character(schlen)  :: titles(7),ch_dummy(2)
+ character(schlen)  :: titles(7),ch_dummy(2),dump_ch
  logical            :: write_widths,write_spin,write_soc_corr
  !
  ! Excitonc amplitude
@@ -103,8 +103,6 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
      titles(n_elements-1)='dE(1)[meV]'
      titles(n_elements  )='dE(2)[meV]'
    endif
-   call msg('o sort','#',titles(:n_elements),INDENT=0,USE_TABS=.true.)
-   call msg('o sort','#','',INDENT=0)
    !
    Residuals(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  Residuals(:) = abs(BS_R(:))
@@ -118,6 +116,13 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
    if (i_mode==2) v2sort=Residuals
    !
    call sort(arrin=v2sort,indx=S_indx)
+   !
+   write(dump_ch,'(a,1e10.5)') " Maximum Residual Value = ",Rmax   
+   call msg('o sort','#',dump_ch,USE_TABS=.TRUE.)
+   call msg('o sort','#','',USE_TABS=.TRUE.)
+   !
+   call msg('o sort','#',titles(:n_elements),INDENT=0,USE_TABS=.true.)
+   call msg('o sort','#','',INDENT=0)
    !
    do j1=BSS_n_eig,1,-1
      !

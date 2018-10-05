@@ -295,6 +295,7 @@ module interfaces
      real(SP),optional :: db1_alat(3) 
    end function
    !
+#if defined _NL
    subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,V_MATRIX,PV_MATRIX,V_bands,k,en,TRANS,nK_mem)
      !
      use pars,           ONLY:SP
@@ -321,6 +322,7 @@ module interfaces
      logical,         optional, intent(in) :: TRANS
      !
    end subroutine
+#endif
    !
  end interface
  !

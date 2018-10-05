@@ -153,9 +153,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    DP_Sx = 0.0d0
    !
+#if !defined _CUDA
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
    !$omp          private(isc,iscp,local_rhotw,iq,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
+#endif
    !
    call OPENMP_update(master_thread)
    !
@@ -178,7 +180,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
+#if !defined _CUDA
    !$omp do schedule(dynamic)
+#endif
    do iq=1,q%nbz
      !
      if (.not.PAR_IND_Q%element_1D(q%sstar(iq,1))) cycle
@@ -300,13 +304,17 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      enddo
      !
    enddo
+#if !defined _CUDA
    !$omp end do
+#endif
    !
    call elemental_collision_free(isc)
    call elemental_collision_free(iscp)
    YAMBO_FREE(local_rhotw)
    !
+#if !defined _CUDA
    !$omp end parallel
+#endif
    !
    QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)+ DP_Sx
    !

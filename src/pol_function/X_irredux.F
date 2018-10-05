@@ -193,16 +193,22 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! omp settings and workspace
  !=================================
  !
-#if defined _OPENMP
-#  if defined _NESTING
+#if defined _CUDA
+ n_threads_X=1
+ call OPENMP_set_threads(n_threads_in=1, use_nested=.false.)
+ n_threads_FFT=1
+#else
+#  if defined _OPENMP
+#    if defined _NESTING
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.true.)
  n_threads_FFT=n_inn_threads
  call msg('s','[X] NESTED openmp parallelism on: n_out_threads/n_inn_threads = ',(/n_out_threads,n_inn_threads/))
-#  else
+#    else
  call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
  n_threads_FFT=1
-#  endif
+#    endif
  if(n_threads_X>1) call OPENMP_locks_reset(INIT=.true.,nlocks=16)
+#  endif
 #endif
  !
  ! Timing
@@ -218,9 +224,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! OpenMP setup
  !==============
  !
+#if !defined _CUDA
  !$omp parallel num_threads(n_out_threads) default(shared), &
  !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
  !$omp &        ig1,ig_row_transp,iw,mutexid,X_rows1,X_rows2,X_cols_transp,X_nrows)
+#endif
  !
  call OPENMP_update(master_thread)
  !
@@ -236,7 +244,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! MAIN LOOP
  !===========
  !
+#if !defined _CUDA
  !$omp do
+#endif
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -299,7 +309,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      !$cuf kernel do(2)
      do ig_col=X_cols1,X_cols2
        !
-#if defined _OPENMP
+#if defined _OPENMP && ! defined _CUDA
        if(n_threads_X>1) then
          call OPENMP_compute_mutex(ig_col,mutexid)
          call omp_set_lock(omp_locks(mutexid))
@@ -377,7 +387,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        enddo
 
      endif
-#if defined _OPENMP
+#if defined _OPENMP && !defined _CUDA
      if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
    enddo
@@ -386,7 +396,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
  enddo 
  !
+#if !defined _CUDA
  !$omp end do
+#endif
  !
  ! CLEAN
  !=======
@@ -396,7 +408,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #endif
  call elemental_collision_free(Xo_scatt)
  !
+#if !defined _CUDA
 !$omp end parallel
+#endif
  !
  !
  if (coarse_grid_N>=n_out_threads) call live_timing( )

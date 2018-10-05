@@ -278,7 +278,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
        ig2=g_rot_d(ig1,sop_inv_l)
        Xo_scatt_rhotw_d(ig1)=rhotw_save(ig2)
      enddo
-     !$omp end parallel do
      !
      if (is>nsym/(i_time_rev+1)) then
        !$cuf kernel do(1) <<<*,*>>>

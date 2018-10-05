@@ -574,11 +574,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
 #if defined _OPENMP
          pre_factor=0.0_SP
-!$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
+         !$omp parallel do default(shared), private(ig1), reduction(+:pre_factor)
          do ig1=1,X%ng
            pre_factor=pre_factor+isc%rhotw(ig1)*local_rhotw(ig1)
          enddo
-!$omp end parallel do
+         !$omp end parallel do
 #else
          pre_factor=sum(isc%rhotw(1:X%ng)*local_rhotw(1:X%ng))
 #endif
@@ -607,9 +607,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          sp_dummy=0.0_SP
          !
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
-#endif
+         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
@@ -622,9 +620,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
            enddo
          enddo
-#if defined _OPENMP
-!$omp end parallel do
-#endif
+         !$omp end parallel do
          !
          QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+sp_dummy
          !

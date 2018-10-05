@@ -47,6 +47,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
+ use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -62,6 +63,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
+ call timing('Xdial',OPR='start')
  !
  ! logicals and control
  !
@@ -205,6 +207,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  endif
  !
  do iq=X%iq(1),X%iq(2)
+ call timing('dialoop',OPR='start')
+
    !
    ! TDDFT setup
    !
@@ -297,6 +301,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
    endif  
    !
+ call timing('dialoop',OPR='stop')
  enddo
  !
  l_X_terminator=.false.
@@ -318,4 +323,5 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #endif
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
+ call timing('Xdial',OPR='stop')
 end function

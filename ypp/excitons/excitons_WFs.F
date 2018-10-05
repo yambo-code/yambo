@@ -185,7 +185,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
-       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)*exp(cI*q_dot_rh)
+       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)*exp(-cI*q_dot_rh)
        ! 
      enddo  !Matrix elements
      !
@@ -211,9 +211,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
    if (use_cube)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
    if (use_xcrysden)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
    if (use_gnuplot)     output_fname='exc_qpt'//trim(intc(iq))//"_"//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
-!   if (use_cube)     output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.cube'
-!   if (use_xcrysden) output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))//'.xsf'
-!   if (use_gnuplot)  output_fname='exc_'//trim(intc(plot_dim))//'d_'//trim(intc(j_lambda))
    !
    if (use_cube) then 
      call of_open_close(trim(output_fname),'o')

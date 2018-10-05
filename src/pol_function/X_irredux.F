@@ -313,7 +313,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
        !
 #ifdef _CUDA
        do ig1=X_rows1,X_rows2
-         if (ig1 <= min(ig_col,X_rows2)) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
+         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
        enddo
 #else
        !
@@ -336,7 +336,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
          !
          !
          do ig1=X_rows1,X_rows2
-           if (ig1 <= min(ig_col-1,X_rows2)) then
+           if (ig1 < ig_col) then
              ig_row_transp = ig_col
              if (PAR_COM_X_WORLD_n_CPU>1) then
                !

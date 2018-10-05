@@ -321,10 +321,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !
 #ifdef _CUDA
      !
-     !$cuf kernel do(1) <<<*,*>>>
+     !$cuf kernel do(2) <<<*,*>>>
      do ig2=X_cols1,X_cols2
-       do ig1=ig_start,min(ig2,X_rows2)
-         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_d(G_m_G_d(ig2,ig1))
+       do ig1=ig_start,X_rows2
+         if (ig1 <= ig2) then
+           Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_d(G_m_G_d(ig2,ig1))
+         endif
        enddo
      enddo
      !

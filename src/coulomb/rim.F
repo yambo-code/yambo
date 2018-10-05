@@ -45,7 +45,7 @@ subroutine rim()
  !
  ! Random generator
  !
- real(SP)  :: first_neighbour(26,3)
+ real(SP)  :: first_neighbour(26,3),fn_dist(26)
  integer   :: N_out,N_in,N_out_G,rep_factor,inn1,inn2,inn3,ic
  real(SP)  :: v1(3),v2(3),v1_norm(2)
  real(SP), allocatable  :: qr(:,:)
@@ -104,6 +104,10 @@ subroutine rim()
      enddo
    enddo
  enddo
+ ! Precompute the neighbours distances
+ do inn1=1,26
+  fn_dist(inn1)=v_norm2(first_neighbour(inn1,:))  
+ end do
  !
  ! Loop setup
  !
@@ -123,10 +127,14 @@ subroutine rim()
    ! From rlu in the k_grid_b units (v2) to Cartesian (v1)
    !
    v1=matmul(transpose(k_grid_b),v2) 
-   v1_norm(1)=v_norm2(v1)
+   !v1_norm(1)=v_norm2(v1)
    do inn1=1,26
-     v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
-     if (v1_norm(2)<v1_norm(1)) cycle loop
+     v1_norm(2)=(v1(1)* first_neighbour(inn1,1) &
+                +v1(2)* first_neighbour(inn1,2) &
+                +v1(3)* first_neighbour(inn1,3))*2._SP
+     if (fn_dist(inn1)<v1_norm(2))  cycle loop
+     !v1_norm(2)=v_norm2(v1-first_neighbour(inn1,:))
+     !if (v1_norm(2)<v1_norm(1)) cycle loop
      !if (v1_norm(2)<v1_norm(1)-1.E-5) cycle loop
      !
      ! The small number 1E-5 seems unessential and bring to erroneous integration in

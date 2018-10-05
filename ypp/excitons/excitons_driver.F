@@ -196,7 +196,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Exciton's WFs
  !=====================
- if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
+ if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
  !
  !
  !GPL_EXCLUDE_START

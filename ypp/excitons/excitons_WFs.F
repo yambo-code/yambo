@@ -24,7 +24,7 @@
 subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,qindx_X
  use units,         ONLY:BO2ANG
  use stderr,        ONLY:intc
  use D_lattice,     ONLY:a,alat
@@ -36,7 +36,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
 &                        use_xcrysden,use_gnuplot,use_cube,plot_dim
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
 &                        BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_bands
+ use BS,            ONLY:BS_H_dim,BS_bands,BSqpts
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -54,7 +54,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
  type(PP_indexes)  :: px
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
 &                     n_lambda_deg
- real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3)
+ integer          :: ikpbz,ikp,isp
+ real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3),q_dot_rh
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
  integer,  allocatable :: rindex(:)
@@ -114,6 +115,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
    enddo
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    r_hole=r_cell_cc(:,ir_hole)
+   q_dot_rh = dot_product(r_hole,BSqpts(:,iq)/alat(:))*2._SP*pi
    !
    call msg('s','::      translated position      [cc]:',r_hole)
    call msg('s','::                                [A]:',r_hole*BO2ANG)
@@ -171,15 +173,19 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
        ikibz = Xk%sstar(ikbz,1)
        is    = Xk%sstar(ikbz,2)
        !
+       ikpbz = qindx_X(iq,ikbz,1)
+       ikp   = Xk%sstar(ikpbz,1)
+       isp   = Xk%sstar(ikpbz,2)
+       !
        k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
        !
-       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikibz,is,i_spin/))
+       WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
        WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
        !
        wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
        if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)
        !
-       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)
+       wf_vc(neh) = wf_vc(neh)*exp(cI*k_dot_r)*exp(cI*q_dot_rh)
        ! 
      enddo  !Matrix elements
      !

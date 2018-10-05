@@ -101,7 +101,10 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    ch_dummy(2)='exc_qpt'//trim(intc(iq))//'_amplitude_at_'//trim(intc(i_l_grp))
    call of_open_close(ch_dummy(1),'ot')
    call of_open_close(ch_dummy(2),'ot')
-   !
+   
+!
+!Note that BSS_description is empty as io_BS it is not called anymore 
+!
    do j1=1,BSS_n_descs
      call msg('o weight amp',"#",trim(BSS_description(j1)),INDENT=0)
    enddo

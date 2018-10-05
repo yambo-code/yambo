@@ -55,7 +55,12 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  integer  :: i1,i2,i3,i4,iv(3),ln(3),is,space_inv(3,3)
  real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
  real(SP), allocatable :: g_vec_rot(:,:)
-
+#ifdef _CUDA
+ real(SP), allocatable, device :: g_vec_rot_d(:,:)
+ integer :: ln_1,ln_2,ln_3,iv_1,iv_2,iv_3
+ integer :: fft_dim_1,fft_dim_2,fft_dim_3
+ integer :: temp_1,temp_2,temp_3,i1_max
+#endif
  call timing("FFT_setup",opr="start")
  !
  space_inv=reshape((/-1, 0, 0, 0,-1, 0, 0, 0,-1/),(/3,3/))
@@ -68,6 +73,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  allocate(g_vec_rot,mold=g_vec)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
+#ifdef _CUDA
+ if(SIZE(g_vec_rot,2)>0) allocate(g_vec_rot_d, source=g_vec_rot)
+#endif
  !
  if (.not.ONLY_SIZE) then
    if (allocated(fft_g_table)) then
@@ -75,9 +83,23 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
  endif
+#ifdef _CUDA
+   if (.not.ONLY_SIZE) then
+     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
+     ! do we need to protect this allocation?
+     if (SIZE(fft_g_table,1)>0 .and. SIZE(fft_g_table,2)>0) then
+       allocate(fft_g_table_d,mold=fft_g_table)
+     endif 
+   endif
+#endif
  !
  ! SIZE estimation
  !
+#ifdef _CUDA
+ ln_1=-1
+ ln_2=-1
+ ln_3=-1
+#endif
  ln=-1
  i4=-1
  if (.not.ONLY_SIZE) fft_g_table=0
@@ -87,6 +109,45 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    if (i4>0.and..not.ONLY_SIZE) call fft_desc_init(fft_dim,iGo_max,dffts)
 #endif
    !
+#ifdef _CUDA
+   fft_dim_1 = fft_dim(1)
+   fft_dim_2 = fft_dim(2)
+   fft_dim_3 = fft_dim(3)
+   i1_max = min(max(iG_max,wf_ng),ng_vec)
+   ! TODO: i1 should be inner loop for performance?
+   !$cuf kernel do(2)
+   do i1=1,i1_max
+     do i2=1,iGo_max
+       !
+       iv_1 = nint(g_vec_rot_d(i1,1) - g_vec_rot_d(i2,1))
+       iv_2 = nint(g_vec_rot_d(i1,2) - g_vec_rot_d(i2,2))
+       iv_3 = nint(g_vec_rot_d(i1,3) - g_vec_rot_d(i2,3))
+       !
+       if (i2==1.or.i1<=iG_max) then
+            ln_1=max(ln_1,iv_1)
+            ln_2=max(ln_2,iv_2)
+            ln_3=max(ln_3,iv_3)
+       endif
+       !
+       if (i4>0.and..not.ONLY_SIZE) then
+
+                       temp_1 = mod(iv_1,fft_dim_1)
+                       temp_2 = mod(iv_2,fft_dim_2)
+                       temp_3 = mod(iv_3,fft_dim_3)
+            if(iv_1<0) temp_1 = mod(temp_1 + fft_dim_1, fft_dim_1)
+            if(iv_2<0) temp_2 = mod(temp_2 + fft_dim_2, fft_dim_2)
+            if(iv_3<0) temp_3 = mod(temp_3 + fft_dim_3, fft_dim_3)
+
+            fft_g_table_d(i1,i2)=1+temp_1+&
+&                                  temp_2*fft_dim_1+&
+&                                  temp_3*fft_dim_1*fft_dim_2
+
+       endif
+
+     enddo
+   enddo
+
+#else
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
        !
@@ -103,12 +164,17 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
      enddo
    enddo
+#endif
    !
 #ifdef _CUDA
    if (i4>0.and..not.ONLY_SIZE) then
-     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
-     allocate(fft_g_table_d,source=fft_g_table)
+!     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
+!     allocate(fft_g_table_d,source=fft_g_table)
+     fft_g_table = fft_g_table_d
    endif
+   ln(1) = ln_1
+   ln(2) = ln_2
+   ln(3) = ln_3
 #endif
    !
    ln=ln*fft_multiplier

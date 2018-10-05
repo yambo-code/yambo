@@ -63,11 +63,11 @@ subroutine excitons_sort_and_report(iq,E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
  !
  do i_mode=1,2
    !
-   if (i_mode==1) write(ch_dummy(1),'(A,I2.2)') 'exc_E_sorted_q',iq 
-   if (i_mode==2) write(ch_dummy(1),'(A,I2.2)') 'exc_I_sorted_q',iq 
+   if (i_mode==1) ch_dummy(1)='exc_qpt'//trim(intc(iq))//"_E_sorted"
+   if (i_mode==2) ch_dummy(1)='exc_qpt'//trim(intc(iq))//"_I_sorted"
    if (write_spin) then
-     if (i_mode==1) write(ch_dummy(1),'(A,I2.2)') 'exc_E+spin_sorted_q',iq 
-     if (i_mode==2) write(ch_dummy(1),'(A,I2.2)') 'exc_I+spin_sorted_q',iq 
+     if (i_mode==1) ch_dummy(1)='exc_qpt'//trim(intc(iq))//"_E+spin_sorted"    
+     if (i_mode==2) ch_dummy(1)='exc_qpt'//trim(intc(iq))//"_I+spin_sorted"    
    endif
    !
    call of_open_close(ch_dummy(1),'ot')

@@ -26,17 +26,15 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use pars,           ONLY:SP,cZERO
  use DIPOLES,        ONLY:P_square
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use hamiltonian,    ONLY:V_hartree_sc,Hzero
- use rt_interfaces,  ONLY:RT_average_operator
- use QP_m,           ONLY:QP_nk
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_is_libDFT,l_use_Hxc_collisions,l_sc_hartree
- use real_time,      ONLY:RT_nk,RT_bands,RT_ibz_coo,XC0,HARTREE0, &
+ use real_time,      ONLY:RT_nk,RT_bands,XC0,HARTREE0, &
 &                         G_lesser_reference,RT_Vnl_xc,eval_energy
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use parallel_m,     ONLY:PAR_DIPk_nibz,master_cpu
+ use parallel_m,     ONLY:PAR_DIPk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
  implicit none 
@@ -73,13 +71,13 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  ! d_Hzero = \delta\eps_{nmk} - V_Hxc[\rho_eq]
  !
- call RT_average_operator(O_VALUE=dE_ion,O_MATRIX=Hzero,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
+ call RT_average_operator(N_V=1,O_VALUE=dE_ion,O_MATRIX=Hzero,G=dG_lesser,  en=en,k=k,Double_Grid='ENERGY',nK_mem=k%nibz)
  !
  ! Non-interacting kinetc energy variation
  !
  ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(O_VALUE=dE_kin,O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+ call RT_average_operator(N_V=1,O_VALUE=dE_kin,O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
  !
  ! dE_ion = dE_tot(IP) - dEkin
  !
@@ -87,11 +85,11 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  ! Non-interacting Hartree energy variation
  !
- call RT_average_operator(O_VALUE=dE_h,O_MATRIX=HARTREE0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(N_V=1,O_VALUE=dE_h,O_MATRIX=HARTREE0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
  !
  ! Non-interacting xc energy variation
  !
- call RT_average_operator(O_VALUE=dE_xc,O_MATRIX=XC0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+ call RT_average_operator(N_V=1,O_VALUE=dE_xc,O_MATRIX=XC0,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
  !
  ! Sum of Hartree plus xc energy
  !
@@ -115,7 +113,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      ! The first term is already computed at the IP level. Thus it only remains the second term
      ! Remember that V_hartree_sc is constructed starting from drho
      !
-     call RT_average_operator(O_VALUE=dE_h_sc,O_REAL=V_hartree_sc/2._SP,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(N_V=1,O_VALUE=dE_h_sc,O_REAL=V_hartree_sc/2._SP,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
      !
    endif
    !
@@ -125,8 +123,8 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      !
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      !
-     call RT_average_operator(O_VALUE=E_xc_ref,O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(O_VALUE=E_xc_sc, O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(N_V=1,O_VALUE=E_xc_ref,O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(N_V=1,O_VALUE=E_xc_sc, O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
      !
      dE_xc_sc = (E_xc_sc-E_xc_ref)-dE_xc
      !
@@ -140,7 +138,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
    !         - If V_rt contains only the Hartree term, this is twice the dE_h_sc
    !         - If V_rt contains also the xc-term, this is not well defined ...
    !
-   call RT_average_operator(O_VALUE=dE_hxc_sc,O_MATRIX=RT_Vnl_xc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
+   call RT_average_operator(N_V=1,O_VALUE=dE_hxc_sc,O_MATRIX=RT_Vnl_xc,G=dG_lesser,  en=en,k=k,nK_mem=k%nibz)
    !
  endif
  !

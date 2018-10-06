@@ -142,7 +142,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Manage OP_IF_START_and_RD_CL_IF_END
  !
- call manage_OP_IF_START_and_CL_IF_END(ID,ik,nXkibz)
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=nXkibz)
  !
  ! Fragmentation
  !

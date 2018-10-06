@@ -324,7 +324,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
    en%nbm =nbf_m_SAVE(2)
  endif
  !
- !
  n_met_bands =en%nbm
  n_full_bands=en%nbf
  !

@@ -148,6 +148,8 @@ integer function io_X(X,Xw,ID)
  enddo
  if (iq==0) goto 1
  !
+ ! Manage OP_IF_START_and_RD_CL_IF_END
+ !
  call manage_OP_IF_START_and_CL_IF_END(ID,iq,nqibz)
 #if defined _PAR_IO
  call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)

@@ -31,7 +31,7 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
  use parallel_m,          ONLY:PAR_DIPk_ibz_index,PAR_IND_B_mat
  use DIPOLES,             ONLY:DIP_P
  use real_time,           ONLY:RT_bands,E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,l_initial_equilibrium,&
-&                              RT_delta_occupations,RT_ibz_coo,RT_H_occupations_reference,&
+&                              RT_life_delta_occupations,RT_ibz_coo,RT_H_occupations_reference,&
 &                              RT_E_occupations_reference,RAD_magnification
  use hamiltonian,         ONLY:B_mat_index
  !
@@ -62,8 +62,8 @@ subroutine RT_Radiative_Lifetimes(i_k,E,k,q)
        f_m      = RT_E_occupations_reference(i_m,i_k_rim)/spin_occ
        Hole_f_m = RT_H_occupations_reference(i_m,i_k_rim)/spin_occ
      else
-       f_m      =  RT_delta_occupations(i_m,i_k_rim)/spin_occ
-       Hole_f_m = -RT_delta_occupations(i_m,i_k_rim)/spin_occ
+       f_m      =  RT_life_delta_occupations(i_m,i_k_rim)/spin_occ
+       Hole_f_m = -RT_life_delta_occupations(i_m,i_k_rim)/spin_occ
      endif
      !
      P_square=2.*(abs(DIP_P(1,i_m,i_n,i_k_mem,i_spin))**2.+&

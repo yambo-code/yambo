@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_driver(kpt,En)
+subroutine RT_occupations_driver(k,en)
  !
  use drivers,        ONLY:l_rt_carriers_in_use
  use R_lattice,      ONLY:bz_samp
@@ -29,46 +29,46 @@ subroutine RT_occupations_driver(kpt,En)
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_conf
- use RT_control,     ONLY:RT_apply,JPC_RT_IO_t
+ use RT_control,     ONLY:RT_apply,OBS_RT_IO_t
  use real_time,      ONLY:RT_bands
- use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_lifetimes,l_RT_2D_dos
+ use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos
  !
  implicit none
  !
- type(bz_samp) :: kpt
- type(levels)  :: En
+ type(bz_samp) :: k
+ type(levels)  :: en
  !
  call section('+','Real-Time components (Occupations, Lifetimes,...)')
  !=====================================================================
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
- call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ call RT_apply(RT_bands,en,k,IO_COM=LOG,keep_RT_carriers=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
  !
- call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
+ call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
  !
  ! Additional QP corrections
  !===========================
  call QP_state_table_setup(en)
  !
- call QP_apply(RT_bands,En,kpt,'G',msg_fmt='s')
+ call QP_apply(RT_bands,en,k,'G',msg_fmt='s')
  !
  ! Occupations energy plot 
  !=========================
- if (l_RT_energy) call RT_components_energy_plot(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_energy) call RT_components_energy_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations time plot 
  !=========================
- if (l_RT_time)   call RT_occ_time_plot(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_time)   call RT_occ_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations 2D dos plot 
  !=========================
- if (l_RT_2D_dos) call RT_occ_2D_dos_plot(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_dos)    call RT_dos_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
  !=========================
- if (l_RT_bands) call RT_occ_bands_interpolation(En,kpt,RT_conf%T_n_steps)
+ if (l_RT_bands) call RT_occ_bands_interpolation(en,k,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

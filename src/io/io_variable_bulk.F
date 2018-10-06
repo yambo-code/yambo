@@ -29,7 +29,7 @@ subroutine io_variable_bulk(ID,I0,I1,I2,I3,I4,I5,&
                              & L0,L1,L2,L3,L4,   &
                              &                    IPOS)
  !
- use pars,    ONLY:SP,DP,LP,nf90_SP
+ use pars,    ONLY:SP,DP,LP
  use pointers,ONLY:linkC2R,linkZ2D
  use IO_m,    ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var
  use netcdf

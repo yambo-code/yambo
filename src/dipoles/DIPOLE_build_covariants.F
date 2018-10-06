@@ -41,8 +41,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:master_cpu
- use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
+ use parallel_m,     ONLY:master_cpu,PAR_DIPk_nbz,PAR_COM_DIPk_bz_index
+ use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD_CL
 
  !
  implicit none
@@ -95,6 +95,27 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  io_err=io_Overlaps(Dip,ID)
  !
  ! If they do not I have to compute them
+ if(io_err/=0) then
+   ! Notice that DIP_S is defined in the BZ       
+   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
+   DIP_S=cZERO
+   !
+   call DIPOLE_overlaps(Xk,Dip)
+   !
+   if (     master_cpu) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_Overlaps(Dip,ID)
+   endif
+   call PP_redux_wait(COMM=PAR_COM_DIPk_bz_index%COMM)
+   if (.not.master_cpu) then
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_Overlaps(Dip,ID)
+   endif
+   !
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2/),ID=ID)
+   io_err=io_Overlaps(Dip,ID)
+   !
+ endif
  !
  if(io_err/=0) call DIPOLE_overlaps(Xk,Dip)
  !

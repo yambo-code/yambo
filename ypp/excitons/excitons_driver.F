@@ -239,7 +239,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
     integer function get_lambda()
      !
      use pars,   ONLY:schlen
-     use stderr, ONLY:string_split
+     use stderr, ONLY:STRING_split
      use YPP,    ONLY:state_ctl
      !
      implicit none
@@ -247,7 +247,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      integer          ::i_start,i_end,i_str,i_st
      character(schlen)::str_piece(50)
      !
-     call string_split(state_ctl,str_piece)
+     call STRING_split(state_ctl,str_piece)
      !
      get_lambda=0
      if (allocated(lambda_s)) lambda_s=0

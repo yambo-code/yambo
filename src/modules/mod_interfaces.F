@@ -27,12 +27,13 @@ module interfaces
  !
  interface
    !
-  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode)
+  subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
      type(bz_samp) ::K
      character(*), OPTIONAL ::mode,OBJ
+     integer,      OPTIONAL ::n_bands
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
@@ -103,7 +104,7 @@ module interfaces
    end subroutine el_density_and_current
    !
    subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                                  USE_the_DbGd,USE_Eo,WF_fac)
+&                                  USE_the_DbGd,USE_Eo,WF_fac,USE_occupations)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -114,8 +115,7 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,DOS_broadening
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,  optional, intent(in) :: USE_Eo
-     logical,  optional, intent(in) :: USE_the_DbGd
+     logical,  optional, intent(in) :: USE_Eo,USE_occupations,USE_the_DbGd
      real(SP), optional, intent(in) :: WF_fac(DOS_bands(1):DOS_bands(2),Xk%nibz,2)
    end subroutine el_density_of_states
    !
@@ -296,6 +296,12 @@ module interfaces
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
    end function
+   !
+   subroutine QP_state_extract_print(qp)
+     use QP_m,          ONLY:QP_t
+     implicit none
+     type(QP_t),optional ::qp              
+   end subroutine
    !
  end interface
  !

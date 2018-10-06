@@ -76,11 +76,13 @@ module parallel_m
  !
  logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
- ! In a parallel run only the head CPU in the q and b chains can do 
- ! (b,k) loops
+ ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
+ ! the operations local in the cpu world
  !
  logical           :: HEAD_QP_cpu=.TRUE.
  logical           :: HEAD_k_cpu =.TRUE.
+ logical           :: HEAD_q_cpu =.TRUE.
+ logical           :: HEAD_b_cpu =.TRUE.
  !
  ! Communicators
  !

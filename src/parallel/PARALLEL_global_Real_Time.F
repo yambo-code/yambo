@@ -33,7 +33,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
  use real_time,     ONLY:RT_bands
- use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset
+ use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
+&                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
@@ -176,6 +177,13 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! QP_cpu corresponds to x marked CPU's. This flag is used when isolated QP loops are performed.
  !
+ ! Q "head"
+ !
+ HEAD_q_cpu=PAR_COM_Q_A2A%CPU_id==0
+ !
+ ! oooo  oooo  oooo  oooo  <- b
+ ! Xo Xo Xo Xo Xo Xo Xo Xo <- q
+ !
  ! K "head"
  !
  HEAD_k_cpu=PAR_COM_Xk_ibz_A2A%CPU_id==0
@@ -183,7 +191,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! oooo  oooo  oooo  oooo  <- k
  ! Xo Xo Xo Xo Xo Xo Xo Xo <- b
  !
- ! NOTE: HEAD_k_cpu=.TRUE. => HEAD_QP_cpu=.TRUE.
+ ! NOTE: HEAD_k/q_cpu=.TRUE. => HEAD_QP_cpu=.TRUE.
  !  
  ! but HEAD_QP_cpu=.TRUE. defines a larger set of CPU's.
  !
@@ -217,7 +225,15 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
  !.........................................................................
- !   "COLLISIONS"
+ !   "COLLISIONS" & "q" -> k-q
+ !.........................................................................
+ !
+ ! The k-q distribution is present both the COLL evaulation and composition
+ !
+ ! In the eval case it is driven directly by IND_Q.
+ ! IND_G_k is just used for the WF distribution
+ !
+ ! In the compose case, instead, IND_G_k is used instead of IND_Q.
  !.........................................................................
  !
  call PARALLEL_collisions( Xk,    COH_collisions )
@@ -233,7 +249,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! Messaging...
  !
  if (allocated( PAR_IND_G_k%element_1D)) then
-   call PARALLEL_live_message("K-q (ibz)",ENVIRONMENT="Real_Time",&
+   call PARALLEL_live_message("k-q",ENVIRONMENT="Real_Time",&
 &                             LOADED=count( PAR_IND_G_k%element_1D ),&
 &                             TOTAL=Xk%nibz)
  endif

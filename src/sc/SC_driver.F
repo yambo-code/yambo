@@ -31,13 +31,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
-&                         rho_convergence,magn_convergence,H_rotate,it_now,           &
+&                         rho_convergence,magn_convergence,it_now,           &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
 &                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
-&                         H_QP_table_setup,SC_R
+&                         H_QP_table_setup,H_rotation
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
@@ -91,7 +91,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
- logical, external        :: stop_now
+ logical, external        :: STOP_now
  !
 #if defined _ELECTRIC
  complex(SP) :: Initial_Pol(3),Pol(3)
@@ -129,7 +129,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Initial Start & Restart 
  !==========================
  ! 
- call SC_start_and_restart(X,E)
+ call SC_start_and_restart(X,E,Xk)
  !
  ! DIPOLES
  !=========
@@ -157,9 +157,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
-   SC_R=cZERO
+   H_rotation=cZERO
    forall(i1=1:SC_bands(2))
-     SC_R(i1,i1,:,:)=1._SP
+     H_rotation(i1,i1,:,:)=1._SP
    end forall
    !
  else if (.not.l_SC_cycle.and.l_SC_RESTART) then
@@ -344,7 +344,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
-       if (.not.l_use_collisions.and.it_now>1) call H_rotate(SC_R(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
+       if (.not.l_use_collisions.and.it_now>1) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
        ! 
        ! I/O [H_nl_sc]
        !
@@ -388,7 +388,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Rotation (WFo->WF) matrix
      !
-     SC_R(:,:,ik,i_sp_pol)=H_nl_sc(:,:) 
+     H_rotation(:,:,ik,i_sp_pol)=H_nl_sc(:,:) 
      !
      ! New wave functions 
      !====================
@@ -447,9 +447,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(SC_R,E,Dip, 1)
+       call DIPOLE_rotate(H_rotation,E,Dip, 1)
        call DIPOLE_expand_and_project(Xk,Dip)
-       call DIPOLE_rotate(SC_R,E,Dip,-1)
+       call DIPOLE_rotate(H_rotation,E,Dip,-1)
        !
        ! Recalcolate Xo and X  
        !
@@ -585,7 +585,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    enddo
    !
    if ( (E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold) .or.&
-&       stop_now(.FALSE.) ) exit
+&       STOP_now(.FALSE.) ) exit
    !
  end do
  !
@@ -752,20 +752,20 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
            ! 
            max_proj=-1._SP
            do i1=1,SC_bands(2)
-             if (abs(SC_R(i1,ib,ik,i_sp_pol))**2>max_proj) then
+             if (abs(H_rotation(i1,ib,ik,i_sp_pol))**2>max_proj) then
                b_of_max_proj(ib,ik,i_sp_pol)=i1
-               max_proj=abs(SC_R(i1,ib,ik,i_sp_pol))**2
+               max_proj=abs(H_rotation(i1,ib,ik,i_sp_pol))**2
              endif
            enddo
            !
            ! Max Overlap
            !
-           max_overlap(ib,ik,i_sp_pol)=maxloc(abs(SC_R(ib,1:SC_bands(2),ik,i_sp_pol)),1)
+           max_overlap(ib,ik,i_sp_pol)=maxloc(abs(H_rotation(ib,1:SC_bands(2),ik,i_sp_pol)),1)
            ! 
            ! simmetrize the spreads summing over all possible degenerate
            ! bands
            !
-           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(SC_R(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
+           forall (ibp=1:SC_bands(2)) WS_spread(ibp)=abs(H_rotation(ibp,ib,ik,i_sp_pol))**2*100._SP/HA2EV
            !
            ibp=b_of_max_proj(ib,ik,i_sp_pol)
            spread(ib,ik,i_sp_pol)=WS_spread( ibp )

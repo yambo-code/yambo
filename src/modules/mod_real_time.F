@@ -63,21 +63,20 @@ module real_time
  !
  logical  :: l_RT_abs_YAMBO = .false.
  !
- !
  ! ... core step length and Time-points array...
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
- real(SP)              :: RT_MAX_step = 0._SP ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_MAX_step =-1._SP ! MAX value of the dynamical RT step value
  ! 
  ! ... NE dynamics ...
  !
  real(SP) :: NE_time    =0._SP  ! <- incremented
  real(SP) :: NE_tot_time=0._SP  ! Total (fixed)
- integer  :: NE_time_step_update_last_point = 1     ! Last time-point of the dT update
- real(SP) :: NE_initial_time_step_update    = 0._SP ! Time above which the time-step is dynamically updated (0. means no update)
- real(SP) :: NE_time_step_update_jump       = 0._SP ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
- real(SP) :: NE_step_update_treshold        = 2._SP ! Time-step update treshold
+ integer  :: NE_time_step_update_last_point = 1      ! Last time-point of the dT update
+ real(SP) :: NE_initial_time_step_update    = 0._SP  ! Time above which the time-step is dynamically updated (0. means no update)
+ real(SP) :: NE_time_step_update_jump       = 0._SP  ! Time BETWEEN two time-steps dynamically updated (0. means RT_step)
+ real(SP) :: NE_step_update_treshold        = 0.1_SP ! Time-step update treshold
  real(SP) :: NE_time_step_update_jump_SAVE  = 0._SP
  !
  integer  :: NE_i_time=1 ! = (NE_time+1)/RT_step
@@ -115,7 +114,6 @@ module real_time
  integer  :: i_MEM_now       = 1
  integer  :: i_MEM_next      = 0 ! Defined in RT_driver 
  integer  :: i_MEM_previous  = 0 ! Defined in RT_driver
- integer  :: MAX_dG_dT_indexes(3)
  integer, allocatable :: MEM_pointer(:) ! Time memory pointers
  !
  ! ... Window on the k-points/bands allowed to follow the dynamics ...
@@ -167,10 +165,11 @@ module real_time
  real(SP),    allocatable :: REF_V_xc_sc(:,:)  
  real(SP),    allocatable :: REF_V_hartree_sc(:,:)   
  !
- ! Update QP Energies and WFs
- !----------------------------
- logical                  :: l_update_QP_Energies
- logical                  :: l_update_QP_WFs=.false.
+ ! Update Energies, eval Lifetimes rotate DM (density matrix)
+ !-----------------------------------------------------------
+ logical                  :: l_eval_Lifetimes
+ logical                  :: l_RT_update_Energies
+ logical                  :: l_RT_rotate_DM
  logical                  :: l_update_SOC
  !
  ! Relaxation and Dissipation 
@@ -211,25 +210,29 @@ module real_time
  ! Energies
  !---------------------
  type RT_DbGd
-   real(SP), allocatable :: En(:,:,:)
+   real(SP), allocatable :: E(:,:,:)
    real(SP), allocatable :: W(:,:,:)
-   real(SP), allocatable :: kpt(:,:)
+   real(SP), allocatable :: k(:,:)
  end type
  !
- type(RT_DbGd),save  :: RT_E_and_k
+ type(RT_DbGd),SAVE  :: RT_E_and_k
  !
- ! Locks and reference
- !----------------------
- logical                  :: l_use_updated_reference
+ ! Locks, reference & Logicals
+ !-----------------------------
+ logical                  :: l_RT_relaxation_update_reference
+ logical                  :: l_RT_constant_lifetimes
+ logical                  :: l_RT_extrapolate_lifetimes
+ logical                  :: l_RT_eval_lifetimes
  logical                  :: l_initial_equilibrium
+ !
  real(SP),    allocatable :: RT_E_occupations(:,:) 
  real(SP),    allocatable :: RT_H_occupations(:,:) 
- real(SP),    allocatable :: RT_delta0_occupations(:,:) 
- real(SP),    allocatable :: RT_delta_occupations(:,:) 
+ real(SP),    allocatable :: RT_delta_occupations(:,:)       ! Running values. Updated at each time step.
+ real(SP),    allocatable :: RT_life_delta_occupations(:,:)  ! Used in the Lifetimes definition. Defined in the Lifetimes procedure only.
  real(SP),    allocatable :: RT_E_occupations_reference(:,:) 
  real(SP),    allocatable :: RT_H_occupations_reference(:,:)
+ !
  logical,     allocatable :: RT_occupations_locked(:,:) 
- logical,     allocatable :: RT_lifetimes_locked(:,:) 
  !
  ! EL-PH RT life-times
  !-----------------------------------------
@@ -272,6 +275,7 @@ module real_time
  !------------------------------
  !
  real(SP)                 :: RT_ave_dephasing
+ real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
  ! GFs (retarded)
@@ -287,15 +291,14 @@ module real_time
  !-----
  !
  complex(SP), allocatable :: G_lesser(:,:,:,:)          ! Band, Band, K, Time
- complex(SP), allocatable :: G_lesser_reference(:,:,:)
  complex(SP), allocatable :: dG_lesser(:,:,:,:)
+ complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
  complex(SP), allocatable :: I1_matrix(:,:)
  !
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
- !complex(SP), allocatable :: I_relax_static(:,:,:)
  !
  ! Density
  !---------
@@ -338,10 +341,6 @@ module real_time
  !
  complex(SP), allocatable :: XC0(:,:,:,:)
  complex(SP), allocatable :: HARTREE0(:,:,:,:)
- !
- ! TD-ABS and RT-BSE [yambo]
- !
- character(schlen)       :: RT_ctl_db(4)
  !
  type RT_t
    !
@@ -466,6 +465,7 @@ module real_time
      use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_use_Hxc_collisions
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use FFT_m,          ONLY:fft_size
+     use ELPH,           ONLY:ph_modes
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use xc_functionals, ONLY:E_xc
      use R_lattice,      ONLY:nqbz,nXkibz
@@ -474,37 +474,15 @@ module real_time
      !
      type(levels), intent(in) :: en
      !
-     call H_alloc(en,.not.l_RT_is_WFfree,l_update_QP_WFs)
+     call H_alloc(en,.not.l_RT_is_WFfree,l_RT_rotate_DM)
      !
      call H_QP_table_setup(en)
      !
      RT_nbands=RT_bands(2)-RT_bands(1)+1
      !
-     YAMBO_ALLOC(E_xc,(fft_size))
-     !
-     YAMBO_ALLOC(RT_E_and_k%En,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     YAMBO_ALLOC(RT_E_and_k%E,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      YAMBO_ALLOC(RT_E_and_k%W,(RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
-     YAMBO_ALLOC(RT_E_and_k%kpt,(3,RT_nk))
-     !
-     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
-     !
-     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_delta0_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
-     !
-     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_E_occupations_reference=0._SP
-     !
-     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_H_occupations_reference=0._SP
-     !
-     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_occupations_locked=.false.
-     !
-     YAMBO_ALLOC(RT_lifetimes_locked,(RT_bands(1):RT_bands(2),RT_nk))
-     RT_lifetimes_locked=.false.
-     !
-     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_E_and_k%k,(3,RT_nk))
      !
      if(l_RT_relax_time_approx) then
        YAMBO_ALLOC(RT_RTA_E_occ_infty,(RT_bands(1):RT_bands(2),RT_nk))
@@ -536,13 +514,15 @@ module real_time
        E_P_Ho_abs_lifetime=0._SP
      endif
      !
-     if (l_elel_scatt.or.l_RT_CCA_Kernel.or.l_elph_scatt.or.l_elphoton_scatt) then
+     if (l_elel_scatt.or.(l_RT_CCA_Kernel.and.l_elph_scatt).or.l_elphoton_scatt) then
        YAMBO_ALLOC(REF_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8))
-       YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
-       YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
        REF_lifetime=0._SP
-       SAVED_lifetime=0._SP
-       SAVED_times=0._SP
+       if (Life_MEM_steps>0) then
+         YAMBO_ALLOC(SAVED_lifetime,(RT_bands(1):RT_bands(2),RT_nk,8,Life_MEM_steps))!e-eh,e-ee,e-ph,e-pe,e-ph(abs),e-pe(abs),e-gh,e-g)
+         YAMBO_ALLOC(SAVED_times,(Life_MEM_steps))
+         SAVED_lifetime=0._SP
+         SAVED_times=0._SP
+       endif
      endif
      !
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
@@ -552,23 +532,36 @@ module real_time
        RT_Vnl_xc=(0._SP,0._SP)
      endif
      !
-     !if(any ((/l_elel_scatt,l_elph_scatt,l_elphoton_scatt,RT_is_statically_dephased/)) ) then
-     !  YAMBOO_ALLOC(I_relax_static,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     !endif
-     !
      YAMBO_ALLOC(HARTREE0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      HARTREE0=cZERO
      !
      YAMBO_ALLOC(XC0,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
      XC0=cZERO
      !
+     ! G's ...
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
-     !
      YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     YAMBO_ALLOC(G_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
+     !
+     ! Occ's ...
+     YAMBO_ALLOC(RT_H_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_life_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+     YAMBO_ALLOC(RT_E_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_E_occupations_reference=0._SP
+     YAMBO_ALLOC(RT_H_occupations_reference,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_H_occupations_reference=0._SP
+     YAMBO_ALLOC(RT_occupations_locked,(RT_bands(1):RT_bands(2),RT_nk))
+     RT_occupations_locked=.false.
+     YAMBO_ALLOC(RT_E_occupations,(RT_bands(1):RT_bands(2),RT_nk))
      !
      YAMBO_ALLOC(MEM_pointer,(G_MEM_steps))
      MEM_pointer    = 0
      MEM_pointer(1) = 1
+     !
+     if (fft_size==0) return
+     !
+     YAMBO_ALLOC(E_xc,(fft_size))
      !
      YAMBO_ALLOC(REF_V_xc_sc,(fft_size,n_spin))
      YAMBO_ALLOC(REF_V_hartree_sc,(fft_size,n_spin))
@@ -611,7 +604,6 @@ module real_time
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
      YAMBO_FREE(RT_TIME_status)
-     !YAMBOO_FREE(I_relax_static)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)
      YAMBO_FREE(E_PHOT_Hole_lifetime)
@@ -628,16 +620,15 @@ module real_time
      YAMBO_FREE(REF_V_xc_sc)
      YAMBO_FREE(RT_E_occupations)
      YAMBO_FREE(RT_H_occupations)
-     YAMBO_FREE(RT_delta0_occupations)
      YAMBO_FREE(RT_delta_occupations)
+     YAMBO_FREE(RT_life_delta_occupations)
      YAMBO_FREE(RT_E_occupations_reference)
      YAMBO_FREE(RT_H_occupations_reference)
      YAMBO_FREE(RT_occupations_locked)
-     YAMBO_FREE(RT_lifetimes_locked)
      YAMBO_FREE(REF_V_hartree_sc)
-     YAMBO_FREE(RT_E_and_k%En)
+     YAMBO_FREE(RT_E_and_k%E)
      YAMBO_FREE(RT_E_and_k%W)
-     YAMBO_FREE(RT_E_and_k%kpt)
+     YAMBO_FREE(RT_E_and_k%k)
      YAMBO_FREE(G_lesser)
      YAMBO_FREE(MEM_pointer)
      YAMBO_FREE(q_weight_RT)

@@ -35,7 +35,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
-&                        PAR_COM_WF_b_INDEX,PAR_COM_DIPOLES_k_subgroup,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A
+&                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLP_ibz,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz, &
 &                        PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_B_mat_ordered,PAR_IND_QP,PAR_IND_B_mat, &
@@ -156,8 +156,6 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! 
    !
    ! Io and messaging
-   !
-   call COMM_copy(PAR_COM_freqs_INDEX,PAR_COM_DIPOLES_k_subgroup)
    !
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Xk_ibz_INDEX%CPU_id==0)
    !

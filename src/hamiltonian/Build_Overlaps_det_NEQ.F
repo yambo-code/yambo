@@ -30,7 +30,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  use nl_optics,      ONLY:NL_bands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
- use X_m,            ONLY:DIP_S
+ use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
  use matrix_operate, ONLY:hermitian
  use QP_m,           ONLY:QP_nk

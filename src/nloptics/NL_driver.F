@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_driver(E,X,k,q)
+subroutine NL_driver(E,X,Dip,k,q)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -29,7 +29,8 @@ subroutine NL_driver(E,X,k,q)
  use com,            ONLY:error
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,Dipole_approach,X_alloc
+ use X_m,            ONLY:X_t,X_alloc
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
@@ -53,13 +54,14 @@ subroutine NL_driver(E,X,k,q)
  type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
+ type(DIPOLE_t)    :: Dip
  !
  logical, external :: STOP_now
  integer, external :: eval_G_minus_G
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save
+ integer           :: i_f,i1,NL_bands1_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -103,7 +105,7 @@ subroutine NL_driver(E,X,k,q)
  NL_bands1_save=NL_bands(1)
  NL_bands(1)   =1
  eval_OVERLAPS =.true.
- X(1)%ib       =(/1,NL_bands(2)/)
+ Dip%ib       =(/1,NL_bands(2)/)
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
  call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
  call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
@@ -116,8 +118,11 @@ subroutine NL_driver(E,X,k,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- Dipole_approach='Covariant' 
- if(l_use_DIPOLES .or. load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ !Dip%approach='Covariant' 
+ if(l_use_DIPOLES .or. load_Overlaps()/=0) then
+   call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
+   call DIPOLE_IO(k,E,Dip,'read ',io_err)
+ endif
  !
  eval_OVERLAPS =.false.
  NL_bands(1)=NL_bands1_save
@@ -126,12 +131,12 @@ subroutine NL_driver(E,X,k,q)
  ! =====================================================
  call qindx_free()
  !
- call X_alloc('P_square')
+ call DIP_alloc('P_square')
  if(l_use_DIPOLES) then
-   call X_alloc('DIP_S')
+   call DIP_alloc('DIP_S')
  else
-   call X_alloc('DIP_R')
-   call X_alloc('DIP_P')
+   call DIP_alloc('DIP_R')
+   call DIP_alloc('DIP_P')
  endif
  !
  ! Non_Linear parallization
@@ -152,7 +157,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Generate DIPOLES in all the BZ if required
  !===================
- if(l_use_DIPOLES) call Build_DIP_bz(k,E,X(1))
+ if(l_use_DIPOLES) call Build_DIP_bz(k,E,Dip)
  !
  ! Load Collisions if necessary
  ! ============================
@@ -253,7 +258,7 @@ subroutine NL_driver(E,X,k,q)
  !
  call WF_free(WF)
  call NL_free()
- call X_alloc('DIP_S')
+ call DIP_alloc('DIP_S')
  !
  call set_real_printed_length()
  !
@@ -261,8 +266,8 @@ subroutine NL_driver(E,X,k,q)
    !
    integer function load_Overlaps()
      !
-     use pars,          ONLY:SP
-     use X_m,            ONLY:DIP_S
+     use pars,           ONLY:SP
+     use DIPOLES,        ONLY:DIP_S
      use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
      use electrons,      ONLY:n_sp_pol
      !
@@ -274,7 +279,7 @@ subroutine NL_driver(E,X,k,q)
      integer, external :: io_Overlaps
      integer :: ik,i_sp_pol
      !
-     call X_alloc('DIP_S',(/X(1)%ib(2),X(1)%ib(2),6,k%nbz/))
+     call DIP_alloc('DIP_S',(/X(1)%ib(2),X(1)%ib(2),6,k%nbz/))
      DIP_S=cZERO
      !
      io_err=0

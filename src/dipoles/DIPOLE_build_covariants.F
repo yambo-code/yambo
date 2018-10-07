@@ -82,7 +82,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  call k_build_up_BZ_tables(Xk)
  !
 #if defined _NL
- if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_OVLP_ibz,CLEAN_UP=.TRUE.)
+ if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
 #endif
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
@@ -236,7 +236,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  call live_timing()
  !
 #if defined _NL
- if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,X)
+ if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
 #endif
  !
  call WF_free(WF)

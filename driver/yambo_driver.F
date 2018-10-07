@@ -143,7 +143,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! MAGN and DEN
  !=============
  !
- call eval_Mtot(en,k,q)
+ !call eval_Mtot(en,k,q)
  !
  ! reset the section numbering
  !

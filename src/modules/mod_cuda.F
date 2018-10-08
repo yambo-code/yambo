@@ -63,6 +63,9 @@ contains
     integer :: namelength, color, i, j
     integer :: nProcs, myrank, newComm, newRank, ierr
 
+#if !defined _MPI
+    return
+#else
     call MPI_COMM_SIZE(MPI_COMM_WORLD, nProcs, ierr)
     call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
 
@@ -98,17 +101,19 @@ contains
     node_id = color
     ierr = cudaSetDevice(dev_id)
     
-#if 0
-    do i=0,nProcs-1
-      if(myrank == i) then
-          write(6,"(A8,I4,A8,A12,A12,I2)") "Rank: ",myrank,"Host: ",hostname(1:namelength),"Using GPU: ",dev_id
-      endif
-      do j=0,1000
-        call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-      end do
-    end do
-#endif
+    ! DEBUG <
+    !do i=0,nProcs-1
+    !  if(myrank == i) then
+    !      write(6,"(A8,I4,A8,A12,A12,I2)") "Rank: ",myrank,"Host: ",hostname(1:namelength),"Using GPU: ",dev_id
+    !  endif
+    !  do j=0,1000
+    !    call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+    !  end do
+    !end do
+    !DEBUG >
+    
     deallocate(hosts)
+#endif
   end subroutine assignDevice
 
   ! lexical .eq.

@@ -341,7 +341,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      end do
      !
      if (.not.X_FILL_UP_matrix_only) then
+#ifdef _CUDA
        PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
+#endif
        !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
          !

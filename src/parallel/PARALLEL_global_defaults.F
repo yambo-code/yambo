@@ -26,7 +26,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use interfaces,    ONLY:PARALLEL_live_message
- use vec_operate,   ONLY:GreatestCommonDivisor
  use com,           ONLY:error
  use stderr,        ONLY:intc
  !
@@ -54,8 +53,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Response_G_space_Finite_Momentum","Response_G_space") 
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
-     call GIMME_a_parallel_proposal(4,(/" b","qp"," k"," q"/))
-   case("Non_Linear") 
+     call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
+  case("Non_Linear") 
      call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
@@ -97,7 +96,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    !
    subroutine GIMME_a_parallel_proposal(N_fields,FIELDS)
      !
-     use stderr,      ONLY:string_remove
+     use stderr,      ONLY:STRING_remove
      use vec_operate, ONLY:sort
      use parallel_m,  ONLY:PAR_QP_range,PAR_n_bands,PAR_n_c_bands,PAR_n_v_bands,PAR_Q_range,&
 &                          PAR_EH_range,PAR_K_range,PAR_n_freqs,PAR_n_G_vectors,&
@@ -110,7 +109,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      ! "q" -> PAR_Q_range(2)- PAR_Q_range(1)+1
      ! "qp"-> PAR_QP_range
      ! "eh"-> PAR_EH_range
-     ! " w"-> PAR_n_freqs
+     ! "w" -> PAR_n_freqs
      ! "g" -> PAR_n_G_vectors
      !
      integer      :: N_fields,i_f,VALS(N_fields),VALS_sorted(N_fields),&
@@ -125,7 +124,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      CPU_structure(i_PAR_structure)%N_chains=N_fields
      !
      do i_f=1,N_fields
-       ch=string_remove(FIELDS(i_f)," ")
+       ch=STRING_remove(FIELDS(i_f)," ")
        CPU_structure(i_PAR_structure)%ROLE(i_f)=trim(ch)
        if (trim(ch)=="g" ) VALS(i_f)=PAR_n_G_vectors
        if (trim(ch)=="c" ) VALS(i_f)=PAR_n_c_bands(2)-PAR_n_c_bands(1)+1

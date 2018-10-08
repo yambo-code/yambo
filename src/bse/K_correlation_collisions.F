@@ -100,6 +100,8 @@ subroutine K_correlation_collisions(iB,Xk,q)
      i_k_sp=BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
      i_p_sp=BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
      !
+     if(i_k_sp/=i_p_sp) cycle
+     !
      i_s_k_p =sop_tab(sop_inv(i_k_s),i_p_s)
      i_s_star=Xk%s_table(i_p,i_s_k_p)
      !
@@ -164,6 +166,8 @@ subroutine K_correlation_collisions(iB,Xk,q)
      !
      i_k_sp=BS_T_grp(i_Tgrp_k)%table(i_Tk,4)
      i_p_sp=BS_T_grp(i_Tgrp_p)%table(i_Tp,4)
+     !
+     if(i_k_sp/=i_p_sp) cycle
      !
      i_s_k_p =sop_tab(sop_inv(i_k_s),i_p_s)
      i_s_star=Xk%s_table(i_p,i_s_k_p)

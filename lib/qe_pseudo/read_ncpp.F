@@ -228,7 +228,7 @@ subroutine read_ncpp (iunps, np, upf)
         do ir = 1, upf%kkbeta
            upf%beta (ir, nb) = upf%chi(ir, l+1) **2 * vnl(ir, l)
         end do
-        call simpson (upf%kkbeta, upf%beta (1, nb), upf%rab, vll )
+        call simpson (upf%kkbeta, upf%beta (:, nb), upf%rab, vll )
         upf%dion (nb, nb) = 1.d0 / vll
         ! upf%beta stores projectors  |beta(r)> = |V_nl(r)phi(r)>
         do ir = 1, upf%kkbeta

@@ -64,7 +64,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
 &                         Vnl_commutator_warning,use_g_space_approach,Dipole_approach,&
 &                         use_shifted_grids_approach,DIP_P,force_v_g_space_approach,Dipole_Energy_treshold,&
 &                         l_X_terminator,DIP_S
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD,&
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD,&
 &                         IO_and_Messaging_switch
  use wave_func,      ONLY:wf_ng
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,&
@@ -333,7 +333,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      if (io_err==0) then
        !
        if (reading) IO_ACTION=OP_RD_CL
-       if (writing) IO_ACTION=OP_APP_WR_CL
+       if (writing) IO_ACTION=OP_APP_CL
        !
        do ik=1,Xk%nibz
          if (.not.PAR_IND_DIPk_ibz%element_1D(ik)                   ) cycle

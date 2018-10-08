@@ -101,7 +101,7 @@ module fields
 &       (E_field%frequency(2)-E_field%frequency(1))/(E_field%n_frequencies-1)*(i_f-1)
    end function
    !
-   function small_a(T_i,E_field,order)
+   function small_a(T,E_field,order)
      !
      ! The vector potential is generally written as
      !
@@ -120,14 +120,14 @@ module fields
      !
      type(ext_field)   ::E_field
      !
-     real(SP)          ::T_i
+     real(SP)          ::T
      integer           ::order
      !
      real(SP)          ::damp_func,a,b,c
      complex(SP), dimension(2) :: small_a
      !
      integer           ::i_fr,i_field,n_fields
-     real(SP)          ::T_0,W_0,W_i,sigma,WT_i,EXPf,fr_shift(2)
+     real(SP)          ::T_0,W_0,W_field,sigma,WtimesT,EXPf,fr_shift(2)
      complex(SP)       ::f_t(2),cZ,cS
      !
      small_a=cZERO
@@ -146,16 +146,16 @@ module fields
        !
        select case( trim(E_field%ef_name) )
        case('STATIC')
-         if (order==0 ) f_t(i_field)=T_i
+         if (order==0 ) f_t(i_field)=T
          if (order==1 ) f_t(i_field)=1._SP
          if (order==2 ) f_t(i_field)=0._SP
        case('SIN')
          do i_fr=1,E_field%n_frequencies     
-           W_i=field_frequency(E_field,i_fr)
-           WT_i=W_i*T_i+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WT_i)-1._SP)/W_i
-           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WT_i)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WT_i)
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WtimesT)
          enddo 
        case('SOFTSIN')
          T_0=sigma
@@ -165,16 +165,16 @@ module fields
          c =  6._SP/T_0**2
          !
          damp_func=1._SP
-         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
          !
          do i_fr=1,E_field%n_frequencies     
            !
-           W_i=field_frequency(E_field,i_fr)
-           WT_i=W_i*T_i+fr_shift(i_field)
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
            !
-           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WT_i)-1._SP)/W_i
-           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WT_i)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WT_i)
+           if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WtimesT)-1._SP)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WtimesT)
            if (order==-1) f_t(i_field)=-2
            !
          enddo 
@@ -188,28 +188,28 @@ module fields
          c =  6._SP/T_0**2
          !
          damp_func=1._SP
-         if(real(T_i)<T_0.and.T_0>0._SP) damp_func=(a*T_i**4 + b*T_i**3 + c*T_i**2)       
+         if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
          !
-         if (order==0 ) f_t(i_field)=damp_func*T_i
+         if (order==0 ) f_t(i_field)=damp_func*T
          if (order==1 ) f_t(i_field)=damp_func
          if (order==2 ) f_t(i_field)=0._SP
          !
        case('ANTIRES')
          do i_fr=1,E_field%n_frequencies
-           W_i=field_frequency(E_field,i_fr)
-           WT_i=W_i*T_i+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*    exp(cI*WT_i)/W_i
-           if (order==1 ) f_t(i_field)=f_t(i_field)+       exp(cI*WT_i)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_i*exp(cI*WT_i)
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*        exp(cI*WtimesT)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+           exp(cI*WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_field*exp(cI*WtimesT)
          enddo
          !
        case('RES')
          do i_fr=1,E_field%n_frequencies
-           W_i=field_frequency(E_field,i_fr)
-           WT_i=W_i*T_i+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*    exp(-cI*WT_i)/W_i
-           if (order==1 ) f_t(i_field)=f_t(i_field)-       exp(-cI*WT_i)
-           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_i*exp(-cI*WT_i)
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*        exp(-cI*WtimesT)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)-           exp(-cI*WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_field*exp(-cI*WtimesT)
          enddo
          !
        case('DELTA')
@@ -218,16 +218,15 @@ module fields
          if (order==-1) f_t(i_field)=1._SP
          !
        case('GAUSS')
-         if (order==0 ) f_t(i_field)= sigma*sqrt(pi/2._SP)* ( erf( (T_i-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
-         if (order==1 ) f_t(i_field)= exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
-         if (order==2 ) f_t(i_field)=-exp(-(T_i-T_0)**2/(2._SP*sigma**2) )*(T_i-T_0)/sigma**2
+         if (order==0 ) f_t(i_field)= sigma*sqrt(pi/2._SP)* ( erf( (T-T_0)/(sigma*sqrt(2._SP)) )+1._SP )
+         if (order==1 ) f_t(i_field)= exp(-(T-T_0)**2/(2._SP*sigma**2) )
+         if (order==2 ) f_t(i_field)=-exp(-(T-T_0)**2/(2._SP*sigma**2) )*(T-T_0)/sigma**2
          !
        case('QSSIN')
-         WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
-         EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         WtimesT=W_0*(T-T_0)+fr_shift(i_field)
+         EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
+         cZ=(sigma**2*W_0-cI*(T-T_0))/(sigma*sqrt(2._SP))
          cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
-         !
          !
          ! W    =FADEVA function
          ! W(-z)=exp(-z^2)*(1-  erf (i*z))
@@ -239,29 +238,29 @@ module fields
 &                                      cI*( (exp(      cZ **2-      cS )*FADEVA(-      cZ )-exp(-      cS )) + &
 &                                           (exp(conjg(cZ)**2-conjg(cS))*FADEVA(-conjg(cZ))-exp(-conjg(cS))) )
          if (order==0 .and. trim(global_gauge)=="length" ) f_t(i_field)=cZERO
-         if (order==1 ) f_t(i_field)=     sin(WT_i)                              *EXPf
-         if (order==2 ) f_t(i_field)=(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
+         if (order==1 ) f_t(i_field)=     sin(WtimesT)                                 *EXPf
+         if (order==2 ) f_t(i_field)=(W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf
          !
        case('QSFIELD')
-         WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
-         EXPf=exp(-(T_i-T_0)**2/(2._SP*sigma**2) )
-         cZ=(sigma**2*W_0-cI*(T_i-T_0))/(sigma*sqrt(2._SP))
+         WtimesT=W_0*(T-T_0)+fr_shift(i_field)
+         EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
+         cZ=(sigma**2*W_0-cI*(T-T_0))/(sigma*sqrt(2._SP))
          cS=cmplx(W_0**2*sigma**2/2._SP,fr_shift(i_field),SP)
          !
-         if (order==0 ) f_t(i_field)=      sin(WT_i)                              *EXPf
-         if (order==1 ) f_t(i_field)=( W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)*EXPf
-         if (order==2 ) f_t(i_field)=(-W_0*sin(WT_i)-sin(WT_i)/sigma**2-W_0*(T_i-T_0)*sin(WT_i)/sigma**2 &
-&                                     -(T_i-T_0)*(W_0*cos(WT_i)-(T_i-T_0)*sin(WT_i)/sigma**2)/sigma**2)*EXPf
+         if (order==0 ) f_t(i_field)=      sin(WtimesT)                                 *EXPf
+         if (order==1 ) f_t(i_field)=( W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)*EXPf
+         if (order==2 ) f_t(i_field)=(-W_0*sin(WtimesT)-sin(WtimesT)/sigma**2-W_0*(T-T_0)*sin(WtimesT)/sigma**2 &
+&                                     -(T-T_0)*(W_0*cos(WtimesT)-(T-T_0)*sin(WtimesT)/sigma**2)/sigma**2)*EXPf
          !
        case('PULSE')
          f_t(i_field)= 0._SP
-         if(abs((T_i-T_0))< sigma) then
-           WT_i=W_0*(T_i-T_0)+fr_shift(i_field)
+         if(abs((T-T_0))< sigma) then
+           WtimesT=W_0*(T-T_0)+fr_shift(i_field)
            if (order==0 ) f_t(i_field)= 0._SP
-           if (order==1 ) f_t(i_field)=       (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4      *cos(WT_i)
-           if (order==2 ) f_t(i_field)=(2._SP*(T_i-T_0 + sigma)    *(T_i-T_0 -sigma)**2/sigma**4                 &
-&                                      +2._SP*(T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)   /sigma**4 )    *cos(WT_i) &
-&                                      -      (T_i-T_0 + sigma)**2 *(T_i-T_0 -sigma)**2/sigma**4  *W_0*sin(WT_i)
+           if (order==1 ) f_t(i_field)=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos(WtimesT)
+           if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
+&                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
+&                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
          endif
          !
        end select
@@ -283,33 +282,24 @@ module fields
      real(SP)          ::W_0
      complex(SP)       ::local_a
      !
-     if(trim(E_field%ef_name)=="circular") then
-       iErr=-1
-       small_a_frequency=cZERO
-       return
-     endif
-     !
+     iErr=-1
      local_a=cZERO
      !
      do i_f=1,E_field%n_frequencies     
        W_0=field_frequency(E_field,i_f)
        select case( trim(E_field%ef_name) )
        case('SIN')
+         iErr=0
          local_a=local_a+   (1._SP/(W_i-W_0)-1._SP/(W_i+W_0))/2._SP-1._SP/W_0
        case('ANTIRES')
+         iErr=0
          local_a=local_a+cI*(               -1._SP/(W_i+W_0)       -1._SP/W_0)
        case('RES')
+         iErr=0
          local_a=       -cI*(1._SP/(W_i-W_0)                       -1._SP/W_0)
        case('DELTA')
+         iErr=0
          local_a=1._SP
-       case('GAUSS')
-         iErr=-1
-       case('QSSIN')
-         iErr=-1
-       case('QSFIELD')
-         iErr=-1
-       case('PULSE')
-         iErr=-1
        end select
      enddo
      !

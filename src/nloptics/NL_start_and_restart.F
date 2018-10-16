@@ -154,9 +154,13 @@ subroutine NL_start_and_restart(E,k,X)
    NL_J(1:3)=NL_J(4:6)
  endif
  !
- call msg('r ',' Initial Dipole Pol.  :',real(NL_initial_Po))
- call msg('r ',' Initial Berry  Pol.  :',real(NL_initial_P))
- call msg('r ',' Initial Current      :',real(NL_J))
+ call msg('r','')
+ call msg('r',' * * * Non-linear dynamics parameters * * * ')
+ call msg('r','============================================')
+ call msg('r ',' Initial Dipole Pol.     :',real(NL_initial_Po))
+ call msg('r ',' Initial Berry  Pol.     :',real(NL_initial_P))
+ call msg('r ',' Initial Current         :',real(NL_J(1:3)))
+ call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_J(4:6)))
  !
  ! Restart
  ! ====================================

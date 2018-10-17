@@ -32,7 +32,7 @@ subroutine k_special(LIST)
  use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
- use stderr,              ONLY:STRING_split
+ use stderr,              ONLY:STRING_split,STRING_match
  use LIVE_t,              ONLY:live_timing_is_on
  use stderr,              ONLY:intc
  !
@@ -43,7 +43,7 @@ subroutine k_special(LIST)
  ! Work Space
  ! 
  integer          :: ik,il,n_lines,ip,i_str,K_position(n_SPECIAL_k_MAX)
- real(SP)         :: trial_b(3,3),K_norm,k_(3),ap,bp,cp,fp,ep
+ real(SP)         :: trial_b(3,3),K_norm,ap,bp,cp,fp,ep,K_sign(n_SPECIAL_k_MAX),k_l(3),k_lp1(3)
  character(schlen):: Path_strings(50),dumb_ch,k_f_name(2)
  character(lchlen):: of_string
  !
@@ -233,9 +233,9 @@ subroutine k_special(LIST)
    call section("p","Special K-points list ["//trim(coo_out)//"]")
    live_timing_is_on=.false.
    do ik=1,SPECIAL_k%nbz
-     k_=SPECIAL_k%pt(ik,:)
-     call K_transform(k_,'cc')
-     write (dumb_ch,'(3f12.7,2x,a)') k_,SPECIAL_k_label(ik)
+     k_l=SPECIAL_k%pt(ik,:)
+     call K_transform(k_l,'cc')
+     write (dumb_ch,'(3f12.7,2x,a)') k_l,SPECIAL_k_label(ik)
      call msg("s",trim(dumb_ch))
    enddo
    live_timing_is_on=.true.
@@ -251,11 +251,17 @@ subroutine k_special(LIST)
  call STRING_split(PtsPath,Path_strings)
  !
  K_position=0
+ K_sign    =1._SP
  n_lines=0
  do i_str=1,50
    do ik=1,SPECIAL_k%nbz
-     if (SPECIAL_k_label(ik)==trim(Path_strings(i_str))) then
+     if ( STRING_match(trim(Path_strings(i_str)),trim(SPECIAL_k_label(ik))) ) then
        n_lines=n_lines+1
+       K_position(n_lines)=ik
+     endif
+     if ( STRING_match(trim(Path_strings(i_str)),trim("-"//SPECIAL_k_label(ik))) ) then
+       n_lines=n_lines+1
+       K_sign(n_lines)=-1.
        K_position(n_lines)=ik
      endif
    enddo
@@ -285,19 +291,21 @@ subroutine k_special(LIST)
    K_norm=0.
    CIRCUIT_k_label=" "
    do il=1,n_lines-1
+     k_l  =SPECIAL_k%pt( K_position(il)  ,:)*K_sign(il)
+     k_lp1=SPECIAL_k%pt( K_position(il+1),:)*K_sign(il+1)
      do ip=1,n_path_pts
        CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-       if (ip==1) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
-       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(il),:)+ &
-&                                     ( SPECIAL_k%pt(K_position(il+1),:) -  &
-&                                       SPECIAL_k%pt(K_position(il),:) )/n_path_pts*(ip-1)
+       if (ip==1.and.K_sign(il)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(il) )
+       if (ip==1.and.K_sign(il)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(il) )
+       CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=k_l+(k_lp1-k_l)/n_path_pts*(ip-1)
        if (CIRCUIT_k%nbz>1) K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
        CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
      enddo
    enddo
    CIRCUIT_k%nbz= CIRCUIT_k%nbz+1
-   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)
-   CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
+   CIRCUIT_k%pt(CIRCUIT_k%nbz,:3)=SPECIAL_k%pt(K_position(n_lines),:)*K_sign(n_lines)
+   if (k_sign(n_lines)>0.) CIRCUIT_k_label(CIRCUIT_k%nbz)=SPECIAL_k_label( K_position(n_lines) )
+   if (k_sign(n_lines)<0.) CIRCUIT_k_label(CIRCUIT_k%nbz)="-"//SPECIAL_k_label( K_position(n_lines) )
    K_norm=K_norm+v_norm(  CIRCUIT_k%pt(CIRCUIT_k%nbz,:3) -  CIRCUIT_k%pt(CIRCUIT_k%nbz-1,:3) )
    CIRCUIT_k%pt(CIRCUIT_k%nbz,4)= K_norm
    !

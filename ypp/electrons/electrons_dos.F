@@ -140,7 +140,7 @@ subroutine electrons_dos(Xk,Xen)
    !
    if (DOS_is_projected) then
      !
-     call electrons_dos_project(GRID_k)
+     call electrons_dos_project( GRID_E, dos_E, el_dos ) 
      !
    else
      !

@@ -45,7 +45,7 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  ! Work Space
  ! 
  integer               :: i_E
- logical               :: LIVE_t_,USE_occ
+ logical               :: LIVE_t_,USE_occ,USE_DbGd
  type(PP_indexes)      :: px
  !
  ! Use occupations?
@@ -54,6 +54,10 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  call parser('DOSUsesOcc',USE_occ)
  if (present(FORCE_occ)) then
    USE_occ=FORCE_occ
+ endif
+ USE_DbGd=.FALSE.
+ if (present(USE_the_DbGd)) then
+   USE_DbGd=USE_the_DbGd
  endif
  !
  ! Parallel setup and live_timing
@@ -77,21 +81,11 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
    if (.not.px%element_1D(i_E)) cycle
    !
    if (present(WF_fac)) then
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     endif
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_DbGd,&
+&                              WF_fac=WF_fac,USE_occupations=USE_occ)
    else
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                USE_occupations=USE_occ)
-     endif
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_DbGd,&
+&                              USE_occupations=USE_occ)
    endif
    !
    if (LIVE_t_) call live_timing(steps=1)

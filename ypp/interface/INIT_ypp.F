@@ -38,8 +38,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         nrnlvls,rnlvls,runlevel_is_on,&
 &                         infile_verbosity,V_general,V_qp,V_all,V_real_time
  use drivers,        ONLY:infile_editing
- use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo
- use stderr,         ONLY:STRING_split,write_to_log  
+ use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo,rename_file
+ use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
@@ -539,8 +539,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
-     call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac")
+     call initactivate(1,"DOSErange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_path cooOut INTERP_Shell_Fac")
    endif
  endif
 #if defined _YPP_RT
@@ -579,7 +579,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
    if (l_RT_dos)  then
-     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+     call initactivate(1,"DOSErange DOSESteps DOS_broad SeparateEH IncludeEQocc")
      call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
      call INIT_QP_ctl_switch('G')
    endif
@@ -706,6 +706,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  ! LOG/REP files
  !
  call INIT_report_and_log_files()
+ !
+ if (log_as_a_file) call rename_file(logfile)
+ !
+ call rename_file(repfile)
  !
  live_timing_is_on =master_cpu
  write_to_report   =master_cpu

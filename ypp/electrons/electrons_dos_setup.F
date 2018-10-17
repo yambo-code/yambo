@@ -24,8 +24,13 @@
 subroutine electrons_dos_setup( E, dos_E , bands )
  !
  use pars,           ONLY:SP
- use YPP,            ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
+ use YPP,            ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening,DOS_is_projected,&
+&                         INTERP_path,INTERP_grid,n_path_pts,PtsPath,CIRCUIT_k
+ use R_lattice,      ONLY:bz_samp_reset
+ use D_lattice,      ONLY:lattice
  use electrons,      ONLY:levels
+ use interpolate,    ONLY:GRID_k
+ use com,            ONLY:msg
  !
  implicit none
  !
@@ -35,7 +40,8 @@ subroutine electrons_dos_setup( E, dos_E , bands )
  !
  ! Work Space
  ! 
- integer               :: i_E
+ integer               :: i_E,ikx,iky,nk
+ real(SP)              :: dk(3)
  !
  ! Energy Range
  !==============
@@ -48,5 +54,45 @@ subroutine electrons_dos_setup( E, dos_E , bands )
  do i_E=1,DOS_E_steps
    dos_E(i_E)=DOS_E_range(1)+real(i_E,SP)*DOS_E_step
  enddo
+ !
+ ! Projection
+ !============
+ !
+ if ( any((/INTERP_grid<0/)) ) return
+ if (len_trim(INTERP_path)==0) return
+ !
+ call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
+ !=============================================================================
+ !
+ PtsPath=INTERP_path
+ n_path_pts=INTERP_grid(1)
+ !
+ call k_special(.FALSE.)
+ !
+ DOS_is_projected=CIRCUIT_k%nbz>0
+ !
+ if (.not.DOS_is_projected) return
+ !
+ call bz_samp_reset(GRID_k)
+ GRID_k%description="INTERP_PLANE"        
+ !
+ GRID_k%nibz=n_path_pts*(n_path_pts+1)
+ GRID_k%nbz =GRID_k%nibz
+ allocate(GRID_k%ptbz(GRID_k%nbz,3)) 
+ allocate(GRID_k%pt(GRID_k%nbz,3)) 
+ allocate(GRID_k%weights(GRID_k%nbz)) 
+ !
+ nk=0
+ do ikx=n_path_pts+1,1,-1
+   do iky=n_path_pts+2,2*n_path_pts+1
+     dk=CIRCUIT_k%pt(iky,:3)-CIRCUIT_k%pt(n_path_pts+1,:3)
+     nk=nk+1
+     GRID_k%ptbz(nk,:)=CIRCUIT_k%pt(ikx,:3)+dk
+   enddo
+ enddo
+ GRID_k%pt=GRID_k%ptbz
+ GRID_k%weights=1./GRID_k%nibz
+ !
+ call msg('s','[GRID_PLANE] Points : ',GRID_k%nibz)
  !
 end subroutine

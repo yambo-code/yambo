@@ -28,7 +28,7 @@ subroutine electrons_dos(Xk,Xen)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
+ use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,DOS_is_projected,&
 &                         DOS_E_steps,INTERP_grid,electrons_dos_elemental
  use com,            ONLY:msg,of_open_close
  use QP_CTL_m,       ONLY:QP_apply
@@ -69,12 +69,14 @@ subroutine electrons_dos(Xk,Xen)
  ! DOS on the built-in grid
  !===================================================================
  !
- if (n_spinor==2) then
-   YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
-   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD,WF_fac=WF_fac)
- else
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD)
+ if (.not.DOS_is_projected) then
+   if (n_spinor==2) then
+     YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
+     call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
+     call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD,WF_fac=WF_fac)
+   else
+     call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD)
+   endif
  endif
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
@@ -92,7 +94,9 @@ subroutine electrons_dos(Xk,Xen)
    if (n_spinor==2) call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=WF_fac,SEED_k=Xk,&
 &                                             operation="SPIN_factors_on_built_in",ID_op=ID)
    !
-   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
+   if (.not.DOS_is_projected) then
+     call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
+   endif
    !
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !
@@ -123,7 +127,8 @@ subroutine electrons_dos(Xk,Xen)
      do ikbz=1,GRID_k%nbz
        values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
-       ik=GRID_k%sstar(ikbz,1)
+       if (.not.DOS_is_projected) ik=GRID_k%sstar(ikbz,1)
+       if (     DOS_is_projected) ik=ikbz
        values(1)=real(ik,SP)
        values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
        call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
@@ -133,11 +138,19 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   if (n_spinor==2) then
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
-&                                 WF_fac=INTERP_obj(ID)%INTERP)
+   if (DOS_is_projected) then
+     !
+     call electrons_dos_project(GRID_k)
+     !
    else
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
+     !
+     if (n_spinor==2) then
+       call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
+&                                   WF_fac=INTERP_obj(ID)%INTERP)
+     else
+       call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
+     endif
+     !
    endif
    !
  endif

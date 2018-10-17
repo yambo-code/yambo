@@ -69,6 +69,7 @@ module YPP
  ! DOS
  !
  logical      ::l_dos ! electrons and phonons
+ logical      ::DOS_is_projected = .FALSE.
  real(SP)     ::DOS_broadening ! electrons
  real(SP)     ::DOS_E_range(2) ! Energy Range
  integer      ::DOS_bands(2)   ! Bands Range
@@ -83,6 +84,7 @@ module YPP
  character(schlen)     ::BANDS_path  = " "
  type(levels)          ::CIRCUIT_E_db
  integer               ::INTERP_grid(3)  ! Interpolation Grid
+ character(schlen)     ::INTERP_path  = " "
  real(SP)              ::Nel_fac
  logical               ::BANDS_print_internal_energies
  logical               ::BANDS_E_and_k_db

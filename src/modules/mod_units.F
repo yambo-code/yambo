@@ -153,7 +153,7 @@ module UNITS
  real(SP), parameter  :: SEC2AU =1._SP/AU2SEC           ! sec = SEC2AU Tau
  !
  real(SP), parameter  :: AU2VMm1=5.14220632E11_SP       ! V/m = AU2VMm1 AU
- real(SP), parameter  :: VMm12AU=1._SP/AU2VMm1          ! Au  = VMm12AU AU
+ real(SP), parameter  :: VMm12AU=1._SP/AU2VMm1          ! Au  = VMm12AU V/m
  !
  real(SP), parameter  :: SPEED_OF_LIGHT_SI = 2.99792458E8_SP ! m/sec
  real(SP), parameter  :: SPEED_OF_LIGHT    = 137.03599911_SP ! a.u.

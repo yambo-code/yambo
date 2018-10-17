@@ -24,6 +24,7 @@
 integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,lchlen,schlen,IP
+ use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_H_dim,BSqpts
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
@@ -48,7 +49,8 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  call timing('io_BSS_diago',OPR='start')
  !
- write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
+! write (db_name,'(a,i2.2)') 'BS_diago_Q',iq
+  db_name='BS_diago_Q'//trim(intc(iq))
  !
  io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BSS_diago/=0) goto 1

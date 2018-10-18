@@ -142,6 +142,10 @@ subroutine electrons_dos(Xk,Xen)
      !
      call electrons_dos_project( GRID_E, dos_E, el_dos ) 
      !
+     YAMBO_FREE(WF_fac)
+     !
+     return
+     !
    else
      !
      if (n_spinor==2) then
@@ -182,8 +186,6 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Output file(s)
  !================
- !
- ! ...headers
  !
  do i_f=1,N_files 
    !

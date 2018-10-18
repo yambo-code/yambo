@@ -539,7 +539,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  if (l_electrons) then
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
-     call initactivate(1,"DOSErange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
+     call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_path cooOut INTERP_Shell_Fac")
    endif
  endif
@@ -579,7 +579,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_density)     call initactivate(1,"LoadGhistory")
    if (l_RT_dos)  then
-     call initactivate(1,"DOSErange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
      call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
      call INIT_QP_ctl_switch('G')
    endif

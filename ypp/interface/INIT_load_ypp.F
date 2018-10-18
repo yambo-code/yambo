@@ -198,7 +198,8 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'INTERP_mode',     'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
  call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
- call it(defs,'INTERP_path',     'Interpolation plane "X O Y". O stands for "origin".',INTERP_path,verb_level=V_general)
+ call it(defs,'INTERP_path',     'Interpolation plane defined via the "X O Y" path. O stands for "origin".',&
+&                                INTERP_path,verb_level=V_general)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
  ! GPL_EXCLUDE_START

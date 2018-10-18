@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,70 +21,84 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XC_eval_gga_potential(vxc_tot,v_rho,v_drho)
+subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
-  ! Given the partial derivatives, v_rho, v_drho, provide the vxc_tot:
+  ! Given the partial derivatives, v1rho, v1sigma, provide the vxc_tot:
+  ! Remember sigma = drho(1)^2+drho(2)^2+drho(3)^2
   !
-  ! 1. Gv_drho(r) = -Grad \cdot v_drho(r,3)
-  ! 2. vxc_tot(r) = v_rho(r) + Gv_drho(r)   
+  ! 0   v_drho(r,:) = v1sigma(r) drho(r,1:3)
+  ! 1. Gv_drho(r)   = -Grad(1:3) \cdot v_drho(r,1:3)
+  ! 2. vxc_tot(r)   = v1rho(r) + G v_drho(r)   
   ! 
   use pars,          ONLY:SP,DP,cI_DP,PI_DP
   use R_lattice,     ONLY:g_vec
   use D_lattice,     ONLY:alat
   use wave_func,     ONLY:wf_ng
+  use electrons,     ONLY:n_spin
+  use xc_functionals,ONLY:xc_spin,V_xc
   use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
   use FFT_m,         ONLY:fftw_plan
 #endif
+  !
   implicit none
   !
-  real(SP),intent(inout) :: vxc_tot(fft_size)
-  real(SP),intent(in) :: v_rho(fft_size), v_drho(3,fft_size)
+  real(SP),intent(in) :: v1rho(n_spin,fft_size),v1sigma(xc_spin(1),fft_size),drho(fft_size,n_spin,3)
   !
   ! Work space
   !
-  integer       :: ic
-  real(SP)      :: Gv_drho(fft_size)
+  integer       :: ic,ifft,is1,is2,is_xc
+  real(SP)      :: Gv_drho(fft_size),v_drho(fft_size,3)
   complex(DP)   :: Vr(fft_size), Vg(wf_ng)
   !
-  ! 1. this is done by FFTing, by doing the scalar
-  !    product with G, and FFT-1 the result
+  ! 0. define v_drho
   !
-  Vg(1:wf_ng) = (0._DP,0._DP)
-  !
-  do ic = 1,3
+  do is1 = 1,n_spin
+    v_drho = 0._SP 
+    do is2 = 1,n_spin
+      is_xc = max(is2*(is1+1)/2,is1*(is2+1)/2)
+      forall(ic=1:3,ifft=1:fft_size) v_drho(ifft,ic) = v_drho(ifft,ic) + &
+&                                         2._SP*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
+    end do
     !
-    Vr(:) = (0._DP,0._DP)
-    Vr(:) = v_drho(ic,:)
+    ! 1. this is done by FFTing, by doing the scalar
+    !    product with G, and FFT-1 the result
     !
+    Vg(1:wf_ng) = (0._DP,0._DP)
+    !
+    do ic = 1,3
+      !
+      Vr = (0._DP,0._DP)
+      Vr = v_drho(:,ic)
+      !
+#if defined _FFTW
+      call dfftw_destroy_plan(fftw_plan)
+      fftw_plan = 0
+      call fft_3d(Vr,fft_dim,-1,fftw_plan)
+#else
+      call fft_3d(Vr,fft_dim,-1)
+#endif
+      !
+      Vg(1:wf_ng)=Vg(1:wf_ng)-cI_DP*(2._DP*PI_DP*real(g_vec(1:wf_ng,ic)/alat(ic),DP)) * &
+&                             Vr(fft_g_table(1:wf_ng,1))/real(fft_size,DP)
+      !
+    end do    
+    !
+    Vr = (0._DP,0._DP)
+    Vr(fft_g_table(1:wf_ng,1)) = Vg(1:wf_ng)
 #if defined _FFTW
     call dfftw_destroy_plan(fftw_plan)
     fftw_plan = 0
-    call fft_3d(Vr,fft_dim,-1,fftw_plan)
+    call fft_3d(Vr,fft_dim,1,fftw_plan)
 #else
-    call fft_3d(Vr,fft_dim,-1)
+    call fft_3d(Vr,fft_dim,1)
 #endif
+    Gv_drho = real(Vr,SP)
     !
-    Vg(1:wf_ng)=Vg(1:wf_ng)-cI_DP*(2._DP*PI_DP*real(g_vec(1:wf_ng,ic)/alat(ic),DP)) * &
-&                           Vr(fft_g_table(1:wf_ng,1))/real(fft_size,DP)
+    ! 2: sum up with the other partial derivative (and in case the other xc component)
     !
-  end do    
-  !
-  Vr = (0._DP,0._DP)
-  Vr(fft_g_table(1:wf_ng,1)) = Vg(1:wf_ng)
-#if defined _FFTW
-  call dfftw_destroy_plan(fftw_plan)
-  fftw_plan = 0
-  call fft_3d(Vr,fft_dim,1,fftw_plan)
-#else
-  call fft_3d(Vr,fft_dim,1)
-#endif
-  Gv_drho(:) = real(Vr(:),SP)
-  !
-  ! 2: sum up with the other partial derivative (and in case the other xc component)
-  !
-  vxc_tot = vxc_tot + v_rho + Gv_drho
+    V_xc(:,is1) = V_xc(:,is1) + v1rho(is1,:) + Gv_drho(:)
+    !
+  enddo
   !
 end subroutine XC_eval_gga_potential
-
-

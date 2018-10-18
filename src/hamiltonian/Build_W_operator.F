@@ -29,7 +29,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  use pars,           ONLY:SP,cI,cZERO,cONE,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use electrons,      ONLY:levels,n_sp_pol
- use electric,       ONLY:Sm1_plus,Sm1_minus,l_force_SndOrd
+ use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands,NL_nbands
  use R_lattice,      ONLY:bz_samp,k_map

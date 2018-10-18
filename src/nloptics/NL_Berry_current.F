@@ -29,10 +29,10 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use pars,           ONLY:DP,SP,cI,cZERO,pi,cONE
  use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
- use D_lattice,      ONLY:a,DL_vol,dl_sop,sop_inv
+ use D_lattice,      ONLY:a,DL_vol
  use vec_operate,    ONLY:get_id_perpendicular
- use electric,       ONLY:Sm1_plus,Sm1_minus
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use electric,       ONLY:l_force_SndOrd
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_bz,PAR_COM_Xk_bz_INDEX
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  use wrapper_omp,    ONLY:V_dot_V_omp
@@ -47,12 +47,12 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Work Space
  !
- integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3,i_star,is
- integer       :: idx(3),id_red,istep
- complex(SP)   :: NL_Jk(3,QP_nk),NL_Jk_red(3,QP_nk),NL_J_red(3)
+ integer       :: ik,i1,i2,i3,iv,isp,ikbz,Nperpend,id,id2,id3
+ integer       :: idx(3),id_red,istep,max_step
+ complex(SP)   :: NL_J_red(3)
  complex(SP)   :: VH_bands(NL_bands(2),en%nbf,nXkbz,n_sp_pol)
  complex(SP)   :: V_tilde(en%nbf,NL_bands(2),2)
- real(SP)    :: R_s(3,3)
+ complex(SP)   :: delta_V_tilde(en%nbf,NL_bands(2),2)
  !
  ! Build the < v_n | H_k | 
  !
@@ -75,63 +75,56 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  call PP_redux_wait(VH_bands,COMM=PAR_COM_Xk_bz_INDEX%COMM)
  !
+ NL_J     = cZERO
+ NL_J_red = cZERO
+ !
  isp  =1
  istep=1
  !
- NL_Jk_red=cZERO
- NL_Jk    =cZERO
- !
- do ik=1,QP_nk
+ do id_red=1,3
    !
-   if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   !    
-   do id_red=1,3
+   if(k_map%max_kdir(id_red)/=1) then   
      !
-     if(k_map%max_kdir(id_red)/=1) then   
+     call get_id_perpendicular(id_red,id2,id3)
+     !
+     Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
+     !
+     max_step=1
+!     if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+     !
+     do ikbz=1,nXkbz
        !
-       call get_id_perpendicular(id_red,id2,id3)
-       !
-       Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
-       !
-       ikbz=Xk%k_table(ik,1)
-       !
-       call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
-       !
-       do iv=1,en%nbf
-         NL_Jk_red(id_red,ik)=sum(VH_bands(:,iv,ikbz,isp)*(V_tilde(iv,:,1)-V_tilde(iv,:,2)))
+       do istep=1,max_step
+         call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
+         delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
        enddo
        !
-     endif
+       ik = Xk%sstar(ikbz,1)
+       !
+       if(max_step==1) then
+         do iv=1,en%nbf
+           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ikbz,isp)*delta_V_tilde(iv,:,1))
+         enddo
+       elseif(max_step==2) then
+         do iv=1,en%nbf
+           NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ikbz,isp)*(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
+         enddo
+       endif
+       !
+     enddo
      !
-     ! Notice that the 2.0 originates from H i\der_k +i \der_k H = 2 * Re[H i\der_k]
-     !
-     NL_Jk_red(id_red,ik)=spin_occ*2.0_SP*real(NL_Jk_red(id_red,ik),SP)/dble(Nperpend)
-     !
-   enddo
+   endif
+   !
+   ! Notice that the 2.0 originates from H i\der_k +i \der_k H = 2 * Re[H i\der_k]
+   !
+   NL_J_red(id_red)=2.0*spin_occ*real(NL_J_red(id_red),SP)/dble(Nperpend)
    !
  enddo
  !
  ! Transform in cartesian coordinates
  ! 
- do ik=1,QP_nk
-   if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   do id=1,3
-     NL_Jk(id,ik)=-sum(NL_Jk_red(:,ik)*a(:,id))/(4.0_SP*pi)
-   enddo
+ do id=1,3
+   NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
- !
- ! Calculate current with symmetries
- ! 
- NL_J=cZERO
- do ik=1,QP_nk
-   if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-   do i_star=1,Xk%nstar(ik)
-     is = sop_inv(Xk%star(ik,i_star))
-     R_s= dl_sop(:,:,is)
-     NL_J(:)=NL_J(:)+matmul(R_s, NL_Jk(:,ik))
-   enddo
- enddo
- !
- call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
 end subroutine NL_Berry_current

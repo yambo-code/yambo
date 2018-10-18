@@ -162,6 +162,8 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
  if (l_elphoton_corr) Dipole_bands_ordered=.false.
 #endif
  !
+ endif
+ !
  ! Set up band limits
  !
  if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
@@ -173,28 +175,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
    X%ib_lim(2)=X%ib(1)
  endif
  !
- ! Check if Dipoles DBs exist and are ok
- !=======================================
+ ! Check if Dipoles DBs exist and are ok @iq=1
+ !=============================================
  io_err=-1
- call DIPOLES_IO('read ')
- !
- else
-  !
-  io_err=-1
-  !
-  ! Set up band limits for iq.ne.1
-  !
-  Dipole_bands_ordered=.true.
-  if (Dipole_bands_ordered.or.Dipole_Energy_treshold<0._SP) then
-    X%ib_lim(1)=Xen%nbm
-    X%ib_lim(2)=Xen%nbf+1
-    if (l_X_terminator) X%ib_lim(2)=X%ib(1)
-  else
-    X%ib_lim(1)=X%ib(2)
-    X%ib_lim(2)=X%ib(1)
-  endif
-  !
- endif
+ if (iq==1) call DIPOLES_IO('read ')
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================

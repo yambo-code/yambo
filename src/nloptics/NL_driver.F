@@ -197,8 +197,8 @@ subroutine NL_driver(E,X,k,q)
    ! Re-initialization
    ! ================
    V_bands=cZERO
-   if(WF_sample%ison) V_bands_t = cZERO
    forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
+   if(WF_sample%ison) V_bands_t = cZERO
    !
    ! Efield
    ! ================
@@ -217,9 +217,12 @@ subroutine NL_driver(E,X,k,q)
      !
      ! Evaluate current
      !
-     call NL_current(k,E,V_bands)
-     !
      call NL_Hamiltonian(E,k,q,X,Time,NE_i_time,V_bands)
+     !
+     ! I evaluate current after the Hamiltonian because I need
+     ! time-dependent overlaps Sm1_plus, and Sm1_mins
+     !
+     call NL_current(k,E,V_bands)
      !
      ! Store Variables
      !

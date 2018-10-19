@@ -56,13 +56,11 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Build the < v_n | H_k | 
  !
+ VH_bands=cZERO
  do isp=1,n_sp_pol
    do ikbz=1,nXkbz
      !
-     if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) then
-       VH_bands(:,ikbz,:,:)=cZERO
-       cycle
-     endif
+     if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
      !
      ik = Xk%sstar(ikbz,1)
      !
@@ -79,7 +77,6 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  NL_J_red = cZERO
  !
  isp  =1
- istep=1
  !
  do id_red=1,3
    !

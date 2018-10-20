@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG)
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,ACCEPT_SPIN,PARALLEL_STRUCTURE,FRAG)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2KEL
@@ -49,7 +49,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  implicit none
  !
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,ACCEPT_SPIN,FRAG
  character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
@@ -61,6 +61,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
  logical             :: WARN,xc_kind_force
+ logical             :: QPTS_,R_LATT_,WF_,IMPOSE_SN_,T_EL_,KPTS_,D_LATT_,CUTOFF_,GAUGE_,IMPOSE_GAUGE_,ACCEPT_SPIN_,FRAG_
  character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
  io_header=0
@@ -69,6 +70,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  WARN=.true.
  if (list_dbs) WARN=.false.
+ !
+ ACCEPT_SPIN_=.false.
+ if(present(ACCEPT_SPIN)) ACCEPT_SPIN_=ACCEPT_SPIN
+ !
+ IMPOSE_SN_=.false.
+ if(present(IMPOSE_SN)) IMPOSE_SN_=IMPOSE_SN
  !
  MENU=1
  MODE=io_mode(ID)
@@ -111,25 +118,25 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! Serial Number
  !
  if (io_serial_number(ID)/=serial_number) then
-   if (present(IMPOSE_SN)) then 
-     if (IMPOSE_SN) then
-       io_header=-1
-       if (io_com(ID)/=NONE) &
-&        call warning('Incompatible serial number for '//trim(io_file(ID)))
-       goto 1
-     endif
-   endif
-   if (io_com(ID)/=NONE) then 
-     call warning('Wrong serial number for '//trim(io_file(ID)))
+   if (IMPOSE_SN_) then 
+     io_header=-1
+     if (io_com(ID)/=NONE) call warning('Incompatible serial number for '//trim(io_file(ID)))
+     goto 1
+   else
+     if (io_com(ID)/=NONE) call warning('Wrong serial number for '//trim(io_file(ID)))
    endif
  endif
  !
  ! SPIN polarizations/spinors
  !
  if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
-   io_header=-1
-   if (io_com(ID)/=NONE) call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
-   goto 1
+   if(.not.ACCEPT_SPIN_) then
+     if (io_com(ID)/=NONE) call warning(' Refusing incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+     io_header=-1
+     goto 1
+   else
+     if (io_com(ID)/=NONE) call warning(' Accepting incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+   endif
  endif
  !
  ! DL lattice

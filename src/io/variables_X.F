@@ -53,7 +53,7 @@ integer function variables_X(ID,local_description,X)
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,&
-&     VAR=" X band range           :",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),&
+&     VAR=" X band range           :",I1=X%ib,WARN=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_local_desc))
  i_local_desc=i_local_desc+1
  call io_elemental(ID,UNIT=HA2EV,&

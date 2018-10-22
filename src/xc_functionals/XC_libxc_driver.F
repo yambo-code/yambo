@@ -225,7 +225,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          do is1 = 1,n_spin
            do is2 = 1,n_spin
              is_xc = xc_spin_map1(is1,is2)
-             forall(i1=1:fft_size) F_xc(i1,is1,is2) = F_xc(i1,is1,is2) + real(tmp_fxc(2,is_xc),SP)
+             forall(i1=1:fft_size) F_xc(i1,is1,is2) = F_xc(i1,is1,is2) + real(tmp_fxc(is_xc,i1),SP)
            enddo
          enddo
      end select

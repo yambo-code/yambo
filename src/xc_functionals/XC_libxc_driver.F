@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG
+! Authors (see AUTHORS file for details): MG, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -73,7 +73,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
  real(DP) :: tmp_fxc(xc_spin(1),fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
- real(SP),allocatable :: v1rho(:,:),v1sigma(:,:)
+ real(DP),allocatable :: v1rho(:,:),v1sigma(:,:)
  real(DP),allocatable :: v2rho2(:,:),v2rhosigma(:,:),v2sigma2(:,:)
  logical              :: EvaluateDGradient
  !
@@ -153,11 +153,16 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    if (ORDER==1) then
      YAMBO_ALLOC(v1rho,(n_spin,fft_size))
      YAMBO_ALLOC(v1sigma,(xc_spin(1),fft_size))
+     v1rho=0._DP
+     v1sigma=0._DP
    endif
    if (ORDER==2) then
      YAMBO_ALLOC(v2rho2,(xc_spin(1),fft_size))
      YAMBO_ALLOC(v2rhosigma,(xc_spin(1)*n_spin,fft_size))
      YAMBO_ALLOC(v2sigma2,(xc_spin(1)*n_spin,fft_size))
+     v2rho2=0._DP
+     v2rhosigma=0._DP
+     v2sigma2=0._DP
    endif
    !
    do is1 = 1,n_spin

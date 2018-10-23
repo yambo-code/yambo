@@ -43,7 +43,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   implicit none
   !
-  real(SP),intent(in) :: v1rho(n_spin,fft_size),v1sigma(xc_spin(1),fft_size),drho(fft_size,n_spin,3)
+  real(DP),intent(in) :: v1rho(n_spin,fft_size),v1sigma(xc_spin(1),fft_size)
+  real(SP),intent(in) :: drho(fft_size,n_spin,3)
   !
   ! Work space
   !
@@ -97,7 +98,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     !
     ! 2: sum up with the other partial derivative (and in case the other xc component)
     !
-    V_xc(:,is1) = V_xc(:,is1) + v1rho(is1,:) + Gv_drho(:)
+    V_xc(:,is1) = V_xc(:,is1) + real(v1rho(is1,:),SP) + Gv_drho(:)
     !
   enddo
   !

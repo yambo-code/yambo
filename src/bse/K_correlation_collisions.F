@@ -185,24 +185,24 @@ subroutine K_correlation_collisions(iB,Xk,q)
        ! v->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_v_k,i_v_p,i_k_sp,i_s_collision)
+       call EVAL_collision(iB,i_v_k,i_v_p,i_k_sp,i_s_collision,K_CORR_collision)
        !
        ! c->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_c_k,i_c_p,i_k_sp,i_s_collision)
+       call EVAL_collision(iB,i_c_k,i_c_p,i_k_sp,i_s_collision,K_CORR_collision)
        !
      else if (BS_blk(iB)%mode=="A") then
        !
        ! v->c'
        !
        i_s_collision=collision_star(i_c_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_v_k,i_c_p,i_k_sp,i_s_collision)
+       call EVAL_collision(iB,i_v_k,i_c_p,i_k_sp,i_s_collision,K_CORR_collision)
        !
        ! c->v'
        !
        i_s_collision=collision_star(i_v_p,i_p,i_p_sp,i_s_star,i_s_k_p)
-       call EVAL_collision(iB,i_c_k,i_v_p,i_k_sp,i_s_collision)
+       call EVAL_collision(iB,i_c_k,i_v_p,i_k_sp,i_s_collision,K_CORR_collision)
        !
      endif
      !
@@ -246,17 +246,19 @@ subroutine K_correlation_collisions(iB,Xk,q)
      BS_blk(iB)%O_table(:,i_s_k_p,i_b,i_b_p,i_k_sp)=BS_blk(iB_ref)%O_table(:,i_s_collision,i_b,i_b_p,i_k_sp)
    end subroutine
    !
-   subroutine EVAL_collision(iB,i_b,i_b_p,i_k_sp,i_s_collision)
+   subroutine EVAL_collision(iB,i_b,i_b_p,i_k_sp,i_s_collision,isc)
+     use collision_el,  ONLY:elemental_collision
      implicit none
      integer,intent(in) :: iB,i_b,i_b_p,i_s_collision, i_k_sp
+     type(elemental_collision),intent(inout) :: isc
      integer :: iB_oscillator
      if (.not.O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)) return 
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
-     K_CORR_collision%is(1)=i_b
-     K_CORR_collision%os(1)=i_b_p
-     K_CORR_collision%os(3)=i_s_collision
-     call scatter_Bamp(K_CORR_collision)
-     BS_blk(iB)%O_c(:,iB_oscillator)=K_CORR_collision%rhotw(:)
+     isc%is(1)=i_b
+     isc%os(1)=i_b_p
+     isc%os(3)=i_s_collision
+     call scatter_Bamp(isc)
+     BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
      O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp) = .false.
    end subroutine
    !

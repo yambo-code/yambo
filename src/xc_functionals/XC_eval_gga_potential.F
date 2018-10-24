@@ -31,9 +31,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   ! 2. vxc_tot(r)   = v1rho(r) + G v_drho(r)   
   ! 
   use pars,          ONLY:SP,DP,cI_DP,PI_DP
-  use R_lattice,     ONLY:g_vec
+  use R_lattice,     ONLY:g_vec,ng_closed
   use D_lattice,     ONLY:alat
-  use wave_func,     ONLY:wf_ng
   use electrons,     ONLY:n_spin
   use xc_functionals,ONLY:xc_spin,V_xc
   use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
@@ -50,7 +49,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   integer       :: ic,ifft,is1,is2,is_xc
   real(SP)      :: Gv_drho(fft_size),v_drho(fft_size,3)
-  complex(DP)   :: Vr(fft_size), Vg(wf_ng)
+  complex(DP)   :: Vr(fft_size), Vg(ng_closed)
   !
   ! 0. define v_drho
   !
@@ -65,7 +64,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     ! 1. this is done by FFTing, by doing the scalar
     !    product with G, and FFT-1 the result
     !
-    Vg(1:wf_ng) = (0._DP,0._DP)
+    Vg(1:ng_closed) = (0._DP,0._DP)
     !
     do ic = 1,3
       !
@@ -80,13 +79,13 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
       call fft_3d(Vr,fft_dim,-1)
 #endif
       !
-      Vg(1:wf_ng)=Vg(1:wf_ng)-cI_DP*(2._DP*PI_DP*real(g_vec(1:wf_ng,ic)/alat(ic),DP)) * &
-&                             Vr(fft_g_table(1:wf_ng,1))/real(fft_size,DP)
+      Vg(1:ng_closed)=Vg(1:ng_closed)-cI_DP*(2._DP*PI_DP*real(g_vec(1:ng_closed,ic)/alat(ic),DP)) * &
+&                             Vr(fft_g_table(1:ng_closed,1))/real(fft_size,DP)
       !
     end do    
     !
     Vr = (0._DP,0._DP)
-    Vr(fft_g_table(1:wf_ng,1)) = Vg(1:wf_ng)
+    Vr(fft_g_table(1:ng_closed,1)) = Vg(1:ng_closed)
 #if defined _FFTW
     call dfftw_destroy_plan(fftw_plan)
     fftw_plan = 0

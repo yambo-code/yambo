@@ -444,12 +444,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ BSS_n_freqs=100
  !
 #if defined _SLEPC
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP
- BSS_n_freqs=100
  BSS_target_E=0
  Slepc_shell=.TRUE.
 #endif

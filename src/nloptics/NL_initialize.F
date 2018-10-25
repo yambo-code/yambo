@@ -23,7 +23,7 @@
 !
 subroutine NL_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
  use hamiltonian,    ONLY:H_potential
@@ -49,7 +49,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time 
+ real(SP) :: Time,W_0,T_0
  integer  :: i1
  !
  ! Parser
@@ -247,6 +247,15 @@ subroutine NL_initialize(E,k,q)
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
+ if(Efield(1)%ef_name=='PULSE') then
+   call msg( 'sr','---Pulse field---')
+   W_0  =Efield(1)%frequency(1)
+   T_0=pi/W_0*(real(nint(W_0/pi*3._SP*Efield(1)%width),SP))
+   call msg( 'sr', 'W_0           [eV]:',NL_er(1)*HA2EV)
+   call msg( 'sr', 'T_0           [fs]:',T_0*AUT2FS)
+   call msg( 'sr', 'Pulse width   [fs]:',Efield(1)%width*AUT2FS)
+ endif
+ !
  ! LOG
  ! ===
  !
@@ -261,7 +270,6 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield FWHM            [fs]:',Efield(1)%FWHM*AUT2FS)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)

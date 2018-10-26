@@ -36,7 +36,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity,V_general,V_qp,V_all,V_real_time
+&                         infile_verbosity,V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists,repfile,write_the_logo
  use stderr,         ONLY:string_split
@@ -194,6 +194,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (i1<50) then
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='rt' )  infile_verbosity=V_real_time
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='nl' )  infile_verbosity=V_nl_optics
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' ) infile_verbosity=V_all
    endif
@@ -325,10 +326,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
    !
 #if defined _YPP_NL
-   if ( trim(rstr_piece(i1)) == 'nonlinear') then
-     l_NL_X   =  trim(rstr_piece(i1+1))=='r'
-     l_NL_exc =  trim(rstr_piece(i1+1))=='e'
-   end if
+   l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
 #endif   
    !    
    if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
@@ -388,8 +386,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  enddo
  !
 #if defined _YPP_NL
- if (l_NL_X)         call initactivate(1,'NL_X')
- if (l_NL_exc)         call initactivate(1,'NL_exc')
+ if (l_NL_X)         call initactivate(1,'nonlinear')
+! if (l_NL_exc)         call initactivate(1,'NL_exc')
 #endif
  !
  l_flag=.not.(l_sort.or.l_fix_save)
@@ -448,8 +446,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #endif
 #if defined _YPP_NL
- l_NL_X   =runlevel_is_on('NL_X')
- l_NL_exc =runlevel_is_on('NL_exc')
+ l_NL_X   =runlevel_is_on('nonlinear')
+! l_NL_exc =runlevel_is_on('NL_exc')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')

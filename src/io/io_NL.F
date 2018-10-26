@@ -107,10 +107,10 @@ integer function io_NL(ID)
    YAMBO_ALLOC(E_ext_t,(NE_steps,3))
    YAMBO_ALLOC(E_ks_t,(NE_steps,3))
    !
-   WF_sample_range(2)= JPC_RT_IO_t%Time(NE_steps)
-   WF_sample_range(1)= WF_sample_range(2) - EtoT(E=NL_er(1))+5._SP*RT_step
-   call NL_set_WF_sample(WF_sample_ondisk,n_order,RT_step,WF_sample_range)
-   call NL_ALLOC_WF_sample(WF_sample_ondisk,RT_bands(2),n_sp_pol) 
+!   WF_sample_range(2)= JPC_RT_IO_t%Time(NE_steps)
+!   WF_sample_range(1)= WF_sample_range(2) - EtoT(E=NL_er(1))+5._SP*RT_step
+!   call NL_set_WF_sample(WF_sample_ondisk,n_order,RT_step,WF_sample_range)
+!   call NL_ALLOC_WF_sample(WF_sample_ondisk,RT_bands(2),n_sp_pol) 
    !
  endif
  !
@@ -136,7 +136,7 @@ integer function io_NL(ID)
  call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
  call io_elemental(ID,VAR="[FIELDs] Versor                :",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
  call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2]:",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID,VAR="[FIELDs] Damping           [fs]:",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,VAR="[FIELDs] Field width       [fs]:",R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
  call io_elemental(ID,VAR="[FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
@@ -170,27 +170,6 @@ integer function io_NL(ID)
  write (VAR_name,'(a,i4.4)') 'E_ks_freq_',i_fragment
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
  call io_bulk(ID,C2=E_ks_t)
- !
- ! WF_sample:  if not switched on skip this variable 
- ! (is that legal or do I need a sec as in io_BSS_diago?)
- !
- if (.not.WF_sample_ondisk%ison) then
-   io_NL=-1
-   goto 1
- endif
- !
- ! Indexes of the time sampled
- !
- write (VAR_name,'(a,i4.4)') 'T_indexes_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/WF_sample_ondisk%n_size/))
- call io_bulk(ID,I1=WF_sample_ondisk%indx_T(:WF_sample_ondisk%n_size))
- !
- ! V_bands at samping times
- !
- write (VAR_name,'(a,i4.4)') 'V_bands_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,WF_sample_ondisk%n_size,RT_bands(2),&
-      &WF_sample_ondisk%n_val,WF_sample_ondisk%n_k,n_sp_pol/))
- call io_bulk(ID,C5=V_bands_t,IPOS=(/1,1,1,1,1,1/))
  !
 1 call io_disconnect(ID=ID)
  !

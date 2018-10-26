@@ -106,9 +106,9 @@ subroutine NL_driver(en,k)
    !
  enddo
  !
- if (Probe_consistency_error) call error('Not all probes have consistent parameters')
- if (any(runs_ok.eqv..false.)) call warning('Incomplete runs')
- if (all(runs_ok.eqv..false.)) call error('Error reading non-linear databases!')
+ if (Probe_consistency_error) call error(' Not all probes have consistent parameters')
+ if (any(runs_ok.eqv..false.)) call warning(' Incomplete runs')
+ if (all(runs_ok.eqv..false.)) call error(' Error reading non-linear databases!')
  !
  ! Time Initialization
  !

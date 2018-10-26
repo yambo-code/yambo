@@ -116,8 +116,8 @@ integer function io_NL(ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
  call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
+ !
  if(io_err/=0) then
    io_NL=io_err
    goto 1

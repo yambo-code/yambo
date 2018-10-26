@@ -107,7 +107,8 @@ subroutine NL_driver(en,k)
  enddo
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
- if (any(runs_ok.eqv..false.)) call warning(' Incomplete runs')
+ if (any(runs_ok.eqv..false.)) call warning('Incomplete runs')
+ if (all(runs_ok.eqv..false.)) call error('Error reading non-linear databases!')
  !
  ! Time Initialization
  !
@@ -199,7 +200,7 @@ subroutine NL_driver(en,k)
      YAMBO_FREE(Susceptibility)
      YAMBO_FREE(Harmonic_Frequency)
      !
-  case ('DELTA')
+  case ('DELTA','PULSE')
     !
     YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,3))
     RT_P_t(:,:) =RT_P_probe(:,i_Probe,:)

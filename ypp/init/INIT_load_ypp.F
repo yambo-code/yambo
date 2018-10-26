@@ -24,7 +24,7 @@
 subroutine ypp_INIT_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -137,6 +137,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
  call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
  call it('r',defs,'NL_exc',     '[R] NonLinear Optics Excitation Post-Processing')
+ call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
 #endif
  !
  ! Temperatures

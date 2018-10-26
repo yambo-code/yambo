@@ -589,7 +589,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
+ if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
 #endif
  !

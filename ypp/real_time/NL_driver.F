@@ -52,11 +52,13 @@ subroutine NL_driver(en,k)
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
- logical  :: Probe_consistency_error
+ logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
  !
  call section("*",'NL Post Processing')
+ !
+ call parser('PrtPwrSpec',l_print_pwr_spectrum)
  !
  ! Input/Output
  !
@@ -208,6 +210,9 @@ subroutine NL_driver(en,k)
 &     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,3)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(RT_P_t)
+     !
+     if(l_print_pwr_spectrum) then
+     endif
      !
      ! OTHER CASES NOT YET WORKING
      !

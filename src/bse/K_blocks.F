@@ -46,49 +46,45 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,iB,n_new_blocks
+ integer    :: i_T,j_T,i_block,iB,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
+ if (BS_K_coupling) then 
+    n_new_blocks = 2
+ else                    
+    n_new_blocks = 1
+ end if
  !
- do i_loop=1,2
-   !
-   if (i_loop==2) allocate(BS_blk(n_BS_blks))
-   !
-   N_Ts_total  =0
-   n_BS_blks   =0
-   !
-   do i_T=1,BS_nT_grps
+ ! Count the blocks
+ n_BS_blks=count(PAR_IND_T_ordered%element_2D)
+ allocate(BS_blk(n_BS_blks*n_new_blocks))
+ !
+ ! Allocate the blocks
+ n_BS_blks=0
+ do i_T=1,BS_nT_grps
+   do j_T=1,BS_nT_grps
      !
-     do j_T=1,BS_nT_grps
-       !
-       if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
-       !
-       n_new_blocks                   =1 
-       if (BS_K_coupling) n_new_blocks=2
-       !
-       if (i_loop==2) then
-         do iB=n_BS_blks+1,n_BS_blks+n_new_blocks
-           YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           BS_blk(iB)%mat=cZERO
-           allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           bs_blk(ib)%done(:,:)="f"
-           BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"
-           if (iB-n_BS_blks==2) BS_blk(iB)%mode="C"
-           BS_blk(iB)%iT_k=i_T
-           BS_blk(iB)%iT_p=j_T
-           BS_blk(iB)%ik=BS_T_grp(i_T)%ik
-           BS_blk(iB)%ip=BS_T_grp(j_T)%ik
-           BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
-        enddo
-       endif
-       !
-       n_BS_blks=n_BS_blks+n_new_blocks
-       !
+     if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+     !
+     do i_block=1,n_new_blocks
+        iB = n_BS_blks + i_block
+        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+        BS_blk(iB)%mat=cZERO
+        allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+        bs_blk(ib)%done(:,:)="f"
+        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+        if (i_block==1) BS_blk(iB)%mode="R"
+        if (i_block==2) BS_blk(iB)%mode="C"
+        BS_blk(iB)%iT_k=i_T
+        BS_blk(iB)%iT_p=j_T
+        BS_blk(iB)%ik=BS_T_grp(i_T)%ik
+        BS_blk(iB)%ip=BS_T_grp(j_T)%ik
+        BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
      enddo
      !
+     n_BS_blks=n_BS_blks+n_new_blocks
+     !
    enddo
-   !
  enddo
  !
  ! Live Timing Blocks

@@ -50,9 +50,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
 &                       l_BSE_minimize_memory, l_restart_bse
- use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el, ONLY:elemental_collision,elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,RD_CL,RD_CL_IF_END,OP_WR_CL,OP_WR,OP_APP_CL,DUMP,&
+&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
@@ -193,6 +193,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! GPL_EXCLUDE_END
    !
 #if defined _PAR_IO
+   !
+   ! TO DO
+   !
 #else
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -285,13 +288,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
- !
- ! Elemental collisions allocation
- !=================================
- !
- call elemental_collision_alloc(K_CORR_collision,NG=O_ng,       TITLE="CORR_COLL")
-! call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
-! XXX
  !
  ! Wave Functions Phases
  !=======================
@@ -400,7 +396,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===============================
  !
 #if defined _PAR_IO
- call io_control(ACTION=OP_WR,COM=REP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,ID=ID)
+ call io_BS_PAR_check(iq,ID)
+ !
+ call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
 #else
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
@@ -429,7 +428,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #ifdef _PAR_IO
    if (l_restart_bse) then
-     call io_BS_PAR_read_block(iq,i_block,ID)
+     call io_control(ACTION=RD_CL,ID=ID)
+     call io_BS_PAR_block(iq,i_block,ID)
      if (all(BS_blk(i_block)%done=="t")) cycle
    endif
 #endif
@@ -742,7 +742,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
 #if defined _PAR_IO
-   call io_BS_PAR_write_block(iq,i_block,ID)
+   call io_control(ACTION=WR_CL,ID=ID)
+   call io_BS_PAR_block(iq,i_block,ID)
 #else
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -786,10 +787,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)
- !
- call elemental_collision_free(K_CORR_collision)
-! call elemental_collision_free(K_EXCH_collision)
-! XXX
  !
  call timing('X T_space Kernel',OPR='stop')
  !

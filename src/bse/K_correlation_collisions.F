@@ -210,9 +210,11 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,iB)
  !
- !$omp parallel default(shared), private(i_Tk,i_Tp, &
- !$omp &          i_k_bz,i_p_bz,i_k_s,i_p_s, i_v_k,i_c_k,i_v_p,i_c_p, &
- !$omp &          i_k_sp, i_p_sp, i_s_k_p,i_s_star,H_pos,  &
+ !$omp parallel default(shared), private(i_Tk,i_Tp,H_pos, &
+ !$omp &          i_k_s,i_p_s,i_k_bz,i_p_bz,i_kp_s,i_star_s,&
+ !$omp &          i_kmq_s,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
+ !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp,i_p_sp,iq_W,iq_W_bz,&
+ !$omp &          i_kmq_t,i_pmq_t, &
  !$omp &          K_CORR_collision, i_s_collision)
  !
  call OPENMP_update(master_thread)
@@ -287,24 +289,24 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
        !
        !
        i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp,i_s_mq_star,i_kp_mq_s)
-       call EVAL_collision(iB,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp,i_p_sp,i_v_k,i_v_p,i_s_collision,K_CORR_collision)
+       call EVAL_collision(iB,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp,i_p_sp,i_v_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
        i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp,i_star_s,i_kp_s)
-       call EVAL_collision(iB,i_k,i_p,1,1,i_k_sp,i_p_sp,i_c_k,i_c_p,i_s_collision,K_CORR_collision)
+       call EVAL_collision(iB,i_k,i_p,1,1,i_k_sp,i_p_sp,i_c_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
        !
      else if (BS_blk(iB)%mode=="C") then
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
        i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp,i_s_mq_star,i_kp_mq_s)
-       call EVAL_collision(iB,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp,i_p_sp,i_v_k,i_c_p,i_s_collision,K_CORR_collision)
+       call EVAL_collision(iB,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp,i_p_sp,i_v_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
        i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp,i_star_s,i_kp_s)
-       call EVAL_collision(iB,i_k,i_p,1,1,i_k_sp,i_p_sp,i_c_k,i_v_p,i_s_collision,K_CORR_collision)
+       call EVAL_collision(iB,i_k,i_p,1,1,i_k_sp,i_p_sp,i_c_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
        !
      endif
      !
@@ -350,10 +352,10 @@ subroutine K_correlation_collisions(iq,iB,Xk,q)
 &      BS_blk(iB_ref)%O_table(:,i_s_collision,iki,iko,ibi,ibo,i_sp)
    end subroutine
    !
-   subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_spi,i_spo,ibi,ibo,i_s_collision,isc)
+   subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_spi,i_spo,ibi,ibo,iq_W,i_s_collision,isc)
      use collision_el,  ONLY:elemental_collision
      implicit none
-     integer,intent(in) :: iB,iki,iko,ikit,ikot,ibi,ibo,i_spi,i_spo,i_s_collision
+     integer,intent(in) :: iB,iki,iko,ikit,ikot,ibi,ibo,i_spi,i_spo,iq_W,i_s_collision
      type(elemental_collision),intent(inout) :: isc
      integer :: iB_oscillator
      if (.not.O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_spi)) return 

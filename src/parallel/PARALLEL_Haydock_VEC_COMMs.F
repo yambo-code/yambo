@@ -25,7 +25,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  ! Set up the mask and communicators for the Haydock part.  
  !
  use BS,          ONLY:BS_nT_grps
- use parallel_m,  ONLY:mpi_comm_world,PAR_IND_T_groups,PAR_IND_T_Haydock,&
+ use parallel_m,  ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,&
 &                      PAR_COM_T_Haydock,PAR_COM_WORLD,CREATE_the_COMM,ncpu
 #include<memory.h>
  !
@@ -33,7 +33,7 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
  !
  ! Work Space
  !
- integer :: i_g,local_key
+ integer :: i_g,local_key,ierr
  !
  select case (what)
    case('assign')
@@ -77,13 +77,10 @@ subroutine PARALLEL_Haydock_VEC_COMMs(what)
      !
      case('reset')
        !
-       ! This is allocated in K_Transitions setup
-       YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
-       !
 #if defined _MPI
        if(ncpu>1) then
          do i_g=1,BS_nT_grps
-           call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM)
+           call MPI_Comm_free(PAR_COM_T_Haydock(i_g)%COMM,ierr)
          enddo
        endif
        deallocate(PAR_COM_T_Haydock)

@@ -550,6 +550,9 @@ subroutine K_Haydock(iq,W)
  !
  call PARALLEL_Haydock_VEC_COMMs('reset')
  !
+ ! This is allocated in K_Transitions setup
+ YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
+ !
  call timing('Haydock Solver',OPR='stop')
  !
  contains

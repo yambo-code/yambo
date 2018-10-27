@@ -429,9 +429,9 @@ subroutine K_diago_driver(iq,W,X_static)
        call BS_HAYVEC_free(Slepc_v%Vo) 
        deallocate(Slepc_v%Vi)
        deallocate(Slepc_v%Vo)
+       call PARALLEL_Haydock_VEC_COMMs('reset')
      endif
      !
-     call PARALLEL_Haydock_VEC_COMMs('reset')
      !
    end subroutine K_slepc_local_free
 #endif

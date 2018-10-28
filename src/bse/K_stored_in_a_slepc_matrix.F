@@ -105,7 +105,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
          call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(val), INSERT_VALUES, ierr )
        endif
        !
-       if (BS_blk(i_B)%mode=="A") then
+       if (BS_blk(i_B)%mode=="C") then
          call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim,       val , INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
        endif

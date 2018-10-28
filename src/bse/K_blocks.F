@@ -31,7 +31,7 @@ subroutine K_blocks( )
  !  integer                       :: iT_k       ! Index (among n_BS_T_grps) of the cv transitions @ k
  !  integer                       :: iT_p       ! Index (among n_BS_T_grps) of the cv transitions @ p
  !  integer                       :: size(2)    ! rows x columns
- !  character(1)                  :: mode       ! "R"esonant/"A"ntiresonant
+ !  character(1)                  :: mode       ! "R"esonant/"C"oupling
  !  complex(SP), allocatable      :: mat(:,:)
  !end type BS_block
  !

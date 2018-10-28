@@ -180,7 +180,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
    ch="BSE_RESONANT"
    VAR_IDs=(/1,2/)
  endif
- if (BS_blk(i_block)%mode=="A") then
+ if (BS_blk(i_block)%mode=="C") then
    ch="BSE_COUPLING"
    VAR_IDs=(/3,4/)
  endif

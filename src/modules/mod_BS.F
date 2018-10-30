@@ -142,6 +142,11 @@ module BS
  !===========
  complex(SP),allocatable :: WF_phase(:,:,:,:)
  !
+ ! Screened interaction
+ !======================
+ complex(SP),allocatable ::BS_W(:,:,:)
+ !
+ !
  contains
    !
    integer function T_group(I)

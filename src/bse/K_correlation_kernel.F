@@ -21,21 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function K_correlation_kernel(BS_W_iq,BS_W_size2,i_block,i_p,i_pmq,                               &
+function K_correlation_kernel(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p,  &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                   &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
  !
  use pars,         ONLY:SP,cZERO,pi
- use BS,           ONLY:BS_blk,BS_n_g_W,BS_W_is_diagonal,WF_phase
+ use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,WF_phase
  use D_lattice,    ONLY:nsym,i_time_rev
  use R_lattice,    ONLY:G_m_G,g_rot
  use wrapper_omp,  ONLY:Vstar_dot_V_omp,M_by_V_omp
  !
  implicit none
  !
- complex(SP), intent(in) :: BS_W_iq(BS_n_g_W,BS_W_size2)
- integer,     intent(in) :: BS_W_size2,i_block,i_p,i_pmq,                                         &
+ integer,     intent(in) :: i_block,i_p,i_pmq,                                            &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p, &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1
@@ -75,14 +74,14 @@ function K_correlation_kernel(BS_W_iq,BS_W_size2,i_block,i_p,i_pmq,             
    !
    !$omp parallel do default(shared), private(i_g1)
    do i_g1=1,BS_n_g_W
-     O_times_W(i_g1)=O1(i_g1)*BS_W_iq(i_g1,1)
+     O_times_W(i_g1)=O1(i_g1)*BS_W(i_g1,1,iq_W)
    enddo
    !$omp end parallel do
    !
  else
    !
    !
-   call M_by_V_omp('T',BS_n_g_W,BS_W_iq,O1,O_times_W)
+   call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
    !
  endif
  !

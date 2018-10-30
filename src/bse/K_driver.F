@@ -225,7 +225,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  call K_Transitions_setup(iq,Ken,Xk,.TRUE.)
  !
  !... Blocks build-up
- if (.not.l_rpa_IP) call K_blocks( )
+ if (.not.l_rpa_IP) call K_blocks(iq)
  !
  ! 1. The IP Part (Dipoles included) ...
  ! ======================================

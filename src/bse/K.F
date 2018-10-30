@@ -56,7 +56,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
- use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
+ use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
@@ -85,22 +85,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BKS_COMMON_INDEXES
- integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,&
-&              i_g1,i_g2,i_g3,O_ng_shift,&
+ integer    :: i_block,BS_W_size2,i_g2,i_g3,O_ng_shift,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
-&              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is_k(4),os_k(4),is_p(4),os_p(4)
- complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
+&              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
+ complex(SP):: Co,H_x,H_c
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
  complex(SP),allocatable ::BS_W(:,:,:)
  complex(SP),   external ::TDDFT_ALDA_R_space
+ complex(SP),   external ::K_correlation_kernel
  logical                 ::W_is_em1s,W_is_pp
  !
  ! Oscillators
  !
  logical    :: load_O_X
- complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
- complex(SP),allocatable  ::Ovc(:),Ocv(:)
  type(elemental_collision)::isc
  !
  ! I/O
@@ -316,19 +314,19 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
    endif
    !
-   i_g1=BS_n_g_W
-   if (BS_W_is_diagonal) i_g1=1
+   BS_W_size2=BS_n_g_W
+   if (BS_W_is_diagonal) BS_W_size2=1
    !
    ! When TR is present but not the SI X_mat indexes need to be exchanged 
    ! when the TR is applied
    !
    if (i_space_inv==0.and.i_time_rev==1.and..not.BS_W_is_diagonal) then
-     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,2*q%nibz))
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,BS_W_size2,2*q%nibz))
    else
-     YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,q%nibz))
+     YAMBO_ALLOC(BS_W,(BS_n_g_W,BS_W_size2,q%nibz))
    endif
    !
-   YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
+   YAMBO_ALLOC(isc%gamp,(BS_W_size2,BS_n_g_W))
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -459,23 +457,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
    !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
-   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
-   !$omp &       iOcc,i_block_cc,PHASE_1, iOcv, i_block_cv, iOvc, i_block_vc, &
-   !$omp &       iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
+   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c)
    !
    call OPENMP_update(master_thread)   
-   !
-   ! Allocations
-   !-------------
-   if (BS_res_K_corr.or.BS_cpl_K_corr) then
-     YAMBO_ALLOC(Ovv,(BS_n_g_W))
-     YAMBO_ALLOC(Occ,(BS_n_g_W))
-     YAMBO_ALLOC(O_times_W,(BS_n_g_W))
-     if (BS_cpl_K_corr) then
-       YAMBO_ALLOC(Ovc,(BS_n_g_W))
-       YAMBO_ALLOC(Ocv,(BS_n_g_W))
-     endif
-   endif
    !
    !$omp do collapse(2), schedule(dynamic)
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
@@ -490,148 +474,50 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
        !
+       if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
+       !
        H_x=cZERO
        H_c=cZERO
        !
-       if (BS_blk(i_block)%mode=="R") then
-         if (BS_res_K_exchange) then
-           !
-           ! :::EXCHANGE    (resonant):::
-           !=============================
-           H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
+       select case (BS_blk(i_block)%mode)
+       !
+       case ("R")
+         !
+         ! :::RESONANT TERM:::
+         !=============================
+         !
+         ! Exchange
+         if (BS_res_K_exchange) H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
 &                                           BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
-         endif
-       else 
-         if (BS_cpl_K_exchange) then
-           !
-           ! :::EXCHANGE    (coupling):::
-           !=============================
-           H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+         !
+         ! ALDA
+         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
+         !
+         ! Correlations
+         if (BS_res_K_corr)     H_c=K_correlation_kernel(BS_W(:,:,iq_W),BS_W_size2,i_block,i_p,i_pmq, &
+&                                 i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                      &
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         !         
+       case ("C")
+         !
+         ! :::COUPLING TERM:::
+         !=============================
+         !
+         ! Exchange
+         if (BS_cpl_K_exchange) H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                                       BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
-         endif
-       endif
-       !
-       if (BS_K_is_ALDA) then
          !
-         if (BS_blk(i_block)%mode=="R") then
-           !
-           ! :::ALDA        (resonant):::
-           !=============================
-           H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
-           !
-         else
-           !
-           ! :::ALDA        (coupling):::
-           !=============================
-           H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
-           !
-         endif
+         ! ALDA
+         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
          !
-       endif
-       !
-       if (BS_blk(i_block)%mode=="R") then
+         ! Correlations
+         if (BS_cpl_K_corr)     H_c=K_correlation_kernel(BS_W(:,:,iq_W),BS_W_size2,i_block,i_p,i_pmq, &
+&                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,     &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                      &
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
-         if (BS_res_K_corr.and.i_k_sp_pol==i_p_sp_pol) then
-           !
-           ! :::SEX         (resonant):::
-           !=============================
-           !
-           iOcc        = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_c_k,i_c_p,i_k_sp_pol)
-           i_block_cc  = BS_blk(i_block)%O_table(2,i_kp_s,1,1,i_c_k,i_c_p,i_k_sp_pol)
-           PHASE_1=WF_phase(i_p,i_kp_s,i_c_p,i_p_sp_pol)
-           if (PHASE_1==cZERO  ) PHASE_1=1._SP
-           if (PHASE_1==-99._SP) PHASE_1=1._SP
-           !
-           iOvv       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol)
-           i_block_vv = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol)
-           PHASE_2=WF_phase(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol)
-           if (PHASE_2==cZERO  ) PHASE_2=1._SP
-           if (PHASE_2==-99._SP) PHASE_2=1._SP
-           !
-           !$omp parallel do default(shared), private(i_g1,i_g2,i_g3)
-           do i_g1=1,BS_n_g_W
-             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s)   ,ig_W   ),i_k_s_m1  )
-             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s_mq),ig_W_mq),i_kmq_s_m1)
-             Occ(i_g1)=BS_blk(i_block_cc)%O_c(i_g2,iOcc)*PHASE_1
-             Ovv(i_g1)=BS_blk(i_block_vv)%O_c(i_g3,iOvv)*PHASE_2
-           enddo
-           !$omp end parallel do
-           !
-           if (i_k_s  >nsym/(i_time_rev+1)) Occ=conjg(Occ)
-           if (i_kmq_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
-           !
-           if (BS_W_is_diagonal) then
-             !
-             !$omp parallel do default(shared), private(i_g1)
-             do i_g1=1,BS_n_g_W
-               O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
-             enddo
-             !$omp end parallel do
-             !
-           else
-             !
-             if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
-             !
-             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
-             !
-           endif
-           !
-           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
-           !
-         endif
-         !
-       else if (BS_blk(i_block)%mode=="C") then
-         !
-         if (BS_cpl_K_corr.and.i_k_sp_pol==i_p_sp_pol) then
-           !
-           ! :::SEX         (coupling):::
-           !=============================
-           !
-           iOcv        = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_c_k,i_v_p,i_k_sp_pol)
-           i_block_cv  = BS_blk(i_block)%O_table(2,i_kp_s,1,1,i_c_k,i_v_p,i_k_sp_pol)
-           PHASE_1=WF_phase(i_p,i_kp_s,i_v_p,i_p_sp_pol)
-           if (PHASE_1==cZERO  ) PHASE_1=1._SP
-           if (PHASE_1==-99._SP) PHASE_1=1._SP
-           !
-           iOvc       = BS_blk(i_block)%O_table(1,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol)
-           i_block_vc = BS_blk(i_block)%O_table(2,i_kp_mq_s,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol)
-           PHASE_2=WF_phase(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol)
-           if (PHASE_2==cZERO  ) PHASE_2=1._SP
-           if (PHASE_2==-99._SP) PHASE_2=1._SP
-           !
-           !$omp parallel do default(shared), private(i_g1,i_g2,i_g3)
-           do i_g1=1,BS_n_g_W
-             i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s)   ,ig_W   ),i_k_s_m1  )
-             i_g3=g_rot(G_m_G(g_rot(i_g1,iq_W_s_mq),ig_W_mq),i_kmq_s_m1)
-             Ocv(i_g1)=BS_blk(i_block_cv)%O_c(i_g2,iOcv)*PHASE_1
-             Ovc(i_g1)=BS_blk(i_block_vc)%O_c(i_g3,iOvc)*PHASE_2
-           enddo
-           !$omp end parallel do
-           !
-           if (i_k_s  >nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
-           if (i_kmq_s>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
-           !
-           if (BS_W_is_diagonal) then
-             !
-             !$omp parallel do default(shared), private(i_g1)
-             do i_g1=1,BS_n_g_W
-               O_times_W(i_g1)=Ocv(i_g1)*BS_W(i_g1,1,iq_W)
-             enddo
-             !$omp end parallel do
-             !
-           else
-             !
-             if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
-             !
-             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),O_times_W)
-             !
-           endif
-           !
-           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovc,O_times_W)*4._SP*pi
-           !
-         endif
-         !
-       endif
+       end select
        !
        ! We have to add a new mode in addition to resonant and coupling for finiteq,
        ! where the kernel is recomputed in the antiresonant case
@@ -649,17 +535,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      enddo   ! i_Tk
    enddo     ! i_Tp
    !$omp end do
-   !
-   if (BS_res_K_corr.or.BS_cpl_K_corr) then
-     YAMBO_FREE(Ovv)
-     YAMBO_FREE(Occ)
-     YAMBO_FREE(O_times_W)
-     if (BS_cpl_K_corr) then
-       YAMBO_FREE(Ovc)
-       YAMBO_FREE(Ocv)
-     endif
-   endif
-   !
    !$omp end parallel
    !
    call BS_oscillators_free(0,i_block)

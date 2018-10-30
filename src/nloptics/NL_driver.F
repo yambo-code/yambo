@@ -261,7 +261,7 @@ subroutine NL_driver(E,X,k,q)
    !
    integer function load_Overlaps()
      !
-     use pars,          ONLY:SP
+     use pars,           ONLY:SP
      use X_m,            ONLY:DIP_S
      use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
      use electrons,      ONLY:n_sp_pol

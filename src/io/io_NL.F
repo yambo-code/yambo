@@ -47,7 +47,7 @@ integer function io_NL(ID)
  !
  ! Work Space
  !
- integer              :: i_fragment
+ integer              :: i_fragment,io_err
  character(lchlen)    :: local_description(100)
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
@@ -111,7 +111,8 @@ integer function io_NL(ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
+ call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
+ if(io_err/=0) goto 1
  !
  ! Manage RD_CL_IF_END
  !

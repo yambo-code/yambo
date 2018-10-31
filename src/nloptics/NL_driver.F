@@ -44,7 +44,7 @@ subroutine NL_driver(E,X,k,q)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -98,14 +98,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Parallelization
  ! =======================
- NL_bands1_save=NL_bands(1)
- NL_bands(1)   =1
- eval_OVERLAPS =.true.
- X(1)%ib       =(/1,NL_bands(2)/)
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
+ call setup_DIPOLES_parallelization()
  !
  ! Dipoles
  !=========
@@ -116,9 +109,6 @@ subroutine NL_driver(E,X,k,q)
  !
  Dipole_approach='Covariant' 
  if((l_use_DIPOLES.or.l_eval_CURRENT).or.load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
- !
- eval_OVERLAPS =.false.
- NL_bands(1)=NL_bands1_save
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
@@ -136,9 +126,8 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Non_Linear parallization
  ! ===================================
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,CLEAN_UP=.TRUE.)
+ call setup_NL_parallelization()
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
  ! WFs loading
@@ -264,6 +253,58 @@ subroutine NL_driver(E,X,k,q)
  call set_real_printed_length()
  !
  contains
+   !
+   subroutine setup_DIPOLES_parallelization()
+     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore
+     use nl_optics,        ONLY:eval_OVERLAPS
+     !
+     implicit none
+     !
+     ! Working space
+     !
+     integer :: n_frequencies_save,NL_bands1_save
+     !
+     ! Set bands between 1 and NL_bands(2)
+     !
+     NL_bands1_save  =NL_bands(1)
+     NL_bands(1)     =1
+     X(1)%ib         =(/1,NL_bands(2)/)
+     !
+     ! Set n_runs = 1 
+     ! Parallelization on frequencies turned off
+     !
+     n_frequencies_save=n_frequencies
+     n_frequencies     =1
+     eval_OVERLAPS     =.TRUE.
+     !
+     ! Save user-defined parallel structure
+     ! and force parallelization on k-points (for dipoles and overlaps)
+     call CPU_and_ROLE_strings_save()
+     !
+     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+     call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
+     !
+     call CPU_and_ROLE_strings_restore()
+     !
+     n_frequencies=n_frequencies_save
+     NL_bands(1)=NL_bands1_save
+     !
+   end subroutine setup_DIPOLES_parallelization
+   !
+   subroutine setup_NL_parallelization
+     use nl_optics,        ONLY:eval_OVERLAPS
+     implicit none
+     !
+     ! Restore original number of bands
+     !
+     X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
+     eval_OVERLAPS=.false.
+     !
+     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+     call PARALLEL_global_indexes(E,k,q,"Non_Linear",X=X(1))
+     !
+   end subroutine setup_NL_parallelization
+
    !
    integer function load_Overlaps()
      !

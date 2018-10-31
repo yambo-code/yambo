@@ -122,6 +122,9 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
+ character(schlen)   :: CPU_string_save(n_CPU_str_max)
+ character(schlen)   :: ROLE_string_save(n_CPU_str_max)
+ !
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -483,6 +486,22 @@ module parallel_m
      endif
      !
    end function
+   !
+   subroutine CPU_and_ROLE_strings_save()
+     implicit none
+     !
+     CPU_string_save =CPU_structure(:)%CPU_string
+     ROLE_string_save=CPU_structure(:)%ROLE_string
+     ! 
+   end subroutine CPU_and_ROLE_strings_save
+   !
+   subroutine CPU_and_ROLE_strings_restore()
+     implicit none
+     !
+     CPU_structure(:)%CPU_string =CPU_string_save
+     CPU_structure(:)%ROLE_string=ROLE_string_save
+     ! 
+   end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
      CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"

@@ -39,7 +39,7 @@ subroutine NL_initialize(E,k,q)
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  !
@@ -59,6 +59,7 @@ subroutine NL_initialize(E,k,q)
  call parser('UseDipoles',           l_use_DIPOLES)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
+ call parser('EvalCurrent' ,         l_eval_CURRENT)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  !
@@ -198,8 +199,6 @@ subroutine NL_initialize(E,k,q)
         call error("Unknow correlation in the response function")
  end select
  !
- !
- !
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
@@ -285,7 +284,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield FWHM            [fs]:',Efield(1)%FWHM*AUT2FS)
+ call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)
@@ -293,6 +292,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Use Dipoles                :',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              :',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    :',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current           :',l_eval_CURRENT)
  call msg( 'r', 'WF sampling                :',WF_sample%ison) 
  !
 end subroutine NL_initialize

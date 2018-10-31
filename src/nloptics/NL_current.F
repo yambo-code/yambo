@@ -63,11 +63,8 @@ subroutine NL_current(k,E,V_input)
    !
  else
    !
-   if(l_use_DIPOLES) then
-     NL_J(1:3)=NL_J(4:6)
-   else
-     call NL_Berry_current(E,k,k_map,V_input,NL_J(1:3))
-   endif
+   call NL_Berry_current(E,k,k_map,V_input,NL_J(1:3))
+   NL_J(1:3)=NL_J(4:6)
    !
  endif
  !

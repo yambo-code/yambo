@@ -39,7 +39,7 @@ subroutine NL_driver(E,X,k,q)
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
-&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,&
+&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
@@ -115,7 +115,7 @@ subroutine NL_driver(E,X,k,q)
  ! force the reloading of the WFs
  !
  Dipole_approach='Covariant' 
- call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ if((l_use_DIPOLES.or.l_eval_CURRENT).or.load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
  !
  eval_OVERLAPS =.false.
  NL_bands(1)=NL_bands1_save
@@ -127,6 +127,11 @@ subroutine NL_driver(E,X,k,q)
  call X_alloc('P_square')
  if(l_use_DIPOLES) then
    call X_alloc('DIP_S')
+ else
+   if(.not.l_eval_CURRENT) then
+     call X_alloc('DIP_R')
+     call X_alloc('DIP_P')
+   endif
  endif
  !
  ! Non_Linear parallization
@@ -220,7 +225,7 @@ subroutine NL_driver(E,X,k,q)
      ! I evaluate current after the Hamiltonian because I need
      ! time-dependent overlaps Sm1_plus, and Sm1_mins
      !
-     call NL_current(k,E,V_bands)
+     if(l_eval_CURRENT) call NL_current(k,E,V_bands)
      !
      ! Store Variables
      !

@@ -29,7 +29,7 @@ subroutine NL_output(i_time,i_freq)
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
  use real_time,    ONLY:NE_steps,RT_step,RT_P
- use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,NL_Po
+ use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,NL_Po,l_eval_CURRENT
  use stderr,       ONLY:set_real_printed_length
  !
  implicit none
@@ -52,12 +52,20 @@ subroutine NL_output(i_time,i_freq)
  file_name(3)='e_total_F'//intc(i_freq)
  file_name(4)='current_F'//intc(i_freq)
  !
+ n_files=1
  short_file_name(1)='external_potential'
- short_file_name(2)='polarization'
- short_file_name(3)='e_total'
- short_file_name(4)='current'
  !
- n_files=4
+ n_files=n_files+1
+ short_file_name(2)='polarization'
+ !
+ n_files=n_files+1
+ short_file_name(3)='e_total'
+ !
+ if(l_eval_CURRENT) then
+   n_files=n_files+1
+   short_file_name(4)='current'
+ endif
+ !
  !
  n_headings(1)=10
  n_headings(2)=7
@@ -105,8 +113,10 @@ subroutine NL_output(i_time,i_freq)
  !
  data_to_dump(3,2:4) =-real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT
  !
- data_to_dump(4,2:4) =real(NL_J(1:3))
- data_to_dump(4,5:7) =real(NL_J(4:6))
+ if(l_eval_CURRENT) then
+   data_to_dump(4,2:4) =real(NL_J(1:3))
+   data_to_dump(4,5:7) =real(NL_J(4:6))
+ endif
  !
  do i_f=1,n_files
    call msg('o '//trim(file_name(i_f)),'',data_to_dump(i_f,1:n_headings(i_f)),USE_TABS=.TRUE.)

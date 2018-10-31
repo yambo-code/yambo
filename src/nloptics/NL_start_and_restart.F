@@ -48,7 +48,7 @@ subroutine NL_start_and_restart(E,k,X)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
-&                         VAL_BANDS,NL_J,NL_initial_Po,NL_Po
+&                         VAL_BANDS,NL_J,NL_initial_Po,NL_Po,l_eval_CURRENT
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
@@ -146,12 +146,9 @@ subroutine NL_start_and_restart(E,k,X)
    !
  endif
  !
- call NL_average_operator(V_VALUE=NL_J(4:6),V_MATRIX=-DIP_P,V_bands=V_bands,k=k,en=E, &
-& TRANS=.TRUE.,nK_mem=k%nibz)
- if(.not.l_use_DIPOLES) then
+ if(l_eval_CURRENT) then
+   call NL_average_operator(V_VALUE=NL_J(4:6),V_MATRIX=-DIP_P,V_bands=V_bands,k=k,en=E,TRANS=.TRUE.,nK_mem=k%nibz)
    call NL_Berry_current(E,k,k_map,V_bands,NL_J(1:3))
- else
-   NL_J(1:3)=NL_J(4:6)
  endif
  !
  call msg('r','')
@@ -159,8 +156,10 @@ subroutine NL_start_and_restart(E,k,X)
  call msg('r','============================================')
  call msg('r ',' Initial Dipole Pol.     :',real(NL_initial_Po))
  call msg('r ',' Initial Berry  Pol.     :',real(NL_initial_P))
- call msg('r ',' Initial Current         :',real(NL_J(1:3)))
- call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_J(4:6)))
+ if(l_eval_CURRENT) then
+   call msg('r ',' Initial Current         :',real(NL_J(1:3)))
+   call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_J(4:6)))
+ endif
  !
  ! Restart
  ! ====================================

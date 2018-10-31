@@ -151,6 +151,7 @@ module nl_optics
  ! Other
  !
  logical  :: l_use_DIPOLES   ! Use standard dipoles (valid only for linear response)
+ logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
  !
  ! IO variables
  !

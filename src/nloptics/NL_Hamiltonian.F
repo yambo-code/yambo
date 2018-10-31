@@ -43,7 +43,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF,NL_bands,VAL_BANDS,NL_Po,NL_initial_Po
+&                         SEX,HF,NL_bands,VAL_BANDS
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -71,43 +71,40 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 #endif
  !
  if(.not.l_use_Hxc_collisions) then
- !
- if(eval_HARTREE .or.  eval_DFT) then
    !
-   call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
+   if(eval_HARTREE .or.  eval_DFT) then
+     !
+     call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
+     !
+     call el_density_vbands(E,k,rho_n,VAL_BANDS)
+     !
+   endif
    !
-   call el_density_vbands(E,k,rho_n,VAL_BANDS)
+   if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
- endif
- !
- if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
- !
- ! I reconstruct the full density if necessary because both TDDFT 
- ! and JGM are not linear in rho_n and require the full density
- ! 
- if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
- !
- if(eval_DFT) then
+   ! I reconstruct the full density if necessary because both TDDFT 
+   ! and JGM are not linear in rho_n and require the full density
+   ! 
    !
-   ! Reconstruct the full density
+   if(eval_DFT) then
+     !
+     if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
+     !
+     ! Reconstruct the full density
+     !
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+     V_xc_sc=V_xc-V_xc_0
+     !
+   endif
    !
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-   V_xc_sc=V_xc-V_xc_0
-   !
- else
-   V_xc_sc=cZERO
- endif
- !
  endif
  !
  ! Evaluate the Polarization 
  ! ===================================================================
  !
- call DIP_polarization(E,k,V_bands,NL_Po)
- NL_Po=NL_Po-NL_initial_Po
- !
  if(l_use_DIPOLES) then
-   RT_P=NL_Po
+   call DIP_polarization(E,k,V_bands,RT_P)
+   RT_P=RT_P-NL_initial_P
  else
    ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
 #if defined _TIMING

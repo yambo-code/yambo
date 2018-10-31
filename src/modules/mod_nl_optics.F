@@ -43,10 +43,6 @@ module nl_optics
  !
  complex(SP)    :: NL_initial_P(3) ! in principle it can be different from zero
  !
- ! Polarization in terms of dipoles
- !
- complex(SP)   :: NL_Po(3),NL_initial_Po(3)
- !
  ! Current
  !
  complex(SP)    :: NL_J(6)

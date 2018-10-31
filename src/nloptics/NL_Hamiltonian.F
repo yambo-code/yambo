@@ -198,22 +198,20 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
         if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
      endif
      !
-     ! Add Ho = T+V_ion+V_h+V_xc
-     !==================
+   endif
+   !
+   ! Add Ho = T+V_ion+V_h+V_xc
+   !==================
+   !
+   forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
+   !
+   if(l_use_DIPOLES) then
+     !    
+     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
      !
-     forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
+   else
      !
-     if(l_use_DIPOLES) then
-       !    
-       call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
-       !
-     else
-       !
-       ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
-       !
-       call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
-       !
-     endif                                                         
+     ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
      call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !

@@ -25,7 +25,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
- use com,            ONLY:msg,warning
+ use com,            ONLY:msg,warning,error
  use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
@@ -45,7 +45,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #endif
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
- use com,            ONLY:error
 #endif
  !
 #include<memory.h>
@@ -71,6 +70,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+ if (.not.(BS_q(1)==1.and.BS_q(2)==1).and.(.not.trim(BSE_mode)=='resonant')) &
+&  call error(' Finite q beyond resonant not implemented')
  !
  ! Joint DOS
  !===========

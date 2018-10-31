@@ -77,17 +77,29 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
      ! First the diagonal
      !
      if (i_Tk==i_Tp) then
-       if (BS_blk(i_B)%mode=="R") then
+       select case(BS_blk(i_B)%mode)
+       case("R")
          E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
             E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
          endif
          val = E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
          call MatSetValue( slepc_mat, H_pos(1),          H_pos(1), val, INSERT_VALUES, ierr )
-       else
+       case("C")
          val = BS_blk(i_B)%mat(i_r,i_r)
          call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim, H_pos(1), val, INSERT_VALUES, ierr )
-       endif
+       case("A")
+         ! To be fixed
+         E_plus_W=BSS_eh_E(H_pos(1)+1)*cONE
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1)+1)
+         endif
+         val = BS_blk(i_B)%mat(i_r,i_r)
+         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim, H_pos(1)+SL_K_dim, val, INSERT_VALUES, ierr )
+       case("Q")
+         val = BS_blk(i_B)%mat(i_r,i_r)
+         call MatSetValue( slepc_mat, H_pos(1)         , H_pos(1)+SL_K_dim, val, INSERT_VALUES, ierr )
+       end select
        !
      endif
      !
@@ -100,15 +112,20 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
        if (H_pos(1)>=H_pos(2)) cycle
        !
        val = BS_blk(i_B)%mat(i_r,i_c)
-       if (BS_blk(i_B)%mode=="R") then
+       select case(BS_blk(i_B)%mode)
+       case("R")
          call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       val , INSERT_VALUES, ierr )
          call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(val), INSERT_VALUES, ierr )
-       endif
-       !
-       if (BS_blk(i_B)%mode=="C") then
-         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim,       val , INSERT_VALUES, ierr )
-         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim, H_pos(1), conjg(val), INSERT_VALUES, ierr )
-       endif
+       case("C")
+         call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim, val, INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim, H_pos(1), val, INSERT_VALUES, ierr )
+       case("A")
+         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim, H_pos(2)+SL_K_dim,       val , INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim, H_pos(1)+SL_K_dim, conjg(val), INSERT_VALUES, ierr )
+       case("Q")
+         call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim, H_pos(2), val, INSERT_VALUES, ierr )
+         call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim, val, INSERT_VALUES, ierr )
+       end select
        !
      enddo
      !

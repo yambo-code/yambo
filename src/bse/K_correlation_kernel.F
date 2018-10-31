@@ -44,7 +44,10 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  integer      :: iO1,i_block_1,iO2,i_block_2,i_g1,i_g2,i_g3
  complex(SP)  :: PHASE_1,PHASE_2,O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
  !
- if (i_k_sp_pol==i_p_sp_pol) K_correlation_kernel=cZERO
+ if (i_k_sp_pol==i_p_sp_pol) then
+   K_correlation_kernel=cZERO
+   return
+ endif
  !
  iO1       = BS_blk(i_block)%O_table(1,i_kp_s,1,1,i_n_k,i_n_p,i_k_sp_pol)
  i_block_1 = BS_blk(i_block)%O_table(2,i_kp_s,1,1,i_n_k,i_n_p,i_k_sp_pol)
@@ -79,7 +82,6 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
    !$omp end parallel do
    !
  else
-   !
    !
    call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
    !

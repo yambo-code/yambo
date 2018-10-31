@@ -35,10 +35,12 @@ integer function io_BS(iq,X,ID)
  use pointers,      ONLY:linkM2V
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
+ use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
+&                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  type(X_t):: X 
@@ -47,7 +49,7 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,i1,n1,n2,block_pos
+ integer             ::i_block,i1,n1,n2,block_pos,VAR_ID
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  character(lchlen)   ::local_description(100)
  !
@@ -110,19 +112,26 @@ integer function io_BS(iq,X,ID)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
+ if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
+ if (BS_blk(i_block)%mode=="C") ch="BSE_COUPLING"
+ if (BS_blk(i_block)%mode=="A") ch="BSE_ANTI-RESONANT"
+ if (BS_blk(i_block)%mode=="Q") ch="BSE_ANTI-COUPLING"
+ !
  if(frag_BS_K) then
-   if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT_BLOCK_"//trim(intc(i_block))
-   if (BS_blk(i_block)%mode=="C") ch="BSE_COUPLING_BLOCK_"//trim(intc(i_block))
-   !
-   call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/))
-   call io_bulk(ID,C2=BS_blk(i_block)%mat)
+   ch=trim(ch)//"_BLOCK_"//trim(intc(i_block))
+   call def_variable_bulk(ID,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
+   call io_variable_bulk(ID,1,C2=BS_blk(i_block)%mat)
  else
-   if(i_block==1) call io_bulk(ID,VAR="BSE_MATRIX",VAR_SZ=(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/))
+   if (BS_blk(i_block)%mode=="R") VAR_ID=1
+   if (BS_blk(i_block)%mode=="C") VAR_ID=2
+   if (BS_blk(i_block)%mode=="A") VAR_ID=3
+   if (BS_blk(i_block)%mode=="Q") VAR_ID=4
+   if(i_block==1) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1
    tmp_link => linkM2V(BS_blk(i_block)%mat,(/n1*n2/))
-   call io_bulk(ID,C1=tmp_link,IPOS=(/1,block_pos/))
+   call io_variable_bulk(ID,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif
  !

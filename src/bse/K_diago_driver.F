@@ -154,13 +154,35 @@ subroutine K_diago_driver(iq,W,X_static)
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  io_err=io_BSS_diago(iq,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_right_kerr,BS_R_PL)
  !
+ K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
+ !
  ! Kernel and/or BSS components loading
  !======================================
  if (io_err<0) then
    !
    call K_components_folded_in_serial_arrays(iq)
    !
-   if(l_diago) call K_stored_in_a_big_matrix(iq,"DIAGO")
+   ! Below two operations:
+   ! - The blocks are sent  either to a big matrix or
+   !   to a distributed (SLEPC shells / or eventually BLACS) matrix
+   ! - The resulting matrix is symmetrized
+   !
+   if(l_diago) then
+     !
+     call K_stored_in_a_big_matrix(iq,"DIAGO")
+     !
+     ! These line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
+     ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
+     !=========================
+     !
+     !if (.not.linear_algebra_is_parallel) call K_stored_in_a_big_matrix(iq,"DIAGO")
+     !
+#if defined _SCALAPACK
+     ! Here maybe the name "K_blacs_matrix(iq)" would probably be more appropiate
+     !if (     linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
+#endif
+     !
+   endif
    !
 #if defined _SLEPC
    if(l_slepc) then
@@ -174,8 +196,6 @@ subroutine K_diago_driver(iq,W,X_static)
    !
  endif
  !
- K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
- !
  ! Allocation (BS_E_real or BS_V)
  !===============================
  call local_alloc("V")
@@ -185,17 +205,6 @@ subroutine K_diago_driver(iq,W,X_static)
  call K_output_file(iq,"open "//trim(Solver))
  !
  if (io_err<0) then
-   !
-#if defined _SCALAPACK
-   !
-   ! Symmetrize the K blocks (to be eventually sent to the BLACS)
-   !
-   ! This line will be needed when the BS kernel will not be folded in BS_mat. But in order to do so
-   ! also linear_algebra_is_parallel must be swiched off when K is not hermitian.
-   !=========================
-   !if (linear_algebra_is_parallel) call BS_Blocks_symmetrize_K()
-   !
-#endif
    !
    ! Diagonalization of the excitonic hamiltonian
    !==============================================

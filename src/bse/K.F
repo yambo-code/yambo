@@ -388,6 +388,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          ! :::COUPLING TERM:::
          !=============================
          !
+         ! STILL TO FIX AT FINITE Q
+         !
          ! Exchange
          if (BS_cpl_K_exchange) H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
 &                                       BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
@@ -401,6 +403,38 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol,i_p_sp_pol,                      &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
+       case ("A")
+         !
+         ! :::ANTI-RESONANT TERM:::
+         !=============================
+         !
+         ! STILL TO CODE AT FINITE Q
+         !
+         ! Exchange
+         if (BS_cpl_K_exchange) H_x=cZERO
+         !
+         ! ALDA
+         if (BS_K_is_ALDA)      H_x=H_x
+         !
+         ! Correlations
+         if (BS_cpl_K_corr)     H_c=cZERO
+         !
+       case ("Q")
+         !
+         ! :::ANTI-COUPLING TERM:::
+         !=============================
+         !
+         ! STILL TO CODE AT FINITE Q
+         !
+         ! Exchange
+         if (BS_cpl_K_exchange) H_x=cZERO
+         !
+         ! ALDA
+         if (BS_K_is_ALDA)      H_x=H_x
+         !
+         ! Correlations
+         if (BS_cpl_K_corr)     H_c=cZERO
+         !
        end select
        !
        ! We have to add a new mode in addition to resonant and coupling for finiteq,
@@ -409,10 +443,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        sqrt_f_itk=sqrt(BS_T_grp(i_Tgrp_k)%f(i_Tk))
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
-       if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=   sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="Q") BS_blk(i_block)%mat(i_Tk,i_Tp)=cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="A") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="Q") BS_blk(i_block)%mat(i_Tk,i_Tp)=-cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !

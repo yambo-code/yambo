@@ -52,9 +52,8 @@ subroutine K_blocks(iq)
  real(SP)   :: N_Ts_total,N_Ts_local
  !
  if (.not.BS_K_coupling           ) n_new_blocks=1
- if (     BS_K_coupling           ) n_new_blocks=2
- !if (     BS_K_coupling.and. iq==1) n_new_blocks=2
- !if (     BS_K_coupling.and. iq/=1) n_new_blocks=4
+ if (     BS_K_coupling.and. iq==1) n_new_blocks=2
+ if (     BS_K_coupling.and. iq/=1) n_new_blocks=4
  !
  ! Count the blocks
  n_BS_blks=count(PAR_IND_T_ordered%element_2D)

@@ -28,7 +28,11 @@ function Lorentzian_FT(W,pole,ordering)
  ! Fourier transform of the Lorentzian function
  ! theta(t)*e^{-i*pole*t} [this is the retarded version, other ordering are computed]
  !
- ! AM, 1/8/16. Note that aimag(pole) is always negative while aimag(W)>0
+ ! AM,01/08/16. Note that aimag(pole) is always negative while aimag(W)>0
+ ! DS,31/10/18. Note thath the present structure uses the relation e_{n,k}=e_{n,-k},
+ !              See Fetter-Walecka, p.158 from Eq.(12.29) to (12.30)
+ !              This implies that f_{n,k}=f_{n,-k} when the occupations are used
+ !              These may not be true in NEQ
  !
  use pars, ONLY:SP
  !

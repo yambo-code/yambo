@@ -26,14 +26,14 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (cI*K_c)    |  
- !  K = |                       |
- !      | (-cI*K_c^*)  (-K_r^*) |
+ !      | (K_r(q))      (cI*K_c(q))    |  
+ !  K = |                              |
+ !      | (-cI*K_c^*(-q))  (-K_r^*(-q) |
  !
  use pars,           ONLY:SP,cI,cZERO,cONE
  use parallel_m,     ONLY:PP_redux_wait
  use BS,             ONLY:BS_K_coupling,n_BS_blks
- use BS_solvers,     ONLY:BS_mat,K_slk,BS_blk,BS_H_dim,BS_K_dim,&
+ use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BS_blks_free,BSS_eh_E,BSS_eh_W
  !
@@ -47,8 +47,7 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  complex(SP) :: E_plus_W
  integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),i_B
  !
- if (allocated(BS_mat)                ) return
- if (what=="INV".and.K_slk%kind=="SLK") return
+ if (allocated(BS_mat)) return
  !
  YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
  BS_mat    = cZERO
@@ -65,15 +64,25 @@ subroutine K_stored_in_a_big_matrix(iq,what)
      ! First the diagonal
      !
      if (i_Tk==i_Tp) then
-       if (BS_blk(i_B)%mode=="R") then
+       select case(BS_blk(i_B)%mode)
+       case("R")
          E_plus_W=BSS_eh_E(H_pos(1))*cONE
          if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
            E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
          endif
          BS_mat(H_pos(1),H_pos(1))=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP)
-       else
+       case("C")
          BS_mat(H_pos(1),H_pos(1)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_r)
-       endif
+       case("A")
+         ! To be fixed
+         E_plus_W=BSS_eh_E(H_pos(1))*cONE
+         if (allocated(BSS_eh_W).and..not.BSS_perturbative_width) then
+           E_plus_W=E_plus_W-cI*BSS_eh_W(H_pos(1))
+         endif
+         BS_mat(H_pos(1)+BS_K_dim,H_pos(1)+BS_K_dim)=E_plus_W+real(BS_blk(i_B)%mat(i_r,i_r),SP) 
+       case("Q")
+         BS_mat(H_pos(1)+BS_K_dim,H_pos(1))=BS_blk(i_B)%mat(i_r,i_r)
+       end select
        !
      endif
      !
@@ -85,9 +94,16 @@ subroutine K_stored_in_a_big_matrix(iq,what)
        !
        if (H_pos(1)>=H_pos(2)) cycle
        !
-       if (BS_blk(i_B)%mode=="R") BS_mat(H_pos(1),H_pos(2))         =BS_blk(i_B)%mat(i_r,i_c)
-       !
-       if (BS_blk(i_B)%mode=="C") BS_mat(H_pos(1),H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+       select case(BS_blk(i_B)%mode)
+       case("R")
+         BS_mat(H_pos(1)         ,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
+       case("C")
+         BS_mat(H_pos(1)         ,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+       case("A")
+         BS_mat(H_pos(1)+BS_K_dim,H_pos(2)+BS_K_dim)=BS_blk(i_B)%mat(i_r,i_c)
+       case("Q")
+         BS_mat(H_pos(1)+BS_K_dim,H_pos(2)         )=BS_blk(i_B)%mat(i_r,i_c)
+       end select
        !
      enddo
      !
@@ -95,7 +111,8 @@ subroutine K_stored_in_a_big_matrix(iq,what)
    !
  enddo
  !
- ! Symmetrization: Resonant part is Hermitian
+ ! Symmetrization: Resonant and anti-Resonant parts are Hermitian
+ !                 Coupling and anti-Cuopling parts are Symmetric
  !
  do i_r=1,BS_K_dim
    do i_c=i_r+1,BS_K_dim
@@ -104,8 +121,6 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  enddo
  !
  if (BS_K_coupling) then
-   !
-   ! Symmetrization: Coupling part is symmetric
    !
    do i_r=1,BS_K_dim
      do i_c=i_r+1,BS_K_dim
@@ -116,12 +131,23 @@ subroutine K_stored_in_a_big_matrix(iq,what)
    ! If Coupling the half lower part of K is empty
    ! Filling the anti-resonant and anti-coupling parts
    !
-   forall(i_r=1:BS_K_dim,i_c=1:BS_K_dim)
-     ! Anti-Coupling
-     BS_mat(i_r+BS_K_dim,i_c)=-conjg(BS_mat(i_r,i_c+BS_K_dim))
-     ! Anti-resonant
-     BS_mat(i_r+BS_K_dim,i_c+BS_K_dim)=-conjg(BS_mat(i_r,i_c))
-   end forall
+   if(iq==1) then
+     forall(i_r=1:BS_K_dim,i_c=1:BS_K_dim)
+       ! Anti-Coupling
+       BS_mat(i_r+BS_K_dim,i_c)=-conjg(BS_mat(i_r,i_c+BS_K_dim))
+       ! Anti-resonant
+       BS_mat(i_r+BS_K_dim,i_c+BS_K_dim)=-conjg(BS_mat(i_r,i_c))
+     end forall
+   else
+     do i_r=1,BS_K_dim
+       do i_c=i_r+1,BS_K_dim
+         ! Anti-Coupling
+         BS_mat(i_c+BS_K_dim,i_r)=BS_mat(i_r+BS_K_dim,i_c)
+         ! Anti-resonant
+         BS_mat(i_c+BS_K_dim,i_r+BS_K_dim)=conjg(BS_mat(i_r+BS_K_dim,i_c+BS_K_dim))
+       enddo
+     enddo
+   endif
    !
  endif
  !

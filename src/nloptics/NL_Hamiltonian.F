@@ -70,27 +70,25 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 #endif
  !
  if(.not.l_use_Hxc_collisions) then
- !
- if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,NL_bands(1))
- !
- if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
- !
- ! I reconstruct the full density if necessary because both TDDFT 
- ! and JGM are not linear in rho_n and require the full density
- ! 
- if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
- !
- if(eval_DFT) then
    !
-   ! Reconstruct the full density
+   if(eval_HARTREE .or.  eval_DFT) call el_density_vbands(E,k,rho_n,V_bands,NL_bands(1))
    !
-   call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
-   V_xc_sc=V_xc-V_xc_0
+   if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
- else
-   V_xc_sc=cZERO
- endif
- !
+   ! I reconstruct the full density if necessary because both TDDFT 
+   ! and JGM are not linear in rho_n and require the full density
+   ! 
+   if(eval_DFT) then
+     !
+     ! Reconstruct the full density
+     !
+     if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
+     !
+     call XC_potential_driver(E,k,WF_KIND,WF_xc_functional,1)
+     V_xc_sc=V_xc-V_xc_0
+     !
+   endif
+   !
  endif
  !
  ! Evaluate the Polarization 
@@ -180,7 +178,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
        !  
        if(n_spinor==1) then
-          if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+          if (eval_Hartree.and.eval_DFT) then
+            call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+          elseif(eval_Hartree.and..not.eval_DFT) then
+            call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
+          endif
        elseif (n_spinor==2) then
           if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
           if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')

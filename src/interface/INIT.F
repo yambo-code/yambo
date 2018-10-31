@@ -1299,7 +1299,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
-#if defined _OPENMP && defined _SC && !defined _RT && !defined_NL
+#if defined _OPENMP && defined _SC && !defined _RT && !defined _NL
      if (l_eval_collisions)    n_threads_SE=0
 #endif
 #if defined _OPENMP && defined _SC && defined _RT

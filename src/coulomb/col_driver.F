@@ -48,7 +48,7 @@ subroutine col_driver(bare_NG,q)
  use pars,          ONLY:SP,schlen,pi
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
- use stderr,        ONLY:string_pack,intc,gen_fmt
+ use stderr,        ONLY:STRING_pack,intc,gen_fmt
  use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
  use D_lattice,     ONLY:DL_vol
@@ -136,8 +136,8 @@ subroutine col_driver(bare_NG,q)
        write (msg_dum(i2-i1+1),trim(fmt_dum)) trim(ch_dum),r_dum
        !
      enddo
-     if (i1==1) call msg('nr',trim(string_pack(msg_dum(1),msg_dum(2))))
-     if (i1/=1) call msg(' r',trim(string_pack(msg_dum(1),msg_dum(2))))
+     if (i1==1) call msg('nr',trim(STRING_pack(msg_dum(1),msg_dum(2))))
+     if (i1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
    enddo
  endif
  !

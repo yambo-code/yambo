@@ -30,15 +30,10 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 &                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
- use com,                 ONLY:msg,write_to_report,more_io_path,com_path
+ use com,                 ONLY:msg,more_io_path,com_path
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
-#if defined _MEM_CHECK 
- use memory,              ONLY:MEM_manager
-#endif
- use LIVE_t,              ONLY:live_timing_is_on
- use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
 #if defined _YPP_RT
@@ -79,7 +74,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  ncpu       =np
  myid       =pid
  infile     =inf
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)
@@ -90,12 +85,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
- !
- ! Switch off report file support
- !
- live_timing_is_on =myid==0
- write_to_report   =myid==0
- write_to_log      =myid==0
+ call SET_job_strings_and_dirs(js)
  !
  ! DB1
  !
@@ -131,7 +121,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    return
  endif
  !
- ! INPUT FILE
+ ! INPUT FILE parsing
  !
  call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
@@ -259,19 +249,12 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #endif
  !
- ! Memory Overview
- !=================
-#if defined _MEM_CHECK 
+ ! CLOSING
+ !=========
  !
- call section('*','Memory Overview')
+ call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
  !
- call MEM_manager("",REPORT="final")
- !
-#endif
- !
- ! END
- !
- call ypp_finalize(" ")
+ call INIT_ypp(en,instr,lnstr,.TRUE.)
  !
  return
  !

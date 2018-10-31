@@ -39,20 +39,7 @@
  Command line structure
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
-  {"help",  "h","Short Help",0,0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0,0}, 
-  {"jobstr","J","Job string identifier",0,0,1,0,1},   
-  {"infver","V","Input file verbosity [opt=gen,qp,rt,nl,all]",0,0,1,0,0},    
-  {"ifile", "F","Input file",0,0,1,0,1},              
-  {"idir",  "I","Core I/O directory",0,0,1,0,1},         
-  {"odir",  "O","Additional I/O directory",0,0,1,0,1},        
-  {"cdir",  "C","Communications I/O directory",0,0,1,0,1},
-#if defined _MPI
-  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
-#endif
-#if defined _OPENMP
-  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
-#endif
+#include "common_options.h"
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom]",0,0,1,0,0}, 
   {"QPDBs",  "q","(g)enerate-modify/(m)erge quasi-particle databases",0,0,1,0,0}, 
   {"wannier","i","Wannier 90 interface",0,0,0,0,0}, 
@@ -74,21 +61,18 @@
 #endif
   {"freehole","f","Free hole position [excitons plot]",0,0,0,0,0}, 
   {"kpts_map","m","BZ map fine grid to coarse",0,0,0,0,0}, 
-  {"WFs",     "w","WFs:(p)erturbative SOC mapping or (c)onvertion to new I/O format",0,0,1,0,0},
+  {"WFs",     "w","WFs:(p)erturbative SOC mapping or (c)onversion to new I/O format",0,0,1,0,0},
   {"fixsyms", "y","Remove symmetries not consistent with an external perturbation",0,0,0,0,0},
 #if defined _YPP_RT
-  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(m)anual,(f)ermi]",0,0,1,0,0}, 
+  {"RTDBs",   "c","Carriers [(e)nergy,(k)-space,(f)ermi]",0,0,1,0,0}, 
   {"RealTime","t","TD-polarization [(X)response,Tr(a)bs]",0,0,1,0,0}, 
   {"RealTime","n","NEQ plot opt#1 [(o)ccupations,(l)ifetimes,(d)ensity]",0,0,2,0,0}, 
-  {"DESC",    " ","         opt#2 occ. [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
-  {"DESC",    " ","         opt#2 life [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
-  {"DESC",    " ","         opt#2 den. [(t)ime]",0,0,0,0,0}, 
+  {"DESC",    " ","         opt#1 o => opt#2 [(b)ands,(t)ime,(e)nergy,(d)os]",0,0,0,0,0},
+  {"DESC",    " ","         opt#1 l => opt#2 [(b)ands,(t)ime,(e)nergy]",0,0,0,0,0},
+  {"DESC",    " ","         opt#1 d => opt#2 [(t)ime]",0,0,0,0,0}, 
 #endif
 #if defined _YPP_NL
-/* 
-  {"nonlinear","u","Non-linear (r)esponse, (e)xcitation analysis",0,0,1,0,0}, 
-*/
-  {"nonlinear","u","Non-linear response",0,0,0,0,0}, 
+  {"nonlinear","u","Non-linear response analysis",0,0,0,0,0}, 
 #endif
 #if defined _YPP_ELPH && ! defined _YPP_RT
   {"phonons","p","Phonon [(d)os,(e)lias,(a)mplitude]",0,0,1,0,0}, 

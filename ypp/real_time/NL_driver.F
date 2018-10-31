@@ -36,7 +36,7 @@ subroutine NL_driver(en,k)
  use com,            ONLY:msg,error,warning
  use real_time,      ONLY:NE_steps,RT_step,NE_time,NE_steps
  use stderr,         ONLY:intc,real2ch
- use RT_control,     ONLY:JPC_RT_IO_t
+ use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -65,7 +65,7 @@ subroutine NL_driver(en,k)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_Nonlinear=io_NL(ID)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
- l_skip_pol_and_curr_IO=.false.
+ l_skip_OBS_IO=.false.
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
  YAMBO_ALLOC(Probe_frequency,(n_frequencies))
@@ -121,10 +121,10 @@ subroutine NL_driver(en,k)
  !
  if (any((/trim(Efield_probe%ef_name) == 'SIN', trim(Efield_probe%ef_name) == 'SOFTSIN', &
 &          trim(Efield_probe%ef_name) == 'ANTIRES'/)).and.RT_conf%T_range(1)<0._SP) then
-    RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
+    RT_conf%T_range(1) = OBS_RT_IO_t%Time(OBS_RT_IO_t%N)-T_period
  endif
  !
- call RT_time_configuration_setup('POLARIZATION',JPC_RT_IO_t)
+ call RT_time_configuration_setup('POLARIZATION',OBS_RT_IO_t)
  !
  ! Check if total simulation time is long enough for analysis  
  !
@@ -204,12 +204,11 @@ subroutine NL_driver(en,k)
      !
   case ('DELTA','PULSE')
     !
-    YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,3))
-    RT_P_t(:,:) =RT_P_probe(:,i_Probe,:)
-    if(trim(RT_conf%damping) /= "NONE") &
-&     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,3)
+    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
+    Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+    if(trim(RT_conf%damping) /= "NONE") call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
     call RT_X_LRR_real_field(en)
-    YAMBO_FREE(RT_P_t)
+    YAMBO_FREE(Pol%F_t)
      !
      if(l_print_pwr_spectrum) then
      endif

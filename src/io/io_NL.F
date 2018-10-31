@@ -25,17 +25,13 @@ integer function io_NL(ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
- use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_correlation,NL_er,NL_correlation,n_frequencies,      & 
-&                        WF_sample,WF_sample_ondisk,V_bands_t,NL_INIT_WF_sample, &
-&                        NL_COPY_WF_sample,NL_set_WF_sample,NL_ALLOC_WF_sample,n_order
- use real_time,     ONLY:Integrator_name,NE_steps,RT_step,RT_bands
- use RT_control,    ONLY:JPC_RT_IO_t
- use fields,        ONLY:Efield,EtoT
- use electrons,     ONLY:levels,n_sp_pol
+ use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,n_frequencies
+ use real_time,     ONLY:NE_steps
+ use RT_control,    ONLY:OBS_RT_IO_t
+ use fields,        ONLY:Efield
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
+&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -53,7 +49,6 @@ integer function io_NL(ID)
  character(lchlen)    :: local_description(100)
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
- real(SP)             :: WF_sample_range(2) 
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
@@ -69,8 +64,6 @@ integer function io_NL(ID)
    io_NL=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,GAUGE=.true.)
    if (io_NL/=0) goto 1
    !
-   call NL_INIT_WF_sample(WF_sample_ondisk)
-   if(write_is_on(ID)) call NL_COPY_WF_sample(WF_sample,WF_sample_ondisk)
    io_NL=variables_NL(ID,local_description)
    !
    if (io_NL/=0) goto 1
@@ -78,18 +71,18 @@ integer function io_NL(ID)
    ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
-      JPC_RT_IO_t%N         =NE_steps    
-      JPC_RT_IO_t%last_point=NE_steps    ! 
+      OBS_RT_IO_t%N         =NE_steps
+      OBS_RT_IO_t%last_point=NE_steps
    endif
    !
    call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=JPC_RT_IO_t%N)
+   call io_elemental(ID,I0=OBS_RT_IO_t%N)
    call io_elemental(ID,VAR="IO_TIME_LAST_POINT",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=JPC_RT_IO_t%last_point)
+   call io_elemental(ID,I0=OBS_RT_IO_t%last_point)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   if(read_is_on(ID).and..not.allocated(JPC_RT_IO_t%Time)) allocate(JPC_RT_IO_t%Time(NE_steps))
-   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/JPC_RT_IO_t%N/))
-   call io_bulk(ID,R1=JPC_RT_IO_t%Time)
+   if(read_is_on(ID).and..not.allocated(OBS_RT_IO_t%Time)) allocate(OBS_RT_IO_t%Time(NE_steps))
+   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/OBS_RT_IO_t%N/))
+   call io_bulk(ID,R1=OBS_RT_IO_t%Time)
    !
    if (io_NL/=0) goto 1
    !
@@ -106,11 +99,6 @@ integer function io_NL(ID)
    YAMBO_ALLOC(E_tot_t,(NE_steps,3))
    YAMBO_ALLOC(E_ext_t,(NE_steps,3))
    YAMBO_ALLOC(E_ks_t,(NE_steps,3))
-   !
-!   WF_sample_range(2)= JPC_RT_IO_t%Time(NE_steps)
-!   WF_sample_range(1)= WF_sample_range(2) - EtoT(E=NL_er(1))+5._SP*RT_step
-!   call NL_set_WF_sample(WF_sample_ondisk,n_order,RT_step,WF_sample_range)
-!   call NL_ALLOC_WF_sample(WF_sample_ondisk,RT_bands(2),n_sp_pol) 
    !
  endif
  !

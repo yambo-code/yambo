@@ -23,17 +23,16 @@
 !
 subroutine RT_X_response(en,k,q)
  !
- use YPP_real_time,  ONLY:Use_FFT,RT_P_t,RT_J_t,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_IO_J_and_P,X_order,&
-&                         l_RT_X_inversion,l_skip_pol_and_curr_IO,l_force_min_damp,&
-&                         Probe_path,Pump_path,N_probes
- use RT_control,     ONLY:JPC_RT_IO_t
+ use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
+&                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,&
+&                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
+ use RT_control,     ONLY:OBS_RT_IO_t
  use pars,           ONLY:lchlen
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
- use parser_m,       ONLY:parser
  use fields,         ONLY:Efield
  use com,            ONLY:jobstr,error
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -46,13 +45,7 @@ subroutine RT_X_response(en,k,q)
  character(lchlen) :: jobstr_save
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
- call RT_IO_J_and_P_paths(en)
- !
- ! LOGICALS
- !----------
- !
- call parser('SkipJP_IO',l_skip_pol_and_curr_IO)
- call parser('FrMinDamp',l_force_min_damp)
+ call RT_OBSERVABLES_IO_paths('JP',en)
  !
  i_Probe=1
  !
@@ -70,7 +63,7 @@ subroutine RT_X_response(en,k,q)
  !
  ! Time Initialization
  !====================
- call RT_time_configuration_setup('CURRENT',JPC_RT_IO_t)
+ call RT_time_configuration_setup('CURRENT',OBS_RT_IO_t)
  !
  ! Field-Dependent actions
  !=========================
@@ -80,27 +73,30 @@ subroutine RT_X_response(en,k,q)
    !
    ! Search the database in JOBSTR,Pump_path and Probe_path
    !
-   call RT_IO_J_and_P( )
+   call RT_OBSERVABLES_IO( what='JP' )
    !
    jobstr_save=jobstr
-   if (.not.allocated(RT_J_t)) then
+   if (.not.allocated(Curr%F_t)) then
      jobstr=trim(Pump_path)
-     call RT_IO_J_and_P(mesg=trim(Pump_path))
+     call RT_OBSERVABLES_IO(what='JP', mesg=trim(Pump_path))
    endif
-   if (.not.allocated(RT_J_t)) then
+   if (.not.allocated(Curr%F_t)) then
      do i_f=1,N_probes
        jobstr=trim(Probe_path(i_f))
-       call RT_IO_J_and_P(mesg=trim(Pump_path))
-       if (allocated(RT_J_t)) exit
+       call RT_OBSERVABLES_IO( what='JP', mesg=trim(Pump_path))
+       if (allocated(Curr%F_t)) exit
      enddo
    endif
    jobstr=trim(jobstr_save)
    !
-   if (.not.allocated(RT_J_t)) call error('J and P databases not found')
+   if (.not.allocated(Curr%F_t)) call error('J and P databases not found')
    !
    !  Initialization 
    !
-   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) call RT_dump_and_write_JP()
+   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) then 
+     call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,l_skip_OBS_IO)
+     call RT_OBSERVABLES_damp_and_write(Curr,RT_conf,l_skip_OBS_IO)
+   endif
    !
    if ( l_RT_LRR_real_field ) then
      !
@@ -132,7 +128,7 @@ subroutine RT_X_response(en,k,q)
  !
  ! CLEAN
  !
- YAMBO_FREE(RT_P_t)
- YAMBO_FREE(RT_J_t)
+ YAMBO_FREE(Pol%F_t)
+ YAMBO_FREE(Curr%F_t)
  !
 end subroutine

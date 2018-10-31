@@ -35,7 +35,7 @@ subroutine NL_initialize(E,k,q)
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
- use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
+ use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
@@ -218,13 +218,13 @@ subroutine NL_initialize(E,k,q)
  ! frequencies is supported
  !
  RT_dyn_step=RT_step
- JPC_RT_IO_t%INTERVAL_time     =RT_step
- JPC_RT_IO_t%INTERVAL_time_SAVE=RT_step
- call SETUP_RT_IO_type(JPC_RT_IO_t,.TRUE.)
- YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
+ OBS_RT_IO_t%INTERVAL_time     =RT_step
+ OBS_RT_IO_t%INTERVAL_time_SAVE=RT_step
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
-   JPC_RT_IO_t%Time(NE_i_time)=Time
+   OBS_RT_IO_t%Time(NE_i_time)=Time
  enddo
  !
  ! Check Field
@@ -263,7 +263,7 @@ subroutine NL_initialize(E,k,q)
  ! =========================
  !
  call NL_INIT_WF_sample(WF_sample)
- WF_sample_range  = (/JPC_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,JPC_RT_IO_t%Time(NE_steps)/)
+ WF_sample_range  = (/OBS_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,OBS_RT_IO_t%Time(NE_steps)/)
  call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
  if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
  if (n_order > 0) then

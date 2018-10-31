@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
@@ -32,12 +32,13 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
  !
  implicit none
  !
- integer      :: ID
- character(*) :: VAR
- integer      :: VAR_SZ(:)
- integer      :: VAR_KIND
+ integer,      intent(in)  :: ID
+ character(*), intent(in)  :: VAR
+ integer,      intent(in)  :: VAR_ID
+ integer,      intent(in)  :: VAR_SZ(:)
+ integer,      intent(in)  :: VAR_KIND
  character(schlen), optional :: dim_names(:)
- character(*), optional      :: par_io_kind
+ character(*),      optional :: par_io_kind
  !
  ! Work Space
  !
@@ -49,7 +50,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
  !
  ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
  !
- if(VAR_KIND==SP)     netcdf_var_kind=nf90_float
+ if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
  if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
  if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
  if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
@@ -77,11 +78,11 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
      endif
    enddo
    !
-   nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
+   nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,VAR_ID))
    !
    if (nf_error==NF90_NOERR) then
      allocate(var_dim_db(size(VAR_SZ)))
-     nf_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),ndims=dims_db,dimids=var_dim_db)
+     nf_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID,VAR_ID),ndims=dims_db,dimids=var_dim_db)
      call netcdf_call(nf_error,ID,VAR=VAR)
      if(any((/var_dim(:)/=var_dim_db(:)/))) &
 &        call error(' Trying to owrite variable '//trim(VAR)//' in '//trim(io_file(ID))//' with wrong dimensions ')
@@ -90,11 +91,11 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
    endif
    !
    if (nf_error/=NF90_NOERR) then
-     nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID)) 
+     nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID,VAR_ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)
 #if defined _PAR_IO
      if(present(par_io_kind).and.ncpu>1) then
-       nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), netcdf_par_io_kind)
+       nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,VAR_ID), netcdf_par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
      endif
 #endif
@@ -104,7 +105,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
    shuffle=0
    deflate=1
    deflate_level=2
-   call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
+   call netcdf_call(nf90_def_var_deflate(io_unit(ID),io_netcdf_var(ID,VAR_ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
 #endif
    !
    call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
@@ -112,9 +113,9 @@ subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
    !
  else if (read_is_on(ID)) then
    !
-   call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
+   call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,VAR_ID)),ID,VAR=VAR)
 #if defined _HDF5_COMPRESSION
-   call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
+   call netcdf_call(nf90_inq_var_deflate(io_unit(ID),io_netcdf_var(ID,VAR_ID),shuffle,deflate,deflate_level),ID,VAR=VAR)
 #endif
    !
  endif

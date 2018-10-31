@@ -191,26 +191,32 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
      !  
      if(n_spinor==1) then
-        if (eval_Hartree.or.eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+        if (eval_Hartree.and.eval_DFT) then
+          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
+        elseif(eval_Hartree.and..not.eval_DFT) then
+          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
+        endif
      elseif (n_spinor==2) then
         if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
         if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
      endif
      !
-   endif
-   !
-   ! Add Ho = T+V_ion+V_h+V_xc
-   !==================
-   !
-   forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
-   !
-   if(l_use_DIPOLES) then
-     !    
-     call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
+     ! Add Ho = T+V_ion+V_h+V_xc
+     !==================
      !
-   else
+     forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
      !
-     ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
+     if(l_use_DIPOLES) then
+       !    
+       call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
+       !
+     else
+       !
+       ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
+       !
+       call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
+       !
+     endif                                                         
      !
      call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !

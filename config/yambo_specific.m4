@@ -118,12 +118,13 @@ AC_SUBST(editor)
 # Copyright (C) 2001-2016 Quantum ESPRESSO Foundation
 #
 # check if the structure mallinfo is present in malloc.h
+SAVE=$CFLAGS
 AC_CHECK_HEADER(malloc.h,have_malloc_h=1,have_malloc_h=0, )
+CFLAGS=$SAVE
 if test "$have_malloc_h" -ne 0
 then
 AC_CHECK_MEMBER([struct mallinfo.arena],
                 [AC_DEFINE(HAVE_MALLINFO)],
                 ,
                 [#include <malloc.h>])
-
 fi

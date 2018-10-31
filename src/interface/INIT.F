@@ -30,33 +30,33 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 2  : DB listing mode
  !
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim, l_pf_fxc,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
-&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,l_nl_optics,&
-&                         l_sc_magnetic
+&                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
+&                         l_sc_magnetic,l_pf_fxc,l_nl_optics
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
- use pars,           ONLY:schlen,lchlen
+ use pars,           ONLY:schlen
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spinor
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,nrnlvls,&
 &                         initmode,rnlvls,initinfio,infile_verbosity,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,V_real_time,V_parallel,V_qp,V_nl_optics
- use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu,myid
+&                         switch_off_runlevel,check_verbosity,V_nl_optics
+ use parallel_m,     ONLY:PP_redux_wait,master_cpu,ncpu
  use com,            ONLY:msg,repfile,com_path,jobstr,more_io_path,core_io_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_nb,QP_nk,QP_state,QP_reset,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
- use stderr,         ONLY:log_as_a_file,logfile,intc,string_add,string_remove
+ use stderr,         ONLY:log_as_a_file,logfile,intc,STRING_add,STRING_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -87,13 +87,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #include<memory.h>
  !
- type(levels) ::en        
-#if defined _SC
- type(levels) ::en_sc
-#endif
- type(bz_samp)::q,k   
- type(X_t)    ::X(4)
- type(w_samp) ::Xw(4)
+ type(levels)    ::en        
+ type(bz_samp)   ::q,k   
+ type(X_t)       ::X(4)
+ type(w_samp)    ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -103,10 +100,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
 &                     io_BS_Fxc_err,io_QINDX_err
 #if defined _SC
+ type(levels)      :: en_sc
  integer           :: io_SC_E_err,io_SC_V_err
 #endif
 #if defined _RT
- integer           :: io_G,io_JPSM
+ integer           :: io_G,io_OBS
 #endif
 #if defined _SC || defined _RT
  integer           :: io_COLLISIONS_err
@@ -114,7 +112,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT
- logical           :: OSTNTS_Vnl_included,QP_state_in_input_file
+ logical           :: OSTNTS_Vnl_included
  !
  integer, external :: io_Double_Grid
  !
@@ -132,7 +130,6 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(initdefs)   ::defs
- character(lchlen)::jch,rch
  integer          ::i1
  !
  ! What is running ?
@@ -163,15 +160,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  what_is_running='YAMBO_PL'
 #endif
  !
- ! Global Logicals
- !
- call SET_logicals()
- !
- ! Presets (input)
+ ! Presets
  !
  INIT = 0
  !
  if (.not.FINALIZE.and..not.CLOSE_Gs) then
+   !
+   ! Global Logicals
+   !
+   call SET_logicals()
+   !
    call E_reset(en)
 #if defined _SC
    call E_reset(en_sc)
@@ -228,7 +226,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Dump the input file
  !
  if (file_exists(trim(infile))) then
+   !
    call infile_dump()
+   !
+   call INIT_input_file( )
+   !
  else if (.not.infile_editing) then
    infile='(none)'
  endif
@@ -425,7 +427,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_JPSM=io_RT_components('JPSM',io_ID)
+ io_OBS=io_RT_components('OBSERVABLES',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_G=io_RT_components('G',io_ID)
 #endif
@@ -937,9 +939,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_START
    !
    call INIT_RT_ctl_switch('G')
-   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField UpdateSOC SaveGhistory')
-   call initactivate(1,'RTEqScatt RTzeroTempRef RTupdateEqp RTEvalEnergy RTEvalEntropy')
-   call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX COHsteps')
+   call initactivate(1,'RTskipImposeN RTeeImposeE InducedField RTUpdateSOC RTUpdateE SaveGhistory')
+   call initactivate(1,'RTEqScatt RTzeroTempRef RTEvalEnergy RTEvalEntropy')
+   call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) &
 &    call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
@@ -982,22 +984,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
 #endif
  !
- ! Are we editing the input file ?
+#if defined _RT
+ if (check_verbosity("real_time").and.l_real_time) call INIT_DephMatrix()
+#endif
  !
- if (infile_editing) then
-   open(unit=12,file=trim(infile))
-   call initinfio(defs,12)
-   close(12)
-   call PP_redux_wait
- endif
+ ! Q-points (from input/DB)
  !
- ! To handle externally defined Q-points I use the INIT_q_pts
- !
- ! (a) first check if input file contains already a list of Q-points...
- call INIT_q_points(io_QINDX_err,.FALSE.)
- !
- ! (b) ... then (re)write the file
- if (l_setup.and.infile_editing) call INIT_q_points(io_QINDX_err,.TRUE.)
+ if (l_setup.and.io_QINDX_err/=0) call INIT_q_points( )
  !
  !If qp limits are requested they are added at the end of the input file
  !
@@ -1005,35 +998,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (QP_field) then
    !
-   ! The QP_state can be read from ioxxvxc in DUMP mode or from the input file.
+   ! The QP_state can be read from DB's in DUMP mode or from the input file.
    ! The DB value is used when a new input file is created or when the previous input file
-   ! had no QP_state fields.
+   ! has no QP fields (see inside INIT_QP)
    !
    ! QP_state from DB ?
    !
-   if (allocated(QP_state)) then
-     !
-     ! QP_state from input file ?
-     !
-     call parser('QPkrange',QP_state_in_input_file)
-     !
-     if (QP_state_in_input_file) then
-       !
-       YAMBO_FREE(QP_state)
-       QP_nb=0
-       QP_nk=0
-       !
-       call QP_state_table_setup(en)
-       !
-     endif
-     !
-   else
-     !
-     call QP_state_table_setup(en)
-     !
-   endif
+   if (allocated(QP_state)) call QP_state_table_setup(en)
    !
-   call INIT_QP(.TRUE.,infile_verbosity==V_qp)
+   call INIT_QP("[GW] QP")
    !
    ! I use it to propose the value in the input file ...
    !
@@ -1044,11 +1017,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
  endif
  !
-#if defined _RT
- if(infile_verbosity==V_real_time.and.l_real_time) call INIT_DephMatrix()
-#endif
+ ! Are we editing the input file ?
  !
- if (infile_editing) return
+ if (infile_editing) then
+   open(unit=12,file=trim(infile))
+   call initinfio(defs,12)
+   close(12)
+   call PP_redux_wait
+   return
+ endif
  !
  ! Update Logicals (especially the write_to_log)
  !
@@ -1056,38 +1033,15 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Report/Log Files
  !
- if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
- if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- if (log_as_a_file) then
-  if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
-  if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
-  if (ncpu>1) then
-    if (trim(jobstr)=='') write (logfile,'(a)')  trim(com_path)//'/LOG/l'
-    if (trim(jobstr)/='') write (logfile,'(2a)') trim(com_path)//'/LOG/l-',trim(jobstr)
-  endif
- endif
- do i1=1,nrnlvls
-   rch=repfile
-   if (rstatus(i1)/=0) then
-     write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i1,1))
-     repfile=rch
-   endif
-   if (log_as_a_file) then
-     jch=logfile
-     if (rstatus(i1)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i1,1))
-     logfile=jch
-   endif
- enddo
- if (ncpu>1) then
-   jch=logfile
-   logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
- endif
- !
- ! Finalize
+ call INIT_report_and_log_files()
  !
  if (log_as_a_file) call rename_file(logfile)
+ !
  call rename_file(repfile)
+ !
+ ! Finalize
  call PP_redux_wait
+ !
  if (master_cpu) then
    open(unit=11,file=trim(repfile))
    call write_the_logo(11,' ')
@@ -1200,7 +1154,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
        ! Davide: Why this ? Can't I do SC-IP calculation with v_HXC=0 ?
-       if (trim(H_potential)=="IP") H_potential="default"
+       if (STRING_match(H_potential,"IP")) H_potential="DEFAULT"
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
@@ -1251,13 +1205,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Setup logicals which are not runlevels
      !
-     l_rpa_IP     = trim(Chi_mode)=='IP'.or.trim(BSK_mode)=='IP'
-     l_td_hartree = trim(Chi_mode)=='Hartree'.or.trim(BSK_mode)=='Hartree'
-     l_alda_fxc = trim(Chi_mode)=='ALDA'.or.trim(BSK_mode)=='ALDA'
-     l_lrc_fxc  = trim(Chi_mode)=='LRC' 
-     l_pf_fxc   = trim(Chi_mode)=='PF' 
-     l_bs_fxc   = trim(Chi_mode)=='BSfxc' .or.trim(BSK_mode)=='BSfxc'
-     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc.or.l_pf_fxc
+     l_rpa_IP     = STRING_match(trim(Chi_mode),"IP").or.STRING_match(trim(BSK_mode),"IP")
+     l_td_hartree = STRING_match(trim(Chi_mode),"HARTREE").or.STRING_match(trim(BSK_mode),"HARTREE")
+     l_alda_fxc   = STRING_match(trim(Chi_mode),"ALDA").or.STRING_match(trim(BSK_mode),"ALDA")
+     l_lrc_fxc    = STRING_match(trim(Chi_mode),"LRC")
+     l_pf_fxc     = STRING_match(Chi_mode,'PF')      
+     l_bs_fxc     = STRING_match(trim(Chi_mode),"BSFXC").or.STRING_match(trim(BSK_mode),"BSFXC")
+     l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
      l_td_hf      = trim(BSK_mode)=="HF"
      l_W_eh       = trim(BSK_mode)=="SEX"
      !
@@ -1367,8 +1321,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
-     if (len_trim(BSE_mode)==0   ) BSE_mode="retarded"
-     if (trim(BSE_mode)=="causal") BSE_mode="retarded"
+     if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
+     if (STRING_match(trim(BSE_mode),"causal")) BSE_mode="retarded"
      !
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
@@ -1382,8 +1336,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        if(l_W_eh) then
          call parser('WehDiag',l_W_eh_diag)
          call parser('WehCpl' ,l_W_eh_cpl )
-         if (     l_W_eh_diag)         BS_res_mode=trim(string_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(string_remove(BS_cpl_mode,'c'))
+         if (     l_W_eh_diag)         BS_res_mode=trim(STRING_add(BS_res_mode,'d'))
+         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(STRING_remove(BS_cpl_mode,'c'))
        endif
      endif
      !
@@ -1413,9 +1367,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      use com,    ONLY:error
      use LIVE_t, ONLY:USER_wall_time_string,GET_user_WALL_time
-     use stderr, ONLY:string_split
+     use stderr, ONLY:STRING_split
      use it_m,   ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,&
-&                     V_real_time,V_all
+&                     V_real_time,V_all,V_parallel
      implicit none
      integer     :: init_
      character(*):: rstr
@@ -1440,7 +1394,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      ! Split the string in pieces
      !
-     call string_split(rstr,rstr_piece)
+     call STRING_split(rstr,rstr_piece)
      n_pieces=0
      do i1=1,2*nrnlvls
        if (len_trim(rstr_piece(i1))>0) n_pieces=n_pieces+1
@@ -1518,8 +1472,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
 &             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
-&             runlevel_is_on('cohsex')  &
-&           ) Chi_mode='hartree'
+&             runlevel_is_on('life')         .or.  runlevel_is_on('cohsex') .or. &
+&             runlevel_is_on('ppa')) &
+&           Chi_mode='HARTREE'
          !
          ! BSE/LLR
          !
@@ -1560,8 +1515,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              if (l_bse) call initactivate(1,'bse')
            end if
            !
-           BSK_mode='Hartree'
-           Chi_mode='Hartree'
+           BSK_mode='HARTREE'
+           Chi_mode='HARTREE'
            !
            if(l_bse)  then
              if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
@@ -1570,7 +1525,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
              if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')    BSK_mode='BSfxc'
            else if(l_chi) then
-             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  Chi_mode='HARTREE'
              if( trim(rstr_piece(i1+1)) == 'alda')     Chi_mode='ALDA'
              if( trim(rstr_piece(i1+1)) == 'lrc')      Chi_mode='LRC'
              if( trim(rstr_piece(i1+1)) == 'bsfxc')    Chi_mode='BSfxc'
@@ -1599,7 +1554,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (BSK_mode=='IP') call switch_off_runlevel('bss',on_name=' ')
            if (BSK_mode==' ') then
              BSK_mode="SEX"
-             Chi_mode="Hartree"
+             Chi_mode="HARTREE"
            endif
            !
          endif
@@ -1613,6 +1568,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if !defined  _ELPH && !defined _QED
            l_elel_corr=.true.
 #endif
+           !
+           if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'
            !
          endif
          !
@@ -1679,7 +1636,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             H_potential='default'
+             H_potential='DEFAULT'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then
@@ -1697,7 +1654,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if ( trim(rstr_piece(i1)) == 'potential' )  then
            !
            H_potential=""
-           if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
+           if ( index(trim(rstr_piece(i1+1)),'cohsex')>0) then
+             H_potential='COH+SEX'
+             if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
+           else if ( index(trim(rstr_piece(i1+1)),'sex')>0 ) then
              H_potential='SEX'
              if (i_cycle==2.and..not.runlevel_is_on('negf')) call initactivate(1,'em1s')
            else if ( index(trim(rstr_piece(i1+1)),'f')>0) then
@@ -1712,7 +1672,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'd') then
-             H_potential='default'
+             H_potential='DEFAULT'
            endif
            !
            if ( trim(rstr_piece(i1+1)) == 'ip') then

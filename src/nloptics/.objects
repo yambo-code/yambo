@@ -1,4 +1,4 @@
-objs = NL_driver.o NL_initialize.o NL_start_and_restart.o el_density_vbands.o NL_Integrator.o \
+objs = NL_driver.o NL_initialize.o NL_start_and_restart.o el_density_vbands.o NL_Integrator.o NL_damping.o \
        NL_Hamiltonian.o NL_output.o DIP_polarization.o NL_average_operator.o EXC_macroscopic_JGM.o \
        NL_databases_IO.o NL_damping.o NL_build_dG_lesser.o NL_build_valence_bands.o \
        NL_average_operator.o NL_current.o NL_Berry_current.o 

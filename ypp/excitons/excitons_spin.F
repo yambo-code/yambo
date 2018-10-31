@@ -27,6 +27,7 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  use pars,          ONLY:SP
  use BS,            ONLY:BS_H_dim
+ use BS_solvers,    ONLY:BSS_n_eig
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,n_spinor
  use YPP,           ONLY:excitons_sort_and_report
@@ -36,7 +37,7 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  type(bz_samp) :: Xk
  type(levels)  :: Xen
  complex(SP)   :: BS_R_right(BS_H_dim),BS_E(BS_H_dim)
- integer       :: n_lambda,BS_E_degs(BS_H_dim),lambda_s(n_lambda)
+ integer       :: n_lambda,BS_E_degs(BSS_n_eig),lambda_s(n_lambda)
  !
  real(SP)      :: S_z(BS_H_dim),S_sq(BS_H_dim)
  !

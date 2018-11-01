@@ -71,8 +71,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw)
  !
  ! GPL_EXCLUDE_END
  !
- if (.not.(BS_q(1)==1.and.BS_q(2)==1).and.(.not.trim(BSE_mode)=='resonant')) &
-&  call error(' Finite q beyond resonant not implemented')
+ if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) &
+&  call error(' Finite q and coupling not implemented')
  !
  ! Joint DOS
  !===========

@@ -105,9 +105,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  do i1=1,n_vars
    call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
-           &                [2,BS_K_dim,BS_K_dim],SP,dim_names(:2),     par_io_kind='independent')
+           &                [2,BS_K_dim,BS_K_dim],SP,dim_names(:3),     par_io_kind='independent')
    call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
-           &                  [BS_K_dim,BS_K_dim],0 ,dim_names_done(:1),par_io_kind='independent')
+           &                  [BS_K_dim,BS_K_dim],0 ,dim_names_done(:2),par_io_kind='independent')
  enddo
  !
 #endif

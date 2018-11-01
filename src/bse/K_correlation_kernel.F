@@ -44,7 +44,7 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  integer      :: iO1,i_block_1,iO2,i_block_2,i_g1,i_g2,i_g3
  complex(SP)  :: PHASE_1,PHASE_2,O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
  !
- if (i_k_sp_pol==i_p_sp_pol) then
+ if (i_k_sp_pol/=i_p_sp_pol) then
    K_correlation_kernel=cZERO
    return
  endif

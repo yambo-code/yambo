@@ -21,35 +21,43 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
+subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect,NN_n_of_nearest
+ use RT_control,     ONLY:RT_carriers_to_RT_k
  !
 #include<memory.h>
  !
- integer,intent(in)    :: bands(2)
+ integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E
  type(bz_samp), intent(in)    :: K
  character(3),  intent(in)    :: what ! X,K,G,R
+ character(*),  intent(in)    :: mode ! NN,BOLTZ
  real(SP),      intent(in)    :: Time
- logical,       intent(in)    :: l_f,l_E,l_W
+ logical,       intent(in)    :: l_f,l_E,l_W,l_B
  !
  ! Work space
  !
- integer               :: nb(2)
+ integer               :: nb(2),ID
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
- real(SP), allocatable :: V_in_tmp(:)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
+ type(bz_samp)         :: RT_k
  !
+ ! Setup
+ !-------
  l_DbGd=K%nibz_FineGd>0     .and. .not.l_RT_abs_yambo
+ l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
+ NN_n_of_nearest=NN
+ ID=0
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -67,14 +75,19 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
    !
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
-   call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt,E%nk)
+   call bz_samp_reset(RT_k)
+   call RT_carriers_to_RT_k(RT_k)
+   !
+   call Interpolate_and_transfer("df",K,.FALSE.)
    E%f=E%fo+E%df
    !
    if (l_DbGd) then
+     !
      YAMBO_ALLOC(E%df_FineGd,(E%nb_FineGd,E%nk_FineGd,n_sp_pol))
      E%df_FineGd=0._SP
-     call Interpolate_and_transfer("df",RT_carriers%delta_f,K%pt_FineGd,K%nibz_FineGd)
+     call Interpolate_and_transfer("df",K,.TRUE.)
      E%f_FineGd=E%f_FineGd+E%df_FineGd
+     !
    endif
    !
  endif
@@ -90,9 +103,9 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
      E%Eo=E%E
    endif
    !
-   call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt,E%nk)
+   call Interpolate_and_transfer("dE",K,.FALSE.)
    !
-   if (l_DbGd) call Interpolate_and_transfer("dE",RT_carriers%delta_E,K%pt_FineGd,K%nibz_FineGd)
+   if (l_DbGd) call Interpolate_and_transfer("dE",K,.TRUE.)
    !
  endif
  !
@@ -128,30 +141,25 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
+ call INTERPOLATION_driver(operation="END",ID_op=ID)
+ !
  contains
   !
-  subroutine Interpolate_and_transfer(OBJ,V_in,K_in,NK)
+  subroutine Interpolate_and_transfer(OBJ,K,IS_DBGD)
     !
     character(*) :: OBJ
-    integer      :: NK
-    real(SP)     :: V_in(RT_carriers%nstates),K_in(NK,3)
+    type(bz_samp):: K
+    logical      :: IS_DBGD
     !
-    ! ws
-    !
-    logical      :: l_renormalize
+    ! Work Space
     integer      :: ik,i_carr,nb_max
-    real(SP)     :: K_weights(NK),V_out(RT_carriers%nb(1):RT_carriers%nb(2),NK,n_sp_pol)
-    !
-    l_renormalize=.not.l_real_time.and..not.l_RT_abs_yambo
     ! 
-    if (NK/=E%nk) K_weights=K%weights_FineGd
-    if (NK==E%nk) K_weights=K%weights
+    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
+&                                     operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
+    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
     !
-    call Nearest_kpt_interpolation(RT_carriers%nk,NK,RT_carriers%nb,RT_carriers%nstates,1,1,RT_carriers%table, &
-&                                  RT_carriers%kpt,K_in,RT_carriers%k_weight,K_weights,V_in,V_out,what,l_renormalize)
-    !
-    if (NK/=E%nk) nb_max=min(nb(2),E%nb_FineGd)
-    if (NK==E%nk) nb_max=    nb(2)
+    nb_max=    nb(2)
+    if (IS_DBGD) nb_max=min(nb(2),E%nb_FineGd)
     !
     if (OBJ=="df") then
       !
@@ -161,26 +169,26 @@ subroutine RT_interpolation(bands,E,K,what,Time,l_f,l_E,l_W)
       E%nbf=nb(1)-1
       E%nbm=nb(2)
       !
-      if(NK==E%nk) then
-        E%df( nb(1):nb(2),:,:)=V_out(nb(1):nb(2),:,:)
-        df_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
-        i_carr=1
-      else if (NK/=E%nk) then
-        E%df_FineGd( nb(1):nb_max,:,:)=V_out(nb(1):nb_max,:,:)
+      if (IS_DBGD) then
+        E%df_FineGd( nb(1):nb_max,:,:)=INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
         i_carr=2
+      else
+        E%df( nb(1):nb(2),:,:)=INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+        df_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
+        i_carr=1
       endif
       !
-      do ik=1,NK
-        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(V_out(nb(1):nb_max,ik,:)))*K_weights(ik)/2._SP
+      do ik=1,K%nibz
+        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(INTERP_obj(ID)%INTERP(nb(1):nb_max,ik,:)))*K%weights(ik)/2._SP
       enddo
       !
     else if (OBJ=="dE") then
       !
-      if(NK==E%nk) then
-        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+V_out(nb(1):nb(2),:,:)
-        dE_Max=maxval(abs(V_out(nb(1):nb(2),:,:)))
-      else if (NK/=E%nk) then
-        E%E_FineGd( nb(1):nb_max,:,:)=E%E_FineGd(nb(1):nb_max,:,:)+V_out(nb(1):nb_max,:,:)
+      if (IS_DBGD) then
+        E%E_FineGd( nb(1):nb_max,:,:)=E%E_FineGd(nb(1):nb_max,:,:)+INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
+      else
+        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+        dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
       endif
       !
     endif

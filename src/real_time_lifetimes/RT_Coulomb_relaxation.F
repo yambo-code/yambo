@@ -27,10 +27,10 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
  use electrons,       ONLY:levels,spin_occ
  use R_lattice,       ONLY:qindx_S,qindx_C,bz_samp
  use real_time,       ONLY:E_E_Electron_lifetime,E_E_Hole_lifetime,RT_occupations_locked,&
-&                          RT_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                          RT_H_occupations,RT_E_occupations,l_RT_uses_E_FineGd,RT_E_and_k,&
+&                          RT_life_delta_occupations,RT_E_occupations_reference,RT_H_occupations_reference,&
+&                          l_RT_uses_E_FineGd,RT_E_and_k,&
 &                          l_initial_equilibrium,DbGd_EE_scatt_table,DbGd_EE_Nk_table,RT_eh_en,&
-&                          RT_scatt_tresh,RT_ibz_coo
+&                          RT_ibz_coo
  use plasma,          ONLY:EH_gas
  use collision_ext,   ONLY:GW_NEQ_COLL_element,GW_NEQ_collisions
  use parallel_m,      ONLY:PAR_Q_index,PAR_IND_Q,PAR_IND_Plasma,PAR_PLASMA_index
@@ -115,11 +115,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        DELTA_W=abs(E%W(i_m,i_p,1))+abs(E%W(i_mp,i_pmq,1))
        !
        f0_p   = RT_E_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
-       df_p   = RT_delta_occupations(i_m ,RT_ibz_coo(i_p,1))
+       df_p   = RT_life_delta_occupations(i_m ,RT_ibz_coo(i_p,1))
        Hole_f0_p   = RT_H_occupations_reference(i_m ,RT_ibz_coo(i_p,1))
        !
        f0_pmq = RT_E_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
-       df_pmq = RT_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
+       df_pmq = RT_life_delta_occupations(i_mp ,RT_ibz_coo(i_pmq,1))
        Hole_f0_pmq  = RT_H_occupations_reference(i_mp ,RT_ibz_coo(i_pmq,1))
        !
        E_plasma=E_plasma+cmplx(delta_E,delta_W)
@@ -161,11 +161,11 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
        !
        if (.not. l_RT_uses_E_FineGd) then
          !
-         if(RT_E_and_k%En(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
-         if(RT_E_and_k%En(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik    ,1)>RT_eh_en(2)) cycle
+         if(RT_E_and_k%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
+         if(RT_E_and_k%E(i_n ,ik    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
          !
-         DELTA_E=RT_E_and_k%En(i_np,ik_m_q,1)-RT_E_and_k%En(i_n,ik,1)
-         DELTA_W=RT_E_and_k%W(i_np,ik_m_q,1) +RT_E_and_k%W(i_n,ik,1)
+         DELTA_E=RT_E_and_k%E(i_np,ik_m_q,1)-RT_E_and_k%E(i_n,ik,1)
+         DELTA_W=RT_E_and_k%W(i_np,ik_m_q,1)+RT_E_and_k%W(i_n,ik,1)
          !
        endif
        !
@@ -190,22 +190,22 @@ subroutine RT_Coulomb_relaxation(ik,E,k,q)
            !
            if (l_RT_uses_E_FineGd) then
              !
-             if(RT_E_and_k%En(i_np,ik_m_q_rim,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_np,ik_m_q_rim,1)>RT_eh_en(2)) cycle
-             if(RT_E_and_k%En(i_n ,ik_rim    ,1)<RT_eh_en(1) .or. RT_E_and_k%En(i_n ,ik_rim    ,1)>RT_eh_en(2)) cycle
+             if(RT_E_and_k%E(i_np,ik_m_q_rim,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_np,ik_m_q_rim,1)>RT_eh_en(2)) cycle
+             if(RT_E_and_k%E(i_n ,ik_rim    ,1)<RT_eh_en(1) .or. RT_E_and_k%E(i_n ,ik_rim    ,1)>RT_eh_en(2)) cycle
              !
-             DELTA_E=RT_E_and_k%En(i_np,ik_m_q_rim,1)-RT_E_and_k%En(i_n,ik_rim,1)
-             DELTA_W=RT_E_and_k%W(i_np,ik_m_q_rim,1) +RT_E_and_k%W(i_n,ik_rim,1)
+             DELTA_E=RT_E_and_k%E(i_np,ik_m_q_rim,1)-RT_E_and_k%E(i_n,ik_rim,1)
+             DELTA_W=RT_E_and_k%W(i_np,ik_m_q_rim,1)+RT_E_and_k%W(i_n,ik_rim,1)
              !
            endif
            !
-           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,RT_scatt_tresh,'EE')/&
+           P_pl_abs  =RT_G_retarded_convolution(DELTA_E, plasma_freq,DELTA_W,plasma_width,'EE')/&
 &                     real(DbGd_EE_Nk_table(ik_rim,ik_m_q))
            !
            if(abs(P_pl_abs)<1.E-7) cycle
            !
            f0_kmq           = RT_E_occupations_reference(i_np,ik_m_q_rim)/spin_occ
            Hole_f0_kmq      = RT_H_occupations_reference(i_np,ik_m_q_rim)/spin_occ
-           df_kmq           = RT_delta_occupations(i_np,ik_m_q_rim)/spin_occ
+           df_kmq           = RT_life_delta_occupations(i_np,ik_m_q_rim)/spin_occ
            !
            if(l_initial_equilibrium) then
              Hole_occupation     = N0_h_plasma*f0_kmq     

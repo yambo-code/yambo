@@ -23,7 +23,7 @@
 !
 subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2KEL
  use electrons,      ONLY:levels,spin_occ
@@ -47,6 +47,9 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  complex(SP) :: dG_lesser_h(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk), &
 &               dG_lesser_e(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
+ TEntr=rZERO
+ Entr=rZERO
+ EnEntr=rZERO
  !
  if(.not.eval_entropy) return
  !
@@ -64,9 +67,9 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  do ik_RT=1,RT_nk
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
-       if ( RT_E_and_k%En(ib1,ik_RT,1)<=0._SP .and. RT_E_and_k%En(ib2,ik_RT,1)<=0._SP ) then
+       if ( RT_E_and_k%E(ib1,ik_RT,1)<=0._SP .and. RT_E_and_k%E(ib2,ik_RT,1)<=0._SP ) then
          dG_lesser_h(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
-       else if ( RT_E_and_k%En(ib1,ik_RT,1)> 0._SP .and. RT_E_and_k%En(ib2,ik_RT,1)> 0._SP ) then
+       else if ( RT_E_and_k%E(ib1,ik_RT,1)> 0._SP .and. RT_E_and_k%E(ib2,ik_RT,1)> 0._SP ) then
          dG_lesser_e(ib1,ib2,ik_RT)=dG_lesser(ib1,ib2,ik_RT)
        endif
      enddo
@@ -79,7 +82,6 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  EnEntr(1)=E_IP
  call RT_energy_components(en,k,dG_lesser_h,Energies_e,EnEntr(2),'el ')
  call RT_energy_components(en,k,dG_lesser_e,Energies_h,EnEntr(3),'hol')
- !
  !
  ! Compute IP Entropy
  !
@@ -94,8 +96,8 @@ subroutine RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
        if(RT_H_occupations(ib1,ik_RT)>0._SP) S_h=-RT_H_occupations(ib1,ik_RT)*log(RT_H_occupations(ib1,ik_RT)/spin_occ)
        if(RT_E_occupations(ib1,ik_RT)>0._SP) S_e=-RT_E_occupations(ib1,ik_RT)*log(RT_E_occupations(ib1,ik_RT)/spin_occ)
        VALUE_tmp(1)=VALUE_tmp(1)+S_e+S_h
-       if ( RT_E_and_k%En(ib1,ik_RT,1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
-       if ( RT_E_and_k%En(ib1,ik_RT,1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e
+       if ( RT_E_and_k%E(ib1,ik_RT,1)<=0._SP ) VALUE_tmp(2)=VALUE_tmp(2)+S_h
+       if ( RT_E_and_k%E(ib1,ik_RT,1)> 0._SP ) VALUE_tmp(3)=VALUE_tmp(3)+S_e
      enddo
      Entr=Entr+VALUE_tmp*k%weights(ik)/real(RT_Nk_ibz(ik),SP)
    enddo

@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl,X_static)
+integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,lchlen,schlen,IP
- use BS,            ONLY:BS_identifier,BS_K_dim,BS_pert_soc
- use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS
+ use BS,            ONLY:BS_identifier,BS_K_dim,BS_H_dim,BS_pert_soc
+ use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
@@ -35,16 +35,16 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  !
  implicit none
  !
- integer              :: iq,ID,BS_H_dim,BSS_n_eig
- complex(SP)          :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
- real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer  :: bsR_kerr(:)
- type(X_t),intent(in) :: X_static
- character(lchlen)    ::local_description(100)
+ type(X_t),intent(in)           :: X_static
+ integer                        :: iq,ID
+ complex(SP)        , optional  :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
+ real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
+ complex(SP),pointer, optional  :: bsR_kerr(:)
  !
  ! Work Space
  !
  character(schlen):: db_name
+ character(lchlen):: local_description(100)
  !
  call timing('io_BSS_diago',OPR='start')
  !

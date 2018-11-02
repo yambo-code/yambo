@@ -144,7 +144,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
      !
-     !
      ! Degeneration Finder
      !====================
      call degeneration_finder(E%E(:RT_bands(2),ik,1),    RT_bands(2),first_el(1,:),n_of_el(1,:),n_deg_grp(1),0.0001/HA2EV)

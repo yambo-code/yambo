@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_k_grid(E,k,q)
+subroutine RT_k_grid(E,k,q)
  !
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
@@ -30,14 +30,14 @@ integer function RT_k_grid(E,k,q)
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
-&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands
+&                         RT_all2ibz,RT_Nk_ibz,l_RT_uses_E_FineGd,RT_bands,RT_nk
  use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
- type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: k
- type(bz_samp),intent(in) :: q
+ type(levels), intent(in)    :: E
+ type(bz_samp),intent(in)    :: k
+ type(bz_samp),intent(in)    :: q
  !
  ! Work space
  !
@@ -65,7 +65,7 @@ integer function RT_k_grid(E,k,q)
  !==============================
  if (.not.l_RT_uses_E_FineGd) then
    !
-   RT_k_grid=k%nibz
+   RT_nk    =k%nibz
    !
    RT_Nk_ibz=1
    DbGd_EE_percent=0._SP
@@ -90,34 +90,37 @@ integer function RT_k_grid(E,k,q)
  ! DbGd support
  !=============
  !
- RT_k_grid=0
+ RT_nk    =0
  !
  do ik=1,k%nibz
+   !
    ik_bz=1+sum(k%nstar(:ik-1))
-   RT_ibz_coo(ik,:)=(/RT_k_grid+1,RT_k_grid+1+k%nibz_mapped(ik)/)
-   RT_k_grid=RT_k_grid+1+k%nibz_mapped(ik)
+   RT_ibz_coo(ik,:)=(/RT_nk+1,RT_nk+1+k%nibz_mapped(ik)/)
+   RT_nk=RT_nk+1+k%nibz_mapped(ik)
    RT_Nk_ibz(ik)=k%nibz_mapped(ik)+1
+   !
  enddo
- YAMBO_ALLOC(RT_all2ibz,(RT_k_grid))
+ !
+ YAMBO_ALLOC(RT_all2ibz,(RT_nk))
  do ik=1,k%nibz
    do ik_rim=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-     RT_all2ibz(ik_rim)=ik
+     RT_all2ibz(ik_rim)    =ik
    enddo
  enddo
  !
  if( l_elel_scatt .and. (index(what_is_running,'YPP')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
-     YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_k_grid,RT_k_grid))
-     YAMBO_ALLOC(DbGd_EE_Nk_table,(RT_k_grid,k%nibz))
+     YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_nk,RT_nk))
+     YAMBO_ALLOC(DbGd_EE_Nk_table,(RT_nk,k%nibz))
    endif
    !
    l_check=.false.
    DbGd_EE_scatt_table=.false.
    DbGd_EE_Nk_table=0
    !
-   do iqbz=1,q%nbz
-     do ik=1,k%nibz
+   do ik=1,k%nibz
+     do iqbz=1,q%nbz
        !
        ik_m_q= k%sstar(qindx_S(ik,iqbz,1),1)
        !
@@ -169,4 +172,4 @@ integer function RT_k_grid(E,k,q)
  !
  ! GPL_EXCLUDE_END
  !
-end function RT_k_grid
+end subroutine RT_k_grid

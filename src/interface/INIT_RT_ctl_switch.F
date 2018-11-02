@@ -32,5 +32,6 @@ subroutine INIT_RT_ctl_switch(what)
  ! Work Space
  !
  call initactivate(1,what//'fnRTdb')
+ call initactivate(1,what//'fnRT_N')
  !
 end subroutine

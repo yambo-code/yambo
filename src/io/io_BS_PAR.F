@@ -27,25 +27,17 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  use netcdf
  use parallel_m
- use com,           ONLY:msg,get_name,error,file_exists
- use pars,          ONLY:SP,schlen,lchlen,nf90_SP
+ use com,           ONLY:error
+ use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
- use BS,            ONLY:BS_K_dim, l_restart_bse, BS_K_coupling
- use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,netcdf_call,io_action,OP_WR,&
-&                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
-&                        io_header,io_mode,io_unit,io_netcdf_var,io_file,io_control,RD_CL,OP_WR_CL
+ use BS,            ONLY:BS_K_dim,BS_K_coupling
  use BS_solvers,    ONLY:variables_BS
+ use IO_m,          ONLY:frag_BS_K,write_is_on,VERIFY,&
+&                        io_connect,io_disconnect,io_elemental,def_variable_bulk,&
+&                        io_header,io_mode,io_file
+ !
  implicit none
-!#define UPLO
-#if defined _DOUBLE
-#define NF_PUT_VARA nf_put_vara_double
-#define NF_GET_VARA nf_get_vara_double
-#else
-#define NF_PUT_VARA nf_put_vara_real
-#define NF_GET_VARA nf_get_vara_real
-#endif
- include 'netcdf.inc'
  !
  type(X_t) :: X 
  integer :: io_BS, iq, mode_flag, stat, ID, dims(3)
@@ -54,21 +46,10 @@ subroutine io_BS_PAR_init(iq,X,ID)
  character(lchlen) :: local_description(100)
  character(schlen) :: dim_names(3), dim_names_done(2)
  !
+ !
  ! Connect to parallel netCDF file.
  !
- db_name='BS_Q'//trim(intc(iq))//'.nc'
- ! Hack to find if the name exists
- call io_control(ACTION=RD_CL,ID=ID)
- io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
- if (file_exists(io_file(ID))) then
-    call msg("s","BSE file found in "//trim(io_file(ID)))
-    l_restart_bse = .true.
- else
-    call msg("s","BSE file not found. Creating an empty one." )
- endif
- call io_disconnect(ID)
- !
- call io_control(ACTION=OP_WR_CL,ID=ID)
+ db_name='BS_PAR_Q'//trim(intc(iq))
  io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  !
  ! Check if the file already contains data and it its consistent
@@ -93,12 +74,12 @@ subroutine io_BS_PAR_init(iq,X,ID)
  dim_names =      [character(schlen) :: 'complex', 'BS_K_flat_dim']
  dim_names_done = [character(schlen) :: 'BS_K_flat_dim']
  flattened_block_size_dim = BS_K_dim*(BS_K_dim+1)/2
- call def_variable_bulk( ID, "BSE_RESONANT_FLAT", [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
- call def_variable_bulk( ID, "BSE_RESONANT_FLAT_DONE", [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT_FLAT",      1, [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT_FLAT_DONE", 2,   [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
  !
  if (BS_K_coupling) then
-   call def_variable_bulk( ID, "BSE_COUPLING_FLAT", [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
-   call def_variable_bulk( ID, "BSE_COUPLING_FLAT_DONE", [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING_FLAT",      3, [2,flattened_block_size], SP, dim_names(:2), par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING_FLAT_DONE", 4,   [flattened_block_size], 0, dim_names_done(:1), par_io_kind='independent')
  end if
  !
 #else
@@ -107,12 +88,12 @@ subroutine io_BS_PAR_init(iq,X,ID)
  !
  dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
  dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
- call def_variable_bulk( ID, "BSE_RESONANT", [2,BS_K_dim,BS_K_dim], SP, dim_names(:3), par_io_kind='independent')
- call def_variable_bulk( ID, "BSE_RESONANT_DONE", [BS_K_dim,BS_K_dim], 0, dim_names_done(:2), par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT",      1, [2,BS_K_dim,BS_K_dim], SP, dim_names(:3),      par_io_kind='independent')
+ call def_variable_bulk( ID, "BSE_RESONANT_DONE", 2,   [BS_K_dim,BS_K_dim], 0 , dim_names_done(:2), par_io_kind='independent')
  !
  if (BS_K_coupling) then
-   call def_variable_bulk( ID, "BSE_COUPLING", [2,BS_K_dim,BS_K_dim], SP, dim_names(:3), par_io_kind='independent')
-   call def_variable_bulk( ID, "BSE_COUPLING_DONE", [BS_K_dim,BS_K_dim], 0, dim_names_done(:2), par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING",      3, [2,BS_K_dim,BS_K_dim], SP, dim_names(:3),      par_io_kind='independent')
+   call def_variable_bulk( ID, "BSE_COUPLING_DONE", 4,   [BS_K_dim,BS_K_dim], 0 , dim_names_done(:2), par_io_kind='independent')
  end if
  !
 #endif
@@ -125,14 +106,49 @@ subroutine io_BS_PAR_free(ID)
  !
  use IO_m,          ONLY:io_disconnect
  !
- integer  :: ID, stat
+ integer, intent(in)  :: ID
  !
  call io_disconnect(ID)
  !
 end subroutine
 
 
-subroutine io_BS_PAR_write_block(iq,i_block,ID)
+subroutine io_BS_par_check(iq,ID)
+ !
+ use pars,          ONLY:schlen
+ use parallel_m,    ONLY:MPI_COMM_WORLD
+ use stderr,        ONLY:intc
+ use BS,            ONLY:l_restart_bse
+ use IO_m,          ONLY:io_connect,io_disconnect,io_file
+ use com,           ONLY:msg,file_exists
+ !
+ implicit none
+ !
+ integer  :: iq,ID
+ character(schlen) :: db_name
+ !
+ integer :: io_BS
+ !
+ ! Hack to find if the name exists
+ ! DS warning. Here if file is found in alternative -J folder code will not work ...
+ !
+ db_name='BS_PAR_Q'//trim(intc(iq))
+ io_BS=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ !
+ if (file_exists(io_file(ID))) then
+   call msg("s","BSE file found in "//trim(io_file(ID)))
+   l_restart_bse = .true.
+ else
+   call msg("s","BSE file not found. Creating an empty one." )
+   l_restart_bse = .false.
+ endif
+ !
+ call io_disconnect(ID)
+ !
+end subroutine io_BS_par_check
+
+
+subroutine io_BS_PAR_block(iq,i_block,ID)
  !
  ! Write one block of the BSE matrix to disk
  ! There is a single file for the full BSE matrix with maximum four variables
@@ -146,21 +162,28 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  use BS,            ONLY:BS_blk
  use IO_m,          ONLY:io_bulk,io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
  use timing_m,      ONLY:timing
+ !
  implicit none
  !
  integer  :: ID
  !
  ! Work Space
  !
- integer             ::i_block,x1,x2,n1,n2,iq
+ integer             ::i_block,x1,x2,n1,n2,iq,VAR_IDs(2)
  character(schlen)   ::ch
  !
  call timing('io_BS',OPR='start')
  !
  ! Get the type of block that we want to write 
  !
- if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
- if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
+ if (BS_blk(i_block)%mode=="R") then
+   ch="BSE_RESONANT"
+   VAR_IDs=(/1,2/)
+ endif
+ if (BS_blk(i_block)%mode=="A") then
+   ch="BSE_COUPLING"
+   VAR_IDs=(/3,4/)
+ endif
  !
  ! Get dimensions
  x1=BS_blk(i_block)%coordinate(1)
@@ -168,13 +191,13 @@ subroutine io_BS_PAR_write_block(iq,i_block,ID)
  n1=BS_blk(i_block)%size(1)
  n2=BS_blk(i_block)%size(2)
  !  
- call io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat,BS_blk(i_block)%done)
+ call io_BS_PAR_arbitrary_block(ID,ch,VAR_IDs,x1,x2,n1,n2,BS_blk(i_block)%mat,BS_blk(i_block)%done)
  !   
  call timing('io_BS',OPR='stop')
  !
 end subroutine
 
-subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
+subroutine io_BS_PAR_arbitrary_block(ID,ch,VAR_IDs,x1,x2,n1,n2,mat,done)
  !
  ! Given coordinates and dimensions of the blocks write them from the file
  ! (This will be used to create the matrix distributed among the cpus)
@@ -182,23 +205,20 @@ subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
  use netcdf
  use pars,          ONLY:SP,schlen
  use BS,            ONLY:BS_K_dim
- use IO_m,          ONLY:io_unit, io_netcdf_var, netcdf_call
+ use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,read_is_on,write_is_on
+ !
  implicit none
- include 'netcdf.inc'
  !
  character(schlen)     ::ch
- integer, intent(in)   ::ID,x1,x2,n1,n2
- integer               ::idx,jdx,stat,g1,g2,i1,i2,matid,doneid
- complex(SP),intent(in)::mat(n1,n2) 
- character,intent(in)  ::done(n1,n2)
+ integer, intent(in)   ::ID,x1,x2,n1,n2,VAR_IDs(2)
+ integer               ::idx,jdx,stat,g1,g2,i1,i2
+ complex(SP),intent(inout)::mat(n1,n2) 
+ character,intent(inout)  ::done(n1,n2)
  ! 
 #ifdef UPLO
  !
  ! Write one element at a time in 1D upper triangular
  !
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',matid); call netcdf_call(stat,ID)
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT_DONE',doneid); call netcdf_call(stat,ID)
- !
  do i2=1,n2
    do i1=1,n1
      !calculate general index
@@ -211,120 +231,20 @@ subroutine io_BS_PAR_write_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
      idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
      !write the element 
      !write(*,*) i1,i2,g1,g2,idx
-     stat = NF_PUT_VARA(io_unit(ID), matid, [1,idx], [2,1], mat(i1,i2))
-     stat = nf_put_vara_text(io_unit(ID), doneid, [idx], [1], done(i1,i2))
+     call io_variable_bulk(ID, VAR_IDs(1),  C1=  mat(i1:i1,i2), IPOS=[1,idx] )
+     call io_variable_bulk(ID, VAR_IDs(2), CH1= done(i1:i1,i2), IPOS=[  idx] )
    enddo
  enddo
+ !
 #else
  !
  ! Write one block at a time in 2D
  !
- stat = nf90_inq_varid(io_unit(ID),ch,matid); call netcdf_call(stat,ID)
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_DONE',doneid); call netcdf_call(stat,ID)
- !
- stat = NF_PUT_VARA(io_unit(ID), matid, [1,x1,x2], [2,n1,n2], mat); call netcdf_call(stat,ID)
- stat = nf_put_vara_text(io_unit(ID), doneid, [x1,x2], [n1,n2], done); call netcdf_call(stat,ID)
+ call io_variable_bulk(ID, VAR_IDs(1),  C2=mat , IPOS=(/1,x1,x2/) )
+ call io_variable_bulk(ID, VAR_IDs(2), CH2=done, IPOS=(/  x1,x2/) )
  !
 #endif
  !
- stat = nf_sync(io_unit(ID)); call netcdf_call(stat,ID)
+ stat = nf90_sync(io_unit(ID)); call netcdf_call(stat,ID)
  !
 end subroutine
-
-subroutine io_BS_PAR_read_block(iq,i_block,ID)
- !
- ! Read one block of the BSE matrix to disk
- !
- use netcdf
- use pars,          ONLY:SP,schlen,lchlen
- use X_m,           ONLY:X_t
- use stderr,        ONLY:intc
- use BS,            ONLY:BS_blk,BS_K_dim
- use IO_m,          ONLY:io_elemental,io_bulk,netcdf_call,&
-&                        read_is_on,write_is_on,io_unit,io_netcdf_var,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,manage_OP_IF_START_and_CL_IF_END
- use timing_m,      ONLY:timing
- implicit none
- include 'netcdf.inc'
- !
- integer  :: ID,stat
- !
- ! Work Space
- !
- integer             ::i_block,i1,i2,n1,n2,idx,jdx,g1,g2,x1,x2,iq
- character(schlen)   ::ch
- !
- call timing('io_BS',OPR='start')
- !
- ! Get the type of block that we want to write 
- !
- if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
- if (BS_blk(i_block)%mode=="A") ch="BSE_COUPLING"
- !
- ! Get dimensions
- x1=BS_blk(i_block)%coordinate(1)
- x2=BS_blk(i_block)%coordinate(2)
- n1=BS_blk(i_block)%size(1)
- n2=BS_blk(i_block)%size(2)
- !  
- call io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,BS_blk(i_block)%mat,BS_blk(i_block)%done)
- !   
- call timing('io_BS',OPR='stop')
- !
-end subroutine
-
-subroutine io_BS_PAR_read_arbitrary_block(ID,ch,x1,x2,n1,n2,mat,done)
- !
- ! Given coordinates and dimensions of the blocks read them from the file
- ! (This will be used to create the matrix distributed among the cpus)
- !
- use netcdf
- use pars,          ONLY:SP,schlen
- use BS,            ONLY:BS_K_dim
- use IO_m,          ONLY:io_unit, io_netcdf_var, netcdf_call
- implicit none
- include 'netcdf.inc'
- !
- character(schlen)       ::ch
- integer, intent(in)     ::ID,x1,x2,n1,n2
- integer                 ::idx,jdx,stat,g1,g2,i1,i2,matid,doneid
- complex(SP),intent(inout) ::mat(n1,n2) 
- character,intent(inout)   ::done(n1,n2)
- !
- ! First read the done/not done logicals
- !
-#ifdef UPLO
- !
- ! Read one block from upper triangular
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT',matid); call netcdf_call(stat,ID)
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_FLAT_DONE',doneid); call netcdf_call(stat,ID)
- !
- do i2=1,n2
-   do i1=1,n1
-     !calculate general index
-     g1 = (x1-1) + (i1-1)
-     g2 = (x2-1) + (i2-1)
-     !ignore elements not in upper triangular part
-     if (g1>g2) cycle
-     !calculate tridiagonal index
-     jdx = g1*BS_K_dim+g2    ! position in full matrix
-     idx = jdx-g1*(g1+1)/2+1 ! position in upper triangular matrix
-     !write the element 
-     !write(*,*) i1,i2,g1,g2,idx
-     stat = nf_get_vara_text(io_unit(ID), doneid, [idx], [1], done(i1,i2))
-     stat = NF_GET_VARA(io_unit(ID), matid, [1,idx], [2,1], mat(i1,i2))
-   enddo
- enddo
-#else
- !
- ! Read one block at a time in 2D
- stat = nf90_inq_varid(io_unit(ID),trim(ch),matid); call netcdf_call(stat,ID)
- stat = nf90_inq_varid(io_unit(ID),trim(ch)//'_DONE',doneid); call netcdf_call(stat,ID)
- !
- stat = nf_get_vara_text(io_unit(ID), doneid, [x1,x2], [n1,n2], done); call netcdf_call(stat,ID)
- stat = NF_GET_VARA(io_unit(ID), matid, [1,x1,x2], [2,n1,n2], mat); call netcdf_call(stat,ID)
- !
-#endif
- !
-end subroutine
-

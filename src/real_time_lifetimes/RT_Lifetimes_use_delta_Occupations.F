@@ -21,42 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
+subroutine RT_Lifetimes_use_delta_Occupations( )
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt,l_elphoton_scatt
  use electrons,      ONLY:spin_occ
  use pars,           ONLY:SP
  use parallel_m,     ONLY:ncpu,PAR_COM_PLASMA_INDEX
  use real_time,      ONLY:RT_occupations_locked,RT_E_occupations_reference,RT_H_occupations_reference,&
-&                         RT_delta_occupations,l_use_updated_reference,l_initial_equilibrium,&
-&                         RT_H_occupations,RT_E_occupations,RT_TIME_status,RT_delta0_occupations,&
+&                         RT_life_delta_occupations,l_RT_relaxation_update_reference,&
+&                         RT_H_occupations,RT_E_occupations,RT_delta_occupations,&
 &                         SAVED_lifetime,Life_MEM_steps,RT_bands,&
 &                         E_E_Hole_lifetime,E_E_Electron_lifetime,&
 &                         E_PHOT_Hole_lifetime,E_PHOT_Electron_lifetime,&
 &                         E_P_Hole_lifetime,E_P_Electron_lifetime, &
 &                         E_P_Ho_abs_lifetime,E_P_El_abs_lifetime,&
-&                         G_lesser_reference,RT_nk,NE_i_time
+&                         G_lesser_reference,RT_nk
  !
  implicit none
- !
- logical                      :: l_eval
  !
  ! Work Space
  !
  integer :: ik,ib
- real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference,df_max
+ real(SP):: f_E_occ,f_H_occ,f_E_occ_reference,f_H_occ_reference
  !
- l_use_updated_reference=.not.l_initial_equilibrium
- !
- if (l_use_updated_reference) l_use_updated_reference=(RT_TIME_status(NE_i_time)> 1)
- !
- if (.not.l_eval) return
- !
- if (l_use_updated_reference) then
-   !
-   df_max=0._SP
+ if (l_RT_relaxation_update_reference) then
    !
    do ik=1,RT_nk
+     !
      do ib=RT_bands(1),RT_bands(2)
        !
        f_E_occ=RT_E_occupations(ib,ik)
@@ -64,10 +55,8 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        f_E_occ_reference=RT_E_occupations_reference(ib,ik)
        f_H_occ_reference=RT_H_occupations_reference(ib,ik)
        !
-       if(f_E_occ<=0.5*spin_occ) RT_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
-       if(f_E_occ> 0.5*spin_occ) RT_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
-       !
-       df_max=max(df_max,abs(RT_delta_occupations(ib,ik)))
+       if(f_E_occ<=0.5*spin_occ) RT_life_delta_occupations(ib,ik) =   f_E_occ-f_E_occ_reference
+       if(f_E_occ> 0.5*spin_occ) RT_life_delta_occupations(ib,ik) = -(f_H_occ-f_H_occ_reference)
        !
      enddo
    enddo
@@ -75,17 +64,14 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
  endif
  !
  do ik=1,RT_nk
+   !
    do ib=RT_bands(1),RT_bands(2)
      !
      RT_occupations_locked(ib,ik)=.FALSE. 
      !
-     if (l_use_updated_reference) then
+     if (l_RT_relaxation_update_reference) then
        !
-       !if (abs( RT_delta_occupations(ib,ik) )<1.E-4*df_max) RT_occupations_locked(ib,ik)=.TRUE.
-       !
-       !DEBUG<
-       !if( RT_occupations_locked(ib,ik) ) write(*,*) 'state= ',ib,ik,' locked'
-       !DEBUG>
+       ! _lifetime(ib,ik) are never used at different k-points. While occupations are
        !
        ! March 2015. AndreaM. The npcu fraction here is because the Lifetimes go trough
        ! an ALL2ALL later. BUT the e-p & e-g lifetimes use only ncpu/PAR_COM_Plasma_INDEX%n_CPU CPU's.
@@ -113,7 +99,7 @@ subroutine RT_Lifetimes_use_delta_Occupations(l_eval)
        !
      else
        !
-       RT_delta_occupations(ib,ik)=RT_delta0_occupations(ib,ik)
+       RT_life_delta_occupations(ib,ik) =RT_delta_occupations(ib,ik)
        RT_E_occupations_reference(ib,ik)=         aimag(G_lesser_reference(ib,ib,ik))
        RT_H_occupations_reference(ib,ik)=spin_occ-aimag(G_lesser_reference(ib,ib,ik))
        !

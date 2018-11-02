@@ -23,15 +23,15 @@
 !
 subroutine ELPH_format_converter(E,Xk,q)
  !
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:schlen
  use electrons,           ONLY:levels
  use ELPH,                ONLY:elph_global_free,elph_global_alloc,&
 &                              elph_gkkp,elph_DW,elph_nDBs
  use ELPH_old,            ONLY:elph_global_free_old,elph_global_alloc_old,&
 &                              elph_gkkp_old,elph_DW_old
- use com,                 ONLY:msg,warning,file_exists,error,core_io_path,more_io_path
+ use com,                 ONLY:core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp
- use IO_m,                ONLY:io_control,OP_APP_WR_CL,OP_WR_CL,OP_RD_CL,DUMP,IO_and_Messaging_switch
+ use IO_m,                ONLY:io_control,OP_APP_CL,OP_WR_CL,OP_RD_CL,DUMP,IO_and_Messaging_switch
  use LIVE_t,              ONLY:live_timing
  !
  implicit none
@@ -103,7 +103,7 @@ subroutine ELPH_format_converter(E,Xk,q)
    !
    core_io_path=more_io_path
    !
-   call io_control(ACTION=OP_APP_WR_CL,SEC=(/iq+1/),ID=ID_WR)
+   call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_WR)
    io_elph_err=io_ELPH(ID_WR,trim(db_name))
    !
    call live_timing(steps=1)

@@ -43,7 +43,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg,
   COMPLEX(SP), ALLOCATABLE :: auxk1(:,:), auxk2(:,:), aux_nc(:,:)
   REAL(SP), ALLOCATABLE :: auxg(:,:), aux_gk(:,:), aux_egk(:,:)
   INTEGER :: ibnd, ibnd_loc, nbnd_loc  ! counters on bands
-  INTEGER :: ikb, jkb, ih, jh, ijh, na, np, is, js
+  INTEGER :: ikb, jkb, ih, jh, ijh, na, np, is, js,i_err
   ! counters on beta functions, atoms, atom types, spin
   !
 ! AF: calbec is assumed to be already computed before
@@ -138,7 +138,7 @@ SUBROUTINE sum_bec ( ik, current_spin, ibnd_start, ibnd_end, this_bgrp_nbnd, wg,
                  !
               ELSE IF ( gamma_only ) THEN
                  !
-                 CALL errore("sum_bec","not implemented in Yambo")
+                 CALL errore("sum_bec","not implemented in Yambo",i_err)
 !                 !
 !!$omp parallel do default(shared), private(ih,ikb,ibnd,ibnd_loc)
 !                 DO ih = 1, nh(np)

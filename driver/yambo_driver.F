@@ -42,14 +42,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _MEM_CHECK 
- use memory,        ONLY:MEM_manager
-#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
+#endif
+#if defined _MEM_CHECK 
+ use memory,        ONLY:MEM_manager
 #endif
  !
  implicit none
@@ -82,11 +81,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  myid     =pid
  infile   =inf
  !
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call it_reset(1)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ call SET_job_strings_and_dirs(js)
  !
  ! not resetted in INIT call
  !
@@ -304,34 +304,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  !
  ! GPL_EXCLUDE_END
+ ! 
+ ! CLOSING
+ !=========
  !
-
- !
- ! Timing Overview
- !=================
- call section('*','Timing Overview')
- call timing_overview(LIST=global_list,MAIN_NAME="yambo")
- !
- ! Memory Overview
- !=================
-#if defined _MEM_CHECK 
- !
- call section('*','Memory Overview')
- !
- call MEM_manager("",REPORT="final")
- !
-#endif
- !
- ! GAME OVER :(
- !==============
- call section('X','Game Over & Game summary')
- !
- ! Update INIT defs
+ call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
  i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
- ! Finalize
- call timing_deallocate( )
  call it_reset(-1)
  !
 end function

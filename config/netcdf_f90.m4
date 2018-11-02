@@ -75,6 +75,11 @@ AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
 AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
              [Activate the HDF5 parallel io. Default is no.]))
 #
+# HDF5 FOR P2Y (also requires parallel HDF5)
+#
+AC_ARG_ENABLE(hdf5_p2y_support, AC_HELP_STRING([--enable-hdf5-p2y-support],
+ [Activate HDF5 support in p2y. Default is no unless parallel HDF5 libs are linked.]))
+#
 enable_netcdf="no"
 enable_hdf5="no"
 compile_netcdf="no"
@@ -84,7 +89,8 @@ internal_hdf5="no"
 def_netcdf=""
 NETCDF_OPT="--disable-netcdf-4"
 NETCDF_VER="v3"
-HDF5_OPT=""
+HDF5_OPT="--disable-parallel";
+HDF5_VER="serial";
 #
 # Other libs
 #
@@ -98,11 +104,20 @@ AC_LANG_POP(C)
 #
 # global options
 #
-#
 if test -d "$with_hdf5_libdir"          ; then enable_hdf5=yes ; fi
 if test -d "$with_hdf5_path"            ; then enable_hdf5=yes ; fi
 if test x"$with_hdf5_libs" != "x"       ; then enable_hdf5=yes ; fi
 if test x"$enable_netcdf_hdf5" = "xyes" ; then enable_hdf5=yes ; fi
+#
+if test x"$enable_hdf5_p2y_support" = "xyes" ; then enable_hdf5=yes ; fi
+#
+if test x"$enable_hdf5_par_io" = "xyes" ; then
+  enable_netcdf_hdf5=yes ;
+  enable_hdf5=yes ;
+fi
+#    
+if test x"$enable_hdf5_par_io" = "xyes" || test x"$enable_hdf5_p2y_support" = "xyes" ; then HDF5_VER="parallel"; fi
+#
 #
 #
 # Set NETCDF LIBS and FLAGS from INPUT
@@ -177,13 +192,13 @@ if test x"$enable_hdf5" = "xno"; then
     FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $save_fcflags";
     LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $save_libs";
     #
-     AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
-       use netcdf
-       implicit none
-       integer nf_err
-       integer ID
-       nf_err = nf90_create('netcdf_test',nf90_share,ID)]),
-       [netcdf=yes], [netcdf=no]);
+    AC_COMPILE_IFELSE(AC_LANG_PROGRAM([], [
+      use netcdf
+      implicit none
+      integer nf_err
+      integer ID
+      nf_err = nf90_create('netcdf_test',nf90_share,ID)]),
+      [netcdf=yes], [netcdf=no]);
     #
     if test "x$netcdf" = "xyes"; then
       AC_MSG_RESULT([yes]) ;
@@ -210,16 +225,19 @@ if test x"$enable_hdf5" = "xno"; then
     # the following may change if we use a different version
     # of the netcdf lib
     #
-    NETCDF_LIBS="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" ;
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
-    NETCDFF_LIBS="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" ;
-    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    #
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}"
+    #
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
     if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
     #
     netcdf=yes
-    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a"; then
+    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a"; then
       compile_netcdf="no" ;
       AC_MSG_RESULT([already compiled]) ;
     else 
@@ -273,15 +291,33 @@ if test x"$enable_hdf5" = "xyes"; then
   #
   LIBS="$try_HDF5_LIBS"
   #
-  AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-     use hdf5
-     use netcdf
-     implicit none
-     integer cmode
-     cmode = NF90_HDF5
-     !cmode = nf90_abort(1)
-     call h5open_f(cmode)]),
-     [hdf5=yes], [hdf5=no]);
+  #if test "$HDF5_VER" = "serial" ; then
+    AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+       use hdf5
+       use netcdf
+       implicit none
+       integer  error
+       error = NF90_HDF5
+       call h5open_f(error)
+       call h5close_f(error)
+       ]),[hdf5=yes], [hdf5=no]);
+  #fi;
+  ##
+  #AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+  #   use hdf5
+  #   use netcdf
+  #   implicit none
+  #   integer  error
+  #   error = NF90_HDF5
+  #   call h5open_f(error)
+  #   call h5close_f(error)
+  #   ]),[hdf5_par=yes], [hdf5_par=no]);
+  ##
+  #if test "$HDF5_VER" = "parallel" ; then hdf5="$hdf5_par" ; fi
+  #if test "$HDF5_VER" = "serial" ; then
+  #  if test "x$hdf5_par" = "xyes" ; then HDF5_VER="parallel" ; fi
+  #fi;
+  #
   netcdf=$hdf5;
   if test "x$hdf5" = xyes; then
     HDF5_LIBS="$try_HDF5_LIBS" ;
@@ -290,7 +326,10 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_INCS="$try_NETCDF_INCS" ;
     NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
     NETCDFF_INCS="$try_NETCDFF_INCS" ;
+    #if test $HDF5_VER = "parallel"; then AC_MSG_RESULT([yes - parallel lib found]) ; fi
+    #if test $HDF5_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
     AC_MSG_RESULT([yes]) ;
+    HDF5_VER="unknown"
   fi
   #
   FCFLAGS="$save_fcflags" ;
@@ -306,12 +345,48 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_OPT="--enable-netcdf-4";
     NETCDF_VER="v4";
     #
-    HDF5_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5hl_fortran.a ${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5_fortran.a ${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5_hl.a ${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a" ;
-    HDF5_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include" ;
-    NETCDF_LIBS="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" ;
-    NETCDF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
-    NETCDFF_LIBS="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" ;
-    NETCDFF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/include" ;
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}" ;
+    NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
+    #
+    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
+    HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    #
+    netcdf=yes ;
+    hdf5=yes ;
+    #
+    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PATH}/lib/libhdf5.a"; then
+      #
+      compile_netcdf="no" ;
+      compile_hdf5="no" ;
+      AC_MSG_RESULT([already compiled]) ;
+      #
+    elif test "$HDF5_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+      #
+      HDF5_VER="parallel";
+      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
+      NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
+      NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      AC_MSG_RESULT([already compiled (using parallel version)]) ;
+      #
+    else
+      #  
+      compile_netcdf="yes";
+      compile_hdf5="yes" ;
+      #
+      if test "$HDF5_VER" = "serial";   then HDF5_OPT="--disable-parallel" ; fi
+      if test "$HDF5_VER" = "parallel"; then HDF5_OPT="--enable-parallel"  ; fi
+      #
+      AC_MSG_RESULT([to be compiled]) ;
+      #
+    fi
+    #
     #
     if test "$use_libz"    = "yes"; then HDF5_LIBS="$HDF5_LIBS -lz"   ; fi
     if test "$use_libsz"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -lsz"  ; fi
@@ -319,34 +394,29 @@ if test x"$enable_hdf5" = "xyes"; then
     if test "$use_libdl"   = "yes"; then HDF5_LIBS="$HDF5_LIBS -ldl"  ; fi
     if test "$use_libcurl" = "yes"; then HDF5_LIBS="$HDF5_LIBS -lcurl"; fi
     #
-    netcdf=yes ;
-    hdf5=yes ;
-    #
-    if test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdf.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/lib/libnetcdff.a" &&
-       test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libhdf5.a"; then
-      compile_netcdf="no" ;
-      compile_hdf5="no" ;
-      AC_MSG_RESULT([already compiled]) ;
-    else  
-      compile_netcdf="yes";
-      compile_hdf5="yes" ;
-      if test "$mpibuild" = "no"  ; then HDF5_OPT="--disable-parallel"; fi ;
-      if test "$mpibuild" = "yes" ; then HDF5_OPT="--enable-parallel" ; fi ;
-      AC_MSG_RESULT([to be compiled]) ;
-    fi
-    #
   fi
 fi
 #
-# Large File Support
+#
+# NETCDF-HDF5 LIBS
+#
+if test x"$hdf5" = "xyes"; then
+  def_netcdf="-D_HDF5_LIB";
+  #if test "$HDF5_VER" = "serial" || test "$HDF5_VER" = "unknown" ; then
+  #  def_netcdf="-D_HDF5_LIB";
+  #elif test "$HDF5_VER" = "parallel"; then
+  #  def_netcdf="-D_HDF5_PARLIB";
+  #fi
+fi
+#
+# Disable large File Support
 #
 if test x"$enable_netcdf_classic" = "xyes"; then
-  def_netcdf="-D_NC_CLASSIC";
-fi
+  def_netcdf="${def_netcdf} -D_NC_CLASSIC";
 #
 # NETCDF-HDF5 IO
 #
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" ; then
   def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
 #
@@ -371,6 +441,7 @@ AC_SUBST(NETCDFF_INCS)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(HDF5_OPT)
+AC_SUBST(HDF5_VER)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)

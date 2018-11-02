@@ -54,10 +54,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
- use YPP_real_time,  ONLY:l_RealTime,l_RT_2D_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
-&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_NL_X,&
-&                         l_RTpump_energy,l_RTpump_kspace,l_RTpump_manual,l_RTpump_Fermi,n_regions,&
-&                         RT_conf
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+&                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
+&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
+&                         l_NL_X,l_NL_exc,RT_conf
  use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif

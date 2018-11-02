@@ -32,7 +32,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  use electrons,           ONLY:levels,spin,spin_occ
  use R_lattice,           ONLY:bz_samp
  use parallel_m,          ONLY:PAR_IND_QP,PAR_IND_G_b,PAR_IND_DIPk_ibz,PAR_nG_bands,PAR_nQP,PP_redux_wait,&
-&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index
+&                              PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_DIPk_ibz_index,mpi_comm_world
  use DIPOLES,             ONLY:DIP_P,DIPOLE_t
  use X_m,                 ONLY:X_t
  use wave_func,           ONLY:wf_ng
@@ -74,7 +74,7 @@ subroutine QED_Radiative_Lifetimes(E,k,q,qp,X,Dip)
  !=========
  !
  call DIPOLE_dimensions(E,Dip,QP_n_G_bands,(/0._SP,0._SP,0._SP/))
- call DIPOLE_IO(k,E,Dip,'read ',io_err)
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,mpi_comm_world)
  !
  ! Loop
  !======

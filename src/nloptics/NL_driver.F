@@ -45,7 +45,7 @@ subroutine NL_driver(E,X,Dip,k,q)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,mpi_comm_world
  !
 #include<memory.h>
  !
@@ -121,7 +121,7 @@ subroutine NL_driver(E,X,Dip,k,q)
  !Dip%approach='Covariant' 
  if(l_use_DIPOLES .or. load_Overlaps()/=0) then
    call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
-   call DIPOLE_IO(k,E,Dip,'read ',io_err)
+   call DIPOLE_IO(k,E,Dip,'read ',io_err,mpi_comm_world)
  endif
  !
  eval_OVERLAPS =.false.

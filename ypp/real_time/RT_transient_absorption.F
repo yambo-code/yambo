@@ -43,6 +43,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use frequency,       ONLY:w_samp
  use interfaces,      ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
+ use parallel_m,      ONLY:mpi_comm_world
  use parser_m,        ONLY:parser
  !
 #include<memory.h>
@@ -88,7 +89,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
  !
  io_DIP=.TRUE.
- call DIPOLE_IO(Xk,Xen,Dip,'read',io_err)
+ call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,mpi_comm_world)
  call DIPOLE_expand_and_project(Xk,Dip)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))

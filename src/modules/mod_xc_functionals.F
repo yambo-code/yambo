@@ -29,7 +29,12 @@ module xc_functionals
  use xc_f90_lib_m
  use xc_f90_types_m
  use libxc_funcs_m
+ !
  implicit none
+ !
+ integer  :: xc_spin(2)
+ integer, allocatable :: xc_spin_map1(:,:)
+ integer, allocatable :: xc_spin_map2(:,:,:)
  !
  integer,  public:: GS_xc_KIND
  integer,  public:: GS_xc_FUNCTIONAL

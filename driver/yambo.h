@@ -36,25 +36,7 @@
  Command line structure
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
-  {"help",   "h","Short Help",0,0,0,0,0},              
-  {"lhelp",  "H","Long Help",0,0,0,0,0},               
-  {"jobstr", "J","Job string identifier",0,0,1,0,1},   
-  {"infver", "V","Input file verbosity",0,0,1,0,0},    
-  {"DESC",   " ","[opt=RL,kpt,sc,qp,io,gen,resp,all,par]",0,0,0,0,0},
-  {"ifile",  "F","Input file",0,0,1,0,1},              
-  {"idir",   "I","Core I/O directory",0,0,1,0,1},         
-  {"odir",   "O","Additional I/O directory",0,0,1,0,1},   
-  {"cdir",   "C","Communications I/O directory",0,0,1,0,1},
-  {"dbpr",   "D","DataBases properties",0,0,0,0,0},    
-  {"wallt",  "W","Wall Time limitation (1d2h30m format)",0,0,1,0,1}, 
-  {"quiet",  "Q","Don't launch the text editor",0,0,0,0,0}, 
-#if defined _MPI
-  {"parenv", "E","Environment Parallel Variables file",0,0,1,0,1},               
-  {"nompi",  "M","Switch-off MPI support (serial run)",0,0,0,0,0}, 
-#endif
-#if defined _OPENMP
-  {"noopenmp","N","Switch-off OpenMP support (single thread run)",0,0,0,0,1}, 
-#endif
+#include "common_options.h"
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
 #if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC

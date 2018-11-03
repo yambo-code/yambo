@@ -128,16 +128,16 @@ module interpolate
      integer,       intent(out)          :: ID
    end subroutine  INTERPOLATION_coefficients
    !
-   subroutine INTERPOLATION_BZ(R1D,R2D,C1D,C2D,E,K,ID)
+   subroutine INTERPOLATION_BZ(K,NK,ID,R1D,R2D,C1D,C2D,E)
      use pars,       ONLY:SP
      use R_lattice,  ONLY:bz_samp
      use electrons,  ONLY:levels
      implicit none
      type(bz_samp), intent(in)            :: K
+     integer,       intent(in)            :: ID,NK
      real(SP),      intent(out), optional :: R1D(:,:),R2D(:,:,:)
      complex(SP),   intent(out), optional :: C1D(:,:),C2D(:,:,:)
      type(levels),  intent(out), optional :: E
-     integer,       intent(in)            :: ID
    end subroutine INTERPOLATION_BZ
    !
    subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCUIT_dE)

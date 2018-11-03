@@ -149,15 +149,15 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
     ! Work Space
     logical      :: HAS_DBGD
     integer      :: ik,i_carr,nb_max,nb_max_FineGd
-    ! 
-    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
-&                                     operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
-    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
     !
     HAS_DBGD=allocated(K%pt_FineGd)
     !
     nb_max=    nb(2)
     if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%nb_FineGd)
+    !
+    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
+&                                     operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
+    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
     !
     if (OBJ=="df") then
       !

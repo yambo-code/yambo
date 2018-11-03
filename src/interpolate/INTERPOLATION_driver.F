@@ -55,7 +55,8 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  !
  ! Work Space
  !
- integer               :: ib,ID,i_obj,n(2),nk
+ integer               :: ib,ID,i_obj,nb(2),nk1,nk2,dimI
+ logical               :: QUIET_,NEAREST_
  !
  ! Actions
  !=========
@@ -75,9 +76,13 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  ! SETUP
  !=======
  !
- if (present(QUIET)) then
-  if (QUIET) call IO_and_Messaging_switch("-log")
- endif
+ QUIET_   =.false.
+ NEAREST_ =.false.
+ if (present(QUIET))    QUIET_   =QUIET
+ if (present(NEAREST))  NEAREST_ =NEAREST
+
+
+ if (QUIET_) call IO_and_Messaging_switch("-log")
  !
  if (operation=="GRID") then
   !
@@ -154,7 +159,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    call init_ID(ID,bands,SEED_k,operation)
    !
-   if (present(NEAREST)) INTERP_obj(ID)%use_NN=NEAREST 
+   if (NEAREST_) INTERP_obj(ID)%use_NN=NEAREST 
    !
    if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then
      !
@@ -193,28 +198,38 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    ! ... Allocation
    !
-   n =INTERP_obj(ID)%nb
-   nk=INTERP_obj(ID)%nk
+   nb=INTERP_obj(ID)%nb
+   !
+   nk1 =OUT_k%nibz
+   nk2 =OUT_k%nibz_FineGd
+   dimI=INTERP_obj(ID)%D
    !
    if (present(OUT_E)) then
+     !
+     OUT_E%nb       =nb(2)
+     OUT_E%nk       =nk1
+     OUT_E%nk_fineGd=nk2
+     !
      if (l_INTERP_E.or.l_INTERP_dE) then
-       YAMBO_ALLOC(OUT_E%E,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+       YAMBO_ALLOC(OUT_E%E,(nb(1):nb(2),nk1,dimI))
      else if (l_INTERP_f) then
-       YAMBO_ALLOC(OUT_E%f,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+       YAMBO_ALLOC(OUT_E%f,(nb(1):nb(2),nk1,dimI))
      endif
-     OUT_E%nk=OUT_k%nibz
-     OUT_E%nb=INTERP_obj(ID)%nb(2)
-     if (OUT_k%nibz_FineGd>0) then
+     if (nk2>0) then
        if (l_INTERP_E.or.l_INTERP_dE) then
-         YAMBO_ALLOC(OUT_E%E_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
+         YAMBO_ALLOC(OUT_E%E_FineGd,(nb(1):nb(2),nk2,dimI))
        else if (l_INTERP_f) then
-         YAMBO_ALLOC(OUT_E%f_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
+         YAMBO_ALLOC(OUT_E%f_FineGd,(nb(1):nb(2),nk2,dimI))
        endif
      endif
+     !
    else
-     YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
-     if (OUT_k%nibz_FineGd>0) &
-       YAMBO_ALLOC(INTERP_obj(ID)%INTERP_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
+     !
+     YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(nb(1):nb(2),nk1,dimI))
+     if (nk2>0) then
+       YAMBO_ALLOC(INTERP_obj(ID)%INTERP_FineGd,(nb(1):nb(2),nk2,dimI))
+     endif
+     !
    endif
    !
    ! ... Interpolation...
@@ -224,34 +239,33 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
      ! ... Using the Nearest point method
      if (present(OUT_E)) then
        if (l_INTERP_E.or.l_INTERP_dE) then
-         call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
-&                                     OUT_k%pt,        OUT_E%E)
+         if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,OUT_E%E)
+         if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt_FineGd,OUT_E%E_FineGd)
        else if (l_INTERP_f) then
-         call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
-&                                     OUT_k%pt,        OUT_E%f)
+         if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,OUT_E%f)
+         if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt_FineGd,OUT_E%f_FineGd)
        endif
      else
-       call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,&
-&                                   OUT_k%pt,        INTERP_obj(ID)%INTERP)
+       if(nk1>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt       ,INTERP_obj(ID)%INTERP)
+       if(nk2>0) call INTERPOLATION_nearest_k(INTERP_obj(ID)%k,INTERP_obj(ID)%SEED,OUT_k%pt_FineGd,INTERP_obj(ID)%INTERP_FineGd)
      endif
      !
-     if (present(QUIET)) then
-       if (.not.QUIET) call INTERPOLATION_nearest_k_report(ID)
-     else
-                       call INTERPOLATION_nearest_k_report(ID)
-     endif
+     if (.not.QUIET_) call INTERPOLATION_nearest_k_report(ID)
      !
    else
      !
      ! ... Using BOLTZ method
      if (present(OUT_E)) then
        if (l_INTERP_E.or.l_INTERP_dE) then
-         call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%E,ID=INTERP_obj(ID)%ID)
+         if(nk1>0) call INTERPOLATION_BZ(OUT_k,nk1,INTERP_obj(ID)%ID,R2D=OUT_E%E)
+         if(nk2>0) call INTERPOLATION_BZ(OUT_k,nk2,INTERP_obj(ID)%ID,R2D=OUT_E%E_FineGd)
        else if (l_INTERP_f) then
-         call INTERPOLATION_BZ(K=OUT_k,R2D=OUT_E%f,ID=INTERP_obj(ID)%ID)
+         if(nk1>0) call INTERPOLATION_BZ(OUT_k,nk1,INTERP_obj(ID)%ID,R2D=OUT_E%f)
+         if(nk2>0) call INTERPOLATION_BZ(OUT_k,nk2,INTERP_obj(ID)%ID,R2D=OUT_E%f_FineGd)
        endif
      else
-       call INTERPOLATION_BZ(K=OUT_k,R2D=INTERP_obj(ID)%INTERP,ID=INTERP_obj(ID)%ID)
+       if(nk1>0) call INTERPOLATION_BZ(OUT_k,nk1,INTERP_obj(ID)%ID,R2D=INTERP_obj(ID)%INTERP)
+       if(nk2>0) call INTERPOLATION_BZ(OUT_k,nk2,INTERP_obj(ID)%ID,R2D=INTERP_obj(ID)%INTERP_FineGd)
      endif
    endif
    !
@@ -260,9 +274,11 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    if (l_INTERP_f) then
      if (present(OUT_E)) then
-       call INTERPOLATION_integral_respect(ID,OUT_k,OUT_E%f,l_integral_respect)
+       if(nk1>0) call INTERPOLATION_integral_respect(ID,OUT_k,OUT_E%f,       l_integral_respect,nk1)
+       if(nk2>0) call INTERPOLATION_integral_respect(ID,OUT_k,OUT_E%f_FineGd,l_integral_respect,nk2)
      else
-       call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP,l_integral_respect)
+       if(nk1>0) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP,       l_integral_respect,nk1)
+       if(nk2>0) call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,l_integral_respect,nk2)
      endif
    endif
    !

@@ -53,7 +53,8 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,Nk)
  do i1=1,nshells
     call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec)  
     do ik=1,Nk
-      if(Nk==K%nibz) call c2a(v_in=K%pt(ik,:),v_out=v,mode='ki2a')
+      if(Nk==K%nibz)        call c2a(v_in=K%pt(ik,:),       v_out=v,mode='ki2a')
+      if(Nk==K%nibz_FineGd) call c2a(v_in=K%pt_FineGd(ik,:),v_out=v,mode='ki2a')
       do is=1,nstar
         star(i1,ik)=star(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,is)))
       enddo

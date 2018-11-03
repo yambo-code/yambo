@@ -692,7 +692,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
  if (l_map_kpts) then
-   call PARSER_array(mode="CH dimensions",VAR="FinGd_DB1_paths",N=n_FineGd_DBs,M=1)
+   call PARSER_array(mode="CH dimensions",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1)
    if (n_FineGd_DBs>0) then
      call PARSER_array(mode="read",VAR="FineGd_DB1_paths",N=n_FineGd_DBs,M=1,CH_v=FineGd_DB1_paths(:n_FineGd_DBs,:))
    else

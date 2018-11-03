@@ -127,10 +127,10 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
          !
        enddo
        !
+       if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+       if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
+       !
      enddo
-     !
-     if (N_V==1) O_VALUE       =O_VALUE       +VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
-     if (N_V> 1) V_VALUE(i_cmp)=V_VALUE(i_cmp)+VALUE_tmp(i_cmp)*k%weights(ik_ibz)/real(RT_Nk_ibz(ik_ibz))
      !
    enddo
    !

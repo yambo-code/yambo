@@ -88,11 +88,15 @@ module interpolate
    integer                  :: ID=0
    logical                  :: in_use=.FALSE.
    logical                  :: use_NN=.FALSE.
+   logical                  :: has_fineGd=.FALSE.
    character(schlen)        :: what=" "
-   real(SP),    allocatable :: weights(:)
-   real(SP),    allocatable :: k(:,:)
+   !
    real(SP),    allocatable :: SEED(:,:,:)
+   real(SP),    allocatable :: k(:,:)
+   real(SP),    allocatable :: weights(:)
+   !
    real(SP),    allocatable :: INTERP(:,:,:)
+   real(SP),    allocatable :: INTERP_FineGd(:,:,:)
  end type INTERP_element
  !
  integer, parameter :: max_interpls=10

@@ -127,9 +127,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
      endif
    enddo
    !
-   if (present(ID_op)) then
-     ID_op=ID
-   endif
+   if (present(ID_op)) ID_op=ID
    !
  else if (present(OUT_k)) then
    !
@@ -156,9 +154,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    call init_ID(ID,bands,SEED_k,operation)
    !
-   if (present(NEAREST)) then
-     INTERP_obj(ID)%use_NN=NEAREST 
-   endif
+   if (present(NEAREST)) INTERP_obj(ID)%use_NN=NEAREST 
    !
    if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then
      !
@@ -170,17 +166,9 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    ! I asssume here that SEED_E and SEED_RT lives on the same grid of SEED_k
    !
-   if (present(SEED_E)) then
-     call FILL_SEED_E(ID,SEED_E)
-   endif
-   !
-   if (present(SEED_RT)) then
-     call FILL_SEED_RT(ID,SEED_RT)
-   endif
-   !
-   if (present(SEED_QP)) then
-     call FILL_SEED_QP(ID,SEED_QP)
-   endif
+   if (present(SEED_E))  call FILL_SEED_E(ID,SEED_E)
+   if (present(SEED_RT)) call FILL_SEED_RT(ID,SEED_RT)
+   if (present(SEED_QP)) call FILL_SEED_QP(ID,SEED_QP)
    !
    if (present(SEED_R3)) then
      do ib=1,bands(2)-bands(1)+1
@@ -216,8 +204,17 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
      endif
      OUT_E%nk=OUT_k%nibz
      OUT_E%nb=INTERP_obj(ID)%nb(2)
+     if (OUT_k%nibz_FineGd>0) then
+       if (l_INTERP_E.or.l_INTERP_dE) then
+         YAMBO_ALLOC(OUT_E%E_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
+       else if (l_INTERP_f) then
+         YAMBO_ALLOC(OUT_E%f_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
+       endif
+     endif
    else
      YAMBO_ALLOC(INTERP_obj(ID)%INTERP,(n(1):n(2),OUT_k%nibz,INTERP_obj(ID)%D))
+     if (OUT_k%nibz_FineGd>0) &
+       YAMBO_ALLOC(INTERP_obj(ID)%INTERP_FineGd,(n(1):n(2),OUT_k%nibz_FineGd,INTERP_obj(ID)%D))
    endif
    !
    ! ... Interpolation...

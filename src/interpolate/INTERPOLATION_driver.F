@@ -56,7 +56,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  ! Work Space
  !
  integer               :: ib,ID,i_obj,nb(2),nk1,nk2,dimI
- logical               :: QUIET_,NEAREST_
+ logical               :: QUIET_
  !
  ! Actions
  !=========
@@ -77,9 +77,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
  !=======
  !
  QUIET_   =.false.
- NEAREST_ =.false.
  if (present(QUIET))    QUIET_   =QUIET
- if (present(NEAREST))  NEAREST_ =NEAREST
 
 
  if (QUIET_) call IO_and_Messaging_switch("-log")
@@ -159,7 +157,7 @@ subroutine INTERPOLATION_driver(bands,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
    !
    call init_ID(ID,bands,SEED_k,operation)
    !
-   if (NEAREST_) INTERP_obj(ID)%use_NN=NEAREST 
+   if (present(NEAREST)) INTERP_obj(ID)%use_NN=NEAREST 
    !
    if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then
      !

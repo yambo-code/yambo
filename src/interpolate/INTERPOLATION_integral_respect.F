@@ -27,7 +27,9 @@ subroutine INTERPOLATION_integral_respect(ID,OUT_k,OUT,DO_it,NK)
  use R_lattice,    ONLY:bz_samp
  use interpolate,  ONLY:INTERP_obj
  !
- integer      , intent(in)    :: ID
+ implicit none
+ !
+ integer      , intent(in)    :: ID,NK
  type(bz_samp), intent(in)    :: OUT_k
  real(SP)     , intent(inout) :: OUT(INTERP_obj(ID)%nb(1):INTERP_obj(ID)%nb(2),NK,INTERP_obj(ID)%D)
  logical,       intent(in)    :: DO_it

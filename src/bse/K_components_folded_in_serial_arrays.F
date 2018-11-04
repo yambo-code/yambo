@@ -81,8 +81,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
    !
    do i_g=1,BS_nT_grps
      !
-     if ( BS_pert_soc ) BSS_eh_E_SOC_corr(:,H_pos(1))=BS_T_grp(i_g)%E_SOC_corr(:,i_c)
-     !
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      !
      do i_c=1,BS_T_grp(i_g)%size

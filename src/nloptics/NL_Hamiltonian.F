@@ -203,7 +203,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Add Ho = T+V_ion+V_h+V_xc
    !==================
    !
-   forall(i1=NL_bands(1):NL_bands(2)) H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
+!$omp parallel do default(shared), private(i1)
+   do i1=NL_bands(1),NL_bands(2) 
+      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)+E_full(i1,ik,i_sp_pol) 
+   enddo
+!$omp end parallel do
    !
    if(l_use_DIPOLES) then
      !    

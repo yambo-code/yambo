@@ -58,7 +58,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:log_as_a_file,logfile,intc,STRING_add,STRING_remove,STRING_match
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
- use wave_func,      ONLY:io_WF
+ use wave_func,      ONLY:wf_ng,io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:io_BS_Fxc
  use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,&
@@ -69,6 +69,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _SC
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:NL_ng
 #endif
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
@@ -277,6 +280,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  QP_ng_Sc=ng_closed
  QP_ng_SH=ng_closed
  BS_n_g_exch=ng_closed
+#if defined _NL
+ NL_ng      =wf_ng
+#endif
  !
  ! kindx
  !

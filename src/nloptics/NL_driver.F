@@ -108,7 +108,11 @@ subroutine NL_driver(E,X,k,q)
  ! force the reloading of the WFs
  !
  Dipole_approach='Covariant' 
- if((l_use_DIPOLES.or.l_eval_CURRENT).or.load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ if(l_use_DIPOLES.or.l_eval_CURRENT) then
+    call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ else
+     if(load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ endif
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================

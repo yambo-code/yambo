@@ -267,7 +267,8 @@ subroutine NL_driver(E,X,k,q)
  contains
    !
    subroutine setup_DIPOLES_parallelization()
-     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore,CPU_structure
+     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore,CPU_structure, &
+&                               PARALLEL_ENV_uses_default
      use nl_optics,        ONLY:eval_OVERLAPS
      !
      implicit none
@@ -275,6 +276,7 @@ subroutine NL_driver(E,X,k,q)
      ! Working space
      !
      integer :: n_frequencies_save,NL_bands1_save
+     integer :: i_s=8 ! Non-linear environment
      !
      ! Set bands between 1 and NL_bands(2)
      !
@@ -297,14 +299,16 @@ subroutine NL_driver(E,X,k,q)
      ! Erase the user-defined string for non-linear
      ! and force parallelization on k-points
      !
-     CPU_structure(8)%CPU_string=" "
-     CPU_structure(8)%ROLE_string=" "
+     CPU_structure(i_s)%CPU_string=" "
+     CPU_structure(i_s)%ROLE_string=" "
+     PARALLEL_ENV_uses_default(i_s)=.true.
      !
      call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
      call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
      !
      call CPU_and_ROLE_strings_restore()
-     !
+     PARALLEL_ENV_uses_default(i_s)=.false.
+     !  
      n_frequencies=n_frequencies_save
      NL_bands(1)=NL_bands1_save
      !

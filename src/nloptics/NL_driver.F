@@ -38,7 +38,7 @@ subroutine NL_driver(E,X,k,q)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
@@ -59,7 +59,7 @@ subroutine NL_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save,N_sample_size
+ integer           :: i_f,i1,NL_bands1_save,N_sample_size,wf_ng_save
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -132,8 +132,14 @@ subroutine NL_driver(E,X,k,q)
  !
  ! WFs loading
  !=============
- if(Correlation/=IPA) &
-&  call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ !
+ wf_ng_save=wf_ng
+ wf_ng     =NL_ng
+ WF_Go_indx =1
+ !
+ if(Correlation/=IPA) then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
  !
  ! QP-corrections 
  !================
@@ -244,6 +250,8 @@ subroutine NL_driver(E,X,k,q)
  ! Deallocation
  ! ==========================
  !
+ wf_ng     = wf_ng_save
+ !
  call WF_free(WF)
  call NL_free()
  call X_alloc('DIP_S')
@@ -308,10 +316,11 @@ subroutine NL_driver(E,X,k,q)
    !
    integer function load_Overlaps()
      !
-     use pars,          ONLY:SP
+     use pars,           ONLY:SP
      use X_m,            ONLY:DIP_S
      use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
      use electrons,      ONLY:n_sp_pol
+     use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_DIPOLES,PAR_IND_Xk_bz_ID,PP_redux_wait
      !
      implicit none
      !
@@ -330,15 +339,22 @@ subroutine NL_driver(E,X,k,q)
      io_err=io_Overlaps(X(1),ID_S)
      !
      if(io_err==0) then
-       call live_timing('[NL] Overlaps loading :',k%nbz)
+       call live_timing('[NL] Overlaps loading :',PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
        do ik=1,k%nbz
+         if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*k%nbz/),ID=ID_S)
            io_err=io_err+io_Overlaps(X(1),ID_S)
          enddo
          call live_timing(steps=1)
        enddo
+       !
        call live_timing()
+       !
+       do i_sp_pol=1,n_sp_pol
+         call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
+       enddo
+       !
      endif
      !
      load_Overlaps=io_err

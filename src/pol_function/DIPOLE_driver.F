@@ -347,7 +347,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
           enddo
          endif
        enddo
-       if(use_covariant_approach.and.(write_header.or.reading)) then
+       if(use_covariant_approach) then
          do ik=1,Xk%nbz
            if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
            do i_sp_pol=1,n_sp_pol

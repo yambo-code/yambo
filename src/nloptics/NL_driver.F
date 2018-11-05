@@ -267,7 +267,7 @@ subroutine NL_driver(E,X,k,q)
  contains
    !
    subroutine setup_DIPOLES_parallelization()
-     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore
+     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore,CPU_structure
      use nl_optics,        ONLY:eval_OVERLAPS
      !
      implicit none
@@ -292,6 +292,13 @@ subroutine NL_driver(E,X,k,q)
      ! Save user-defined parallel structure
      ! and force parallelization on k-points (for dipoles and overlaps)
      call CPU_and_ROLE_strings_save()
+     !
+     !
+     ! Erase the user-defined string for non-linear
+     ! and force parallelization on k-points
+     !
+     CPU_structure(8)%CPU_string=" "
+     CPU_structure(8)%ROLE_string=" "
      !
      call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
      call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))

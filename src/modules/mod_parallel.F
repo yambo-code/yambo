@@ -490,16 +490,16 @@ module parallel_m
    subroutine CPU_and_ROLE_strings_save()
      implicit none
      !
-     CPU_string_save =CPU_structure(:)%CPU_string
-     ROLE_string_save=CPU_structure(:)%ROLE_string
+     CPU_string_save (:)=CPU_structure(:)%CPU_string
+     ROLE_string_save(:)=CPU_structure(:)%ROLE_string
      ! 
    end subroutine CPU_and_ROLE_strings_save
    !
    subroutine CPU_and_ROLE_strings_restore()
      implicit none
      !
-     CPU_structure(:)%CPU_string =CPU_string_save
-     CPU_structure(:)%ROLE_string=ROLE_string_save
+     CPU_structure(:)%CPU_string = CPU_string_save(:)
+     CPU_structure(:)%ROLE_string=ROLE_string_save(:)
      ! 
    end subroutine CPU_and_ROLE_strings_restore
    !

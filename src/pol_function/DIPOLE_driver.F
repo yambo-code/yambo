@@ -272,9 +272,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
      use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
-#if defined _NL
      use parallel_m, ONLY:PAR_IND_Xk_bz
-#endif
      !
      character(5), intent(in) :: read_or_write
      !

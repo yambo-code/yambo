@@ -188,7 +188,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
      !  
      if(n_spinor==1) then
-        if (eval_Hartree.and.eval_DFT) then
+        if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
           call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
         elseif(eval_Hartree.and..not.eval_DFT) then
           call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')

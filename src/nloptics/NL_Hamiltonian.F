@@ -150,6 +150,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
     if(Correlation==LRC)   E_vec_pot=E_vec_pot + NL_LRC_alpha*RT_P
     if(Correlation==JGM) then
+      ! Recontruct the full density for the JGM
+      if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
       call EXC_macroscopic_JGM(E,RT_P,rho_n,E_xc_pot,V_xc_sc)
       E_vec_pot=E_vec_pot +  E_xc_pot - E_xc_0
       V_xc_sc=V_xc_sc-V_xc_0

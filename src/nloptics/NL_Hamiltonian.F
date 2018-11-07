@@ -153,8 +153,8 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       ! Recontruct the full density for the JGM
       if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
       call EXC_macroscopic_JGM(E,RT_P,rho_n,E_xc_pot,V_xc_sc)
-      E_vec_pot=E_vec_pot +  E_xc_pot - E_xc_0
       V_xc_sc=V_xc_sc-V_xc_0
+      E_vec_pot=E_vec_pot +  E_xc_pot - E_xc_0
     end if
     !
     E_ks=E_vec_pot
@@ -193,12 +193,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      if(n_spinor==1) then
         if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
           call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-        elseif(eval_Hartree.and..not.eval_DFT) then
+        elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
           call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
         endif
      elseif (n_spinor==2) then
         if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        if (eval_DFT) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
+        if (eval_DFT.or.Correlation==JGM) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
      endif
      !
    endif

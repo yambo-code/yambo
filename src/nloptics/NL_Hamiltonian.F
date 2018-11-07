@@ -152,6 +152,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     if(Correlation==JGM) then
       call EXC_macroscopic_JGM(E,RT_P,rho_n,E_xc_pot,V_xc_sc)
       E_vec_pot=E_vec_pot +  E_xc_pot - E_xc_0
+      V_xc_sc=V_xc_sc-V_xc_0
     end if
     !
     E_ks=E_vec_pot

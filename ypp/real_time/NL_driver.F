@@ -210,9 +210,6 @@ subroutine NL_driver(en,k)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(Pol%F_t)
      !
-     if(l_print_pwr_spectrum) then
-     endif
-     !
      ! OTHER CASES NOT YET WORKING
      !
   case default 

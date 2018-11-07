@@ -53,24 +53,23 @@ subroutine NL_output(i_time,i_freq)
  file_name(4)='current_F'//intc(i_freq)
  !
  n_files=1
- short_file_name(1)='external_potential'
+ short_file_name(n_files)='external_potential'
+ n_headings(n_files)=10
  !
  n_files=n_files+1
- short_file_name(2)='polarization'
+ short_file_name(n_files)='polarization'
+ n_headings(n_files)=4
  !
  n_files=n_files+1
- short_file_name(3)='e_total'
+ short_file_name(n_files)='e_total'
+ n_headings(n_files)=4
  !
  if(l_eval_CURRENT) then
    n_files=n_files+1
-   short_file_name(4)='current'
+   short_file_name(n_files)='current'
+   n_headings(n_files)=7
  endif
  !
- !
- n_headings(1)=10
- n_headings(2)=4
- n_headings(3)=4
- n_headings(4)=7
  !
  ! Open files if i_time==1
  !

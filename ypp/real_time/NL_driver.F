@@ -58,6 +58,8 @@ subroutine NL_driver(en,k)
  !
  call section("*",'NL Post Processing')
  !
+ call RT_output_INIT( )
+ !
  call parser('PrtPwrSpec',l_print_pwr_spectrum)
  !
  ! Input/Output

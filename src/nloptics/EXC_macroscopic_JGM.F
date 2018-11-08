@@ -59,6 +59,7 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
  ! FT the alpha:
  !
 #if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
  call fft_3d(alpha,fft_dim,-1,fftw_plan)
 #else
@@ -76,6 +77,7 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
  rhog        = rho
  !
 #if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
  call fft_3d(rhog,fft_dim,-1,fftw_plan)
 #else
@@ -111,6 +113,7 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
 !$omp end parallel do
  !
 #if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
  call fft_3d(Vxc_tmp,fft_dim,1,fftw_plan)
 #else

@@ -44,14 +44,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:rm_file
+ use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
 #if defined _YPP_RT || defined _YPP_SC
  use QP_m,           ONLY:QP_nb
  use electrons,      ONLY:levels,E_reset
- use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
@@ -78,13 +77,14 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
- integer          ::i1,i2
+ integer, external::io_RIM,io_COL_CUT
+ integer          ::i1,i2,ID,io_err
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_SC
  type(levels)     ::E_dummy
  integer, external::io_SC_components
- integer          ::io_SC_err,ID
+ integer          ::io_SC_err
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
@@ -165,6 +165,16 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ ! rim
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_RIM(ID) 
+ !
+ ! cutoff
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_COL_CUT(ID) 
  !
  ! Defaults->Defs + Initialization
  !

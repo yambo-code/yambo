@@ -88,7 +88,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,io_KB_abinit_err
 #endif
 #if defined _YPP_NL
  integer, external::io_NL

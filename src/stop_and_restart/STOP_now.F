@@ -66,7 +66,7 @@ logical function STOP_now(DO_IT_NOW)
  call CLOSE_the_run(.TRUE.,.TRUE.,.TRUE.)
  !
 #if defined _MPI
- call MPI_Abort(mpi_comm_world,1,ierr)
+ if(ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
  stop
  !

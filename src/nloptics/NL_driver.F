@@ -54,7 +54,7 @@ subroutine NL_driver(E,X,k,q)
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
  !
- logical, external :: STOP_now
+ logical, external :: stop_now
  integer, external :: eval_G_minus_G
  ! 
  ! Work Space
@@ -175,7 +175,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Initialization
  ! ==================
- call NL_start_and_restart(E,k,X(1))
+ call NL_start_and_restart(E,k,X)
  !
  ! Check if calculation was already done
  ! =====================================
@@ -239,13 +239,13 @@ subroutine NL_driver(E,X,k,q)
      !
      call live_timing(steps=1)
      !
-     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. STOP_now(.false.)
+     l_dynamics_is_over= (NE_i_time>=NE_steps) .or. stop_now(.false.)
      !
    enddo
    !
    call NL_databases_IO(i_f,'write')
    !
-   if(STOP_now(.false.)) exit
+   if(stop_now(.false.)) exit
    !
  enddo
  !
@@ -351,7 +351,7 @@ subroutine NL_driver(E,X,k,q)
      io_err=0
      !
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-     io_err=io_Overlaps(X(1),ID_S)
+     io_err=io_Overlaps(X,ID_S)
      !
      if(io_err==0) then
        call live_timing('[NL] Overlaps loading :',PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))

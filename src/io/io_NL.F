@@ -25,13 +25,15 @@ integer function io_NL(ID)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
- use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,n_frequencies
- use real_time,     ONLY:NE_steps
+ use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
+&                        NL_er,n_frequencies
+ use real_time,     ONLY:Integrator_name,NE_steps,RT_step
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
+ use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental
+&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -71,8 +73,8 @@ integer function io_NL(ID)
    ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
-      OBS_RT_IO_t%N         =NE_steps
-      OBS_RT_IO_t%last_point=NE_steps
+     OBS_RT_IO_t%N         =NE_steps
+     OBS_RT_IO_t%last_point=NE_steps
    endif
    !
    call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 

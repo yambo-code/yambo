@@ -262,10 +262,11 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
 #if defined _MPI
- if (mpi_init==0 && np>1) {
+ if (mpi_init==0) {
    MPI_Init(&argc,&argv);               /* starts MPI */
    MPI_Comm_rank(MPI_COMM_WORLD, &pid); /* get current process id */
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
+   if (np==1) { MPI_Finalize(); };
  };
 #endif
  /* Note on passing characters from C to Fortran:

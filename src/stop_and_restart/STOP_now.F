@@ -24,7 +24,7 @@
 logical function STOP_now(DO_IT_NOW)
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:myid,mpi_comm_world,ncpu
+ use parallel_m,     ONLY:myid,mpi_comm_world
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  use com,            ONLY:warning
@@ -66,7 +66,7 @@ logical function STOP_now(DO_IT_NOW)
  call CLOSE_the_run(.TRUE.,.TRUE.,.TRUE.)
  !
 #if defined _MPI
- if(ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
+ call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
  stop
  !

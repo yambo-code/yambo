@@ -399,7 +399,7 @@ module com
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:STRING_pack
 #if defined _MPI
-     use parallel_m, ONLY:mpi_comm_world,ncpu
+     use parallel_m, ONLY:mpi_comm_world
      integer         :: ierr
 #endif
      character(*)    :: mesg
@@ -415,7 +415,7 @@ module com
      call LIVE_message("","n","","%s")
      !
 #if defined _MPI
-     if(ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
+     call MPI_Abort(mpi_comm_world,1,ierr)
 #endif
      stop
      !

@@ -120,8 +120,8 @@ subroutine EXC_macroscopic_JGM(en,Pmac,rho,Exc,V_xc)
  call fft_3d(Vxc_tmp,fft_dim,1)
 #endif
  !
- V_xc(:,1)=V_xc(:,1)+real(Vxc_tmp,SP)
- if(n_spin==2) V_xc(:,2)=V_xc(:,2)+real(Vxc_tmp,SP)
+ V_xc(:,1)=real(Vxc_tmp,SP)
+ if(n_spin==2) V_xc(:,2)=real(Vxc_tmp,SP)
  !
 contains
   !

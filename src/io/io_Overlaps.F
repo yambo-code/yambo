@@ -97,7 +97,10 @@ integer function io_Overlaps(X,ID)
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
- if(io_err/=0) goto 1
+ if(io_err/=0) then
+   io_Overlaps=io_err
+   goto 1
+ endif
  !
  ! Manage RD_CL_IF_END
  !

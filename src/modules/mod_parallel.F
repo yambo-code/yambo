@@ -122,6 +122,9 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
+ character(schlen)   :: CPU_string_save(n_CPU_str_max)
+ character(schlen)   :: ROLE_string_save(n_CPU_str_max)
+ !
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -475,7 +478,7 @@ module parallel_m
        if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
        if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
        if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
-       if (n_threads_NL>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
+       if (n_threads_NL >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -483,6 +486,22 @@ module parallel_m
      endif
      !
    end function
+   !
+   subroutine CPU_and_ROLE_strings_save()
+     implicit none
+     !
+     CPU_string_save (:)=CPU_structure(:)%CPU_string
+     ROLE_string_save(:)=CPU_structure(:)%ROLE_string
+     ! 
+   end subroutine CPU_and_ROLE_strings_save
+   !
+   subroutine CPU_and_ROLE_strings_restore()
+     implicit none
+     !
+     CPU_structure(:)%CPU_string = CPU_string_save(:)
+     CPU_structure(:)%ROLE_string=ROLE_string_save(:)
+     ! 
+   end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
      CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"

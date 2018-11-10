@@ -70,8 +70,7 @@ integer function io_NL(ID)
    !
    if (io_NL/=0) goto 1
    !
-   ! Time variable
-   ! (just for compatibility reasons)
+   ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
      OBS_RT_IO_t%N         =NE_steps
@@ -97,22 +96,22 @@ integer function io_NL(ID)
  !
  if(read_is_on(ID)) then
    !  
-   if(.not.allocated(NL_P_t)) then
-     !
-     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
-     !
-     YAMBO_ALLOC(E_tot_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ext_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ks_t,(NE_steps,3))
-     !
-   endif
+   YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+   !
+   YAMBO_ALLOC(E_tot_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ext_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ks_t,(NE_steps,3))
    !
  endif
  !
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
- if(io_err/=0) goto 1
+ !
+ if(io_err/=0) then
+   io_NL=io_err
+   goto 1
+ endif
  !
  ! Manage RD_CL_IF_END
  !
@@ -127,7 +126,7 @@ integer function io_NL(ID)
  call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
  call io_elemental(ID,VAR="[FIELDs] Versor                :",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
  call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2]:",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID,VAR="[FIELDs] Damping           [fs]:",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,VAR="[FIELDs] Field width       [fs]:",R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
  call io_elemental(ID,VAR="[FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)

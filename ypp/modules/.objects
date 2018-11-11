@@ -1,5 +1,5 @@
 RT_obj =
-#if defined _YPP_RT
+#if defined _YPP_RT || YPP_NL
 RT_obj = mod_YPP_real_time.o
 #endif
 ELPH_obj =

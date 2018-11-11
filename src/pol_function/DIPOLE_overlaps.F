@@ -32,7 +32,7 @@ subroutine DIPOLE_overlaps(Xk,X)
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
- use parallel_m,        ONLY:PAR_COM_Xk_ibz_INDEX,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
+ use parallel_m,        ONLY:PAR_COM_DIPOLES,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
  !
  implicit none
  !
@@ -129,7 +129,7 @@ subroutine DIPOLE_overlaps(Xk,X)
  call live_timing()
  !
  do i_sp_pol=1,n_sp_pol
-   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
  enddo
  !
 end subroutine Dipole_Overlaps

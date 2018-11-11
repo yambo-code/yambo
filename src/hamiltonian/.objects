@@ -8,7 +8,7 @@ PSEUDO_objects = Pseudo_Hamiltonian.o Pseudo_KB_G_to_R_space.o Pseudo_KB_FFT.o P
 #endif
 NL_objects = 
 #if defined _NL
-NL_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 
+NL_objects = Build_Overlaps_det_NEQ.o Build_tilde_vbands.o Build_W_operator.o Berry_polarization_NEQ.o 
 #endif
 #if defined _ELECTRIC
 ELECTRIC_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 

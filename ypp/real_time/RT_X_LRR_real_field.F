@@ -135,6 +135,7 @@ subroutine RT_X_LRR_real_field(en)
  ! Pol FT
  !--------
  !
+ Pol%title="PolFFT"
  call RT_1D_Fourier_Transform('T2W',Pol,RT_conf,1)
  !
  ! a) If the induced field is     computed: E_input=E_ext

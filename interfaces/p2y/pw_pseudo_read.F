@@ -290,7 +290,7 @@ subroutine pseudo_read_parameters(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
 &                               rho_nlcc,vloc,lbeta,mesh_beta,beta,d,dmat,ierr)
   endif
   !
-  if(ierr/=0) CALL errore('pseudo_read_parameters', 'Cannot open file: '//TRIM(psfile),1)
+  if(ierr/=0) CALL errore('pseudo_read_parameters', 'Cannot read file: '//TRIM(psfile),1)
   !
 end subroutine
 
@@ -482,13 +482,6 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
   call iotk_scan_end(iun, 'PP_MESH', ierr=ierr)
   if (ierr/=0) return
   !
-  if (psp_has_nlcc) then
-    call iotk_scan_dat(iun, 'PP_NLCC', rho_nlcc, ierr=ierr)
-    if (ierr/=0) return
-  else 
-    rho_nlcc = 0.0
-  endif
-  !
   call iotk_scan_dat(iun, 'PP_LOCAL', vloc, ierr=ierr)
   if (ierr/=0) return
   !
@@ -544,6 +537,16 @@ subroutine read_upf_parameters_v2(psfile,nmesh,nbeta,mesh,psp_has_so,psp_has_nlc
     call iotk_scan_end(iun, 'PP_SPIN_ORB', ierr=ierr)
     if (ierr/=0) return
     !
+  endif
+  !
+  if (psp_has_nlcc) then
+    rewind(iun)
+    read(iun,*)
+    !
+    call iotk_scan_dat(iun, 'PP_NLCC', rho_nlcc, ierr=ierr)
+    if (ierr/=0) return
+  else
+    rho_nlcc = 0.0
   endif
   !
   call iotk_close_read(iun, ierr=ierr)

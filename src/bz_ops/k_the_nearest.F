@@ -91,7 +91,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      ! DS: 2018/11/04: Here previously I replaced
      !     all the lines between if and endif with the line
      ! call k2bs(v)
-     !     However (i) it was much slower  and (ii) test Beryllium 05_ypp was failing
+     !     However some tests are failing with this
      !     To check which are the differences
      !
      if(.not.present(k_symm)) then

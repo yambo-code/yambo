@@ -289,6 +289,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
      use X_m,        ONLY:global_gauge
      use com,        ONLY:msg
      use IO_m,       ONLY:io_DIP
+     use parallel_m, ONLY:PAR_IND_Xk_bz
      !
      character(5), intent(in) :: read_or_write
      !
@@ -361,13 +362,19 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir,iq)
           enddo
          endif
        enddo
-       if(use_covariant_approach.and.(write_header.or.reading)) then
+       if(use_covariant_approach) then
          do ik=1,Xk%nbz
+           if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
            do i_sp_pol=1,n_sp_pol
              call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
              io_err=io_err+io_Overlaps(X,ID_S)
            enddo
          enddo
+         if(reading) then
+           do i_sp_pol=1,n_sp_pol
+             call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
+            enddo  
+         endif
        endif
        !
      endif

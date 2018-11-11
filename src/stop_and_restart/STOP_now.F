@@ -24,7 +24,7 @@
 logical function STOP_now(DO_IT_NOW)
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:myid,mpi_comm_world,ncpu
+ use parallel_m,     ONLY:myid,mpi_comm_world
  use LIVE_t,         ONLY:cput_tot,USER_wall_time,USER_wall_time_string
  use parser_m,       ONLY:parser
  use com,            ONLY:warning

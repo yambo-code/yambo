@@ -103,10 +103,8 @@ module pseudo
      use FFT_m,      ONLY:fft_size
      implicit none
      YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
-     YAMBO_ALLOC(pp_rho_nlcc,(fft_size))
      YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))
      pp_rhog_nlcc =0.
-     pp_rho_nlcc =0.
      pp_has_nlcc_atom =0
    end subroutine 
    !

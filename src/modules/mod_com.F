@@ -399,7 +399,7 @@ module com
      use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
      use stderr,     ONLY:STRING_pack
 #if defined _MPI
-     use parallel_m, ONLY:mpi_comm_world,ncpu
+     use parallel_m, ONLY:mpi_comm_world
      integer         :: ierr
 #endif
      character(*)    :: mesg

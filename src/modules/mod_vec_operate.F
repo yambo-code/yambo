@@ -196,17 +196,14 @@ module vec_operate
      !
      ! Work Space
      !
-     real(SP) a_here(3,3),mat(3,3),n(3),u(3)
+     real(SP) a_here(3,3),mat(3,3),n(3),v_tmp(3)
      !
      ! Define local unit cell vectors
      !
-     if (index(mode,'r')/=0) then
-       a_here=a
-       if (present(b_in)) a_here=b_in
-     else
-       a_here=b
-       if (present(b_in)) a_here=b_in
-     endif
+     if (index(mode,'r')/=0) a_here=a
+     if (index(mode,'k')/=0) a_here=b
+     !
+     if (present(b_in))      a_here=b_in
      !
      ! Scale factor if input vector is in iku
      !
@@ -215,8 +212,8 @@ module vec_operate
      !
      ! u is rlu or cc (no iku)
      !
-     u=v_in
-     if (index(mode,'i2')/=0) u(:)=v_in(:)*n(:) ! iku -> cc
+     if (index(mode,'i2')==0) v_tmp(:)=v_in(:)
+     if (index(mode,'i2')/=0) v_tmp(:)=v_in(:)*n(:) ! iku -> *
      !
      ! i2c/c2i
      mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
@@ -227,13 +224,14 @@ module vec_operate
      ! c2a/i2a
      if (index(mode,'c2a')/=0.or.index(mode,'i2a')/=0) call m3inv(transpose(a_here),mat) 
      !
-     if (present(v_out)) then
-       v_out=matmul(mat,u) 
-       if (index(mode,'2i')/=0) v_out(:)=v_out(:)/n(:) ! * -> iku
-     else
-       v_in=matmul(mat,u) 
-       if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> iku
-     endif
+     v_tmp=matmul(mat,v_tmp)
+     ! 
+     !if (index(mode,'2i')==0) v_tmp(:)=v_tmp(:)
+     if (index(mode,'2i')/=0) v_tmp(:)=v_tmp(:)/n(:) ! * -> iku
+     !
+     if (     present(v_out)) v_out=v_tmp
+     if (.not.present(v_out)) v_in =v_tmp
+     !
    end subroutine c2a
    !
    subroutine k2bz(v_in,v_out,b_in) 
@@ -246,42 +244,30 @@ module vec_operate
      ! 
      ! Work Space
      ! 
-     real(SP):: b_here(3,3),p(3),q(3),u(3),dist
+     real(SP):: b_here(3,3) !,p(3),q(3),u(3),dist
+     real(SP):: v_tmp(3)
      integer :: i1,i2,i3
      integer,parameter :: ni=2
      !
-     if (present(b_in))      b_here=b_in
+     if (     present(b_in)) b_here=b_in
      if (.not.present(b_in)) b_here=b
      !
-     call c2a(b_here,v_in,q,'ki2a')
-     call c2a(b_here,v_in,p,'ki2c')
-     dist=v_norm(p)
-     do i1=-ni,ni
-       do i2=-ni,ni
-         do i3=-ni,ni
-           call c2a(b_here,q(:)-(/i1,i2,i3/),u,'ka2c')
-           if (v_norm(u)<dist-1.E-5) p=u
-           if (v_norm(u)<dist-1.E-5) dist=v_norm(u)
-         enddo
-       enddo
-     enddo
-     call c2a(b_here,p,q,'kc2i')
+     call c2a(b_in=b_here,v_in=v_in, v_out=v_tmp,mode='ki2a')
+     call rlu_k2bz(v_tmp)
+     call c2a(b_in=b_here,v_in=v_tmp,            mode='ka2i')
      !
-     if (present(v_out))      v_out=q
-     if (.not.present(v_out)) v_in=q
+     if (     present(v_out)) v_out=v_tmp
+     if (.not.present(v_out)) v_in =v_tmp
      !
    end subroutine k2bz
    !
-   subroutine rlu_k2bz(v_in,v_out) 
+   subroutine rlu_k2bz(v_in,v_out)
      !
      real(SP)           :: v_in(3)
      real(SP), optional :: v_out(3)
      !
-     if (present(v_out)) then
-       v_out=v_in-nint(v_in)                    
-     else
-       v_in =v_in-nint(v_in)                    
-     endif
+     if (     present(v_out)) v_out=v_in-real(nint(v_in),SP)
+     if (.not.present(v_out)) v_in =v_in-real(nint(v_in),SP)
      !
    end subroutine rlu_k2bz
    !

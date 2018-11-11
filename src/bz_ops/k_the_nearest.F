@@ -96,9 +96,9 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
      !
      if(.not.present(k_symm)) then
        call c2a(v_in=v,mode='ki2a')
-       v(1)=abs(v(1)-nint(v(1)))     
-       v(2)=abs(v(2)-nint(v(2)))     
-       v(3)=abs(v(3)-nint(v(3)))   
+       v(1)=v(1)-nint(v(1))     
+       v(2)=v(2)-nint(v(2))     
+       v(3)=v(3)-nint(v(3))   
        call c2a(v_in=v,mode='ka2i')
      endif
      !

@@ -26,9 +26,9 @@ integer function io_NL(ID)
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_correlation,NL_er,NL_correlation,n_frequencies
+&                        NL_er,n_frequencies
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step
- use RT_control,    ONLY:JPC_RT_IO_t
+ use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
  use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
@@ -70,22 +70,21 @@ integer function io_NL(ID)
    !
    if (io_NL/=0) goto 1
    !
-   ! Time variable
-   ! (just for compatibility reasons)
+   ! Time variable (just for compatibility reasons)
    !
    if(write_is_on(ID)) then
-      JPC_RT_IO_t%N         =NE_steps
-      JPC_RT_IO_t%last_point=NE_steps
+     OBS_RT_IO_t%N         =NE_steps
+     OBS_RT_IO_t%last_point=NE_steps
    endif
    !
    call io_elemental(ID,VAR="IO_TIME_N_points",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=JPC_RT_IO_t%N)
+   call io_elemental(ID,I0=OBS_RT_IO_t%N)
    call io_elemental(ID,VAR="IO_TIME_LAST_POINT",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=JPC_RT_IO_t%last_point)
+   call io_elemental(ID,I0=OBS_RT_IO_t%last_point)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   if(read_is_on(ID).and..not.allocated(JPC_RT_IO_t%Time)) allocate(JPC_RT_IO_t%Time(NE_steps))
-   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/JPC_RT_IO_t%N/))
-   call io_bulk(ID,R1=JPC_RT_IO_t%Time)
+   if(read_is_on(ID).and..not.allocated(OBS_RT_IO_t%Time)) allocate(OBS_RT_IO_t%Time(NE_steps))
+   call io_bulk(ID,VAR="IO_TIME_points",VAR_SZ=(/OBS_RT_IO_t%N/))
+   call io_bulk(ID,R1=OBS_RT_IO_t%Time)
    !
    if (io_NL/=0) goto 1
    !
@@ -97,22 +96,22 @@ integer function io_NL(ID)
  !
  if(read_is_on(ID)) then
    !  
-   if(.not.allocated(NL_P_t)) then
-     !
-     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
-     !
-     YAMBO_ALLOC(E_tot_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ext_t,(NE_steps,3))
-     YAMBO_ALLOC(E_ks_t,(NE_steps,3))
-     !
-   endif
+   YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+   !
+   YAMBO_ALLOC(E_tot_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ext_t,(NE_steps,3))
+   YAMBO_ALLOC(E_ks_t,(NE_steps,3))
    !
  endif
  !
  ! Fragmentation
  !
  call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
- if(io_err/=0) goto 1
+ !
+ if(io_err/=0) then
+   io_NL=io_err
+   goto 1
+ endif
  !
  ! Manage RD_CL_IF_END
  !
@@ -127,7 +126,7 @@ integer function io_NL(ID)
  call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
  call io_elemental(ID,VAR="[FIELDs] Versor                :",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
  call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2]:",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID,VAR="[FIELDs] Damping           [fs]:",R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,VAR="[FIELDs] Field width       [fs]:",R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
  call io_elemental(ID,VAR="[FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)

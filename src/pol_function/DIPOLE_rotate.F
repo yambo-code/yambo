@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_rotate(SC_R,Xen,X,rot_direction)
+subroutine Dipole_rotate(H_rotation,Xen,X,rot_direction)
  !
  ! This routine update dipoles according to eq. 13
  ! of ref. PRB 59, 7486 (1999)
@@ -32,14 +32,14 @@ subroutine Dipole_rotate(SC_R,Xen,X,rot_direction)
  use com,            ONLY:warning
  use drivers,        ONLY:l_sc_run
  use electrons,      ONLY:levels,n_sp_pol
- use SC,             ONLY:SC_bands,H_rotate
+ use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
  use X_m,            ONLY:DIP_P,DIP_iR,X_t
  !
  implicit none
  !
  type(levels),  intent(in) :: Xen
- complex(SP),   intent(in) :: SC_R(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
+ complex(SP),   intent(in) :: H_rotation(SC_bands(2),SC_bands(2),QP_nk,n_sp_pol)
  type(X_t),  intent(inout) :: X
  !
  integer,       intent(in) :: rot_direction
@@ -55,11 +55,13 @@ subroutine Dipole_rotate(SC_R,Xen,X,rot_direction)
    do id=1,3
      !
      DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_P (id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
+     call OBS_rotate(H_rotation(1:SC_bands(2),1:SC_bands(2),ik,1),&
+&                  DIP_P (id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
      DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1) =transpose(DIP_P(id,1:SC_bands(2),1:SC_bands(2),ik,1))
      !
      DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
-     call H_rotate(SC_R(1:SC_bands(2),1:SC_bands(2),ik,1),DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
+     call OBS_rotate(H_rotation(1:SC_bands(2),1:SC_bands(2),ik,1),&
+&                  DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1),SC_bands(2),rot_direction)
      DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1)=transpose(DIP_iR(id,1:SC_bands(2),1:SC_bands(2),ik,1))
      !
    enddo

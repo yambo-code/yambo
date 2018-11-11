@@ -23,9 +23,9 @@
 !
 module YPP_real_time
  !
- use pars,     ONLY:schlen,SP,DP
+ use pars,     ONLY:schlen,SP,DP,rZERO
  !
- implicit none
+#include<memory.h>
  !
  ! RT
  !
@@ -36,7 +36,6 @@ module YPP_real_time
  !
  logical  :: l_RTpump_energy
  logical  :: l_RTpump_kspace
- logical  :: l_RTpump_manual
  logical  :: l_RTpump_Fermi
  !
  ! RT Post-processing (what)
@@ -46,6 +45,7 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_X
  logical  :: l_NL_X
+ logical  :: l_NL_exc
  logical  :: l_RT_abs
  !
  ! RT post-processing (kind)
@@ -53,7 +53,7 @@ module YPP_real_time
  logical  :: l_RT_bands
  logical  :: l_RT_time
  logical  :: l_RT_energy
- logical  :: l_RT_2D_dos
+ logical  :: l_RT_dos
  !
  ! (RT) Retarded Green's functions
  !
@@ -67,11 +67,11 @@ module YPP_real_time
  real(SP)    :: Eh_pumped_pair_energy(2)
  !
  real(SP)    :: Eh_pumped_pair_deltaE
- real(SP)    :: Eh_pumped_pair_BZ_reagions(3,6)   
+ real(SP)    :: Eh_pumped_pair_BZ_regions(3,6)   
  !
  real(SP)    :: Eh_pumped_pair_width               ! energy with
  real(SP)    :: Eh_pumped_pair_BZ_width            ! k width
- integer     :: n_regions
+ integer     :: Eh_pumped_pair_n_BZ_regions
  !
  ! Fermi function pump
  !
@@ -82,7 +82,7 @@ module YPP_real_time
  ! (RT) optics
  !
  logical  :: Use_FFT
- logical  :: l_skip_pol_and_curr_IO
+ logical  :: l_skip_OBS_IO
  logical  :: l_force_min_damp
  logical  :: l_RT_X_inversion
  integer  :: N_probes
@@ -91,14 +91,11 @@ module YPP_real_time
  integer  :: X_order
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
- integer, parameter:: max_n_of_paths=10000
+ integer, parameter:: max_n_of_paths=500
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
- !
- complex(DP),    allocatable :: RT_J_t(:,:)
- complex(DP),    allocatable :: RT_P_t(:,:)
- !
  character(3) :: RT_p_format   
+ !
  !
  ! (RT) carriers
  !
@@ -109,11 +106,12 @@ module YPP_real_time
  real(SP),allocatable     :: RT_time(:)
  !
  type RT_ctl
+   real(SP) :: delta_W           =0._SP   ! delta W
+   real(SP) :: W_range(2)        =0._SP   ! energy range 
+   integer  :: W_n_steps         =0       ! number of steps in energy mesh
    real(SP) :: delta_T           =0._SP   ! delta T
    real(SP) :: T_range(2)        =0._SP   ! time windows for the transform
    integer  :: T_n_steps         =0       ! number of steps in Time mesh
-   real(SP) :: W_range(2)        =0._SP   ! energy range 
-   integer  :: W_n_steps         =0       ! number of steps in energy mesh
    real(SP) :: damp_factor       =0._SP   ! factor used in damping
    real(SP) :: Field_damp_factor =0._SP   ! factor used deduced from the Field 
    character(schlen) :: damping  ="NONE"  ! Damp type (none, lorentian or gaussian)
@@ -121,14 +119,27 @@ module YPP_real_time
  !
  type(RT_ctl), save :: RT_conf 
  !
+ type OBS_el
+   character(schlen)        :: title
+   integer                  :: N
+   complex(DP), allocatable :: F_t(:,:)
+   complex(DP), allocatable :: F_w(:,:)
+   complex(SP), allocatable :: W(:)
+ end type OBS_el
+ !
+ type(OBS_el) :: Pol 
+ type(OBS_el) :: Curr 
+ type(OBS_el) :: ElField 
+ !
  interface
    !
-   subroutine  RT_IO_J_and_P(IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+   subroutine  RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
      use electrons,     ONLY:levels
      implicit none
-     logical, optional  :: IO_error,first_sec_only,G_lesser_only
-     integer, optional  :: COM_
-     character(*), optional  :: mesg
+     character,    optional :: what
+     logical,      optional :: IO_error,first_sec_only,G_lesser_only
+     integer,      optional :: COM_
+     character(*), optional :: mesg
    end subroutine
    !
    subroutine RT_IO_carriers(Time,imposed_COM)
@@ -138,5 +149,14 @@ module YPP_real_time
    end subroutine RT_IO_carriers
    !
  end interface
- !
+   !
+   contains 
+   !
+   subroutine FT_free(FT)
+     type(OBS_el) :: FT
+     YAMBO_FREE(FT%F_w)
+     YAMBO_FREE(FT%F_t)
+     YAMBO_FREE(FT%W)
+   end subroutine
+   !
 end module YPP_real_time

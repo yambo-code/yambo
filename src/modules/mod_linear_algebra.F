@@ -76,10 +76,10 @@ module linear_algebra
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)
-     use stderr,  ONLY:string_pack
+     use stderr,  ONLY:STRING_pack
      use com,     ONLY:error
      character(*) calling_subr,message_
-     call error( trim( string_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
+     call error( trim( STRING_pack('LINEAR ALGEBRA driver [',trim(calling_subr),']:',trim(message_)) ))
    end subroutine
    !
    !============================

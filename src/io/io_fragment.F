@@ -30,7 +30,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! the properties of the DB that have been read previously 
  ! (like io_nectdf_support or io_code_version/revision).
  !
- use pars,       ONLY:schlen,lchlen
+ use pars,       ONLY:schlen
  use IO_m,       ONLY:close_is_on,io_connect,io_resetable,io_file,&
 &                     io_sec,io_extension,io_action,read_is_on,write_is_on,&
 &                     OP_RD_CL,OP_WR_CL,io_type,io_disconnect,io_folder,io_raw_extension
@@ -38,7 +38,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_SCREEN
  use stderr,     ONLY:intc,write_fragments_IO_log,logfile
  use interfaces, ONLY:PARALLEL_live_message
- use parallel_m, ONLY:ncpu,myid,PP_bcast
+ use parallel_m, ONLY:ncpu,PP_bcast
  use timing_m,   ONLY:timing
  !
  implicit none
@@ -81,7 +81,7 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
      if (.not.frag_HF) return
    case("em1s","em1d","pp","Xx")
      if (.not.frag_RESPONSE) return
-   case("carriers","THETA","JPSM","G","REF")
+   case("carriers","THETA","OBSERVABLES","G","REF")
      if (.not.frag_RT) return
    case("scE","scWFs","scV","sc_MeanPotential")
      if (.not.frag_SC) return
@@ -112,6 +112,8 @@ subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
  io_file(ID)=' '
  !
  fragment_filename=trim(io_extension(ID))//"_fragment_"//trim(intc(i_frag))
+ ! Cannot use the following line in place of the following three becasue of the name "fragments" instead of "fragment"
+ !if (present(j_fragment)) fragment_filename=trim(fragment_filename)//"_"//trim(intc(j_fragment))
  if (present(j_fragment)) then
    fragment_filename=trim(io_extension(ID)) &
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))

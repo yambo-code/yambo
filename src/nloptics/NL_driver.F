@@ -29,7 +29,7 @@ subroutine NL_driver(E,X,k,q)
  use com,            ONLY:error
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,Dipole_approach,X_alloc
+ use X_m,            ONLY:X_t,Dipole_approach,X_alloc,DIP_P
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
@@ -38,13 +38,13 @@ subroutine NL_driver(E,X,k,q)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS, &
-&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,&
-&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng, &
+&                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
+&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  !
 #include<memory.h>
  !
@@ -59,7 +59,7 @@ subroutine NL_driver(E,X,k,q)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save
+ integer           :: i_f,i1,NL_bands1_save,N_sample_size,wf_ng_save
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -90,9 +90,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================
- if(allocated(qindx_S)) then
-   YAMBO_FREE(qindx_S)
- endif
+ YAMBO_FREE(qindx_S)
  !
  ! QP dimensions
  !================
@@ -100,14 +98,7 @@ subroutine NL_driver(E,X,k,q)
  !
  ! Parallelization
  ! =======================
- NL_bands1_save=NL_bands(1)
- NL_bands(1)   =1
- eval_OVERLAPS =.true.
- X(1)%ib       =(/1,NL_bands(2)/)
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
+ call setup_DIPOLES_parallelization()
  !
  ! Dipoles
  !=========
@@ -117,10 +108,11 @@ subroutine NL_driver(E,X,k,q)
  ! force the reloading of the WFs
  !
  Dipole_approach='Covariant' 
- if(l_use_DIPOLES .or. load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
- !
- eval_OVERLAPS =.false.
- NL_bands(1)=NL_bands1_save
+ if(l_use_DIPOLES.or.l_eval_CURRENT) then
+    call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ else
+     if(load_Overlaps()/=0) call DIPOLE_driver(E,k,X(1),X(1)%q0)
+ endif
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
@@ -130,29 +122,32 @@ subroutine NL_driver(E,X,k,q)
  if(l_use_DIPOLES) then
    call X_alloc('DIP_S')
  else
-   call X_alloc('DIP_R')
-   call X_alloc('DIP_P')
+   if(.not.l_eval_CURRENT) then
+     call X_alloc('DIP_R')
+     call X_alloc('DIP_P')
+   endif
  endif
  !
  ! Non_Linear parallization
  ! ===================================
- call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
- call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
- call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,CLEAN_UP=.TRUE.)
+ call setup_NL_parallelization()
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
  ! WFs loading
  !=============
- if(Correlation/=IPA) &
-&  call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ !
+ wf_ng_save=wf_ng
+ wf_ng     =NL_ng
+ WF_Go_indx =1
+ !
+ if(Correlation/=IPA) then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
  !
  ! QP-corrections 
  !================
  call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
- !
- ! Generate DIPOLES in all the BZ if required
- !===================
- if(l_use_DIPOLES) call Build_DIP_bz(k,E,X)
  !
  ! Load Collisions if necessary
  ! ============================
@@ -176,6 +171,7 @@ subroutine NL_driver(E,X,k,q)
  ! Allocation
  ! ==================
  call NL_alloc(E) 
+ call NL_alloc_k_distributed(E)
  !
  ! Initialization
  ! ==================
@@ -206,6 +202,7 @@ subroutine NL_driver(E,X,k,q)
    ! ================
    V_bands=cZERO
    forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
+   if(WF_sample%ison) V_bands_t = cZERO
    !
    ! Efield
    ! ================
@@ -214,6 +211,7 @@ subroutine NL_driver(E,X,k,q)
    l_dynamics_is_over=.false.
    !
    NE_i_time=0
+   N_sample_size=0
    !
    do while(.not.l_dynamics_is_over)
      !
@@ -221,7 +219,12 @@ subroutine NL_driver(E,X,k,q)
      !
      Time=real(NE_i_time-1,SP)*RT_step
      !
-     call NL_Hamiltonian(E,k,q,X,Time,NE_i_time,V_bands)
+     call NL_Hamiltonian(E,k,q,X(1),Time,NE_i_time,V_bands)
+     !
+     ! I evaluate current after the Hamiltonian because I need
+     ! time-dependent overlaps Sm1_plus, and Sm1_mins
+     !
+     if(l_eval_CURRENT) call NL_current(k,E,V_bands)
      !
      ! Store Variables
      !
@@ -232,7 +235,7 @@ subroutine NL_driver(E,X,k,q)
      !
      call NL_output(NE_i_time,i_f) 
      !
-     call NL_Integrator(E,k,q,X,Integrator,NE_i_time,V_bands)
+     call NL_Integrator(E,k,q,X(1),Integrator,NE_i_time,V_bands)
      !
      call live_timing(steps=1)
      !
@@ -251,13 +254,80 @@ subroutine NL_driver(E,X,k,q)
  ! Deallocation
  ! ==========================
  !
+ wf_ng     = wf_ng_save
+ !
  call WF_free(WF)
  call NL_free()
  call X_alloc('DIP_S')
+ call X_alloc('DIP_R')
+ call X_alloc('DIP_P')
  !
  call set_real_printed_length()
  !
  contains
+   !
+   subroutine setup_DIPOLES_parallelization()
+     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore,CPU_structure, &
+&                               PARALLEL_ENV_uses_default
+     use nl_optics,        ONLY:eval_OVERLAPS
+     !
+     implicit none
+     !
+     ! Working space
+     !
+     integer :: n_frequencies_save,NL_bands1_save
+     integer :: i_s=8 ! Non-linear environment
+     !
+     ! Set bands between 1 and NL_bands(2)
+     !
+     NL_bands1_save  =NL_bands(1)
+     NL_bands(1)     =1
+     X(1)%ib         =(/1,NL_bands(2)/)
+     !
+     ! Set n_runs = 1 
+     ! Parallelization on frequencies turned off
+     !
+     n_frequencies_save=n_frequencies
+     n_frequencies     =1
+     eval_OVERLAPS     =.TRUE.
+     !
+     ! Save user-defined parallel structure
+     ! and force parallelization on k-points (for dipoles and overlaps)
+     call CPU_and_ROLE_strings_save()
+     !
+     !
+     ! Erase the user-defined string for non-linear
+     ! and force parallelization on k-points
+     !
+     CPU_structure(i_s)%CPU_string=" "
+     CPU_structure(i_s)%ROLE_string=" "
+     PARALLEL_ENV_uses_default(i_s)=.true.
+     !
+     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+     call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,X=X(1))
+     !
+     call CPU_and_ROLE_strings_restore()
+     PARALLEL_ENV_uses_default(i_s)=.false.
+     !  
+     n_frequencies=n_frequencies_save
+     NL_bands(1)=NL_bands1_save
+     !
+   end subroutine setup_DIPOLES_parallelization
+   !
+   subroutine setup_NL_parallelization
+     use nl_optics,        ONLY:eval_OVERLAPS
+     implicit none
+     !
+     ! Restore original number of bands
+     !
+     X(1)%ib       =(/NL_bands(1),NL_bands(2)/)
+     eval_OVERLAPS=.false.
+     !
+     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,X=X(1))
+     call PARALLEL_global_indexes(E,k,q,"Non_Linear",X=X(1))
+     !
+   end subroutine setup_NL_parallelization
+
    !
    integer function load_Overlaps()
      !
@@ -265,6 +335,7 @@ subroutine NL_driver(E,X,k,q)
      use X_m,            ONLY:DIP_S
      use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
      use electrons,      ONLY:n_sp_pol
+     use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_DIPOLES,PAR_IND_Xk_bz_ID,PP_redux_wait
      !
      implicit none
      !
@@ -283,15 +354,22 @@ subroutine NL_driver(E,X,k,q)
      io_err=io_Overlaps(X,ID_S)
      !
      if(io_err==0) then
-       call live_timing('[NL] Overlaps loading :',k%nbz)
+       call live_timing('[NL] Overlaps loading :',PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
        do ik=1,k%nbz
+         if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
          do i_sp_pol=1,n_sp_pol
            call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*k%nbz/),ID=ID_S)
-           io_err=io_err+io_Overlaps(X,ID_S)
+           io_err=io_err+io_Overlaps(X(1),ID_S)
          enddo
          call live_timing(steps=1)
        enddo
+       !
        call live_timing()
+       !
+       do i_sp_pol=1,n_sp_pol
+         call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
+       enddo
+       !
      endif
      !
      load_Overlaps=io_err

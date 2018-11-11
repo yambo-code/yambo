@@ -23,9 +23,10 @@
 !
 module RT_control
  !
- use pars,       ONLY:SP,lchlen,schlen
+ use pars,       ONLY:SP,lchlen,schlen,rZERO
  use units,      ONLY:AUT2FS
- use real_time,  ONLY:l_NE_dynamics
+ use real_time,  ONLY:l_NE_dynamics,l_elph_scatt
+ !
 #include<memory.h>
  !
  integer                  :: n_RT_descriptions = 0
@@ -34,7 +35,7 @@ module RT_control
  integer                  :: n_TIME_STEP_CONF_descriptions = 0
  character(lchlen)        :: TIME_STEP_CONF_description(100)
  !
- integer                  :: IO_JPSM_cache_steps=1
+ integer                  :: IO_OBS_cache_steps=1
  !
  integer                  :: ID(8)
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -51,21 +52,23 @@ module RT_control
  !
  logical                  :: SAVE_G_history
  !
- type(RT_IO_t),save  :: JPC_RT_IO_t
+ type(RT_IO_t),save  :: OBS_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
  !
  ! J, P and M (spin) cache 
  !
- real(SP), allocatable    :: J_cache(:,:)
- real(SP), allocatable    :: P_cache(:,:)
- real(SP), allocatable    :: Ms_cache(:,:)
- real(SP), allocatable    :: Ml_cache(:,:)
+ complex(SP), allocatable    :: J_cache(:,:)
+ complex(SP), allocatable    :: P_cache(:,:)
+ complex(SP), allocatable    :: Ms_cache(:,:)
+ complex(SP), allocatable    :: Ml_cache(:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
  logical                 :: NEQ_Kernel
  logical                 :: NEQ_Residuals
+ character(schlen)       :: RT_ctl_db(4)
+ integer                 :: RT_ctl_interp_neigh(4)=1
  ! 
  interface
    !
@@ -107,49 +110,52 @@ module RT_control
  !
  contains
    !
-   subroutine RT_alloc_control()
+   subroutine RT_control_alloc(FORCE)
      !
-     use pars,           ONLY:rZERO
+     use pars,           ONLY:cZERO,rZERO
      use real_time,      ONLY:NE_steps
      use electrons,      ONLY:n_spin
+     use ELPH,           ONLY:ph_modes
      !
-     if(l_NE_dynamics) then
+     logical :: FORCE
+     !
+     if(l_NE_dynamics.or.FORCE) then
        !
-       YAMBO_ALLOC(J_cache,(6,IO_JPSM_cache_steps))
-       J_cache=rZERO
-       YAMBO_ALLOC(P_cache,(6,IO_JPSM_cache_steps))
-       P_cache=rZERO
+       YAMBO_ALLOC(J_cache,(3,IO_OBS_cache_steps))
+       J_cache=cZERO
+       YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
+       P_cache=cZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(6,IO_JPSM_cache_steps))
-         Ms_cache=rZERO
-         YAMBO_ALLOC(Ml_cache,(6,IO_JPSM_cache_steps))
-         Ml_cache=rZERO
+         YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
+         Ms_cache=cZERO
+         YAMBO_ALLOC(Ml_cache,(3,IO_OBS_cache_steps))
+         Ml_cache=cZERO
        endif
        !
      endif
      !
-     YAMBO_FREE(JPC_RT_IO_t%Time)
+     YAMBO_FREE(OBS_RT_IO_t%Time)
      !
-     YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
-     JPC_RT_IO_t%Time=rZERO
+     YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
+     OBS_RT_IO_t%Time=rZERO
      !
      YAMBO_FREE(GF_RT_IO_t%Time)
      !
      YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
      GF_RT_IO_t%Time=rZERO
      !
-   end subroutine RT_alloc_control
+   end subroutine RT_control_alloc
    !
-   subroutine RT_free_control
+   subroutine RT_control_free
      !
      YAMBO_FREE(J_cache)
      YAMBO_FREE(P_cache)
      YAMBO_FREE(Ms_cache)
      YAMBO_FREE(Ml_cache)
-     YAMBO_FREE(JPC_RT_IO_t%Time)
+     YAMBO_FREE(OBS_RT_IO_t%Time)
      YAMBO_FREE(GF_RT_IO_t%Time)
      !
-   end subroutine RT_free_control
+   end subroutine RT_control_free
    !
    logical function RT_do_it(what)
      !
@@ -163,9 +169,9 @@ module RT_control
      RT_do_it= .FALSE.
      IT_last = 1
      !
-     if (what=="JPC") then
-       DO_IT_steps=JPC_RT_IO_t%INTERVAL_steps
-       IT_last    =JPC_RT_IO_t%last_point
+     if (what=="OBS") then
+       DO_IT_steps=OBS_RT_IO_t%INTERVAL_steps
+       IT_last    =OBS_RT_IO_t%last_point
      endif
      if (what=="OUT") then
        DO_IT_steps=OUTPUT_RT_IO_t%INTERVAL_steps
@@ -272,6 +278,58 @@ module RT_control
      !
      if (INIT.and.TYP%last_point==0) TYP%last_point=-TYP%INTERVAL_steps+1
      !
+   end subroutine
+   !
+   subroutine RT_carriers_to_RT_k( K )
+     use R_lattice,      ONLY:bz_samp,bz_samp_reset
+     use real_time,      ONLY:RT_carriers
+     type(bz_samp) :: K
+     integer       :: ik
+     call bz_samp_reset(K)
+     K%units='i'
+     K%description="RT_GRID"
+     K%nibz=RT_carriers%nk
+     YAMBO_ALLOC(K%pt,(K%nibz,3))
+     YAMBO_ALLOC(K%weights,(K%nibz))
+     do ik=1,K%nibz
+       K%pt(ik,:)   =RT_carriers%kpt(ik,:)
+       K%weights(ik)=RT_carriers%k_weight(ik)
+     enddo
+   end subroutine
+   !
+   subroutine RT_carriers_to_RT_E(E_eq,E,what)
+     use electrons,      ONLY:levels,E_reset,n_sp_pol
+     use real_time,      ONLY:RT_carriers
+     type(levels) :: E,E_eq
+     character(*) :: what
+     integer      :: i_RT,i_sp_pol,ib,ik
+     if (.not.allocated(E%E)) then
+       call E_reset(E)
+       E%nk=RT_carriers%nk
+       E%nb=RT_carriers%nb(2)
+       E%nb=RT_carriers%nb(2)
+       E%nk=RT_carriers%nk
+       E%nbf=E_eq%nbf
+       E%nbm=E_eq%nbm
+       E%E_Fermi  =E_eq%E_Fermi
+       E%E_VBM    =E_eq%E_VBM
+       E%E_CBm    =E_eq%E_CBm
+       E%E_dir_gap=E_eq%E_dir_gap
+       YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+       YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+       E%E=rZERO
+       E%f=rZERO
+     endif
+     do i_RT=1,RT_carriers%nstates
+       ib      =RT_carriers%table(i_RT,1)
+       ik      =RT_carriers%table(i_RT,3)
+       i_sp_pol=RT_carriers%table(i_RT,4)
+       if (what=="Eo") E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)
+       if (what=="E" ) E%E(ib,ik,i_sp_pol)=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
+       if (what=="fo") E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)
+       if (what=="f" ) E%f(ib,ik,i_sp_pol)=RT_carriers%f_bare(i_RT)+RT_carriers%delta_f(i_RT)
+       if (what=="df") E%f(ib,ik,i_sp_pol)=RT_carriers%delta_f(i_RT)
+     enddo
    end subroutine
    !
 end module RT_control

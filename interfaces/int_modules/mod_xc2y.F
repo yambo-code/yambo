@@ -31,7 +31,7 @@ module mod_xc2y
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 11, N_PW_C = 13, N_PW_GX = 18, N_PW_GC = 13
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 11, N_PW_C = 13, N_PW_GX = 19, N_PW_GC = 14
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -72,11 +72,12 @@ module mod_xc2y
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
- character(len=7),parameter,dimension(N_PW_GX) :: PW_GX=& 
-& (/ 'NOGX ', 'B88  ', 'BLYP ', 'GGX  ', 'PW91 ', 'PBX  ', 'PBE  ', 'RPB  ', 'HCTH ', 'OPTX ',&
-&    'META ', 'PB0X ', 'PBE0 ', 'B3LP ', 'B3LYP', 'PSX  ', 'WCX  ', 'HSE  '/)
- character(len=7),parameter,dimension(N_PW_GC) :: PW_GC=&
-& (/ 'NOGC ', 'P86  ', 'GGC  ', 'PW91 ', 'BLYP ', 'PBC  ', 'PBE  ','PBE0 ','HCTH ', 'META ','B3LP ', 'B3LYP', 'PSC  '/)
+ character(len=8),parameter,dimension(N_PW_GX) :: PW_GX=& 
+& (/ 'NOGX  ', 'B88   ', 'BLYP  ', 'GGX   ', 'PW91  ', 'PBX   ', 'PBE   ', 'RPB   ', 'HCTH  ', 'OPTX  ',&
+&    'META  ', 'PB0X  ', 'PBE0  ','PBESOL', 'B3LP  ', 'B3LYP ', 'PSX   ', 'WCX   ', 'HSE   '/)
+ character(len=8),parameter,dimension(N_PW_GC) :: PW_GC=&
+& (/ 'NOGC  ', 'P86   ', 'GGC   ', 'PW91  ', 'BLYP  ', 'PBC   ', 'PBE   ','PBE0  ','PBESOL','HCTH  ', 'META  ',&
+&    'B3LP  ', 'B3LYP ', 'PSC   '/)
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
@@ -87,11 +88,11 @@ module mod_xc2y
 &    NOXC, XC_NOT_AVAILABLE/)
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
 & (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
-&    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH, &
+&    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH,XC_GGA_X_PBE_SOL, &
 &    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, XC_GGA_C_PBE, NOXC,&
-&    NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)
+&    XC_GGA_C_PBE_SOL,NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)
  !
  ! Note that in libxc some functional as b3lyp, pbe0 and hcth are defined as one xc functional 
  ! e.g. exchange and correlation are not separable!!!

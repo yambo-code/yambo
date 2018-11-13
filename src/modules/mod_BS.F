@@ -259,7 +259,7 @@ module BS
      integer :: iB
      do iB=1,n_BS_blks
        YAMBO_FREE(BS_blk(iB)%mat)
-       YAMBO_FREE(BS_blk(iB)%done)
+       deallocate(BS_blk(iB)%done)
      enddo
    end subroutine
    !

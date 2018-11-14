@@ -27,7 +27,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use units,          ONLY:HA2EV
  use real_time,      ONLY:q_weight_RT,elph_gkkp_expanded_sq,THETA_matrix,&
 &                         THETA_matrix_index,Q_io_map,K_io_map,&
-&                         l_RT_CCA_Kernel,RT_bands,l_RT_uses_E_DbGd
+&                         l_RT_CCA_Kernel,RT_bands
  use electrons,      ONLY:levels,spin_occ
  use drivers,        ONLY:l_elph_scatt
  use vec_operate,    ONLY:v_norm
@@ -143,7 +143,6 @@ subroutine RT_ELPH_initialize(E,k,q)
      ! needed in the case the RIM is not used. But when the RIM is used gkkp m.e. corresponding to transitions between degenerate
      ! states can be exported to non-degenerate bands belonging to a k of the small grid. In this way
      ! the detailled balance condition is not satisfied anymore.
-     !
      !
      ! Degeneration Finder
      !====================

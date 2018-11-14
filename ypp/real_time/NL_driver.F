@@ -23,8 +23,8 @@
 !
 subroutine NL_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order,X_order,RT_conf,RT_P_t,RT_time,&
-&                         l_skip_pol_and_curr_IO,Probe_Keyword,RT_conf
+ use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Probe_Keyword,Pol,&
+&                         l_skip_OBS_IO
  use pars,           ONLY:SP,pi,cZERO,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
@@ -36,7 +36,7 @@ subroutine NL_driver(en,k)
  use com,            ONLY:msg,error,warning
  use real_time,      ONLY:NE_steps,RT_step,NE_time,NE_steps
  use stderr,         ONLY:intc,real2ch
- use RT_control,     ONLY:JPC_RT_IO_t
+ use RT_control,     ONLY:OBS_RT_IO_t
  use LIVE_t,         ONLY:live_timing
  !
 #include<memory.h>
@@ -52,29 +52,44 @@ subroutine NL_driver(en,k)
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
- logical  :: Probe_consistency_error
+ logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
+ logical, allocatable :: runs_ok(:)
  !
  call section("*",'NL Post Processing')
+ !
+ call RT_output_INIT( )
+ !
+ call parser('PrtPwrSpec',l_print_pwr_spectrum)
  !
  ! Input/Output
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_Nonlinear=io_NL(ID)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
- l_skip_pol_and_curr_IO=.false.
+ l_skip_OBS_IO=.false.
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
  YAMBO_ALLOC(Probe_frequency,(n_frequencies))
+ RT_P_probe=0._SP
+ Probe_frequency=0._SP
  !
  ! Reads the polarization from dbs containing simulation at different frequencies 
  !
  Probe_consistency_error=.FALSE.
  i_Probe=1
  !
+ allocate(runs_ok(n_frequencies))
+ runs_ok=.true.
+ !
  do i_f=1,n_frequencies
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
    io_Nonlinear=io_NL(ID)
+   !
+   if(io_Nonlinear/=0) then
+     runs_ok(i_f)=.false.
+     cycle
+   endif
    !
    Efield(i_Probe)%amplitude=Efield_strength(Efield(i_Probe)%intensity,'AU')
    !
@@ -95,7 +110,9 @@ subroutine NL_driver(en,k)
    !
  enddo
  !
- if (Probe_consistency_error) call error('Not all probes have consistent parameters')
+ if (Probe_consistency_error) call error(' Not all probes have consistent parameters')
+ if (any(runs_ok.eqv..false.)) call warning(' Incomplete runs')
+ if (all(runs_ok.eqv..false.)) call error(' Error reading non-linear databases!')
  !
  ! Time Initialization
  !
@@ -106,10 +123,10 @@ subroutine NL_driver(en,k)
  !
  if (any((/trim(Efield_probe%ef_name) == 'SIN', trim(Efield_probe%ef_name) == 'SOFTSIN', &
 &          trim(Efield_probe%ef_name) == 'ANTIRES'/)).and.RT_conf%T_range(1)<0._SP) then
-    RT_conf%T_range(1) = JPC_RT_IO_t%Time(JPC_RT_IO_t%N)-T_period
+    RT_conf%T_range(1) = OBS_RT_IO_t%Time(OBS_RT_IO_t%N)-T_period
  endif
  !
- call RT_time_configuration_setup('POLARIZATION',JPC_RT_IO_t)
+ call RT_time_configuration_setup('POLARIZATION',OBS_RT_IO_t)
  !
  ! Check if total simulation time is long enough for analysis  
  !
@@ -144,6 +161,8 @@ subroutine NL_driver(en,k)
      !
      do i_f = 1, n_frequencies
        !
+       if(.not.runs_ok(i_f)) cycle
+       !
        T_period=T_range(1,i_f)
        !
        do i_d = 1,3
@@ -165,6 +184,8 @@ subroutine NL_driver(en,k)
        !
        do i_f=1,n_frequencies
          !
+         if(.not.runs_ok(i_f)) cycle
+         !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
                 &                                                   Divide_by_Field(Efield(i_Probe),i_order)
@@ -183,14 +204,13 @@ subroutine NL_driver(en,k)
      YAMBO_FREE(Susceptibility)
      YAMBO_FREE(Harmonic_Frequency)
      !
-  case ('DELTA')
+  case ('DELTA','PULSE')
     !
-    YAMBO_ALLOC(RT_P_t,(RT_conf%T_n_steps,3))
-    RT_P_t(:,:) =RT_P_probe(:,i_Probe,:)
-    if(trim(RT_conf%damping) /= "NONE") &
-&     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,RT_P_t,3)
+    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
+    Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+    if(trim(RT_conf%damping) /= "NONE") call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
     call RT_X_LRR_real_field(en)
-    YAMBO_FREE(RT_P_t)
+    YAMBO_FREE(Pol%F_t)
      !
      ! OTHER CASES NOT YET WORKING
      !
@@ -254,6 +274,8 @@ contains
        do i_fp=1,n_frequencies
          !
          i_f=f_indx(i_fp)
+         !
+         if(.not.runs_ok(i_f)) cycle
          !
          Unit_of_Measure = 1._SP
          !

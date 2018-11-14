@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
- ! 
+subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
+ !
  ! GPL_EXCLUDE_START
  use debug,      ONLY:dbg
  ! GPL_EXCLUDE_END
- use pars,       ONLY:SP,cZERO,schlen
+ use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
@@ -58,10 +58,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     eval_magn,E_SOC_nbands
  use parallel_m, ONLY:ncpu,CPU_str_reset
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
-&                     more_io_path,core_io_path,jobstr,com_path,alt_jobstr,repfile,n_alt_jobstr,&
-&                     n_max_jobstr,grid_paths
- use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,&
-&                     string_split,log_as_a_file,string_remove
+&                     more_io_path,core_io_path,com_path,repfile,grid_paths
+ use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
@@ -104,7 +102,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
- use RT_control, ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history
+ use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_headings,YPP_append
+ use RT_control, ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db
  use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_life_extrap_times,      &
 &                     Gr_kind,two_alpha,l_RT_CCA_Kernel,l_lftm_fit_temperatures,          &
 &                     RAD_LifeTime,Phase_LifeTime,EP_abs_prefactor,                       &
@@ -112,13 +111,14 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
 &                     RT_eh_en,l_lftm_fit_stable,Nfitted_lifetimes,RT_Tfit_lifetimes,     &
 &                     RT_Efit_lifetimes,l_update_SOC,                                     &
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,               &
-&                     RT_ctl_db,RAD_prefactor
+&                     RAD_prefactor
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
 &                     A_tot,A_ind,A_ext
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
+&                     NL_verb_name,NL_bands,n_order
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -130,12 +130,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  implicit none
  !
- character(*) :: INSTR,IND,OD,JS,COM_DIR
+ character(*) :: INSTR,IND,OD,COM_DIR
  !
  ! Work Space 
  !
  integer           :: i1,i2
- character(schlen) :: string(10)
  !
  ! Printed reals format lengths 
  !
@@ -192,24 +191,6 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  call mk_dir(core_io_path)
  !
- ! ... and Job strings
- !
- call string_split(JS,string,",")
- !
- ! remove final /
- do i1=1,n_max_jobstr
-   if (len_trim(string(i1))==0) cycle
-   string(i1)=trim(string_remove(string(i1),"/"))
- enddo
- !
- jobstr=string(1)
- alt_jobstr=" "
- do i1=2,n_max_jobstr
-   if (len_trim(string(i1))==0) cycle
-   alt_jobstr(i1-1)=string(i1)
-   n_alt_jobstr=i1-1
- enddo
- !
  ! WFs fragmentation, this is for the interfaces
  !
  frag_WF = (.not.index(INSTR,'nodbfr')>0 .or. index(INSTR,'fragnb')>0)
@@ -244,10 +225,10 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ID_logo=-1
  ID_logo_stderr=-1
  !
- !stderr
+ !LOG/REP files
  !
  repfile=" "
- write (logfile,'(2a)') trim(more_io_path),'/l_stderr'
+ logfile=" "
  !
  !Timing
  !
@@ -303,6 +284,8 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  pp_n_l_times_proj_max=0
  pp_kbv_dim=0
+ !
+ ! Electrons
  !
  n_spin=1
  n_sp_pol=1
@@ -462,12 +445,12 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ BSS_n_freqs=100
  !
 #if defined _SLEPC
  BSS_slepc_extraction='ritz'
  BSS_slepc_ncv=0
  BSS_slepc_tol=1E-6_SP
- BSS_n_freqs=100
  BSS_target_E=0
  Slepc_shell=.TRUE.
 #endif
@@ -530,7 +513,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  ! COLLISIONS I/O
  !
  COLLISIONS_cutoff=0.0005_SP
- H_potential="default"
+ H_potential="NONE"
  !
 #endif
  !
@@ -542,7 +525,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  SC_cycle_mixing=0.5_SP
  SC_rho_threshold=1.E-5_SP
  SC_up_W_iters=0
- SC_potential='default'
+ SC_potential='NONE'
  OEP_approx='n'
  compatible_SC_DB=.FALSE.
  found_SC_DB=.FALSE.
@@ -584,7 +567,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  NE_MEM_treshold=0.
  RT_nk=0
  RT_eh_en=0._SP
- RT_scatt_tresh=1._SP
+ RT_scatt_tresh=-1._SP/HA2EV
  PLASMA_redux_percent=100._SP
  DbGd_EE_percent=0._SP
  !
@@ -612,11 +595,19 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  ! RT_ctl
  !
- JPC_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time=2._SP*FS2AUT
  OUTPUT_RT_IO_t%INTERVAL_time=5._SP*FS2AUT
+ SAVE_G_history=.FALSE.
  GF_RT_IO_t%INTERVAL_time=1._SP*FS2AUT
  !
- SAVE_G_history=.FALSE.
+ ! RT_output
+ !
+ n_RT_headings=0
+ N_RT_o_files=0
+ RT_o_file_long= " "
+ RT_o_file_short= " "
+ RT_headings= " "
+ YPP_append=" "
  !
 #endif
  !
@@ -624,9 +615,11 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  !
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'
+ NL_bands      =(/0,0/)
  NL_correlation="IPA"
- NL_er         =(/0.3_SP,8._SP/)/HA2EV
+ NL_er         =(/0.2_SP,8._SP/)/HA2EV
  n_frequencies =80
+ n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  call Efield_reset(Efield(1))
@@ -634,6 +627,7 @@ subroutine SET_defaults(INSTR,IND,OD,JS,COM_DIR)
  Efield(1)%intensity=1000._SP*kWCMm22AU
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
+ NL_verb_name='low'
  !
 #endif
  !

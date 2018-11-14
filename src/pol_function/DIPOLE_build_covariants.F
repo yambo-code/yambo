@@ -41,8 +41,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:master_cpu
- use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_WR_CL,OP_RD_CL
 
  !
  implicit none
@@ -66,8 +64,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  logical     :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer     :: n_LT_steps
  !
- integer           :: io_err,ID
- integer, external :: io_Overlaps
+ integer           :: ID
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
@@ -92,15 +89,12 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
  &             keep_states_to_load=.TRUE.)
  !
- ! In the covariat approach I do need the overlap. 
- ! So as a first thing I check if they exist
+ ! Notice that DIP_S is defined in the BZ       
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_Overlaps(X,ID)
+ call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
+ DIP_S=cZERO
  !
- ! If they do not I have to compute them
- !
- if(io_err/=0) call DIPOLE_overlaps(Xk,X)
+ call DIPOLE_overlaps(Xk,X)
  !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !

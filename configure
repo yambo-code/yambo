@@ -2788,6 +2788,11 @@ SHASH="416d240f3"
 
 
 #
+CURRENT_DIR=`echo "$PWD" | sed -e "s/\s/X/g"`
+if ! test -d $CURRENT_DIR ; then
+ as_fn_error $? "Make cannot work using paths which include spaces" "$LINENO" 5
+fi
+#
 
 if test "$exec_prefix" = "NONE" ; then exec_prefix="$PWD" ; fi
 #
@@ -10787,7 +10792,7 @@ fi
 #
 HAVE_FFT="no"
 save_ldflags="$LDFLAGS"
-try_fft_libs=
+try_libs=
 internal_fft="no"
 compile_fftqe="no"
 compile_fftw="no"
@@ -10797,8 +10802,8 @@ include_warn="no"
 #
 # first identifies lib and include dirs
 #
-try_fft_libdir=
-try_fft_incdir=
+try_libdir=
+try_incdir=
 #
 if test -d "$with_fft_path" || test -d "$with_fft_libdir" ; then
   #
@@ -10810,14 +10815,14 @@ $as_echo_n "checking for FFT in $with_fft_path... " >&6; } ; fi
 $as_echo_n "checking for FFT in $with_fft_libdir... " >&6; } ; fi
   #
   if test -d "$with_fft_path" ; then
-    try_fft_libdir=$with_fft_path/lib
-    try_fft_incdir=$with_fft_path/include
+    try_libdir=$with_fft_path/lib
+    try_incdir=$with_fft_path/include
   fi
-  if test -d "$with_fft_libdir"     ; then try_fft_libdir=$with_fft_libdir ; fi
-  if test -d "$with_fft_includedir" ; then try_fft_incdir=$with_fft_includedir ; fi
+  if test -d "$with_fft_libdir"     ; then try_libdir=$with_fft_libdir ; fi
+  if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
   #
-  if test -z "$try_fft_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
-  if test -z "$try_fft_incdir" ; then include_warn="yes" ; fi
+  if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+  if test -z "$try_incdir" ; then include_warn="yes" ; fi
   #
 elif test x"$with_fft_libs" != "x" ; then
   #
@@ -10825,10 +10830,10 @@ elif test x"$with_fft_libs" != "x" ; then
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT Library using $with_fft_libs" >&5
 $as_echo_n "checking for FFT Library using $with_fft_libs... " >&6; }
-  try_fft_libs=$with_fft_libs
+  try_libs=$with_fft_libs
   #
-  if test -d "$with_fft_includedir" ; then try_fft_incdir=$with_fft_includedir ; fi
-  if test -z "$try_fft_incdir" ; then include_warn="yes" ; fi
+  if test -d "$with_fft_includedir" ; then try_incdir=$with_fft_includedir ; fi
+  if test -z "$try_incdir" ; then include_warn="yes" ; fi
   #
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFT" >&5
@@ -10852,26 +10857,26 @@ testprog_omp="      program main
 
       end"
 #
-if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
    #
-   if test x"$enable_open_mp" = "xyes" && test -e "$try_fft_libdir/libfftw3_omp.a" ; then
-       try_fft_libs="-lfftw3 -lfftw3_omp"
+   if test x"$enable_open_mp" = "xyes" && test -e "$try_libdir/libfftw3_omp.a" ; then
+       try_libs="-lfftw3 -lfftw3_omp"
    else
-       try_fft_libs="-lfftw3"
+       try_libs="-lfftw3"
    fi
    #
 fi
 #
-if ! test x"$try_fft_libs" = "x" ; then
+if ! test x"$try_libs" = "x" ; then
   #
   save_libs=$LIBS
   save_fcflags=$FCFLAGS
   #
-  FFT_LIBS="$try_fft_libs";
+  FFT_LIBS="$try_libs";
   FFT_INCS="";
   #
-  if test x"$try_fft_libdir" != "x" ; then FFT_LIBS="-L$try_fft_libdir $try_fft_libs" ; fi
-  if test x"$try_fft_incdir" != "x" ; then FFT_INCS="$IFLAG$try_fft_incdir" ; fi
+  if test x"$try_libdir" != "x" ; then FFT_LIBS="-L$try_libdir $try_libs" ; fi
+  if test x"$try_incdir" != "x" ; then FFT_INCS="$IFLAG$try_incdir" ; fi
   #
   LIBS="$FFT_LIBS $save_libs";
   FCFLAGS="$FFT_INCS $save_fcflags";
@@ -10905,17 +10910,17 @@ rm -f core conftest.err conftest.$ac_objext \
     def_fft="-D_FFTW"
     if test "$HAVE_FFTW_OMP" = "yes" ; then def_fft="-D_FFTW -D_FFTW_OMP" ; fi
     #
-    if test "$try_fft_libs" = "-lfftw3" ; then
+    if test "$try_libs" = "-lfftw3" ; then
       FFT_info="(FFTW v3)";
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW3" >&5
 $as_echo "FFTW3" >&6; }
-    elif test "$try_fft_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
+    elif test "$try_libs" = "-lfftw3 -lfftw3_omp" && test "$HAVE_FFTW_OMP" = "yes" ; then
       FFT_info="(FFTW_OMP v3)";
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW3_OMP" >&5
 $as_echo "FFTW3_OMP" >&6; }
     else
       desc=Other
-      if ! test -z "`echo $try_fft_libs | grep -i mkl`" ; then desc="MKL" ; fi
+      if ! test -z "`echo $try_libs | grep -i mkl`" ; then desc="MKL" ; fi
       FFT_info="(FFTW $desc)";
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW ($desc) " >&5
 $as_echo "FFTW ($desc) " >&6; }
@@ -10939,21 +10944,21 @@ fi
 #
 # check for ESSL FFT
 #
-if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
-   try_fft_libs="-L$try_fft_libdir -lessl"
+if test -d "$try_libdir" && test -d "$try_incdir" ; then
+   try_libs="-L$try_libdir -lessl"
 fi
 #
-if ! test x"$try_fft_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
+if ! test x"$try_libs" = "x" && ! test "$HAVE_FFT" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: FFTW no" >&5
 $as_echo "FFTW no" >&6; }
   #
-  if ! test x"$try_fft_libdir" = "x" ; then FFT_PATH="-L$try_fft_libdir" ; fi
+  if ! test x"$try_libdir" = "x" ; then FFT_PATH="-L$try_libdir" ; fi
   #
   save_libs=$LIBS
   save_ldflags=$LDFLAGS
   save_fcflags=$FCFLAGS
-  LIBS="$FFT_PATH $try_fft_libs"
-  if test x"$try_fft_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_fft_incdir" ; fi
+  LIBS="$FFT_PATH $try_libs"
+  if test x"$try_incdir" != "x" ; then FCFLAGS="$FCFLAGS $IFLAG$try_incdir" ; fi
   #
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dcft in $LIBS" >&5
 $as_echo_n "checking for dcft in $LIBS... " >&6; }
@@ -10986,8 +10991,8 @@ $as_echo_n "checking for FFT... " >&6; }
       FFT_info="(FFT ESSL (FFTQE))";
     fi
     def_fft="-D_FFTQE $FFT3D_CPP -D_ESSL"
-    FFT_LIBS="${FFT_PATH} $try_fft_libs"
-    FFT_INCS="$IFLAG$try_fft_incdir"
+    FFT_LIBS="${FFT_PATH} $try_libs"
+    FFT_INCS="$IFLAG$try_incdir"
     HAVE_FFT=yes
     compile_fftqe=yes
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: ESSL FFT" >&5
@@ -11358,15 +11363,15 @@ $as_echo_n "checking for Petsc in $with_petsc_path... " >&6; } ;
   fi
   #
   if test -d "$with_petsc_path" ; then
-      try_petsc_libdir="$with_petsc_path/lib" ;
-      try_petsc_incdir="$with_petsc_path/include" ;
+      try_libdir="$with_petsc_path/lib" ;
+      try_incdir="$with_petsc_path/include" ;
   fi
   #
-  if test -d "$with_petsc_libdir"     ; then try_petsc_libdir="$with_petsc_libdir" ; fi
-  if test -d "$with_petsc_includedir" ; then try_petsc_incdir="$with_petsc_includedir" ; fi
+  if test -d "$with_petsc_libdir"     ; then try_libdir="$with_petsc_libdir" ; fi
+  if test -d "$with_petsc_includedir" ; then try_incdir="$with_petsc_includedir" ; fi
   #
-  try_PETSC_INCS="$IFLAG$try_petsc_incdir" ;
-  try_PETSC_LIBS="-L$try_petsc_libdir -lpetsc" ;
+  try_PETSC_INCS="$IFLAG$try_incdir" ;
+  try_PETSC_LIBS="-L$try_libdir -lpetsc" ;
   #
   if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
   #
@@ -11480,15 +11485,15 @@ $as_echo_n "checking for Slepc in $with_slepc_path... " >&6; } ;
   fi
   #
   if test -d "$with_slepc_path" ; then
-      try_slepc_libdir="$with_slepc_path/lib" ;
-      try_slepc_incdir="$with_slepc_path/include" ;
+      try_libdir="$with_slepc_path/lib" ;
+      try_incdir="$with_slepc_path/include" ;
   fi
   #
-  if test -d "$with_slepc_libdir"     ; then try_slepc_libdir="$with_slepc_libdir" ; fi
-  if test -d "$with_slepc_includedir" ; then try_slepc_incdir="$with_slepc_includedir" ; fi
+  if test -d "$with_slepc_libdir"     ; then try_libdir="$with_slepc_libdir" ; fi
+  if test -d "$with_slepc_includedir" ; then try_incdir="$with_slepc_includedir" ; fi
   #
-  try_SLEPC_INCS="$IFLAG$try_slepc_incdir" ;
-  try_SLEPC_LIBS="-L$try_slepc_libdir -lslepc" ;
+  try_SLEPC_INCS="$IFLAG$try_incdir" ;
+  try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
   #
   if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
   if test x"$with_slepc_incs" != "x" ; then  try_SLEPC_INCS="$with_slepc_incs" ; fi
@@ -12215,24 +12220,24 @@ $as_echo_n "checking for NetCDF in $with_netcdf_path... " >&6; } ;
   fi
   #
   if test -d "$with_netcdf_path" ; then
-      try_netcdf_libdir="$with_netcdf_path/lib" ;
-      try_netcdf_incdir="$with_netcdf_path/include" ;
-      try_netcdff_libdir="$with_netcdf_path/lib" ;
-      try_netcdff_incdir="$with_netcdf_path/include" ;
+      try_libdir="$with_netcdf_path/lib" ;
+      try_incdir="$with_netcdf_path/include" ;
+      tryf_libdir="$with_netcdf_path/lib" ;
+      tryf_incdir="$with_netcdf_path/include" ;
   fi
   if test -d "$with_netcdff_path" ; then
-      try_netcdff_libdir="$with_netcdff_path/lib" ;
-      try_netcdff_incdir="$with_netcdff_path/include" ;
+      tryf_libdir="$with_netcdff_path/lib" ;
+      tryf_incdir="$with_netcdff_path/include" ;
   fi
   #
-  if test -d "$with_netcdf_libdir"     ; then try_netcdf_libdir="$with_netcdf_libdir" ; fi
-  if test -d "$with_netcdf_includedir" ; then try_netcdf_incdir="$with_netcdf_includedir" ; fi
+  if test -d "$with_netcdf_libdir"     ; then try_libdir="$with_netcdf_libdir" ; fi
+  if test -d "$with_netcdf_includedir" ; then try_incdir="$with_netcdf_includedir" ; fi
   #
-  if test -d "$with_netcdff_libdir"     ; then try_netcdff_libdir="$with_netcdff_libdir" ; fi
-  if test -d "$with_netcdff_includedir" ; then try_netcdff_incdir="$with_netcdff_includedir" ; fi
+  if test -d "$with_netcdff_libdir"     ; then tryf_libdir="$with_netcdff_libdir" ; fi
+  if test -d "$with_netcdff_includedir" ; then tryf_incdir="$with_netcdff_includedir" ; fi
   #
-  if test -z "$try_netcdf_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
-  if test -z "$try_netcdf_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+  if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+  if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
   #
   ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
@@ -12240,16 +12245,16 @@ ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
   #
-  try_NETCDF_INCS="$IFLAG$try_netcdf_incdir" ;
-  if test -d "$try_netcdff_incdir" ; then
-    try_NETCDFF_INCS="$IFLAG$try_netcdff_incdir" ;
+  try_NETCDF_INCS="$IFLAG$try_incdir" ;
+  if test -d "$tryf_incdir" ; then
+    try_NETCDFF_INCS="$IFLAG$tryf_incdir" ;
   fi
   #
-  try_NETCDF_LIBS="-L$try_netcdf_libdir -lnetcdf" ;
-  if test -r $try_netcdff_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$try_netcdff_libdir -lnetcdff" ;
-  elif test -r $try_netcdf_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$try_netcdf_libdir -lnetcdff" ;
+  try_NETCDF_LIBS="-L$try_libdir -lnetcdf" ;
+  if test -r $tryf_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$tryf_libdir -lnetcdff" ;
+  elif test -r $try_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_libdir -lnetcdff" ;
   fi
   #
 elif test x"$with_netcdf_libs" != "x" ; then
@@ -12377,17 +12382,17 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   # re-define lib and inc dirs
   #
   if test -d "$with_hdf5_path" ; then
-      try_hdf5_libdir=$with_hdf5_path/lib
-      try_hdf5_incdir=$with_hdf5_path/include
+      try_libdir=$with_hdf5_path/lib
+      try_incdir=$with_hdf5_path/include
   fi
-  if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
-  if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
+  if test -d "$with_hdf5_libdir"     ; then try_libdir=$with_hdf5_libdir ; fi
+  if test -d "$with_hdf5_includedir" ; then try_incdir=$with_hdf5_includedir ; fi
   #
   if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
   #
-  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test -d "$try_libdir" ; then try_HDF5_LIBS="-L$try_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
-  if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
+  if test -d "$try_incdir" ; then try_HDF5_INCS="$IFLAG$try_incdir" ; fi
   #
   save_libs="$LIBS" ;
   save_fcflags="$FCFLAGS" ;
@@ -12637,30 +12642,30 @@ $as_echo_n "checking for IOTK in $with_iotk_path... " >&6; } ; fi
 $as_echo_n "checking for IOTK in $with_iotk_libdir... " >&6; } ; fi
     #
     if test -d "$with_iotk_path" ; then
-        try_iotk_libdir_src=$with_iotk_path/src
-        try_iotk_incdir_src=$with_iotk_path/src
-        try_iotk_libdir=$with_iotk_path/lib
-        try_iotk_incdir=$with_iotk_path/include
+        try_libdir_src=$with_iotk_path/src
+        try_incdir_src=$with_iotk_path/src
+        try_libdir=$with_iotk_path/lib
+        try_incdir=$with_iotk_path/include
     fi
-    if test -d "$with_iotk_libdir"  ;    then try_iotk_libdir=$with_iotk_libdir ; fi
-    if test -d "$with_iotk_includedir" ; then try_iotk_incdir=$with_iotk_includedir ; fi
+    if test -d "$with_iotk_libdir"  ;    then try_libdir=$with_iotk_libdir ; fi
+    if test -d "$with_iotk_includedir" ; then try_incdir=$with_iotk_includedir ; fi
     #
-    if test -z "$try_iotk_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
-    if test -z "$try_iotk_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
     #
     #
-    if test -r $try_iotk_libdir_src/libiotk.a && test -e $try_iotk_incdir_src/iotk_module.mod ; then
+    if test -r $try_libdir_src/libiotk.a && test -e $try_incdir_src/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
-      IOTK_INCS="$IFLAG$try_iotk_incdir_src"
-      IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
+      IOTK_INCS="$IFLAG$try_incdir_src"
+      IOTK_LIBS="$try_libdir_src/libiotk.a"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-    elif test -r $try_iotk_libdir/libiotk.a  && test -e $try_iotk_incdir/iotk_module.mod ; then
+    elif test -r $try_libdir/libiotk.a  && test -e $try_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
-      IOTK_INCS="$IFLAG$try_iotk_incdir"
-      IOTK_LIBS="$try_iotk_libdir/libiotk.a"
+      IOTK_INCS="$IFLAG$try_incdir"
+      IOTK_LIBS="$try_libdir/libiotk.a"
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
     else
@@ -12794,21 +12799,21 @@ $as_echo_n "checking for ETSF_IO in $with_etsf_io_path... " >&6; } ; fi
 $as_echo_n "checking for ETSF_IO in $with_etsf_io_libdir... " >&6; } ; fi
     #
     if test -d "$with_etsf_io_path" ; then
-        try_etsf_libdir=$with_etsf_io_path/lib
-        try_etsf_incdir=$with_etsf_io_path/include
+        try_libdir=$with_etsf_io_path/lib
+        try_incdir=$with_etsf_io_path/include
     fi
-    if test -d "$with_etsf_io_libdir"     ; then try_etsf_libdir=$with_etsf_io_libdir ; fi
-    if test -d "$with_etsf_io_includedir" ; then try_etsf_incdir=$with_etsf_io_includedir ; fi
+    if test -d "$with_etsf_io_libdir"     ; then try_libdir=$with_etsf_io_libdir ; fi
+    if test -d "$with_etsf_io_includedir" ; then try_incdir=$with_etsf_io_includedir ; fi
     #
-    if test -z "$try_etsf_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
-    if test -z "$try_etsf_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+    if test -z "$try_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
     #
     #
-    if test -r $try_etsf_libdir/libetsf_io.a ; then
+    if test -r $try_libdir/libetsf_io.a ; then
       compile_e2y="yes"
       internal_etsf="no"
-      ETSF_LIBS="$try_etsf_libdir/libetsf_io.a"
-      ETSF_INCS="$IFLAG$try_etsf_incdir"
+      ETSF_LIBS="$try_libdir/libetsf_io.a"
+      ETSF_INCS="$IFLAG$try_incdir"
       #
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }

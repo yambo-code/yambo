@@ -31,7 +31,7 @@ subroutine K_kerr_IP(iq,w)
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&

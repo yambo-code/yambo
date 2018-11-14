@@ -54,29 +54,29 @@ if test "x$enable_iotk" = "xyes" ; then
     if test -d "$with_iotk_libdir" ; then AC_MSG_CHECKING([for IOTK in $with_iotk_libdir]) ; fi
     #
     if test -d "$with_iotk_path" ; then
-        try_libdir_src=$with_iotk_path/src
-        try_incdir_src=$with_iotk_path/src
-        try_libdir=$with_iotk_path/lib
-        try_incdir=$with_iotk_path/include
+        try_iotk_libdir_src=$with_iotk_path/src
+        try_iotk_incdir_src=$with_iotk_path/src
+        try_iotk_libdir=$with_iotk_path/lib
+        try_iotk_incdir=$with_iotk_path/include
     fi
-    if test -d "$with_iotk_libdir"  ;    then try_libdir=$with_iotk_libdir ; fi
-    if test -d "$with_iotk_includedir" ; then try_incdir=$with_iotk_includedir ; fi
+    if test -d "$with_iotk_libdir"  ;    then try_iotk_libdir=$with_iotk_libdir ; fi
+    if test -d "$with_iotk_includedir" ; then try_iotk_incdir=$with_iotk_includedir ; fi
     #
-    if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
-    if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+    if test -z "$try_iotk_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+    if test -z "$try_iotk_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
     #
     # 
-    if test -r $try_libdir_src/libiotk.a && test -e $try_incdir_src/iotk_module.mod ; then
+    if test -r $try_iotk_libdir_src/libiotk.a && test -e $try_iotk_incdir_src/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
-      IOTK_INCS="$IFLAG$try_incdir_src"
-      IOTK_LIBS="$try_libdir_src/libiotk.a"
+      IOTK_INCS="$IFLAG$try_iotk_incdir_src"
+      IOTK_LIBS="$try_iotk_libdir_src/libiotk.a"
       AC_MSG_RESULT([yes])
-    elif test -r $try_libdir/libiotk.a  && test -e $try_incdir/iotk_module.mod ; then
+    elif test -r $try_iotk_libdir/libiotk.a  && test -e $try_iotk_incdir/iotk_module.mod ; then
       compile_p2y="yes"
       compile_iotk="no"
-      IOTK_INCS="$IFLAG$try_incdir"
-      IOTK_LIBS="$try_libdir/libiotk.a"
+      IOTK_INCS="$IFLAG$try_iotk_incdir"
+      IOTK_LIBS="$try_iotk_libdir/libiotk.a"
       AC_MSG_RESULT([yes])
     else
       AC_MSG_RESULT([no. Fallback to internal library.])

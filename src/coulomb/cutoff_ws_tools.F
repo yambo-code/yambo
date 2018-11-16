@@ -65,7 +65,7 @@
   vcut%corrected=0.0
   !
   call PP_indexes_reset(px)
-  call PARALLEL_index(px,(/n2,n3/),low_range=(/-n2,-n3/))
+  call PARALLEL_index(px,(/2*n2+1,2*n3+1/))
   !
   call live_timing('WS setup',px%n_of_elements(myid+1)/n_threads)
   !
@@ -78,7 +78,7 @@
     do i2=-n2,n2
       !
       if (master_thread) call live_timing(steps=1)
-      if (.not.px%element_2D(i2,i3)) cycle
+      if (.not.px%element_2D(i2+n2+1,i3+n3+1)) cycle
       !
       do i1=-n1,n1
         !

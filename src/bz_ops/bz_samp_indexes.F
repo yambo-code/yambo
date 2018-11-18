@@ -274,7 +274,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  call k_ibz2bz(k,'a',.false.)
  !
  connected_grids=.true.
- local_zero=5.E-4_SP
+ local_zero=1.E-4_SP
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo

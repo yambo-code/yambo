@@ -449,5 +449,6 @@ AC_SUBST(compile_netcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)
+AC_SUBST(enable_hdf5_p2y_support)
 
 ])

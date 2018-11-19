@@ -2788,7 +2788,7 @@ SHASH="e249a91b6"
 
 
 #
-CURRENT_DIR=`echo "$PWD" | sed -e "s/\s/X/g"`
+CURRENT_DIR=`echo "$PWD" | sed -e "s/ /X/g"`
 if ! test -d $CURRENT_DIR ; then
  as_fn_error $? "Make cannot work using paths which include spaces" "$LINENO" 5
 fi

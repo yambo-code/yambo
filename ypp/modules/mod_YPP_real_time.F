@@ -45,6 +45,7 @@ module YPP_real_time
  logical  :: l_RT_density
  logical  :: l_RT_X
  logical  :: l_NL_X
+ logical  :: l_NL_exc
  logical  :: l_RT_abs
  !
  ! RT post-processing (kind)
@@ -90,7 +91,7 @@ module YPP_real_time
  integer  :: X_order
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
- integer, parameter:: max_n_of_paths=100
+ integer, parameter:: max_n_of_paths=500
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  character(3) :: RT_p_format   

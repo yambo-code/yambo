@@ -23,7 +23,7 @@
 !
 module IO_m
  !
- use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_active_sections
+ use pars,       ONLY:SP,DP,lchlen,schlen,max_io_units,max_io_vars_open,max_active_sections
  use LOGO,       ONLY:code_version,code_revision,code_GPL_revision
 #if defined _MPI
  use parallel_m, ONLY:myid,MPI_INFO_NULL
@@ -101,11 +101,15 @@ module IO_m
  integer, parameter:: IO_READ_MODE  =               nf90_nowrite
  !
 #if defined _NC_CLASSIC
- integer, parameter:: IO_CREATE_MODE=    nf90_share
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_classic_model)
 #elif defined _HDF5_IO
- integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_hdf5)
+ integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_netcdf4)
 #else
  integer, parameter:: IO_CREATE_MODE=ior(nf90_share,nf90_64bit_offset)
+#endif
+ !
+#if defined _PAR_IO && defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
 #endif
  !
  ! Units
@@ -122,7 +126,7 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
- integer :: io_netcdf_var(max_io_units)
+ integer :: io_netcdf_var(max_io_units,max_io_vars_open)
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
@@ -187,6 +191,14 @@ module IO_m
      !
    end subroutine
    !
+   integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
+     character(*)           :: desc
+     integer,      optional :: type,ID
+     character(*), optional :: subfolder
+     logical,      optional :: no_full_RESET
+     integer,      optional :: COMM
+   end function
+   !
    !  NEW: def and IO subroutines split in two
    !
    subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
@@ -198,10 +210,11 @@ module IO_m
      character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)
      use pars,              ONLY:schlen
      integer                :: ID
      character(*)           :: VAR
+     integer                :: VAR_ID
      integer                :: VAR_SZ(:)
      integer                :: VAR_KIND
      character(schlen),optional :: dim_names(:)
@@ -230,23 +243,25 @@ module IO_m
      !
    end subroutine io_variable_elemental
    !
-   subroutine io_variable_bulk(ID,I0,I1,I2,I3,I4,I5,&
-                      &           R0,R1,R2,R3,R4,R5,&
-                      &           D0,D1,D2,D3,D4,D5,&
-                      &           C0,C1,C2,C3,C4,C5,&
-                      &           Z0,Z1,Z2,Z3,Z4,Z5,&
-                      &           L0,L1,L2,L3,L4,   &
-                      &                              IPOS)
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
+                                        &  R0, R1, R2, R3, R4, R5,&
+                                        &  D0, D1, D2, D3, D4, D5,&
+                                        &  C0, C1, C2, C3, C4, C5,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
+                                        &  L0, L1, L2, L3, L4,    &
+                                        & CH0,CH1,CH2,CH3,CH4,    &
+                                        &                     IPOS)
      !
      use pars,   ONLY:SP,DP,LP
-     integer      :: ID
+     integer, intent(in)   :: ID, VAR_ID
      integer,     optional :: IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
-     real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
-     complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
-     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
+     integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
+     real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
+     real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
+     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
+     complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
+     character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
    end subroutine io_variable_bulk
    !
@@ -316,185 +331,6 @@ module IO_m
      !
      integer :: ID
      DB_is_OK=any((/io_status(ID)==IO_NO_ERROR,io_status(ID)==IO_NO_BINDING_ERROR/))
-     !
-   end function
-   !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
-     !
-     use parallel_m,    ONLY:ncpu
-     use stderr,        ONLY:STRING_pack
-     use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
-&                            num_of_alternative_locations,n_alt_jobstr,jobdir
-     character(*)           :: desc
-     integer,      optional :: type,ID
-     character(*), optional :: subfolder
-     logical,      optional :: no_full_RESET
-     integer,      optional :: COMM
-     !
-     ! Work Space
-     !
-     integer          ::CREATE_MODE,i_jobstr
-     character(lchlen)::alternative_file(num_of_alternative_locations),folder
-     character(schlen)::subfolder_
-     logical          ::file_found,par_IO
-     !
-     io_connect=0
-     par_IO=present(COMM).and.ncpu>1
-     !
-     if ( (read_is_on(ID).and..not.IO_read).or.&
-&         (write_is_on(ID).and..not.IO_write) ) then
-       io_connect=IO_NOT_ALLOWED
-       call io_reset(ID)
-       return
-     endif
-     !
-     ! Build the file name
-     !
-     subfolder_=' '
-     if (present(subfolder)) subfolder_=subfolder
-     !
-     alternative_file=" "
-     !
-     if (len_trim(io_file(ID))==0) then
-       !
-       if (write_is_on(ID)) then
-         !
-         ! NEW databases are always written respecting the "type" (see mod_com.F)
-         !
-         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-         !
-       else if (read_is_on(ID)) then
-         !
-         io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-         !
-         if (type==1.or.type==2) then
-           !
-           alternative_file=all_locations(desc,subfolder_)
-           !
-         endif
-         !
-       endif
-       !
-     endif
-     !
-     ! Keep the extension for the fragment-related procedures
-     !
-     if (len_trim(io_raw_extension(ID))==0) io_raw_extension(ID)=desc
-     io_extension(ID) =desc
-     io_folder(ID)    =trim(subfolder_)
-     !
-     ! Create Directories 
-     !
-     write (folder,'(2a)') trim(more_io_path),'/SAVE'
-     if (len_trim(jobstr)>0) then
-       if (len_trim(jobdir)> 0) write (folder,'(5a)') trim(more_io_path),'/',trim(jobdir),'/',trim(jobstr)
-       if (len_trim(jobdir)==0) write (folder,'(3a)') trim(more_io_path),'/',trim(jobstr)
-     endif
-     if (write_is_on(ID).and.(type==2.or.len_trim(jobstr)==0)) then
-       call mk_dir(more_io_path)
-       call mk_dir(folder)
-       if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
-     endif
-     !
-     ! Open if to open and to write
-     !
-     if (open_is_on(ID).and.write_is_on(ID)) then
-       !
-       if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) ) then
-         !
-         if( file_exists(trim(io_file(ID))) ) then
-           call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
-         else
-           if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-#if defined _PAR_IO
-           if(     par_IO) then
-             call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
-             &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-           endif
-#else
-           if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
-#endif
-           call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-           if (io_action(ID)==OP_APP_CL) io_action(ID)=OP_WR_CL
-           if (io_action(ID)==OP_APP   ) io_action(ID)=OP_WR
-         endif
-         !
-       else
-         !
-         if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
-#if defined _PAR_IO
-         if(     par_IO) then
-           call netcdf_call(nf90_create(trim(io_file(ID)),IOR(nf90_netcdf4, nf90_mpiio),&
-           &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
-         endif
-#else
-         if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
-#endif
-         call netcdf_call(nf90_enddef(io_unit(ID)),ID)
-         !
-       endif
-       !
-       io_type(ID)=type
-       !
-     endif
-     !
-     ! Open if to open and to read
-     !
-     if (open_is_on(ID).and.read_is_on(ID)) then
-       !
-       if (.not.file_exists(trim(io_file(ID)))) then
-         !
-         file_found=.FALSE.
-         !
-         if (file_exists(trim(alternative_file(1)))) then
-           io_file(ID)=alternative_file(1)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(2)))) then
-           io_file(ID)=alternative_file(2)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(3)))) then
-           io_file(ID)=alternative_file(3)
-           file_found=.TRUE.
-         else if (file_exists(trim(alternative_file(4)))) then
-           io_file(ID)=alternative_file(4)
-           file_found=.TRUE.
-         endif
-         !
-         if (.not.file_found) then
-           do i_jobstr=1,n_alt_jobstr
-             if (file_exists(trim(alternative_file(3+2*i_jobstr)))) then
-               io_file(ID)=alternative_file(3+2*i_jobstr)
-               file_found=.TRUE.
-               exit
-             else if (file_exists(trim(alternative_file(4+2*i_jobstr)))) then
-               io_file(ID)=alternative_file(4+2*i_jobstr)
-               file_found=.TRUE.
-               exit
-             endif
-           enddo
-         endif
-         !
-         if (.not.file_found) then
-           io_connect=IO_NO_DATABASE
-           if (present(no_full_RESET)) then
-             io_file(ID)=''
-           else
-             call io_reset(ID)
-             io_type(ID)=0
-           endif
-           return
-         endif
-       endif
-       !
-       if (type==-2.or.type==-4) then
-         open(unit=io_unit(ID),file=trim(io_file(ID)),form='unformatted')
-       else
-         call netcdf_call(nf90_open(trim(io_file(ID)),IO_READ_MODE,io_unit(ID)),ID)
-       endif
-       !
-       io_type(ID)=type
-       !
-     endif
      !
    end function
    !
@@ -619,6 +455,7 @@ module IO_m
    subroutine io_reset(ID)
      integer :: ID
      io_status(ID)=0
+     !io_type(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0
@@ -737,19 +574,22 @@ module IO_m
      INQUIRE (FILE=trim(filename),OPENED=PLAIN_file_is_open)
    end function
    !
-   subroutine netcdf_call(status,ID,VAR)
+   subroutine netcdf_call(status,ID,VAR,ID_VAR)
      use com,           ONLY:error
      integer,      intent (in)           :: status
      integer,      intent (in)           :: ID
+     integer,      intent (in), optional :: ID_VAR
      character(*), intent (in), optional :: VAR
      character(lchlen) :: msg
      character(schlen) :: VARNAME,FILENAME
-     integer           :: local_error
+     integer           :: local_error,VARNUMBER
      if(status /= NF90_NOERR) then
        FILENAME=io_file(ID)
        VARNAME=' NOT DEFINED '
        if(.not.present(VAR)) then
-         local_error=nf90_inquire_variable(io_unit(ID),io_netcdf_var(ID),VARNAME)
+         if(     present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,ID_VAR)
+         if(.not.present(ID_VAR)) VARNUMBER=io_netcdf_var(ID,1)
+         local_error=nf90_inquire_variable(io_unit(ID),VARNUMBER,VARNAME)
          if(local_error/=0) VARNAME=' NOT DEFINED '
        endif
        if(present(VAR)) VARNAME=VAR

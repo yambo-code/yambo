@@ -24,7 +24,7 @@
 subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
  !
  use netcdf
- use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen
+ use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP
  use drivers,    ONLY:list_dbs
  use com,        ONLY:msg
  use parallel_m, ONLY:ncpu
@@ -58,7 +58,7 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    !
    ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
    !
-   if(VAR_KIND==SP)     netcdf_var_kind=nf90_real
+   if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
    if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
    if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
    if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
@@ -76,7 +76,7 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
    !
    if (write_is_on(ID)) then
      call netcdf_call(nf90_redef(io_unit(ID)),ID,VAR=VAR)
-     nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID))
+     nf_error=nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,1))
      if (nf_error/=NF90_NOERR) then
        if(     VAR_KIND==0) then
          allocate(netcdf_var_dim(2))
@@ -86,19 +86,19 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
          allocate(netcdf_var_dim(1))
          netcdf_var_dim=(/                      netcdf_dim(ID,VAR_SZ)/)
        endif
-       nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,netcdf_var_dim,io_netcdf_var(ID))
+       nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,netcdf_var_dim,io_netcdf_var(ID,1))
        call netcdf_call(nf_error,ID,VAR=VAR)
        deallocate(netcdf_var_dim)
 #if defined _PAR_IO
        if(present(par_io_kind).and.ncpu>1) then
-         nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID), netcdf_par_io_kind)
+         nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,1), netcdf_par_io_kind)
          call netcdf_call(nf_error,ID,VAR=VAR)
        endif
 #endif
      endif
      call netcdf_call(nf90_enddef(io_unit(ID)),ID,VAR=VAR) 
    else if (read_is_on(ID)) then
-     call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID)),ID,VAR=VAR)
+     call netcdf_call(nf90_inq_varid(io_unit(ID),VAR,io_netcdf_var(ID,1)),ID,VAR=VAR)
    endif
    !
  endif

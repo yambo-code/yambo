@@ -60,7 +60,7 @@
 #
 # - COMPILERS -
 #
-# FC kind = @FCKIND@ 
+# FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
 # [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@

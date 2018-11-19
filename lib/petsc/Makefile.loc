@@ -55,20 +55,24 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	#
 	touch package-ready-stamp
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install ) ; fi
-	#
-	chmod u+x $(LIBPATH)/lib/*petsc*.a
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
 
 #
 # cleaning
 #
 clean:
 	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp
+	@- rm -rf package-ready-stamp configure-stamp package-installed
 
-clean_all: 
+clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp
-
+	@- rm -rf uncompress-stamp 
+	
+define install
+ cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install; \
+ chmod u+x $(LIBPATH)/lib/*petsc*.a
+endef 

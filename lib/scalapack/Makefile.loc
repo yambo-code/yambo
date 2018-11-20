@@ -32,7 +32,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) ) ; \
+	( cd $(PACKAGE);  $(make) -j1 ) ; \
 	fi
 	touch package-ready-stamp
 

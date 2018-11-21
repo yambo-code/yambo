@@ -613,9 +613,13 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
    !
-   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
+   if (.not.l_rpa_IP)   call X_activate('Xd',(/'NGsBlk'/))
+   !
+   call X_activate('Xd',(/'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
+   !
+   !
    call initactivate(1,'DrClassic')
    !
    call INIT_QP_ctl_switch('X')

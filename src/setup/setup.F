@@ -143,9 +143,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
- ! Spin symmetries
+ ! Spin symmetries & xc spin for libxc
  !
  call build_spin_sop()
+ !
+ call build_xc_spin_map()
  !
  YAMBO_ALLOC(rl_sop,(3,3,nsym))
  !

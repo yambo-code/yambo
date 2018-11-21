@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA MG
+! Authors (see AUTHORS file for details): AM CA MG DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -31,7 +31,6 @@ integer function io_Overlaps(Dip,ID)
 &                        RD_CL_IF_END,RD_CL,io_action,&
 &                        IO_NOT_ALLOWED,io_DIP,io_fragment
  use parallel_m,    ONLY:PAR_DIPk_bz_index,PAR_DIPk_nbz,PAR_IND_DIPk_bz
- use R_lattice,     ONLY:nXkbz
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -40,7 +39,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2)
+ integer :: ik,ik_mem,i_fragment,ixyz,i_sp_pol,shift(2),io_err
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -67,6 +66,8 @@ integer function io_Overlaps(Dip,ID)
    !
  endif
  !
+ if(io_Overlaps/=0) goto 1
+ !
  i_fragment=maxval(io_sec(ID,:))-1
  if(i_fragment<=nXkbz) then
    i_sp_pol=1
@@ -84,7 +85,11 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
+ call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
+ if(io_err/=0) then
+   io_Overlaps=io_err
+   goto 1
+ endif
  !
  ! Manage RD_CL_IF_END
  !

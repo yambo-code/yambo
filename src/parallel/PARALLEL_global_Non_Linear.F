@@ -33,7 +33,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,PAR_Q_range,PAR_n_bands,COMM_copy,PAR_index_copy,PAR_build_index
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs, &
+ use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,PAR_COM_DIPOLES, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A
  ! IND
@@ -100,6 +100,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    allocate(PAR_Xk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_Xk_ibz,Xk%nibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
    call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
+   call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_DIPOLES)
    !
    ! Define the Xk_bz indeces for BZ parallelization
    ! 

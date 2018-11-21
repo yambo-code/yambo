@@ -41,8 +41,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
- use parallel_m,     ONLY:master_cpu,PAR_DIPk_nbz,PAR_COM_DIPk_bz_index
- use IO_m,           ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD_CL
 
  !
  implicit none
@@ -64,8 +62,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  complex(SP) :: Wop(1:Dip%ib(2),1:Dip%ib(2),2),DIP_tmp(6,1:Dip%ib(2),1:Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
- integer           :: io_err,ID
- integer, external :: io_Overlaps
+ integer           :: ID
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
@@ -88,36 +85,12 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &               keep_states_to_load=.TRUE.)
  !
- ! In the covariat approach I do need the overlap. 
- ! So as a first thing I check if they exist
+ ! Notice that DIP_S is defined in the BZ       
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_Overlaps(Dip,ID)
+ call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
+ DIP_S=cZERO
  !
- ! If they do not I have to compute them
- if(io_err/=0) then
-   ! Notice that DIP_S is defined in the BZ       
-   call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
-   DIP_S=cZERO
-   !
-   call DIPOLE_overlaps(Xk,Dip)
-   !
-   if (     master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(Dip,ID)
-   endif
-   call PP_redux_wait(COMM=PAR_COM_DIPk_bz_index%COMM)
-   if (.not.master_cpu) then
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_Overlaps(Dip,ID)
-   endif
-   !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2/),ID=ID)
-   io_err=io_Overlaps(Dip,ID)
-   !
- endif
- !
- if(io_err/=0) call DIPOLE_overlaps(Xk,Dip)
+ call DIPOLE_overlaps(Xk,Dip)
  !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !

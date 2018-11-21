@@ -35,7 +35,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
  complex(SP), intent(out)  :: X(NX)
-  !
+ !
  ! Work space
  !
  integer                 :: i_t,i_n,i_deltaT,nP_components,M_size,i_t_start

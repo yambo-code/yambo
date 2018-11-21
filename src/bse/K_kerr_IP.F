@@ -31,7 +31,7 @@ subroutine K_kerr_IP(iq,w)
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
@@ -101,7 +101,7 @@ subroutine K_kerr_IP(iq,w)
        endif
        !
        ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res/           q_norm(1)**2
+       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res/           bare_qpg(1,1)**2
        if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res/E_plus_W(i_pert_SOC)**2
        !
      enddo
@@ -125,7 +125,7 @@ subroutine K_kerr_IP(iq,w)
  B_Hall(1)=B_Hall(1)*Co_factor
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(1)**2
+ if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(1,1)**2
  if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/  w(:)   **2
  !
  ! I add the term describing the Anomalous Hall effect which is

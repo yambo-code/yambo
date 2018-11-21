@@ -118,10 +118,10 @@ rm -f $cdir/$ofile.c
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
 \$(target): \$(dep_file) \$(objs)
-	\$(driver)\$
-	\$(link)\$
-	\$(modmove)\$ 
-	\$(dircheck)\$
+	\$(driver)
+	\$(link)
+	\$(modmove)
+	\$(dircheck)
 	@mv \$@ \$(exec_prefix)
 EOF
 else 

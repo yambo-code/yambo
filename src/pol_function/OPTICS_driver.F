@@ -233,8 +233,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      !
      call X_redux(iq,X_par(1),wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
      !
    endif
    !

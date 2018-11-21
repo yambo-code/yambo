@@ -32,7 +32,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:q_norm,bz_samp
+ use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
@@ -299,7 +299,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/q_norm(1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(1,1)**2
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP

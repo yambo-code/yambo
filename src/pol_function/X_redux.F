@@ -155,11 +155,12 @@ subroutine X_redux(iq,X_par,Xw,X)
    else if (l_lrc_fxc) then
      !
      ! LRC Fxc
+     ! DS : notive that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
      !
      if (Xo%cols(1)==1) then
        !$omp parallel do default(shared), private(ig1)
        do ig1=Xo%rows(1),Xo%rows(2)
-         KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
+         KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/bare_qpg(iq,1)**2
        enddo
        !$omp end parallel do
      endif

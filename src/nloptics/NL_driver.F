@@ -336,7 +336,7 @@ subroutine NL_driver(E,X,Dip,k,q)
      use DIPOLES,        ONLY:DIP_S
      use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
      use electrons,      ONLY:n_sp_pol
-     use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_DIPOLES,PAR_IND_Xk_bz_ID,PP_redux_wait
+     use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_DIPk_ibz_INDEX,PAR_IND_Xk_bz_ID,PP_redux_wait
      !
      implicit none
      !
@@ -368,7 +368,7 @@ subroutine NL_driver(E,X,Dip,k,q)
        call live_timing()
        !
        do i_sp_pol=1,n_sp_pol
-         call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
+         call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
        enddo
        !
      endif

@@ -38,7 +38,8 @@ subroutine NL_start_and_restart(E,k,X)
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
- use X_m,            ONLY:X_t,DIP_P
+ use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIP_P
  use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver

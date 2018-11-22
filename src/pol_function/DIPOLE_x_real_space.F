@@ -52,16 +52,16 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  !
- YAMBO_ALLOC(x_cc,(fft_size,3,1))
- !
- call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
- !
  ! WF load
  ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
  ! there will be other WF_load calls using the present WF distribution. 
  !
  call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
 &             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ !
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ !
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
  call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
  !

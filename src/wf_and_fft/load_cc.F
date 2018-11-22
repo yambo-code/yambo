@@ -33,11 +33,10 @@ subroutine load_cc(manage_zero,x_zero_point,n_coord)
  !  - true ,i.e. x_zero_point=( 0 , 0 , 0 ) --> the saw-like jump is at the center of the supercell 
  !
  use pars,        ONLY:SP
- use drivers,     ONLY:l_real_time 
- use FFT_m,       ONLY:fft_size,fft_dim
+ use FFT_m,       ONLY:fft_dim
  use D_lattice,   ONLY:x_cc,a
  !
-#include<memory.h>
+ implicit none
  !
  ! input variable
  !
@@ -49,8 +48,6 @@ subroutine load_cc(manage_zero,x_zero_point,n_coord)
  !
  real(SP)   :: tmp_border(3),tmp_x(3),rir1,rir2,rir3
  integer    :: ir,ir1,ir2,ir3,i_dir   
- !
- if(.not.l_real_time) call fft_setup(0,1,.true.)      ! FFT size
  !
  x_jump=(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/)+x_zero_point
  !

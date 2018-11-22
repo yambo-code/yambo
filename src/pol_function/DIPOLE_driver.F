@@ -52,10 +52,7 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  !
  ! being a derived structure it must be mapped in the calling routine.
  !
- use drivers,        ONLY:l_optics
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
+ use drivers,        ONLY:l_optics,l_photolum
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
@@ -241,12 +238,10 @@ subroutine Dipole_driver(Xen,Xk,X,field_dir)
  ! Clean up
  !
  call X_alloc('DIP_iR') 
-#if defined _PL
  if (.not.l_photolum) then
    call X_alloc('DIP_P')
    call X_alloc('DIP_v')
  endif
-#endif
  !
  if (use_covariant_approach) call X_alloc('DIP_S')
  !

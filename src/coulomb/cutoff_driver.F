@@ -46,7 +46,7 @@ subroutine cutoff_driver(q)
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
- use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description
+ use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
  use stderr,        ONLY:string_split,string_pack
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
@@ -57,7 +57,7 @@ subroutine cutoff_driver(q)
  !
  ! Work Space
  !
- logical ::cut_is_sphere,cut_is_box,cut_is_cyl,is_cut(3)
+ logical ::cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)
  integer ::i1,i2,i3,i4
  real(SP)::length(3)
  logical ::l_col_test
@@ -96,6 +96,7 @@ subroutine cutoff_driver(q)
  cut_is_sphere=trim(str_piece(1))=='sphere'
  cut_is_box=trim(str_piece(1))=='box'
  cut_is_cyl=trim(str_piece(1))=='cylinder'
+ cut_is_ws=trim(str_piece(1))=='ws'
  !
  ! Cutoffed directions
  !
@@ -111,10 +112,11 @@ subroutine cutoff_driver(q)
  if (.not.is_cut(1)) box_length(1)=0.
  if (.not.is_cut(2)) box_length(2)=0.
  if (.not.is_cut(3)) box_length(3)=0.
+ if (.not.cut_is_ws) ws_cutoff=0.
  !
  ! Return conditions
  !
- if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl/))) then
+ if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws/))) then
    l_col_cut=.false.
    return
  endif
@@ -134,6 +136,10 @@ subroutine cutoff_driver(q)
    l_col_cut=.false.
    return
  endif
+ if (cut_is_ws.and.ws_cutoff==0.) then
+   l_col_cut=.false.
+   return
+ endif
  !
  ch1=string_pack('Coloumb potential CutOff :',str_piece(1))
  call section('*',trim(ch1))
@@ -148,13 +154,17 @@ subroutine cutoff_driver(q)
  if (is_cut(3)) ch2=string_pack(ch2,'z')
  call msg('r',trim(ch1))
  write (cut_geometry,'(3a)') trim(str_piece(1)),' ',trim(ch2)
- if (cut_is_sphere) is_cut=.true.
+! if (cut_is_sphere) is_cut=.true.
  !
  !lengths
  !
  if (cut_is_sphere) then 
    call msg('r','Sphere radius   [au]:',cyl_ph_radius)
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', cyl_ph_radius
+ endif
+ if (cut_is_ws) then
+   call msg('r','WS Cutoff   [units to be defined]:',ws_cutoff)
+   write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', ws_cutoff
  endif
  if (cut_is_box) then
    i1=0
@@ -227,13 +237,14 @@ subroutine cutoff_driver(q)
    if (cut_is_sphere) call cutoff_sphere()
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
+   if (cut_is_ws)     call cutoff_ws(q)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    !
    ! Test
    !
-   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,is_cut,q)
+   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  endif
  !
  call timing('Coulomb Cutoff',OPR='stop')

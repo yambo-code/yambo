@@ -78,7 +78,8 @@ subroutine electrons_dos(Xk,Xen,mode)
  !
  ! Output files headers
  !
- output_fname='el_dos'
+ if (mode=="NORMAL") output_fname='el_dos'
+ if (mode=="INTERP") output_fname='el_dos_INTERPOLATED'
  call of_open_close(trim(output_fname),'ot')
  if (n_spin==1) then
    titles(1)='E[eV]'

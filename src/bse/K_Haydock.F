@@ -28,7 +28,7 @@ subroutine K_Haydock(iq,W)
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_treshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
@@ -565,7 +565,7 @@ subroutine K_Haydock(iq,W)
      para_term_w0  =cZERO
      diam_term_used=cZERO
      !
-     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/q_norm(1)**2
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(1,1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -672,7 +672,7 @@ subroutine K_Haydock(iq,W)
        !
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/q_norm(1)**2
+           B_Hall(2)=B_Hall(2)*Co/bare_qpg(1,1)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co

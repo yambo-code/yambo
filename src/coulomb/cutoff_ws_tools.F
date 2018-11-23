@@ -146,7 +146,7 @@ END SUBROUTINE vcut_init
 &                 trim(real2ch(real(vcut%a(3,3),SP)))
      call msg('rn',dumb_ch1)
 !
-     call msg('nr','See if it works, next some info has to be dumped to the database')     
+!     call msg('nr','See if it works, next some info has to be dumped to the database')     
 !      write(*,*) "this should be put in the report using msg interface"
 !      WRITE(*, "(  2x,'Cutoff: ',f6.2,4x,'  n grid: ',3i4,/)") vcut%cutoff, n(:)
      !

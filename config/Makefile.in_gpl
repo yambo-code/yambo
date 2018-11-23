@@ -52,7 +52,7 @@ bindir      = @bindir@
 topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
-libbindir   = @prefix@/libs/bin
+libbindir   = @prefix@/lib/bin
 CFGFILES = config/setup config/Makefile config/report \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \

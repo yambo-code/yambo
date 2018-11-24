@@ -50,8 +50,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  select case(ENVIRONMENT)
    case("DIPOLES")
      call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
-   case("Response_G_space")
-     call GIMME_a_parallel_proposal(4,(/"g","v","c","k","q"/))
+   case("Response_G_space_Finite_Momentum","Response_G_space")
+     call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
   case("Non_Linear") 
@@ -196,7 +196,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      i1_loop: do i1=2,NC
        do i3=2,i1-1
          if (mod(i1,i3)==0) cycle i1_loop
-     enddo
+       enddo
        if (mod(NC,i1)==0) then
          BASIS=i1
          return

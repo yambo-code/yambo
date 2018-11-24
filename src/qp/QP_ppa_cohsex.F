@@ -264,6 +264,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+!DV
+! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+! that the definition here below of  X_mat(i1,i2,X_range(2)) are correct.
+!
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif

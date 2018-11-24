@@ -35,7 +35,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 &                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
- use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads
+ use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use LIVE_t,         ONLY:USER_wall_time_string
  implicit none
  !
@@ -77,7 +77,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! CPU structure REPORT
  !======================
  !
- n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP/))
+ n_max_threads=maxval((/n_threads,n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL/))
  !
  if (ncpu>1.or.n_max_threads>1) then
    !

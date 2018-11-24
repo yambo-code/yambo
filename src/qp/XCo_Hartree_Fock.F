@@ -58,7 +58,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !Work Space
  !
  type(elemental_collision), target::isc,iscp
- integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
+ integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx, DP_Sx_l
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch,mode_
@@ -131,8 +131,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands
- if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps/n_threads_SE)
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands/n_threads_SE
+ if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
    !
@@ -156,7 +156,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 #if !defined _CUDA
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
 #endif
    !
    call OPENMP_update(master_thread)
@@ -184,10 +184,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !$omp do schedule(dynamic)
 #endif
    do iq=1,q%nbz
+     iq_ibz=q%sstar(iq,1)
+     is_ibz=q%sstar(iq,2)
      !
-     if (.not.PAR_IND_Q%element_1D(q%sstar(iq,1))) cycle
+     if (.not.PAR_IND_Q%element_1D(iq_ibz)) cycle
      !
-     isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
+     isc%qs(2:)=(/iq_ibz,is_ibz/)
      if (isc%qs(2)/=isc%iqref) then 
 #ifdef _CUDA
        call scatter_Gamp_gpu(isc,'x')
@@ -299,7 +301,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        DP_Sx=DP_Sx+V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
 #endif
        !
-       if (master_thread.and.q%sstar(iq,2)==1) call live_timing(steps=1)
+       if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
        !
      enddo
      !
@@ -320,7 +322,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  enddo
  !
- call live_timing()
+ if(n_lt_steps>0) call live_timing()
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 

@@ -123,6 +123,9 @@ module parallel_m
    integer              :: nCPU_lin_algebra_DIAGO =1
  end type CPU_stru
  !
+ character(schlen)   :: CPU_string_save(n_CPU_str_max)
+ character(schlen)   :: ROLE_string_save(n_CPU_str_max)
+ !
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
  !
  !... Running values ...
@@ -396,7 +399,7 @@ module parallel_m
 &                   c0share,c1share,c2share,c3share,c4share,c5share, &
 &                   ch0share,                                        &
 #if ! defined _DOUBLE
-&                   d0share,d1share,d2share,                         &
+                    d0share,d1share,d2share,d3share,                 &
 #endif
 &                   PARALLEL_wait
  end interface PP_redux_wait
@@ -476,7 +479,7 @@ module parallel_m
        if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
        if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
        if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
-       if (n_threads_NL>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
+       if (n_threads_NL >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&
@@ -484,6 +487,22 @@ module parallel_m
      endif
      !
    end function
+   !
+   subroutine CPU_and_ROLE_strings_save()
+     implicit none
+     !
+     CPU_string_save (:)=CPU_structure(:)%CPU_string
+     ROLE_string_save(:)=CPU_structure(:)%ROLE_string
+     ! 
+   end subroutine CPU_and_ROLE_strings_save
+   !
+   subroutine CPU_and_ROLE_strings_restore()
+     implicit none
+     !
+     CPU_structure(:)%CPU_string = CPU_string_save(:)
+     CPU_structure(:)%ROLE_string=ROLE_string_save(:)
+     ! 
+   end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
      CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"
@@ -962,6 +981,36 @@ module parallel_m
      allocate(larray(dimension))
      larray=0.
      call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine d3share(array,COMM)
+     real(DP):: array(:,:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
+     real(DP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_DOUBLE_PRECISION
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0.
+     call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)

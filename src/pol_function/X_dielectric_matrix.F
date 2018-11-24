@@ -203,6 +203,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
  endif
  !
+ !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
@@ -225,6 +226,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
+   !
+   if (iq==1) then
+     call io_control(ACTION=OP_WR_CL, COM=REP,SEC=(/1/),ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
+   endif
    !
    ! Allocation
    !
@@ -271,8 +277,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
    X%ng_db=X%ng
    !
-   if (iq==1) call io_control(ACTION=OP_WR_CL,    COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

@@ -29,7 +29,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  use BS,            ONLY:BS_nT_at_k,BS_nT_grps
  use openmp,        ONLY:n_threads_K,OPENMP_set_threads
  use parallel_m,    ONLY:master_cpu,COMM_copy,PAR_INDEX_copy,PAR_build_index,PP_indexes_reset, &
-&                        PAR_n_c_bands,PAR_n_v_bands
+&                        PAR_n_c_bands,PAR_n_v_bands,myid
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX, &
 &                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_ordered, &
@@ -70,7 +70,7 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! Dipoles are calculated using PAR_COM_Xk_ibz_INDEX, PAR_COM_eh_INDEX and PAR_COM_T_INDEX communicators
  !
  !call COMM_copy(PAR_COM_WORLD,PAR_COM_DIPk_ibz_INDEX)
- call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_ibz_A2A)
+ !call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_ibz_A2A)
  call COMM_copy(PAR_COM_eh_INDEX,PAR_COM_CON_INDEX_DIP)
  call COMM_copy(PAR_COM_T_INDEX,PAR_COM_VAL_INDEX_DIP)
  call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX)
@@ -89,21 +89,22 @@ subroutine PARALLEL_global_Response_T(Xk,X_type)
  ! 
  ! Dipoles k-points uses same distribution of K k-points
  !
- call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
  call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_Xk_ibz)
- PAR_IND_DIPk_ibz_ID=PAR_IND_Kk_ibz_ID
  PAR_Xk_nibz  =PAR_Kk_nibz
- PAR_DIPk_nibz=PAR_Kk_nibz
- YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
- call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
  !
- if(.not.allocated(PAR_DIPk_bz_index)) then
-   YAMBO_ALLOC(PAR_DIPk_bz_index,(nXkbz))
-   call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
-&                                                           PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
-&                                                           PAR_DIPk_bz_index,PAR_DIPk_nbz)
- endif
-   !
+ !call PAR_INDEX_copy(PAR_IND_Kk_ibz,PAR_IND_DIPk_ibz)
+ !PAR_IND_DIPk_ibz_ID=PAR_IND_Kk_ibz_ID
+ !PAR_DIPk_nibz=PAR_Kk_nibz
+ !YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
+ !call PAR_build_index(PAR_IND_DIPk_ibz,nXkibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+ !
+! if(.not.allocated(PAR_DIPk_bz_index)) then
+!   YAMBO_ALLOC(PAR_DIPk_bz_index,(nXkbz))
+!   call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
+!&                                                           PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
+!&                                                           PAR_DIPk_bz_index,PAR_DIPk_nbz)
+! endif
+ !
  YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
  call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
  YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))

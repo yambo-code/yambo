@@ -53,8 +53,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  use collision_ext,   ONLY:HXC_COLL_element,GW_NEQ_COLL_element,COLLISIONS_have_HARTREE
  use QP_CTL_m,        ONLY:QP_apply
  use interfaces,      ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait,&
-&                          mpi_comm_world
+ use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PP_bcast,PP_redux_wait
  use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  !
@@ -129,7 +128,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  !=========
  !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
- call DIPOLE_IO(k,E,Dip,'read ',io_err,mpi_comm_world)
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !

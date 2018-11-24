@@ -162,6 +162,20 @@ module parallel_m
    integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
+ type PARk_str
+   type(MPI_comm)      :: COM_ibz_INDEX
+   type(MPI_comm)      :: COM_ibz_A2A
+   type(PP_indexes)    :: IND_ibz
+   type(PP_indexes)    :: IND_bz
+   integer,allocatable :: ibz_index(:)
+   integer,allocatable :: bz_index(:)
+   integer             :: nibz
+   integer             :: nbz
+   integer             :: comm_world
+ end type
+ !
+ type(PARk_str),SAVE   :: PAR_K_scheme
+ !
  ! Number of Bands to load
  !=========================
  !

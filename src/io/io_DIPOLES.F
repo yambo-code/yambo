@@ -30,7 +30,6 @@ integer function io_DIPOLES(Dip,ID)
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
 &                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_nibz
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
@@ -39,11 +38,13 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
+ use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
  implicit none
- type(DIPOLE_t)::Dip
- integer       ::ID
+ !
+ type(DIPOLE_t) :: Dip
+ integer        :: ID
  !
  ! Work Space
  !
@@ -96,7 +97,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  if (ik==0) goto 1
  !
- ik_mem=PAR_DIPk_ibz_index(ik)
+ ik_mem=PAR_K_scheme%ibz_index(ik)
  !
  ! Reading size and position
  !
@@ -120,20 +121,20 @@ integer function io_DIPOLES(Dip,ID)
 #endif
  !
  if (read_is_on(ID)) then
-   call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-   call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+   call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+   call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
    ! GPL_EXCLUDE_START
    !
 #if defined _RT
    if (l_real_time_magn_dipoles) then
-     call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-     if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    endif
 #endif
 #if defined _SC || defined _RT
-   if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+   if (l_sc_run.or.l_real_time)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
    !
    ! GPL_EXCLUDE_END

@@ -134,7 +134,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
- call DIPOLE_IO(Xk,Xen,Dip,'check',io_err,mpi_comm_world)
+ call DIPOLE_IO(Xk,Xen,Dip,'check',io_err,'DIP')
  !
  ! In case dipoles were not found/ok then I need to compute them
  !==============================================================
@@ -184,7 +184,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
-   call DIPOLE_IO(Xk,Xen,Dip,'write',io_err,mpi_comm_world)
+   call DIPOLE_IO(Xk,Xen,Dip,'write',io_err,'DIP')
    !
    ! I/O privilegies: RESTORE to previous values
    !

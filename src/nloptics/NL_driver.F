@@ -112,7 +112,7 @@ subroutine NL_driver(E,X,Dip,k,q)
  !Dip%approach='Covariant' 
  if(l_use_DIPOLES.or.l_eval_current.or.load_Overlaps()/=0) then
    call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
-   call DIPOLE_IO(k,E,Dip,'read ',io_err,mpi_comm_world)
+   call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  endif
  !
  ! Free memory: qindx_* and unused DIPOLES

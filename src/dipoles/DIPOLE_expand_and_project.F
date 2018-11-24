@@ -25,8 +25,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_col_cut
- use parallel_m,     ONLY:PAR_DIPk_nbz,PAR_DIPk_bz_index,PAR_DIPk_ibz_index,PAR_IND_DIPk_bz,&
-&                         PAR_IND_DIPk_ibz,PP_redux_wait,PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_INDEX
+ use parallel_m,     ONLY:PAR_K_scheme
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
@@ -79,12 +78,12 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  ! This is q       *iR in the length gauge
  !         q_versor*P  in the velocity
  !
- call DIP_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nbz/))
+ call DIP_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nbz/))
  DIP_projected = cZERO
  !
 #if defined _KERR
  if(l_kerr) then
-   call KERR_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nbz/))
+   call KERR_alloc('DIP_projected',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nbz/))
    DIP_projected_r90 = cZERO
  endif
 #endif
@@ -99,18 +98,13 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
          !
          dipole = cZERO
          !
-         if (PAR_IND_DIPk_ibz%element_1D(ik)) then
+         if (PAR_K_scheme%IND_ibz%element_1D(ik)) then
            !      
-           ik_mem = PAR_DIPk_ibz_index(ik)
+           ik_mem = PAR_K_scheme%ibz_index(ik)
            if (use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
            if (use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
            !
          endif
-         !
-         !write(*,*) PAR_COM_DIPk_ibz_A2A%COMM,PAR_COM_DIPk_ibz_INDEX%COMM
-         !call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-         !call PP_redux_wait(dipole,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
-         !call PP_redux_wait(dipole,COMM=PAR_COM_Xk_bz_INDEX%COMM)
          !
          do i_star=1,Xk%nstar(ik)
            !
@@ -118,9 +112,9 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            ik_bz             = i_star
            if ( ik>1 ) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
            !
-           if (.not.PAR_IND_DIPk_bz%element_1D(ik_bz)) cycle
+           if (.not.PAR_K_scheme%IND_bz%element_1D(ik_bz)) cycle
            !
-           ik_bz_mem=PAR_DIPk_bz_index(ik_bz)
+           ik_bz_mem=PAR_K_scheme%bz_index(ik_bz)
            !
            if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
            if ( is > nsym/(i_time_rev+1) ) t_rev=.true.

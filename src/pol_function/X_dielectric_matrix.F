@@ -227,8 +227,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   if (iq==1) then
-     call io_control(ACTION=OP_WR_CL, COM=REP,SEC=(/1/),ID=Xdb)
+   if(iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
      i_err=io_X(X,Xw,Xdb)
    endif
    !

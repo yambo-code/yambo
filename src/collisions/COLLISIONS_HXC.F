@@ -469,6 +469,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        !
        if (.not.PAR_IND_Q%element_1D(iqbz)) cycle
        !
+       if (iqbz==1.and.l_compute_screening) then
+         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
+         io_err=io_X(X,Xw,ID)
+       endif
+       !
        iqibz    =q%sstar(iqbz,1)
        iqs      =q%sstar(iqbz,2)
        !
@@ -498,19 +503,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          call scatter_Gamp(isc_XC ,'c')
          !
-         call Io_and_Messaging_switch("-fragments_IO_log")
-         !
          ! I/O
          !
-         if (q%nbz==1) then
-           call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,3/),ID=ID)
-         else
-           if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
-           if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-         endif
+         call IO_and_Messaging_switch("-fragments_IO_log")
+         !
+         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
          io_err=io_X(X,Xw,ID)
          !
-         call Io_and_Messaging_switch("+fragments_IO_log")
+         call IO_and_Messaging_switch("+fragments_IO_log")
          !
          ! Poles and Residuals
          !

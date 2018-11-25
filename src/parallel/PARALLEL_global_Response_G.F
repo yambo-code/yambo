@@ -35,18 +35,16 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
-&                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_DIPk_bz_A2A,PAR_COM_Xk_bz_A2A, &
-&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X,PAR_COM_DIPk_bz_index
+&                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_Xk_bz_A2A, &
+&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_DIPk_bz,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q, &
-&                        PAR_IND_OVLP_ibz
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q,PAR_IND_OVLP_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_DIPk_ibz_index,PAR_Q_index,&
-&                        PAR_DIPk_bz_index,PAR_COM_DIPk_ibz_INDEX
+ use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_Q_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nbz,PAR_Xk_nibz,PAR_DIPk_nbz
+ use parallel_m,    ONLY:PAR_nQ,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_Q_ID,PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_Q_ID
  !
 #include<memory.h>
  !
@@ -135,24 +133,6 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
-   !
-   ! DIPOLES
-   !
-   call COMM_copy(PAR_COM_Q_A2A,PAR_COM_DIPk_bz_index)
-   call COMM_copy(PAR_COM_Xk_bz_A2A,PAR_COM_DIPk_bz_A2A)
-   !
-   call PARALLEL_minimal_index_from_overlaping(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz,PAR_COM_Xk_bz_INDEX)
-   PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
-   !
-   allocate(PAR_DIPk_ibz_index(Xk%nibz))
-   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
-   !
-   if(.not.allocated(PAR_DIPk_bz_index)) then
-     allocate(PAR_DIPk_bz_index(Xk%nbz))
-     call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
-&                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
-&                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
-   endif
    !
    ! I/O privileges
    !

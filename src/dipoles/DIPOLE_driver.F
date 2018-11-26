@@ -250,7 +250,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
      endif
 #endif
      if(use_covariant_approach) then
-       call DIP_alloc('DIP_S',(/X%ib(2),X%ib(2),6,Xk%nbz/))
+       call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
      endif
      !

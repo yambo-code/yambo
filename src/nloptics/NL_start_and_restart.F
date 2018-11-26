@@ -22,7 +22,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_start_and_restart(E,k,X)
+subroutine NL_start_and_restart(E,k,Dip)
  !
  ! This subroutine initialize some variables and 
  ! restart from a previous NL calculation
@@ -39,7 +39,7 @@ subroutine NL_start_and_restart(E,k,X)
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
  use X_m,            ONLY:X_t
- use DIPOLES,        ONLY:DIP_P
+ use DIPOLES,        ONLY:DIP_P,DIPOLE_t
  use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -60,7 +60,8 @@ subroutine NL_start_and_restart(E,k,X)
  !
  type(levels)      :: E
  type(bz_samp)     :: k
- type(X_t)         :: X
+ type(DIPOLE_t)    :: Dip
+ !type(X_t)         :: X
  !
  ! Working space
  !
@@ -135,7 +136,7 @@ subroutine NL_start_and_restart(E,k,X)
  if(.not.l_use_DIPOLES) then
    if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
    if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
-   call POLARIZATION_output(E,k,X)
+   call POLARIZATION_output(E,k,Dip)
  endif
  !
  if(l_use_DIPOLES) then

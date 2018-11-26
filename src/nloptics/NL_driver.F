@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_driver(E,X,Dip,k,q)
+subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -98,10 +98,6 @@ subroutine NL_driver(E,X,Dip,k,q)
  !================
  call H_QP_table_setup(E)
  !
- ! Parallelization
- ! =======================
- call setup_DIPOLES_parallelization()
- !
  ! Dipoles
  !=========
  !
@@ -109,11 +105,10 @@ subroutine NL_driver(E,X,Dip,k,q)
  ! the optical collisions that are done in G-space and would
  ! force the reloading of the WFs
  !
- !Dip%approach='Covariant' 
- if(l_use_DIPOLES.or.l_eval_current.or.load_Overlaps()/=0) then
-   call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
-   call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
- endif
+ !if(l_use_DIPOLES.or.l_eval_current) then
+ call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
+ !endif
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
@@ -176,7 +171,7 @@ subroutine NL_driver(E,X,Dip,k,q)
  !
  ! Initialization
  ! ==================
- call NL_start_and_restart(E,k,X)
+ call NL_start_and_restart(E,k,Dip)
  !
  ! Check if calculation was already done
  ! =====================================

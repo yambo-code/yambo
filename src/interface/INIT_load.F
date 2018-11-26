@@ -862,7 +862,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
    !
    subroutine DIP_mirror_bands( )
      use parser_m,       ONLY:parser
-     logical :: is_def(9)
+     logical :: is_def(10)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if(initmode/=4) return
@@ -877,22 +877,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('BSEBands', is_def(6))
      call parser('RTBands',  is_def(7))
      call parser('SCBands',  is_def(8))
-     call parser('COLLBands',is_def(9))
+     call parser('NLBands',  is_def(9))
+     call parser('COLLBands',is_def(10))
      !
      bands=-1
-     do i1=1,9
+     do i1=1,10
        if(.not.(is_def(i1))) cycle
        if(i1< 5) tmp_bands=X(i1)%ib
        if(i1==5) tmp_bands=Dip%ib
        if(i1==6) tmp_bands=BS_bands
-#if defined _RT
+#if defined _RT || defined _NL
        if(i1==7) tmp_bands=RT_bands
 #endif
 #if defined _SC
        if(i1==8) tmp_bands=SC_bands
 #endif
-#if defined _RT || defined _SC
-       if(i1==9) tmp_bands=COLL_bands
+#if defined _NL
+       if(i1==9) tmp_bands=NL_bands
+#endif
+#if defined _RT || defined _SC || defined _NL
+       if(i1==10) tmp_bands=COLL_bands
 #endif
        if(any((/bands==-1/))) then
          bands=tmp_bands

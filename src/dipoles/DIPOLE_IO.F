@@ -101,13 +101,19 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
      call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nibz/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)
-     if(use_covariant_approach) then
-       call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
-       io_err=io_err+io_Overlaps(Dip,ID_S)
-     endif
    enddo
  enddo
- !
+ !    
+ if(use_covariant_approach) then
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,Xk%nbz
+       if ( .not.PAR_K_scheme%IND_bz%element_1D(ik)             ) cycle
+       !if ((.not.PAR_K_scheme%COM_bz_A2A%CPU_id==0).and.writing ) cycle
+       call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
+       io_err=io_err+io_Overlaps(Dip,ID_S)
+     enddo
+   enddo
+ endif
  !
  if(.not.(allocated(Xen%W).or.allocated(Xen%Eo)).or.writing) return
  !

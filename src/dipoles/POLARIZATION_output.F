@@ -38,11 +38,12 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  !
  implicit none
  type(levels)  ::Xen
- type(bz_samp) ::Xk,k,q
+ type(bz_samp) ::Xk
  type(DIPOLE_t)::Dip
  ! 
  ! Work Space
  !
+ type(bz_samp)::k,q
  complex(SP) :: P_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: I_Berry_RED(3),Tot_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: modfac,rmod
@@ -63,7 +64,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  !                                         
  do i_sp_pol=1,n_sp_pol
    do ikbz=1,Xk%nbz
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
    enddo
  enddo
  !

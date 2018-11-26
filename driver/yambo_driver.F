@@ -168,7 +168,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! DIPOLES
  !=========
  !
- driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run
+#if defined _NL
+ if(l_nl_optics) then
+    Dip%approach="Covariant"
+    Dip%ib(1)   =1
+ endif
+#endif
+ driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run.or.l_nl_optics
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
  if (driver_now) call mem_manager_report

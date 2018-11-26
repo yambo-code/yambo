@@ -262,54 +262,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  contains
    !
-   subroutine setup_DIPOLES_parallelization()
-     use parallel_m,       ONLY:CPU_and_ROLE_strings_save,CPU_and_ROLE_strings_restore,CPU_structure, &
-&                               PARALLEL_ENV_uses_default
-     use nl_optics,        ONLY:eval_OVERLAPS
-     !
-     implicit none
-     !
-     ! Working space
-     !
-     integer :: n_frequencies_save,NL_bands1_save
-     integer :: i_s=8 ! Non-linear environment
-     !
-     ! Set bands between 1 and NL_bands(2)
-     !
-     NL_bands1_save  =NL_bands(1)
-     NL_bands(1)     =1
-     Dip%ib          =(/1,NL_bands(2)/)
-     !
-     ! Set n_runs = 1 
-     ! Parallelization on frequencies turned off
-     !
-     n_frequencies_save=n_frequencies
-     n_frequencies     =1
-     eval_OVERLAPS     =.TRUE.
-     !
-     ! Save user-defined parallel structure
-     ! and force parallelization on k-points (for dipoles and overlaps)
-     call CPU_and_ROLE_strings_save()
-     !
-     !
-     ! Erase the user-defined string for non-linear
-     ! and force parallelization on k-points
-     !
-     CPU_structure(i_s)%CPU_string=" "
-     CPU_structure(i_s)%ROLE_string=" "
-     PARALLEL_ENV_uses_default(i_s)=.true.
-     !
-     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip)
-     call PARALLEL_global_indexes(E,k,q,"Non_Linear",RESET=.FALSE.,Dip=Dip)
-     !
-     call CPU_and_ROLE_strings_restore()
-     PARALLEL_ENV_uses_default(i_s)=.false.
-     !  
-     n_frequencies=n_frequencies_save
-     NL_bands(1)=NL_bands1_save
-     !
-   end subroutine setup_DIPOLES_parallelization
-   !
    subroutine setup_NL_parallelization
      use nl_optics,        ONLY:eval_OVERLAPS
      implicit none
@@ -323,53 +275,5 @@ subroutine NL_driver(E,X,k,q,Dip)
      call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
      !
    end subroutine setup_NL_parallelization
-
-   !
-   integer function load_Overlaps()
-     !
-     use pars,           ONLY:SP
-     use DIPOLES,        ONLY:DIP_S
-     use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP
-     use electrons,      ONLY:n_sp_pol
-     use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_DIPk_ibz_INDEX,PAR_IND_Xk_bz_ID,PP_redux_wait
-     !
-     implicit none
-     !
-     ! Word Space
-     !
-     integer :: ID_S,io_err
-     integer, external :: io_Overlaps
-     integer :: ik,i_sp_pol
-     !
-     call DIP_alloc('DIP_S',(/X(1)%ib(2),X(1)%ib(2),6,k%nbz/))
-     DIP_S=cZERO
-     !
-     io_err=0
-     !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
-     io_err=io_Overlaps(X,ID_S)
-     !
-     if(io_err==0) then
-       call live_timing('[NL] Overlaps loading :',PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
-       do ik=1,k%nbz
-         if (.not.PAR_IND_Xk_bz%element_1D(ik)                   ) cycle
-         do i_sp_pol=1,n_sp_pol
-           call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*k%nbz/),ID=ID_S)
-           io_err=io_err+io_Overlaps(X(1),ID_S)
-         enddo
-         call live_timing(steps=1)
-       enddo
-       !
-       call live_timing()
-       !
-       do i_sp_pol=1,n_sp_pol
-         call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
-       enddo
-       !
-     endif
-     !
-     load_Overlaps=io_err
-     !
-   end function load_Overlaps
    !
 end subroutine NL_driver

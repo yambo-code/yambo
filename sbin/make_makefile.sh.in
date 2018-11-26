@@ -128,7 +128,7 @@ else
 rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
 \$(target): \$(dep_file) arcreate
-	\$(modmove)\$ 
+	\$(modmove) 
 EOF
 fi
 

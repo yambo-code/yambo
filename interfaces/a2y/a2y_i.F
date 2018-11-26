@@ -123,16 +123,22 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
      !
      do ib_grp=1,wf_nb_io_groups
        !
+       if (ifrag==1.and.ib_grp==1) then
+         if (n_atoms_species_max>0) then
+           call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+           io_err=io_KB_abinit(ID)
+         endif
+         call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+       endif
+       !
        call a2y_wf(wf_disk,i_sp_pol,ik,ib_grp,trim(KSS_file_name))
        !
        if (n_atoms_species_max>0.and.ib_grp==1) then
-         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-         if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+         call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
          io_err=io_KB_abinit(ID)
        endif
        !
-       if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
      enddo

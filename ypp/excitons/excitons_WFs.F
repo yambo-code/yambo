@@ -55,7 +55,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
  integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
 &                     n_lambda_deg
  integer          :: ikpbz,ikp,isp
- real(SP)          :: r_eh(3),k_dot_r,r_hole_rlu(3),q_dot_rh,kp_dot_r_h,k_dot_r_e
+ real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor)
  !
  integer,  allocatable :: rindex(:)
@@ -115,7 +115,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
    enddo
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
    r_hole=r_cell_cc(:,ir_hole)
-   q_dot_rh = dot_product(r_hole,BSqpts(:,iq)/alat(:))*2._SP*pi
    !
    call msg('s','::      translated position      [cc]:',r_hole)
    call msg('s','::                                [A]:',r_hole*BO2ANG)
@@ -157,11 +156,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
      if (.not.px%element_1D(ir)) cycle
      !
      if (l_free_hole) then
-       r_eh(:)=0._SP
        ir_hole=ir
        r_hole=r_cell_cc(:,ir)
-     else
-       r_eh(:)=r_cell_cc(:,ir)-r_hole(:)
      endif
      !
      do neh = 1,BS_H_dim
@@ -178,7 +174,6 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda,iq)
        ikp   = Xk%sstar(ikpbz,1)
        isp   = Xk%sstar(ikpbz,2)
        !
-!       k_dot_r = dot_product(r_eh,Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
        k_dot_r_e = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
        kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
         

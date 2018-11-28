@@ -24,7 +24,7 @@
 subroutine e2y_db1(en,k,ncid)
  !
  use netcdf
- use etsf_data
+ use netcdf_data
  use pars,                 only : SP, DP, PI, schlen
  use com,                  only : msg, error, warning
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
@@ -83,14 +83,14 @@ subroutine e2y_db1(en,k,ncid)
  ! PP 
  !
  call msg('s','Pseudopotential...')
- if(trim(ETSF_kind)=='KSS') call import_gwdata_group_kss
- if(trim(ETSF_kind)=='WFK') call import_gwdata_group_wfk
+ if(trim(NETCDF_kind)=='KSS') call import_gwdata_group_kss
+ if(trim(NETCDF_kind)=='WFK') call import_gwdata_group_wfk
  call msg('l','done')
  !
  ! G-vectors grids and indices
  !
- if(trim(ETSF_kind)=='KSS') call import_basisdata_group_kss
- if(trim(ETSF_kind)=='WFK') call import_basisdata_group_wfk
+ if(trim(NETCDF_kind)=='KSS') call import_basisdata_group_kss
+ if(trim(NETCDF_kind)=='WFK') call import_basisdata_group_wfk
  call msg('s','RL vectors...done')
  !
  ! All other data
@@ -572,7 +572,7 @@ contains
   ! GW data from KSS file
   !===========================================================
   subroutine import_gwdata_group_kss
-    use etsf_data
+    use netcdf_data
     use D_lattice,             only : n_atomic_species
     use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
 &                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
@@ -629,7 +629,7 @@ contains
   ! GW data from WFK file
   !===========================================================
   subroutine import_gwdata_group_wfk
-    use etsf_data
+    use netcdf_data
     use pars,                  only : SP
     use D_lattice,             only : n_atomic_species
     use wave_func,             only : wf_ncx

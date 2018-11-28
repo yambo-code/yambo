@@ -23,17 +23,20 @@
 !
 integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  use netcdf
- use etsf_data
+ use netcdf_data
  use pars,                ONLY: SP,lchlen
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo
+ use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo,&
+&                               com_path
+ use stderr,              ONLY: log_as_a_file,write_to_log,logfile,intc
+ use LIVE_t,              ONLY: live_timing_is_on
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
  use pseudo,              ONLY: PP_alloc_abinit, PP_free
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,mk_dir
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !
@@ -63,7 +66,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  e2y_i = 0
  ncpu  = np
  myid  = pid
- call SET_defaults(instr,od,od,'')
+ call SET_defaults(instr,ind,od,com_dir)
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
@@ -71,6 +74,22 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ !
+ write_to_log      = .true.
+ live_timing_is_on = .true.
+ !
+ if (log_as_a_file) then
+   if (len_trim(com_path)==0) com_path="./"
+   write (logfile,'(2a)') trim(com_path),'/l-e2y'
+   !
+   if (ncpu>1) then
+     call mk_dir(trim(com_path)//"/LOG")
+     write (logfile,'(2a)') trim(com_path)//'/LOG/l-e2y'
+     logfile=trim(logfile)//"_CPU_"//trim(intc(myid+1))
+   endif
+   !
+ endif
+ !
  !
  ! S/N
  !======
@@ -90,9 +109,9 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s','Checking input file ...')
  !
  if      (index(trim(inf),'KSS')/=0) then
-   ETSF_kind='KSS'
+   NETCDF_kind='KSS'
  else if (index(trim(inf),'WFK')/=0) then
-   ETSF_kind='WFK'
+   NETCDF_kind='WFK'
  else
    call msg('ln','File kind not supported! Use either KSS or WFK filename.')
  end if
@@ -104,11 +123,12 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    return
  endif
  !
+ call msg('s','DBs path set to :',trim(core_io_path))
+ !
  ! Open ETSF file for reading
  !
  netcdf_error = nf90_open(path = trim(inf), mode = NF90_NOWRITE, ncid = ncid)
- !
- call msg('s','DBs path set to :',trim(core_io_path))
+ call netcdf_check(ncid,netcdf_error, 0)
  !
  ! DB1
  !==========================================
@@ -131,11 +151,11 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! WF & PP
  !==========================================
  !
- if(trim(ETSF_kind)=='KSS') then
+ if(trim(NETCDF_kind)=='KSS') then
    call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
  endif
  !
- if(trim(ETSF_kind)=='WFK') then
+ if(trim(NETCDF_kind)=='WFK') then
    call msg('s',' == Writing DB2 (wavefunctions) ...') 
  endif
  !
@@ -159,8 +179,8 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
-       if(trim(ETSF_kind)=='KSS') call e2y_kb_pp(ik,ncid) 
-       if(trim(ETSF_kind)=='WFK') call e2y_kb_pp_wfk(ik,ncid) 
+       if(trim(NETCDF_kind)=='KSS') call e2y_kb_pp(ik,ncid) 
+       if(trim(NETCDF_kind)=='WFK') call e2y_kb_pp_wfk(ik,ncid) 
        if (n_atoms_species_max>0.and.ib_grp==1) then
          if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
          if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
@@ -174,7 +194,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  enddo
  !
  deallocate(wf_disk)
- if(trim(ETSF_kind)=='KSS') call PP_free()
+ if(trim(NETCDF_kind)=='KSS') call PP_free()
  !
  call msg('l','done ==')
  !

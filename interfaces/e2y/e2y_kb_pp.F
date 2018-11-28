@@ -46,7 +46,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
   !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_comp_max )
   !
   use netcdf
-  use etsf_data
+  use netcdf_data
   use pars,                 only : SP
   use R_lattice,            only : ng_vec
   use D_lattice,            only : n_atomic_species,n_atoms_species_max
@@ -114,7 +114,7 @@ subroutine e2y_kb_pp_wfk( ikibz, ncid )
   !   pp_kbd ( ng_vec, n_atom_species, pp_n_l_times_proj_max )
   !
   use netcdf
-  use etsf_data
+  use netcdf_data
   use pars,                 only : SP
   use vec_operate,          only : sort
   use R_lattice,            only : ng_vec

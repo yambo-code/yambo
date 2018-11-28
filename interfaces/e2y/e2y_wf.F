@@ -26,7 +26,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! Reads and returns wf_disk for both spins
   !
   use netcdf
-  use etsf_data,             only : ETSF_kind,netcdf_check
+  use netcdf_data,             only : NETCDF_kind,netcdf_check
   use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
   use com,                   only : msg, error
@@ -57,7 +57,7 @@ subroutine e2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   netcdf_error = nf90_inq_varid(ncid, "coefficients_of_wavefunctions", varid)
   netcdf_error = nf90_get_var(ncid, varid, wavefunction_section_, start, count)
   !
-  if(ETSF_kind=='WFK') then
+  if(NETCDF_kind=='WFK') then
     wf_igk_save = wf_igk(:wf_nc_k(ikibz),ikibz)
     call sort(wf_igk_save,indx=wf_igk_indx)
   else

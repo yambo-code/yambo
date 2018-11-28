@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module etsf_data
+module netcdf_data
   !
   ! ETSF kind can be KSS or WFK at the moment
   !
-  character(3) :: ETSF_kind
+  character(3) :: NETCDF_kind
   !
   contains
 
@@ -73,4 +73,4 @@ module etsf_data
         call error(msg)
     end if
   end subroutine netcdf_check
-end module etsf_data
+end module netcdf_data

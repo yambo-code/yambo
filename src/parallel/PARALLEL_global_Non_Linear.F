@@ -115,8 +115,6 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! Overlap indeces for WF distribution
    !
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
-!   call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz_ID,&
-!&                                PAR_IND_Q,PAR_COM_Xk_ibz_INDEX,PAR_Q_range,Xk,q)
    !
    call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&

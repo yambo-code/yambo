@@ -227,11 +227,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
-   endif
-   !
    ! Allocation
    !
    iq_mem=PAR_Q_index(iq)
@@ -239,6 +234,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
+   !
+   if(iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
+   endif
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !

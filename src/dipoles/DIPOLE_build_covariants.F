@@ -114,7 +114,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      !
      ikbz=Xk%k_table(ik,1)
      !
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,S_det)
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
      !
      DIP_tmp=cZERO
      !

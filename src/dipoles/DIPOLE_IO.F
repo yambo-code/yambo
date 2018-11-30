@@ -24,7 +24,7 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,       ONLY:SP,cI,cZERO
- use com,        ONLY:msg
+ use com,        ONLY:msg,error
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
@@ -37,7 +37,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
- character(5),  intent(in)    :: check_read_or_write
+ character(*),  intent(in)    :: check_read_or_write
  character(*),  intent(in)    :: PAR_K_scheme_kind
  integer,       intent(out)   :: io_err
  !
@@ -51,9 +51,18 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if (.not.IO_dip) return
  !
- check  =trim(check_read_or_write)=="check"
- reading=trim(check_read_or_write)=="read"
- writing=trim(check_read_or_write)=="write"
+ check   =.false.
+ reading =.false.
+ writing =.false.
+ if(trim(check_read_or_write)=="check") then
+   check=.true.
+ elseif(trim(check_read_or_write)=="read") then
+   reading=.true.
+ elseif(trim(check_read_or_write)=="write") then
+   writing=.true.
+ else
+   call error("Wrong call to the DIPOLES_IO")
+ endif
  !
  ID=0
  ID_S=0
@@ -107,12 +116,17 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if(use_covariant_approach) then
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
-       if ( .not.PAR_K_scheme%IND_bz%element_1D(ik)             ) cycle
-       !if ((.not.PAR_K_scheme%COM_bz_A2A%CPU_id==0).and.writing ) cycle
+       if ( .not.PAR_K_scheme%IND_bz%element_1D(ik)) cycle
+       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0)) cycle
        call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1+ik+(i_sp_pol-1)*Xk%nbz/),ID=ID_S)
        io_err=io_err+io_Overlaps(Dip,ID_S)
      enddo
    enddo
+   if(reading) then 
+     do i_sp_pol=1,n_sp_pol
+       call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_K_scheme%comm_world)
+     enddo
+   endif
  endif
  !
  if(.not.(allocated(Xen%W).or.allocated(Xen%Eo)).or.writing) return

@@ -208,6 +208,7 @@ module parallel_m
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
+ type(PP_indexes),SAVE :: PAR_IND_OVLPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
  !
@@ -274,6 +275,7 @@ module parallel_m
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
  integer            :: PAR_IND_DIPk_ibz_ID
+ integer            :: PAR_IND_OVLPk_ibz_ID
  integer            :: PAR_IND_VAL_BANDS_DIP_ID
  integer            :: PAR_IND_CON_BANDS_DIP_ID
  !

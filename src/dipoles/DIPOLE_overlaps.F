@@ -125,7 +125,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      enddo ! istep
    enddo ! idir
    !
-   call PP_redux_wait(DIP_S(:,:,:,ikbz,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+   do i_sp_pol=1,n_sp_pol
+     call PP_redux_wait(DIP_S(:,:,:,ikbz,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+   enddo ! i_sp_pol
    !
    call live_timing(steps=1)
    !

@@ -35,15 +35,17 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PAR_COM_DIPk_ibz_A2A,PAR_COM_DIPk_ibz_INDEX, &
 &                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,&
+ use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_OVLPk_ibz,&
 &                        PAR_IND_VAL_BANDS_DIP,PAR_IND_DIPk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_DIPk_nbz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,&
+ use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_OVLPk_ibz_ID,&
 &                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
+ use DIPOLES,       ONLY:eval_OVERLAPS
+ use parallel_m,    ONLY:PAR_Q_range,PAR_IND_Q
  !
  implicit none
  !
@@ -77,6 +79,11 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
    call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
+   if(eval_OVERLAPS) then
+     call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
+&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+   endif
+   
    !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)

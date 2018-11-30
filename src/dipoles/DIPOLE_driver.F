@@ -53,11 +53,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,DIP_S
+&                         use_shifted_grids_approach,DIP_P,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
-&                         mpi_comm_world
+&                         mpi_comm_world,PAR_IND_OVLPk_ibz
  use parser_m,       ONLY:parser
 #if defined _RT || defined _SC || defined _NL
  use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
@@ -127,6 +127,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
  idir_not_done           =.true.
  !
+ if(use_covariant_approach)  eval_OVERLAPS=.true.
+ !
  ! Dipole dimensions to be fixed
  !
  call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
@@ -151,10 +153,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! WF distribution
    !=================
-   call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+   if(use_covariant_approach) then
+     call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,&
 &                              B_index=PAR_IND_CON_BANDS_DIP,&
 &                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
 &                              CLEAN_UP=.TRUE.)
+   else
+     call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+&                              B_index=PAR_IND_CON_BANDS_DIP,&
+&                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
+&                              CLEAN_UP=.TRUE.)
+   endif
    !
    call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
    !

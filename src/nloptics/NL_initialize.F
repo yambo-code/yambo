@@ -35,10 +35,11 @@ subroutine NL_initialize(E,k,q)
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
- use RT_control,     ONLY:SETUP_RT_IO_type,JPC_RT_IO_t
+ use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  !
@@ -49,7 +50,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time 
+ real(SP) :: Time, WF_sample_range(2) 
  integer  :: i1
  !
  ! Parser
@@ -58,15 +59,16 @@ subroutine NL_initialize(E,k,q)
  call parser('UseDipoles',           l_use_DIPOLES)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
+ call parser('EvalCurrent' ,         l_eval_CURRENT)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  !
- ! Check double-precision
- ! ========================
+ ! Check double-precision and other possible errors
+ ! ================================================
  !
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
- if(n_sp_pol/=1) call error(" Spin-polarized systems not full implemented")
- if(any(NL_bands(:)==0)) call error(" Error set RTBands == 0 ! ")
+ if(n_sp_pol/=1) call error(" Spin-polarized systems not yet implemented")
+ if(any(NL_bands(:)==0)) call error("Any of the NLBands limits is 0, change to nv|nc with 0<nv<fermi<nc")
  !
  ! Integrator ! ============
  !
@@ -85,13 +87,24 @@ subroutine NL_initialize(E,k,q)
         Integrator=RK4EXP
     case('HEUN')
         Integrator=HEUN
-        call error("HEUN integrator temporarily not available")
+        call error("HEUN integrator not yet available")
     case('INVINT')
         Integrator=INVINT
     case('CRANKNIC')
         Integrator=CRANK_NICOLSON
     case default
         call error("Unknow integrator")
+ end select
+ !
+ ! Verbosity Level
+ ! 
+ select case (trim(NL_verb_name))
+   case('low')
+      NL_verbosity=VERB_LOW
+   case('high')
+      NL_verbosity=VERB_HIGH
+   case default
+      call error("Unknow verbosity level")
  end select
  !
  ! Important in the Time-dependent Schrodinger Eq.
@@ -186,8 +199,6 @@ subroutine NL_initialize(E,k,q)
         call error("Unknow correlation in the response function")
  end select
  !
- !
- !
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
@@ -206,13 +217,13 @@ subroutine NL_initialize(E,k,q)
  ! frequencies is supported
  !
  RT_dyn_step=RT_step
- JPC_RT_IO_t%INTERVAL_time     =RT_step
- JPC_RT_IO_t%INTERVAL_time_SAVE=RT_step
- call SETUP_RT_IO_type(JPC_RT_IO_t,.TRUE.)
- YAMBO_ALLOC(JPC_RT_IO_t%Time,(NE_steps))
+ OBS_RT_IO_t%INTERVAL_time     =RT_step
+ OBS_RT_IO_t%INTERVAL_time_SAVE=RT_step
+ call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
-   JPC_RT_IO_t%Time(NE_i_time)=Time
+   OBS_RT_IO_t%Time(NE_i_time)=Time
  enddo
  !
  ! Check Field
@@ -247,6 +258,18 @@ subroutine NL_initialize(E,k,q)
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
+ ! WFs sampling
+ ! =========================
+ !
+ call NL_INIT_WF_sample(WF_sample)
+ WF_sample_range  = (/OBS_RT_IO_t%Time(NE_steps) - EtoT(E=NL_er(1))+5._SP*RT_step,OBS_RT_IO_t%Time(NE_steps)/)
+ call NL_set_WF_sample(WF_sample,n_order,RT_step,WF_sample_range,v=E%nbf,k=k%nibz)
+ if (Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') WF_sample%ison = .false.
+ if (n_order > 0) then
+   if (WF_sample%ison.eqv..false.) call warning('WF sampling switched off (only available with SOFTSIN/SIN field')
+   if (WF_sample%n_order < n_order) call warning('WF sampling analysis order set to the maximum of 7')
+ end if
+ !
  ! LOG
  ! ===
  !
@@ -261,7 +284,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Damping                [eV]:',NL_damping*HA2EV)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield FWHM            [fs]:',Efield(1)%FWHM*AUT2FS)
+ call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)
@@ -269,5 +292,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Use Dipoles                :',l_use_DIPOLES)
  call msg( 'r', 'Induced Field              :',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    :',l_force_SndOrd)
+ call msg( 'r', 'Evaluate Current           :',l_eval_CURRENT)
+ call msg( 'r', 'WF sampling                :',WF_sample%ison) 
  !
 end subroutine NL_initialize

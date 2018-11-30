@@ -38,8 +38,7 @@ subroutine XC_nlcc_setup()
 &                        use_nlcc,pp_has_nlcc,pp_has_nlcc_atom
  use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_RD_CL,REP
- !
- implicit none
+#include <memory.h>
  !
  ! Work Space 
  !
@@ -66,6 +65,10 @@ subroutine XC_nlcc_setup()
  if (all(pp_has_nlcc_atom(:)==0)) call error(' [xc] Unexpected zero NLCC')
  !
  ! init core charge in direct space
+ !
+ if (.not.allocated(pp_rho_nlcc)) then
+   YAMBO_ALLOC(pp_rho_nlcc,(fft_size))
+ endif
  !
  pp_rho_nlcc=0.0
  !

@@ -29,13 +29,11 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:spin_occ,E_SOC_nbands,nel,n_sp_pol
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:q_norm
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_H_dim
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact
  use interfaces,     ONLY:PARALLEL_index
- use R_lattice,      ONLY:nkbz
+ use R_lattice,      ONLY:nkbz,bare_qpg
  !
 #if defined _KERR
  use KERR,           ONLY:B_Hall
@@ -51,8 +49,8 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  type(w_samp),intent(in)  :: W
  integer,     intent(in)  :: iq
- complex(SP), intent(in)  :: BS_E(BS_H_dim)
- complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
+ complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+ complex(SP), intent(in)  :: BS_R_left(BSS_n_eig),BS_R_right(BSS_n_eig)
  real(SP),    pointer     :: BS_E_SOC_corr(:,:)
  complex(SP), pointer     :: BS_R_right_kerr(:)
  real(SP),    pointer     :: BS_R_PL(:,:)
@@ -91,7 +89,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  ! If perturbative SOC energies are loaded compute the SOC energies
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/BS_H_dim/))
+ call PARALLEL_index(px,(/BSS_n_eig/))
  !
 #if defined _PL
  call live_timing('BSK  EPS and PL',px%n_of_elements(myid+1))
@@ -124,7 +122,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
      if (BSS_add_antiresonant) Epsilon_ii(:,2)=Epsilon_ii(:,2)+&
 &      conjg(BS_R_left(i1)*BS_R_right(i1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
      !
-     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/q_norm(1)**2
+     if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
      if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+BS_R_left(i1)*BS_R_right(i1)/EXC_E(i_pert_SOC)
      !
      Joint_DOS(:,2)=Joint_DOS(:,2)-1._SP/(W%p(:)-EXC_E(i_pert_SOC))
@@ -174,26 +172,24 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
  endif
  !
- if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/q_norm(1)**2
- if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-diam_term_used)*Co_factor/ W%p(:)  **2
+ if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/bare_qpg(1,1)**2
+ if(trim(global_gauge)=='velocity') Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)-diam_term_used)*Co_factor/   W%p(:)    **2
  !
  ! Drude term
  !============
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
- !
- Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
  !
  Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
  !
 #if defined _KERR
  !
  if(l_kerr) then
-   if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/q_norm(1)**2
-   if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/ W%p(:)  **2
+   if(trim(global_gauge)=='length'  ) Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/bare_qpg(1,1)**2
+   if(trim(global_gauge)=='velocity') Epsilon_ij(:,2)=Epsilon_ij(:,2)*Co_factor/   W%p(:)    **2
    !
    if(l_anomalous_Hall) then
      if(BSS_add_antiresonant) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
-     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/q_norm(1)**2
+     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(1,1)**2
      if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
      !
      ! I add the term describing the Anomalous Hall effect which is

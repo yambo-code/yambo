@@ -26,7 +26,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  ! BROKEN AS i_t_start not in YPP module anymore
  !
  use pars,            ONLY:SP,cI,cONE,cZERO
- use YPP_real_time,   ONLY:X_order,RT_conf,RT_time
+ use YPP_real_time,   ONLY:X_order,RT_conf
  use real_time,       ONLY:RT_step,NE_steps
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
@@ -35,7 +35,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  integer,     intent(in)   :: NW,NX
  real(SP),    intent(in)   :: P(NE_steps),W(NW),T_period
  complex(SP), intent(out)  :: X(NX)
-  !
+ !
  ! Work space
  !
  integer                 :: i_t,i_n,i_deltaT,nP_components,M_size,i_t_start

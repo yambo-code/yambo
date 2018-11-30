@@ -36,11 +36,7 @@
  Command line structure
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
-  {"help",  "h","Short Help",0,0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0,0}, 
-  {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
-  {"ifile", "F","XML index file name",0,0,1,0,1}, 
-  {"odir",  "O","Output directory",0,0,1,0,1}, 
+#include "common_options.h"
   {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,1}, 
   {"fragnb","b","Number of bands for each fragment",1,0,0,0,1},
   {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,1},

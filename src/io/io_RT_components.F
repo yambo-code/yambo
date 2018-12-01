@@ -42,6 +42,10 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
+#if defined _PAR_IO
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
+ use IO_m,           ONLY:def_variable_bulk,io_variable_bulk
+#endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
 #endif
@@ -53,11 +57,14 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_RT
- character(lchlen)     :: local_description(100),db_name
+ character(lchlen)     :: local_description(100),db_name,ch
  character(schlen)     :: what_
  !
+#if defined _PAR_IO
+ integer               :: k_range(2)
+#endif
  integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D
+ logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
  !
  ! DB kind and name...
  !=====================
@@ -90,13 +97,21 @@ integer function io_RT_components(what,ID)
    db_type=-3
  endif
  !
+ par_IO=.false.
  if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
+#if defined _PAR_IO
+ if (l_G) then
+   par_IO=.true.
+   k_range(1)=minval(io_sec(ID,:),MASK=(io_sec(ID,:)>0))-1
+   k_range(2)=maxval(io_sec(ID,:))-1
+ endif
+#endif
  !
  ! ACTION
  !========
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
- if (l_G     .or.l_THETA) then
+ if (l_G     .or.l_THETA .and. (.not.par_IO) ) then
    if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
      call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
    else
@@ -111,8 +126,19 @@ integer function io_RT_components(what,ID)
  !
  if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
  !
+#if defined _PAR_IO
+ if(l_G.and.io_sec(ID,1)> 1) then
+   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   if (io_RT_components/=0) goto 1
+ else
+#endif
+ !
  io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  if (io_RT_components/=0) goto 1
+ !
+#if defined _PAR_IO
+ endif
+#endif
  !
  ! 1st SECTION
  !=============
@@ -271,21 +297,36 @@ integer function io_RT_components(what,ID)
    !
    ! Needed for restart
    !
-   call io_fragment(ID,i_fragment=ik)
-   !
    i_spin=1
+   !
+#if defined _PAR_IO
+   do i_memory=1,G_MEM_steps
+     !
+     i_time=NE_i_time-G_MEM_steps+i_memory
+     if(i_time<=0) cycle
+     !
+     ch="dG_lesser_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+     call def_variable_bulk(ID,trim(ch),i_memory,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
+     call  io_variable_bulk(ID,i_memory,C3=dG_lesser(:,:,k_range(1):k_range(2),i_memory)   ,IPOS=(/1,1,1,k_range(1)/))
+     !
+   enddo
+   !
+#else
+   !
+   call io_fragment(ID,i_fragment=ik)
    !
    do i_memory=1,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
      if(i_time<=0) cycle
      !
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-&                        "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),VAR_SZ=(/2,RT_nbands,RT_nbands/))
+     ch="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,RT_nbands,RT_nbands/))
      call io_bulk(ID,C2=dG_lesser(:,:,ik,i_memory))
      !
    enddo
    !
+#endif
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
      call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))

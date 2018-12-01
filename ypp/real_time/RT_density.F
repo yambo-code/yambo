@@ -48,7 +48,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t
+ integer               :: ID,ik,io_err,i_t,secs(RT_nk)
  real(SP), allocatable :: drho(:)
  character(schlen)     :: ch_ws(2)
  logical               :: load_G_history
@@ -104,6 +104,10 @@ subroutine RT_density(en,kpt,qpt)
  !
  l_norm_to_one=.false.
  !
+ do ik = 1, RT_nk 
+   secs(ik)=ik+1
+ enddo
+ !
  call plot_check_and_launch(.true.)
  !
  do i_T=1,RT_conf%T_n_steps
@@ -113,10 +117,15 @@ subroutine RT_density(en,kpt,qpt)
    !
    if (load_G_history) then
      !
+#if defined _PAR_IO
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=secs,ID=ID)
+     io_err=io_RT_components('G',ID)
+#else
      do ik = 1, RT_nk 
        call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
+#endif
      !
      call el_density_matrix(dG_lesser(:,:,:,1),en,kpt,drho,RT_bands(1))
      !

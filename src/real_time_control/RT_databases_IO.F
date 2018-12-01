@@ -41,7 +41,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,sec(RT_nk)
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -108,11 +108,26 @@ subroutine RT_databases_IO(E)
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
    !
-   do i_cpu=1,ncpu
-     !
+#if defined _PAR_IO
+   !
+   n_sec=0
+   do ik = 1, RT_nk
+     if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     n_sec=n_sec+1
+     sec(n_sec)=ik+1
+   enddo
+   !
+   if(n_sec>0) then
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/sec(:n_sec)/),ID=ID(5))
+     io_G=io_RT_components('G',ID(5))
+   endif
+   !
+#else
+   !do i_cpu=1,ncpu
+   !  !
      do ik = 1, RT_nk
        !
-       if (myid+1/=i_cpu) cycle
+   !    if (myid+1/=i_cpu) cycle
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
@@ -123,7 +138,8 @@ subroutine RT_databases_IO(E)
      !
      call PP_redux_wait( )
      !
-   enddo 
+   !enddo 
+#endif
    !
    call IO_and_Messaging_switch("RESTORE")
    !

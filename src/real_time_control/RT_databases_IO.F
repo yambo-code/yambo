@@ -34,6 +34,9 @@ subroutine RT_databases_IO(E)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,HEAD_k_cpu,ncpu,myid,PAR_COM_Xk_ibz_INDEX
  use real_time,      ONLY:THETA_matrix,l_RT_CCA_Kernel,RT_carriers,NE_time,RT_all2ibz
  use timing_m,       ONLY:timing
+#if defined  _PAR_IO
+ use com,            ONLY:error
+#endif
  !
  implicit none
  !
@@ -41,7 +44,7 @@ subroutine RT_databases_IO(E)
  !
  ! Work Space
  !
- integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,sec(RT_nk)
+ integer           :: ik,io_G,io_OBS,io_carr,io_THETA,i_time,i_cpu,n_sec,secs(2)
  integer, external :: io_RT_components
  !
  call timing('RT databases IO',OPR='start')
@@ -113,12 +116,16 @@ subroutine RT_databases_IO(E)
    n_sec=0
    do ik = 1, RT_nk
      if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+     if (n_sec==0) secs=ik+1
+     if (n_sec >0) then
+       if (ik/=secs(2)) call error(" Non contiguous G distr does not work with PAR-IO")
+       secs(2)=ik+1
+     endif
      n_sec=n_sec+1
-     sec(n_sec)=ik+1
    enddo
    !
    if(n_sec>0) then
-     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/sec(:n_sec)/),ID=ID(5))
+     call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=secs,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
    endif
    !

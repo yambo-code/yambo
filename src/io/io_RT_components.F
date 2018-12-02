@@ -102,8 +102,8 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  if (l_G) then
    par_IO=.true.
-   k_range(1)=minval(io_sec(ID,:),MASK=(io_sec(ID,:)>0))-1
-   k_range(2)=maxval(io_sec(ID,:))-1
+   k_range(1)=io_sec(ID,1)-1
+   k_range(2)=io_sec(ID,2)-1
  endif
 #endif
  !
@@ -111,7 +111,7 @@ integer function io_RT_components(what,ID)
  !========
  !
  if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
- if (l_G     .or.l_THETA .and. (.not.par_IO) ) then
+ if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
    if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
      call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
    else

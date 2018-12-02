@@ -128,6 +128,8 @@ integer function io_RT_components(what,ID)
  !
 #if defined _PAR_IO
  if(l_G.and.io_sec(ID,1)> 1) then
+   if(.not.l_track_history) db_name=trim(db_name)//"_last"
+   !
    io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    if (io_RT_components/=0) goto 1
  else

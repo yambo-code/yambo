@@ -277,7 +277,7 @@ subroutine RT_driver(E,X,k,q)
    LT_pump_duration=min(maxval(Efield(:)%width)*8,NE_tot_time)
    LT_pump_steps=LT_pump_duration/RT_step
  endif
- if (NE_i_start_time<LT_pump_steps) then
+ if (NE_i_start_time<LT_pump_steps.and.l_NE_with_fields) then
    call live_timing("[RT] Dynamics (T<"//trim(real2ch(real(LT_pump_duration/FS2AUT,SP)))//" fs) :",&
 &                   LT_pump_steps-NE_i_start_time+1,DEPTH=0.01_SP)
  else

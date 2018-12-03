@@ -98,25 +98,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !================
  call H_QP_table_setup(E)
  !
- ! Dipoles
- !=========
- !
- ! before loading the WF in R-space I check and/or calculate
- ! the optical collisions that are done in G-space and would
- ! force the reloading of the WFs
- !
- ! Parallelization
- !==================
- DIP%bands_ordered=.false.
- DIP%approach     ='Covariant'
- call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
- call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIP)
- !
- ! Evaluate Dipoles if required
- ! ============================
- call DIPOLE_IO(k,E,Dip,'check',io_err,'DIP')
- if(io_err/=0) call DIPOLE_IO(k,E,Dip,'write',io_err,'DIP')
- !
  ! Non_Linear parallization
  ! ===================================
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
@@ -126,7 +107,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  !Load Dipole after the NL parallelization
  ! ========================================
- use_covariant_approach=.true.
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
  !

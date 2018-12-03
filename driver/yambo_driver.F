@@ -49,6 +49,9 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
+#if defined _NL
+ use nl_optics,     ONLY:l_use_DIPOLES
+#endif
 #if defined _MEM_CHECK 
  use memory,        ONLY:MEM_manager
 #endif
@@ -169,7 +172,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !=========
  !
 #if defined _NL
- if(l_nl_optics) then
+ if(l_nl_optics.and..not.l_use_DIPOLES) then
     Dip%approach="Covariant"
     Dip%ib(1)   =1
  endif

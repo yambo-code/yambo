@@ -119,6 +119,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! Main loop over k in IBZ
  !
+ W_=0._SP
  !
  do i_sp_pol=1,n_sp_pol
    !

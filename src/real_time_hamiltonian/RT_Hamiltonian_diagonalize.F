@@ -64,8 +64,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR)
  !
  BGR=rZERO
  !
- l_do_E=l_RT_update_Energies.and.(l_RT_eval_lifetimes.or.RT_do_it('OUT'))
- l_do_R=l_RT_rotate_DM.and.RT_do_it('OUT')
+ l_do_E=l_RT_update_Energies.and.(l_RT_eval_lifetimes.or.(RT_do_it('OUT').or.RT_do_it('OBS')))
+ l_do_R=l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))
  !
  if (.not.l_do_E .and. .not. l_do_R) return
  !

@@ -118,16 +118,20 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
        if (what=="fill") then
          RT%delta_f(i_RT)=RT_delta_occupations(i_b,i_k_RT)
+         !RT%delta_f(i_RT)=RT_E_occupations(i_b,i_k_RT)
        else if (what=="dump".and.allocated(RT_delta_occupations)) then
          RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
+         !RT_E_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies
        !
        if (what=="fill") then
          RT%delta_E(i_RT)=RT_E_and_k%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
+         !RT%E(i_RT)      =RT_E_and_k%E(i_b,i_k_RT,i_spin)
        else if (what=="dump".and.allocated(RT_E_and_k%E)) then
-         RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%E_bare(i_RT)+RT%delta_E(i_RT)
+         RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
+         !RT_E_and_k%E(i_b,i_k_RT,i_spin)=RT%E(i_RT)
        endif
        !
        ! Lifetimes

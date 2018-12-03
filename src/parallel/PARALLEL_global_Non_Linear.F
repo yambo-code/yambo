@@ -35,11 +35,11 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,PAR_COM_DIPk_ibz_INDEX,&
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
-&                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A
+&                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_bz_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLP_ibz,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz, &
 &                        PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_B_mat_ordered,PAR_IND_QP,PAR_IND_B_mat, &
-&                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz
+&                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz,PAR_IND_DIPk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_DIPk_ibz_index, &
 &                        PAR_G_bands_index,PAR_QP_index,PAR_G_bands_index
@@ -109,6 +109,8 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
 
+   call PAR_INDEX_copy(PAR_IND_Xk_bz,PAR_IND_DIPk_bz)
+   !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
    !

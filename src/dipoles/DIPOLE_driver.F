@@ -154,10 +154,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    ! WF distribution
    !=================
    if(use_covariant_approach) then
-     call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,&
-&                              B_index=PAR_IND_CON_BANDS_DIP,&
-&                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
-&                              CLEAN_UP=.TRUE.)
+     call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
    else
      call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
 &                              B_index=PAR_IND_CON_BANDS_DIP,&

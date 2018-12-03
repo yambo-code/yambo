@@ -37,7 +37,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                         PAR_DIPk_nbz,PP_redux_wait
+&                         PAR_DIPk_nbz,PP_redux_wait,PAR_IND_OVLPk_ibz
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -78,9 +78,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call k_build_up_BZ_tables(Xk)
  !
-#if defined _NL
- if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
-#endif
+ call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &               keep_states_to_load=.TRUE.)

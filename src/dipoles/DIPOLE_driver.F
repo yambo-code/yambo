@@ -57,7 +57,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
-&                         mpi_comm_world,PAR_IND_OVLPk_ibz
+&                         mpi_comm_world
  use parser_m,       ONLY:parser
 #if defined _RT || defined _SC || defined _NL
  use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
@@ -153,14 +153,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    ! WF distribution
    !=================
-   if(use_covariant_approach) then
-     call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
-   else
-     call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
+   call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,&
 &                              B_index=PAR_IND_CON_BANDS_DIP,&
 &                              Bp_index=PAR_IND_VAL_BANDS_DIP,&
 &                              CLEAN_UP=.TRUE.)
-   endif
    !
    call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
    !

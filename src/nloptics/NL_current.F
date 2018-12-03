@@ -35,7 +35,8 @@ subroutine NL_current(k,E,V_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin,n_sp_pol
  use fields,         ONLY:A_ext
- use X_m,            ONLY:global_gauge,DIP_P
+ use X_m,            ONLY:global_gauge
+ use DIPOLES,        ONLY:DIP_P
  use nl_optics,      ONLY:NL_J,NL_bands,l_use_DIPOLES
  use QP_m,           ONLY:QP_nk
  use interfaces,     ONLY:NL_average_operator

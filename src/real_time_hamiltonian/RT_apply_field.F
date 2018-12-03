@@ -29,7 +29,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use electrons,      ONLY:n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_v,DIP_P_spinor,global_gauge
+ use DIPOLES,        ONLY:DIP_iR,DIP_P,DIP_v,DIP_P_spinor
+ use X_m,            ONLY:global_gauge
  use real_time,      ONLY:RT_bands,l_update_SOC,l_velocity_gauge_corr
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z

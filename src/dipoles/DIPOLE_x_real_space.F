@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
+subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
@@ -32,38 +32,37 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use X_m,                ONLY:X_t,DIP_iR,DIP_P,force_v_g_space_approach,l_X_terminator
+ use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_v
+ use X_m,                ONLY:l_X_terminator
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
- use parallel_m,         ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(in)    :: X
+ type(DIPOLE_t),intent(in)    :: Dip
  logical,       intent(in)    :: idir_todo(3)
  !
  ! Work space
  !
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
 &                                ic_wf,iv_wf,idir,n_LT_steps
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  real(SP)                     :: Ev_m_Ec
- complex(SP)                  :: DIP_tmp(3,X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='R',title='-Oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
+ ! 
+ call fft_setup(0,1,.true.)      ! FFT size
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
  call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps) 
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  if (n_LT_steps>0) call live_timing('Dipoles in real space',n_LT_steps)
  !
@@ -73,18 +72,23 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      !
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
      !
+     call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='R',title='-Oscillators/R space',&
+&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
      DIP_tmp=cZERO
      !
-     do iv=X%ib(1),X%ib_lim(1) 
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
-       ic_min=max(iv,X%ib_lim(2))
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       !
+       ic_min=max(iv,Dip%ib_lim(2))
        if (l_X_terminator) ic_min=iv
        !
-       do ic=ic_min,X%ib(2)
+       do ic=ic_min,Dip%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          iv_wf=WF%index(iv,ik,i_sp_pol)
          ic_wf=WF%index(ic,ik,i_sp_pol)
@@ -121,21 +125,24 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
      enddo
      !
      !=====
-     ! <P>
+     ! <v>
      !=====
-     if(.not.force_v_g_space_approach) then
-       do iv=X%ib(1),X%ib_lim(1) 
-         do ic=max(iv,X%ib_lim(2)),X%ib(2)
-           if (.not.l_mat_eval_DIP(ic,iv)) cycle
-           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
+     if(.not.Dip%force_v_g_space) then
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+         do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_v(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
            enddo
          enddo
        enddo
      endif
+     !
+     call WF_free(WF)
      !
    enddo 
    !
@@ -144,7 +151,5 @@ subroutine DIPOLE_x_real_space(Xen,Xk,X,idir_todo)
  call live_timing()
  !
  YAMBO_FREE(x_cc)
- !
- call WF_free(WF)
  !
 end subroutine Dipole_x_real_space

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_build_covariants(Xen,Xk,X)
+subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  ! Build the covariant dipole operator at zero field
  ! in PRB 69, 085106 (2004)
@@ -32,12 +32,12 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  use interfaces,     ONLY:WF_load,PARALLEL_WF_distribute,WF_free
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels,n_sp_pol
- use X_m,            ONLY:X_t,DIP_S,DIP_iR,DIP_P,X_alloc,force_v_g_space_approach
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S,DIP_iR,DIP_P
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
- use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_Xk_ibz_ID, &
-&                         PAR_IND_OVLP_ibz,PAR_Xk_nbz,PAR_COM_DIPOLES,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                         PAR_DIPk_nbz,PP_redux_wait
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -47,7 +47,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(inout)  :: Xk
- type(X_t),              intent(in)     :: X      
+ type(DIPOLE_t),         intent(in)     :: Dip
  !
  ! Work Space
  !
@@ -59,10 +59,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
  complex(SP) :: S_det(6)
- complex(SP) :: Wop(1:X%ib(2),1:X%ib(2),2),DIP_tmp(6,1:X%ib(2),1:X%ib(2))
- complex(SP) :: S_tmp(X%ib(2),X%ib(2),2)
- logical     :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
- integer     :: n_LT_steps
+ complex(SP) :: Wop(1:Dip%ib(2),1:Dip%ib(2),2),DIP_tmp(6,1:Dip%ib(2),1:Dip%ib(2))
+ complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  integer           :: ID
  !
@@ -80,21 +78,19 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  !
  call k_build_up_BZ_tables(Xk)
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
- !
 #if defined _NL
- if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_OVLP_ibz,CLEAN_UP=.TRUE.)
+ if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
 #endif
  !
- call WF_load(WF,0,1,(/1,X%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
- &             keep_states_to_load=.TRUE.)
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
+&               keep_states_to_load=.TRUE.)
  !
  ! Notice that DIP_S is defined in the BZ       
  !
- call X_alloc('DIP_S',(/X%ib(2),X%ib(2),6,PAR_Xk_nbz/))
+ call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,PAR_DIPk_nbz/))
  DIP_S=cZERO
  !
- call DIPOLE_overlaps(Xk,X)
+ call DIPOLE_overlaps(Xk,Dip)
  !
  idir_not_done(:)= (k_map%max_kdir(:)==1)
  !
@@ -103,7 +99,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  if(any(k_map%max_kdir(:)>=6.and..not.l_force_SndOrd)) &
  &   call msg('rs','Using forth order approximation for covariant dipoles')
  !
- call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)*n_sp_pol)
+ call live_timing('Covariant Dipoles:',PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*n_sp_pol)
  !
  ! Notice that DIP_iR/DIP_P are defined only in the IBZ
  ! while the overlaps are in the BZ 
@@ -118,7 +114,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
      !
      ikbz=Xk%k_table(ik,1)
      !
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,S_det)
      !
      DIP_tmp=cZERO
      !
@@ -145,7 +141,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
          !
          Wop(:,:,istep)=cZERO
          !
-         forall(i1=Xen%nbm+1:X%ib(2),i2=1:Xen%nbf) 
+         forall(i1=Xen%nbm+1:Dip%ib(2),i2=1:Xen%nbf) 
            Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
 &                           sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
          end forall
@@ -165,47 +161,38 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
            DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(Wop(:,:,1))*a(id_red,idir)
          enddo
          !
-        else
-          !      
-          ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
-          ! Eq. 97 of PRB 63, 155107(2001)
-          !
-          do idir=1,3
-            DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,idir)
-          enddo
-        endif
-        !
-      enddo ! id_red
-      !
-      !======
-      ! <iR>
-      !======
-      do iv=X%ib(1),X%ib_lim(1)
-        do ic=max(iv,X%ib_lim(2)),X%ib(2)
-          !
-          if (.not.l_mat_eval_DIP(ic,iv)) cycle
-          !
-          do idir=1,3
-            DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
-          enddo
-          !
-        enddo
-      enddo
-      !
-      !=====
-      ! <P>
-      !=====
-      if(.not.force_v_g_space_approach) then
-        !      
-        do iv=X%ib(1),X%ib_lim(1) 
-          do ic=max(iv,X%ib_lim(2)),X%ib(2)
-            !
-            if (.not.l_mat_eval_DIP(ic,iv)) cycle
-            !
-            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-            !
-            do idir=1,3
+       else
+         !      
+         ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
+         ! Eq. 97 of PRB 63, 155107(2001)
+         !
+         do idir=1,3
+           DIP_tmp(idir,:,:)=DIP_tmp(idir,:,:)+transpose(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,idir)
+         enddo
+       endif
+       !
+     enddo ! id_red
+     !
+     !======
+     ! <iR>
+     !======
+     do iv=Dip%ib(1),Dip%ib_lim(1)
+       do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+         do idir=1,3
+           DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
+         enddo
+       enddo
+     enddo
+     !
+     !=====
+     ! <P>
+     !=====
+     if(.not.Dip%force_v_g_space) then
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
+           Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           do idir=1,3
              DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
            enddo
            !
@@ -222,16 +209,12 @@ subroutine DIPOLE_build_covariants(Xen,Xk,X)
  call live_timing()
  !
 #if defined _NL
- if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,X)
+ if(l_eval_polarization) call POLARIZATION_output(Xen,Xk,Dip)
 #endif
  !
  call WF_free(WF)
  !
-#if defined _NL
- if(l_nl_optics) call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,CLEAN_UP=.TRUE.)
-#endif
- !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+ if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
  return
  !

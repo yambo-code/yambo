@@ -28,7 +28,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  use D_lattice,      ONLY:a,DL_vol
  use R_lattice,      ONLY:bz_samp,k_map,nXkbz
  use QP_m,           ONLY:QP_nk
- use X_m,            ONLY:DIP_iR
+ use DIPOLES,        ONLY:DIP_iR
  use nl_optics,      ONLY:NL_bands
  use parallel_m,     ONLY:PAR_Xk_nibz
  use interfaces,     ONLY:NL_average_operator

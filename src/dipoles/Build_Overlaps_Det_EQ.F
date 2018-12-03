@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
+subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,S_det)
  !
  ! Build inverse overlaps and overlaps determinants between valence bands at
  ! equilibrium
@@ -33,11 +33,14 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra, ONLY:INV,USE_LK
  use vec_operate,    ONLY:k_periodic_idx
- use X_m,            ONLY:DIP_S
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_S
+ !
  implicit none
  !
  integer,      intent(in) :: ikbz,i_sp_pol
  type(levels), intent(in) :: Xen
+ type(DIPOLE_t),intent(in) :: Dip
+ !
  complex(SP), intent(out) :: S_det(6)
  complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
  complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbm,6)

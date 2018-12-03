@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
+integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! INIT =-2  : Unsupported Runlevel(s) combination
  ! INIT =-1  : Missing CORE DBs
@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -57,6 +57,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,intc,STRING_add,STRING_remove,STRING_match
+ use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use R_lattice,      ONLY:ng_closed,q0_def_norm,bz_samp,nqibz,bz_samp_reset 
  use wave_func,      ONLY:wf_ng,io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
@@ -93,6 +94,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(levels)    ::en        
  type(bz_samp)   ::q,k   
  type(X_t)       ::X(4)
+ type(DIPOLE_t)  ::Dip
  type(w_samp)    ::Xw(4)
  integer         ::lnstr
  character(lnstr)::instr
@@ -187,6 +189,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   call DIPOLES_reset(Dip)
  endif
  !
  ! Presets (local)
@@ -351,24 +354,23 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
  io_err=io_QP_and_GF('W',qp,io_ID) 
  !
- ! ostnts
+ ! Vnl PWscf old format
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_err=io_DIPOLES(X(3),io_ID)
+ io_err=io_DIPOLES(Dip,io_ID)
  !
- OSTNTS_Vnl_included=io_err==0.and.X(3)%Vnl_included
- !
- ! PP_PWscf
+ ! KB PWscf
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_pwscf_err=io_KB_pwscf(io_ID)
  !
- ! kb_pp
+ ! KB abinit
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_abinit_err=io_KB_abinit(io_ID)
  !
- if (io_err/=0) OSTNTS_Vnl_included=(io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
+ if (io_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
+ if (io_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !
@@ -389,6 +391,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    enddo
    !
  endif
+ !
  !
  ! The GLOBAL vcalue of %Vnl_included is decided on the basis of the contents
  ! of db.OSTENTS OR on the presence of the KB_PP. This means that if the
@@ -510,13 +513,17 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! CPU structure
  !
+ if (l_dipoles) then
+   call CPU_activate("DIP")
+   call initactivate(1,'DIP_Threads')
+ endif
+ !
+ ! CPU structure
+ !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa) then
-   if (l_optics.and..not.l_bse) then
-     call CPU_activate("X_q_0")
-     call CPU_activate("X_finite_q")
-   else
-     call CPU_activate("X_all_q")
-   endif
+   call CPU_activate("X")
+   if (l_optics.and..not.l_bse) call CPU_activate("X_finite_q")
+   call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads')
  endif
  !
@@ -559,6 +566,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (l_bse) then
    call CPU_activate("BS")
+   call CPU_activate("DIP")
    call initactivate(1,'X_Threads DIP_Threads K_Threads')
  endif
  !
@@ -593,6 +601,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
+ if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
+ !
  if (l_optics.and.l_chi) then
    !
    ! GPL_EXCLUDE_START
@@ -625,13 +635,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _RT
    call INIT_RT_ctl_switch('X')
 #endif
+   call initactivate(1,'Qdirection QShiftOrder')
    !
    ! GPL_EXCLUDE_END
-   !
-   call initactivate(1,'DipApproach DipPDirect ShiftedPaths Qdirection QShiftOrder')
-#if defined _NL | defined _ELECTRIC
-   call initactivate(1,'EvPolarization FrSndOrd')
-#endif
    !
  endif
  !
@@ -685,6 +691,11 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_END
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
+   !
+#if defined _NL | defined _ELECTRIC
+   call initactivate(1,'EvPolarization FrSndOrd')
+#endif
+   !
 #if defined _KERR
    call initactivate(1,'EvalKerr AnHall')
 #endif
@@ -1038,6 +1049,8 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
+ call Dip_check_ordered
+ !
  ! Report/Log Files
  !
  call INIT_report_and_log_files()
@@ -1083,13 +1096,12 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      call initactivate(1,"PAR_def_mode")
      call initactivate(1,what//"_CPU")
      call initactivate(1,what//"_ROLEs")
-     if ((what=="X_q_0".and..not.l_real_time).or.&
-&         what=="X_finite_q".or.what=="X_all_q".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
-     if (what=="BS")                                           call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
-     if (what=="SE".and.l_sc_run)                              call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
+     if (what=="X_finite_q".or.what=="X".or.what=="BS") call initactivate(1,what//"_nCPU_LinAlg_INV")
+     if (what=="BS")                                    call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
+     if (what=="SE".and.l_sc_run)                       call initactivate(1,what//"_nCPU_LinAlg_DIAGO")
 #endif
 #if defined _SCALAPACK &&  defined _MPI
-     if (what=="SLK")                                          call initactivate(1,what//"_nCPU_LinAlg_INV")
+     if (what=="SLK")             call initactivate(1,what//"_nCPU_LinAlg_INV")
 #endif
      !
    end subroutine
@@ -1111,7 +1123,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (mode=='Close_G_vectors') initmode=2
      if (mode=='Game_Over') initmode=3
      if (mode=='parser_input_file') initmode=4
-     call INIT_load(defs,en,q,k,X,Xw)
+     call INIT_load(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
    subroutine logicalson
@@ -1132,6 +1144,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
@@ -1237,6 +1250,24 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
    end subroutine X_var_setup
    !
+   subroutine Dip_check_ordered
+     !
+     use X_m,  ONLY:l_X_terminator
+     implicit none
+     logical :: all_bands
+     !
+     call parser('DipBandsAll',all_bands)
+     !
+     Dip%bands_ordered=.not.all_bands
+#if defined _SC  || defined _RT || defined _NL
+     if ( l_sc_run.or.l_real_time.or.l_nl_optics ) Dip%bands_ordered=.false.
+#endif
+#if defined _QED 
+     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
+#endif
+     !
+   end subroutine Dip_check_ordered
+   ! 
    subroutine before_infile_write_setup 
      !
      ! After DB reading/stdin logicals I propose here values for the input file
@@ -1257,16 +1288,16 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (l_ppa)    call initactivate(1,'em1d')
+     if (l_em1s)   call initactivate(1,'dipoles')
+     if (l_em1d)   call initactivate(1,'dipoles')
+     if (l_optics) call initactivate(1,'dipoles')
+     if (l_ppa)    call initactivate(1,'em1d dipoles')
      if (l_gw0.and..not.l_ppa.and..not.l_cohsex.and..not.&
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
-&                  call initactivate(1,'em1d')
-     if (l_cohsex) call initactivate(1,'em1s')
-     if (l_bsk)    call initactivate(1,'optics')
-     if (l_bsk)    call initactivate(1,'bse')
-     if (l_bss)    call initactivate(1,'optics')
-     if (l_bss)    call initactivate(1,'bse')
-     if (l_bss)    call initactivate(1,'bsk')
+&                  call initactivate(1,'em1d dipoles')
+     if (l_cohsex) call initactivate(1,'em1s dipoles')
+     if (l_bsk)    call initactivate(1,'optics dipoles bse')
+     if (l_bss)    call initactivate(1,'optics dipoles bse bsk')
      if (l_bs_fxc) BSS_mode="t"
      !
      if (l_bse) then
@@ -1277,7 +1308,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
        else if (io_X_err(4)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(4)%ng
-         call initactivate(1,'em1d ppa')
+         call initactivate(1,'em1d dipoles ppa')
        endif
        !
      endif
@@ -1285,7 +1316,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
      !
 #if defined _PL
-     if (l_photolum) call initactivate(1,'bse optics')
+     if (l_photolum) call initactivate(1,'bse optics dipoles')
 #endif
      !
 #if defined _SC
@@ -1297,6 +1328,9 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
 #endif
 #if defined _OPENMP
+     if (l_dipoles) then
+       n_threads_DIP=n_threads
+     endif
      if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
        n_threads_K=0
        n_threads_X=0
@@ -1477,6 +1511,10 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
            if (i_cycle==1) call GET_user_WALL_time()
          endif
          !
+         if ( trim(rstr_piece(i1)) == 'dipoles' )  then
+           call initactivate(1,'dipoles')
+         endif
+         !
          if ( trim(rstr_piece(i1)) == 'em1s' .or.  trim(rstr_piece(i1)) == 'em1d' .or.&
 &             runlevel_is_on('em1s')         .or.  runlevel_is_on('em1d')  .or. &
 &             runlevel_is_on('life')         .or.  runlevel_is_on('cohsex') .or. &
@@ -1544,6 +1582,7 @@ integer function INIT(en,q,k,X,Xw,instr,lnstr,CLOSE_Gs,FINALIZE)
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
            if(l_bse)   call initactivate(1,'bsk')
+           if(trim(BSK_mode)=="SEX") call initactivate(1,'em1s')
            !
          endif
          !

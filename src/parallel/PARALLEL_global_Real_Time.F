@@ -37,19 +37,18 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
-&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A,        &
-&                        PAR_COM_DIPOLES,PAR_COM_DIPOLES_k_subgroup
+&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
 &                        PAR_IND_Q,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index,PAR_COM_VAL_INDEX,PAR_COM_QP_INDEX,&
-&                        PAR_COM_CON_INDEX
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
+&                        PAR_COM_CON_INDEX_X
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ,PAR_Xk_nibz
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
-&                        PAR_IND_DIPk_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
+&                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_ID,PAR_IND_WF_b_ID
  !
 #include<memory.h>
  !
@@ -83,10 +82,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
  endif
  !
- call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_DIPOLES_k_subgroup)
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
- call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX(X_type))
- call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX(X_type))
+ call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
+ call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
  !
  ! K-points (IBZ)
  !
@@ -152,7 +150,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  endif
  call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
- PAR_IND_DIPk_ID=PAR_IND_Xk_ibz_ID
+ PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
  YAMBO_ALLOC(PAR_DIPk_ibz_index,(Xk%nibz))
  call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
  YAMBO_ALLOC(PAR_Xk_ibz_index,(Xk%nibz))

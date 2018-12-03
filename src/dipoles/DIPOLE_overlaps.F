@@ -33,7 +33,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
-&                            PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PP_redux_wait 
+     &                            PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PP_redux_wait 
  !
  implicit none
  !
@@ -125,13 +125,13 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      enddo ! istep
    enddo ! idir
    !
-   do i_sp_pol=1,n_sp_pol
-     call PP_redux_wait(DIP_S(:,:,:,ikbz,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-   enddo ! i_sp_pol
-   !
    call live_timing(steps=1)
    !
  enddo ! ikbz
+ !
+ do i_sp_pol=1,n_sp_pol
+   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+ enddo ! i_sp_pol
  !
  call live_timing()
  !

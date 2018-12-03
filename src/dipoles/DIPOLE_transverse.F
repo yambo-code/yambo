@@ -119,6 +119,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! Main loop over k in IBZ
  !
+ W_=0._SP
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -170,7 +171,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          if (iv_wf==0) call error(" Error in parallel wf distribution (Dipole iv)")
          if (ic_wf==0) call error(" Error in parallel wf distribution (Dipole ic)")
          !
+         if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
+         !
          Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+         Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
+         !
          if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
          ! Evaluate <iv_wf|   p   |ic_wf>

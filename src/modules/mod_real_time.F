@@ -596,6 +596,7 @@ module real_time
      !
      call DIP_alloc('DIP_iR')
      call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_v')
      call DIP_alloc('DIP_spin')
      call DIP_alloc('DIP_orbital')
      call DIP_alloc('P_square') 

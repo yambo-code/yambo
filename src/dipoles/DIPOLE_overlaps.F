@@ -133,6 +133,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
    !
  enddo ! ikbz
  !
+ ! I need to distributed overlaps among all processors because
+ ! the construction of covariant dipoles require the first and second 
+ ! neighboar of each k-point
+ !
  do i_sp_pol=1,n_sp_pol
    call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
  enddo ! i_sp_pol

@@ -62,12 +62,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  call SETUP_PAR_K_scheme()
  !
- if ((reading.or.check).and.PAR_K_scheme%COM_ibz_INDEX%n_CPU==ncpu) then
-   l_vnl=Dip%Vnl_included
-   call PP_redux_wait(l_vnl,COMM=PAR_K_scheme%comm_world)
-   Dip%Vnl_included=l_vnl(1)
- endif
- !
  if(write_header) then
    call msg('s','[DIP] Writing dipoles header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)

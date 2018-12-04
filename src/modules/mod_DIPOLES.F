@@ -67,6 +67,7 @@ module DIPOLES
    logical    :: bands_ordered
    logical    :: force_v_g_space
    character(schlen) :: approach
+   character(schlen) :: computed
    !
    ! TO DO: add PAR INDEX / COMM and everything needeed (in particular by DIPOLES_IO)
    !        inside dipole type. Like that I do not need to give extra arguments in input
@@ -177,6 +178,7 @@ module DIPOLES
      Dip_out%bands_ordered      = Dip_in%bands_ordered
      Dip_out%force_v_g_space    = Dip_in%force_v_g_space
      Dip_out%approach           = Dip_in%approach
+     Dip_out%computed           = Dip_in%computed
    end subroutine DIPOLES_duplicate
    !
    subroutine DIPOLES_reset(Dip)
@@ -197,6 +199,7 @@ module DIPOLES
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.
      Dip%approach="G-space v"
+     Dip%computed="R P"
    end subroutine DIPOLES_reset
    !
 end module

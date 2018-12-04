@@ -75,6 +75,8 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  !
  call timing('RT H diago',OPR='start')
  !
+ RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:)=rZERO
+ !
  do ik=1,nkibz
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
@@ -113,7 +115,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
          if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E_DbGd(ib,ik_DbGd,1)
        else
          E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE
-         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik_DbGd,1)
+         if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E(ib,ik,1)
        endif
        !
      enddo
@@ -123,7 +125,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  !
  if (     l_RT_uses_E_DbGd) call PP_redux_wait(E%E_DbGd,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  if (.not.l_RT_uses_E_DbGd) call PP_redux_wait(E%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
- call PP_redux_wait(RT_E_and_K%E,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(RT_E_and_K%E(RT_bands(1):RT_bands(2),:,:),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ! Evaluation of the contribution to the minimal gap
  !

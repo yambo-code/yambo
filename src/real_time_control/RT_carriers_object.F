@@ -121,7 +121,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
          !RT%delta_f(i_RT)=RT_E_occupations(i_b,i_k_RT)
        else if (what=="dump".and.allocated(RT_delta_occupations)) then
          RT_delta_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
-         !RT_E_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
+         !RT_occupations(i_b,i_k_RT)=RT%delta_f(i_RT)
        endif
        !
        ! Energies

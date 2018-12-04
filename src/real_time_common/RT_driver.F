@@ -305,7 +305,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
-   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25))
+   call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================

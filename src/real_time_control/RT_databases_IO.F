@@ -130,11 +130,11 @@ subroutine RT_databases_IO(E)
    endif
    !
 #else
-   !do i_cpu=1,ncpu
-   !  !
+   do i_cpu=1,ncpu
+     !
      do ik = 1, RT_nk
        !
-   !    if (myid+1/=i_cpu) cycle
+       if (myid+1/=i_cpu) cycle
        !
        if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
        !
@@ -145,7 +145,7 @@ subroutine RT_databases_IO(E)
      !
      call PP_redux_wait( )
      !
-   !enddo 
+   enddo 
 #endif
    !
    call IO_and_Messaging_switch("RESTORE")

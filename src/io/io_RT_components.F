@@ -302,6 +302,7 @@ integer function io_RT_components(what,ID)
    i_spin=1
    !
 #if defined _PAR_IO
+   !
    do i_memory=1,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
@@ -328,11 +329,12 @@ integer function io_RT_components(what,ID)
      !
    enddo
    !
-#endif
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
      call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
+   !
+#endif
    !
  endif
  !

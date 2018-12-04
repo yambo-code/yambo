@@ -127,6 +127,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
  idir_not_done           =.true.
  !
+ Dip%computed='R P'
+#if defined _SC
+ if (l_sc_run) Dip%computed='R P P2'
+#endif
+#if defined _RT
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+ if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
+#endif
+ !
  ! Dipole dimensions to be fixed
  !
  call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))

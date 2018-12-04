@@ -64,14 +64,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  call timing('io_DIPOLES',OPR='start')
  !
- io_extension(ID)='dip_iR_and_P'
-#if defined _SC
- if (l_sc_run)    io_extension(ID)='dip_iR_P_and_P2'
-#endif
-#if defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1
- if (l_real_time_magn_dipoles) io_extension(ID)='dip_iR_P_spin_and_P2'
-#endif
+ io_extension(ID)='dipoles'
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1

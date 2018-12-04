@@ -42,7 +42,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use hamiltonian,    ONLY:H_rotation,E_reference
  use linear_algebra, ONLY:DIAGO,USE_LK
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
- use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ !use interfaces,     ONLY:LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use real_time,      ONLY:RT_E_and_k,Ho_plus_Sigma,RT_ibz_coo,RT_bands,&
 &                         l_RT_uses_E_DbGd,l_RT_update_Energies,l_RT_rotate_DM,&
 &                         DbGd_ibz_coo,l_RT_eval_lifetimes,RT_nbands,l_NE_with_fields
@@ -91,7 +91,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      !
    endif
    !
-   call LINEAR_ALGEBRA_driver(DIAGO,lib_in=USE_LK,M=H,E_real=Ed)
+   call SERIAL_HERMITIAN_diagonalization(RT_nbands,H,Ed)
    !
    ! Rotation
    !
@@ -118,7 +118,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
        !
      enddo
    enddo
-   !
+   !    
  enddo
  !
  if (     l_RT_uses_E_DbGd) call PP_redux_wait(E%E_DbGd,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

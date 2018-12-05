@@ -33,7 +33,7 @@ subroutine RT_density(en,kpt,qpt)
  use com,            ONLY:msg,of_open_close,warning
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,RT_step,&
+ use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
  use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
@@ -50,13 +50,18 @@ subroutine RT_density(en,kpt,qpt)
  ! Workspace
  !
  integer               :: ID,ik,io_err,i_t,i_dir
- real(SP), allocatable :: drho(:),delta_magn(:,:)
  character(schlen)     :: ch_ws(3)
- logical               :: load_G_history
+ logical               :: load_G_history,include_eq_occ
+ !
+ ! Allocs
+ !
+ real(SP), allocatable    :: drho(:),delta_magn(:,:)
+ complex(SP), allocatable :: G_loc(:,:,:)
  !
  integer, external     :: io_RT_components
  !
  call parser('LoadGhistory',load_G_history)
+ call parser('IncludeEQocc',include_eq_occ)
  !
  call section('*','Time dependent density plot')
  !
@@ -75,8 +80,16 @@ subroutine RT_density(en,kpt,qpt)
  !
  if(load_G_history) then
    ch_ws(1)="Computing the density from the G lesser"
+   YAMBO_ALLOC(G_loc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+   G_loc=cZERO
    YAMBO_ALLOC(dG_lesser,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,G_MEM_steps))
    dG_lesser=cZERO
+   if(include_eq_occ) then
+     YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
+     G_lesser_reference=cZERO
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
+     io_err=io_RT_components('REF',ID)
+   endif
  else
    ch_ws(1)="Computing the density from the occupations"
    call RT_apply(RT_bands,En,kpt,IO_COM=LOG,keep_RT_carriers=.TRUE.)
@@ -131,9 +144,12 @@ subroutine RT_density(en,kpt,qpt)
      enddo
 #endif
      !
-     call el_density_matrix(dG_lesser(:,:,:,1),en,kpt,drho,RT_bands(1))
+     if(     include_eq_occ) G_loc=dG_lesser(:,:,:,1)+G_lesser_reference
+     if(.not.include_eq_occ) G_loc=dG_lesser(:,:,:,1)
      !
-     if(n_spin>1) call el_magnetization_matrix(dG_lesser(:,:,:,1),en,kpt,delta_magn,RT_bands(1))
+     call el_density_matrix(G_loc,en,kpt,drho,RT_bands(1))
+     !
+     if(n_spin>1) call el_magnetization_matrix(G_loc,en,kpt,delta_magn,RT_bands(1))
      !
    else
      !
@@ -199,6 +215,8 @@ subroutine RT_density(en,kpt,qpt)
  !
  if (load_G_history) then
    YAMBO_FREE(dG_lesser)
+   YAMBO_FREE(G_lesser_reference)
+   YAMBO_FREE(G_loc)
  else
    YAMBO_FREE(RT_delta_occupations)
  endif

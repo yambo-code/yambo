@@ -270,7 +270,9 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="G_lesser_reference",VAR_SZ=(/2,RT_nbands,RT_nbands,RT_nk/))
      call io_bulk(ID,C3=G_lesser_reference)
      !
+#if !defined _YPP_RT
      if (read_is_on(ID)) call RT_init_occupation_reference( )
+#endif
      !
    endif
    !

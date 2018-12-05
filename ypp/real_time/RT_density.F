@@ -24,11 +24,12 @@
 subroutine RT_density(en,kpt,qpt)
  !
  use pars,           ONLY:SP,schlen,cZERO
+ use units,          ONLY:FS2AUT
  use R_lattice,      ONLY:bz_samp
  use FFT_m,          ONLY:fft_size,fft_dim
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close,warning
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
@@ -50,7 +51,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  integer               :: ID,ik,io_err,i_t,i_dir
  real(SP), allocatable :: drho(:),delta_magn(:,:)
- character(schlen)     :: ch_ws(2)
+ character(schlen)     :: ch_ws(3)
  logical               :: load_G_history
  !
  integer, external     :: io_RT_components
@@ -98,7 +99,8 @@ subroutine RT_density(en,kpt,qpt)
  YAMBO_ALLOC(drho,(fft_size))
  drho=0._SP
  !
- if(n_spin>1) then
+ if(n_spin>1.and.load_G_history) then
+   call build_spin_sop()
    YAMBO_ALLOC(delta_magn,(fft_size,3))
  endif
  !
@@ -115,10 +117,12 @@ subroutine RT_density(en,kpt,qpt)
    NE_time=RT_time(i_T)
    NE_i_time=nint(NE_time/RT_step)+1
    !
+   call msg('s','RT density at time '//trim(real2ch(real(NE_time/FS2AUT,SP)))//' fs')
+   !
    if (load_G_history) then
      !
 #if defined _PAR_IO
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(2,RT_nk+1),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 
@@ -159,18 +163,20 @@ subroutine RT_density(en,kpt,qpt)
    !
    call of_open_close(trim(output_fname))
    !
-   if(n_spin>1) then
+   if(n_spin>1.and.load_G_history) then
      !
      do i_dir=1,3
        !
        v2plot=delta_magn(:,i_dir)
        !
-       if(i_dir==1) ch_ws(2)='RT_magn_x_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
-       if(i_dir==2) ch_ws(2)='RT_magn_x_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
-       if(i_dir==3) ch_ws(2)='RT_magn_x_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
-       if (use_cube)     output_fname=trim(ch_ws(2))//'.cube'
-       if (use_xcrysden) output_fname=trim(ch_ws(2))//'.xsf'
-       if (use_gnuplot)  output_fname=trim(ch_ws(2))//''
+       if(i_dir==1) ch_ws(2)='RT_magne_x'
+       if(i_dir==2) ch_ws(2)='RT_magne_y'
+       if(i_dir==3) ch_ws(2)='RT_magne_z'
+       ch_ws(3)=trim(ch_ws(2))//'_'//trim(intc(plot_dim))//'d@t'//trim(TIME_string( (NE_i_time-1)*RT_step ))
+       !
+       if (use_cube)     output_fname=trim(ch_ws(3))//'.cube'
+       if (use_xcrysden) output_fname=trim(ch_ws(3))//'.xsf'
+       if (use_gnuplot)  output_fname=trim(ch_ws(3))//''
        !
        if (use_cube) then 
          call of_open_close(trim(output_fname),'o')
@@ -180,7 +186,7 @@ subroutine RT_density(en,kpt,qpt)
          call msg('o RT_magn',"#")
        endif
        !
-       plot_title='RT_magnetization'
+       plot_title=trim(ch_ws(2)//" ")
        call plot_check_and_launch(.false.)
        !
        call of_open_close(trim(output_fname))
@@ -198,7 +204,7 @@ subroutine RT_density(en,kpt,qpt)
  endif
  YAMBO_FREE(drho)
  !
- if(n_spin>1) then
+ if(n_spin>1.and.load_G_history) then
    YAMBO_ALLOC(delta_magn,(fft_size,3))
  endif
  !

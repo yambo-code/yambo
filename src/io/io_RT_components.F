@@ -43,8 +43,8 @@ integer function io_RT_components(what,ID)
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
+ use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,write_is_on
 #endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -61,7 +61,7 @@ integer function io_RT_components(what,ID)
  character(schlen)     :: what_
  !
 #if defined _PAR_IO
- integer               :: k_range(2)
+ integer               :: k_range(2),local_COMM
 #endif
  integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
@@ -101,6 +101,8 @@ integer function io_RT_components(what,ID)
  if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
 #if defined _PAR_IO
  if (l_G) then
+   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
+   if ( read_is_on(ID)) local_COMM=mpi_comm_world
    par_IO=.true.
    k_range(1)=io_sec(ID,1)-1
    k_range(2)=io_sec(ID,2)-1
@@ -130,7 +132,7 @@ integer function io_RT_components(what,ID)
  if(l_G.and.io_sec(ID,1)> 1) then
    if(.not.l_track_history) db_name=trim(db_name)//"_last"
    !
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=local_COMM)
    if (io_RT_components/=0) goto 1
  else
 #endif

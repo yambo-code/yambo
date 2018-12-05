@@ -52,7 +52,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  real(SP),allocatable  :: spin_factors(:,:,:),RT_spin_factors(:,:,:)
  real(SP),   external  :: RIntegrate
  integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin
- logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp
+ logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp,l_skip_occ
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
  character(schlen)     :: file_n(2)
@@ -65,6 +65,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  call parser('SeparateEH',l_separate_eh)
  call parser('IncludeEQocc',l_sum_equilibrium)
+ call parser('NoOcc',l_skip_occ)
  !
  N_files=1
  l_interp=all(INTERP_grid>0)
@@ -126,14 +127,18 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    if (i_T==1) call QP_state_table_setup(RT_E)
    call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='s')
    !
-   if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"df")
-   if(     l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"f")
+   if(.not.l_skip_occ) then
+     if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"df")
+     if(     l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"f")
+   endif
+   !
    !... DOS
    if (n_spinor==2) then
      call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
-&                                 dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.,WF_fac=RT_spin_factors)
+&                                 dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ,WF_fac=RT_spin_factors)
    else
-     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.TRUE.)
+     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
+                                  dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    endif
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol

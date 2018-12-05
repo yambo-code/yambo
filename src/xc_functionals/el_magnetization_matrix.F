@@ -121,13 +121,21 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  do ik=1,Xk%nibz
    !
+#if !defined _YPP_RT
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
+#endif
    !      
    do ib1=RT_bands(1),RT_bands(2)
      !
+#if defined _YPP_RT
+     if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
+#endif
+     !
      do ib2=ib1,RT_bands(2)
        !
+#if !defined _YPP_RT
        if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
+#endif
        !
        f_occ=cZERO
        do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)

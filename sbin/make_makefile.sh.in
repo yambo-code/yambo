@@ -154,13 +154,12 @@ define driver
                     \$(prefix)/driver/yambo.h > \$(prefix)/driver/yambo_cpp.h; fi
  ${PREFIX}if test -f \$(prefix)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(prefix)/driver/ypp.h > \$(prefix)/driver/ypp_cpp.h; fi
- ${PREFIX}( eval \$(cc) \$(cflags) -c \$(prefix)/driver/getopt.c > /dev/null)
  ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
  ${PREFIX}rm -f \$(prefix)/driver/yambo_cpp.h \$(prefix)/driver/ypp_cpp.h
  @echo
 endef
 define link
- ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o getopt.o \$(objs) \$(llibs) ) > /dev/null
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || mv *.mod \$(includedir)

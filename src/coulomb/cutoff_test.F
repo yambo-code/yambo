@@ -101,14 +101,6 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    if (is_cut(2)) dummy(2)=2.0_SP*plot_factor*box_length(2)
    if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*box_length(3)
  endif
-! if (cut_is_ws) then
-!   if (is_cut(1)) dummy(1)=2._SP*plot_factor*v_norm(a(1,:))
-!   if (is_cut(2)) dummy(2)=2._SP*plot_factor*v_norm(a(2,:))
-!   if (is_cut(3)) dummy(3)=2._SP*plot_factor*v_norm(a(3,:))
-!!   if (.not.is_cut(1)) dummy(1)=dummy(1)*10.0
-!!   if (.not.is_cut(2)) dummy(2)=dummy(2)*10.0
-!!   if (.not.is_cut(3)) dummy(3)=dummy(3)*10.0
-! endif
  !
 do ir1=1,n_dl_pts
    do ir2=1,n_dl_pts

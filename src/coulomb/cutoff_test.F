@@ -27,7 +27,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  use vec_operate,   ONLY:v_norm
  use D_lattice,     ONLY:alat,sop_inv,a,DL_vol
  use R_lattice,     ONLY:bz_samp,cyl_ph_radius,bare_qpg,cyl_length,box_length,&
-&                        g_vec,g_rot
+&                        g_vec,g_rot,nqibz
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
  use LIVE_t,        ONLY:live_timing
@@ -45,8 +45,8 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  real(SP):: pl_xy_pt(n_dl_pts**2,3),v_xy(n_dl_pts**2,2),&
 &           pl_yz_pt(n_dl_pts**2,3),v_yz(n_dl_pts**2,2),&
 &           pl_xz_pt(n_dl_pts**2,3),v_xz(n_dl_pts**2,2),&
-&           dummy(3),max_val
- integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is
+&           dummy(3),max_val,rdum(3),atws(3,3)
+ integer :: iqibz,iqbz,ig,ir1,ir2,ip,ig_r,is,nq(3),i1
  type(PP_indexes) ::px
 
  !
@@ -65,7 +65,30 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
- if (cut_is_ws)     dummy=2._SP*plot_factor*dummy
+ if (cut_is_ws) then 
+!
+! build the superperiodicity direct lattice
+!
+  nq=1
+  rdum=1000
+  do iqibz=1,nqibz
+   if(abs(q%pt(iqibz,1))/=0..and.(abs(q%pt(iqibz,1))<rdum(1))) rdum(1)=q%pt(iqibz,1)
+   if(abs(q%pt(iqibz,2))/=0..and.(abs(q%pt(iqibz,2))<rdum(2))) rdum(2)=q%pt(iqibz,2)
+   if(abs(q%pt(iqibz,3))/=0..and.(abs(q%pt(iqibz,3))<rdum(3))) rdum(3)=q%pt(iqibz,3)
+  enddo
+  nq=abs(nint(1./rdum))
+  do i1=1,3
+    if (nq(i1)==0) nq(i1)=1
+  enddo
+  dummy=2._SP*plot_factor*dummy*nq
+ !
+  do i1=1,3
+    atws(:,i1) = a(i1,:)
+    atws(:,i1) = atws(:,i1) * nq(i1)
+  enddo
+!
+
+ endif
  !
  if (cut_is_cyl) then
    dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
@@ -78,14 +101,14 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
    if (is_cut(2)) dummy(2)=2.0_SP*plot_factor*box_length(2)
    if (is_cut(3)) dummy(3)=2.0_SP*plot_factor*box_length(3)
  endif
- if (cut_is_ws) then
-   if (is_cut(1)) dummy(1)=2._SP*plot_factor*v_norm(a(1,:))
-   if (is_cut(2)) dummy(2)=2._SP*plot_factor*v_norm(a(2,:))
-   if (is_cut(3)) dummy(3)=2._SP*plot_factor*v_norm(a(3,:))
-!   if (.not.is_cut(1)) dummy(1)=dummy(1)*10.0
-!   if (.not.is_cut(2)) dummy(2)=dummy(2)*10.0
-!   if (.not.is_cut(3)) dummy(3)=dummy(3)*10.0
- endif
+! if (cut_is_ws) then
+!   if (is_cut(1)) dummy(1)=2._SP*plot_factor*v_norm(a(1,:))
+!   if (is_cut(2)) dummy(2)=2._SP*plot_factor*v_norm(a(2,:))
+!   if (is_cut(3)) dummy(3)=2._SP*plot_factor*v_norm(a(3,:))
+!!   if (.not.is_cut(1)) dummy(1)=dummy(1)*10.0
+!!   if (.not.is_cut(2)) dummy(2)=dummy(2)*10.0
+!!   if (.not.is_cut(3)) dummy(3)=dummy(3)*10.0
+! endif
  !
 do ir1=1,n_dl_pts
    do ir2=1,n_dl_pts
@@ -112,6 +135,11 @@ do ir1=1,n_dl_pts
        v_xy(ip,1)=V_in_cyl( pl_xy_pt(ip,:) )
        v_yz(ip,1)=V_in_cyl( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_cyl( pl_xz_pt(ip,:) )
+     endif
+     if (cut_is_ws) then
+       v_xy(ip,1)=V_in_ws( pl_xy_pt(ip,:) )
+       v_yz(ip,1)=V_in_ws( pl_yz_pt(ip,:) )
+       v_xz(ip,1)=V_in_ws( pl_xz_pt(ip,:) )
      endif
    enddo
  enddo
@@ -154,7 +182,8 @@ do ir1=1,n_dl_pts
    call live_timing(steps=1)
    !
  enddo
- !
+!
+!
  call PP_redux_wait(v_xy(:,2))
  call PP_redux_wait(v_yz(:,2))
  call PP_redux_wait(v_xz(:,2))
@@ -256,9 +285,9 @@ do ir1=1,n_dl_pts
    real(SP) function V_in_ws(r)
      real(SP) :: r(3)
      V_in_ws=0.
-     if ((.not.is_cut(1).or.abs(r(1))<a(1,1)/2.).and.&
-&         (.not.is_cut(2).or.abs(r(2))<a(2,2)/2.).and.&
-&         (.not.is_cut(3).or.abs(r(3))<a(3,3)/2.)) V_in_ws=1./v_norm(r)
+     if ((.not.is_cut(1).or.abs(r(1))<atws(1,1)/2.).and.&
+&         (.not.is_cut(2).or.abs(r(2))<atws(2,2)/2.).and.&
+&         (.not.is_cut(3).or.abs(r(3))<atws(3,3)/2.)) V_in_ws=1./v_norm(r)
    end function
  !
 end subroutine

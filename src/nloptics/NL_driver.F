@@ -65,7 +65,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
- ! In Non-Linear NL_bands always equal to SC_bands
+ ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
  !
  NL_nbands=NL_bands(2)-NL_bands(1)+1
@@ -107,6 +107,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  !Load Dipole after the NL parallelization
  ! ========================================
+ call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
  !

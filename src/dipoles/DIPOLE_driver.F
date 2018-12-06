@@ -43,6 +43,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
+#if defined _NL
+ use drivers,        ONLY:l_nl_optics
+#endif
  use BS,             ONLY:BS_bands
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
@@ -66,6 +69,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,      ONLY:n_spinor
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:l_use_DIPOLES
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,        ONLY:P_square
@@ -102,6 +108,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  l_real_time_magn_dipoles=.false.
 #if defined _SC  || defined _RT
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+#endif
+ !
+#if defined _NL
+ if (l_nl_optics) then
+   call parser('UseDipoles',l_use_DIPOLES)
+   if(.not.l_use_DIPOLES) then
+     Dip%approach="Covariant"
+     Dip%ib(1)   =1
+   endif
+ endif
 #endif
  !
  ! Setup logicals 

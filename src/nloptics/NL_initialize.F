@@ -56,7 +56,6 @@ subroutine NL_initialize(E,k,q)
  ! Parser
  ! ============
  !
- call parser('UseDipoles',           l_use_DIPOLES)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)

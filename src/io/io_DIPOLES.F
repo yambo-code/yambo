@@ -113,7 +113,6 @@ integer function io_DIPOLES(Dip,ID)
  P2_ipos(2:3)=DIP_ipos(3:4)
 #endif
  !
- l_real_time_magn_dipoles=.false.
 #if defined _SC  || defined _RT
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif

@@ -64,7 +64,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  !                                         
  do i_sp_pol=1,n_sp_pol
    do ikbz=1,Xk%nbz
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Dip,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
    enddo
  enddo
  !

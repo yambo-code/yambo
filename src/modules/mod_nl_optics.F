@@ -117,7 +117,6 @@ module nl_optics
  !
  logical :: eval_COLLISIONS
  logical :: eval_dG
- logical :: eval_OVERLAPS
  !
  ! Non-linear spectra parameters
  !

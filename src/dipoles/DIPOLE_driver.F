@@ -53,7 +53,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,DIP_S
+&                         use_shifted_grids_approach,DIP_P,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
@@ -135,6 +135,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
  if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
 #endif
+ !
+ if(use_covariant_approach)  eval_OVERLAPS=.true.
  !
  ! Dipole dimensions to be fixed
  !

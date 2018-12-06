@@ -122,15 +122,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
      i_spin=i_sp_pol+i_spinor-1
      do j_spinor=1,n_spinor
        j_spin=i_sp_pol+j_spinor-1
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ir)
-       do ir=1,fft_size
-         c_ws(ir,i_spinor)=c_ws(ir,i_spinor)+V_mat(ir,i_spin,j_spin)*WF%c(ir,j_spinor,i_wfp)
-       enddo
-!$omp end parallel do
-#else
        c_ws(:,i_spinor)=c_ws(:,i_spinor)+V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
-#endif
      enddo
    enddo
    !

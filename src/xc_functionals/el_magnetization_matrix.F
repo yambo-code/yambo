@@ -78,7 +78,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
        &                                 space='R',title='-RT',keep_states_to_load=.true.)
        do ib1=lowest_band,RT_bands(1)-1
          !
-         i_wf1=WF%index(ib1,ik,i_sp_pol)
+         i_wf1=WF_tmp%index(ib1,ik,i_sp_pol)
          !
          f_occ=cmplx(en%f(ib1,ik,i_sp_pol),0._SP)
          !
@@ -95,20 +95,20 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
            ! mx
            !
            cv(:,1)=cv(:,1)+Xk%weights(ik)*real(f_occ)*(&
-&                     +real(conjg(WF%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
-&                     +real(conjg(WF%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
+&                     +real(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
+&                     +real(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
            !
            ! my
            !
            cv(:,2)=cv(:,2)+Xk%weights(ik)*real(f_occ)*(&
-&                     +aimag(conjg(WF%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
-&                     -aimag(conjg(WF%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
+&                     +aimag(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,2,i_wf1))&
+&                     -aimag(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,1,i_wf1)) )
            !
            ! mz
            !
            cv(:,3)=cv(:,3)+Xk%weights(ik)*real(f_occ)*(&
-&                     +real(conjg(WF%c(:,1,i_wf1))*WF_tmp%c(:,1,i_wf1))&
-&                     -real(conjg(WF%c(:,2,i_wf1))*WF_tmp%c(:,2,i_wf1)) )
+&                     +real(conjg(WF_tmp%c(:,1,i_wf1))*WF_tmp%c(:,1,i_wf1))&
+&                     -real(conjg(WF_tmp%c(:,2,i_wf1))*WF_tmp%c(:,2,i_wf1)) )
            !
          endif
          !

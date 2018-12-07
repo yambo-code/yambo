@@ -221,19 +221,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
-2  if (io_X_err<0) then
+   if (io_X_err<0) then
      call deliver_IO_error_message(io_X_err,'PP/Em1s')
      call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
-     n_BS_blks=0
-     call BS_blks_free()
-     !
-#if defined _PL
-     call BSS_PL_free( )
-#endif
-#if defined _KERR
-     call BSS_KERR_free( )
-#endif
-     !
+     call K_clean( )
    endif
    !
    ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
@@ -325,8 +316,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
      io_X_err=io_X(X,Xw,XID)
      if (io_X_err<0) then
-       call warning('Reading of io_X heared failed depite previous check.')
-       goto 2
+       call deliver_IO_error_message(io_X_err,'PP/Em1s')
+       call warning('Reading of io_X  header failed depite previous check.')
+       call K_clean( )
+       goto 1
      endif
    endif
    !
@@ -340,8 +333,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
        io_X_err=io_X(X,Xw,XID)
        if (io_X_err<0) then
+         call deliver_IO_error_message(io_X_err,'PP/Em1s')
          call warning('Reading of io_X for iq='//trim(intc(iq_W))//' failed depite previous check.')
-         goto 2
+         call K_clean( )
+         goto 1
        endif
        !
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
@@ -738,4 +733,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call timing('X T_space Kernel',OPR='stop')
  !
+ contains
+   !
+   subroutine K_clean
+     n_BS_blks=0
+     call BS_blks_free()
+#if defined _PL
+     call BSS_PL_free( )
+#endif
+#if defined _KERR
+     call BSS_KERR_free( )
+#endif
+   end subroutine
 end subroutine

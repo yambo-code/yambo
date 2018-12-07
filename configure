@@ -826,6 +826,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -981,6 +982,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1233,6 +1235,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1370,7 +1381,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1523,6 +1534,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -13344,9 +13356,9 @@ fi
 
 
 # ============================================================================
-ac_config_headers="$ac_config_headers include/c_defs.h:include/c_defs.h.in"
+ac_config_headers="$ac_config_headers include/headers/c_defs.h:include/headers/c_defs.h.in"
 
-ac_config_files="$ac_config_files config/setup config/Makefile config/report config/msg_ydb src/wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh driver/codever.h driver/editor.h src/external_c/.objects"
+ac_config_files="$ac_config_files config/setup config/Makefile config/report config/msg_ydb src/wf_and_fft/sgfft.F sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh include/headers/codever.h include/headers/editor.h src/external_c/.objects"
 
 #
 cat >confcache <<\_ACEOF
@@ -14041,7 +14053,7 @@ do
     "lib/fftqe/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/fftqe/c_defs.h:lib/fftqe/c_defs.h.in" ;;
     "lib/fftqe/fftqe_defs.h") CONFIG_FILES="$CONFIG_FILES lib/fftqe/fftqe_defs.h:lib/fftqe/fftqe_defs.h.in" ;;
     "lib/iotk/make_iotk.inc") CONFIG_FILES="$CONFIG_FILES lib/iotk/make_iotk.inc:lib/iotk/make_iotk.inc.in" ;;
-    "include/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS include/c_defs.h:include/c_defs.h.in" ;;
+    "include/headers/c_defs.h") CONFIG_HEADERS="$CONFIG_HEADERS include/headers/c_defs.h:include/headers/c_defs.h.in" ;;
     "config/setup") CONFIG_FILES="$CONFIG_FILES config/setup" ;;
     "config/Makefile") CONFIG_FILES="$CONFIG_FILES config/Makefile" ;;
     "config/report") CONFIG_FILES="$CONFIG_FILES config/report" ;;
@@ -14050,8 +14062,8 @@ do
     "sbin/make_makefile.sh") CONFIG_FILES="$CONFIG_FILES sbin/make_makefile.sh" ;;
     "sbin/objects_store.sh") CONFIG_FILES="$CONFIG_FILES sbin/objects_store.sh" ;;
     "sbin/generate_gpl.sh") CONFIG_FILES="$CONFIG_FILES sbin/generate_gpl.sh" ;;
-    "driver/codever.h") CONFIG_FILES="$CONFIG_FILES driver/codever.h" ;;
-    "driver/editor.h") CONFIG_FILES="$CONFIG_FILES driver/editor.h" ;;
+    "include/headers/codever.h") CONFIG_FILES="$CONFIG_FILES include/headers/codever.h" ;;
+    "include/headers/editor.h") CONFIG_FILES="$CONFIG_FILES include/headers/editor.h" ;;
     "src/external_c/.objects") CONFIG_FILES="$CONFIG_FILES src/external_c/.objects" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

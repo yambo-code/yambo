@@ -55,11 +55,13 @@ topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
+HEADERS  = include/headers/load_environments.h
+STAMPS   = lib/archive/keep-extlibs-stamp
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_store.sh driver/editor.h lib/archive/keep-extlibs-stamp \
-           include/c_defs.h sbin/generate_gpl.sh
+           sbin/objects_store.sh include/headers/editor.h \
+           include/headers/c_defs.h sbin/generate_gpl.sh
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
@@ -85,9 +87,9 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser communicate common io \
+BASIC_LIBS   = driver external_c modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft 
-BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser communicate common io \
+BASIC_LIBS_LD= driver external_c memory modules matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft 
 
 MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup \
@@ -117,13 +119,13 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS       = driver external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = driver external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
-YPP_BASIC_LIBS     = modules interface qp plotting electrons 
-YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
+YPP_BASIC_LIBS     = driver modules interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = driver modules interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 
@@ -318,12 +320,14 @@ clean_fast:
 	@$(xclean)
 clean:
 	@$(objects_clean)
+	@$(makefiles_clean)
 	@$(lib_mod_clean)
 	@$(sysincs_clean)
 	@$(conf_clean)
 	@$(xclean)
 clean_all:
 	@$(objects_clean)
+	@$(makefiles_clean)
 	@$(lib_mod_clean)
 	@$(lib_ext_clean)
 	@$(sysincs_clean)
@@ -464,25 +468,32 @@ endef
 #
 # CLEANING
 #
-define objects_clean
- find . \( -name '*.o' -o -name 'Makefile' -o -name '*.f90' \
-        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' -o -name '*make.dep' \) \
-        -type f -print | grep -v '\.\/Makefile' | \
-        grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
-        grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
+define makefiles_clean
+ find . \( -name 'Makefile' -o -name '*make.dep' \) -type f -print | grep -v '\.\/Makefile' | \
+        grep -v '.*iotk.*\/Makefile' |  \
+        grep -v '.*etsf_io.*\/Makefile' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
-        grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*blacs*' |  \
+        grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | xargs rm -f
+ echo "[CLEAN] Makefiles ... done"
+endef
+define objects_clean
+ find . \( -name '*.o' -o -name '*.f90' \
+        -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
+        -type f -print | \
+        grep -v '.*iotk.*\/*f90' | \
+        grep -v '.*etsf_io.*\/*f90' | \
+        grep -v '.*lapack*' | grep -v '.*blacs*' |  \
         grep -v '.*scalapack*' | grep -v '.*/lib/slepc*' | \
         grep -v '.*/lib/petsc*'  | xargs rm -f
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
- echo "[CLEAN] Makefiles ... done"
  if test "$(keep_objs)" = yes ; then \
  find . -name '.objects__lock*' | xargs rm -fr ; \
  echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
 define lib_ext_clean
+ rm -f $(STAMPS)
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
@@ -504,6 +515,7 @@ define lib_ext_clean
  fi
 endef
 define sysincs_clean
+ rm -f $(HEADERS)
  @if test -d $(prefix)/include/system/; then \
    rm -rf $(prefix)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \

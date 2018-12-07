@@ -22,7 +22,9 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- INCLUDES
+ INCLUDES...
+
+ ...SYSTEM
 */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -34,22 +36,19 @@
 #if defined _MPI 
  #include <mpi.h>
 #endif
+/*
+ ...definitions
+*/
 #include <editor.h>
 #include <codever.h>
+/*
+ ...Subroutines/functions
+*/
+#include <driver_libs.h>
 /* 
  Command line options structure
 */
-typedef struct 
-{
-        char *ln;
-        char *sn;
-        char *d;
-        int   ni;
-        int   nr;
-        int   nc;
-        int   st;
-        int   mp;
-} Ldes;
+#include <options_kind.h>
 /* 
  Yambo/Ypp driver flag
 */
@@ -83,13 +82,6 @@ typedef struct
 #if defined _e2y
  #include "e2y.h"
 #endif
-/* 
- Declarations 
-*/
-static void usage(int verbose);
-static void title(FILE *file_name,char *cmnt);
-/*
-*/
 /* 
  F90 wrapper
 */
@@ -158,15 +150,18 @@ int main(int argc, char *argv[])
      nf=opts[j].ni+opts[j].nr+opts[j].nc;
      if (optind+nf>argc) {break;};
 #else
-     if (c=='?') {usage(1);exit(0);};
+     if (c=='?') {
+      usage(opts,1,tool,codever,tool_desc);
+      exit(0);
+     };
 #endif
  /*
    Upper Case actions
    
    Help...
  */
-     if (strcmp(opts[j].ln,"help")==0) {usage(1);exit(0);};
-     if (strcmp(opts[j].ln,"lhelp")==0) {usage(2);exit(0);};
+     if (strcmp(opts[j].ln,"help")==0) {usage(opts,1,tool,codever,tool_desc);exit(0);};
+     if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,tool,codever,tool_desc);exit(0);};
 /* 
  ...switch off MPI_init for non-parallel options ...
 */
@@ -187,7 +182,7 @@ int main(int argc, char *argv[])
      lnc=0;
      nf=opts[j].ni+opts[j].nr+opts[j].nc;
      if (optind+nf>argc) {
-       fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
+       fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(opts,1,tool,codever,tool_desc);exit(0);
      };
      for(i=1;i<=nf;i++) {
        k=0;
@@ -195,7 +190,7 @@ int main(int argc, char *argv[])
 #if defined _NO_OPTIONS_CHECK 
          break;
 #else
-         fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(1);exit(0);
+         fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(opts,1,tool,codever,tool_desc);exit(0);
 #endif
        };
        if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
@@ -209,7 +204,7 @@ int main(int argc, char *argv[])
        free(env_file);
        env_file = malloc(strlen(cv[1])+1);
        strcpy(env_file,cv[1]);
-       load_environments(env_file);
+       load_environments(env_file,editor);
      };
  /* 
    Input File, i/o directory 
@@ -383,86 +378,4 @@ int main(int argc, char *argv[])
 #endif 
  exit(0);
 }
-static void usage(int verbose)
-{
- int i,j,nr=0;
- while(opts[nr].ln!=NULL) {nr++;};
- if (verbose==1) {
-#if defined _MPI
-  char* MPI_string="MPI";
-#else
-  char* MPI_string="Serial";
-#endif
-#if defined _OPENMP
-  char* OMP_string="+OpenMP";
-#else
-  char* OMP_string="";
-#endif
-#if defined _CUDA
-  char* CUDA_string="+CUDA";
-#else
-  char* CUDA_string="";
-#endif
-#if defined _SCALAPACK
-  char* SLK_string="+SLK";
-#else
-  char* SLK_string="";
-#endif
-#if defined _SLEPC
-  char* SLEPC_string="+SLEPC";
-#else
-  char* SLEPC_string="";
-#endif
-#if defined _PAR_IO
-  char* HDF5_string="+HDF5_MPI_IO";
-#elif defined _HDF5_IO
-  char* HDF5_string="+HDF5_IO";
-#elif defined _HDF5_LIB
-  char* HDF5_string="+HDF5_LIB";
-#else
-  char* HDF5_string="";
-#endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
-  fprintf(stderr,"Usage: %s",tool); 
-  for(j=0;j<=nr-1;j++)
-  {if (strcmp(opts[j].ln,"DESC")!=0) 
-   {fprintf(stderr," -%s",opts[j].sn);
-   for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
-   for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-   for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
-   };
-  };
-  fprintf(stderr,"\n%s%s%s\n","Try `",tool," -H' for more information");exit(0);
- };
- if (verbose==2) {title(stderr,"");
- for(j=0;j<=nr-1;j++)
-  {if (strcmp(opts[j].ln,"DESC")==0) 
-   {
-    fprintf(stderr,"\t\t %s\n",opts[j].d);
-   }
-   else
-   {
-    fprintf(stderr," -%s",opts[j].sn);
-    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
-    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
-    if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
-    fprintf(stderr,"\t:%s\n",opts[j].d);
-   };
-  };
-  fprintf(stderr,"\n");
-  fprintf(stderr,"%s\n\n"," YAMBO developers group (http://www.yambo-code.org)");
- };
-};
-static void title(FILE *file_name,char *cmnt)
-{
- fprintf(file_name,"%s%s\n",cmnt,  " ___ __  _____  __ __  _____   _____ ");
- fprintf(file_name,"%s%s\n",cmnt,  "|   Y  ||  _  ||  Y  ||  _  \\ |  _  |");
- fprintf(file_name,"%s%s\n",cmnt,  "|   |  ||. |  ||.    ||. |  / |. |  |");
- fprintf(file_name,"%s%s\n",cmnt,  " \\   _/ |. _  ||.\\ / ||. _  \\ |. |  |");
- fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
- fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
- fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
- fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,tool,codever);
- fprintf(file_name,"%s %s \n\n",cmnt,tdesc);
-};
+

@@ -22,5 +22,17 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-static void load_environments(char *file_name);
+#include <stdio.h>
 
+void title(FILE *file_name,char *cmnt, char *tool, char *codever, char *tool_desc)
+{
+ fprintf(file_name,"%s%s\n",cmnt,  " ___ __  _____  __ __  _____   _____ ");
+ fprintf(file_name,"%s%s\n",cmnt,  "|   Y  ||  _  ||  Y  ||  _  \\ |  _  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "|   |  ||. |  ||.    ||. |  / |. |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  " \\   _/ |. _  ||.\\ / ||. _  \\ |. |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
+ fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
+ fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,tool,codever);
+ fprintf(file_name,"%s %s \n\n",cmnt,tool_desc);
+};

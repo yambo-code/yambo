@@ -46,4 +46,4 @@
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="c2y";
- char *tdesc="C(pmd) 2 Y(ambo) interface";
+ char *tool_desc="C(pmd) 2 Y(ambo) interface";

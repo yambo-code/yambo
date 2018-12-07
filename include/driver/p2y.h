@@ -25,9 +25,9 @@
  Driver declaration
 */
 #if defined _FORTRAN_US
- int a2y_i_
+ int p2y_i_
 #else
- int a2y_i
+ int p2y_i
 #endif
  (int *, int *,int *,int *,int *,int *,int *,int *,
   char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
@@ -37,14 +37,14 @@
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
-  {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,0},
+  {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,1}, 
   {"fragnb","b","Number of bands for each fragment",1,0,0,0,1},
-  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,0},
-  {"dupl",  "d","States duplication (artificial spin polarization)",0,0,0,0,0},
-  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,0},
-  {"nosy",  "n","Force no symmetries",0,0,0,0,0},
-  {"nowf",  "w","Force no wavefunctions",0,0,0,0,0},
+  {"alat_f","a","Lattice constants rescaling factor",0,1,0,0,1},
+  {"notr",  "t","Force use of spatial Inv. instead of Time Rev.",0,0,0,0,1},
+  {"nosy",  "n","Force no symmetries",0,0,0,0,1},
+  {"nowf",  "w","Force no wavefunctions",0,0,0,0,1},
+  {"verb",  "v","Verbose wfc I/O reporting",0,0,0,0,1}, 
   {NULL,NULL,NULL,0,0,0,0,0}
  };
- char *tool="a2y";
- char *tool_desc="A(binit) 2 Y(ambo) interface";
+ char *tool="p2y";
+ char *tool_desc="P(Wscf) 2 Y(ambo) interface";

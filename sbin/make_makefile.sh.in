@@ -154,8 +154,9 @@ define driver
                     \$(includedir)/driver/yambo.h > \$(includedir)/driver/yambo_cpp.h; fi
  ${PREFIX}if test -f \$(includedir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(includedir)/driver/ypp.h > \$(includedir)/driver/ypp_cpp.h; fi
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -I\$(includedir)/headers -I\$(includedir)/driver -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
- ${PREFIX}(rm -f \$(includedir)/driver/yambo_cpp.h \$(includedir)/driver/ypp_cpp.h)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -I\$(includedir)/headers -I\$(includedir)/driver -L\$(libdir) -ldriver \
+                  -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
+ #${PREFIX}(rm -f \$(includedir)/driver/yambo_cpp.h \$(includedir)/driver/ypp_cpp.h)
  @echo
 endef
 define link

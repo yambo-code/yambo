@@ -22,15 +22,11 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <editor.h>
 
-static void load_environments(char *file_name)
+void load_environments(char *file_name, char *editor)
 {
  FILE *fp;
  char edit_line[100]={'\0'},str[100];

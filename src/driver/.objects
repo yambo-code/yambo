@@ -1,1 +1,2 @@
-objs =  load_environments.o
+objs = driver_libs.o load_environments.o title.o usage.o
+

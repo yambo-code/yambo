@@ -81,4 +81,4 @@
   {NULL,NULL,NULL,0,0,0,0,0}
  };
  char *tool="ypp";
- char *tdesc="Y(ambo) P(ost) P(rocessor)";
+ char *tool_desc="Y(ambo) P(ost) P(rocessor)";

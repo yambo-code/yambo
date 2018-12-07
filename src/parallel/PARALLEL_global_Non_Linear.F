@@ -37,7 +37,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_G_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_WF_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_DIPk_bz_INDEX
  ! IND
- use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLP_ibz,PAR_IND_OVLP_ibz,PAR_IND_Xk_ibz, &
+ use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
 &                        PAR_IND_G_b,PAR_IND_WF_b,PAR_IND_B_mat_ordered,PAR_IND_QP,PAR_IND_B_mat, &
 &                        PAR_IND_DIPk_ibz,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz,PAR_IND_DIPk_bz
  ! INDEX
@@ -116,7 +116,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    ! Overlap indeces for WF distribution
    !
-   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLP_ibz)
+   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz)
    !
    call PARALLEL_live_message("H(ibz)",ENVIRONMENT=ENVIRONMENT,&
 &           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=Xk%nibz,&

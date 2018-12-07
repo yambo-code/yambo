@@ -208,12 +208,13 @@ module parallel_m
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
- type(PP_indexes),SAVE :: PAR_IND_OVLPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
  !
  ! ... Overlaps
- type(PP_indexes),SAVE :: PAR_IND_OVLP_ibz
+ type(PP_indexes),SAVE :: PAR_IND_OVLPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_OVLP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_OVLP
  !
  ! ... linear response & BSK
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
@@ -275,9 +276,13 @@ module parallel_m
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
  integer            :: PAR_IND_DIPk_ibz_ID
- integer            :: PAR_IND_OVLPk_ibz_ID
  integer            :: PAR_IND_VAL_BANDS_DIP_ID
  integer            :: PAR_IND_CON_BANDS_DIP_ID
+ !
+ ! ... Overlaps
+ integer            :: PAR_IND_OVLPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_OVLP_ID
+ integer            :: PAR_IND_CON_BANDS_OVLP_ID
  !
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
@@ -349,6 +354,10 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
  type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ !
+ ! ... Overlaps
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
  !
  ! ... linear response & BSK
  type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)

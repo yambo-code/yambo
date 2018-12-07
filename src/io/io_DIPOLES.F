@@ -113,6 +113,10 @@ integer function io_DIPOLES(Dip,ID)
  P2_ipos(2:3)=DIP_ipos(3:4)
 #endif
  !
+#if defined _SC  || defined _RT
+ l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+#endif
+ !
  if (read_is_on(ID)) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))

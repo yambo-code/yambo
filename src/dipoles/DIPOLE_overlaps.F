@@ -112,7 +112,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
        !
        do i_sp_pol=1,n_sp_pol
          !
-         do ib=1,Dip%ib_lim(1)
+         do ib=1,Dip%ib(2)
            if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
            do ibp=1,Dip%ib(2)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle

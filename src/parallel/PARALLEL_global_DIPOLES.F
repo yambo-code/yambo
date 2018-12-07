@@ -144,13 +144,13 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
      ! Overlaps valence bands
      !
      call COMM_copy(PAR_COM_VAL_INDEX_DIP,PAR_COM_VAL_INDEX_OVLP)
-     call PARALLEL_index(PAR_IND_VAL_BANDS_OVLP,(/PAR_n_v_bands(2)/),&
+     call PARALLEL_index(PAR_IND_VAL_BANDS_OVLP,(/PAR_n_c_bands(2)/),&
 &                        COMM=PAR_COM_VAL_INDEX_OVLP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
      PAR_IND_VAL_BANDS_OVLP_ID=PAR_COM_VAL_INDEX_OVLP%CPU_id
      !
      call PARALLEL_live_message("VAL bands (OVLP)",ENVIRONMENT=ENVIRONMENT,&
 &                               LOADED=PAR_IND_VAL_BANDS_OVLP%n_of_elements(PAR_COM_VAL_INDEX_OVLP%CPU_id+1),&
-&                               TOTAL=PAR_n_v_bands(2),&
+&                               TOTAL=PAR_n_c_bands(2),&
 &                               NCPU=PAR_COM_VAL_INDEX_OVLP%n_CPU)
      !
    endif

@@ -28,7 +28,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
- use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square,DIP_S,use_covariant_approach
+ use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square,use_covariant_approach
  use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD
  use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme
  !

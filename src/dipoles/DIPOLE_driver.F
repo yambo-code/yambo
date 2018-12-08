@@ -291,13 +291,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     integer  :: ic,iv,i_sp_pol,ik,ik_mem
     !
-    do ik=1,Xk%nibz
-      !
-      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-      !
-      ik_mem=PAR_DIPk_ibz_index(ik)
-      ! 
-      do i_sp_pol=1,n_sp_pol
+    do i_sp_pol=1,n_sp_pol
+      do ik=1,Xk%nibz
+        !
+        if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+        !
+        ik_mem=PAR_DIPk_ibz_index(ik)
         !
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
@@ -326,13 +325,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         ! GPL_EXCLUDE_END 
         !
-      enddo
-      !
-      ! Symmetrization 
-      !================
-      ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
-      !
-      do i_sp_pol=1,n_sp_pol
+        !
+        ! Symmetrization 
+        !================
+        ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
+        !
         do iv=Dip%ib(1),Dip%ib_lim(1)
           if(iv>=Dip%ib_lim(2)) then
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
@@ -380,8 +377,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             endif
           enddo
         enddo
+        !
       enddo
-      !
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize

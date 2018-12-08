@@ -38,7 +38,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
- use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
+ use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
@@ -214,7 +214,10 @@ subroutine NL_driver(E,X,k,q,Dip)
      ! I evaluate current after the Hamiltonian because I need
      ! time-dependent overlaps Sm1_plus, and Sm1_mins
      !
-     if(l_eval_CURRENT) call NL_current(k,E,V_bands)
+     if(l_eval_CURRENT) then
+       call NL_current(k,E,V_bands,NL_J)
+       NL_J=NL_J-NL_initial_J
+     endif
      !
      ! Store Variables
      !

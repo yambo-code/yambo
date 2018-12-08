@@ -65,7 +65,6 @@ subroutine NL_current(k,E,V_input)
  else
    !
    call NL_Berry_current(E,k,k_map,V_input,NL_J(1:3))
-   NL_J(1:3)=NL_J(4:6)
    !
  endif
  !

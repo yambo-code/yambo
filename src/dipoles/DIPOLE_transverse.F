@@ -26,7 +26,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  ! This routine returns <iR> and <P^2>.
  !
  use pars,                ONLY:SP,schlen,cZERO,cI
- use drivers,             ONLY:l_sc_run
+ use drivers,             ONLY:l_sc_run,l_nl_optics
 #if defined _PL
  use drivers,             ONLY:l_photolum
 #endif
@@ -102,6 +102,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #endif
 #if defined _RT
  l_eval_DIP_P2=l_real_time
+#endif
+#if defined _NL
+ if(l_nl_optics) then
+   l_eval_DIP_iR=.true.
+   l_eval_DIP_P =.true.
+ endif
 #endif
  !
  ! GPL_EXCLUDE_END

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
+subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
@@ -33,24 +33,28 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
  use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,PAR_build_index,PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_DIPk_ibz_A2A,PAR_COM_DIPk_ibz_INDEX, &
-&                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP
+&                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP, &
+&                        PAR_COM_CON_INDEX_OVLP,PAR_COM_VAL_INDEX_OVLP
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,&
-&                        PAR_IND_VAL_BANDS_DIP,PAR_IND_DIPk_bz
+ use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_OVLPk_ibz,&
+&                        PAR_IND_VAL_BANDS_DIP,PAR_IND_DIPk_bz,&
+&                        PAR_IND_VAL_BANDS_OVLP,PAR_IND_CON_BANDS_OVLP
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_DIPk_bz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_DIPk_nbz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,&
-&                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
+ use parallel_m,    ONLY:PAR_IND_DIPk_bz_ID,PAR_IND_DIPk_ibz_ID,PAR_IND_OVLPk_ibz_ID,&
+&                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
+&                        PAR_IND_CON_BANDS_OVLP_ID,PAR_IND_VAL_BANDS_OVLP_ID
+ use DIPOLES,       ONLY:eval_OVERLAPS
+ use parallel_m,    ONLY:PAR_Q_range,PAR_IND_Q
  !
  implicit none
  !
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
  character(*)         :: ENVIRONMENT
- integer              :: X_type
  !
  ! Work space
  !
@@ -77,6 +81,11 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
    call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
+   if(eval_OVERLAPS) then
+     call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
+&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+   endif
+   
    !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
@@ -117,6 +126,34 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT,X_type)
 &                             LOADED=PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_COM_VAL_INDEX_DIP%CPU_id+1),&
 &                             TOTAL=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1,&
 &                             NCPU=PAR_COM_VAL_INDEX_DIP%n_CPU)
+   !
+   if(eval_OVERLAPS) then
+     !
+     ! Overlaps conduction bands
+     !
+     call COMM_copy(PAR_COM_CON_INDEX_DIP,PAR_COM_CON_INDEX_OVLP)
+     call PARALLEL_index(PAR_IND_CON_BANDS_OVLP,(/PAR_n_c_bands(2)/),&
+&                        COMM=PAR_COM_CON_INDEX_OVLP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+     PAR_IND_CON_BANDS_OVLP_ID=PAR_COM_CON_INDEX_OVLP%CPU_id
+     !
+     call PARALLEL_live_message("CON bands (OVLP)",ENVIRONMENT=ENVIRONMENT,&
+&                               LOADED=PAR_IND_CON_BANDS_OVLP%n_of_elements(PAR_COM_CON_INDEX_OVLP%CPU_id+1),&
+&                               TOTAL=PAR_n_c_bands(2),&
+&                               NCPU=PAR_COM_CON_INDEX_OVLP%n_CPU)
+     !
+     ! Overlaps valence bands
+     !
+     call COMM_copy(PAR_COM_VAL_INDEX_DIP,PAR_COM_VAL_INDEX_OVLP)
+     call PARALLEL_index(PAR_IND_VAL_BANDS_OVLP,(/PAR_n_c_bands(2)/),&
+&                        COMM=PAR_COM_VAL_INDEX_OVLP,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+     PAR_IND_VAL_BANDS_OVLP_ID=PAR_COM_VAL_INDEX_OVLP%CPU_id
+     !
+     call PARALLEL_live_message("VAL bands (OVLP)",ENVIRONMENT=ENVIRONMENT,&
+&                               LOADED=PAR_IND_VAL_BANDS_OVLP%n_of_elements(PAR_COM_VAL_INDEX_OVLP%CPU_id+1),&
+&                               TOTAL=PAR_n_c_bands(2),&
+&                               NCPU=PAR_COM_VAL_INDEX_OVLP%n_CPU)
+     !
+   endif
    !
  endif
  !

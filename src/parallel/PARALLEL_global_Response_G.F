@@ -38,7 +38,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 &                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_Xk_bz_A2A, &
 &                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q,PAR_IND_OVLP_ibz
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
  ! INDEX
  use parallel_m,    ONLY:PAR_Xk_bz_index,PAR_Xk_ibz_index,PAR_Q_index
  ! DIMENSIONS

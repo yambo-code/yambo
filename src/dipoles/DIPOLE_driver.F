@@ -50,7 +50,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S
+&                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
@@ -63,6 +63,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,      ONLY:n_spinor
+#endif
+#if defined _NL
+ use nl_optics,      ONLY:l_use_DIPOLES
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,        ONLY:P_square
@@ -101,6 +104,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif
  !
+#if defined _NL
+ if (l_nl_optics) then
+   call parser('UseDipoles',l_use_DIPOLES)
+   if(.not.l_use_DIPOLES) then
+     Dip%approach="Covariant"
+     Dip%ib(1)   =1
+   endif
+ endif
+#endif
+ !
  ! Setup logicals 
  !================
  !
@@ -132,6 +145,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
  if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
 #endif
+ !
+ if(use_covariant_approach)  eval_OVERLAPS=.true.
  !
  ! Dipole dimensions to be fixed
  !
@@ -273,13 +288,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     integer  :: ic,iv,i_sp_pol,ik,ik_mem
     !
-    do ik=1,Xk%nibz
-      !
-      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
-      !
-      ik_mem=PAR_DIPk_ibz_index(ik)
-      ! 
-      do i_sp_pol=1,n_sp_pol
+    do i_sp_pol=1,n_sp_pol
+      do ik=1,Xk%nibz
+        !
+        if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+        !
+        ik_mem=PAR_DIPk_ibz_index(ik)
         !
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
@@ -309,13 +323,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         ! GPL_EXCLUDE_END 
         !
-      enddo
-      !
-      ! Symmetrization 
-      !================
-      ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
-      !
-      do i_sp_pol=1,n_sp_pol
+        !
+        ! Symmetrization 
+        !================
+        ! Impose P(/iR) to be Hermitian (/anti-Hermitian)
+        !
         do iv=Dip%ib(1),Dip%ib_lim(1)
           if(iv>=Dip%ib_lim(2)) then
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
@@ -365,8 +377,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             endif
           enddo
         enddo
+        !
       enddo
-      !
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize

@@ -560,7 +560,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
  if (l_nl_optics) then
    call CPU_activate("NL")
-   call initactivate(1,'NL_Threads')
+   call CPU_activate("DIP")
+   call initactivate(1,'DIP_Threads NL_Threads')
  endif
 #endif
  !

@@ -32,7 +32,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
- !use parallel_m,        ONLY:PAR_COM_DIPOLES,PP_redux_wait,PAR_IND_Xk_bz,PAR_IND_Xk_bz_ID
+ use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
+&                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
  !
  implicit none
  !
@@ -57,12 +58,12 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  DIP_S=cZERO
  !
- call live_timing("Overlaps:",Xk%nbz)
- !call live_timing("Overlaps:",PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1))
+ call live_timing("Overlaps:",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
+ do i_sp_pol=1,n_sp_pol
  do ikbz=1,Xk%nbz
    !
-   !if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+   if(.not.PAR_IND_DIPk_bz%element_1D(ikbz)) cycle
    !
    idx_k=k_map%k_map_inv(ikbz,:)
    !
@@ -110,27 +111,33 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          WF_shifted=WF_ikp
        endif
        !
-       do i_sp_pol=1,n_sp_pol
          !
          do ib=1,Dip%ib(2)
+           if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
            do ibp=1,Dip%ib(2)
+             if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
                        &  Vstar_dot_V_omp(wf_ng*n_spinor,WF_ik(:wf_ng,:,ib,i_sp_pol),WF_shifted(:wf_ng,:,ibp,i_sp_pol)) 
            enddo ! ibp
          enddo ! ib
-       enddo ! i_sp_pol
        !
      enddo ! istep
    enddo ! idir
    !
+   call PP_redux_wait(DIP_S(:,:,:,ikbz,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+   !
    call live_timing(steps=1)
    !
  enddo ! ikbz
+   !
+   ! I need to distributed overlaps among all processors because
+   ! the construction of covariant dipoles require the first and second 
+   ! neighboar of each k-point
+   !
+   call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+   !
+ enddo ! i_sp_pol
  !
  call live_timing()
- !
- !do i_sp_pol=1,n_sp_pol
- !  call PP_redux_wait(DIP_S(:,:,:,:,i_sp_pol),COMM=PAR_COM_DIPOLES%COMM)
- !enddo
  !
 end subroutine Dipole_Overlaps

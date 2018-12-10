@@ -30,7 +30,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,use_covariant_approach,DIP_S
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
@@ -41,7 +41,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
-&                         HF,SEX,NL_bands,eval_OVERLAPS,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
+&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -65,7 +65,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
- ! In Non-Linear NL_bands always equal to SC_bands
+ ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
  !
  NL_nbands=NL_bands(2)-NL_bands(1)+1
@@ -98,17 +98,18 @@ subroutine NL_driver(E,X,k,q,Dip)
  !================
  call H_QP_table_setup(E)
  !
- ! Dipoles
- !=========
+ ! Non_Linear parallization
+ ! ===================================
+ call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
+ call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
+ call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_index( )
  !
- ! before loading the WF in R-space I check and/or calculate
- ! the optical collisions that are done in G-space and would
- ! force the reloading of the WFs
- !
- !if(l_use_DIPOLES.or.l_eval_current) then
+ !Load Dipole after the NL parallelization
+ ! ========================================
  call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
- !endif
+ if(io_err/=0) call error("Error in DIPOLES! ")
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
@@ -123,12 +124,6 @@ subroutine NL_driver(E,X,k,q,Dip)
      call DIP_alloc('DIP_P')
    endif
  endif
- !
- ! Non_Linear parallization
- ! ===================================
- call setup_NL_parallelization()
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_index( )
  !
  ! WFs loading
  !=============
@@ -260,20 +255,4 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  call set_real_printed_length()
  !
- contains
-   !
-   subroutine setup_NL_parallelization
-     use nl_optics,        ONLY:eval_OVERLAPS
-     implicit none
-     !
-     ! Restore original number of bands
-     !
-     Dip%ib       =(/NL_bands(1),NL_bands(2)/)
-     eval_OVERLAPS=.false.
-     !
-     call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.,Dip=Dip,X=X(1))
-     call PARALLEL_global_indexes(E,k,q,"Non_Linear",Dip=Dip,X=X(1))
-     !
-   end subroutine setup_NL_parallelization
-   !
 end subroutine NL_driver

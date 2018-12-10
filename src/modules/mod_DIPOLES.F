@@ -39,6 +39,7 @@ module DIPOLES
  ! other
  !
  integer                  :: num_shifted_grids
+ logical                  :: eval_OVERLAPS
  !
  ! Allocs
  !

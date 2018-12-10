@@ -39,7 +39,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                         PAR_DIPk_nbz,PP_redux_wait,PAR_IND_OVLPk_ibz,&
 &                         PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,&
-&                         PAR_COM_DIPk_ibz_INDEX
+&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP,&
+&                         PAR_COM_DIPk_ibz_INDEX,PAR_COM_NULL
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -55,13 +56,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  logical     :: idir_not_done(3)
  logical     :: l_eval_polarization,l_force_SndOrd
- integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
+ integer     :: ik,iv,ic,ic_min,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec
  complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
  complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
  complex(SP) :: S_det(6)
- complex(SP) :: Wop(1:Dip%ib(2),1:Dip%ib(2),2),DIP_tmp(6,1:Dip%ib(2),1:Dip%ib(2))
+ complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  integer           :: ID
@@ -85,7 +86,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
 &                              Bp_index=PAR_IND_VAL_BANDS_OVLP,&
 &                              CLEAN_UP=.TRUE.)
  !
- call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
+ call PARALLEL_WF_index(COMM=PAR_COM_NULL)
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
 &               keep_states_to_load=.TRUE.)
@@ -146,10 +147,18 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          Wop(:,:,istep)=cZERO
          !
-         forall(i1=Xen%nbm+1:Dip%ib(2),i2=1:Xen%nbf) 
-           Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
-&                           sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
-         end forall
+         do iv=Dip%ib(1),Dip%ib_lim(1)
+           if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+           ic_min=max(iv,Dip%ib_lim(2))
+           !if (l_X_terminator) ic_min=iv
+           do ic=ic_min,Dip%ib(2)
+             if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
+             !
+             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,iv,id_red + (istep-1)*3))- &
+&                             sum(S_tmp(ic,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,iv,id_red + (istep-1)*3))
+             !
+           enddo
+         enddo
          !
          Wop(:,:,istep)=Wop(:,:,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
          !

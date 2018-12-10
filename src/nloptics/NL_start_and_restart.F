@@ -49,7 +49,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:master_cpu
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,Alpha_ED,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
-&                         VAL_BANDS,NL_J,l_eval_CURRENT
+&                         VAL_BANDS,l_eval_CURRENT,NL_initial_J
  use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
@@ -147,18 +147,15 @@ subroutine NL_start_and_restart(E,k,Dip)
    !
  endif
  !
- if(l_eval_CURRENT) then
-   call NL_average_operator(V_VALUE=NL_J(4:6),V_MATRIX=-DIP_P,V_bands=V_bands,k=k,en=E,TRANS=.TRUE.,nK_mem=k%nibz)
-   call NL_Berry_current(E,k,k_map,V_bands,NL_J(1:3))
- endif
+ if(l_eval_CURRENT) call NL_current(k,E,V_bands,NL_initial_J)
  !
  call msg('r','')
  call msg('r',' * * * Non-linear dynamics parameters * * * ')
  call msg('r','============================================')
  call msg('r ',' Initial Polarization      :',real(NL_initial_P))
  if(l_eval_CURRENT) then
-   call msg('r ',' Initial Current         :',real(NL_J(1:3)))
-   call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_J(4:6)))
+   call msg('r ',' Initial Current         :',real(NL_initial_J(1:3)))
+   call msg('r ',' Initial <v>=<[Hloc,r]>  :',real(NL_initial_J(4:6)))
  endif
  !
  ! Restart

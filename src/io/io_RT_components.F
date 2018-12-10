@@ -36,15 +36,16 @@ integer function io_RT_components(what,ID)
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
 &                         manage_OP_IF_START_and_CL_IF_END,frag_RT
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
-&                         dG_lesser,RT_carriers,RT_obj_alloc,&
+&                         dG_lesser,RT_carriers,RT_obj_alloc,l_RT_rotate_DM,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
 &                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,RT_all2ibz
  use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
 &                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
+ use hamiltonian,    ONLY:H_rotation
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,write_is_on
+ use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
 #endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -314,9 +315,15 @@ integer function io_RT_components(what,ID)
      !
      ch="dG_lesser_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
      call def_variable_bulk(ID,trim(ch),i_memory,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
-     call  io_variable_bulk(ID,i_memory,C3=dG_lesser(:,:,k_range(1):k_range(2),i_memory)   ,IPOS=(/1,1,1,k_range(1)/))
+     call  io_variable_bulk(ID,i_memory,C3=dG_lesser(:,:,k_range(1):k_range(2),i_memory),IPOS=(/1,1,1,k_range(1)/))
      !
    enddo
+   !
+   ch="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+   if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+     call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
+     call  io_variable_bulk(ID,G_MEM_steps+1,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=(/1,1,1,k_range(1)/))
+   endif
    !
 #else
    !

@@ -623,7 +623,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
    !
-   call X_activate('Xd',(/'NGsBlk','QpntsR','BndsRn',&
+   if (.not.l_rpa_IP) call X_activate('Xd',(/'NGsBlk'/))
+   !
+   call X_activate('Xd',(/'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    call initactivate(1,'DrClassic')
@@ -1564,7 +1566,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            Chi_mode='HARTREE'
            !
            if(l_bse)  then
-             if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='Hartree'
+             if(trim(rstr_piece(i1+1))  == 'hartree')  BSK_mode='HARTREE'
              if(trim(rstr_piece(i1+1))  == 'hf')       BSK_mode='HF'
              if( trim(rstr_piece(i1+1)) == 'alda')     BSK_mode='ALDA'
              if(trim(rstr_piece(i1+1))  == 'sex')      BSK_mode='SEX'

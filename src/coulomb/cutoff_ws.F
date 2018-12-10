@@ -56,7 +56,7 @@ subroutine cutoff_ws(q)
    if(abs(q%pt(iq,2))/=0..and.(abs(q%pt(iq,2))<rdum(2))) rdum(2)=q%pt(iq,2)
    if(abs(q%pt(iq,3))/=0..and.(abs(q%pt(iq,3))<rdum(3))) rdum(3)=q%pt(iq,3)
  enddo
- nq=nint(1./rdum)
+ nq=abs(nint(1./rdum))
  do i1=1,3
    if (nq(i1)==0) nq(i1)=1
  enddo

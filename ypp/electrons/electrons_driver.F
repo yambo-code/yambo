@@ -91,7 +91,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  ! DOS 
  !=====
- if (l_dos)     call electrons_dos(Xk,Xen,"NORMAL")
+ if (l_dos)     call electrons_dos(Xk,Xen)
  !
  ! DENSITY
  !=========
@@ -126,9 +126,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
 #endif
  !
+ ! GPL_EXCLUDE_END
+ !
  ! CURRENT
  !=========
- if (l_current) call electrons_current(Xk,Xen,Xq)
+ if (l_current) call electrons_current(Xk,Xen)
  !
  ! Clean-up
  !==========

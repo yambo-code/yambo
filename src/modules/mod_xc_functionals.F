@@ -29,11 +29,17 @@ module xc_functionals
  use xc_f90_lib_m
  use xc_f90_types_m
  use libxc_funcs_m
+ !
  implicit none
  !
- integer     , public :: GS_xc_KIND
- integer     , public :: GS_xc_FUNCTIONAL
- real(SP), public :: GS_exx_FRACTION, GS_exx_SCREENING
+ integer  :: xc_spin(2)
+ integer, allocatable :: xc_spin_map1(:,:)
+ integer, allocatable :: xc_spin_map2(:,:,:)
+ !
+ integer,  public:: GS_xc_KIND
+ integer,  public:: GS_xc_FUNCTIONAL
+ real(SP), public:: GS_exx_FRACTION, GS_exx_SCREENING
+ real(SP), public:: E_xc_val=0.0
  real(SP), public, allocatable:: magn(:,:)
  real(SP), public, allocatable:: F_xc(:,:,:)
  real(SP), public, allocatable:: V_xc(:,:)

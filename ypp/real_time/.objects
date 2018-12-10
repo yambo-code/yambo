@@ -1,10 +1,13 @@
 #if defined _YPP_RT
 RT_objects = RT_driver.o \
-             RT_IO_J_and_P_paths.o RT_IO_J_and_P.o RT_transient_absorption.o \
+             RT_OBSERVABLES_IO_path.o RT_OBSERVABLES_IO.o RT_transient_absorption.o \
              RT_X_LRR_real_field.o RT_X_response.o RT_manual_excitation.o RT_DBs_carriers_setup.o \
-             RT_dump_and_write_JP.o RT_1D_Fourier_Transform.o \
+             RT_OBSERVABLES_damp_and_write.o RT_1D_Fourier_setup.o RT_1D_Fourier_Transform.o \
              RT_occupations_driver.o RT_components_energy_plot.o RT_occ_time_plot.o RT_density.o \
-             RT_occ_2D_dos_plot.o RT_occ_bands_kpts_and_En_map.o RT_occ_bands_interpolation.o \
-             RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o
+             RT_dos_time_plot.o RT_occ_bands_interpolation.o \
+             RT_write_descriptions.o RT_time_configuration_setup.o RT_damp_it.o RT_Fermi_excitation.o
 #endif
-objs = $(RT_objects)
+#if defined _YPP_NL
+NL_objects = NL_driver.o RT_coefficients_Inversion.o NL_exc_driver.o
+#endif
+objs = $(RT_objects) $(NL_objects)

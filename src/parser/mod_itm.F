@@ -52,6 +52,7 @@ module it_m
  integer, parameter :: V_resp=7
  integer, parameter :: V_real_time=8
  integer, parameter :: V_parallel=9
+ integer, parameter :: V_nl_optics=10
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=50
@@ -59,7 +60,7 @@ module it_m
  integer, parameter :: maxi1vars=100
  integer, parameter :: maxi2vars=50
  integer, parameter :: maxi3vars=50
- integer, parameter :: maxr1vars=120
+ integer, parameter :: maxr1vars=150
  integer, parameter :: maxr2vars=50
  integer, parameter :: maxr3vars=100
  integer, parameter :: maxr4vars=50
@@ -152,7 +153,7 @@ module it_m
    !
    subroutine it_reset(mode)
      use stderr,    ONLY:cstr
-     use parser_lib,ONLY:iparse_init,iparse_end
+     use PARSER_lib,ONLY:iparse_init,iparse_end
      integer, optional :: mode
      integer           :: ierr
      if (mode<=0) call iparse_end()
@@ -195,8 +196,23 @@ module it_m
      nr4v=0
      nc1v=0
      nchv=0
-     ns=0 
+     ns=0
    end subroutine
+   !
+   logical function check_verbosity(what)
+     use drivers, ONLY:infile_editing
+     character(*) :: what
+     if (what=="kpt") check_verbosity=infile_verbosity==V_kpt.or.infile_verbosity==V_all
+     if (what=="RL" ) check_verbosity=infile_verbosity==V_RL.or.infile_verbosity==V_all
+     if (what=="sc" ) check_verbosity=infile_verbosity==V_sc.or.infile_verbosity==V_all
+     if (what=="qp" ) check_verbosity=infile_verbosity==V_qp.or.infile_verbosity==V_all
+     if (what=="io" ) check_verbosity=infile_verbosity==V_io.or.infile_verbosity==V_all
+     if (what=="general"  ) check_verbosity=infile_verbosity==V_general.or.infile_verbosity==V_all
+     if (what=="resp"     ) check_verbosity=infile_verbosity==V_resp.or.infile_verbosity==V_all
+     if (what=="real_time") check_verbosity=infile_verbosity==V_real_time.or.infile_verbosity==V_all
+     if (what=="parallel" ) check_verbosity=infile_verbosity==V_parallel.or.infile_verbosity==V_all
+     if (.not.infile_editing) check_verbosity=.TRUE.
+   end function
    !
    subroutine infile_dump()
      character(lchlen) :: ch
@@ -234,14 +250,14 @@ module it_m
    end function
    !
    subroutine switch_off_runlevel(off_name,on_name)
-     use stderr,    ONLY:string_split
+     use stderr,    ONLY:STRING_split
      character(*)     :: off_name,on_name
      !
      ! Work Space
      !
      character(schlen):: on_names(maxrnlvls)
      integer          :: i2,i3
-     call string_split(on_name,on_names)
+     call STRING_split(on_name,on_names)
      ext_loop: do i2=1,nrnlvls
        if (rstatus(i2)==0) cycle
        do i3=1,maxrnlvls
@@ -336,7 +352,7 @@ module it_m
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
            if (initmode==4) call parser(trim(name),defs%i1def(i1))
-           if (initmode==2) call init_convert_i(defval,i1vars(i1,3),.TRUE.)
+           if (initmode==2) call PARSER_convert_INT(defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)
            v_id=i1
@@ -389,7 +405,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i2def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert_i(defval(i2),i2vars(i1,3),.TRUE.)
+                 call PARSER_convert_INT(defval(i2),i2vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i2def(i1,:)=defval
@@ -404,7 +420,7 @@ module it_m
              if (initmode==4) call parser(trim(name),defs%i3def(i1,:))
              if (initmode==2) then
                do i2=1,dim
-                 call init_convert_i(defval(i2),i3vars(i1,3),.TRUE.)
+                 call PARSER_convert_INT(defval(i2),i3vars(i1,3),.TRUE.)
                enddo
              endif
              if (initmode<=3) defs%i3def(i1,:)=defval
@@ -593,14 +609,16 @@ module it_m
      endif
    end subroutine
    !
-   subroutine loadchvar(defs,name,description,defval,verb_level,protect)
+   subroutine loadchvar(defs,name,description,defval,verb_level,protect,case)
      use drivers,        ONLY:infile_editing
      use parser_m,       ONLY:parser
+     use stderr,         ONLY:STRING_to_UPPER,STRING_to_LOWER
      character(*)::name,description,defval
-     type(initdefs)::defs
-     integer::v_id
-     integer, optional::verb_level 
-     logical, optional::protect
+     type(initdefs)        ::defs
+     integer               ::v_id
+     integer,      optional::verb_level 
+     logical,      optional::protect
+     character(1), optional::case
      if (initmode==0) then
        chst=0
        nchv=nchv+1
@@ -608,6 +626,10 @@ module it_m
        chvars(nchv,1)=name
        chvars(nchv,2)=description
        defs%chdef(nchv)=trim(defval)
+       if (present(case)) then
+         if (case=="A") call STRING_to_UPPER(defs%chdef(nchv))
+         if (case=="a") call STRING_to_LOWER(defs%chdef(nchv))
+       endif
        v_id=nchv
      else
        do i1=1,nchv
@@ -619,7 +641,13 @@ module it_m
              endif
              call parser(trim(name),defs%chdef(i1))
            endif
-           if (initmode<=3) defs%chdef(i1)=defval
+           if (initmode<=3) then
+             defs%chdef(i1)=defval
+             if (present(case)) then
+               if (case=="A") call STRING_to_UPPER(defs%chdef(i1))
+               if (case=="a") call STRING_to_LOWER(defs%chdef(i1))
+             endif
+           endif
            defval=defs%chdef(i1)
            exit
          endif
@@ -803,7 +831,7 @@ module it_m
          if (i1st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i1vars(i2,1)),1,defs%i1def(i2))) cycle
            nflines=nflines+1
-           if (ou/=20) call init_convert_i(defs%i1def(i2),i1vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i1def(i2),i1vars(i2,3),.FALSE.)
            ch(2)=gen_fmt((/defs%i1def(i2)/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
            write (flines(nflines),trim(ch(1))) trim(i1vars(i2,1)),'=',&
@@ -813,8 +841,8 @@ module it_m
        do i2=1,ni2v
          if (i2st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i2vars(i2,1)),2,defs%i2def(i2,:))) cycle
-           if (ou/=20) call init_convert_i(defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert_i(defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i2def(i2,1),i2vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i2def(i2,2),i2vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i2vars(i2,1))
            ch(2)=gen_fmt(defs%i2def(i2,:))
@@ -830,9 +858,9 @@ module it_m
        do i2=1,ni3v
          if (i3st(i2)==ifpos) then
            if (.not.Iverbose_enough(trim(i3vars(i2,1)),3,defs%i3def(i2,:))) cycle
-           if (ou/=20) call init_convert_i(defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert_i(defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
-           if (ou/=20) call init_convert_i(defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,1),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,2),i3vars(i2,3),.FALSE.)
+           if (ou/=20) call PARSER_convert_INT(defs%i3def(i2,3),i3vars(i2,3),.FALSE.)
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(i3vars(i2,1))
            ch(2)=gen_fmt(defs%i3def(i2,:))
@@ -849,7 +877,7 @@ module it_m
          if (c1st(i2)==ifpos) then
            if (.not.Cverbose_enough(trim(c1vars(i2,1)),1,defs%c1def(i2))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,c1vars(i2,3))
+           call PARSER_convert_REAL(unit_factor,c1vars(i2,3))
            nflines=nflines+1
            v(1)=real(defs%c1def(i2))*unit_factor
            v(2)=aimag(defs%c1def(i2))*unit_factor
@@ -865,7 +893,7 @@ module it_m
          if (r1st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r1vars(i2,1)),1,defs%r1def(i2))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r1vars(i2,3))
+           call PARSER_convert_REAL(unit_factor,r1vars(i2,3))
            nflines=nflines+1
            ch(2)=gen_fmt(r_v=(/defs%r1def(i2)*unit_factor/))
            write (ch(1),'(3a)') '(2a,',trim(ch(2)),',t24,a,t32,2a)'
@@ -878,7 +906,7 @@ module it_m
          if (r2st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r2vars(i2,1)),2,defs%r2def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r2vars(i2,3))
+           call PARSER_convert_REAL(unit_factor,r2vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r2vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r2def(i2,:)*unit_factor)
@@ -895,7 +923,7 @@ module it_m
          if (r3st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r3vars(i2,1)),3,defs%r3def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r3vars(i2,3))
+           call PARSER_convert_REAL(unit_factor,r3vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r3vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r3def(i2,:)*unit_factor)
@@ -913,7 +941,7 @@ module it_m
          if (r4st(i2)==ifpos) then
            if (.not.Rverbose_enough(trim(r4vars(i2,1)),4,defs%r4def(i2,:))) cycle
            unit_factor=1.
-           call init_convert_r(unit_factor,r4vars(i2,3))
+           call PARSER_convert_REAL(unit_factor,r4vars(i2,3))
            nflines=nflines+1
            write (flines(nflines),'(2a)') '% ',trim(r4vars(i2,1))
            ch(2)=gen_fmt(r_v=defs%r4def(i2,:)*unit_factor)
@@ -946,15 +974,14 @@ module it_m
        if (ou==11) write (ou,'(2a)') ' .-Input file : ',trim(infile)
      endif
      if (ou/=11.and.ou/=12) write (ou,'(a/2a)') '#','# .-Input file : ',trim(infile)
-     do i1=1,nflines+nADDITIONAL_flines
-       if (i1<=nflines) ch(1)=flines(i1)
-       if (i1> nflines) ch(1)=trim(ADDITIONAL_flines(i1-nflines))
+     do i1=1,nflines
        if (master_cpu) then
-         if (ou==12) write (ou,'(a)') trim(ch(1))
-         if (ou==11) write (ou,'(2a)') ' | ',trim(ch(1))
+         if (ou==12) write (ou,'(a)') trim(flines(i1))
+         if (ou==11) write (ou,'(2a)') ' | ',trim(flines(i1))
        endif
-       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(ch(1))
+       if (ou/=11.and.ou/=12) write (ou,'(2a)') '# | ',trim(flines(i1))
       enddo
+     call PARSER_dump_the_additional_lines(ou)
      !
      if (ou==11) close(11)
      !

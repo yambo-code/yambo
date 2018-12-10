@@ -95,15 +95,15 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
   fi
   #
   if test -d "$with_petsc_path" ; then 
-      try_libdir="$with_petsc_path/lib" ;
-      try_incdir="$with_petsc_path/include" ;
+      try_petsc_libdir="$with_petsc_path/lib" ;
+      try_petsc_incdir="$with_petsc_path/include" ;
   fi
   #
-  if test -d "$with_petsc_libdir"     ; then try_libdir="$with_petsc_libdir" ; fi
-  if test -d "$with_petsc_includedir" ; then try_incdir="$with_petsc_includedir" ; fi
+  if test -d "$with_petsc_libdir"     ; then try_petsc_libdir="$with_petsc_libdir" ; fi
+  if test -d "$with_petsc_includedir" ; then try_petsc_incdir="$with_petsc_includedir" ; fi
   #
-  try_PETSC_INCS="$IFLAG$try_incdir" ;
-  try_PETSC_LIBS="-L$try_libdir -lpetsc" ;
+  try_PETSC_INCS="$IFLAG$try_petsc_incdir" ;
+  try_PETSC_LIBS="-L$try_petsc_libdir -lpetsc" ;
   #
   if test "$use_libdl"    = "yes"; then try_PETSC_LIBS="$try_PETSC_LIBS -ldl"   ; fi
   #
@@ -152,7 +152,7 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   internal_petsc="yes"
   #
-  PETSC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib -lpetsc" ;
+  PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
@@ -196,15 +196,15 @@ if test -d "$with_slepc_path" || test -d "$with_slec_libdir" || test x"$with_sle
   fi
   #
   if test -d "$with_slepc_path" ; then 
-      try_libdir="$with_slepc_path/lib" ;
-      try_incdir="$with_slepc_path/include" ;
+      try_slepc_libdir="$with_slepc_path/lib" ;
+      try_slepc_incdir="$with_slepc_path/include" ;
   fi
   #
-  if test -d "$with_slepc_libdir"     ; then try_libdir="$with_slepc_libdir" ; fi
-  if test -d "$with_slepc_includedir" ; then try_incdir="$with_slepc_includedir" ; fi
+  if test -d "$with_slepc_libdir"     ; then try_slepc_libdir="$with_slepc_libdir" ; fi
+  if test -d "$with_slepc_includedir" ; then try_slepc_incdir="$with_slepc_includedir" ; fi
   #
-  try_SLEPC_INCS="$IFLAG$try_incdir" ;
-  try_SLEPC_LIBS="-L$try_libdir -lslepc" ;
+  try_SLEPC_INCS="$IFLAG$try_slepc_incdir" ;
+  try_SLEPC_LIBS="-L$try_slepc_libdir -lslepc" ;
   #
   if test x"$with_slepc_libs" != "x" ; then  try_SLEPC_LIBS="$with_slepc_libs" ; fi
   if test x"$with_slepc_incs" != "x" ; then  try_SLEPC_INCS="$with_slepc_incs" ; fi
@@ -251,7 +251,7 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
-  SLEPC_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib -lslepc" ;
+  SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes

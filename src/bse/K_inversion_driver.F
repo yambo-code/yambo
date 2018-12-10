@@ -32,7 +32,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:q_norm,bz_samp
+ use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
@@ -74,7 +74,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  type(PP_indexes)  :: PAR_IND_freqs
  integer           :: i1,i2,iw,PAR_IND_FREQ_ID
- logical, external :: stop_now
+ logical, external :: STOP_now
  real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
  !
@@ -146,7 +146,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel and/or BSS components loading
  !======================================
- call K_components_folded_in_serial_arrays(iq,"INV")
+ call K_components_folded_in_serial_arrays(iq)
+ call K_stored_in_a_big_matrix(iq,"INV")
  !
  if (K_slk%kind=="SLK") then
    !
@@ -298,7 +299,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(1,1)**2
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
@@ -334,7 +335,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        call live_timing(steps=1)
        !
-       if (stop_now(.FALSE.)) then
+       if (STOP_now(.FALSE.)) then
          exit
        endif
        !

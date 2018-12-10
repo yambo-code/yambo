@@ -30,19 +30,14 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 &                              nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP,mk_dir
- use com,                 ONLY:msg,write_to_report,more_io_path,com_path
+ use com,                 ONLY:msg,more_io_path,com_path
  use it_m,                ONLY:it_reset,infile
  use wave_func,           ONLY:io_WF
  use interfaces,          ONLY:PARALLEL_global_indexes
-#if defined _MEM_CHECK 
- use memory,              ONLY:MEM_manager
-#endif
- use LIVE_t,              ONLY:live_timing_is_on
- use stderr,              ONLY:write_to_log
  use YPP,                 ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,l_fix_save
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
@@ -79,7 +74,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  ncpu       =np
  myid       =pid
  infile     =inf
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)
@@ -90,12 +85,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
- !
- ! Switch off report file support
- !
- write_to_report   =.FALSE.
- live_timing_is_on =myid==0
- write_to_log      =myid==0
+ call SET_job_strings_and_dirs(js)
  !
  ! DB1
  !
@@ -131,7 +121,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
    return
  endif
  !
- ! INPUT FILE
+ ! INPUT FILE parsing
  !
  call INIT_ypp(en,instr,lnstr,.false.)
  if (infile_editing) then
@@ -198,11 +188,7 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_map_kpts) call k_map_fine_to_coarse(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
- !
- ! GPL_EXCLUDE_END
  !
  if (l_bxsf)  call bxsf_read(Xk,Xen)
  !
@@ -226,6 +212,13 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
  if (l_RealTime) call RT_driver(en,k,q)
  !
+#endif
+ !
+#if defined _YPP_NL
+ !
+ if (l_NL_X) call NL_driver(en,k)
+ if (l_NL_exc) call NL_Exc_driver(en,k)
+ !   ======
 #endif
  !
  l_flag=l_excitons
@@ -256,19 +249,12 @@ integer function ypp_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,
  !
 #endif
  !
- ! Memory Overview
- !=================
-#if defined _MEM_CHECK 
+ ! CLOSING
+ !=========
  !
- call section('*','Memory Overview')
+ call CLOSE_the_run(.TRUE.,.FALSE.,.FALSE.)
  !
- call MEM_manager("",REPORT="final")
- !
-#endif
- !
- ! END
- !
- call ypp_finalize(" ")
+ call INIT_ypp(en,instr,lnstr,.TRUE.)
  !
  return
  !

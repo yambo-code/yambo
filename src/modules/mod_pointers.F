@@ -24,7 +24,7 @@
 module pointers
  !
  use iso_c_binding,      ONLY:C_LOC,C_F_POINTER
- use pars,               ONLY:SP
+ use pars,               ONLY:SP,DP
  !
  implicit none
  !
@@ -34,6 +34,10 @@ module pointers
  !
  interface linkC2R
    module procedure linkC2R_0D,linkC2R_1D,linkC2R_2D,linkC2R_3D,linkC2R_4D,linkC2R_5D
+ end interface
+ !
+ interface linkZ2D
+   module procedure linkZ2D_0D,linkZ2D_1D,linkZ2D_2D,linkZ2D_3D,linkZ2D_4D,linkZ2D_5D
  end interface
  !
  contains
@@ -90,12 +94,56 @@ module pointers
      real(SP), pointer :: REAL_pointer(:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_4D
-   !
+   ! 
    function linkC2R_5D(M,N) result(REAL_pointer)
      complex(SP), target  :: M(1,1,1,1,1)
      integer, intent(in)  :: N(:)
      real(SP), pointer :: REAL_pointer(:,:,:,:,:,:)
      call C_F_POINTER(C_LOC(M), REAL_pointer, N )
    end function linkC2R_5D
+   !
+   ! Interface which links Z-Complex to Double Prec
+   !
+   function linkZ2D_0D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_0D
+   !
+   function linkZ2D_1D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M(1)
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_1D
+   !
+   function linkZ2D_2D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M(1,1)
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_2D
+   !
+   function linkZ2D_3D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M(1,1,1)
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:,:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_3D
+   !
+   function linkZ2D_4D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M(1,1,1,1)
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:,:,:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_4D
+   !
+   function linkZ2D_5D(M,N) result(REAL_pointer)
+     complex(DP), target  :: M(1,1,1,1,1)
+     integer, intent(in)  :: N(:)
+     real(DP), pointer :: REAL_pointer(:,:,:,:,:,:)
+     call C_F_POINTER(C_LOC(M), REAL_pointer, N )
+   end function linkZ2D_5D
    !
 end module

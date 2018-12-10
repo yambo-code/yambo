@@ -30,7 +30,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use pars,          ONLY:pi,SP,cZERO
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc,set_real_printed_length
- use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
@@ -59,7 +59,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  ! Work Space
  !
  integer          :: iw,iq,i_G_shift,n_output
- real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus
+ real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,eval_eels,Macroscopic_CPU
  !
  integer,external :: O_select_q_and_G
@@ -231,10 +231,21 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      !
      call X_redux(iq,X_par(1),wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
      !
    endif
+   !
+   if (l_pf_fxc) then
+     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
+     if (abs(b_xc).le.1.e-5) then
+       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
+     else
+       forall(iw=1:wv%n_freqs) Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&               (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+     end if
+   end if
    !
    call of_open_close(eps_file_name,'oa')
    call of_open_close(eel_file_name,'oa')

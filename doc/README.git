@@ -9,6 +9,10 @@ Branches list clean-up
 =======================
 git remote prune origin
 
+Tags list update
+================
+git fetch --tags --all
+
 status
 ==========
 >git status #show status of local branch
@@ -79,11 +83,17 @@ Create a new branch:
 >git push origin new_branch  #if you want to make available the new branch
 >git branch -u origin/new_branch new_branch #to set that the new branch tracks the new remote one
 
-Create a new tag:
-=================
+Tags:
+=====
+CREATE:
+
 From current branch you want to tag
 >git tag -a 4.1.0 -m "Version 4.1.0" # new local tag created
 >git push origin 4.1.0 # if you want to make available the new tag
+
+DELETE:
+>git tag -d 4.1.0
+>git push -d origin 4.1.0
 
 Moving/removing files branches:
 ===============================

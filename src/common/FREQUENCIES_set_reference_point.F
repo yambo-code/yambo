@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FREQUENCIES_set_reference_point(omega,n_freq)
+subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  !
  ! Look for the W(iw_ref) closest 0
  ! This is needed by the velocity gauge to impose the diamagnetic sum-rule
  !
  use pars,          ONLY:SP
- use X_m,           ONLY:iw_ref,global_gauge,skip_cond_sum_rule
+ use X_m,           ONLY:global_gauge,skip_cond_sum_rule
  use parser_m,      ONLY:parser
  use com,           ONLY:warning
  !
@@ -35,6 +35,7 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq)
  !
  integer,     intent(in)        :: n_freq
  complex(SP), intent(inout)     :: omega(n_freq)
+ integer,     intent(out)       :: iw_ref
  !
  ! Work space
  !
@@ -44,12 +45,12 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq)
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
- if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity".and..not.skip_cond_sum_rule) then
-   call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
-   skip_cond_sum_rule=.false.
-   global_gauge='length'
-   return
- endif
+ !if(all(abs(real(omega(:)))>0.01) .and. trim(global_gauge)=="velocity".and..not.skip_cond_sum_rule) then
+ !  call warning(' No w close to 0 in the frequency grid. Length gauge imposed')
+ !  skip_cond_sum_rule=.false.
+ !  global_gauge='length'
+ !  return
+ !endif
  !
  do iw=1,n_freq
    if(abs(real(omega(iw)))>0.01) cycle

@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
  !
- use pars,          ONLY:SP,schlen,IP
- use BS,            ONLY:BS_identifier,BS_K_dim
- use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat
+ use pars,          ONLY:SP,lchlen,schlen,IP
+ use BS,            ONLY:BS_identifier,BS_K_dim,BS_H_dim
+ use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
+ use X_m,           ONLY:X_t
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_elemental,io_status,io_bulk,&
 &                        io_header,ver_is_gt_or_eq
@@ -34,14 +35,16 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
  !
  implicit none
  !
- integer              :: iq,ID,BS_H_dim,BSS_n_eig
- complex(SP)          :: bsE(BSS_n_eig),bsRl(BS_H_dim),bsRr(BS_H_dim)
- real(SP)   ,pointer  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer  :: bsR_kerr(:)
+ type(X_t),intent(in)           :: X_static
+ integer                        :: iq,ID
+ complex(SP)        , optional  :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
+ real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
+ complex(SP),pointer, optional  :: bsR_kerr(:)
  !
  ! Work Space
  !
  character(schlen):: db_name
+ character(lchlen):: local_description(100)
  !
  call timing('io_BSS_diago',OPR='start')
  !
@@ -56,6 +59,8 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
    ! check the K QP corrections
    !
    io_BSS_diago=io_header(ID,XC_KIND="K_E force")
+   !
+   io_BSS_diago=variables_BS(ID,local_description,X=X_static)
    !
    if (ver_is_gt_or_eq(ID,(/3,0,15/))) then
      call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
@@ -87,25 +92,25 @@ integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,bsRr,BsE_corr,bs
    call io_bulk(ID,C1=bsE)
    !
    if(E_SOC_nbands/=0) then
-     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BS_H_dim/))
+     call io_bulk(ID,'BS_Energies_SOC_corr',VAR_SZ=(/2/n_sp_pol,BSS_n_eig/))
      call io_bulk(ID,R2=BsE_corr)
    endif
    !
-   call io_bulk(ID,'BS_left_Residuals',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'BS_left_Residuals',VAR_SZ=(/2,BSS_n_eig/))
    call io_bulk(ID,C1=bsRl)
    !
-   call io_bulk(ID,'BS_right_Residuals',VAR_SZ=(/2,BS_H_dim/))
+   call io_bulk(ID,'BS_right_Residuals',VAR_SZ=(/2,BSS_n_eig/))
    call io_bulk(ID,C1=bsRr)
    !
    ! GPL_EXCLUDE_START
    !
    if(associated(bsR_kerr)) then
-     call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,'BS_KERR_Residuals',VAR_SZ=(/2,BSS_n_eig/))
      call io_bulk(ID,C1=bsR_kerr)
    endif
    !
    if(associated(bsR_pl)) then
-     call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/2,BS_H_dim/))
+     call io_bulk(ID,'BS_PL_Residuals',VAR_SZ=(/2,BSS_n_eig/))
      call io_bulk(ID,R2=bsR_pl)
    endif
    !

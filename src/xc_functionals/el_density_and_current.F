@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -44,23 +44,30 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  ! Same procedure for the current
  !
- use pars,          ONLY:SP
- use com,           ONLY:warning
+ use pars,          ONLY:SP,DP
+ use com,           ONLY:warning,error,msg
+ use stderr,        ONLY:real2ch
+ use vec_operate,   ONLY:c2a
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,b
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
- use FFT_m,         ONLY:fft_size,fft_rot_r,fft_rot_r_inv
- use wave_func,     ONLY:WF
+ use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
+#if defined _FFTW
+ use FFT_m,         ONLY:fftw_plan
+#endif
+ use wave_func,     ONLY:WF,wf_nc_k,wf_igk,wf_ncx
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
+ use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
  use drivers,       ONLY:l_real_time
- use timing_m,       ONLY:timing
+ use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta0_occupations,RT_ibz_coo,RT_Nk_ibz
+ use real_time,     ONLY:RT_delta_occupations,RT_ibz_coo,RT_Nk_ibz
 #endif
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp)::k
  type(levels) ::E       
@@ -75,8 +82,12 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
+ integer    :: npwk,ig,igs
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ real(SP)   :: xk(3),raux
  complex(SP):: WF_der(fft_size,n_spinor,3)
+ complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
+ complex(SP), allocatable :: wf_SP(:,:)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
 #if defined _RT
@@ -98,6 +109,17 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !  J         =0._SP
  !  J_no_sym  =0._SP
  !endif
+ 
+ !
+ ! USPP contribution
+ ! 
+ if (l_rho.and.pp_is_uspp) then
+   !
+   if (.not. qe_pseudo_alloc) call error(' [PP] qe_pseudo not alloc in XC driver')
+   !
+   becsum=0.0
+   !
+ endif
  !
  warn_done=.false.
  !
@@ -106,6 +128,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,k%nibz
+     !
      do ib=bands_range(1),bands_range(2)
        !
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
@@ -123,7 +146,7 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        if(present(bands)) then
          f_occ=0._SP
          do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           f_occ=f_occ+RT_delta0_occupations(ib,ik_RT)
+           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)
          enddo
          f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
@@ -143,8 +166,17 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
          do i_spinor=1,n_spinor
            rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
          enddo
+         !
+         ! uspp becsum
+         !
+         if (pp_is_uspp) then
+           !
+           call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/), becp(ik,i_sp_pol) )
+           !
+         endif
+         !
        endif
-       !
+       !DEBUG>
        !if (l_J) then
        !  !
        !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
@@ -158,10 +190,49 @@ subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
        !  enddo
        !  !
        !endif
-       !
+       !DEBUG<
      enddo
+     !
    enddo
  enddo
+ !
+ ! finalize USPP contribution
+ !
+ if (l_rho.and.pp_is_uspp) then
+   !
+   YAMBO_ALLOC(aux_DP,(fft_size))
+   YAMBO_ALLOC(rhog_aug_DP,(qe_ngm,n_sp_pol))
+   rhog_aug_DP=0.0
+   !
+   call addusdens(qe_ngm,n_sp_pol,qe_ngm,rhog_aug_DP)
+   !
+   do i_sp_pol=1,n_sp_pol
+      !
+      aux_DP=0.0
+      do ig = 1, qe_ngm
+         aux_DP(fft_g_table(ig,1)) = rhog_aug_DP(ig,i_sp_pol)
+      enddo
+      !
+#if defined _FFTW
+      call dfftw_destroy_plan(fftw_plan)
+      fftw_plan = 0
+      call fft_3d(aux_DP,fft_dim,+1,fftw_plan)
+#else
+      call fft_3d(aux_DP,fft_dim,+1)
+#endif
+      !
+      aux_DP=aux_DP*qe_omega/real(fft_size,DP)
+      rho_no_sym(:)=rho_no_sym(:)+real(aux_DP(:),SP)
+      !
+   enddo
+   !
+   YAMBO_FREE(rhog_aug_DP)
+   YAMBO_FREE(aux_DP)
+   !
+   raux = sum(rho_no_sym)
+   call msg('nr','[PP] USPP charge normalization :  '//trim(real2ch(raux))//' [el/cell]')
+   !
+ endif
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)

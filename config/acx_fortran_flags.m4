@@ -24,7 +24,6 @@
 ################################################
 # Set FC FLAGS
 # ----------------------------------
-
 AC_DEFUN([ACX_FCSETUP],
 [
 AC_REQUIRE([AC_CANONICAL_HOST])
@@ -54,12 +53,12 @@ i?86*linux*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-g -O3 -w -tpp7"
-    FUFLAGS="-g -O0 -w -tpp7"
+    SYSFLAGS="-O3 -w -tpp7"
+    FUFLAGS="-O0 -w -tpp7"
     FCMFLAG=""
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS=""
+    DEBUG_FLAGS="-g"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore -mtune=pentium4"
@@ -69,22 +68,21 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *gfortran*)
-    SYSFLAGS="-g -O3 -mtune=native"
-    FUFLAGS="-g -O0 -mtune=native"
+    SYSFLAGS="-O3 -mtune=native"
+    FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* | *15* | *16* )
-       #CPU_FLAG="-xHost"
-       CPU_FLAG=" "
+       CPU_FLAG="-xHost"
+       #CPU_FLAG=" "
        ;;
       *17* | *18* | *19*)
        CPU_FLAG=" "
@@ -97,9 +95,10 @@ i?86*linux*)
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -g -O3 -ip $CPU_FLAG"
-    FUFLAGS="-assume bscc -g -O0 $CPU_FLAG"
+    SYSFLAGS="-assume bscc -O3 -ip $CPU_FLAG"
+    FUFLAGS="-assume bscc -O0 $CPU_FLAG"
     FCMFLAG="-nofor_main"
+    DEBUG_FLAGS="-g -check all -CB -traceback -check bound"
   ;;
   *pathf9*)
     SYSFLAGS="-g -O2 -fno-second-underscore"
@@ -125,12 +124,12 @@ i?86*linux*)
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *gfortran*)
-    SYSFLAGS="-g -O3 -mtune=native"
-    FUFLAGS="-g -O0 -mtune=native"
+    SYSFLAGS="-O3 -mtune=native"
+    FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check"
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fno-second-underscore -mtune=pentium4"
@@ -139,9 +138,8 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *1*)
        CPU_FLAG="-mtune=pentium4"
        ;;
@@ -149,11 +147,12 @@ i?86*linux*)
        CPU_FLAG="-mtune=pentium4"
        ;;
     esac
-    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
-    FUFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O3 -ip ${CPU_FLAG}"
+    FUFLAGS="-assume bscc -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -check all -CB -traceback -check bound"
     ;;
   *)
     SYSFLAGS="-O"
@@ -173,12 +172,12 @@ ia64*linux* )
     def_compiler="-D_PGI"
     ;;
   *gfortran*)
-    SYSFLAGS="-g -O3 -mtune=native"
-    FUFLAGS="-g -O0 -mtune=native"
+    SYSFLAGS="-O3 -mtune=native"
+    FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
@@ -190,15 +189,15 @@ ia64*linux* )
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-g -O3 -w"
-    FUFLAGS="-g -O0 -w"
+    SYSFLAGS="-O3 -w"
+    FUFLAGS="-O0 -w"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *1*)
        CPU_FLAG="-mtune=itanium"
        ;;
@@ -206,11 +205,12 @@ ia64*linux* )
        CPU_FLAG=""
        ;;
     esac
-    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
-    FUFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O2 -ip ${CPU_FLAG}"
+    FUFLAGS="-assume bscc -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -check all -CB -traceback -check bound"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -242,12 +242,12 @@ ia64*linux* )
     NETCDFFLAGS="-DpgiFortran"
     ;;
   *gfortran*)
-    SYSFLAGS="-g -O3 -mtune=native"
-    FUFLAGS="-g -O0 -mtune=native"
+    SYSFLAGS="-O3 -mtune=native"
+    FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check "
+    DEBUG_FLAGS="-g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-g -O3 -fbackslash -fno-second-underscore"
@@ -259,16 +259,15 @@ ia64*linux* )
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
     ;;
   *ifc*)
-    SYSFLAGS="-g -O3 -w -tpp2"
-    FUFLAGS="-g -O0 -w -tpp2"
+    SYSFLAGS="-O3 -w -tpp2"
+    FUFLAGS="-O0 -w -tpp2"
     OMPFLAGS="-openmp"
-    NETCDFFLAGS="-DpgiFortran"
+    NETCDFFLAGS="-g -DpgiFortran"
     ;;
   *ifort*)
-    DEBUG_FLAGS="-CA -CB"
     OMPFLAGS="-openmp"
     CPU_FLAG=""
-    case "${FCVERSION}" in
+    case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
@@ -284,10 +283,11 @@ ia64*linux* )
        CPU_FLAG=" "
        ;;
     esac
-    SYSFLAGS="-assume bscc -g -O3 -ip ${CPU_FLAG}"
-    FUFLAGS="-assume bscc -g -O0 ${CPU_FLAG}"
+    SYSFLAGS="-assume bscc -O0 -ip ${CPU_FLAG}"
+    FUFLAGS="-assume bscc -O0 ${CPU_FLAG}"
     FCMFLAG="-nofor_main"
     NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -CB -traceback"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -358,7 +358,10 @@ else
  FUFLAGS="$UFLAGS"
 fi 
 #
-if test x"$enable_debug_flags" = "xyes"; then FCFLAGS="$FUFLAGS $DEBUG_FLAGS" ; fi
+if test x"$enable_debug_flags" = "xyes"; then 
+ FCFLAGS="$DEBUG_FLAGS"  
+ FCUFLAGS="$DEBUG_FLAGS"  
+fi
 #
 AC_MSG_CHECKING([for specific NETCDF flags])
 AC_MSG_RESULT([$NETCDFFLAGS])

@@ -32,7 +32,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr
+&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr,l_nl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -42,14 +42,13 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use timing_m,      ONLY:timing_overview,timing_deallocate,global_list
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _MEM_CHECK 
- use memory,        ONLY:MEM_manager
-#endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
+#endif
+#if defined _MEM_CHECK 
+ use memory,        ONLY:MEM_manager
 #endif
  !
  implicit none
@@ -82,11 +81,12 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  myid     =pid
  infile   =inf
  !
- call SET_defaults(instr,ind,od,js,com_dir)
+ call SET_defaults(instr,ind,od,com_dir)
  call it_reset(1)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ call SET_job_strings_and_dirs(js)
  !
  ! not resetted in INIT call
  !
@@ -283,6 +283,10 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
    !
  endif
  !
+#if defined _NL
+ if (     l_nl_optics) call NL_driver(en,X(:2),k,q)
+#endif
+ !
  ! GPL_EXCLUDE_START
  !
  ! Electron-Phonon Hamiltonian
@@ -300,34 +304,14 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
  !
  ! GPL_EXCLUDE_END
+ ! 
+ ! CLOSING
+ !=========
  !
-
- !
- ! Timing Overview
- !=================
- call section('*','Timing Overview')
- call timing_overview(LIST=global_list,MAIN_NAME="yambo")
- !
- ! Memory Overview
- !=================
-#if defined _MEM_CHECK 
- !
- call section('*','Memory Overview')
- !
- call MEM_manager("",REPORT="final")
- !
-#endif
- !
- ! GAME OVER :(
- !==============
- call section('X','Game Over & Game summary')
- !
- ! Update INIT defs
+ call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
  i_err=INIT(en,q,k,X,Xw,instr,lnstr,.false.,.true.)
  !
- ! Finalize
- call timing_deallocate( )
  call it_reset(-1)
  !
 end function

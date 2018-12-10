@@ -30,7 +30,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
-&                         symmetry_group_table,mag_syms,idt_index
+&                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
@@ -142,9 +142,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=============================
  call msg('r','DL (S)ymmetries [cc]')
  !
- ! Spin symmetries
+ ! Spin symmetries & xc spin for libxc
  !
  call build_spin_sop()
+ !
+ call build_xc_spin_map()
  !
  YAMBO_ALLOC(rl_sop,(3,3,nsym))
  !
@@ -198,6 +200,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Symmetries Multiplication Table
  !
  call symmetry_group_table('r')
+ call symmetry_equiv_atoms()
  !
  call section('=','RL shells')
  !============================
@@ -234,7 +237,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !=================================
  !
  i_err=k_lattice(k,Xk,1,.TRUE.)
- !
  if (i_err /= 0 ) then
    call warning('Trying to expand the k-grid')
    call msg('r','')
@@ -245,9 +247,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (i1==i2) i_err=k_lattice(k,Xk,i1,.TRUE.)
      i1=i1+1
    enddo
-   !
    if (i_err/=0) call error('Impossible to determine the K-grid lattice')
-   !
  endif
  !
  if (BZ_DbGd_nbands>0.and.allocated(en%E_DbGd)) then
@@ -324,7 +324,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
    en%nbf =nbf_m_SAVE(1)
    en%nbm =nbf_m_SAVE(2)
  endif
- !
  !
  n_met_bands =en%nbm
  n_full_bands=en%nbf

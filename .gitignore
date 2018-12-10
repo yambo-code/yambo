@@ -11,6 +11,8 @@
 *.f90
 *.s
 *.sw*
+*dSYM
+*bk
 
 # source #
 ##########
@@ -50,7 +52,7 @@ sbin/objects_store.sh
 sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
-bin-libs/*
+lib/bin/*
 
 # source #
 ##########
@@ -92,3 +94,4 @@ ehthumbs.db
 Thumbs.db
 myconfig*
 nohup.out
+autom4te.cache

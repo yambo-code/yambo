@@ -26,9 +26,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use electrons,      ONLY:n_spin,n_spinor,spin
  use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
- use QP_m,           ONLY:QP_nb,QP_table,QP_n_states
+ use QP_m,           ONLY:QP_table,QP_n_states
  use wave_func,      ONLY:WAVEs
- use wrapper,        ONLY:Vstar_dot_V
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use matrix_operate, ONLY:UP_matrix_index
  use hamiltonian,    ONLY:H_ref_bands
  use timing_m,       ONLY:timing
@@ -38,7 +38,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
 #endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
- use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k,HEAD_QP_cpu
+ use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
 #endif
  implicit none
  !
@@ -50,13 +50,13 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  !
  ! Work Space
  !
- integer     :: i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
+ integer     :: ir,i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
  complex(SP) :: c_ws(fft_size,n_spinor)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
 #if defined _RT
- if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik).or..not.HEAD_QP_cpu)) return
+ if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik))) return
 #endif
  !
  call timing('V_real_space_to_H',OPR='start')
@@ -110,11 +110,9 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  do ib=H_ref_bands(1),H_ref_bands(2)
    do ibp=ib,H_ref_bands(2)
    !
-   if (.not.HEAD_QP_cpu) cycle
    if (.not.PAR_IND_local(ib,ibp)) cycle
    !
    ! <i_wf|V_mat|i_wfp>
-   !
    !
    i_wf  =WF%index(ib ,ik,i_sp_pol)
    i_wfp =WF%index(ibp,ik,i_sp_pol)
@@ -124,11 +122,19 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
      i_spin=i_sp_pol+i_spinor-1
      do j_spinor=1,n_spinor
        j_spin=i_sp_pol+j_spinor-1
+#if defined _OPENMP
+!$omp parallel do default(shared), private(ir)
+       do ir=1,fft_size
+         c_ws(ir,i_spinor)=c_ws(ir,i_spinor)+V_mat(ir,i_spin,j_spin)*WF%c(ir,j_spinor,i_wfp)
+       enddo
+!$omp end parallel do
+#else
        c_ws(:,i_spinor)=c_ws(:,i_spinor)+V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
+#endif
      enddo
    enddo
    !
-   H(ib,ibp) = H(ib,ibp)+Vstar_dot_V(fft_size*n_spinor,WF%c(:,:,i_wf),c_ws(:,:))
+   H(ib,ibp) = H(ib,ibp)+Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,i_wf),c_ws(:,:))
    !
    if(ib==ibp) H(ib,ib) =real(H(ib,ib),SP)
    if(ib/=ibp) H(ibp,ib)=conjg(H(ib,ibp))

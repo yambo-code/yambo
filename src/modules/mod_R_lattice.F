@@ -24,6 +24,7 @@
 module R_lattice
  !
  use pars, ONLY:SP,schlen, IP
+ !
 #include<memory.h>
  !
  ! K lattice
@@ -49,6 +50,7 @@ module R_lattice
  real(SP) :: q0_def_norm, q0_shift_norm
  real(SP),allocatable :: q_norm(:)
  character(schlen)    :: q_source="User defined / from ndb.kindx."
+ !
  type bz_samp
    integer           :: nibz,nbz
    integer,  allocatable :: nstar(:)      ! n° of points in the star
@@ -119,6 +121,7 @@ module R_lattice
  real(SP)                :: cyl_length
  real(SP)                :: box_length(3)
  real(SP)                :: cyl_cut
+ real(SP)                :: ws_cutoff 
  character(schlen)       :: cut_geometry
  character(schlen)       :: cut_description
  complex(SP),allocatable :: bare_qpg(:,:)
@@ -232,6 +235,7 @@ module R_lattice
      cyl_ph_radius=0.
      box_length=0.
      cyl_length=0.
+     ws_cutoff=0.7
      cut_geometry='none'
      cut_description='none'
      CUTOFF_plus_RIM=.false.

@@ -31,7 +31,7 @@ subroutine K_kerr_IP(iq,w)
  use BS_solvers,     ONLY:BSS_add_antiresonant,BSS_n_freqs,Co_factor
  use BS,             ONLY:BS_T_grp,BS_nT_grps,BS_K_coupling
  use electrons,      ONLY:E_SOC_nbands,n_sp_pol
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use drivers,        ONLY:l_anomalous_Hall
  use parallel_m,     ONLY:PAR_BS_nT_col_grps,PP_redux_wait,&
 &                         PAR_IND_T_groups,PAR_Xk_bz_index,&
@@ -55,11 +55,7 @@ subroutine K_kerr_IP(iq,w)
  !
  n_SOC=1
  !
- ! GPL_EXCLUDE_START
- !
  if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
- !
- ! GPL_EXCLUDE_END
  !
  B_Hall=cZERO
  !
@@ -86,11 +82,7 @@ subroutine K_kerr_IP(iq,w)
      !
      if (E_SOC_nbands==0) E_plus_W=E_plus_W0
      !
-     ! GPL_EXCLUDE_START
-     !
      if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
-     !
-     ! GPL_EXCLUDE_END
      !
      BS_T_grp(i_T_g)%dipoles_R_kerr(i_T)=conjg_fac*conjg(DIP_projected_r90(ic,iv,ik_mem,i_sp_pol))
      if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_kerr(i_T)=DIP_projected_r90(ic,iv,ik_mem,i_sp_pol)
@@ -109,7 +101,7 @@ subroutine K_kerr_IP(iq,w)
        endif
        !
        ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res
+       if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res/           bare_qpg(1,1)**2
        if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res/E_plus_W(i_pert_SOC)**2
        !
      enddo
@@ -130,20 +122,15 @@ subroutine K_kerr_IP(iq,w)
  call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
+ B_Hall(1)=B_Hall(1)*Co_factor
  if (BSS_add_antiresonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
- if(trim(global_gauge)=='length'   ) then
-   B_Hall(1)=B_Hall(1)*Co_factor/q_norm(1)**2
-   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/q_norm(1)**2
-   ! I add the term describing the Anomalous Hall effect which is
-   ! missing in the length gauge (this should be zero for systems with a gap)
-   if (l_anomalous_Hall) Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/w(:)
- endif
+ if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(1,1)**2
+ if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/  w(:)   **2
  !
- if(trim(global_gauge)=='velocity' ) then
-   B_Hall(1)=B_Hall(1)*Co_factor
-   Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/w(:)**2
- endif
+ ! I add the term describing the Anomalous Hall effect which is
+ ! missing in the length gauge (this should be zero for systems with a gap)
+ if (l_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/w(:)
  !
  ! CLEAN
  !

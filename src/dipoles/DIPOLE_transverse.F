@@ -88,12 +88,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  if (allocated(Xen%Eo)   ) call msg('rns','[X] Using energies without QP corrections for the dipoles')
  !
  l_eval_DIP_iR=use_g_space_approach
-#if defined _PL
- l_eval_DIP_P =use_g_space_approach.or.Dip%force_v_g_space.or.l_photolum
-#else
  l_eval_DIP_P =use_g_space_approach.or.Dip%force_v_g_space
-#endif
  l_eval_DIP_P2=.false.
+ !
+#if defined _PL
+ l_eval_DIP_P =l_eval_DIP_P.or.l_photolum
+#elif defined _NL
+ l_eval_DIP_P =l_eval_DIP_P.or.l_nl_optics
+#endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -102,12 +104,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #endif
 #if defined _RT
  l_eval_DIP_P2=l_real_time
-#endif
-#if defined _NL
- if(l_nl_optics) then
-   l_eval_DIP_iR=.true.
-   l_eval_DIP_P =.true.
- endif
 #endif
  !
  ! GPL_EXCLUDE_END

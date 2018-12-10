@@ -56,11 +56,11 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  logical     :: idir_not_done(3)
  logical     :: l_eval_polarization,l_force_SndOrd
- integer     :: ik,iv,ic,ic_min,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
+ integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
+ complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
+ complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
  complex(SP) :: S_det(6)
  complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
@@ -147,7 +147,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          Wop(:,:,istep)=cZERO
          !
-         do iv=Dip%ib(1),Dip%ib_lim(1)
+         iv_max=min(Dip%ib_lim(1),Xen%nbm)
+         do iv=Dip%ib(1),iv_max
            if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
            ic_min=max(iv,Dip%ib_lim(2))
            !if (l_X_terminator) ic_min=iv

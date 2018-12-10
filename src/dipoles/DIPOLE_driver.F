@@ -40,12 +40,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
 &                         l_gw0,l_elel_corr,l_life
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
-#if defined _NL
- use drivers,        ONLY:l_nl_optics
-#endif
  use BS,             ONLY:BS_bands
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning

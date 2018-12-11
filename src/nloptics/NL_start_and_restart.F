@@ -134,8 +134,6 @@ subroutine NL_start_and_restart(E,k,Dip)
  ! ====================================
  !
  if(.not.l_use_DIPOLES) then
-   if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
-   if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
    call POLARIZATION_output(E,k,Dip)
  endif
  !

@@ -52,7 +52,7 @@ subroutine NL_current(k,E,V_input,NL_J)
  !
  ! A : Current
  !
- call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=-DIP_P(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
+ call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_P(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
      &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=k%nibz)
  !
  if(trim(global_gauge)=='velocity') then

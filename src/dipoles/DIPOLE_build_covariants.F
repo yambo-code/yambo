@@ -72,22 +72,14 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  call parser('EvPolarization'  ,l_eval_polarization)
  call parser('FrSndOrd'        ,l_force_SndOrd)
  !
- ! WF load 
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- ! I force the system to load all the WF distribution not implemented yet
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
+ if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
- call k_map_nearest_by_dir(Xk,k_map)
- !
- call k_build_up_BZ_tables(Xk)
- !
- call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,&
-&                              CLEAN_UP=.TRUE.)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
  call PARALLEL_WF_index(COMM=PAR_COM_NULL)
  !
- call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               keep_states_to_load=.TRUE.)
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !
  ! Notice that DIP_S is defined in the BZ       
  !
@@ -187,9 +179,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      ! <iR>
      !======
      do iv=Dip%ib(1),Dip%ib_lim(1)
-       if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(iv)) cycle
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
-         if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ic)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          do idir=1,3
            DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
          enddo
@@ -201,9 +193,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      !=====
      if(.not.Dip%force_v_g_space) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
-         if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(iv)) cycle
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
-           if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ic)) cycle
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            do idir=1,3

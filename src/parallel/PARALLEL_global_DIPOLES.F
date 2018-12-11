@@ -81,11 +81,6 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
-   if(eval_OVERLAPS) then
-     call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
-&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
-   endif
-   
    !
    allocate(PAR_DIPk_ibz_index(Xk%nibz))
    call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
@@ -129,6 +124,11 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    !
    if(eval_OVERLAPS) then
      !
+     ! Add the neighboars k-points
+     !
+     call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
+&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+   
      ! Overlaps conduction bands
      !
      call COMM_copy(PAR_COM_CON_INDEX_DIP,PAR_COM_CON_INDEX_OVLP)

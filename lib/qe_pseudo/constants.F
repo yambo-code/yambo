@@ -19,6 +19,10 @@ MODULE constants
   !
   ! ... Mathematical constants
   ! 
+  REAL(DP), PARAMETER :: ZERO   = 0._DP
+  REAL(DP), PARAMETER :: ONE    = 1._DP
+  REAL(DP), PARAMETER :: TWO    = 2._DP
+  ! 
   REAL(DP), PARAMETER :: pi     = 3.14159265358979323846_DP 
   REAL(DP), PARAMETER :: tpi    = 2.0_DP * pi
   REAL(DP), PARAMETER :: fpi    = 4.0_DP * pi
@@ -41,6 +45,9 @@ MODULE constants
   REAL(DP), PARAMETER :: MUNOUGHT_SI      = fpi*1.0E-7_DP       ! N A^-2
   REAL(DP), PARAMETER :: EPSNOUGHT_SI     = 1.0_DP / (MUNOUGHT_SI * &
                                                        C_SI**2) ! F m^-1
+  !
+  REAL(DP), PARAMETER :: RYD              = 13.605826d0       ! eV 
+
   !
   ! ... Physical constants, atomic units:
   ! ... AU for "Hartree" atomic units (e = m = hbar = 1)
@@ -88,6 +95,8 @@ MODULE constants
   !  Speed of light in atomic units
   !
   REAL(DP), PARAMETER :: C_AU             = C_SI / BOHR_RADIUS_SI * AU_SEC
+  !
+  REAL(DP), PARAMETER :: eps_m8 = 0.00000001_DP
   !
   ! ... zero up to a given accuracy
   !

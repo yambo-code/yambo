@@ -95,7 +95,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  integer                  :: PAR_COM_X_WORLD_n_CPU
 #endif
  integer,    external     :: X_eh_setup
- type(elemental_collision):: Xo_scatt
+ type(elemental_collision), target :: Xo_scatt
  !
  ! Defaults & Setups
  !===================
@@ -304,11 +304,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
      X_par_blc_d => X_par%blc_d
      GreenF_iw=GreenF(iw)
      !
+#endif
      X_rows1=X_par%rows(1)
      X_rows2=X_par%rows(2)
      X_cols1=X_par%cols(1)
      X_cols2=X_par%cols(2)
-#endif
      !
      !$cuf kernel do(2)
      do ig_col=X_cols1,X_cols2

@@ -1,0 +1,13 @@
+
+cd src/driver
+cp *.h ../../include/
+gcc -c title.c -I ../../include/headers  -I../../include
+gcc -c load_environments.c -I ../../include/headers -I../../include
+gcc -c usage.c -I ../../include/headers -I ../../include
+cd ../../driver
+cp ../include/driver/common_options.h ../include
+cp ../include/driver/yambo.h ../include
+gcc -c driver.c -I ../include/ -I ../include/headers/
+cd ../
+gcc -o driver.x driver/driver.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o
+

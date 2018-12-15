@@ -55,10 +55,9 @@ topdir      = @abs_top_srcdir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
-HEADERS  = include/headers/load_environments.h
 STAMPS   = lib/archive/keep-extlibs-stamp
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
-           sbin/make_makefile.sh driver/codever.h src/wf_and_fft/sgfft.F  \
+           sbin/make_makefile.sh include/headers/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
            sbin/objects_store.sh include/headers/editor.h \
            include/headers/c_defs.h sbin/generate_gpl.sh
@@ -515,7 +514,7 @@ define lib_ext_clean
  fi
 endef
 define sysincs_clean
- rm -f $(HEADERS)
+ @if test -d $(prefix)/include; then rm -f $(prefix)/include/*.h ; fi 
  @if test -d $(prefix)/include/system/; then \
    rm -rf $(prefix)/include/system ; \
    echo "[CLEAN] Libraries ... done"; \

@@ -151,12 +151,11 @@ arcreate: \$(objs)
 #
 define driver
  ${PREFIX}if test -f \$(includedir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                    \$(includedir)/driver/yambo.h > \$(includedir)/driver/yambo_cpp.h; fi
+                    \$(includedir)/driver/yambo.h > \$(includedir)/yambo.h; fi
  ${PREFIX}if test -f \$(includedir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                   \$(includedir)/driver/ypp.h > \$(includedir)/driver/ypp_cpp.h; fi
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -I\$(includedir)/headers -I\$(includedir)/driver -L\$(libdir) -ldriver \
+                   \$(includedir)/driver/ypp.h > \$(includedir)/ypp.h; fi
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -I\$(includedir)/headers -I\$(includedir) -L\$(libdir) -ldriver \
                   -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
- #${PREFIX}(rm -f \$(includedir)/driver/yambo_cpp.h \$(includedir)/driver/ypp_cpp.h)
  @echo
 endef
 define link
@@ -225,5 +224,5 @@ cat << EOF >> $cdir/Makefile
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$*.c) > /dev/null
 	@echo $ECHO_N \$*".c"
-	@if [ -f \$*".h" ]; then cp \$*".h" \$(includedir)/headers ; fi
+	@if [ -f \$*".h" ]; then cp \$*".h" \$(includedir); fi
 EOF

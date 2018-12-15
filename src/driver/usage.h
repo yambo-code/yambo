@@ -21,3 +21,6 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
+
+void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc);
+

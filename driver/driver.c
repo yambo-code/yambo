@@ -20,11 +20,9 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-*/
-/*
- INCLUDES...
 
- ...SYSTEM
+ ...SYSTEM...
+
 */
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -37,82 +35,56 @@
  #include <mpi.h>
 #endif
 /*
+
  ...definitions
 */
 #include <editor.h>
 #include <codever.h>
-/*
- ...Subroutines/functions
-*/
-#include <driver_libs.h>
 /* 
+
  Command line options structure
 */
-#include <options_kind.h>
-/* 
- Yambo/Ypp driver flag
+#include <DRIVER_kind.h>
+/*
+
+ ...Subroutines/functions
 */
-#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL
- #define _YAMBO_MAIN
-#endif
-#if defined _MAGNETIC || _KERR || _SURF
- #define _YAMBO_MAIN
-#endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC || _YPP_SURF
- #define _YPP_MAIN
-#endif
-/* 
- Includes (II)
+#include <usage.h>
+#include <load_environments.h>
+/*
+
+ ... Command line options
 */
-#if defined _YAMBO_MAIN
- #include "yambo_cpp.h"
-#endif
-#if defined _YPP_MAIN
- #include "ypp_cpp.h"
-#endif
-#if defined _a2y
- #include "a2y.h"
-#endif
-#if defined _c2y
- #include "c2y.h"
-#endif
-#if defined _p2y
- #include "p2y.h"
-#endif
-#if defined _e2y
- #include "e2y.h"
-#endif
-/* 
- F90 wrapper
-*/
-#if defined _FORTRAN_US
- #define F90_FUNC(name,NAME) name ## _
- #define F90_FUNC_(name,NAME) name ## _
-#else
- #define F90_FUNC(name,NAME) name
- #define F90_FUNC_(name,NAME) name
-#endif
-/* */
+#include <yambo.h>
+
+/*====
+  MAIN
+  ====*/
 int main(int argc, char *argv[])
 {
- int io,i,c,j,k,nf,lni,lnr,lnc,ttd,
-     iif=0,iid=1,iod=1,icd=1,nr=0,ijs=0,np=1,pid=0;
-/* 
- By default MPI_init is on. It is swiched off during the options scanning
-*/
- int mpi_init=0;
- int use_editor=1;
- int iv[4];
+ /*
+  Needed for the drivers call
+ */
+ int iif=0,iid=1,iod=1,icd=1,ijs=0,np=1,pid=0,lni=0;
+ char rnstr2[500]={'\0'};
+ char *inf=NULL,*od=NULL,*id=NULL,*js=NULL,*com_dir=NULL;
+ /*
+  Work Space
+ */
+ int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4];
+ int mpi_init=0,use_editor=1,nr=0;
  double rv[4];
  char *cv[4]; 
- char *fmt=NULL,*inf=NULL,*od=NULL,*id=NULL,*js=NULL,*db=NULL,*com_dir=NULL,*env_file=NULL;
- extern int optind;
+ char *fmt=NULL,*env_file=NULL;
+ char rnstr1[500]={'\0'},edit_line[100]={'\0'};
+ /*
+  External functions
  extern int guess_winsize();
- char rnstr1[500]={'\0'},rnstr2[500]={'\0'},edit_line[100]={'\0'};
- struct stat buf;
-/* 
- Default input file, Job string, I/O directories
-*/
+ */
+ extern int optind;
+ /* 
+  Default input file, Job string, I/O directories and other initializations
+ */
  inf = malloc(strlen(tool)+4);
  strcpy(inf,tool);
  strcat(inf,".in");
@@ -125,8 +97,11 @@ int main(int argc, char *argv[])
  strcpy(js," ");
  strcpy(id,".");
  strcpy(com_dir,".");
- ttd=guess_winsize();
  strcpy(rnstr2," ");
+ /*
+  stdlog?
+ ttd=guess_winsize();
+ */
  if (argc>1) {
    while(opts[nr].ln!=NULL) {nr++;};
    fmt = malloc(sizeof(char)*nr+1);
@@ -160,7 +135,7 @@ int main(int argc, char *argv[])
    
    Help...
  */
-     if (strcmp(opts[j].ln,"help")==0) {usage(opts,1,tool,codever,tool_desc);exit(0);};
+     if (strcmp(opts[j].ln,"help")==0)  {usage(opts,1,tool,codever,tool_desc);exit(0);};
      if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,tool,codever,tool_desc);exit(0);};
 /* 
  ...switch off MPI_init for non-parallel options ...
@@ -171,7 +146,7 @@ int main(int argc, char *argv[])
 */
      if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
 /*
- Switch off launch editor
+ ...switch off launch editor
 */
      if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=0;};
 /*
@@ -369,7 +344,6 @@ int main(int argc, char *argv[])
  free(id);
  free(js);
  free(od); 
- free(db);
 #if defined _MPI
   if (mpi_init==0) {
    MPI_Barrier(MPI_COMM_WORLD);

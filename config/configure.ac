@@ -93,7 +93,6 @@ fi
 AC_SUBST(MAKE)
 # ============================================================================
 #AR 
-#AC_DISABLE_SHARED
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
 test -z "$AR_FLAGS" && AR_FLAGS="-ru"

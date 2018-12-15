@@ -22,15 +22,11 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <getopt.h>
-#include <options_kind.h>
+#include <stdio.h>
+#include <DRIVER_kind.h>
+#include <title.h>
 
 void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc)
 {
@@ -83,7 +79,7 @@ void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc)
   };
   fprintf(stderr,"\n%s%s%s\n","Try `",tool," -H' for more information");exit(0);
  };
- /*if (verbose==2) {title(stderr,"",tool,codever,tool_desc);*/
+ if (verbose==2) {title(stderr,"",tool,codever,tool_desc);};
  for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")==0) 
    {

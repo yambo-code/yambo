@@ -21,7 +21,15 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-typedef struct 
+
+typedef struct f90_parameters
+{
+ int iif,iid,iod,icd,ijs,np,pid,lni;
+ char rnstr2[500];
+ char *inf,*od,*id,*js,*com_dir;
+} f90_parameters;
+
+typedef struct Ldes
 {
         char *ln;
         char *sn;

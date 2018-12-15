@@ -22,9 +22,5 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-#include <options_kind.h>
-
-void load_environments(char *file_name, char* editor);
 void title(FILE *file_name,char *cmnt, char *tool, char *codever, char *tool_desc);
-void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc)
 

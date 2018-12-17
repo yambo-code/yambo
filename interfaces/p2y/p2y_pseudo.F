@@ -87,9 +87,7 @@ subroutine p2y_pseudo(k)
  ! Main allocations:
  !
  call fill_struct(struct)
- write(*,*) 'pippo1'
  call fill_atoms(atoms,struct)
- write(*,*) 'pippo2'
  !
  call pw_basis_init(basis_con,struct)
  !

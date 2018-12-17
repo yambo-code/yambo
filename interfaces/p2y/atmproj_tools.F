@@ -8,13 +8,13 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 !*********************************************
-   MODULE atmproj_tools_module
+MODULE atmproj_tools_module
 !*********************************************
    !
    use pars,                ONLY:cZERO
    use com,                 ONLY:error,file_exists
    !
-   USE constants,           ONLY : ZERO, ONE, TWO, RYD, EPS_m8, TPI 
+   !USE constants,           ONLY : ZERO, ONE, TWO, RYD, EPS_m8, TPI 
    USE parameters,          ONLY : nstrx
    USE pseudo_types,        ONLY : pseudo_upf 
    USE uspp_param,          ONLY : upf
@@ -60,6 +60,8 @@
    ! SUBROUTINE  atmproj_get_natomwfc( nsp, psfile, natomwfc )
    ! FUNCTION    atmproj_get_index( i, ia, natomwfc(:) )
    !
+   PUBLIC :: atmproj_read_ext
+   !
    !PUBLIC :: atmproj_to_internal
    PUBLIC :: file_is_atmproj
    PUBLIC :: atmproj_get_index
@@ -72,7 +74,6 @@
    PUBLIC :: spin_component
 
 CONTAINS
-
 
 !**********************************************************
    SUBROUTINE atmproj_tools_init( file_proj_, ierr )
@@ -468,4 +469,3 @@ SUBROUTINE  atmproj_get_natomwfc( nsp, psfile, natomwfc, itypl )
 END SUBROUTINE atmproj_get_natomwfc
 
 END MODULE atmproj_tools_module
-

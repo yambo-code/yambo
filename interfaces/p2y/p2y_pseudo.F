@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH, AF, IM
+! Authors (see AUTHORS file for details): CH, DS, AF, IM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PP_PWscf_driver(k)
+subroutine p2y_pseudo(k)
  !
  use pw_struct_module
  use pw_atoms_module
@@ -42,6 +42,7 @@ subroutine PP_PWscf_driver(k)
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_CL,REP
  use interfaces,            ONLY:PARALLEL_index
  use read_pseudo_mod,       ONLY: readpp
+ !
  implicit none
  !
  type(bz_samp),    intent(in)  :: k      ! K/Q points
@@ -168,7 +169,7 @@ subroutine PP_PWscf_driver(k)
  !
  return
  !
-end subroutine PP_PWscf_driver
+end subroutine p2y_pseudo
 !
 subroutine fill_struct(struct)
  use pw_struct_module

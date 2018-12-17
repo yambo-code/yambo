@@ -11,16 +11,14 @@
 MODULE atmproj_tools_module
 !*********************************************
    !
-   use pars,                ONLY:cZERO
-   use com,                 ONLY:error,file_exists
+   use com,                 ONLY:error
    !
-   !USE constants,           ONLY : ZERO, ONE, TWO, RYD, EPS_m8, TPI 
    USE parameters,          ONLY : nstrx
    USE pseudo_types,        ONLY : pseudo_upf 
    USE uspp_param,          ONLY : upf
-   USE iotk_module
-   USE qexml_module
-   USE qexsd_module
+   !USE iotk_module
+   !USE qexml_module
+   !USE qexsd_module
    !
    IMPLICIT NONE 
    PRIVATE
@@ -50,122 +48,17 @@ MODULE atmproj_tools_module
    REAL(dbl)          :: atmproj_thr = 0.0d0    ! 0.9d0
    INTEGER            :: atmproj_nbnd = 0
    INTEGER            :: atmproj_nbndmin = 1
-   CHARACTER(256)     :: spin_component = "all"
    !
    INTEGER, PARAMETER :: nwfcx = 50
 
    ! contains:
-   ! SUBROUTINE  atmproj_to_internal( filein, fileham, filespace, filewan, do_orthoovp )
-   ! FUNCTION    file_is_atmproj( filein )
-   ! SUBROUTINE  atmproj_get_natomwfc( nsp, psfile, natomwfc )
-   ! FUNCTION    atmproj_get_index( i, ia, natomwfc(:) )
    !
    PUBLIC :: atmproj_read_ext
-   !
-   !PUBLIC :: atmproj_to_internal
-   PUBLIC :: file_is_atmproj
    PUBLIC :: atmproj_get_index
    PUBLIC :: atmproj_get_natomwfc
-   !
-   PUBLIC :: atmproj_sh
-   PUBLIC :: atmproj_thr
-   PUBLIC :: atmproj_nbnd
-   PUBLIC :: atmproj_nbndmin
-   PUBLIC :: spin_component
 
 CONTAINS
 
-!**********************************************************
-   SUBROUTINE atmproj_tools_init( file_proj_, ierr )
-   !**********************************************************
-   !
-   ! define module global variables
-   !
-   IMPLICIT NONE
-   CHARACTER(*),   INTENT(IN)  :: file_proj_
-   INTEGER,        INTENT(OUT) :: ierr
-   !
-   CHARACTER(18)  :: subname="atmproj_tools_init"
-   INTEGER        :: ilen
-   !
-   file_proj = TRIM( file_proj_ )
-   !
-   IF ( .NOT. file_exists( file_proj ) ) return
-
-   ierr = 1
-    
-   !
-   ! define save_dir
-   !
-   savedir  = ' '
-   !
-   ilen = LEN_TRIM( file_proj_ )
-   IF ( ilen <= 14 ) RETURN
-   !
-   IF ( file_proj_(ilen-14:ilen) == "atomic_proj.xml" .OR. &
-        file_proj_(ilen-14:ilen) == "atomic_proj.dat" ) THEN
-       !
-       savedir = file_proj_(1:ilen-15)
-       !
-   ENDIF
-   !
-   IF ( LEN_TRIM(savedir) == 0 ) RETURN
-   !
-   file_data = TRIM(savedir) // "/data-file.xml"
-   IF ( file_exists( file_data ) ) THEN
-       file_fmt="qexml"
-   ELSE
-       !
-       file_data = TRIM(savedir) // "/data-file-schema.xml"
-       file_fmt="qexsd"
-       IF ( .NOT. file_exists( file_data ) ) RETURN
-       !
-   ENDIF
-   !
-   ierr     =  0
-   init     = .TRUE.
-   !
-END SUBROUTINE atmproj_tools_init
-
-
-
-
-!**********************************************************
-   LOGICAL FUNCTION file_is_atmproj( filename )
-   !**********************************************************
-   !
-   IMPLICIT NONE
-     !
-     ! check for atmproj fmt
-     !
-     CHARACTER(*)     :: filename
-     !
-     INTEGER          :: nbnd, nkpts, nspin, natomwfc
-     INTEGER          :: ierr
-     LOGICAL          :: lerror
-    
-
-     file_is_atmproj = .FALSE.
-     lerror = .FALSE.
-     !
-     IF ( .NOT. init ) THEN 
-         !
-         CALL atmproj_tools_init( filename, ierr )
-         IF ( ierr/=0 ) lerror = .TRUE. 
-         !
-     ENDIF
-     !
-     IF ( lerror ) RETURN
-     !
-     CALL atmproj_read_ext( filename, NBND=nbnd, NKPT=nkpts, &
-                            NSPIN=nspin, NATOMWFC=natomwfc,  IERR=ierr )
-     IF ( ierr/=0 ) lerror = .TRUE.
-
-     IF ( lerror ) RETURN
-     !
-     file_is_atmproj = .TRUE.
-     !
-  END FUNCTION file_is_atmproj
 
 
 !*************************************************

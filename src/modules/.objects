@@ -30,7 +30,7 @@ objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_paralle
        mod_xc_functionals.o mod_global_XC.o \
        mod_matrix_operate.o mod_D_lattice.o mod_frequency.o \
        mod_vec_operate.o mod_X.o \
-       mod_functions.o  mod_zeros.o mod_pseudo.o \
+       mod_functions.o  mod_zeros.o mod_atom_proj.o mod_pseudo.o \
        mod_QP.o mod_collision_el.o \
        mod_BS.o mod_BS_solvers.o mod_QP_CTL.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
        mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \

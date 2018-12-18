@@ -236,6 +236,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
    !
+   if(iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
+   endif
+   !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
@@ -273,8 +278,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
    X%ng_db=X%ng
    !
-   if (iq==1) call io_control(ACTION=OP_WR_CL,    COM=REP,SEC=(/1,2*iq,2*iq+1/),ID=Xdb)
-   if (iq> 1) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),  ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
    !
    ! CLEAN (1)

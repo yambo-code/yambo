@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,bands,J,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !

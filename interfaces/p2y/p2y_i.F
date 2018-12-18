@@ -189,14 +189,18 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
         !
         if (.not.PAR_IND_wfc_io%element_2D(ib_grp,ik)) cycle
         !
+        if (ifrag==1.and.ib_grp==1) then
+          call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+          io_err=io_WF(ID)
+        endif
+        !
         ! Read a single wfc component from disk
         !
         call p2y_wf(wf_disk,i_sp_pol,ik,ib_grp)
         !
         ! Write the standard wf header
         !
-        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
         io_err=io_WF(ID,wf_disk)
         !
      enddo

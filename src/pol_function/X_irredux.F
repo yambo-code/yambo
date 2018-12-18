@@ -230,7 +230,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 #if !defined _CUDA
  !$omp parallel num_threads(n_out_threads) default(shared), &
  !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
- !$omp &        ig1,ig_row_transp,iw,mutexid,X_rows1,X_rows2,X_cols_transp,X_nrows)
+ !$omp &        ig1,ig_row_transp,iw,mutexid,X_rows1,X_rows2,X_cols1,X_cols2,&
+ !$omp &        X_rows1_l,X_rows2_l,X_cols_transp,X_nrows)
 #endif
  !
  call OPENMP_update(master_thread)

@@ -82,7 +82,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                            X_cols_transp(2),X_rows(2),X_nrows,io_err
+&                            X_cols_transp(2),X_rows(2),X_nrows,io_err,drude_norm(1)
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -234,11 +234,19 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !=======================================
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    !
-   if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
-     !$omp critical
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
-     !$omp end critical
-     call live_timing(steps=1)
+   if (i_cg==1) then
+     drude_norm=0
+     if(Drude_pole) drude_norm=bare_grid_N(i_cg)
+     call PP_redux_wait(drude_norm,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
+   endif
+   !
+   if(Drude_pole) then
+     if(X_par%rows(1)==1.and.X_par%cols(1)==1) then
+       !$omp critical
+       X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(drude_norm(1),SP)
+       !$omp end critical
+     endif
+     if (master_thread) call live_timing(steps=1)
      cycle
    endif
    !

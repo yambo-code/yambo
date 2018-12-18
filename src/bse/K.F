@@ -495,9 +495,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ! skip this block if already done
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
        !
-       ! skip this block if already done
-       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
-       !
        sqrt_f_itp=sqrt(BS_T_grp(i_Tgrp_p)%f(i_Tp))
        !
        i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1)

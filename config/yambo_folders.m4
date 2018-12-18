@@ -42,6 +42,14 @@ for includedir in $IOTK_INCDIRS;   do
   if test $count != 0; then ln -fs $includedir/*iotk*.mod include/system/  ; fi
 done
 #
+ETSF_INCDIRS=`echo "$ETSF_INCS"     | sed "s/$IFLAG/ /g"`
+for includedir in $ETSF_INCDIRS;   do
+  count=`ls -1 $includedir/*etsf*.h   2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*etsf*.h   include/system/  ; fi
+  count=`ls -1 $includedir/*etsf*.mod 2>/dev/null | wc -l`
+  if test $count != 0; then ln -fs $includedir/*etsf*.mod include/system/  ; fi
+done
+#
 NETCDF_INCDIRS=`echo "$NETCDF_INCS" | sed "s/$IFLAG/ /g"`
 NETCDFF_INCDIRS=`echo "$NETCDFF_INCS" | sed "s/$IFLAG/ /g"`
 for includedir in $NETCDF_INCDIRS $NETCDFF_INCDIRS; do

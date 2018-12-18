@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH DS HM
+! Authors (see AUTHORS file for details): CH DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -23,17 +23,35 @@
 !
 subroutine e2y_db1(en,k,ncid)
  !
- use netcdf
- use netcdf_data
+ ! For version 1.0.3 of ETSF library, downloadable from
+ ! http://www.etsf.eu/system/files/etsf_io-1.0.3.tar.gz
+ !
+ ! Note: Current version returns only double precision 
+ ! reals, hence local copies are required. Later version
+ ! may return reals generated on the fly by netCDF.
+ ! The ETSF specs specify double precision storage in the -etsf.nc file.
+ ! --------------------------------------------------
+ ! Note:
+ ! electrons_group%eigenvalues%data3d => en%E ! Not allowed due to type mismatch
+ ! forall(ib=1:en%nb,ik=1:k%nibz,is=1:n_sp_pol) en%E(ib,ik,is) = eigenvalues_(ib,ik,is)
+ ! For splitting (verion 0.5)
+ ! electrons_group%eigenvalues%k_splitted = .false.
+ ! electrons_group%eigenvalues%spin_splitted = .false.
+ ! electrons_group%eigenvalues%k_id =
+ ! electrons_group%eigenvalues%spin_id = 
+ !
+ use etsf_io
+ use etsf_io_low_level
+ use etsf_data
  use pars,                 only : SP, DP, PI, schlen
  use com,                  only : msg, error, warning
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
  use wave_func,            only : wf_ncx
- use R_lattice,            only : ng_vec, bz_samp, nkibz
- use D_lattice,            only : nsym, n_atoms, n_atomic_species
- use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit
+ use R_lattice,            only : bz_samp, nkibz
+ use D_lattice,            only : nsym, n_atomic_species
+ use mod_com2y,            only : print_interface_dimensions,ng_vec_abinit
  !
-#include<memory.h>
+ implicit none
  !
  type(levels),   intent(inout) :: en
  type(bz_samp),  intent(inout) :: k
@@ -42,25 +60,39 @@ subroutine e2y_db1(en,k,ncid)
  ! Work Space
  !
  integer                       :: i1,i2,ik,ib,is
- integer                       :: dimid, netcdf_error
+ !ETSF library stuff
+ logical                       :: lstat ! to get informed on error
+ type(etsf_io_low_error)       :: error_data ! to store informations about errors
 
  call msg('s','Header/K-points/Energies...')
  !
+ ! Dimensions
+ !
+ call etsf_io_dims_get(ncid, dims, lstat, error_data)
+ !
  ! Directly read dimensions
  !
- n_bands  = netcdf_get_dimension(ncid,"max_number_of_states")
- nkibz    = netcdf_get_dimension(ncid,"number_of_kpoints")
- n_spinor = netcdf_get_dimension(ncid,"number_of_spinor_components")
- n_sp_pol = netcdf_get_dimension(ncid,"number_of_spins")
- n_atoms  = netcdf_get_dimension(ncid,"number_of_atoms")
- wf_ncx   = netcdf_get_dimension(ncid,"max_number_of_coefficients")
- n_atomic_species = netcdf_get_dimension(ncid,"number_of_atom_species")
-
+ en%nb    = dims%max_number_of_states
+ k%nibz   = dims%number_of_kpoints 
+ n_spinor = dims%number_of_spinor_components 
+ n_sp_pol = dims%number_of_spins
+ n_atomic_species = dims%number_of_atom_species
+ if(trim(ETSF_kind)=='KSS') ng_vec_abinit = dims%max_number_of_coefficients
+ if(trim(ETSF_kind)=='WFK') wf_ncx        = dims%max_number_of_coefficients
+ !
+ ! Derived YAMBO dimensions
+ !
  n_spin  = max(n_spinor, n_sp_pol)
- k%nibz = nkibz
- en%nb  = n_bands
- ng_vec = wf_ncx
+ nkibz   = k%nibz
+ n_bands = en%nb
  call msg("l","done")
+ !>>>DEBUG
+ ! call msg('s',':: K-points              :',k%nibz)
+ ! call msg('s',':: Bands                 :',en%nb)
+ ! call msg('s',':: Spin  [components/pol]:',(/n_spinor,n_sp_pol/))
+ ! call msg('s',':: Max WF components     :',wf_ncx) 
+ ! call msg('s',':: Atomic species        :',n_atom_species)
+ !<<<DEBUG
  !
  ! Geometry (must appear first, in order to define alat)
  !
@@ -82,21 +114,17 @@ subroutine e2y_db1(en,k,ncid)
  !
  ! PP 
  !
- call msg('s','Pseudopotential...')
- if(trim(NETCDF_kind)=='KSS') call import_gwdata_group_kss
- if(trim(NETCDF_kind)=='WFK') call import_gwdata_group_wfk
- call msg('l','done')
+ if(trim(ETSF_kind)=='KSS') call import_gwdata_group
+ if(trim(ETSF_kind)=='WFK') call warning('Commutator not supported. You need a KSS file to include it.')
  !
  ! G-vectors grids and indices
  !
- if(trim(NETCDF_kind)=='KSS') call import_basisdata_group_kss
- if(trim(NETCDF_kind)=='WFK') call import_basisdata_group_wfk
+ call import_basisdata_group
  call msg('s','RL vectors...done')
  !
  ! All other data
  !
  call import_miscellaneous_data
- call msg('s','Misc data...done')
  !
  ! Report
  !
@@ -106,6 +134,24 @@ subroutine e2y_db1(en,k,ncid)
 
 contains
  
+  !=------------------------------------------------------------------!
+  ! All import blocks have the following structure:                   !
+  !                                                                   !
+  ! 1 - Allocate targets for data to be read according to dimensions  !
+  !     in specifications                                             ! 
+  !                       [call allocate_XXX_group ]                  !
+  !                                                                   !
+  ! 2 - Point library variable to local target variables              !
+  !                       [ group%x => x_ ]                           !
+  !                                                                   !
+  ! 3 - Call the library for this group of variables                  !
+  !                       [ call etsf_io_XXX_get ]                    !
+  !                                                                   !
+  ! 4 - Copy target variables to YAMBO variables, allocating and       !
+  !     processing where representations differ                       !
+  !                       [ yambo_x = x_ ]                             !
+  !=------------------------------------------------------------------!
+
   !
   ! Geometry group subroutines
   !
@@ -113,32 +159,36 @@ contains
     use vec_operate,          only : cross_product
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                    DL_vol, a, alat, &
-&                                    n_atomic_species,n_atoms_species,&
-&                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
-    use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor
+&                                  DL_vol, a, alat, &
+&                                  n_atomic_species,n_atoms_species,&
+&                                  n_atoms_species_max,atom_pos, Z_species
+    use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
     implicit none
+    type(etsf_geometry)           :: geometry_group
     logical                       :: l_identity, l_inversion
     real(SP)                      :: lsop(3,3), cp(3)
-    integer                       :: a_nsym, a_species
+    integer                       :: a_nsym
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
-    integer,  allocatable, target :: atom_species_(:)
-    real(SP), allocatable, target :: reduced_atom_positions_(:,:)
 
-    integer :: varid
+    call allocate_geometry_group
 
+    geometry_group%primitive_vectors         => primitive_vectors_
+    geometry_group%reduced_symmetry_matrices => reduced_symmetry_matrices_
+    geometry_group%reduced_atom_positions    => reduced_atom_positions_
+    geometry_group%atom_species              => atom_species_
+    geometry_group%chemical_symbols          => chemical_symbols_
+    geometry_group%atomic_numbers            => atomic_numbers_
+
+    call etsf_io_geometry_get(ncid, geometry_group, lstat, error_data)
     !
     ! Lattice vectors
     !
-    varid = netcdf_inquire_varid(ncid, "primitive_vectors")
-    netcdf_error = nf90_get_var(ncid, varid, a)
-    call netcdf_check(ncid,netcdf_error,varid)
-
-    a(:,:) = transpose(a(:,:))
+    a(:,:) = transpose(primitive_vectors_(:,:))
     alat(1) = alat_mult_factor*maxval( abs( a(1,:) ))
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
+!   call msg('s',':: Lattice factors [a.u.]:',alat)
     cp = cross_product(a(2,:),a(3,:))
     do i1 = 1,3
       DL_vol = DL_vol+a(1,i1)*cp(i1)
@@ -154,59 +204,43 @@ contains
     ! n_atoms         n_atoms(n_atom_species) : number of atoms for each atom species
     ! atom_pos        the positions
     !
-    YAMBO_ALLOC( atom_species_, (n_atoms) )
-    YAMBO_ALLOC( reduced_atom_positions_, (3,n_atoms ) )
-    YAMBO_ALLOC( n_atoms_species, (n_atomic_species) )
-
-    varid = netcdf_inquire_varid(ncid, "atom_species")
-    netcdf_error = nf90_get_var(ncid, varid, atom_species_)
-    call netcdf_check(ncid,netcdf_error,varid)
-
-    varid = netcdf_inquire_varid(ncid, "reduced_atom_positions")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_atom_positions_)
-    call netcdf_check(ncid,netcdf_error,varid)
-
+    allocate( n_atoms_species(n_atomic_species) )
+    !
     ! Determine n_atoms_max
+    !
     n_atoms_species(:) = 0 
-    do i1 = 1, n_atoms
-      a_species = atom_species_(i1)
-      n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
+    do i1 = 1, dims%number_of_atoms
+      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
     enddo
     n_atoms_species_max = maxval(n_atoms_species)
-
+    !
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
+    !
     n_atoms_species(:) = 0 
-    YAMBO_ALLOC( atom_pos, (3, n_atoms_species_max, n_atomic_species) )
-    do i1 = 1, n_atoms
-      a_species = atom_species_(i1)
-      n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
-      atom_pos(:, n_atoms_species( a_species ) , a_species ) = &
+    allocate( atom_pos(3, n_atoms_species_max, n_atomic_species) )
+    do i1 = 1, dims%number_of_atoms
+      n_atoms_species( atom_species_(i1) ) = n_atoms_species( atom_species_(i1) ) + 1
+      atom_pos(:, n_atoms_species( atom_species_(i1) ) , atom_species_(i1) ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
     enddo
-    YAMBO_FREE( reduced_atom_positions_ )
-    YAMBO_FREE( atom_species_ )
-
     !
     ! Atomic species data
     !
-    YAMBO_ALLOC( Z_species, (n_atomic_species) )
-    varid = netcdf_inquire_varid(ncid, "atomic_numbers")
-    netcdf_error = nf90_get_var(ncid, varid, Z_species)
-    call netcdf_check(ncid,netcdf_error,varid)
-
+    allocate( Z_species(n_atomic_species) )
+    do i1 = 1, n_atomic_species
+      Z_species(i1) = atomic_numbers_( i1 )
+    enddo
     !
     ! Symmetry 
     !
-    netcdf_error = nf90_inq_dimid(ncid, "number_of_symmetry_operations", dimid)
-    netcdf_error = nf90_inquire_dimension(ncid, dimid, len = a_nsym)
-
-    YAMBO_ALLOC( asop, (3,3,a_nsym) )
-    varid = netcdf_inquire_varid(ncid, "reduced_symmetry_matrices")
-    netcdf_error = nf90_get_var(ncid, varid, asop)
-    call netcdf_check(ncid,netcdf_error,varid)
-
+    a_nsym   = dims%number_of_symmetry_operations
+    allocate( asop(3,3,a_nsym) )
+    do is=1,a_nsym
+      asop(:,:,is) = reduced_symmetry_matrices_(:,:,is) 
+    enddo
     call symmetries_check_and_load(asop,a_nsym)
 
+    call deallocate_geometry_group
     return
   end subroutine import_geometry_group
 
@@ -214,335 +248,170 @@ contains
   subroutine import_electrons_group
     use electrons,            only : default_nel
     implicit none
-    integer :: varid
-    real(SP), allocatable, target :: eigenvalues_(:,:,:)
+    type(etsf_electrons)          :: electrons_group
 
-    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol ) )
+    call allocate_electrons_group
+    electrons_group%number_of_electrons      => number_of_electrons_
+    electrons_group%eigenvalues%data3d => eigenvalues_ 
 
-    varid = netcdf_inquire_varid(ncid, "number_of_electrons")
-    netcdf_error = nf90_get_var(ncid, varid, default_nel)
-    call netcdf_check(ncid,netcdf_error,varid)
-
-    varid = netcdf_inquire_varid(ncid, "eigenvalues")
-    netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
-    call netcdf_check(ncid,netcdf_error,varid)
-
+    call etsf_io_electrons_get(ncid, electrons_group, lstat, error_data)
+    if (.not. lstat) call etsf_long_error(error_data)
+    default_nel = number_of_electrons_
+    default_nel = -1  ! Until fixed in ETSF file. Is calculated later.
     !
     ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
     !
-    YAMBO_ALLOC( en%E, (en%nb, k%nibz, n_spin) )
+    allocate( en%E(en%nb, k%nibz, n_spin) )
     en%E(:,:,1:n_sp_pol) = eigenvalues_(:,:,1:n_sp_pol)     ! Type conversion
     if(n_spinor==2) en%E(:,:,2) = en%E(:,:,1)
 
-    YAMBO_FREE(eigenvalues_)
-
+    call deallocate_electrons_group
+    ! Note that functional information is read in 'miscellaneous' section
     return
   end subroutine import_electrons_group
-
-
-  subroutine import_basisdata_group_kss
+  !
+  ! Wavefunction grids: l_KSS == (k-dependent = no)
+  !===========================================================
+  subroutine import_basisdata_group
     !
     use vec_operate,          only : sort, iku_v_norm
     use R_lattice,            only : g_vec, b, ng_vec
     use D_lattice,            only : alat, i_space_inv, i_time_rev
-    use wave_func,            only : wf_nc_k, wf_igk, wf_ncx, wf_ng
+    use wave_func,            only : wf_nc_k, wf_igk,wf_ncx,wf_ng
     !
     implicit none
     !
-    integer                        :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
-    integer                        :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
-    integer,   allocatable         :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
-    integer,   allocatable         :: G_mod_indx(:)
-    logical                        :: gamma_only,l_new
-    logical,   allocatable         :: l_g_mapped(:)
-    real(SP)                       :: ecut, norm_2
-    real(SP),  allocatable         :: G_mod(:), g_vec_tmp(:,:)
-    integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
+    type(etsf_basisdata)          :: basisdata_group
+    integer                       :: g_lim(6), gtotmax, ig_wf, ng_vec_old, ig, ic, ik, g_vec_new(3)
+    integer,     allocatable      :: g_vec_tmp(:,:)
+    real(SP),    allocatable      :: G_mod(:),g_vec_sort(:,:)
+    integer,     allocatable      :: wf_igk_tmp(:,:),G_mod_indx(:)
+    logical                       :: gamma_only,l_new
+    logical,     allocatable      :: l_g_mapped(:)
+    character(len=15)             :: format1
     !
-    YAMBO_ALLOC( istwfk, (k%nibz) )
-    YAMBO_ALLOC( wf_nc_k, (k%nibz) )
-    allocate( reduced_coordinates_of_plane_waves(3,wf_ncx,k%nibz) )
-    YAMBO_ALLOC( wf_igk, (wf_ncx,k%nibz) )
+    call allocate_basisdata_group
     !
-    varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
-    netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
-    call netcdf_check(ncid,netcdf_error,varid)
+    if(trim(ETSF_kind)=='KSS') &
+&     basisdata_group%reduced_coordinates_of_plane_waves%data2d => reduced_coordinates_of_plane_waves_KSS_
+    if(trim(ETSF_kind)=='WFK') &
+&     basisdata_group%reduced_coordinates_of_plane_waves%data3d => reduced_coordinates_of_plane_waves_WFK_
+    basisdata_group%number_of_coefficients  => number_of_coefficients_
     !
-    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
-    call netcdf_check(ncid,netcdf_error,varid)
+    call etsf_io_basisdata_get(ncid, basisdata_group, lstat, error_data)
     !
-    YAMBO_ALLOC( g_vec, (wf_ncx,3) )
-    do i1=1,wf_ncx
-      g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves(:,i1,1))*alat(:)/2.0_SP/pi
-    enddo
-    !
-    ng_vec=wf_ncx
-    gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
-    if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
-      call msg('s','Closing shells against inversion...')
-      call G_rot_grid(-1,'extend_grid')
-      call msg('l','done')
-      if(ng_vec/=wf_ncx) call msg('s',':: ng_vec was increased to close the G-shells')
+    if(trim(ETSF_kind)=='KSS') then
+      !
+      allocate( g_vec(ng_vec_abinit,3) )
+      do i1=1,ng_vec_abinit
+        g_vec(i1,:)=matmul(transpose(b),reduced_coordinates_of_plane_waves_KSS_(:,i1))*alat(:)/2.0_SP/pi
+      enddo
+      !
+      ng_vec=ng_vec_abinit
+      !
+      gamma_only=(nkibz==1 .and. all(k%pt(1,:)==0.) )
+      !
+      if( i_time_rev==1 .or. i_space_inv==1 .and. .not.gamma_only) then
+        call msg('s','Closing shells against inversion...')
+        call G_rot_grid(-1,'extend_grid')
+        call msg('l','done')
+        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+      endif
+      !
+      call e2y_wf_components(ncid)
+      !
     endif
     !
-    wf_igk=-1
-    do ik=1,nkibz
-      do ig=1,wf_nc_k(ik)
-        wf_igk(ig,ik)=ig
+    if(trim(ETSF_kind)=='WFK') then
+      !
+      allocate( wf_nc_k(k%nibz), wf_igk(wf_ncx,k%nibz) )
+      wf_nc_k = basisdata_group%number_of_coefficients
+      wf_igk=-1
+      !
+      ! First guess: G vectors= gvectors at gamma
+      ng_vec = wf_nc_k(1) 
+      allocate(g_vec_tmp(2*wf_ncx,3))
+      !
+      do ic=1,wf_nc_k(1)
+        wf_igk(ic,1)=ic
+        ig=wf_igk(ic,1)
+        g_vec_tmp(ig,:)=reduced_coordinates_of_plane_waves_WFK_(:,ic,1)
       enddo
-    enddo
-    wf_ng=maxval(wf_igk)
+      !
+      do ik=2,k%nibz
+        ng_vec_old=ng_vec
+        allocate(l_g_mapped(ng_vec_old))
+        l_g_mapped=.false.
+        do ic=1,wf_nc_k(ik)
+          g_vec_new=reduced_coordinates_of_plane_waves_WFK_(:,ic,ik)
+          l_new=.true.
+          do ig=1,ng_vec_old
+            if(l_g_mapped(ig)) cycle
+            if( all(g_vec_tmp(ig,:)-g_vec_new(:)==0) ) then
+              l_new=.false.
+              l_g_mapped(ig)=.true.
+              wf_igk(ic,ik)=ig
+              exit
+            endif
+          enddo
+          if(.not.l_new) cycle
+          ng_vec=ng_vec+1
+          g_vec_tmp(ng_vec,:)=g_vec_new
+          wf_igk(ic,ik)=ng_vec
+        enddo
+        deallocate(l_g_mapped)
+      enddo
+      !
+      ng_vec_abinit=ng_vec
+      !
+      allocate(g_vec(ng_vec,3))
+      do ig=1,ng_vec
+        g_vec(ig,:3)=matmul(transpose(b),g_vec_tmp(ig,:3))*alat(:)/2.0_SP/pi
+      enddo
+      deallocate(g_vec_tmp)
+      !
+      if(nsym>1) then
+        call msg('s','Closing shells against symmetries...')
+        do is=2,nsym
+          call G_rot_grid(is,'extend_grid')
+        enddo
+        call msg('l','done')
+        if(ng_vec/=ng_vec_abinit) call msg('s',':: ng_vec was increased to close the G-shells')
+      endif
+      !
+      ! Re-ordering by increasing module
+      !==================================
+      ! indx_m1 (j) went to position indx_m1(j)
+      ! indx    (i) before was in position indx(i) 
+      allocate(G_mod(ng_vec),G_mod_indx(ng_vec))
+      do ig=1,ng_vec
+        G_mod(ig)=iku_v_norm(g_vec(ig,:))
+      enddo
+      call sort(G_mod,indx_m1=G_mod_indx)
+      deallocate(G_mod)
+      !
+      allocate(g_vec_sort(ng_vec,3))
+      g_vec_sort=g_vec
+      g_vec(G_mod_indx(:ng_vec),:3)=g_vec_sort(:ng_vec,:3)
+      deallocate(g_vec_sort)
+      !
+      ! Sort wf_igk accordingly
+      allocate( wf_igk_tmp(wf_ncx,k%nibz) )
+      wf_igk_tmp=wf_igk
+      wf_igk=-1
+      do ik=1,k%nibz
+        wf_igk(:wf_nc_k(ik),ik)=G_mod_indx(wf_igk_tmp(:wf_nc_k(ik),ik))
+      enddo
+      deallocate( wf_igk_tmp,G_mod_indx )
+      wf_ng=maxval(wf_igk)
+      !
+    endif
+    !
+    call deallocate_basisdata_group
     !
     return
     !
-  end subroutine import_basisdata_group_kss
-
-
-
-  subroutine import_basisdata_group_wfk
-    !
-    use com,                  only : error
-    use vec_operate,          only : sort, iku_v_norm
-    use R_lattice,            only : g_vec, b, ng_vec
-    use D_lattice,            only : alat, i_space_inv, i_time_rev
-    use wave_func,            only : wf_nc_k, wf_igk, wf_ncx, wf_ng
-    !
-    implicit none
-    !
-    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
-    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
-    integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
-    integer,     allocatable      :: G_mod_indx(:)
-    logical                       :: gamma_only,l_new
-    real(SP)                      :: ecut, norm_2, b_transpose(3,3)
-    real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
-    integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
-    !
-    YAMBO_ALLOC( istwfk, (k%nibz) )
-    YAMBO_ALLOC( wf_nc_k, (k%nibz) )
-    allocate( reduced_coordinates_of_plane_waves(3,wf_ncx,k%nibz) )
-    !
-    varid = netcdf_inquire_varid(ncid, "number_of_coefficients")
-    netcdf_error = nf90_get_var(ncid, varid, wf_nc_k)
-    call netcdf_check(ncid,netcdf_error,varid)
-    !
-    wf_ncx = maxval(wf_nc_k) 
-    YAMBO_ALLOC( wf_igk, (wf_ncx,k%nibz) )
-    !
-    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_plane_waves")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_plane_waves)
-    call netcdf_check(ncid,netcdf_error,varid)
-    !
-    ! the mapping wf_igk(wf_ncx,k%nibz) brings the WF component at each k-point to
-    ! a gamma centered G-vector sphere
-    !
-    ! the mapping is found by:
-    !   1. Generate a G-sphere that accomodates all the G components
-    !   2. Put this G-sphere into a big box using the 'gsphere_abinit' 
-    !      routine and obtain mapping G-sphere to components
-    !      map_gamma :  xyz -> npw
-    !   3. Put the G-vectors associated to each K-point in the same big box 
-    !      using 'gsphere_abinit' and obtain mapping G-sphere to components
-    !      inv_map_k :  npw -> xyz
-    !   4. Use the mappings 2 and 3 to generate wf_igk mapping
-    !       inv_map_k    map_gamma
-    !      npw -> xyz   xyz -> npw
-    ! TODO: handle the istwfk /= 1 cases
-    !
-   
-    ! 1.
-    ! Get dimensions of sphere
-    ecut = 1
-   
-    max_nx = 0
-    max_ny = 0
-    max_nz = 0
-    do ik=1,k%nibz
-      !write(*,*) ik, wf_nc_k(ik)
-      max_nx = max(max_nx,maxval(reduced_coordinates_of_plane_waves(1,:,ik)))
-      max_ny = max(max_ny,maxval(reduced_coordinates_of_plane_waves(2,:,ik)))
-      max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves(3,:,ik)))
-    end do
-    !write(*,*) max_nx, max_ny, max_nz
-    n1 = 4*max_nx
-    n2 = 4*max_ny
-    n3 = 4*max_nz
-   
-    ! Calculate G-vectors inside the sphere
-    b_transpose = transpose(b)
-    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
-    YAMBO_ALLOC( g_vec_tmp, (max_size,3) )
-    YAMBO_ALLOC( igk_tmp, (3,max_size) )
-    npw = 0
-    do i1=-n1,n1
-      do i2=-n2,n2
-        do i3=-n3,n3
-          igv = [i1,i2,i3]
-          g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
-          norm_2 = g_vec_tmp1(1)**2.0_SP + &
-                   g_vec_tmp1(2)**2.0_SP + &
-                   g_vec_tmp1(3)**2.0_SP
-          if (ecut .gt. 0.25_SP*norm_2) then
-              npw = npw+1
-              igk_tmp(:,npw) = igv
-              g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
-          end if
-          !this check is not needed anymore in principle
-          if (npw > max_size) then
-              call error('an error has occurred: npw > max_size')
-          end if
-        end do
-      end do
-    end do
-    ng_vec = npw
-   
-    ! can sort the G vectors in whatever way here
-    YAMBO_ALLOC(G_mod,(ng_vec))
-    YAMBO_ALLOC(G_mod_indx,(ng_vec))
-    do ig=1,ng_vec
-      G_mod(ig)=iku_v_norm(g_vec_tmp(ig,:))
-    enddo
-    call sort(G_mod,indx_m1=G_mod_indx)
-    YAMBO_FREE(G_mod)
-    !
-    YAMBO_ALLOC(g_vec,(ng_vec,3))
-    YAMBO_ALLOC(igk,(3,ng_vec))
-    g_vec(G_mod_indx(:ng_vec),:3)=g_vec_tmp(:ng_vec,:3)
-    igk(:3,G_mod_indx(:ng_vec))=igk_tmp(:3,:ng_vec)
-    YAMBO_FREE(g_vec_tmp)
-    YAMBO_FREE(igk_tmp)
-   
-    ! 2.
-    allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-    open(2,file='gs.dat')
-    do ic=1,ng_vec
-      write(2,*) igk(:,ic)
-    end do
-    call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
-   
-    ! 3.
-    ! Same thing but for the K-dependent G-spheres     
-    ! Get storage type of the wavefunctions
-    varid = netcdf_inquire_varid(ncid, "istwfk")
-    netcdf_error = nf90_get_var(ncid, varid, istwfk)
-    call netcdf_check(ncid,netcdf_error,varid)
-    if (.not.all(istwfk==1)) call error('istwfk /= 1 found. Please set istwfk *1 in the Abinit input file and rerun') 
- 
-    wf_igk = -1
-    do ik=1,k%nibz
-      npw = wf_nc_k(ik)
-      write(2,*)
-      write(2,*)
-      do ic=1,npw
-        write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
-      end do
-      call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
-      ! 4.
-      ! Do the wf_igk mapping
-      do ic=1,wf_nc_k(ik)
-        i1 = inv_map_k(1,ic)
-        i2 = inv_map_k(2,ic)
-        i3 = inv_map_k(3,ic)
-        npw = map_gamma(i1,i2,i3)
-        !write(*,*) ic, npw
-        if (npw .eq. -1) then
-            write(*,*) 'no mapping found', ic, 'to', i1,i2,i3
-            call exit(0)
-        end if
-        wf_igk(ic,ik) = npw
-      end do
-    end do
-    !
-    wf_ng=maxval(wf_igk)
-    !
-    !
-    return
-    !
-  end subroutine import_basisdata_group_wfk
-
-
-  !
-  ! Routine inspired in gsphere routine in
-  ! abinit/src/52_fft_mpi_noabirule/m_fftcore.F90
-  ! with important input from Matteo Giantomassi
-  ! 
-  ! Maps G vectors defined in the kg_k to a fftbox of n1,n2,n3
-  !
-  subroutine gsphere_abinit(n1,n2,n3,kg_k,npw,istwf_k,map,inv_map)
-
-  implicit none
-
-  !Arguments ------------------------------------
-  !scalars
-  integer,intent(in)  :: istwf_k,n1,n2,n3,npw
-  !arrays
-  integer,intent(in)  :: kg_k(3,npw)
-  integer,optional,intent(out) :: map(n1,n2,n3)
-  integer,optional,intent(out) :: inv_map(3,npw)
-
-  !Local variables-------------------------------
-  !scalars
-  integer :: i1,i1inv,i2,i2inv,i3,i3inv,id1,id2,id3,idat,ipw
-  !arrays
-  !integer :: i1inver(n1),i2inver(n2),i3inver(n3)
-
-  !In the case of special k-points, invariant under time-reversal,
-  !but not Gamma, initialize the inverse coordinates. !Remember indeed that
-  !
-  !  u_k(G) = u_{k+G0}(G-G0); u_{-k}(G) = u_k(G)^* and therefore:
-  !  u_{G0/2}(G) = u_{G0/2}(-G-G0)^*.
-
-  !if (istwf_k>=2) then
-  !  if(istwf_k==2 .or. istwf_k==4 .or. istwf_k==6 .or. istwf_k==8)then
-  !    i1inver(1)=1
-  !    do i1=2,n1
-  !      i1inver(i1)=n1+2-i1
-  !    end do
-  !  else
-  !    do i1=1,n1
-  !      i1inver(i1)=n1+1-i1
-  !    end do
-  !  end if
-  !  if(istwf_k>=2 .and. istwf_k<=5)then
-  !    i2inver(1)=1
-  !    do i2=2,n2
-  !      i3inver(i2)=n2+2-i2
-  !    end do
-  !  else
-  !    do i2=1,n2
-  !      i2inver(i2)=n2+1-i2
-  !    end do
-  !  end if
-  !  if(istwf_k==2 .or. istwf_k==3 .or. istwf_k==6 .or. istwf_k==7)then
-  !    i3inver(1)=1
-  !    do i3=2,n3
-  !      i3inver(i3)=n3+2-i3
-  !    end do
-  !  else
-  !    do i3=1,n3
-  !      i3inver(i3)=n3+1-i3
-  !    end do
-  !  end if
-  !end if
-
-  ! TODO: handle the istwfk /= 1 cases
-  ! create mapping from G sphere to box
-  if (present(map))     map = -1
-  if (present(inv_map)) inv_map = -1
-  do ipw=1,npw
-    i1=kg_k(1,ipw); if(i1<0)i1=i1+n1; i1=i1+1
-    i2=kg_k(2,ipw); if(i2<0)i2=i2+n2; i2=i2+1
-    i3=kg_k(3,ipw); if(i3<0)i3=i3+n3; i3=i3+1
-
-    if (present(map)    ) map(i1,i2,i3)  = ipw
-    if (present(inv_map)) inv_map(:,ipw) = [i1,i2,i3]
-  end do
-
-  end subroutine
-
-
-
+  end subroutine import_basisdata_group
   !
   ! K-points (convert to new units)
   !===========================================================
@@ -550,141 +419,70 @@ contains
     use R_lattice,            only : b
     use D_lattice,            only : alat
     implicit none
-    integer :: varid
-    real(SP), allocatable :: reduced_coordinates_of_kpoints(:,:)
+    type(etsf_kpoints)            :: kpoints_group
+
+    call allocate_kpoints_group
+
+    kpoints_group%reduced_coordinates_of_kpoints => reduced_coordinates_of_kpoints_
+
+    call etsf_io_kpoints_get(ncid, kpoints_group, lstat, error_data)
     !
-    allocate(reduced_coordinates_of_kpoints(3, k%nibz))
+    ! Note here the indices are reversed in YAMBO.
+    ! However, could map directly using low level
+    ! etsf_io_low_read_var routine, if type conversion problem was absent
     !
-    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
-    netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints)
-    call netcdf_check(ncid,netcdf_error,varid)
-    !
-    YAMBO_ALLOC(k%pt,(k%nibz,3))
+    allocate(k%pt(k%nibz,3))
     do ik = 1,k%nibz
-      k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints(:,ik))*alat(:)/2.0_SP/pi
+      k%pt(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints_(:,ik))*alat(:)/2.0_SP/pi
     enddo
-    !
-    deallocate(reduced_coordinates_of_kpoints)
+
+    call deallocate_kpoints_group
     return
   end subroutine import_kpoints_group
 
   !
-  ! GW data from KSS file
+  ! GW data
   !===========================================================
-  subroutine import_gwdata_group_kss
-    use netcdf_data
-    use D_lattice,             only : n_atomic_species
-    use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
-&                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
-&                                     pp_table,l_many_proj,pp_n_l_max
-#include<memory.h>
-    real(SP),allocatable :: pp_kbs_(:,:)
-    integer :: max_number_of_angular_momenta,max_number_of_projectors
-    integer :: ia, nproj, ip, il, varid, start(3), count(3)
-    !
-    ! Get kb related dimensions
-    !
-    max_number_of_angular_momenta = netcdf_get_dimension(ncid,"max_number_of_angular_momenta")
-    max_number_of_projectors      = netcdf_get_dimension(ncid,"max_number_of_projectors")
-    !
-    pp_n_l_max            = max_number_of_angular_momenta
-    pp_n_l_times_proj_max = max_number_of_angular_momenta!max_number_of_projectors
-    !
-    call PP_alloc_abinit()
-    YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
-    YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
-    pp_n_l_comp(:)=pp_n_l_max
-    !
-    ! [TODO: RECOVER THIS]
-    !
-    nproj = pp_n_l_times_proj_max/pp_n_l_max
-    do ia=1,n_atomic_species
-      do il=1,pp_n_l_max ! loop over l
-        do ip=1,nproj ! loop over nproj
-          pp_table(1,ia,il*(nproj-1)+ip)=il  !  l+1
-          pp_table(2,ia,il*(nproj-1)+ip)=ip  !  n_proj
-          pp_table(3,ia,il*(nproj-1)+ip)=1   !  i_spin
-        enddo
-      enddo
-    enddo
-    !
-    ! Form factor signs
-    !
-    allocate(pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species ))
-    start = [1,1,1]
-    count = [1,pp_n_l_times_proj_max,n_atomic_species]
-    varid = netcdf_inquire_varid(ncid, "kb_formfactor_sign")
-    netcdf_error = nf90_get_var(ncid, varid, pp_kbs_, start=start, count=count)
-    call netcdf_check(ncid, netcdf_error, varid, "kb_formfactor_sign")
-    call netcdf_check(ncid,netcdf_error,varid)
-    forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
-&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
-    YAMBO_FREE(pp_kbs_)
-    !
-    return
-  end subroutine import_gwdata_group_kss
-
-
+  ! Note that kbpp data is read and converted separately (split) over k-point,
+  ! therefore is not done here. Use of pointers is left here for completeness.
+  ! This routine must be called, however, to set pp_n_l_comp array.
   !
-  ! GW data from WFK file
-  !===========================================================
-  subroutine import_gwdata_group_wfk
-    use netcdf_data
-    use pars,                  only : SP
+  subroutine import_gwdata_group
     use D_lattice,             only : n_atomic_species
-    use wave_func,             only : wf_ncx
-    use pseudo,                only : PP_alloc_abinit, pp_n_l_times_proj_max,&
-&                                     pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
-&                                     pp_table,l_many_proj,pp_n_l_max
-#include<memory.h>
-    real(SP),allocatable :: pp_kbs_(:,:)
-    integer :: lmnmax
-    integer, allocatable :: indlmn(:,:,:)
-    integer :: ia, nproj, ip, varid
-    !
-    ! Get kb related dimensions
-    !
-    lmnmax                = netcdf_get_dimension(ncid,"lmnmax")
-    pp_n_l_times_proj_max = lmnmax
-    !
-    ! read abinit indlmn
-    !
-    allocate(indlmn(6,lmnmax,n_atomic_species))
-    varid = netcdf_inquire_varid(ncid, "indlmn")
-    netcdf_error = nf90_get_var(ncid, varid, indlmn)
-    call netcdf_check(ncid, netcdf_error, varid, "indlmn")
-    !
-    !calculate max_number of angular momenta
-    pp_n_l_max = maxval(indlmn(1,:,:))+1
-    !
-    call PP_alloc_abinit()
-    YAMBO_ALLOC(pp_n_l_comp,(n_atomic_species))
-    YAMBO_ALLOC(pp_table,(3,n_atomic_species,pp_n_l_times_proj_max))
+    use pseudo,                only : pp_n_l_times_proj_max,&
+&                                  pp_n_l_comp, pp_kbs,pp_kb,pp_kbd,&
+&                                  pp_table,l_many_proj,pp_n_l_max
+    implicit none
+    type(etsf_gwdata)            :: gwdata_group
+
+    pp_n_l_times_proj_max = dims%max_number_of_angular_momenta
+
+!   call allocate_gwdata_group
+
+!   gwdata_group%kb_formfactors%data5d => kb_formfactors_
+!   gwdata_group%kb_formfactor_derivative%data5d => kb_formfactor_derivative_
+!   gwdata_group%kb_formfactor_sign%data3d => kb_formfactor_sign_
+
+!   call etsf_io_gwdata_get(ncid, gwdata_group, lstat, error_data)
+
+    l_many_proj=.false.
+    pp_n_l_max=abs(pp_n_l_times_proj_max)
+    allocate(pp_n_l_comp(n_atomic_species),&
+&            pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
     pp_n_l_comp(:)=pp_n_l_max
     !
-    do ia=1,n_atomic_species
-      do ip=1,pp_n_l_times_proj_max
-        pp_table(1,ia,ip)=indlmn(1,ip,ia)+1 !  l+1
-        pp_table(2,ia,ip)=indlmn(3,ip,ia)   !  n_proj
-        pp_table(3,ia,ip)=indlmn(6,ip,ia)   !  i_spin
+    ! if "l_many_proj" the table is readen in a2y_wf
+    if(.not.l_many_proj) then
+      do i1=1,pp_n_l_times_proj_max
+        pp_table(1,:,i1)=i1  !  l+1
+        pp_table(2,:,i1)=1   !  n_proj
+        pp_table(3,:,i1)=1   !  i_spin
       enddo
-    enddo
+    endif
     !
-    ! Form factor signs
-    !
-    allocate(pp_kbs_( pp_n_l_times_proj_max,  n_atomic_species ))
-    varid = netcdf_inquire_varid(ncid, "vkbsign")
-    netcdf_error = nf90_get_var(ncid, varid, pp_kbs_)
-    call netcdf_check(ncid, netcdf_error, varid, "vkbsign")
-    forall( ia=1:n_atomic_species, ip=1:pp_n_l_times_proj_max ) &
-&          pp_kbs(ia,ip) = pp_kbs_(ip,ia)
-    YAMBO_FREE(pp_kbs_)
-    !
+    call deallocate_gwdata_group
     return
-  end subroutine import_gwdata_group_wfk
-
-
-
+  end subroutine import_gwdata_group
   !
   ! Miscellaneous data 
   !===========================================================
@@ -697,24 +495,46 @@ contains
     use electrons,            only : l_spin_orbit, default_nel
     use xc_functionals,       only : GS_xc_KIND,GS_xc_FUNCTIONAL
     use mod_xc2y,             only : XC_yamboID, XC_yamboID2kind
-    integer                       :: i1, varid, ixc_
+    integer                       :: i1
     !
     ! Temperature (Abinit)
     !
-    varid = netcdf_inquire_varid(ncid, "tphysel")
-    netcdf_error = nf90_get_var(ncid, varid, input_GS_Tel)
-
+    call etsf_io_low_read_var(ncid, "tphysel", temperature_, lstat)
+    if(lstat) then
+      input_GS_Tel = temperature_ ! type conversion
+    else
+      input_GS_Tel = 0.0_SP
+    endif
+    !
+    ! Number of electrons (Abinit)
+    !
+    allocate(valence_charges_(n_atomic_species))
+    call etsf_io_low_read_var(ncid, "valence_charges", valence_charges_, lstat)
+    if(lstat) then
+      default_nel = 0.
+      do i1 = 1,n_atomic_species
+        default_nel = default_nel + n_atoms_species(i1)*valence_charges_(i1)
+      enddo
+    endif
+    deallocate(valence_charges_)
     !
     ! Spin orbit splitting (Abinit)
     !
-    l_spin_orbit = (n_spin == 2)
-
+    allocate(spin_orbit_atom_(n_atomic_species))
+    call etsf_io_low_read_var(ncid, "so_typat", spin_orbit_atom_, lstat)
+    if(lstat) then
+      l_spin_orbit = .false.
+      if(any(spin_orbit_atom_.eq.2).or.any(spin_orbit_atom_.eq.3)) then
+        l_spin_orbit = .true.
+      endif
+    else
+      l_spin_orbit = .false.
+    endif
+    deallocate(spin_orbit_atom_)
     !
     ! XC functional (Abinit)
     !
-    varid = netcdf_inquire_varid(ncid, "ixc")
-    netcdf_error = nf90_get_var(ncid, varid, ixc_)
-
+    call etsf_io_low_read_var(ncid, "ixc", ixc_, lstat)
     GS_xc_FUNCTIONAL = XC_yamboID('abinit',abinit_func=ixc_)
     GS_xc_KIND = XC_yamboID2kind(GS_xc_FUNCTIONAL)
     return

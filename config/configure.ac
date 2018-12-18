@@ -233,6 +233,7 @@ m4_include([config/netcdf_f90.m4])
 m4_include([config/libxc.m4])
 m4_include([config/fft.m4])
 m4_include([config/iotk.m4])
+m4_include([config/etsf_io.m4])
 m4_include([config/scalapack.m4])
 m4_include([config/petsc_slepc.m4])
 #
@@ -259,6 +260,9 @@ AC_HAVE_NETCDF_F90
 # ============================================================================
 # IOTK library 
 AC_HAVE_IOTK
+# ============================================================================
+# ETSF_IO
+AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC

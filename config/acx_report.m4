@@ -60,6 +60,15 @@ if test "$compile_p2y" = "yes" ; then
   fi
 fi
 #
+ETSF_str=" - "
+if test "$compile_e2y" = "yes" ; then
+  ETSF_str=" E "
+  if test "$internal_etsf" = "yes" ; then
+    if test "$compile_etsf" = "yes" ; then ETSF_str=" Ic"; fi
+    if test "$compile_etsf" = "no"  ; then ETSF_str=" If"; fi
+  fi
+fi
+#
 NETCDF_str=" - "
 if test "$internal_netcdf" = "yes" ; then
   if test "$compile_netcdf" = "yes" ; then NETCDF_str=" Ic"; fi

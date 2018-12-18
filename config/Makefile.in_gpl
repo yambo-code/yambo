@@ -39,7 +39,9 @@ do_fftqe    = @compile_fftqe@
 do_iotk     = @compile_iotk@
 do_hdf5     = @compile_hdf5@
 do_netcdf   = @compile_netcdf@
+do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
+do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
 do_petsc    = @compile_petsc@
 do_slepc    = @compile_slepc@
@@ -61,7 +63,10 @@ CFGFILES = config/setup config/Makefile config/report \
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
-INTERFCS = a2y e2y $(p2y)
+ifeq ($(do_e2y),yes)
+  e2y   = e2y
+endif
+INTERFCS = a2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
@@ -158,6 +163,8 @@ ext-libs:
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
+	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_blacs)" = yes ; then LIBS2DO="blacs" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mklib_ext); fi
 	@+if test "$(do_slk)" = yes ; then LIBS2DO="scalapack" ; \
@@ -215,14 +222,18 @@ yambo_ph: libs
 interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+#a2y: interfcs
+#	@+X2DO="a2y"; XPATH="interfaces/old_a2y"; VPATH="$(topdir)/interfaces/old_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 a2y: interfcs
-	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+	@+X2DO="a2y"; XPATH="interfaces/new_a2y"; VPATH="$(topdir)/interfaces/new_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
 p2y: interfcs
 	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
 endif
+ifeq ($(do_e2y),yes)
 e2y: interfcs
 	@+X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ;
+endif
 #
 # YPP #
 #
@@ -403,6 +414,7 @@ define objects_clean
         -o -name '*_cpp.f' -o -name 'ifc*' -o -name '__*' -o -name '*.s' -o -name 'penmp' \) \
         -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*iotk.*\/Makefile'   | grep -v '.*iotk.*\/*f90' | \
+        grep -v '.*etsf_io.*\/Makefile'| grep -v '.*etsf_io.*\/*f90' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
         grep -v '.*lapack*' | grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*blacs*' |  \
         grep -v '.*scalapack*' | grep -v '.*/lib/slepc*' | \
@@ -420,7 +432,7 @@ define lib_ext_clean
            -o -name 'H5*.h' -o -name 'hdf5*.h' -o -name 'netcdf*h' -o -name 'netcdf*inc' \
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
- @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
@@ -457,7 +469,7 @@ define lib_ext_remove
 endef
 define lib_mod_clean
  find . \( -name '*.a' -o -name '*.la' -o -name '*.mod' \) -type f -print | \
-       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v fftw | xargs rm -f 
+       grep -v hdf5 | grep -v netcdf | grep -v xc | grep -v iotk | grep -v typesize | grep -v etsf_io | grep -v fftw | xargs rm -f 
  @if test -d $(libbindir); then \
   cd $(libbindir) ; rm -f * ; cd .. ; rmdir $(libbindir); \
  fi

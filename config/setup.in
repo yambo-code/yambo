@@ -71,6 +71,8 @@ lfft        = @FFT_LIBS@
 ifft        = @FFT_INCS@
 liotk       = @IOTK_LIBS@
 iiotk       = @IOTK_INCS@
+letsf       = @ETSF_LIBS@
+ietsf       = @ETSF_INCS@
 #
 # VPATH
 #

@@ -143,6 +143,9 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      GW_NEQ_COLL_element(1)%v3_r=rZERO
    endif
    !
+   call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
+   io_err=io_X(X,Xw,ID)
+   !
    do iqbz=1,q%nbz 
      !
      iqibz    =q%sstar(iqbz,1)
@@ -155,12 +158,11 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        call scatter_Gamp(isc,'c')
        !
-       call Io_and_Messaging_switch("-fragments_IO_log")
-       !
        ! I/O
        !
-       if (iqbz ==1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1,2,2*iqibz+1/),ID=ID)
-       if (iqbz>  1) call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
+       call Io_and_Messaging_switch("-fragments_IO_log")
+       !
+       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
        call Io_and_Messaging_switch("+fragments_IO_log")

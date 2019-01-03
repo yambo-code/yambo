@@ -111,6 +111,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    enddo
  endif
  !
+ call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ !
  if(.not.(allocated(Xen%W).or.allocated(Xen%Eo)).or.writing) return
  !
  ! Now I need to correct DIP_P and P_square in case I'll use it

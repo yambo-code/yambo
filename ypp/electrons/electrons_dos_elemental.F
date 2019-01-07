@@ -26,7 +26,7 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp 
- use YPP,            ONLY:DOS_broadening,DOS_E_step,DOS_E_steps
+ use YPP,            ONLY:DOS_broadening,DOS_E_step,DOS_E_steps,l_pdos
  use interfaces,     ONLY:PARALLEL_index,el_density_of_states
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
@@ -52,23 +52,19 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  !==================
  !
  call parser('DOSUsesOcc',USE_occ)
- if (present(FORCE_occ)) then
-   USE_occ=FORCE_occ
- endif
+ if (present(FORCE_occ)) USE_occ=FORCE_occ 
  !
  ! Parallel setup and live_timing
  !================================
  !
  LIVE_t_=.TRUE.
- if (present(QUIET)) then
-   LIVE_t_=.not.QUIET
-   if (QUIET) call IO_and_Messaging_switch("-log")
- endif
+ if (present(QUIET)) LIVE_t_=.not.QUIET
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/DOS_E_steps/))
  !
- if (LIVE_t_) call live_timing('DOS',px%n_of_elements(myid+1))
+ if (.not.LIVE_t_) call IO_and_Messaging_switch("-log")
+ if (     LIVE_t_) call live_timing('DOS',px%n_of_elements(myid+1))
  !
  el_dos=rZERO
  !
@@ -77,21 +73,11 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
    if (.not.px%element_1D(i_E)) cycle
    !
    if (present(WF_fac)) then
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     endif
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_the_DbGd,&
+&                              WF_fac=WF_fac,USE_occupations=USE_occ,PDOS=l_pdos)
    else
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                USE_occupations=USE_occ)
-     endif
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_the_DbGd,&
+&                              USE_occupations=USE_occ,PDOS=l_pdos)
    endif
    !
    if (LIVE_t_) call live_timing(steps=1)

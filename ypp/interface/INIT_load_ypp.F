@@ -151,6 +151,13 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
+ call it('f',defs,'Proj_DOS', 'Print the projected DOS')
+ call it(defs,'PDOS_atoms', 'Select atom number range',PDOS_atoms,verb_level=V_general)
+ call it(defs,'PDOS_kinds', 'Select atom kind   range',PDOS_kinds,verb_level=V_general)
+ call it(defs,'PDOS_l',     'Select angular momentum l range',PDOS_l,verb_level=V_general)
+ call it(defs,'PDOS_j',     'Select angular momentum j range',PDOS_j,verb_level=V_general)
+ call it(defs,'PDOS_m',     'Select angular momentum m range',PDOS_m,verb_level=V_general)
+ !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
  ! GPL_EXCLUDE_START

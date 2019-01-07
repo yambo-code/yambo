@@ -86,8 +86,7 @@ subroutine p2y_atmproj(filename,k)
  enddo
  !
  YAMBO_FREE(atomic_projections)
- YAMBO_FREE(atomic_table
-)
+ YAMBO_FREE(atomic_table)
  !
  contains
    !

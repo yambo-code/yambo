@@ -22,13 +22,16 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                               USE_the_DbGd,USE_Eo,WF_fac,USE_occupations)
+&                               USE_the_DbGd,USE_Eo,WF_fac,USE_occupations,PDOS)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
  use functions,      ONLY:Fermi_fnc_derivative
+#if defined _YPP
+ use YPP,            ONLY:POS_atoms,PDOS_kinds,PDOS_l,PDOS_j,PDOS_m
+#endif
  use electrons,      ONLY:spin,n_sp_pol,n_spinor,n_spin,spin_occ, &
 &                         BZ_DbGd_nkpt,BZ_DbGd_table
  !
@@ -40,7 +43,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  real(SP),   intent(in)  :: dos_E,DOS_broadening
  integer,    intent(in)  :: DOS_bands(2)
  real(SP),   intent(out) :: dos_value(n_spin)
- logical,  optional, intent(in) :: USE_Eo,USE_the_DbGd,USE_occupations
+ logical,  optional, intent(in) :: USE_Eo,USE_the_DbGd,USE_occupations,PDOS
  real(SP), optional, intent(in) :: WF_fac(DOS_bands(1):DOS_bands(2),Xk%nibz,2)
  !
  ! Work space
@@ -71,6 +74,16 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        if (ik_ibz_done(ik)) cycle
        ik_ibz_done(ik)=.true.
      endif
+     !
+#if DEFINED _YPP
+     if(present(PDOS)) then
+       do iproj=1,nproj
+         iatm=
+         iatm=
+         iatm=
+         iatm=
+     endif
+#endif
      !
      do ib=DOS_bands(1),DOS_bands(2)
        !

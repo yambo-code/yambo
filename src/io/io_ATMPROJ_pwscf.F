@@ -68,6 +68,11 @@ integer function io_ATMPROJ_pwscf(ID)
    call io_elemental(ID,I0=n_proj_bands)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
+   if ( (.not.allocated(atomic_table)) .and. read_is_on(ID) ) then
+     YAMBO_ALLOC(atomic_table,(6,n_atom_wfc))
+     atomic_table=0
+   endif
+   !
    varname="ATOM_PROJ_TABLE"
    call def_variable_bulk(ID,trim(varname),1,shape(atomic_table),IP+100)
    call  io_variable_bulk(ID,1,I2=atomic_table)

@@ -29,8 +29,10 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
  use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
-&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental
- use com,            ONLY:msg,of_open_close
+&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
+&                         l_pdos
+ use com,            ONLY:msg,of_open_close,warning
+ use IO_m,           ONLY:OP_RD_CL,REP,io_control
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
@@ -50,6 +52,11 @@ subroutine electrons_dos(Xk,Xen)
  type(levels)          :: GRID_E
  real(SP), external    :: RIntegrate
  !
+ ! I/O
+ !
+ integer           :: io_err
+ integer, external :: io_ATMPROJ_pwscf
+ !
  call section('*','Electronic DOS')
  !
  ! E Double Grid
@@ -58,6 +65,8 @@ subroutine electrons_dos(Xk,Xen)
  l_DbGD=BZ_DbGd_nbands>0
  !
  if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),BZ_DbGd_nbands)
+ !
+ call parser('Proj_DOS',l_pdos)
  !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
@@ -68,6 +77,21 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! DOS on the built-in grid
  !===================================================================
+ !
+ ! Load the PDOS coefficient
+ !-----------------------------
+ if (l_pdos) then
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_ATMPROJ_pwscf(ID)
+   !
+   do is=1,n_sp_pol
+     do ik=1,Xen%nk
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/ik+(is-1)*Xen%nk+1/),ID=ID)
+       io_err=io_ATMPROJ_pwscf(ID)
+     enddo
+   enddo
+   !
+ endif
  !
  if (n_spinor==2) then
    YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
@@ -82,6 +106,8 @@ subroutine electrons_dos(Xk,Xen)
  N_files=1
  !
  if (all(INTERP_grid>0)) then
+   !
+   if (l_pdos) call warning(" PDOS and interpolation not yet implemented")
    !
    N_files=2
    !

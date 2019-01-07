@@ -75,6 +75,15 @@ module YPP
  integer      ::DOS_E_steps    ! Energy steps
  real(SP)     ::DOS_E_step     ! Energy step
  !
+ ! PDOS
+ !
+ logical      ::l_pdos
+ integer      ::PDOS_atoms(2)
+ integer      ::PDOS_kinds(2)
+ integer      ::PDOS_l(2)
+ integer      ::PDOS_j(2)
+ integer      ::PDOS_m(2)
+ !
  ! BANDS
  !
  integer               ::BANDS_bands(2)

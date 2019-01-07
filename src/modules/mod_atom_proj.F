@@ -28,6 +28,8 @@ module atom_proj
  integer  :: n_atom_wfc
  integer  :: n_proj_bands
  !
+ integer,     allocatable :: atomic_table(:,:)
+ !
  complex(SP), allocatable :: atomic_projections(:,:,:,:)
  !
 end module

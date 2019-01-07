@@ -24,7 +24,7 @@
 integer function io_ATMPROJ_pwscf(ID)
  !
  use atom_proj
- use pars,             ONLY:SP,schlen,cZERO
+ use pars,             ONLY:IP,SP,schlen,cZERO
  use electrons,        ONLY:n_sp_pol
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
@@ -68,7 +68,9 @@ integer function io_ATMPROJ_pwscf(ID)
    call io_elemental(ID,I0=n_proj_bands)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
-   if (io_ATMPROJ_pwscf/=0) goto 1
+   varname="ATOM_PROJ_TABLE"
+   call def_variable_bulk(ID,trim(varname),1,shape(atomic_table),IP+100)
+   call  io_variable_bulk(ID,1,I2=atomic_table)
    !
  endif
  !

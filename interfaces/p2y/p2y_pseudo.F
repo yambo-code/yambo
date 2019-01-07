@@ -146,21 +146,23 @@ subroutine p2y_pseudo(k)
  !
  ! write USPP data
  !
+ call qe_pseudo_init()
+ call readpp(input_dft)
+ !
+ call pre_init()
+ call allocate_nlpot()
+ !
  if ( any(atoms%pseudo(:)%is_uspp) ) then
    !
-   call qe_pseudo_init()
-   call readpp(input_dft)
-   !
-   call pre_init()
-   call allocate_nlpot()
    call init_us_1()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_USPP_pwscf(ID)
    !
-!   call PP_uspp_free()
-   !
  endif
+!!
+!call PP_uspp_free()
+!!
  !
  ! cleanup
  !

@@ -14,11 +14,6 @@ MODULE atmproj_tools_module
    use com,                 ONLY:error
    !
    USE parameters,          ONLY : nstrx
-   USE pseudo_types,        ONLY : pseudo_upf 
-   USE uspp_param,          ONLY : upf
-   !USE iotk_module
-   !USE qexml_module
-   !USE qexsd_module
    !
    IMPLICIT NONE 
    PRIVATE
@@ -54,8 +49,6 @@ MODULE atmproj_tools_module
    ! contains:
    !
    PUBLIC :: atmproj_read_ext
-   PUBLIC :: atmproj_get_index
-   PUBLIC :: atmproj_get_natomwfc
 
 CONTAINS
 
@@ -299,66 +292,5 @@ SUBROUTINE atmproj_read_ext ( filein, nbnd, nkpt, nspin, natomwfc, nelec, &
    RETURN
    !
 END SUBROUTINE atmproj_read_ext
-
-
-!************************************************************
-INTEGER FUNCTION atmproj_get_index( i, ia, ityp, natomwfc )
-   !************************************************************
-   !
-   IMPLICIT NONE
-   !
-   INTEGER       :: i, ia, ityp(*), natomwfc(*)
-   !
-   INTEGER       :: ind, iatm, nt
-   CHARACTER(17) :: subname="atmproj_get_index"
-   !
-   IF ( i > natomwfc( ityp(ia)) ) CALL errore(subname,"invalid i",i)
-   !
-   ind = i
-   DO iatm = 1, ia-1
-       !
-       nt = ityp(iatm)
-       ind = ind + natomwfc(nt)
-       !
-   ENDDO
-   !
-   atmproj_get_index = ind
-   !
-END FUNCTION atmproj_get_index
-
-
-!************************************************************
-SUBROUTINE  atmproj_get_natomwfc( nsp, psfile, natomwfc, itypl )
-   !************************************************************
-   !
-   IMPLICIT NONE
-   !
-   INTEGER,           INTENT(IN)  :: nsp
-   TYPE(pseudo_upf),  INTENT(IN)  :: psfile(nsp)
-   INTEGER,           INTENT(OUT) :: natomwfc(nsp)
-   INTEGER, OPTIONAL, INTENT(OUT) :: itypl(nwfcx,nsp)
-   !
-   CHARACTER(20) :: subname="atmproj_get_natomwfc"
-   INTEGER :: nt, nb, il
-   !
-   DO nt = 1, nsp
-       !
-       !IF (PRESENT(indxl)) indxl(0:3,nt) = 0
-       IF (PRESENT(itypl)) itypl(:,nsp) = -1
-       natomwfc(nt)  = 0
-       !
-       DO nb = 1, psfile(nt)%nwfc
-           il = psfile(nt)%lchi(nb)
-           IF ( il > 3 ) CALL errore(subname,"invalid il",il)
-           IF ( psfile(nt)%oc(nb) >= 0.0d0 ) THEN
-               !IF (PRESENT(indxl)) indxl(il,nt) = natomwfc(nt) + 1 
-               IF (PRESENT(itypl)) itypl(natomwfc(nt)+1:natomwfc(nt)+2*il+1,nt) = il
-               natomwfc(nt) = natomwfc(nt) + 2 * il + 1
-           ENDIF
-       ENDDO
-       !
-   ENDDO
-   !
-END SUBROUTINE atmproj_get_natomwfc
 
 END MODULE atmproj_tools_module

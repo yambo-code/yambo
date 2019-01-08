@@ -214,7 +214,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose)
    ! Instead the en%E are out-of-date and are not shifted in OCCUPATIONS_Extend.
    ! This line is to prevent that CBm and VMB are not the same as en%E
    !
-   en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
+   !en%E(:,:,:)=en%E(:,:,:)-Fermi_en%E_Fermi
    !
    call OCCUPATIONS_Extend(Fermi_en,en)
    !

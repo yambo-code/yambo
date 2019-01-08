@@ -74,7 +74,7 @@ subroutine k_special(LIST)
      ! to properly detect special k-points
      ! uncomment the following line
      !
-     !trial_b=b
+     trial_b=b
      !
      SPECIAL_k%nbz=6
      !

@@ -67,7 +67,7 @@ subroutine SC_Energy(E_total,E_Hartree,E_xc_,E,k,rho)
  !
  ! Fermi level contribution to E_total
  !
- E_total=(E%E_Fermi+E_reference%E_Fermi)*nel
+ !E_total=(E%E_Fermi+E_reference%E_Fermi)*nel
  !
  ! Bands energy
  !

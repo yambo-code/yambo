@@ -139,7 +139,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call msg('nr','[SC] Found   accuracy on density      :',rho_convergence)
    call msg('nr','[SC] Found   accuracy on magnetization:',magn_convergence)
    call msg('rn','[SC]                  on energies [ev]:',E_convergence*HA2EV)
-   l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
+   l_SC_cycle=.true. !.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
    ! I can skip the SC cycle

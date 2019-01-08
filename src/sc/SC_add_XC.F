@@ -33,7 +33,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_spin,spin_occ
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -59,6 +59,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  complex(SP)  :: G_sex(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  complex(SP)  :: G_coh(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  !
+ ! tests for excitons
+ !
+ real(SP)                 :: n_exc,ELEC,HOLE
+ !
  type(QP_t)   :: qp_dummy
  !
  ! Fock/SEX/Hartree + COH
@@ -73,6 +77,16 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    !
    ! Now I build the G_collisions rotating the non interaction one
    ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
+   !
+   n_exc=0.1 !/ 1+real(iteration/60,SP))
+   HOLE=sqrt((1._SP-n_exc/3._SP)*spin_occ)
+   ELEC=sqrt((      n_exc      )*spin_occ)
+   do ib=2,4
+     G_sex(ib,ib,1)=cI*HOLE**2
+     !G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
+     !G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
+   enddo
+   G_sex(5,5,1)=cI*ELEC**2
    !
    do ik=1,E%nk
      call OBS_rotate(H_rotation(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)

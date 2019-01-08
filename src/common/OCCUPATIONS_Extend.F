@@ -66,10 +66,10 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  ! in the Fermi routine)
  !
  if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
-   E%E=E%E-E%E_Fermi
-   E%E_VBM =E%E_VBM-E%E_Fermi
-   E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+   !E%E=E%E-E%E_Fermi
+   !E%E_VBM =E%E_VBM-E%E_Fermi
+   !E%E_CBm =E%E_CBm-E%E_Fermi
+   !if (allocated(E%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
    return
  endif
  !
@@ -88,10 +88,10 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    Ef_test=Ef_test+Ef_step
  enddo
  !
- E%E=E%E-E%E_Fermi
- E%E_VBM =E%E_VBM-E%E_Fermi
- E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
+ !E%E=E%E-E%E_Fermi
+ !E%E_VBM =E%E_VBM-E%E_Fermi
+ !E%E_CBm =E%E_CBm-E%E_Fermi
+ !if (allocated(Xe%E_DbGd)) E%E_DbGd =E%E_DbGd -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')

@@ -89,7 +89,10 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
    !
    ! Sort the weights
    !
-   call sort(arrin=A_weight,indx=S_indx)
+   !call sort(arrin=A_weight,indx=S_indx)
+   do neh=1,BS_H_dim
+     S_indx(neh)=neh
+   enddo
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...
@@ -146,7 +149,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
+     !if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
      !
      ikbz = BSS_eh_table(S_indx(neh),1)
      iv = BSS_eh_table(S_indx(neh),2)
@@ -160,7 +163,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
      amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<min_weight*5._SP) cycle
+     !if (A_weight(neh)<min_weight*5._SP) cycle
      !
      if(n_sp_pol==1) then
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&

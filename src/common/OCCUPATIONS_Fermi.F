@@ -263,7 +263,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    !
  enddo
  !
- E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
+ !E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
  ! If %E_DbGd is associated I simply extend the %E occupations to %E_DbGd
  !
@@ -271,13 +271,13 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    ! 
    nel_DbGd=0._SP 
    !
-   E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
+   !E%E_DbGd(:,:,:)=E%E_DbGd(:,:,:)-E%E_Fermi
    do is=1,n_sp_pol
      do ikbz=1,K%nbz
        do i1=1,BZ_DbGd_nkpt(ikbz)
          ik_rand = BZ_DbGd_table(ikbz,i1,1)
          do ib=1,BZ_DbGd_nbands
-           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is),Tel)
+           E%f_DbGd(ib,ik_rand,is)=spin_occ*Fermi_fnc(E%E_DbGd(ib,ik_rand,is)-E%E_Fermi,Tel)
            nel_DbGd=nel_DbGd+E%f_DbGd(ib,ik_rand,is)
          enddo
        enddo

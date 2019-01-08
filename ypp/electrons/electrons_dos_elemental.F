@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
+subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
+                &                  WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
@@ -39,8 +40,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  type(levels),      intent(in)  :: E
  integer,           intent(in)  :: bands(2)
  real(SP),        intent(inout) :: el_dos(:,:),dos_E(:)
+ real(SP), pointer, intent(in)  :: WF_fac(:,:,:)
+ real(SP), pointer, intent(in)  :: PDOS_fac(:,:,:)
  logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
- real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
  !
  ! Work Space
  ! 
@@ -72,13 +74,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   if (present(WF_fac)) then
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_the_DbGd,&
-&                              WF_fac=WF_fac,USE_occupations=USE_occ,PDOS=l_pdos)
-   else
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=USE_the_DbGd,&
-&                              USE_occupations=USE_occ,PDOS=l_pdos)
-   endif
+   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  & ! standard
+&                              USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,& ! optionals
+&                              WF_fac=WF_fac,PDOS_fac=PDOS_fac)                    ! optional pointers
    !
    if (LIVE_t_) call live_timing(steps=1)
    !

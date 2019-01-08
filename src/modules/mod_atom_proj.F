@@ -25,6 +25,8 @@ module atom_proj
  !
  use pars,      ONLY:SP
  !
+ implicit none
+ !
  integer  :: n_atom_wfc
  integer  :: n_proj_bands
  !

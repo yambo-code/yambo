@@ -32,10 +32,10 @@ subroutine electrons_dos(Xk,Xen)
 &                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
 &                         l_pdos
  use com,            ONLY:msg,of_open_close,warning
- use IO_m,           ONLY:OP_RD_CL,REP,io_control
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -45,17 +45,15 @@ subroutine electrons_dos(Xk,Xen)
  ! Work Space
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
- real(SP),allocatable  :: WF_fac(:,:,:)
+ real(SP), external    :: RIntegrate
+ real(SP),pointer      :: WF_fac(:,:,:)       => null()
+ real(SP),pointer      :: WF_fac_int(:,:,:)   => null()
+ real(SP),pointer      :: PDOS_fac(:,:,:)     => null()
+ !
  integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,ID
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
- real(SP), external    :: RIntegrate
- !
- ! I/O
- !
- integer           :: io_err
- integer, external :: io_ATMPROJ_pwscf
  !
  call section('*','Electronic DOS')
  !
@@ -81,25 +79,17 @@ subroutine electrons_dos(Xk,Xen)
  ! Load the PDOS coefficient
  !-----------------------------
  if (l_pdos) then
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_ATMPROJ_pwscf(ID)
-   !
-   do is=1,n_sp_pol
-     do ik=1,Xen%nk
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/ik+(is-1)*Xen%nk+1/),ID=ID)
-       io_err=io_ATMPROJ_pwscf(ID)
-     enddo
-   enddo
-   !
+   YAMBO_ALLOC_P(PDOS_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
+   call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac)
  endif
  !
  if (n_spinor==2) then
-   YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
+   YAMBO_ALLOC_P(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD,WF_fac=WF_fac)
- else
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD)
  endif
+ !
+ call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
+&                             WF_fac=WF_fac,PDOS_fac=PDOS_fac,USE_the_DbGd=l_DbGD)
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
  !===================================================================
@@ -160,11 +150,14 @@ subroutine electrons_dos(Xk,Xen)
    enddo
    !
    if (n_spinor==2) then
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
-&                                 WF_fac=INTERP_obj(ID)%INTERP)
-   else
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
+     !
+     ! associate pointer to matrix
+     !WF_fac_int=INTERP_obj(ID)%INTERP
+     !
    endif
+   ! 
+   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
+&                               WF_fac=WF_fac_int,PDOS_fac=PDOS_fac,USE_the_DbGd=.FALSE.)
    !
  endif
  !
@@ -233,6 +226,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! CLEAN...
  !
- YAMBO_FREE(WF_fac)
+ YAMBO_FREE_P(WF_fac)
+ YAMBO_FREE_P(PDOS_fac)
  !
 end subroutine

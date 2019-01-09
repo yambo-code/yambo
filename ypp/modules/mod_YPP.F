@@ -80,8 +80,9 @@ module YPP
  logical      ::l_pdos
  integer      ::PDOS_atoms(2)
  integer      ::PDOS_kinds(2)
+ integer      ::PDOS_wfcs(2)
  integer      ::PDOS_l(2)
- integer      ::PDOS_j(2)
+ real(SP)     ::PDOS_j(2)
  integer      ::PDOS_m(2)
  !
  ! BANDS

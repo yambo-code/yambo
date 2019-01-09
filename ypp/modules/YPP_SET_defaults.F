@@ -30,7 +30,7 @@ subroutine YPP_SET_defaults()
 &                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
 &                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
-&                         l_pdos,PDOS_atoms,PDOS_kinds,PDOS_l,PDOS_j,PDOS_m
+&                         l_pdos,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -75,8 +75,9 @@ subroutine YPP_SET_defaults()
  l_pdos=.false.
  PDOS_atoms=-1
  PDOS_kinds=-1
+ PDOS_wfcs =-1
  PDOS_l=-1
- PDOS_j=-1
+ PDOS_j=-1._SP
  PDOS_m=-10
  !
  ! RT OCCUPATIONS

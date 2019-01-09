@@ -564,7 +564,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac")
-     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_l PDOS_j PDOS_m")
+     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
 #if defined _YPP_RT

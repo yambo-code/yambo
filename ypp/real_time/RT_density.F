@@ -157,6 +157,9 @@ subroutine RT_density(en,kpt,qpt)
      !
      call el_density_and_current(en,kpt,rho=drho,bands=RT_bands)
      !
+     ! To be coded
+     !if(n_spin>1) call el_magnetization(en,kpt,delta_magn,bands=RT_bands)
+     !
    endif
    !
    v2plot=drho

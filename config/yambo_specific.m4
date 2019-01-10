@@ -84,6 +84,19 @@ AC_SUBST(def_time_profile)
 #
 # ============================================================================
 #
+# USPP
+#
+AC_ARG_ENABLE(uspp, AC_HELP_STRING([--enable-uspp],[Enable Ultrasoft PP support]))
+if test x"$enable_uspp" = "x"; then enable_uspp="no"; fi
+#
+def_uspp=" "
+if test x"$enable_uspp" = "xyes"; then
+   def_uspp="-D_USPP"
+fi
+AC_SUBST(def_uspp)
+#
+# ============================================================================
+#
 # Memory Profiling 
 #
 AC_ARG_ENABLE(memory-profile, AC_HELP_STRING([--enable-memory-profile],

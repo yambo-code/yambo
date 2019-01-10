@@ -157,7 +157,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        !
        core_io_path = trim(grid_paths_vector(iq))
        !
-       call WF_load(WF_shifted,0,1,Dip%ib,(/1,Xk%nibz/),space='G',&
+       call WF_load(WF_shifted,0,1,Dip%ib,(/ik,ik/),space='G',&
 &      title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.)
        !
        wf_ng_eff = min(wf_ng_save,wf_ng_shifted)

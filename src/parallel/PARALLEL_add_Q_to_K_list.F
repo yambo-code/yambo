@@ -27,10 +27,8 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  use parallel_m,    ONLY:PP_indexes,MPI_comm
  use R_lattice,     ONLY:qindx_X,nkbz,nkibz,bz_samp,nqbz,qindx_S,qindx_B
  use QP_m,          ONLY:QP_n_states,QP_table
-#if defined _NL
  use R_lattice,     ONLY:k_map
  use vec_operate,   ONLY:k_periodic_idx
-#endif
  !
 #include<memory.h>
  !
@@ -41,9 +39,7 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  type(bz_samp)          ::k,q
  !
  integer :: iq,ikp,ikbz,ik,ikpbz,iqp,iqbz
-#if defined _NL
  integer :: id,istep,idx(3),idx_kp(3),idx_k(3),max_step,ikbzp
-#endif
  !
  IND_k_out_ID=IND_in_ID
  !
@@ -148,10 +144,12 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      !
    enddo
    !
-#if defined _NL && !defined _YPP_NL
  else if (ZONE=="overlaps") then
    !
-   call k_map_nearest_by_dir(k,k_map)   
+   ! K-sampling
+   ! ===========
+   !
+   if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
    !
    do ikbz=1,nkbz
      !
@@ -194,7 +192,6 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      enddo
      !
    enddo
-#endif
  endif
  !
 end subroutine PARALLEL_add_Q_to_K_list

@@ -39,7 +39,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                         PAR_DIPk_nbz,PP_redux_wait,PAR_IND_OVLPk_ibz,&
 &                         PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,&
-&                         PAR_COM_DIPk_ibz_INDEX
+&                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP,&
+&                         PAR_COM_DIPk_ibz_INDEX,PAR_COM_NULL
  use com,            ONLY:error,warning,msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
@@ -55,13 +56,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  logical     :: idir_not_done(3)
  logical     :: l_eval_polarization,l_force_SndOrd
- integer     :: ik,iv,ic,i_sp_pol,ikm1,id_red,idir,idx(3),i1,i2,ikbz,ik_mem
+ integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
+ complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
+ complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
  complex(SP) :: S_det(6)
- complex(SP) :: Wop(1:Dip%ib(2),1:Dip%ib(2),2),DIP_tmp(6,1:Dip%ib(2),1:Dip%ib(2))
+ complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  integer           :: ID
@@ -71,24 +72,14 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  call parser('EvPolarization'  ,l_eval_polarization)
  call parser('FrSndOrd'        ,l_force_SndOrd)
  !
- ! WF load 
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- ! I force the system to load all the WF distribution not implemented yet
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
+ if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
- call k_map_nearest_by_dir(Xk,k_map)
+ call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
- call k_build_up_BZ_tables(Xk)
+ call PARALLEL_WF_index(COMM=PAR_COM_NULL)
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,&
-&                              B_index=PAR_IND_CON_BANDS_OVLP,&
-&                              Bp_index=PAR_IND_VAL_BANDS_OVLP,&
-&                              CLEAN_UP=.TRUE.)
- !
- call PARALLEL_WF_index(COMM=PAR_COM_DIPk_ibz_INDEX)
- !
- call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&               keep_states_to_load=.TRUE.)
+ call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !
  ! Notice that DIP_S is defined in the BZ       
  !
@@ -146,10 +137,16 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          Wop(:,:,istep)=cZERO
          !
-         forall(i1=Xen%nbm+1:Dip%ib(2),i2=1:Xen%nbf) 
-           Wop(i1,i2,istep)=sum(S_tmp(i1,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,i2,id_red + (istep-1)*3))- &
-&                           sum(S_tmp(i1,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,i2,id_red + (istep-1)*3))
-         end forall
+         iv_max=min(Dip%ib_lim(1),Xen%nbm)
+         do iv=Dip%ib(1),iv_max
+           ic_min=max(iv,Dip%ib_lim(2))
+           do ic=ic_min,Dip%ib(2)
+             !
+             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,iv,id_red + (istep-1)*3))- &
+&                             sum(S_tmp(ic,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,iv,id_red + (istep-1)*3))
+             !
+           enddo
+         enddo
          !
          Wop(:,:,istep)=Wop(:,:,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
          !
@@ -182,7 +179,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      ! <iR>
      !======
      do iv=Dip%ib(1),Dip%ib_lim(1)
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          do idir=1,3
            DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)=(DIP_tmp(idir,ic,iv)+conjg(DIP_tmp(idir,iv,ic)))/cI
          enddo
@@ -194,7 +193,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      !=====
      if(.not.Dip%force_v_g_space) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            do idir=1,3

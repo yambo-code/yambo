@@ -61,56 +61,57 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  call live_timing("Overlaps:",PAR_IND_DIPk_bz%n_of_elements(PAR_IND_DIPk_bz_ID+1)*n_sp_pol)
  !
  do i_sp_pol=1,n_sp_pol
- do ikbz=1,Xk%nbz
    !
-   if(.not.PAR_IND_DIPk_bz%element_1D(ikbz)) cycle
-   !
-   idx_k=k_map%k_map_inv(ikbz,:)
-   !
-   ik = Xk%sstar(ikbz,1)
-   is = Xk%sstar(ikbz,2)
-   !
-   call WF_symm_kpoint((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
-   !  
-   call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
-   !
-   do id=1,3
+   do ikbz=1,Xk%nbz
      !
-     if(k_map%max_kdir(id)==1) cycle
+     if(.not.PAR_IND_DIPk_bz%element_1D(ikbz)) cycle
      !
-     max_step=1
-     if(k_map%max_kdir(id)>=6) max_step=2
+     idx_k=k_map%k_map_inv(ikbz,:)
      !
-     do istep=1,max_step
+     ik = Xk%sstar(ikbz,1)
+     is = Xk%sstar(ikbz,2)
+     !
+     call WF_symm_kpoint((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
+     !  
+     call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
+     !
+     do id=1,3
        !
-       idx_kp=idx_k
-       idx_kp(id)=idx_kp(id)+istep
+       if(k_map%max_kdir(id)==1) cycle
        !
-       USE_shifted_wf=.false.
-       if(idx_kp(id)>k_map%max_kdir(id)) USE_shifted_wf=.true.
+       max_step=1
+       if(k_map%max_kdir(id)>=6) max_step=2
        !
-       idx_kp=k_periodic_idx(idx_kp,k_map)
-       ikbzp=k_map%k_map_dir(idx_kp(1),idx_kp(2),idx_kp(3)) 
-       !
-       ikp = Xk%sstar(ikbzp,1)
-       isp = Xk%sstar(ikbzp,2)
-       !
-       call WF_symm_kpoint((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
-       !
-       call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,WF_shifts(ikbzp,:),Xk,WF_symm,WF_ikp)
-       !
-       if(USE_shifted_wf) then
-         !  
-         ! Check if I crossed BZ border and impose periodic Gauge
+       do istep=1,max_step
          !
-         shift=0
-         shift(id)=1
-         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
+         idx_kp=idx_k
+         idx_kp(id)=idx_kp(id)+istep
          !
-       else
-         WF_shifted=WF_ikp
-       endif
-       !
+         USE_shifted_wf=.false.
+         if(idx_kp(id)>k_map%max_kdir(id)) USE_shifted_wf=.true.
+         !
+         idx_kp=k_periodic_idx(idx_kp,k_map)
+         ikbzp=k_map%k_map_dir(idx_kp(1),idx_kp(2),idx_kp(3)) 
+         !
+         ikp = Xk%sstar(ikbzp,1)
+         isp = Xk%sstar(ikbzp,2)
+         !
+         call WF_symm_kpoint((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
+         !
+         call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,WF_shifts(ikbzp,:),Xk,WF_symm,WF_ikp)
+         !
+         if(USE_shifted_wf) then
+           !  
+           ! Check if I crossed BZ border and impose periodic Gauge
+           !
+           shift=0
+           shift(id)=1
+           call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
+           !
+         else
+           WF_shifted=WF_ikp
+         endif
+         !
          !
          do ib=1,Dip%ib(2)
            if(.not.PAR_IND_VAL_BANDS_OVLP%element_1D(ib)) cycle
@@ -120,15 +121,15 @@ subroutine DIPOLE_overlaps(Xk,Dip)
                        &  Vstar_dot_V_omp(wf_ng*n_spinor,WF_ik(:wf_ng,:,ib,i_sp_pol),WF_shifted(:wf_ng,:,ibp,i_sp_pol)) 
            enddo ! ibp
          enddo ! ib
-       !
-     enddo ! istep
-   enddo ! idir
-   !
-   call PP_redux_wait(DIP_S(:,:,:,ikbz,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-   !
-   call live_timing(steps=1)
-   !
- enddo ! ikbz
+         !
+       enddo ! istep
+     enddo ! idir
+     !
+     call PP_redux_wait(DIP_S(:,:,:,ikbz,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+     !
+     call live_timing(steps=1)
+     !
+   enddo ! ikbz
    !
    ! I need to distributed overlaps among all processors because
    ! the construction of covariant dipoles require the first and second 

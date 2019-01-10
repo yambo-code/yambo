@@ -78,7 +78,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
- integer, external::io_RIM,io_COL_CUT
+ integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
  integer          ::i1,i2,ID,io_err
  character(schlen)::rstr_piece(60) 
  !
@@ -166,6 +166,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ ! ATOMIC PROJETIONS pwscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_ATMPROJ_pwscf(ID)
  !
  ! rim
  !

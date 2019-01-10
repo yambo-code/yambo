@@ -103,7 +103,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     io_BS_Fxc_err,io_QINDX_err
+&                     io_BS_Fxc_err,io_QINDX_err,io_ATMPROJ_pwscf_err
 #if defined _SC
  type(levels)      :: en_sc
  integer           :: io_SC_E_err,io_SC_V_err
@@ -116,7 +116,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT
+&                     io_COL_CUT,io_ATMPROJ_pwscf
  logical           :: OSTNTS_Vnl_included
  !
  integer, external :: io_Double_Grid
@@ -371,6 +371,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (io_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
+ !
+ ! ATOMIC PROJETIONS pwscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
  !
  ! I transfer to all X types the X(3) used in the previous io's 
  !

@@ -2,4 +2,4 @@
 SC_objects = fix_SC_DBs.o
 #endif
 objs = symmetries_driver.o fix_symmetries.o k_build_map.o fix_WFs_Gshells.o fix_WFs_and_E.o fix_PPs.o \
-       fix_QP_DBs.o $(SC_objects)
+       fix_ATOMPROJs.o fix_QP_DBs.o $(SC_objects)

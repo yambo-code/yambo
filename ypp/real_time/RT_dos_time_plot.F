@@ -103,7 +103,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    YAMBO_ALLOC(RT_PDOS_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
    call electrons_pdos_factors((/1,k%nibz/),RT_carriers%nb,PDOS_fac_v)
    do i_RT=1,RT_carriers%nstates
-     RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=SPIN_fac_v(:, RT_carriers%table(i_RT,2), :)
+     RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=PDOS_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
    PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac))
    YAMBO_FREE(PDOS_fac_v)

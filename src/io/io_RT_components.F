@@ -34,7 +34,8 @@ integer function io_RT_components(what,ID)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,frag_RT
+&                         manage_OP_IF_START_and_CL_IF_END,frag_RT, &
+&                         def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
 &                         dG_lesser,RT_carriers,RT_obj_alloc,l_RT_rotate_DM,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
@@ -45,7 +46,6 @@ integer function io_RT_components(what,ID)
  use hamiltonian,    ONLY:H_rotation
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
 #endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
@@ -335,10 +335,16 @@ integer function io_RT_components(what,ID)
      if(i_time<=0) cycle
      !
      ch="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
-     call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,RT_nbands,RT_nbands/))
-     call io_bulk(ID,C2=dG_lesser(:,:,ik,i_memory))
+     call def_variable_bulk(ID,trim(ch),i_memory,(/2,RT_nbands,RT_nbands/),SP)
+     call  io_variable_bulk(ID,i_memory,C2=dG_lesser(:,:,ik,i_memory))
      !
    enddo
+   !
+   ch="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+   if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+     call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands/),SP)
+     call  io_variable_bulk(ID,G_MEM_steps+1,C2=H_rotation(:,:,ik,i_spin))
+   endif
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))

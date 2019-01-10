@@ -185,7 +185,7 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
- call it('f',defs,'NoOocc',      '[NEGF] Consider only the changes in the energy')
+ call it('f',defs,'NoOcc',       '[NEGF] Consider only the changes in the energy')
  call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !

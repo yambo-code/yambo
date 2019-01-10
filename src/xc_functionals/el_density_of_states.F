@@ -114,8 +114,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if(n_spinor==2) then
          if(USE_WFs) then
-           proj_fac(1)=proj_fac(1)*WF_fac(ib,ik,1)
-           proj_fac(2)=proj_fac(2)*WF_fac(ib,ik,2)
+           proj_fac(1)=proj_fac(1)*WF_fac(ib-DOS_bands(1)+1,ik,1)
+           proj_fac(2)=proj_fac(2)*WF_fac(ib-DOS_bands(1)+1,ik,2)
          else
            proj_fac   =proj_fac*0.5_SP
          endif
@@ -123,8 +123,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        ! Project on PSOC coefficients
        !
-       if(USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
-       !
+       if(USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib-DOS_bands(1)+1,ik,i_sp_pol)
        !
        if(n_spinor==1) dos_value(i_sp_pol)=dos_value(i_sp_pol)+el_dos_tmp(i_sp_pol)*proj_fac(i_sp_pol)
        !

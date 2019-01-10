@@ -609,6 +609,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
+     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
      call initactivate(1,"INTERP_Grid INTERP_Shell_Fac")
      call INIT_QP_ctl_switch('G')
    endif

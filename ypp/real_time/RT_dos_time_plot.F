@@ -134,12 +134,11 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    !... DOS
    if (n_spinor==2) then
-     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
-&                                 dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ,WF_fac=RT_spin_factors)
-   else
-     call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),&
-                                  dos_E,USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
+     !associate WF_fac to RT_spin_factors
    endif
+   !
+   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,WF_fac,PDOS_fac,&
+           &                    USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
    if (n_spin==2) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1)+el_dos(:,2,1),dos_E,DOS_E_steps)*DL_vol
@@ -153,14 +152,14 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
        call INTERPOLATION_driver(bands=RT_bands,SEED_R3=RT_spin_factors,SEED_k=RT_k,&
 &                                operation="SPIN_factors_on_RT_grid",ID_op=ID_spin)
        call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_RT_grid")
-       !... DOS
-       call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&
-&                                   FORCE_occ=.TRUE.,WF_fac=INTERP_obj(ID_spin)%INTERP)
-     else
-       !... DOS
-       call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.,&
-&                                   FORCE_occ=.TRUE.)
+       !
+       !associate WF_fac_int to INTERP_obj(ID_spin)%INTERP)
+       !
      endif
+     !
+     !... DOS
+     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,WF_fac_int,PDOS_fac,&
+             &                    USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
      if (n_spin==2) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2)+el_dos(:,2,2),dos_E,DOS_E_steps)*DL_vol

@@ -31,11 +31,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
-&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys,X_DbGd_percentual
+&                     eval_alpha,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
+&                     l_X_terminator,X_terminator_E,global_gauge,&
+&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+ use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
+&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -298,9 +299,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  E_SOC_nbands=0
  filled_tresh=0.00001
  !
- ! Magnetization
+ ! Magnetization and density
  !
- eval_magn=.FALSE.
+ eval_magn      = .FALSE.
  !
  !wave_func
  !
@@ -336,14 +337,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  X_FILL_UP_matrix_only=.FALSE.
- Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
- Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
  use_g_space_approach       = .TRUE.
- force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=1.
  eps_2_alpha=1._SP

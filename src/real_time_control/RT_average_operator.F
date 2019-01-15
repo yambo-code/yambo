@@ -32,7 +32,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use QP_m,           ONLY:QP_n_states
  use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
- use X_m,            ONLY:Dipole_Energy_treshold
+ !use DIPOLES,        ONLY:Dipole_Energy_treshold
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
@@ -110,7 +110,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
              do ibp=ib+1,RT_bands(2)
                deltaE       =en%E(ib,ik_ibz,i_sp_pol)          -en%E(ibp,ik_ibz,i_sp_pol)
                deltaE_FineGd=en%E_FineGd(ib,iE_FineGd,i_sp_pol)-en%E_FineGd(ibp,iE_FineGd,i_sp_pol)
-               if(abs(deltaE)>Dipole_Energy_treshold .and. abs(deltaE_FineGd)>Dipole_Energy_treshold) then
+               if(abs(deltaE)>1.E-5 .and. abs(deltaE_FineGd)>1.E-5) then
                  Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_FineGd
                  Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_FineGd
                else

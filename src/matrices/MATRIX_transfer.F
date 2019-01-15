@@ -25,7 +25,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! General, multi-purpose M <-> M transfer
  !
- use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G_q0,l_par_X_G_all_q,l_par_X_G_finite_q
+ use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
@@ -88,9 +88,8 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  ! PAR 2 PAR COMM
  !
  if (present(COMM_name)) then 
-   if (l_par_X_G_q0)       PAR_to_PAR_comm_NAME="X_G_q0_"//trim(COMM_name)
    if (l_par_X_G_finite_q) PAR_to_PAR_comm_NAME="X_G_finite_q_"//trim(COMM_name)
-   if (l_par_X_G_all_q)    PAR_to_PAR_comm_NAME="X_G_all_q_"//trim(COMM_name)
+   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_all_q_"//trim(COMM_name)
  else
    PAR_to_PAR_comm_NAME="NONE"
  endif

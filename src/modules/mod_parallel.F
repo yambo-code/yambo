@@ -74,8 +74,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G_q0,l_par_X_G_all_q,&
-&                      l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -163,6 +162,20 @@ module parallel_m
    integer, allocatable :: first_of_1D(:)
  end type PP_indexes
  !
+ type PARk_str
+   type(MPI_comm)      :: COM_ibz_INDEX
+   type(MPI_comm)      :: COM_ibz_A2A
+   type(PP_indexes)    :: IND_ibz
+   type(PP_indexes)    :: IND_bz
+   integer,allocatable :: ibz_index(:)
+   integer,allocatable :: bz_index(:)
+   integer             :: nibz
+   integer             :: nbz
+   integer             :: comm_world
+ end type
+ !
+ type(PARk_str),SAVE   :: PAR_K_scheme
+ !
  ! Number of Bands to load
  !=========================
  !
@@ -192,11 +205,20 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
- ! ... linear response
+ ! ... DIPOLES
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_DIP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_DIP
+ !
+ ! ... Overlaps
+ type(PP_indexes),SAVE :: PAR_IND_OVLPk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_OVLP
+ type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_OVLP
+ !
+ ! ... linear response & BSK
  type(PP_indexes),SAVE :: PAR_IND_VAL_BANDS_X(n_parallel_X_types)
  type(PP_indexes),SAVE :: PAR_IND_CON_BANDS_X(n_parallel_X_types)
- type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
- type(PP_indexes),SAVE :: PAR_IND_OVLP_ibz
  !
  ! ... QP
  type(PP_indexes),SAVE :: PAR_IND_QP
@@ -251,6 +273,17 @@ module parallel_m
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
  !
+ ! ... DIPOLES
+ integer            :: PAR_IND_DIPk_bz_ID
+ integer            :: PAR_IND_DIPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_DIP_ID
+ integer            :: PAR_IND_CON_BANDS_DIP_ID
+ !
+ ! ... Overlaps
+ integer            :: PAR_IND_OVLPk_ibz_ID
+ integer            :: PAR_IND_VAL_BANDS_OVLP_ID
+ integer            :: PAR_IND_CON_BANDS_OVLP_ID
+ !
  ! ... linear response & BSK
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
@@ -267,9 +300,6 @@ module parallel_m
  !
  ! .... Frequencies
  integer            :: PAR_IND_freqs_ID
- !
- ! ... Optical oscillators
- integer            :: PAR_IND_DIPk_ID
  !
  ! ... Freqs
  integer            :: PAR_IND_FREQ_ID
@@ -317,17 +347,27 @@ module parallel_m
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
+ ! ... DIPOLES
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ !
+ ! ... Overlaps
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
+ !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
+ type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
  type(MPI_comm),SAVE :: PAR_COM_X_WORLD
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES
- type(MPI_comm),SAVE :: PAR_COM_DIPOLES_k_subgroup
  !
  ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(MPI_comm),SAVE :: PAR_COM_eh_A2A
  type(MPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... Haydock solver
@@ -347,6 +387,8 @@ module parallel_m
  integer            :: PAR_EH_range     = 0
  integer            :: PAR_QP_range     = 0
  integer            :: PAR_Q_range(2)   = 0
+ integer            :: PAR_Dip_ib(2)    = 0
+ integer            :: PAR_Dip_ib_lim(2)= 0
  integer            :: PAR_X_ib(2)      = 0
  integer            :: PAR_X_iq(2)      = 0
  integer            :: PAR_n_bands(2)   = 0
@@ -373,10 +415,12 @@ module parallel_m
  integer            :: PAR_Kk_nibz
  integer            :: PAR_Xk_nibz
  integer,allocatable:: PAR_Xk_ibz_index(:)
- integer            :: PAR_DIPk_nibz
- integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_DIPk_nibz
+ integer,allocatable:: PAR_DIPk_ibz_index(:)
+ integer            :: PAR_DIPk_nbz
+ integer,allocatable:: PAR_DIPk_bz_index(:)
  integer            :: PAR_BS_nT_col_grps 
  integer,allocatable:: PAR_BS_T_grps_index(:)
  integer            :: PAR_nG_bands 
@@ -504,12 +548,12 @@ module parallel_m
    end subroutine CPU_and_ROLE_strings_restore
    !
    subroutine CPU_str_reset()
-     CPU_structure(1)%Long_Description="Response_G_space_Zero_Momentum"
-     CPU_structure(1)%Short_Description="X_q_0"
+     CPU_structure(1)%Long_Description="DIPOLES"
+     CPU_structure(1)%Short_Description="DIP"
      CPU_structure(2)%Long_Description="Response_G_space_Finite_Momentum"
      CPU_structure(2)%Short_Description="X_finite_q"
      CPU_structure(3)%Long_Description="Response_G_space"
-     CPU_structure(3)%Short_Description="X_all_q"
+     CPU_structure(3)%Short_Description="X"
      CPU_structure(4)%Long_Description="Response_T_space"
      CPU_structure(4)%Short_Description="BS"
      CPU_structure(5)%Long_Description="Self_Energy"

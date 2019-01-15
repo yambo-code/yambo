@@ -78,6 +78,7 @@ module drivers
  logical :: l_chi                =.FALSE.
  logical :: l_em1d               =.FALSE.
  logical :: l_em1s               =.FALSE.
+ logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
  logical :: l_bsk                =.FALSE.
  logical :: l_bss                =.FALSE.

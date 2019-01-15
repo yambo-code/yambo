@@ -27,7 +27,7 @@ subroutine K_Haydock(iq,W)
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
- use R_lattice,      ONLY:q_norm
+ use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
@@ -565,8 +565,10 @@ subroutine K_Haydock(iq,W)
      !
      ! Work Space
      !
+     logical     :: update_thresh
      integer     :: i1,iw,iw_start,i_eps(2)
-     real(SP)    :: Co,tmp_tresh,den
+     real(SP)    :: Co,tmp_tresh
+     complex(SP) :: sums,diff
      !
      complex(SP) :: para_term_w0(2),diam_term_used(2)
      complex(SP) :: gauge_factor
@@ -597,7 +599,7 @@ subroutine K_Haydock(iq,W)
      para_term_w0  =cZERO
      diam_term_used=cZERO
      !
-     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/q_norm(iq)**2
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(iq,1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -708,7 +710,7 @@ subroutine K_Haydock(iq,W)
        !
        if (l_anomalous_Hall) then
          if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/q_norm(iq)**2
+           B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
            Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
          else if (trim(global_gauge)=='velocity') then
            B_Hall(2)=B_Hall(2)*Co
@@ -719,15 +721,20 @@ subroutine K_Haydock(iq,W)
        !
        select case(ii)
        case(1)
-         den=abs(Epsilon_ii(iw,2)+Epsilon_ii(iw,2))/2._SP
-         tmp_tresh=abs(Epsilon_ii(iw,2)-Epsilon_ii(iw,4))/den
+         sums=(Epsilon_ii(iw,2)+Epsilon_ii(iw,4))/2._SP
+         diff= Epsilon_ii(iw,2)-Epsilon_ii(iw,4)
        case(2)
-         den=abs(Epsilon_ij(iw,2)+Epsilon_ij(iw,2))/2._SP
-         tmp_tresh=abs(Epsilon_ij(iw,2)-Epsilon_ij(iw,4))/den
+         sums=(Epsilon_ij(iw,2)+Epsilon_ij(iw,4))/2._SP
+         diff= Epsilon_ij(iw,2)-Epsilon_ij(iw,4)
        end select
        !
-       if (Haydock_threshold>0._SP .and. den>0._SP ) reached_threshold=max(reached_threshold,tmp_tresh)
-       if (Haydock_threshold<0._SP .and. den>0._SP ) reached_threshold=reached_threshold+tmp_tresh/real(W%n_freqs)
+       update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP
+       !
+       if (update_thresh) then
+         tmp_tresh=max( abs(real(diff)/real(sums)) , abs(aimag(diff)/aimag(sums)) )
+         if (Haydock_threshold>0._SP ) reached_threshold=max(reached_threshold,tmp_tresh)
+         if (Haydock_threshold<0._SP ) reached_threshold=reached_threshold+tmp_tresh/real(W%n_freqs)
+       endif
        !
      enddo
      !

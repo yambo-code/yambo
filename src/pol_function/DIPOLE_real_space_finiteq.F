@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): FP&AMS
+! Authors (see AUTHORS file for details): DS
 !
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -110,7 +110,7 @@ subroutine DIPOLE_real_space_finiteq(Xen,Xk,X,iq)
    enddo
    !
  enddo
- ! STORE IN DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
+ !
  call live_timing()
  !
  YAMBO_FREE(WF_symm_i)

@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
+subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use units,         ONLY:HA2EV
+ use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
@@ -32,21 +33,20 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
- use interfaces,    ONLY:PARALLEL_WF_distribute
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        DIP_projected,X_drude_term,X_alloc,global_gauge,   &
-&                        skip_cond_sum_rule,l_drude,Dipole_Energy_treshold
+&                        X_drude_term,global_gauge,   &
+&                        skip_cond_sum_rule,l_drude
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,&
-&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
- use X_m,           ONLY:DIP_P
+ use DIPOLES,       ONLY:DIP_P
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
 #endif
 #if defined _KERR
@@ -57,13 +57,13 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
 #include<memory.h>
  type(levels) ::Ken
  type(bz_samp)::Xk
- type(X_t)    ::X_oscillators
+ type(DIPOLE_t)::Dip
  type(w_samp) ::W_bss
  integer      ::iq
  !
  ! Work space
  !
- integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC
+ integer           ::ik_bz,iv,ic,i_sp_pol,i_T_g,i_T,ik_bz_mem,n_SOC,i_pert_SOC,io_err
  real(SP)          ::conjg_fac,Z_
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used
@@ -116,13 +116,6 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
  call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
  if (l_drude) drude_GreenF=drude_GreenF*(Ken%f(Ken%bf,Ken%kf,Ken%sf)*(spin_occ-Ken%f(Ken%bf,Ken%kf,Ken%sf)))
  !
- ! WF distribution
- !=================
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
-&                            B_index=PAR_IND_CON_BANDS_X(X_oscillators%whoami),&
-&                            Bp_index=PAR_IND_VAL_BANDS_X(X_oscillators%whoami),&
-&                            CLEAN_UP=.TRUE.)
- !
  ! Oscillators I/O & Eps0
  !========================
  !
@@ -142,9 +135,20 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    para_term_w0=cZERO
    !
-   call DIPOLE_driver(Ken,Xk,X_oscillators,BSS_q0,iq)
+   ! The residuals of the BSE are <wf_k|e^{iqr}|wf_k+q>
+   ! These are trivial to compute at finite q, instead they are 
+   ! obtained via the dipoles in the q->0 limit and stored to disk
    !
-   BSS_Vnl_included=X_oscillators%Vnl_included
+   if (iq==1) then
+     call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
+     call DIPOLE_expand_and_project(Xk,Dip)
+   else
+     ! Alternative form presently not working since uGo shift of the WFs is missing
+     !call DIPOLE_real_space_finiteq(Xen,Xk,Dip,iq)
+     call DIPOLE_gspace_finiteq(Ken,Xk,Dip,iq)
+   endif
+   !
+   BSS_Vnl_included=Dip%Vnl_included
    !
    if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
    if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
@@ -192,7 +196,7 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
        endif
 #endif
        !
-       if ( abs(real(E_plus_W0)) < Dipole_Energy_treshold .and. iq==1) cycle
+       if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 ) cycle
        !
        ! Residuals DIP_cv * DIP_vc
        !
@@ -303,14 +307,22 @@ subroutine K_IP(iq,Ken,Xk,X_oscillators,W_bss)
    !
    A_drude(1)=para_term_w0-diam_term_exact
    !
-   if (l_kerr) call K_kerr_IP(iq,W_bss%p)
+   if (l_kerr) call K_kerr_IP(iq,W_bss%p,Dip)
    !
 #endif
    !
  !
  ! CLEAN
  !
- call X_alloc('DIP_projected')
+ if (iq==1.and.io_DIP) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_spin')
+   call DIP_alloc('DIP_orbital')
+   call DIP_alloc('P_square') 
+   call DIP_alloc('DIP_projected')
+   call DIP_alloc('DIP_P_spinor')
+ endif
  !
  if (l_rpa_IP) then
    !

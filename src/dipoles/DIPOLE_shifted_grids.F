@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_shifted_grids(Xen,Xk,X)
+subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  ! Using the wfc at the k,k-q points to construct <r>
  !
@@ -33,11 +33,13 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
- use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use parallel_m,          ONLY: PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                               PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                               PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use interfaces,          ONLY: WF_load,WF_free,io_DB1_selective_scan
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
- use X_m,                 ONLY: X_t,DIP_iR,DIP_P,l_X_terminator,&
-&                               force_v_g_space_approach,num_shifted_grids,Dipole_Energy_treshold
+ use X_m,                 ONLY: l_X_terminator
+ use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,num_shifted_grids
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
@@ -51,7 +53,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Saves
  !
@@ -69,12 +71,11 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  ! Work Space
  !
  character(schlen)            :: grid_paths_vector(3)
- logical                      :: idir_not_done(3)=.true.,&
-&                                l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
+ logical                      :: idir_not_done(3)
  integer                      :: ik,ik_mem,ic_wf,iv_wf,ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
- real(SP)                     :: Ev_m_Ec,Ev_m_Ec_QP,q_mod(3)
+ real(SP)                     :: Ev_m_Ec,q_mod(3)
  !
  !ioDB1 shifted grids
  !
@@ -86,7 +87,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  integer                      :: io_err(3)
  !
- ! saves...
+ !
  !
  call set_parms(grid='  local', command=' define')
  !
@@ -106,6 +107,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  ! Check grids and determine grid displacement
  !
  grid_order=0
+ !
+ idir_not_done=.true.
  !
  do iq =1,num_shifted_grids
    !
@@ -129,59 +132,53 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
  !
  if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
- ! Load unshifted WFs
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='G',title='-Oscillators/G space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+ call live_timing('Dipoles shifted grids   :',n_LT_steps)
  !
- ! Main loop over cartesian directions
- !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
- !
- do iq = 1, num_shifted_grids
+ do i_sp_pol = 1,n_sp_pol
    !
-   core_io_path = trim(grid_paths_vector(iq))
-   !
-   ! Load WFs {k + q_iq}
-   !
-   call WF_load(WF_shifted,0,1,X%ib,(/1,Xk%nibz/),space='G',&
-   &  title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.) 
-   !
-   wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
-   !
-   ir = grid_order(iq)
-   !
-   call live_timing('Dipole @ grid '//trim(intc(iq))//':',n_LT_steps)
-   !
-   do i_sp_pol = 1,n_sp_pol
+   do ik = 1, Xk%nibz
      !
-     do ik = 1, Xk%nibz
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     !
+     ! Load WFs first at k and then at k+q_iq
+     ! 
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
+&           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     !
+     do iq = 1, num_shifted_grids
        !
-       if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+       ir = grid_order(iq)
        !
-       ik_mem=PAR_DIPk_ibz_index(ik)
+       core_io_path = trim(grid_paths_vector(iq))
        !
-       do iv=X%ib(1),X%ib_lim(1) 
+       call WF_load(WF_shifted,0,1,Dip%ib,(/ik,ik/),space='G',&
+&      title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.)
+       !
+       wf_ng_eff = min(wf_ng_save,wf_ng_shifted)
+       !
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
          !
-         ic_min=max(iv,X%ib_lim(2))
+         if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+         !
+         ic_min=max(iv,Dip%ib_lim(2))
          if (l_X_terminator) ic_min=iv
          !
-         do ic=ic_min,X%ib(2)
-           ! 
-           if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         do ic=ic_min,Dip%ib(2)
+           !
+           if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
            !
            rho=cZERO
            !
-           if (allocated(Xen%Eo)) then 
-             Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
-             Ev_m_Ec_QP=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           else
-             Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           endif
+           Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
-           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold .or. iv==ic) then
+           if (abs(Ev_m_Ec)<=Dip%Energy_treshold .or. iv==ic) then
              call live_timing(steps=1)
              cycle
            endif
@@ -209,30 +206,32 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,X)
            !=====
            ! <P>
            !=====
-           if(.not.force_v_g_space_approach) DIP_P(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
+           if(.not.Dip%force_v_g_space) DIP_P(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
            !
            call live_timing(steps=1)
            !
          enddo  ! ic
        enddo    ! iv
        !
-     enddo      ! i_sp_pol
+       call WF_free(WF_shifted)
+       !
+     enddo      ! iq
+     !
+     core_io_path = trim(core_io_path_save)
+     !
+     call WF_free(WF)
      !
    enddo        ! ik
    !
-   call WF_free(WF_shifted)
-   !
-   call live_timing()
-   !
- enddo          ! iq
+ enddo          ! i_sp_pol
+ !
+ call live_timing()
  !
  ! CLEAN
  !
- call WF_free(WF)
- !
  call DB1_reset()
  !
- if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,X,idir_not_done)
+ if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
  contains
    !

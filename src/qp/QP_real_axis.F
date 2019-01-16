@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
+subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! This routine calculates 
  ! 
@@ -43,6 +43,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
 &                        PARALLEL_WF_distribute,QP_state_extract_print
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
+ use DIPOLES,       ONLY:DIPOLE_t
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
 &                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
@@ -63,6 +64,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  type(X_t)    ::X
  type(QP_t)   ::qp
  type(w_samp) ::Xw
+ type(DIPOLE_t)       :: Dip
  integer      ::GW_iter
  !
  ! WorkSpace
@@ -223,7 +225,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    do iqibz=1,q%nibz
      X%iq=iqibz
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
    enddo
    call PP_redux_wait()
    !
@@ -247,7 +249,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! Redefine i_q_to_start to be CPU-dependent
  !
- do iqbz=1,q%nbz 
+ do iqbz=1,q%nbz
    if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
      i_q_to_start=iqbz
      exit

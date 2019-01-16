@@ -580,10 +580,19 @@ module real_time
    !   
    subroutine RT_free
      !
+     use DIPOLES,        ONLY:DIP_alloc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
      !
      call H_free()
+     !
+     call DIP_alloc('DIP_iR')
+     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_spin')
+     call DIP_alloc('DIP_orbital')
+     call DIP_alloc('P_square') 
+     call DIP_alloc('DIP_projected')
+     call DIP_alloc('DIP_P_spinor')
      !
      YAMBO_FREE(DbGd_ibz_coo)
      YAMBO_FREE(DbGd_bz_coo)

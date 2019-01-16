@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_orbital_magnetization(Xen,Xk,X)
+subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
@@ -32,54 +32,57 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,X)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use vec_operate,         ONLY:cross_product
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t,DIP_iR,DIP_orbital
+ use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t
  use com,                 ONLY:error
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
  implicit none
  !
  type(levels),  intent(in)    :: Xen
  type(bz_samp), intent(in)    :: Xk
- type(X_t),     intent(inout) :: X
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic,iv,ib,i_sp_pol,i_spin,n_LT_steps,ik_mem
  real(SP)                     :: Eb,Ev,Ec
  complex(SP)                  :: DIP_pos(3,2)
  !
- ! Parallelization Mask 
- !======================
- ! Depending on the environment DIPOLES are distributed in different ways
- !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
  if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
- do ik=1,Xk%nibz
+ do i_sp_pol=1,n_sp_pol
    !
    if (n_LT_steps==0) cycle
    ! 
-   if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
-   !
-   ik_mem=PAR_DIPk_ibz_index(ik)
-   ! 
-   do i_sp_pol=1,n_sp_pol
-     do iv=X%ib(1),X%ib_lim(1) 
+   do ik=1,Xk%nibz
+     !
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     !
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     ! 
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
+       !
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        !
        Ev=Xen%E(iv,ik,i_sp_pol)
        if (allocated(Xen%Eo)) Ev=Xen%Eo(iv,ik,i_sp_pol)
        !
-       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+       do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
+         !
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          Ec=Xen%E(ic,ik,i_sp_pol)
          if (allocated(Xen%Eo)) Ec=Xen%Eo(ic,ik,i_sp_pol)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
-         !
-         do ib=X%ib(1),X%ib(2)
+         do ib=Dip%ib(1),Dip%ib(2)
            !
            Eb=Xen%E(ib,ik,i_sp_pol)
            if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)

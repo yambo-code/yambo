@@ -231,8 +231,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! TDDFT xc-kernel Setup
  !======================
  if (l_bs_fxc) then
-   !
-   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0,iq)
+   !  
+   !if (iq==1) here put dipoles I/O
+   if (iq==1) stop
    !
    ! Allocation
    !-----------

@@ -31,6 +31,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
+ use DIPOLES,        ONLY:DIPOLE_t
  !
  implicit none
  !
@@ -42,6 +43,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  type(bz_samp)     ::q,k
  type(X_t)         ::X(4)
  type(w_samp)      ::Xw(4)
+ type(DIPOLE_t)    :: Dip
  integer           ::ierr,i_c
  integer, external ::INIT
  !
@@ -90,7 +92,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
      call X_reset(X(i_c),type=i_c)
    enddo
    !
-   ierr=INIT(en,q,k,X,Xw," ",1,.false.,.true.)
+   ierr=INIT(en,q,k,X,Xw,Dip," ",1,.false.,.true.)
    !
  endif
  !

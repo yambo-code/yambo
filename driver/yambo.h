@@ -52,6 +52,7 @@
   {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
   {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
   {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
+  {"dipoles","q","Compute oscillator strenghts (or dipoles)",0,0,0,0,0},        
   {"gwapprx","p","GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0,0},              
   {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
   {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
@@ -64,7 +65,7 @@
   {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf",   "n","NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
   {"scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif
 #if defined _QED && !defined _ELPH

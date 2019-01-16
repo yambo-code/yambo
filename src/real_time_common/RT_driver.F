@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(E,X,k,q)
+subroutine RT_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_use_collisions,l_use_Hxc_collisions,l_elph_scatt,l_elel_scatt,l_elphoton_scatt
@@ -29,6 +29,7 @@ subroutine RT_driver(E,X,k,q)
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_spin,n_spinor
  use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIPOLE_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
@@ -63,11 +64,12 @@ subroutine RT_driver(E,X,k,q)
  type(levels)      :: E
  type(bz_samp)     :: k,q
  type(X_t)         :: X(2)
+ type(DIPOLE_t)    :: Dip
  logical, external :: STOP_now
  ! 
  ! Work Space
  !
- integer           :: io_REF
+ integer           :: io_REF,io_err
  character(schlen) :: sec_title(3)
  real(SP)          :: OBSERVABLES(25)
  !
@@ -125,12 +127,8 @@ subroutine RT_driver(E,X,k,q)
  ! Dipoles
  !=========
  !
- call PARALLEL_WF_distribute(K_index=PAR_IND_DIPk_ibz,Bm_index=PAR_IND_B_mat,CLEAN_UP=.TRUE.)
- !
- ! before loading the WF in R-space I check and/or calculatethe optical collisions that 
- ! are done in G-space and would ! force the reloading of the WFs
- !
- call DIPOLE_driver(E,k,X(1),X(1)%q0,1)
+ call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
+ call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
  ! In dipole_driver the IO is k-dictated. Here I want only the master to write
  !

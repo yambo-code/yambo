@@ -29,7 +29,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  use stderr,        ONLY:intc
  use D_lattice,     ONLY:a,alat
  use FFT_m,         ONLY:fft_dim
- use com,           ONLY:msg,warning,of_open_close
+ use com,           ONLY:msg,warning,of_open_close,error
  use electrons,     ONLY:spin,n_spinor
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
@@ -97,6 +97,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
    call c2a(b_in=a,v_in=r_hole,v_out=r_hole_rlu,mode='kc2a')
    r_hole_rlu(:)=nint(r_hole_rlu(:)*fft_dim(:))
    ir_hole=1+r_hole_rlu(1)+ r_hole_rlu(2)*nr(1)+ r_hole_rlu(3)*nr(1)*nr(2)
+   if (ir_hole.lt.0) call error(' Hole coordinates in input must be positive') 
    call msg('s','::      position in the FFT grid [cc]:',r_cell_cc(:,ir_hole))
    !
    ! [3] Translation in the center of the Big grid

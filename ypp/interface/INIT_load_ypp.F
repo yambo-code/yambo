@@ -242,7 +242,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
- call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC

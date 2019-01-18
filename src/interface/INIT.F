@@ -1337,7 +1337,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _OPENMP
      if (l_dipoles) then
-       n_threads_DIP=n_threads
+       n_threads_DIP=0
      endif
      if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
        n_threads_K=0

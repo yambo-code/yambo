@@ -72,6 +72,8 @@ SUBROUTINE read_upf(upf, grid, ierr, unit, filename)             !
       IF(ierr==0) ierr=-1
    ENDIF
 
+   close(u)
+
    RETURN
 
 END SUBROUTINE read_upf

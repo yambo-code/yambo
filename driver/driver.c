@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
  /*
   Needed for the drivers call
  */
- int iif=0,iid=1,iod=1,icd=1,ijs=0,np=1,pid=0,lni=0;
+ int iif=0,iid=1,iod=1,icd=1,ijs=0,np=1,pid=0;
  char rnstr2[500]={'\0'};
  char *inf=NULL,*od=NULL,*id=NULL,*js=NULL,*com_dir=NULL;
  /*
@@ -107,27 +107,12 @@ int main(int argc, char *argv[])
  y.job_N=strlen(y.job);
  strcpy(y.string,"");
  y.string_N=strlen(y.string);
-
- inf = malloc(strlen(tool)+4);
- strcpy(inf,tool);
- strcat(inf,".in");
- iif=strlen(inf);
- id       = malloc(2);
- od       = malloc(2);
- com_dir  = malloc(2);
- js  = malloc(2);
- strcpy(od,".");
- strcpy(js," ");
- strcpy(id,".");
- strcpy(com_dir,".");
- strcpy(rnstr2," ");
  /*
   stdlog?
  ttd=guess_winsize();
  */
  if (argc>1) {
   y=command_line_short_new(argc,argv,opts,t);
-  command_line_short(argc,argv,opts,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,tool,tool_desc,editor,codever);
  }
  /* 
    MPI
@@ -161,17 +146,11 @@ int main(int argc, char *argv[])
   fprintf(stderr,"\n","");
   fprintf(stderr,"%s %i\n","np:" ,np);
   fprintf(stderr,"%s %i\n","pid:",pid);
-  fprintf(stderr,"%s %i %s\n","RUNSTRING (old):",lni,rnstr2);
   fprintf(stderr,"%s %i %s\n","RUNSTRING (new):",y.string_N,y.string);
-  fprintf(stderr,"%s %i %s\n","INPUT file(old):",iif,inf);
   fprintf(stderr,"%s %i %s\n","INPUT file(new):",y.in_file_N,y.in_file);
-  fprintf(stderr,"%s %i %s\n","INPUT dir (old):",iid,id);
   fprintf(stderr,"%s %i %s\n","INPUT dir (new):",y.in_dir_N,y.in_dir);
-  fprintf(stderr,"%s %i %s\n","OUT   dir (old):",iod,od);
   fprintf(stderr,"%s %i %s\n","OUT   dir (new):",y.out_dir_N,y.out_dir);
-  fprintf(stderr,"%s %i %s\n","COM   dir (old):",icd,com_dir);
   fprintf(stderr,"%s %i %s\n","COM   dir (new):",y.com_dir_N,y.com_dir);
-  fprintf(stderr,"%s %i %s\n","JOB       (old):",ijs,js);
   fprintf(stderr,"%s %i %s\n","JOB       (new):",y.job_N,y.job);
   fprintf(stderr,"\n","");
 #if defined _YAMBO_MAIN
@@ -180,7 +159,9 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(yambo_driver,YAMBO_DRIVER)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+#include <fortran_arguments.h>
+ );
+exit(1);
 #endif
 #if defined _YPP_MAIN
  /* 
@@ -188,7 +169,7 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(ypp_driver,YPP_DRIVER)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
 #endif
 #if defined _c2y 
  /* 
@@ -196,7 +177,7 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(c2y_i,C2Y_I)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
 #endif
 #if defined _a2y 
  /* 
@@ -204,7 +185,7 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(a2y_i,A2Y_I)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
 #endif
 #if defined _p2y
  /* 
@@ -212,7 +193,8 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(p2y_i,P2Y_I)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+#include <fortran_arguments.h>
+ );
 #endif
 #if defined _e2y 
  /* 
@@ -220,7 +202,7 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
  F90_FUNC(e2y_i,E2Y_I)(
-         &np,&pid,&lni,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,lni,iif,iid,iod,icd,ijs);
+         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
 #endif
  /* 
    INPUT FILE
@@ -260,10 +242,6 @@ int main(int argc, char *argv[])
    CLEAN & EXIT
  ===========================================================================
  */
- free(inf);
- free(id);
- free(js);
- free(od); 
 #if defined _MPI
   if (mpi_init==0) {
    MPI_Barrier(MPI_COMM_WORLD);

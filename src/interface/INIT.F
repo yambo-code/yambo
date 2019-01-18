@@ -705,7 +705,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
 #if defined _RT
@@ -717,6 +716,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! BSE solver
  !
  if (l_optics.and.l_bse.and.l_bss) then
+   !
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation

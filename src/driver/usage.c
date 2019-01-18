@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <DRIVER_kind.h>
+#include <kind.h>
 #include <title.h>
 
 void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc)

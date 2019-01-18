@@ -1,13 +1,16 @@
-
+#! /bin/sh
+#
 cd src/driver
 cp *.h ../../include/
-gcc -c title.c -I ../../include/headers  -I../../include
-gcc -c load_environments.c -I ../../include/headers -I../../include
-gcc -c usage.c -I ../../include/headers -I ../../include
+file_list=`find .  -type f  | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ gcc -c $file -I ../../include/headers/driver  -I../../include  -I ../../include/headers/common
+done
 cd ../../driver
 cp ../include/driver/common_options.h ../include
 cp ../include/driver/yambo.h ../include
-gcc -c driver.c -I ../include/ -I ../include/headers/
+gcc -c driver.c -I ../include/ -I ../include/headers/common -I ../include/headers/driver 
 cd ../
-gcc -o driver.x driver/driver.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o
+gcc -o driver.x driver/driver.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o src/driver/command_line_short.o src/driver/command_line_short_new.o
 
+./driver.x -x -o c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file

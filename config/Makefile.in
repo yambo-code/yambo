@@ -57,10 +57,10 @@ includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
 STAMPS   = lib/archive/keep-extlibs-stamp
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
-           sbin/make_makefile.sh include/headers/codever.h src/wf_and_fft/sgfft.F  \
+           sbin/make_makefile.sh include/headers/common/codever.h src/wf_and_fft/sgfft.F  \
            src/external_c/.objects Makefile driver/version.h \
-           sbin/objects_store.sh include/headers/editor.h \
-           include/headers/c_defs.h sbin/generate_gpl.sh
+           sbin/objects_store.sh include/headers/driver/editor.h \
+           include/headers/common/c_defs.h sbin/generate_gpl.sh
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif

@@ -22,21 +22,8 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-typedef struct f90_parameters
-{
- int iif,iid,iod,icd,ijs,np,pid,lni;
- char rnstr2[500];
- char *inf,*od,*id,*js,*com_dir;
-} f90_parameters;
+struct yambo_seed_struct command_line_short_new(int argc, char *argv[], Ldes *opts,  struct tool_struct t);
 
-typedef struct Ldes
-{
-        char *ln;
-        char *sn;
-        char *d;
-        int   ni;
-        int   nr;
-        int   nc;
-        int   st;
-        int   mp;
-} Ldes;
+void command_line_short(int argc, char *argv[], Ldes *opts,int *lni, int *iif, int *iid, int *iod, int *icd, int *ijs, char *rnstr2, char *inf, char *id, char *od, 
+                        char *com_dir, char *js,char *tool, char *tool_desc,char *editor, char *codever);
+

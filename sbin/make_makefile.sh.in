@@ -67,7 +67,7 @@ done
 #
 llibs="-L\$(libdir) $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir) @F90_MODULE_FLAG@\$(sysinclude)"
-linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers"
+linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/driver -I\$(includedir)/headers/parser"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
@@ -154,7 +154,7 @@ define driver
                     \$(includedir)/driver/yambo.h > \$(includedir)/yambo.h; fi
  ${PREFIX}if test -f \$(includedir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(includedir)/driver/ypp.h > \$(includedir)/ypp.h; fi
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) -I\$(includedir)/headers -I\$(includedir) -L\$(libdir) -ldriver \
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver \
                   -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
  @echo
 endef

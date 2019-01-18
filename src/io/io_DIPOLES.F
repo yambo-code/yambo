@@ -36,7 +36,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square
- use drivers,       ONLY:l_real_time,l_sc_run
+ use drivers,       ONLY:l_real_time,l_sc_run,l_magnons
 #endif
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
@@ -50,7 +50,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4)
 #if defined _RT || defined _SC
- logical :: l_real_time_magn_dipoles
+ logical :: l_magn_dipoles
  integer :: P2_size(3),P2_ipos(3),Pspinor_size(6),Pspinor_ipos(6)
 #endif
  integer, external    :: variables_DIPOLES
@@ -114,7 +114,7 @@ integer function io_DIPOLES(Dip,ID)
 #endif
  !
 #if defined _SC  || defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+ l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
 #endif
  !
  if (read_is_on(ID)) then
@@ -124,9 +124,9 @@ integer function io_DIPOLES(Dip,ID)
    ! GPL_EXCLUDE_START
    !
 #if defined _RT
-   if (l_real_time_magn_dipoles) then
+   if (l_magn_dipoles) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-     call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+     if (n_spin==2)   call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
      if (n_spinor==2) call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    endif
 #endif
@@ -161,7 +161,7 @@ integer function io_DIPOLES(Dip,ID)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- if (l_real_time_magn_dipoles) then
+ if (l_magn_dipoles) then
    !
    ! Itinerant magnetization
    !
@@ -175,11 +175,15 @@ integer function io_DIPOLES(Dip,ID)
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
    call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
-   ! Spin magntization
-   !
-   write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
-   call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   if (n_spin  ==2) then
+     !
+     ! Spin magntization
+     !
+     write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
+     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+     call io_bulk(ID,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+     !
+   endif
    !
    if (n_spinor==2) then
      !

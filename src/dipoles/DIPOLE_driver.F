@@ -39,7 +39,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !                              and then <v> as <r>*DeltaE
  !
  use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                         l_gw0,l_elel_corr,l_life
+&                         l_gw0,l_elel_corr,l_life,l_magnons
  use BS,             ONLY:BS_bands
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
@@ -87,7 +87,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  integer           :: ik,i_sp_pol,io_err,ib(2)
  logical           :: l_sta_X,l_dyn_X,use_dipole_transverse,idir_not_done(3),&
-&                     l_real_time_magn_dipoles
+&                     l_magn_dipoles
  !
  call timing('Dipoles',OPR='start')
  !
@@ -99,9 +99,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    io_DIP=.true.
  endif
  !
- l_real_time_magn_dipoles=.false.
+ l_magn_dipoles=.false.
 #if defined _SC  || defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1
+ l_magn_dipoles=(l_real_time.or.l_magnons).and.n_spin>1
 #endif
  !
 #if defined _NL
@@ -142,8 +142,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  if (l_sc_run) Dip%computed='R P P2'
 #endif
 #if defined _RT
- l_real_time_magn_dipoles=l_real_time.and.n_spin>1
- if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
+ if (l_magn_dipoles) Dip%computed='R P P2 Magn'
 #endif
  !
  if(use_covariant_approach)  eval_OVERLAPS=.true.
@@ -189,14 +188,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
    !
    if (use_real_space_approach)    call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
    !
-   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
+   if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip,l_magn_dipoles)
    !
    ! GPL_EXCLUDE_START 
    !
 #if defined _RT
-   if (l_real_time_magn_dipoles)   call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
+   if (l_magn_dipoles)             call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
    !
-   if (l_real_time_magn_dipoles)   call DIPOLE_spin_magnetization(Xen,Xk,Dip)
+   if (l_magn_dipoles)             call DIPOLE_spin_magnetization(Xen,Xk,Dip)
 #endif
    !
    ! GPL_EXCLUDE_END
@@ -230,9 +229,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  call DIP_alloc('DIP_P')
  if (use_covariant_approach) call DIP_alloc('DIP_S')
 #if defined _RT
- if (l_real_time_magn_dipoles) then
+ if (l_magn_dipoles) then
    call DIP_alloc('DIP_orbital')
-   call DIP_alloc('DIP_spin')
+   if(n_spin  ==2) call DIP_alloc('DIP_spin')
    if(n_spinor==2) call DIP_alloc('DIP_P_spinor')
  endif
 #endif
@@ -252,11 +251,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
      ! GPL_EXCLUDE_START 
      !
 #if defined _RT
-     if (l_real_time_magn_dipoles) then
+     if (l_magn_dipoles) then
        call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,2/))
        DIP_orbital=cZERO
-       call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-       DIP_spin=cZERO
+       if (n_spin  ==2) then
+         call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+         DIP_spin=cZERO
+       endif
        if (n_spinor==2) then
          call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
          DIP_P_spinor=cZERO
@@ -299,9 +300,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
 #if defined _RT
         !
-        if (l_real_time_magn_dipoles) then
+        if (l_magn_dipoles) then
           call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          if (n_spin  ==2) &
+&           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           if (n_spinor==2) &
 &           call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
@@ -332,9 +334,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             ! GPL_EXCLUDE_START 
             !
 #if defined _RT
-            if (l_real_time_magn_dipoles) then
+            if (l_magn_dipoles) then
               DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+              if(n_spin  ==2) &
+&               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
               if(n_spinor==2) &
 &               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
             endif
@@ -354,9 +357,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               ! GPL_EXCLUDE_START 
               !
 #if defined _RT
-              if (l_real_time_magn_dipoles) then
+              if (l_magn_dipoles) then
                 DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
-                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+                if (n_spin  ==2) &
+&                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
                 if (n_spinor==2) &
 &                 DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
               endif

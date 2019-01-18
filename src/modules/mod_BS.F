@@ -85,12 +85,16 @@ module BS
    complex(SP), allocatable      :: dipoles_A(:)
    complex(SP), allocatable      :: dipoles_R_kerr(:)
    complex(SP), allocatable      :: dipoles_A_kerr(:)
+   complex(SP), allocatable      :: dipoles_R_mag(:,:)
+   complex(SP), allocatable      :: dipoles_A_mag(:,:)
    complex(SP), allocatable      :: dipoles_R_PL(:,:)
    complex(SP), allocatable      :: dipoles_A_PL(:,:)
    complex(SP), allocatable      :: Z(:)
    real(SP)   , allocatable      :: E(:)
+   real(SP)   , allocatable      :: E_SFLIP(:)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
+   real(SP)   , allocatable      :: f_SFLIP(:)
    real(SP)   , allocatable      :: f_PL(:,:)
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)
@@ -205,7 +209,7 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP
-     use drivers,    ONLY:l_kerr,l_photolum
+     use drivers,    ONLY:l_kerr,l_photolum,l_magnons
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,E_SOC_nbands,n_sp_pol
      integer      :: iT,nT
@@ -223,14 +227,20 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
      endif
+     if(l_magnons) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_mag,(2,nT))
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_mag,(2,nT))
+     endif
      if(l_photolum) then
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%E_SFLIP,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_SFLIP,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
      if (allocated(E%Z)) then
        YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
@@ -254,7 +264,7 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_kerr,l_photolum
+     use drivers,    ONLY:l_kerr,l_photolum,l_magnons
      use parallel_m, ONLY:PAR_BS_T_grps_index
      use electrons,  ONLY:E_SOC_nbands
      integer :: iT
@@ -273,10 +283,16 @@ module BS
          YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
          YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
        endif
+       if (l_magnons) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_mag)
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_mag)
+       endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)
+       YAMBO_FREE(BS_T_grp(iT)%E_SFLIP)
        YAMBO_FREE(BS_T_grp(iT)%f)
        YAMBO_FREE(BS_T_grp(iT)%f_RES)
+       YAMBO_FREE(BS_T_grp(iT)%f_SFLIP)
        YAMBO_FREE(BS_T_grp(iT)%f_PL)
        YAMBO_FREE(BS_T_grp(iT)%Z)
        YAMBO_FREE(BS_T_grp(iT)%W)

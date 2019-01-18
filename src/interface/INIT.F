@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_magnons
 #if defined _PL
  use drivers,        ONLY:l_photolum
 #endif
@@ -1143,6 +1143,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _PL
        l_photolum=runlevel_is_on('photolum')
 #endif
+       l_magnons=runlevel_is_on('magnons')
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -1257,16 +1258,17 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      use X_m,  ONLY:l_X_terminator
      implicit none
-     logical :: all_bands
+     logical :: all_bands,l_local
      !
      call parser('DipBandsAll',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
 #if defined _SC  || defined _RT || defined _NL
-     if ( l_sc_run.or.l_real_time.or.l_nl_optics ) Dip%bands_ordered=.false.
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics.or.l_magnons
+     if (l_local)         Dip%bands_ordered=.false.
 #endif
 #if defined _QED 
-     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
+     if (l_elphoton_corr) Dip%bands_ordered=.false.
 #endif
      !
    end subroutine Dip_check_ordered
@@ -1528,14 +1530,16 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          if (i_cycle==2.and.trim(rstr_piece(i1)) == 'optics' )  then
            !
+           l_magnons= (trim(rstr_piece(i1+1))=='m')
            l_chi= (trim(rstr_piece(i1+1))=='g' ).or.(trim(rstr_piece(i1+1))=='c')
-           l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b')
+           l_bse= (trim(rstr_piece(i1+1))=='eh').or.(trim(rstr_piece(i1+1))=='b').or.l_magnons
            !
-           if (.not.l_chi.and..not.l_bse) l_chi=.true.
+           if ((.not.l_chi).and.(.not.l_bse)) l_chi=.true.
            !
            call initactivate(1,'optics')
            if (l_chi) call initactivate(1,'chi')
            if (l_bse) call initactivate(1,'bse')
+           if (l_magnons) call initactivate(1,'magnons')
            !
            if (l_chi.and.trim(Chi_mode)==' ') Chi_mode='IP'
            if (l_bse.and.trim(BSK_mode)==' ') BSK_mode='IP'
@@ -1561,6 +1565,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
              call initactivate(1,'optics')
              if (l_chi) call initactivate(1,'chi')
              if (l_bse) call initactivate(1,'bse')
+             if (l_magnons) call initactivate(1,'magnons')
            end if
            !
            BSK_mode='HARTREE'

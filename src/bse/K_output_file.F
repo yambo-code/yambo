@@ -44,6 +44,11 @@ subroutine K_output_file(iq,mode)
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name
  use KERR,      ONLY:B_Hall,A_drude
 #endif
+#if defined _RT
+ use drivers,   ONLY:l_magnons
+ use X_m,       ONLY:X_magnons
+ use X_output,  ONLY:magp_file_name,magm_file_name
+#endif
 #if defined _PL
  use X_output,  ONLY:pl_file_name
  use PHOTOLUM,  ONLY:PL
@@ -115,6 +120,12 @@ subroutine K_output_file(iq,mode)
    call of_open_close(off_file_name,title_mode)
    call of_open_close(moke_file_name,title_mode)
    if (eval_alpha) call of_open_close(beta_file_name,title_mode)
+ endif
+#endif
+#if defined _RT
+ if(l_magnons) then
+   call of_open_close(magp_file_name,title_mode)
+   call of_open_close(magm_file_name,title_mode)
  endif
 #endif
  if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name,title_mode)
@@ -237,6 +248,22 @@ subroutine K_output_file(iq,mode)
  endif
 #endif
  !
+#if defined _RT
+ if(l_magnons) then
+   !
+   call X_setup_headers('pmag ')
+   if (l_Haydock.or.l_Inversion) call msg("o pmag",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o pmag",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o pmag",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   !
+   call X_setup_headers('mmag')
+   if (l_Haydock.or.l_Inversion) call msg("o mmag",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+   if (l_Diago.or.l_Slepc) call msg("o mmag",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+   if (l_IP) call msg("o mmag",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   !
+ endif
+#endif
+ !
  if (.not.l_Haydock) then
    call X_setup_headers('jdos')
    if (l_Diago.or.l_Slepc) call msg("o jdos",'#',headers(:7),INDENT=0,USE_TABS=.TRUE.)
@@ -244,7 +271,7 @@ subroutine K_output_file(iq,mode)
    if (l_IP) call msg("o jdos",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
- call msg("o eps refl eel alpha off beta moke jdos pl_",'#')
+ call msg("o eps refl eel alpha off beta moke jdos pl_ mmag pmag",'#')
  !
 #if defined _PL
  !
@@ -442,6 +469,42 @@ subroutine K_output_file(iq,mode)
  !
 #endif
  !
+#if defined _RT
+ !
+ ! MAGNONS
+ !------
+ if(l_magnons) then
+   !
+   ! magnons_plus
+   !
+   n_output_data=5
+   if (l_Haydock.or.l_Inversion) n_output_data=7
+   if (l_IP) n_output_data=3
+   !
+   do iw=1,BSS_n_freqs 
+     output_data(1:5)=(/real(X_magnons(iw,1,1))*HA2EV,aimag(X_magnons(iw,1,2)),real(X_magnons(iw,1,2)),&
+&                  aimag(X_magnons(iw,1,3)),real(X_magnons(iw,1,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,1,4)),real(X_magnons(iw,1,4))/)
+     if (l_IP) output_data(2:3)=output_data(4:5)
+     call msg('o pmag','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+   ! magnons_minus
+   !
+   do iw=1,BSS_n_freqs 
+     output_data(1:5)=(/real(X_magnons(iw,2,1))*HA2EV,aimag(X_magnons(iw,2,2)),real(X_magnons(iw,2,2)),&
+&                  aimag(X_magnons(iw,2,3)),real(X_magnons(iw,2,3))/)
+     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(X_magnons(iw,2,4)),real(X_magnons(iw,2,4))/)
+     if (l_IP) output_data(2:3)=output_data(4:5)
+     call msg('o mmag','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     !
+   enddo
+   !
+ endif
+ !
+#endif
+ !
  ! JOINT DOS
  !------------
  !
@@ -486,6 +549,13 @@ subroutine K_output_file(iq,mode)
        call of_open_close(off_file_name)
        call of_open_close(beta_file_name)
        call of_open_close(moke_file_name)
+     endif
+#endif
+     !
+#if defined _RT
+     if(l_magnons) then
+       call of_open_close(magp_file_name)
+       call of_open_close(magm_file_name)
      endif
 #endif
      !

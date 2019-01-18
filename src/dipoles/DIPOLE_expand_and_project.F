@@ -24,7 +24,7 @@
 subroutine DIPOLE_expand_and_project(Xk,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
- use drivers,        ONLY:l_col_cut
+ use drivers,        ONLY:l_col_cut,l_magnons
  use parallel_m,     ONLY:PAR_K_scheme
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
@@ -33,11 +33,17 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  use X_m,            ONLY:global_gauge
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:secnm
+#if defined _RT
+ use pars,           ONLY:cI
+ use matrix_operate, ONLY:m3det
+ use MAGNONS,        ONLY:DIP_Splus,DIP_Smins,MAGNONS_alloc
+ use DIPOLES,        ONLY:DIP_spin
+#endif
 #if defined _KERR
  use pars,           ONLY:pi
  use vec_operate,    ONLY:rot_v_xy_plane
  use drivers,        ONLY:l_kerr
- use KERR,           ONLY:DIP_projected_r90,KERR_alloc,KERR_alloc
+ use KERR,           ONLY:DIP_projected_r90,KERR_alloc
 #endif
  !
  implicit none
@@ -47,10 +53,14 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  !
  ! Work Space
  !
- integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
+ integer                   :: ik,ik_bz,ic,iv,is,is_inv,i_sp_pol,ik_mem,ik_bz_mem,i_star
  real(SP)                  :: field_dir(3),field_dir_rot(3)
  complex(SP)               :: dipole(3)
- logical                   :: t_rev,use_dip_iR,use_dip_P
+#if defined _RT
+ complex(SP)               :: dipole_m(3)
+ real(SP)                  :: tmp_sop(3,3)
+#endif
+ logical                   :: t_rev,inv,use_dip_iR,use_dip_P
 #if defined _KERR
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
 #endif
@@ -88,6 +98,14 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  endif
 #endif
  !
+#if defined _RT
+ if(l_magnons) then
+   call MAGNONS_alloc('DIP_S',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nbz/))
+   DIP_Splus = cZERO
+   DIP_Smins = cZERO
+ endif
+#endif
+ !
  do i_sp_pol=1,n_sp_pol
    !
    do ik=1,Xk%nibz
@@ -104,11 +122,16 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            if (use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
            if (use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
            !
+#if defined _RT
+           if (l_magnons ) dipole_m = DIP_spin(:,ic,iv,ik_mem,i_sp_pol)
+#endif
+           !
          endif
          !
          do i_star=1,Xk%nstar(ik)
            !
-           is                = sop_inv(Xk%star(ik,i_star))
+           is                = Xk%star(ik,i_star)
+           is_inv            = sop_inv(is)
            ik_bz             = i_star
            if ( ik>1 ) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
            !
@@ -116,10 +139,10 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            !
            ik_bz_mem=PAR_K_scheme%bz_index(ik_bz)
            !
-           if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-           if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+           if ( is_inv<= nsym/(i_time_rev+1) ) t_rev=.false.
+           if ( is_inv > nsym/(i_time_rev+1) ) t_rev=.true.
            !
-           field_dir_rot = matmul( dl_sop(:,:,is), field_dir )
+           field_dir_rot = matmul( dl_sop(:,:,is_inv), field_dir )
            !
            if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
            if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
@@ -127,10 +150,20 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            !
 #if defined _KERR
            if(l_kerr) then
-             dipole_dir_rot = matmul( dl_sop(:,:,is), dipole_dir )
+             dipole_dir_rot = matmul( dl_sop(:,:,is_inv), dipole_dir )
              if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
              if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
              if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
+           endif
+#endif
+           !
+#if defined _RT
+           if(l_magnons) then
+             tmp_sop(:,:)=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
+             if( t_rev ) tmp_sop(:,:)=-tmp_sop(:,:)
+             dipole_m = matmul( tmp_sop, dipole_m )
+             DIP_Splus(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m(1)+cI*dipole_m(2) 
+             DIP_Smins(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m(1)+cI*dipole_m(2)
            endif
 #endif
            !

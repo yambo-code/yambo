@@ -38,7 +38,7 @@
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
   {"setup",  "i","Initialization",0,0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
+  {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space / (m)agnons]",0,0,1,0,0},
 #if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
   {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
   {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0,0},

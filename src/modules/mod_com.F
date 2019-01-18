@@ -669,7 +669,7 @@ module com
      ! Work Space
      !
      integer          ::i1,i2
-     character(schlen)::ch_piece(10)
+     character(schlen)::ch_piece(20)
      character(lchlen)::stripped_file_name
      !
      terminator(1)='('
@@ -679,7 +679,7 @@ module com
      !
      if (how(:1)=="o") then
        call STRING_split(how,ch_piece)
-       do i2=2,10
+       do i2=2,20
          if (len_trim(ch_piece(i2))==0) cycle
          do i1=1,max_open_ofs-1
            if (len_trim(opened_of(i1))==0) cycle

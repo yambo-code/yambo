@@ -21,21 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module KERR
+module MAGNONS
  !
- use drivers, ONLY:l_kerr
+ use drivers, ONLY:l_magnons
  use pars,    ONLY:SP
  !
 #include<memory.h>
  !
- complex(SP)              :: A_drude(2)
- complex(SP)              :: B_Hall(2)
- complex(SP), allocatable :: BSS_dipoles_kerr(:)
- complex(SP), allocatable :: DIP_projected_r90(:,:,:,:)
+ complex(SP), allocatable :: BSS_dipoles_magnons(:,:)
+ complex(SP), allocatable :: DIP_Splus(:,:,:,:)
+ complex(SP), allocatable :: DIP_Smins(:,:,:,:)
  !
  contains
    !
-   subroutine KERR_alloc(what,d)
+   subroutine MAGNONS_alloc(what,d)
      !
      use electrons, ONLY:n_sp_pol
      character(*)      :: what
@@ -47,29 +46,31 @@ module KERR
      !
      if (present(d)) then
        select case(what)
-       case('DIP_projected')
-         if (allocated(DIP_projected_r90)) return
-         YAMBO_ALLOC(DIP_projected_r90,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+       case('DIP_S')
+         if (allocated(DIP_Splus)) return
+         YAMBO_ALLOC(DIP_Splus,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
+         YAMBO_ALLOC(DIP_Smins,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
        end select
      else
        select case(what)
-       case('DIP_projected')
-         YAMBO_FREE(DIP_projected_r90)
+       case('DIP_S')
+         YAMBO_FREE(DIP_Splus)
+         YAMBO_FREE(DIP_Smins)
        end select
      endif
    end subroutine
    !
-   subroutine BSS_KERR_alloc( )
+   subroutine BSS_MAGNONS_alloc( )
      use pars,       ONLY:cZERO
      use BS,         ONLY:BS_H_dim,BS_K_dim
-     if (.not.l_kerr) return
-     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
-     BSS_dipoles_kerr = cZERO
+     if (.not.l_magnons) return
+     YAMBO_ALLOC(BSS_dipoles_magnons,(2,BS_H_dim))
+     BSS_dipoles_magnons = cZERO
    end subroutine
    !
-   subroutine BSS_KERR_free( )
-     if (.not.l_kerr) return
-     YAMBO_FREE(BSS_dipoles_kerr)
+   subroutine BSS_MAGNONS_free( )
+     if (.not.l_magnons) return
+     YAMBO_FREE(BSS_dipoles_magnons)
    end subroutine
    !
 end module

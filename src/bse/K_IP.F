@@ -48,6 +48,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use DIPOLES,       ONLY:DIP_P
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
 #endif
+#if defined _RT
+ use drivers,       ONLY:l_magnons
+ use X_m,           ONLY:X_magnons
+#endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
  use X_m,           ONLY:Epsilon_ij
@@ -287,6 +291,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
 #endif
    !
+#if defined _RT
+   !
+   if (l_magnons) call K_magnons_IP(iq,W_bss%p,Dip)
+   !
+#endif
+   !
  endif
  !
  ! CLEAN
@@ -313,6 +323,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    YAMBO_FREE(Joint_DOS)
 #if defined _KERR
    YAMBO_FREE(Epsilon_ij)
+#endif
+#if defined _RT
+   YAMBO_FREE(X_magnons)
 #endif
 #if defined _PL
    YAMBO_FREE(PL)

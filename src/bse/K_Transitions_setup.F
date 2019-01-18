@@ -55,6 +55,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
+#if defined _RT
+ use drivers,      ONLY:l_magnons
+#endif
 #if defined _PL
  use drivers,      ONLY:l_photolum
 #endif
@@ -83,6 +86,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
  real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
  integer, allocatable :: i_T_at_k(:)
+#if defined _RT
+ real(SP):: f_eh_SFLIP,E_eh_SFLIP
+#endif
 #if defined _PL
  real(SP):: f_eh_PL(2)
 #endif
@@ -203,12 +209,23 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
                 PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
              endif
              !
+             ! Energies
+             !
              BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
+#if defined _RT
+             if(l_magnons) BS_T_grp(i_T_group_now)%E_SFLIP(i_T_in_the_grp)=E_eh_SFLIP
+#endif
+             !
+             ! Occupations
+             !
              BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
 #if defined _PL
              if (l_photolum) BS_T_grp(i_T_group_now)%f_PL(:,i_T_in_the_grp) =f_eh_PL
 #endif
              BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
+#if defined _RT
+             if(l_magnons) BS_T_grp(i_T_group_now)%f_SFLIP(i_T_in_the_grp)=f_eh_SFLIP
+#endif
              !
              if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=Ken%Z(ic,ik,i_sp)*Ken%Z(iv,ikp,i_sp)
              !
@@ -262,6 +279,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      if(     allocated(Ken%Eo)) Eo_eh= Ken%Eo(ic,ik ,i_sp)-Ken%Eo(iv,ikp,i_sp)
      if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
+#if defined _RT
+     E_eh_SFLIP=E_eh
+     if(l_magnons.and.n_sp_pol==2) then
+       if (i_sp==1) E_eh_SFLIP = Ken%E(ic,ikp,1)-Ken%E(iv,ik ,2)
+       if (i_sp==2) E_eh_SFLIP = Ken%E(ic,ikp,2)-Ken%E(iv,ik ,1)
+     endif
+#endif
+     !
      ! Small energy transitions. Dipoles in length gauge are not defined
      if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
      !
@@ -283,6 +308,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      f_eh_REF =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      f_eh     =f_eh_REF
      f_eh_RES =f_eh_REF
+     !
+#if defined _RT
+     f_eh_SFLIP=f_eh
+     if(l_magnons.and.n_sp_pol==2) then
+       if (i_sp==1) f_eh_SFLIP =(Ken%f(iv,ikp,2)-Ken%f(ic,ik ,1))/spin_occ
+       if (i_sp==2) f_eh_SFLIP =(Ken%f(iv,ikp,1)-Ken%f(ic,ik ,2))/spin_occ
+     endif
+#endif
      !
      ! f_eh  enter the excitonic Hamiltonian
      ! f_eh_RES enter the residual of the dielectric constant

@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2018 the YAMBO team
+         Copyright (C) 2000-2019 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM

@@ -27,7 +27,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  use drivers,        ONLY:l_col_cut,l_magnons
  use parallel_m,     ONLY:PAR_K_scheme
  use electrons,      ONLY:n_sp_pol
- use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
+ use D_lattice,      ONLY:nsym,i_time_rev,dl_sop
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
  use DIPOLES,        ONLY:DIP_projected,DIP_alloc,DIPOLE_t,DIP_iR,DIP_P
  use X_m,            ONLY:global_gauge
@@ -54,15 +54,14 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  ! Work Space
  !
  integer                   :: ik,ik_bz,ic,iv,is,is_inv,i_sp_pol,ik_mem,ik_bz_mem,i_star
- real(SP)                  :: field_dir(3),field_dir_rot(3)
- complex(SP)               :: dipole(3)
+ real(SP)                  :: field_dir(3)
+ complex(SP)               :: dipole(3),dipole_rot(3)
 #if defined _RT
- complex(SP)               :: dipole_m(3)
- real(SP)                  :: tmp_sop(3,3)
+ complex(SP)               :: tmp_sop(3,3),dipole_m(3),dipole_m_rot(3)
 #endif
- logical                   :: t_rev,inv,use_dip_iR,use_dip_P
+ logical                   :: t_rev,use_dip_iR,use_dip_P
 #if defined _KERR
- real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
+ real(SP)                  :: field_dir_r90(3)
 #endif
  !
  ! The field direction and the gamma-point norm must be renormalized here in case the
@@ -77,7 +76,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  if(use_dip_P ) field_dir=Dip%q0/v_norm(Dip%q0)
  !
 #if defined _KERR
- if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
+ if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,field_dir_r90(3))
 #endif
  !
  if (     l_col_cut) q_norm(1)    =q0_def_norm
@@ -131,7 +130,6 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
          do i_star=1,Xk%nstar(ik)
            !
            is                = Xk%star(ik,i_star)
-           is_inv            = sop_inv(is)
            ik_bz             = i_star
            if ( ik>1 ) ik_bz = sum(Xk%nstar(1:ik-1))+i_star
            !
@@ -139,20 +137,18 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            !
            ik_bz_mem=PAR_K_scheme%bz_index(ik_bz)
            !
-           if ( is_inv<= nsym/(i_time_rev+1) ) t_rev=.false.
-           if ( is_inv > nsym/(i_time_rev+1) ) t_rev=.true.
+           if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+           if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
            !
-           field_dir_rot = matmul( dl_sop(:,:,is_inv), field_dir )
+           dipole_rot = matmul( dl_sop(:,:,is), dipole )
+           if(t_rev) dipole_rot=conjg(dipole_rot)
            !
-           if (.not.t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_rot, dipole )
-           if (     t_rev) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, field_dir_rot ) 
+           DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir, dipole_rot )
            if (  iv==ic  ) DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = cONE
            !
 #if defined _KERR
            if(l_kerr) then
-             dipole_dir_rot = matmul( dl_sop(:,:,is_inv), dipole_dir )
-             if (.not.t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole_dir_rot, dipole )
-             if (     t_rev) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( dipole, dipole_dir_rot )
+             DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = dot_product( field_dir_r90, dipole_rot )
              if (  iv==ic  ) DIP_projected_r90(ic,iv,ik_bz_mem,i_sp_pol) = cONE
            endif
 #endif
@@ -161,9 +157,10 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            if(l_magnons) then
              tmp_sop(:,:)=dl_sop(:,:,is)*m3det(dl_sop(:,:,is))
              if( t_rev ) tmp_sop(:,:)=-tmp_sop(:,:)
-             dipole_m = matmul( tmp_sop, dipole_m )
-             DIP_Splus(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m(1)+cI*dipole_m(2) 
-             DIP_Smins(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m(1)+cI*dipole_m(2)
+             dipole_m_rot = matmul( tmp_sop, dipole_m )
+             !if( t_rev ) dipole_m = conjg(dipole_m)
+             DIP_Splus(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m_rot(1)+cI*dipole_m_rot(2) 
+             DIP_Smins(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m_rot(1)-cI*dipole_m_rot(2)
            endif
 #endif
            !

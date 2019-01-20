@@ -89,7 +89,8 @@ subroutine K_magnons_IP(iq,w,Dip)
      endif
      !
      ! Residuals
-     res=BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T)*conjg(BS_T_grp(i_T_g)%dipoles_R_mag(:,i_T))*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC

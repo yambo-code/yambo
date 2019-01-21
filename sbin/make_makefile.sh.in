@@ -67,7 +67,7 @@ done
 #
 llibs="-L\$(libdir) $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir) @F90_MODULE_FLAG@\$(sysinclude)"
-linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/driver -I\$(includedir)/headers/parser"
+linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi
@@ -108,7 +108,7 @@ echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
-echo "dopts=$dopts -D_\$(os) -D_$@" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
 echo "dep_file=$dep_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
@@ -150,13 +150,7 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}if test -f \$(includedir)/driver/yambo.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                    \$(includedir)/driver/yambo.h > \$(includedir)/yambo.h; fi
- ${PREFIX}if test -f \$(includedir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
-                   \$(includedir)/driver/ypp.h > \$(includedir)/ypp.h; fi
- ${PREFIX}( eval cp -f \$(includedir)/driver/a2y.h \$(includedir)/driver/p2y.h  \$(includedir)/driver/c2y.h  \$(includedir)/driver/e2y.h \$(includedir))
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver \
-                  -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
  @echo
 endef
 define link
@@ -225,5 +219,4 @@ cat << EOF >> $cdir/Makefile
 .c.o:
 	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$*.c) > /dev/null
 	@echo $ECHO_N \$*".c"
-	@if [ -f \$*".h" ]; then cp \$*".h" \$(includedir); fi
 EOF

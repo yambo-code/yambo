@@ -28,7 +28,7 @@
 #include <kind.h>
 #include <title.h>
 
-void usage(short_options_struct *opts,int verbose, char *tool, char *codever, char *tool_desc)
+void usage(short_options_struct *opts,int verbose, struct tool_struct t)
 {
  int i,j,nr=0;
  while(opts[nr].ln!=NULL) {nr++;};
@@ -67,8 +67,8 @@ void usage(short_options_struct *opts,int verbose, char *tool, char *codever, ch
 #else
   char* HDF5_string="";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",tool,codever,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
-  fprintf(stderr,"Usage: %s",tool); 
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",t.tool,t.version,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
+  fprintf(stderr,"Usage: %s",t.tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")!=0) 
    {fprintf(stderr," -%s",opts[j].sn);
@@ -77,9 +77,9 @@ void usage(short_options_struct *opts,int verbose, char *tool, char *codever, ch
    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
    };
   };
-  fprintf(stderr,"\n%s%s%s\n","Try `",tool," -H' for more information");exit(0);
+  fprintf(stderr,"\n%s%s%s\n","Try `",t.tool," -H' for more information");exit(0);
  };
- if (verbose==2) {title(stderr,"",tool,codever,tool_desc);};
+ if (verbose==2) {title(stderr,"",t);};
  for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].ln,"DESC")==0) 
    {

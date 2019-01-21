@@ -21,10 +21,10 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-
 #include <stdio.h>
+#include <kind.h>
 
-void title(FILE *file_name,char *cmnt, char *tool, char *codever, char *tool_desc)
+void title(FILE *file_name,char *cmnt,  struct tool_struct t)
 {
  fprintf(file_name,"%s%s\n",cmnt,  " ___ __  _____  __ __  _____   _____ ");
  fprintf(file_name,"%s%s\n",cmnt,  "|   Y  ||  _  ||  Y  ||  _  \\ |  _  |");
@@ -33,6 +33,6 @@ void title(FILE *file_name,char *cmnt, char *tool, char *codever, char *tool_des
  fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
- fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,tool,codever);
- fprintf(file_name,"%s %s \n\n",cmnt,tool_desc);
+ fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,t.tool,t.version);
+ fprintf(file_name,"%s %s \n\n",cmnt,t.desc);
 };

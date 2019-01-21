@@ -22,5 +22,5 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-void usage(short_options_struct *opts,int verbose, char *tool, char *codever, char *tool_desc);
+void usage(short_options_struct *opts,int verbose, struct tool_struct t);
 

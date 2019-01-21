@@ -22,5 +22,5 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-void title(FILE *file_name,char *cmnt, char *tool, char *codever, char *tool_desc);
+void title(FILE *file_name,char *cmnt, struct tool_struct t);
 

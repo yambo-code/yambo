@@ -22,4 +22,4 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-void launcher(int np, int pid, struct yambo_seed_struct y,int use_mpi);
+void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );

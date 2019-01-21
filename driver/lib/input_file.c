@@ -22,15 +22,11 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <kind.h>
 #include <macros.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 void input_file(struct yambo_seed_struct y,struct tool_struct t,int use_editor)
 {
@@ -51,15 +47,12 @@ void input_file(struct yambo_seed_struct y,struct tool_struct t,int use_editor)
  strcpy(edit_line,t.editor);
  strncat(edit_line,y.in_file,strlen(y.in_file));
 #if defined _YAMBO_MAIN || defined _YPP_MAIN 
- if (y.in_file_N == 1 && ttd>0)
+ if (use_editor == 1 && ttd>0 && strstr(t.editor,"none ")==0)
  {
-  if(strstr(t.editor,"none ")==0 && use_editor==1) { 
-    system(edit_line);
-  }
-  else { 
-   fprintf(stderr," \n%s %s %s\n\n","yambo: input file",y.in_file,"created");
-   exit (0);
-  }
+  system(edit_line);
+ }else if (use_editor == -2){ 
+  fprintf(stderr," \n%s%s %s %s\n\n",t.tool,": input file",y.in_file,"created");
+  exit (0);
  };
 #endif
 };

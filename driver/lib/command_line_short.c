@@ -22,11 +22,8 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <getopt.h>
 #include <kind.h>
@@ -36,7 +33,7 @@
 void substring(char [], char[], int, int);
 
 
-struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t, int use_editor, int use_mpi)
+struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t, int *use_editor, int *use_mpi)
 {
  int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4],lni,nr=0;
  double rv[4];
@@ -69,34 +66,34 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], short_option
    if (optind+nf>argc) {break;};
 #else
    if (c=='?') {
-    usage(opts,1,t.tool,t.version,t.desc);
+    usage(opts,1,t);
     exit(0);
    };
 #endif
   /* Upper Case actions */
   
   /* Help...*/
-   if (strcmp(opts[j].ln,"help")==0)  {usage(opts,1,t.tool,t.version,t.desc);exit(0);};
-   if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,t.tool,t.version,t.desc);exit(0);};
+   if (strcmp(opts[j].ln,"help")==0)  {usage(opts,1,t);exit(0);};
+   if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,t);exit(0);};
   /*
    ...switch off MPI_init for non-parallel options ...
   */
-   if (opts[j].mp==0)  {use_mpi=-1;};
+   if (opts[j].mp==0)  {*use_mpi=-1;};
   /*
    ...or for an explicit request
   */
-   if (strcmp(opts[j].ln,"nompi")==0) {use_mpi=-1;};
+   if (strcmp(opts[j].ln,"nompi")==0) {*use_mpi=-1;};
   /*
    ...switch off launch editor
   */
-   if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=-1;};
+   if (strcmp(opts[j].ln,"quiet")==0)  {*use_editor=-2;};
    opts[j].st++; 
    lni=0;
    lnr=0;
    lnc=0;
    nf=opts[j].ni+opts[j].nr+opts[j].nc;
    if (optind+nf>argc) {
-     fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t.tool,t.version,t.desc);exit(0);
+     fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t);exit(0);
    };
    for(i=1;i<=nf;i++) {
      k=0;
@@ -104,7 +101,7 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], short_option
 #if defined _NO_OPTIONS_CHECK 
        break;
 #else
-       fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t.tool,t.version,t.desc);exit(0);
+       fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t);exit(0);
 #endif
      };
      if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};

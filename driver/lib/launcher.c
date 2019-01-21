@@ -22,21 +22,27 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <getopt.h>
 #include <kind.h>
-#include <usage.h>
-#include <load_environments.h>
 #include <wrapper.h>
 #include <macros.h>
+#if defined _MPI 
+ #include <mpi.h>
+#endif
 
-void launcher(int np, int pid, struct yambo_seed_struct y,int use_mpi)
+void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
 {
+ /* 
+   MPI
+ */
+#if defined _MPI
+ if (*use_mpi==1) {
+   MPI_Init(NULL,NULL);                 /* starts MPI */
+   MPI_Comm_rank(MPI_COMM_WORLD, &pid); /* get current process id */
+   MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
+ };
+#endif
 /* 
 
   Note on passing characters from C to Fortran:
@@ -128,5 +134,35 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int use_mpi)
 #include <fortran_arguments.h>
  );
 #endif
-
+ /* 
+   Input file edit ?
+ ===========================================================================
+ */
+ if ( y.in_file_N ==1 && *use_editor==0 ) {*use_editor=1;};
+ /* 
+   Error message
+ ===========================================================================
+ */
+ if ( y.in_file_N < 0 ) 
+ {
+  if (pid==0 && y.in_file_N == -1) {
+   fprintf(stderr," \n%s\n\n","yambo: cannot access CORE database (SAVE/*db1 and/or SAVE/*wf)");
+  };
+  if (pid==0 && y.in_file_N == -2) {
+   fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
+  };
+#if defined _MPI
+  if (*use_mpi==1) { MPI_Abort(MPI_COMM_WORLD,1); };
+#endif 
+ }
+ /* 
+   CLEAN & EXIT
+ ===========================================================================
+ */
+#if defined _MPI
+  if (*use_mpi==1) {
+   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Finalize();
+  };
+#endif 
 };

@@ -89,15 +89,17 @@ subroutine K_magnons_IP(iq,w,Dip)
      if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
      if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
      !
+     !if(ic==iv) i_sp_pol_rev=2
+     !
      BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S+|v>(i_sp_pol_c)
      BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S-|v>(i_sp_pol_c)
      if (BSS_add_antiresonant.or.BS_K_coupling) then
-       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus(ic,iv,ik_mem,i_sp_pol)  ! <v|S+|c>(i_sp_pol_c)
-       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins(ic,iv,ik_mem,i_sp_pol)  ! <v|S-|c>(i_sp_pol_c)
+       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev)  ! <v|S+|c>(i_sp_pol_c)
+       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev)  ! <v|S-|c>(i_sp_pol_c)
      endif
      !
-     ! Residuals: (1) <c|S+|v><v|S-|c> = dip_R_magn(1)*dip_A_magn(2)
-     !            (2) <c|S-|v><v|S+|c> = dip_R_magn(2)*dip_A_magn(1)
+     ! Residuals: (1) <c|S+|v>(i_sp_pol_c)<v|S-|c>(i_sp_pol_c) = dip_R_magn(1)*dip_A_magn(2)
+     !            (2) <c|S-|v>(i_sp_pol_c)<v|S+|c>(i_sp_pol_c) = dip_R_magn(2)*dip_A_magn(1)
      !
      res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
      res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
@@ -110,8 +112,8 @@ subroutine K_magnons_IP(iq,w,Dip)
      !
      if (BSS_add_antiresonant.or.BS_K_coupling) then
        !
-       ! Residuals: (1) <v|S+|c><c|S-|v> = dip_A_magn(1)*dip_R_magn(2)
-       !            (2) <v|S-|c><c|S+|v> = dip_A_magn(2)*dip_R_magn(1)
+       ! Residuals: (1) <v|S+|c>(i_sp_pol_c)<c|S-|v>(i_sp_pol_c) = dip_A_magn(1)*dip_R_magn(2)
+       !            (2) <v|S-|c>(i_sp_pol_c)<c|S+|v>(i_sp_pol_c) = dip_A_magn(2)*dip_R_magn(1)
        !
        res(1)=BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
        res(2)=BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)

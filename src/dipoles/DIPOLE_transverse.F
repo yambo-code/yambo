@@ -214,7 +214,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
            ! GPL_EXCLUDE_START
            !
 #if defined _RT
-           if (l_real_time_magn_dipoles) then
+           if (l_real_time_magn_dipoles.and.n_spinor==2) then
              if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
              if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
                if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=cZERO

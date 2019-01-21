@@ -284,9 +284,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,ik,ik_mem
+    !
+    i_sp_pol_inv=1
     !
     do i_sp_pol=1,n_sp_pol
+      !
+      if(i_sp_pol==1 .and. n_sp_pol==2) i_sp_pol_inv=2
+      if(i_sp_pol==2 .and. n_sp_pol==2) i_sp_pol_inv=1
+      !
       do ik=1,Xk%nibz
         !
         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
@@ -336,7 +342,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
             if (l_magn_dipoles) then
               DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-              if(n_spin  ==2) &
+              if(n_spin  ==2.and. (.not.n_sp_pol==2)) &
 &               DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
               if(n_spinor==2) &
 &               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
@@ -360,7 +366,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
               if (l_magn_dipoles) then
                 DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
                 if (n_spin  ==2) &
-&                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
+&                 DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol_inv))
                 if (n_spinor==2) &
 &                 DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
               endif

@@ -84,7 +84,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  !
  integer :: ikbz,iv,ic,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),ik,ikp,i_sp,i_star,nb(2),&
 &           i_T_group_now,i_T_group_last,i_g,n_loops,i_loop,i_T_in_the_grp,pert_range(2/n_sp_pol,2)
- real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h
+ real(SP):: E_eh,Eo_eh,E_eh_SOC_corr(2/n_sp_pol),E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh,f_eh_RES,f_eh_REF,f_e,f_h,f_check
  integer, allocatable :: i_T_at_k(:)
 #if defined _RT
  real(SP):: f_eh_SFLIP,E_eh_SFLIP
@@ -288,7 +288,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
 #endif
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
-     if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
+     !if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
      !
      if(E_SOC_nbands/=0) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -308,6 +308,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      f_eh_REF =(Ken%f(iv,ikp,i_sp)-Ken%f(ic,ik ,i_sp))/spin_occ
      f_eh     =f_eh_REF
      f_eh_RES =f_eh_REF
+     f_check  =f_eh_REF
      !
 #if defined _RT
      f_eh_SFLIP=f_eh_REF
@@ -315,6 +316,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
        if (i_sp==1) f_eh_SFLIP =(Ken%f(iv,ikp,2)-Ken%f(ic,ik ,1))/spin_occ
        if (i_sp==2) f_eh_SFLIP =(Ken%f(iv,ikp,1)-Ken%f(ic,ik ,2))/spin_occ
      endif
+     f_check  =f_eh_SFLIP
 #endif
      !
      ! f_eh  enter the excitonic Hamiltonian
@@ -337,6 +339,12 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
      f_e = (         Ken%f(iv,ikp,i_sp))/spin_occ
      f_h = (spin_occ-Ken%f(ic,ik ,i_sp))/spin_occ
+#if defined _RT
+     if(l_magnons.and.n_sp_pol==2) then
+       if (i_sp==1) f_e = (         Ken%f(iv,ikp,2))/spin_occ
+       if (i_sp==2) f_e = (         Ken%f(iv,ikp,1))/spin_occ
+     endif
+#endif
      !
 #if defined _PL
      !
@@ -353,7 +361,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
      ! f_eh<0 transitions are included in the anti-resonant part
      ! f_eh=0 transitions give no contribution to absorption and are not considered
-     if ( f_eh_REF<=0._SP ) T_is_ok=.FALSE.
+     if ( f_check<0._SP ) T_is_ok=.FALSE.
      !
      ! GPL_EXCLUDE_START
      !

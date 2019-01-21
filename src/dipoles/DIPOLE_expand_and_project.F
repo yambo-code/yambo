@@ -159,8 +159,8 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
              if( t_rev ) tmp_sop(:,:)=-tmp_sop(:,:)
              dipole_m_rot = matmul( tmp_sop, dipole_m )
              if( t_rev ) dipole_m_rot = conjg(dipole_m_rot)
-             DIP_Splus(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m_rot(1)+cI*dipole_m_rot(2) 
-             DIP_Smins(ic,iv,ik_bz_mem,i_sp_pol) = dipole_m_rot(1)-cI*dipole_m_rot(2)
+             DIP_Splus(ic,iv,ik_bz_mem,i_sp_pol) = 0.5_SP*(dipole_m_rot(1)+cI*dipole_m_rot(2))
+             DIP_Smins(ic,iv,ik_bz_mem,i_sp_pol) = 0.5_SP*(dipole_m_rot(1)-cI*dipole_m_rot(2))
            endif
 #endif
            !

@@ -361,7 +361,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      !
      ! f_eh<0 transitions are included in the anti-resonant part
      ! f_eh=0 transitions give no contribution to absorption and are not considered
-     if ( f_check<0._SP ) T_is_ok=.FALSE.
+     if ( f_check<=0._SP ) T_is_ok=.FALSE.
      !
      ! GPL_EXCLUDE_START
      !

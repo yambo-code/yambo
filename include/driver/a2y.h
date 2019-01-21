@@ -22,20 +22,9 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- Driver declaration
-*/
-#if defined _FORTRAN_US
- int a2y_i_
-#else
- int a2y_i
-#endif
- (int *, int *,int *,int *,int *,int *,int *,int *,
-  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
-  int lni,int iif,int iid,int iod,int icd,int ijs);
-/*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static short_options_struct short_options[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
   {"nodbfr","U","Do not fragment the DataBases (only for serial runs)",0,0,0,0,0},
   {"fragnb","b","Number of bands for each fragment",1,0,0,0,1},
@@ -46,5 +35,3 @@
   {"nowf",  "w","Force no wavefunctions",0,0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}
  };
- char *tool="a2y";
- char *tool_desc="A(binit) 2 Y(ambo) interface";

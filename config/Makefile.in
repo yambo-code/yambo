@@ -88,7 +88,7 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 #
 BASIC_LIBS   = driver external_c modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= driver external_c memory modules matrices linear_algebra bz_opsparallel parser communicate common io \
+BASIC_LIBS_LD= driver external_c memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
@@ -123,8 +123,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YPP
 #
-YPP_BASIC_LIBS     = driver modules interface qp plotting electrons 
-YPP_BASIC_LIBS_LD  = driver modules interface qp plotting electrons 
+YPP_BASIC_LIBS     = modules interface qp plotting electrons 
+YPP_BASIC_LIBS_LD  = modules interface qp plotting electrons 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons symmetries k-points bits 
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons symmetries k-points bits 
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) elph excitons symmetries k-points bits 

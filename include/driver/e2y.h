@@ -22,26 +22,14 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- Driver declaration
-*/
-#if defined _FORTRAN_US
- int e2y_i_
-#else
- int e2y_i
-#endif
- (int *, int *,int *,int *,int *,int *,int *,int *,
-  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
-  int lni,int iif,int iid,int iod,int icd,int ijs);
-/*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static short_options_struct short_options[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
   {"ifile", "F","KSS or WFK filename",0,0,1,0,0},
   {"odir","O","Output directory",0,0,1,0,0},
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
   {NULL,NULL,NULL,0,0,0,0,0}
  };
- char *tool="e2y";
- char *tool_desc="E(TSF) 2 Y(ambo) interface (0.6)";
+
 

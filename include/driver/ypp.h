@@ -22,23 +22,9 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
-  declaration
-*/
-/*
- "e" and "s" commmand line structure
-*/
-#if defined _FORTRAN_US
- int ypp_i
-#else
- int ypp_i_
-#endif
-(int *, int *,int *,int *,int *,int *,int *,int *,
-  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
-  int lni,int iif,int iid,int iod,int icd,int ijs);
-/*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static short_options_struct short_options[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
   {"bzgrids","k","BZ Grid generator [(k)pt,(q)pt,(s)hifted,(h)igh symmetry,(r)andom]",0,0,1,0,0}, 
   {"QPDBs",  "q","(g)enerate-modify/(m)erge quasi-particle databases",0,0,1,0,0}, 
@@ -80,5 +66,3 @@
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
- char *tool="ypp";
- char *tool_desc="Y(ambo) P(ost) P(rocessor)";

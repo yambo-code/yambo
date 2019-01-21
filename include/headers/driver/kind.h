@@ -22,7 +22,6 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-
 typedef struct tool_struct
 {
  char editor[500];
@@ -47,14 +46,15 @@ typedef struct yambo_seed_struct
  int  job_N;
 } yambo_seed_struct;
 
-typedef struct Ldes
+typedef struct short_options_struct
 {
-        char *ln;
-        char *sn;
-        char *d;
-        int   ni;
-        int   nr;
-        int   nc;
-        int   st;
-        int   mp;
-} Ldes;
+ char *ln;
+ char *sn;
+ char *d;
+ int   ni;
+ int   nr;
+ int   nc;
+ int   st;
+ int   mp;
+} short_options_struct;
+

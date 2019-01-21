@@ -28,7 +28,7 @@
 #include <kind.h>
 #include <title.h>
 
-void usage(Ldes *opts,int verbose, char *tool, char *codever, char *tool_desc)
+void usage(short_options_struct *opts,int verbose, char *tool, char *codever, char *tool_desc)
 {
  int i,j,nr=0;
  while(opts[nr].ln!=NULL) {nr++;};

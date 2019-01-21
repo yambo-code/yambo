@@ -22,20 +22,9 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
- Driver declaration
-*/
-#if defined _FORTRAN_US
- int yambo_driver
-#else
- int yambo_driver_
-#endif
- (int *, int *,int *,int *,int *,int *,int *,int *,
-  char *rnstr2, char *inf, char *id, char *od, char *com_dir, char *js,
-  int lni,int iif,int iid,int iod,int icd,int ijs);
-/*
  Command line structure
 */
- static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static short_options_struct short_options[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
   {"setup",  "i","Initialization",0,0,0,0,0},          
   {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
@@ -100,5 +89,3 @@
 #endif
   {NULL,NULL,NULL,0,0,0,0,0}
  };
- char *tool="yambo";
- char *tool_desc="A shiny pot of fun and happiness [C.D.Hogan]";

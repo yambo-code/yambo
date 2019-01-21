@@ -4,13 +4,16 @@ cd src/driver
 cp *.h ../../include/
 file_list=`find .  -type f  | grep -E '\.c' |grep -v .swp`
 for file in $file_list; do
- gcc -c $file -I ../../include/headers/driver  -I../../include  -I ../../include/headers/common
+ gcc -D_FORTRAN_US -D_TEST_MAIN -c $file -I ../../include/headers/driver  -I../../include  -I ../../include/headers/common 
 done
 cd ../../driver
 cp ../include/driver/common_options.h ../include
 cp ../include/driver/yambo.h ../include
-gcc -c driver.c -I ../include/ -I ../include/headers/common -I ../include/headers/driver 
+gcc -D_FORTRAN_US -D_TEST_MAIN -c driver.c -I ../include/ -I ../include/headers/common -I ../include/headers/driver 
+cp yambo.F yambo.f90
+gfortran -c yambo.f90
 cd ../
-gcc -o driver.x driver/driver.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o src/driver/command_line_short.o src/driver/command_line_short_new.o
+
+gfortran -o driver.x driver/driver.o driver/yambo.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o src/driver/command_line_short.o
 
 ./driver.x -x -o c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file

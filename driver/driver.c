@@ -56,23 +56,20 @@
 
  ... Command line options
 */
-#include <yambo.h>
+#include <wrapper.h>
+/*
 
-/*====
+  ====
   MAIN
-  ====*/
+  ====
+*/
 int main(int argc, char *argv[])
 {
  /*
-  Needed for the drivers call
- */
- int iif=0,iid=1,iod=1,icd=1,ijs=0,np=1,pid=0;
- char rnstr2[500]={'\0'};
- char *inf=NULL,*od=NULL,*id=NULL,*js=NULL,*com_dir=NULL;
- /*
+
   Work Space
  */
- int mpi_init=0,use_editor=1,ttd;
+ int np=1,pid=0,mpi_init=0,use_editor=1,ttd;
  char edit_line[100]={'\0'};
  /*
   Yambo and Tool structures
@@ -81,39 +78,27 @@ int main(int argc, char *argv[])
  tool_struct t;
  /*
   External functions
- extern int guess_winsize();
  */
- extern int optind;
+#if !defined _TEST_MAIN
+ extern int guess_winsize();
+#endif
  /* 
-  TOOL initializatio
+  TOOL initialization
  */
  strcpy(t.editor,editor);
  strcpy(t.tool,tool);
  strcpy(t.desc,tool_desc);
  strcpy(t.version,codever);
- /* 
-  YAMBO seed initialization
- */
- strcpy(y.in_file,tool);
- strcat(y.in_file,".in");
- y.in_file_N=strlen(y.in_file);
- strcpy(y.in_dir,".");
- y.in_dir_N=strlen(y.in_dir);
- strcpy(y.out_dir,".");
- y.out_dir_N=strlen(y.out_dir);
- strcpy(y.com_dir,".");
- y.com_dir_N=strlen(y.com_dir);
- strcpy(y.job,"");
- y.job_N=strlen(y.job);
- strcpy(y.string,"");
- y.string_N=strlen(y.string);
  /*
   stdlog?
- ttd=guess_winsize();
  */
- if (argc>1) {
-  y=command_line_short_new(argc,argv,opts,t);
- }
+#if !defined _TEST_MAIN
+ ttd=guess_winsize();
+#endif
+ /*
+  Command line parsing
+ */
+ if (argc>1) { y=command_line_short(argc,argv,short_options,t) ;};
  /* 
    MPI
  ===========================================================================
@@ -143,56 +128,67 @@ int main(int argc, char *argv[])
   See: http://docs.hp.com/en/B3909-90002/ch08s05.html
 
  */
-  fprintf(stderr,"\n","");
-  fprintf(stderr,"%s %i\n","np:" ,np);
-  fprintf(stderr,"%s %i\n","pid:",pid);
-  fprintf(stderr,"%s %i %s\n","RUNSTRING (new):",y.string_N,y.string);
-  fprintf(stderr,"%s %i %s\n","INPUT file(new):",y.in_file_N,y.in_file);
-  fprintf(stderr,"%s %i %s\n","INPUT dir (new):",y.in_dir_N,y.in_dir);
-  fprintf(stderr,"%s %i %s\n","OUT   dir (new):",y.out_dir_N,y.out_dir);
-  fprintf(stderr,"%s %i %s\n","COM   dir (new):",y.com_dir_N,y.com_dir);
-  fprintf(stderr,"%s %i %s\n","JOB       (new):",y.job_N,y.job);
-  fprintf(stderr,"\n","");
+
+#if defined _TEST_MAIN
+ fprintf(stderr,"\n\n%s \n","C driver");
+ fprintf(stderr,"%s %i\n","np:" ,np);
+ fprintf(stderr,"%s %i\n","pid:",pid);
+ fprintf(stderr,"%s %i %s\n","RUNSTRING :",y.string_N,y.string);
+ fprintf(stderr,"%s %i %s\n","INPUT file:",y.in_file_N,y.in_file);
+ fprintf(stderr,"%s %i %s\n","INPUT dir :",y.in_dir_N,y.in_dir);
+ fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
+ fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
+ fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
+ fprintf(stderr,"\n","");
+
+ F90_FUNC(driver)(
+#include <fortran_arguments.h>
+ );
+ exit(1);
+#endif
+
 #if defined _YAMBO_MAIN
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
  */
- F90_FUNC(yambo_driver,YAMBO_DRIVER)(
+ F90_FUNC(yambo_driver)(
 #include <fortran_arguments.h>
  );
-exit(1);
 #endif
 #if defined _YPP_MAIN
  /* 
    Running the Fortran YPP driver
  ===========================================================================
  */
- F90_FUNC(ypp_driver,YPP_DRIVER)(
-         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
+ F90_FUNC(ypp_driver)(
+#include <fortran_arguments.h>
+ );
 #endif
 #if defined _c2y 
  /* 
    Running the Fortran c2y driver
  ===========================================================================
  */
- F90_FUNC(c2y_i,C2Y_I)(
-         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
+ F90_FUNC(c2y_i)(
+#include <fortran_arguments.h>
+ );
 #endif
 #if defined _a2y 
  /* 
    Running the Fortran a2y driver
  ===========================================================================
  */
- F90_FUNC(a2y_i,A2Y_I)(
-         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
+ F90_FUNC(a2y_i)(
+#include <fortran_arguments.h>
+ );
 #endif
 #if defined _p2y
  /* 
    Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(p2y_i,P2Y_I)(
+ F90_FUNC(p2y_i)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -201,23 +197,24 @@ exit(1);
    Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(e2y_i,E2Y_I)(
-         &np,&pid,&y.in_file_N,&iif,&iid,&iod,&icd,&ijs,rnstr2,inf,id,od,com_dir,js,y.in_file_N,iif,iid,iod,icd,ijs);
+ F90_FUNC(e2y_i)(
+#include <fortran_arguments.h>
+ );
 #endif
  /* 
    INPUT FILE
  ===========================================================================
  */
  strcpy(edit_line,editor);
- strncat(edit_line,inf,strlen(inf));
+ strncat(edit_line,y.in_file,strlen(y.in_file));
 #if defined _YAMBO_MAIN || defined _YPP_MAIN 
- if (iif == 1 && ttd>0)
+ if (y.in_file_N == 1 && ttd>0)
  {
   if(strstr(editor,"none ")==0 && use_editor) { 
     system(edit_line);
   }
   else { 
-   fprintf(stderr," \n%s %s %s\n\n","yambo: input file",inf,"created");
+   fprintf(stderr," \n%s %s %s\n\n","yambo: input file",y.in_file,"created");
    exit (0);
   }
  };
@@ -226,12 +223,12 @@ exit(1);
    Error message
  ===========================================================================
  */
- if ( iif < 0 ) 
+ if ( y.in_file_N < 0 ) 
  {
-  if (pid==0 && iif == -1) {
+  if (pid==0 && y.in_file_N == -1) {
    fprintf(stderr," \n%s\n\n","yambo: cannot access CORE database (SAVE/*db1 and/or SAVE/*wf)");
   };
-  if (pid==0 && iif == -2) {
+  if (pid==0 && y.in_file_N == -2) {
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI

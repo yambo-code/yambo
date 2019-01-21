@@ -21,5 +21,8 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-&np,&pid,&y.string_N,&y.in_file_N,&y.in_dir_N,&y.out_dir_N,&y.com_dir_N,&y.job_N,y.string,y.in_file,y.in_dir,y.out_dir,y.com_dir,y.job,
-y.in_file_N,y.in_file_N,y.in_dir_N,y.out_dir_N,y.com_dir_N,y.job_N
+&np,&pid,
+&y.string_N,&y.in_file_N,&y.in_dir_N,&y.out_dir_N,&y.com_dir_N,&y.job_N,
+ y.string,   y.in_file,   y.in_dir,   y.out_dir,   y.com_dir,   y.job,
+ y.string_N, y.in_file_N, y.in_dir_N, y.out_dir_N, y.com_dir_N, y.job_N
+

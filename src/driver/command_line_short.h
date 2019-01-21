@@ -22,8 +22,4 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-struct yambo_seed_struct command_line_short_new(int argc, char *argv[], Ldes *opts,  struct tool_struct t);
-
-void command_line_short(int argc, char *argv[], Ldes *opts,int *lni, int *iif, int *iid, int *iod, int *icd, int *ijs, char *rnstr2, char *inf, char *id, char *od, 
-                        char *com_dir, char *js,char *tool, char *tool_desc,char *editor, char *codever);
-
+struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t);

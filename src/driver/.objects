@@ -1,1 +1,1 @@
-objs = load_environments.o title.o usage.o command_line_short.o command_line_short_new.o
+objs = load_environments.o title.o usage.o command_line_short.o

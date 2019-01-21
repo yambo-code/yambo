@@ -33,21 +33,22 @@
 #include <usage.h>
 #include <load_environments.h>
 
-void command_line_short(int argc, char *argv[], Ldes *opts,int *lni, int *iif, int *iid, int *iod, int *icd, int *ijs, char *rnstr2, char *inf, char *id, char *od, 
-                        char *com_dir, char *js,char *tool, char *tool_desc,char *editor, char *codever)
+struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t)
 {
- int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4];
+ int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4],lni;
  int mpi_init=0,use_editor=1,nr=0;
  double rv[4];
  char *cv[4]; 
  char *fmt=NULL,*env_file=NULL;
- char rnstr1[500]={'\0'},edit_line[100]={'\0'};
+ char string[500]={'\0'},edit_line[100]={'\0'};
+ 
+ yambo_seed_struct y;
 
  while(opts[nr].ln!=NULL) {nr++;};
  fmt = malloc(sizeof(char)*nr+1);
-/* 
- strcat needs fmt to be initialized 
-*/
+ /* 
+   strcat needs fmt to be initialized 
+ */
  fmt[0] = '\0' ;
  for(i=0;i<=nr-1;i++) {
    strcat(fmt,opts[i].sn);
@@ -66,38 +67,34 @@ void command_line_short(int argc, char *argv[], Ldes *opts,int *lni, int *iif, i
    if (optind+nf>argc) {break;};
 #else
    if (c=='?') {
-    usage(opts,1,tool,codever,tool_desc);
+    usage(opts,1,t.tool,t.version,t.desc);
     exit(0);
    };
 #endif
-/*
-  Upper Case actions
+  /* Upper Case actions */
   
-  Help...
-*/
-   if (strcmp(opts[j].ln,"help")==0)  {usage(opts,1,tool,codever,tool_desc);exit(0);};
-   if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,tool,codever,tool_desc);exit(0);};
-/* 
- ...switch off MPI_init for non-parallel options ...
-*/
+  /* Help...*/
+   if (strcmp(opts[j].ln,"help")==0)  {usage(opts,1,t.tool,t.version,t.desc);exit(0);};
+   if (strcmp(opts[j].ln,"lhelp")==0) {usage(opts,2,t.tool,t.version,t.desc);exit(0);};
+  /*
+   ...switch off MPI_init for non-parallel options ...
+  */
    if (opts[j].mp==0)  {mpi_init=-1;};
-/* 
- ...or for an explicit request
-*/
+  /*
+   ...or for an explicit request
+  */
    if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
-/*
- ...switch off launch editor
-*/
+  /*
+   ...switch off launch editor
+  */
    if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=0;};
-/*
-*/
    opts[j].st++; 
-   *lni=0;
+   lni=0;
    lnr=0;
    lnc=0;
    nf=opts[j].ni+opts[j].nr+opts[j].nc;
    if (optind+nf>argc) {
-     fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(opts,1,tool,codever,tool_desc);exit(0);
+     fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t.tool,t.version,t.desc);exit(0);
    };
    for(i=1;i<=nf;i++) {
      k=0;
@@ -105,67 +102,83 @@ void command_line_short(int argc, char *argv[], Ldes *opts,int *lni, int *iif, i
 #if defined _NO_OPTIONS_CHECK 
        break;
 #else
-       fprintf(stderr,"\n%s : invalid option -- %s\n",tool,opts[j].sn); usage(opts,1,tool,codever,tool_desc);exit(0);
+       fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].sn); usage(opts,1,t.tool,t.version,t.desc);exit(0);
 #endif
      };
-     if (opts[j].ni!=0 && k==0) {*lni++;iv[*lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
+     if (opts[j].ni!=0 && k==0) {lni++;iv[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};
      if (opts[j].nr!=0 && k==0) {lnr++;rv[lnr]=atof(argv[optind-1+i]);opts[j].nr--;k=1;};
      if (opts[j].nc!=0 && k==0) {lnc++;cv[lnc]=argv[optind-1+i];opts[j].nc--;k=1; };
    };
-/* 
- ...Parallel environments
-*/
+   /*
+    ...Parallel environments
+   */
    if (strcmp(opts[j].ln,"parenv")==0) {
      free(env_file);
      env_file = malloc(strlen(cv[1])+1);
      strcpy(env_file,cv[1]);
-     load_environments(env_file,editor);
+     load_environments(env_file,t.editor);
    };
- /* 
+   /*
    Input File, i/o directory 
- 
-   REALLOC ! 
- */
+   */
    if (strcmp(opts[j].ln,"ifile")==0) {
-     free(inf);
-     inf = malloc(strlen(cv[1])+1);
-     strcpy(inf,cv[1]);
-     *iif=strlen(inf);
+     strcpy(y.in_file,cv[1]);
+     y.in_file_N=strlen(y.in_file);
    };
    if (strcmp(opts[j].ln,"idir")==0) {
-     free(id);
-     id = malloc(strlen(cv[1])+1);
-     strcpy(id,cv[1]);
-     *iid=strlen(id);
+     strcpy(y.in_dir,cv[1]);
+     y.in_dir_N=strlen(y.in_dir);
    };
    if (strcmp(opts[j].ln,"odir")==0) {
-     free(od);
-     od = malloc(strlen(cv[1])+1);
-     strcpy(od,cv[1]);
-     *iod=strlen(od);
+     strcpy(y.out_dir,cv[1]);
+     y.out_dir_N=strlen(y.out_dir);
    };
    if (strcmp(opts[j].ln,"cdir")==0) {
-     free(com_dir);
-     com_dir = malloc(strlen(cv[1])+1);
-     strcpy(com_dir,cv[1]);
-     *icd=strlen(com_dir);
+     strcpy(y.com_dir,cv[1]);
+     y.com_dir_N=strlen(y.com_dir);
    };
    if (strcmp(opts[j].ln,"jobstr")==0) {
-     free(js);
-     js = malloc(strlen(cv[1])+1);
-     strcpy(js,cv[1]);
-     *ijs=strlen(js);
-
+     strcpy(y.job,cv[1]);
+     y.job_N=strlen(y.job);
    };
-   /* ------------------------- */
-   strcat(rnstr1," ");
-   strcat(rnstr1,opts[j].ln);
-   strcpy(rnstr2,rnstr1);
-   for(i=1;i<=*lni;i++) {sprintf(rnstr1,"%s %d ",rnstr2,iv[i]);strcpy(rnstr2,rnstr1);};
-   for(i=1;i<=lnr;i++) {sprintf(rnstr1,"%s %f ",rnstr2,rv[i]);strcpy(rnstr2,rnstr1);};
-   for(i=1;i<=lnc;i++) {sprintf(rnstr1,"%s %s ",rnstr2,cv[i]);strcpy(rnstr2,rnstr1);};
+   strcat(string," ");
+   strcat(string,opts[j].ln);
+   strcpy(y.string,string);
+   for(i=1;i<=lni;i++) {sprintf(string,"%s %d ",y.string,iv[i]);strcpy(y.string,string);};
+   for(i=1;i<=lnr;i++) {sprintf(string,"%s %f ",y.string,rv[i]);strcpy(y.string,string);};
+   for(i=1;i<=lnc;i++) {sprintf(string,"%s %s ",y.string,cv[i]);strcpy(y.string,string);};
 
  };
- *lni=strlen(rnstr2);
+ y.string_N=strlen(y.string);
  free(fmt);
+ /* 
+  Filling of empty input files
+ */
+ if (y.in_file_N==0){
+  strcpy(y.in_file,t.tool);
+  strcat(y.in_file,".in");
+  y.in_file_N=strlen(y.in_file);
+ };
+ if (y.in_dir_N==0) { 
+  strcpy(y.in_dir,".");
+  y.in_dir_N=1;
+ };
+ if (y.out_dir_N==0) { 
+  strcpy(y.out_dir,".");
+  y.out_dir_N=1;
+ }
+ if (y.com_dir_N==0) { 
+  strcpy(y.com_dir,".");
+  y.com_dir_N=1;
+ }
+ if (y.job_N==0) { 
+  strcpy(y.job,"");
+  y.job_N=0;
+ }
+ if (y.string_N==0) { 
+  strcpy(y.string,"");
+  y.string_N=0;
+ }
+ /* */
+ return(y);
 };

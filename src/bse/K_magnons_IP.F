@@ -23,7 +23,7 @@
 !
 subroutine K_magnons_IP(iq,w,Dip)
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO,cI,pi
  use LIVE_t,         ONLY:live_timing
  use drivers,        ONLY:l_rpa_IP
  use DIPOLES,        ONLY:DIPOLE_t
@@ -134,6 +134,8 @@ subroutine K_magnons_IP(iq,w,Dip)
  !
  call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+ !
+ X_magnons=X_magnons*Co_factor/(4._SP*pi)
  !
  ! CLEAN
  !

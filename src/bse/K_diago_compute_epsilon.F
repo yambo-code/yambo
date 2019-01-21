@@ -179,7 +179,7 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !============
  if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W%p(:)**2
  !
- Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor
+ Joint_DOS(:,2)=Joint_DOS(:,2)*Co_factor/(4._SP*pi)
  !
 #if defined _KERR
  !

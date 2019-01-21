@@ -33,13 +33,16 @@
 #include <usage.h>
 #include <load_environments.h>
 
+void substring(char [], char[], int, int);
+
+
 struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t, int use_editor, int use_mpi)
 {
  int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4],lni,nr=0;
  double rv[4];
  char *cv[4]; 
  char *fmt=NULL,*env_file=NULL;
- char string[500]={'\0'},edit_line[100]={'\0'};
+ char string[500]={'\0'},edit_line[100]={'\0'},ch[500]={'\0'};
  
  yambo_seed_struct y;
 
@@ -143,9 +146,25 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], short_option
    strcat(string," ");
    strcat(string,opts[j].ln);
    strcpy(y.string,string);
-   for(i=1;i<=lni;i++) {sprintf(string,"%s %d ",y.string,iv[i]);strcpy(y.string,string);};
-   for(i=1;i<=lnr;i++) {sprintf(string,"%s %f ",y.string,rv[i]);strcpy(y.string,string);};
-   for(i=1;i<=lnc;i++) {sprintf(string,"%s %s ",y.string,cv[i]);strcpy(y.string,string);};
+   y.string_N=strlen(y.string);
+   for(i=1;i<=lni;i++) {
+    substring(y.string, ch,1, y.string_N);
+    sprintf(string,"%s %d ",ch,iv[i]);
+    strcpy(y.string,string);
+    y.string_N=strlen(y.string);
+   };
+   for(i=1;i<=lnr;i++) {
+    substring(y.string, ch,1, y.string_N);
+    sprintf(string,"%s %f ",ch,rv[i]);
+    strcpy(y.string,string);
+    y.string_N=strlen(y.string);
+   };
+   for(i=1;i<=lnc;i++) {
+    substring(y.string, ch,1, y.string_N);
+    sprintf(string,"%s %s ",ch,cv[i]);
+    strcpy(y.string,string);
+    y.string_N=strlen(y.string);
+   };
 
  };
  y.string_N=strlen(y.string);
@@ -181,3 +200,13 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], short_option
  /* */
  return(y);
 };
+
+void substring(char s[], char sub[], int p, int l) {
+   int c = 0;
+   
+   while (c < l) {
+      sub[c] = s[p+c-1];
+      c++;
+   }
+   sub[c] = '\0';
+}

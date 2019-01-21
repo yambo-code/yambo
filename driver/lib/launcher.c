@@ -66,7 +66,7 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int use_mpi)
  fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
  fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
  fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
- fprintf(stderr,"\n","");
+ fprintf(stderr,"\n");
 
  F90_FUNC(driver)(
 #include <fortran_arguments.h>

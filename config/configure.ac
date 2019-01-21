@@ -273,7 +273,7 @@ AC_CONFIG_HEADERS([include/headers/common/c_defs.h:include/headers/common/c_defs
 AC_CONFIG_FILES([config/setup config/Makefile config/report config/msg_ydb
                  src/wf_and_fft/sgfft.F
                  sbin/make_makefile.sh sbin/objects_store.sh sbin/generate_gpl.sh
-                 include/headers/common/codever.h include/headers/driver/editor.h src/external_c/.objects])
+                 driver/include/codever.h driver/include/editor.h src/external_c/.objects])
 #
 AC_OUTPUT
 #

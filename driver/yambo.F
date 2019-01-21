@@ -14,6 +14,7 @@
  character(job_N),     intent(in)    :: job
 
  write (*,*) "F driver"
+ write (*,*) "NP, PID   :",np,pid
  write (*,*) "RUNSTRING :",string_N,string
  write (*,*) "INPUT file:",in_file_N,in_file
  write (*,*) "INPUT dir :",in_dir_N,in_dir

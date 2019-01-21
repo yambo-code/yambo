@@ -108,7 +108,7 @@ echo "lf90include=$lf90include $llibinclude" >> $cdir/Makefile
 echo "mfiles=find . -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
-echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
+echo "dopts=$dopts -D_\$(os) -D_$@" >> $cdir/Makefile
 echo "lock_file=$lock_file" >> $cdir/Makefile
 echo "dep_file=$dep_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
@@ -154,7 +154,7 @@ define driver
                     \$(includedir)/driver/yambo.h > \$(includedir)/yambo.h; fi
  ${PREFIX}if test -f \$(includedir)/driver/ypp.h; then \$(cpp) \$(cppflags) \$(dopts) \
                    \$(includedir)/driver/ypp.h > \$(includedir)/ypp.h; fi
- ${PREFIX}( eval cp -f \$(includedir)/driver/a2y.h  \$(includedir)/driver/p2y.h  \$(includedir)/driver/c2y.h  \$(includedir)/driver/e2y.h \$(includedir))
+ ${PREFIX}( eval cp -f \$(includedir)/driver/a2y.h \$(includedir)/driver/p2y.h  \$(includedir)/driver/c2y.h  \$(includedir)/driver/e2y.h \$(includedir))
  ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -ldriver \
                   -D_\$@ -c \$(prefix)/driver/driver.c > /dev/null)
  @echo

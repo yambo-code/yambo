@@ -2,7 +2,7 @@
          Copyright (C) 2000-2019 the YAMBO team
                http://www.yambo-code.org
  
-  Authors (see AUTHORS file for details): AM
+  Authors (see AUTHORS file for details): DS
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -21,5 +21,23 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-
-struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t, int use_editor, int use_mpi);
+/*
+ ...global conditional flags
+*/
+#if defined _test
+ #define _TEST_MAIN
+#endif
+#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL || _MAGNETIC || _KERR || _SURF
+ #define _YAMBO_MAIN
+#endif
+#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC || _YPP_SURF
+ #define _YPP_MAIN
+#endif
+/* 
+ F90 wrapper
+*/
+#if defined _FORTRAN_US
+ #define F90_FUNC(name) name ## _
+#else
+ #define F90_FUNC(name) name
+#endif

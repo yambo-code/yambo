@@ -40,11 +40,17 @@
 */
 #include <editor.h>
 #include <codever.h>
+#include <tool.h>
 /* 
 
  Command line options structure
 */
 #include <kind.h>
+/* 
+
+ Launcher
+*/
+#include <launcher.h>
 /*
 
  ...Subroutines/functions
@@ -52,6 +58,7 @@
 #include <usage.h>
 #include <load_environments.h>
 #include <command_line_short.h>
+#include <input_file.h>
 /*
 
  ... Command line options
@@ -66,22 +73,14 @@
 int main(int argc, char *argv[])
 {
  /*
-
   Work Space
  */
- int np=1,pid=0,mpi_init=0,use_editor=1,ttd;
- char edit_line[100]={'\0'};
+ int np=1,pid=0,use_mpi=1,use_editor=1;
  /*
   Yambo and Tool structures
  */
  yambo_seed_struct y;
  tool_struct t;
- /*
-  External functions
- */
-#if !defined _TEST_MAIN
- extern int guess_winsize();
-#endif
  /* 
   TOOL initialization
  */
@@ -90,135 +89,27 @@ int main(int argc, char *argv[])
  strcpy(t.desc,tool_desc);
  strcpy(t.version,codever);
  /*
-  stdlog?
- */
-#if !defined _TEST_MAIN
- ttd=guess_winsize();
-#endif
- /*
   Command line parsing
  */
- if (argc>1) { y=command_line_short(argc,argv,short_options,t) ;};
+ y=command_line_short(argc,argv,short_options,t,use_editor,use_mpi);
  /* 
    MPI
- ===========================================================================
  */
 #if defined _MPI
- if (mpi_init==0) {
+ if (use_mpi==1) {
    MPI_Init(&argc,&argv);               /* starts MPI */
    MPI_Comm_rank(MPI_COMM_WORLD, &pid); /* get current process id */
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
 #endif
  /* 
-
-  Note on passing characters from C to Fortran:
-  For each CHARACTER*n argument passed to a Fortran subprogram, 
-  two items are actually passed as arguments:
-  - The address of the character argument in memory (that is, a pointer to the argument).
-  - The arguments length in bytes. This is the "hidden" length argument 
-  that is available to the subprogram from the stack.
-  To pass a string argument from Fortran to C, you must explicitly prepare 
-  the C function to receive the string address argument and the hidden argument. 
-  The order of the address arguments in the argument list will be the same 
-  in C as in Fortran. The hidden length arguments, however, will come at the end of the list. 
-  If more than one string argument is passed, the length arguments will 
-  follow the same order as the address arguments, but at the end of the C's argument list.
-  Both C and Fortran both pass strings by reference. 
-  See: http://docs.hp.com/en/B3909-90002/ch08s05.html
-
+   Launcher
  */
-
-#if defined _TEST_MAIN
- fprintf(stderr,"\n\n%s \n","C driver");
- fprintf(stderr,"%s %i\n","np:" ,np);
- fprintf(stderr,"%s %i\n","pid:",pid);
- fprintf(stderr,"%s %i %s\n","RUNSTRING :",y.string_N,y.string);
- fprintf(stderr,"%s %i %s\n","INPUT file:",y.in_file_N,y.in_file);
- fprintf(stderr,"%s %i %s\n","INPUT dir :",y.in_dir_N,y.in_dir);
- fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
- fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
- fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
- fprintf(stderr,"\n","");
-
- F90_FUNC(driver)(
-#include <fortran_arguments.h>
- );
- exit(1);
-#endif
-
-#if defined _YAMBO_MAIN
- /* 
-   Running the Fortran YAMBO driver 
- ===========================================================================
- */
- F90_FUNC(yambo_driver)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _YPP_MAIN
- /* 
-   Running the Fortran YPP driver
- ===========================================================================
- */
- F90_FUNC(ypp_driver)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _c2y 
- /* 
-   Running the Fortran c2y driver
- ===========================================================================
- */
- F90_FUNC(c2y_i)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _a2y 
- /* 
-   Running the Fortran a2y driver
- ===========================================================================
- */
- F90_FUNC(a2y_i)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _p2y
- /* 
-   Running the Fortran p2y driver 
- ===========================================================================
- */
- F90_FUNC(p2y_i)(
-#include <fortran_arguments.h>
- );
-#endif
-#if defined _e2y 
- /* 
-   Running the Fortran p2y driver 
- ===========================================================================
- */
- F90_FUNC(e2y_i)(
-#include <fortran_arguments.h>
- );
-#endif
+ launcher(np,pid,y,use_mpi);
  /* 
    INPUT FILE
- ===========================================================================
  */
- strcpy(edit_line,editor);
- strncat(edit_line,y.in_file,strlen(y.in_file));
-#if defined _YAMBO_MAIN || defined _YPP_MAIN 
- if (y.in_file_N == 1 && ttd>0)
- {
-  if(strstr(editor,"none ")==0 && use_editor) { 
-    system(edit_line);
-  }
-  else { 
-   fprintf(stderr," \n%s %s %s\n\n","yambo: input file",y.in_file,"created");
-   exit (0);
-  }
- };
-#endif
+ input_file(y,t,use_editor);
  /* 
    Error message
  ===========================================================================
@@ -232,7 +123,7 @@ int main(int argc, char *argv[])
    fprintf(stderr," \n%s\n\n","yambo: invalid command line options and/or build");
   };
 #if defined _MPI
-  if (mpi_init==0) { MPI_Abort(MPI_COMM_WORLD,1); };
+  if (use_mpi==1) { MPI_Abort(MPI_COMM_WORLD,1); };
 #endif 
  };
  /* 
@@ -240,7 +131,7 @@ int main(int argc, char *argv[])
  ===========================================================================
  */
 #if defined _MPI
-  if (mpi_init==0) {
+  if (use_mpi==1) {
    MPI_Barrier(MPI_COMM_WORLD);
    MPI_Finalize();
   };

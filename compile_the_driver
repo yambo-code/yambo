@@ -4,16 +4,18 @@ cd src/driver
 cp *.h ../../include/
 file_list=`find .  -type f  | grep -E '\.c' |grep -v .swp`
 for file in $file_list; do
- gcc -D_FORTRAN_US -D_TEST_MAIN -c $file -I ../../include/headers/driver  -I../../include  -I ../../include/headers/common 
+ gcc -D_FORTRAN_US -D_test -c $file -I ../../include/headers/driver  -I../../include  -I ../../include/headers/common 
 done
-cd ../../driver
+cd ../../
+
+cd driver
 cp ../include/driver/common_options.h ../include
 cp ../include/driver/yambo.h ../include
-gcc -D_FORTRAN_US -D_TEST_MAIN -c driver.c -I ../include/ -I ../include/headers/common -I ../include/headers/driver 
+gcc -D_FORTRAN_US -D_test -c driver.c -I ../include/ -I ../include/headers/common -I ../include/headers/driver  -I ../include/headers
 cp yambo.F yambo.f90
 gfortran -c yambo.f90
 cd ../
 
-gfortran -o driver.x driver/driver.o driver/yambo.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o src/driver/command_line_short.o
+gfortran -o driver.x driver/driver.o driver/yambo.o src/driver/title.o src/driver/usage.o src/driver/load_environments.o src/driver/command_line_short.o src/driver/launcher.o src/driver/input_file.o
 
 ./driver.x -x -o c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file

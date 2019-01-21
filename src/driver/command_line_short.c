@@ -33,10 +33,9 @@
 #include <usage.h>
 #include <load_environments.h>
 
-struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t)
+struct yambo_seed_struct command_line_short(int argc, char *argv[], short_options_struct *opts,  struct tool_struct t, int use_editor, int use_mpi)
 {
- int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4],lni;
- int mpi_init=0,use_editor=1,nr=0;
+ int io,i,c,j,k,nf,lnr,lnc,ttd,iv[4],lni,nr=0;
  double rv[4];
  char *cv[4]; 
  char *fmt=NULL,*env_file=NULL;
@@ -79,15 +78,15 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], short_option
   /*
    ...switch off MPI_init for non-parallel options ...
   */
-   if (opts[j].mp==0)  {mpi_init=-1;};
+   if (opts[j].mp==0)  {use_mpi=-1;};
   /*
    ...or for an explicit request
   */
-   if (strcmp(opts[j].ln,"nompi")==0) {mpi_init=-1;};
+   if (strcmp(opts[j].ln,"nompi")==0) {use_mpi=-1;};
   /*
    ...switch off launch editor
   */
-   if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=0;};
+   if (strcmp(opts[j].ln,"quiet")==0)  {use_editor=-1;};
    opts[j].st++; 
    lni=0;
    lnr=0;

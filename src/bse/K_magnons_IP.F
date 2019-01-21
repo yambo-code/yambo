@@ -47,7 +47,7 @@ subroutine K_magnons_IP(iq,w,Dip)
  !
  real(SP)          :: conjg_fac
  complex(SP)       :: E_plus_W0,res(2),E_plus_W(2/n_sp_pol)
- integer           :: ik_bz,iv,ic,i_sp_pol,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
+ integer           :: ik_bz,iv,ic,i_sp_pol,i_sp_pol_rev,i_T,i_T_g,ik_mem,i_pert_SOC,n_SOC
  !
  YAMBO_ALLOC(X_magnons,(BSS_n_freqs,2,4))
  X_magnons=cZERO
@@ -56,6 +56,7 @@ subroutine K_magnons_IP(iq,w,Dip)
  X_magnons(:,2,1)=w(:)
  !
  n_SOC=1
+ i_sp_pol_rev=1
  !
  if(E_SOC_nbands/=0.and.n_sp_pol==1) n_SOC=2
  !
@@ -81,27 +82,47 @@ subroutine K_magnons_IP(iq,w,Dip)
      !
      if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Splus(ic,iv,ik_mem,i_sp_pol))
-     BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Smins(ic,iv,ik_mem,i_sp_pol))
-     if (BS_K_coupling) then
-       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus(ic,iv,ik_mem,i_sp_pol)
-       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins(ic,iv,ik_mem,i_sp_pol)
+     !
+     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_v) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_c_rev))
+     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_v) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_c_rev))
+     !
+     if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
+     if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
+     !
+     BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S+|v>(i_sp_pol_c)
+     BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S-|v>(i_sp_pol_c)
+     if (BSS_add_antiresonant.or.BS_K_coupling) then
+       BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)=DIP_Splus(ic,iv,ik_mem,i_sp_pol)  ! <v|S+|c>(i_sp_pol_c)
+       BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)=DIP_Smins(ic,iv,ik_mem,i_sp_pol)  ! <v|S-|c>(i_sp_pol_c)
      endif
      !
-     ! Residuals
-     res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
-     res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     ! Residuals: (1) <c|S+|v><v|S-|c> = dip_R_magn(1)*dip_A_magn(2)
+     !            (2) <c|S-|v><v|S+|c> = dip_R_magn(2)*dip_A_magn(1)
+     !
+     res(1)=BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+     res(2)=BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
      if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
      !
      do i_pert_SOC=1,n_SOC
-       X_magnons(:,1,3)=X_magnons(:,1,3)-  res(1)/(w(:)-E_plus_W(i_pert_SOC))
-       X_magnons(:,2,3)=X_magnons(:,2,3)-  res(2)/(w(:)-E_plus_W(i_pert_SOC))
-       if (BSS_add_antiresonant.or.BS_K_coupling) then
-         X_magnons(:,1,3)=X_magnons(:,1,3)+conjg(res(1))/(w(:)+conjg(E_plus_W(i_pert_SOC)))
-         X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res(2))/(w(:)+conjg(E_plus_W(i_pert_SOC)))
-       endif
-       !
+       X_magnons(:,1,3)=X_magnons(:,1,3)-res(1)/(w(:)-E_plus_W(i_pert_SOC))
+       X_magnons(:,2,3)=X_magnons(:,2,3)-res(2)/(w(:)-E_plus_W(i_pert_SOC))
      enddo
+     !
+     if (BSS_add_antiresonant.or.BS_K_coupling) then
+       !
+       ! Residuals: (1) <v|S+|c><c|S-|v> = dip_A_magn(1)*dip_R_magn(2)
+       !            (2) <v|S-|c><c|S+|v> = dip_A_magn(2)*dip_R_magn(1)
+       !
+       res(1)=BS_T_grp(i_T_g)%dipoles_A_mag(1,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       res(2)=BS_T_grp(i_T_g)%dipoles_A_mag(2,i_T)*BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)*BS_T_grp(i_T_g)%f_SFLIP(i_T)
+       if (allocated(BS_T_grp(i_T_g)%Z)) res=res*BS_T_grp(i_T_g)%Z(i_T)
+       !
+       do i_pert_SOC=1,n_SOC
+         X_magnons(:,1,3)=X_magnons(:,1,3)+res(1)/(w(:)+conjg(E_plus_W(i_pert_SOC)))
+         X_magnons(:,2,3)=X_magnons(:,2,3)+res(2)/(w(:)+conjg(E_plus_W(i_pert_SOC)))
+       enddo
+       !
+     endif
      !
    enddo
    !

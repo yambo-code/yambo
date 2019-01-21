@@ -310,7 +310,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
      f_eh_RES =f_eh_REF
      !
 #if defined _RT
-     f_eh_SFLIP=f_eh
+     f_eh_SFLIP=f_eh_REF
      if(l_magnons.and.n_sp_pol==2) then
        if (i_sp==1) f_eh_SFLIP =(Ken%f(iv,ikp,2)-Ken%f(ic,ik ,1))/spin_occ
        if (i_sp==2) f_eh_SFLIP =(Ken%f(iv,ikp,1)-Ken%f(ic,ik ,2))/spin_occ

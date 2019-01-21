@@ -79,17 +79,13 @@ subroutine K_magnons_IP(iq,w,Dip)
      if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E_SFLIP(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      !
      if (E_SOC_nbands==0) E_plus_W=E_plus_W0
-     !
      if (E_SOC_nbands/=0) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     !
-     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_v) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_c_rev))
-     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_v) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_c_rev))
+     ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_v) while I need  <c|S+|v>(i_sp_pol_c) = conjg(<v|S-|c>(i_sp_pol_rev))
+     ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_v) while I need  <c|S-|v>(i_sp_pol_c) = conjg(<v|S+|c>(i_sp_pol_rev))
      !
      if(i_sp_pol==1.and.n_sp_pol==2) i_sp_pol_rev=2
      if(i_sp_pol==2.and.n_sp_pol==2) i_sp_pol_rev=1
-     !
-     !if(ic==iv) i_sp_pol_rev=2
      !
      BS_T_grp(i_T_g)%dipoles_R_mag(1,i_T)=conjg(DIP_Smins(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S+|v>(i_sp_pol_c)
      BS_T_grp(i_T_g)%dipoles_R_mag(2,i_T)=conjg(DIP_Splus(ic,iv,ik_mem,i_sp_pol_rev))  ! <c|S-|v>(i_sp_pol_c)

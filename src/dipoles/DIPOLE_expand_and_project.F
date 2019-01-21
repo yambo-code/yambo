@@ -76,7 +76,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  if(use_dip_P ) field_dir=Dip%q0/v_norm(Dip%q0)
  !
 #if defined _KERR
- if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,field_dir_r90(3))
+ if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,field_dir_r90)
 #endif
  !
  if (     l_col_cut) q_norm(1)    =q0_def_norm

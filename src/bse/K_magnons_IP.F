@@ -135,7 +135,7 @@ subroutine K_magnons_IP(iq,w,Dip)
  call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
  !
- X_magnons=X_magnons*Co_factor/(4._SP*pi)
+ X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
  ! CLEAN
  !

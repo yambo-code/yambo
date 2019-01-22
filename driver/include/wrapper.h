@@ -25,9 +25,9 @@
 /* 
  Command line options
 */
+ #include "yambo.h"
 /* TEST */
 #if defined _TEST_MAIN
- #include "yambo.h"
  #if defined _FORTRAN_US
   int driver_
  #else

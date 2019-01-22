@@ -28,10 +28,10 @@
 #include <kind.h>
 #include <title.h>
 
-void usage(short_options_struct *opts,int verbose, struct tool_struct t)
+void usage(options_struct *opts,int verbose, struct tool_struct t)
 {
  int i,j,nr=0;
- while(opts[nr].ln!=NULL) {nr++;};
+ while(opts[nr].runlevel!=NULL) {nr++;};
  if (verbose==1) {
 #if defined _MPI
   char* MPI_string="MPI";
@@ -70,29 +70,29 @@ void usage(short_options_struct *opts,int verbose, struct tool_struct t)
   fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",t.tool,t.version,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
   fprintf(stderr,"Usage: %s",t.tool); 
   for(j=0;j<=nr-1;j++)
-  {if (strcmp(opts[j].ln,"DESC")!=0) 
-   {fprintf(stderr," -%s",opts[j].sn);
+  {if (strcmp(opts[j].runlevel,"DESC")!=0) 
+   {fprintf(stderr," -%s",opts[j].short_opt);
    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-   for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+   for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<string>");};
    };
   };
   fprintf(stderr,"\n%s%s%s\n","Try `",t.tool," -H' for more information");exit(0);
  };
  if (verbose==2) {title(stderr,"",t);};
  for(j=0;j<=nr-1;j++)
-  {if (strcmp(opts[j].ln,"DESC")==0) 
+  {if (strcmp(opts[j].runlevel,"DESC")==0) 
    {
-    fprintf(stderr,"\t\t %s\n",opts[j].d);
+    fprintf(stderr,"\t\t %s\n",opts[j].short_desc);
    }
    else
    {
-    fprintf(stderr," -%s",opts[j].sn);
+    fprintf(stderr," -%s",opts[j].short_opt);
     for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
     for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
-    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<opt>");};
+    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<string>");};
     if (opts[j].ni==0 && opts[j].nr==0 && opts[j].nc==0) {fprintf(stderr,"\t");};
-    fprintf(stderr,"\t:%s\n",opts[j].d);
+    fprintf(stderr,"\t:%s\n",opts[j].short_desc);
    };
   };
   fprintf(stderr,"\n");

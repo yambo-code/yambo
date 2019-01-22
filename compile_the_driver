@@ -1,15 +1,21 @@
 #! /bin/sh
+echo $1
+OPT=" -D_FORTRAN_US -D_test"
+if [ $1 = "long" ]
+then
+ OPT=" -D_FORTRAN_US -D_test -D_LONG_OPTIONS"
+fi
 #
 cd driver/lib
 file_list=`find .  -type f  | grep -E '\.c' |grep -v .swp`
 for file in $file_list; do
- gcc -D_FORTRAN_US -D_test -c $file -I../include  -I../options  
+ gcc $OPT -c $file -I../include  -I../options  
 done
 ar -r driver_lib.a *.o
 cd ../../
 
 cd driver
-gcc -D_FORTRAN_US -D_test -c driver.c -I include -I options
+gcc $OPT -c driver.c -I include -I options
 cp yambo.F yambo.f90
 gfortran -c yambo.f90
 cd ../
@@ -17,3 +23,4 @@ cd ../
 gfortran -o driver.x driver/driver.o driver/yambo.o driver/lib/driver_lib.a
 
 ./driver.x -x -o c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file
+./driver.x -t 1 2 BELLA

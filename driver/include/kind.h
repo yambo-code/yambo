@@ -46,15 +46,15 @@ typedef struct yambo_seed_struct
  int  job_N;
 } yambo_seed_struct;
 
-typedef struct short_options_struct
+typedef struct options_struct
 {
- char *ln;
- char *sn;
- char *d;
+ char *long_opt;
+ char *runlevel;
+ char *short_opt;
+ char *short_desc;
  int   ni;
  int   nr;
  int   nc;
- int   st;
- int   mp;
-} short_options_struct;
+ int   mpion;
+} options_struct;
 

@@ -41,6 +41,7 @@
  ...Subroutines/functions
 */
 #include <command_line_short.h>
+#include <command_line.h>
 #include <input_file.h>
 /*
  ... Command line options
@@ -69,9 +70,13 @@ int main(int argc, char *argv[])
  strcpy(t.version,codever);
  /*
   Command line parsing
- */
- y=command_line_short(argc,argv,short_options,t,&use_editor,&use_mpi);
- /* 
+ */ 
+#if defined _LONG_OPTIONS 
+ y=command_line(argc,argv,options,t,&use_editor,&use_mpi);
+#else
+ y=command_line_short(argc,argv,options,t,&use_editor,&use_mpi);
+#endif
+ /*
    Launcher
  */
  launcher(np,pid,y,&use_editor,&use_mpi);

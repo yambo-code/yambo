@@ -25,7 +25,7 @@
  ...global conditional flags
 */
 #if defined _test
- #define _TEST_MAIN
+ #define _TEST_MAIN 
 #endif
 #if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL || _MAGNETIC || _KERR || _SURF
  #define _YAMBO_MAIN

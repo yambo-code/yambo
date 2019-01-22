@@ -20,16 +20,16 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+ 
+  Command line structure
+
 */
-/*
- Command line structure
-*/
- static short_options_struct short_options[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static options_struct options[] = { /* Int Real Ch (dummy) Parallel_option*/
 #include "common_options.h"
-  {"ifile", "F","KSS or WFK filename",0,0,1,0,0},
-  {"odir","O","Output directory",0,0,1,0,0},
-  {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},
-  {NULL,NULL,NULL,0,0,0,0,0}
+  {"input","ifile", "F","KSS or WFK filename",0,0,1,0},
+  {"dir","odir","O","Output directory",0,0,1,0},
+  {"dbfra","dbfrag","S","DataBases fragmentation",0,0,0,0},
+  {NULL,NULL,NULL,NULL,0,0,0,0}
  };
 
 

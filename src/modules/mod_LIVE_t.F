@@ -360,7 +360,13 @@ module LIVE_t
      else
        steps_done=time_steps
      endif
-     hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
+     !
+     if (time_steps > 0 ) then
+        hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
+     else
+        hashes_now=0
+     endif
+     !
      if (hashes_now==hashes_done) return
      !
      etch=time_string(cput_seg(myid+1,1)) 

@@ -62,9 +62,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  !
- call section('*','Response Functions in Transition space')
- !=========================================================
- !
  ! GPL_EXCLUDE_START
  !
 #if defined _RT 
@@ -185,115 +182,114 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  enddo
  !
  do iq=BS_q(1),BS_q(2)
- !
- if(iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
- if(iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
- !
- ! BSS output arrays
- !===================
- call K_observables("ALLOC",W_bss)
- !
- ! W/X RL size setup looking at the max index of G-G' 
- ! =========
- !
- if (.not.l_rpa_IP) then
    !
-   iGo_BSE=maxval(qindx_B(:,:,2))
-   iG_BSE =BS_n_g_W
-   if (.not.iq==1) then
-     iGo_BSE=maxval((/4*qindx_B(:,:,2),qindx_X(iq,:,2)/))
-     iG_BSE =max(BS_n_g_exch,BS_n_g_W)
-   endif
+   call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
-   Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE,force_recompute=.true.)
+   ! BSS output arrays
+   !===================
+   call K_observables("ALLOC",W_bss)
    !
-   if (.not.iq==1) then
-     if (BS_n_g_exch> Max_G_m_G ) then
-       BS_n_g_exch= Max_G_m_G
-       call warning (' Exch size reduced due to symmetry constraints')
-       call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+   ! W/X RL size setup looking at the max index of G-G' 
+   ! =========
+   !
+   if (.not.l_rpa_IP) then
+     !
+     iGo_BSE=maxval(qindx_B(:,:,2))
+     iG_BSE =BS_n_g_W
+     if (.not.iq==1) then
+       iGo_BSE=maxval((/4*qindx_B(:,:,2),qindx_X(iq,:,2)/))
+       iG_BSE =max(BS_n_g_exch,BS_n_g_W)
      endif
+     !
+     Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE,force_recompute=.true.)
+     !
+     if (.not.iq==1) then
+       if (BS_n_g_exch> Max_G_m_G ) then
+         BS_n_g_exch= Max_G_m_G
+         call warning (' Exch size reduced due to symmetry constraints')
+         call msg('s','[BSE-exch] Exch size forced by symmetry to be :',BS_n_g_exch)
+       endif
+     endif
+     !
+     if (BS_n_g_W> Max_G_m_G ) then
+       BS_n_g_W= Max_G_m_G
+       call warning (' W size reduced due to symmetry constraints')
+       call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+     endif
+     !
    endif
    !
-   if (BS_n_g_W> Max_G_m_G ) then
-     BS_n_g_W= Max_G_m_G
-     call warning (' W size reduced due to symmetry constraints')
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+   call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
+   !
+   ! ... EH space (no parallelization)
+   call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
+   !
+   !... Parallel distribution
+   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   !
+   ! ... EH space (with parallelization) and Transition groups build-up
+   call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
+   !
+   !... Blocks build-up
+   if (.not.l_rpa_IP) call K_blocks(iq)
+   !
+   ! 1. The IP Part
+   ! ===============
+   call K_IP(iq,Ken,Xk,Dip,W_bss)
+   !
+   ! Wave Functions distribution 
+   !=============================
+   call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
+   call PARALLEL_WF_index( )
+   !
+   ! 2. The KERNEL
+   ! ================
+   if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+   !
+   ! 3. The SOLVER
+   ! =================
+   if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
+   !
+   ! GPL_EXCLUDE_START
+   !
+   ! `TDDFT` SOLVER
+   !
+   if (index(BSS_mode,'t')/=0) then
+     !
+     call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
+     !
+     X_tddft%ordering='Tr'
+     if (FXC_is_retarded) X_tddft%ordering='R'
+     !
+     ! If the kernel contains QP corrections I have to equally correct Xen
+     !
+     if (allocated(Ken%Eo)) then
+       YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
+       Xen%Eo=Xen%E
+       Xen%E =Ken%E
+     endif
+     !
+     call PP_redux_wait
+     X_tddft%iq=iq
+     X_tddft%ng=BS_n_g_exch
+     call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
+     !
    endif
    !
- endif
- !
- call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
- !
- ! ... EH space (no parallelization)
- call K_Transitions_setup(iq,Ken,Xk,Dip,.FALSE.)
- !
- !... Parallel distribution
- call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
- !
- ! ... EH space (with parallelization) and Transition groups build-up
- call K_Transitions_setup(iq,Ken,Xk,Dip,.TRUE.)
- !
- !... Blocks build-up
- if (.not.l_rpa_IP) call K_blocks(iq)
- !
- ! 1. The IP Part
- ! ===============
- call K_IP(iq,Ken,Xk,Dip,W_bss)
- !
- ! Wave Functions distribution 
- !=============================
- call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
- call PARALLEL_WF_index( )
- !
- ! 2. The KERNEL
- ! ================
- if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
- !
- ! 3. The SOLVER
- ! =================
- if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
- !
- ! GPL_EXCLUDE_START
- !
- ! `TDDFT` SOLVER
- !
- if (index(BSS_mode,'t')/=0) then
+   ! GPL_EXCLUDE_END
    !
-   call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
+   ! CLEAN (OBSs)
+   call K_observables("FREE",W_bss)
    !
-   X_tddft%ordering='Tr'
-   if (FXC_is_retarded) X_tddft%ordering='R'
+   ! CLEAN (Blocks)
    !
-   ! If the kernel contains QP corrections I have to equally correct Xen
+   call BS_Blocks_and_Transitions_free( )
    !
-   if (allocated(Ken%Eo)) then
-     YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
-     Xen%Eo=Xen%E
-     Xen%E =Ken%E
-   endif
+   !... Parallel distribution reset
+   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
    !
-   call PP_redux_wait
-   X_tddft%iq=iq
-   X_tddft%ng=BS_n_g_exch
-   call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
-   !
- endif
- !
- ! GPL_EXCLUDE_END
- !
- ! CLEAN (OBSs)
- call K_observables("FREE",W_bss)
- !
- ! CLEAN (Blocks)
- !
- call BS_Blocks_and_Transitions_free( )
- !
- !... Parallel distribution reset
- call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
- !
  enddo
  !
  YAMBO_FREE(BSqpts)
  !
-end subroutine
+  end subroutine

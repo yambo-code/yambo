@@ -6,24 +6,23 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use drivers,      ONLY:l_td_hf
  use com,          ONLY:warning
  use collision_el, ONLY:elemental_collision,elemental_collision_free
- use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,minus_G
+ use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP
+ use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD,RD_CL,RD_CL_IF_END
  !
 #include<memory.h>
  !
  type(bz_samp) ::q
  type(X_t)     ::X
- type(w_samp)  ::Xw,W_bss
+ type(w_samp)  ::Xw
  !
  integer,     intent(out) :: io_X_err
  !
  type(elemental_collision)::isc
  !
- integer    :: BS_W_size2,i_g2,i_g3,O_ng_shift,iq_W
+ integer    :: BS_W_size2,i_g2,i_g3,iq_W
  logical    :: W_is_em1s,W_is_pp
  !
  ! I/O
@@ -68,6 +67,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    !
    if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
    if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   !
  endif
  !
  BS_W_size2=BS_n_g_W

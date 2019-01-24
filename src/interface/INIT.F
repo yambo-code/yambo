@@ -381,6 +381,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  if (nqibz>0) then
    !
+   if (trim(code_branch)=="devel-cumulant".or.trim(code_branch)=="devel-BSE-finite-q") BS_q=(/1,nqibz/)
+   !
    do i1=1,4 ! Xx Xs Xd Xp
      !
      X(i1)%iq=(/1,nqibz/)

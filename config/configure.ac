@@ -168,6 +168,7 @@ if test x"$enable_open_mp" = "xyes"; then
 fi
 AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
+#
 # ============================================================================
 #
 # Underscore options in subroutine naming

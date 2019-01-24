@@ -71,6 +71,10 @@ subroutine PP_uspp_init()
  !
  pp_is_uspp=(io_err==0)
  !
+#ifndef _USPP
+ if (pp_is_uspp) call error("[PPs] Ultrasoft PP not supported")
+#endif
+ !
  if (.not.pp_is_uspp.or.nkb<=0) then
    pp_is_uspp=.false.
    call PP_uspp_free()

@@ -362,9 +362,9 @@ module LIVE_t
      endif
      !
      if (time_steps > 0 ) then
-        hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
+       hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
      else
-        hashes_now=0
+       hashes_now=0
      endif
      !
      if (hashes_now==hashes_done) return

@@ -292,4 +292,4 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  YAMBO_FREE(BSqpts)
  !
-  end subroutine
+end subroutine

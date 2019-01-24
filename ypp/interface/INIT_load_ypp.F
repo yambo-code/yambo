@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -243,7 +243,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Qpts','Index q of the BS state(s)',Bsiq)
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
- call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC

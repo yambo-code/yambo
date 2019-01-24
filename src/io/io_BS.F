@@ -79,7 +79,7 @@ integer function io_BS(iq,X,ID)
      goto 1
    endif
    !
-   io_BS=variables_BS(ID,local_description,X=X)
+   io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
    !
    if (io_BS/=0) then
      !

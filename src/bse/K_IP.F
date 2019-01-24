@@ -24,7 +24,6 @@
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
- use units,         ONLY:HA2EV
  use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
@@ -33,25 +32,24 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use stderr,        ONLY:intc
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
- use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
+ use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
-&                        BSS_n_freqs,BSS_q0,Co_factor,diam_term_exact,BSS_Wd
+&                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
  use DIPOLES,       ONLY:DIP_P
- use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
+ use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
 #endif
 #if defined _KERR
  use drivers,       ONLY:l_kerr
- use X_m,           ONLY:Epsilon_ij
  use KERR,          ONLY:A_drude
 #endif
 #include<memory.h>
@@ -72,12 +70,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)          ::res_PL(2)
 #endif
  !
+ if (l_bs_fxc) return
+ !
  call section('=','BSE - Independent Particles absorption @q'//trim(intc(iq))) 
  !===================================================
  !
  call timing('T_space IP',OPR='start')
- !
- if (l_bs_fxc) goto 1
  !
  ! Polarizability ?
  !==================
@@ -87,30 +85,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
- !
- ! Eps_0
- !=======
- YAMBO_ALLOC(Epsilon_ii,(BSS_n_freqs,4))!2(int)3(nonint)4(n-1 Haydock/inv shifted)
- YAMBO_ALLOC(X_drude_term,(BSS_n_freqs))
- Epsilon_ii   = cZERO
- X_drude_term = cZERO
- !
- Epsilon_ii(:,1)=W_bss%p(:)
- if (BSS_eval_JDOS) then
-   YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
-   Joint_DOS=cZERO
-   Joint_DOS(:,1) =W_bss%p(:)
- endif
- !
-#if defined _PL
- !
- ! PL_0
- !=======
- call PL_init( )
- !
- PL(:,1) = W_bss%p(:)  
- !
-#endif
  !
  !...Drude
  call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
@@ -331,19 +305,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call K_output_file(iq,"open IP")
    call K_output_file(iq,"IP")
    !
-   YAMBO_FREE(Epsilon_ii)
-   YAMBO_FREE(X_drude_term)
-   YAMBO_FREE(Joint_DOS)
-#if defined _KERR
-   YAMBO_FREE(Epsilon_ij)
-#endif
-#if defined _PL
-   YAMBO_FREE(PL)
-#endif
-   !
  endif
- !
-1 continue
  !
  call timing('T_space IP',OPR='stop')
  !

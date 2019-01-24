@@ -28,7 +28,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! GPL_EXCLUDE_END
  use pars,       ONLY:SP,cZERO
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
- use LOGO,       ONLY:ID_logo,ID_logo_stderr
+ use LOGO,       ONLY:ID_logo,ID_logo_stderr,code_branch
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
 &                     eval_alpha,&
@@ -138,6 +138,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  integer           :: i1,i2
  !
  ! Printed reals format lengths 
+ !
+ include 'branch.inc'
  !
  call set_real_printed_length()
  !

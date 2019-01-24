@@ -26,6 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
  use frequency,     ONLY:w_samp
+ use LOGO,          ONLY:code_branch
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
@@ -126,6 +127,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT
  integer  :: i_field
 #endif
+ integer  :: VERB_tmp
  real(SP) :: IO_times(3)
  !
  !===============
@@ -607,11 +609,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE
  !
- call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',&
-&        BS_eh_win,verb_level=V_resp)
- call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=V_resp)
- call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,&
-&                        E_unit,verb_level=V_resp)
+ call it(defs,'BSehWind','[BSK] [o/o] E/h coupling pairs energy window',BS_eh_win,verb_level=V_resp)
+ if (trim(code_branch)=="devel-cumulant") VERB_tmp=0
+ if (trim(code_branch)/="devel-cumulant") VERB_tmp=V_resp
+ call it(defs,'BSEQptR', '[BSK] Transferred momenta range',BS_q,verb_level=VERB_tmp)
+ call it(defs,'BDmERef', '[BSS] Damping energy reference',BSS_damp_reference,E_unit,verb_level=V_resp)
  !
  ! Xx
  !

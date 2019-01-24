@@ -70,6 +70,7 @@ subroutine K_Haydock(iq,W)
  character(schlen)  ::dumb_ch
  logical            ::use_cpl_scheme
  logical, external  ::STOP_now
+ character(1)       ::sec
  !
  ! I/O
  !
@@ -79,11 +80,9 @@ subroutine K_Haydock(iq,W)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(2)/=0) then
-   call section('=','Haydock solver')
- else if (isec(2)==0) then
-   call section('+','Haydock solver')
- endif
+ if (isec(4)/=0) sec="="
+ if (isec(4)==0) sec="+"
+ call section(sec,'Haydock Solver @q'//trim(intc(iq)))
  !
  call BS_Blocks_symmetrize_K()
  !

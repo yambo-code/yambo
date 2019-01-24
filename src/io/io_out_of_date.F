@@ -73,6 +73,9 @@ integer function io_out_of_date(ID)
  if (index(io_file(ID),'elph_gkkp')/=0.and..not.ver_is_gt_or_eq(ID,REF_ver)) return
  if (index(io_file(ID),'elph_gFsq')/=0.and..not.ver_is_gt_or_eq(ID,REF_ver)) return
  !
+ REF_ver=(/3,0,15/)
+ if (index(io_file(ID),'BS_diago_Q')/=0.and..not.ver_is_gt_or_eq(ID,REF_ver)) return
+ !
  ! No error => Clean return
  !==========================
  !

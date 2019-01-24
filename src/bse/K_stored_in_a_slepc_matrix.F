@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
+subroutine K_stored_in_a_slepc_matrix(slepc_mat)
  !
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
@@ -30,12 +30,11 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use pars,           ONLY:SP,DP,cI,cONE
- use electrons,      ONLY:n_sp_pol
+ use pars,           ONLY:SP,cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_T_grp,BS_K_coupling
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,&
-&                         BSS_perturbative_width,BSS_alloc
- use com,            ONLY:error,msg
+&                         BSS_perturbative_width
+ use com,            ONLY:error
  !
  implicit none
  !
@@ -47,7 +46,7 @@ subroutine K_stored_in_a_slepc_matrix(iq,slepc_mat)
 #include <slepc/finclude/slepceps.h>
  !
  complex(SP) :: E_plus_W
- integer     :: iq,i_c,i_r,i_Tk,i_Tp,i_B
+ integer     :: i_c,i_r,i_Tk,i_Tp,i_B
  Mat   :: slepc_mat
  PetscFortranComplex :: val
  PetscFortranInt     :: H_pos(2),SL_K_dim,SL_H_dim

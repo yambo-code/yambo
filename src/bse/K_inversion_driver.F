@@ -48,6 +48,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #if defined _RT
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
 #endif
+ use stderr,         ONLY:intc
  !
  ! GPL_EXCLUDE_START
  !
@@ -76,6 +77,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer           :: i1,i2,iw,PAR_IND_FREQ_ID
  logical, external :: STOP_now
  real(SP)          :: ratio
+ character(1)      :: sec
  complex(SP), allocatable :: Lo(:,:,:)
  !
  ! ... frequencies
@@ -92,11 +94,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Sectioning
  !============
- if (isec(2)/=0) then
-   call section('=','Inversion solver')
- else if (isec(2)==0) then
-   call section('+','Inversion solver')
- endif
+ if (isec(4)/=0) sec="="
+ if (isec(4)==0) sec="+"
+ call section(sec,'Inversion Solver @q'//trim(intc(iq)))
  !
 #if defined _SCALAPACK
  !

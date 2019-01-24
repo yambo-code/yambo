@@ -176,7 +176,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  X_oscillators%q0=BSS_q0
  !
  ! Tranferred momentum
- !=====================================
+ !======================
  !
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
  do iq=BS_q(1),BS_q(2)
@@ -188,6 +188,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  if(iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
  if(iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
+ !
+ ! BSS output arrays
+ !===================
+ call K_observables("ALLOC",W_bss)
  !
  ! W/X RL size setup looking at the max index of G-G' 
  ! =========
@@ -277,6 +281,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  endif
  !
  ! GPL_EXCLUDE_END
+ !
+ ! CLEAN (OBSs)
+ call K_observables("FREE",W_bss)
  !
  ! CLEAN (Blocks)
  !

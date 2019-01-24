@@ -1,0 +1,67 @@
+
+Extracted from https://docs.google.com/document/d/1JecXBxlHlEKYY86x6McfbwKcs7W-E8xoWm2PC3UJ43U/edit
+
+Clone
+=====
+git clone ssh://developername@qeforge.qe-forge.org/gitroot/yambo-git ./
+
+Branches list clean-up
+=======================
+git remote prune origin
+
+Tags list update
+================
+git fetch --tags --all
+
+status
+==========
+>git status #show status of local branch
+>git status -uno #to show only modified files
+>git remote show origin #show status of all branches
+
+commit: The process of committing to the $YAMBO_REPO is a 3-steps process:
+==========
+1. stage the changes to be commited: “git add” (“git add --u” does not add new files)
+2. commit to your local repo: “git commit”. 
+3. merge your local repo with the $YAMBO_REPO: “git push”
+
+diff:
+========
+>git diff # shows changes not staged (before “add”)
+>git diff HEAD # shows also changes staged but not commited (before “commit”)
+>git diff origin/master # shown also changes committed (before “push”)
+[ “-M50%” option is very useful in case of file renamed/moved ]
+
+LOG
+====
+>git log
+
+merge:
+=========
+this is now “git merge”. No options are displayed during the merge. If you want the “tc” option for all the conflicts use: “git merge -X theirs”
+After you can also use te “git mergetool” command. 
+
+Checkout a branch:
+===================
+>git worktree add ~/Yambo/yambo/branches/BRANCH origin/BRANCH
+
+Create a new branch:
+===================
+>git checkout -b new_branch
+(equivalent to “git branch new_branch” + “git checkout new_branch”)
+>git push origin new_branch  #if you want to make available the new branch
+>git branch -u origin/new_branch new_branch #to set that the new branch tracks the new remote one
+
+Tags:
+=====
+CREATE:
+
+From current branch you want to tag
+>git tag -a 4.1.0 -m "Version 4.1.0" # new local tag created
+>git push origin 4.1.0 # if you want to make available the new tag
+
+DELETE:
+>git tag -d 4.1.0
+>git push -d origin 4.1.0
+
+

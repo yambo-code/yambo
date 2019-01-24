@@ -144,12 +144,13 @@ module BS_solvers
  !
  interface 
    !
-   integer function variables_BS(ID,local_description,X)
+   integer function variables_BS(ID,iq,local_description,CLOSE_the_menu,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
      implicit none
-     integer            ::ID
+     integer            ::ID,iq
      character(lchlen)  ::local_description(100)
+     logical            ::CLOSE_the_menu
      type(X_t), optional::X
    end function
    !

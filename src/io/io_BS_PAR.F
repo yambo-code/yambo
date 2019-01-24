@@ -42,9 +42,9 @@ subroutine io_BS_PAR_init(iq,X,ID)
  type(X_t) :: X 
  integer :: iq, ID
  !
- integer :: io_BS, mode_flag, stat, dims(3), VAR_IDs(8), n_vars, i1
- integer :: flattened_block_size_dim,block_size_dim,complex_dim
- character(schlen) :: db_name, file_to_use, PARALLEL_STRUCTURE
+ integer :: io_BS,  stat,  VAR_IDs(8), n_vars, i1
+ integer :: flattened_block_size_dim,block_size_dim
+ character(schlen) :: db_name, PARALLEL_STRUCTURE
  character(lchlen) :: local_description(100),ch(4)
  character(schlen) :: dim_names(3), dim_names_done(2)
  !
@@ -60,7 +60,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  io_BS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",&
  &                    PARALLEL_STRUCTURE=trim(PARALLEL_STRUCTURE),CUTOFF=.true.,FRAG=frag_BS_K)
  !
- io_BS=variables_BS(ID,local_description,X=X)
+ io_BS=variables_BS(ID,iq,local_description,.TRUE.,X=X)
  if (io_BS/=0) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    call error('Invalid dimensions found in BSE restart file '//trim(io_file(ID))//&

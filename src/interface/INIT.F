@@ -41,6 +41,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use drivers,        ONLY:l_slk_test
 #endif
  use pars,           ONLY:schlen
+ use LOGO,           ONLY:code_branch
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset,n_spinor
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
@@ -62,7 +63,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use wave_func,      ONLY:wf_ng,io_WF
  use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE,mk_dir
  use TDDFT,          ONLY:io_BS_Fxc
- use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,L_kind,&
+ use BS,             ONLY:BS_bands,BS_n_g_exch,BS_n_g_W,BS_q,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH 
@@ -103,7 +104,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  integer           :: io_err,io_WF_err,io_X_err(4),io_ID,io_BS_err,io_KB_abinit_err,io_KB_pwscf_err,&
-&                     io_BS_Fxc_err,io_QINDX_err
+&                     io_BS_Fxc_err,io_QINDX_err,io_BSS_diago_err
 #if defined _SC
  type(levels)      :: en_sc
  integer           :: io_SC_E_err,io_SC_V_err
@@ -423,6 +424,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! ELPH 
  !
 #if defined _ELPH 
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_ELPH_err=io_ELPH(io_ID,'gkkp')
  !

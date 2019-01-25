@@ -213,7 +213,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Transient absorption 
  !======================
- if(l_RT_abs)      call RT_transient_absorption(Xbsk,Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
  !
 #endif
  !

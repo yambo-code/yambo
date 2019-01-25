@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! This subroutine must be kept thread-safe, since it is used
  ! inside an external omp loop.
@@ -32,7 +32,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator,X_cols,X_rows
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_projected
+ use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
@@ -46,6 +47,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  type(levels), intent(in) :: Xen
  type(bz_samp),intent(in) :: Xk
  type(X_t),    intent(in) :: X
+ type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
  complex(SP),  intent(out):: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
  !
@@ -148,17 +150,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
-#if defined _OPENMP
    !$omp parallel do default(shared), private(ig2)
-#endif
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_by_V_plus_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
-#if defined _OPENMP
    !$omp end parallel do
-#endif
    !
    ! add terminator specific corrections
    ! (ic is running in valence)
@@ -179,16 +177,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      ! symm
      rhotw_save=Xo_scatt%rhotw
      !
-#if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
-#endif
      do ig1=1,X%ng
        ig2=g_rot(ig1,sop_inv(is))
        Xo_scatt%rhotw(ig1)=rhotw_save(ig2)
      enddo
-#if defined _OPENMP
      !$omp end parallel do
-#endif
      !
      if (is>nsym/(i_time_rev+1)) then
        do ig1=1,X%ng
@@ -201,17 +195,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      ig_start=X_rows(1)
      if (iq==1) ig_start= max(2,ig_start)
      !
-#if defined _OPENMP
      !$omp parallel do default(shared), private(ig1,ig2)
-#endif
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,min(ig2,X_rows(2))
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))
        enddo
      enddo
-#if defined _OPENMP
      !$omp end parallel do 
-#endif
      !
      Xo_scatt%rhotw = rhotw_save2
      !

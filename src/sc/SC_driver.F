@@ -23,11 +23,11 @@
 !
 subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
- use pars,           ONLY:SP,schlen,cZERO,cI
+ use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
  use drivers,        ONLY:l_sc_coh,l_sc_sex,l_use_Hxc_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
- use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor,spin_occ
+ use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
  use QP_m,           ONLY:QP_nk,QP_Sc,QP_n_states,QP_Vnl_xc,SC_E_threshold
  use SC,             ONLY:SC_bands,SC_iterations,SC_rho_threshold,E_convergence,      &
@@ -102,12 +102,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  real(SP)                 :: WS_spread(SC_bands(2))
  integer                  :: first_el(SC_bands(2)),n_of_el(SC_bands(2)),n_deg_grp,&
 &                            b_of_max_proj(SC_bands(2),k%nibz,n_sp_pol)
- !!
- !! tests for excitons
- !!
- !integer                  :: nb
- !real(SP)                 :: n_exc
- !complex(SP)              :: G_tmp(SC_bands(2),SC_bands(2)),G_eq_occ(SC_bands(2),SC_bands(2))
  !
  ! SC_bands(1)
  !=============
@@ -116,23 +110,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
  !
  call H_QP_table_setup(E)
- !
- !G_eq_occ=cZERO
- !do ib=SC_bands(1),E%nbf
- !  G_eq_occ(ib,ib)=cI*spin_occ
- !enddo
- !!
- !n_exc=0.1
- !!
- !nb=3
- !do ib=2,1+nb
- ! G_eq_occ(ib,ib)=cI*(1._SP-n_exc/real(nb,SP))*spin_occ
- !enddo
- !G_eq_occ(5,5)=cI*n_exc*spin_occ
- !!
- !forall(ib=1:5) E%f(ib,1,i_sp_pol)=-real(cI*G_eq_occ(ib,ib),SP)
- !E%nbf=1
- !E%nbm=5
  !
  ! Parallel Setup
  !================
@@ -178,10 +155,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Initialize SC_R matrix
  !========================
  !
- write(*,*) l_SC_RESTART,l_use_collisions
  if(.not.l_SC_RESTART.and.l_use_collisions) then
    !      
-   write(*,*) 'pippo1'
    H_rotation=cZERO
    forall(i1=1:SC_bands(2))
      H_rotation(i1,i1,:,:)=1._SP
@@ -284,7 +259,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
  !
- do it = 1,SC_iterations
+ do it = 1, SC_iterations
    !
    E_previous(:,:,:) = E%E(:SC_bands(2),:,:)
    !
@@ -369,7 +344,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        ! Rotate H_nl_sc in the WFo basis.
        !
-       if ((.not.l_use_collisions).and.(it_now>1)) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
+       if (.not.l_use_collisions.and.it_now>1) call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_nl_sc,SC_bands(2)-SC_bands(1)+1,-1)
        ! 
        ! I/O [H_nl_sc]
        !
@@ -409,16 +384,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      ! Diagonalize H_nl_sc 
      !=====================
      !
-     ! Perturbative
-     !
-     !do ib=SC_bands(1),SC_bands(2)
-     !  !if(ik==1) write(*,*) H_nl_SC(ib,:)*27.2116
-     !  do ibp=SC_bands(1),SC_bands(2)
-     !    if(ib==ibp) cycle
-     !    H_nl_sc(ib,ibp)=cZERO
-     !  enddo
-     !enddo
-     !
      call LINEAR_ALGEBRA_driver(DIAGO,M=H_nl_sc,E_real=E%E(:SC_bands(2),ik,i_sp_pol))
      !
      ! Rotation (WFo->WF) matrix
@@ -441,16 +406,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    enddo ! i_sp_pol
    !
-   if (l_NSC_shot) then
-     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
-     !
-     !G_tmp=G_eq_occ
-     !call OBS_rotate(H_rotation(:,:,1,i_sp_pol),G_tmp,SC_bands(2),1)
-     !forall(ib=1:5) E%f(ib,1,i_sp_pol)=-real(cI*G_tmp(ib,ib),SP)
-     E%nbf=1
-     E%nbm=5
-     !
-   endif
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
    !
    if (l_SC_cycle) then
      !
@@ -472,16 +428,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS")
-     !write(*,*) 'occ'
-     !write(*,*) 'before= ',E%f(1:5,1,1)
-     !!
-     !G_tmp=G_eq_occ
-     !call OBS_rotate(H_rotation(:,:,1,1),G_tmp,SC_bands(2),1)
-     !forall(ib=1:5) E%f(ib,1,1)=-real(cI*G_tmp(ib,ib),SP)
-     !write(*,*) 'after= ',E%f(1:5,1,1)
-     E%nbf=1
-     E%nbm=5
+     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
      !
      ! New density 
      !=============
@@ -843,16 +790,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) then
-       call OCCUPATIONS_Fermi(E,k,OBJ="E")
-       !
-       !G_tmp=G_eq_occ
-       !call OBS_rotate(H_rotation(:,:,1,1),G_tmp,SC_bands(2),1)
-       !forall(ib=1:5) E%f(ib,1,1)=-real(cI*G_tmp(ib,ib),SP)
-       E%nbf=1
-       E%nbm=5
-       !
-     endif
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
      !
      dE(:,:,:)=E%E(:SC_bands(2),:,:)-E_reference%E(:SC_bands(2),:,:)
      !

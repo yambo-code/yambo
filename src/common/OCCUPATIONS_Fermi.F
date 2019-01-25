@@ -48,6 +48,10 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
+#if defined _SC
+ use SC,            ONLY:l_SC_RESTART
+#endif 
+ !
 #include<memory.h>
  !
  type(levels)  ::E
@@ -62,6 +66,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),Efdist,nel_DbGd,nel_diff_zero
  logical :: Fermi_is_converged
  real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
+ real(SP) :: n_carr(2),mu_zero,mu_hole,mu_el
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
  !       1        1        1         2      
@@ -245,12 +250,32 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  endif
  Efdist=1.E5_SP
  !
+ mu_zero=E%E_fermi
+ mu_el  =E%E_fermi
+ mu_hole=E%E_fermi
+ n_carr=0.
+ write(*,*) E%E_fermi*27.2116
+#if defined _SC
+ if (l_SC_restart) then
+   mu_zero=9._SP/27.2116
+   mu_el  = 8.00_SP/27.2116+mu_zero
+   mu_hole=-5.97_SP/27.2116+mu_zero
+   n_carr=0.
+ endif
+#endif
+ !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
    ik=index( index_E_sorted(i1) , 2)
    is=index( index_E_sorted(i1) , 3)
    !
-   E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
+   if(ib<=4) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_hole,Tel)
+   if(ib>4 ) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_el,  Tel)
+   !E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
+   !
+   if((E%E(ib,ik,is)-mu_zero)<=0._SP) n_carr(1)=n_carr(1)+(spin_occ-E%f(ib,ik,is))*K%weights(ik)
+   if((E%E(ib,ik,is)-mu_zero)> 0._SP) n_carr(2)=n_carr(2)+          E%f(ib,ik,is) *K%weights(ik)
+   !write(*,*) ib,ik,is,n_carr
    !
    if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
      if ( E%f(ib,ik,is) < filled_tresh ) cycle
@@ -262,6 +287,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    endif
    !
  enddo
+ !
+ write(*,*) n_carr
  !
  !E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !

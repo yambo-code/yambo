@@ -83,15 +83,15 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
    enddo
    !
-   n_exc=1.0 !/ 1+real(iteration/60,SP))
+   n_exc=0.5 !/ 1+real(iteration/60,SP))
    HOLE=sqrt((1._SP-n_exc/3._SP)*spin_occ)
    ELEC=sqrt((      n_exc      )*spin_occ)
    do ib=2,4
-     !G_sex(ib,ib,1)=cI*HOLE**2
+     G_sex(ib,ib,1)=cI*HOLE**2
      !G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
      !G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
-     !if(iteration==2) G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
-     !if(iteration==2) G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
+     !if(iteration==66) G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
+     !if(iteration==66) G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
    enddo
    !G_sex(5,5,1)=cI*ELEC**2
    !

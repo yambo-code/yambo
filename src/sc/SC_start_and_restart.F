@@ -27,6 +27,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg,warning
+ use electrons,      ONLY:E_reset,E_duplicate
  use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
@@ -34,7 +35,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  use QP_m,           ONLY:SC_E_threshold,SC_band_mixing,COHSEX_use_empties
  use hamiltonian,    ONLY:H_potential,H_kind,H_xc_functional,H_perturbation,    &
 &                         WF_G_max,WF_Go_indx,E_reference,l_sc_V_is_local,      &
-&                         H_QP_table_setup
+&                         H_QP_table_setup,E_reference
  use SC,             ONLY:SC_potential,SC_kind,SC_xc_functional,SC_perturbation,&
 &                         l_SC_RESTART,l_NSC_shot,SC_bands,l_SC_diagonal,       &
 &                         SC_iterations,SC_preconditioning,                     &
@@ -106,6 +107,11 @@ subroutine SC_start_and_restart(X,E,Xk)
  !======================
  ! 
  call WF_and_dipole_dimensions(X)
+ !
+ ! Before reading the SC energies save the KS one in E_reference
+ !
+ call E_reset(E_reference)
+ call E_duplicate(E,E_reference)
  !
  ! Sectioning
  !============

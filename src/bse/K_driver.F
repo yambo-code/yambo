@@ -61,6 +61,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  type(X_t)         :: X_tddft,X_oscillators
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
+ logical           :: l_bs_q
  !
  ! GPL_EXCLUDE_START
  !
@@ -70,8 +71,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! GPL_EXCLUDE_END
  !
- if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) &
-&  call error(' Finite q and coupling not implemented')
+ call parser('BSEQptR',l_bs_q)
+ !
+ if (.not.l_bs_q) BS_q=(/1,1/)
+ !
+ if ( (.not.(BS_q(1)==1.and.BS_q(2)==1)) .and. (trim(BSE_mode)=='coupling') ) then
+   call error(' Finite q and coupling not implemented')
+ endif
  !
  ! Joint DOS
  !===========

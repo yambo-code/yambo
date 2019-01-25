@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,6 +55,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
+ use openmp,         ONLY:n_threads,master_thread,OPENMP_update
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
@@ -234,11 +235,16 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_B(ikbz,okbz,1)=iqbz
  ! qindx_B(ikbz,okbz,2)=iGo
  !
- call live_timing('X indexes',Xk%nbz)
+ call live_timing('X indexes',Xk%nbz/n_threads)
  !
+ !$omp parallel default(shared), private(ikbz,ikbz_p,v1,iv1,iqbz,iqibz,iqs)
+ call OPENMP_update(master_thread)
+ !
+ !$omp do
  do ikbz=1,Xk%nbz
    !
    do ikbz_p=1,Xk%nbz
+     !
      v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
      iv1=nint(v1)
      call k_grid_shift(iv1)
@@ -256,19 +262,22 @@ subroutine bz_samp_indexes(k,Xk,q)
      !
    enddo
    !
-   call live_timing(steps=1)
+   if (master_thread) call live_timing(steps=1)
    !
  enddo
+ !$omp end do
+ !$omp end parallel
+ !
  call live_timing()
  !
  if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
  !
  if(coll_scattering) then
    call msg('rn',':: Indices: Scattering and Self-Energy')
-   call live_timing('SSE indexes',k%nbz)
+   call live_timing('SSE indexes',k%nbz/n_threads)
  else
    call msg('rn',':: Indices: Self-Energy')
-   call live_timing('SE indexes',QP_states_k(2)-QP_states_k(1)+1)
+   call live_timing('SE indexes',(QP_states_k(2)-QP_states_k(1)+1)/n_threads)
  endif
  !
  call k_ibz2bz(k,'a',.false.)
@@ -282,6 +291,10 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_C(ikbz,iqbz,1)=okbz
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
+ !$omp parallel default(shared), private(ikbz,ikibz,iks,ikbz_p,v1,iv1,iqbz)
+ call OPENMP_update(master_thread)
+ !
+ !$omp do
  do ikbz=1,k%nbz
    !
    ikibz=k%sstar(ikbz,1)
@@ -294,8 +307,12 @@ subroutine bz_samp_indexes(k,Xk,q)
      v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
      iv1=nint(v1)
      !
-     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) connected_grids=.false.
-     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) cycle
+     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) then
+        !$omp critical
+        connected_grids=.false.
+        !$omp end critical
+        cycle
+     endif
      !
      call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
@@ -310,6 +327,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    if (any(qindx_S(ikibz,:,:)==0)) then
      !
+     !$omp critical
      call warning(' Null transition detected [qindx_S]. Gamma point only.')
      call q_shadows(.true.)
      !
@@ -317,13 +335,18 @@ subroutine bz_samp_indexes(k,Xk,q)
      bse_scattering=.false.
      gamma_point_only=.true.
      !
+     !$omp end critical
+#ifndef _OPENMP
      exit
+#endif
      !
    endif
    !
-   call live_timing(steps=1)
+   if (master_thread) call live_timing(steps=1)
    !
  enddo
+ !$omp end do
+ !$omp end parallel
  !
  call live_timing()
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 1  : input file editing mode
  ! INIT = 2  : DB listing mode
  !
- use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bsk,l_bss,&
+ use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
@@ -654,7 +654,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! BSK
  !
- if (l_optics.and.l_bse.and.l_bsk) then
+ if (l_optics.and.l_bse) then
    !                     
    call initactivate(1,'BSENGexx ALLGexx')
    !
@@ -705,7 +705,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    call initactivate(1,'BSEQptR BSEBands BSEEhEny BSehWind')
    !
 #if defined _RT
@@ -717,6 +716,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! BSE solver
  !
  if (l_optics.and.l_bse.and.l_bss) then
+   !
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
@@ -1138,7 +1139,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_optics=runlevel_is_on('optics')
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
-       l_bsk=runlevel_is_on('bsk')
        l_bss=runlevel_is_on('bss')
 #if defined _PL
        l_photolum=runlevel_is_on('photolum')
@@ -1299,8 +1299,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &        l_HF_and_locXC.and..not.l_elph_corr.and..not.l_elphoton_corr)  &
 &                  call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
-     if (l_bsk)    call initactivate(1,'optics dipoles bse')
-     if (l_bss)    call initactivate(1,'optics dipoles bse bsk')
+     if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
      !
      if (l_bse) then
@@ -1584,7 +1583,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &             (trim(rstr_piece(i1+1)) == 'pf').or.&
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
-           if(l_bse)   call initactivate(1,'bsk')
            if(trim(BSK_mode)=="SEX") call initactivate(1,'em1s')
            !
          endif

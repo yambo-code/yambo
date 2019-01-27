@@ -131,6 +131,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  call SC_start_and_restart(X,E,Xk)
  !
+ call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+ !
  ! DIPOLES
  !=========
  !

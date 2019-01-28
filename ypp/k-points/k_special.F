@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine k_special(LIST)
  !
  use pars,                ONLY:SP,schlen,lchlen
  use units,               ONLY:pi
- use R_lattice,           ONLY:bz_samp_reset
+ use R_lattice,           ONLY:bz_samp_reset,b
  use D_lattice,           ONLY:alat,lattice,a
  use com,                 ONLY:msg,of_open_close,msg_deliver,warning
  use vec_operate,         ONLY:c2a,v_norm
@@ -64,6 +64,17 @@ subroutine k_special(LIST)
      trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
      trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
      trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
+     !
+     ! 2019/02/01:
+     ! If yambo "b" is different
+     ! i.e. in case for example
+     ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
+     ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
+     ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
+     ! to properly detect special k-points
+     ! uncomment the following line
+     !
+     !trial_b=b
      !
      SPECIAL_k%nbz=6
      !

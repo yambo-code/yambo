@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -31,7 +31,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
 &                              pp_n_l_times_proj_max,PP_free,PP_alloc_abinit,Vnl
  use LIVE_t,              ONLY:live_timing
- use X_m,                 ONLY:X_t
+ use DIPOLES,             ONLY:DIPOLE_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_ng,wf_ncx
  use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nkibz,ng_vec
@@ -58,7 +58,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  ! Work space
  !
- type(X_t)             :: X_Vnl
+ type(DIPOLE_t)        :: Dip
  !
  character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
@@ -91,11 +91,12 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  io_KB_pwscf_err =-1
  !
  ! PWscf (old)
- X_Vnl%ib=(/1,E%nb/)       ! full bands range
- X_Vnl%ngostnts=1          ! to overcome check for io
+ Dip%ib=(/1,E%nb/)       ! full bands range
+ Dip%ng=1                ! to overcome check for io
  nkibz=k_save%nibz
+ !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+ io_Vnl_err=io_Vnl(Dip,E,ID)
  !
  ! Check for the KB pwscf DB 
  if(.not.io_KB_abinit_err==0) then
@@ -183,7 +184,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    Vnl_store=(0._SP,0._SP)
    !
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+   io_Vnl_err=io_Vnl(Dip,E,ID)
    !
    Vnl_store=Vnl
    !
@@ -379,9 +380,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        !
      enddo
      !
-     X_Vnl%ngostnts=wf_ng
+     Dip%ng=wf_ng
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)      
-     io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+     io_Vnl_err=io_Vnl(Dip,E,ID)
      !
      YAMBO_FREE(Vnl)
      YAMBO_FREE(Vnl_store)
@@ -456,9 +458,10 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      forall(ik=1:k%nibz) Vnl(:,:,:,ik,:) = Vnl_store(:,:,:,kpoints_map(1,ik),:)
      !
-     X_Vnl%ngostnts=wf_ng
+     Dip%ng=wf_ng
+     !
      call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-     io_Vnl_err=io_Vnl(X_Vnl,E,ID)
+     io_Vnl_err=io_Vnl(Dip,E,ID)
      !
      YAMBO_FREE(Vnl_store)
      YAMBO_FREE(Vnl)

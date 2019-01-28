@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_spin_magnetization(Xk,X)
+subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  !
  ! This routine returns <sigma>
  !
@@ -29,57 +29,61 @@ subroutine Dipole_spin_magnetization(Xk,X)
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
- use electrons,           ONLY:n_spinor,n_sp_pol
- use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
+ use electrons,           ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp
- use X_m,                 ONLY:X_t,DIP_spin
+ use X_m,                 ONLY:X_t
+ use DIPOLES,             ONLY:DIP_spin,DIPOLE_t
  use fft_m,               ONLY:fft_size
  use wave_func,           ONLY:WF
  use com,                 ONLY:error
  use wrapper,             ONLY:Vstar_dot_V
+ use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
+&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  !
  implicit none
  !
  type(bz_samp), intent(in)    :: Xk
- type(X_t),     intent(inout) :: X
+ type(levels),  intent(in)    :: Xen
+ type(DIPOLE_t),intent(inout) :: Dip
  !
  ! Work Space
  !
- logical                      :: l_mat_eval_DIP(X%ib_lim(2):X%ib(2),X%ib(1):X%ib_lim(1))
  integer                      :: ik,ic_wf,iv_wf,ic,iv,&
 &                                i_sp_pol,i_spinor,i_spin,n_LT_steps,ik_mem
- !
- ! WF load
- ! Here I avoid the deallocation of states_to_load as I ASSUME that AFTER this routine 
- ! there will be other WF_load calls using the present WF distribution. 
- ! This is the case, for example, of the response function calculation.
- !
- call WF_load(WF,0,1,X%ib,(/1,Xk%nibz/),space='R',title='-Spin oscillators/R space',&
-&             force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
  !
  ! Parallelization Mask 
  !======================
  ! Depending on the environment DIPOLES are distributed in different ways
  !
- call DIPOLE_build_parallelization_mask(X,l_mat_eval_DIP,n_LT_steps)
+ n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
+&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
+&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: spin magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: spin',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
  do i_sp_pol=1,n_sp_pol
+   !
+   if (n_LT_steps==0) cycle
+   !
    do ik=1,Xk%nibz
-     !
-     if (n_LT_steps==0) cycle
      ! 
      if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
+     !
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='R',title='-Spin oscillators/R space',&
+&               force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      ! 
-     do iv=X%ib(1),X%ib_lim(1) 
-       do ic=max(iv,X%ib_lim(2)),X%ib(2)
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
+       !
+       if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       !
+       do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          !
-         if (.not.l_mat_eval_DIP(ic,iv)) cycle
+         if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
          iv_wf=WF%index(iv,ik,i_sp_pol)
          ic_wf=WF%index(ic,ik,i_sp_pol)
@@ -120,15 +124,13 @@ subroutine Dipole_spin_magnetization(Xk,X)
          !
        enddo    ! conduction band loop
      enddo      ! valence    band loop
+     !
+     call WF_free(WF)
      ! 
-   enddo        ! sp_pol loop
+   enddo        ! k-points loop
    !
- enddo          ! k-points
+ enddo          ! sp_pol   loop
  !
  call live_timing()
- !
- ! CLEAN
- !
- call WF_free(WF)
  !
 end subroutine Dipole_spin_magnetization

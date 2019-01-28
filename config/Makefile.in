@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -29,7 +29,7 @@ scalapack   = @def_scalapack@
 slepc       = @def_slepc@
 precision   = @def_dp@
 fft         = @def_fft@
-xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@
 keep_objs   = @enable_keep_objects@
 do_blacs    = @compile_blacs@
 do_slk      = @compile_slk@
@@ -86,31 +86,31 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 # Libraries (ordered for compiling & linking)
 #
 BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser communicate common io \
-               xc_functionals interface stop_and_restart wf_and_fft 
-BASIC_LIBS_LD= external_c memory modules matrices linear_algebra parallel parser communicate common io \
-               xc_functionals interface stop_and_restart wf_and_fft 
+               xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb 
+BASIC_LIBS_LD= external_c memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+               xc_functionals interface stop_and_restart wf_and_fft coulomb
 
-MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup \
-               tddft pol_function qp acfdt bse
-MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup \
-               tddft pol_function qp acfdt bse
+MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
+               tddft dipoles pol_function qp acfdt bse
+MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup \
+               tddft dipoles pol_function qp acfdt bse
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) collisions hamiltonian sc
 
-PJ_RTLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
-               tddft pol_function qp acfdt bse collisions hamiltonian \
+PJ_RTLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
-PJ_RTLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
-               tddft pol_function qp acfdt bse collisions hamiltonian \
+PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
                real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
-PJ_PLLIBS    = $(BASIC_LIBS) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
-               tddft pol_function qp acfdt bse collisions hamiltonian sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
-PJ_PLLIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops interpolate real_time_control interpolate qp_control setup \
-               tddft pol_function qp acfdt bse collisions hamiltonian sc \
-               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common 
+PJ_PLLIBS    = $(BASIC_LIBS) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function qp acfdt bse collisions hamiltonian sc \
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
+PJ_PLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function qp acfdt bse collisions hamiltonian sc \
+               real_time_hamiltonian real_time_propagation real_time_el-ph real_time_lifetimes real_time_common
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
@@ -131,18 +131,18 @@ YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph excitons symmetries k-points bits
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) elph real_time excitons symmetries k-points bits 
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) elph real_time excitons symmetries k-points bits 
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) coulomb bz_ops interpolate qp_control setup interface tddft pol_function qp bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) coulomb bz_ops interpolate qp_control setup interface tddft pol_function qp bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
-YPPRT_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup interface \
-                     pol_function qp bse collisions hamiltonian 
-YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup interface \
-                     pol_function qp bse collisions hamiltonian 
-YPPNL_MAIN_LIBS    = $(BASIC_LIBS) coulomb bz_ops real_time_control interpolate qp_control setup interface \
-                     pol_function qp bse collisions hamiltonian nloptics 
-YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) coulomb bz_ops real_time_control interpolate qp_control setup interface \
-                     pol_function qp bse collisions hamiltonian nloptics 
+YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
+                     dipoles pol_function qp bse collisions hamiltonian 
+YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
+                     dipoles pol_function qp bse collisions hamiltonian 
+YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
+                     dipoles pol_function qp bse collisions hamiltonian nloptics 
+YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
+                     dipoles pol_function qp bse collisions hamiltonian nloptics 
 
 .PHONY: interfaces
 

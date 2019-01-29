@@ -22,6 +22,26 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
   https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Option-Example.html
+  https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Options.html#Getopt-Long-Options
+
+Data Type: struct option
+This structure describes a single long option name for the sake of getopt_long. The argument longopts must be an array of these structures, one for each long option. Terminate the array with an element containing all zeros.
+
+The struct option structure has these fields:
+
+const char *name
+This field is the name of the option. It is a string.
+
+int has_arg
+This field says whether the option takes an argument. It is an integer, and there are three legitimate values: no_argument, required_argument and optional_argument.
+
+int *flag
+int val
+These fields control how to report or act on the option when it occurs.
+
+If flag is a null pointer, then the val is a value which identifies this option. Often these values are chosen to uniquely identify particular long options.
+
+If flag is not a null pointer, it should be the address of an int variable which is the flag for this option. The value in val is the value to store in the flag to indicate that the option was seen.
 
 */
 #include <stdio.h>
@@ -36,7 +56,8 @@ void substring(char [], char[], int, int);
 
 struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *opts,  struct tool_struct t, int *use_editor, int *use_mpi)
 {
- int n_options=0,i,n_vars,opt=0;
+ int n_options=0,i,n_vars,i_char=1,opt=0;
+ char opt_string[100],ch[1];
 /*
  int io,i,c,j,k,nf,lnr,lnc,ttd,int_opt[4],lni,nr=0,flag[100];
  double real_opt[4];
@@ -50,27 +71,40 @@ struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *op
 
  struct option long_options[n_options];
 
- for(i=0;i<=n_options-2;i++) {
+ for(i=0;i<=n_options-1;i++) {
    n_vars=opts[i].ni+opts[i].nr+opts[i].nc;
    long_options[i].name=opts[i].long_opt;
    /*no_argument, required_argument and optional_argument*/
-   if (n_vars ==0) {long_options[i].has_arg=no_argument;};
-   if (n_vars > 0) {long_options[i].has_arg=required_argument;};
-   long_options[i].flag=0;
+   substring(opts[i].short_opt, ch,1, 1);
+   if (n_vars ==0) {
+    opt_string[i_char]=ch;
+    long_options[i].has_arg=no_argument;
+    i_char=i_char+1;
+   }else{
+    long_options[i].has_arg=required_argument;
+    opt_string[i_char:i_char]=ch;
+    opt_string[i_char+1]=":";
+    i_char=i_char+2;
+   };
+   long_options[i].flag=NULL;
    long_options[i].val=atoi(opts[i].short_opt);
    /*long_options[i].val=opts[i].short_opt;*/
-   printf (" %i %s %s\n",i,long_options[i].name,opts[i].short_opt);
  };
+/*
  long_options[n_options].name=0;
  long_options[n_options].has_arg=0;
  long_options[n_options].flag=0;
  long_options[n_options].val=0;
-
+*/
+ for(i=0;i<=n_options-1;i++) {
+   printf (" %i %i %s %s\n",i,n_options,long_options[i].name,opts[i].short_opt);
+ }; 
+ exit(1);
  int long_index =0;
  while ((opt = getopt_long_only(argc, argv,"",long_options, &long_index )) != -1) {
   printf (" %i %i",opt,long_index);
  };
- exit(0);
+ exit(1);
  
 
 /*

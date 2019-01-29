@@ -77,17 +77,17 @@ struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *op
    /*no_argument, required_argument and optional_argument*/
    substring(opts[i].short_opt, ch,1, 1);
    if (n_vars ==0) {
-    opt_string[i_char]=ch;
+    /*opt_string[i_char]=ch;*/
     long_options[i].has_arg=no_argument;
     i_char=i_char+1;
    }else{
     long_options[i].has_arg=required_argument;
-    opt_string[i_char:i_char]=ch;
-    opt_string[i_char+1]=":";
+    /*opt_string[i_char:i_char]=ch;
+    opt_string[i_char+1]=":";*/
     i_char=i_char+2;
    };
    long_options[i].flag=NULL;
-   long_options[i].val=atoi(opts[i].short_opt);
+   /*long_options[i].val=atoi(opts[i].short_opt);*/
    /*long_options[i].val=opts[i].short_opt;*/
  };
 /*

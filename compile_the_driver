@@ -1,11 +1,12 @@
 #! /bin/bash
-OPT=" -D_FORTRAN_US -D_test"
-if [ "$1" = "long" ]; then
- OPT=" -D_FORTRAN_US -D_test -D_LONG_OPTIONS"
+OPT=" -D_FORTRAN_US -D_test -D_LONG_OPTIONS"
+if [ "$1" = "short" ]; then
+ OPT=" -D_FORTRAN_US -D_test"
 fi
 #
 cd driver/lib
 file_list=`find .  -type f  | grep -E '\.c' |grep -v .swp`
+echo $file_list
 for file in $file_list; do
  gcc $OPT -c $file -I../include  -I../options  
 done

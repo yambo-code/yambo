@@ -53,7 +53,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on,what_is_running
- use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_solver,QP_state,QP_reset,&
+ use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,QP_solver,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
@@ -283,6 +283,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  QP_ng_Sx=ng_closed
  QP_ng_Sc=ng_closed
  QP_ng_SH=ng_closed
+ QP_ng_Vxc=ng_closed
+ !
  BS_n_g_exch=ng_closed
 #if defined _NL
  NL_ng      =wf_ng
@@ -591,7 +593,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs')  
  if (l_HF_and_locXC) call initactivate(1,'UseNLCC')  
  !
  ! Kernels
@@ -804,7 +806,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    ! GPL_EXCLUDE_END
    !
    call initactivate(1,'ShiftedPaths')
-   call initactivate(1,'EXXRLvcs AC_n_LAM AC_n_FR AC_E_Rng')
+   call initactivate(1,'EXXRLvcs VXCRKvcs AC_n_LAM AC_n_FR AC_E_Rng')
    call X_activate('Xx',(/'QpntsR','BndsRn','NGsBlk','CGrdSp','EhEngy','LongDr'/))
  endif
  !
@@ -922,6 +924,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(-1,'QpntsRXs')
    !
    if (l_eval_collisions) then
+                                                                    call initactivate(1,'VXCRLvcs')
      if( index(H_potential,"HARTREE")>0 )                           call initactivate(1,'HARRLvcs ALLGHAR')
      if( index(H_potential,"SEX")>0.or.index(H_potential,"FOCK")>0) call initactivate(1,'EXXCut EXXRLvcs ALLGexx')
      if( index(H_potential,"SEX")>0.or.index(H_potential,"COH")>0 ) call initactivate(1,'CORRLvcs ALLGexx')

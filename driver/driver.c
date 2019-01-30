@@ -40,6 +40,7 @@
 /*
  ...Subroutines/functions
 */
+#include <command_line_alt.h>
 #include <command_line_short.h>
 #include <command_line.h>
 #include <input_file.h>
@@ -72,7 +73,8 @@ int main(int argc, char *argv[])
   Command line parsing
  */ 
 #if defined _LONG_OPTIONS 
- y=command_line(argc,argv,options,t,&use_editor,&use_mpi);
+ /*y=command_line(argc,argv,options,t,&use_editor,&use_mpi);*/
+ command_line_alt(argc,argv);
 #else
  y=command_line_short(argc,argv,options,t,&use_editor,&use_mpi);
 #endif

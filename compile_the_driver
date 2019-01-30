@@ -19,6 +19,7 @@ cp yambo.F yambo.f90
 gfortran -c yambo.f90
 cd ../
 
+rm -f driver.x
 gfortran -o driver.x driver/driver.o driver/yambo.o driver/lib/driver_lib.a
 
 #./driver.x -x -o c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file

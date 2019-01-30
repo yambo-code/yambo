@@ -195,7 +195,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Correlation part Hartree + TDDFT
    ! ================================
    !
-   if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
+   if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !  
      if(n_spinor==1) then
         if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then

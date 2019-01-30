@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -140,6 +140,12 @@ subroutine col_driver(bare_NG,q)
      if (i1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
    enddo
  endif
+! DV
+!     do i1=1,nqibz
+!      iq=q_norm_i(i1)
+!      write(90,*) q_norm(iq) ,2./(abs(bare_qpg(iq,1))**2.*DL_vol*real(nqbz)) 
+!     enddo
+!
  !
  ! CUTOFF
  !

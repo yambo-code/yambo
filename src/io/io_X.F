@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -184,7 +184,7 @@ integer function io_X(X,Xw,ID)
      endif
      if (X%whoami/=4) then
        call io_variable_elemental(ID,           VAR=" :: Current Q-pt index     :",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X energy range     [ev]:",R1=Xw%er,     WARN =.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,UNIT=HA2EV,VAR=" :: X damping range    [ev]:",R1=Xw%dr,     CHECK=.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,           VAR=" :: Number of frequencies  :",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif

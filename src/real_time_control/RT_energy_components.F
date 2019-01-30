@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -24,7 +24,7 @@
 subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  use pars,           ONLY:SP,cZERO
- use X_m,            ONLY:P_square
+ use DIPOLES,        ONLY:P_square
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use hamiltonian,    ONLY:V_hartree_sc,Hzero
@@ -34,7 +34,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
 &                         G_lesser_reference,RT_Vnl_xc,eval_energy
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_kind,WF_xc_functional
- use parallel_m,     ONLY:PAR_Xk_nibz
+ use parallel_m,     ONLY:PAR_DIPk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  !
  implicit none 
@@ -77,7 +77,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  !
  ! dE_Kin = - i Tr { P^2 dG^<}/2  
  !
- call RT_average_operator(N_V=1,O_VALUE=dE_kin,O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
+ call RT_average_operator(N_V=1,O_VALUE=dE_kin,O_MATRIX=P_square/2._SP,G=dG_lesser,  en=en,k=k,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
  !
  ! dE_ion = dE_tot(IP) - dEkin
  !

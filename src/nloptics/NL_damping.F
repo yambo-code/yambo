@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -31,6 +31,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  use QP_m,           ONLY:QP_nk
  use real_time,      ONLY:Phase_LifeTime
  use nl_optics,      ONLY:I_relax,NL_bands
+ use parallel_m,     ONLY:PAR_Xk_ibz_index
  !
  implicit none
  !                      
@@ -40,10 +41,12 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  !
  ! Working Space
  !
- integer          :: ib,i1,i2
+ integer          :: ib,i1,i2,ik_mem
  !
  ! Damping
  !=========
+ !
+ ik_mem=PAR_Xk_ibz_index(ik)
  !
  ! Fictitious lifetime equivalent to the broadening
  ! in linear optics
@@ -53,12 +56,14 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  ! the |V_b(t)><V_b(t)| term
  !
  forall(ib=1:E%nbf,i1=NL_bands(1):NL_bands(2),i2=NL_bands(1):NL_bands(2))
-   I_relax(i1,i2,ib,ik,i_sp_pol)=-cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,ib,ik,i_sp_pol))*V_bands(i1,ib,ik,i_sp_pol))
+   I_relax(i1,i2,ib,ik_mem,i_sp_pol) = & 
+       & -cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,ib,ik,i_sp_pol))*V_bands(i1,ib,ik,i_sp_pol))
  end forall
  !
  ! the |V_b(t=0)><V_b(t=0)| term 
  !
- forall(ib=NL_bands(1):E%nbf) I_relax(ib,ib,ib,ik,i_sp_pol)=I_relax(ib,ib,ib,ik,i_sp_pol)+cI*2._SP/Phase_LifeTime 
+ forall(ib=NL_bands(1):E%nbf) &
+&     I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/Phase_LifeTime 
  !
 end subroutine NL_damping
 

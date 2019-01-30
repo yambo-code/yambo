@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -34,7 +34,8 @@ subroutine Dipole_rotate(H_rotation,Xen,X,rot_direction)
  use electrons,      ONLY:levels,n_sp_pol
  use SC,             ONLY:SC_bands
  use QP_m,           ONLY:QP_nk
- use X_m,            ONLY:DIP_P,DIP_iR,X_t
+ use DIPOLES,        ONLY:DIP_P,DIP_iR
+ use X_m,            ONLY:X_t
  !
  implicit none
  !

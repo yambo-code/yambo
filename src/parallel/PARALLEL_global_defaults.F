@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,14 +48,14 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  ! Propose the defaults
  !-----------------------------
  select case(ENVIRONMENT)
-   case("Response_G_space_Zero_Momentum")
-     call GIMME_a_parallel_proposal(4,(/"g","v","c","k"/))
-   case("Response_G_space_Finite_Momentum","Response_G_space") 
+   case("DIPOLES")
+     call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
+   case("Response_G_space_Finite_Momentum","Response_G_space")
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
   case("Non_Linear") 
-     call GIMME_a_parallel_proposal(2,(/" k"," w"/))
+     call GIMME_a_parallel_proposal(2,(/" w"," k"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu

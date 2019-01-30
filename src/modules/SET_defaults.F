@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,11 +31,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                     eval_alpha,Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,Dipole_Energy_treshold,Dipole_Energy_treshold_vv,&
-&                     l_X_terminator,X_terminator_E,global_gauge,use_covariant_approach,&
-&                     force_v_g_space_approach,use_real_space_approach,Dipole_approach,Chi_linalg_mode,&
-&                     X_use_lin_sys,X_DbGd_percentual
+&                     eval_alpha,&
+&                     q_plus_G_direction,Q_Shift_Order,n_X_descs,&
+&                     l_X_terminator,X_terminator_E,global_gauge,&
+&                     Chi_linalg_mode,X_use_lin_sys,X_DbGd_percentual
+ use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
+&                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -117,7 +118,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use plasma,     ONLY:PLASMA_redux_percent
 #endif
 #if defined _NL
- use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha
+ use nl_optics,  ONLY:NL_correlation,NL_er,n_frequencies,NL_damping,NL_LRC_alpha,         &
+&                     NL_verb_name,NL_bands,n_order
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _MAGNETIC
@@ -297,9 +299,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  E_SOC_nbands=0
  filled_tresh=0.00001
  !
- ! Magnetization
+ ! Magnetization and density
  !
- eval_magn=.FALSE.
+ eval_magn      = .FALSE.
  !
  !wave_func
  !
@@ -335,14 +337,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.
  X_FILL_UP_matrix_only=.FALSE.
- Dipole_Energy_treshold=1.E-5_SP/HA2EV
- Dipole_Energy_treshold_vv=1.E+5_SP/HA2EV
- Dipole_approach="G-space v"
  use_shifted_grids_approach = .FALSE.
  use_covariant_approach     = .FALSE.
  use_real_space_approach    = .FALSE.
  use_g_space_approach       = .TRUE.
- force_v_g_space_approach   = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=1.
  eps_2_alpha=1._SP
@@ -614,9 +612,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  NE_tot_time   =  -1._SP*FS2AUT 
  Integrator_name='INVINT'
+ NL_bands      =(/0,0/)
  NL_correlation="IPA"
- NL_er         =(/0.3_SP,8._SP/)/HA2EV
+ NL_er         =(/0.2_SP,8._SP/)/HA2EV
  n_frequencies =80
+ n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
  call Efield_reset(Efield(1))
@@ -624,6 +624,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%intensity=1000._SP*kWCMm22AU
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
+ NL_verb_name='low'
  !
 #endif
  !

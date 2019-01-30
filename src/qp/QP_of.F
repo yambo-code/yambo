@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,10 +48,10 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=31
- integer       :: ntitles,titles_order(tpar)
- real(SP)      :: values(tpar)
- character(schlen) :: titles(tpar)
+ integer, parameter :: tpar=31
+ integer            :: ntitles,titles_order(tpar)
+ real(SP)           :: values(tpar)
+ character(schlen)  :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) 
  titles(2)  = 'Sc|Eo' 
@@ -161,7 +161,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    if (index(what,"qp")>0) call msg('o '//what,'#')
    !
    do i1=i_desc_min,qp%n_descs
-     call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
+     call msg('o '//what,'#',trim(qp%description(i1)),INDENT=0)
    enddo
    !
    call msg('o '//what,'#')
@@ -252,7 +252,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')
      do i2=2,qp%n_descs
-       call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
+       call msg('o G_Sc','#',trim(qp%description(i2)),INDENT=0)
      enddo
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')

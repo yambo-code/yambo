@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -211,11 +211,11 @@ integer function variables_BS(ID,local_description,X)
    call io_elemental(ID,VAR="W_DbGd",VAR_SZ=2,MENU=0)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_ng,&
-&     VAR=' RIM|RL components      [col]:',WARN=.true.,OP=(/"=="/),&
+&     VAR=' RIM|RL components      [col]:',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    i_local_desc=i_local_desc+1
    call io_elemental(ID,I0=RIM_n_rand_pts,&
-&     VAR='    |Random points      [col]:',WARN=.true.,OP=(/"=="/),&
+&     VAR='    |Random points      [col]:',CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTION=local_description(i_local_desc),DO_NOT_DUMP=.TRUE.)
    !
  endif

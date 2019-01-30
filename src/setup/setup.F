@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,6 +48,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+ !
 #include <memory.h>
  !
  type(levels)    ::en,Xen,Ken
@@ -99,7 +100,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! DL vol
  !
- DL_vol=0.
+ DL_vol=0._SP
  rv=cross_product(a(2,:),a(3,:))
  DL_vol=abs(dot_product(a(1,:),rv))
  call msg('r','DL volume [au]:',DL_vol)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,8 +23,8 @@
 !
 subroutine ypp_INIT_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -133,6 +133,9 @@ subroutine ypp_INIT_load(defs)
  !
 #if defined _YPP_NL
  call it('r',defs,'nonlinear',     '[R] NonLinear Optics Post-Processing')
+ call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
+ call it('r',defs,'NL_exc',     '[R] NonLinear Optics Excitation Post-Processing')
+ call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
 #endif
  !
  ! Temperatures
@@ -239,7 +242,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
- call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC
@@ -324,14 +327,16 @@ subroutine ypp_INIT_load(defs)
  !
  ! RT Post-Processing
  !
- call it(defs,'Xorder','Max order of the response functions',X_order)
+ call it(defs,'Xorder','Max order of the response/exc functions',X_order)
  call it(defs,'EnRngeRt','Energy range',RT_conf%W_range,unit=E_unit)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)
  call it(defs,'TimeRange','Time-window where processing is done',RT_conf%T_range,unit=Time_unit(1))
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
+ call it('f',defs,'PrintExc','Print excited states functions')
  !
  ! GPL_EXCLUDE_START
  !

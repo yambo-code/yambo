@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -50,6 +50,9 @@ integer function io_DB1(E,k,ID)
 #endif
 #if defined _SC
  use SC,               ONLY:SC_bands
+#endif
+#if defined _NL
+ use nl_optics,        ONLY:NL_bands
 #endif
 #if defined _RT
  use real_time,        ONLY:RT_bands
@@ -246,6 +249,9 @@ integer function io_DB1(E,k,ID)
 #endif
 #if defined _RT
      if(any(RT_bands(:)==0)) RT_bands=(/1,E%nb/)
+#endif
+#if defined _NL
+     if(any(NL_bands(:)==0)) NL_bands=(/1,E%nb/)
 #endif
      !
      Tel=input_GS_Tel

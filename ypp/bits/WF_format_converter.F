@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -84,6 +84,26 @@ subroutine WF_format_converter(E,Xk,q)
  !
  YAMBO_ALLOC(wf_disk_old,(2,wf_nb_io,wf_ncx,n_spin))
  !
+ core_io_path=core_io_path_save
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID_old)
+ io_err=io_WF_old(ID_old)
+ !
+ if (n_atoms_species_max>0.and.io_KB_abinit_err==0) then
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),ID=ID_old)
+   io_KB_abinit_err=io_KB_abinit_old(ID_old)
+ endif
+ !
+ core_io_path=more_io_path
+ !
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID_new)
+ io_err=io_WF(ID_new)
+ !
+ if (n_atoms_species_max>0.and.io_KB_abinit_err==0) then
+   call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID_new)
+   io_KB_abinit_err=io_KB_abinit(ID_new)
+ endif
+ !
  call live_timing('Conversion',E%nk*wf_nb_io_groups)
  !
  do ik=1,E%nk
@@ -93,13 +113,11 @@ subroutine WF_format_converter(E,Xk,q)
      core_io_path=core_io_path_save
      !
      if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
-       if (ik==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),ID=ID_old)
-       if (ik> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1/),ID=ID_old)
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1/),ID=ID_old)
        io_KB_abinit_err=io_KB_abinit_old(ID_old)
      endif
      !
-     if (ik==1.and.ib_grp==1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,1/),ID=ID_old)
-     if (ik> 1.or. ib_grp> 1) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID_old)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/ik+1,ib_grp/),ID=ID_old)
      io_err=io_WF_old(ID_old,wf_old=wf_disk_old)
      !
      do i_sp_pol=1,n_sp_pol
@@ -116,13 +134,11 @@ subroutine WF_format_converter(E,Xk,q)
        core_io_path=more_io_path
        !
        if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
-         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID_new)
-         if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID_new)
+         call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID_new)
          io_KB_abinit_err=io_KB_abinit(ID_new)
        endif
        !
-       if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID_new)
-       if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID_new)
+       call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID_new)
        io_err=io_WF(ID_new,wf_disk_new)
        !
      enddo

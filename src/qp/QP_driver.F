@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
+subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
@@ -29,6 +29,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:real2ch
  use R_lattice,     ONLY:bz_samp
+ use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg,warning
  use X_m,           ONLY:X_t
@@ -54,6 +55,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(w_samp) ::Xw
+ type(DIPOLE_t)::Dip
  !
  ! Work Space
  !
@@ -122,9 +124,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    return
    !
  endif
- qp%n_descs=2
+ qp%n_descs=3
  if (l_ppa) then
-   qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   !
+   qp%description(2)=' == PPA-GN GW =='
+   qp%description(3)=' '
+   qp%description(4)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   qp%n_descs=4
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
@@ -141,6 +147,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    GWo_iterations=0
    !
    qp%description(2)=' == COHSEX GW =='
+   qp%description(3)=' '
    !
    QP_DB_kind=QP_SE_COHSEX
    !
@@ -149,6 +156,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
    if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
    if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
    if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
+   qp%description(3)=' '
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.
@@ -302,7 +310,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 # if defined _ELPH 
    !
@@ -322,14 +330,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw)
  !
  if (l_life) then
    !
-   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,0) 
+   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !
    ! Radiative Lifetimes (Using <p>)
    !=================================
    !
-   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X)
+   if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif
    !

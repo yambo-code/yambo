@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use it_m,           ONLY:initdefs,initmode,ofiles_append,&
 &                         initinfio,infile,infile_dump,initactivate,&
 &                         nrnlvls,rnlvls,runlevel_is_on,&
-&                         infile_verbosity,V_general,V_qp,V_all,V_real_time
+&                         infile_verbosity,V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
  use com,            ONLY:file_exists,write_to_report,repfile,write_the_logo
  use stderr,         ONLY:STRING_split,write_to_log  
@@ -44,20 +44,20 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
  use LIVE_t,         ONLY:what_is_running,live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:rm_file
+ use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
 #if defined _YPP_SC
  use SC,             ONLY:SC_bands
 #endif
 #if defined _YPP_RT || defined _YPP_SC
  use QP_m,           ONLY:QP_nb
  use electrons,      ONLY:levels,E_reset
- use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
 #endif
 #if defined _YPP_RT 
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
-&                         l_NL_X,RT_conf
+&                         l_NL_X,l_NL_exc,RT_conf
+ use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
@@ -78,17 +78,18 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
- integer          ::i1,i2
+ integer, external::io_RIM,io_COL_CUT
+ integer          ::i1,i2,ID,io_err
  character(schlen)::rstr_piece(60) 
  !
 #if defined _YPP_SC
  type(levels)     ::E_dummy
  integer, external::io_SC_components
- integer          ::io_SC_err,ID
+ integer          ::io_SC_err
 #endif
 #if defined _YPP_RT
  integer, external::io_RT_components,io_KB_pwscf,io_KB_abinit
- integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,ID,io_KB_abinit_err
+ integer          ::io_RT_G_err,io_RT_OBS_err,io_KB_pwscf_err,io_KB_abinit_err
 #endif
 #if defined _YPP_NL
  integer, external::io_NL
@@ -166,6 +167,16 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
 #endif
  !
+ ! rim
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_RIM(ID) 
+ !
+ ! cutoff
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_COL_CUT(ID) 
+ !
  ! Defaults->Defs + Initialization
  !
  call call_INIT_load('load')
@@ -194,6 +205,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (i1<50) then
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='gen' ) infile_verbosity=V_general
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='rt' )  infile_verbosity=V_real_time
+     if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='nl' )  infile_verbosity=V_nl_optics
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='qp' )  infile_verbosity=V_qp
      if( trim(rstr_piece(i1)) == 'infver' .and. trim(rstr_piece(i1+1))=='all' ) infile_verbosity=V_all
    endif
@@ -322,6 +334,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      !
    endif
 #endif
+   !
+#if defined _YPP_NL
+   l_NL_X   =  trim(rstr_piece(i1)) == 'nonlinear'
+#endif   
    !    
    if ( trim(rstr_piece(i1)) == 'excitons'.or. trim(rstr_piece(i1)) == 'electrons') then
      if (l_amplitude)      call initactivate(1,'amplitude')
@@ -377,6 +393,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  enddo
  !
+#if defined _YPP_NL
+ if (l_NL_X)         call initactivate(1,'nonlinear')
+#endif
+ !
  l_flag=.not.(l_sort.or.l_fix_save)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
@@ -430,6 +450,9 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! GPL_EXCLUDE_END
  !
+#endif
+#if defined _YPP_NL
+ l_NL_X   =runlevel_is_on('nonlinear')
 #endif
 #if defined _YPP_MAGNETIC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
@@ -593,9 +616,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) then
-   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor")
- endif
+ if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
+ if(l_NL_exc) call initactivate(1,"Xorder PrintExc")!  MaxContr")
 #endif
  !
 #if defined _YPP_MAGNETIC

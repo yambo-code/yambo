@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OPTICS_driver(Xen,Xk,q,wv,X)
+subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Optics driver
  !
@@ -35,11 +35,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_alloc,X_fxc,X_par,&
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_mat,X_alloc,X_fxc,X_par,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_n_descs,FXC_description,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
@@ -54,6 +55,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q
  type(X_t)     :: X
+ type(DIPOLE_T):: Dip
  type(w_samp)  :: wv 
  ! 
  ! Work Space
@@ -79,12 +81,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    ! PARALLEL indexes
    !==================
    !
-   if (X%iq(1)==1) then
-     if (iq==1) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Zero_Momentum",X=X) 
-     if (iq==2) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-   else 
-     if (iq==X%iq(1)) call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
-   endif
+   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space_Finite_Momentum",X=X) 
    !
    ! WF distribution 
    !=================
@@ -94,8 +91,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
 &                              CLEAN_UP=.TRUE.)
    !
-   if (iq==1) call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
-   if (iq> 1) call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
+   call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
    !
@@ -215,7 +211,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
    EEL       =cZERO
    Alpha     =cZERO
    !
-   call X_irredux(iq,X_par(1),Xen,Xk,wv,X)     
+   call X_irredux(iq,X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF eps
    !
@@ -231,8 +227,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
      !
      call X_redux(iq,X_par(1),wv,X)
      !
-     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+!     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
+!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
+     if (Macroscopic_CPU) Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
      !
    endif
    !
@@ -357,7 +354,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X)
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
- call X_alloc('DIP_projected')
+ call DIP_alloc('DIP_projected')
  call WF_free(WF)
  call PP_redux_wait
  call set_real_printed_length()

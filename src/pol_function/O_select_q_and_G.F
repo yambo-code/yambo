@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -49,10 +49,10 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  if (iq==1) then
    Q_plus_G_pt=X%q0/v_norm(X%q0)
-   Q_plus_G_sq_modulus=q_norm(iq)**2.
+   Q_plus_G_sq_modulus=q_norm(iq)**2
  else 
    Q_plus_G_pt=q%pt(iq,:)
-   Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2.
+   Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2
  endif
  !
  ! Wrong input paramaters
@@ -66,8 +66,8 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    ! In this case check only the the given q-point lays on the user defined direction
    !
    v=Q_plus_G_pt/v_norm(Q_plus_G_pt)
-   projection=dot_product(q_plus_G_direction,v)-1.
-   if (abs(projection)>1.E-5) O_select_q_and_G=-1
+   projection=dot_product(q_plus_G_direction,v)-1._SP
+   if (abs(projection)>1.E-5_SP) O_select_q_and_G=-1
    !
    return
    !
@@ -77,8 +77,8 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  ! q + G are in the correct direction
  !
  if (iq==1) then
-   projection=dot_product(q_plus_G_direction,Q_plus_G_pt)-1.
-   if (abs(projection)>1.E-5) then
+   projection=dot_product(q_plus_G_direction,Q_plus_G_pt)-1._SP
+   if (abs(projection)>1.E-5_SP) then
      call warning(' Field direction and Q drection are different. q=0 case not computed')
      O_select_q_and_G=-1
      return
@@ -94,7 +94,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  do ig=2,X%ng
    v=Q_plus_G_pt+g_vec(ig,:)
    v=v/v_norm(v)
-   projection=dot_product(q_plus_G_direction,v)-1.
+   projection=dot_product(q_plus_G_direction,v)-1._SP
    if (abs(projection)<1.E-5) then
      i_found=i_found+1
      if (i_found==Q_Shift_Order) O_select_q_and_G=ig
@@ -105,7 +105,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  if (O_select_q_and_G/=-1) then
    Q_plus_G_pt=Q_plus_G_pt+g_vec(O_select_q_and_G,:)
-   Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2.
+   Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2
    call msg('rs',trim(RL_msg(2)))
    call msg('r','Momentum shift [cc]:',g_vec(O_select_q_and_G,:))
    call msg('r','Total Momentum [cc]:',Q_plus_G_pt(:))

@@ -51,6 +51,12 @@ module pseudo
 
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
  !
+ ! ABINIT (old) KB
+ !=====================
+ real(SP), allocatable:: pp_kbs_old(:,:)
+ real(SP), allocatable:: pp_kb_old(:,:,:,:)
+ real(SP), allocatable:: pp_kbd_old(:,:,:,:)
+ !
  ! ABINIT and PWSCF KB
  !=====================
  real(SP), allocatable:: pp_kbs(:,:)
@@ -78,6 +84,17 @@ module pseudo
  !
  contains
    !
+   ! Abinit (OLD)
+   subroutine PP_alloc_abinit_old()
+     use R_lattice,  ONLY:ng_vec
+     YAMBO_ALLOC(pp_kbs_old,(n_atomic_species,pp_n_l_times_proj_max))
+     YAMBO_ALLOC(pp_kb_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     pp_kbs =0._SP
+     pp_kb  =0._SP
+     pp_kbd =0._SP
+   end subroutine
+   !
    ! Abinit
    subroutine PP_alloc_abinit()
      use wave_func,  ONLY:wf_ncx
@@ -98,6 +115,12 @@ module pseudo
      pp_kbs =0._SP
      pp_kb  =0._SP
      pp_kbd =0._SP
+   end subroutine
+   !
+   subroutine PP_free_old()
+     YAMBO_FREE(pp_kbs_old)
+     YAMBO_FREE(pp_kb_old)
+     YAMBO_FREE(pp_kbd_old)
    end subroutine
    !
    subroutine PP_free()

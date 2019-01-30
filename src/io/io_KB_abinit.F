@@ -27,7 +27,7 @@ integer function io_KB_abinit(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
- use R_lattice,        ONLY:ng_vec,nkibz
+ use R_lattice,        ONLY:nkibz
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit

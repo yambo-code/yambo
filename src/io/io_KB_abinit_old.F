@@ -27,7 +27,7 @@ integer function io_kb_abinit_old(ID)
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
- use wave_func,        ONLY:wf_ncx
+ use R_lattice,        ONLY:ng_vec
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs_old,pp_kb_old,pp_kbd_old, &
 &                           PP_alloc_abinit_old
@@ -123,7 +123,7 @@ integer function io_kb_abinit_old(ID)
    call io_bulk(ID,R2=pp_kbs_old)
  endif
  !
- YAMBO_ALLOC(pp_disk,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max))
+ YAMBO_ALLOC(pp_disk,(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
  !
  call io_fragment(ID,i_fragment=ik)
  !

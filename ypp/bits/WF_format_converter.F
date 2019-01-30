@@ -32,7 +32,7 @@ subroutine WF_format_converter(E,Xk,q)
  use IO_m,                ONLY:mk_dir,rm_file,cp_file
  use com,                 ONLY:msg,core_io_path,more_io_path
  use electrons,           ONLY:levels,n_spin,n_sp_pol,n_spinor
- use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io,wf_igk
+ use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
  use IO_m,                ONLY:io_control,NONE,DUMP,OP_WR_CL,OP_APP_CL,OP_RD_CL
  !
 #include<memory.h>
@@ -139,8 +139,8 @@ subroutine WF_format_converter(E,Xk,q)
            pp_kbs=pp_kbs_old
          endif
          !
-         pp_kb(:,:,:,i_sp_pol) =pp_kb_old(wf_igk(:,ik),:,:,i_sp_pol) 
-         pp_kbd(:,:,:,i_sp_pol)=pp_kbd_old(wf_igk(:,ik),:,:,i_sp_pol)
+         pp_kb(:,:,:,i_sp_pol) =pp_kb_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
+         pp_kbd(:,:,:,i_sp_pol)=pp_kbd_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
          !
        endif
        !

@@ -90,9 +90,9 @@ module pseudo
      YAMBO_ALLOC(pp_kbs_old,(n_atomic_species,pp_n_l_times_proj_max))
      YAMBO_ALLOC(pp_kb_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
      YAMBO_ALLOC(pp_kbd_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
-     pp_kbs =0._SP
-     pp_kb  =0._SP
-     pp_kbd =0._SP
+     pp_kbs_old =0._SP
+     pp_kb_old  =0._SP
+     pp_kbd_old =0._SP
    end subroutine
    !
    ! Abinit

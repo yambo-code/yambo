@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,6 +42,11 @@ subroutine QP_state_extract_print(qp)
  !
  if (.not.present(qp)) call msg('r','')
  !
+ if (present(qp)) then
+   qp%n_descs=qp%n_descs+1
+   qp%description(qp%n_descs)=""
+ endif
+ !
  i4=(/1,1,0,0/)
  do while(QP_state_extract(i4)>0)
    !
@@ -49,7 +54,7 @@ subroutine QP_state_extract_print(qp)
    !
    if (present(qp)) then
      qp%n_descs=qp%n_descs+1
-     qp%description(qp%n_descs)=trim(ch)
+     qp%description(qp%n_descs)=" "//trim(ch)
    else
      call msg('r',trim(ch))
    endif

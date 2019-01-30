@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -218,6 +218,19 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
+ ! Drude term
+ !
+ if (iq==1.and.master_thread) then
+   do i_cg = 1,coarse_grid_N
+     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+     if(.not.Drude_pole) cycle
+     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+     exit
+   enddo
+ endif
+ !
  ! MAIN LOOP
  !===========
  !
@@ -226,21 +239,20 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !
+   ! Drude term already accounted for
+   !
+   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+   if(Drude_pole) then
+     if (master_thread) call live_timing(steps=1)
+     cycle
+   endif
+   !
    ! 1) First compute the residuals
    !================================
    call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
    ! 2) Then the frequency dependent term
    !=======================================
-   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
-   !
-   if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
-     !$omp critical
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
-     !$omp end critical
-     call live_timing(steps=1)
-     cycle
-   endif
    !
    ! GPL_EXCLUDE_START
    !

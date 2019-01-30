@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -124,9 +124,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    return
    !
  endif
- qp%n_descs=2
+ qp%n_descs=3
  if (l_ppa) then
-   qp%description(2)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   !
+   qp%description(2)=' == PPA-GN GW =='
+   qp%description(3)=' '
+   qp%description(4)=' PPA imaginary pt   [ev]:'//trim(real2ch(X%ppaE*HA2EV))
+   qp%n_descs=4
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
@@ -143,6 +147,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    GWo_iterations=0
    !
    qp%description(2)=' == COHSEX GW =='
+   qp%description(3)=' '
    !
    QP_DB_kind=QP_SE_COHSEX
    !
@@ -151,6 +156,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    if (l_elel_corr)     qp%description(2)=' == Real Axis GW =='
    if (l_elph_corr)     qp%description(2)=' == El-Ph Self-Energy =='
    if (l_elphoton_corr) qp%description(2)=' == Lamb Shift =='
+   qp%description(3)=' '
    !
    ! Here I am not considering the case where ELPH + GW is used.
    ! For this case I need to create a new global KIND.

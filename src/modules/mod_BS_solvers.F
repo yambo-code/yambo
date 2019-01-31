@@ -94,7 +94,7 @@ module BS_solvers
  ! Solvers (Haydock)
  !=========
  logical  :: Haydock_terminator
- real(SP) :: Haydock_treshold
+ real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
 #if defined _SLEPC
  !
@@ -162,12 +162,12 @@ module BS_solvers
      complex(SP),pointer,optional :: bsR_kerr(:)
    end function
    !
-   integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
+   integer function io_BSS_Haydock(ID,it,reached_threshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
      implicit none
      integer             :: ID,it
-     real(SP)            :: reached_treshold,Bf(it+1),Af(it)
+     real(SP)            :: reached_threshold,Bf(it+1),Af(it)
      complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
      complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)
      complex(SP),optional:: Cf_kerr(it+1)

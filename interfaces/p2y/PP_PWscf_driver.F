@@ -29,6 +29,7 @@ subroutine PP_PWscf_driver(k)
  use pw_wfc_module
  !
  use pars,                  ONLY:SP,DP
+ use com,                   ONLY:error
  use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
@@ -146,6 +147,10 @@ subroutine PP_PWscf_driver(k)
  ! write USPP data
  !
  if ( any(atoms%pseudo(:)%is_uspp) ) then
+   !
+#ifndef _USPP
+   call error("[PPs] Ultrasoft PP not supported")
+#endif
    !
    call qe_pseudo_init()
    call readpp(input_dft)

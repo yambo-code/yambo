@@ -419,6 +419,7 @@ contains
    use D_lattice,             ONLY : DL_vol, a, alat,lattice
    use mod_com2y,             ONLY : alat_mult_factor
    use vec_operate,           ONLY : cross_product
+   use com,                   ONLY : msg
    real(SP) :: cp(3)
     
    select case (trim(dftdata_fmt))
@@ -454,6 +455,7 @@ contains
    do i1=1,3
      DL_vol= DL_vol+a(1,i1)*cp(i1)
    enddo
+   if ( DL_vol <0._SP) call msg('s',"Axis vectors are left handed")
    b(1,:)=cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
    b(2,:)=cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
    b(3,:)=cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol

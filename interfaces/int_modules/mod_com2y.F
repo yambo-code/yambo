@@ -162,7 +162,10 @@ module mod_com2y
      ! Identity was stripped in outkss: swap all
      ! symmetries with their inversions
      !
-     if (.not.l_identity.and.l_inversion) int_sop=-int_sop
+     if (.not.l_identity.and.l_inversion) then
+       call msg('s','[SYMS] Identity not found: swapping all symmetries')
+       int_sop=-int_sop
+     endif
      !
      if (force_noSYMM) i_time_rev=0
      ! 

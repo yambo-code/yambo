@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -47,6 +47,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -70,7 +71,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  call timing('NL Hamiltonian',OPR='start')
 #endif
  !
- if(.not.l_use_Hxc_collisions) then
+ if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
    !
    if(eval_HARTREE .or.  eval_DFT) then
      !
@@ -194,7 +195,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Correlation part Hartree + TDDFT
    ! ================================
    !
-   if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
+   if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !  
      if(n_spinor==1) then
         if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then

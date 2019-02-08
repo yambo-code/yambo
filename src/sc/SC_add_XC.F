@@ -37,9 +37,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation
+ use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation,E_reference
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         SC_bands,l_oep_iterative
+&                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -55,7 +55,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  ! Work Space
  !
- integer      :: ib,ik
+ integer      :: ib,ibp,ik
  complex(SP)  :: G_sex(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  complex(SP)  :: G_coh(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  !
@@ -83,17 +83,33 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
    enddo
    !
-   n_exc=0.5 !/ 1+real(iteration/60,SP))
-   HOLE=sqrt((1._SP-n_exc/3._SP)*spin_occ)
-   ELEC=sqrt((      n_exc      )*spin_occ)
-   do ib=2,4
-     G_sex(ib,ib,1)=cI*HOLE**2
-     !G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
-     !G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
-     !if(iteration==66) G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
-     !if(iteration==66) G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
-   enddo
-   !G_sex(5,5,1)=cI*ELEC**2
+   if (trim(SC_neq_kind)=="matsubara") then
+     ELEC=0._SP
+     HOLE=0._SP
+     do ik=1,E%nk
+       do ib=SC_bands(1),SC_bands(2)
+         if(E_reference%E(ib,ik,1)> SC_mu(1)) ELEC=ELEC          -real(cI*G_sex(ib,ib,ik),SP) !*Xk%weight(ik)
+         if(E_reference%E(ib,ik,1)<=SC_mu(1)) HOLE=HOLE+(spin_occ+real(cI*G_sex(ib,ib,ik),SP))!*Xk%weight(ik)
+         if(iteration>SC_last_coh_it) cycle
+         do ibp=SC_bands(1),SC_bands(2)
+           if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
+           G_sex(ib,ibp,ik) = 0.5
+           G_sex(ibp,ib,ik) = 0.5
+         enddo
+       enddo
+     enddo
+     write(*,*) "(ELEC,HOLE)= ",ELEC,HOLE
+   endif
+   !
+   !n_exc=0.1 !/ 1+real(iteration/60,SP))
+   !HOLE=sqrt((1._SP-n_exc/1._SP)*spin_occ)
+   !ELEC=sqrt((      n_exc      )*spin_occ)
+   !do ib=2,2
+   !  !G_sex(ib,ib,1)=cI*HOLE**2
+   !  !G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
+   !  !G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
+   !enddo
+   !!G_sex(5,5,1)=cI*ELEC**2
    !
    call COLLISIONS_compose_sc(G_sex,G_coh)
    !

@@ -949,6 +949,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
    call initactivate(1,'SCdiag Mean_Potential')
    !
+   call initactivate(1,'SCneqKIND SCmu SCocc SCcohIt')
+   !
  endif
  !
 #endif

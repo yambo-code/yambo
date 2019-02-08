@@ -73,6 +73,13 @@ module SC
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
  !
+ ! NEQ
+ !
+ character(schlen)     :: SC_neq_kind
+ integer               :: SC_last_coh_it
+ real(SP)              :: SC_mu(3)
+ real(SP), allocatable :: SC_occ(:,:,:)
+ !
  ! xc potential
  !
  complex(SP), allocatable :: V_mean(:,:)

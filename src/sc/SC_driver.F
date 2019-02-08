@@ -34,7 +34,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         rho_convergence,magn_convergence,it_now,           &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
-&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
+&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
+&                         SC_neq_kind,SC_mu
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
 &                         H_QP_table_setup,H_rotation
@@ -79,6 +80,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  real(SP),    allocatable :: V_xc_nm1(:,:),rho_nm1(:),magn_nm1(:,:)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
+ !
+ complex(SP) :: H_tmp(SC_bands(2),SC_bands(2))
+ !
 #if defined _ELECTRIC
  complex(SP), allocatable :: SC_R0(:,:,:,:)
 #endif
@@ -130,8 +134,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !==========================
  ! 
  call SC_start_and_restart(X,E,Xk)
- !
- call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
  !
  ! DIPOLES
  !=========
@@ -189,6 +191,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
+ write(*,*) 'check : ',it_now
+ call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+ !
  ! Reference wavefunctions
  !
  call WF_copy(WF,WFo)
@@ -218,6 +223,21 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
        io_WF=io_SC_components('WF',E,ID(2))
        call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+       !
+       ! Transform H_SC into H_matsubara
+       !
+       if(trim(SC_neq_kind)=="matsubara") then
+         H_tmp=cZERO
+         do ib=1,SC_bands(2)
+           if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) H_tmp(ib,ib) = -SC_mu(2)
+           if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) H_tmp(ib,ib) = -SC_mu(3)
+         enddo
+         ! The chemical potential is imposed in the EQ-SEX basis
+         call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_bands(2),-1)
+         Hzero(:,:,ik,i_sp_pol)=Hzero(:,:,ik,i_sp_pol)+H_tmp
+         !
+       endif
+       !
      enddo
    enddo
    !

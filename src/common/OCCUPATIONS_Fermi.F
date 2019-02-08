@@ -49,7 +49,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
 #if defined _SC
- use SC,            ONLY:l_SC_RESTART
+ use SC,            ONLY:SC_neq_kind,SC_mu,SC_occ
 #endif 
  !
 #include<memory.h>
@@ -253,14 +253,13 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  mu_zero=E%E_fermi
  mu_el  =E%E_fermi
  mu_hole=E%E_fermi
- n_carr=0.
- write(*,*) E%E_fermi*27.2116
 #if defined _SC
- if (l_SC_restart) then
-   mu_zero=9._SP/27.2116
-   mu_el  = 8.00_SP/27.2116+mu_zero
-   mu_hole=-5.97_SP/27.2116+mu_zero
-   n_carr=0.
+ n_carr=0.
+ !write(*,*) "Ef= ",E%E_fermi*27.2116
+ if (trim(SC_neq_kind)=="constrained-mu") then
+   mu_zero= SC_mu(1)
+   mu_hole= SC_mu(2)
+   mu_el  = SC_mu(3)
  endif
 #endif
  !
@@ -269,12 +268,13 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    ik=index( index_E_sorted(i1) , 2)
    is=index( index_E_sorted(i1) , 3)
    !
-   if(ib<=4) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_hole,Tel)
-   if(ib>4 ) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_el,  Tel)
-   !E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,Tel)
+   if(E_sorted(i1)<=mu_zero) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_hole,Tel)
+   if(E_sorted(i1)> mu_zero) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_el,  Tel)
    !
+#if defined _SC
    if((E%E(ib,ik,is)-mu_zero)<=0._SP) n_carr(1)=n_carr(1)+(spin_occ-E%f(ib,ik,is))*K%weights(ik)
    if((E%E(ib,ik,is)-mu_zero)> 0._SP) n_carr(2)=n_carr(2)+          E%f(ib,ik,is) *K%weights(ik)
+#endif
    !write(*,*) ib,ik,is,n_carr
    !
    if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
@@ -288,7 +288,22 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    !
  enddo
  !
+#if defined _SC
+ !
  write(*,*) n_carr
+ !
+ if (trim(SC_neq_kind)=="constrained-occ") then
+   do is=1,n_sp_pol
+     do ik=1,E%nk
+       do ib=1,nb_here
+         if( SC_occ(ib,ik,is)==-99._SP ) cycle
+         E%f(ib,ik,is)=SC_occ(ib,ik,is)*spin_occ
+       enddo
+     enddo
+   enddo
+ endif
+ !
+#endif
  !
  !E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !

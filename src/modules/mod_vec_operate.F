@@ -236,6 +236,31 @@ module vec_operate
      endif
    end subroutine c2a
    !
+   subroutine define_b_and_DL_vol()
+     !
+     use pars,        ONLY:pi
+     use D_lattice,   ONLY:a,DL_vol
+     use R_lattice,   ONLY:b
+     use com,         ONLY:msg
+     !
+     real(SP)  :: cp(3)
+     integer   :: i1
+     !
+     cp = cross_product(a(2,:),a(3,:))
+     DL_vol=0._SP
+     do i1=1,3
+       DL_vol= DL_vol+a(1,i1)*cp(i1)
+     enddo
+     b(1,:)=cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
+     b(2,:)=cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
+     b(3,:)=cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
+     if ( DL_vol <0._SP) then
+       call msg('rsn',"Axis vectors are left handed")
+       DL_vol=abs(DL_vol)
+     endif
+     !
+   end subroutine
+   !
    subroutine k2bz(v_in,v_out,b_in) 
      !
      ! k is iku 

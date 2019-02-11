@@ -149,7 +149,7 @@ subroutine NL_driver(E,X,k,q,Dip)
    !
  endif
  !
- if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
    call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  endif
  !

@@ -26,7 +26,7 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use DIPOLES,        ONLY:DIPOLE_t
- use X_m,            ONLY:l_X_terminator
+ use X_m,            ONLY:l_X_terminator,X_terminator_Kind
  use wave_func,      ONLY:wf_ng
  !
  implicit none
@@ -46,6 +46,10 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  Dip%ng=wf_ng
  Dip%q0=q0
  Dip%ib=bands
+ !
+ ! Check if terminator is required
+ !
+ l_X_terminator = X_terminator_Kind/='none'
  !
  ! Set up band limits
  !

@@ -25,7 +25,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
- use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states,QP_ng_SH,QP_ng_Vxc
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
@@ -33,8 +33,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
- use wave_func,      ONLY:WF
  use timing_m,       ONLY:timing
+use fft_m,           ONLY:fft_g_table
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
@@ -49,7 +49,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol
+ integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
  !
  Hzero=cZERO
  !
@@ -110,6 +110,11 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !========================================
  !
  ! V_hartree
+ iG_bounds_loaded=shape(fft_g_table)
+   if (iG_bounds_loaded(1)<max(QP_ng_SH,QP_ng_VXC)) then
+     iGo_max=iG_bounds_loaded(2) 
+     call fft_setup(max(QP_ng_SH,QP_ng_VXC),iGo_max,.false.)
+   endif 
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc

@@ -877,6 +877,10 @@ contains
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      write(*,*) "GS_xc_FUNCTIONAL", GS_xc_FUNCTIONAL
+      write(*,*) "pw_dft",pw_dft
+      write(*,*) "GS_xc_KIND", GS_xc_KIND
+      write(*,*) "pw_exx_is_active",pw_exx_is_active
       !
       if (pw_exx_is_active) then
          !

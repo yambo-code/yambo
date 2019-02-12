@@ -99,7 +99,7 @@ module hamiltonian
    !
    subroutine H_alloc(E,l_real_space,l_rotation_matrix)
      use pars,           ONLY:SP
-     use drivers,        ONLY:l_nl_optics
+     use drivers,        ONLY:l_nl_optics,l_sc_run
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
@@ -112,8 +112,10 @@ module hamiltonian
      !
      ! Store the reference energies
      !
-     call E_reset(E_reference)
-     call E_duplicate(E,E_reference)
+     if (.not.l_sc_run) then
+       call E_reset(E_reference)
+       call E_duplicate(E,E_reference)
+     endif
      !
      YAMBO_ALLOC(Hzero,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      !

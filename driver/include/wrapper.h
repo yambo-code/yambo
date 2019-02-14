@@ -29,9 +29,9 @@
 /* TEST */
 #if defined _TEST_MAIN
  #if defined _FORTRAN_US
-  int driver_
+  int yambo_
  #else
-  int driver
+  int yambo
  #endif
 #endif
 /* YAMBO */

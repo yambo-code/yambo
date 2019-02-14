@@ -2,7 +2,7 @@
          Copyright (C) 2000-2019 the YAMBO team
                http://www.yambo-code.org
  
-  Authors (see AUTHORS file for details): DS
+  Authors (see AUTHORS file for details): AM
   
   This file is distributed under the terms of the GNU 
   General Public License. You can redistribute it and/or 
@@ -22,7 +22,50 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-  {"help","help",   'h',"Short Help",0,0,0,0},              
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <string.h>
+#include <kind.h>
+#include <usage.h>
+#include <load_environments.h>
+
+struct n_options_struct options_maker( )
+{
+ int i_opt;
+ n_options_struct n_options[100];
+ for(i_opt=0;i_opt<100;i_opt++) {
+  n_options[i_opt].long_opt=NULL;
+  n_options[i_opt].short_opt=0;
+  n_options[i_opt].short_desc=NULL;
+  n_options[i_opt].long_desc=NULL;
+  n_options[i_opt].project="all";
+  n_options[i_opt].n_int=0;
+  n_options[i_opt].n_float=0;
+  n_options[i_opt].n_char=0;
+  n_options[i_opt].serial_var=0;
+  n_options[i_opt].no_GPL=0;
+ }
+ i_opt=-1;
+ /* */
+ i_opt++;
+ n_options[i_opt].short_desc="Short Help";
+ n_options[i_opt].short_opt='h';
+ n_options[i_opt].long_opt="help";
+ n_options[i_opt].serial_var=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Long Help";
+ n_options[i_opt].short_opt='H';
+ n_options[i_opt].long_opt="Help";
+ n_options[i_opt].serial_var=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Job strinh";
+ n_options[i_opt].short_opt='J';
+ n_options[i_opt].long_opt="job";
+ n_options[i_opt].n_char=1;
+
+
+/*
   {"Help","lhelp",  'H',"Long Help",0,0,0,0},               
   {"job","jobstr", 'J',"Job string identifier",0,0,1,1},   
   {"verbosity","infver", 'V',"Input file verbosity",0,0,1,0},    
@@ -39,5 +82,9 @@
   {"nompi","nompi",  'M',"Switch-off MPI support (serial run)",0,0,0,0}, 
 #endif
 #if defined _OPENMP
-  {"noopemp","noopenmp",'N',"Switch-off OpenMP support (single thread run)",0,0,0,1}, 
+  {"noopenmp","noopenmp",'N',"Switch-off OpenMP support (single thread run)",0,0,0,1}, 
 #endif
+*/
+ /* */
+ return(n_options[100]);
+};

@@ -26,66 +26,67 @@
 */
  static options_struct options[] = { 
 #include "common_options.h"
-  {"setup","setup",  "i","Initialization",0,0,0,0},          
-  {"optics","optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0},
+  {"setup","setup",  'i',"Initialization",0,0,0,0},          
+  {"optics","optics", 'o',"Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0},
 #if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
-  {"potential","potential",  "v","Self-Consistent Potential",0,0,1,0}, 
-  {"NULL","DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0},
-  {"NULL","DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0},
+  {"potential","potential",  'v',"Self-Consistent Potential",0,0,1,0}, 
+  {"NULL","DESC",       0,"opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0},
+  {"NULL","DESC",       0,"(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0},
 #endif
 #if defined _TEST_MAIN
-  {"test","test", "t","test",1,1,1,0},
+  {"test","test", 0,"test",0,0,0,0},
 #endif
-  {"kernel","kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0},
-  {"NULL","DESC"," " ,"       (hf/sex only eh-space; lrc only G-space)",0,0,0,0},
-  {"solver","bss",    "y","BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0},                      
-  {"NULL","DESC",  " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0},
-  {"coulomb","rim_cut","r","Coulomb potential",0,0,0,0},  
-  {"hf","HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0},      
-  {"screen_dyn","em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0},     
-  {"screen","em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0},        
-  {"dipoles","dipoles","q","Compute oscillator strenghts (or dipoles)",0,0,0,0},        
-  {"se","gwapprx","p","GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0},              
-  {"dyson","gw0",    "g","Dyson Equation solver",0,0,1,0}, 
-  {"NULL","DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0},
-  {"life","life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0},                  
-  {"acdft","acfdt",  "a","ACFDT Total Energy",0,0,0,0},                            
+  {"kernel","kernel", 'k',"Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0},
+  {"NULL","DESC",0 ,"       (hf/sex only eh-space; lrc only G-space)",0,0,0,0},
+  {"solver","bss",    'y',"BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0},                      
+  {"NULL","DESC",  0,"       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0},
+  {"coulomb","rim_cut",'r',"Coulomb potential",0,0,0,0},  
+  {"hf","HF_and_locXC",  'x',"Hartree-Fock Self-energy and local XC",0,0,0,0},      
+  {"screen_dyn","em1d",   'd',"Dynamical Inverse Dielectric Matrix",0,0,0,0},     
+  {"screen","em1s",   'b',"Static Inverse Dielectric Matrix",0,0,0,0},        
+  {"dipoles","dipoles",'q',"Compute oscillator strenghts (or dipoles)",0,0,0,0},        
+  {"se","gwapprx",'p',"GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0},              
+  {"dyson","gw0",    'g',"Dyson Equation solver",0,0,1,0}, 
+  {"NULL","DESC",   0,"[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0},
+  {"life","life",   'l',"GoWo Quasiparticle lifetimes",0,0,0,0},                  
+  {"acdft","acfdt",  'a',"ACFDT Total Energy",0,0,0,0},                            
 #if defined _PL
-  {"pl","photolum", "u","Photo-Luminescence",0,0,0,0}, 
+  {"pl","photolum", 'u',"Photo-Luminescence",0,0,0,0}, 
 #endif
 #if defined _NL
-  {"nl","nloptics","u","Non-linear spectroscopy",0,0,0,0}, 
+  {"nl","nloptics",'u',"Non-linear spectroscopy",0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf","negf",   "n","NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0}, 
-  {"scatt","scattp", "s","Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0},
+  {"negf","negf",   'n',"NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0}, 
+  {"scatt","scattp", 's',"Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0},
 #endif
 #if defined _QED && !defined _ELPH
-  {"corr","corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0},
+  {"corr","corrtp", 'c',"Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0},
 #endif
 #if defined _ELPH && !defined _QED
-  {"corr","corrtp", "c","Correlation [opt=(e)lectrons/(p)honons]",0,0,1,0},
+  {"corr","corrtp", 'c',"Correlation [opt=(e)lectrons/(p)honons]",0,0,1,0},
 #endif
 #if defined _QED && defined _ELPH
-  {"corr","corrtp", "c","Correlation [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0},
+  {"corr","corrtp", 'c',"Correlation [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0},
 #endif
 #if defined _ELPH && !defined _RT
-  {"elphham","ElPhHam","f","Electron-Phonon Hamiltonian",0,0,0,0},    
+  {"elphham","ElPhHam",'f',"Electron-Phonon Hamiltonian",0,0,0,0},    
 #endif
 #if defined _SC | defined _RT
-  {"coll","collisions", "e","Evaluate Collisions",0,0,0,0}, 
+  {"coll","collisions", 'e',"Evaluate Collisions",0,0,0,0}, 
 #endif
 #if defined _SC
-  {"sc","scrun",      "s","Self-Consistent Single-Particle Calculations",0,0,0,0}, 
+  {"sc","scrun",      's',"Self-Consistent Single-Particle Calculations",0,0,0,0}, 
 #endif
 #if defined _MAGNETIC 
-  {"magnetic","magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 
+  {"magnetic","magnetic", 'm',"Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 
 #endif
 #if defined _ELECTRIC 
-  {"electric","electric", "m","Static Electric Field",0,0,0,0}, 
+  {"electric","electric", 'm',"Static Electric Field",0,0,0,0}, 
 #endif
 #if defined _SCALAPACK
-  {"slktest","slktest",  "s","ScaLapacK test",0,0,0,0},
+  {"slktest","slktest",  's',"ScaLapacK test",0,0,0,0},
 #endif
-  {NULL,NULL,NULL,NULL,0,0,0}
+  {NULL,NULL,0,NULL,0,0,0,0}
  };
+

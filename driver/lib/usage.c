@@ -71,7 +71,7 @@ void usage(options_struct *opts,int verbose, struct tool_struct t)
   fprintf(stderr,"Usage: %s",t.tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].runlevel,"DESC")!=0) 
-   {fprintf(stderr," -%s",opts[j].short_opt);
+   {fprintf(stderr," -%c",opts[j].short_opt);
    for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
    for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
    for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<string>");};
@@ -87,7 +87,7 @@ void usage(options_struct *opts,int verbose, struct tool_struct t)
    }
    else
    {
-    fprintf(stderr," -%s",opts[j].short_opt);
+    fprintf(stderr," -%c",opts[j].short_opt);
     for(i=1;i<=opts[j].ni;i++) {fprintf(stderr," %s","<int>");};
     for(i=1;i<=opts[j].nr;i++) {fprintf(stderr," %s","<real>");};
     for(i=1;i<=opts[j].nc;i++) {fprintf(stderr," %s","<string>");};

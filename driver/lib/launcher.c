@@ -74,7 +74,7 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *
  fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
  fprintf(stderr,"\n");
 
- F90_FUNC(driver)(
+ F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );
  exit(1);

@@ -33,6 +33,7 @@
  ...Command line options structure
 */
 #include <kind.h>
+#include <options_maker.h>
 /* 
  ...Launcher
 */
@@ -62,6 +63,7 @@ int main(int argc, char *argv[])
  */
  yambo_seed_struct y;
  tool_struct t;
+ n_options_struct n_options[100];
  /* 
   TOOL initialization
  */
@@ -70,11 +72,14 @@ int main(int argc, char *argv[])
  strcpy(t.desc,tool_desc);
  strcpy(t.version,codever);
  /*
+  Options "maker"
+ */ 
+ n_options[100]=options_maker( );
+ /*
   Command line parsing
  */ 
 #if defined _LONG_OPTIONS 
- /*y=command_line(argc,argv,options,t,&use_editor,&use_mpi);*/
- command_line_alt(argc,argv);
+ y=command_line(argc,argv,options,t,&use_editor,&use_mpi);
 #else
  y=command_line_short(argc,argv,options,t,&use_editor,&use_mpi);
 #endif

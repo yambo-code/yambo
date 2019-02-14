@@ -38,7 +38,7 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], options_stru
  double real_opt[4];
  char *ch_opt[4]; 
  char *fmt=NULL,*env_file=NULL;
- char string[500]={'\0'},edit_line[100]={'\0'},ch[500]={'\0'};
+ char string[500]={'\0'},edit_line[100]={'\0'},ch[500]={'\0'},var_ch[1];
  
  yambo_seed_struct y;
 
@@ -50,13 +50,14 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], options_stru
  fmt[0] = '\0' ;
  flag[100]=0;
  for(i=0;i<=nr-1;i++) {
-   strcat(fmt,opts[i].short_opt);
+   sprintf(fmt+strlen(fmt),"%c",opts[i].short_opt);
  }
  while ((c = getopt(argc, argv, fmt)) != -1) {
    io=optind;
    if (io==1) {io++;};
    for(i=0;i<=nr-1;i++) {
-     if (strstr(argv[io-1],opts[i].short_opt)!=0 && flag[i]==0) { 
+     sprintf(var_ch,"%c",opts[i].short_opt);
+     if (strstr(argv[io-1],var_ch)!=0 && flag[i]==0) { 
       j=i;
       break;};
    };
@@ -96,7 +97,7 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], options_stru
    lnc=0;
    nf=opts[j].ni+opts[j].nr+opts[j].nc;
    if (optind+nf>argc) {
-     fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].short_opt); usage(opts,1,t);exit(0);
+     fprintf(stderr,"\n%s : invalid option -- %c\n",t.tool,opts[j].short_opt); usage(opts,1,t);exit(0);
    };
    for(i=1;i<=nf;i++) {
      k=0;
@@ -104,7 +105,7 @@ struct yambo_seed_struct command_line_short(int argc, char *argv[], options_stru
 #if defined _NO_OPTIONS_CHECK 
        break;
 #else
-       fprintf(stderr,"\n%s : invalid option -- %s\n",t.tool,opts[j].short_opt); usage(opts,1,t);exit(0);
+       fprintf(stderr,"\n%s : invalid option -- %c\n",t.tool,opts[j].short_opt); usage(opts,1,t);exit(0);
 #endif
      };
      if (opts[j].ni!=0 && k==0) {lni++;int_opt[lni]=atoi(argv[optind-1+i]);opts[j].ni--;k=1;};

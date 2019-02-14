@@ -1,5 +1,5 @@
  !
- integer function driver(&
+ integer function yambo(&
 &  np,pid,&
 &  string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N,&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)

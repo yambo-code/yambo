@@ -43,8 +43,15 @@ cat <<EOF > .git/hooks/prepare-commit-msg
 SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
 echo " " >> \$1
 case "\$2,\$3" in
-  merge,) ;;
-  *) ./sbin/make_message.pl -p "\$SOB"; cat commit.msg >> \$1; rm commit.msg;;
+  merge,)
+    echo "Regenerating configure after merge"
+    autoconf
+  ;;
+  *)
+    ./sbin/make_message.pl -p "\$SOB"
+    cat commit.msg >> \$1
+    rm commit.msg
+  ;;
 esac
 EOF
 chmod +x .git/hooks/prepare-commit-msg

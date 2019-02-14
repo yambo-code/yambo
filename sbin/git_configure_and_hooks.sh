@@ -45,6 +45,7 @@ echo " " >> \$1
 case "\$2,\$3" in
   merge,)
     echo "Merge commit, configure check prepared"
+    touch .check_configure
   ;;
   *)
     if [ "\$2" != "message" ]; then
@@ -77,7 +78,30 @@ fi
 EOF
 chmod +x .git/hooks/post-merge
 #
-# 3. git config
+# 4. "Post commit"
+#
+cat <<EOF > .git/hooks/post-commit
+#!/bin/bash
+if [ -f .check_configure ]; then
+  echo "Post MERGE hook: Checking if configure was correctly updated"
+  rm .check_configure
+  echo "Regenerating configure after merge"
+  cp configure configure_save
+  autoconf configure.ac > configure
+  if [ \$(diff configure configure_save | head -c 5) ]; then
+    echo "configure automatically updated after merge"
+    rm configure_save
+    git add configure
+    git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
+  else
+    rm configure_save
+    echo "configure did not need update after merge"
+  fi
+fi
+EOF
+chmod +x .git/hooks/post-commit
+#
+# 5. git config
 #
 git config merge.keepTheirs.driver "cp -f %B %A"
 git config merge.commit no

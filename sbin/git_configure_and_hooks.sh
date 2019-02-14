@@ -44,17 +44,38 @@ SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
 echo " " >> \$1
 case "\$2,\$3" in
   merge,)
-    echo "Regenerating configure after merge"
-    autoconf
+    echo "Merge commit, configure check prepared"
   ;;
   *)
-    ./sbin/make_message.pl -p "\$SOB"
-    cat commit.msg >> \$1
-    rm commit.msg
+    if [ "\$2" != "message" ]; then
+      ./sbin/make_message.pl -p "\$SOB"
+      cat commit.msg >> \$1
+      rm commit.msg
+    fi
   ;;
 esac
 EOF
 chmod +x .git/hooks/prepare-commit-msg
+#
+# 3. "Post merge"
+#
+cat <<EOF > .git/hooks/post-merge
+#!/bin/bash
+echo "Post MERGE hook: Checking if configure was correctly updated"
+rm .check_configure
+echo "Regenerating configure after merge"
+cp configure configure_save
+autoconf configure.ac > configure
+if [ \$(diff configure configure_save | head -c 5) ]; then
+  echo "configure automatically updated after merge"
+  rm configure_save
+  git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
+else
+  rm configure_save
+  echo "configure did not need update after merge"
+fi
+EOF
+chmod +x .git/hooks/post-merge
 #
 # 3. git config
 #

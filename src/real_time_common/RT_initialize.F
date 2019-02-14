@@ -35,8 +35,6 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use hamiltonian,    ONLY:WF_G_max
- use QP_m,           ONLY:QP_ng_SH,QP_ng_Vxc
  use RT_control,     ONLY:OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,                      &
 &                         SETUP_RT_IO_type,IO_OBS_cache_steps,TIME_adjust,SAVE_G_history
  use real_time,      ONLY:RT_potential,RT_step,l_NE_with_fields,RT_bands,RT_dyn_step,RT_nk,   &
@@ -343,8 +341,6 @@ subroutine RT_initialize(E,k,q)
  !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP") .and. (.not.eval_energy) .and. &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
- !
- if (.not.l_RT_is_WFfree) WF_G_max=max(QP_ng_SH,QP_ng_Vxc)
  !
  ! GPL_EXCLUDE_START
  !

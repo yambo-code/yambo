@@ -325,23 +325,6 @@ subroutine bz_samp_indexes(k,Xk,q)
      if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1)
    enddo
    !
-   if (any(qindx_S(ikibz,:,:)==0)) then
-     !
-     !$omp critical
-     call warning(' Null transition detected [qindx_S]. Gamma point only.')
-     call q_shadows(.true.)
-     !
-     Xk_grid_is_uniform=.false.
-     bse_scattering=.false.
-     gamma_point_only=.true.
-     !
-     !$omp end critical
-#ifndef _OPENMP
-     exit
-#endif
-     !
-   endif
-   !
    if (master_thread) call live_timing(steps=1)
    !
  enddo
@@ -349,6 +332,18 @@ subroutine bz_samp_indexes(k,Xk,q)
  !$omp end parallel
  !
  call live_timing()
+ !
+ do ikbz=1,k%nbz
+   ikibz=k%sstar(ikbz,1)
+   if (any(qindx_S(ikibz,:,:)==0)) then
+     call warning(' Null transition detected [qindx_S]. Gamma point only.')
+     call q_shadows(.true.)
+     Xk_grid_is_uniform=.false.
+     bse_scattering=.false.
+     gamma_point_only=.true.
+     exit
+   endif
+ enddo
  !
  ! For some reason I have seen CPU's loading the DB while/before it is actually written.
  ! This is avoided here by using the PP_redux_wait call.

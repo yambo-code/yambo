@@ -22,4 +22,4 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-struct n_options_struct options_maker( );
+void options_maker(struct n_options_struct n_options[]);

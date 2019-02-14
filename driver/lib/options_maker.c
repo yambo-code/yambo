@@ -23,22 +23,17 @@
 
 */
 #include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
-#include <string.h>
 #include <kind.h>
-#include <usage.h>
-#include <load_environments.h>
 
-struct n_options_struct options_maker( )
+void options_maker(struct n_options_struct n_options[])
 {
- int i_opt;
- n_options_struct n_options[100];
+ int i_opt,dummy;
  for(i_opt=0;i_opt<100;i_opt++) {
   n_options[i_opt].long_opt=NULL;
   n_options[i_opt].short_opt=0;
   n_options[i_opt].short_desc=NULL;
   n_options[i_opt].long_desc=NULL;
+  n_options[i_opt].yambo_string=NULL;
   n_options[i_opt].project="all";
   n_options[i_opt].n_int=0;
   n_options[i_opt].n_float=0;
@@ -47,44 +42,114 @@ struct n_options_struct options_maker( )
   n_options[i_opt].no_GPL=0;
  }
  i_opt=-1;
- /* */
+ /* 
+  Help(s) 
+ */
  i_opt++;
  n_options[i_opt].short_desc="Short Help";
  n_options[i_opt].short_opt='h';
- n_options[i_opt].long_opt="help";
+ n_options[i_opt].long_opt="help"; /*help*/
  n_options[i_opt].serial_var=1;
  i_opt++;
  n_options[i_opt].short_desc="Long Help";
  n_options[i_opt].short_opt='H';
- n_options[i_opt].long_opt="Help";
+ n_options[i_opt].long_opt="Help"; /*lhelp*/
+ n_options[i_opt].serial_var=1;
+ /* 
+  Input file 
+ */
+ i_opt++;
+ n_options[i_opt].short_desc="Input file variables verbosity";
+ n_options[i_opt].long_desc="<string> can be RL,kpt,sc,qp,io,gen,resp,all,par";
+ n_options[i_opt].short_opt='V';
+ n_options[i_opt].long_opt="Verbosity"; 
+ n_options[i_opt].n_char=1;
+ n_options[i_opt].serial_var=1;
+ n_options[i_opt].yambo_string="infver";
+ i_opt++;
+ n_options[i_opt].short_desc="Input file";
+ n_options[i_opt].short_opt='F';
+ n_options[i_opt].long_opt="Input"; 
+ n_options[i_opt].n_char=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Quiet input file creation";
+ n_options[i_opt].short_opt='Q';
+ n_options[i_opt].long_opt="quiet"; 
+ n_options[i_opt].serial_var=1;
+ /* 
+  Job control 
+ */
+ i_opt++;
+ n_options[i_opt].short_desc="Job string";
+ n_options[i_opt].short_opt='J';
+ n_options[i_opt].long_opt="job"; 
+ n_options[i_opt].n_char=1;
+ n_options[i_opt].yambo_string="jobstr";
+ i_opt++;
+ n_options[i_opt].short_desc="Databases properties";
+ n_options[i_opt].short_opt='D';
+ n_options[i_opt].long_opt="dbprops";
+ n_options[i_opt].serial_var=1;
+ n_options[i_opt].yambo_string="dbpr";
+ i_opt++;
+ n_options[i_opt].short_desc="Input directory";
+ n_options[i_opt].short_opt='I';
+ n_options[i_opt].long_opt="dir"; 
+ n_options[i_opt].n_char=1;
+ i_opt++;
+ n_options[i_opt].short_desc="I/O directory";
+ n_options[i_opt].short_opt='O';
+ n_options[i_opt].long_opt="output";
+ n_options[i_opt].n_char=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Communication directory";
+ n_options[i_opt].short_opt='C';
+ n_options[i_opt].long_opt="com";
+ n_options[i_opt].n_char=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Walltime";
+ n_options[i_opt].long_desc="Format is DdHhMm with D=days, H=hours and M=minutes";
+ n_options[i_opt].long_opt="walltime";
+ n_options[i_opt].n_char=1;
+ n_options[i_opt].yambo_string="wallt";
+ i_opt++;
+ n_options[i_opt].short_desc="Environment Parallel Variables file";
+ n_options[i_opt].long_opt="parenv"; 
+ n_options[i_opt].n_char=1;
+ i_opt++;
+ n_options[i_opt].short_desc="Switch off MPI support";
+ n_options[i_opt].long_opt="nompi";
  n_options[i_opt].serial_var=1;
  i_opt++;
- n_options[i_opt].short_desc="Job strinh";
- n_options[i_opt].short_opt='J';
- n_options[i_opt].long_opt="job";
+ n_options[i_opt].short_desc="Switch off OPENMP support";
+ n_options[i_opt].long_opt="noopenmp";
+ /* 
+  Runlevels 
+ */
+ i_opt++;
+ n_options[i_opt].short_desc="Hartree-Fock";
+ n_options[i_opt].long_opt="hf";
+ n_options[i_opt].project="yambo";
+ n_options[i_opt].yambo_string="HF_and_locXC";
+ i_opt++;
+ n_options[i_opt].short_desc="Initialization";
+ n_options[i_opt].long_opt="setup";
+ n_options[i_opt].project="yambo";
+ n_options[i_opt].yambo_string="setup";
+ i_opt++;
+ n_options[i_opt].short_desc="Linear Response optical properties";
+ n_options[i_opt].long_desc="Response function solution\nstring=c (G)-space\nstring=b for Bethe-Salpter";
+ n_options[i_opt].long_opt="optics";
+ n_options[i_opt].project="yambo";
+ n_options[i_opt].yambo_string="optics";
  n_options[i_opt].n_char=1;
-
-
-/*
-  {"Help","lhelp",  'H',"Long Help",0,0,0,0},               
-  {"job","jobstr", 'J',"Job string identifier",0,0,1,1},   
-  {"verbosity","infver", 'V',"Input file verbosity",0,0,1,0},    
-  {"NULL","DESC",   0,"[opt=RL,kpt,sc,qp,io,gen,resp,all,par]",0,0,0,0},
-  {"input","ifile",  'F',"Input file",0,0,1,1},              
-  {"dir","idir",   'I',"Core I/O directory",0,0,1,1},         
-  {"io","odir",   'O',"Additional I/O directory",0,0,1,1},   
-  {"com","cdir",   'C',"Communications I/O directory",0,0,1,1},
-  {"db","dbpr",   'D',"DataBases properties",0,0,0,0},    
-  {"walltime","wallt",  'W',"Wall Time limitation (1d2h30m format)",0,0,1,1}, 
-  {"quiet","quiet",  'Q',"Don't launch the text editor",0,0,0,0}, 
-#if defined _MPI
-  {"parenv","parenv", 'E',"Environment Parallel Variables file",0,0,1,1},               
-  {"nompi","nompi",  'M',"Switch-off MPI support (serial run)",0,0,0,0}, 
-#endif
-#if defined _OPENMP
-  {"noopenmp","noopenmp",'N',"Switch-off OpenMP support (single thread run)",0,0,0,1}, 
-#endif
-*/
- /* */
- return(n_options[100]);
-};
+ /* 
+  Assign dummy short options to variables with only long options
+ */
+ dummy=57;
+ for(i_opt=0;i_opt<100;i_opt++) {
+  if (n_options[i_opt].short_opt > 0 ) continue;
+  n_options[i_opt].short_opt=dummy;
+  dummy--;
+ }
+}

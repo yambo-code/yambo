@@ -65,6 +65,7 @@ typedef struct n_options_struct
  char *short_desc;
  char *long_desc;
  char *project;
+ char *yambo_string;
  int   n_int;
  int   n_float;
  int   n_char;

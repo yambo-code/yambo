@@ -56,36 +56,32 @@ The struct option structure has these fields:
 #include <usage.h>
 #include <load_environments.h>
 
-void substring(char [], char[], int, int);
-
-struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *opts,  struct tool_struct t, int *use_editor, int *use_mpi)
+struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi)
 {
  int n_options,n_vars,opt=0,i_opt;
- char opt_string[100],ch[3],*runlevel[100];
+ char opt_string[100],ch[3];
+ /* */
  yambo_seed_struct y;
  /* */
  n_options=0;
  for(i_opt=0;i_opt<=100;i_opt++) {
   if (opts[i_opt].long_opt== NULL ) {break;};
-  if (strcmp(opts[i_opt].long_opt,"NULL")==0) {continue;};
   n_options++;
  }
  /* */
  struct option long_options[n_options+1];
  /* */
  n_options=0;
- for(i_opt=0;i_opt<=100-1;i_opt++) {
+ for(i_opt=0;i_opt<=99;i_opt++) {
   /**/
   if (opts[i_opt].long_opt== NULL ) {break;};
-  if (strcmp(opts[i_opt].long_opt,"NULL")==0) {continue;};
   /**/
   long_options[n_options].name=opts[i_opt].long_opt;
   long_options[n_options].flag=0;
   long_options[n_options].val=opts[i_opt].short_opt;
-  sprintf(ch,"%c",opts[i_opt].short_opt);
-  /*printf (" %i_opt => %i %c %d %s\n",i_opt,n_options,opts[i_opt].short_opt,long_options[n_options].val,ch);*/
   /* VARS */
-  n_vars=opts[i_opt].ni+opts[i_opt].nr+opts[i_opt].nc;
+  n_vars=opts[i_opt].n_int+opts[i_opt].n_float+opts[i_opt].n_char;
+  sprintf(ch,"%c",opts[i_opt].short_opt);
   if (n_vars ==0) {
    long_options[n_options].has_arg=no_argument;
    strcat(opt_string,ch);
@@ -102,14 +98,17 @@ struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *op
  long_options[n_options].val=0;
  int long_index =0;
  while ((opt = getopt_long_only(argc, argv,opt_string,long_options, &long_index )) != -1) {
+  for(i_opt=0;i_opt<=100;i_opt++) {
+   if (opts[i_opt].short_opt==opt) {break;};
+  }
   switch (opt){
    case '?':
    case 'h':
-    usage(opts,1,t);
+    /*usage(opts,1,t);*/
     exit(0);
     break;
    case 'H':
-    usage(opts,2,t);
+    /*usage(opts,2,t);*/
     exit(0);
     break;
    }
@@ -118,10 +117,12 @@ struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *op
     printf ("\n\n GETOPT ouput without short-opt: %s\n\n",long_options[long_index].name);
    }
   }else{
-   printf ("\n\n GETOPT ouput: %c\n\n",opt);
+   printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);
   }
   if (optarg)
+  {
   printf (" with arg %s", optarg);
+  }
   printf ("\n");
  };
  /* */
@@ -155,17 +156,9 @@ struct yambo_seed_struct command_line(int argc, char *argv[], options_struct *op
   y.string_N=0;
  }
  /* */
+ exit(0);
  return(y);
 };
 
-void substring(char s[], char sub[], int p, int l) {
-   int c = 0;
-   
-   while (c < l) {
-      sub[c] = s[p+c-1];
-      c++;
-   }
-   sub[c] = '\0';
-}
 
 

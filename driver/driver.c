@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
  */
  yambo_seed_struct y;
  tool_struct t;
- n_options_struct n_options[100];
+ struct n_options_struct n_options[100];
  /* 
   TOOL initialization
  */
@@ -74,12 +74,12 @@ int main(int argc, char *argv[])
  /*
   Options "maker"
  */ 
- n_options[100]=options_maker( );
+ options_maker(n_options);
  /*
   Command line parsing
  */ 
 #if defined _LONG_OPTIONS 
- y=command_line(argc,argv,options,t,&use_editor,&use_mpi);
+ y=command_line(argc,argv,n_options,t,&use_editor,&use_mpi);
 #else
  y=command_line_short(argc,argv,options,t,&use_editor,&use_mpi);
 #endif

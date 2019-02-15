@@ -142,9 +142,13 @@ subroutine NL_driver(E,X,k,q,Dip)
    if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
 &    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
    !
-   if(COLLISIONS_have_HARTREE.and.(Correlation==JGM.or.Correlation==TDDFT)) then
-     call warning('Collisions not compatible with JGM or TDDFT, turned off')
-     l_use_Hxc_collisions=.false.
+   if(COLLISIONS_have_HARTREE) then
+     if(Correlation==JGM) then
+        call warning('Collisions not compatible with JGM, turned off')
+        l_use_Hxc_collisions=.false.
+     elseif(Correlation==TDDFT) then
+        call warning('With Collisions TDDFT is approximated to the linear contribution!')
+     endif
    endif
    !
  endif

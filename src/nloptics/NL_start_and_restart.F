@@ -103,7 +103,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  !
- if(Correlation==TDDFT) then
+ if(Correlation==TDDFT.and..not.COLLISIONS_have_HARTREE) then
    !
    ! Calculate V_xc
    !

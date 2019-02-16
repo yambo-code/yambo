@@ -34,10 +34,13 @@ subroutine INIT_report_and_log_files()
  !
  integer          :: i_r
  character(lchlen)::jch,rch
+ !
+ write_to_log      = write_to_log_default
+ live_timing_is_on = write_to_log_default
  ! 
  if (trim(jobstr)=='') write (repfile,'(2a)') trim(com_path),'/r'
  if (trim(jobstr)/='') write (repfile,'(4a)') trim(com_path),'/','r-',trim(jobstr)
- if (log_as_a_file) then
+ if (log_as_a_file.and.write_to_log) then
   if (trim(jobstr)=='') write (logfile,'(2a)') trim(com_path),'/l'
   if (trim(jobstr)/='') write (logfile,'(4a)') trim(com_path),'/','l-',trim(jobstr)
   if (ncpu>1) then
@@ -51,18 +54,15 @@ subroutine INIT_report_and_log_files()
      write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i_r,1))
      repfile=rch
    endif
-   if (log_as_a_file) then
+   if (log_as_a_file.and.write_to_log) then
      jch=logfile
      if (rstatus(i_r)/=0) write (jch,'(3a)') trim(logfile),'_',trim(rnlvls(i_r,1))
      logfile=jch
    endif
  enddo
- if (ncpu>1) then
+ if (ncpu>1.and.log_as_a_file.and.write_to_log) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
  endif
- !
- write_to_log      = write_to_log_default
- live_timing_is_on = write_to_log_default
  !
 end subroutine

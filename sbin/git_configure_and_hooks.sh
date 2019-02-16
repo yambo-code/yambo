@@ -62,18 +62,20 @@ chmod +x .git/hooks/prepare-commit-msg
 #
 cat <<EOF > .git/hooks/post-merge
 #!/bin/bash
-echo "Post MERGE hook: Checking if configure was correctly updated"
-rm .check_configure
-echo "Regenerating configure after merge"
-cp configure configure_save
-autoconf configure.ac > configure
-if [ \$(diff configure configure_save | head -c 5) ]; then
-  echo "configure automatically updated after merge"
-  rm configure_save
-  git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
-else
-  rm configure_save
-  echo "configure did not need update after merge"
+if [ -f .check_configure ]; then
+  echo "Post MERGE hook: Checking if configure was correctly updated"
+  rm .check_configure
+  echo "Regenerating configure after merge"
+  cp configure configure_save
+  autoconf configure.ac > configure
+  if [ \$(diff configure configure_save | head -c 5) ]; then
+    echo "configure automatically updated after merge"
+    rm configure_save
+    git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
+  else
+    rm configure_save
+    echo "configure did not need update after merge"
+  fi
 fi
 EOF
 chmod +x .git/hooks/post-merge

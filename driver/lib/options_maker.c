@@ -74,7 +74,7 @@ void options_maker(struct n_options_struct n_options[])
  i_opt++;
  n_options[i_opt].short_desc="Quiet input file creation";
  n_options[i_opt].short_opt='Q';
- n_options[i_opt].long_opt="quiet"; 
+ n_options[i_opt].long_opt="Quiet"; 
  n_options[i_opt].serial_var=1;
  /* 
   Job control 
@@ -82,13 +82,13 @@ void options_maker(struct n_options_struct n_options[])
  i_opt++;
  n_options[i_opt].short_desc="Job string";
  n_options[i_opt].short_opt='J';
- n_options[i_opt].long_opt="job"; 
+ n_options[i_opt].long_opt="Job"; 
  n_options[i_opt].n_char=1;
  n_options[i_opt].yambo_string="jobstr";
  i_opt++;
  n_options[i_opt].short_desc="Databases properties";
  n_options[i_opt].short_opt='D';
- n_options[i_opt].long_opt="dbprops";
+ n_options[i_opt].long_opt="DBlist";
  n_options[i_opt].serial_var=1;
  n_options[i_opt].yambo_string="dbpr";
  i_opt++;
@@ -129,10 +129,12 @@ void options_maker(struct n_options_struct n_options[])
  i_opt++;
  n_options[i_opt].short_desc="Hartree-Fock";
  n_options[i_opt].long_opt="hf";
+ n_options[i_opt].short_opt='x';
  n_options[i_opt].project="yambo";
  n_options[i_opt].yambo_string="HF_and_locXC";
  i_opt++;
  n_options[i_opt].short_desc="Initialization";
+ n_options[i_opt].short_opt='i';
  n_options[i_opt].long_opt="setup";
  n_options[i_opt].project="yambo";
  n_options[i_opt].yambo_string="setup";

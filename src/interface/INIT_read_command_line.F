@@ -385,9 +385,9 @@ subroutine INIT_read_command_line(rstr,init_)
      ! ELPH/QED
      !
      if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-       if ( trim(rstr_piece(i1+1),'e') >0 ) l_elel_corr=.true.
-       if ( trim(rstr_piece(i1+1),'p') >0 ) l_elph_corr=.true.
-       if ( trim(rstr_piece(i1+1),'h') >0 ) l_elphoton_corr=.true.
+       if ( index(rstr_piece(i1+1),'e') >0 ) l_elel_corr=.true.
+       if ( index(rstr_piece(i1+1),'p') >0 ) l_elph_corr=.true.
+       if ( index(rstr_piece(i1+1),'h') >0 ) l_elphoton_corr=.true.
        if ( trim(rstr_piece(i1+1)) == 'a') then
          l_elel_corr=.true.
          l_elph_corr=.true.

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine read_command_line(rstr,init_) 
+subroutine INIT_read_command_line(rstr,init_) 
  !
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&

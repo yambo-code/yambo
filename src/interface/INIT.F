@@ -176,7 +176,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Command line reading
  !
- call READ_command_line(instr,INIT)
+ call INIT_read_command_line(instr,INIT)
  !
  ! DB props listing mode ?
  !
@@ -201,7 +201,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    infile='(none)'
  endif
  !
- call CHECK_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
+ call INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                     io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
  !
  if (list_dbs) then

@@ -1586,7 +1586,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &             (trim(rstr_piece(i1+1)) == 'pf').or.&
 &             (trim(rstr_piece(i1+1)) == 'bsfxc')) call initactivate(1,'tddft')
            !
-           if(trim(BSK_mode)=="SEX") call initactivate(1,'em1s')
+           if(trim(BSK_mode)=="SEX" .and. .not.(runlevel_is_on('ppa'))) call initactivate(1,'em1s')
            !
          endif
          !

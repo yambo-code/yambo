@@ -385,9 +385,9 @@ subroutine INIT_read_command_line(rstr,init_)
      ! ELPH/QED
      !
      if ( trim(rstr_piece(i1)) == 'corrtp' ) then
-       if ( trim(rstr_piece(i1+1)) == 'e') l_elel_corr=.true.
-       if ( trim(rstr_piece(i1+1)) == 'p') l_elph_corr=.true.
-       if ( trim(rstr_piece(i1+1)) == 'h') l_elphoton_corr=.true.
+       if ( trim(rstr_piece(i1+1),'e') >0 ) l_elel_corr=.true.
+       if ( trim(rstr_piece(i1+1),'p') >0 ) l_elph_corr=.true.
+       if ( trim(rstr_piece(i1+1),'h') >0 ) l_elphoton_corr=.true.
        if ( trim(rstr_piece(i1+1)) == 'a') then
          l_elel_corr=.true.
          l_elph_corr=.true.
@@ -418,11 +418,11 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
      !
      if ( trim(rstr_piece(i1)) == 'scattp' ) then
-       if ( trim(rstr_piece(i1+1)) == 'e'.or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
-       if ( trim(rstr_piece(i1+1)) == 'p'.or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
+       if ( index(rstr_piece(i1+1),'e') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elel_scatt=.true.
+       if ( index(rstr_piece(i1+1),'p') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elph_scatt=.true.
 #endif
 #if defined _RT 
-       if ( trim(rstr_piece(i1+1)) == 'h'.or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
+       if ( index(rstr_piece(i1+1),'h') > 0 .or. trim(rstr_piece(i1+1)) == 'a') l_elphoton_scatt=.true.
        if (l_elphoton_scatt) call initactivate(1,'el_photon_scatt')
 #endif
 #if defined _RT 

@@ -60,17 +60,17 @@ module parallel_m
  include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
+ integer            :: mpi_comm_null =0
 #endif
  !
  integer            :: myid
  integer            :: ncpu
  integer            :: n_nodes  = 1
  integer            :: n_MPI    = 1
-#if defined _MPI
- integer, parameter :: comm_default_value  = MPI_COMM_NULL
-#else
- integer, parameter :: comm_default_value  = 0
-#endif
+ !
+ ! This should be removed and mpi_comm_null used everywhere
+ !
+ integer, parameter :: comm_default_value  = mpi_comm_null
  !
  ! Logicals
  !
@@ -628,7 +628,7 @@ module parallel_m
      if (present(COMM)) then
        local_COMM=COMM
      endif
-     if (local_COMM==comm_default_value) local_COMM=mpi_comm_world
+     if (local_COMM==comm_default_value) return
      call mpi_barrier(local_COMM,i_err)
 #endif
    end subroutine

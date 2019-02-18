@@ -35,11 +35,27 @@ module pseudo
  !
  logical :: l_many_proj
  integer :: pp_n_l_max
+ ! max number of angular momentum channel
+
  integer :: pp_n_l_times_proj_max
+ ! max number of angular momentum channel times number of projectors
+
  integer :: pp_kbv_dim
- integer,  allocatable:: pp_table(:,:,:)
+
+ integer,  allocatable:: pp_table(:,:,:)  
+ ! (3,n_atomic_species,pp_n_l_times_proj_max)
+ ! the first dimension contains (angular_momentum,nprojectors,spin)
+
  integer,  allocatable:: pp_n_l_comp(:)
+ !
+
  real(SP), allocatable:: pp_factor(:,:,:,:,:)
+ !
+ ! ABINIT (old) KB
+ !=====================
+ real(SP), allocatable:: pp_kbs_old(:,:)
+ real(SP), allocatable:: pp_kb_old(:,:,:,:)
+ real(SP), allocatable:: pp_kbd_old(:,:,:,:)
  !
  ! ABINIT and PWSCF KB
  !=====================
@@ -68,12 +84,23 @@ module pseudo
  !
  contains
    !
+   ! Abinit (OLD)
+   subroutine PP_alloc_abinit_old()
+     use R_lattice,  ONLY:ng_vec
+     YAMBO_ALLOC(pp_kbs_old,(n_atomic_species,pp_n_l_times_proj_max))
+     YAMBO_ALLOC(pp_kb_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd_old,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     pp_kbs_old =0._SP
+     pp_kb_old  =0._SP
+     pp_kbd_old =0._SP
+   end subroutine
+   !
    ! Abinit
    subroutine PP_alloc_abinit()
-     use R_lattice,  ONLY:ng_vec
+     use wave_func,  ONLY:wf_ncx
      YAMBO_ALLOC(pp_kbs,(n_atomic_species,pp_n_l_times_proj_max))
-     YAMBO_ALLOC(pp_kb,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
-     YAMBO_ALLOC(pp_kbd,(ng_vec,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kb,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
+     YAMBO_ALLOC(pp_kbd,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol))
      pp_kbs =0._SP
      pp_kb  =0._SP
      pp_kbd =0._SP
@@ -88,6 +115,12 @@ module pseudo
      pp_kbs =0._SP
      pp_kb  =0._SP
      pp_kbd =0._SP
+   end subroutine
+   !
+   subroutine PP_free_old()
+     YAMBO_FREE(pp_kbs_old)
+     YAMBO_FREE(pp_kb_old)
+     YAMBO_FREE(pp_kbd_old)
    end subroutine
    !
    subroutine PP_free()

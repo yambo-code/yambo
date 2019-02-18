@@ -26,7 +26,6 @@ subroutine INIT_read_command_line(rstr,init_)
  use pars,           ONLY:schlen
  use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
 &                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt
- use com,            ONLY:error
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode

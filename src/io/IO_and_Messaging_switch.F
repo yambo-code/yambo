@@ -112,26 +112,26 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      if (trim(ch_piece(ich))=="-report") write_to_report=local_FALSE
      if (trim(ch_piece(ich))=="-timing") live_timing_is_on=local_FALSE
      if (trim(ch_piece(ich))=="+report") write_to_report=local_master
-     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=local_TRUE
+     if (trim(ch_piece(ich))=="+timing") live_timing_is_on=(local_TRUE.and.write_to_log_default)
      !
      ! Log 
      !
      if (trim(ch_piece(ich))=="-log") write_to_log=local_FALSE
-     if (trim(ch_piece(ich))=="+log") write_to_log=local_TRUE
+     if (trim(ch_piece(ich))=="+log") write_to_log=(local_TRUE.and.write_to_log_default)
      !
      ! Ouput files
      !
      if (trim(ch_piece(ich))=="-output") write_to_of=local_FALSE
-     if (trim(ch_piece(ich))=="+output") write_to_of=local_TRUE
+     if (trim(ch_piece(ich))=="+output") write_to_of=local_master
      !
      ! I/O
      !
      if (trim(ch_piece(ich))=="-io_in" ) IO_read=local_FALSE
      if (trim(ch_piece(ich))=="-io_out") IO_write=local_FALSE
      if (trim(ch_piece(ich))=="+io_in" ) IO_read=local_TRUE
-     if (trim(ch_piece(ich))=="+io_out") IO_write=local_TRUE
-     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=local_TRUE
+     if (trim(ch_piece(ich))=="+io_out") IO_write=local_master
      if (trim(ch_piece(ich))=="-fragments_IO_log") write_fragments_IO_log=local_FALSE
+     if (trim(ch_piece(ich))=="+fragments_IO_log") write_fragments_IO_log=(local_TRUE.and.write_to_log_default)
      !
    enddo
    !

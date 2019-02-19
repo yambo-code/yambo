@@ -191,7 +191,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
- write(*,*) 'check : ',it_now
  call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
  !
  ! Reference wavefunctions
@@ -223,21 +222,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        call io_control(ACTION=RD_CL_IF_END,SEC=(/ik+1+(i_sp_pol-1)*QP_nk/),ID=ID(2))
        io_WF=io_SC_components('WF',E,ID(2))
        call WF_rotate(ik,i_sp_pol,WFo,fft_size)
-       !
-       ! Transform H_SC into H_matsubara
-       !
-       if(trim(SC_neq_kind)=="matsubara") then
-         H_tmp=cZERO
-         do ib=1,SC_bands(2)
-           if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) H_tmp(ib,ib) = -SC_mu(2)
-           if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) H_tmp(ib,ib) = -SC_mu(3)
-         enddo
-         ! The chemical potential is imposed in the EQ-SEX basis
-         call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_bands(2),-1)
-         Hzero(:,:,ik,i_sp_pol)=Hzero(:,:,ik,i_sp_pol)+H_tmp
-         !
-       endif
-       !
      enddo
    enddo
    !
@@ -270,6 +254,31 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
  endif
  !
+ ! Apply shift to the chemical potential
+ !
+ if(trim(SC_neq_kind)=="matsubara") then
+   !
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,QP_nk
+       !
+       ! Transform H_SC into H_matsubara
+       !
+       H_tmp=cZERO
+       do ib=1,SC_bands(2)
+         !if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) write(*,*) 'occ',ik,ib,SC_mu(2)*27.2116,E_reference%E(ib,ik,i_sp_pol)*27.2116
+         !if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) write(*,*) 'emp',ik,ib,SC_mu(3)*27.2116,E_reference%E(ib,ik,i_sp_pol)*27.2116
+         if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) H_tmp(ib,ib) = -SC_mu(2)
+         if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) H_tmp(ib,ib) = -SC_mu(3)
+       enddo
+       ! The chemical potential is imposed in the EQ-SEX basis
+       call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_bands(2),-1)
+       Hzero(:,:,ik,i_sp_pol)=Hzero(:,:,ik,i_sp_pol)+H_tmp
+       !
+     enddo
+   enddo
+   !
+ endif
+ !
 #if defined _ELECTRIC
  ! Initial Polarization
  ! ====================
@@ -280,6 +289,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !=====================
  ! 
  if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
+ !
+ if (l_sc_hartree.and.COLLISIONS_have_HARTREE.and..not.l_SC_nl_mix) then
+   call warning(' Non local mixing imposed since Hartree is in the collisions')
+   l_SC_nl_mix=.true.
+ endif
  !
  do it = 1, SC_iterations
    !
@@ -323,6 +337,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      call V_Hartree(rho_n,V_hartree_sc)
      !
    endif
+   !
    !
 #if defined _ELECTRIC
    !

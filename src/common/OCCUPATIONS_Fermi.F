@@ -255,8 +255,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  mu_hole=E%E_fermi
 #if defined _SC
  n_carr=0.
- !write(*,*) "Ef= ",E%E_fermi*27.2116
  if (trim(SC_neq_kind)=="constrained-mu") then
+   write(*,*) "Ef= ",E%E_fermi*27.2116
    mu_zero= SC_mu(1)
    mu_hole= SC_mu(2)
    mu_el  = SC_mu(3)
@@ -275,7 +275,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    if((E%E(ib,ik,is)-mu_zero)<=0._SP) n_carr(1)=n_carr(1)+(spin_occ-E%f(ib,ik,is))*K%weights(ik)
    if((E%E(ib,ik,is)-mu_zero)> 0._SP) n_carr(2)=n_carr(2)+          E%f(ib,ik,is) *K%weights(ik)
 #endif
-   !write(*,*) ib,ik,is,n_carr
    !
    if (abs(E%E(ib,ik,is)-E%E_Fermi)<Efdist) then
      if ( E%f(ib,ik,is) < filled_tresh ) cycle
@@ -290,9 +289,8 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
 #if defined _SC
  !
- write(*,*) n_carr
- !
  if (trim(SC_neq_kind)=="constrained-occ") then
+   write(*,*) n_carr
    do is=1,n_sp_pol
      do ik=1,E%nk
        do ib=1,nb_here

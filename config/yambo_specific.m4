@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -81,6 +81,19 @@ if test x"$enable_time_profile" = "xyes"; then
  def_time_profile="-D_TIMING"
 fi
 AC_SUBST(def_time_profile)
+#
+# ============================================================================
+#
+# USPP
+#
+AC_ARG_ENABLE(uspp, AC_HELP_STRING([--enable-uspp],[Enable Ultrasoft PP support]))
+if test x"$enable_uspp" = "x"; then enable_uspp="no"; fi
+#
+def_uspp=" "
+if test x"$enable_uspp" = "xyes"; then
+   def_uspp="-D_USPP"
+fi
+AC_SUBST(def_uspp)
 #
 # ============================================================================
 #

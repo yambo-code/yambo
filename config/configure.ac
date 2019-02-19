@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -169,6 +169,7 @@ if test x"$enable_open_mp" = "xyes"; then
 fi
 AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
+#
 # ============================================================================
 #
 # Underscore options in subroutine naming

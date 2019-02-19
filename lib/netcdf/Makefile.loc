@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libnetcdf.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${hdf5_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_netcdf)

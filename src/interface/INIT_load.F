@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch
- use BS_solvers,    ONLY:BSS_mode,Haydock_treshold,BSS_n_freqs,&
+ use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
 #if defined _SLEPC
@@ -267,7 +267,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
- call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_treshold)
+ call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock treshold. Strict(>0)/Average(<0)',Haydock_threshold)
  call it(defs,'BSEPSInvTrs', '[BSS EPS] Inversion treshold. Relative[o/o](>0)/Absolute(<0)',K_INV_EPS%treshold)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)

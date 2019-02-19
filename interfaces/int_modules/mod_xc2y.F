@@ -27,7 +27,7 @@ module mod_xc2y
  use libxc_funcs_m
  use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
 &                         xc_f90_info_kind, XC_UNPOLARIZED
- use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID 
+ use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID,XC_HYB_GGA_XC_GAUPBE 
  !
  implicit none
  !
@@ -89,7 +89,7 @@ module mod_xc2y
  integer,parameter,dimension(N_PW_GX) :: PWGX2LIBXC=&
 & (/ NOXC, XC_GGA_X_B88, XC_GGA_X_B88, XC_GGA_X_PW91, XC_GGA_X_PW91, XC_GGA_X_PBE, XC_GGA_X_PBE, XC_GGA_X_PBE_R,&
 &    XC_GGA_XC_HCTH_93, XC_GGA_X_OPTX, XC_MGGA_X_TPSS, XC_HYB_GGA_XC_PBEH, XC_HYB_GGA_XC_PBEH,XC_GGA_X_PBE_SOL, &
-&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06, XC_HYB_GGA_XC_HSE06/)
+&    XC_HYB_GGA_XC_B3LYP, XC_HYB_GGA_XC_B3LYP, XC_GGA_X_PBE_SOL, XC_GGA_X_WC, XC_HYB_GGA_XC_HSE06, XC_HYB_GGA_XC_GAUPBE/)
  integer,parameter,dimension(N_PW_GC) :: PWGC2LIBXC=&
 & (/ NOXC, XC_GGA_C_P86, XC_GGA_C_PW91, XC_GGA_C_PW91, XC_GGA_C_LYP, XC_GGA_C_PBE, XC_GGA_C_PBE, NOXC,&
 &    XC_GGA_C_PBE_SOL,NOXC, XC_MGGA_C_TPSS, NOXC, NOXC, XC_GGA_C_PBE_SOL/)

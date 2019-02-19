@@ -40,7 +40,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:real_V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
-&                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
+&                         XC_LDA_C_KP,XC_HYB_GGA_XC_GAUPBE,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current

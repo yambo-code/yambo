@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -159,6 +159,7 @@ subroutine RT_driver(E,X,k,q,Dip)
    ! GPL_EXCLUDE_START
    if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
    ! GPL_EXCLUDE_END
+   !
    call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)

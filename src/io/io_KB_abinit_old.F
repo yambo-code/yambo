@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,8 +29,8 @@ integer function io_kb_abinit_old(ID)
 &                           atom_pos
  use R_lattice,        ONLY:ng_vec
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
-&                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
-&                           PP_alloc_abinit
+&                           pp_n_l_comp,pp_kbs_old,pp_kb_old,pp_kbd_old, &
+&                           PP_alloc_abinit_old
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
@@ -118,9 +118,9 @@ integer function io_kb_abinit_old(ID)
  if (ik==0) goto 1
  !
  if (ik==1) then
-   if (read_is_on(ID)) call PP_alloc_abinit()
-   call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs))
-   call io_bulk(ID,R2=pp_kbs)
+   if (read_is_on(ID)) call PP_alloc_abinit_old()
+   call io_bulk(ID,VAR="PP_KBS",VAR_SZ=shape(pp_kbs_old))
+   call io_bulk(ID,R2=pp_kbs_old)
  endif
  !
  YAMBO_ALLOC(pp_disk,(ng_vec,n_atomic_species,pp_n_l_times_proj_max))
@@ -128,13 +128,13 @@ integer function io_kb_abinit_old(ID)
  call io_fragment(ID,i_fragment=ik)
  !
  if (read_is_on(ID)) then
-   pp_kb=0._SP
-   pp_kbd=0._SP
+   pp_kb_old=0._SP
+   pp_kbd_old=0._SP
  endif
  ! 
  do i_spin=1,n_sp_pol
    ! 
-   if (write_is_on(ID)) pp_disk=pp_kb(:,:,:,i_spin)
+   if (write_is_on(ID)) pp_disk=pp_kb_old(:,:,:,i_spin)
    !
    if (ver_is_gt_or_eq(ID,revision=374)) then
      call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
@@ -144,9 +144,9 @@ integer function io_kb_abinit_old(ID)
    endif
    call io_bulk(ID,R3=pp_disk)
    !
-   if (read_is_on(ID)) pp_kb(:,:,:,i_spin) = pp_disk(:,:,:)
+   if (read_is_on(ID)) pp_kb_old(:,:,:,i_spin) = pp_disk(:,:,:)
    !
-   if (write_is_on(ID)) pp_disk=pp_kbd(:,:,:,i_spin)
+   if (write_is_on(ID)) pp_disk=pp_kbd_old(:,:,:,i_spin)
    !
    if (ver_is_gt_or_eq(ID,revision=374)) then
      call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SPIN'//trim(intc(i_spin)),VAR_SZ=shape(pp_disk)) 
@@ -156,8 +156,8 @@ integer function io_kb_abinit_old(ID)
    endif
    call io_bulk(ID,R3=pp_disk)
    !
-   if (read_is_on(ID)) pp_kbd(:,:,:,i_spin) = pp_disk(:,:,:)
-   ! 
+   if (read_is_on(ID)) pp_kbd_old(:,:,:,i_spin) = pp_disk(:,:,:)
+   !
  enddo
  !
  YAMBO_FREE(pp_disk)

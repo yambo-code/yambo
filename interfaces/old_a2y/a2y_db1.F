@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,20 +27,20 @@ subroutine a2y_db1(en,k,KSS_file_name)
  use com,                   ONLY: msg,warning,error
  use electrons,             ONLY: levels, default_nel,n_bands,n_spin,n_sp_pol,&
 &                                 n_spinor,l_spin_orbit,n_spin_den 
- use R_lattice,             ONLY: bz_samp, ng_vec, g_vec,nkibz, b
- use D_lattice,             ONLY: DL_vol, a, alat, input_GS_Tel,i_space_inv,&
+ use R_lattice,             ONLY: b, bz_samp, ng_vec, g_vec,nkibz
+ use D_lattice,             ONLY: a, alat, input_GS_Tel,i_space_inv,&
 &                                 n_atomic_species,n_atoms_species,i_time_rev,&
 &                                 n_atoms_species_max,atom_pos,Z_species,lattice
  use pseudo,                ONLY: pp_n_l_times_proj_max,pp_n_l_comp,&
 &                                 pp_n_l_max,pp_table,l_many_proj
  use wave_func,             ONLY: wf_nc_k, wf_igk,wf_ncx,wf_ng
- use vec_operate,           ONLY: cross_product,v_is_zero
+ use vec_operate,           ONLY: v_is_zero
  use defs_datatypes,        ONLY: hdr_type, wffile_type
  use xc_functionals,        ONLY: GS_xc_KIND,GS_xc_FUNCTIONAL
  use mod_xc2y,              ONLY: XC_yamboID, XC_yamboID2kind
  use mod_com2y,             ONLY: print_interface_dimensions,symmetries_check_and_load,&
 &                                 alat_mult_factor,artificial_spin_pol,ng_vec_abinit
- use vec_operate,           ONLY: v_is_zero
+ use vec_operate,           ONLY: v_is_zero,define_b_and_DL_vol
  !
 #include<memory.h>
  character(*)                   :: KSS_file_name
@@ -49,7 +49,6 @@ subroutine a2y_db1(en,k,KSS_file_name)
  !
  !Work Space
  !
- real(SP)                       :: cp(3)
  integer                        :: i1,ik,i2,i3,inel,i_spin,i_spinor,ic,ig
  complex(DP),allocatable        :: wf_disk_DP(:,:)
  integer, allocatable           :: wf_igk_tmp(:,:)
@@ -117,14 +116,7 @@ subroutine a2y_db1(en,k,KSS_file_name)
  alat(2) = maxval(abs(a(2,:)))*alat_mult_factor
  alat(3) = maxval(abs(a(3,:)))*alat_mult_factor
  call crystal_lattice()
- !
- cp=cross_product(a(2,:),a(3,:))
- do i1 = 1,3
-   DL_vol = DL_vol+a(1,i1)*cp(i1)
- enddo
- b(1,:) = cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
- b(2,:) = cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
- b(3,:) = cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
+ call define_b_and_DL_vol()
  !
  k%nibz      = ahdr%nkpt
  nkibz       = k%nibz

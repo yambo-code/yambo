@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -26,7 +26,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
  use stderr,         ONLY:set_real_printed_length
- use com,            ONLY:error
+ use com,            ONLY:error,warning
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
  use X_m,            ONLY:X_t,X_alloc
@@ -39,13 +39,14 @@ subroutine NL_driver(E,X,k,q,Dip)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng,JGM,TDDFT, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,mpi_comm_world
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
  !
@@ -132,7 +133,27 @@ subroutine NL_driver(E,X,k,q,Dip)
  wf_ng     =NL_ng
  WF_Go_indx =1
  !
- if(Correlation/=IPA) then
+ if(io_COLLs) then
+   !      
+   ! check if they exist      
+   !
+   call COLLISIONS_load(.true.)
+   !
+   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
+&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
+   !
+   if(COLLISIONS_have_HARTREE) then
+     if(Correlation==JGM) then
+        call warning('Collisions not compatible with JGM, turned off')
+        l_use_Hxc_collisions=.false.
+     elseif(Correlation==TDDFT) then
+        call warning('With Collisions TDDFT is approximated to the linear contribution!')
+     endif
+   endif
+   !
+ endif
+ !
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
    call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  endif
  !
@@ -142,20 +163,12 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Load Collisions if necessary
  ! ============================
- if(io_COLLs) then
-   !      
-   ! check if they exist      
+ !
+ if(l_use_Hxc_collisions.and.io_COLLs) then
    !
-   call COLLISIONS_load(.true.)
+   eval_dG=.true.
    !
-   eval_dG=l_use_Hxc_collisions
-   !
-   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
-&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
-   !
-   ! and load ....
-   !
-   if(l_use_Hxc_collisions)  call COLLISIONS_load(.false.)
+   call COLLISIONS_load(.false.)
    !
  endif
  !

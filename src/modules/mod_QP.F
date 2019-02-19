@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,6 +43,7 @@ module QP_m
  integer           :: QP_ng_Sc
  integer           :: QP_ng_Sx
  integer           :: QP_ng_SH
+ integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  logical           :: QP_dSc_test

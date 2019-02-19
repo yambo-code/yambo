@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -49,7 +49,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_K_has_been_calculated_loaded,BS_nT_grps,BS_blks_free,&
 &                       l_BSE_minimize_memory, l_restart_bse
- use collision_el, ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use collision_el, ONLY:elemental_collision,elemental_collision_free
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message
@@ -249,7 +249,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======================
  if (l_bs_fxc) then
    !  
-   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
+   !if (iq==1) here put dipoles I/O
+   if (iq==1) stop
    !
    ! Allocation
    !-----------
@@ -278,13 +279,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call WF_load(WF,max(O_ng,BS_n_g_exch),1,bands_to_load,(/1,Xk%nibz/),space='R',title='-BSK')
    !
  endif
- !
- ! Elemental collisions allocation
- !=================================
- !
- call elemental_collision_alloc(K_CORR_collision,NG=O_ng,       TITLE="CORR_COLL")
-! call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
-! XXX
  !
  ! Wave Functions Phases
  !=======================
@@ -742,10 +736,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)
- !
- call elemental_collision_free(K_CORR_collision)
-! call elemental_collision_free(K_EXCH_collision)
-! XXX
  !
  call timing('X T_space Kernel',OPR='stop')
  !

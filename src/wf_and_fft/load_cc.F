@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -34,7 +34,7 @@ subroutine load_cc(manage_zero,center_cc)
  !
  use pars,        ONLY:SP
  use FFT_m,       ONLY:fft_size,fft_dim
- use D_lattice,   ONLY:x_cc,a,x_zero_point
+ use D_lattice,   ONLY:x_cc,a
  !
 #include<memory.h>
  !
@@ -44,15 +44,20 @@ subroutine load_cc(manage_zero,center_cc)
  !
  ! work space
  !
- real(SP)   :: tmp_border(3),tmp_x(3),rir1,rir2,rir3
+ real(SP)   :: tmp_border(3),tmp_x(3),rir1,rir2,rir3, &
+&              x_center_point(3),x_jump(3)
  integer    :: ir,ir1,ir2,ir3,i_dir   
  !
  call fft_setup(0,1,.true.)      ! FFT size
  !
  YAMBO_ALLOC(x_cc,(fft_size,3))
  !
- ! Not implemented. Option to set the jump elsewhere
- x_zero_point=0._SP
+ if(     center_cc) x_center_point=(/   0._SP    ,   0._SP    ,   0._SP    /)
+ if(.not.center_cc) x_center_point=(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/)
+ !
+ do i_dir=1,3
+   x_jump(i_dir)=a(i_dir,i_dir)/2._SP+x_center_point(i_dir)
+ enddo
  !
  do ir1 = 0, fft_dim(1)-1         ! x 
    rir1=real(ir1,SP)/real(fft_dim(1),SP)
@@ -66,25 +71,19 @@ subroutine load_cc(manage_zero,center_cc)
        ! Definition: x_i=a1_i+a_2i+a3_i     i=x,y,z       in cartesian coordinates
        tmp_x(:) = a(1,:)*rir1 + a(2,:)*rir2 + a(3,:)*rir3
        !
-       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
-       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
-       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
+       tmp_border(1)= x_jump(1)  +a(2,1)*rir2 +a(3,1)*rir3
+       tmp_border(2)=a(1,2)*rir1 + x_jump(2)  +a(3,2)*rir3
+       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 + x_jump(3)
        !
-       ! Correclty compute x1, x2 and x3 with respect to cartesian axis
+       ! Correctly compute x1, x2 and x3 with respect to cartesian axis
        ! They are saw-like and the jumps are always at the axis parallel to the vectors
        ! which defines the supercell and which cross at the center of the supercell
        ! If center_cc is specified the saw-like jump is in the middle of the super-cell 
        !
        x_cc(ir,:)=tmp_x(:)
        !
-       if(.not.center_cc) cycle
-       !
-       tmp_border(1)=a(1,1)/2._SP+a(2,1)*rir2 +a(3,1)*rir3
-       tmp_border(2)=a(1,2)*rir1 +a(2,2)/2._SP+a(3,2)*rir3
-       tmp_border(3)=a(1,3)*rir1 +a(2,3)*rir2 +a(3,3)/2._SP
-       !
        do i_dir=1,3
-         if (tmp_x(i_dir)>tmp_border(i_dir)) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)
+         if (tmp_x(i_dir)> tmp_border(i_dir)) x_cc(ir,:)=x_cc(ir,:)-a(i_dir,:)
        enddo
        !
        do i_dir=1,3

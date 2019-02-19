@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -207,7 +207,7 @@ module IO_m
      integer               :: VAR_SZ
      integer               :: VAR_KIND
      integer               :: MENU
-     character(*),optional      :: par_io_kind
+     character(*),optional :: par_io_kind
    end subroutine def_variable_elemental
    !
    subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -75,9 +75,11 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  !
  ! Transform in cartesian coordinates
  !
+!$omp parallel do default(shared), private(id)
  do id=1,3
    Polarization(id)=sum(Polarization_red(:)*a(:,id))/DL_Vol
  enddo
+!$omp end parallel do
  !
 #if defined _TIMING
  call timing('NL Berry Pol NEQ',OPR='stop')

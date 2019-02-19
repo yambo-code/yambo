@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -248,7 +248,7 @@ module BS
      integer :: iB
      do iB=1,n_BS_blks
        YAMBO_FREE(BS_blk(iB)%mat)
-       YAMBO_FREE(BS_blk(iB)%done)
+       deallocate(BS_blk(iB)%done)
      enddo
    end subroutine
    !

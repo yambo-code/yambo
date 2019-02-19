@@ -1,7 +1,7 @@
 !
 ! Copyright (C) 2003 M. Marques, A. Castro, A. Rubio, G. Bertsch
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -29,7 +29,12 @@ module xc_functionals
  use xc_f90_lib_m
  use xc_f90_types_m
  use libxc_funcs_m
+ !
  implicit none
+ !
+ integer  :: xc_spin(2)
+ integer, allocatable :: xc_spin_map1(:,:)
+ integer, allocatable :: xc_spin_map2(:,:,:)
  !
  integer,  public:: GS_xc_KIND
  integer,  public:: GS_xc_FUNCTIONAL

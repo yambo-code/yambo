@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DV
+! Authors (see AUTHORS file for details): DV DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -33,7 +33,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
- use wave_func,      ONLY:WF
  use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
@@ -49,7 +48,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol
+ integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
  !
  Hzero=cZERO
  !

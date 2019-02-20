@@ -67,7 +67,7 @@ module xc_functionals
     XC_FACTOR        = 1000,&
     XC_NOT_AVAILABLE = 999999, & 
     NOXC             = 0, &    
-    XC_LDA_C_KP      = 99
+    XC_LDA_C_KP      = 99, &
     XC_HYB_GGA_XC_GAUPBE        = 999
  !
  character(*), parameter, dimension(3) :: XC_KIND_DESCR = (/'(X) ','(C) ','(XC)'/)

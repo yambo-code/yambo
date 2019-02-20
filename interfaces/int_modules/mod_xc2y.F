@@ -125,25 +125,19 @@ module mod_xc2y
        !
        do ii=1,N_PW_GX ! I scan before the GGAs
         if (matches(PW_GX(ii),pw_func)) XC_yamboID = PWGX2LIBXC(ii)*XC_FACTOR
-        write(*,*) "linea 128",PW_GX(ii),pw_func,XC_yamboID
        end do
        if (XC_ComponentsAreSeparate(XC_yamboID)) then
          XC_yamboID_ = 0
          do ii=1,N_PW_GC
-          write(*,*) "linea 133"
-           write(*,*) PW_GC(ii),pw_func,matches(PW_GC(ii),pw_func)
            if (matches(PW_GC(ii),pw_func)) XC_yamboID_ = PWGC2LIBXC(ii)
          end do
          XC_yamboID = XC_yamboID + XC_yamboID_
        endif
        if (XC_yamboID == XC_NOT_AVAILABLE .or. XC_yamboID == NOXC) then ! Only if no GGAs or no 
-                                                                        ! XC are found I scan LDA (this avoids 'double counting')
-         write(*,*) "Linea 141"
          do ii=1,N_PW_X
            if (matches(PW_X(ii),pw_func)) XC_yamboID = PWX2LIBXC(ii)
          end do
          do ii=1,N_PW_C
-          write(*,*) "Linea 146"
            if (matches(PW_C(ii),pw_func)) XC_yamboID = XC_yamboID + PWC2LIBXC(ii)
          end do
        end if
@@ -158,6 +152,7 @@ module mod_xc2y
      type(xc_f90_pointer_t)  p, info
      integer ifunc, func
      !
+     write(*,*) "linea 155", yamboID
      if (yamboID == XC_NOT_AVAILABLE) return
      XC_yamboID2kind = 0
      do ifunc = 1,2
@@ -179,7 +174,8 @@ module mod_xc2y
      lcheck = (ID==XC_GGA_XC_HCTH_93).or.&
              &(ID==XC_HYB_GGA_XC_PBEH).or.&
              &(ID==XC_HYB_GGA_XC_B3LYP).or.&
-             &(ID==XC_HYB_GGA_XC_HSE06)
+             &(ID==XC_HYB_GGA_XC_HSE06).or.&
+             &(ID==XC_HYB_GGA_XC_GAUPBE)
      XC_ComponentsAreSeparate=.not.lcheck
    end function XC_ComponentsAreSeparate
    !

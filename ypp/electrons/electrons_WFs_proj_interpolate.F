@@ -70,8 +70,7 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,proj_fac,
  !
  call load_SC_components('WF_clean')
  !
- call INTERPOLATION_driver(bands=BANDS_range,SEED_k=SEED_k,SEED_R3=proj_fac,operation="SCporj",&
-&                            ID_op=ID_proj,NEAREST=.TRUE.)
+ call INTERPOLATION_driver(bands=BANDS_range,SEED_k=SEED_k,SEED_R3=proj_fac,operation="SCporj",ID_op=ID_proj)
  call INTERPOLATION_driver(OUT_k=OUT_k,operation="SCproj")
  !
 end subroutine electrons_WFs_proj_interpolate

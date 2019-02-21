@@ -64,6 +64,10 @@ subroutine electrons_bands(Xk,Xen)
  character(lchlen)     :: of_string
  character(schlen), allocatable :: headings(:)
  logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
+#if defined _YPP_SC
+ logical               :: proj_wfc=.true.
+#endif
+
  !
  call section('*','Interpolation tool')
  !=====================================
@@ -112,6 +116,17 @@ subroutine electrons_bands(Xk,Xen)
      call electrons_spin_and_magn_interpolate("S M",Xk,CIRCUIT_k,BANDS_bands,ID_spin,ID_magn)
    endif
    !
+#if defined _YPP_SC
+   !
+   ! Perform interpolation of spinorial factors and magnetization
+   !==============================================================
+   if(proj_wfc) then
+     call section('=','Interpolation@work: SC-WFs projections')
+     call electrons_WFs_proj_interpolate(Xen,Xk,CIRCUIT_k,BANDS_bands,ID_proj)
+   endif
+   !
+#endif
+   !
    call set_real_printed_length(f_length=10,g_length=10)
    !
  endif
@@ -134,6 +149,12 @@ subroutine electrons_bands(Xk,Xen)
    spin_values=0._SP
    magn_values=0._SP
  endif
+#if defined _YPP_SC
+ if(projwfc) then
+   YAMBO_ALLOC(proj_values,(nbands+4,2))
+   proj_values=0._SP
+ endif
+#endif
  !
  headings(1)=" |k| (a.u.) "
  do ib=BANDS_bands(1),BANDS_bands(2)
@@ -174,6 +195,17 @@ subroutine electrons_bands(Xk,Xen)
      call msg('o '//trim(file_name_spin_magn(i1)),"#")
    enddo
  endif
+#if defined _YPP_SC
+ if(projwfc) then
+   file_name_proj(1)="proj_val"
+   file_name_proj(2)="proj_con"
+   do i1=1,5
+     call of_open_close(trim(file_name_spin_magn(i1)),'ot')
+     call msg('o '//trim(file_name_spin_magn(i1)),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name_spin_magn(i1)),"#")
+   enddo
+ endif
+#endif
  !
  call msg('o path',"#"," ",INDENT=0)
  !
@@ -259,6 +291,9 @@ subroutine electrons_bands(Xk,Xen)
        spin_values(1,:)=values(1)
        magn_values(1,:)=values(1)
      endif
+#if defined _YPP_SC
+     if(projwfc) proj_values(1,:)=values(1)
+#endif
      !
      do is=1,n_sp_pol
        !
@@ -307,6 +342,17 @@ subroutine electrons_bands(Xk,Xen)
            call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
        endif
+       !
+#if defined _YPP_SC
+       if(projwfc) then
+         do i1=1,2
+           proj_values(1+1:nbands+1,i1)=INTERP_obj(ID_proj)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
+           proj_values(nbands+2:nbands+4,i1)=tmp_k
+           call msg('o '//trim(file_name_proj(i1)),' ',(/proj_values(:,i1)/),INDENT=0,USE_TABS=.true.)
+         enddo
+       endif
+#endif
+       !
      enddo
      !
    enddo
@@ -327,6 +373,9 @@ subroutine electrons_bands(Xk,Xen)
    call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
    call INTERPOLATION_driver(operation="END",ID_op=ID_magn)
  endif
+#if defined _YPP_SC
+ if(projwfc) call INTERPOLATION_driver(operation="END",ID_op=ID_poj)
+#endif
  !
  do is=1,n_sp_pol
    do i_f=1,3
@@ -339,5 +388,12 @@ subroutine electrons_bands(Xk,Xen)
      call of_open_close(trim(file_name_spin_magn(i1)))
    enddo
  endif
+#if defined _YPP_SC
+ if(projwfc) then
+   do i1=1,2
+     call of_open_close(trim(file_name_proj(i1)))
+   enddo
+ endif
+#endif
  !
 end subroutine

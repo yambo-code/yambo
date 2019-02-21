@@ -28,7 +28,7 @@
 */
 #include <editor.h>
 #include <codever.h>
-#include <tool.h>
+#include <tool_init.h>
 /* 
  ...Command line options structure
 */
@@ -42,13 +42,8 @@
  ...Subroutines/functions
 */
 #include <command_line_alt.h>
-#include <command_line_short.h>
 #include <command_line.h>
 #include <input_file.h>
-/*
- ... Command line options
-*/
-#include <wrapper.h>
 /*
   MAIN
 */
@@ -62,15 +57,16 @@ int main(int argc, char *argv[])
   Yambo and Tool structures
  */
  yambo_seed_struct y;
- tool_struct t;
+ tool_struct tool;
  struct n_options_struct n_options[100];
  /* 
   TOOL initialization
- */
  strcpy(t.editor,editor);
  strcpy(t.tool,tool);
  strcpy(t.desc,tool_desc);
  strcpy(t.version,codever);
+ */
+ tool=tool_init();
  /*
   Options "maker"
  */ 
@@ -78,11 +74,7 @@ int main(int argc, char *argv[])
  /*
   Command line parsing
  */ 
-#if defined _LONG_OPTIONS 
- y=command_line(argc,argv,n_options,t,&use_editor,&use_mpi);
-#else
- y=command_line_short(argc,argv,options,t,&use_editor,&use_mpi);
-#endif
+ y=command_line(argc,argv,n_options,tool,&use_editor,&use_mpi);
  /*
    Launcher
  */
@@ -90,6 +82,6 @@ int main(int argc, char *argv[])
  /* 
    Input File
  */
- input_file(y,t,use_editor);
+ input_file(y,tool,use_editor);
 }
 

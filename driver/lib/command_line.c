@@ -101,27 +101,19 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
   for(i_opt=0;i_opt<=100;i_opt++) {
    if (opts[i_opt].short_opt==opt) {break;};
   }
-  switch (opt){
-   case '?':
-   case 'h':
-    /*usage(opts,1,t);*/
+  if (strcmp(opts[i_opt].long_opt,"help")==0){
+    /*usage()opts,1,t);*/
     exit(0);
-    break;
-   case 'H':
-    /*usage(opts,2,t);*/
+  }
+  if (strcmp(opts[i_opt].long_opt,"Help")==0){
     exit(0);
-    break;
-   }
-  if (opt == 0) {
-   if (strcmp(long_options[long_index].name,"test")==0) {
-    printf ("\n\n GETOPT ouput without short-opt: %s\n\n",long_options[long_index].name);
-   }
-  }else{
+  }
+  if (opt > 0) {
    printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);
   }
   if (optarg)
   {
-  printf (" with arg %s", optarg);
+   printf (" with arg %s", optarg);
   }
   printf ("\n");
  };

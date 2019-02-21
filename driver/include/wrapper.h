@@ -21,11 +21,17 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-#include <macros.h>
+/*
+ F90 wrapper
+*/
+#if defined _FORTRAN_US
+ #define F90_FUNC(name) name ## _
+#else
+ #define F90_FUNC(name) name
+#endif
 /* 
  Command line options
 */
- #include "yambo.h"
 /* TEST */
 #if defined _TEST_MAIN
  #if defined _FORTRAN_US

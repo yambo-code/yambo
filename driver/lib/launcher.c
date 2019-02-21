@@ -24,9 +24,8 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <kind.h>
 #include <wrapper.h>
-#include <macros.h>
+#include <kind.h>
 #if defined _MPI 
  #include <mpi.h>
 #endif

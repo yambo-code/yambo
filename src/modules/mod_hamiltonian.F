@@ -60,6 +60,7 @@ module hamiltonian
  ! Rotation matrix which diagonalize the hamiltonian
  !
  complex(SP), allocatable :: H_rotation(:,:,:,:)
+ complex(SP), allocatable :: H_rotation_ref(:,:,:,:)
  !
  ! Wavefunction indexes
  !

@@ -27,7 +27,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use drivers,     ONLY:l_sc_run
  use SC,          ONLY:compatible_SC_DB,SC_bands,SC_kind,&
 &                      SC_xc_functional,SC_perturbation,found_SC_DB
- use hamiltonian, ONLY:H_nl_sc,H_rotation
+ use hamiltonian, ONLY:H_nl_sc,H_rotation,H_rotation_ref
  use electrons,   ONLY:levels,E_reset,n_sp_pol
  use R_lattice,   ONLY:nkibz
  use IO_m,        ONLY:io_control,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
@@ -95,6 +95,7 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
      io_err=io_SC_components('WF',E_dummy,ID)
      if (io_err==0) then
        YAMBO_ALLOC(H_rotation,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
+       if (.true.) YAMBO_ALLOC(H_rotation_ref,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),nkibz,n_sp_pol))
        do ip_sp_pol=1,n_sp_pol
          do ip=1,nkibz
            call io_control(ACTION=RD_CL_IF_END,SEC=(/ip+1+(ip_sp_pol-1)*nkibz/),ID=ID)
@@ -106,14 +107,17 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
    case("Hsc_clean")
      if (allocated(H_nl_sc)) then
        YAMBO_FREE(H_nl_sc)
-       return
      endif
+     return
      !
    case("WF_clean")
      if (allocated(H_rotation)) then
        YAMBO_FREE(H_rotation)
-       return
      endif
+     if (allocated(H_rotation_ref)) then
+       YAMBO_FREE(H_rotation_ref)
+     endif
+     return
      ! 
  end select
  !

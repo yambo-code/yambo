@@ -38,7 +38,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         SC_neq_kind,SC_mu
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
-&                         H_QP_table_setup,H_rotation
+&                         H_QP_table_setup,H_rotation,H_rotation_ref
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
@@ -92,7 +92,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
- real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
+ real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
@@ -258,6 +258,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  if(trim(SC_neq_kind)=="matsubara") then
    !
+   YAMBO_ALLOC(H_rotation_ref,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk,n_sp_pol))
+   H_rotation_ref=H_rotation
+   !
    do i_sp_pol=1,n_sp_pol
      do ik=1,QP_nk
        !
@@ -306,7 +309,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    ! Exchange & Correlation
    !========================
    !
-   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1)
+   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1,ELEC,HOLE)
    !
    ! Hartree potential
    !===================
@@ -557,6 +560,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(magn_convergence))//'%'
      endif
      !
+     if(trim(SC_neq_kind)=="matsubara") then
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS/HOLES    '
+       dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))
+     endif
+     !
 #if defined _ELECTRIC
      if(l_sc_electric) then
        if(it==1) then
@@ -645,6 +653,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
    if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
    if (.not.l_sc_V_is_local)  call msg('r','')
+   if(trim(SC_neq_kind)=="matsubara") &
+&                      call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
    if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
    if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !

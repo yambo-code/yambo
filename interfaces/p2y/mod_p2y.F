@@ -840,7 +840,7 @@ contains
  !
  subroutine get_xc
    use com,            ONLY: warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING      
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,XC_FACTOR,XC_HYB_GGA_XC_GAUPBE      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
 
@@ -875,15 +875,12 @@ contains
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
-      write(*,*) "linea 878",pw_dft
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      write(*,*) "linea 880", GS_xc_FUNCTIONAL
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
-      write(*,*) "linea 882"
-      write(*,*) "GS_xc_FUNCTIONAL", GS_xc_FUNCTIONAL
-      write(*,*) "pw_dft",pw_dft
-      write(*,*) "GS_xc_KIND", GS_xc_KIND
-      write(*,*) "pw_exx_is_active",pw_exx_is_active
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
+        GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       !
       if (pw_exx_is_active) then
          !

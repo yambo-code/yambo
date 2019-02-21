@@ -183,6 +183,10 @@ module xc_functionals
      integer        :: ixc
      !
      xc_string = ''
+     if (functional.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        xc_string="GAUPBE(XC)" 
+        return
+     endif
      call xc_setup_fnctl(f,functional,XC_UNPOLARIZED)
      !
      do ixc = 1,2  

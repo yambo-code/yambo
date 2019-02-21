@@ -25,10 +25,14 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,ID_proj)
  !
  use pars,           ONLY:SP,cZERO
  use wave_func,      ONLY:WF
+ use electrons,      ONLY:levels
  use electrons,      ONLY:n_spinor
  use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver
- use interfaces,     ONLY:WF_load,WF_free
+ use SC,             ONLY:load_SC_components,SC_bands
+ use hamiltonian,    ONLY:H_rotation,H_rotation_ref
+ use IO_m,           ONLY:DUMP,NONE
+ use wrapper,        ONLY:M_by_M
  !
  implicit none
  !
@@ -40,8 +44,9 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,ID_proj)
  !
  ! Work space
  !
- type(levels) ::
+ complex(SP)  :: H_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  real(SP)     :: proj_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,2)
+ integer      :: ik,ib,ibp
  !
  proj_fac=cZERO
  !
@@ -49,11 +54,15 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,ID_proj)
  !
  do ik=1,SEED_k%nibz
    !
-   do ib=BANDS_range(1):BANDS_range(2)
-     do ibp=BANDS_range(1):BANDS_range(2)
-       if(Xen%Eo(ibp,ik,1)<=0._SP) proj_fac(ib,ik,1)=proj_fac(ib,ik,1)+H_rotation(ib,ibp,ik,1)*conjg(H_rotation(ib,ibp,ik,1))
-       if(Xen%Eo(ibp,ik,1)> 0._SP) proj_fac(ib,ik,1)=proj_fac(ib,ik,1)+H_rotation(ib,ibp,ik,1)*conjg(H_rotation(ib,ibp,ik,1))
+   call M_by_M('c','n',SC_bands(2)-SC_bands(1)+1,H_rotation_ref(:,:,ik,1),H_rotation(:,:,ik,1),H_tmp)
+   !
+   do ib=BANDS_range(1),BANDS_range(2)
+     do ibp=SC_bands(1),SC_bands(2)
+       if(Xen%Eo(ibp,ik,1)<=0._SP) proj_fac(ib,ik,1)=proj_fac(ib,ik,1)+H_tmp(ib,ibp)*conjg(H_tmp(ib,ibp))
+       if(Xen%Eo(ibp,ik,1)> 0._SP) proj_fac(ib,ik,1)=proj_fac(ib,ik,1)+H_tmp(ib,ibp)*conjg(H_tmp(ib,ibp))
+     enddo
    enddo
+   !
  enddo
  !
  call load_SC_components('WF_clean')

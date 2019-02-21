@@ -65,6 +65,9 @@ subroutine electrons_bands(Xk,Xen)
  character(schlen), allocatable :: headings(:)
  logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
 #if defined _YPP_SC
+ integer               :: ID_proj
+ real(SP), allocatable :: proj_values(:,:)
+ character(schlen)     :: file_name_proj(2)
  logical               :: proj_wfc=.true.
 #endif
 
@@ -150,7 +153,7 @@ subroutine electrons_bands(Xk,Xen)
    magn_values=0._SP
  endif
 #if defined _YPP_SC
- if(projwfc) then
+ if(proj_wfc) then
    YAMBO_ALLOC(proj_values,(nbands+4,2))
    proj_values=0._SP
  endif
@@ -196,7 +199,7 @@ subroutine electrons_bands(Xk,Xen)
    enddo
  endif
 #if defined _YPP_SC
- if(projwfc) then
+ if(proj_wfc) then
    file_name_proj(1)="proj_val"
    file_name_proj(2)="proj_con"
    do i1=1,5
@@ -292,7 +295,7 @@ subroutine electrons_bands(Xk,Xen)
        magn_values(1,:)=values(1)
      endif
 #if defined _YPP_SC
-     if(projwfc) proj_values(1,:)=values(1)
+     if(proj_wfc) proj_values(1,:)=values(1)
 #endif
      !
      do is=1,n_sp_pol
@@ -344,7 +347,7 @@ subroutine electrons_bands(Xk,Xen)
        endif
        !
 #if defined _YPP_SC
-       if(projwfc) then
+       if(proj_wfc) then
          do i1=1,2
            proj_values(1+1:nbands+1,i1)=INTERP_obj(ID_proj)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
            proj_values(nbands+2:nbands+4,i1)=tmp_k
@@ -374,7 +377,7 @@ subroutine electrons_bands(Xk,Xen)
    call INTERPOLATION_driver(operation="END",ID_op=ID_magn)
  endif
 #if defined _YPP_SC
- if(projwfc) call INTERPOLATION_driver(operation="END",ID_op=ID_poj)
+ if(proj_wfc) call INTERPOLATION_driver(operation="END",ID_op=ID_proj)
 #endif
  !
  do is=1,n_sp_pol
@@ -389,7 +392,7 @@ subroutine electrons_bands(Xk,Xen)
    enddo
  endif
 #if defined _YPP_SC
- if(projwfc) then
+ if(proj_wfc) then
    do i1=1,2
      call of_open_close(trim(file_name_proj(i1)))
    enddo

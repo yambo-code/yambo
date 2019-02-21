@@ -66,8 +66,8 @@ subroutine electrons_bands(Xk,Xen)
  logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
 #if defined _YPP_SC
  integer               :: ID_proj
- real(SP), allocatable :: proj_values(:,:)
- character(schlen)     :: file_name_proj(2)
+ real(SP), allocatable :: proj_values(:,:),proj_fac(:,:,:)
+ character(schlen)     :: file_name_proj(2,2)
  logical               :: proj_wfc=.true.
 #endif
 
@@ -125,7 +125,8 @@ subroutine electrons_bands(Xk,Xen)
    !==============================================================
    if(proj_wfc) then
      call section('=','Interpolation@work: SC-WFs projections')
-     call electrons_WFs_proj_interpolate(Xen,Xk,CIRCUIT_k,BANDS_bands,ID_proj)
+     YAMBO_ALLOC(proj_fac,(BANDS_bands(1):BANDS_bands(2),Xk%nibz,2))
+     call electrons_WFs_proj_interpolate(Xen,Xk,CIRCUIT_k,BANDS_bands,proj_fac,ID_proj)
    endif
    !
 #endif
@@ -199,13 +200,22 @@ subroutine electrons_bands(Xk,Xen)
    enddo
  endif
 #if defined _YPP_SC
+ file_name_proj= " "
  if(proj_wfc) then
-   file_name_proj(1)="proj_val"
-   file_name_proj(2)="proj_con"
-   do i1=1,5
-     call of_open_close(trim(file_name_spin_magn(i1)),'ot')
-     call msg('o '//trim(file_name_spin_magn(i1)),"#",headings,INDENT=0,USE_TABS=.true.)
-     call msg('o '//trim(file_name_spin_magn(i1)),"#")
+   if (BANDS_interpolate) then
+     file_name_proj(1,1)="proj_val_interpolated"
+     file_name_proj(2,1)="proj_con_interpolated"
+   endif
+   if (BANDS_internal   ) then
+     file_name_proj(1,2)="proj_val_built_in"
+     file_name_proj(2,2)="proj_con_built_in"
+   endif
+   do i_f=1,2
+     do i1=1,2
+       call of_open_close(trim(file_name_proj(i1,i_f)),'ot')
+       call msg('o '//trim(file_name_proj(i1,i_f)),"#",headings,INDENT=0,USE_TABS=.true.)
+       call msg('o '//trim(file_name_proj(i1,i_f)),"#")
+     enddo
    enddo
  endif
 #endif
@@ -265,6 +275,17 @@ subroutine electrons_bands(Xk,Xen)
            call K_transform(values(nbands+2:nbands+4),'iku')
            call msg('o '//trim(file_name_bands(2,is)),' ',(/values(1)+iku_v_norm(tmp_k),values(2:)/),INDENT=0,USE_TABS=.true.)
          enddo
+         !
+#if defined _YPP_SC
+         if(proj_wfc) then
+           values(nbands+2:nbands+4)=Xk%ptbz(ikbz,:)
+           call K_transform(values(nbands+2:nbands+4),'iku')
+           values(1+1:nbands+1)=proj_fac(BANDS_bands(1):BANDS_bands(2),Xk%sstar(ikbz,1),1)
+           call msg('o '//trim(file_name_proj(1,2)),' ',(/values(1)+iku_v_norm(tmp_k),values(2:)/),INDENT=0,USE_TABS=.true.)
+           values(1+1:nbands+1)=proj_fac(BANDS_bands(1):BANDS_bands(2),Xk%sstar(ikbz,1),2)
+           call msg('o '//trim(file_name_proj(2,2)),' ',(/values(1)+iku_v_norm(tmp_k),values(2:)/),INDENT=0,USE_TABS=.true.)
+         endif
+#endif
          !
        endif
        !
@@ -351,7 +372,7 @@ subroutine electrons_bands(Xk,Xen)
          do i1=1,2
            proj_values(1+1:nbands+1,i1)=INTERP_obj(ID_proj)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
            proj_values(nbands+2:nbands+4,i1)=tmp_k
-           call msg('o '//trim(file_name_proj(i1)),' ',(/proj_values(:,i1)/),INDENT=0,USE_TABS=.true.)
+           call msg('o '//trim(file_name_proj(i1,1)),' ',(/proj_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
        endif
 #endif
@@ -393,9 +414,12 @@ subroutine electrons_bands(Xk,Xen)
  endif
 #if defined _YPP_SC
  if(proj_wfc) then
-   do i1=1,2
-     call of_open_close(trim(file_name_proj(i1)))
+   do i_f=1,2
+     do i1=1,2
+       call of_open_close(trim(file_name_proj(i1,i_f)))
+     enddo
    enddo
+   YAMBO_FREE(proj_fac)
  endif
 #endif
  !

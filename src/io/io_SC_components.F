@@ -220,7 +220,7 @@ integer function io_SC_components(what,E_sc,ID)
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
    call io_bulk(ID,C2=H_rotation(:,:,ik,i_sp_pol))
    !
-   if (allocated(H_rotation_ref).and.write_is_on(ID)) then
+   if (allocated(H_rotation_ref).and.(write_is_on(ID).or..not.l_sc_run)) then
      call io_bulk(ID,VAR="REF_Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
      call io_bulk(ID,C2=H_rotation_ref(:,:,ik,i_sp_pol))

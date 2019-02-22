@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,13 +25,14 @@ subroutine WF_format_converter(E,Xk,q)
  !
  use pars,                ONLY:SP,lchlen
  use R_lattice,           ONLY:bz_samp
- use pseudo,              ONLY:PP_free
+ use pseudo,              ONLY:PP_free,PP_free_old,PP_alloc_abinit, &
+&                              pp_kbs,pp_kbs_old,pp_kb,pp_kb_old,pp_kbd,pp_kbd_old
  use LIVE_t,              ONLY:live_timing
  use D_lattice,           ONLY:n_atoms_species_max
  use IO_m,                ONLY:mk_dir,rm_file,cp_file
  use com,                 ONLY:msg,core_io_path,more_io_path
  use electrons,           ONLY:levels,n_spin,n_sp_pol,n_spinor
- use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io
+ use wave_func,           ONLY:wf_ncx,io_WF,io_WF_old,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
  use IO_m,                ONLY:io_control,NONE,DUMP,OP_WR_CL,OP_APP_CL,OP_RD_CL
  !
 #include<memory.h>
@@ -131,6 +132,18 @@ subroutine WF_format_converter(E,Xk,q)
        !
        ifrag=ik+(i_sp_pol-1)*E%nk
        !
+       if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
+         !
+         if(ifrag==1) then
+           call PP_alloc_abinit()
+           pp_kbs=pp_kbs_old
+         endif
+         !
+         pp_kb(:,:,:,i_sp_pol) =pp_kb_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
+         pp_kbd(:,:,:,i_sp_pol)=pp_kbd_old(wf_igk(:wf_nc_k(ik),ik),:,:,i_sp_pol)
+         !
+       endif
+       !
        core_io_path=more_io_path
        !
        if (n_atoms_species_max>0.and.ib_grp==1.and.io_KB_abinit_err==0) then
@@ -155,7 +168,10 @@ subroutine WF_format_converter(E,Xk,q)
  YAMBO_FREE(wf_disk_new)
  YAMBO_FREE(wf_disk_old)
  !
- if (io_KB_abinit_err==0) call PP_free()
+ if (io_KB_abinit_err==0) then
+   call PP_free()
+   call PP_free_old()
+ endif
  !
 #if defined _YPP_ELPH
  call ELPH_format_converter(E,Xk,q)

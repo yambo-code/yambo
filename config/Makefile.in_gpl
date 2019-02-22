@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -222,8 +222,10 @@ yambo_ph: libs
 interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
+#a2y: interfcs
+#	@+X2DO="a2y"; XPATH="interfaces/old_a2y"; VPATH="$(topdir)/interfaces/old_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 a2y: interfcs
-	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+	@+X2DO="a2y"; XPATH="interfaces/new_a2y"; VPATH="$(topdir)/interfaces/new_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
 p2y: interfcs
 	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;

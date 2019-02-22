@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS
@@ -156,17 +156,17 @@ contains
   ! Geometry group subroutines
   !
   subroutine import_geometry_group
-    use vec_operate,          only : cross_product
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
-&                                  DL_vol, a, alat, &
+&                                  a, alat, &
 &                                  n_atomic_species,n_atoms_species,&
 &                                  n_atoms_species_max,atom_pos, Z_species
     use mod_com2y,           only : symmetries_check_and_load, alat_mult_factor
+    use vec_operate,         only :  define_b_and_DL_vol
     implicit none
     type(etsf_geometry)           :: geometry_group
     logical                       :: l_identity, l_inversion
-    real(SP)                      :: lsop(3,3), cp(3)
+    real(SP)                      :: lsop(3,3)
     integer                       :: a_nsym
     integer, allocatable          :: asop(:,:,:)
     character(3), allocatable     :: atom_species_names(:)
@@ -189,13 +189,7 @@ contains
     alat(2) = alat_mult_factor*maxval( abs( a(2,:) ))
     alat(3) = alat_mult_factor*maxval( abs( a(3,:) ))
 !   call msg('s',':: Lattice factors [a.u.]:',alat)
-    cp = cross_product(a(2,:),a(3,:))
-    do i1 = 1,3
-      DL_vol = DL_vol+a(1,i1)*cp(i1)
-    enddo
-    b(1,:) = cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
-    b(2,:) = cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
-    b(3,:) = cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
+    call define_b_and_DL_vol()
     !
     ! Atomic position data
     !

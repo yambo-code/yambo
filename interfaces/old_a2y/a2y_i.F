@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,13 +25,16 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use pars,                ONLY:SP,lchlen
  use LOGO,                ONLY:pickup_a_random
- use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo
+ use com,                 ONLY:msg,write_to_report,core_io_path,write_the_logo,&
+&                              com_path
+ use stderr,              ONLY:log_as_a_file,write_to_log,logfile,intc
+ use LIVE_t,              ONLY:live_timing_is_on
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use D_lattice,           ONLY:n_atoms_species_max
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,mk_dir
  use interfaces,          ONLY:PARALLEL_live_message
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
@@ -78,6 +81,20 @@ integer function a2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Switch off report file support
  !
  write_to_report=.FALSE.
+ write_to_log      = .true.
+ live_timing_is_on = .true.
+ !
+ if (log_as_a_file) then
+   if (len_trim(com_path)==0) com_path="./"
+   write (logfile,'(2a)') trim(com_path),'/l-e2y'
+   !
+   if (ncpu>1) then
+     call mk_dir(trim(com_path)//"/LOG")
+     write (logfile,'(2a)') trim(com_path)//'/LOG/l-e2y'
+     logfile=trim(logfile)//"_CPU_"//trim(intc(myid+1))
+   endif
+   !
+ endif
  !
  ! LOGO
  !

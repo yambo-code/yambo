@@ -1,6 +1,6 @@
 !
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,CA
@@ -55,6 +55,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use stderr,         ONLY:intc
  use IO_m,           ONLY:IO_and_Messaging_switch
  use interfaces,     ONLY:NL_average_operator
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
  !
@@ -85,7 +86,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
  !
- if(Correlation/=IPA) then
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  
    call NL_build_valence_bands(E,V_bands,VAL_BANDS,1)
    call el_density_vbands(E,k,full_rho,VAL_BANDS)
@@ -102,7 +103,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  !
- if(Correlation==TDDFT) then
+ if(Correlation==TDDFT.and..not.COLLISIONS_have_HARTREE) then
    !
    ! Calculate V_xc
    !

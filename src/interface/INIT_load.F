@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use com,           ONLY:grid_paths
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
-&                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,GW_terminator_E,GW_terminator_Kind,&
+&                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
@@ -135,7 +135,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'optics',  '[R OPT] Optics')
  call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
  call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'bsk',     '[R BSK] Bethe Salpeter Equation kernel')
  call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
  call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
  call it('r',defs,'dipoles', '[R   ] Compute the dipoles')
@@ -259,6 +258,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'HARRLvcs', '[HA] Hartree     RL components',QP_ng_SH,G_unit)
  call it(defs,'EXXRLvcs', '[XX] Exchange    RL components',QP_ng_Sx,G_unit)
  call it('f',defs,'UseNLCC',  '[XC] If present, add NLCC contributions to the charge density ',verb_level=V_qp)
+ call it(defs,'VXCRLvcs', '[XC] XCpotential RL components',QP_ng_Vxc,G_unit)
  call it(defs,'CORRLvcs', '[GW] Correlation RL components',QP_ng_Sc,G_unit)
 #if defined _QED
  call it(defs,'QEDRLvcs', '[QED] Vector-Potential G-vectors components',QP_QED_ng,G_unit)

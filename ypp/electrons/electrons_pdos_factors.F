@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -78,8 +78,8 @@ subroutine electrons_pdos_factors(kpts,bands,PDOS_fac)
          if(all(PDOS_kinds(:)/=-1) .and. (ikind<PDOS_kinds(1).or.ikind>PDOS_kinds(2)) ) cycle
          if(all(PDOS_wfcs(:) /=-1) .and. (iwfc <PDOS_wfcs(1) .or.iwfc >PDOS_wfcs(2) ) ) cycle
          !
-         if(all(PDOS_l(:)/=-1) .and. (il<      1+PDOS_l(1) .or.il>      1+PDOS_l(2) ) ) cycle
-         if(all(PDOS_j(:)/=-1) .and. (j2<nint(2.*PDOS_j(1)).or.j2>nint(2.*PDOS_l(2))) ) cycle
+         if(all(PDOS_l(:)/=-1) .and. (il<         1+PDOS_l(1) .or.il>         1+PDOS_l(2) ) ) cycle
+         if(all(PDOS_j(:)/=-1) .and. (j2<nint(2._SP*PDOS_j(1)).or.j2>nint(2._SP*PDOS_j(2))) ) cycle
          !
          !PDOS_m(2)
          !

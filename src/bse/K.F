@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -249,7 +249,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======================
  if (l_bs_fxc) then
    !  
-   if (iq==1) call DIPOLE_driver(Ken,Xk,X,BSS_q0)
+   !if (iq==1) here put dipoles I/O
+   if (iq==1) stop
    !
    ! Allocation
    !-----------

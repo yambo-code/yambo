@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -38,6 +38,9 @@ subroutine YPP_SET_defaults()
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
+#if defined _YPP_SC
+ use YPP,            ONLY:l_mean_potential
+#endif
 #if defined _YPP_MAGNETIC
  use YPP,            ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif

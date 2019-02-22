@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,6 +46,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
 #if defined _YPP_SC
+ use YPP,            ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
 #endif
 #if defined _YPP_RT || defined _YPP_SC

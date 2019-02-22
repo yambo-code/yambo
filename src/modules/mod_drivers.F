@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -78,8 +78,8 @@ module drivers
  logical :: l_chi                =.FALSE.
  logical :: l_em1d               =.FALSE.
  logical :: l_em1s               =.FALSE.
+ logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
- logical :: l_bsk                =.FALSE.
  logical :: l_bss                =.FALSE.
  logical :: l_kerr               =.FALSE.
  logical :: l_anomalous_Hall     =.FALSE.

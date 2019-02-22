@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
- use vec_operate,    ONLY:cross_product,c2a
+ use vec_operate,    ONLY:cross_product,c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
 #if defined _SC
@@ -48,6 +48,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         X_xc_functional,setup_global_XC,K_kind,K_xc_functional,loaded_WF_xc_string,&
 &                         X_perturbation,G_perturbation,K_perturbation,WF_kind,WF_xc_functional,WF_perturbation
 #endif
+ !
 #include <memory.h>
  !
  type(levels)    ::en,Xen,Ken
@@ -99,17 +100,9 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  ! DL vol
  !
- DL_vol=0.
- rv=cross_product(a(2,:),a(3,:))
- DL_vol=abs(dot_product(a(1,:),rv))
+ call define_b_and_DL_vol()
  call msg('r','DL volume [au]:',DL_vol)
  RL_vol=(2._SP*pi)**3/DL_vol
- !
- ! RL unit vectors 
- !
- b(1,:)=cross_product(a(2,:),a(3,:))*2._SP*pi/DL_vol
- b(2,:)=cross_product(a(3,:),a(1,:))*2._SP*pi/DL_vol
- b(3,:)=cross_product(a(1,:),a(2,:))*2._SP*pi/DL_vol
  !
  call msg('nr','Reciprocal Lattice(RL) unit cell [iku  /  cc]')
  rv=b(1,:)

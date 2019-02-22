@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG AC
@@ -48,6 +48,7 @@ module nl_optics
  ! Current
  !
  complex(SP)    :: NL_J(6)
+ complex(SP)    :: NL_initial_J(6)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
  !
@@ -117,7 +118,6 @@ module nl_optics
  !
  logical :: eval_COLLISIONS
  logical :: eval_dG
- logical :: eval_OVERLAPS
  !
  ! Non-linear spectra parameters
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,8 +41,10 @@ subroutine TDDFT_ALDA_G_space(E,k)
  ! 
  ! Work Space
  !
- integer                  :: i1,i2
+ integer                  :: i1,i2,nG
  complex(DP), allocatable :: F_xc_DP(:)
+ !
+ integer, external        :: G_index_energy_factor
  !
  if (allocated(FXC)) return
  !
@@ -56,7 +58,9 @@ subroutine TDDFT_ALDA_G_space(E,k)
  ! WF distributed & load
  !=======================
  !
- call WF_load(WF,0,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
+ nG=G_index_energy_factor(FXC_n_g_corr,4._SP)
+ !
+ call WF_load(WF,nG,1,(/1,E%nbm/),(/1,k%nibz/),title='-Rho')
  !
  ! ALDA functional
  !

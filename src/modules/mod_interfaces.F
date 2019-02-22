@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -176,8 +176,9 @@ module interfaces
      type(MPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
      use X_m,           ONLY:X_t
+     use DIPOLES,       ONLY:DIPOLE_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
      implicit none
@@ -185,6 +186,7 @@ module interfaces
      type(bz_samp)            ::Xk,q
      character(*)             ::ENVIRONMENT
      type(X_t),       optional::X
+     type(DIPOLE_t),  optional::Dip
      logical,         optional::RESET
    end subroutine
    !

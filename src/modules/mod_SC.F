@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -121,16 +121,16 @@ module SC
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_alloc
+     use DIPOLES,        ONLY:DIP_alloc
      !
      implicit none
      !
      call H_free()
      !
-     call X_alloc('DIP_P')
-     call X_alloc('DIP_iR')
-     call X_alloc('DIP_spin')
-     call X_alloc('P_square')
+     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_iR')
+     call DIP_alloc('DIP_spin')
+     call DIP_alloc('P_square')
      !
      YAMBO_FREE(QP_Sc)
      !

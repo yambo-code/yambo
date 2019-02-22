@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH, DS, AF, IM
@@ -29,6 +29,7 @@ subroutine p2y_pseudo(k)
  use pw_wfc_module
  !
  use pars,                  ONLY:SP,DP
+ use com,                   ONLY:error
  use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
@@ -154,15 +155,17 @@ subroutine p2y_pseudo(k)
  !
  if ( any(atoms%pseudo(:)%is_uspp) ) then
    !
+#ifndef _USPP
+   call error("[PPs] Ultrasoft PP not supported")
+#endif
    call init_us_1()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_USPP_pwscf(ID)
    !
+   !call PP_uspp_free()
+   !
  endif
-!!
-!call PP_uspp_free()
-!!
  !
  ! cleanup
  !

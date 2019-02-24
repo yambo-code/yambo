@@ -26,9 +26,10 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use pars,           ONLY:SP,cZERO
  use DIPOLES,        ONLY:P_square
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spin
  use hamiltonian,    ONLY:V_hartree_sc,Hzero
  use units,          ONLY:HA2EV
+ use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_sc_is_libDFT,l_use_Hxc_collisions,l_sc_hartree
  use real_time,      ONLY:RT_nk,RT_bands,XC0,HARTREE0, &
 &                         G_lesser_reference,RT_Vnl_xc,eval_energy
@@ -45,6 +46,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  real(SP),      intent(out):: Energies(5),dE_IP
  character(3),  intent(in) :: what
  !
+ real(SP) , allocatable    :: E_xc_rt(:,:)
  complex(SP) :: G_full(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk),              &
 &               dE_tot,dE_kin,dE_ion,dE_h,dE_xc,dE_hxc,dE_h_sc,E_xc_sc,E_xc_ref,dE_xc_sc,dE_hxc_sc
  !
@@ -123,9 +125,14 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
      !
      call XC_potential_driver(en,k,WF_KIND,WF_xc_functional,0)
      !
-     call RT_average_operator(N_V=1,O_VALUE=E_xc_ref,O_REAL=E_xc,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
-     call RT_average_operator(N_V=1,O_VALUE=E_xc_sc, O_REAL=E_xc,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
+     allocate(E_xc_rt(fft_size,n_spin))
+     E_xc_rt(:,1)=E_xc
+     if(n_spin==2) E_xc_rt(:,2)=E_xc
      !
+     call RT_average_operator(N_V=1,O_VALUE=E_xc_ref,O_REAL=E_xc_rt,G=G_lesser_reference,en=en,k=k,nK_mem=k%nibz)
+     call RT_average_operator(N_V=1,O_VALUE=E_xc_sc, O_REAL=E_xc_rt,G=G_full            ,en=en,k=k,nK_mem=k%nibz)
+     !
+     deallocate(E_xc_rt)
      dE_xc_sc = (E_xc_sc-E_xc_ref)-dE_xc
      !
    endif

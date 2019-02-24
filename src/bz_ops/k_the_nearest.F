@@ -88,7 +88,13 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err)
    do is=1,nsym
      v=k_rotated(:,is)-k(i1,:)
      !
-     if(.not.present(k_symm)) call k2bz(v)
+     if(.not.present(k_symm)) then
+       call c2a(v_in=v,mode='ki2a')
+       v(1)=v(1)-nint(v(1))     
+       v(2)=v(2)-nint(v(2))     
+       v(3)=v(3)-nint(v(3))   
+       call c2a(v_in=v,mode='ka2i')
+     endif
      !
      if(present(k_dist)) k_dist(i1)=min(k_dist(i1),iku_v_norm(v))
      if ( iku_v_norm(v)<abs(k_distance_loc-iku_v_norm(k_iku_zero)) ) then

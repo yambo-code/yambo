@@ -19,7 +19,6 @@ void cclock (cpu)         /* OK for ibm, hp with sppuxOS, ... */
 #endif
 
 double* cpu;
-
 {
-    *cpu = ((double) clock()) / CLOCKS_PER_SEC;
+ *cpu = ((double) clock()) / CLOCKS_PER_SEC;
 }

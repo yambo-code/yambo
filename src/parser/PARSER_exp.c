@@ -21,9 +21,8 @@
 #include <ctype.h>
 #include <gsl_complex.h>
 #include <gsl_complex_math.h>
-
-#include "parser.h"
-#include "symbols.h"
+#include <parser.h>
+#include <symbols.h>
 
 static char *par_string;
 static int par_pos;

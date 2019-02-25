@@ -19,7 +19,7 @@
 
 #include "c_defs.h"
 
-void F90_FUNC_(imkdir, IMKDIR)
+void C_FUNC(imkdir, IMKDIR)
                  (char *name) 
 {
         struct stat buf;
@@ -27,45 +27,45 @@ void F90_FUNC_(imkdir, IMKDIR)
         mkdir(name, 0775);
 }
                  
-void F90_FUNC_(ichdir, ICHDIR)
+void C_FUNC(ichdir, ICHDIR)
                  (char *name)
 {
         chdir(name);
 }
                  
-void F90_FUNC_(irename, IRENAME)
+void C_FUNC(irename, IRENAME)
                  (char *namein, char *nameout)
 {       
         rename(namein,nameout);
 }
 
-void F90_FUNC_(iremove, IREMOVE)
+void C_FUNC(iremove, IREMOVE)
                  (char *name)
 {
         remove(name);
 }
 
-void F90_FUNC_(isystem, ISSYSTEM)
+void C_FUNC(isystem, ISSYSTEM)
                  (char *name, int* ierr)
 {
         *ierr=system(name);
 }
 
-void F90_FUNC_(igetcwd, IGETCWD)
+void C_FUNC(igetcwd, IGETCWD)
                  (char* name, int* ln)
 {
   getcwd(name,256);
   *ln=strlen(name);
 }
  
-void F90_FUNC_(igethname, IGETHNAME)
+void C_FUNC(igethname, IGETHNAME)
                  (char* name, int* ln)
 {
   gethostname(name,256);
   *ln=strlen(name);
 }
 
-void F90_FUNC_(ifolder_list, IFOLDER_LIST)
+void C_FUNC(ifolder_list, IFOLDER_LIST)
                  (char* folder, char* list, int* ln)
 {
  DIR *dir,*subdir;

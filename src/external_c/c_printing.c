@@ -33,13 +33,13 @@ int guess_winsize()
   width = ws.ws_col - 1;
  return width;
 };
-int F90_FUNC_(win_size, WIN_SIZE)(int *win_width)
+int C_FUNC(win_size, WIN_SIZE)(int *win_width)
 {
  *win_width = 0;
  *win_width = guess_winsize();
  return 0;
 };
-int F90_FUNC_(c_fprintf, C_FPRINTF)(char *lfmt, char *msg,char *rfmt, char *sfmt)
+int C_FUNC(c_fprintf, C_FPRINTF)(char *lfmt, char *msg,char *rfmt, char *sfmt)
 {
  if (strcmp(lfmt,"r")==0) fprintf(stderr,"\r");
  if (strcmp(lfmt,"n")==0) fprintf(stderr,"\n");

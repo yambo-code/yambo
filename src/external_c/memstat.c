@@ -20,7 +20,7 @@
 #if defined(HAVE_MALLINFO) && !defined(__QK_USER__) && !defined(SUN__MALLINFO) 
 #include <malloc.h>
 
-void F90_FUNC_(memstat,MEMSTAT)(int *kilobytes)
+void C_FUNC(memstat,MEMSTAT)(int *kilobytes)
 {
 
   struct mallinfo info;  
@@ -39,7 +39,7 @@ void F90_FUNC_(memstat,MEMSTAT)(int *kilobytes)
 #endif
 
 #else
-void F90_FUNC_(memstat,MEMSTAT)(int *kilobytes)
+void C_FUNC(memstat,MEMSTAT)(int *kilobytes)
 {
   *kilobytes = -1;
 #endif

@@ -5,16 +5,14 @@ GNU General Public License. See the file `License'
 in the root directory of the present distribution,
 or http://www.gnu.org/copyleft/gpl.txt .
 */
-
-/* fortran-to-C naming convention, for functions with and without
-   underscores in the name (some compilers treat them differently) */ 
-
+/*
+ C wrapper
+*/ 
 #if defined _C_US
- #define F90_FUNC_(name,NAME) name ## _
+ #define C_FUNC(name,NAME) name ## _
 #else
- #define F90_FUNC_(name,NAME) name
+ #define C_FUNC(name,NAME) name
 #endif
-
 #if defined(_WIN32)
 #include <windows.h>
 #include <stdint.h>

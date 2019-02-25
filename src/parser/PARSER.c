@@ -20,8 +20,8 @@
 #include <c_defs.h>
 #include <ctype.h>
 #include <math.h>
-#include "parser.h"
-#include "symbols.h"
+#include <parser.h>
+#include <symbols.h>
 
 static FILE *fout;
 

@@ -41,7 +41,6 @@
 /*
  ...Subroutines/functions
 */
-#include <command_line_alt.h>
 #include <command_line.h>
 #include <input_file.h>
 /*

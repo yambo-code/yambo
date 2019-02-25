@@ -96,12 +96,17 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
    LIBXC_message_done=.TRUE.
  endif
  !
+ write(*,*) "linea 99",FUNCTIONAL,local_exx_fraction
  call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction,&
 &                     EXX_SCREENING=local_exx_screening)
+ write(*,*) "linea 102"
  if (local_exx_fraction.gt.rZERO) then
+ write(*,*) "linea 104"
    if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
+ write(*,*) "linea 106"
    call msg('rsn','[xc] Hybrid functional. EXX fraction: ',EXX_FRACTION)
  endif
+ write(*,*) "linea 108"
  !
  if (local_exx_screening.gt.rZERO) then
    if (present(EXX_FRACTION)) EXX_SCREENING = local_exx_screening 

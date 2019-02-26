@@ -152,7 +152,6 @@ module mod_xc2y
      type(xc_f90_pointer_t)  p, info
      integer ifunc, func
      !
-     write(*,*) "linea 155", yamboID
      if (yamboID == XC_NOT_AVAILABLE) return
      XC_yamboID2kind = 0
      do ifunc = 1,2

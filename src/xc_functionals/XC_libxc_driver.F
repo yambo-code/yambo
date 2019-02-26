@@ -41,7 +41,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use wrapper,        ONLY:real_V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,F_xc,magn,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
-&                         xc_spin,xc_spin_map1
+&                         xc_spin,xc_spin_map1, &
+&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,XC_HYB_GGA_XC_PBEH
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
@@ -51,7 +52,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  type(levels) ::en
  type(bz_samp)::Xk
- integer      ::FUNCTIONAL,ORDER
+ integer      ::FUNCTIONAL,FUNCTIONALTMP,ORDER
  real(SP), optional :: EXX_FRACTION, EXX_SCREENING
  !
  ! Work Space
@@ -60,6 +61,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  integer  :: io_err,ID
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
+ real(DP) :: exsr
  !
  ! XC routines arrays
  !
@@ -85,22 +87,28 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Convert and Initialize
  !===============================
  !
+ exsr=0._DP
  tmp_exc=0._DP
  tmp_vxc=0._DP
  tmp_fxc=0._DP
+ FUNCTIONALTMP=0
+!Set the functional as a PBE to get Exc, next calculate the GUA-PBE Exc as
+!Exc=Exc(PBE)-alfa*Ex(PBE,SR) next add the HF part.
  !
- write(*,*) "fnctl(1) to be defined in xc_setup for GAU_PBE"
- stop
- call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
+ if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
+   FUNCTIONALTMP=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
+   FUNCTIONAL=101130   !  This is semi-local PBE  XC_HYB_GGA_XC_PBEH*XC_FACTOR
+ endif
+   call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
+   if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) FUNCTIONAL=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
  !
- write(*,*) "linea 94", FUNCTIONAL,fnctl(1)%family,XC_FAMILY_HYB_GGA,EXX_FRACTION
- local_exx_fraction = RZERO
- if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
-   call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
-   local_exx_fraction = fnctl(1)%exx_fraction
- end if
+   local_exx_fraction = RZERO
+   if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
+     call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
+     local_exx_fraction = fnctl(1)%exx_fraction
+   end if
  !
- EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
+   EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
  !
  !
  !==========================
@@ -242,6 +250,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
+         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
+            call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr)
+!            call pbexgau (rho, grho, sxsr, v1xsr, v2xsr, gau_parameter)
+         endif
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          ! Yambo internal for V_xc
@@ -254,7 +266,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    end if
  enddo
  !
- if (order==0) E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+ if (order==0) then 
+   E_xc_val = real_V_dot_V(fft_size,rho,E_xc(:))
+   if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*exsr
+ endif
  !
  if (EvaluateDGradient) then
    YAMBO_FREE(sigma)

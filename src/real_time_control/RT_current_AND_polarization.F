@@ -45,7 +45,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
 &                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
- use X_m,            ONLY:global_gauge
  use parallel_m,     ONLY:PAR_DIPk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  use RT_control,     ONLY:RT_do_it

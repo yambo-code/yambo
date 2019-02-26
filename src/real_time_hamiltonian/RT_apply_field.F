@@ -52,7 +52,9 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  !
  call timing('RT Apply Field',OPR='start')
  !
- if(trim(global_gauge)=='velocity') then
+ select case(trim(global_gauge))
+   !
+ case('velocity')
    !
    ! Velocity gauge
    !================
@@ -94,7 +96,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      enddo
    enddo
    !
- else  
+ case('length')
    !
    ! Length gauge
    !===============
@@ -155,7 +157,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
      enddo
    enddo
- endif
+   !
+ end select
  !
  call timing('RT Apply Field',OPR='stop')
  !

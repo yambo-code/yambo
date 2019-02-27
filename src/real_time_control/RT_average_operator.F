@@ -33,6 +33,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  use electrons,      ONLY:n_sp_pol,n_spin,levels
  use FFT_m,          ONLY:fft_size
  !use DIPOLES,        ONLY:Dipole_Energy_treshold
+ use interfaces,     ONLY:V_real_space_to_H
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
@@ -211,7 +212,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
        !
        ! Warning: for nspinor=2 the Vxc countribution could be wrong
        !
-       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,O_REAL,Hk_tmp,WF,'def')
+       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,Hk_tmp,WF,'def',V=O_REAL)
        !
      endif
      !

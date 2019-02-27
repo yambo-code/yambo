@@ -69,6 +69,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
+ use interfaces,     ONLY:V_real_space_to_H
  !
  implicit none
  !
@@ -167,14 +168,10 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
-     if (n_spinor==1 )   call V_real_space_to_H(ik,1,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-     if (n_spinor==2 ) then
-       if(eval_HARTREE)  call V_real_space_to_H(ik,1,V_hartree_sc,H_nl_sc,WF,'def')
-       if(eval_DFT)      call V_real_space_to_H(ik,1,V_xc_sc     ,H_nl_sc,WF,'xc ')
-       ! GPL_EXCLUDE_START
-       if(l_update_SOC)  call Vgrad_real_space_to_H(ik,V_scf_grad,H_nl_sc,WF)
-       ! GPL_EXCLUDE_END    
-     endif
+     call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
+     ! GPL_EXCLUDE_START
+     if(n_spinor==2.and.l_update_soc) call Vgrad_real_space_to_H(ik,H_nl_sc,WF,V_scf_grad)
+     ! GPL_EXCLUDE_END
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)
      !

@@ -32,7 +32,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:el_density_and_current,WF_load
+ use interfaces,     ONLY:el_density_and_current,WF_load,V_real_space_to_H
  use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
@@ -139,7 +139,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      ! ... then remove Vh[rho_0] 
      !===========================
      !
-     call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Hzero(:,:,ik,i_sp_pol),WF,'def')
+     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-V_hartree_sc)
      !
      ! ... then remove Vxc[rho_0] also
      !=================================

@@ -58,6 +58,7 @@ subroutine RT_start_and_restart(E,k,q)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
+ use interfaces,     ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
@@ -105,8 +106,8 @@ subroutine RT_start_and_restart(E,k,q)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,HARTREE0(:,:,ik,i_sp_pol),WF,'def') 
-       call V_real_space_to_H(ik,i_sp_pol,V_xc,        XC0(:,:,ik,i_sp_pol),WF,'xc ') 
+       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc) 
+       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc) 
      enddo
    enddo
    !

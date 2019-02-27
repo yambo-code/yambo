@@ -72,6 +72,7 @@ subroutine p2y_db1(en,k)
  !---------------------------------------------------------------------*
  !
  call get_xc
+ write(*,*)  "linea 75", GS_xc_FUNCTIONAL
  call msg('s','XC functional...'//xc_string(GS_xc_FUNCTIONAL))
  call msg('s','EXX fraction...',GS_exx_FRACTION)
  call msg('s','EXX screening...',GS_exx_SCREENING)

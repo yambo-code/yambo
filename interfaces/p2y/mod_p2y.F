@@ -843,7 +843,6 @@ contains
    use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,XC_FACTOR,XC_HYB_GGA_XC_GAUPBE      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
-
    select case (trim(dftdata_fmt))
    case ("pw_export")
       !
@@ -856,13 +855,17 @@ contains
       !
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
       !
+      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       call qexml_read_exx(exx_fraction=pw_exx_fraction, &
 &                         screening_parameter=pw_screening_parameter, & 
 &                         exx_is_active=pw_exx_is_active, ierr=ierr)
       if (ierr==0) then
-         if (pw_exx_is_active) then 
+         if (pw_exx_is_active) then
             GS_exx_FRACTION = pw_exx_fraction
             GS_exx_SCREENING= pw_screening_parameter
          endif

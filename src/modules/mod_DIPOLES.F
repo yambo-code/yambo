@@ -46,6 +46,7 @@ module DIPOLES
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
@@ -99,6 +100,10 @@ module DIPOLES
          if (allocated(DIP_P)) return
          YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
+       case('DIP_v')
+         if (allocated(DIP_v)) return
+         YAMBO_ALLOC(DIP_v,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         DIP_v=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
          YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
@@ -132,6 +137,9 @@ module DIPOLES
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          YAMBO_FREE(DIP_P)
+       case('DIP_v')
+         if (.not.allocated(DIP_v)) return
+         YAMBO_FREE(DIP_v)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          YAMBO_FREE(DIP_S)

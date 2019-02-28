@@ -38,7 +38,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim,pp_factor
  use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_P_spinor,use_g_space_approach
+ use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach
  use X_m,                 ONLY:l_X_terminator
  use IO_m,                ONLY:io_control,RD_CL,RD
  use wave_func,           ONLY:wf_ng,WF
@@ -184,6 +184,25 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          !================================
          call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
+         !=====
+         ! <P>
+         !=====
+         ! P_vc=rho
+         !
+         if (l_eval_DIP_P) then
+           !
+           DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
+           !
+           ! GPL_EXCLUDE_START
+           !
+#if defined _RT
+           if (l_real_time_magn_dipoles) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
+#endif
+           !
+           ! GPL_EXCLUDE_END
+           !
+         endif
+         !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
@@ -197,33 +216,19 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          if(l_X_terminator.and.ic<=Dip%ib_lim(1)) Dipole_Energy_treshold=Dip%Energy_treshold_vv
          !
          !=====
-         ! <P>
+         ! <v>
          !=====
-         ! P_vc=rho
+         ! v_vc=rho
          !
          if (l_eval_DIP_P) then
            !
            ! See for this PRB 48, 11789 (1993), definition of p_eff
            !
-           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
+           if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=rho
            if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
-             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
+             if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+             if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=rho*Ev_m_Ec_QP/Ev_m_Ec
            endif
-           !
-           ! GPL_EXCLUDE_START
-           !
-#if defined _RT
-           if (l_real_time_magn_dipoles) then
-             if (.not.(allocated(Xen%Eo).or.allocated(Xen%W))) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
-             if (     (allocated(Xen%Eo).or.allocated(Xen%W))) then
-               if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=cZERO
-               if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor*Ev_m_Ec_QP/Ev_m_Ec
-             endif
-           endif
-#endif
-           !
-           ! GPL_EXCLUDE_END
            !
          endif
          !

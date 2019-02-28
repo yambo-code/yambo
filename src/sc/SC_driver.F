@@ -42,7 +42,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index,&
-&                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+&                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi,V_real_space_to_H
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use DIPOLES,        ONLY:DIPOLE_t
@@ -369,11 +369,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #endif
      ! Add local V_xc
      !
-     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WFo,'xc ')
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
      !
      ! Add V_Hartree
      !
-     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WFo,'def')
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
      !
      call PP_redux_wait(H_nl_sc)
      !

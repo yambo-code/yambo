@@ -32,7 +32,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  use FFT_m,              ONLY:fft_size
  use R_lattice,          ONLY:bz_samp
  use electrons,          ONLY:levels,n_sp_pol,n_spinor
- use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_P
+ use DIPOLES,            ONLY:DIPOLE_t,DIP_iR,DIP_v
  use X_m,                ONLY:l_X_terminator
  use com,                ONLY:error
  use LIVE_t,             ONLY:live_timing
@@ -49,12 +49,16 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  ! Work space
  !
- integer                      :: ik,ik_mem,i_sp_pol,i_spinor,i_spin,ic,iv,ic_min,&
+ integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
 &                                ic_wf,iv_wf,idir,n_LT_steps
  real(SP)                     :: Ev_m_Ec
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
+ ! 
+ call fft_setup(0,1,.true.)      ! FFT size
  !
- call load_cc(.false.,.true.)
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ !
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
@@ -101,7 +105,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
              !
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
 &                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
-&                             x_cc(1:fft_size,idir)*WF%c(1:fft_size,i_spinor,ic_wf) )
+&                             x_cc(1:fft_size,idir,1)*WF%c(1:fft_size,i_spinor,ic_wf) )
              !
            enddo
          enddo
@@ -121,7 +125,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
      enddo
      !
      !=====
-     ! <P>
+     ! <v>
      !=====
      if(.not.Dip%force_v_g_space) then
        do iv=Dip%ib(1),Dip%ib_lim(1) 
@@ -132,7 +136,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
            if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_P(idir,ic,iv,ik_mem,i_sp_pol)=DIP_iR(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_v(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec
            enddo
          enddo
        enddo

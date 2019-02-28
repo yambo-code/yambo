@@ -27,13 +27,16 @@ subroutine electrons_dos(Xk,Xen)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
+ use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
  use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
-&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental
- use com,            ONLY:msg,of_open_close
+&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
+&                         l_pdos
+ use com,            ONLY:msg,of_open_close,warning
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
  use stderr,         ONLY:intc
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -43,12 +46,16 @@ subroutine electrons_dos(Xk,Xen)
  ! Work Space
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
- real(SP),allocatable  :: WF_fac(:,:,:)
- integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,ID
+ real(SP), external    :: RIntegrate
+ real(SP),allocatable  :: SPIN_fac_v(:,:,:)
+ real(SP),allocatable  :: PDOS_fac_v(:,:,:)
+ real(SP),pointer      :: SPIN_fac_p(:,:,:)       => null()
+ real(SP),pointer      :: PDOS_fac_p(:,:,:)     => null()
+ !
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
- real(SP), external    :: RIntegrate
  !
  call section('*','Electronic DOS')
  !
@@ -58,6 +65,8 @@ subroutine electrons_dos(Xk,Xen)
  l_DbGD=BZ_DbGd_nbands>0
  !
  if (l_DbGd) DOS_bands(2)=min(DOS_bands(2),BZ_DbGd_nbands)
+ !
+ call parser('Proj_DOS',l_pdos)
  !
  call QP_state_table_setup(Xen)
  call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
@@ -69,13 +78,22 @@ subroutine electrons_dos(Xk,Xen)
  ! DOS on the built-in grid
  !===================================================================
  !
- if (n_spinor==2) then
-   YAMBO_ALLOC(WF_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,2))
-   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,WF_fac)
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD,WF_fac=WF_fac)
- else
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=l_DbGD)
+ ! Load the PDOS coefficient
+ !-----------------------------
+ if (l_pdos) then
+   YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
+   call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
+   PDOS_fac_p => linkM2M(PDOS_fac_v,shape(PDOS_fac_v))
  endif
+ !
+ if (n_spinor==2) then
+   YAMBO_ALLOC(SPIN_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
+   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
+   SPIN_fac_p => linkM2M(SPIN_fac_v,shape(SPIN_fac_v))
+ endif
+ !
+ call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
+&                             SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
  !===================================================================
@@ -83,24 +101,36 @@ subroutine electrons_dos(Xk,Xen)
  !
  if (all(INTERP_grid>0)) then
    !
+   if (l_pdos) call warning(" PDOS and interpolation not yet implemented")
+   !
    N_files=2
-   !
-   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in")
-   !
-   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in")
-   !
-   if (n_spinor==2) call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=WF_fac,SEED_k=Xk,&
-&                                             operation="SPIN_factors_on_built_in",ID_op=ID)
    !
    call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
    !
+   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",ID_op=IDe)
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
    !
+   call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="f_on_built_in",ID_op=IDf)
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="f_on_built_in",QUIET=.TRUE.)
    !
-   if (n_spinor==2) call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
+   if (l_pdos) then
+     call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=PDOS_fac_v,SEED_k=Xk,&
+&                                operation="SPIN_factors_on_built_in",ID_op=IDp)
+     call INTERPOLATION_driver(OUT_k=GRID_k,operation="PDOS_factors_on_built_in")
+     PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP))
+   endif
    !
-   call INTERPOLATION_driver(operation="END")
+   if (n_spinor==2) then
+     call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=SPIN_fac_v,SEED_k=Xk,&
+&                                operation="SPIN_factors_on_built_in",ID_op=IDs)
+     call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
+     SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP))
+   endif
+   !
+   call INTERPOLATION_driver(operation="END",ID_op=IDe)
+   call INTERPOLATION_driver(operation="END",ID_op=IDf)
+   call INTERPOLATION_driver(operation="END",ID_op=IDs)
+   call INTERPOLATION_driver(operation="END",ID_op=IDp)
    !
    do is=1,n_sp_pol
      !
@@ -133,12 +163,10 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   if (n_spinor==2) then
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.,&
-&                                 WF_fac=INTERP_obj(ID)%INTERP)
-   else
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,USE_the_DbGd=.FALSE.)
-   endif
+   ! DOS
+   !
+   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
+&                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.)
    !
  endif
  !
@@ -207,6 +235,9 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! CLEAN...
  !
- YAMBO_FREE(WF_fac)
+ nullify(SPIN_fac_p)
+ nullify(PDOS_fac_p)
+ YAMBO_FREE(SPIN_fac_v)
+ YAMBO_FREE(PDOS_fac_v)
  !
 end subroutine

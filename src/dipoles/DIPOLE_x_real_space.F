@@ -44,7 +44,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
- type(DIPOLE_t),intent(in)    :: Dip
+ type(DIPOLE_t),intent(inout) :: Dip
  logical,       intent(in)    :: idir_todo(3)
  !
  ! Work space
@@ -132,6 +132,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
          if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
          do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
            if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
+           ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
+           Dip%v_eff=.true.
            Ev_m_Ec=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
            if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3

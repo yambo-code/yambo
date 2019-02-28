@@ -134,7 +134,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
  Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
- use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
+ use_dipole_transverse   =.true.
  idir_not_done           =.true.
  !
  Dip%computed='R P'

@@ -339,6 +339,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_v')
    call DIP_alloc('DIP_spin')
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 

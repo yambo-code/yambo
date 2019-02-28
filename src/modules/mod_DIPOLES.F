@@ -64,6 +64,7 @@ module DIPOLES
    real(SP)   :: q0(3)
    real(SP)   :: Energy_treshold
    real(SP)   :: Energy_treshold_vv
+   logical    :: v_eff
    logical    :: Vnl_included
    logical    :: bands_ordered
    logical    :: force_v_g_space
@@ -175,6 +176,7 @@ module DIPOLES
      Dip_out%q0        = Dip_in%q0
      Dip_out%Energy_treshold    = Dip_in%Energy_treshold
      Dip_out%Energy_treshold_vv = Dip_in%Energy_treshold_vv
+     Dip_out%v_eff              = Dip_in%v_eff
      Dip_out%Vnl_included       = Dip_in%Vnl_included
      Dip_out%bands_ordered      = Dip_in%bands_ordered
      Dip_out%force_v_g_space    = Dip_in%force_v_g_space
@@ -196,6 +198,7 @@ module DIPOLES
      Dip%q0=(/1._SP,0._SP,0._SP/)
      Dip%Energy_treshold=1.E-5_SP/HA2EV
      Dip%Energy_treshold_vv=1.E+5_SP/HA2EV
+     Dip%v_eff=.false.
      Dip%Vnl_included=.false.
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.

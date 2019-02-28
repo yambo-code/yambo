@@ -105,6 +105,11 @@ subroutine electrons_dos(Xk,Xen)
    !
    N_files=2
    !
+   IDe=0
+   IDf=0
+   IDp=0
+   IDs=0
+   !
    call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",ID_op=IDe)

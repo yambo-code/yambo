@@ -47,10 +47,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
-<<<<<<< HEAD
-=======
- real(SP)          :: Ev_m_Ec,Ev_m_Ec_QP,W_
->>>>>>> bug-fixes
  !
  if (.not.IO_dip) return
  !

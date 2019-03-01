@@ -47,7 +47,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
- real(SP)          :: Dipole_Energy_treshold,Ev_m_Ec,Ev_m_Ec_QP,W_
+ real(SP)          :: Ev_m_Ec,Ev_m_Ec_QP,W_
  !
  if (.not.IO_dip) return
  !
@@ -136,13 +136,13 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
          !
          if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
          !
-         if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-         if (abs(Ev_m_Ec)> Dipole_Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)= &
+         if (abs(Ev_m_Ec)<=Dip%Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+         if (abs(Ev_m_Ec)> Dip%Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)= &
 &                                                        DIP_P(:,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_QP/Ev_m_Ec
          !
          if (allocated(P_square)) then
-           if (abs(Ev_m_Ec)<=Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
-           if (abs(Ev_m_Ec)> Dipole_Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=&
+           if (abs(Ev_m_Ec)<=Dip%Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
+           if (abs(Ev_m_Ec)> Dip%Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=&
 &                                                      P_square(ic,iv,ik_mem,i_sp_pol)*(Ev_m_Ec_QP/Ev_m_Ec)**2
          endif
          !

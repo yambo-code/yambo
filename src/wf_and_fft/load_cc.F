@@ -74,9 +74,13 @@ subroutine load_cc(manage_zero,x_zero_point,n_coord)
        !
        x_cc(ir,:,n_coord)=tmp_x(:)
        !
+       ! 2018/03/01
+       !============
+       ! DS warning: this implment must be changed for the cases a(i,j)<0 
+       !
        do i_dir=1,3
          if (tmp_x(i_dir)>  tmp_border(i_dir)                ) x_cc(ir,:,n_coord)=x_cc(ir,:,n_coord)-a(i_dir,:)
-         if (tmp_x(i_dir)<=(tmp_border(i_dir)-a(i_dir,i_dir))) x_cc(ir,:,n_coord)=x_cc(ir,:,n_coord)+a(i_dir,:)
+         !if (tmp_x(i_dir)<=(tmp_border(i_dir)-a(i_dir,i_dir))) x_cc(ir,:,n_coord)=x_cc(ir,:,n_coord)+a(i_dir,:)
        enddo
        !
        if(.not.manage_zero) cycle

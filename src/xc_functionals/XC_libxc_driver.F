@@ -76,6 +76,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  real(DP) :: tmp_fxc(xc_spin(1),fft_size),tmp_vxc(n_spin,fft_size),tmp_exc(fft_size)
  real(DP),allocatable :: v1rho(:,:),v1sigma(:,:)
+ real(DP),allocatable :: vx1(:,:),vx2(:,:)
  real(DP),allocatable :: v2rho2(:,:),v2rhosigma(:,:),v2sigma2(:,:)
  logical              :: EvaluateDGradient
  !
@@ -175,6 +176,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      v2rhosigma=0._DP
      v2sigma2=0._DP
    endif
+   if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+     YAMBO_ALLOC(vx1,(n_spin,fft_size))
+     YAMBO_ALLOC(vx2,(xc_spin(1),fft_size))
+     vx1=0._DP
+     vx2=0._DP
+   endif 
    !
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
@@ -246,16 +253,23 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          enddo
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
+     if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        !GAUPBE short range x-energy  and potentials part
+        call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
+     endif
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
-         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
-            call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr)
-!            call pbexgau (rho, grho, sxsr, v1xsr, v2xsr, gau_parameter)
-         endif
+!         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
+!           call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1),exsr)
+!         endif
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
+!         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+         !GAUPBE short energy part of the x potential
+!           call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
+!         endif
          ! Yambo internal for V_xc
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
        case(2)
@@ -284,6 +298,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_FREE(v2rhosigma)
    YAMBO_FREE(v2sigma2)
  endif
+ if (EvaluateDGradient.and.(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)) then
+   YAMBO_FREE(vx1)
+   YAMBO_FREE(vx2)
+   endif
  !
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !

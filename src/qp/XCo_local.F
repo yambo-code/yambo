@@ -101,14 +101,12 @@ subroutine XCo_local(E,Xk)
    else
 #endif
      ! evaluate E_xc as a double check against DFT
-     write(*,*) "linea  104"
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
-     write(*,*) "linea  107"
      ! evaluate v_xc
+     write(*,*) "linea 107 here evaluate potential, local?"
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
-     write(*,*) "linea  111"
 #if defined _RT
    endif
 #endif

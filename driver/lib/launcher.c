@@ -24,6 +24,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <tool.h>
 #include <wrapper.h>
 #include <kind.h>
 #if defined _MPI 

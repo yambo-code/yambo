@@ -227,8 +227,8 @@ get_extlibs:
 # Yambo #
 # 
 yambo: libs
-	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
 	@+LIBS2DO="lib"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_yambo"; $(mk_driver_src)
+	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #

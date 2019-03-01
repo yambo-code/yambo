@@ -24,62 +24,6 @@
 */
 #include <kind.h>
 
-/*
-
-#if defined _test
-#endif
-#if defined _yambo  || _ELPH || _SC  || _RT || _QED || _NL || _MAGNETIC || _KERR 
-#endif
-#if defined _ypp  || _YPP_ELPH || _YPP_RT || _YPP_SC || _YPP_NL || _YPP_MAGNETIC 
-#endif
-
-#if defined _yambo  || _ypp || _a2y || _c2y || _p2y || _e2y || _TEST_MAIN
- char *pj="none";
-#endif
-#if defined _YPP_ELPH || _ELPH
- char *pj="ph";
-#endif
-#if defined _YPP_RT || _RT
- char *pj="rt";
-#endif
-#if defined _YPP_SC || _SC
- char *pj="sc";
-#endif
-
-#if defined _TEST_MAIN
- #define _TEST_MAIN 
- char *tool="driver";
- char *tool_desc="Testing Driver";
-#endif
-#if defined _yambo || 
- #define _YAMBO_MAIN
- char *tool="yambo";
- char *tool_desc="A shiny pot of fun and happiness [C.D.Hogan]";
-#endif
-#if defined _ypp || _YPP_ELPH || _YPP_RT || _YPP_NL || _YPP_SC || _YPP_MAGNETIC 
- #define _YPP_MAIN
- char *tool="ypp";
- char *tool_desc="Y(ambo) P(ost) P(rocessor)";
-#endif
-#if defined _a2y
- char *tool="a2y";
- char *tool_desc="A(binit) 2 Y(ambo) interface";
-#endif
-#if defined _c2y
- char *tool="c2y";
- char *tool_desc="C(pmd) 2 Y(ambo) interface";
-#endif
-#if defined _p2y
- char *tool="p2y";
- char *tool_desc="P(Wscf) 2 Y(ambo) interface";
-#endif
-#if defined _e2y
- char *tool="e2y";
- char *tool_desc="E(TSF) 2 Y(ambo) interface (0.6)";
-#endif
-
-*/
-
 struct tool_struct tool_init( )
 {
  tool_struct tool;

@@ -150,7 +150,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
- call load_cc(.false.,(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/))
+ call load_cc(.false.,(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/),1)
  !
 1 continue
  !

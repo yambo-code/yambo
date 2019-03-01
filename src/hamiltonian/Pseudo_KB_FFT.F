@@ -23,8 +23,8 @@
 !
 subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  !
- use drivers,       ONLY:l_real_time
- use pars,          ONLY:SP,DP,cI
+ use drivers,       ONLY:l_real_time,l_sc_magnetic
+ use pars,          ONLY:SP,DP,cI,cONE
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
@@ -58,15 +58,22 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  endif
 #endif
  !
+#if defined _MAGNETIC
+ if(l_sc_magnetic)  kpt_factor=cONE
+#endif
+ !
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
      !
      i_atom=i_atom+1
      !
-     call load_cc(.false.,atom_pos(:,ia,is),i_atom)
-     !
-     k_dot_x(:)=(kpt(1)*x_cc(:,1,i_atom)+kpt(2)*x_cc(:,2,i_atom)+kpt(3)*x_cc(:,3,i_atom))
-     kpt_factor(:)  =cmplx( cos(k_dot_x(:)),sin(k_dot_x(:)) )
+#if defined _RT
+     if(l_real_time) then
+       call load_cc(.false.,atom_pos(:,ia,is),i_atom)
+       k_dot_x(:)=(kpt(1)*x_cc(:,1,i_atom)+kpt(2)*x_cc(:,2,i_atom)+kpt(3)*x_cc(:,3,i_atom))
+       kpt_factor(:)  =cmplx( cos(k_dot_x(:)),sin(k_dot_x(:)) )
+     endif
+#endif
      !
      do i_pp = 1, pp_n_l_times_proj_max
        il = pp_table(1,is,i_pp)

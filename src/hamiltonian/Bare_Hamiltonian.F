@@ -71,7 +71,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    call Pseudo_KB_G_to_R_space(k,E)  
    call Pseudo_Hamiltonian(Xk,E,.true.)
-   !call Pseudo_Hamiltonian(Xk,E,.false.)
+   call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !

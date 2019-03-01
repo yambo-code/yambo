@@ -49,8 +49,8 @@ subroutine electrons_dos(Xk,Xen)
  real(SP), external    :: RIntegrate
  real(SP),allocatable  :: SPIN_fac_v(:,:,:)
  real(SP),allocatable  :: PDOS_fac_v(:,:,:)
- real(SP),pointer      :: SPIN_fac_p(:,:,:)       => null()
- real(SP),pointer      :: PDOS_fac_p(:,:,:)     => null()
+ real(SP),pointer, contiguous :: SPIN_fac_p(:,:,:) => null()
+ real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
  !
  integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp
  character(schlen)     :: titles(DOS_bands(2)+4)
@@ -83,13 +83,13 @@ subroutine electrons_dos(Xk,Xen)
  if (l_pdos) then
    YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
    call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
-   PDOS_fac_p => linkM2M(PDOS_fac_v,shape(PDOS_fac_v))
+   PDOS_fac_p => linkM2M(PDOS_fac_v,shape(PDOS_fac_v),lbound(PDOS_fac_v),ubound(PDOS_fac_v))
  endif
  !
  if (n_spinor==2) then
    YAMBO_ALLOC(SPIN_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
-   SPIN_fac_p => linkM2M(SPIN_fac_v,shape(SPIN_fac_v))
+   SPIN_fac_p => linkM2M(SPIN_fac_v,shape(SPIN_fac_v),lbound(SPIN_fac_v),ubound(SPIN_fac_v))
  endif
  !
  call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
@@ -122,14 +122,16 @@ subroutine electrons_dos(Xk,Xen)
      call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=PDOS_fac_v,SEED_k=Xk,&
 &                                operation="SPIN_factors_on_built_in",ID_op=IDp)
      call INTERPOLATION_driver(OUT_k=GRID_k,operation="PDOS_factors_on_built_in")
-     PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP))
+     PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
+     &                     lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
    endif
    !
    if (n_spinor==2) then
      call INTERPOLATION_driver(bands=DOS_bands,SEED_R3=SPIN_fac_v,SEED_k=Xk,&
 &                                operation="SPIN_factors_on_built_in",ID_op=IDs)
      call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
-     SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP))
+     SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP),&
+     &                     lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
    endif
    !
    call INTERPOLATION_driver(operation="END",ID_op=IDe)

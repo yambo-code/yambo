@@ -22,28 +22,22 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
+#include <stdio.h>
 #include <string.h>
 /*
  ...definitions
 */
 #include <editor.h>
 #include <codever.h>
-#include <tool_init.h>
 /* 
  ...Command line options structure
 */
 #include <kind.h>
-#include <options_maker.h>
 /* 
- ...Launcher
+ ...Library
 */
-#include <launcher.h>
-/*
- ...Subroutines/functions
-*/
-#include <command_line.h>
-#include <input_file.h>
-/*
+#include <driver.h>
+/* 
   MAIN
 */
 int main(int argc, char *argv[])

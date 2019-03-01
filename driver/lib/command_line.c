@@ -53,8 +53,7 @@ The struct option structure has these fields:
 #include <getopt.h>
 #include <string.h>
 #include <kind.h>
-#include <usage.h>
-#include <load_environments.h>
+#include <driver.h>
 
 struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi)
 {

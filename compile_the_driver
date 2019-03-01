@@ -5,7 +5,7 @@ cd driver/lib
 file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
 echo $file_list
 for file in $file_list; do
- gcc $OPT -c $file -I../include  -I../options  
+ gcc $OPT -c $file -I../include  -I../options
 done
 ar -r driver_lib.a *.o
 cd ../../

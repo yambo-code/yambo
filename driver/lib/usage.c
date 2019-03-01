@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <kind.h>
-#include <title.h>
+#include <driver.h>
 
 void usage(options_struct *opts,int verbose, struct tool_struct t)
 {

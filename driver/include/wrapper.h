@@ -42,7 +42,6 @@
 #endif
 /* YAMBO */
 #if defined _YAMBO_MAIN
- #include "yambo.h"
  #if defined _FORTRAN_US
   int yambo_driver_
  #else

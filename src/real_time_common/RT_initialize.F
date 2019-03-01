@@ -67,7 +67,7 @@ subroutine RT_initialize(E,k,q)
  integer                  :: i1,N_T_samplings
  character(6)             :: MSG_ch
  real(SP)                 :: T_memory
- logical                  :: l_Full_RT_T_evolution,l_skip_it
+ logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  integer,         external:: RT_Lifetimes_evaluation_plan
  !
  ! Logicals
@@ -78,9 +78,10 @@ subroutine RT_initialize(E,k,q)
  call parser('RAD_prefactor',        RAD_magnification)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
- call parser('VelGaugeDiam',         l_velocity_gauge_diam)
+ call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  call parser('PfromJ',               l_P_integrating_J)
  call parser('RT_T_evol',            l_Full_RT_T_evolution)
+ l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
  !...updates
  call parser('RTUpdateE',            l_RT_update_Energies)

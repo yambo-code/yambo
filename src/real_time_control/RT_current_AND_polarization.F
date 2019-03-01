@@ -79,7 +79,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !               (it will be computed from the current in the velocity gauge)
  !               The proper value is set in RT_propagate_fields
  !
- if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)-A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
  !
  RT_ind_J=RT_ind_J/DL_vol
  !

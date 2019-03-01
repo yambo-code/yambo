@@ -75,6 +75,16 @@ module YPP
  integer      ::DOS_E_steps    ! Energy steps
  real(SP)     ::DOS_E_step     ! Energy step
  !
+ ! PDOS
+ !
+ logical      ::l_pdos
+ integer      ::PDOS_atoms(2)
+ integer      ::PDOS_kinds(2)
+ integer      ::PDOS_wfcs(2)
+ integer      ::PDOS_l(2)
+ real(SP)     ::PDOS_j(2)
+ integer      ::PDOS_m(2)
+ !
  ! BANDS
  !
  integer               ::BANDS_bands(2)
@@ -247,7 +257,7 @@ module YPP
      integer            :: iq
    end subroutine
    !
-   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -256,9 +266,10 @@ module YPP
      type(bz_samp), intent(in) :: k
      type(levels),  intent(in) :: E
      integer,       intent(in) :: bands(2)
-     real(SP),      intent(out) :: el_dos(:,:),dos_E(:)
+     real(SP),      intent(out):: el_dos(:,:),dos_E(:)
+     real(SP), pointer,  intent(in) :: WF_fac(:,:,:)
+     real(SP), pointer,  intent(in) :: PDOS_fac(:,:,:)
      logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
-     real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
    end subroutine electrons_dos_elemental
    !
  end interface

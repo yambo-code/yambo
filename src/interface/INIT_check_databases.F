@@ -64,11 +64,11 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! Workspace
  !
- integer           :: i1,io_ID,io_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err
+ integer           :: i1,io_ID,io_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT,io_Double_Grid,io_E_SOC_map
+&                     io_COL_CUT,io_Double_Grid,io_E_SOC_map,io_ATMPROJ_pwscf
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -216,6 +216,12 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_KB_abinit_err=io_KB_abinit(io_ID)
+ !
+ ! ATOMIC PROJETIONS pwscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
+ !
  !
  if (io_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)

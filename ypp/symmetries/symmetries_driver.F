@@ -118,6 +118,9 @@ subroutine symmetries_driver(E,Xk)
  ! Rotate KB or Vnl
  call fix_PPs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !
+ ! Rotate atomic projections
+ call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ !
  ! CLEAN
  !=======
  call bz_samp_reset(Xk_save)

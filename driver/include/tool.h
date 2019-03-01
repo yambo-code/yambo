@@ -60,7 +60,6 @@
  tool & desc
 */
 #if defined _TEST_MAIN
- #define _TEST_MAIN 
  char *pj="none";
  char *tool="driver";
  char *tool_desc="Testing Driver";

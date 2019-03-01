@@ -23,6 +23,7 @@
 #include <math.h>
 #include <parser.h>
 #include <symbols.h>
+#include <string.h>
 
 static FILE *fout;
 

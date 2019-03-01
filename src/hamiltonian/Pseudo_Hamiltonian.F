@@ -39,7 +39,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
  use interfaces,    ONLY:WF_load,WF_free
- use io_m,          ONLY:OP_RD,RD,RD_CL,io_control
+ use io_m,          ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -61,7 +61,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,i_atom,ifrag
  !
  ! I / O
- integer                 :: ID,io_KB_real_space_err
+ integer                 :: ID,io_KB_real_space_err,ACT
  integer, external       :: io_KB_real_space
  !
 #if defined _MAGNETIC
@@ -70,11 +70,11 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim))
  !
- call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
  io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  if(io_KB_real_space_err/=0) then
-   call io_control(ACTION=RD_CL,SEC=(/1/),ID=ID)
+   call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
    io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
    YAMBO_FREE(kbv_real_space)
    return
@@ -97,15 +97,22 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
      !
 #if defined _MAGNETIC
-     if(l_sc_magnetic) call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+     if(l_sc_magnetic) then
+       call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+       ACT=OP_RD_CL
+     endif
 #endif
      !
 #if defined _RT
-     if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
+     if(l_real_time) then
+       call timing('Pseudo kbv I/O',OPR='start')
+       if (ifrag==1               ) ACT=OP_RD
+       if (ifrag< n_sp_pol*Xk%nibz) ACT=RD
+       if (ifrag==n_sp_pol*Xk%nibz) ACT=RD_CL
+      endif
 #endif
      !
-     if (ifrag< n_sp_pol*Xk%nibz) call io_control(ACTION=RD,SEC=(/ifrag+1/),ID=ID)
-     if (ifrag==n_sp_pol*Xk%nibz) call io_control(ACTION=RD_CL,SEC=(/ifrag+1/),ID=ID)
+     call io_control(ACTION=ACT,SEC=(/ifrag+1/),ID=ID)
      io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
      !
 #if defined _RT
@@ -115,7 +122,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      endif
 #endif
      !
-     call Pseudo_KB_gauge_factor(gauge_factor)
+     if(.not.l_equilibrium) call Pseudo_KB_gauge_factor(gauge_factor)
      !
      do i1=1,pp_kbv_dim
        !     

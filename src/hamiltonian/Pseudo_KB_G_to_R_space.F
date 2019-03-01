@@ -72,7 +72,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  if(io_KB_abinit_err/=0.and.io_KB_pwscf_err/=0) return
  !
- if(fft_size==0) call fft_setup(0,1,.true.)
+ if(fft_size==0) call fft_setup(0,1,.not.l_sc_magnetic)
  !
  YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
  YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim))

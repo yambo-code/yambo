@@ -112,7 +112,7 @@ subroutine MAG_common_build_A(build)
  !
  YAMBO_FREE(x_cc)
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
- call load_cc(.false.,(/0._SP,0._SP,0._SP/))
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
  ! A(r) Build-Up
  ! Ax , Ay , Az   

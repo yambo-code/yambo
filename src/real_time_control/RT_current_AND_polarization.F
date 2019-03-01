@@ -73,7 +73,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Velocity gauge I must use the correct definition of the J operator
  !
- ! *warning* DS: this is the current at time t, I should use the vecpot at time t
+ ! *warning* DS: The present comment holds for when RT_current is called by RT_propagate fields
+ !               this is the current at time t, I should use the vecpot at time t
  !               However I still do not have it here when the induced field is included
  !               (it will be computed from the current in the velocity gauge)
  !               The proper value is set in RT_propagate_fields

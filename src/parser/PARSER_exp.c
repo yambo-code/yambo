@@ -17,7 +17,6 @@
  02111-1307, USA.
 */
 
-#include <c_defs.h>
 #include <ctype.h>
 #include <gsl_complex.h>
 #include <gsl_complex_math.h>

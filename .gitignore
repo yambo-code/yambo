@@ -26,7 +26,7 @@ include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
 include/xc*.h
-include/c_defs.h
+include/headers/common/have_malloc.h
 include/system/*
 lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc

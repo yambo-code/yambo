@@ -5,8 +5,6 @@
    or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#include "c_defs.h"
-
 double F90_FUNC(etime,ETIME)(tt)
 #if defined _DOUBLE
 double tt[2];

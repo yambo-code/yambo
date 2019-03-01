@@ -16,8 +16,11 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  02111-1307, USA.
 */
-
-#include "c_defs.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <wrapper.h>
+#include <stdio.h>
 
 void C_FUNC(imkdir, IMKDIR)
                  (char *name) 

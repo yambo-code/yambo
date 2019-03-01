@@ -6,7 +6,13 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#include "c_defs.h"
+#include <wrapper.h>
+#if defined(_WIN32)
+#include <windows.h>
+#include <stdint.h>
+#endif
+#include <sys/time.h>
+#include <sys/resource.h>
 
 double C_FUNC(qe_cclock,QE_CCLOCK)()
 /*

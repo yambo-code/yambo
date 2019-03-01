@@ -6,7 +6,8 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#include "c_defs.h"
+#include <wrapper.h>
+#include <sys/resource.h>
 
 void C_FUNC(remove_stack_limit,REMOVE_STACK_LIMIT) (void) {
  

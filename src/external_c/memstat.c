@@ -6,7 +6,8 @@
   or http://www.gnu.org/copyleft/gpl.txt .
 */
 
-#include "c_defs.h"
+#include <wrapper.h>
+#include <have_malloc.h>
 
 /* 
   This function return the numer of kilobytes allocated by the calling process. 

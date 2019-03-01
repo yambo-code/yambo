@@ -21,7 +21,12 @@
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
-#include "c_defs.h"
+
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <wrapper.h>
+#include <unistd.h>
+
 int guess_winsize()
 {
  int width;

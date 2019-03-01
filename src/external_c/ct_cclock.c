@@ -8,7 +8,7 @@
 
 */
 
-#include <time.h>
+#include <sys/time.h>
 
 #if defined _irix || defined _ultrix || defined _dec_alpha
 void cclock_ (cpu)

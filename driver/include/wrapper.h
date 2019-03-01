@@ -22,6 +22,14 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 /*
+ C wrapper
+*/ 
+#if defined _C_US
+ #define C_FUNC(name,NAME) name ## _
+#else
+ #define C_FUNC(name,NAME) name
+#endif
+/*
  F90 wrapper
 */
 #if defined _FORTRAN_US
@@ -29,70 +37,3 @@
 #else
  #define F90_FUNC(name) name
 #endif
-/* 
- Command line options
-*/
-/* TEST */
-#if defined _TEST_MAIN
- #if defined _FORTRAN_US
-  int yambo_
- #else
-  int yambo
- #endif
-#endif
-/* YAMBO */
-#if defined _YAMBO_MAIN
- #if defined _FORTRAN_US
-  int yambo_driver_
- #else
-  int yambo_driver
- #endif
-#endif
-/* YPP */
-#if defined _YPP_MAIN
- #include "ypp.h"
- #if defined _FORTRAN_US
-  int ypp_i_
- #else
-  int ypp_i
- #endif
-#endif
-/* A2Y */
-#if defined _a2y
- #include "a2y.h"
- #if defined _FORTRAN_US
-  int a2y_i_
- #else
-  int a2y_i
- #endif
-#endif
-/* C2Y */
-#if defined _c2y
- #include "c2y.h"
- #if defined _FORTRAN_US
-  int c2y_i_
- #else
-  int c2y_i
- #endif
-#endif
-/* P2Y */
-#if defined _p2y
- #include "p2y.h"
- #if defined _FORTRAN_US
-  int p2y_i_
- #else
-  int p2y_i
- #endif
-#endif
-/* E2Y */
-#if defined _e2y
- #include "e2y.h"
- #if defined _FORTRAN_US
-  int e2y_i_
- #else
-  int e2y_i
- #endif
-#endif
- (int *, int *,int *,int *,int *,int *,int *,int *,
-  char *string, char *in_file, char *in_dir, char *out_dir, char *com_dir, char *job,
-  int string_N, int in_file_N, int in_dir_N, int out_dir_N, int com_dir_N, int job_N);

@@ -58,9 +58,9 @@ libbindir   = @prefix@/lib/bin
 STAMPS   = lib/archive/keep-extlibs-stamp
 CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh driver/include/codever.h src/wf_and_fft/sgfft.F  \
-           src/external_c/.objects Makefile  \
+           src/tools/.objects Makefile  \
            sbin/objects_store.sh driver/include/editor.h \
-           include/headers/common/c_defs.h sbin/generate_gpl.sh
+           include/headers/common/have_malloc.h sbin/generate_gpl.sh
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif
@@ -86,9 +86,9 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 #
 # Libraries (ordered for compiling & linking)
 #
-BASIC_LIBS   = external_c modules memory matrices linear_algebra parallel parser communicate common io \
+BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= driver_lib external_c memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+BASIC_LIBS_LD= driver_lib tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
@@ -118,8 +118,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = driver_lib external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = driver_lib tools memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #

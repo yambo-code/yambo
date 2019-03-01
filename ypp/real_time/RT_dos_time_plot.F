@@ -53,12 +53,12 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
  real(SP),allocatable  :: PDOS_fac_v(:,:,:),RT_PDOS_fac(:,:,:)
  real(SP),allocatable  :: SPIN_fac_v(:,:,:),RT_SPIN_fac(:,:,:)
- real(SP),pointer      :: PDOS_fac_p(:,:,:) => null()
- real(SP),pointer      :: SPIN_fac_p(:,:,:) => null()
+ real(SP),pointer,contiguous :: PDOS_fac_p(:,:,:) => null()
+ real(SP),pointer,contiguous :: SPIN_fac_p(:,:,:) => null()
  !
  real(SP),   external  :: RIntegrate
  !
- integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,lb(3),ub(3)
  logical               :: l_sum_equilibrium,l_separate_eh,space_printed,l_interp,l_skip_occ
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -105,7 +105,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=PDOS_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac))
+   PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac),lbound(RT_PDOS_fac),ubound(RT_PDOS_fac))
    YAMBO_FREE(PDOS_fac_v)
  endif
  !
@@ -116,9 +116,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_SPIN_fac(:,RT_carriers%table(i_RT,3),:)=SPIN_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   SPIN_fac_p => linkM2M(RT_SPIN_fac,shape(RT_SPIN_fac))
+   SPIN_fac_p => linkM2M(RT_SPIN_fac,shape(RT_SPIN_FAC),lbound(RT_SPIN_fac),ubound(RT_SPIN_fac))
    YAMBO_FREE(SPIN_fac_v)
- endif 
+ endif
  !
  ! Map the RT k in RT_k
  !
@@ -173,14 +173,16 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
        call INTERPOLATION_driver(bands=RT_bands,SEED_R3=RT_PDOS_fac,SEED_k=RT_k,&
 &                                operation="PDOS_factors_on_RT_grid",ID_op=ID_pdos)
        call INTERPOLATION_driver(OUT_k=GRID_k,operation="PDOS_factors_on_RT_grid")
-       PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP))
+       PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP),&
+       &                     lbound(INTERP_obj(ID_pdos)%INTERP),ubound(INTERP_obj(ID_pdos)%INTERP))
      endif
      !
      if (n_spinor==2) then
        call INTERPOLATION_driver(bands=RT_bands,SEED_R3=RT_SPIN_fac,SEED_k=RT_k,&
 &                                operation="SPIN_fac_on_RT_grid",ID_op=ID_spin)
        call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_fac_on_RT_grid")
-       SPIN_fac_p => linkM2M(INTERP_obj(ID_spin)%INTERP,shape(INTERP_obj(ID_spin)%INTERP))
+       SPIN_fac_p => linkM2M(INTERP_obj(ID_spin)%INTERP,shape(INTERP_obj(ID_spin)%INTERP),&
+       &                     lbound(INTERP_obj(ID_spin)%INTERP),ubound(INTERP_obj(ID_spin)%INTERP))
      endif
      !
      !... DOS

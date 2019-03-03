@@ -640,8 +640,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'EvPolarization',    '[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
  !
- call DIP_mirror_bands( )
- !
  ! El-Ph
  !
 #if defined _ELPH 
@@ -707,6 +705,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
+ !
+ call DIP_mirror_bands( )
  ! 
  contains 
    !

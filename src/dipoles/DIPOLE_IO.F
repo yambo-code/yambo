@@ -87,7 +87,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if (check.or.io_err/=0) return
  !
- if(writing) call fix_velocity(Dip,1)
+ if(writing) call fix_velocity(Dip,-1)
  !
  if(reading) IO_ACTION=OP_RD_CL
  if(writing) IO_ACTION=OP_APP_CL

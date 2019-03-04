@@ -67,7 +67,7 @@ void usage(options_struct *opts,int verbose, struct tool_struct t)
 #else
   char* HDF5_string="";
 #endif
-  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",t.tool,t.version,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
+  fprintf(stderr,"\nThis is %s %s - %s%s%s%s%s%s -\n",t.tool,t.version_string,MPI_string,OMP_string,CUDA_string,SLK_string,SLEPC_string,HDF5_string); 
   fprintf(stderr,"Usage: %s",t.tool); 
   for(j=0;j<=nr-1;j++)
   {if (strcmp(opts[j].runlevel,"DESC")!=0) 

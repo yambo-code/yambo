@@ -30,7 +30,7 @@ if ( $#argv < 1 ) goto HELP
 if ( $#argv > 1 ) goto HELP
 #
 if ( "$argv[1]" != "r" && "$argv[1]" != "v" && "$argv[1]" != "s" && "$argv[1]" != "p" && "$argv[1]" != "save" ) then
-  echo "Argoument '"$argv"' not recognised. Options are:"
+  echo "Argument '"$argv"' not recognised. Options are:"
   goto HELP
 endif
 #

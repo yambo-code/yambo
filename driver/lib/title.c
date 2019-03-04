@@ -33,6 +33,6 @@ void title(FILE *file_name,char *cmnt,  struct tool_struct t)
  fprintf(file_name,"%s%s\n",cmnt,  "  |: |  |: |  ||: |  ||: |   \\|: |  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  |::|  |:.|:.||:.|:.||::.   /|::.  |");
  fprintf(file_name,"%s%s\n",cmnt,  "  `--\"  `-- --\"`-- --\"`-----\" `-----\"");
- fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,t.tool,t.version);
+ fprintf(file_name,"%s\n%s This is %s %s\n",cmnt,cmnt,t.tool,t.version_string);
  fprintf(file_name,"%s %s \n\n",cmnt,t.desc);
 };

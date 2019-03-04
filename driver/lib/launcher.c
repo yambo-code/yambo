@@ -25,8 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tool.h>
-#include <fortran_driver.h>
 #include <wrapper.h>
+#include <fortran_driver.h>
 #include <kind.h>
 #if defined _MPI 
  #include <mpi.h>

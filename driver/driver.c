@@ -28,7 +28,6 @@
  ...definitions
 */
 #include <editor.h>
-#include <codever.h>
 /* 
  ...Command line options structure
 */
@@ -36,6 +35,7 @@
 /* 
  ...Library
 */
+#include <wrapper.h>
 #include <driver.h>
 /* 
   MAIN
@@ -54,12 +54,18 @@ int main(int argc, char *argv[])
  struct n_options_struct n_options[100];
  /* 
   TOOL initialization
- strcpy(t.editor,editor);
- strcpy(t.tool,tool);
- strcpy(t.desc,tool_desc);
- strcpy(t.version,codever);
+  strcpy(t.tool,tool);
+  strcpy(t.desc,tool_desc);
  */
+ strcpy(tool.editor,editor);
  tool=tool_init();
+ /* 
+  VERSION initialization
+ */
+ F90_FUNC(get_the_version)(&tool.version,&tool.subversion,&tool.patchlevel,&tool.revision,tool.hash);
+ sprintf(tool.version_string,"%i.%i.%i Revision %i Hash %s",tool.version,tool.subversion,
+                                                            tool.patchlevel,tool.revision,tool.hash);
+ printf("TOOL version: %s\n",tool.version_string);
  /*
   Options "maker"
  */ 

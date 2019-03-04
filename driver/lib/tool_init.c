@@ -28,6 +28,7 @@
 struct tool_struct tool_init( )
 {
  tool_struct tool;
+
  return(tool);
 };
 

@@ -1,0 +1,50 @@
+!
+!        Copyright (C) 2000-2019 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AM
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+integer function get_the_version(version,subversion,patchlevel,revision,hash)
+ !
+ implicit none
+ !
+ integer        :: version,subversion,patchlevel,revision
+ character(50)  :: hash
+ !
+ ! Workspace
+ !
+ integer                    :: code_version(3)
+ integer                    :: code_GPL_revision
+ integer                    :: code_revision
+ character(50)              :: code_hash
+ !
+ include 'version.inc'
+ !
+ version=code_version(1)
+ subversion=code_version(2)
+ patchlevel=code_version(3)
+ revision=code_revision
+ hash=code_hash
+ !
+ get_the_version=1
+ !
+ return
+ !
+end 

@@ -27,7 +27,12 @@ typedef struct tool_struct
  char editor[500];
  char tool[500];
  char desc[500];
- char version[500];
+ char version_string[500];
+ char hash[50];
+ int version;
+ int subversion;
+ int patchlevel;
+ int revision;
 } tool_struct;
 
 typedef struct yambo_seed_struct

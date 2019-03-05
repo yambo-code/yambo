@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_driver(X,Xw,Xk,E,k,q)
+subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
@@ -41,10 +41,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index,&
-&                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
+&                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
+ use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
  use xc_functionals, ONLY:E_xc
@@ -66,6 +68,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  type(levels) ::E
  type(bz_samp)::k,q,Xk
  type(X_t)    ::X(2)  ! Xx Em1s
+ type(DIPOLE_t)::Dip
  type(w_samp) ::Xw(2)
  !
  ! Iterations
@@ -85,7 +88,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
@@ -129,26 +132,13 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
  ! 
  call SC_start_and_restart(X,E,Xk)
  !
-#if defined _ELECTRIC
- !
- ! Parallelization for DIPOLES
- ! ======================================
- !
- if(l_sc_electric.or.SC_up_W_iters>0.or.l_sc_exx) then
-   call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
-   if (SC_up_W_iters>0) then 
-     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(2))
-   else
-     call PARALLEL_global_indexes(E,Xk,q,"Response_G_space_Zero_Momentum",X=X(1))
-   endif
- endif
- !
-#endif
- !
  ! DIPOLES
  !=========
- if (l_sc_exx.and.l_SC_cycle) call DIPOLE_driver(E, Xk, X(1), X(1)%q0)
- if (SC_up_W_iters>0)         call DIPOLE_driver(E, Xk, X(2), X(2)%q0)
+ !
+ if ((l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0) ) then
+   call DIPOLE_dimensions(E,Dip,SC_bands,(/0._SP,0._SP,0._SP/))
+   call DIPOLE_IO(k,E,Dip,'read ',io_DIP_err,"SC")
+ endif
  !
  if (.not.any((/l_SC_RESTART,l_SC_cycle,l_NSC_shot/))) return
  !
@@ -380,11 +370,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
 #endif
      ! Add local V_xc
      !
-     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WFo,'xc ')
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
      !
      ! Add V_Hartree
      !
-     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WFo,'def')
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
      !
      call PP_redux_wait(H_nl_sc)
      !
@@ -458,15 +448,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q)
        ! Update dipoles
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_rotate(H_rotation,E,X(2), 1)
-       call DIPOLE_project_along_q(Xk,X(2),X(2)%q0)
-       call DIPOLE_rotate(H_rotation,E,X(2),-1)
+       call DIPOLE_rotate(H_rotation,E,Dip, 1)
+       call DIPOLE_expand_and_project(Xk,Dip)
+       call DIPOLE_rotate(H_rotation,E,Dip,-1)
        !
        ! Recalcolate Xo and X  
        !
        current_iq=0
        call IO_and_Messaging_switch("-report")
-       io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),.true.)
+       io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.true.)
        call IO_and_Messaging_switch("+report")
        !
        ! Reload and rotate wave-functions if W is updated

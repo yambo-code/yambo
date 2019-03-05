@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -120,7 +120,7 @@ PW_VER="no-hdf5-support"
 PW_CPP=
 #
 #if test x"$hdf5" = "xyes" && test "$HDF5_VER" = "parallel"; then
-if test x"$hdf5" = "xyes" ; then
+if test x"$hdf5" = "xyes" && test x"$enable_hdf5_p2y_support" != "xno"; then
   PW_VER="hdf5-support"
   PW_CPP="-D_P2Y_QEXSD_HDF5"
 fi

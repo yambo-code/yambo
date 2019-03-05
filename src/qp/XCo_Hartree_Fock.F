@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
+ use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
  use drivers,       ONLY:l_sc_exx
@@ -58,7 +58,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !Work Space
  !
  type(elemental_collision)::isc,iscp
- integer                  ::iq,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
+ integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch,mode_
@@ -80,6 +80,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  mode_=""
  if (present(mode)) mode_=trim(mode)
  !
+ call msg('r', '[VXC] Plane waves :',QP_ng_Vxc)
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
  ! QP_table -> report
@@ -105,7 +106,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      !
    endif
    !
-   call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+   call WF_load(WF,max(QP_ng_Sx,QP_ng_Vxc),maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
  endif
  !
@@ -124,8 +125,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 ! endif
 !
  n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
- n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands
- if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps/n_threads_SE)
+ n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*n_lt_bands/n_threads_SE
+ if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
  do i_qp=1,QP_n_states
    !
@@ -148,7 +149,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikibz,i_sp_pol,jb,ig), reduction(+:DP_sx)
    !
    call OPENMP_update(master_thread)
    !
@@ -168,10 +169,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    !$omp do schedule(dynamic)
    do iq=1,q%nbz
+     iq_ibz=q%sstar(iq,1)
+     is_ibz=q%sstar(iq,2)
      !
-     if (.not.PAR_IND_Q%element_1D(q%sstar(iq,1))) cycle
+     if (.not.PAR_IND_Q%element_1D(iq_ibz)) cycle
      !
-     isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
+     isc%qs(2:)=(/iq_ibz,is_ibz/)
      if (isc%qs(2)/=isc%iqref) then 
        call scatter_Gamp(isc,'x')
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
@@ -237,7 +240,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        !
        DP_Sx=DP_Sx+V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
        !
-       if (master_thread.and.q%sstar(iq,2)==1) call live_timing(steps=1)
+       if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
        !
      enddo
      !
@@ -254,7 +257,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
  enddo
  !
- call live_timing()
+ if(n_lt_steps>0) call live_timing()
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp) 

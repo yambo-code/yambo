@@ -23,7 +23,7 @@
 #
 m4_include([config/version.m4])
 #
-CURRENT_DIR=`echo "$PWD" | sed -e "s/\s/X/g"`
+CURRENT_DIR=`echo "$PWD" | sed -e "s/ /X/g"`
 if ! test -d $CURRENT_DIR ; then 
  AC_MSG_ERROR(Make cannot work using paths which include spaces)
 fi
@@ -169,6 +169,7 @@ if test x"$enable_open_mp" = "xyes"; then
 fi
 AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
+#
 # ============================================================================
 #
 # Underscore options in subroutine naming

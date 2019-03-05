@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -104,7 +104,7 @@ module interfaces
    end subroutine el_density_and_current
    !
    subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                                  USE_the_DbGd,USE_Eo,WF_fac,USE_occupations)
+&                                  USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -116,7 +116,8 @@ module interfaces
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
      logical,  optional, intent(in) :: USE_Eo,USE_occupations,USE_the_DbGd
-     real(SP), optional, intent(in) :: WF_fac(DOS_bands(1):DOS_bands(2),Xk%nibz,2)
+     real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
+     real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
 #if defined _SLEPC
@@ -175,8 +176,9 @@ module interfaces
      type(MPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,RESET)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
      use X_m,           ONLY:X_t
+     use DIPOLES,       ONLY:DIPOLE_t
      use electrons,     ONLY:levels
      use R_lattice,     ONLY:bz_samp
      implicit none
@@ -184,6 +186,7 @@ module interfaces
      type(bz_samp)            ::Xk,q
      character(*)             ::ENVIRONMENT
      type(X_t),       optional::X
+     type(DIPOLE_t),  optional::Dip
      logical,         optional::RESET
    end subroutine
    !
@@ -294,35 +297,6 @@ module interfaces
      real(SP),optional :: db1_a(3,3)
      real(SP),optional :: db1_alat(3) 
    end function
-   !
-#if defined _NL
-   subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,V_MATRIX,PV_MATRIX,V_bands,k,en,TRANS,nK_mem)
-     !
-     use pars,           ONLY:SP
-     use nl_optics,      ONLY:NL_bands
-     use R_lattice,      ONLY:bz_samp
-     use QP_m,           ONLY:QP_nk
-     use electrons,      ONLY:n_sp_pol,n_spin,levels
-     use FFT_m,          ONLY:fft_size
-     !
-     implicit none
-     !
-     type(bz_samp), intent(in) :: k
-     type(levels),  intent(in) :: en
-     complex(SP),   intent(in) :: V_bands(NL_bands(2),en%nbf,QP_nk, n_sp_pol)
-     integer,       intent(in) :: nK_mem
-     !
-     ! Optionals
-     !
-     complex(SP),     optional, intent(out):: O_VALUE,V_VALUE(3)
-     complex(SP),     optional, intent(in) :: PV_MATRIX(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) ::  V_MATRIX(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nK_mem,n_sp_pol)
-     complex(SP),     optional, intent(in) ::  O_MATRIX(  NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),nK_mem,n_sp_pol)
-     real(SP),        optional, intent(in) :: O_REAL(fft_size,n_spin)
-     logical,         optional, intent(in) :: TRANS
-     !
-   end subroutine
-#endif
    !
    subroutine QP_state_extract_print(qp)
      use QP_m,          ONLY:QP_t

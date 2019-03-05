@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -22,6 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module LOGO
+ !
+ use pars,     ONLY:schlen
  ! 
  implicit none
  !
@@ -59,7 +61,7 @@ module LOGO
    !
    subroutine pickup_a_logo(unit_)
      !
-     use pars,     ONLY:schlen,SP
+     use pars,     ONLY:SP
      use stderr,   ONLY:intc,slash
      !
      integer      :: unit_

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DV
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -154,7 +154,6 @@ subroutine cutoff_driver(q)
  if (is_cut(3)) ch2=STRING_pack(ch2,'z')
  call msg('r',trim(ch1))
  write (cut_geometry,'(3a)') trim(str_piece(1)),' ',trim(ch2)
-! if (cut_is_sphere) is_cut=.true.
  !
  !lengths
  !
@@ -221,7 +220,6 @@ subroutine cutoff_driver(q)
  endif
  call msg('rn','Symmetry test passed :',geometry_sym_is_ok())
  if (.not.geometry_sym_is_ok()) return
-
  !
  ! timing is started here after all the return conditions
  ! since it should be both started and stopped in order not

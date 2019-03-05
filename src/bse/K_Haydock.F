@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -560,8 +560,10 @@ subroutine K_Haydock(iq,W)
      !
      ! Work Space
      !
+     logical     :: update_thresh
      integer     :: i1,iw,iw_start,i_eps(2)
-     real(SP)    :: Co,tmp_tresh,den
+     real(SP)    :: Co,tmp_tresh
+     complex(SP) :: sums,diff
      !
      complex(SP) :: para_term_w0(2),diam_term_used(2)
      complex(SP) :: gauge_factor
@@ -710,15 +712,20 @@ subroutine K_Haydock(iq,W)
        !
        select case(ii)
        case(1)
-         den=abs(Epsilon_ii(iw,2)+Epsilon_ii(iw,2))/2._SP
-         tmp_tresh=abs(Epsilon_ii(iw,2)-Epsilon_ii(iw,4))/den
+         sums=(Epsilon_ii(iw,2)+Epsilon_ii(iw,4))/2._SP
+         diff= Epsilon_ii(iw,2)-Epsilon_ii(iw,4)
        case(2)
-         den=abs(Epsilon_ij(iw,2)+Epsilon_ij(iw,2))/2._SP
-         tmp_tresh=abs(Epsilon_ij(iw,2)-Epsilon_ij(iw,4))/den
+         sums=(Epsilon_ij(iw,2)+Epsilon_ij(iw,4))/2._SP
+         diff= Epsilon_ij(iw,2)-Epsilon_ij(iw,4)
        end select
        !
-       if (Haydock_threshold>0._SP .and. den>0._SP ) reached_threshold=max(reached_threshold,tmp_tresh)
-       if (Haydock_threshold<0._SP .and. den>0._SP ) reached_threshold=reached_threshold+tmp_tresh/real(W%n_freqs)
+       update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP
+       !
+       if (update_thresh) then
+         tmp_tresh=max( abs(real(diff)/real(sums)) , abs(aimag(diff)/aimag(sums)) )
+         if (Haydock_threshold>0._SP ) reached_threshold=max(reached_threshold,tmp_tresh)
+         if (Haydock_threshold<0._SP ) reached_threshold=reached_threshold+tmp_tresh/real(W%n_freqs)
+       endif
        !
      enddo
      !

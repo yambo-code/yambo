@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -57,7 +57,10 @@ module real_time
  !
  ! To include the induced field in the coupling and current
  !
- logical           :: l_RT_induced_field = .FALSE.
+ logical          :: l_RT_induced_field = .FALSE.
+ logical          :: l_P_integrating_J
+ logical          :: l_velocity_gauge_corr
+ logical          :: l_velocity_gauge_diam
  !
  ! TMP SOLUTION FOR TR ABS
  !
@@ -298,6 +301,7 @@ module real_time
  ! COLLISIONS
  !------------
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !
  ! Density
@@ -527,6 +531,10 @@ module real_time
      !
      YAMBO_ALLOC(Ho_plus_Sigma,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
      !
+     if (l_velocity_gauge_corr) then
+       YAMBO_ALLOC(H_pseudo_eq,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk,n_sp_pol))
+     endif
+     !
      if(l_use_Hxc_collisions) then
        YAMBO_ALLOC(RT_Vnl_xc,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz,n_sp_pol))
        RT_Vnl_xc=(0._SP,0._SP)
@@ -580,10 +588,20 @@ module real_time
    !   
    subroutine RT_free
      !
+     use DIPOLES,        ONLY:DIP_alloc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:E_xc
      !
      call H_free()
+     !
+     call DIP_alloc('DIP_iR')
+     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_v')
+     call DIP_alloc('DIP_spin')
+     call DIP_alloc('DIP_orbital')
+     call DIP_alloc('P_square') 
+     call DIP_alloc('DIP_projected')
+     call DIP_alloc('DIP_P_spinor')
      !
      YAMBO_FREE(DbGd_ibz_coo)
      YAMBO_FREE(DbGd_bz_coo)
@@ -594,6 +612,7 @@ module real_time
      YAMBO_FREE(E_xc)
      YAMBO_FREE(RT_Vnl_xc)
      YAMBO_FREE(Ho_plus_Sigma)
+     YAMBO_FREE(H_pseudo_eq)
      YAMBO_FREE(RT_TIME_status)
      YAMBO_FREE(HARTREE0)
      YAMBO_FREE(XC0)

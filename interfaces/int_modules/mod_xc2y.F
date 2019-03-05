@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -31,7 +31,7 @@ module mod_xc2y
  !
  implicit none
  !
- integer, parameter :: N_Abinit_XC = 28,N_PW_X = 11, N_PW_C = 13, N_PW_GX = 19, N_PW_GC = 14
+ integer, parameter :: N_Abinit_XC = 28,N_PW_X = 12, N_PW_C = 13, N_PW_GX = 19, N_PW_GC = 14
  !
  !  Map for ABINIT/ETSF_IO
  !
@@ -68,7 +68,7 @@ module mod_xc2y
  ! Map for PWSCF (note that some of the acronims were used in past versions of pw.x 
  ! 
  character(len=6),parameter,dimension(N_PW_X) :: PW_X=&  
-& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK ', 'PZ  '/)
+& (/'NOX ', 'SLA ','LDA ', 'SL1 ', 'RXC ', 'OEP ', 'HF  ', 'PB0X', 'B3LP', 'KZK ', 'PZ  ','PW  '/)
  character(len=6),parameter,dimension(N_PW_C) :: PW_C=&  
 & (/ 'NOC ', 'PZ  ','LDA ', 'VWN ', 'LYP ', 'PW  ', 'WIG ', 'HL  ', 'OBZ ', &
 &    'OBW ', 'GL  ' , 'B3LP', 'KZK ' /)
@@ -81,7 +81,7 @@ module mod_xc2y
  ! 
  integer,parameter,dimension(N_PW_X) :: PWX2LIBXC=&
 & (/ NOXC, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR, XC_LDA_X*XC_FACTOR+XC_LDA_C_XALPHA, XC_NOT_AVAILABLE, &
-&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE,XC_LDA_X*XC_FACTOR/)
+&    XC_NOT_AVAILABLE, NOXC, NOXC, XC_NOT_AVAILABLE,XC_NOT_AVAILABLE,XC_LDA_X*XC_FACTOR,XC_LDA_X*XC_FACTOR/)
  integer,parameter,dimension(N_PW_C) :: PWC2LIBXC=&
 & (/ NOXC, XC_LDA_C_PZ, XC_LDA_C_PZ, XC_LDA_C_VWN, XC_GGA_C_LYP, XC_LDA_C_PW,&
 &    XC_LDA_C_WIGNER, XC_LDA_C_HL, XC_LDA_C_OB_PZ, XC_LDA_C_OB_PW,XC_LDA_C_GL,&

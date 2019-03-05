@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
+subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  !
  ! Out: 
  !
@@ -48,7 +48,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  use BS,           ONLY:BS_K_dim,BS_H_dim,T_group,BS_eh_en,BS_K_coupling,&
 &                       BS_bands,BS_nT_at_k,BSE_mode,BS_T_grp,BS_nT_grps,&
 &                       BS_not_const_eh_f,BS_Blocks_and_Transitions_alloc
- use X_m,          ONLY:global_gauge,Dipole_Energy_treshold
+ use DIPOLES,      ONLY:DIPOLE_t
+ use X_m,          ONLY:global_gauge
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock
  use electrons,    ONLY:levels,n_sp_pol,spin_occ,filled_tresh,E_SOC_nbands,E_SOC_table
@@ -72,6 +73,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
  !
  type(levels) :: Ken
  type(bz_samp):: Xk
+ type(DIPOLE_t):: Dip
  integer      :: iq
  logical      :: FILL_the_groups,l_trans_in_group,l_grp_to_grp
  !
@@ -261,7 +263,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,FILL_the_groups)
      if(.not.allocated(Ken%Eo)) Eo_eh= E_eh
      !
      ! Small energy transitions. Dipoles in length gauge are not defined
-     if ( abs(Eo_eh) < Dipole_Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
+     if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" ) T_is_ok=.FALSE.
      !
      if(E_SOC_nbands/=0) then
        if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))

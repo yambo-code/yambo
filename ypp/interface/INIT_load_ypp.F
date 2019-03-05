@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -151,6 +151,14 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
+ call it('f',defs,'Proj_DOS', 'Print the projected DOS')
+ call it(defs,'PDOS_atoms', 'Select atom number range',PDOS_atoms,verb_level=V_general)
+ call it(defs,'PDOS_kinds', 'Select atom kind   range',PDOS_kinds,verb_level=V_general)
+ call it(defs,'PDOS_wfcs',  'Select projector   range',PDOS_wfcs, verb_level=V_general)
+ call it(defs,'PDOS_l',     'Select angular momentum l range',PDOS_l,verb_level=V_general)
+ call it(defs,'PDOS_j',     'Select angular momentum j range',PDOS_j,verb_level=V_general)
+ call it(defs,'PDOS_m',     'Select angular momentum m range',PDOS_m,verb_level=V_general)
+ !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
  ! GPL_EXCLUDE_START
@@ -177,6 +185,7 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'NoOcc',       '[NEGF] Consider only the changes in the energy')
  call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !
@@ -242,7 +251,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
  call it(defs,'States','Index of the BS state(s)',state_ctl)
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
- call it(defs,'Hole', '[cc] Hole position in unit cell',r_hole)
+ call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC

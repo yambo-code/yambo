@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -51,6 +51,13 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !
  call section('=','Amplitude and weights')
  !==================================================
+ !
+ !call parser('DipWeight',l_weight_with_dipoles)
+ !!
+ !if(l_weight_with_dipoles) then
+ !  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ !  io_err=io_DIPOLES(Dip,io_ID)
+ !endif
  !
  call msg('s','Processing '//trim(intc(n_lambda))//' states')
  !

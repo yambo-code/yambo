@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -56,7 +56,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  ! Dummyes
  integer                  :: ifft,ib,ik,i_spin
  character(schlen)        :: titles(6)
- real(SP)                 :: tmp_var
+ real(SP)                 :: tmp_var,x_zero(3)
  complex(SP),allocatable  :: wf_tmp_2d(:,:,:),rperp_tmp_2d(:,:,:),rperp_med_2d(:,:,:)
  complex(SP),allocatable  :: r_tmp(:),theta_tmp(:),psi_tmp(:)
  complex(SP),allocatable  :: x_tmp(:,:)
@@ -65,8 +65,10 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
  !
  if(.not.any((/l_cartesian,l_cylindrical,l_spherical/)) ) return
  !
- if(power<0) call load_cc(.true.,.true.)
- if(power>0) call load_cc(.false.,.true.)
+ x_zero=(/0._SP,0._SP,0._SP/)
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ if(power<0) call load_cc(.true. ,x_zero,1)
+ if(power>0) call load_cc(.false.,x_zero,1)
  call logical_init()
  call local_alloc()
  !
@@ -122,9 +124,9 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          ! 1)  3D
          if(l_3d) then
            do i1=1,3
-             x_tmp(:,i1)=x_cc(:,i1)**power*WF%c(:,1,ifft)
+             x_tmp(:,i1)=x_cc(:,i1,1)**power*WF%c(:,1,ifft)
              x_med(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),x_tmp(:,i1))
-             x_med(i1) = x_med(i1)**(1./power)
+             x_med(i1) = x_med(i1)**(1._SP/power)
            enddo
            !
            call msg('o '//output_fname,'',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
@@ -140,18 +142,18 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          ! 1)  3D
          if (l_3d) then
            do ir=1,fft_size
-             tmp_var=sqrt((x_cc(ir,1)**2+x_cc(ir,2)**2))
+             tmp_var=sqrt((x_cc(ir,1,1)**2+x_cc(ir,2,1)**2))
              rperp_tmp(ir)=tmp_var**power*WF%c(ir,1,ifft)
-             z_tmp(ir)=x_cc(ir,3)**power*WF%c(ir,1,ifft)
-             if ( x_cc(ir,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
-             if ( x_cc(ir,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
+             z_tmp(ir)=x_cc(ir,3,1)**power*WF%c(ir,1,ifft)
+             if ( x_cc(ir,1,1)> 0 ) phi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
+             if ( x_cc(ir,1,1)< 0 ) phi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
            enddo
            rperp_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),rperp_tmp(:))
            z_med     = Vstar_dot_V(fft_size,WF%c(:,1,ifft),    z_tmp(:))
            phi_med   = Vstar_dot_V(fft_size,WF%c(:,1,ifft),  phi_tmp(:))
            rperp_med = rperp_med**(1./power)
            z_med     = z_med**(1./power)
-           AB_dev    = (1.-6.41**2*rperp_med**(-2.))  ! 5.92 (8,0)  6.41 (5,5)  10.36  (14,0)
+           AB_dev    = (1.-6.41**2*rperp_med**(-2))  ! 5.92 (8,0)  6.41 (5,5)  10.36  (14,0)
            !
            call msg('o '//output_fname,'',(/real(ib,SP),real(ik,SP),real(i_spin,SP),&
 &                   real(rperp_med),real(z_med),real(phi_med),real(AB_dev)/),INDENT=-2,USE_TABS=.true.)
@@ -159,7 +161,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
          ! 2)  2D
          if(l_2d) then
            wf_tmp_2d(:,:,:)=reshape(WF%c(:,1,ifft),(/fft_dim(1),fft_dim(2),fft_dim(3)/))
-           rperp_tmp_2d(:,:,:)=reshape(sqrt((x_cc(:,1)**2+x_cc(:,2)**2))**power*WF%c(:,1,ifft),&
+           rperp_tmp_2d(:,:,:)=reshape(sqrt((x_cc(:,1,1)**2+x_cc(:,2,1)**2))**power*WF%c(:,1,ifft),&
 &                                   (/fft_dim(1),fft_dim(2),fft_dim(3)/))
            rperp_med=(0.,0.)
            do ir3 = 0, fft_dim(3)-1         ! z 
@@ -168,7 +170,7 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
              norm=Vstar_dot_V(fft_dim(1)*fft_dim(2),wf_tmp_2d(:,:,ir3+1),wf_tmp_2d(:,:,ir3+1))
              rperp_med=rperp_med+rperp_med_2d(nband_tot,1,ir3+1)
              rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)=rperp_med_2d(ib-nband_pos(1)+1,i_spin,ir3+1)/norm
-             if (ib==nband_pos(2))  call msg('o '//output_fname,'',(/real(x_cc(1+ir3*fft_dim(1)*fft_dim(2),3),SP),&
+             if (ib==nband_pos(2))  call msg('o '//output_fname,'',(/real(x_cc(1+ir3*fft_dim(1)*fft_dim(2),3,1),SP),&
 &                                            real(rperp_med_2d(:,1,ir3+1)),real(rperp_med) /),INDENT=-2,USE_TABS=.true.)
           
            enddo
@@ -178,12 +180,12 @@ subroutine electrons_position(nkpt_pos,nband_pos,power,what,format)
        !
        if(l_spherical) then
          do ir=1,fft_size
-           tmp_var=sqrt((x_cc(ir,1)**2+x_cc(ir,2)**2+x_cc(ir,3)**2))
+           tmp_var=sqrt((x_cc(ir,1,1)**2+x_cc(ir,2,1)**2+x_cc(ir,3,1)**2))
            r_tmp(ir)=tmp_var**power*WF%c(ir,1,ifft)
-           tmp_var=sqrt(x_cc(ir,1)**2+x_cc(ir,2)**2)
-           theta_tmp(ir)=atan(x_cc(ir,3)/tmp_var)*WF%c(ir,1,ifft)
-           if ( x_cc(ir,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
-           if ( x_cc(ir,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2)/x_cc(ir,1)))*WF%c(ir,1,ifft)
+           tmp_var=sqrt(x_cc(ir,1,1)**2+x_cc(ir,2,1)**2)
+           theta_tmp(ir)=atan(x_cc(ir,3,1)/tmp_var)*WF%c(ir,1,ifft)
+           if ( x_cc(ir,1,1)> 0 ) psi_tmp(ir)=(0.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
+           if ( x_cc(ir,1,1)< 0 ) psi_tmp(ir)=(1.5*pi+atan(x_cc(ir,2,1)/x_cc(ir,1,1)))*WF%c(ir,1,ifft)
          enddo
          r_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),rperp_tmp(:))
          theta_med = Vstar_dot_V(fft_size,WF%c(:,1,ifft),theta_tmp(:))

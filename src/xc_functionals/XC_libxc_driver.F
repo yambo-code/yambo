@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -56,7 +56,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,i3,is_xc,ic,is1,is2,ixc,ifft,ng_
+ integer  :: i1,i2,i3,is_xc,ic,is1,is2,ixc,ifft
  integer  :: io_err,ID
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 

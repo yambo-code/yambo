@@ -92,6 +92,7 @@ subroutine bz_samp_indexes(k,Xk,q)
 #endif
  !
  call parser('NoDiagSC',non_diag_supercell)
+ if(non_diag_supercell) call msg('sr','Using the new bz sampling setup')
  !
  q%description='q'
  !

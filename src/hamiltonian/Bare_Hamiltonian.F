@@ -33,6 +33,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
+ use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
@@ -69,7 +70,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call MAG_H_pseudo(Xk,E)
+   call Pseudo_KB_G_to_R_space(k,E)  
+   call Pseudo_Hamiltonian(Xk,E,.true.)
+   call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !
@@ -137,7 +140,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      ! ... then remove Vh[rho_0] 
      !===========================
      !
-     call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Hzero(:,:,ik,i_sp_pol),WF,'def')
+     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-V_hartree_sc)
      !
      ! ... then remove Vxc[rho_0] also
      !=================================

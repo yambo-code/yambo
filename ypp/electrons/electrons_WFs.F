@@ -38,6 +38,7 @@ subroutine electrons_WFs(Xen)
  use xc_functionals, ONLY:magn
 #if defined _YPP_SC
  use YPP,            ONLY:V_value,l_mean_potential
+ use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size

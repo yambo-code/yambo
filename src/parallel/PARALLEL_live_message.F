@@ -43,9 +43,7 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,
  if (ncpu==1) return
  !
  local_env="distribution"
- if (present(ENVIRONMENT)) then
-   local_env=ENVIRONMENT
- endif
+ if (present(ENVIRONMENT)) local_env=ENVIRONMENT
  !
  if(present(LOADED).or.present(LOADED_r)) then
    !

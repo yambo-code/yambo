@@ -84,7 +84,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  ! Work Space
  !
- !
  type(initdefs)   ::defs
  !
  ! I/O related

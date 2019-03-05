@@ -466,8 +466,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'SaveGhistory',  '[RT] Save the history of the green function',Verb_level=V_real_time)
  !
  ! ... updates ...
- call it('f',defs,'RTUpdateSOC',   '[RT] Update the SOC interaction on-the-fl',Verb_level=V_real_time)
+ call it('f',defs,'RTUpdateSOC',     '[RT] Update the SOC interaction',Verb_level=V_real_time)
  call it('f',defs,'RTUpdateE',     '[RT] Update the Enery levels on-the-fly',Verb_level=V_real_time)
+ !
+ call it('f',defs,'RTEqScatt',     '[RT] Include Gamma0f0 term in scattering',Verb_level=V_real_time)
+ call it('f',defs,'RTImpForMet',   '[RT] Impose structure optimized for metals',Verb_level=V_real_time)
+ call it('f',defs,'RTzeroTempRef', '[RT] Use zero temperature Fermi districution as reference',Verb_level=V_real_time)
  !
  ! Scattering
  !
@@ -500,13 +504,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
    call Afield(i_field)
  enddo
  !
- ! OLD / EXPERIMENTAL
- !
- ! 1 - Induced Field
- !
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
+ call it('f',defs,'VelGaugeCorr','[RT] Correct the non local term of the pseudo with the vector potential',verb_level=V_real_time)
  !
- ! 2 - Other
+ ! OLD / EXPERIMENTAL
  !
  call it(defs,'RTAveDeph',    '[RT] Dephasing for all elements not included in RTDePhMatrix', &
 &                             RT_ave_dephasing,verb_level=V_real_time,unit=Time_unit(1))
@@ -640,8 +641,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'EvPolarization',    '[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
  !
- call DIP_mirror_bands( )
- !
  ! El-Ph
  !
 #if defined _ELPH 
@@ -707,6 +706,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'OEPItSolver','[SC] Iterative solution instead of inversion of OEP')
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
+ !
+ call DIP_mirror_bands( )
  ! 
  contains 
    !
@@ -746,9 +747,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (is_def.and.n_ext_fields==0) n_ext_fields=n_ext_fields+1
        call parser(trim(name)//'_FWHM',is_def)
        if (is_def) then
-         Efield(i_field)%width=Efield(i_field)%FWHM/(2.*sqrt(2.*log(2.)))
+         Efield(i_field)%width=Efield(i_field)%FWHM/(2._SP*sqrt(2._SP*log(2._SP)))
        else
-         Efield(i_field)%FWHM=Efield(i_field)%width*2.*sqrt(2.*log(2.))
+         Efield(i_field)%FWHM=Efield(i_field)%width*(2._SP*sqrt(2._SP*log(2._SP)))
        endif
      endif
      !

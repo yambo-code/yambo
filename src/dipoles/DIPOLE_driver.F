@@ -137,13 +137,14 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use_dipole_transverse   =.true.
  idir_not_done           =.true.
  !
- Dip%computed='R P'
+ Dip%computed='R V P'
 #if defined _SC
- if (l_sc_run) Dip%computed='R P P2'
+ if (l_sc_run) Dip%computed='R V P P2'
 #endif
 #if defined _RT
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
- if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
+ if (l_real_time)              Dip%computed='R V P P2'
+ if (l_real_time_magn_dipoles) Dip%computed='R V P P2 Magn'
 #endif
  !
  if(use_covariant_approach)  eval_OVERLAPS=.true.

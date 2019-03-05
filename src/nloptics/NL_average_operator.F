@@ -34,7 +34,7 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
- use interfaces,     ONLY:V_real_space_to_H
+ use H_interfaces,   ONLY:V_real_space_to_H
  !
  implicit none
  !

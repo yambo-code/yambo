@@ -32,7 +32,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:el_density_and_current,WF_load,V_real_space_to_H
+ use interfaces,     ONLY:el_density_and_current,WF_load
+ use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time

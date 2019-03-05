@@ -69,7 +69,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use timing_m,       ONLY:timing
- use interfaces,     ONLY:V_real_space_to_H
+ use H_interfaces,   ONLY:V_real_space_to_H
  !
  implicit none
  !

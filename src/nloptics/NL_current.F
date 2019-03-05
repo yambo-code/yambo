@@ -39,7 +39,7 @@ subroutine NL_current(k,E,V_input,NL_J)
  use DIPOLES,        ONLY:DIP_v
  use nl_optics,      ONLY:NL_bands,l_use_DIPOLES
  use QP_m,           ONLY:QP_nk
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
  use parallel_m,     ONLY:PAR_Xk_nibz
  !
  implicit none          

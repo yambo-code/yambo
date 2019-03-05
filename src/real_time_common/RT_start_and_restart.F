@@ -58,7 +58,7 @@ subroutine RT_start_and_restart(E,k,q)
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:V_real_space_to_H
+ use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !

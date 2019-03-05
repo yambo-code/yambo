@@ -54,7 +54,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
  use IO_m,           ONLY:IO_and_Messaging_switch
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>

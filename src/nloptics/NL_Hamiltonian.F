@@ -48,6 +48,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use H_interfaces,   ONLY:V_real_space_to_H
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -197,15 +198,10 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !  
-     if(n_spinor==1) then
-        if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
-          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-        elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
-          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        endif
-     elseif (n_spinor==2) then
-        if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        if (eval_DFT.or.Correlation==JGM) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
+     if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def+xc',V_hartree_sc,V_xc_sc)
+     elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def',V_hartree_sc)
      endif
      !
    endif

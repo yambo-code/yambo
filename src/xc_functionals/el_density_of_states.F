@@ -120,7 +120,6 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if(USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
        !
-       !
        if(n_spinor==1) dos_value(i_sp_pol)=dos_value(i_sp_pol)+el_dos_tmp(i_sp_pol)*proj_fac(i_sp_pol)
        !
        if(n_spinor==2) dos_value          =dos_value          +el_dos_tmp(1)       *proj_fac

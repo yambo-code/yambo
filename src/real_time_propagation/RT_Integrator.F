@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
+subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  !  This subroutine perform integration using different methods: EULER / EXP / INV
  !        G(t),H[G(t')],dt  --> G(t+dt)
@@ -60,17 +60,20 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  ! --------------------------------------
  !
  use pars,           ONLY:SP
- use R_lattice,      ONLY:bz_samp  
+ use R_lattice,      ONLY:bz_samp
+ use RT_control,     ONLY:TIME_adjust
  use real_time,      ONLY:Integrator_step,RT_nk,RT_bands,a_tableau,b_tableau,&
-&                         c_tableau,RWA_table,Integrator_nsteps
+&                         c_tableau,RWA_table,Integrator_nsteps,G_lesser_reference,&
+&                         NE_time,NE_i_time,RT_step,RT_dyn_step,i_MEM_collision,i_MEM_next
  use fields,         ONLY:gauge_field
  use electrons,      ONLY:levels
  use timing_m,       ONLY:timing
+ !
  implicit none
  !
  type(bz_samp),        intent(in) :: k,q
  type(levels),      intent(inout) :: E
- real(SP),             intent(in) :: T_step,Time
+ complex(SP),       intent(inout) :: G_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),          intent(in) :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  complex(SP),         intent(out) :: dG_new(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field),    intent(in) :: A_old
@@ -95,9 +98,9 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    if (a_tableau(i_step)==0._SP) cycle 
    !  
-   delta_T1=T_step*a_tableau(i_step)
-   delta_T2=T_step*c_tableau(i_step)
-   delta_T3=T_step*RWA_table(i_step)
+   delta_T1=RT_dyn_step*a_tableau(i_step)
+   delta_T2=RT_dyn_step*c_tableau(i_step)
+   delta_T3=RT_dyn_step*RWA_table(i_step)
    !
    ! Evaluate @ T+dt1
    !
@@ -111,7 +114,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! Fields @ T+dt2
    !
-   call RT_propagate_fields(E,k,A_old,A_tmp(i_step),dG_tmp(:,:,:,i_step),Time,delta_T2)
+   call RT_propagate_fields(E,k,A_old,A_tmp(i_step),dG_tmp(:,:,:,i_step),NE_time,delta_T2)
    !
    Integrator_step=Integrator_step+1
    !
@@ -123,7 +126,7 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_relaxation(E,k,q,Time+delta_T1)                                 ! since nothing explicitely depends on time
+   call RT_relaxation(E,k,q,NE_time+delta_T1)                                 ! since nothing explicitely depends on time
    !
    ! GPL_EXCLUDE_END
    !
@@ -133,8 +136,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! final step @ T+dt
  !
- call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,Integrator_nsteps),&
-&                       dG_tmp(:,:,:,Integrator_nsteps+1),T_step,T_step*RWA_table(Integrator_nsteps+1))
+ call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,Integrator_nsteps),dG_tmp(:,:,:,Integrator_nsteps+1), &
+&                                               RT_dyn_step,RT_dyn_step*RWA_table(Integrator_nsteps+1))
  !
  call RT_build_dG_new()
  !
@@ -152,13 +155,18 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
  !
  ! Fields @ T+dT
  !
- call RT_propagate_fields(E,k,A_old,A_tmp(Integrator_nsteps+1),dG_new,Time,T_step)
+ call RT_propagate_fields(E,k,A_old,A_tmp(Integrator_nsteps+1),dG_new,NE_time,RT_dyn_step)
  !
  call RT_build_A_new()
  !
- ! Reset integrator time-point
+ ! Reset integrator time-point and update time
+ !=============================================
  !
  Integrator_step=1
+ !
+ NE_i_time       = NE_i_time+nint(RT_dyn_step/RT_step)
+ NE_time         = TIME_adjust((NE_i_time-1)*RT_step)
+ i_MEM_collision = i_MEM_next
  !
  call timing('RT integrator',OPR='stop')
  !
@@ -191,6 +199,8 @@ subroutine RT_Integrator(dG_new,dG_old,A_new,A_old,T_step,E,k,q,Time)
        enddo
        !
      enddo
+     !
+     G_new=G_lesser_reference+dG_new
      !
    end subroutine RT_build_dG_new
    !

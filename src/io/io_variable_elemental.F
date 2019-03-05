@@ -369,8 +369,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      if (DUMP_)             CH0=db_ch(1)
      if (present(DB_CH0))   DB_CH0=db_ch(1)
      if (io_mode(ID)==VERIFY) then
-       i_err=0
-       if (trim(db_ch(1))/=CH0) i_err=-1
+       i_err=ch_verify(CH0,db_ch(1))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
@@ -400,21 +399,11 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      integer :: iv1(:),iv2(:),i1
      i_verify=0
      do i1=1,size(iv1)
-       if (OP(i1)=="==") then 
-         if (iv1(i1)/=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (iv1(i1)>=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (iv1(i1)>iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (iv1(i1)<=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (iv1(i1)<iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="==" .and. iv1(i1)/=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<"  .and. iv1(i1)>=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<=" .and. iv1(i1)> iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and. iv1(i1)<=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and. iv1(i1)< iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        if (i_verify/=0) return
      enddo
    end function
@@ -434,21 +423,11 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      enddo
      !
      do i1=1,size(rv1)
-       if (OP(i1)=="==") then 
-         if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (rv1(i1)>=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (rv1(i1)>rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (rv1(i1)<=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (rv1(i1)<rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="==" .and. abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<"  .and.     rv1(i1)>=rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<=" .and.     rv1(i1)> rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and.     rv1(i1)<=rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and.     rv1(i1)< rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
        if (r_verify/=0) return
      enddo
    end function
@@ -466,26 +445,27 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      do i1=1,size(cv1)
        if ( abs(cv1(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv1(i1))*acc_fraction )
        if ( abs(cv2(i1))>0._SP) eq_accuracy=min( eq_accuracy , abs(cv2(i1))*acc_fraction )
-     enddo
-     !
-     do i1=1,size(cv1)
-       if (OP(i1)=="==") then 
-         if (abs(cv1(i1)-cv2(i1))>eq_accuracy) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (abs(cv1(i1))>=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (abs(cv1(i1))>abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (abs(cv1(i1))<=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (abs(cv1(i1))<abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="<=" .and. abs(cv1(i1))> abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and. abs(cv1(i1))<=abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and. abs(cv1(i1))< abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
        if (c_verify/=0) return
      enddo
+   end function
+   !
+   integer function ch_verify(chv1,chv2)
+     character(*),optional :: chv1,chv2
+     ch_verify=0
+     !
+     if (.not.present(OP) .and. trim(chv1)/=trim(chv2)) ch_verify=IO_INCOMPATIBLE_VAR
+     !
+     if (     present(OP)) then
+       if (OP(1)=="==" .and. trim(chv2)/=trim(chv1)              )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+     endif
+     !
    end function
    !
 end subroutine

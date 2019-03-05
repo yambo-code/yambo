@@ -26,9 +26,12 @@ subroutine RT_occupations(dG)
  use pars,           ONLY:SP
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
  use real_time,      ONLY:RT_all2ibz,l_RT_eval_lifetimes,RT_E_occupations,&
-&                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,G_lesser_reference
+&                         RT_H_occupations,RT_delta_occupations,RT_bands,RT_nk,RT_nbands,&
+&                         G_lesser_reference,l_RT_rotate_DM
+ use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:RT_do_it
  use electrons,      ONLY:spin_occ
+ use wrapper_omp,    ONLY:M_by_M_omp
  !
  implicit none
  !
@@ -38,10 +41,8 @@ subroutine RT_occupations(dG)
  !
  integer                 :: ik,ib
  real(SP)                :: df_H
- !
- if (l_RT_eval_lifetimes.or.RT_do_it('OUT')) then
-   !OBS_rotate(R,O,N,direction)
- endif
+ complex(SP)             :: G_rot(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),&
+&                           G_ref(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Update the occupations:
  !  RT_delta_occupations are always sensitive to small changes 
@@ -56,19 +57,37 @@ subroutine RT_occupations(dG)
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
    !
-   do ib=RT_bands(1),RT_bands(2)
-     !
-     RT_E_occupations(ib,ik)= aimag(dG(ib,ib,ik))+aimag(G_lesser_reference(ib,ib,ik))
-     !
-     ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
-     ! df_H this problem is solved.
-     !
-     df_H                   =spin_occ-aimag(G_lesser_reference(ib,ib,ik))
-     RT_H_occupations(ib,ik)=-aimag(dG(ib,ib,ik))+ df_H
-     !
-     RT_delta_occupations(ib,ik)=aimag(dG(ib,ib,ik))
-     !
-   enddo
+   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))) then
+     G_rot=G_lesser_reference(:,:,ik)+dG(:,:,ik)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_rot,RT_nbands,1)
+     G_ref=G_lesser_reference(:,:,ik)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_ref,RT_nbands,1)
+   endif
+   !
+   if (l_RT_rotate_DM.and.(RT_do_it('OUT').or.RT_do_it('OBS'))) then
+     do ib=RT_bands(1),RT_bands(2)
+       RT_E_occupations(ib,ik)= aimag(G_rot(ib,ib))
+       RT_H_occupations(ib,ik)=-aimag(G_rot(ib,ib))+spin_occ
+       ! This would be the correct definition
+       !RT_delta_occupations(ib,ik)=aimag(G_rot(ib,ib)-G_ref(ib,ib))
+       ! but I use this definition to consistently reconstruct f from df in ypp
+       RT_delta_occupations(ib,ik)=aimag(G_rot(ib,ib)-G_lesser_reference(ib,ib,ik))
+     enddo
+   else
+     do ib=RT_bands(1),RT_bands(2)
+       !
+       RT_E_occupations(ib,ik)= aimag(dG(ib,ib,ik))+aimag(G_lesser_reference(ib,ib,ik))
+       !
+       ! AM, July 2015. Intel compilers nest in ordered way the mathematical parenthesis. By using 
+       ! df_H this problem is solved.
+       !
+       df_H                   =spin_occ-aimag(G_lesser_reference(ib,ib,ik))
+       RT_H_occupations(ib,ik)=-aimag(dG(ib,ib,ik))+ df_H
+       !
+       RT_delta_occupations(ib,ik)=aimag(dG(ib,ib,ik))
+     enddo
+   endif
+   ! 
  enddo
  !
  call PP_redux_wait(RT_E_occupations,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

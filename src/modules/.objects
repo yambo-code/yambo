@@ -1,5 +1,5 @@
 #if defined _SC || defined _RT || defined _QED || defined _NL
-COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o
+COMMON_objects = mod_collision_ext.o mod_plasma.o mod_COLL_interfaces.o mod_H_interfaces.o
 #endif
 #if defined _SC
 SC_objects       = mod_SC.o
@@ -8,7 +8,7 @@ SC_objects       = mod_SC.o
 RT_objects       = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_interfaces.o
 #endif
 #if defined _NL
-NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o
+NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
 #endif
 #if defined _ELECTRIC
 ELECTRIC_objects = mod_fields.o mod_electric.o 

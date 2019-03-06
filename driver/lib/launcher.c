@@ -24,7 +24,6 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <tool.h>
 #include <wrapper.h>
 #include <fortran_driver.h>
 #include <kind.h>
@@ -78,7 +77,6 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *
  F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );
- exit(1);
 #endif
 
 #if defined _YAMBO_MAIN

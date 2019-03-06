@@ -61,6 +61,15 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  char opt_string[100],ch[3];
  /* */
  yambo_seed_struct y;
+ /* 
+  Pre-sets 
+ */
+ y.in_file=t.tool;
+ y.in_dir=".";
+ y.out_dir=".";
+ y.com_dir=".";
+ y.job="";
+ y.string="";
  /* */
  n_options=0;
  for(i_opt=0;i_opt<=100;i_opt++) {
@@ -100,13 +109,15 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
   for(i_opt=0;i_opt<=100;i_opt++) {
    if (opts[i_opt].short_opt==opt) {break;};
   }
-  if (strcmp(opts[i_opt].long_opt,"help")==0){
+  if (strcmp(opts[i_opt].long_opt,"help")==0 || strcmp(opts[i_opt].long_opt,"Help")==0){
     /*usage()opts,1,t);*/
     exit(0);
   }
-  if (strcmp(opts[i_opt].long_opt,"Help")==0){
-    exit(0);
-  }
+  if (strcmp(opts[i_opt].long_opt,"Input")==0){y.in_file=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"Job")==0){y.job=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"dir")==0){y.in_dir=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"com")==0){y.com_dir=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"output")==0){y.out_dir=optarg;continue;}
   if (opt > 0) {
    printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);
   }
@@ -116,38 +127,16 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
   }
   printf ("\n");
  };
- /* */
- y.string_N=strlen(y.string);
- /* 
-  Filling of empty input files
+ /*
+  Sizes
  */
- if (y.in_file_N==0){
-  strcpy(y.in_file,t.tool);
-  strcat(y.in_file,".in");
-  y.in_file_N=strlen(y.in_file);
- };
- if (y.in_dir_N==0) { 
-  strcpy(y.in_dir,".");
-  y.in_dir_N=1;
- };
- if (y.out_dir_N==0) { 
-  strcpy(y.out_dir,".");
-  y.out_dir_N=1;
- }
- if (y.com_dir_N==0) { 
-  strcpy(y.com_dir,".");
-  y.com_dir_N=1;
- }
- if (y.job_N==0) { 
-  strcpy(y.job,"");
-  y.job_N=0;
- }
- if (y.string_N==0) { 
-  strcpy(y.string,"");
-  y.string_N=0;
- }
+ y.string_N=strlen(y.string);
+ y.in_file_N=strlen(y.in_file);
+ y.out_dir_N=strlen(y.out_dir);
+ y.in_dir_N=strlen(y.in_dir);
+ y.com_dir_N=strlen(y.com_dir);
+ y.job_N=strlen(y.job);
  /* */
- exit(0);
  return(y);
 };
 

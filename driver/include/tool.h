@@ -23,7 +23,7 @@
 */
 
 /*
- PJ
+ PJ's
 */
 #if defined _yambo || _ypp || _a2y || _c2y || _p2y || _e2y 
  char *pj="none";
@@ -55,7 +55,6 @@
 #if defined _QED
  char *pj="qed";
 #endif
-
 /*
  tool & desc
 */

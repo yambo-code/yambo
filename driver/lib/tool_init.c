@@ -23,12 +23,29 @@
 
 */
 
+#include <stdlib.h>
 #include <kind.h>
+#include <string.h>
+#include <stdio.h>
+#include <wrapper.h>
+#include <tool.h>
+#include <driver.h>
+#include <editor.h>
 
 struct tool_struct tool_init( )
 {
- tool_struct tool;
-
- return(tool);
+ tool_struct t;
+ F90_FUNC(get_the_version)(&t.version,&t.subversion,&t.patchlevel,&t.revision,t.hash);
+ t.editor=editor;
+ t.tool=tool;
+ t.desc=tool_desc;
+ t.pj=pj;
+ sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,
+                                                          t.patchlevel,t.revision,t.hash);
+ /*
+ printf("TOOL        : %s - %s - %s\n",t.tool,t.desc,t.pj);
+ printf("TOOL version: %s\n",t.version_string);
+ */
+ return(t);
 };
 

@@ -1,1 +1,1 @@
-objs = get_the_version.o
+objs = get_the_version.o get_running_tool.c

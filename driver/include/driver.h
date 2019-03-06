@@ -38,6 +38,8 @@ void usage(options_struct *opts,int verbose, struct tool_struct t);
 
 void title(FILE *file_name,char *cmnt, struct tool_struct t);
 
+char *running_tool();
+
 #if defined _FORTRAN_US
  extern int get_the_version_
 #else

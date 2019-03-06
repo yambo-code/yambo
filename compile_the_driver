@@ -1,17 +1,9 @@
 #! /bin/bash
-OPT=" -D_FORTRAN_US -D_TEST_MAIN"
+OPT=" -D_FORTRAN_US -D_TEST_MAIN -D_C_US"
 #
 rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o
 
 cd driver
-cd lib
-file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
-for file in $file_list; do
- echo $file
- gcc $OPT -c $file -I../include  -I../../include/headers/common 
-done
-ar -r ../include/driver_lib.a *.o
-cd ../
 
 cd interface
 cp get_the_version.F get_the_version.f90
@@ -23,6 +15,25 @@ done
 ar -r ../include/driver_lib.a *.o
 cd ../
 
+cd interface
+file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ gcc $OPT -c $file -I../include  -I../../include/headers/common 
+done
+ar -r ../include/driver_lib.a *.o
+cd ../
+
+cd lib
+file_list=`find . -maxdepth 1 -type f | grep -E '\.c' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ gcc $OPT -c $file -I../include  -I../../include/headers/common 
+done
+ar -r ../include/driver_lib.a *.o
+cd ../
+
+
 gcc $OPT -c driver.c -I include -I options -I ../include/headers/common/
 cp yambo.F yambo.f90
 gfortran -c yambo.f90
@@ -31,7 +42,7 @@ cd ../
 rm -f driver.x
 gfortran -o driver.x driver/driver.o driver/yambo.o driver/include/driver_lib.a
 
-./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -h
+./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup 
 
 #./driver.x -x -optics c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -t
 

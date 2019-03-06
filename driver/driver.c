@@ -24,18 +24,7 @@
 */
 #include <stdio.h>
 #include <string.h>
-/*
- ...definitions
-*/
-#include <editor.h>
-/* 
- ...Command line options structure
-*/
 #include <kind.h>
-/* 
- ...Library
-*/
-#include <wrapper.h>
 #include <driver.h>
 /* 
   MAIN
@@ -53,19 +42,9 @@ int main(int argc, char *argv[])
  tool_struct tool;
  struct n_options_struct n_options[100];
  /* 
-  TOOL initialization
-  strcpy(t.tool,tool);
-  strcpy(t.desc,tool_desc);
+  TOOL & Version initialization
  */
- strcpy(tool.editor,editor);
  tool=tool_init();
- /* 
-  VERSION initialization
- */
- F90_FUNC(get_the_version)(&tool.version,&tool.subversion,&tool.patchlevel,&tool.revision,tool.hash);
- sprintf(tool.version_string,"%i.%i.%i Revision %i Hash %s",tool.version,tool.subversion,
-                                                            tool.patchlevel,tool.revision,tool.hash);
- printf("TOOL version: %s\n",tool.version_string);
  /*
   Options "maker"
  */ 
@@ -75,7 +54,7 @@ int main(int argc, char *argv[])
  */ 
  y=command_line(argc,argv,n_options,tool,&use_editor,&use_mpi);
  /*
-   Launcher
+  Launcher
  */
  launcher(np,pid,y,&use_editor,&use_mpi);
  /* 

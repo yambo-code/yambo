@@ -29,7 +29,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  use electrons,      ONLY:n_sp_pol
  use D_lattice,      ONLY:nsym,i_time_rev,dl_sop,sop_inv
  use R_lattice,      ONLY:bz_samp,q0_def_norm,q_norm,bare_qpg
- use DIPOLES,        ONLY:DIP_projected,DIP_alloc,DIPOLE_t,DIP_iR,DIP_P
+ use DIPOLES,        ONLY:DIP_projected,DIP_alloc,DIPOLE_t,DIP_iR,DIP_v
  use X_m,            ONLY:global_gauge
  use vec_operate,    ONLY:v_norm
  use com,            ONLY:secnm
@@ -50,7 +50,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  integer                   :: ik,ik_bz,ic,iv,is,i_sp_pol,ik_mem,ik_bz_mem,i_star
  real(SP)                  :: field_dir(3),field_dir_rot(3)
  complex(SP)               :: dipole(3)
- logical                   :: t_rev,use_dip_iR,use_dip_P
+ logical                   :: t_rev,use_dip_iR,use_dip_v
 #if defined _KERR
  real(SP)                  :: dipole_dir(3),dipole_dir_rot(3)
 #endif
@@ -61,10 +61,10 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
  ! to the norm of the grid shift.
  !
  use_dip_iR=trim(global_gauge)=='length'   .or. .not.(index(secnm,"absorption")/=0)
- use_dip_P =trim(global_gauge)=='velocity'.and.      (index(secnm,"absorption")/=0)
+ use_dip_v =trim(global_gauge)=='velocity'.and.      (index(secnm,"absorption")/=0)
  !
  if(use_dip_iR) field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
- if(use_dip_P ) field_dir=Dip%q0/v_norm(Dip%q0)
+ if(use_dip_v ) field_dir=Dip%q0/v_norm(Dip%q0)
  !
 #if defined _KERR
  if(l_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir,dipole_dir)
@@ -102,7 +102,7 @@ subroutine DIPOLE_expand_and_project(Xk,Dip)
            !      
            ik_mem = PAR_K_scheme%ibz_index(ik)
            if (use_dip_iR) dipole = DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
-           if (use_dip_P ) dipole = DIP_P (:,ic,iv,ik_mem,i_sp_pol)
+           if (use_dip_v ) dipole = DIP_v (:,ic,iv,ik_mem,i_sp_pol)
            !
          endif
          !

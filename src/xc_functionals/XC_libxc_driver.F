@@ -253,26 +253,23 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          enddo
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
-     if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+     if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
         !GAUPBE short range x-energy  and potentials part
-        call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
-     endif
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
-!         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
-!           call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1),exsr)
-!         endif
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
-!         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) then
          !GAUPBE short energy part of the x potential
-!           call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
-!         endif
+           v1rho=v1rho-EXX_FRACTION*vx1
+           v1sigma=v1sigma-EXX_FRACTION*vx2
+         endif
          ! Yambo internal for V_xc
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
        case(2)
+         if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          call xc_f90_gga_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v2rho2, v2rhosigma, v2sigma2)
          ! Yambo internal for Kxc
          call XC_eval_gga_kernel()
@@ -301,7 +298,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (EvaluateDGradient.and.(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)) then
    YAMBO_FREE(vx1)
    YAMBO_FREE(vx2)
-   endif
+ endif
  !
  if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
  !

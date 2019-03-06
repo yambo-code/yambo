@@ -104,7 +104,6 @@ subroutine XCo_local(E,Xk)
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,0,&
 &         exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
      ! evaluate v_xc
-     write(*,*) "linea 107 here evaluate potential, local?"
      call XC_potential_driver(E,Xk,WF_KIND,WF_xc_functional,1,&
 &                             exx_fraction=WF_exx_fraction,exx_screening=WF_exx_screening)
 #if defined _RT

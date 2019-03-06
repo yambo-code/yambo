@@ -17,11 +17,15 @@ real(DP), parameter :: alpha_gau= 0.150_DP
 integer  :: ir
 !
  exsr=0.0_DP
+ v1xsr=0.0_DP
+ v2xsr=0.0_DP
  do ir=1,fft_size
    RHO=spin_rho_DP(1,ir)
    GRHO=sigma(1,ir)
    call pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
    exsr=exsr+sxsr
+   vx1(1,ir)=v1xsr
+   vx2(1,ir)=v2xsr
  enddo
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs

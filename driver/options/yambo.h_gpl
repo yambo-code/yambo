@@ -20,43 +20,41 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+
+  Command line structure
+
 */
-/*
- Command line structure
-*/
- static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
+ static options_struct options[] = { 
 #include "common_options.h"
-  {"setup",  "i","Initialization",0,0,0,0,0},          
-  {"optics", "o","Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0,0},
-#if defined _RT
-  {"potential",  "v","Self-Consistent Potential",0,0,1,0,0}, 
-  {"DESC",       " ","opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(d)ef,(ip)",0,0,0,0,0},
-  {"DESC",       " ","(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0,0},
+  {"setup","setup",  'i',"Initialization",0,0,0,0},          
+  {"optics","optics", 'o',"Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0},
+#if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
+  {"potential","potential",  'v',"Self-Consistent Potential",0,0,1,0}, 
+  {"NULL","DESC",       0,"opt=(h)artree (f)ock (coh) (sex) (cohsex) (d)ef (ip)",0,0,0,0},
+  {"NULL","DESC",       0,"(h)artree can be combined with others  i.e. hf  hsex  ... ",0,0,0,0},
 #endif
-  {"kernel", "k","Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0,0},
-  {"DESC",   " ","       (hf/sex only eh-space; lrc only G-space)",0,0,0,0,0},
-  {"bss",    "y","BSE solver [opt=h/d/s/(p/f)i]",0,0,1,0,0},                      
-  {"DESC",   " ","       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0,0},
-  {"rim_cut","r","Coulomb potential",0,0,0,0,0},  
-  {"HF_and_locXC",  "x","Hartree-Fock Self-energy and local XC",0,0,0,0,0},      
-  {"em1d",   "d","Dynamical Inverse Dielectric Matrix",0,0,0,0,0},     
-  {"em1s",   "b","Static Inverse Dielectric Matrix",0,0,0,0,0},        
-  {"gwapprx","p","GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0,0},              
-  {"gw0",    "g","Dyson Equation solver",0,0,1,0,0}, 
-  {"DESC",   " ","[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0,0},
-  {"life",   "l","GoWo Quasiparticle lifetimes",0,0,0,0,0},                  
-  {"acfdt",  "a","ACFDT Total Energy",0,0,0,0,0},                            
+  {"kernel","kernel", 'k',"Kernel [opt=hartree/alda/lrc/hf/sex]",0,0,1,0},
+  {"NULL","DESC",0 ,"       (hf/sex only eh-space; lrc only G-space)",0,0,0,0},
+  {"solver","bss",    'y',"BSE solver [opt=h/d/s/(p/f)i]",0,0,1,0},
+                   
+  {"NULL","DESC",  0,"       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0},
+  {"coulomb","rim_cut",'r',"Coulomb potential",0,0,0,0},  
+  {"hf","HF_and_locXC",  'x',"Hartree-Fock Self-energy and local XC",0,0,0,0},      
+  {"screen_dyn","em1d",   'd',"Dynamical Inverse Dielectric Matrix",0,0,0,0},     
+  {"screen","em1s",   'b',"Static Inverse Dielectric Matrix",0,0,0,0},       
+  {"se","gwapprx",'p',"GW approximations [opt=(p)PA/(c)HOSEX]",0,0,1,0},              
+  {"dyson","gw0",    'g',"Dyson Equation solver",0,0,1,0}, 
+  {"NULL","DESC",   0,"[opt=(n)ewton/(s)ecant/(g)reen]",0,0,0,0},
+  {"life","life",   'l',"GoWo Quasiparticle lifetimes",0,0,0,0},                  
+  {"acdft","acfdt",  'a',"ACFDT Total Energy",0,0,0,0},                            
+
 #if defined _NL
-  {"nloptics","u","Non-linear spectroscopy",0,0,0,0,0}, 
+  {"nl","nloptics",'u',"Non-linear spectroscopy",0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf",   "q","Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0,0}, 
+  {"negf","negf",   'q',"NEQ Real-time dynamics [opt=(p)ump or probe (pp)ump & probe (pn) n external fields]",0,0,1,0}, 
 #endif
 #if defined _RT
-  {"collisions", "e","Evaluate Collisions",0,0,0,0,0}, 
+  {"coll","collisions", 'e',"Evaluate Collisions",0,0,0,0}, 
 #endif
-#if defined _SCALAPACK
-  {"slktest",  "s","ScaLapacK test",0,0,0,0,0},
-#endif
-  {NULL,NULL,NULL,0,0,0,0,0}
  };

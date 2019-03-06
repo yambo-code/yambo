@@ -38,7 +38,8 @@
 #endif
   {"kernel","kernel", 'k',"Kernel [opt=hartree/alda/lrc/hf/sex/bsfxc]",0,0,1,0},
   {"NULL","DESC",0 ,"       (hf/sex only eh-space; lrc only G-space)",0,0,0,0},
-  {"solver","bss",    'y',"BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0},                      
+  {"solver","bss",    'y',"BSE solver [opt=h/d/s/(p/f)i/t]",0,0,1,0},
+                   
   {"NULL","DESC",  0,"       (h)aydock/(d)iagonalization/(i)nversion",0,0,0,0},
   {"coulomb","rim_cut",'r',"Coulomb potential",0,0,0,0},  
   {"hf","HF_and_locXC",  'x',"Hartree-Fock Self-energy and local XC",0,0,0,0},      
@@ -87,6 +88,5 @@
 #if defined _SCALAPACK
   {"slktest","slktest",  's',"ScaLapacK test",0,0,0,0},
 #endif
-  {NULL,NULL,0,NULL,0,0,0,0}
  };
 

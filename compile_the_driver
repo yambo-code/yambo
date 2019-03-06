@@ -1,7 +1,7 @@
 #! /bin/bash
 OPT=" -D_FORTRAN_US -D_TEST_MAIN -D_C_US"
 #
-rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o
+rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o driver/include/*.a driver.x
 
 cd driver
 
@@ -42,7 +42,7 @@ cd ../
 rm -f driver.x
 gfortran -o driver.x driver/driver.o driver/yambo.o driver/include/driver_lib.a
 
-./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup 
+./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q
 
 #./driver.x -x -optics c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -t
 

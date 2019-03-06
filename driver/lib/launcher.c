@@ -72,6 +72,8 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *
  fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
  fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
  fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
+ fprintf(stderr,"%s %i   \n","MPI       :",*use_mpi);
+ fprintf(stderr,"%s %i   \n","EDITOR    :",*use_editor);
  fprintf(stderr,"\n");
 
  F90_FUNC(yambo)(

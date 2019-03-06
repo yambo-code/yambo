@@ -69,7 +69,6 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  y.out_dir=".";
  y.com_dir=".";
  y.job="";
- y.string="";
  /* */
  n_options=0;
  for(i_opt=0;i_opt<=100;i_opt++) {
@@ -106,9 +105,18 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  long_options[n_options].val=0;
  int long_index =0;
  while ((opt = getopt_long_only(argc, argv,opt_string,long_options, &long_index )) != -1) {
+  if (opt == '?') {
+    /*usage()opts,1,t);*/
+    exit(EXIT_FAILURE);
+  }
   for(i_opt=0;i_opt<=100;i_opt++) {
    if (opts[i_opt].short_opt==opt) {break;};
   }
+
+  if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
+  if (optarg) {printf (" with arg %s", optarg);}
+  printf ("\n");
+
   if (strcmp(opts[i_opt].long_opt,"help")==0 || strcmp(opts[i_opt].long_opt,"Help")==0){
     /*usage()opts,1,t);*/
     exit(0);
@@ -118,14 +126,16 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
   if (strcmp(opts[i_opt].long_opt,"dir")==0){y.in_dir=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"com")==0){y.com_dir=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"output")==0){y.out_dir=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"nompi")==0){*use_mpi=-1;continue;}
+  if (strcmp(opts[i_opt].long_opt,"Quiet")==0){*use_editor=-1;continue;}
   if (opt > 0) {
-   printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);
+   strcat(y.string," ");
+   strcat(y.string,opts[i_opt].long_opt);
   }
-  if (optarg)
-  {
-   printf (" with arg %s", optarg);
+  if (optarg) {
+   strcat(y.string," ");
+   strcat(y.string,optarg);
   }
-  printf ("\n");
  };
  /*
   Sizes

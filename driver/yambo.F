@@ -8,6 +8,11 @@
    subroutine get_running_tool(what_is_running)
      character(*), intent(out):: what_is_running
    end subroutine
+   subroutine get_runlevel_component(component,component_id,runlevel_id)
+     character(*), intent(out):: component
+     integer,      intent(in) :: component_id
+     integer,      intent(in) :: runlevel_id
+   end subroutine
  end interface
  !
  integer,              intent(in)    :: np,pid 
@@ -19,7 +24,8 @@
  character(com_dir_N), intent(in)    :: com_dir
  character(job_N),     intent(in)    :: job
  !
- character(100) what_is_running
+ integer i_runlevel
+ character(100) what_is_running,key,desc,pj
  !
  write (*,*) "F driver"
  write (*,*) "NP, PID   :",np,pid
@@ -32,7 +38,18 @@
 
  what_is_running=" "
  call get_running_tool(what_is_running)
- write (*,*) "F RUNNING :",trim(what_is_running)
+ write (*,*) "RUNNING   :",trim(what_is_running)
+
+ do i_runlevel=1,99
+   key=" "
+   desc=" "
+   pj=" "
+   call get_runlevel(key,1,i_runlevel)
+   call get_runlevel(desc,2,i_runlevel)
+   call get_runlevel(pj,3,i_runlevel)
+   if (trim(key)=="EMPTY") cycle
+   write (*,*) "RUNLEVEL #",i_runlevel," :",trim(key),'-',trim(desc),'-',trim(pj)
+ enddo
 
 end function
    !

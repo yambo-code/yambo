@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
  /*
   Work Space
  */
- int np=1,pid=0,use_mpi=1,use_editor=0;
+ int np=1,pid=0,use_mpi=1,use_editor=1;
  /*
   Yambo and Tool structures
  */
@@ -60,6 +60,6 @@ int main(int argc, char *argv[])
  /* 
    Input File
  */
- input_file(y,tool,use_editor);
+ input_file(y,tool,&use_editor);
 }
 

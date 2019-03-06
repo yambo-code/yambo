@@ -20,62 +20,28 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-
 */
-typedef struct tool_struct
-{
- char *editor;
- char *tool;
- char *desc;
- char version_string[500];
- char hash[500];
- char *pj;
- int  version;
- int  subversion;
- int  patchlevel;
- int  revision;
-} tool_struct;
 
-typedef struct yambo_seed_struct
-{
- char string[500];
- char *in_file;
- char *in_dir;
- char *out_dir;
- char *com_dir;
- char *job;
- int  string_N;
- int  in_file_N;
- int  in_dir_N;
- int  out_dir_N;
- int  com_dir_N;
- int  job_N;
-} yambo_seed_struct;
+#include <stdio.h>
+#include <wrapper.h>
+#include <kind.h>
+#include <driver.h>
+#include <string.h>
 
-typedef struct options_struct
+char *runlevel(int *runid, int *id)
 {
- char *long_opt;
- char *runlevel;
- char short_opt;
- char *short_desc;
- int   ni;
- int   nr;
- int   nc;
- int   mpion;
-} options_struct;
-
-typedef struct n_options_struct
+ struct n_options_struct options[100];
+ options_maker(options);
+ if (!options[*runid].yambo_string) { return "EMPTY"; }
+ if (*id == 1) {return options[*runid].yambo_string;}
+ if (*id == 2) {return options[*runid].short_desc;}
+ if (*id == 3) {return options[*runid].project;}
+}
+void C_FUNC(get_runlevel, GET_RUNLEVEL)(char *key, int *component_id, int *runlevel_id)
 {
- char  short_opt;
- char *long_opt;
- char *short_desc;
- char *long_desc;
- char *project;
- char *yambo_string;
- int   n_int;
- int   n_float;
- int   n_char;
- int   no_GPL;
- int   serial_var;
-} n_options_struct;
+ char *c = runlevel(runlevel_id,component_id);
+ int len = strlen(c);
+ strcpy(key, c);
+ key[len] = key[len + 1];
+}
 

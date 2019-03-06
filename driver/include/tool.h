@@ -55,20 +55,25 @@
 #if defined _QED
  char *pj="qed";
 #endif
+#if defined _SCALAPACK
+ char *pj="slk";
+#endif
+#if defined _TEST_MAIN
+ char *pj="test";
+#endif
 /*
  tool & desc
 */
 #if defined _TEST_MAIN
- char *pj="none";
  char *tool="driver";
  char *tool_desc="Testing Driver";
 #endif
-#if defined _yambo || _ELPH || _RT || _SC || _MAGNETIC || _ELECTRIC || _KERR || _PL || _NL || _QED
+#if defined _yambo 
  #define _YAMBO_MAIN
  char *tool="yambo";
  char *tool_desc="A shiny pot of fun and happiness [C.D.Hogan]";
 #endif
-#if defined _ypp || _YPP_ELPH || _YPP_RT || _YPP_NL || _YPP_SC || _YPP_MAGNETIC 
+#if defined _ypp 
  #define _YPP_MAIN
  char *tool="ypp";
  char *tool_desc="Y(ambo) P(ost) P(rocessor)";

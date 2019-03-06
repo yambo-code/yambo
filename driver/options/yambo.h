@@ -30,8 +30,8 @@
   {"optics","optics", 'o',"Optics [opt=(c)hi is (G)-space / (b)se is (eh)-space ]",0,0,1,0},
 #if defined _SC | defined _MAGNETIC | defined _RT | defined _ELECTRIC
   {"potential","potential",  'v',"Self-Consistent Potential",0,0,1,0}, 
-  {"NULL","DESC",       0,"opt=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)",0,0,0,0},
-  {"NULL","DESC",       0,"(h)artree can be combined with others, i.e. hf, hsex, ... ",0,0,0,0},
+  {"NULL","DESC",       0,"opt=(h)artree (f)ock (coh) (sex) (cohsex) (exx) (exxc) (srpa) (d)ef (ip)",0,0,0,0},
+  {"NULL","DESC",       0,"(h)artree can be combined with others  i.e. hf  hsex  ... ",0,0,0,0},
 #endif
 #if defined _TEST_MAIN
   {"test","test", 0,"test",0,0,0,0},
@@ -57,7 +57,7 @@
   {"nl","nloptics",'u',"Non-linear spectroscopy",0,0,0,0}, 
 #endif
 #if defined _RT
-  {"negf","negf",   'n',"NEQ Real-time dynamics [opt=(p)ump or probe,(pp)ump & probe, (pn) n external fields]",0,0,1,0}, 
+  {"negf","negf",   'n',"NEQ Real-time dynamics [opt=(p)ump or probe (pp)ump & probe (pn) n external fields]",0,0,1,0}, 
   {"scatt","scattp", 's',"Scattering  [opt=(e)lectrons/(p)honons/p(h)otons/(a)ll]",0,0,1,0},
 #endif
 #if defined _QED && !defined _ELPH
@@ -79,7 +79,7 @@
   {"sc","scrun",      's',"Self-Consistent Single-Particle Calculations",0,0,0,0}, 
 #endif
 #if defined _MAGNETIC 
-  {"magnetic","magnetic", 'm',"Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0}, 
+  {"magnetic","magnetic", 'm',"Magnetic [opt=(p)auli (l)andau (a)ll]",0,0,1,0}, 
 #endif
 #if defined _ELECTRIC 
   {"electric","electric", 'm',"Static Electric Field",0,0,0,0}, 

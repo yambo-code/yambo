@@ -1,4 +1,0 @@
-#if defined _OPENMP
-extra_timer = ct_cptimer.o
-#endif
-objs = ct_cptimer.o c_printing.o io.o stack.o memstat.o $(extra_timer)

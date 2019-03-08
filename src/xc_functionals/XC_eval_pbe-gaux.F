@@ -14,6 +14,7 @@ real(DP) :: RHO,GRHO,sxsr,v1xsr, v2xsr
 !
 !parameter 
 real(DP), parameter :: alpha_gau= 0.150_DP
+real(DP), parameter :: epsg= 1.0d-10
 integer  :: ir
 !
  exsr=0.0_DP
@@ -22,7 +23,7 @@ integer  :: ir
  do ir=1,fft_size
    RHO=spin_rho_DP(1,ir)
    GRHO=sigma(1,ir)
-   call pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
+   if (GRHO > epsg) call pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
    exsr=exsr+sxsr
    vx1(1,ir)=v1xsr
    vx2(1,ir)=v2xsr
@@ -63,6 +64,7 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
       V1Xsr = VX*FX + (DSDN*D2X+D1X)*EX   ! - VX
       DSDG = US*RR
       V2Xsr = EX*1.D0/SQRT(AA)*DSDG*D2X
+      write(24,*)  RHO,GRHO,v1xsr 
 
 ! NOTE, here sx is the total energy density,
 ! not just the gradient correction energy density as e.g. in pbex()

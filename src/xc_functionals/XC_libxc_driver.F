@@ -197,6 +197,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
          sigma(is_xc,i1) = real(real_V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
+         write(28,*) i1,is_xc,sigma(is_xc,i1),spin_rho_DP(1,i1)
        end do
      end do
    end do
@@ -210,6 +211,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Evaluate the xc functional
  !===========================
  !
+ 
  if (order==0) E_xc=0._SP
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
@@ -253,8 +255,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          enddo
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
-     if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
         !GAUPBE short range x-energy  and potentials part
+         call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
@@ -265,6 +267,16 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          !GAUPBE short energy part of the x potential
            v1rho=v1rho-EXX_FRACTION*vx1
            v1sigma=v1sigma-EXX_FRACTION*vx2
+!test
+           v1sigma=0._DP
+!
+!Check QE when using libxc, vx2 is subtracted  to a v1sigma having a factor 2 of
+!difference. V1rho is instead is v1x-v1x_vxlda; this is internal of QE and
+!should be harmless
+          do ifft=1,fft_size
+             write(22,*) ifft,v1rho(1,ifft),vx1(1,ifft)
+             write(23,*) ifft,vx2(1,ifft)
+         enddo
          endif
          ! Yambo internal for V_xc
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
@@ -296,6 +308,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_FREE(v2sigma2)
  endif
  if (EvaluateDGradient.and.(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)) then
+
    YAMBO_FREE(vx1)
    YAMBO_FREE(vx2)
  endif

@@ -36,10 +36,11 @@ subroutine NL_current(k,E,V_input,NL_J)
  use electrons,      ONLY:nel,levels,n_spin,n_sp_pol
  use fields,         ONLY:A_ext
  use X_m,            ONLY:global_gauge
- use DIPOLES,        ONLY:DIP_P
+ use DIPOLES,        ONLY:DIP_v
  use nl_optics,      ONLY:NL_bands,l_use_DIPOLES
  use QP_m,           ONLY:QP_nk
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
+ use parallel_m,     ONLY:PAR_Xk_nibz
  !
  implicit none          
  ! 
@@ -52,8 +53,8 @@ subroutine NL_current(k,E,V_input,NL_J)
  !
  ! A : Current
  !
- call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_P(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
-     &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=k%nibz)
+ call NL_average_operator(V_VALUE=NL_J(4:6), V_MATRIX=DIP_v(:,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,:),  &
+     &  V_bands=V_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_Xk_nibz)
  !
  if(trim(global_gauge)=='velocity') then
    !

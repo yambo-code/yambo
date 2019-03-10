@@ -31,7 +31,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  use DIPOLES,        ONLY:DIP_iR
  use nl_optics,      ONLY:NL_bands
  use parallel_m,     ONLY:PAR_Xk_nibz
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
  !
  implicit none           
  type(bz_samp), intent(in)  :: Xk

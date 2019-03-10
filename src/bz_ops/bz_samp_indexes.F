@@ -51,7 +51,7 @@ subroutine bz_samp_indexes(k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,q_source
+&                         q_sstar,coll_scattering,q_source,Xk_grid_new_mapping
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
@@ -71,7 +71,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  integer :: io_db,io_err,io_QINDX
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only,non_diag_supercell
+ logical :: connected_grids,user_defined_qpts,gamma_point_only
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -81,7 +81,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  user_defined_qpts=.false.
  gamma_point_only=.false.
- non_diag_supercell=.false.
  !
  if (.not.bse_scattering ) bse_scattering =l_bse
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
@@ -90,9 +89,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.&
 &                                          trim(q_source)=="Electron-Phonon databases"
 #endif
- !
- call parser('NoDiagSC',non_diag_supercell)
- if(non_diag_supercell) call msg('sr','Using the new bz sampling setup')
  !
  q%description='q'
  !
@@ -134,11 +130,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    call m3inv(M=k_b_m1)
    !
-   if(non_diag_supercell) then
-     call define_q_map_new( Xk%ptbz(:,:), Xk%ptbz(1,:))
-   else
-     call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
-   endif
+   if(     Xk_grid_new_mapping) call define_q_map_new( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   if(.not.Xk_grid_new_mapping) call define_q_map    ( Xk%ptbz(:,:), Xk%ptbz(1,:))
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -202,11 +195,8 @@ subroutine bz_samp_indexes(k,Xk,q)
      gamma_point_only=.true.
    else
      !  
-     if(non_diag_supercell) then
-       call define_q_map_new(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
-     else
-       call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
-     endif
+     if(     Xk_grid_new_mapping) call define_q_map_new(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
+     if(.not.Xk_grid_new_mapping) call define_q_map    (q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
      !
    endif
    !
@@ -251,7 +241,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing('X indexes',Xk%nbz/n_threads)
  !
- if(non_diag_supercell) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
+ if(Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
  !
  !$omp parallel default(shared), private(ikbz,ikbz_p,v1,iv1,iqbz,iqibz,iqs)
  call OPENMP_update(master_thread)
@@ -261,7 +251,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    do ikbz_p=1,Xk%nbz
      !
-     if(non_diag_supercell) then
+     if(Xk_grid_new_mapping) then
        !  
        v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
        v1=v1-nint(v1)       ! Bring in the BZ, remove the G0
@@ -340,7 +330,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    do ikbz_p=1,k%nbz
      !
-     if(non_diag_supercell) then
+     if(Xk_grid_new_mapping) then
        !
        v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
        v1=v1-nint(v1)       ! Bring in the BZ, remove the G0

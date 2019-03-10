@@ -25,6 +25,7 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,Dip,iq)
  !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
+ use X_m,                ONLY:global_gauge
  use D_lattice,          ONLY:x_cc
  use wave_func,          ONLY:WF,wf_ng
  use interfaces,         ONLY:WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -100,7 +101,8 @@ subroutine DIPOLE_gspace_finiteq(Xen,Xk,Dip,iq)
          Xo_scatt%is=ic_indexes
          Xo_scatt%os=ov_indexes
          Xo_scatt%qs=(/iGo,iq,1/)
-         call scatter_Bamp(Xo_scatt)
+         if(trim(global_gauge)=="length")   call scatter_Bamp(Xo_scatt)
+         if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(Xo_scatt,"o")
          !
          DIP_projected(ic,iv,ik_bz_mem,i_sp_pol) = -conjg(Xo_scatt%rhotw(1))
          !

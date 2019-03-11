@@ -39,7 +39,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use stderr,         ONLY:gen_fmt
  use com,            ONLY:msg,error,warning
@@ -69,9 +69,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  character(lchlen) :: string
  integer :: io_db,io_err,io_QINDX
- integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks
- real(SP):: v1(3),k_b_m1(3,3),local_zero(3)
- logical :: connected_grids,user_defined_qpts,gamma_point_only
+ integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
+ real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
+ logical :: connected_grids,user_defined_qpts,gamma_point_only,non_diag_supercell
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -81,6 +81,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  user_defined_qpts=.false.
  gamma_point_only=.false.
+ non_diag_supercell=.false.
  !
  if (.not.bse_scattering ) bse_scattering =l_bse
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
@@ -89,6 +90,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.&
 &                                          trim(q_source)=="Electron-Phonon databases"
 #endif
+ !
+ call parser('NoDiagSC',non_diag_supercell)
+ if(non_diag_supercell) call msg('sr','Using the new bz sampling setup')
  !
  q%description='q'
  !
@@ -130,7 +134,11 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    call m3inv(M=k_b_m1)
    !
-   call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   if(non_diag_supercell) then
+     call define_q_map_new( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   else
+     call define_q_map( Xk%ptbz(:,:), Xk%ptbz(1,:))
+   endif
    !
    ! THE GRID IS UNIFORM IF ALL THE Q_MAP IS FILLED
    !
@@ -193,7 +201,13 @@ subroutine bz_samp_indexes(k,Xk,q)
      bse_scattering=.false.
      gamma_point_only=.true.
    else
-     call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
+     !  
+     if(non_diag_supercell) then
+       call define_q_map_new(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
+     else
+       call define_q_map(q%ptbz(:,:),(/0._SP,0._SP,0._SP/))
+     endif
+     !
    endif
    !
  else
@@ -237,6 +251,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing('X indexes',Xk%nbz/n_threads)
  !
+ if(non_diag_supercell) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
+ !
  !$omp parallel default(shared), private(ikbz,ikbz_p,v1,iv1,iqbz,iqibz,iqs)
  call OPENMP_update(master_thread)
  !
@@ -245,9 +261,29 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    do ikbz_p=1,Xk%nbz
      !
-     v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
-     iv1=nint(v1)
-     call k_grid_shift(iv1)
+     if(non_diag_supercell) then
+       !  
+       v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
+       v1=v1-nint(v1)       ! Bring in the BZ, remove the G0
+       where(v1<-zero_dfl)  ! Bring between [0,1)
+         v1(:)=1._SP+v1(:)
+       end where
+       do id=1,3
+         if(q_step(id)==0) then
+           iv1(id)=1 ! Non-periodic directions or no kpoints in this direction
+         else
+           iv1(id)=nint(v1(id)/q_step(id))+1
+         endif
+       enddo
+       !
+     else
+       !  
+       v1=matmul(k_b_m1,Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)) ! K-K_p= Q + Go
+       iv1=nint(v1)
+       call k_grid_shift(iv1)
+       !
+     endif
+     !
      iqbz =q_map(iv1(1),iv1(2),iv1(3))
      iqibz=q%sstar(iqbz,1)
      iqs  =q%sstar(iqbz,2)
@@ -304,17 +340,37 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    do ikbz_p=1,k%nbz
      !
-     v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
-     iv1=nint(v1)
-     !
-     if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) then
-        !$omp critical
-        connected_grids=.false.
-        !$omp end critical
-        cycle
+     if(non_diag_supercell) then
+       !
+       v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)
+       v1=v1-nint(v1)       ! Bring in the BZ, remove the G0
+       where(v1<-zero_dfl)  ! Bring between [0,1)
+         v1(:)=1._SP+v1(:)
+       end where
+       do id=1,3
+         if(q_step(id)==0) then
+           iv1(id)=1 ! Non-periodic directions or no kpoints in this direction
+         else
+           iv1(id)=nint(v1(id)/q_step(id))+1
+         endif
+       enddo
+       !
+     else
+       !   
+       v1=matmul(k_b_m1,k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:))
+       iv1=nint(v1)
+       !
+       if (.not.v_is_zero(v1-real(iv1,SP),zero_=local_zero)) then
+          !$omp critical
+          connected_grids=.false.
+          !$omp end critical
+          cycle
+       endif
+       !
+       call k_grid_shift(iv1)
+       !
      endif
      !
-     call k_grid_shift(iv1)
      iqbz=q_map(iv1(1),iv1(2),iv1(3))
      !
      if (iks==1) qindx_S(ikibz,iqbz,1)=ikbz_p
@@ -405,6 +461,8 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    subroutine define_q_map(qpt_map,q_ref)
      !
+     implicit none
+     !
      real(SP)::qpt_map(Xk%nbz,3),q_ref(3)
      !
      q_map=0
@@ -434,6 +492,67 @@ subroutine bz_samp_indexes(k,Xk,q)
          enddo
        enddo
      enddo
+   end subroutine
+   !
+   subroutine define_q_map_new(qpt_map,q_ref)
+     !
+     use pars,      ONLY:zero_dfl
+     !
+     implicit none
+     !
+     real(SP)  :: qpt_map(Xk%nbz,3)
+     real(SP), intent(in)     :: q_ref(3)
+     !
+     ! Work space
+     !
+     real(SP) :: qpt_save(Xk%nbz,3),q_step(3)
+     integer  :: id
+     !
+     qpt_save=qpt_map
+     !
+     ! Remove shift if present 
+     do id=1,3
+       qpt_map(:,id)=qpt_map(:,id)-q_ref(id)
+     enddo
+     !
+     qpt_map(:,:)=qpt_map(:,:)-nint(qpt_map(:,:)) ! Bring in the BZ
+     !  
+     ! Bring k-points between [0,1)
+     !
+     where(qpt_map(:,:)<-zero_dfl)
+       qpt_map(:,:)=1._SP+qpt_map(:,:)     
+     end where
+     !
+     ! Find the smallest q in the 3 direction 
+     !  
+     call k_find_smallest_q(qpt_map,q_step,Xk%nbz)
+     !
+     q_map=0
+     do i1=1,Xk%nbz
+       !
+       do id=1,3
+         !
+         if(q_step(id)==0._SP) then ! Non periodic directions
+           q_iptbz(i1,id)=1
+           cycle
+         endif
+         !
+         q_iptbz(i1,id)=nint(qpt_map(i1,id)/q_step(id))+1
+         !
+       enddo
+       !
+       q_map(q_iptbz(i1,1),q_iptbz(i1,2),q_iptbz(i1,3))=i1
+       !
+     enddo
+     !
+     qpt_map=qpt_save
+     !
+     if(any(q_map==0)) then
+       call error('[RL indx] error in mapping')
+       q_map=0
+       return
+     endif
+     !
    end subroutine
    !
    subroutine q_shadows(force_gamma_only)

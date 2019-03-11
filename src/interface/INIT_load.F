@@ -228,6 +228,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nDBs_used,verb_level=V_kpt) 
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
+ call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
  !
  ! Parallel Setup
  !

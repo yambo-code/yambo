@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
-                                     &  R0, R1, R2, R3, R4, R5,&
-                                     &  D0, D1, D2, D3, D4, D5,&
-                                     &  C0, C1, C2, C3, C4, C5,&
-                                     &  Z0, Z1, Z2, Z3, Z4, Z5,&
-                                     &  L0, L1, L2, L3, L4,    &
-                                     & CH0,CH1,CH2,CH3,CH4,    &
+subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,   &
+                                     &  R0, R1, R2, R3, R4, R5,   &
+                                     &  D0, D1, D2, D3, D4, D5,   &
+                                     &  C0, C1, C2, C3, C4, C5,C6,&
+                                     &  Z0, Z1, Z2, Z3, Z4, Z5,   &
+                                     &  L0, L1, L2, L3, L4,       &
+                                     & CH0,CH1,CH2,CH3,CH4,       &
                                      &                     IPOS)
  !
  use pars,    ONLY:SP,DP,LP
@@ -42,7 +42,7 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
  integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
  real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
  real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
- complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
+ complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
  complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
  !
  ! These types can be used instead of logical that are not supported by NetCdf
@@ -55,7 +55,7 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
  ! 
  ! Work Space
  !
- real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:)
+ real(SP), pointer    :: RC0(:),RC1(:,:),RC2(:,:,:),RC3(:,:,:,:),RC4(:,:,:,:,:),RC5(:,:,:,:,:,:),RC6(:,:,:,:,:,:,:)
  real(DP), pointer    :: RZ0(:),RZ1(:,:),RZ2(:,:,:),RZ3(:,:,:,:),RZ4(:,:,:,:,:),RZ5(:,:,:,:,:,:)
  !
  integer, allocatable :: ipos_loc(:),isize_loc(:)
@@ -70,6 +70,7 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
  if (present(CH4).or.present(L4).or.present(I4).or.present(R4).or.present(D4).or.present(C3).or.present(Z3)) dims=4
  if (                               present(I5).or.present(R5).or.present(D5).or.present(C4).or.present(Z4)) dims=5
  if (                                                                            present(C5).or.present(Z5)) dims=6
+ if (                                                                            present(C6)               ) dims=7
  !
  if(dims>0) then
    allocate(ipos_loc(dims),isize_loc(dims))
@@ -293,7 +294,14 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC5, ipos_loc, isize_loc)
  endif
  !
- ! Complex numbers / vectors / matricies
+ if (present(C6)) then
+   isize_loc=(/2,size(C6,1),size(C6,2),size(C6,3),size(C6,4),size(C6,5),size(C6,6)/)
+   RC6 => linkC2R(C6,isize_loc)
+   if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC6, ipos_loc, isize_loc)
+   if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC6, ipos_loc, isize_loc)
+ endif
+ !
+ ! DP Complex numbers / vectors / matricies
  !
  if (present(Z0)) then
    RZ0 => linkZ2D(Z0,(/2/))

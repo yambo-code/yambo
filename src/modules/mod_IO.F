@@ -243,13 +243,13 @@ module IO_m
      !
    end subroutine io_variable_elemental
    !
-   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
-                                        &  R0, R1, R2, R3, R4, R5,&
-                                        &  D0, D1, D2, D3, D4, D5,&
-                                        &  C0, C1, C2, C3, C4, C5,&
-                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
-                                        &  L0, L1, L2, L3, L4,    &
-                                        & CH0,CH1,CH2,CH3,CH4,    &
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,   &
+                                        &  R0, R1, R2, R3, R4, R5,   &
+                                        &  D0, D1, D2, D3, D4, D5,   &
+                                        &  C0, C1, C2, C3, C4, C5,C6,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,   &
+                                        &  L0, L1, L2, L3, L4,       &
+                                        & CH0,CH1,CH2,CH3,CH4,       &
                                         &                     IPOS)
      !
      use pars,   ONLY:SP,DP,LP
@@ -258,7 +258,7 @@ module IO_m
      integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
      real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
      real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
+     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
      complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)

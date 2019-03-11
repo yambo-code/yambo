@@ -29,7 +29,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD
+ use IO_m,       ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_RD_CL,&
+&                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme
  !
  implicit none
@@ -89,8 +90,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(writing) call fix_velocity(Dip,-1)
  !
- if(reading) IO_ACTION=OP_RD_CL
- if(writing) IO_ACTION=OP_APP_CL
+ if(reading) IO_ACTION=OP_IF_START_RD_CL_IF_END
+ if(writing) IO_ACTION=OP_IF_START_APP_CL_IF_END
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz

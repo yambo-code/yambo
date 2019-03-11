@@ -600,7 +600,6 @@ module real_time
      call DIP_alloc('DIP_spin')
      call DIP_alloc('DIP_orbital')
      call DIP_alloc('P_square') 
-     call DIP_alloc('DIP_projected')
      call DIP_alloc('DIP_P_spinor')
      !
      YAMBO_FREE(DbGd_ibz_coo)

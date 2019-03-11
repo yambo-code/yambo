@@ -32,13 +32,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use DIPOLES,       ONLY:DIPOLE_t,DIP_projected
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G
+ use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
+ use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  !
  implicit none
@@ -61,8 +62,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  complex(SP)              :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
  real(SP)                 :: Z_eh_occ
  logical                  :: l_X_term_vv
- integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,ik_bz_mem,&
+ integer                  :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                            isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
+ !
+ ! DIPOLES
+ !
+ complex(SP)           :: DIP_projected,field_dir(3)
+ !
+ field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
  isave       = 0
  n_poles     = sum(bare_grid_N(1:i_cg-1))
@@ -116,7 +123,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%is = (/ic,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
-     ik_bz_mem   = PAR_Xk_bz_index(ikbz)
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          call scatter_Bamp(Xo_scatt)
@@ -138,7 +144,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      ! cancellation with another XTerm contribution to wings and head
      ! (that, in fact, is not included below, see ig_start=2)
      !
-     Xo_scatt%rhotw(1)=-conjg(DIP_projected(ic,iv,ik_bz_mem,i_spin))
+     DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
+     !
+     Xo_scatt%rhotw(1)=-conjg(DIP_projected)
      if (l_X_term_vv.and.iv==ic) Xo_scatt%rhotw(1)=0.0_SP
      !
    else

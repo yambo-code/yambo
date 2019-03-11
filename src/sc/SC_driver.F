@@ -449,7 +449,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        ! Davide: this should be replaced by the use of covariant dipoles ...
        call DIPOLE_rotate(H_rotation,E,Dip, 1)
-       call DIPOLE_expand_and_project(Xk,Dip)
        call DIPOLE_rotate(H_rotation,E,Dip,-1)
        !
        ! Recalcolate Xo and X  

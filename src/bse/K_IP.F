@@ -30,12 +30,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg
+ use vec_operate,   ONLY:v_norm
+ use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
  use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,BSS_q0,Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
@@ -45,7 +46,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use timing_m,      ONLY:timing
 #if defined _PL
  use drivers,       ONLY:l_photolum
- use DIPOLES,       ONLY:DIP_P
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights,PL_init
 #endif
 #if defined _KERR
@@ -70,6 +70,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::rotated_P(3),P_weighted(3)
  real(SP)          ::res_PL(2)
 #endif
+ !
+ character(6)          :: DIP_kind
+ complex(SP)           :: DIP_projected,field_dir(3)
+ !
  !
  call section('=','Independent Particles absorption') 
  !===================================================
@@ -136,12 +140,19 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    !
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
-   call DIPOLE_expand_and_project(Xk,Dip)
    !
    BSS_Vnl_included=Dip%Vnl_included
    !
-   if (trim(global_gauge)=='length'  ) conjg_fac=-1._SP
-   if (trim(global_gauge)=='velocity') conjg_fac=+1._SP
+   if (trim(global_gauge)=='length'  ) then
+     conjg_fac=-1._SP
+     dip_kind ="DIP_iR"
+     field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
+   endif
+   if (trim(global_gauge)=='velocity') then
+     conjg_fac=+1._SP
+     dip_kind ="DIP_v"
+     field_dir=Dip%q0/v_norm(Dip%q0)
+   endif
    !
    if (l_rpa_IP) call live_timing('IP absorption',PAR_BS_nT_col_grps)
    !
@@ -156,8 +167,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ic    = BS_T_grp(i_T_g)%table(i_T,3)
        i_sp_pol = BS_T_grp(i_T_g)%table(i_T,4)
        !
-       ik_bz_mem= PAR_Xk_bz_index(ik_bz)
-       !
        if(.not.allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
        if(     allocated(BS_T_grp(i_T_g)%W)) E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
        !
@@ -169,18 +178,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> =  conjg(q_ver*<v|r|c>)
        !              see definition of conjg_fac few lines before for the -1
        !
-       BS_T_grp(i_T_g)%dipoles_R(i_T)=conjg_fac*conjg(DIP_projected(ic,iv,ik_bz_mem,i_sp_pol))
-       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected(ic,iv,ik_bz_mem,i_sp_pol)
+       DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ik_bz,i_sp_pol,dip_kind,Xk))
+       !
+       BS_T_grp(i_T_g)%dipoles_R(i_T)=   conjg_fac*conjg(DIP_projected)
+       if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A(i_T)=DIP_projected
 #if defined _PL
        if (l_photolum) then
-         !
-         call GET_the_rotated_P( )
-         !
-         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(rotated_P(:))
-         if (BS_K_coupling) then
-           BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=rotated_P(:)
-         endif
-         !
+         BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:)=conjg(DIP_rotated(ic,iv,ik_bz,i_sp_pol,"DIP_v",Xk))
+         if (BS_K_coupling) BS_T_grp(i_T_g)%dipoles_A_PL(i_T,:)=conjg(BS_T_grp(i_T_g)%dipoles_R_PL(i_T,:))
        endif
 #endif
        !
@@ -283,7 +288,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    A_drude(1)=para_term_w0-diam_term_exact
    !
-   if (l_kerr) call K_kerr_IP(iq,W_bss%p,Dip)
+   if (l_kerr) call K_kerr_IP(iq,W_bss%p,Dip,Xk)
    !
 #endif
    !
@@ -295,10 +300,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_v')
+   call DIP_alloc('DIP_S')
    call DIP_alloc('DIP_spin')
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_projected')
    call DIP_alloc('DIP_P_spinor')
  endif
  !
@@ -325,34 +330,4 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  call timing('T_space IP',OPR='stop')
  !
-#if defined _PL
- !
- contains
-   !
-   subroutine GET_the_rotated_P( )
-     !
-     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
-     use parallel_m,     ONLY:PAR_DIPk_ibz_index
-     !
-     integer :: ik,is,ik_mem
-     logical :: t_rev
-     !
-     ik=Xk%sstar(ik_bz,1)
-     is=Xk%sstar(ik_bz,2)
-     !
-     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
-     !
-     is = sop_inv( is )
-     !      
-     ik_mem    = PAR_DIPk_ibz_index(ik)
-     rotated_P = matmul( dl_sop(:,:,is) , DIP_P(:,ic,iv,ik_mem,i_sp_pol) )
-     !
-     if (t_rev) rotated_P = conjg( rotated_P )
-     !
-   end subroutine
-   !
-#endif
-   !
-   !
 end subroutine

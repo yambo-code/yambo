@@ -112,7 +112,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  if (iq==1) then
    call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
    call DIPOLE_IO(Xk,Xen,Dip,'read ',io_err,'X')
-   call DIPOLE_expand_and_project(Xk,Dip)   
  endif
  !
  ! WF load
@@ -343,7 +342,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    call DIP_alloc('DIP_spin')
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_projected')
    call DIP_alloc('DIP_P_spinor')
  endif
  !

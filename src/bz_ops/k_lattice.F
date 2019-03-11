@@ -34,7 +34,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use matrix_operate, ONLY:m3det,m3inv
  use R_lattice,      ONLY:b,k_grid_b,k_grid_dim,k_grid,RL_vol,&
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
-&                         bz_samp,g_vec,ng_in_shell
+&                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
 #include<memory.h>
  !
@@ -283,25 +283,29 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  ! ################ BEGIN NEW MAPPING ##################
  !
- call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
- !
- k_shift=Xk%ptbz(1,:) ! I assume the first k-point as shift
- !
- Xk%ptbz(:,:)=Xk%ptbz(:,:)-nint(Xk%ptbz(:,:)) ! Bring in the BZ
- !  
- ! Bring k-points between [0,1)
- !
- where(Xk%ptbz(:,:)<-zero_dfl)
-   Xk%ptbz(:,:)=1._SP+Xk%ptbz(:,:)     
- end where
- !
- do id=1,3
-   if(q_step(id)==0._SP) then
-     k_grid(id)=1
-   else
-      k_grid(id)=nint(maxval(Xk%ptbz(:,id)-k_shift(id))/q_step(id))+1
-   endif
- enddo
+ if(Xk_grid_new_mapping) then
+   !
+   call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
+   !
+   k_shift=Xk%ptbz(1,:) ! I assume the first k-point as shift
+   !
+   Xk%ptbz(:,:)=Xk%ptbz(:,:)-nint(Xk%ptbz(:,:)) ! Bring in the BZ
+   !  
+   ! Bring k-points between [0,1)
+   !
+   where(Xk%ptbz(:,:)<-zero_dfl)
+     Xk%ptbz(:,:)=1._SP+Xk%ptbz(:,:)     
+   end where
+   !
+   do id=1,3
+     if(q_step(id)==0._SP) then
+       k_grid(id)=1
+     else
+        k_grid(id)=nint(maxval(Xk%ptbz(:,id)-k_shift(id))/q_step(id))+1
+     endif
+   enddo
+   !
+ endif
  !
  ! ################  END  NEW MAPPING ##################
  !

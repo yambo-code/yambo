@@ -29,9 +29,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,       ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_RD_CL,&
+ use IO_m,       ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme,myid
  !
  implicit none
  !
@@ -57,12 +57,17 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
+ call SETUP_PAR_K_scheme()
+ !
  ID=0
  ID_S=0
+#if defined _PAR_IO
+ write_header  =      PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
+ read_header   =(.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing).or.reading.or.check
+#else
  write_header  =(     master_cpu.and.writing)
  read_header   =(.not.master_cpu.and.writing).or.reading.or.check
- !
- call SETUP_PAR_K_scheme()
+#endif
  !
  if(write_header) then
    call msg('s','[DIP] Writing dipoles header ')
@@ -93,6 +98,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if(reading) IO_ACTION=OP_IF_START_RD_CL_IF_END
  if(writing) IO_ACTION=OP_IF_START_APP_CL_IF_END
  !
+#if defined _PAR_IO
+ call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/0/),ID=ID)
+ io_err=io_DIPOLES(Dip,ID)
+#endif
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
      if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
@@ -101,8 +110,16 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      io_err=io_DIPOLES(Dip,ID)
    enddo
  enddo
- !    
+#if defined _PAR_IO
+ call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/2+n_sp_pol*Xk%nibz/),ID=ID)
+ io_err=io_DIPOLES(Dip,ID)
+#endif
+ !
  if(use_covariant_approach) then
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/0/),ID=ID_S)
+   io_err=io_err+io_Overlaps(Dip,ID_S)
+#endif
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
@@ -111,6 +128,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        io_err=io_err+io_Overlaps(Dip,ID_S)
      enddo
    enddo
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/2+n_sp_pol*Xk%nibz/),ID=ID_S)
+   io_err=io_err+io_Overlaps(Dip,ID_S)
+#endif
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)

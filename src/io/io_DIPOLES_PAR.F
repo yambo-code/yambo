@@ -29,7 +29,8 @@ integer function io_DIPOLES(Dip,ID)
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
 &                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END
+&                        IO_NOT_ALLOWED,io_fragment,manage_OP_IF_START_and_CL_IF_END,io_action,&
+&                        open_is_on,close_is_on
 #if defined _RT
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,     ONLY:n_spinor
@@ -38,7 +39,7 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:P_square
  use drivers,       ONLY:l_real_time,l_sc_run
 #endif
- use parallel_m,    ONLY:PAR_K_scheme
+ use parallel_m,    ONLY:PAR_K_scheme,master_cpu,myid
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -62,11 +63,26 @@ integer function io_DIPOLES(Dip,ID)
    return
  endif
  !
+ i_sp_pol=-1
+ ik=-1
+ i_fragment=maxval(io_sec(ID,:))-1
+ if(i_fragment<=nXkibz) then
+   i_sp_pol=1
+   ik=i_fragment
+ else if(n_sp_pol==2.and.i_fragment<=2*nXkibz) then
+   i_sp_pol=2
+   ik=i_fragment-nXkibz
+ endif
+ !
+ ! Manage OP_IF_START_and_RD_CL_IF_END
+ !
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_fragment,FIRST=-1,LAST=(nXkibz*n_sp_pol+1))
+ !
  call timing('io_DIPOLES',OPR='start')
  !
  io_extension(ID)='dipoles'
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -79,18 +95,10 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- i_fragment=maxval(io_sec(ID,:))-1
- if(i_fragment<=nXkibz) then
-   i_sp_pol=1
-   ik=i_fragment
- else
-   i_sp_pol=2
-   ik=i_fragment-nXkibz
- endif
+ if (i_fragment==0)               goto 1
+ if (i_fragment> n_sp_pol*nXkibz) goto 1
  !
- if (ik==0) goto 1
- !
- ik_mem=PAR_K_scheme%ibz_index(ik)
+ if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik)
  !
  ! Reading size and position
  !
@@ -117,7 +125,7 @@ integer function io_DIPOLES(Dip,ID)
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
 #endif
  !
- if (read_is_on(ID)) then
+ if (read_is_on(ID).and.i_fragment==-1) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
@@ -139,30 +147,26 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- ! Manage OP_IF_START_and_RD_CL_IF_END
- !
- call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_fragment,LAST=nXkibz*n_sp_pol)
- !
  ! iR
  !
  VAR_ID=1
  VAR_name='DIP_iR'
- call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
- call  io_variable_bulk(ID,VAR_ID,C5=DIP_iR(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+ if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+ if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_iR(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
  !
  ! P
  !
  VAR_ID=2
  VAR_name='DIP_P'
- call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
- call  io_variable_bulk(ID,VAR_ID,C5=DIP_P(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+ if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+ if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_P(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
  !
  ! v
  !
  VAR_ID=3
  VAR_name='DIP_v'
- call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
- call  io_variable_bulk(ID,VAR_ID,C5=DIP_P(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+ if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+ if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_P(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
  !
  ! GPL_EXCLUDE_START
  !
@@ -173,22 +177,22 @@ integer function io_DIPOLES(Dip,ID)
    !
    VAR_ID=4
    VAr_name='DIP_itinerant'
-   call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,2),IPOS=DIP_ipos)
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,2),IPOS=DIP_ipos)
    !
    ! Orbital magnetization
    !
    VAR_ID=5
    VAR_name='DIP_orbital'
-   call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
    ! Spin magntization
    !
    VAR_ID=5
    VAR_name='DIP_spin'
-   call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
    !
    if (n_spinor==2) then
      !
@@ -196,8 +200,8 @@ integer function io_DIPOLES(Dip,ID)
      !
      VAR_ID=6
      VAR_name='DIP_P_spinor'
-     call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
-     call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
+     if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
+     if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
      !
    endif
    !
@@ -212,8 +216,8 @@ integer function io_DIPOLES(Dip,ID)
    !
    VAR_ID=7
    VAR_name='P_square'
-   call def_variable_bulk(ID,trim(VAR_name),VAR_ID,P2_size,SP,par_io_kind='independent')
-   call  io_variable_bulk(ID,VAR_ID,C4=P_square(:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=P2_ipos)
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,P2_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C4=P_square(:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=P2_ipos)
    !
  endif
 #endif

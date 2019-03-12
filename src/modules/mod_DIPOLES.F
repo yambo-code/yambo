@@ -223,7 +223,7 @@ module DIPOLES
      is=kpt%sstar(ik_bz,2)
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
-     is = sop_inv( is )
+     !is = sop_inv( is )
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)

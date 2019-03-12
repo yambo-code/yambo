@@ -126,7 +126,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
-!     call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
      if(.not.par_IO) call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO && defined _HDF5_IO
      if(     par_IO) call netcdf_call(nf90_open_par(trim(io_file(ID)),PAR_IO_WRITE_MODE, &

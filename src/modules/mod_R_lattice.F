@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,6 +34,7 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
+ logical  :: Xk_grid_new_mapping
  !
  ! Q/K-sampling
  !

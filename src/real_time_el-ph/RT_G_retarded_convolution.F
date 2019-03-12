@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -45,12 +45,16 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Skind)
  !
  W_center=WmWp+Wbose
  !
- if (Skind=='EP') local_alpha=  two_alpha  ! El-Ph, 2 GFs
- if (Skind=='EE') local_alpha=2*two_alpha  ! El-El, 4 GFs
- !
- if (trim(Gr_kind)=='QP') RT_G_retarded_convolution=W_center/(E_center**2+W_center**2)
- !
- if (trim(Gr_kind)=='HS') RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W_center,local_alpha)
+ select case(trim(Gr_kind))
+   case('SQ')
+     RT_G_retarded_convolution=Squared_function(E_center,W_center)
+   case('QP')
+     RT_G_retarded_convolution=W_center/(E_center**2+W_center**2)
+   case('HS')
+     if (Skind=='EP') local_alpha=  two_alpha  ! El-Ph, 2 GFs
+     if (Skind=='EE') local_alpha=2*two_alpha  ! El-El, 4 GFs
+     RT_G_retarded_convolution=HyperbolicSecant_FT(E_center,W_center,local_alpha)
+ end select
  !
  contains
    !
@@ -64,5 +68,11 @@ real(SP) function RT_G_retarded_convolution(EmEp,Ebose,WmWp,Wbose,Skind)
      if (  E2==0._SP               ) return
      if (  E1/E2   >0._SP          ) Energy_Condition=.false.
    end function
+   !
+   real(SP) function Squared_function(E_,W_)
+     real(SP) :: E_,W_
+     if(E_<=W_) Squared_function=1._SP/W_
+     if(E_> W_) Squared_function=0._SP
+   end function Squared_function
    !
 end function RT_G_retarded_convolution

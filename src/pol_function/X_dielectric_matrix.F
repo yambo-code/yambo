@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -30,6 +30,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
 #if defined _PL
  use drivers,       ONLY:l_photolum
 #endif
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
@@ -54,6 +55,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  type(levels) ::Xen 
  type(bz_samp)::Xk,q
  type(X_t)    ::X
+ type(DIPOLE_t)::Dip
  type(w_samp) ::Xw
  logical      ::APPEND_NO_VERIFY
  !
@@ -72,6 +74,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  endif
+ !
+ X%ngostnts=Dip%ng
  !
  ! TDDFT SETUP (-1 argument)
  !
@@ -122,11 +126,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  io_X_done=-1
  !
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
- !
- ! X%ngostnts is defined in DIPOLE_driver. It may happen that this is called only for the group of CPU's that eval q=1. 
- ! To avoid erroneous errors in the VERIFY mode this value must be spread to all CPUs before doing the IO of the header
- !
- if (l_life .and. X%iq(1)>1) call PP_redux_wait((/X%ngostnts/),COMM=PAR_COM_X_WORLD%COMM)
  !
  if (io_RESPONSE) then
    !
@@ -205,6 +204,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    !
  endif
  !
+ !
  do iq=X%iq(1),X%iq(2)
    !
    ! TDDFT setup
@@ -228,18 +228,18 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
+   if(iq==1) then
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
+     i_err=io_X(X,Xw,Xdb)
+   endif
+   !
    ! Allocation
    !
    iq_mem=PAR_Q_index(iq)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X)  
-   !
-   if(iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
-   endif
+   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
    !
    ! When X%whoami == 1 X is Xo (ACFDT). 
    !
@@ -317,9 +317,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,APPEND_NO_VERIFY)
  if (allocated(FXC)) then
    YAMBO_FREE(FXC)
  endif
- call X_alloc('DIP_projected')
+ call DIP_alloc('DIP_projected')
 #if defined _PL
- if (l_photolum) call X_alloc('DIP_P')
+ if (l_photolum) call DIP_alloc('DIP_P')
 #endif
  if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
  !

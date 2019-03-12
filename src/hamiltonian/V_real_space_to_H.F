@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
+subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  use electrons,      ONLY:n_spin,n_spinor,spin
+ use com,            ONLY:error
  use pars,           ONLY:SP,cZERO
  use FFT_m,          ONLY:fft_size
  use QP_m,           ONLY:QP_table,QP_n_states
@@ -40,13 +41,15 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  use drivers,        ONLY:l_real_time
  use parallel_m,     ONLY:PAR_IND_B_mat_ordered,PAR_IND_WF_k
 #endif
+ !
  implicit none
  !
- integer,      intent(in)    :: ik,i_sp_pol
- real(SP),     intent(in)    :: V(fft_size,n_spin)
- complex(SP),  intent(inout) :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
- character(3), intent(in)    :: V_kind
- type(WAVEs) :: WF
+ integer,      intent(in)              :: ik,i_sp_pol
+ complex(SP),  intent(inout)           :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
+ type(WAVEs),  intent(in)              :: WF
+ character(*), intent(in)              :: V_kind
+ real(SP),     intent(in), optional    :: V(fft_size,n_spin)
+ real(SP),     intent(in), optional    :: Vxc(fft_size,n_spin)
  !
  ! Work Space
  !
@@ -59,12 +62,16 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
  if (l_real_time.and.(.not.PAR_IND_WF_k%element_1D(ik))) return
 #endif
  !
+ if(index(V_kind,"xc") >0 .and. .not.present(Vxc)) call error(' V_real_space_to_H called with xc kind but without Vxc')
+ if(index(V_kind,"def")>0 .and. .not.present(V)  ) call error(' V_real_space_to_H called with def kind but without V')
+ !
  call timing('V_real_space_to_H',OPR='start')
  !
- if(V_kind=="xc ") call Build_V_xc_mat(V,V_mat)
- if(V_kind=="def") then
-   V_mat=cZERO
-   forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)=V(:,i_sp_pol+i_spinor-1)
+ V_mat=cZERO
+ if(index(V_kind,"xc") >0) call Build_V_xc_mat(Vxc,V_mat)
+ if(index(V_kind,"def")>0) then
+   forall(i_spinor=1:n_spinor) V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)= &
+&         V_mat(:,i_sp_pol+i_spinor-1,i_sp_pol+i_spinor-1)+V(:,i_sp_pol+i_spinor-1)
  endif
  !
  PAR_IND_local=.true.
@@ -122,15 +129,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,V,H,WF,V_kind)
      i_spin=i_sp_pol+i_spinor-1
      do j_spinor=1,n_spinor
        j_spin=i_sp_pol+j_spinor-1
-#if defined _OPENMP
-!$omp parallel do default(shared), private(ir)
-       do ir=1,fft_size
-         c_ws(ir,i_spinor)=c_ws(ir,i_spinor)+V_mat(ir,i_spin,j_spin)*WF%c(ir,j_spinor,i_wfp)
-       enddo
-!$omp end parallel do
-#else
        c_ws(:,i_spinor)=c_ws(:,i_spinor)+V_mat(:,i_spin,j_spin)*WF%c(:,j_spinor,i_wfp)
-#endif
      enddo
    enddo
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
+subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Non interacting Xo
  !
@@ -38,7 +38,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  ! X terminator (BG kind) implemented (IM,AF)
  ! 
  use drivers,       ONLY:l_life
- use IO_m,          ONLY:io_RESPONSE
+ use IO_m,          ONLY:io_RESPONSE,io_DIP
  use pars,          ONLY:SP,cZERO,schlen
  use wrapper,       ONLY:V_by_V_plus_V
  use LIVE_t,        ONLY:live_timing
@@ -58,6 +58,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
  use D_lattice,     ONLY:i_space_inv
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle
@@ -69,12 +70,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
+ !
 #include<memory.h>
  !
  type(PAR_matrix), target :: X_par
  type(levels)         :: Xen
  type(bz_samp)        :: Xk
  type(X_t)            :: X
+ type(DIPOLE_t)       :: Dip
  type(w_samp)         :: Xw
  integer              :: iq
  !
@@ -82,7 +85,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  character(schlen)        :: live_t_string
  integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows
+&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows,io_err
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
  complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
@@ -114,17 +117,16 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
  !
- !  Optical strengths
- !=====================
+ ! Drude term
+ !============
+ if (iq==1) call X_drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
+ !
+ ! Dipoles
+ !=========
  if (iq==1) then
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_DIP)
-   !
-   call DIPOLE_driver(Xen, Xk, X, X%q0)
-   call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
-   !
-   call OPENMP_set_threads(n_threads_in=n_threads_X)
-   !
+   call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
+   call DIPOLE_IO(Xk,Xen,Dip,'read ',io_err,'X')
+   call DIPOLE_expand_and_project(Xk,Dip)   
  endif
  !
  ! WF load
@@ -246,6 +248,19 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
+ ! Drude term
+ !
+ if (iq==1.and.master_thread) then
+   do i_cg = 1,coarse_grid_N
+     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+     if(.not.Drude_pole) cycle
+     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+     exit
+   enddo
+ endif
+ !
  ! MAIN LOOP
  !===========
  !
@@ -256,28 +271,27 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
    !
+   ! Drude term already accounted for
+   !
+   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+   if(Drude_pole) then
+#ifdef _CUDA
+   call error('[X] CUDA Porting not implemented here')
+#endif
+     if (master_thread) call live_timing(steps=1)
+     cycle
+   endif
+   !
    ! 1) First compute the residuals
    !================================
 #ifdef _CUDA
-   call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res_d,Xo_scatt)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_d,Xo_scatt)
 #else
-   call X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #endif
    !
    ! 2) Then the frequency dependent term
    !=======================================
-   Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
-   !
-   if(Drude_pole.and.X_par%rows(1)==1.and.X_par%cols(1)==1) then
-#ifdef _CUDA
-   call error('[X] CUDA Porting not implemented here')
-#endif
-     !$omp critical
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg))
-     !$omp end critical
-     call live_timing(steps=1)
-     cycle
-   endif
    !
    ! GPL_EXCLUDE_START
    !
@@ -421,6 +435,16 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X)
 !$omp end parallel
 #endif
  !
+ if (iq==1.and.io_DIP) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_v')
+   call DIP_alloc('DIP_spin')
+   call DIP_alloc('DIP_orbital')
+   call DIP_alloc('P_square') 
+   call DIP_alloc('DIP_projected')
+   call DIP_alloc('DIP_P_spinor')
+ endif
  !
  if (coarse_grid_N>=n_out_threads) call live_timing( )
  !

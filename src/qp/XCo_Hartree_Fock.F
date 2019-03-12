@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 &                        PAR_IND_QP_ID,PAR_IND_Q,PAR_IND_G_b,&
 &                        PAR_IND_Q_ID,n_WF_bands_to_load
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_table,QP_nb,QP_n_states
+ use QP_m,          ONLY:QP_Vnl_xc,QP_ng_Sx,QP_ng_Vxc,QP_table,QP_nb,QP_n_states
  use R_lattice,     ONLY:qindx_S,bz_samp
 #if defined _SC
  use drivers,       ONLY:l_sc_exx
@@ -87,6 +87,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  mode_=""
  if (present(mode)) mode_=trim(mode)
  !
+ call msg('r', '[VXC] Plane waves :',QP_ng_Vxc)
  call msg('r', '[EXS] Plane waves :',QP_ng_Sx)
  !
  ! QP_table -> report
@@ -112,7 +113,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      !
    endif
    !
-   call WF_load(WF,QP_ng_Sx,maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
+   call WF_load(WF,max(QP_ng_Sx,QP_ng_Vxc),maxval(qindx_S(:,:,2)),(/1,max(E%nbm,QP_nb)/),(/1,k%nibz/),title='-HF/Rho')
    !
  endif
  !

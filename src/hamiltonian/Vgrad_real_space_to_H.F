@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Vgrad_real_space_to_H(ik,V_grad,H,WF)
+subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  !
  ! Updte of SOC interaction, i.e. last term in 
  ! Eq.(1) JCTC 11, 4870 (2015)

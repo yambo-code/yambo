@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM,AF,IM
@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
+subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !
  ! This subroutine must be kept thread-safe, since it is used
  ! inside an external omp loop.
@@ -32,10 +32,11 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  !
  use pars,          ONLY:SP,cZERO,cONE
  use wrapper,       ONLY:V_by_V_plus_V
- use X_m,           ONLY:X_t,DIP_projected,X_poles_tab,l_X_terminator,X_cols,X_rows
 #ifdef _CUDA
  use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
 #endif
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_projected
+ use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows
  use parallel_m,    ONLY:PAR_Xk_bz_index
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N
@@ -52,6 +53,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  type(levels), intent(in) :: Xen
  type(bz_samp),intent(in) :: Xk
  type(X_t),    intent(in) :: X
+ type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
  complex(SP),  intent(out):: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
 #ifdef _CUDA
@@ -313,6 +315,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
          Xo_scatt%rhotw(ig1)=conjg(Xo_scatt%rhotw(ig1))
        enddo
      endif
+     !
 #endif
      !
      ! take into account the cancellation of terms
@@ -347,6 +350,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
      !$omp end parallel do 
      !
      Xo_scatt%rhotw = rhotw_save2
+     !
 #endif
      !
    endif
@@ -354,4 +358,3 @@ subroutine X_irredux_residuals(Xen,Xk,X,i_cg,iq,Xo_res,Xo_scatt)
  enddo loop_bare_grid
  !
 end subroutine X_irredux_residuals
-

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -148,7 +148,9 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  NB_to_map=SOC_bands_to_map(2)-SOC_bands_to_map(1)+1
  YAMBO_ALLOC(E_vec,(NB_to_map*n_sp_pol))
  !
- call load_cc(.false.,.false.)
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ !
+ call load_cc(.false.,(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/),1)
  !
 1 continue
  !
@@ -212,7 +214,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      endif
      !
      do i_fft=1,fft_size
-       WF_SOC_rot(i_fft,:)=WF_SOC_rot(i_fft,:)*exp(-cI*dot_product(kpt_diff,x_cc(i_fft,:)))
+       WF_SOC_rot(i_fft,:)=WF_SOC_rot(i_fft,:)*exp(-cI*dot_product(kpt_diff,x_cc(i_fft,:,1)))
      enddo
      !
      proj_up=abs(dot_product( WF_SOC_rot(:, 1 ),WF_SOC_rot(:, 1) ))
@@ -338,15 +340,20 @@ subroutine WF_map_perturbative_SOC(kpt,En)
    !
  endif
  !
+ ! Final I/O
+ !
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
+ io_err=io_E_SOC_map(En,kpt,ID) 
+ !
  call msg('s',' Mapping finalized with treshold '//trim(real2ch(mapping_tresh))//' ')
  call msg('s',' Minimum overlap used is         '//trim(real2ch(minval(min_sq)))//' ')
  !
  call WF_free(WF)
  call WF_free(WF_soc)
  !
- ! Final I/O
- !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=LOG,ID=ID)
- io_err=io_E_SOC_map(En,kpt,ID) 
+ YAMBO_FREE(WF_SOC_rot)
+ YAMBO_FREE(E_vec)
+ YAMBO_FREE(E_SOC_table)
+ YAMBO_FREE(x_cc)
  !
 end subroutine WF_map_perturbative_SOC

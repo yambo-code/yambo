@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -83,8 +83,8 @@ module D_lattice
  !
  ! Centered cartesian coordinates inside the cell
  !
- real(SP),    allocatable :: x_cc(:,:)
- real(SP)                 :: x_zero_point(3)
+ real(SP),    allocatable :: x_cc(:,:,:)
+ real(SP)                 :: x_CM(3) ! position of the center of mass
  !
  ! Gradients
  !

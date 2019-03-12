@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -31,7 +31,7 @@ subroutine NL_initialize(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
  use zeros,          ONLY:zero_dfl
- use R_lattice,      ONLY:bz_samp,bare_qpg
+ use R_lattice,      ONLY:bz_samp,bare_qpg,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
@@ -56,7 +56,6 @@ subroutine NL_initialize(E,k,q)
  ! Parser
  ! ============
  !
- call parser('UseDipoles',           l_use_DIPOLES)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
@@ -69,6 +68,12 @@ subroutine NL_initialize(E,k,q)
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
  if(n_sp_pol/=1) call error(" Spin-polarized systems not yet implemented")
  if(any(NL_bands(:)==0)) call error("Any of the NLBands limits is 0, change to nv|nc with 0<nv<fermi<nc")
+ !
+ ! K-sampling
+ ! ===========
+ !
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
+ if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
  !
  ! Integrator ! ============
  !

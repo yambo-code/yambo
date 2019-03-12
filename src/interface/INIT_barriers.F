@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -98,7 +98,7 @@ subroutine INIT_barriers()
  endif
  !
  if (l_nl_optics) then
-   on_runlevels='chi tddft bse bsk bss ppa em1s em1d nloptics'
+   on_runlevels='chi tddft bse ss ppa em1s em1d nloptics'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -158,7 +158,7 @@ subroutine INIT_barriers()
    goto 1
  endif
  if (tddft_r_space) then
-   call switch_off_runlevel('all',on_name='optics bse bsk bss tddft '//trim(always_runlevels))
+   call switch_off_runlevel('all',on_name='optics bse bss tddft '//trim(always_runlevels))
    goto 1
  endif
  !
@@ -167,7 +167,7 @@ subroutine INIT_barriers()
  l_flag=l_bss.or.l_bse.or.l_photolum
 #endif
  if (l_flag) then
-   on_runlevels='optics bse bsk bss tddft em1s em1d ppa photolum'
+   on_runlevels='optics bse bss tddft em1s em1d ppa photolum'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
    goto 1
  endif
@@ -180,8 +180,8 @@ subroutine INIT_barriers()
  ! Non Uniform grids
  !===================
  if (.not.Xk_grid_is_uniform) then
-   on_runlevels='optics chi bse bsk bss'
-   if (l_elph_corr) on_runlevels='optics chi bse bsk bss el_ph_corr gw0'
+   on_runlevels='optics chi bse bss'
+   if (l_elph_corr) on_runlevels='optics chi bse bss el_ph_corr gw0'
    if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 
@@ -189,10 +189,10 @@ subroutine INIT_barriers()
  ! SPIN
  !=============
  if (n_spin>2) then
-   on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
+   on_runlevels='optics chi bse bss em1s em1d ppa HF_and_locXC cohsex gw0 magnetic scrun'
    on_runlevels=trim(on_runlevels)//' negf collisions el_el_corr el_ph_corr el_el_scatt el_ph_scatt'
    ! GPL_INCLUDE_START SC_IGNORE
-   !on_runlevels='optics chi bse bsk bss em1s em1d ppa HF_and_locXC cohsex gw0'
+   !on_runlevels='optics chi bse bss em1s em1d ppa HF_and_locXC cohsex gw0'
    ! GPL_INCLUDE_END SC_IGNORE
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))
  endif 

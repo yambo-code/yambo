@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -149,15 +149,15 @@ subroutine k_find_smallest_q(ptbz,q_step,nbz)
    enddo
  enddo
  !
- if(any(q_step==10000)) call msg("s"," System with reduced dimensionality ")
+ if(any(q_step==10000)) call msg("r"," System with reduced dimensionality ")
  !
  where(q_step==10000)
    q_step = 0._SP
  end where
  !
- call msg("s"," Smallest q vectors :")
+ call msg("r"," Smallest q vectors (crystal coordinates) :")
  write(dump_ch,'(3f14.6)') q_step(:)
- call msg("s",dump_ch)
+ call msg("r",dump_ch)
  !
 end subroutine k_find_smallest_q
 

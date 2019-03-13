@@ -69,6 +69,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  y.out_dir=".";
  y.com_dir=".";
  y.job="";
+ strcpy(y.string,"");
  /* */
  n_options=0;
  for(i_opt=0;i_opt<=100;i_opt++) {

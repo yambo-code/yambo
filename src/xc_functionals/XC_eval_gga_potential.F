@@ -102,7 +102,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     !
   enddo
   do ifft=1,fft_size
-   write(50,*)  V_xc(ifft,1),Gv_drho(ifft)
+   write(50,*)  ifft,V_xc(ifft,1),real(v1rho(1,ifft),SP),Gv_drho(ifft)
+   write(41,*)  ifft,real(v1rho(1,ifft),SP),real(v1sigma(1,ifft),SP)
   enddo
   !
 end subroutine XC_eval_gga_potential

@@ -256,7 +256,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
         !GAUPBE short range x-energy  and potentials part
-         call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
+        if(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
      select case(ORDER)
        case(0)
          call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
@@ -264,20 +264,17 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        case(1)
          call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) then
-         !GAUPBE short energy part of the x potential
+         !GAUPBE short energy part of the x potential,factor 2 in vx2 for
+         !consistency qith QE
            v1rho=v1rho-EXX_FRACTION*vx1
-           v1sigma=v1sigma-EXX_FRACTION*vx2
+           v1sigma=v1sigma-(EXX_FRACTION*vx2)/2._DP
 !test
-           v1sigma=0._DP
+!           v1sigma=0._DP
+         endif
 !
 !Check QE when using libxc, vx2 is subtracted  to a v1sigma having a factor 2 of
 !difference. V1rho is instead is v1x-v1x_vxlda; this is internal of QE and
 !should be harmless
-          do ifft=1,fft_size
-             write(22,*) ifft,v1rho(1,ifft),vx1(1,ifft)
-             write(23,*) ifft,vx2(1,ifft)
-         enddo
-         endif
          ! Yambo internal for V_xc
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
        case(2)

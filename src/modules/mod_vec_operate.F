@@ -183,9 +183,9 @@ module vec_operate
    !
    subroutine c2a(b_in,v_in,v_out,mode)
      !
-     ! mode = 'k/rc2a' 'k/ra2c' (cc  <-> rlu)
-     ! mode = 'k/ri2a' 'k/ra2i' (iku <-> rlu)
-     ! mode = 'k/ri2c' 'k/rc2i' (cc  <-> iku)
+     ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
+     ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)
+     ! mode = 'k/r i2c' 'k/r c2i' (cc  <-> iku)
      !
      use D_lattice,      ONLY:alat,a
      use R_lattice,      ONLY:b

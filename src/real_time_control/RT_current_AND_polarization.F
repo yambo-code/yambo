@@ -41,10 +41,10 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time
+&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time,&
+&                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
  use fields,         ONLY:gauge_field
- use DIPOLES,        ONLY:DIP_iR,DIP_P,DIP_spin,DIP_orbital
- use X_m,            ONLY:global_gauge
+ use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz
  use RT_interfaces,  ONLY:RT_average_operator
  use RT_control,     ONLY:RT_do_it
@@ -58,7 +58,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  ! Work Space
  !
- !complex(SP)   :: RT_P_tmp(3)
  complex(SP)   :: RT_M_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
@@ -70,31 +69,41 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  ! 
  ! A : Current
  !
- call RT_average_operator(N_V=3,V_VALUE=RT_ind_J, V_MATRIX=-DIP_P,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+ call RT_average_operator(N_V=3,V_VALUE=RT_ind_J, V_MATRIX=-DIP_v,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
  !
  ! Velocity gauge I must use the correct definition of the J operator
  !
- ! *warning* DS: since this is the current at time t, I should use the vecpot at time t
- !               However I still do not have it here (it will be computed from the current in the velocity gauge)
+ ! *warning* DS: The present comment holds for when RT_current is called by RT_propagate fields
+ !               this is the current at time t, I should use the vecpot at time t
+ !               However I still do not have it here when the induced field is included
+ !               (it will be computed from the current in the velocity gauge)
+ !               The proper value is set in RT_propagate_fields
  !
- if(trim(global_gauge)=='velocity') RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
+ if(l_velocity_gauge_diam) RT_ind_J(:)=RT_ind_J(:)+A_input%vecpot(:)*real(nel,SP)/(2._SP*SPEED_OF_LIGHT)
  !
  RT_ind_J=RT_ind_J/DL_vol
  !
- ! B : Polarization
- !
- call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
- !
- RT_P    =RT_P/DL_vol
+ if (.not.l_P_integrating_J) then
+   !
+   ! B : Polarization in terms of the off-diagonal dipoles x_ij.
+   !     This expression is exact up to linear order in the field.
+   !
+   call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+   !
+   RT_P    =RT_P/DL_vol
+   !
+ else
+   !
+   ! B': Polarization as an integral of the current.
+   !     This expression is exact to all orders in the field.
+   !     (to be fixed, it is not stable ...)
+   !
+   if(integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
+   if(integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
+   !
+ endif
  !
  ! GPL_EXCLUDE_START
- !
- ! B': Polarization as an integral of the current (to be fixed, it is not stable anyway)
- !
- !if(integrator_step==1) RT_P_tmp=RT_P_prev+RT_ind_J_prev*RT_dyn_step
- !if(integrator_step==2) RT_P_tmp=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
- !
- !RT_P=RT_P_tmp
  !
  if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
  !

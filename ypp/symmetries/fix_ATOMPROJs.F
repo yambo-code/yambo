@@ -75,8 +75,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
  io_err=io_ATMPROJ_pwscf(ID)
  !
- write(*,*) io_err
- !
  if (io_err/=0) return
  !
  call section('=',"Atomic projections (PWSCF)")
@@ -131,7 +129,7 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
    call msg('s','done')
    !
    !
-   if(n_steps>0) call live_timing('Atomic projections rotation',n_steps)
+   if(n_steps>0) call live_timing('Atomic projections rotation',n_steps*n_sp_pol)
    !
    call warning(' After rotation m projections will be meaningless')
    !

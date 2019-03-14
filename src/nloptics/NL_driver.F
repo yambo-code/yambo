@@ -122,7 +122,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  else
    if(.not.l_eval_CURRENT) then
      call DIP_alloc('DIP_R')
-     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_v')
    endif
  endif
  !
@@ -267,7 +267,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  call NL_free()
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
- call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
  !
  call set_real_printed_length()
  !

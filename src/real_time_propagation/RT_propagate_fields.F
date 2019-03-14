@@ -100,9 +100,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    ! d^2 A_ind / d t^2 = 4 pi * c * J_ind(t)
    !
-   ! A''(t+dt) =         4 pi * j(t+dt) * c           [this is defined but it is useless]
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt [this is what is used in the velocity gauge]
    ! A' (t+dt) = A'(t) + 4 pi * j(t)    * c * dt
-   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt      [this is defined but it is useless as well]
+   ! A''(t+dt) =         4 pi * j(t+dt) * c
    !
    ! Results are almost ok, but, due to numerical errors, derived epsilon and eels are very bad
    !
@@ -126,9 +126,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    ! d A_ind / d t = 4 pi * c * P(t)
    !
-   ! A''(t+dt) =         4 pi * j(t+dt) * c        [this is defined but it is useless]
-   ! A' (t+dt) =         4 pi * P(t+dt) * c
-   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt   [this is defined but it is useless as well]
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt
+   ! A' (t+dt) =         4 pi * P(t+dt) * c       [this is what is used in the length gauge]
+   ! A''(t+dt) =         4 pi * j(t+dt) * c
    !
    ! It works fine
    !
@@ -140,15 +140,15 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    A_ind=A_ind_new
    !
-   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
-   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
    A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
+   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
    !
  else
    !
-   A_new%vecpot_acc=A_ext%vecpot_acc
-   A_new%vecpot_vel=A_ext%vecpot_vel
    A_new%vecpot    =A_ext%vecpot    
+   A_new%vecpot_vel=A_ext%vecpot_vel
+   A_new%vecpot_acc=A_ext%vecpot_acc
    !
  endif
  !

@@ -51,8 +51,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ! Work Space
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
- real(SP),allocatable  :: PDOS_fac_v(:,:,:),RT_PDOS_fac(:,:,:)
- real(SP),allocatable  :: SPIN_fac_v(:,:,:),RT_SPIN_fac(:,:,:)
+ real(SP),allocatable  :: PDOS_fac_v(:,:,:)
+ real(SP),allocatable  :: SPIN_fac_v(:,:,:)
+ real(SP),allocatable,target :: RT_PDOS_fac(:,:,:)
+ real(SP),allocatable,target :: RT_SPIN_fac(:,:,:)
  real(SP),pointer,contiguous :: PDOS_fac_p(:,:,:) => null()
  real(SP),pointer,contiguous :: SPIN_fac_p(:,:,:) => null()
  !

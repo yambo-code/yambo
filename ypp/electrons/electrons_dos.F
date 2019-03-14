@@ -47,8 +47,8 @@ subroutine electrons_dos(Xk,Xen)
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP), external    :: RIntegrate
- real(SP),allocatable  :: SPIN_fac_v(:,:,:)
- real(SP),allocatable  :: PDOS_fac_v(:,:,:)
+ real(SP),allocatable,target  :: SPIN_fac_v(:,:,:)
+ real(SP),allocatable,target  :: PDOS_fac_v(:,:,:)
  real(SP),pointer, contiguous :: SPIN_fac_p(:,:,:) => null()
  real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
  !

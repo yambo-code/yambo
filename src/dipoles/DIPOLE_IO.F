@@ -28,9 +28,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
  use electrons,  ONLY:levels,n_sp_pol
- use DIPOLES,    ONLY:DIPOLE_t,DIP_P,P_square,use_covariant_approach
+ use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_m,       ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL,OP_APP_CL,OP_RD
- use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
  !
  implicit none
  !
@@ -43,11 +43,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Work space
  !
- logical           :: write_header,read_header,check,reading,writing,l_vnl(1)
+ logical           :: write_header,read_header,check,reading,writing
  integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
- real(SP)          :: Ev_m_Ec,Ev_m_Ec_QP,W_
  !
  if (.not.IO_dip) return
  !
@@ -88,6 +87,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if (check.or.io_err/=0) return
  !
+ if(writing) call fix_velocity(Dip,-1)
+ !
  if(reading) IO_ACTION=OP_RD_CL
  if(writing) IO_ACTION=OP_APP_CL
  !
@@ -113,46 +114,70 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
- if(.not.(allocated(Xen%W).or.allocated(Xen%Eo)).or.writing) return
- !
- ! Now I need to correct DIP_P and P_square in case I'll use it
- ! See for this PRB 48, 11789 (1993), definition of p_eff
- !
- W_=0._SP
- !
- do i_sp_pol=1,n_sp_pol
-   do ik=1,Xk%nibz
-     !
-     if (.not.PAR_K_scheme%IND_ibz%element_1D(ik)) cycle
-     ik_mem=PAR_K_scheme%ibz_index(ik)
-     !
-     do iv=Dip%ib(1),Dip%ib_lim(1) 
-       do ic=Dip%ib_lim(2),Dip%ib(2)
-         !
-         if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
-         !
-         Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
-         Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
-         !
-         if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
-         !
-         if (abs(Ev_m_Ec)<=Dip%Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)=cZERO
-         if (abs(Ev_m_Ec)> Dip%Energy_treshold) DIP_P(:,ic,iv,ik_mem,i_sp_pol)= &
-&                                                        DIP_P(:,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_QP/Ev_m_Ec
-         !
-         if (allocated(P_square)) then
-           if (abs(Ev_m_Ec)<=Dip%Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=cZERO
-           if (abs(Ev_m_Ec)> Dip%Energy_treshold) P_square(ic,iv,ik_mem,i_sp_pol)=&
-&                                                      P_square(ic,iv,ik_mem,i_sp_pol)*(Ev_m_Ec_QP/Ev_m_Ec)**2
-         endif
-         !
-       enddo
-     enddo
-     !
-   enddo
- enddo
+ call fix_velocity(Dip,1)
  !
  contains
+ !
+ subroutine fix_velocity(Dip,dir)
+   !
+   ! Now I need to correct DIP_v in case
+   ! (a) I'll use it    (dir=+1), since I'll need v_eff
+   ! (b) before writing (dir=-1), since I always write v and never v_eff
+   !     however some of the dipoles approaches directly compute v_eff    
+   !
+   ! For a definition of v_eff see PRB 48, 11789 (1993)
+   !
+   integer,       intent(in)    :: dir
+   type(DIPOLE_t),intent(inout) :: Dip
+   !
+   real(SP)    :: Ev_m_Ec,W_
+   complex(SP) :: Ev_m_Ec_QP,den,num
+   !
+   if(.not.(allocated(Xen%W).or.allocated(Xen%Eo))) return
+   !
+   if( (.not.Dip%v_eff) .and. dir==-1 )             return
+   !
+   W_=0._SP
+   !
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,Xk%nibz
+       !
+       if (.not.PAR_K_scheme%IND_ibz%element_1D(ik)) cycle
+       ik_mem=PAR_K_scheme%ibz_index(ik)
+       !
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=Dip%ib_lim(2),Dip%ib(2)
+           !
+           if (allocated(Xen%W )) W_=abs(Xen%W(iv,ik,i_sp_pol))+abs(Xen%W(ic,ik,i_sp_pol))
+           !
+           Ev_m_Ec   =Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)
+           Ev_m_Ec_QP=Xen%E(iv,ik,i_sp_pol)-Xen%E(ic,ik,i_sp_pol)+cI*W_
+           !
+           if (allocated(Xen%Eo)) Ev_m_Ec=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           !
+           if (dir== 1) then
+             num=Ev_m_Ec_QP
+             den=Ev_m_Ec
+           endif
+           !
+           if (dir==-1) then
+             num=Ev_m_Ec
+             den=Ev_m_Ec_QP
+           endif
+           !
+           if (abs(den)<=Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           if (abs(den)> Dip%Energy_treshold) DIP_v(:,ic,iv,ik_mem,i_sp_pol)=DIP_v(:,ic,iv,ik_mem,i_sp_pol)*(num/den)
+           !
+         enddo
+       enddo
+       !
+     enddo
+   enddo
+   !
+   if( dir==-1) Dip%v_eff=.false.
+   if( dir==+1) Dip%v_eff=.true.
+   !
+ end subroutine
  !
  subroutine SETUP_PAR_K_scheme()
    !
@@ -176,7 +201,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    if (allocated(PAR_K_scheme%bz_index))  deallocate(PAR_K_scheme%bz_index)
    !
    select case(trim(PAR_K_scheme_kind))
-   case ("DIP","NL","RT","SC")
+   case ("DIP","RT","SC")
      call COMM_copy(PAR_COM_DIPk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
      call COMM_copy(PAR_COM_DIPk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
      call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_K_scheme%IND_ibz)
@@ -192,7 +217,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        PAR_K_scheme%bz_index=PAR_DIPk_bz_index
      endif
      PAR_K_scheme%comm_world=mpi_comm_world
-   case ("X")
+   case ("X","NL")
      call COMM_copy(PAR_COM_Xk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
      call COMM_copy(PAR_COM_Xk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
      call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_K_scheme%IND_ibz)

@@ -51,6 +51,8 @@ subroutine electrons_dos_project( E , dos_E , el_dos )
  type(levels)  :: E
  real(SP)      :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps)
  character(schlen)  :: titles(5)
+ real(SP),pointer,contiguous :: PDOS_fac_p(:,:,:) => null()
+ real(SP),pointer,contiguous :: SPIN_fac_p(:,:,:) => null()
  !
  ! Work Space
  !
@@ -104,12 +106,7 @@ subroutine electrons_dos_project( E , dos_E , el_dos )
    call msg('o dos','#',titles(:5),INDENT=0,USE_TABS=.true.)    
  endif
  call msg('o dos',"#")
-!   !
-!   ! ...data
-!   !
-!   do i_E=1,DOS_E_steps
-!   enddo
-!   !
+ !
  !
  do ik=1,Nk_slice
    !
@@ -118,7 +115,8 @@ subroutine electrons_dos_project( E , dos_E , el_dos )
    !
    !write (*,*) GRID_k%pt(Nk_slice*(ik-1)+1,:),"-",GRID_k%pt(Nk_slice*ik,:)
    !
-   call electrons_dos_elemental(SLICE_k,SLICE_E,DOS_bands,el_dos(:,:,1),dos_E,USE_the_DbGd=.FALSE.,QUIET=.TRUE.)
+   call electrons_dos_elemental(SLICE_k,SLICE_E,DOS_bands,el_dos(:,:,1),dos_E,&
+&                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.,QUIET=.TRUE.)
    !
    do i_E=1,DOS_E_steps
      !

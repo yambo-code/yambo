@@ -29,23 +29,23 @@ subroutine NL_driver(E,X,k,q,Dip)
  use com,            ONLY:error,warning
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels
- use X_m,            ONLY:X_t,X_alloc
- use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,use_covariant_approach,DIP_S
+ use X_m,            ONLY:X_t
+ use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
- use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,H_QP_table_setup
+ use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng,JGM,TDDFT, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,NL_ng,JGM,TDDFT, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
- use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
+ use IO_m,           ONLY:io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,mpi_comm_world
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -58,11 +58,10 @@ subroutine NL_driver(E,X,k,q,Dip)
  type(DIPOLE_t)    :: Dip
  !
  logical, external :: stop_now
- integer, external :: eval_G_minus_G
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,NL_bands1_save,N_sample_size,wf_ng_save,io_err
+ integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -122,15 +121,15 @@ subroutine NL_driver(E,X,k,q,Dip)
  else
    if(.not.l_eval_CURRENT) then
      call DIP_alloc('DIP_R')
-     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_v')
    endif
  endif
  !
  ! WFs loading
  !=============
  !
- wf_ng_save=wf_ng
- wf_ng     =NL_ng
+ wf_ng_save =wf_ng
+ wf_ng      =NL_ng
  WF_Go_indx =1
  !
  if(io_COLLs) then
@@ -267,7 +266,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  call NL_free()
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')
- call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
  !
  call set_real_printed_length()
  !

@@ -58,7 +58,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,l_NL_exc,RT_conf
- use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
@@ -79,7 +78,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  logical          ::l_init_QP,l_flag
  type(initdefs)   ::defs
- integer, external::io_RIM,io_COL_CUT
+ integer, external::io_RIM,io_COL_CUT,io_ATMPROJ_pwscf
  integer          ::i1,i2,ID,io_err
  character(schlen)::rstr_piece(60) 
  !
@@ -167,6 +166,11 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  endif
  !
 #endif
+ !
+ ! ATOMIC PROJETIONS pwscf
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_err=io_ATMPROJ_pwscf(ID)
  !
  ! rim
  !
@@ -564,7 +568,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_path cooOut INTERP_Shell_Fac")
+     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_path INTERP_Shell_Fac")
+     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
    endif
  endif
 #if defined _YPP_RT
@@ -601,9 +606,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
-   if (l_RT_density)     call initactivate(1,"LoadGhistory")
+   if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
-     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc")
+     call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
+     call initactivate(1,"Proj_DOS PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
      call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac")
      call INIT_QP_ctl_switch('G')
    endif

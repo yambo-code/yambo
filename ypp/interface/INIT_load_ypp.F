@@ -23,7 +23,7 @@
 !
 subroutine ypp_INIT_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -151,6 +151,14 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'DOSESteps', 'Energy steps',DOS_E_steps) 
  call it('f',defs,'DOSUsesOcc', 'Weight the DOS with the occupation factors') 
  !
+ call it('f',defs,'Proj_DOS', 'Print the projected DOS')
+ call it(defs,'PDOS_atoms', 'Select atom number range',PDOS_atoms,verb_level=V_general)
+ call it(defs,'PDOS_kinds', 'Select atom kind   range',PDOS_kinds,verb_level=V_general)
+ call it(defs,'PDOS_wfcs',  'Select projector   range',PDOS_wfcs, verb_level=V_general)
+ call it(defs,'PDOS_l',     'Select angular momentum l range',PDOS_l,verb_level=V_general)
+ call it(defs,'PDOS_j',     'Select angular momentum j range',PDOS_j,verb_level=V_general)
+ call it(defs,'PDOS_m',     'Select angular momentum m range',PDOS_m,verb_level=V_general)
+ !
  call it(defs,'WFReference', 'band and kpt index of reference WF for spin direction',WF_ref,verb_level=V_general)
  !
  ! GPL_EXCLUDE_START
@@ -177,6 +185,7 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'NoOcc',       '[NEGF] Consider only the changes in the energy')
  call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 
  !

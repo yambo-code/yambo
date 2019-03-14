@@ -24,7 +24,7 @@
 integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen
- use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
@@ -120,6 +120,7 @@ integer function io_DIPOLES(Dip,ID)
  if (read_is_on(ID)) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+   call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
    ! GPL_EXCLUDE_START
    !
@@ -157,6 +158,12 @@ integer function io_DIPOLES(Dip,ID)
  write (VAR_name,'(3(a,i4.4))') 'DIP_P_k_',ik,'_spin_',i_sp_pol
  call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
  call io_bulk(ID,C3=DIP_P(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+ !
+ ! v
+ !
+ write (VAR_name,'(3(a,i4.4))') 'DIP_v_k_',ik,'_spin_',i_sp_pol
+ call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+ call io_bulk(ID,C3=DIP_v(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
  !
  ! GPL_EXCLUDE_START
  !
@@ -202,7 +209,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=P2_size)
-   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos )
+   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=P2_ipos )
    !
  endif
 #endif

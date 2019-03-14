@@ -183,6 +183,9 @@ subroutine XCo_local(E,Xk)
    !
    call timing('XCo_local',OPR="stop")
    !
+!DV
+   write(*,*) "<Vxc>  ", QP_Vxc(1)
+!
    return
    !
  endif

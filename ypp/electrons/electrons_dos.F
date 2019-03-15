@@ -131,7 +131,7 @@ subroutine electrons_dos(Xk,Xen)
 &                                operation="SPIN_factors_on_built_in",ID_op=IDs)
      call INTERPOLATION_driver(OUT_k=GRID_k,operation="SPIN_factors_on_built_in")
      SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP),&
-     &                     lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
+&                            lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
    endif
    !
    call INTERPOLATION_driver(operation="END",ID_op=IDe)

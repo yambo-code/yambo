@@ -247,27 +247,27 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
 #endif
-   !
-   ! PAR => SER for I/O or for cases where I/O is not done
-   !
-   do iw=1,Xw%n_freqs
      !
-     X_par(iq_mem)%I=iw
+     ! PAR => SER for I/O or for cases where I/O is not done
      !
-     if (     io_RESPONSE) iw_X_mat=iw
-     if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+     do iw=1,Xw%n_freqs
+       !
+       X_par(iq_mem)%I=iw
+       !
+       if (     io_RESPONSE) iw_X_mat=iw
+       if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
+       !
+       X_mat(:,:,iw_X_mat)=cZERO
+       !
+       if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
+         X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
+&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
+       endif
+       !
+       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       !
+     enddo
      !
-     X_mat(:,:,iw_X_mat)=cZERO
-     !
-     if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
-       X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&            X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
-     endif
-     !
-     call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-     !
-   enddo
-   !
 #if defined _PAR_IO
    endif
 #endif

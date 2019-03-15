@@ -632,7 +632,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! DIPOLES
  !
- call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib)
+ call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib,verb_level=V_resp)
  call it(defs,'DipQpts',        '[DIP] Qpts range for dipoles',Dip%iq,verb_level=V_resp)
  call it(defs,'DipoleEtresh',   '[DIP] Treshold in the definition of R=P/deltaE',Dip%Energy_treshold,&
 &                                                                               verb_level=V_resp,unit=E_unit)

@@ -107,7 +107,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=PDOS_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac),lbound(RT_PDOS_fac),ubound(RT_PDOS_fac))
+   !PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac),lbound(RT_PDOS_fac),ubound(RT_PDOS_fac))
+   PDOS_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_sp_pol) => RT_PDOS_fac
    YAMBO_FREE(PDOS_fac_v)
  endif
  !
@@ -118,7 +119,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_SPIN_fac(:,RT_carriers%table(i_RT,3),:)=SPIN_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   SPIN_fac_p => linkM2M(RT_SPIN_fac,shape(RT_SPIN_FAC),lbound(RT_SPIN_fac),ubound(RT_SPIN_fac))
+   !SPIN_fac_p => linkM2M(RT_SPIN_fac,shape(RT_SPIN_FAC),lbound(RT_SPIN_fac),ubound(RT_SPIN_fac))
+   SPIN_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_spinor) => RT_SPIN_fac
    YAMBO_FREE(SPIN_fac_v)
  endif
  !

@@ -64,7 +64,6 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
       V1Xsr = VX*FX + (DSDN*D2X+D1X)*EX   ! - VX
       DSDG = US*RR
       V2Xsr = EX*1.D0/SQRT(AA)*DSDG*D2X
-      write(24,*)  RHO,GRHO,v1xsr 
 
 ! NOTE, here sx is the total energy density,
 ! not just the gradient correction energy density as e.g. in pbex()

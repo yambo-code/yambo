@@ -197,7 +197,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
          sigma(is_xc,i1) = real(real_V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
-         write(28,*) i1,is_xc,sigma(is_xc,i1),spin_rho_DP(1,i1)
        end do
      end do
    end do

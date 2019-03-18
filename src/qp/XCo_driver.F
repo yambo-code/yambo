@@ -163,8 +163,8 @@ subroutine XCo_driver(E,k,Xk,q)
 #else
    call XCo_local(E,Xk)
 !
-   WF_exx_fraction=0.
-   write(*,*) "exx fraction set to zero"
+!   WF_exx_fraction=0.
+!   write(*,*) "exx fraction set to zero"
 !
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...

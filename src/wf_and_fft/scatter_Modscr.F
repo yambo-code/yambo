@@ -47,7 +47,6 @@ subroutine scatter_ModScr(isc,mu)
  ng=shape(isc%gamp)
  !
  Co=(pi/mu)**(3._SP/2._SP)/(4._SP*pi)*d3q_factor/(2._SP*pi)**3
- write(*,*) "CO",Co
  do i1=1,ng(1)
    do i2=1,ng(2)
      ig1=i1

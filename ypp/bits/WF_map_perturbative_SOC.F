@@ -353,7 +353,6 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  YAMBO_FREE(WF_SOC_rot)
  YAMBO_FREE(E_vec)
- YAMBO_FREE(E_SOC_table)
  YAMBO_FREE(x_cc)
  !
 end subroutine WF_map_perturbative_SOC

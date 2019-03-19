@@ -108,6 +108,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
      local_exx_fraction = fnctl(1)%exx_fraction
    end if
+   if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) local_exx_fraction=EXX_FRACTION
  !
    EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
  !

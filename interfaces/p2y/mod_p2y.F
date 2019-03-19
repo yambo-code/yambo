@@ -868,6 +868,7 @@ contains
          if (pw_exx_is_active) then
             GS_exx_FRACTION = pw_exx_fraction
             GS_exx_SCREENING= pw_screening_parameter
+            if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) GS_exx_SCREENING=0.15 
          endif
       endif
       !
@@ -892,6 +893,7 @@ contains
          if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
          GS_exx_FRACTION = pw_exx_fraction
          GS_exx_SCREENING= pw_screening_parameter
+         if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.18
          !
       endif
       !

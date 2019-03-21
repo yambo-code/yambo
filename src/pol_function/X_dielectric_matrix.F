@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
+integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
@@ -51,12 +51,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  !
 #include<memory.h>
  !
- type(levels) ::Xen 
- type(bz_samp)::Xk,q
- type(X_t)    ::X
+ type(levels)  ::Xen 
+ type(bz_samp) ::Xk,q
+ type(X_t)     ::X
  type(DIPOLE_t)::Dip
- type(w_samp) ::Xw
- logical      ::APPEND_NO_VERIFY
+ type(w_samp)  ::Xw
+ logical       ::SILENT_MODE
  !
  ! Work Space
  !
@@ -91,11 +91,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  X_dielectric_matrix=-1
  !
  if (X%whoami==2) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Static Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
  else if (X%whoami==3) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamical Dielectric Matrix')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamical Dielectric Matrix')
    if (l_gw0) self_detect_E_range=.true.
    !
    ! X_n_freqs defines the size of each q-block loaded in memory when io_RESPONSE=.FALSE.
@@ -105,7 +105,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
    !
  else if (X%whoami==4) then
-   if (.not.APPEND_NO_VERIFY) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
    Xw%n_freqs    =2
    X_MEM_n_freqs =2
    Xw%er=(/epsilon(1._SP),0._SP/)
@@ -203,8 +203,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
    !
  endif
  !
- !
  do iq=X%iq(1),X%iq(2)
+   !
+   if (     io_X_done(iq) > 0       ) cycle
+   if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    ! TDDFT setup
    !
@@ -223,9 +225,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
    endif
-   !
-   if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q%element_1D(iq)) cycle
    !
    if(iq==1) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=Xdb)
@@ -320,6 +319,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
 #if defined _PL
  if (l_photolum) call DIP_alloc('DIP_P')
 #endif
- if (.not.APPEND_NO_VERIFY.or.X%iq(2)==q%nibz) call WF_free(WF)
+ if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function

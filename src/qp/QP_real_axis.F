@@ -205,7 +205,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !=======================
  if (l_life) then
    !
-   call section('=','Lifetimes Transitions Selector')
+   call section('+','Lifetimes Transitions Selector')
    !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
    YAMBO_ALLOC(life_W_table,(q%nibz,QP_n_W_freqs))

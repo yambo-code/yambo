@@ -61,7 +61,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
 &                         rho_reference,magn_reference,RT_Vnl_xc,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RT_ibz_coo,RT_potential,      &
 &                         RT_bands,RT_nbands,RT_nk,RT_E_and_k,    &
-&                         l_update_SOC,l_velocity_gauge_corr,!NE_time
+&                         l_update_SOC,l_velocity_gauge_corr !NE_time
  use fields,         ONLY:gauge_field!,Efield,n_ext_fields
  use wave_func,      ONLY:WF
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_A2A,PP_redux_wait
@@ -80,7 +80,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ik_FineGd,ib
+ integer                  :: ik,ik_RT,ib
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)

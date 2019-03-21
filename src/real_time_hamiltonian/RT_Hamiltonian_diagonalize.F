@@ -114,7 +114,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
        ik_E_FineGd=ik_RT-ik
        !
        if(      l_RT_uses_E_FineGd .and.ik_RT/=RT_ibz_coo(ik,1)) then
-       &   E%E_FineGd(ib,ik_E_FineGd,1) = E_reference%E_FineGd(ib,ik_E_FineGd,1)+dE
+         E%E_FineGd(ib,ik_E_FineGd,1) = E_reference%E_FineGd(ib,ik_E_FineGd,1)+dE
          if (ib>=RT_bands(1)) RT_E_and_k%E(ib,ik_RT,1) =E%E_FineGd(ib,ik_E_FineGd,1)
        else
          E%E(ib,ik,1)             =E_reference%E(ib,ik,1)+dE

@@ -176,12 +176,11 @@ module DIPOLES
      Dip_out%computed           = Dip_in%computed
    end subroutine DIPOLES_duplicate
    !
-   subroutine DIPOLES_reset(Dip)
-     use pars,  ONLY:czero
+   subroutine DIPOLES_reset(Dip) 
+     use electrons, ONLY:n_bands
      type(DIPOLE_t)::Dip
-     integer       ::nb
      Dip%iq=(/1,1/)
-     Dip%ib=(/-1,-1/)
+     Dip%ib=(/1,n_bands/)
      Dip%ib_lim=(/0,0/)
      Dip%db_ib=(/0,0/)
      Dip%db_ib_lim=(/0,0/)

@@ -38,7 +38,6 @@ subroutine RT_INV_step_diago(dG_old,dG_inp,dG_out,ik,deltaT)
  use wrapper_omp,    ONLY:M_by_M_omp
  !use linear_algebra, ONLY:LIN_SYS
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
- use pointers,       ONLY:linkM2V
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nk,RT_nbands,&
 &                         integrator_exp_order,G_lesser_reference,I1_matrix
  !

@@ -31,7 +31,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
                                      &                     IPOS)
  !
  use pars,          ONLY:SP,DP,LP
- !use pointers,     ONLY:linkC2R,linkZ2D
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use IO_m,          ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var
  use netcdf
@@ -255,7 +254,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  ! Complex numbers / vectors / matricies
  !
  if (present(C0)) then
-   !RC0 => linkC2R(C0,(/2/))
    call C_F_POINTER(C_LOC(C0), RC0, (/2/) )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC0, (/1/), (/2/))
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC0, (/1/), (/2/))
@@ -263,7 +261,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C1)) then
    isize_loc=(/2,size(C1)/)
-   !RC1 => linkC2R(C1,isize_loc)
    call C_F_POINTER(C_LOC(C1), RC1, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC1, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC1, ipos_loc, isize_loc)
@@ -271,7 +268,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C2)) then
    isize_loc=(/2,size(C2,1),size(C2,2)/)
-   !RC2 => linkC2R(C2,isize_loc)
    call C_F_POINTER(C_LOC(C2), RC2, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC2, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC2, ipos_loc, isize_loc)
@@ -279,7 +275,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C3)) then
    isize_loc=(/2,size(C3,1),size(C3,2),size(C3,3)/)
-   !RC3 => linkC2R(C3,isize_loc)
    call C_F_POINTER(C_LOC(C3), RC3, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC3, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC3, ipos_loc, isize_loc)
@@ -287,7 +282,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C4)) then
    isize_loc=(/2,size(C4,1),size(C4,2),size(C4,3),size(C4,4)/)
-   !RC4 => linkC2R(C4,isize_loc)
    call C_F_POINTER(C_LOC(C4), RC4, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC4, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC4, ipos_loc, isize_loc)
@@ -295,7 +289,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C5)) then
    isize_loc=(/2,size(C5,1),size(C5,2),size(C5,3),size(C5,4),size(C5,5)/)
-   !RC5 => linkC2R(C5,isize_loc)
    call C_F_POINTER(C_LOC(C5), RC5, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC5, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC5, ipos_loc, isize_loc)
@@ -303,7 +296,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(C6)) then
    isize_loc=(/2,size(C6,1),size(C6,2),size(C6,3),size(C6,4),size(C6,5),size(C6,6)/)
-   !RC6 => linkC2R(C6,isize_loc)
    call C_F_POINTER(C_LOC(C6), RC6, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC6, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RC6, ipos_loc, isize_loc)
@@ -312,7 +304,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  ! DP Complex numbers / vectors / matricies
  !
  if (present(Z0)) then
-   !RZ0 => linkZ2D(Z0,(/2/))
    call C_F_POINTER(C_LOC(Z0), RZ0, (/2/) )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ0, (/1/), (/2/))
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ0, (/1/), (/2/))
@@ -320,7 +311,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(Z1)) then
    isize_loc=(/2,size(Z1)/)
-   !RZ1 => linkZ2D(Z1,isize_loc)
    call C_F_POINTER(C_LOC(Z1), RZ1, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ1, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ1, ipos_loc, isize_loc)
@@ -328,7 +318,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(Z2)) then
    isize_loc=(/2,size(Z2,1),size(Z2,2)/)
-   !RZ2 => linkZ2D(Z2,isize_loc)
    call C_F_POINTER(C_LOC(Z2), RZ2, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ2, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ2, ipos_loc, isize_loc)
@@ -336,7 +325,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(Z3)) then
    isize_loc=(/2,size(Z3,1),size(Z3,2),size(Z3,3)/)
-   !RZ3 => linkZ2D(Z3,isize_loc)
    call C_F_POINTER(C_LOC(Z3), RZ3, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ3, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ3, ipos_loc, isize_loc)
@@ -344,7 +332,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(Z4)) then
    isize_loc=(/2,size(Z4,1),size(Z4,2),size(Z4,3),size(Z4,4)/)
-   !RZ4 => linkZ2D(Z4,isize_loc)
    call C_F_POINTER(C_LOC(Z4), RZ4, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ4, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ4, ipos_loc, isize_loc)
@@ -352,7 +339,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
  !
  if (present(Z5)) then
    isize_loc=(/2,size(Z5,1),size(Z5,2),size(Z5,3),size(Z5,4),size(Z5,5)/)
-   !RZ5 => linkZ2D(Z5,isize_loc)
    call C_F_POINTER(C_LOC(Z5), RZ5, isize_loc )
    if (write_is_on(ID)) nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ5, ipos_loc, isize_loc)
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ5, ipos_loc, isize_loc)

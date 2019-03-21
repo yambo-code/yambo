@@ -164,7 +164,8 @@ module IO_m
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
-     complex(SP), optional :: C0,DB_C0
+     complex(SP), optional, target :: C0
+     complex(SP), optional :: DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
@@ -237,7 +238,8 @@ module IO_m
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
-     complex(SP), optional :: C0,DB_C0
+     complex(SP), optional, target :: C0
+     complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0
      character(lchlen),optional :: DESCRIPTION

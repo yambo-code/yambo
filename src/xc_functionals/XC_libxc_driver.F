@@ -44,6 +44,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         xc_spin,xc_spin_map1, &
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,XC_HYB_GGA_XC_PBEH
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
+ use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc
  use IO_m,           ONLY:io_control,OP_RD_CL,REP
@@ -93,12 +94,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  tmp_vxc=0._DP
  tmp_fxc=0._DP
  FUNCTIONALTMP=0
-!Set the functional as a PBE to get Exc, next calculate the GUA-PBE Exc as
+!Set the functional as a PBE to get Exc, next calculate the GAU-PBE Exc as
 !Exc=Exc(PBE)-alfa*Ex(PBE,SR) next add the HF part.
  !
  if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
    FUNCTIONALTMP=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
-   FUNCTIONAL=101130   !  This is semi-local PBE  XC_HYB_GGA_XC_PBEH*XC_FACTOR
+   FUNCTIONAL=XC_GGA_X_PBE*XC_FACTOR+XC_GGA_C_PBE  !101130   This is semi-local PBE  
  endif
    call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
    if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) FUNCTIONAL=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR

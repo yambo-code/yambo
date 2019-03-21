@@ -31,9 +31,9 @@ use xc_functionals, ONLY:xc_spin
 
 
 implicit none
-real(DP),intent(in) :: spin_rho_DP(n_spin,fft_size),sigma(1,fft_size)
+real(DP),intent(in) :: spin_rho_DP(n_spin,fft_size),sigma(xc_spin(1),fft_size)
 real(DP),intent(out) :: exsr, vx1(n_spin,fft_size), vx2(xc_spin(1),fft_size)
-real(DP) :: RHO,GRHO,sxsr,v1xsr, v2xsr
+real(DP) :: RHO(n_spin),GRHO(n_spin),sxsr,v1xsr(n_spin), v2xsr(n_spin),rh
 !
 !parameter 
 real(DP), parameter :: alpha_gau= 0.150_DP
@@ -43,19 +43,60 @@ integer  :: ir
  exsr=0.0_DP
  v1xsr=0.0_DP
  v2xsr=0.0_DP
+ RHO=0.0_DP
+ GRHO=0.0_DP
  do ir=1,fft_size
-   RHO=spin_rho_DP(1,ir)
-   GRHO=sigma(1,ir)
-   if (GRHO > epsg) call pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
+   RHO(:)=spin_rho_DP(:,ir)
+   GRHO(:)=sigma(:,ir)
+   if (n_spin==1) then
+     if (GRHO(1) > epsg) call pbexgau(RHO(1),GRHO(1),sxsr,v1xsr(1),v2xsr(1),alpha_gau)
+     vx1(1,ir)=v1xsr(1)
+     vx2(1,ir)=v2xsr(1)
+   else
+     call pbexgau_lsd(RHO(1),RHO(2),GRHO(1),GRHO(2),sxsr,v1xsr(1),v2xsr(1),v1xsr(2),v2xsr(2),alpha_gau)
+   endif
+
+!    call pbexgau_lsd (rhoup, rhodw, grhoup2, grhodw2, sxsr,  &
+!                         v1xupsr, v2xupsr, v1xdwsr, v2xdwsr, &
+!                         gau_parameter)
    exsr=exsr+sxsr
-   vx1(1,ir)=v1xsr
-   vx2(1,ir)=v2xsr
  enddo
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs
 !
  contains
 !this comes from QE
+!-----------------------------------------------------------------------
+      SUBROUTINE pbexgau_lsd(RHOA,RHOB,GRHOAA,GRHOBB,sx, &
+                            V1XA,V2XA,V1XB,V2XB,alpha_gau)
+!     ==--------------------------------------------------------------==
+!     ==--------------------------------------------------------------==
+      IMPLICIT REAL*8 (A-H,O-Z)
+      PARAMETER(SMALL=1.D-20)
+!     ==--------------------------------------------------------------==
+      SXA=0.0D0
+      SXB=0.0D0
+      V1XA=0.0D0
+      V2XA=0.0D0
+      V1XB=0.0D0
+      V2XB=0.0D0
+      IF(RHOA.GT.SMALL.AND.GRHOAA.GT.SMALL) THEN
+        CALL pbexgau(2.D0*RHOA, 4.D0*GRHOAA, SXA, V1XA, V2XA, &
+                                                   alpha_gau)
+      ENDIF
+      IF(RHOB.GT.SMALL.AND.GRHOBB.GT.SMALL) THEN
+        CALL pbexgau(2.D0*RHOB, 4.D0*GRHOBB, SXB, V1XB, V2XB, &
+                                                   alpha_gau)
+      ENDIF
+      sx = 0.5D0*(SXA+SXB)
+      V2XA = 2.D0*V2XA
+      V2XB = 2.D0*V2XB          ! I HOPE THIS WORKS JUST LIKE THIS
+
+!     ==--------------------------------------------------------------==
+      RETURN
+      END SUBROUTINE pbexgau_lsd
+!
+
 SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 !-----------------------------------------------------------------------
 !
@@ -182,25 +223,6 @@ SUBROUTINE pbexgau(RHO,GRHO,sxsr,v1xsr,v2xsr,alpha_gau)
 
       RETURN
       END SUBROUTINE pbe_gauscheme
-!
-!      FUNCTION TayExp(X)
-!      Real*8 TAYEXP,X
-!      INTEGER NTERM,I
-!      Real*8 SUMVAL,IVAL,COEF
-!      PARAMETER (NTERM=16)
-!
-!      SUMVAL = X
-!      IVAL = X
-!      COEF = 1.0D0
-!      DO 10 I = 2,NTERM
-!         COEF = COEF * I
-!         IVAL = IVAL * (X / COEF)
-!         SUMVAL = SUMVAL + IVAL
-! 10         CONTINUE
-!      TAYEXP = SUMVAL
-!      RETURN
-!      END FUNCTION TayExp
-! gau-pbe out
 end subroutine XC_eval_pbegaux
 
       FUNCTION TayExp(X)

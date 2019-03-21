@@ -120,7 +120,10 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    GF_is_causal=Finite_Tel.or.l_elph_corr 
    !
- else if (.not.l_life) then
+ else if (l_life) then
+   call section('*','Dyson equation: QP lifetimes')
+   !
+ else
    return
    !
  endif

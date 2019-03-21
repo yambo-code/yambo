@@ -23,7 +23,6 @@
 !
 integer function variables_DIPOLES(Dip,ID)
  !
- use pars,          ONLY:lchlen
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t
  use R_lattice,     ONLY:q0_def_norm
@@ -60,11 +59,11 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call io_elemental(ID,VAR="APPROACH",VAR_SZ=1,CH0="",MENU=0)
  call io_elemental(ID,VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,VAR="",VAR_SZ=0)
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="KINDS",VAR_SZ=1,CH0="",MENU=0)
  call io_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
- call io_elemental(ID,VAR="",VAR_SZ=0)
+ call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Wavefunctions xc 
  !

@@ -31,12 +31,15 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
 &                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL
 #if defined _PAR_IO && defined _HDF5_IO
- use IO_m,          ONLY:PAR_IO_CREATE_MODE
+ use IO_m,          ONLY:PAR_IO_CREATE_MODE,PAR_IO_WRITE_MODE
  use parallel_m,    ONLY:MPI_INFO_NULL
 #else
  use com,           ONLY:error
 #endif
  use netcdf,        ONLY:nf90_open,nf90_create,nf90_enddef
+#if defined _PAR_IO && defined _HDF5_IO
+ use netcdf,        ONLY:nf90_open_par,nf90_create_par,nf90_nowrite
+#endif
  use com,           ONLY:get_name,jobstr,file_exists,more_io_path,all_locations,&
 &                        num_of_alternative_locations,n_alt_jobstr,jobdir
  !
@@ -123,14 +126,20 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,ID,COMM)
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
-     call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
+     if(.not.par_IO) call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
+#if defined _PAR_IO && defined _HDF5_IO
+     if(     par_IO) call netcdf_call(nf90_open_par(trim(io_file(ID)),PAR_IO_WRITE_MODE, &
+                     &                              COMM,MPI_INFO_NULL,io_unit(ID)),ID)
+#else
+     if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+#endif
      !
    else
      !
      if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO && defined _HDF5_IO
-     if(     par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
-                     &                           comm=COMM,info=MPI_INFO_NULL,ncid=io_unit(ID)),ID)
+     if(     par_IO) call netcdf_call(nf90_create_par(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
+                     &                                COMM,MPI_INFO_NULL,io_unit(ID)),ID)
 #else
      if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
 #endif

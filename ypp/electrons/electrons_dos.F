@@ -46,8 +46,8 @@ subroutine electrons_dos(Xk,Xen)
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),values(DOS_bands(2)+4),dos_integral(2)
  real(SP), external    :: RIntegrate
- real(SP),allocatable  :: SPIN_fac_v(:,:,:)
- real(SP),allocatable  :: PDOS_fac_v(:,:,:)
+ real(SP),allocatable,target  :: SPIN_fac_v(:,:,:)
+ real(SP),allocatable,target  :: PDOS_fac_v(:,:,:)
  real(SP),pointer, contiguous :: SPIN_fac_p(:,:,:) => null()
  real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
  !
@@ -78,23 +78,19 @@ subroutine electrons_dos(Xk,Xen)
  !===================================================================
  !
  if (.not.DOS_is_projected) then
-   ! 
    ! Load the PDOS coefficient
    !-----------------------------
    if (l_pdos) then
      YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
      call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
-     PDOS_fac_p => linkM2M(PDOS_fac_v,shape(PDOS_fac_v),lbound(PDOS_fac_v),ubound(PDOS_fac_v))
+     PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
    endif
    !
    if (n_spinor==2) then
      YAMBO_ALLOC(SPIN_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
      call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
-     SPIN_fac_p => linkM2M(SPIN_fac_v,shape(SPIN_fac_v),lbound(SPIN_fac_v),ubound(SPIN_fac_v))
+     SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
    endif
-   !
-   call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,SPIN_fac_p,&
-&                               PDOS_fac_p,USE_the_DbGd=l_DbGD)
    !
  endif
  !

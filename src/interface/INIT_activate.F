@@ -128,7 +128,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
+ if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif

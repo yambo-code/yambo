@@ -24,13 +24,14 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
- use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,&
+ use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell
  use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
@@ -227,6 +228,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  call section('=','K-grid lattice')
  !=================================
+ !
+ Xk_grid_new_mapping=.false.
+ !
+ call parser('NoDiagSC',Xk_grid_new_mapping)
+ if(Xk_grid_new_mapping) call msg('sr','Using the new bz sampling setup')
  !
  i_err=k_lattice(k,Xk,1,.TRUE.)
  if (i_err /= 0 ) then

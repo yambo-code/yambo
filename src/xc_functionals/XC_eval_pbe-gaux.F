@@ -38,7 +38,7 @@ real(DP) :: RHO(n_spin),GRHO(n_spin),sxsr,v1xsr(n_spin), v2xsr(n_spin),rh
 !parameter 
 real(DP), parameter :: alpha_gau= 0.150_DP
 real(DP), parameter :: epsg= 1.0d-10
-integer  :: ir
+integer  :: ir,is1,is2,is_xc
 !
  exsr=0.0_DP
  v1xsr=0.0_DP
@@ -54,12 +54,23 @@ integer  :: ir
      vx2(1,ir)=v2xsr(1)
    else
      call pbexgau_lsd(RHO(1),RHO(2),GRHO(1),GRHO(2),sxsr,v1xsr(1),v2xsr(1),v1xsr(2),v2xsr(2),alpha_gau)
+!Here potentials
+     vx1(:,ir)=v1xsr(:)
+     write(*,*) "fix this 1uu,2ud,3dd. 2ud should be zero"
+     stop
+    do is1 = 1,n_spin
+      do is2 = 1,n_spin
+        is_xc = max(is2*(is1+1)/2,is1*(is2+1)/2)
+        write(20,*) is1,is2,is_xc
+        vx2(is_xc,ir)=v2xsr(is2)
+      end do
+    enddo
    endif
-
-!    call pbexgau_lsd (rhoup, rhodw, grhoup2, grhodw2, sxsr,  &
-!                         v1xupsr, v2xupsr, v1xdwsr, v2xdwsr, &
-!                         gau_parameter)
    exsr=exsr+sxsr
+ enddo
+ do ir=1,fft_size
+   write(60,*) vx1(1,ir),vx1(2,ir) 
+   write(61,*) vx2(1,ir),vx2(2,ir)
  enddo
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs
@@ -72,7 +83,7 @@ integer  :: ir
 !     ==--------------------------------------------------------------==
 !     ==--------------------------------------------------------------==
       IMPLICIT REAL*8 (A-H,O-Z)
-      PARAMETER(SMALL=1.D-20)
+      PARAMETER(SMALL=1.D-15)
 !     ==--------------------------------------------------------------==
       SXA=0.0D0
       SXB=0.0D0

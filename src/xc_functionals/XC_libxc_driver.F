@@ -184,6 +184,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      vx1=0._DP
      vx2=0._DP
    endif 
+   write(*,*) "XCSPIN",xc_spin(1)
    !
    do is1 = 1,n_spin
      spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
@@ -269,8 +270,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          !consistency qith QE
            v1rho=v1rho-EXX_FRACTION*vx1
            v1sigma=v1sigma-(EXX_FRACTION*vx2)/2._DP
-!test
-!           v1sigma=0._DP
+         endif
+!DV
+         if (ixc==1) then 
+          do ifft=1,fft_size
+            write(30,*) v1sigma(1,ifft),v1sigma(2,ifft),v1sigma(3,ifft)
+          enddo
          endif
 !
 !Check QE when using libxc, vx2 is subtracted  to a v1sigma having a factor 2 of

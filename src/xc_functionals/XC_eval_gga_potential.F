@@ -102,8 +102,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     !
   enddo
   do ic=1,fft_size 
-      write(50,*) ic,V_xc(ic,1), real(v1rho(1,ic),SP)
-      write(51,*) ic,V_xc(ic,2), real(v1rho(2,ic),SP)
+      write(50,*) ic,V_xc(ic,1),  Gv_drho(ic),real(v1rho(1,ic),SP)
+      write(51,*) ic,V_xc(ic,2),  Gv_drho(ic),real(v1rho(2,ic),SP)
   enddo
   !
 end subroutine XC_eval_gga_potential

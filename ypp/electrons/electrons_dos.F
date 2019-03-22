@@ -78,6 +78,7 @@ subroutine electrons_dos(Xk,Xen)
  !===================================================================
  !
  if (.not.DOS_is_projected) then
+   !
    ! Load the PDOS coefficient
    !-----------------------------
    if (l_pdos) then
@@ -91,6 +92,9 @@ subroutine electrons_dos(Xk,Xen)
      call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
      SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
    endif
+   !
+    call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
+&                                SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
    !
  endif
  !
@@ -217,6 +221,8 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Output file(s)
  !================
+ !
+ ! ...headers
  !
  do i_f=1,N_files 
    !

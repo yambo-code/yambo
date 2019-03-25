@@ -39,7 +39,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
  use X_m,            ONLY:X_t
- use DIPOLES,        ONLY:DIP_P,DIPOLE_t
+ use DIPOLES,        ONLY:DIPOLE_t
  use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -54,7 +54,8 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
  use IO_m,           ONLY:IO_and_Messaging_switch
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
  !
@@ -85,7 +86,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
  !
- if(Correlation/=IPA) then
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  
    call NL_build_valence_bands(E,V_bands,VAL_BANDS,1)
    call el_density_vbands(E,k,full_rho,VAL_BANDS)
@@ -102,7 +103,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  call A_vecpot_reset(A_tot)
  call A_vecpot_reset(A_ext)
  !
- if(Correlation==TDDFT) then
+ if(Correlation==TDDFT.and..not.COLLISIONS_have_HARTREE) then
    !
    ! Calculate V_xc
    !

@@ -46,6 +46,7 @@ module DIPOLES
  complex(SP), allocatable :: DIP_projected(:,:,:,:)
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
@@ -63,6 +64,7 @@ module DIPOLES
    real(SP)   :: q0(3)
    real(SP)   :: Energy_treshold
    real(SP)   :: Energy_treshold_vv
+   logical    :: v_eff
    logical    :: Vnl_included
    logical    :: bands_ordered
    logical    :: force_v_g_space
@@ -99,6 +101,10 @@ module DIPOLES
          if (allocated(DIP_P)) return
          YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_P=cZERO
+       case('DIP_v')
+         if (allocated(DIP_v)) return
+         YAMBO_ALLOC(DIP_v,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         DIP_v=cZERO
        case('DIP_S')
          if (allocated(DIP_S)) return
          YAMBO_ALLOC(DIP_S,(d(1),d(2),d(3),d(4),n_sp_pol))
@@ -132,6 +138,9 @@ module DIPOLES
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          YAMBO_FREE(DIP_P)
+       case('DIP_v')
+         if (.not.allocated(DIP_v)) return
+         YAMBO_FREE(DIP_v)
        case('DIP_S')
          if (.not.allocated(DIP_S)) return
          YAMBO_FREE(DIP_S)
@@ -167,6 +176,7 @@ module DIPOLES
      Dip_out%q0        = Dip_in%q0
      Dip_out%Energy_treshold    = Dip_in%Energy_treshold
      Dip_out%Energy_treshold_vv = Dip_in%Energy_treshold_vv
+     Dip_out%v_eff              = Dip_in%v_eff
      Dip_out%Vnl_included       = Dip_in%Vnl_included
      Dip_out%bands_ordered      = Dip_in%bands_ordered
      Dip_out%force_v_g_space    = Dip_in%force_v_g_space
@@ -174,12 +184,11 @@ module DIPOLES
      Dip_out%computed           = Dip_in%computed
    end subroutine DIPOLES_duplicate
    !
-   subroutine DIPOLES_reset(Dip)
-     use pars,  ONLY:czero
+   subroutine DIPOLES_reset(Dip) 
+     use electrons, ONLY:n_bands
      type(DIPOLE_t)::Dip
-     integer       ::nb
      Dip%iq=(/1,1/)
-     Dip%ib=(/-1,-1/)
+     Dip%ib=(/1,n_bands/)
      Dip%ib_lim=(/0,0/)
      Dip%db_ib=(/0,0/)
      Dip%db_ib_lim=(/0,0/)
@@ -188,6 +197,7 @@ module DIPOLES
      Dip%q0=(/1._SP,0._SP,0._SP/)
      Dip%Energy_treshold=1.E-5_SP/HA2EV
      Dip%Energy_treshold_vv=1.E+5_SP/HA2EV
+     Dip%v_eff=.false.
      Dip%Vnl_included=.false.
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.

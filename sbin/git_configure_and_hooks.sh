@@ -109,6 +109,6 @@ chmod +x .git/hooks/post-commit
 git config merge.keepTheirs.driver "cp -f %B %A"
 git config merge.commit no
 git config core.editor "vim"
-#git config pull.rebase true
+git config pull.rebase false
 
 

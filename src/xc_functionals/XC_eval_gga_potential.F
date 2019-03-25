@@ -55,19 +55,18 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   ! 0. define v_drho
   !
-  !
-  ! In the presence of spin 
-  !        vsigma(2,:)=vsigma_updw(2,:)+vsigma_dwup(2,:)=2.*vsigma_updw(2,:)
-!  if(n_spin==2) v1sigma(2,:)=v1sigma(2,:)/2._SP
-  !
   do is1 = 1,n_spin
     v_drho = 0._SP 
     do is2 = 1,n_spin
-      fac=2._SP
       is_xc = max(is2*(is1+1)/2,is1*(is2+1)/2)
-      if (is_xc==2) fac=1._SP
+      ! In the presence of spin 
+      ! vsigma(2,:) = vsigma_updw(2,:)+vsigma_dwup(2,:)
+      !             = 2*vsigma_updw(2,:)
+      ! thus I set fac to 2._SP to remove the extra 2
+      if (is_xc/=2) fac=1._SP
+      if (is_xc==2) fac=2._SP
       forall(ic=1:3,ifft=1:fft_size) v_drho(ifft,ic) = v_drho(ifft,ic) + &
-&                                         fac*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
+&                                         2._SP/fac*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
     end do
     !
     ! 1. this is done by FFTing, by doing the scalar

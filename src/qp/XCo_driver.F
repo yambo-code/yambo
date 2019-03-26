@@ -163,14 +163,10 @@ subroutine XCo_driver(E,k,Xk,q)
 #else
    call XCo_local(E,Xk)
 !
-   write(*,*) "LOCAL 1",QP_Vxc(1)
-   write(*,*) "LOCAL 2",QP_Vxc(2)
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
-     write(*,*) "NLC 1",WF_exx_fraction*QP_Vnl_sex(1)
-     write(*,*) "NLC 2",WF_exx_fraction*QP_Vnl_sex(2)
      YAMBO_FREE(QP_Vnl_sex)
    endif
 #endif

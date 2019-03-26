@@ -60,10 +60,6 @@ integer  :: ir,is1,is2,is_xc
    endif
    exsr=exsr+sxsr
  enddo
- do ir=1,fft_size
-   write(60,*) vx1(1,ir),vx1(2,ir) 
-   write(61,*) vx2(1,ir),vx2(2,ir),vx2(3,ir)
- enddo
  exsr=exsr*real(DL_vol,DP)/real(fft_size,DP)
 !Then consider the EXX fraction outside the subs
 !

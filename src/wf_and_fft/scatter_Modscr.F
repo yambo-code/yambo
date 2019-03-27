@@ -27,6 +27,7 @@ subroutine scatter_ModScr(isc,mu)
  !
  use pars,          ONLY:SP,pi
  use collision_el,  ONLY:elemental_collision
+ use drivers,       ONLY:l_col_cut
  use R_lattice,     ONLY:bare_qpg,d3q_factor
  use global_XC,     ONLY:WF_xc_functional
  use xc_functionals,ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
@@ -35,7 +36,7 @@ subroutine scatter_ModScr(isc,mu)
  implicit none
  !
  type(elemental_collision)::isc
- real(SP)                 :: mu,Co
+ real(SP)                 :: mu,Co,bare_qpg_true
  !
  !Working Space
  !
@@ -53,14 +54,43 @@ subroutine scatter_ModScr(isc,mu)
      ig2=i2
      if (ng(1)==1) ig1=ig2
      if (ng(2)==1) ig2=ig1
+     if (l_col_cut) then
+       call set_qpg_true(iq,ig1,bare_qpg_true)
+     else
+       bare_qpg_true=bare_qpg(iq,ig1)
+     endif
      if (WF_xc_functional==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
 !GAUPBE expression for model exchange see: Song et al. J. Chem. Phys. 138, 241101 (2013)
-       isc%gamp(i1,i2)= Co*real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu)),SP)
+!       isc%gamp(i1,i2)= Co*real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu)),SP)
+       isc%gamp(i1,i2)= Co*real(exp(-(bare_qpg_true**2)/(4._SP*mu)),SP)
      else
+!       isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
+!            &(1._SP-real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu**2)),SP)) 
        isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
-            &(1._SP-real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu**2)),SP)) 
+            &(1._SP-real(exp(-(bare_qpg_true**2)/(4._SP*mu**2)),SP)) 
      endif
    enddo
  end do
  !
-end subroutine
+ contains
+   !
+   subroutine set_qpg_true(iq,ig1,bare_qpg_true)
+   use vec_operate,   ONLY:iku_v_norm
+   use R_lattice,     ONLY:q_norm,g_vec,q_pt
+   real(SP)::bare_qpg_true
+   integer ::ig1,iq
+   !
+ 
+    if (iq==1.and.ig1==1)  then
+      bare_qpg_true=q_norm(1)
+    elseif(iq==1.and.ig1 > 1) then
+      bare_qpg_true=iku_v_norm(g_vec(ig1,:))
+    else
+      bare_qpg_true=iku_v_norm(q_pt(iq,:)+g_vec(ig1,:))
+    endif
+
+   end subroutine set_qpg_true
+   !
+ end subroutine scatter_ModScr
+
+

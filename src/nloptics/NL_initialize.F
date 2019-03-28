@@ -144,12 +144,13 @@ subroutine NL_initialize(E,k,q)
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
- ! For short pulses field (PULSE, QSSIN, QSFIELD)
+ ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
  !
  W_0=Efield(1)%frequency(1)
  sigma=Efield(1)%width
  T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+ if(Efield(1)%ef_name=='SPULSE') T_0=sigma
  !
  ! Important in the Time-dependent Schrodinger Eq.
  ! the Phase_LifeTime is 1/2 of the one used in the 
@@ -178,7 +179,8 @@ subroutine NL_initialize(E,k,q)
      call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
      call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
      !
-   elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN'.or.Efield(1)%ef_name=='QSFIELD') then
+   elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
+&     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
      !
      NE_tot_time=3*T_0
      call msg('sr','Time T_0                [fs]:',T_0*AUT2FS)

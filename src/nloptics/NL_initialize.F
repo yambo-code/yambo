@@ -23,7 +23,7 @@
 !
 subroutine NL_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
  use hamiltonian,    ONLY:H_potential
@@ -50,7 +50,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time, WF_sample_range(2) 
+ real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
  integer  :: i1
  !
  ! Parser
@@ -290,6 +290,12 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
  call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
+ 
+ W_0=Efield(1)%frequency(1)
+ sigma=Efield(1)%width
+ T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+
+ call msg( 'r', 'Efield T_0             [fs]:',T_0)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)

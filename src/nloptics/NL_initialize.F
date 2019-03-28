@@ -161,7 +161,7 @@ subroutine NL_initialize(E,k,q)
  !
  if(NE_tot_time<=0._SP) then
    !
-   if(Efield(1)%ef_name=='SOFTSIN'.and.Efield(1)%ef_name=='SIN') then
+   if(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') then
      !  
      ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
      !
@@ -175,9 +175,14 @@ subroutine NL_initialize(E,k,q)
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-   elseif(Efield(1)%ef_name=='SOFTSIN'.and.Efield(1)%ef_name=='SIN') then
+     call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
+     call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     !
+   elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN'.or.Efield(1)%ef_name=='QSFIELD') then
      !
      NE_tot_time=3*T_0
+     call msg('sr','Time T_0                [fs]:',T_0*AUT2FS)
+     call msg('sr','Dephasing               [fs]:',Phase_LifeTime*AUT2FS)
      !
    else
      call error("Negative total simulation time! ")
@@ -187,8 +192,6 @@ subroutine NL_initialize(E,k,q)
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
- call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
  call msg('sr','Total simulation time   [fs]:',NE_tot_time*AUT2FS)
  !
  NE_steps=int(NE_tot_time/RT_step)+1

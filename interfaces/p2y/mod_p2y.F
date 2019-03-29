@@ -840,7 +840,7 @@ contains
  !
  subroutine get_xc
    use com,            ONLY: warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,XC_FACTOR,XC_HYB_GGA_XC_GAUPBE      
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
    select case (trim(dftdata_fmt))
@@ -866,9 +866,13 @@ contains
 &                         exx_is_active=pw_exx_is_active, ierr=ierr)
       if (ierr==0) then
          if (pw_exx_is_active) then
-            GS_exx_FRACTION = pw_exx_fraction
-            GS_exx_SCREENING= pw_screening_parameter
-            if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) GS_exx_SCREENING=0.15 
+           if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR) then
+              GS_exx_FRACTION = pw_exx_fraction
+              GS_exx_SCREENING= pw_screening_parameter
+              if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) GS_exx_SCREENING=0.15 
+           else
+             call error('Hybrid functional: Only PBE0 and GAUPBE allowed')
+           endif
          endif
       endif
       !
@@ -888,13 +892,17 @@ contains
       !
       if (pw_exx_is_active) then
          !
-         call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
+         if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR) then
+           call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
 &                            screening_parameter=pw_screening_parameter, ierr=ierr)
-         if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
-         GS_exx_FRACTION = pw_exx_fraction
-         GS_exx_SCREENING= pw_screening_parameter
-         if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.18
+           if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
+           GS_exx_FRACTION = pw_exx_fraction
+           GS_exx_SCREENING= pw_screening_parameter
+           if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.15
          !
+         else
+           call error('Hybrid functional: Only PBE0 and GAUPBE allowed')
+         endif
       endif
       !
    case default

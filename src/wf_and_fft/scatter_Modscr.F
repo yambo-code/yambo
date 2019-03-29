@@ -54,6 +54,7 @@ subroutine scatter_ModScr(isc,mu)
      ig2=i2
      if (ng(1)==1) ig1=ig2
      if (ng(2)==1) ig2=ig1
+!      write(20,*) iq,ig1,ig2,isc%gamp(iq,ig1)
      if (l_col_cut) then
        call set_qpg_true(iq,ig1,bare_qpg_true)
      else
@@ -67,10 +68,11 @@ subroutine scatter_ModScr(isc,mu)
 !       isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
 !            &(1._SP-real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu**2)),SP)) 
        isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
-            &(1._SP-real(exp(-(bare_qpg_true**2)/(4._SP*mu**2)),SP)) 
+            &(1._SP -real(exp(-(bare_qpg_true**2)/(4._SP*mu**2)),SP)) 
      endif
    enddo
  end do
+write(*,*) "MU",mu
  !
  contains
    !

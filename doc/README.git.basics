@@ -32,6 +32,11 @@ diff:
 >git diff origin/master # shown also changes committed (before “push”)
 [ “-M50%” option is very useful in case of file renamed/moved ]
 
+I am in branch PIPPO
+
+git diff ...bug-fixes src/io/io_DIPOLE.F (new commits after last merge of bug-fixes)
+git diff bug-fixes... src/io/io_DIPOLE.F (commit of PIPPO)
+
 LOG
 ====
 >git log

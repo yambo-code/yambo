@@ -840,7 +840,8 @@ contains
  !
  subroutine get_xc
    use com,            ONLY: warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH      
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,&
+&                            XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
    select case (trim(dftdata_fmt))

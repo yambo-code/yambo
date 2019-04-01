@@ -71,7 +71,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
  !=======================
  !
  if (l_use_Hxc_collisions.or.l_use_COH_collisions) then
-   !     
+   !
    G_sex=cZERO
    forall(ib=SC_bands(1):SC_bands(2),ik=1:E%nk) G_sex(ib,ib,ik)=cI*E%f(ib,ik,1)
    G_coh=cZERO
@@ -101,6 +101,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
            G_sex(ibp,ib,ik) = 0.5
          enddo
        enddo
+       call OBS_rotate(H_rotation_ref(:,:,ik,1),G_sex,SC_bands(2),-1)
      enddo
    endif
    !

@@ -275,7 +275,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) H_tmp(ib,ib) = -SC_mu(3)
        enddo
        ! The chemical potential is imposed in the EQ-SEX basis
-       call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_bands(2),-1)
+       call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_bands(2)-SC_bands(1)+1,-1)
        Hzero(:,:,ik,i_sp_pol)=Hzero(:,:,ik,i_sp_pol)+H_tmp
        !
      enddo

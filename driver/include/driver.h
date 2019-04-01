@@ -26,7 +26,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[],struct n_options_st
 
 void input_file(struct yambo_seed_struct y,struct tool_struct t, int *use_editor);
 
-void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
+void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
 
 void load_environments(char *file_name, char* editor);
 

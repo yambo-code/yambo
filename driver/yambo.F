@@ -27,29 +27,33 @@
  integer i_runlevel
  character(100) what_is_running,key,desc,pj
  !
- write (*,*) "F driver"
- write (*,*) "NP, PID   :",np,pid
- write (*,*) "RUNSTRING :",string_N,string
- write (*,*) "INPUT file:",in_file_N,in_file
- write (*,*) "INPUT dir :",in_dir_N,in_dir
- write (*,*) "OUT   dir :",out_dir_N,out_dir
- write (*,*) "COM   dir :",com_dir_N,com_dir
- write (*,*) "JOB       :",job_N,job
+ if (pid==0) then
+   !
+   write (*,*) "F driver"
+   write (*,*) "NP, PID   :",np,pid
+   write (*,*) "RUNSTRING :",string_N,string
+   write (*,*) "INPUT file:",in_file_N,in_file
+   write (*,*) "INPUT dir :",in_dir_N,in_dir
+   write (*,*) "OUT   dir :",out_dir_N,out_dir
+   write (*,*) "COM   dir :",com_dir_N,com_dir
+   write (*,*) "JOB       :",job_N,job
+  
+   what_is_running=" "
+   call get_running_tool(what_is_running)
+   write (*,*) "RUNNING   :",trim(what_is_running)
+  
+   do i_runlevel=1,99
+     key=" "
+     desc=" "
+     pj=" "
+     call get_runlevel(key,1,i_runlevel)
+     call get_runlevel(desc,2,i_runlevel)
+     call get_runlevel(pj,3,i_runlevel)
+     if (trim(key)=="EMPTY") cycle
+     write (*,*) "RUNLEVEL #",i_runlevel," :",trim(key),'-',trim(desc),'-',trim(pj)
+   enddo
+endif
 
- what_is_running=" "
- call get_running_tool(what_is_running)
- write (*,*) "RUNNING   :",trim(what_is_running)
-
- do i_runlevel=1,99
-   key=" "
-   desc=" "
-   pj=" "
-   call get_runlevel(key,1,i_runlevel)
-   call get_runlevel(desc,2,i_runlevel)
-   call get_runlevel(pj,3,i_runlevel)
-   if (trim(key)=="EMPTY") cycle
-   write (*,*) "RUNLEVEL #",i_runlevel," :",trim(key),'-',trim(desc),'-',trim(pj)
- enddo
 
 end function
    !

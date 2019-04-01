@@ -31,14 +31,14 @@
  #include <mpi.h>
 #endif
 
-void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
+void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
 {
  /* 
    MPI
  */
 #if defined _MPI
  if (*use_mpi==1) {
-   MPI_Init(NULL,NULL);                 /* starts MPI */
+   MPI_Init(&argc,&argv);               /* starts MPI */
    MPI_Comm_rank(MPI_COMM_WORLD, &pid); /* get current process id */
    MPI_Comm_size(MPI_COMM_WORLD, &np);  /* get number of processes */
  };
@@ -66,16 +66,17 @@ void launcher(int np, int pid, struct yambo_seed_struct y,int *use_editor, int *
  fprintf(stderr,"\n\n%s \n","C driver");
  fprintf(stderr,"%s %i\n","np:" ,np);
  fprintf(stderr,"%s %i\n","pid:",pid);
- fprintf(stderr,"%s %i %s\n","RUNSTRING :",y.string_N,y.string);
- fprintf(stderr,"%s %i %s\n","INPUT file:",y.in_file_N,y.in_file);
- fprintf(stderr,"%s %i %s\n","INPUT dir :",y.in_dir_N,y.in_dir);
- fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
- fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
- fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
- fprintf(stderr,"%s %i   \n","MPI       :",*use_mpi);
- fprintf(stderr,"%s %i   \n","EDITOR    :",*use_editor);
- fprintf(stderr,"\n");
-
+ if (pid == 0) {
+  fprintf(stderr,"%s %i %s\n","RUNSTRING :",y.string_N,y.string);
+  fprintf(stderr,"%s %i %s\n","INPUT file:",y.in_file_N,y.in_file);
+  fprintf(stderr,"%s %i %s\n","INPUT dir :",y.in_dir_N,y.in_dir);
+  fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
+  fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
+  fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
+  fprintf(stderr,"%s %i   \n","MPI       :",*use_mpi);
+  fprintf(stderr,"%s %i   \n","EDITOR    :",*use_editor);
+  fprintf(stderr,"\n");
+ }
  F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );

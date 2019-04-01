@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
  /*
   Launcher
  */
- launcher(np,pid,y,&use_editor,&use_mpi);
+ launcher(argc,argv,np,pid,y,&use_editor,&use_mpi);
  /* 
    Input File
  */

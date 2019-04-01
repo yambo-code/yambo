@@ -121,8 +121,8 @@ subroutine electrons_bands(Xk,Xen)
    !
 #if defined _YPP_SC
    !
-   ! Perform interpolation of spinorial factors and magnetization
-   !==============================================================
+   ! Perform interpolation of projection factors
+   !=============================================
    if(proj_wfc) then
      call section('=','Interpolation@work: SC-WFs projections')
      YAMBO_ALLOC(proj_fac,(BANDS_bands(1):BANDS_bands(2),Xk%nibz,2))

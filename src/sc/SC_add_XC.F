@@ -86,34 +86,33 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
    enddo
    !
    if (trim(SC_neq_kind)=="matsubara") then
+     !
      ELEC=0._SP
      HOLE=0._SP
      do ik=1,E%nk
+       !
+       ! Compute number of electrons and holes
+       !
        G_tmp=G_sex(:,:,ik)
        call OBS_rotate(H_rotation_ref(:,:,ik,1),G_tmp,SC_bands(2),1)
        do ib=SC_bands(1),SC_bands(2)
          if(E_reference%E(ib,ik,1)> SC_mu(1)) ELEC=ELEC          -real(cI*G_tmp(ib,ib),SP) *Xk%weights(ik)
          if(E_reference%E(ib,ik,1)<=SC_mu(1)) HOLE=HOLE+(spin_occ+real(cI*G_tmp(ib,ib),SP))*Xk%weights(ik)
-         if(iteration>SC_last_coh_it) cycle
+       enddo
+       !
+       ! Impose starting off diagonal elements
+       !
+       if(iteration>SC_last_coh_it) cycle
+       do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
            if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
-           G_sex(ib,ibp,ik) = 0.5
-           G_sex(ibp,ib,ik) = 0.5
+           G_sex(ib,ibp,ik) = cI*0.5
+           G_sex(ibp,ib,ik) = cI*0.5
          enddo
        enddo
-       call OBS_rotate(H_rotation_ref(:,:,ik,1),G_sex,SC_bands(2),-1)
      enddo
+     !
    endif
-   !
-   !n_exc=0.1 !/ 1+real(iteration/60,SP))
-   !HOLE=sqrt((1._SP-n_exc/1._SP)*spin_occ)
-   !ELEC=sqrt((      n_exc      )*spin_occ)
-   !do ib=2,2
-   !  !G_sex(ib,ib,1)=cI*HOLE**2
-   !  !G_sex(ib,5,1) =cI*HOLE*ELEC !*(-1._SP)**(ib)
-   !  !G_sex(5,ib,1) =cI*ELEC*HOLE !*(-1._SP)**(ib)
-   !enddo
-   !!G_sex(5,5,1)=cI*ELEC**2
    !
    call COLLISIONS_compose_sc(G_sex,G_coh)
    !

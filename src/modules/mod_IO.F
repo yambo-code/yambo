@@ -110,6 +110,7 @@ module IO_m
  !
 #if defined _PAR_IO && defined _HDF5_IO
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
+ integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
  !
  ! Units
@@ -163,7 +164,8 @@ module IO_m
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
-     complex(SP), optional :: C0,DB_C0
+     complex(SP), optional, target :: C0
+     complex(SP), optional :: DB_C0
      logical     ,optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0,CH1(:)
      character(lchlen),optional :: DESCRIPTION
@@ -236,20 +238,21 @@ module IO_m
      integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
      real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
      real(DP),    optional :: D0,DB_D0
-     complex(SP), optional :: C0,DB_C0
+     complex(SP), optional, target :: C0
+     complex(SP), optional :: DB_C0
      logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
      character(*),optional :: CH0,DB_CH0
      character(lchlen),optional :: DESCRIPTION
      !
    end subroutine io_variable_elemental
    !
-   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,&
-                                        &  R0, R1, R2, R3, R4, R5,&
-                                        &  D0, D1, D2, D3, D4, D5,&
-                                        &  C0, C1, C2, C3, C4, C5,&
-                                        &  Z0, Z1, Z2, Z3, Z4, Z5,&
-                                        &  L0, L1, L2, L3, L4,    &
-                                        & CH0,CH1,CH2,CH3,CH4,    &
+   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
+                                        &  R0, R1, R2, R3, R4, R5,    &
+                                        &  D0, D1, D2, D3, D4, D5,    &
+                                        &  C0, C1, C2, C3, C4, C5, C6,&
+                                        &  Z0, Z1, Z2, Z3, Z4, Z5,    &
+                                        &  L0, L1, L2, L3, L4,        &
+                                        & CH0,CH1,CH2,CH3,CH4,        &
                                         &                     IPOS)
      !
      use pars,   ONLY:SP,DP,LP
@@ -258,8 +261,8 @@ module IO_m
      integer,     optional ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
      real(SP),    optional ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
      real(DP),    optional ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:)
-     complex(DP), optional ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
+     complex(SP), optional, target ::  C0, C1(:), C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
+     complex(DP), optional, target ::  Z0, Z1(:), Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
      integer(LP), optional ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
      character,   optional :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
      !
@@ -446,7 +449,7 @@ module IO_m
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_.and.NOW==end_) io_action(ID)=OP_APP_CL
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.NOW==start_              ) io_action(ID)=OP_APP
        if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
-       if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
+       !if (io_action(ID)==OP_IF_START_APP_CL_IF_END.and.                NOW==end_) io_action(ID)=   WR_CL
        !
      endif
      !

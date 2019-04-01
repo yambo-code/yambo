@@ -209,7 +209,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'P_square_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=P2_size)
-   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos )
+   call io_bulk(ID,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=P2_ipos )
    !
  endif
 #endif

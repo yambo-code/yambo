@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,9 +37,9 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,SC_R
+ use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,&
-&                         SC_bands,H_rotate,l_oep_iterative
+&                         SC_bands,l_oep_iterative
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
  !
@@ -75,8 +75,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
    ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
    !
    do ik=1,E%nk
-     call H_rotate(SC_R(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
-     call H_rotate(SC_R(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
    enddo
    !
    call COLLISIONS_compose_sc(G_sex,G_coh)

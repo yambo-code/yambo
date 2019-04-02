@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,7 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  use D_lattice,    ONLY:nsym
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
- use stderr,       ONLY:string_split
+ use stderr,       ONLY:STRING_split
  use com,          ONLY:warning
  !
  implicit none
@@ -72,8 +72,8 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    if (ROLE_string_(i_c:i_c)==",") ROLE_string_(i_c:i_c)=" "
  enddo
  !
- call string_split(CPU_string_,c_strings,n_non_empty_strings=CPU_structure(i_PAR_structure)%N_chains)
- call string_split(ROLE_string_,r_strings)
+ call STRING_split(CPU_string_,c_strings,n_non_empty_strings=CPU_structure(i_PAR_structure)%N_chains)
+ call STRING_split(ROLE_string_,r_strings)
  !
  n_structures=0
  n_eh_grps=1

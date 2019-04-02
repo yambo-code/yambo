@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2018 the YAMBO team
+         Copyright (C) 2000-2019 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -36,9 +36,7 @@
  Command line structure
 */
  static Ldes opts[] = { /* Int Real Ch (dummy) Parallel_option*/
-  {"help",  "h","Short Help",0,0,0,0,0}, 
-  {"lhelp", "H","Long Help",0,0,0,0,0}, 
-  {"nompi", "N","Skip MPI initialization",0,0,0,0,0},
+#include "common_options.h"
   {"ifile", "F","KSS or WFK filename",0,0,1,0,0},
   {"odir","O","Output directory",0,0,1,0,0},
   {"dbfrag","S","DataBases fragmentation",0,0,0,0,0},

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -58,7 +58,7 @@ module SC
  logical           :: l_SC_update_W
  logical           :: l_SC_diagonal
  logical           :: l_SC_nl_mix
-
+ logical           :: l_froze_density
  !
  ! Possible Kinds, functionals and external perturbations
  !
@@ -98,7 +98,7 @@ module SC
  contains
    !
    subroutine SC_alloc(E)
-     use drivers,        ONLY:l_sc_sex,l_sc_coh,l_sc_srpa
+     use drivers,        ONLY:l_sc_srpa,l_sc_sex,l_sc_coh
      use electrons,      ONLY:n_sp_pol,levels
      use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
      use QP_m,           ONLY:QP_n_states,QP_Sc,QP_nk
@@ -118,67 +118,22 @@ module SC
    end subroutine
    !
    subroutine SC_free()
-     use drivers,        ONLY:l_real_time
      use QP_m,           ONLY:QP_Sc
      use hamiltonian,    ONLY:H_free
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_alloc
+     use DIPOLES,        ONLY:DIP_alloc
      !
      implicit none
      !
      call H_free()
      !
-     call X_alloc('DIP_P')
-     call X_alloc('DIP_iR')
-     call X_alloc('DIP_spin')
-     call X_alloc('P_square')
+     call DIP_alloc('DIP_P')
+     call DIP_alloc('DIP_iR')
+     call DIP_alloc('DIP_spin')
+     call DIP_alloc('P_square')
      !
      YAMBO_FREE(QP_Sc)
      !
    end subroutine
-   !
-   subroutine H_rotate(R,H,N,direction)
-     !
-     ! Transform H in the new/old basis defined by R
-     !
-     ! new basis |n'>
-     ! old basis |n>
-     !
-     ! R(i,j)=<i|j'>
-     !
-     ! direction = +1 => <n'|H|k'>=sum_{m,p} <n'|m> H(m,p) <p|k'> =
-     !                               sum_{m,p} R_(m,n')^* H(m,p) R(p,k) = 
-     !                               sum_{m,p} R^+_(n',m) H(m,p) R(p,k)
-     !
-     ! direction = -1 => <n|H|k>=sum_{m,p} <n|m'> H(m',p') <p'|k> =
-     !                               sum_{m,p} R_(n,m) H(m',p') R^*(k,p) = 
-     !                               sum_{m,p} R_(n,m) H(m',p') R^+(p,k)
-     !
-     use wrapper,        ONLY:M_by_M
-     !
-     integer     :: direction,N
-     complex(SP) :: H(N,N),R(N,N)
-     !
-     ! Work Space
-     !
-     integer     :: i,j
-     complex(SP) :: H_rot(N,N),R_(N,N)
-     !
-     if (direction ==  1) R_=R
-     if (direction == -1) forall(i=1:N,j=1:N) R_(i,j)=conjg(R(j,i))
-     !
-     ! [1] H_rot = (R_^{\dagger}) H
-     !     H     = H_rot
-     !
-     call M_by_M('c','n',N,R_,H,H_rot)
-     H = H_rot
-     !
-     ! [2] H_rot = H R_
-     !     H     = H_rot
-     !
-     call M_by_M('n','n',N,H,R_,H_rot)
-     H = H_rot
-     !
-   end subroutine 
    !
 end module

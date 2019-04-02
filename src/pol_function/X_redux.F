@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,9 +48,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
+ !
 #include<memory.h>
  !
  type(PAR_matrix) :: X_par
@@ -67,9 +66,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Setup 
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='start')
-#endif
  !
  ! Barrier... 
  !
@@ -158,17 +155,14 @@ subroutine X_redux(iq,X_par,Xw,X)
    else if (l_lrc_fxc) then
      !
      ! LRC Fxc
+     ! DS : notive that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
      !
      if (Xo%cols(1)==1) then
-#if defined _OPENMP
        !$omp parallel do default(shared), private(ig1)
-#endif
        do ig1=Xo%rows(1),Xo%rows(2)
-         KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/q_norm(iq)**2
+         KERNEL%blc(ig1,1,1)=-Xo%blc(ig1,1,1)*(FXC_LRC_alpha + FXC_LRC_beta*abs(Xw%p(iw))**2)/bare_qpg(iq,1)**2
        enddo
-#if defined _OPENMP
        !$omp end parallel do
-#endif
      endif
      !
    else if (l_alda_fxc) then
@@ -188,18 +182,14 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-#if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
-#endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
        if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
      enddo
    enddo
-#if defined _OPENMP
    !$omp end parallel do
-#endif
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -219,17 +209,13 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    endif
    !
-#if defined _OPENMP
    !$omp parallel do default(shared), private(ig1,ig2)
-#endif
    do ig1=Xo%rows(1),Xo%rows(2)
      do ig2=Xo%cols(1),Xo%cols(2)
        BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
      enddo
    enddo
-#if defined _OPENMP
    !$omp end parallel do
-#endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
    !
@@ -248,10 +234,8 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_reset(K_FXC)
  endif
  !
-#if defined _TIMING
  call timing('X (procedure)',OPR='stop')
  call timing('X (REDUX)',OPR='start')
-#endif
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -296,9 +280,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    enddo
  enddo
  !
-#if defined _TIMING
  call timing('X (REDUX)',OPR='stop')
-#endif
  !
  ! Clean-up of FREQ structure
  !==========

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DV
+! Authors (see AUTHORS file for details): DV DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -33,17 +33,14 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
- use wave_func,      ONLY:WF
+ use H_interfaces,   ONLY:V_real_space_to_H
+ use timing_m,       ONLY:timing
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
 #if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
-#endif
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -52,13 +49,11 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol
+ integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
  !
  Hzero=cZERO
  !
-#if defined _TIMING
  call timing('Bare_Hamiltonian',OPR='start')
-#endif
  !
 #if defined _MAGNETIC
  !
@@ -75,7 +70,9 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call MAG_H_pseudo(Xk,E)
+   call Pseudo_KB_G_to_R_space(k,E)  
+   call Pseudo_Hamiltonian(Xk,E,.true.)
+   call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !
@@ -143,7 +140,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      ! ... then remove Vh[rho_0] 
      !===========================
      !
-     call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Hzero(:,:,ik,i_sp_pol),WF,'def')
+     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-V_hartree_sc)
      !
      ! ... then remove Vxc[rho_0] also
      !=================================
@@ -174,8 +171,6 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  call PP_redux_wait(Hzero)
  !
-#if defined _TIMING
  call timing('Bare_Hamiltonian',OPR='stop')
-#endif
  !
 end subroutine Bare_Hamiltonian

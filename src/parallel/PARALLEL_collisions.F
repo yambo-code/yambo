@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -142,9 +142,11 @@ subroutine PARALLEL_collisions( k, COLL )
  !   "k.b" -> QP (k,n,n')  
  !.........................................................................
  !
+ use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_live_message
  use collision_ext, ONLY:COLLISIONS_group,COLL_bands
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,l_par_RT,l_par_SE,l_par_SC
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat,PAR_IND_G_k,PAR_IND_Q,PAR_IND_QP,&
+&                        l_par_RT,l_par_SE,l_par_SC,l_par_NL
  use hamiltonian,   ONLY:B_mat_index
  use R_lattice,     ONLY:bz_samp,qindx_S,nqbz
  use interfaces,    ONLY:PARALLEL_check_phase_space
@@ -163,7 +165,7 @@ subroutine PARALLEL_collisions( k, COLL )
  YAMBO_ALLOC(COLL%PAR_map,(COLL%N))
  YAMBO_ALLOC(COLL%PAR_IND%element_1D,(COLL%N))
  !
- if (.not.allocated(PAR_IND_G_k%element_1D) ) then
+ if (.not.allocated(PAR_IND_G_k%element_1D).and.l_eval_collisions ) then
    YAMBO_ALLOC(PAR_IND_G_k%element_1D,(k%nibz))
    PAR_IND_G_k%element_1D=.FALSE.
  endif
@@ -171,6 +173,7 @@ subroutine PARALLEL_collisions( k, COLL )
  COLL%PAR_N=0
  COLL%PAR_map=0
  NC_tot=0
+ !
  do i_coll=1,COLL%N
    !
    ib1 = COLL%state(i_coll,1)
@@ -183,6 +186,10 @@ subroutine PARALLEL_collisions( k, COLL )
      if (.not.PAR_IND_B_mat%element_1D( B_mat_index(ib1,ib2,COLL_bands) ) ) cycle
    endif
    !
+   if (l_par_NL) then
+     if (.not.PAR_IND_Xk_ibz%element_1D(i_k)) cycle
+   endif
+   !
    ! l_par_SE is for LAMB
    if (l_par_SE.or.l_par_SC) then
      if (.not.PAR_IND_QP%element_1D(i_coll)) cycle
@@ -192,20 +199,22 @@ subroutine PARALLEL_collisions( k, COLL )
    COLL%PAR_map(i_coll)=COLL%PAR_N
    COLL%PAR_IND%element_1D(i_coll)=.TRUE.
    !
-   PAR_IND_G_k%element_1D(i_k)=.TRUE.
-   !
-   if (.not.l_par_SE) then
+   if (l_eval_collisions) then
      !
-     do i_q=1,nqbz
+     if ( (.not.l_par_SE) ) then
        !
-       if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+       do i_q=1,nqbz
+         !
+         if (.not.PAR_IND_Q%element_1D(i_q)) cycle
+         !
+         i_p_bz=qindx_S(i_k,i_q,1)
+         i_p   =k%sstar(i_p_bz,1)
+         !
+         PAR_IND_G_k%element_1D(i_p)=.TRUE.
+         !
+       enddo
        !
-       i_p_bz=qindx_S(i_k,i_q,1)
-       i_p   =k%sstar(i_p_bz,1)
-       !
-       PAR_IND_G_k%element_1D(i_p)=.TRUE.
-       !
-     enddo
+     endif
      !
    endif
    !

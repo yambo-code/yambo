@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,6 +42,9 @@ module collision_ext
  !
  logical :: COLLISIONS_parallel_SC_structure=.FALSE.
  logical :: COLLISIONS_have_HARTREE=.FALSE.
+ logical :: COLLISIONS_HXC_local=.FALSE.
+ logical :: COLLISIONS_HXC_MB=.FALSE.
+ logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
  !
  ! Elements used in the code
  !
@@ -136,7 +139,7 @@ module collision_ext
        local_name(4)="HARTREE+FOCK"
        local_name(5)="HARTREE+SEX"
        local_name(6)="GS_xc"
-       local_name(7)="HARTREE+GS_xc"
+       local_name(7)="HARTREE+GS_XC"
        !
        do i_c=1,nc
          if (H_SE_kind==local_kind(i_c).or.H_SE_kind==local_kind(i_c)+H_SE_COH) then

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -99,7 +99,7 @@ if test "$mpibuild"  = "yes"; then
   if test "$mpif_found" = "yes" && test "$enable_blacs" = "internal"; then
     enable_blacs="yes"
     internal_blacs="yes";
-    BLACS_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lblacs -lblacs_C_init -lblacs_init";
+    BLACS_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblacs.a ${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_C_init.a ${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_init.a";
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs.a" && test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libblacs_init.a"; then
       compile_blacs="no"
     else
@@ -110,7 +110,7 @@ if test "$mpibuild"  = "yes"; then
   if test "$mpif_found" = "yes" && test "$enable_scalapack" = "internal"; then
     enable_scalapack="yes"
     internal_slk="yes"
-    SCALAPACK_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -lscalapack"
+    SCALAPACK_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libscalapack.a"
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libscalapack.a"; then
       compile_slk="no"
     else

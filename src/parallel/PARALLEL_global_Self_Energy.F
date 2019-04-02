@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,41 +24,44 @@
 subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,nqbz,nXkibz
+ use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
  use drivers,       ONLY:l_eval_collisions
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
- use QP_m,          ONLY:QP_n_states
+ use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
- use QP_m,          ONLY:QP_n_states
- use parallel_m,    ONLY:HEAD_QP_cpu,master_cpu,n_WF_bands_to_load,&
+ use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,&
 &                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
 &                        PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
  ! INDEX
  use parallel_m,    ONLY:PAR_QP_index,PAR_Q_index,PAR_Q_bz_index,PAR_G_bands_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ,PAR_nQ_bz,PAR_nQP
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_Q_ID,PAR_IND_QP_ID
+#if defined _ELECTRIC
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
+#endif
 #if defined _SC || defined _RT || defined _QED
  use QP_m,          ONLY:QP_n_G_bands
  use drivers,       ONLY:l_elphoton_corr,l_life,l_real_time,l_sc_run
  use collision_ext, ONLY:COLL_bands,COH_collisions,HXC_collisions,P_collisions
  use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,COMM_copy
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX
+ use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_G_b_INDEX,&
+&                        PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
- use parallel_m,    ONLY:PAR_IND_DIPk_ibz,PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_IND_Bp_mat,PAR_IND_QP,PAR_IND_Q
  ! INDEX
  use parallel_m,    ONLY:PAR_DIPk_ibz_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_DIPk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Bp_mat_ID,PAR_IND_DIPk_ID
+ use parallel_m,    ONLY:PAR_IND_Bp_mat_ID
 #endif
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
@@ -150,7 +153,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    !   
 #endif
    !
-   ! 00000000          <- q
+   ! 0000     0000     <- q
    ! 0000     0000     <- g
    ! x0 x0    x0 x0    <- qp
    ! 0 0 0 0  0 0 0 0  <- b
@@ -166,7 +169,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  ! K-points
  !
  call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
-&                              PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+&                                PAR_IND_Q,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
  !
  ! G bands
  !=========
@@ -182,6 +185,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  YAMBO_ALLOC(PAR_G_bands_index,(PAR_n_bands(2)))
  call PAR_build_index(PAR_IND_G_b,PAR_n_bands(2),PAR_G_bands_index,PAR_nG_bands)
  !
+ HEAD_b_cpu=PAR_COM_G_b_index%CPU_id==0
+ !
  call PARALLEL_live_message("G bands",ENVIRONMENT="Self_Energy",&
 &                           LOADED=PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1),&
 &                           TOTAL=PAR_n_bands(2)-PAR_n_bands(1)+1,NCPU=PAR_COM_G_b_INDEX%n_CPU)
@@ -194,7 +199,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    call PARALLEL_collisions( Xk,   P_collisions )
  endif
  !
- ! To eval/use the COLLISIONS  in RT (and SC?) I need the PAR_Bp_mat_index, built here.
+ ! To eval/use the COLLISIONS I need the PAR_Bp_mat_index, built here.
  !
  if (l_sc_run.or.l_real_time.or.l_eval_collisions) then
    !
@@ -208,30 +213,41 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
    nb_mat=(COLL_bands(2)-COLL_bands(1)+1)**2
    call G_b_to_B_mat(PAR_COM_G_b_INDEX,'Bp',COLL_bands)
    call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Self_Energy",&
-&                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
-&                           TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+&                             LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
+&                             TOTAL=nb_mat,NCPU=PAR_COM_G_b_INDEX%n_CPU)
+   !
+   call PARALLEL_index(PAR_IND_G_k,(/QP_nk/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.TRUE.)
+   !
+   call PARALLEL_live_message("k-q",ENVIRONMENT="Self_Energy",&
+&                             LOADED=count( PAR_IND_G_k%element_1D ),&
+&                             TOTAL=QP_nk)
    !
  endif
  !
  if (l_elphoton_corr.and.l_life) then
    !
    ! Oscillators needed to evaluate the Radiative Lifetimes
-   ! 
+   !
    PAR_n_c_bands=QP_n_G_bands
    PAR_n_v_bands=QP_n_G_bands
-   ! 
-   ! As there will be a mismatch between the k-distribution here and in the self-energy (qp-loop)
-   ! I cannot distribute the k-pts. Therefore the PAR_COM_DIPOLES_k_subgroup is the WORLD
    !
-   call PARALLEL_index(PAR_IND_DIPk_ibz,(/nXkibz/),COMM=PAR_COM_Q_INDEX,NO_EMPTIES=.TRUE.)
-   PAR_IND_DIPk_ID=PAR_IND_Q_ID
    YAMBO_ALLOC(PAR_DIPk_ibz_index,(nXkibz))
    do i_k=1,nXkibz
      PAR_DIPk_ibz_index(i_k)=i_k
    enddo
    PAR_DIPk_nibz=nXkibz
-   !
+   ! 
  endif
+ !
+#endif
+ !
+ !
+#if defined _ELECTRIC
+ !
+ ! Parallelization indexes for the Berry Polarization
+ !
+ call PARALLEL_index(PAR_IND_Xk_bz,(/nXkbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
+ call COMM_copy(PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX)
  !
 #endif
  !
@@ -239,7 +255,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
      call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    endif

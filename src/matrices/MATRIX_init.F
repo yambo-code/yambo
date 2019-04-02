@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -74,13 +74,13 @@ subroutine MATRIX_init( what, M_par, N, Nb)
    return
  endif
  !
+#if defined _SCALAPACK
  ! ... SLK
  !
  if (what=="SLK") then
-#if defined _SCALAPACK
    call SLK_matrix_init(M_par,N, Nb)
-#endif
  endif
+#endif
  !
  ! Response function. Only upper triangle is distributed.
  !

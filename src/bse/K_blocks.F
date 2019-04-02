@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,50 +46,47 @@ subroutine K_blocks( )
  !
  ! Work Space
  !
- integer    :: i_T,j_T,i_loop,iB,n_new_blocks
+ integer    :: i_T,j_T,i_block,iB,n_new_blocks
  real(SP)   :: N_Ts_total,N_Ts_local
  !
  call section('=','CPU-dependent Block structure')
  !                 =============================
- do i_loop=1,2
-   !
-   if (i_loop==2) then
-     allocate(BS_blk(n_BS_blks))
-   endif
-   !
-   N_Ts_total  =0
-   n_BS_blks   =0
-   !
-   do i_T=1,BS_nT_grps
+ if (BS_K_coupling) then 
+    n_new_blocks = 2
+ else                    
+    n_new_blocks = 1
+ end if
+ !
+ ! Count the blocks
+ n_BS_blks=count(PAR_IND_T_ordered%element_2D)
+ allocate(BS_blk(n_BS_blks*n_new_blocks))
+ !
+ ! Allocate the blocks
+ n_BS_blks=0
+ do i_T=1,BS_nT_grps
+   do j_T=1,BS_nT_grps
      !
-     do j_T=1,BS_nT_grps
-       !
-       if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
-       !
-       n_new_blocks                   =1 
-       if (BS_K_coupling) n_new_blocks=2
-       !
-       if (i_loop==2) then
-         do iB=n_BS_blks+1,n_BS_blks+n_new_blocks
-           YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
-           BS_blk(iB)%mat=cZERO
-           BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-           if (iB-n_BS_blks==1) BS_blk(iB)%mode="R"
-           if (iB-n_BS_blks==2) BS_blk(iB)%mode="A"
-           BS_blk(iB)%iT_k=i_T
-           BS_blk(iB)%iT_p=j_T
-           BS_blk(iB)%ik=BS_T_grp(i_T)%ik
-           BS_blk(iB)%ip=BS_T_grp(j_T)%ik
-           BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
-        enddo
-       endif
-       !
-       n_BS_blks=n_BS_blks+n_new_blocks
-       !
+     if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+     !
+     do i_block=1,n_new_blocks
+        iB = n_BS_blks + i_block
+        YAMBO_ALLOC(BS_blk(iB)%mat,(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+        BS_blk(iB)%mat=cZERO
+        allocate(BS_blk(iB)%done(BS_T_grp(i_T)%size,BS_T_grp(j_T)%size))
+        bs_blk(ib)%done(:,:)="f"
+        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+        if (i_block==1) BS_blk(iB)%mode="R"
+        if (i_block==2) BS_blk(iB)%mode="A"
+        BS_blk(iB)%iT_k=i_T
+        BS_blk(iB)%iT_p=j_T
+        BS_blk(iB)%ik=BS_T_grp(i_T)%ik
+        BS_blk(iB)%ip=BS_T_grp(j_T)%ik
+        BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
      enddo
      !
+     n_BS_blks=n_BS_blks+n_new_blocks
+     !
    enddo
-   !
  enddo
  !
  ! Live Timing Blocks

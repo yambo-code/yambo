@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
+subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  !
  ! The external and total fields in Yambo are defined and organized as follow:
  !
@@ -55,7 +55,6 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
  type(bz_samp),        intent(in) :: k 
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
- type(gauge_field),    intent(in) :: A_inp
  type(gauge_field),   intent(out) :: A_new
  complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  !
@@ -90,6 +89,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
    ! Thus I add A null vector potential here and then update the current later 
    !
    call A_vecpot_reset(A_null)
+   !
    call RT_current_AND_polarization(k,E,G_inp,A_null)
    !
    ! OPTION 1: "velocity gauge"
@@ -100,9 +100,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
    !
    ! d^2 A_ind / d t^2 = 4 pi * c * J_ind(t)
    !
-   ! A''(t+dt) =         4 pi * j(t+dt) * c           [this is defined but it is useless]
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt [this is what is used in the velocity gauge]
    ! A' (t+dt) = A'(t) + 4 pi * j(t)    * c * dt
-   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt      [this is defined but it is useless as well]
+   ! A''(t+dt) =         4 pi * j(t+dt) * c
    !
    ! Results are almost ok, but, due to numerical errors, derived epsilon and eels are very bad
    !
@@ -126,9 +126,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
    !
    ! d A_ind / d t = 4 pi * c * P(t)
    !
-   ! A''(t+dt) =         4 pi * j(t+dt) * c        [this is defined but it is useless]
-   ! A' (t+dt) =         4 pi * P(t+dt) * c
-   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt   [this is defined but it is useless as well]
+   ! A  (t+dt) = A (t) + 4 pi * P(t)    * c * dt
+   ! A' (t+dt) =         4 pi * P(t+dt) * c       [this is what is used in the length gauge]
+   ! A''(t+dt) =         4 pi * j(t+dt) * c
    !
    ! It works fine
    !
@@ -140,13 +140,15 @@ subroutine RT_propagate_fields(E,k,A_old,A_inp,A_new,G_inp,T,T_step)
    !
    A_ind=A_ind_new
    !
-   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
-   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
    A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
+   A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
+   A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
    !
  else
    !
-   A_new=A_ext
+   A_new%vecpot    =A_ext%vecpot    
+   A_new%vecpot_vel=A_ext%vecpot_vel
+   A_new%vecpot_acc=A_ext%vecpot_acc
    !
  endif
  !

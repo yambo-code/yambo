@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -107,7 +107,7 @@ module QP_CTL_m
  ! "ACTION" type (can be a fit/interpolation/QP/...)
  !===============
  type QP_action_t
-   logical              :: plan(5) ! E W Z ukI ueI 
+   logical              :: plan(6) ! E W Z ukI ueI ubI
    logical              :: active
    character(schlen)    :: what 
    character(lchlen)    :: desc 

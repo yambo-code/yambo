@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -41,7 +41,7 @@ subroutine MAG_A_phase()
  integer     :: ib_ref,ik_ref,is_ref,iwf
  !
  n_loops=0
- r2_cyl(:)=x_cc(:,1)**2+x_cc(:,2)**2
+ r2_cyl(:)=x_cc(:,1,1)**2+x_cc(:,2,1)**2
  !
  if(MAG_radius>1.E-5) then
    n_loops=int(MAG_radius**2*Bz/(2*SPEED_OF_LIGHT)+0.5)

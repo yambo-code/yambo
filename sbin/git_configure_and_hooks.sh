@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#        Copyright (C) 2000-2016 the YAMBO team
+#        Copyright (C) 2000-2017 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): HM, DS
@@ -54,6 +54,6 @@ chmod +x .git/hooks/prepare-commit-msg
 git config merge.keepTheirs.driver "cp -f %B %A"
 git config merge.commit no
 git config core.editor "vim"
-git config pull.rebase true
+#git config pull.rebase true
 
 

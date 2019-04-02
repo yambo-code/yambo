@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,29 +23,32 @@
 !
 integer function io_RT_components(what,ID)
  !
- ! What can be E WF V JPSM G
+ ! What can be E WF V OBSERV(J,P,M,...) G
  !
  use pars,           ONLY:SP,lchlen,schlen
  use drivers,        ONLY:l_elph_scatt,l_real_time
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use electrons,      ONLY:n_spin
- use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,        &
+ use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz
+ use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
 &                         io_sec,io_bulk,read_is_on,io_fragment, &
-&                         manage_OP_IF_START_and_CL_IF_END,&
-&                         frag_RT
+&                         manage_OP_IF_START_and_CL_IF_END,frag_RT, &
+&                         def_variable_bulk,io_variable_bulk,write_is_on,variable_exist
  use real_time,      ONLY:NE_i_time,REF_lifetime,RT_step,l_NE_with_fields,NE_steps,RT_nk, &
-&                         dG_lesser,RT_carriers,RT_obj_alloc,&
+&                         dG_lesser,RT_carriers,RT_obj_alloc,l_RT_rotate_DM,&
 &                         G_lesser_reference,G_MEM_steps,THETA_matrix,q_weight_RT,&
-&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference
- use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,JPC_RT_IO_t,RT_carriers_object,RT_IO_t,&
-&                         GF_RT_IO_t,TIME_string,IO_JPSM_cache_steps,SAVE_G_history
+&                         RT_bands,RT_nbands,MEM_pointer,RT_init_occupation_reference,RT_all2ibz
+ use RT_control,     ONLY:J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,RT_carriers_object,RT_IO_t,&
+&                         GF_RT_IO_t,TIME_string,IO_OBS_cache_steps,SAVE_G_history
  use fields,         ONLY:A_tot
+ use hamiltonian,    ONLY:H_rotation
+#if defined _PAR_IO
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
+#endif
 #if defined _ELPH
  use ELPH,           ONLY:ph_modes,elph_branches
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #include<memory.h>
  !
@@ -55,53 +58,92 @@ integer function io_RT_components(what,ID)
  ! Work Space
  !
  integer, external     :: variables_RT
- character(lchlen)     :: local_description(100),db_name
+ character(lchlen)     :: local_description(100),db_name,ch
  character(schlen)     :: what_
  !
+#if defined _PAR_IO
+ integer               :: k_range(2),local_COMM
+#endif
  integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
- logical               :: l_G,l_JPSM,l_THETA,l_REF,l_carriers,l_track_history
+ logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
  !
- ! DB kind and name
- !==================
+ ! DB kind and name...
+ !=====================
  l_carriers   =what=="carriers"
  l_THETA      =what=="THETA"
- l_JPSM       =what=="JPSM"
  l_G          =what=="G"
  l_REF        =what=="REF"
  !
-#if defined _TIMING
+ !...OBSERVABLES
+ !===============
+ l_JP         =what=="JP".or.what=="OBSERVABLES"
+ l_M          =what=="M".or.what=="OBSERVABLES"
+ l_D          =what=="D".or.what=="OBSERVABLES"
+ l_OBS        =l_JP.or.l_M.or.l_D
+ !
  call timing('io_RT_components',OPR='start')
-#endif
  !
  db_name="RT_"//trim(what)
- if (l_REF) db_name="RT_reference_components"
+ if (l_OBS)    db_name="RT_OBSERVABLES"
+ if (l_REF)    db_name="RT_reference_components"
  !
  what_=what
  db_type=2
- if (.not.any((/l_carriers,l_THETA,l_JPSM,l_G,l_REF/))) then
+ if (l_OBS) then
+   what_='OBSERVABLES'
+ else if (.not.any((/l_carriers,l_THETA,l_G,l_REF/))) then
    db_name=trim(what)
    what_='carriers'
    l_carriers=.TRUE.
    db_type=-3
  endif
  !
+ par_IO=.false.
  if (l_THETA.or.l_G) ik = maxval(io_sec(ID,:))-1
+#if defined _PAR_IO
+ if (l_G) then
+   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
+   if ( read_is_on(ID)) local_COMM=mpi_comm_world
+   par_IO=.true.
+   k_range(1)=io_sec(ID,1)-1
+   k_range(2)=io_sec(ID,2)-1
+ endif
+#endif
  !
  ! ACTION
  !========
  !
- if (l_JPSM.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NE_i_time,NE_steps)
- if (l_G   .or.l_THETA   ) call manage_OP_IF_START_and_CL_IF_END(ID,ik,RT_nk)
+ if (l_OBS.or.l_carriers) call manage_OP_IF_START_and_CL_IF_END(ID,NOW=NE_i_time,LAST=NE_steps)
+ if ( (l_G.or.l_THETA) .and. (.not.par_IO) ) then
+   if (ik>0.and.allocated(PAR_IND_Xk_ibz%element_1D)) then
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=RT_all2ibz(ik),PAR_index=PAR_IND_Xk_ibz)
+   else
+     call manage_OP_IF_START_and_CL_IF_END(ID,NOW=ik,LAST=RT_nk)
+   endif
+ endif
  !
  l_track_history=.false.
- if (l_JPSM)     l_track_history=io_sec(ID,1)> 1
+ if (l_OBS)      l_track_history=io_sec(ID,1)> 1
  if (l_carriers) l_track_history=io_sec(ID,1)> 1
  if (l_G)        l_track_history=io_sec(ID,1)> 1 .and. SAVE_G_history
  !
  if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
  !
+#if defined _PAR_IO
+ if(l_G.and.io_sec(ID,1)> 1) then
+   if(.not.l_track_history) db_name=trim(db_name)//"_last"
+   !
+   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,COMM=local_COMM)
+   if (io_RT_components/=0) goto 1
+ else
+#endif
+ !
  io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
  if (io_RT_components/=0) goto 1
+ !
+#if defined _PAR_IO
+ endif
+#endif
  !
  ! 1st SECTION
  !=============
@@ -158,9 +200,9 @@ integer function io_RT_components(what,ID)
    !
    ! I/O time points
    !
-   if ((l_JPSM.or.l_carriers).and.(db_type==2.or..not.l_real_time)) call LOCAL_IO(JPC_RT_IO_t)
+   if ((l_OBS.or.l_carriers).and.(db_type==2.or..not.l_real_time)) call LOCAL_IO(OBS_RT_IO_t)
    !
-   if (l_G)                                                         call LOCAL_IO(GF_RT_IO_t)
+   if (l_G)                                                        call LOCAL_IO(GF_RT_IO_t)
    !
    io_RT_components=io_status(ID)
    if (io_RT_components/=0) goto 1
@@ -229,7 +271,9 @@ integer function io_RT_components(what,ID)
      call io_bulk(ID,VAR="G_lesser_reference",VAR_SZ=(/2,RT_nbands,RT_nbands,RT_nk/))
      call io_bulk(ID,C3=G_lesser_reference)
      !
+#if !defined _YPP_RT
      if (read_is_on(ID)) call RT_init_occupation_reference( )
+#endif
      !
    endif
    !
@@ -260,25 +304,54 @@ integer function io_RT_components(what,ID)
    !
    ! Needed for restart
    !
-   if (.not.SAVE_G_history) call io_fragment(ID,i_fragment=ik)
-   !
    i_spin=1
+   !
+#if defined _PAR_IO
    !
    do i_memory=1,G_MEM_steps
      !
      i_time=NE_i_time-G_MEM_steps+i_memory
      if(i_time<=0) cycle
      !
-     call io_bulk(ID,VAR="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//&
-&                        "_TIME"//trim(TIME_string( (i_time-1)*RT_step )),VAR_SZ=(/2,RT_nbands,RT_nbands/))
-     call io_bulk(ID,C2=dG_lesser(:,:,ik,i_memory))
+     ch="dG_lesser_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+     call def_variable_bulk(ID,trim(ch),i_memory,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
+     call  io_variable_bulk(ID,i_memory,C3=dG_lesser(:,:,k_range(1):k_range(2),i_memory),IPOS=(/1,1,1,k_range(1)/))
      !
    enddo
+   !
+   ch="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+   if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+     call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands,RT_nk/),SP,par_io_kind='independent')
+     call  io_variable_bulk(ID,G_MEM_steps+1,C3=H_rotation(:,:,k_range(1):k_range(2),i_spin),IPOS=(/1,1,1,k_range(1)/))
+   endif
+   !
+#else
+   !
+   call io_fragment(ID,i_fragment=ik)
+   !
+   do i_memory=1,G_MEM_steps
+     !
+     i_time=NE_i_time-G_MEM_steps+i_memory
+     if(i_time<=0) cycle
+     !
+     ch="dG_lesser_K"//trim(intc(ik))//"_SPIN"//trim(intc(i_spin))//"_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+     call def_variable_bulk(ID,trim(ch),i_memory,(/2,RT_nbands,RT_nbands/),SP)
+     call  io_variable_bulk(ID,i_memory,C2=dG_lesser(:,:,ik,i_memory))
+     !
+   enddo
+   !
+   ch="H_rotation_TIME"//trim(TIME_string( (i_time-1)*RT_step ))
+   if ( l_RT_rotate_DM .and. (variable_exist(ID,trim(ch)).or.write_is_on(ID)) ) then
+     call def_variable_bulk(ID,trim(ch),G_MEM_steps+1,(/2,RT_nbands,RT_nbands/),SP)
+     call  io_variable_bulk(ID,G_MEM_steps+1,C2=H_rotation(:,:,ik,i_spin))
+   endif
    !
    if(l_NE_with_fields.and.ik==RT_nk) then
      call io_bulk(ID,VAR="A_tot",VAR_SZ=(/2,9/))
      call io_bulk(ID,C1=(/A_tot%vecpot,A_tot%vecpot_vel,A_tot%vecpot_acc/))
    endif
+   !
+#endif
    !
  endif
  !
@@ -298,33 +371,33 @@ integer function io_RT_components(what,ID)
  !
  ! Current and Polarization
  !==========================
- if ( l_JPSM) then
+ if (l_OBS) then
    !        
-   call io_elemental(ID,VAR="JPSM_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,I0=IO_JPSM_cache_steps)
+   call io_elemental(ID,VAR="OBSERV_CACHE_TIME_N_points",VAR_SZ=1,MENU=0) 
+   call io_elemental(ID,I0=IO_OBS_cache_steps)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
-   call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-   call io_bulk(ID,R2=J_cache)
-   !
-   call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-   call io_bulk(ID,R2=P_cache)
-   !
-   if(n_spin>1) then
-     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-     call io_bulk(ID,R2=Ms_cache)
+   if (l_JP) then
+     call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=J_cache)
      !
-     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/6,IO_JPSM_cache_steps/))
-     call io_bulk(ID,R2=Ml_cache)
+     call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=P_cache)
+   endif
+   !
+   if(n_spin>1.and.l_M) then
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=Ms_cache)
+     !
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C2=Ml_cache)
    endif
    !
  endif       
  !
 1 call io_disconnect(ID=ID)
  !
-#if defined _TIMING
  call timing('io_RT_components',OPR='stop')
-#endif
  !
  contains
    !

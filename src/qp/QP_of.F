@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,16 +42,16 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  ! Work Space
  !
- integer           :: i1,i2,qp_b,qp_k,qp_isp
- character(lchlen) :: file_name,G_Sc_name
+ integer           ::i1,i2,qp_b,qp_k,qp_isp,i_desc_min
+ character(lchlen) ::file_name,G_Sc_name
  logical           ::state_is_2do(QP_n_states)
  !
  !o.qp titles
  !
- integer, parameter:: tpar=31
- integer       :: ntitles,titles_order(tpar)
- real(SP)      :: values(tpar)
- character(schlen) :: titles(tpar)
+ integer, parameter :: tpar=31
+ integer            :: ntitles,titles_order(tpar)
+ real(SP)           :: values(tpar)
+ character(schlen)  :: titles(tpar)
  !
  titles(1)  = trim(Vxc_kind) 
  titles(2)  = 'Sc|Eo' 
@@ -138,19 +138,30 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
  !
  if ( trim(QP_solver)=='n'.or.trim(QP_solver)=='s'.or.l_life.or.&
 &    (trim(QP_solver)=='g'.and.use_GreenF_to_eval_QP).or.&
-&    what=='hf') then
+&    trim(QP_solver)=='mixed'.or.what=='hf') then
    !
    file_name=what
    call of_open_close(file_name,'ot')
-   if (trim(QP_solver)=='n') call msg('o '//what,'# GW [Newton Solver]')
-   if (trim(QP_solver)=='s') call msg('o '//what,'# GW [Secant method Solver]')
-   if (trim(QP_solver)=='g') call msg('o '//what,'# GW [Green`s Function Solver]')
+   !
+   i_desc_min=1
+   select case ( trim(QP_solver) )
+     case ("n")
+       call msg('o '//what,'# GW [Newton Solver]')
+       i_desc_min=2
+     case ("s")
+       call msg('o '//what,'# GW [Secant method Solver]')
+       i_desc_min=2
+     case ("g")
+       call msg('o '//what,'# GW [Green`s Function Solver]')
+       i_desc_min=2
+   end select
+   !
    if (what==          'hf') call msg('o '//what,'# Hartree-Fock Components and Corrections')
    !
    if (index(what,"qp")>0) call msg('o '//what,'#')
    !
-   do i1=2,qp%n_descs
-     call msg('o '//what,'# ',trim(qp%description(i1)),INDENT=0)
+   do i1=i_desc_min,qp%n_descs
+     call msg('o '//what,'#',trim(qp%description(i1)),INDENT=0)
    enddo
    !
    call msg('o '//what,'#')
@@ -241,7 +252,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      call msg('o G_Sc','# GW [Green`s function & Self-Energy]')
      call msg('o G_Sc','#')
      do i2=2,qp%n_descs
-       call msg('o G_Sc','# ',trim(qp%description(i2)),INDENT=0)
+       call msg('o G_Sc','#',trim(qp%description(i2)),INDENT=0)
      enddo
      if (allocated(QP_G_amplitude_integral)) then
        call msg('o G_Sc','#')

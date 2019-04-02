@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -32,7 +32,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
- use R_lattice,      ONLY:q_norm,bz_samp
+ use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg,warning
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
@@ -40,12 +40,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use interfaces,     ONLY:PARALLEL_index,PARALLEL_live_message,MATRIX_duplicate
  use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
+ use timing_m,       ONLY:timing
 #if defined _SCALAPACK
  use interfaces,     ONLY:MATRIX_transfer
  use parallel_m,     ONLY:linear_algebra_is_parallel
-#endif
-#if defined _TIMING
- use timing_m,       ONLY:timing
 #endif
 #if defined _RT
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel
@@ -76,7 +74,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  type(PP_indexes)  :: PAR_IND_freqs
  integer           :: i1,i2,iw,PAR_IND_FREQ_ID
- logical, external :: stop_now
+ logical, external :: STOP_now
  real(SP)          :: ratio
  complex(SP), allocatable :: Lo(:,:,:)
  !
@@ -90,9 +88,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
  !
-#if defined _TIMING
  call timing('Inversion Solver',OPR='start')
-#endif
  !
  ! Sectioning
  !============
@@ -150,7 +146,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Kernel and/or BSS components loading
  !======================================
- call K_components_folded_in_serial_arrays(iq,"INV")
+ call K_components_folded_in_serial_arrays(iq)
+ call K_stored_in_a_big_matrix(iq,"INV")
  !
  if (K_slk%kind=="SLK") then
    !
@@ -302,7 +299,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==============
  !
  Epsilon_ii(:,2)=1._SP+Epsilon_ii(:,2)
- if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/q_norm(1)**2
+ if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*Co_factor/bare_qpg(1,1)**2
  !
  BSS_n_descs=BSS_n_descs+1
  ratio=real(count(K_INV_EPS%err==0))/real(W%n_freqs)*100._SP
@@ -338,7 +335,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
        !
        call live_timing(steps=1)
        !
-       if (stop_now(.FALSE.)) then
+       if (STOP_now(.FALSE.)) then
          exit
        endif
        !
@@ -449,9 +446,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call MATRIX_duplicate( "free", M_out=K_inv_slk )
 #endif
      !
-#if defined _TIMING
      call timing('Inversion Solver',OPR='stop')
-#endif
    end subroutine
    !
    subroutine LOCAL_TYP_clean(TYP)

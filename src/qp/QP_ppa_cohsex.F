@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,11 +48,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
+&                        PARALLEL_WF_distribute,QP_state_extract_print
  use matrix_operate,ONLY:mat_transpose
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #if defined _SC
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
@@ -72,7 +71,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Work Space
  !
  integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),iv4(4),io_err,ID,timing_steps
+&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision)::isc,iscp
  character(schlen)::ch,SECTION_name
@@ -125,12 +124,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      call msg('r','')
    endif
    ch=trim(SECTION_name)
-   iv4=(/1,1,0,0/)
-   do while(QP_state_extract(iv4)>0)
-     write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-     call msg('r',trim(ch))
-   enddo
-   call msg('r','')
+   !
+   call QP_state_extract_print( )
+   !
  endif
  !
  call k_expand(k)
@@ -173,9 +169,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
-#if defined _TIMING
  call timing('GW(ppa)',OPR='start')
-#endif
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
@@ -250,6 +244,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! Poles and Residuals
      !
+!DV
+! When cutoff is used, here it needs a careful check. Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+! that the definition here below of  X_mat(i1,i2,X_range(2)) are correct.
+!
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
@@ -345,29 +343,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if ( HEAD_QP_cpu ) then
            if (X_is_TR_rotated) then
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2)
-#endif
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig2,ig1))
                 enddo
               enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
            else
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2)
-#endif
               do ig2=1,X%ng
                 do ig1=1,X%ng
                   eet_factor(ig1,ig2)=isc%rhotw(G_m_G(ig1,ig2))
                 enddo
               enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
            endif
          endif
          !
@@ -376,29 +366,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          sp_dummy = 0.0_SP
          !
          if (X_is_TR_rotated) then
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig2,ig1))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
          else
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2), reduction(+:sp_dummy)
-#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                sp_dummy=sp_dummy+2._SP*pi*isc%rhotw(G_m_G(ig1,ig2))*X_mat(ig1,ig2,X_range(1))
              enddo
            enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
          endif
          !
          dc(1) = sp_dummy
@@ -470,9 +452,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
            sp_dummy = 0.0_SP
            !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:sp_dummy)
-#endif
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
@@ -487,9 +467,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
              enddo
            enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
            !
            dc(i_w) = sp_dummy
            !
@@ -536,9 +514,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          sp_dummy=0.0_SP
          !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:sp_dummy)
-#endif
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
@@ -551,9 +527,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
            enddo
          enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
          !
          QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+sp_dummy
          !
@@ -582,9 +556,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 #endif
  if(l_X_alloc) call X_alloc('X')
  !
-#if defined _TIMING
  call timing('GW(ppa)',OPR='stop')
-#endif
  !
  if (.not.l_sc_run) call WF_free(WF)
  !
@@ -593,12 +565,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! ALL 2 ALL of QP_Sc
  !
-#if defined _TIMING
  call timing('GW(REDUX)',OPR='start')
-#endif
  call PP_redux_wait(QP_Sc)
-#if defined _TIMING
  call timing('GW(REDUX)',OPR='stop')
-#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -42,21 +42,23 @@ subroutine RT_start_and_restart(E,k,q)
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time,JPC_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
+ use RT_control,     ONLY:ID,NE_i_start_time,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,TIME_adjust
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,RT_E_occupations,RT_H_occupations,&
 &                         G_lesser_reference,rho_reference,magn_reference,RT_init_occupation_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,RT_ibz_coo,NE_time,l_RT_is_WFfree, &
 &                         RT_P,RT_step,l_RT_CCA_Kernel,dG_lesser,NE_i_time,RT_dyn_step,&
 &                         Gr_kind,Gr_description,l_RT_uses_E_DbGd,N_Gr_descs,RT_E_and_k,&
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
-&                         RT_H_occupations_reference,RT_delta_occupations,RT_delta0_occupations,&
+&                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
-&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
+&                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
+ use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
@@ -67,7 +69,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_sp_pol,ik,COM_,io_G,io_JPSM,io_THETA,io_REF,&
+ integer :: i_sp_pol,ik,COM_,io_G,io_OBS,io_THETA,io_REF,&
 &           io_OCCUPATIONS,ID_OCCUPATIONS,nt,i_memory
  integer, external :: io_RT_components
  !
@@ -104,8 +106,8 @@ subroutine RT_start_and_restart(E,k,q)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,HARTREE0(:,:,ik,i_sp_pol),WF,'def') 
-       call V_real_space_to_H(ik,i_sp_pol,V_xc,        XC0(:,:,ik,i_sp_pol),WF,'xc ') 
+       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc) 
+       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc) 
      enddo
    enddo
    !
@@ -130,8 +132,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  COM_=REP
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(4)) ! Current response
- io_JPSM=io_RT_components('JPSM',ID(4))
- if (io_JPSM==0) COM_=NONE
+ io_OBS=io_RT_components('OBSERVABLES',ID(4))
+ if (io_OBS==0) COM_=NONE
  call io_control(ACTION=OP_RD_CL,COM=COM_,SEC=(/1/),MODE=VERIFY,ID=ID(5)) ! G_lesser
  io_G=io_RT_components('G',ID(5))
  !
@@ -180,25 +182,34 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
+#if defined _PAR_IO
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID(5))
+   io_G=io_RT_components('G',ID(5))
+   !
+#else
+   !
    do ik=1,RT_nk
-     !
      call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
-     !
-     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+   enddo
+   !
+#endif
+   !
+   ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
+   !
+   do i_memory=1,G_MEM_steps
+     G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
+     if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
+     if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
+   enddo
+   !
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     do ik=1,RT_nk
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
-     endif
-     !
-     ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
-     !
-     do i_memory=1,G_MEM_steps
-       G_lesser(:,:,ik,i_memory)=G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,i_memory)
-       if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
-       if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
-     enddo
-     !
-   enddo
+       enddo
+   endif
    !
    ! Define RT_E/H_occupations_reference
    !
@@ -229,7 +240,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
    call msg('r',  'dT Update Interval            [fs]:',NE_time_step_update_jump*AUT2FS)
    call msg('r',  'Lifetimes inter/intr times    [fs]:',RT_life_extrap_times*AUT2FS)
-   call msg('r',  'T between I/O of J,P,f        [fs]:',JPC_RT_IO_t%INTERVAL_time*AUT2FS)
+   call msg('r',  'T between I/O of J,P,f        [fs]:',OBS_RT_IO_t%INTERVAL_time*AUT2FS)
    call msg('r',  '          I/O of   GFs        [fs]:',GF_RT_IO_t%INTERVAL_time*AUT2FS)
    !
    OUTPUT_RT_IO_t%INTERVAL_time  = max(TIME_adjust(OUTPUT_RT_IO_t%INTERVAL_time,RT_dyn_step),RT_dyn_step)
@@ -249,7 +260,16 @@ subroutine RT_start_and_restart(E,k,q)
  ! Initialize the Vector Potential
  !=================================
  !
- if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
+ if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
+ !
+ ! Pseudo potential terms needed for velocity gauge
+ !==================================================
+ !
+ if (l_velocity_gauge_corr) then
+   call Pseudo_KB_G_to_R_space(k,E)
+   call Pseudo_Hamiltonian(k,E,.true.)
+ endif
+ !
  !
  call msg('r','')
  !
@@ -333,8 +353,8 @@ subroutine RT_start_and_restart(E,k,q)
      RT_H_occupations          =rzero
      RT_E_occupations_reference=rzero
      RT_H_occupations_reference=rzero
-     RT_delta0_occupations     =rzero
      RT_delta_occupations      =rzero
+     RT_life_delta_occupations =rzero
      !
      ! GPL_EXCLUDE_END
      !
@@ -356,7 +376,9 @@ subroutine RT_start_and_restart(E,k,q)
      !
      do ib=RT_bands(1),RT_bands(2)
        do ik=1,k%nibz
+         !
          do ik_RT_DbGd=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+           !
            ik_E_DbGd=ik_RT_DbGd-RT_ibz_coo(ik,1)+DbGd_ibz_coo(ik,1)
            !
            if (l_RT_uses_E_DbGd) then
@@ -369,18 +391,20 @@ subroutine RT_start_and_restart(E,k,q)
              Width     = 0._SP
              if (allocated(E%fo)) f_occ_ref = E%f_DbGd(ib,ik_E_DbGd,1)-E%df_DbGd(ib,ik_E_DbGd,1)
              if (allocated(E%W))  Width     = abs(E%W_DbGd(ib,ik_E_DbGd,1))
+             !
            else
+             !
              Energy    = E%E(ib,ik,1)
              f_occ     = E%f(ib,ik,1)
              f_occ_ref = f_occ
              Width     = 0._SP
              if (allocated(E%fo)) f_occ_ref = E%fo(ib,ik,1)
              if (allocated(E%W))  Width     = abs(E%W(ib,ik,1))
+             !
            endif
            !
-           RT_E_and_k%En(ib,ik_RT_DbGd,1) = Energy
-           RT_E_and_k%W(ib,ik_RT_DbGd,1)  = Width 
-           !RT_E_and_k%kpt(:,ik_RT_DbGd)  = k%pt(ik,:)
+           RT_E_and_k%E(ib,ik_RT_DbGd,1) = Energy
+           RT_E_and_k%W(ib,ik_RT_DbGd,1) = Width 
            !
            G_lesser(ib,ib,ik_RT_DbGd,1)         = cmplx(0.,f_occ    ,SP)
            G_lesser_reference(ib,ib,ik_RT_DbGd) = cmplx(0.,f_occ_ref,SP)
@@ -408,10 +432,10 @@ subroutine RT_start_and_restart(E,k,q)
      do ib=RT_bands(1),RT_bands(2)
        RT_E_occupations_reference(ib,:)=         aimag(G_lesser_reference(ib,ib,:))
        RT_H_occupations_reference(ib,:)=spin_occ-aimag(G_lesser_reference(ib,ib,:))
-       RT_delta0_occupations(ib,:)     =         aimag(dG_lesser(ib,ib,:,1))
        RT_delta_occupations(ib,:)      =         aimag(dG_lesser(ib,ib,:,1))
-       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta0_occupations(ib,:)
-       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta0_occupations(ib,:)
+       RT_life_delta_occupations(ib,:) =         aimag(dG_lesser(ib,ib,:,1))
+       RT_E_occupations(ib,:) = RT_E_occupations_reference(ib,:)+RT_delta_occupations(ib,:)
+       RT_H_occupations(ib,:) = RT_H_occupations_reference(ib,:)-RT_delta_occupations(ib,:)
      enddo
      !
      ! RTA infinity ditributions

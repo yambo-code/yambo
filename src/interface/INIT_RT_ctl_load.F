@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,7 +31,7 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  ! spin unless the DB1 is read. 
  !
  use it_m,          ONLY:it,initdefs,V_real_time
- use real_time,     ONLY:RT_ctl_db
+ use RT_control,    ONLY:RT_ctl_db,RT_ctl_interp_neigh
  !
  implicit none
  integer, intent(in) :: i_type
@@ -51,5 +51,9 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  call it(defs,prefix(i_type)//'fnRTdb',&
 &        '[EXTRT '//trim(description_ch(i_type))//'] Database',&
 &        RT_ctl_db(i_type),verb_level=V_real_time)
+ !
+ call it(defs,prefix(i_type)//'fnRT_N',&
+&        '[EXTRT '//trim(description_ch(i_type))//'] Interpolation neighbours',&
+&        RT_ctl_interp_neigh(i_type),verb_level=V_real_time)
  ! 
 end subroutine

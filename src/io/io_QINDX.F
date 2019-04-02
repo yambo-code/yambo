@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,9 +29,7 @@ integer function io_QINDX(Xk,q,io_db)
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
 &                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
 &                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
 #include<memory.h>
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -40,9 +38,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  integer      :: ioScatt
  !
-#if defined _TIMING
  call timing('io_QINDX',OPR='start')
-#endif
  !
  io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
@@ -58,23 +54,18 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=5545)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
-   call io_elemental(io_db,VAR="PARS",VAR_SZ=10,MENU=0)
+   call io_elemental(io_db,VAR="PARS",VAR_SZ=9,MENU=0)
    !
    call io_elemental(io_db,I0=nXkbz)
-   call io_elemental(io_db,&
-&       VAR=" Polarization last K   :",I0=nXkibz)
-   call io_elemental(io_db,&
-&       VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
+   call io_elemental(io_db,VAR=" Polarization last K   :",I0=nXkibz)
+   call io_elemental(io_db,VAR=" QP states             :",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(io_db,I0=q%nibz)
    call io_elemental(io_db,I0=q%nbz)
-   call io_elemental(io_db,&
-&       VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
+   call io_elemental(io_db,VAR=" X grid is uniform     :",L0=Xk_grid_is_uniform)
    io_QINDX=io_status(io_db)
    !
-   call io_elemental(io_db,&
-&       VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(io_db,&
-&       VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" BS scattering         :",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(io_db,VAR=" COLL scattering       :",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(io_db,VAR="",VAR_SZ=0)
    ioScatt=io_status(io_db)
@@ -155,8 +146,6 @@ integer function io_QINDX(Xk,q,io_db)
  !
 1 call io_disconnect(ID=io_db)
  !
-#if defined _TIMING
  call timing('io_QINDX',OPR='stop')
-#endif
  !
 end function

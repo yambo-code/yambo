@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS
@@ -51,7 +51,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  real(SP),    intent(in)  :: deltaT
  complex(SP), intent(in)  :: dG_old(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  complex(SP), intent(in)  :: dG_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
- complex(SP), intent(out) :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+ complex(SP), intent(out), target :: dG_out(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  !
  ! Work space
  !

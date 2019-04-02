@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,12 +31,9 @@ integer function io_BS(iq,X,ID)
  use BS,            ONLY:BS_blk,n_BS_blks,BS_K_has_been_calculated_loaded
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_bulk,frag_BS_K,&
-&                        read_is_on,write_is_on,io_header,io_mode,VERIFY, &
+&                        write_is_on,io_header,io_mode,VERIFY, &
 &                        io_fragment,IO_NOT_ALLOWED,io_BS_K,manage_OP_IF_START_and_CL_IF_END
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
- !
 #include<memory.h>
  !
  type(X_t):: X 
@@ -55,9 +52,7 @@ integer function io_BS(iq,X,ID)
    return
  endif
  !
-#if defined _TIMING
  call timing('io_BS',OPR='start')
-#endif
  !
  db_name='BS_Q'//trim(intc(iq))//'_CPU_'//trim(intc(myid))
  !
@@ -106,7 +101,7 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==0) goto 1
  !
- call manage_OP_IF_START_and_CL_IF_END(ID,i_block,n_BS_blks)
+ call manage_OP_IF_START_and_CL_IF_END(ID,NOW=i_block,LAST=n_BS_blks)
  !
  call io_fragment(ID,i_fragment=i_block)
  !
@@ -136,8 +131,6 @@ integer function io_BS(iq,X,ID)
  !
  call io_disconnect(ID)
  !
-#if defined _TIMING
  call timing('io_BS',OPR='stop')
-#endif
  !
 end function

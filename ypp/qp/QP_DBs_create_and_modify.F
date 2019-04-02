@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -27,10 +27,10 @@ subroutine QP_DBs_create_and_modify(en,k)
  use units,         ONLY:HA2EV
  use com,           ONLY:error
  use electrons,     ONLY:levels,n_sp_pol
- use parser_m,      ONLY:parser
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
+ use YPP,           ONLY:QP_user_corrections
  !
 #include<memory.h>
  !
@@ -39,10 +39,9 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,icheck,i1,ib,ik,ic,is
- integer  :: k_rng_lines,ikrange(2),ibrange(2)
+ integer  :: io_QP_and_GF_err,ID,i1,ib,ik,ic,is
+ integer  ::ikrange(2),ibrange(2)
  integer, external     :: io_QP_and_GF
- real(SP), allocatable :: QP_r_corrections(:,:)
  logical,  allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
@@ -61,31 +60,16 @@ subroutine QP_DBs_create_and_modify(en,k)
  ! 
  call QP_alloc(qp)
  !
- ! Check the input file
- !
- k_rng_lines=1
- icheck=1
- do while(icheck/=0)
-   YAMBO_FREE(QP_r_corrections)
-   YAMBO_ALLOC(QP_r_corrections,(k_rng_lines,7))
-   QP_r_corrections=0._SP
-   call parser('QPkrange',QP_r_corrections)
-   icheck=sum(QP_r_corrections(k_rng_lines,:))
-   if (any(QP_r_corrections(k_rng_lines,1:4)<0)) icheck=0
-   k_rng_lines=k_rng_lines+1
- enddo
- k_rng_lines=k_rng_lines-2
- !
  YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
  QP_done=.FALSE.
  !
  ic=1
- do i1=1,k_rng_lines
+ do i1=1,size(QP_user_corrections,1)
    !
-   ikrange(1:2)=int(QP_r_corrections(i1,1:2))
-   ibrange(1:2)=int(QP_r_corrections(i1,3:4))
+   ikrange(1:2)=int(QP_user_corrections(i1,1:2))
+   ibrange(1:2)=int(QP_user_corrections(i1,3:4))
    !
-   if (QP_r_corrections(i1,7)<epsilon(1._SP)) QP_r_corrections(i1,7)=1.
+   if (QP_user_corrections(i1,7)<epsilon(1._SP)) QP_user_corrections(i1,7)=1.
    !
    if(ikrange(2)>en%nk.or.ibrange(2)>en%nb) call error("Indices out of the range!")
    !
@@ -93,14 +77,14 @@ subroutine QP_DBs_create_and_modify(en,k)
      do ik=ikrange(1),ikrange(2)
        do ib=ibrange(1),ibrange(2)
          qp%E_bare(ic) =en%E(ib,ik,is)
-         qp%E(ic)      =cmplx(QP_r_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_r_corrections(i1,6)/HA2EV,kind=SP)
-         qp%Z(ic)      =cmplx(QP_r_corrections(i1,7),0.,kind=SP)
+         qp%E(ic)      =cmplx(QP_user_corrections(i1,5)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i1,6)/HA2EV,kind=SP)
+         qp%Z(ic)      =cmplx(QP_user_corrections(i1,7),0.,kind=SP)
          qp%table(ic,1)=ib
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik
          if(n_sp_pol==2) qp%table(ic,4)=is
          qp%k(qp%table(ic,3),:)       =k%pt(qp%table(ic,3),:)
-         if(QP_done(ib,ib,ik,is)) call error("Duplicate quasi-particle indexes! ")
+         if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
          QP_done(ib,ib,ik,is)=.TRUE.
          ic=ic+1   
        enddo
@@ -113,7 +97,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=REP,ID=ID)
  io_QP_and_GF_err=io_QP_and_GF("QP",qp,ID)
  !
- YAMBO_FREE(QP_r_corrections)
+ YAMBO_FREE(QP_user_corrections)
  YAMBO_FREE(qp%k)
  YAMBO_FREE(qp%table)
  YAMBO_FREE(qp%Z)

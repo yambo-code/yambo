@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AF, AM
@@ -297,11 +297,11 @@ module wrapper_omp
      complex(SP) :: ctmp
      if (n_threads_now>1) then
        ctmp=cZERO
-!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       !$omp parallel do default(shared), private(i), reduction(+:ctmp)
        do i=1,N
          ctmp=ctmp +conjg(CX(i))*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        Vstar_dot_V_omp=ctmp
      else
        Vstar_dot_V_omp=Vstar_dot_V(N,CX,CY)
@@ -321,11 +321,11 @@ module wrapper_omp
      real(SP) :: rtmp
      if (n_threads_now>1) then
        rtmp=0.0_SP
-!$omp parallel do default(shared), private(i), reduction(+:rtmp)
+       !$omp parallel do default(shared), private(i), reduction(+:rtmp)
        do i=1,N
          rtmp=rtmp +CX(i)*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        real_V_dot_V_omp=rtmp
      else
        real_V_dot_V_omp=real_V_dot_V(N,CX,CY)
@@ -344,11 +344,11 @@ module wrapper_omp
      complex(SP) :: ctmp
      if (n_threads_now>1) then
        ctmp=0.0_SP
-!$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       !$omp parallel do default(shared), private(i), reduction(+:ctmp)
        do i=1,N
          ctmp=ctmp +CX(i)*CY(i)
        enddo 
-!$omp end parallel do
+       !$omp end parallel do
        V_dot_V_omp=ctmp
      else
        V_dot_V_omp=V_dot_V(N,CX,CY)

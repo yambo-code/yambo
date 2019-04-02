@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM 
@@ -23,17 +23,19 @@
 !
 subroutine RT_time_step_update( )
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use stderr,         ONLY:real2ch
  use units,          ONLY:AUT2FS
  use real_time,      ONLY:RT_bands,RT_nk,dG_lesser,MEM_pointer,i_MEM_previous,l_Update_Time_Step,&
-&                         i_MEM_now,i_MEM_next,MAX_dG_dT_indexes,RT_step,RT_dyn_step,&
+&                         i_MEM_now,i_MEM_next,RT_step,RT_dyn_step,&
 &                         RT_life_extrap_times,Life_MEM_steps,NE_time,NE_time_step_update_jump,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
-&                         NE_initial_time_step_update
- use RT_control,     ONLY:JPC_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
+&                         NE_initial_time_step_update,RT_all2ibz
+ use RT_control,     ONLY:OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,n_TIME_STEP_CONF_descriptions,&
 &                         TIME_STEP_CONF_description,RT_do_it,SETUP_RT_IO_type,TIME_adjust
  use com,            ONLY:msg
+ use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ !
  implicit none
  ! 
  ! Work Space 
@@ -51,11 +53,16 @@ subroutine RT_time_step_update( )
  !
  NE_time_step_update_last_point=NE_i_time
  !
- dG_dT_max   =0._SP
+ dG_dT_max   =cZERO
+ dG          =cZERO
+ !
  dT_now      =(MEM_pointer(i_MEM_next)-MEM_pointer(i_MEM_now))*RT_step
  dT_previous =(MEM_pointer(i_MEM_now)-MEM_pointer(i_MEM_previous))*RT_step
  !
  do ik=1,RT_nk
+   !
+   if( .not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+   !
    do ib=RT_bands(1),RT_bands(2)
      do ibp=RT_bands(1),RT_bands(2)
        dG_dT(1)=(dG_lesser(ib,ibp,ik,i_MEM_now)-dG_lesser(ib,ibp,ik,i_MEM_previous))/dT_previous
@@ -65,11 +72,13 @@ subroutine RT_time_step_update( )
          dG(2)=dG_lesser(ib,ibp,ik,i_MEM_now)
          dG(3)=dG_lesser(ib,ibp,ik,i_MEM_next)
          dG_dT_max=dG_dT
-         MAX_dG_dT_indexes=(/ib,ibp,ik/)
        endif
      enddo
    enddo
  enddo
+ !
+ call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ call PP_redux_wait(dG_dT_max,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
  ERROR=(dG(1)+dG_dT_max(1)*(dT_previous+dT_now)-dG(3))/dG(3)
  !
@@ -79,17 +88,17 @@ subroutine RT_time_step_update( )
    !
    RT_dyn_step=dT_next
    !
-   call SETUP_RT_IO_type(JPC_RT_IO_t,.FALSE.)
+   call SETUP_RT_IO_type(OBS_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,.FALSE.)
    call SETUP_RT_IO_type(GF_RT_IO_t,.FALSE.)
    !
-   JPC_RT_IO_t%last_point    = NE_i_time
+   OBS_RT_IO_t%last_point    = NE_i_time
    OUTPUT_RT_IO_t%last_point = NE_i_time
    GF_RT_IO_t%last_point     = NE_i_time
    !
    ! ... and the dT update steps
    !
-   NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,JPC_RT_IO_t%INTERVAL_time),JPC_RT_IO_t%INTERVAL_time)
+   NE_time_step_update_jump = max(TIME_adjust(NE_time_step_update_jump,OBS_RT_IO_t%INTERVAL_time),OBS_RT_IO_t%INTERVAL_time)
    !
    ! I need to re-calculate the lifetimes evaluation plan in order to be consistent with the new Time Step
    !

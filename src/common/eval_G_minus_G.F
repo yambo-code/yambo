@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF,DS
@@ -35,9 +35,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use parallel_m,   ONLY:MPI_comm,PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,minus_G,E_of_shell
  use interfaces,   ONLY:PARALLEL_index,PARALLEL_live_message
-#if defined _TIMING
  use timing_m,     ONLY:timing
-#endif
 #include<memory.h>
  !
  integer :: iG,iGo
@@ -61,9 +59,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
    return
  endif
  !
-#if defined _TIMING
  call timing("eval_G_minus_G",opr="start")
-#endif
  !
  iG_=iG
  iGo_=iGo
@@ -189,8 +185,6 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call PP_indexes_reset(PAR_IND_G)
  YAMBO_FREE(E_G_m_G)
  !
-#if defined _TIMING
  call timing("eval_G_minus_G",opr="stop")
-#endif
  !
 end function

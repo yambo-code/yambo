@@ -19,6 +19,7 @@ cppflags    = @CPPFLAGS_yambo@
 fpp         = @FPP@
 fc          = @FC@
 fc_kind     = @FCKIND@
+fc_version  = @FCVERSION@
 mpi_kind    = @MPIKIND@
 fcflags     = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@
 fcuflags    = @FCUFLAGS@ @FCMFLAG@ @OPENMPLIBS@
@@ -28,6 +29,7 @@ fflags      = @FFLAGS@
 fuflags     = @FUFLAGS@
 package_bugreport = @PACKAGE_BUGREPORT@
 shell       = @SHELL@
+yprecision  = @build_precision@
 #
 # Paths
 #
@@ -62,6 +64,7 @@ netcdf_flag = @NETCDFFLAGS@
 lhdf5       = @HDF5_LIBS@
 ihdf5       = @HDF5_INCS@
 hdf5_opt    = @HDF5_OPT@
+hdf5_ver    = @HDF5_VER@
 llibxc      = @LIBXC_LIBS@
 ilibxc      = @LIBXC_INCS@
 lfft        = @FFT_LIBS@

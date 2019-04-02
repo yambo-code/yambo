@@ -1,6 +1,6 @@
 ! 
 ! Copyright (C) 2004 WanT Group
-! Copyright (C) 2000-2018 the YAMBO team
+! Copyright (C) 2000-2019 the YAMBO team
 ! 
 ! This file is distributed under the terms of the 
 ! GNU General Public License. See the file `License' 
@@ -93,6 +93,9 @@ MODULE timing_m
      INTEGER                               :: index
      TYPE(clock_list), POINTER  :: listp
      !
+#ifndef _TIMING
+     return
+#endif
      if (.not.master_thread) return
      !
      IF ( LEN( TRIM(name)) == 0 )  CALL error('timing: Invalid name')
@@ -151,6 +154,9 @@ MODULE timing_m
      IMPLICIT NONE
      INTEGER,             INTENT(in)  :: nclock_max_
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( nclock_max_ < 1 ) CALL error('timing_allocate:  Invalid NCLOCK_MAX')
      !
      ! public clocks
@@ -170,6 +176,9 @@ MODULE timing_m
    !
    SUBROUTINE timing_deallocate()
      IMPLICIT NONE
+#ifndef _TIMING
+     return
+#endif
      CALL clock_list_deallocate(global_list)
      CALL clock_stop(internal_list%clock(1))
      CALL clock_list_deallocate(internal_list)
@@ -314,10 +323,11 @@ MODULE timing_m
      CHARACTER(*), OPTIONAL, INTENT(in) :: form
      CHARACTER(4)                       :: form_
      CHARACTER(256)                     :: str
+     CHARACTER(15)                      :: sec_str
      CHARACTER(lchlen)                  :: local_ch
      INTEGER                            :: nday,nhour,nmin
      INTEGER                            :: call_number
-     REAL(DP)                           :: total_time
+     REAL(DP)                           :: total_time,effective_total_time
      REAL(DP)                           :: nsec
      !
      form_="sec "
@@ -343,6 +353,13 @@ MODULE timing_m
        !
      ENDIF
      !
+     sec_str=" sec avg)"
+     effective_total_time = total_time
+     if (total_time<1._DP) then
+       sec_str=" millisec avg)"
+       effective_total_time=total_time*1000._DP
+     endif
+     !
      SELECT CASE ( TRIM(form_) ) 
        CASE ( "dhms" )
          nday  = INT(  total_time/ 86400 )
@@ -367,21 +384,20 @@ MODULE timing_m
            call msg('r',local_ch(:100))
          ELSE
            IF (nday > 0) THEN
-             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (", &
-                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nday, nhour, &
-                   call_number , total_time / REAL( call_number, DP )
+             WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i10," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
+                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSEIF (nhour > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
-                   &  i8," calls,",f8.3," s avg)")') TRIM(obj%name), nhour, nmin, &
-                   call_number , total_time / REAL( call_number, DP )
+                   & i10," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
+                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSEIF (nmin > 0) THEN
              WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
-                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nmin, nsec, &
-                        call_number , total_time / REAL( call_number, DP )
+                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
+                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ELSE
              WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
-                   &    i8," calls,",f8.3," s avg)")') TRIM(obj%name), nsec, &
-                        call_number , total_time / REAL( call_number, DP )
+                   &   i10," calls,",f8.3,a)') TRIM(obj%name), nsec, &
+                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
@@ -414,6 +430,11 @@ MODULE timing_m
      REAL(DP) :: total_time
      character(lchlen)::ch
      !
+#ifndef _TIMING
+     call msg('rn'," ")
+     return
+#endif
+     !
      IF ( .NOT. internal_list%alloc ) CALL error('timing_upto_now:  Internal clock not allocated')
      CALL clock_update(internal_list%clock(1))
      !
@@ -436,6 +457,9 @@ MODULE timing_m
      TYPE(clock)                        :: tmp_clock
      INTEGER                            :: i
      !
+#ifndef _TIMING
+     return
+#endif
      IF ( .NOT. list%alloc ) CALL error('timing_overview:  list not allocated')
      !
      call msg('r','Routines: '//TRIM(list%name)//' (Only MASTER cpu here)')

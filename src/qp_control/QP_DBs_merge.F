@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP
  use QP_m,           ONLY:QP_t,QP_copy
  use com,            ONLY:msg
  use stderr,         ONLY:intc
@@ -42,7 +42,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
  ! Work Space
  !
- integer      :: i_db,i_db_p,GROUND(n_dbs)
+ integer      :: i_db,i_db_p,GROUND(n_dbs),i_d
  logical      :: MERGED(n_dbs),SAME_states,SAME_desc,just_COUNT,CONDITION
  character(4) :: WHAT
  !
@@ -71,7 +71,15 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      if (plan_EWZG(i_db,2)) WHAT=trim(WHAT)//"W"
      if (plan_EWZG(i_db,3)) WHAT=trim(WHAT)//"Z"
      if (plan_EWZG(i_db,4)) WHAT=trim(WHAT)//"G"
+     !
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
+     !
+     qp( n_GROUNDS )%n_descs=qp2merge(i_db)%n_descs+1
+     qp( n_GROUNDS )%description( 1 )="--- DB#"//trim(intc(i_db))//" descriptions ---"
+     do i_d=1,qp2merge(i_db)%n_descs
+       qp( n_GROUNDS )%description( i_d+1 )= qp2merge(i_db)%description(i_d)
+     enddo
+     !
    endif
    !
    do i_db_p=i_db+1,n_dbs
@@ -109,6 +117,12 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
        MERGED(i_db_p)=.TRUE.
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
+         !
+         if (.not.SAME_desc) then
+           qp( GROUND(i_db_p) )%n_descs=qp( GROUND(i_db_p) )%n_descs+1
+           qp( GROUND(i_db_p) )%description( qp( GROUND(i_db_p) )%n_descs )="--- DB#"//trim(intc(i_db_p))//" descriptions ---"
+         endif
+         !
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
 &                           SAME_states, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
        endif

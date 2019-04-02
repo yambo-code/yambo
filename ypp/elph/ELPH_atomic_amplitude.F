@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,14 +59,14 @@ subroutine ELPH_atomic_amplitude(q)
  !---------------------------------------------------------------------------
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=io_ELPH(ID,'no_gkkp')
+ io_err=io_ELPH(ID,'no_matrix_elements')
  !
  call msg('s',':: Checking database ...')
  if (io_err<0) then
-   call msg('l','not found')
+   call msg('s','not found')
    return
  endif
- call msg('l','sane')
+ call msg('s','sane')
  !
  nq_to_sum=elph_nDBs
  if (elph_use_q_grid) nq_to_sum=q%nibz
@@ -94,7 +94,7 @@ subroutine ELPH_atomic_amplitude(q)
    ! I/O
    !
    call io_control(ACTION=RD_CL_IF_END,SEC=(/iq+1/),ID=ID)
-   io_err=io_ELPH(ID,'no_gkkp')  
+   io_err=io_ELPH(ID,'no_matrix_elements')  
    !
    if (.not.allocated(pol_vector)) then
      call warning('Polarization vectors not found!')

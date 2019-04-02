@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -32,9 +32,6 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  complex(SP), intent(in)  :: dG_in(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  integer,     intent(in)  :: ik
  real(SP),    intent(in)  :: deltaT
- !
- real(SP) :: GAMMA_e,GAMMA_h,dGAMMA_e,dGAMMA_h,GAMMA_TOT,f_inf,f0
- integer  :: ib1,ib2
  !
  ! Note that dG_in is ONLY the coherent part of the equation. It must be added
  ! to dG_out if we are not using the EXP integrator. This is done here or in RT_apply_RWA

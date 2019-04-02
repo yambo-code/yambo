@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
+subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! This routine calculates 
  ! 
@@ -38,12 +38,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_index,PAR_nQP,&
-&                        PAR_nG_bands,PAR_nQ_bz,myid
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
+&                        PAR_nG_bands,PAR_nQ_bz
+ use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
+&                        PARALLEL_WF_distribute,QP_state_extract_print
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
+ use DIPOLES,       ONLY:DIPOLE_t
  use IO_m,          ONLY:io_control,REP,VERIFY,DUMP,NONE,RD,RD_CL,OP_RD,&
-&                        OP_WR_CL,OP_APP_WR_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
+&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD_CL,io_RESPONSE,io_SCREEN
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
@@ -54,9 +56,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V
  use wrapper_omp,   ONLY:Vstar_dot_V_omp,V_dot_V_omp
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
  !
 #include<memory.h>
  type(levels) ::en,Xen
@@ -64,6 +64,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  type(X_t)    ::X
  type(QP_t)   ::qp
  type(w_samp) ::Xw
+ type(DIPOLE_t)       :: Dip
  integer      ::GW_iter
  !
  ! WorkSpace
@@ -71,7 +72,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  type(elemental_collision) ::scattering_main,scattering_prime
  type(w_samp)     ::Sc_W(qp%n_states),X_life_W(q%nibz)
  integer          ::i1,i2,i3,i4,i_or,iqbz,iqibz,ib,i_err,i_q_to_start,iqs,&
-&                   iv4(4),io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
+&                   io_err,X_id,WID,timing_steps,i_q_mem,X_range(2),i_qp,i_qp_mem,i_q_W_mem,i_b_mem
  complex(SP)      :: lrhotw(X%ng),X_mat_ws(X%ng,X%ng),W_dummy
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
@@ -137,13 +138,8 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     :',QP_n_G_bands)
  call msg('r', '[GW] G damping   [ev]:',QP_G_damp*HA2EV)
- call msg('r','')
- iv4=(/1,1,0,0/)
- do while(QP_state_extract(iv4)>0)
-   write (ch,'(4(a,i3.3))') 'QP @ K ',iv4(1),' - ',iv4(2),' : b ',iv4(3),' - ',iv4(4)
-   call msg('r',trim(ch))
- enddo
- call msg('r','')
+ !
+ call QP_state_extract_print( )
  !
  if (.not.l_life) then
    !
@@ -203,15 +199,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  ! Actual Calculation Body
  !=========================
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='start')
-#endif
  !
  ! Lifetimes Transitions 
  !=======================
  if (l_life) then
    !
-   call section('=','Lifetimes Transitions Selector')
+   call section('+','Lifetimes Transitions Selector')
    !
    QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
    YAMBO_ALLOC(life_W_table,(q%nibz,QP_n_W_freqs))
@@ -231,7 +225,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
    !
    do iqibz=1,q%nibz
      X%iq=iqibz
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),iqibz>1)
+     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
    enddo
    call PP_redux_wait()
    !
@@ -255,7 +249,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  !
  ! Redefine i_q_to_start to be CPU-dependent
  !
- do iqbz=1,q%nbz 
+ do iqbz=1,q%nbz
    if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
      i_q_to_start=iqbz
      exit
@@ -455,21 +449,18 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
          !
 #if defined _OPENMP
          !
-!$omp parallel do default(shared), private(i2,i3,i4)
-         !
          do i2=1,QP_n_W_freqs
            W_dummy=cZERO
+!$omp parallel do default(shared), private(i3,i4), reduction(+:W_dummy), collapse(2)
            do i3=1,X%ng
              do i4=1,X%ng
                W_dummy=W_dummy+scattering_main%rhotw(i3)*X_mat(i3,i4,i2+X_range(1)-1)*conjg(scattering_prime%rhotw(i4))
              enddo
            enddo
+!$omp end parallel do
            QP_W(i_qp_mem,i_q_W_mem,i_b_mem,i2)=-4._SP/spin_occ*W_dummy
          enddo
-         !
-!$omp end parallel do
 #else
-         !
          do i2=1,QP_n_W_freqs
            !
            do i3=1,X%ng
@@ -507,7 +498,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
        if (iqbz==1) then
          call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=WID)
        else
-         call io_control(ACTION=OP_APP_WR_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
+         call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2+iqbz/),ID=WID)
        endif
        io_err=io_QP_and_GF('W',qp,WID)
        !
@@ -550,8 +541,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,GW_iter)
  call elemental_collision_free(scattering_prime)
  call PP_redux_wait()
  !
-#if defined _TIMING
  call timing('GW(real-axis)',OPR='stop')
-#endif
  !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
+subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  use pars,            ONLY:SP,pi,cZERO,cI
  use units,           ONLY:AUT2FS,HA2EV,SPEED_OF_LIGHT
@@ -29,12 +29,12 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
- use X_m,             ONLY:X_t,DIP_projected
+ use DIPOLES,         ONLY:DIP_projected,DIPOLE_t
 #if defined _KERR
  use drivers,         ONLY:l_kerr
  use KERR,            ONLY:DIP_projected_r90
 #endif
- use RT_control,      ONLY:RT_output,RT_apply,JPC_RT_IO_t
+ use RT_control,      ONLY:RT_output,RT_apply,OBS_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
  use X_m,             ONLY:Epsilon_ii
@@ -47,7 +47,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
 #include<memory.h>
  !
- type(X_t)         :: Xbsk
  type(levels)      :: Xen
  type(bz_samp)     :: Xk,Xq
  integer           :: BS_H_dim
@@ -56,9 +55,10 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  ! Work space
  !
  type(w_samp)      :: W_bss
+ type(DIPOLE_t)    :: Dip
  !
- integer              :: n_T_steps,i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp
- real(SP)             :: Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp,x_tmp
+ integer              :: i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp,io_err
+ real(SP)             :: Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
  complex(SP)          :: IP_E,IP_R,dipole,BS_R1(BS_H_dim),BS_R_var
  logical              :: l_TR_transm,l_TR_reflec,l_include_IP
  !
@@ -72,31 +72,24 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
- call RT_apply(Xbsk%ib,Xen,Xk,keep_RT_carriers=.TRUE.)
+ call RT_apply(Dip%ib,Xen,Xk,keep_RT_carriers=.TRUE.)
  !
  ! Setup of Time-range & Report
  !
- call RT_time_configuration_setup("CARRIERS",JPC_RT_IO_t)
- !
- ! I need to compute the dipoles, however they rely on the parallel structure
- ! I would need a structure defined for ypp 
+ call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
  !
  call parser('Transmission',l_TR_transm)
  call parser('Reflectivity',l_TR_reflec)
  call parser('IncludeIP'   ,l_include_IP)
  !
- Xbsk%ib=BS_bands
- YAMBO_ALLOC(q_norm,(1))
- YAMBO_ALLOC(bare_qpg,(1,1))
+ Dip%ib=BS_bands
  !
  call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(Xen,Xk,Xq,"Response_G_space_Zero_Momentum",X=Xbsk)
+ call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
  !
- io_DIP=.FALSE.
- call DIPOLE_driver(Xen,Xk,Xbsk,Xbsk%q0)
- !
- YAMBO_FREE(q_norm)
- YAMBO_FREE(bare_qpg)
+ io_DIP=.TRUE.
+ call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,'YPP')
+ call DIPOLE_expand_and_project(Xk,Dip)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
  if(l_TR_reflec) then
@@ -117,7 +110,6 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  ! Output
  !
- call RT_output(what="initialize")
  call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
  if (l_TR_reflec) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
  if (l_TR_transm) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
@@ -128,9 +120,9 @@ subroutine RT_transient_absorption(Xbsk,Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  do i_T=1,RT_conf%T_n_steps
    !
-   call RT_apply(Xbsk%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(Dip%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
-   call RT_interpolation(Xbsk%ib,Xen,Xk," R ",RT_time(i_T),.true.,.false.,.false.)
+   call RT_interpolation(Dip%ib,Xen,Xk," R ",RT_time(i_T),.true.,.false.,.false.)
    !
    Epsilon_ii=cZERO
    !

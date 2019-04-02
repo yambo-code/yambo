@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -29,7 +29,8 @@ integer function variables_RT(ID,local_description,what)
  use stderr,         ONLY:intc
  use hamiltonian,    ONLY:H_ref_bands
  use RT_control,     ONLY:RT_description,n_RT_descriptions,TIME_STEP_CONF_description,&
-&                         n_TIME_STEP_CONF_descriptions,JPC_RT_IO_t,GF_RT_IO_t,RT_IO_t
+&                         n_TIME_STEP_CONF_descriptions,OBS_RT_IO_t,GF_RT_IO_t,RT_IO_t
+ use IO_m,           ONLY:variable_exist,write_is_on
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step,RT_dyn_step, &
 &                         Integrator_name,RT_bands,l_RT_lifetimes_extrapolation, &
 &                         RAD_LifeTime,Phase_LifeTime,NE_initial_time_step_update,NE_time_step_update_jump,&
@@ -37,7 +38,7 @@ integer function variables_RT(ID,local_description,what)
 &                         l_RT_CCA_Kernel,Gr_description,l_RT_impose_N_dN,NE_time_step_update_jump_SAVE, &
 &                         l_RT_uses_E_DbGd,N_Gr_descs,RT_life_extrap_times_SAVE,&
 &                         DbGd_EE_percent,l_RT_impose_E,l_Update_Time_Step,RT_DbGd_nk,&
-&                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step
+&                         NE_step_update_treshold,RT_life_extrap_times,RT_MAX_step,RT_potential
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -55,14 +56,14 @@ integer function variables_RT(ID,local_description,what)
  character(*)       ::what
  !
  integer               :: i1,i_desc
- logical               :: l_JPSM,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_OBS,l_G,l_carriers,l_NE_with_fields_disk,l_RT_diamagnetic,l_disk_flag
  real(SP)              :: RT_life_extrap_decay_time
  character(lchlen)     :: ch
  !
  l_RT_diamagnetic          = .false.
  RT_life_extrap_decay_time = 0._SP
  !
- l_JPSM        = what=="JPSM"
+ l_OBS         = what=="OBSERVABLES"
  l_G           = what=="G"
  l_carriers    = what=="carriers"
  !
@@ -82,6 +83,15 @@ integer function variables_RT(ID,local_description,what)
 &     VAR=' [RT] K-points                   :',CHECK=.true.,OP=(/"==","=="/),&
 &     DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ !
+ if (variable_exist(ID,"POTENTIAL").or.write_is_on(ID)) then
+   call io_elemental(ID,VAR="POTENTIAL",CH0="",VAR_SZ=1,MENU=0)
+   i_desc=i_desc+1
+   call io_elemental(ID,CH0=RT_potential,&
+&       VAR=' [RT] Potential                  :',WARN=.true.,OP=(/"=="/),&
+&       DESCRIPTION=local_description(i_desc))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -134,9 +144,9 @@ integer function variables_RT(ID,local_description,what)
  !
  ! GPL_EXCLUDE_END
  !
- if(.not.any((/l_JPSM,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
+ if(.not.any((/l_OBS,l_G,l_carriers/))) call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  !
- if(any((/l_JPSM,l_G,l_carriers/))) then
+ if(any((/l_OBS,l_G,l_carriers/))) then
    !
    ! RT_DYNAMICS
    !
@@ -171,8 +181,8 @@ integer function variables_RT(ID,local_description,what)
    !
    ! GPL_EXCLUDE_END
    !
-   if (l_JPSM.or.l_carriers) call LOCAL_IO_variables(JPC_RT_IO_t)
-   if (l_G)                  call LOCAL_IO_variables(GF_RT_IO_t)
+   if (l_OBS.or.l_carriers) call LOCAL_IO_variables(OBS_RT_IO_t)
+   if (l_G)                 call LOCAL_IO_variables(GF_RT_IO_t)
    !
    i_desc=i_desc+1
    call io_elemental(ID,&
@@ -197,21 +207,23 @@ integer function variables_RT(ID,local_description,what)
    !   
    call io_elemental(ID,VAR="DELTA_T_UPDATE",VAR_SZ=6,MENU=0) 
    i_desc=i_desc+1
-   call io_elemental(ID,L0=l_Update_Time_Step,VAR=' [dT] Update                     :',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_Update_Time_Step,DB_L0=l_disk_flag,VAR=' [dT] Time-Dependent Time step   :',CHECK=.true.,OP=(/"=="/),&
 &    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
-   i_desc=i_desc+1
-   call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
-&    DESCRIPTION=local_description(i_desc))
-   if (ver_is_gt_or_eq(ID,revision=14112)) then
+   if (l_disk_flag) then
      i_desc=i_desc+1
-     call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+     call io_elemental(ID,R0=NE_initial_time_step_update,VAR=' [dT] Starting Time          [fs]:',CHECK=.true.,OP=(/"=="/),&
 &      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_time_step_update_jump_SAVE, VAR=' [dT] Update interval        [fs]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     i_desc=i_desc+1
+     call io_elemental(ID,R0=NE_step_update_treshold,    VAR=' [dT] Update interval tresh [o/o]:',CHECK=.true.,OP=(/"=="/),&
+&      DESCRIPTION=local_description(i_desc))
+     if (ver_is_gt_or_eq(ID,revision=14112)) then
+       i_desc=i_desc+1
+       call io_elemental(ID,R0=RT_MAX_step,              VAR=' [dT] Max step in dynamics   [fs]:',CHECK=.true.,OP=(/"=="/),&
+&        DESCRIPTION=local_description(i_desc),UNIT=AUT2FS)
+     endif
    endif
    ! ... for RESTART purposes...
    call io_elemental(ID,R0=NE_time_step_update_jump, DB_R0=NE_time_step_update_jump,CHECK=.FALSE.)

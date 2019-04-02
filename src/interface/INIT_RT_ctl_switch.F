@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -32,5 +32,6 @@ subroutine INIT_RT_ctl_switch(what)
  ! Work Space
  !
  call initactivate(1,what//'fnRTdb')
+ call initactivate(1,what//'fnRT_N')
  !
 end subroutine

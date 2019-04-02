@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,9 +34,7 @@ subroutine rim()
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
 &                        RIM_id_epsm1_reference,RIM_anisotropy
-#if defined _TIMING
  use timing_m,      ONLY:timing
-#endif
 #include<memory.h>
  !
  ! Work Space
@@ -54,9 +52,7 @@ subroutine rim()
  integer            :: iseed(8)
  real(DP), external :: dlaran
  ! 
-#if defined _TIMING
  call timing('RIM',OPR='start')
-#endif
  !
  call PP_indexes_reset(px)
  !
@@ -173,8 +169,6 @@ subroutine rim()
  !
  call PP_indexes_reset(px)
  !
-#if defined _TIMING
  call timing('RIM',OPR='stop')
-#endif
  !
 end subroutine

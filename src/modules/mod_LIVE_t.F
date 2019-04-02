@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,12 +43,15 @@ module LIVE_t
  integer             :: nhash
  integer             :: time_steps
  integer             :: steps_done
+ integer             :: steps_done_in_the_memory
  integer             :: hashes_now
  integer             :: hashes_done
+ integer             :: memory_steps
  real(DP),allocatable:: cput_seg(:,:)
  real(DP),allocatable:: cput_sec(:,:)
  real(DP),allocatable:: cput_tot(:,:)
- real(DP)            :: cput_save
+ real(DP)            :: cput_last_report
+ real(DP)            :: cput_last_estimate
  character(schlen)   :: timing_name
  character(schlen)   :: USER_wall_time_string=" "
  integer             :: USER_wall_time(3)=0 ! Days, Hours, Minutes
@@ -112,18 +115,29 @@ module LIVE_t
      if (present(dt_out)) dt_out=dz(:6)
    end function
    !
-   subroutine live_timing(message,steps)
+   subroutine live_timing(message,steps,DEPTH)
      character(*),optional :: message
      integer     ,optional :: steps
+     real(SP)    ,optional :: DEPTH
      !
      if (.not.master_thread) return
      if (.not.live_timing_is_on) return
      !
-     if (.not.present(steps)) call live_timing_close( )
+     if (.not.present(steps)) then
+       call live_timing_close( )
+       return
+     endif
      !
-     if (present(steps)) then
-       if (present(message)    )  call live_timing_activate(message,steps)
-       if (.not.present(message)) call live_timing_add(steps)
+     if (.not.present(message)) then
+       call live_timing_add(steps)
+       return
+     endif
+     !
+     call live_timing_activate(message,steps)
+     memory_steps=0
+     !
+     if (present(DEPTH)) then
+       memory_steps=int(steps*DEPTH)
      endif
      !
    end subroutine
@@ -307,7 +321,9 @@ module LIVE_t
      hashes_now=0
      time_steps=steps
      steps_done=0
-     cput_save=0.
+     steps_done_in_the_memory=0
+     cput_last_report=0.
+     cput_last_estimate=0.
      call ct(INIT_SEG=.true.)
      if (.not.log_as_a_file) call LIVE_message(trim(name),"n","","%s")
      call live_timing_update("--","--")
@@ -340,24 +356,47 @@ module LIVE_t
      call ct(SEG=.true.)
      if (steps_done+steps<=time_steps) then
        steps_done=steps_done+steps
+       steps_done_in_the_memory=steps_done_in_the_memory+steps
      else
        steps_done=time_steps
      endif
-     hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
+     !
+     if (time_steps > 0 ) then
+       hashes_now=int(real(steps_done)/real(time_steps)*real(nhash))
+     else
+       hashes_now=0
+     endif
+     !
      if (hashes_now==hashes_done) return
      !
      etch=time_string(cput_seg(myid+1,1)) 
      if (len_trim(etch)==0) etch='--'
-     time_report=cput_seg(myid+1,1)-cput_save>=rts
-     if (.not.time_report) time_report=steps_done==time_steps
-     if (time_report) cput_save=cput_seg(myid+1,1)
      !
-     if (time_report) then
+     time_report=cput_seg(myid+1,1)-cput_last_report>=rts.or.steps_done==time_steps
+     !
+     if (.not.time_report) return
+     !
+     ! report...
+     !
+     cput_last_report=cput_seg(myid+1,1)
+     !
+     if (memory_steps>0) then
+       if (steps_done_in_the_memory>=memory_steps) then
+         lts=(cput_seg(myid+1,1)-cput_last_estimate)*real(time_steps-steps_done,DP)/real(steps_done_in_the_memory,DP)
+         lts=lts+cput_seg(myid+1,1)
+         steps_done_in_the_memory=0
+         cput_last_estimate=cput_seg(myid+1,1)
+       else
+         lts=cput_seg(myid+1,1)*real(time_steps,DP)/real(steps_done,DP)
+       endif
+     else
        lts=cput_seg(myid+1,1)*real(time_steps,DP)/real(steps_done,DP)
-       xtch=time_string(lts)
-       if (len_trim(xtch)==0) xtch='--'
-       call live_timing_update(trim(xtch),trim(etch))
      endif
+     !
+     xtch=time_string(lts)
+     if (len_trim(xtch)==0) xtch='--'
+     !
+     call live_timing_update(trim(xtch),trim(etch))
      !
    end subroutine
    !

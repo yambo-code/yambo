@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -134,7 +134,7 @@ subroutine fix_WFs_Gshells(k,k_save,kpoints_map,old_nsym,action_kind)
        call G_rot_grid(is,'extend_grid')
      enddo
      !
-     call msg('l','done')
+     call msg('s','done')
      !
    endif
    !

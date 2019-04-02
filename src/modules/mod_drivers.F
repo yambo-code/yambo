@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,10 +41,12 @@ module drivers
  logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
+ logical :: l_sc_electric        =.FALSE.
  logical :: l_rt_carriers_in_use =.FALSE.
  logical :: l_sc_magnetic        =.FALSE.
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
+ logical :: l_nl_optics          =.FALSE.  
  !
  ! The self-energy correlation "kind"
  !
@@ -76,8 +78,8 @@ module drivers
  logical :: l_chi                =.FALSE.
  logical :: l_em1d               =.FALSE.
  logical :: l_em1s               =.FALSE.
+ logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
- logical :: l_bsk                =.FALSE.
  logical :: l_bss                =.FALSE.
  logical :: l_kerr               =.FALSE.
  logical :: l_anomalous_Hall     =.FALSE.
@@ -90,6 +92,7 @@ module drivers
  logical :: l_alda_fxc           =.FALSE.
  logical :: l_bs_fxc             =.FALSE.
  logical :: l_lrc_fxc            =.FALSE.
+ logical :: l_pf_fxc             =.FALSE.
  logical :: l_td_hf              =.FALSE.
  logical :: l_W_eh               =.FALSE.
  logical :: l_W_eh_diag          =.FALSE.

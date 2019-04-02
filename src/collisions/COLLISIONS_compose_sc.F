@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -30,11 +30,8 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_states,QP_Sc,QP_Vnl_xc
  use collision_ext,    ONLY:COH_COLL_element,HXC_COLL_element,COLL_bands,HXC_collisions,&
 &                           COH_collisions,COLLISIONS_have_HARTREE
- use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_QP_cpu
- !
-#if defined _TIMING
- use timing_m,       ONLY:timing
-#endif
+ use parallel_m,       ONLY:PAR_IND_QP,PP_redux_wait,HEAD_b_cpu,PAR_IND_G_k
+ use timing_m,         ONLY:timing
  implicit none
  !
  complex(SP), intent(in)   :: G_sex(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2),QP_nk)
@@ -43,18 +40,19 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  ! Work Space
  !
  integer           :: i_qp,ib,ibp,i_kmq,ic1,ic2,i_coll_mem
+ logical           :: l_sex
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and.&
 &   .not.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) return
  !
-#if defined _TIMING
  call timing('COLLISIONS_compose_sc',OPR='start')
-#endif
+ !
  ! In _SC QP_Sc is calculated on-the-fly when the collision are not used.
  ! Here all contributions are packed in QP_Vnl_xc
  !
  if (.not.allocated(QP_Vnl_xc))  allocate(QP_Vnl_xc(QP_n_states))
  !
+ l_sex    =l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)
  QP_Vnl_xc=cZERO
  !
  if (allocated(QP_Sc)) then 
@@ -63,15 +61,26 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  !
  do i_qp=1,QP_n_states
    !
-   if (.not.(PAR_IND_QP%element_1D(i_qp).and.HEAD_QP_cpu)) cycle
+   if (.not. PAR_IND_QP%element_1D(i_qp)) cycle
+   if (.not. HEAD_b_cpu) cycle
    !
-   if (l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) i_coll_mem=HXC_collisions%PAR_map(i_qp)
-   if (l_sc_coh)                                                            i_coll_mem=COH_collisions%PAR_map(i_qp)
+   if (l_sex)    i_coll_mem=HXC_collisions%PAR_map(i_qp)
+   if (l_sc_coh) i_coll_mem=COH_collisions%PAR_map(i_qp)
    !
    ic1=1
    ic2=1
    !
    do i_kmq=1,QP_nk
+     !
+     if (.not.PAR_IND_G_k%element_1D(i_kmq)) then 
+       if (l_sc_coh) then
+         ic1=ic1+count(COH_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)/=0)
+       endif
+       if (l_sex) then
+         ic2=ic2+count(HXC_COLL_element(i_coll_mem)%table(COLL_bands(1):QP_nb,COLL_bands(1):QP_nb,i_kmq)/=0)
+       endif
+       cycle
+     endif
      !
      do ibp=COLL_bands(1),QP_nb
        do ib=COLL_bands(1),QP_nb
@@ -87,7 +96,7 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
          !
          ! SEX/HF/HARTREE parts
          !
-         if (l_sc_sex.or.l_sc_fock.or.(l_sc_hartree.and.COLLISIONS_have_HARTREE)) then
+         if (l_sex) then
            if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
              QP_Vnl_xc(i_qp)=QP_Vnl_xc(i_qp)-cI*HXC_COLL_element(i_coll_mem)%v_c(ic2)*G_sex(ib,ibp,i_kmq)
              ic2=ic2+1
@@ -102,8 +111,6 @@ subroutine COLLISIONS_compose_sc(G_sex,G_coh)
  !
  call PP_redux_wait(QP_Vnl_xc)
  !
-#if defined _TIMING
  call timing('COLLISIONS_compose_sc',OPR='stop')
-#endif
  !
 end subroutine COLLISIONS_compose_sc

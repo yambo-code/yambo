@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -29,9 +29,9 @@ subroutine QP_load_SC_xc()
  use QP_m,            ONLY:QP_table,QP_n_states,QP_vnl_xc
  use IO_m,            ONLY:VERIFY,DUMP,NONE
  use R_lattice,       ONLY:nkibz
- use SC,              ONLY:SC_bands,load_SC_components,H_rotate,compatible_SC_DB,&
+ use SC,              ONLY:SC_bands,load_SC_components,compatible_SC_DB,&
 &                          found_SC_DB
- use hamiltonian,     ONLY:H_nl_sc,SC_R
+ use hamiltonian,     ONLY:H_nl_sc,H_rotation
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
  !
@@ -54,8 +54,8 @@ subroutine QP_load_SC_xc()
      !
      if (.not.compatible_SC_DB.or..not.found_SC_DB) return
      !
-     call LINEAR_ALGEBRA_driver(INV,M=SC_R(:,:,i_k,i_sp_pol))
-     call H_rotate(SC_R(:,:,i_k,i_sp_pol),H_nl_sc,SC_bands(2),-1)
+     call LINEAR_ALGEBRA_driver(INV,M=H_rotation(:,:,i_k,i_sp_pol))
+     call OBS_rotate(H_rotation(:,:,i_k,i_sp_pol),H_nl_sc,SC_bands(2),-1)
      !
      do i_qp=1,QP_n_states
        if (.not.QP_table(i_qp,3) ==i_k)      cycle

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -60,21 +60,21 @@ if test "x$enable_etsf_io" = "xyes" ; then
     if test -d "$with_etsf_io_libdir" ; then AC_MSG_CHECKING([for ETSF_IO in $with_etsf_io_libdir]) ; fi
     #
     if test -d "$with_etsf_io_path" ; then
-        try_libdir=$with_etsf_io_path/lib
-        try_incdir=$with_etsf_io_path/include
+        try_etsf_libdir=$with_etsf_io_path/lib
+        try_etsf_incdir=$with_etsf_io_path/include
     fi
-    if test -d "$with_etsf_io_libdir"     ; then try_libdir=$with_etsf_io_libdir ; fi
-    if test -d "$with_etsf_io_includedir" ; then try_incdir=$with_etsf_io_includedir ; fi
+    if test -d "$with_etsf_io_libdir"     ; then try_etsf_libdir=$with_etsf_io_libdir ; fi
+    if test -d "$with_etsf_io_includedir" ; then try_etsf_incdir=$with_etsf_io_includedir ; fi
     #
-    if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
-    if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+    if test -z "$try_etsf_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+    if test -z "$try_etsf_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
     #
     #
-    if test -r $try_libdir/libetsf_io.a ; then
+    if test -r $try_etsf_libdir/libetsf_io.a ; then
       compile_e2y="yes"
       internal_etsf="no"
-      ETSF_LIBS="$try_libdir/libetsf_io.a"
-      ETSF_INCS="$IFLAG$try_incdir"
+      ETSF_LIBS="$try_etsf_libdir/libetsf_io.a"
+      ETSF_INCS="$IFLAG$try_etsf_incdir"
       #
       AC_MSG_RESULT([yes])
     else
@@ -98,7 +98,7 @@ if test "x$enable_etsf_io" = "xyes" ; then
     internal_etsf="yes"
     compile_e2y="yes"
     ETSF_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/include"
-    ETSF_LIBS="-L${extlibs_path}/${FCKIND}/${FC}/lib -letsf_io"
+    ETSF_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"
     if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libetsf_io.a"; then
       compile_etsf="no"
       AC_MSG_RESULT(found already compiled)

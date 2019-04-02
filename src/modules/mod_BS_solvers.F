@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,7 +30,8 @@ module BS_solvers
  !
  ! Epsilon factor
  !==================
- real(SP) :: Co_factor
+ real(SP)    :: Co_factor
+ complex(SP) :: diam_term_exact
  !
  ! Haydock
  !========== 
@@ -93,7 +94,8 @@ module BS_solvers
  ! Solvers (Haydock)
  !=========
  logical  :: Haydock_terminator
- real(SP) :: Haydock_treshold
+ integer  :: Haydock_iterIO
+ real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
 #if defined _SLEPC
  !
@@ -144,22 +146,28 @@ module BS_solvers
    integer function variables_BS(ID,local_description,X)
      use pars,       ONLY:lchlen
      use X_m,        ONLY:X_t
+     implicit none
      integer            ::ID
      character(lchlen)  ::local_description(100)
      type(X_t), optional::X
    end function
    !
-   integer function io_BSS_diago(iq,ID,BS_H_dim,BSS_n_eig,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
+   integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,BsRr,BsE_corr,bsR_kerr,bsR_pl)
      use pars,          ONLY:SP
-     integer             :: iq,ID,BS_H_dim,BSS_n_eig
-     complex(SP)         :: bsE(BS_H_dim),bsRl(BS_H_dim),bsRr(BS_H_dim)
-     real(SP),   pointer :: BsE_corr(:,:),bsR_pl(:,:)
-     complex(SP),pointer :: bsR_kerr(:)
+     use X_m,           ONLY:X_t
+     implicit none
+     type(X_t),intent(in)         :: X_static
+     integer                      :: iq,ID
+     complex(SP)        ,optional :: bsE(*),bsRl(*),bsRr(*)
+     real(SP),   pointer,optional :: BsE_corr(:,:),bsR_pl(:,:)
+     complex(SP),pointer,optional :: bsR_kerr(:)
    end function
    !
-   integer function io_BSS_Haydock(ID,it,BS_H_dim,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
+   integer function io_BSS_Haydock(ID,it,reached_treshold,Af,Bf,Vnm1,Vn,Vnp1,Cf,Cf_kerr)
      use pars,          ONLY:SP
-     integer             :: ID,it,BS_H_dim
+     use BS,            ONLY:BS_H_dim
+     implicit none
+     integer             :: ID,it
      real(SP)            :: reached_treshold,Bf(it+1),Af(it)
      complex(SP)         :: Vnm1(BS_H_dim),Vn(BS_H_dim)
      complex(SP),optional:: Cf(it+1),Vnp1(BS_H_dim)

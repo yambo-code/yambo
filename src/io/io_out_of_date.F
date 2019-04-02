@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ integer function io_out_of_date(ID)
  !
  REF_rev=5380
  if (index(io_file(ID),'RT_carriers')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
- if (index(io_file(ID),'RT_JPSM')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
+ if (index(io_file(ID),'RT_OBSERVERVABLES')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  if (index(io_file(ID),'RT_REF')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  if (index(io_file(ID),'RT_G')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  !

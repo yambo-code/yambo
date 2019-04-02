@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,11 +26,9 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX
+ use parallel_m,     ONLY:PAR_COM_PLASMA_INDEX,PAR_COM_Q_INDEX,PP_redux_wait
  use real_time,      ONLY:REF_lifetime,l_initial_equilibrium,RT_nk,RT_bands
-#if defined _TIMING
  use timing_m,       ONLY:timing
-#endif
  !
  implicit none
  !
@@ -43,26 +41,23 @@ subroutine RT_Lifetimes_merge(E,k,LIFE,SAVE_index)
  !
  integer          :: ik
  !
-#if defined _TIMING
-   call timing('RT life merge',OPR='start')
-#endif
- !
- !===========
- ! ALL 2 ALL
+ call timing('RT life merge',OPR='start')
  !
  do ik=1,RT_nk
    !
    if (SAVE_index>2) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_PLASMA_INDEX%n_CPU)
    if (SAVE_index>6) LIFE(:,ik)=LIFE(:,ik)/real(PAR_COM_Q_INDEX%n_CPU)
    !
-   call PP_redux_wait(LIFE(:,ik))
-   !
  enddo
  !
- if (l_initial_equilibrium) REF_lifetime(:,:,SAVE_index)=LIFE
+ call PP_redux_wait(LIFE)
  !
-#if defined _TIMING
-   call timing('RT life merge',OPR='stop')
-#endif
+ do ik=1,RT_nk
+   !
+   if (l_initial_equilibrium) REF_lifetime(:,ik,SAVE_index)=LIFE(:,ik)
+   !
+ enddo 
+ !
+ call timing('RT life merge',OPR='stop')
  !
 end subroutine RT_Lifetimes_merge

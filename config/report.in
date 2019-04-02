@@ -29,21 +29,22 @@
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
-# > I/O
+# > I/O: @NETCDF_info@ @HDF5_info@
 #
 # [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
 # [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
 #                 @ETSF_INCS@
-# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @NETCDF_info@
+# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@
 #                 @NETCDFF_INCS@ @NETCDF_INCS@
-# [@HDF5_str@] HDF5    : @HDF5_LIBS@ @HDF5_info@
+# [@HDF5_str@] HDF5    : @HDF5_LIBS@
 #                 @HDF5_INCS@
-# > MATH
 #
-# [@FFT_str@] FFT       : @FFT_LIBS@ @FFT_info@
+# > MATH: @FFT_info@ @BLAS_info@
+#
+# [@FFT_str@] FFT       : @FFT_LIBS@
 #                   @FFT_INCS@
-# [@BLAS_str@] BLAS      : @BLAS_LIBS@ @BLAS_info@
+# [@BLAS_str@] BLAS      : @BLAS_LIBS@
 # [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_str@] BLACS     : @BLACS_LIBS@
@@ -51,6 +52,7 @@
 #                   @PETSC_INCS@ 
 # [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
 #                   @SLEPC_INCS@ 
+#
 # > OTHERs
 #
 # [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
@@ -60,11 +62,11 @@
 #
 # - COMPILERS -
 #
-# FC kind = @FCKIND@ 
+# FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @PW_CPP@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@
 # [ FCUF] @FCUFLAGS@

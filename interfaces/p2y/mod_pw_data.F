@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH
@@ -27,7 +27,7 @@ module pw_data
   public
   
 ! Cell
-  real(DP)                  :: alat_, a1_(3), a2_(3), a3_(3)
+  real(DP)                   :: alat_, a1_(3), a2_(3), a3_(3)
 
 ! Atoms
   integer                    :: nat_, nsp_
@@ -43,10 +43,14 @@ module pw_data
   integer                    :: t_rev_(48)
   logical                    :: invsym_
   logical                    :: trevsym_
+  logical                    :: nosym_,noinv_
 
 ! Planewaves
-  integer                    :: ngm_, npwx_
+  integer                    :: npwx_
+  integer                    :: nr1_,nr2_,nr3_,ngm_
+  integer                    :: nr1s_,nr2s_,nr3s_,ngms_
   real(DP)                   :: ecutwfc_
+  real(DP)                   :: ecutrho_
   integer, allocatable       :: igv_(:,:)
   logical                    :: gamma_only_
 
@@ -88,5 +92,6 @@ module pw_data
 ! Pseudopotentials
   character(256),allocatable :: psfile(:)
   integer, allocatable       :: nmesh(:), nbeta(:)
+  integer, allocatable       :: nqf(:), nqlc(:), lmax(:)
 
 end module pw_data

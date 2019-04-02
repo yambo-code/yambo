@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -21,67 +21,109 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_bands(Xk,Xen,BANDS_range)
+subroutine electrons_bands(Xk,Xen)
  !
- use pars,           ONLY:SP,schlen
+ ! Levels produced by this routine:
+ !
+ ! CIRCUIT_E    = Eo (+delta E if QP) interpolated @ CIRCUIT_k (no GS SAVE)
+ !              = Eo                  interpolated @ CIRCUIT_k (if GS SAVE)
+ ! CIRCUIT_dE   = delta E (if QP) interpolated @ CIRCUIT_k (eventually read from GS SAVE)
+ ! GRID_E       = interpolated @ GRID_k (if INTERP_grid>0)
+ ! CIRCUIT_E_db = eventually read from GS SAVE
+ !
+ use pars,           ONLY:SP,schlen,lchlen,rZERO
  use units,          ONLY:HA2EV
- use YPP,            ONLY:BANDS_steps,coo_in,coo_out,k_transform,interp_grid
- use electrons,      ONLY:levels,n_sp_pol,n_spinor
+ use YPP,            ONLY:BANDS_steps,coo_out,K_transform,INTERP_grid,&
+&                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
+&                         PtsPath,BANDS_path,n_path_pts,CIRCUIT_made_of_SPECIAL_k,&
+&                         BANDS_E_and_k_db,CIRCUIT_k_label
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset
  use R_lattice,      ONLY:bz_samp
- use com,            ONLY:msg,of_open_close
+ use D_lattice,      ONLY:lattice
+ use com,            ONLY:msg,of_open_close,file_exists,msg_deliver
  use vec_operate,    ONLY:v_norm,iku_v_norm
- use stderr,         ONLY:intc
- use interpolate,    ONLY:reset_interpolation,electrons_bands_interpolate
+ use stderr,         ONLY:intc,set_real_printed_length
+ use parser_m,       ONLY:parser
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_obj,INTERPOLATION_driver
  use QP_CTL_m,       ONLY:QP_apply
+ use interfaces,     ONLY:OCCUPATIONS_Fermi
  !
 #include<memory.h>
  !
  type(bz_samp), intent(inout) :: Xk
  type(levels),  intent(in)    :: Xen
- integer,       intent(inout) :: BANDS_range(2)
  !
- type(bz_samp)         :: USER_K,CIRCUIT_K,INTERP_K
- real(SP), pointer     :: bands_interpolated(:,:,:)
- real(SP), allocatable :: spin_interpolated(:,:,:),magn_interpolated(:,:,:)
+ ! Work Space
  !
- integer               :: i1,is,ik,ikbz,ib,nbands,ID_interp
- real(SP)              :: tmp_k(3)
+ type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
+ integer               :: i1,is,ik,ikbz,ib,nbands,i_f,ID_spin,ID_magn
+ real(SP)              :: tmp_k(3),delta_Ef
  real(SP), allocatable :: values(:),spin_values(:,:),magn_values(:,:),circuit_versor(:,:)
  character(8)          :: spin_ch
- character(schlen)     :: file_name_bands(2,n_sp_pol),file_name_grid(n_sp_pol),file_name_spin_magn(5)
+ character(schlen)     :: file_name_bands(3,n_sp_pol),file_name_spin_magn(5)
+ character(lchlen)     :: of_string
  character(schlen), allocatable :: headings(:)
+ logical               :: BANDS_internal,BANDS_interpolate,GRID_interpolate
  !
  call section('*','Interpolation tool')
  !=====================================
+ call parser('BANDS_built_in',BANDS_internal)
+ !
+ if (.not.file_exists(trim(CIRCUIT_E_DB_path)//"/SAVE/ns.db1")) CIRCUIT_E_DB_path="none"
+ !
+ BANDS_E_and_k_db    = trim(CIRCUIT_E_DB_path)/="none"
+ BANDS_interpolate   = BANDS_steps>0.or.trim(CIRCUIT_E_DB_path)/="none"
+ if (BANDS_E_and_k_db) BANDS_internal=.FALSE.
+ GRID_interpolate    = all(INTERP_grid>0)
+ !
+ call section('+',"Loading special Points for the "//trim(lattice)//" lattice")
+ !============================================================================= 
+ if (BANDS_E_and_k_db) BANDS_path= " " 
+ !
+ PtsPath=BANDS_path
+ n_path_pts=BANDS_steps
+ !
+ call k_special(.FALSE.)
+ !
+ CIRCUIT_made_of_SPECIAL_k=CIRCUIT_k%nbz>0
+ CIRCUIT_k%nibz=CIRCUIT_k%nbz
  !
  ! Apply QP corrections
  !====================== 
- call QP_apply(BANDS_range,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(BANDS_bands,Xen,Xk,'G',msg_fmt='s')
  !
  ! IBZ => BZ: need to be done here as QP_apply cleans the %ptbz allocation
  !
  call k_ibz2bz(Xk,'iku',.TRUE.)
  !
- ! Perform the energies interpolation
- !====================================
- call electrons_bands_interpolate(Xen,Xk,ID_interp,USER_k,INTERP_k,CIRCUIT_k,BANDS_range,bands_interpolated)
- !
- ! Perform interpolation of spinorial factors and magnetization
- !==============================================================
- if(n_spinor>1 .and. BANDS_steps> 0) then
-   YAMBO_ALLOC(spin_interpolated,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,n_spinor))
-   YAMBO_ALLOC(magn_interpolated,(BANDS_range(1):BANDS_range(2),CIRCUIT_k%nibz,3))
-   call electrons_spin_and_magn_interpolate(Xk,CIRCUIT_k,BANDS_range,spin_interpolated,magn_interpolated)
+ if (BANDS_interpolate) then
+   !
+   ! Perform the energies interpolation
+   !====================================
+   if (BANDS_interpolate.and..not.GRID_interpolate) call section('=','Interpolation@work: Circuit')
+   if (BANDS_interpolate.and.GRID_interpolate     ) call section('=','Interpolation@work: Circuit and Grid')
+   !
+   call electrons_bands_interpolate(Xen,Xk,BANDS_bands,CIRCUIT_E,GRID_E=GRID_E,CIRCUIT_dE=CIRCUIT_dE)
+   !
+   ! Perform interpolation of spinorial factors and magnetization
+   !==============================================================
+   if(n_spinor>1 .and. BANDS_steps> 0) then
+     call section('=','Interpolation@work: Spin and Magnetization')
+     call electrons_spin_and_magn_interpolate("S M",Xk,CIRCUIT_k,BANDS_bands,ID_spin,ID_magn)
+   endif
+   !
+   call set_real_printed_length(f_length=10,g_length=10)
+   !
  endif
  !
- call reset_interpolation(ID_interp)
+ ! HEADINGS...
  !
- ! Output
- !========
- ! 1: bands on circuit    if (BANDS_steps>0) ; 
- ! 2: dos on regular grid if (interp_grid>0) ; 
+ ! - bands on circuit    if (BANDS_steps>0)  
+ ! - dos on regular grid if (interp_grid>0)  
  !
- nbands=BANDS_range(2)-BANDS_range(1)+1
+ !==========================================
+ !
+ nbands=BANDS_bands(2)-BANDS_bands(1)+1
  !
  YAMBO_ALLOC(values,(nbands+4))
  allocate(headings(nbands+4))
@@ -93,37 +135,36 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    magn_values=0._SP
  endif
  !
- headings(1)=" |k| "
- do ib=BANDS_range(1),BANDS_range(2)
-   headings(1+ib-BANDS_range(1)+1)=' b'//intc(ib)
+ headings(1)=" |k| (a.u.) "
+ do ib=BANDS_bands(1),BANDS_bands(2)
+   headings(1+ib-BANDS_bands(1)+1)=' b'//intc(ib)
  enddo
- headings(nbands+2:nbands+4)=(/" kx  "," ky  "," kz  "/)
+ headings(nbands+2:nbands+4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
  !
  file_name_bands= " "
- file_name_grid = " "
  spin_ch        = " "
  !
  do is=1,n_sp_pol
    if (n_sp_pol>1.and.is==1) spin_ch="_spin-up"
    if (n_sp_pol>1.and.is==2) spin_ch="_spin-dn"
-   file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
-   if(BANDS_steps> 0)     file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
-   if(all(interp_grid>0)) file_name_grid(is)   ="grid"//trim(spin_ch)
-   call of_open_close(trim(file_name_grid(is)),'ot')
-   call of_open_close(trim(file_name_bands(1,is)),'ot')
-   call of_open_close(trim(file_name_bands(2,is)),'ot')
+   !
+   if (BANDS_interpolate) file_name_bands(1,is)="bands_interpolated"//trim(spin_ch)
+   if (BANDS_internal   ) file_name_bands(2,is)="bands_built_in"//trim(spin_ch)
+   if (BANDS_E_and_k_db ) file_name_bands(3,is)="bands_from_DB"//trim(spin_ch)
+   !
  enddo
  !
  do is=1,n_sp_pol
-   call msg('o '//trim(file_name_bands(1,is)),"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name_bands(1,is)),"#")
-   call msg('o '//trim(file_name_bands(2,is)),"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name_bands(2,is)),"#")
+   do i_f=1,3
+     call of_open_close(trim(file_name_bands(i_f,is)),'ot')
+     call msg('o '//trim(file_name_bands(i_f,is)),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name_bands(i_f,is)),"#")
+   enddo
  enddo
  !
- if(BANDS_steps> 0.and.n_spinor==2) then
-   file_name_spin_magn(1)="spin_factors_1"
-   file_name_spin_magn(2)="spin_factors_2"
+ if(BANDS_interpolate.and.n_spinor==2) then
+   file_name_spin_magn(1)="spin_factors_UP"
+   file_name_spin_magn(2)="spin_factors_DN"
    file_name_spin_magn(3)="magnetization_x"
    file_name_spin_magn(4)="magnetization_y"
    file_name_spin_magn(5)="magnetization_z"
@@ -136,40 +177,59 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  !
  call msg('o path',"#"," ",INDENT=0)
  !
- coo_out=coo_in
+ ! Fermi Levels
+ !==============
+ !
+ ! AM (March 2018): The delta_Ef must be applied in order to have consistent
+ !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
+ !                  only when it can be correctly (all occupied bands) evaulated with GRID_E
+ !
+ if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
+ !
+ call section('=','Fermi Levels')
+ !
+ call msg("s",'Fermi Level  (BUILT-in bands) [eV]:',Xen%E_Fermi*HA2EV)
+ !
+ delta_Ef=rZERO
+ !
+ if (BANDS_bands(1)==1) then
+   delta_Ef=-GRID_E%E_Fermi
+   call msg("s",'Correction             (GRID) [eV]:',GRID_E%E_Fermi*HA2EV)
+ endif
+ !
+ call section('=','Bands output')
+ !
+ ! Bands on USER_k using the energy of the nearest in the internal list 
+ !======================================================================
  !
  values(1)=0._SP
  !
- if(BANDS_steps> 0) then
+ if (BANDS_internal.and.USER_k%nbz>0) then
    !
-   YAMBO_ALLOC(circuit_versor,(USER_K%nibz-1,3))
+   YAMBO_ALLOC(circuit_versor,(USER_k%nbz-1,3))
    !
-   do ik=1,USER_K%nibz-1
-     tmp_k=USER_K%pt(ik+1,:)-USER_K%pt(ik,:)
+   do ik=1,USER_k%nbz-1
+     tmp_k=USER_k%pt(ik+1,:)-USER_k%pt(ik,:)
      circuit_versor(ik,:)=tmp_k/v_norm(tmp_k)
    enddo
    !
-   do ik=1,USER_K%nibz-1
+   do ik=1,USER_k%nbz-1
      !
-     if (ik>1) values(1)=values(1)+iku_v_norm(USER_K%pt(ik,:)-USER_K%pt(ik-1,:))
+     if (ik>1) values(1)=values(1)+iku_v_norm(USER_k%pt(ik,:)-USER_k%pt(ik-1,:))
      !
      do ikbz=1,Xk%nbz
        !
-       tmp_k=Xk%ptbz(ikbz,:)-USER_K%pt(ik,:)
+       tmp_k=Xk%ptbz(ikbz,:)-USER_k%pt(ik,:)
        !
        if ((abs(v_norm(tmp_k)-dot_product(tmp_k,circuit_versor(ik,:)))<1.E-5).and.&
-  &           iku_v_norm(tmp_k)<=iku_v_norm(USER_K%pt(ik+1,:)-USER_K%pt(ik,:))         ) then
+&           iku_v_norm(tmp_k)<=iku_v_norm(USER_k%pt(ik+1,:)-USER_k%pt(ik,:))         ) then
          !
          do is=1,n_sp_pol
-           values(1+1:nbands+1)=Xen%E(BANDS_range(1):BANDS_range(2),Xk%sstar(ikbz,1),is)*HA2EV
+           values(1+1:nbands+1)=Xen%E(BANDS_bands(1):BANDS_bands(2),Xk%sstar(ikbz,1),is)*HA2EV
            values(nbands+2:nbands+4)=Xk%ptbz(ikbz,:)
-           call k_transform(values(nbands+2:nbands+4),'iku')
+           call K_transform(values(nbands+2:nbands+4),'iku')
            call msg('o '//trim(file_name_bands(2,is)),' ',(/values(1)+iku_v_norm(tmp_k),values(2:)/),INDENT=0,USE_TABS=.true.)
          enddo
-         !
-         ! DEBUG <
-         !write (*,'(10f10.6)') values(1)+iku_v_norm(tmp_k),Xen%E(4,Xk%sstar(ikbz,1),1)*HA2EV,tmp_k
-         ! DEBUG >
          !
        endif
        !
@@ -178,32 +238,72 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
    !
    YAMBO_FREE(circuit_versor)
    !
+ endif
+ !
+ ! Bands on CIRCUIT using the energy of the nearest in the internal list 
+ !=======================================================================
+ !
+ if (BANDS_interpolate) then
+   !
    values(1)=0._SP
    !
-   do ik=1,CIRCUIT_K%nibz
+   do ik=1,CIRCUIT_k%nbz
      !
-     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_K%pt(ik,:)-tmp_k)
-     if (ik<CIRCUIT_K%nibz) tmp_k=CIRCUIT_K%pt(ik,:)
+     if (ik>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(ik,:3)-CIRCUIT_k%pt(ik-1,:3))
      !
-     call k_transform(CIRCUIT_K%pt(ik,:),"iku")
+     tmp_k=CIRCUIT_k%pt(ik,:3)
      !
-     if(n_spinor==2) then
+     call K_transform(tmp_k,'iku')
+     !
+     if (n_spinor==2) then
        spin_values(1,:)=values(1)
        magn_values(1,:)=values(1)
      endif
+     !
      do is=1,n_sp_pol
-       values(1+1:nbands+1)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-       values(nbands+2:nbands+4)=CIRCUIT_K%pt(ik,:)
-       call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.)
+       !
+       ! Energies...
+       !
+       ! ... Interpolated Eo or Eo+deltaE (if QP present)
+       !
+       values(1+1:nbands+1)=(CIRCUIT_E%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
+       if (allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E)) then
+         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+&
+&                              CIRCUIT_dE%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
+       endif
+       values(nbands+2:nbands+4)=tmp_k
+       call msg('o '//trim(file_name_bands(1,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+       if (len_trim(CIRCUIT_k_label(ik))>0) then
+         of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+       endif
+       call msg_deliver(trim(file_name_bands(1,is)),of_string)
+       !
+       ! ... Read from GS SAVE (if present)
+       !
+       if (allocated(CIRCUIT_E_db%E)) then
+         values(1+1:nbands+1)=(CIRCUIT_E_db%E(BANDS_bands(1):BANDS_bands(2),ik,is)+delta_Ef)*HA2EV
+         call msg('o '//trim(file_name_bands(3,is)),' ',values,INDENT=0,USE_TABS=.true.,formatted_msg=of_string)
+         if (len_trim(CIRCUIT_k_label(ik))>0) then
+           of_string=trim(of_string)//"  ["//trim(CIRCUIT_k_label(ik))//"]"
+         endif
+         call msg_deliver(trim(file_name_bands(3,is)),of_string)
+       endif
+       !
        if(n_spinor==2) then
+         !
+         ! Spins...
+         !
          do i1=1,2
-           spin_values(1+1:nbands+1,i1)=spin_interpolated(BANDS_range(1):BANDS_range(2),ik,i1)
-           spin_values(nbands+2:nbands+4,i1)=CIRCUIT_K%pt(ik,:)
+           spin_values(1+1:nbands+1,i1)=INTERP_obj(ID_spin)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
+           spin_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1)),' ',(/spin_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
+         !
+         ! Magnetization...
+         !
          do i1=1,3
-           magn_values(1+1:nbands+1,i1)=magn_interpolated(BANDS_range(1):BANDS_range(2),ik,i1)
-           magn_values(nbands+2:nbands+4,i1)=CIRCUIT_K%pt(ik,:)
+           magn_values(1+1:nbands+1,i1)=INTERP_obj(ID_magn)%INTERP(BANDS_bands(1):BANDS_bands(2),ik,i1)
+           magn_values(nbands+2:nbands+4,i1)=tmp_k
            call msg('o '//trim(file_name_spin_magn(i1+2)),' ',(/magn_values(:,i1)/),INDENT=0,USE_TABS=.true.)
          enddo
        endif
@@ -211,34 +311,7 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
      !
    enddo
    !
- endif
- !
- if(all(interp_grid>0)) then
-   !
-   headings(1)  =  " ik  "
-   headings(2:4)=(/" kx  "," ky  "," kz  "/)
-   do ib=BANDS_range(1),BANDS_range(2)
-     headings(4+ib-BANDS_range(1)+1)=' b'//intc(ib)
-   enddo
-   !
-   do is=1,n_sp_pol
-     call msg('o '//trim(file_name_grid(is)),"#",headings,INDENT=0,USE_TABS=.true.)
-   enddo
-   !
-   do ikbz=1,INTERP_K%nbz
-     call k_transform(INTERP_K%ptbz(ikbz,:),"iku")
-     values(2:4)=INTERP_K%ptbz(ikbz,:)
-     !
-     ik=INTERP_K%sstar(ikbz,1)
-     !
-     values(1)=real(ik,SP)
-     !
-     do is=1,n_sp_pol
-       values(1+4:nbands+4)=bands_interpolated(BANDS_range(1):BANDS_range(2),is,ik)*HA2EV
-       call msg('o '//trim(file_name_grid(is)),' ',values,INDENT=0,USE_TABS=.true.)
-     enddo
-     !
-   enddo
+   call set_real_printed_length( )
    !
  endif
  !
@@ -246,14 +319,19 @@ subroutine electrons_bands(Xk,Xen,BANDS_range)
  deallocate(headings)
  YAMBO_FREE(spin_values)
  YAMBO_FREE(magn_values)
- YAMBO_FREE_P(bands_interpolated)
- YAMBO_FREE(spin_interpolated)
- YAMBO_FREE(magn_interpolated)
+ call E_reset(GRID_E)
+ call E_reset(CIRCUIT_E)
+ call E_reset(CIRCUIT_DE)
+ call E_reset(CIRCUIT_E_db)
+ if (n_spinor>1 .and. BANDS_steps> 0) then
+   call INTERPOLATION_driver(operation="END",ID_op=ID_spin)
+   call INTERPOLATION_driver(operation="END",ID_op=ID_magn)
+ endif
  !
  do is=1,n_sp_pol
-   call of_open_close(trim(file_name_bands(1,is)))
-   call of_open_close(trim(file_name_bands(2,is)))
-   call of_open_close(trim(file_name_grid(is)))
+   do i_f=1,3
+     call of_open_close(trim(file_name_bands(i_f,is)))
+   enddo
  enddo
  !
  if(BANDS_steps> 0.and.n_spinor==2) then

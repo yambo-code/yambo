@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine External_corrections(en,Xen,Ken,Xk,k,X)
+subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse,l_alda_fxc
  use X_m,           ONLY:X_t
- use electrons,     ONLY:levels,n_bands
+ use electrons,     ONLY:levels,n_bands,E_duplicate
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
@@ -33,7 +33,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- use drivers,       ONLY:l_cohsex,l_real_time
+ use drivers,       ONLY:l_cohsex,l_real_time,l_ppa
  use RT_control,    ONLY:RT_apply
 #endif
  !
@@ -46,7 +46,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
  implicit none
  !
- type(levels) ::en,Xen,Ken
+ type(levels) ::en,Xen,Ken,DIPen
  type(X_t)    ::X(4) 
  type(bz_samp)::k,Xk
  !
@@ -79,7 +79,7 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
-&    (     (l_em1s.and..not.l_real_time)   &
+&    (     ((l_em1s.or.l_ppa.or.l_gw0).and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
  if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
 #endif
@@ -121,11 +121,15 @@ subroutine External_corrections(en,Xen,Ken,Xk,k,X)
  ! GPL_EXCLUDE_START
  !
 #if defined _RT
- l_apply_RT_corrections=l_cohsex
+ l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
 #endif
  !
  ! GPL_EXCLUDE_END
+ !
+ call E_duplicate(en,DIPen)
+ DIPen%nbf=minval((/en%nbf,Xen%nbf,Ken%nbf/))
+ DIPen%nbm=maxval((/en%nbm,Xen%nbm,Ken%nbm/))
  !
  call section('r',' ')
  !

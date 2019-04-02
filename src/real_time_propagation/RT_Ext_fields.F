@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -46,6 +46,7 @@ subroutine RT_Ext_fields(A,time)
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
+ use com,            ONLY:error
  !
  implicit none
  !
@@ -90,6 +91,8 @@ subroutine RT_Ext_fields(A,time)
 &                                   -A_coeff*Efield(i_f)%versor_circ*( E_of_t(2)*theta+A_of_t(2)*delta )
      A%vecpot_acc(:)=A%vecpot_acc(:)-A_coeff*Efield(i_f)%versor     *( J_of_t(1)*theta+E_of_t(1)*delta+A_of_t(1)*signf)  &
 &                                   -A_coeff*Efield(i_f)%versor_circ*( J_of_t(2)*theta+E_of_t(2)*delta+A_of_t(2)*signf)
+     case default
+       call error("Unknown external field polarization! ")
    end select
    !
  enddo

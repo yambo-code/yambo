@@ -206,8 +206,8 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,write_to_log
-     use parallel_m, ONLY : myid,ncpu
+     use stderr,     ONLY : c_print,logfile,write_to_log,intc
+     use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
      character(*),optional :: lfmt,rfmt,sfmt
@@ -245,6 +245,11 @@ module LIVE_t
      message_composed=trim(message)
      if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
+       if (n_nodes(1)>1) then
+         message_composed='P'//trim(intc(myid+1))//"-"//trim(host_name)//": "//trim(message)
+       else
+         message_composed='P'//trim(intc(myid+1))//": "//trim(message)
+       endif
      endif
      add_cput=live_timing_is_on.and.master_thread
      if (present(CPU_TIME)) then

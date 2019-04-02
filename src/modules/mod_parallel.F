@@ -66,7 +66,7 @@ module parallel_m
  !
  integer            :: myid
  integer            :: ncpu
- integer            :: n_nodes     = 1
+ integer            :: n_nodes(1)  = 1
  integer            :: n_IO_nodes  = 1
  integer            :: n_MPI       = 1
  !
@@ -443,11 +443,10 @@ module parallel_m
  !
  interface PP_redux_wait
    module procedure l1share,                                         &
-&                   i2share,i3share,                &
+&                   i1share,i2share,i3share,                         &
 &                   i81share,                                        &
 &                   r0share,r1share,r2share,r3share,                 &
 &                   c0share,c1share,c2share,c3share,c4share,c5share, &
-&                   ch0share,                                        &
 #if ! defined _DOUBLE
                     d0share,d1share,d2share,d3share,                 &
 #endif
@@ -676,39 +675,39 @@ module parallel_m
 #endif
    end subroutine
    !
-!   subroutine i1share(array,imode,COMM)
-!     integer(4):: array(:)
-!     integer, optional :: imode,COMM
-!#if defined _MPI
-!     integer ::omode,LOCAL_COMM
-!     integer ::dimensions(1),dimension ! Work Space
-!     integer,allocatable::larray(:)    ! Work Space
-!     if (ncpu==1) return
-!     !
-!     if (present(COMM)) then
-!       LOCAL_COMM=COMM
-!     else
-!       LOCAL_COMM=mpi_comm_world
-!     endif
-!     if (LOCAL_COMM==comm_default_value) return
-!     call mpi_barrier(LOCAL_COMM,i_err)
-!     if (present(imode)) then
-!       if (imode==1) omode=mpi_sum
-!       if (imode==2) omode=mpi_prod
-!     else
-!       omode=mpi_sum
-!     endif
-!     dimensions=shape(array)
-!     if( any(dimensions<1) ) return
-!     dimension=product(dimensions)
-!     allocate(larray(dimension))
-!     larray=0
-!     call mpi_allreduce(array(1),larray,dimension,mpi_integer,omode,LOCAL_COMM,i_err)
-!     array=reshape(larray,dimensions)
-!     deallocate(larray)
-!     call mpi_barrier(LOCAL_COMM,i_err)
-!#endif
-!   end subroutine
+   subroutine i1share(array,imode,COMM)
+     integer:: array(:)
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer ::omode,LOCAL_COMM
+     integer ::dimensions(1),dimension ! Work Space
+     integer,allocatable::larray(:)    ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0
+     call mpi_allreduce(array(1),larray,dimension,mpi_integer,omode,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
    !
    subroutine i81share(array,imode,COMM)
      integer(8)        :: array(:)
@@ -794,29 +793,6 @@ module parallel_m
      call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine ch0share(chval,COMM)
-     character(lchlen) :: chval
-     integer, optional :: COMM
-#if defined _MPI
-     integer          :: LOCAL_COMM   ! Work Space
-     character(lchlen):: local_chval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     local_chval=' '
-     call mpi_allreduce(chval,local_chval,lchlen,MPI_CHARACTER,mpi_sum,LOCAL_COMM,i_err)
-     chval=local_chval
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine

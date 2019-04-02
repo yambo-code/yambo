@@ -33,7 +33,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
 &                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL,host_name,&
-&                         master_cpu,PP_redux_wait,n_IO_nodes
+&                         master_cpu,PP_redux_wait,n_IO_nodes,PP_bcast
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
@@ -75,16 +75,15 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! Nodes
  !==========================
  if (master_cpu) dumb_ch=host_name
- call PP_redux_wait
+ call PP_bcast(dumb_ch,0)
  do i_cpu=2,ncpu
    if (myid+1==i_cpu) then
      if (trim(host_name)==trim(dumb_ch)) n_nodes=0
-     if (trim(host_name)/=trim(dumb_ch)) dumb_ch=host_name
+     dumb_ch=host_name
    endif
-   call PP_redux_wait(dumb_ch)
+   call PP_bcast(dumb_ch,i_cpu-1)
  enddo
- !call PP_redux_wait((/n_nodes,1/))
- !write (*,*) n_nodes,trim(host_name)
+ call PP_redux_wait(n_nodes)
  !
  ! GET ENVIROMENT definitions
  !============================
@@ -116,7 +115,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
  call msg('r', '* THREADS    (max):',n_max_threads)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
- call msg('r', '* NODES(computing):',n_nodes)
+ call msg('r', '* NODES(computing):',n_nodes(1))
  call msg('r', '*            (I/O):',n_IO_nodes)
  !
  ! I/O and more

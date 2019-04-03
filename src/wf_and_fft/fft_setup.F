@@ -71,7 +71,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  mat(:,2)=scal(2)*mat(:,2)
  mat(:,3)=scal(3)*mat(:,3)
  !
- allocate(g_vec_rot,mold=g_vec)
+ !allocate(g_vec_rot,mold=g_vec)
+ allocate(g_vec_rot(size(g_vec,1),3))
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
 #ifdef _CUDA
  if(SIZE(g_vec_rot,2)>0) allocate(g_vec_rot_d, source=g_vec_rot)

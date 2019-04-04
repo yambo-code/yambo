@@ -312,6 +312,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
+   freq_loop:&
    do iw=1,Xw%n_freqs
      !
 #ifdef _CUDA
@@ -353,6 +354,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
 
 #endif
+#if defined _OPENMP && !defined _CUDA
+       if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
+#endif
      end do
      !
      if (.not.X_FILL_UP_matrix_only) then
@@ -362,9 +366,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
          !
+#if defined _OPENMP && ! defined _CUDA
+         if(n_threads_X>1) then
+           call OPENMP_compute_mutex(ig_col,mutexid)
+           call omp_set_lock(omp_locks(mutexid))
+         endif
+#endif
          !
 #ifdef _CUDA
-         !
          !
          do ig1=X_rows1,X_rows2
            if (ig1 < ig_col) then
@@ -387,31 +396,31 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          X_nrows = X_rows2_l-X_rows1_l+1
          !
          ig_row_transp = ig_col
+         X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          ! ----    ----
          ! -xxx    ----
          ! ---- => -x--
          ! ----    -x--
- 
-         X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          if (PAR_COM_RL_INDEX%n_CPU>1) then
            call V_by_V_plus_V(X_nrows,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1:X_rows2,ig_col)),&
+&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          else
            call V_by_V_plus_V(X_nrows,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1:X_rows2,ig_col)),&
+&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
 #endif
-       enddo
-
-     endif
 #if defined _OPENMP && !defined _CUDA
-     if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
+         if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
 #endif
-   enddo
+       enddo
+       !
+     endif
+     !
+   enddo freq_loop
    !
    if (master_thread) call live_timing(steps=1)
    !

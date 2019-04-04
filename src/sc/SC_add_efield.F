@@ -38,7 +38,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  type(bz_samp), intent(in)  :: k
  type(levels),  intent(in)  :: E
- complex(SP),   intent(in)  :: V_bands(SC_bands(2),E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(SC_bands(1):SC_bands(2),E%nbf,QP_nk,n_sp_pol)
  complex(SP),   intent(out) :: Pol(3)
  !
  ! Working space

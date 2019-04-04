@@ -32,8 +32,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
-#if defined _RT
- use drivers,        ONLY:l_real_time,l_nl_optics
+ use drivers,        ONLY:l_sc_run,l_real_time,l_nl_optics
+#if defined _SC || defined _RT
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
@@ -104,17 +104,17 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Electronic/spin density 
  !==========================
  !
-#if defined _RT
- if (l_real_time.or.l_nl_optics) then
+#if defined _SC || defined _RT
+ if (l_real_time.or.l_nl_optics) then !.or.l_sc_run) then
    rho=rho_n
    if(n_spin> 1) magn=magn_n
- else
-#endif
-   call el_density_and_current(en,Xk,rho=rho)
-   if (n_spin> 1) call el_magnetization(en,Xk,magn)
-#if defined _RT
  endif
 #endif
+ !
+ if (.not.(l_real_time.or.l_nl_optics)) then !.or.l_sc_run)) then
+   call el_density_and_current(en,Xk,rho=rho)
+   if (n_spin> 1) call el_magnetization(en,Xk,magn)
+ endif
  !
  if (pp_has_nlcc) rho(:)=rho(:)+real(pp_rho_nlcc(:),SP)
  !

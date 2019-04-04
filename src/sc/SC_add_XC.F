@@ -39,7 +39,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation,&
 &                         H_rotation_ref,E_reference
- use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,&
+ use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,SC_nbands,       &
 &                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu
  use FFT_m,          ONLY:fft_size
  use IO_m,           ONLY:IO_and_Messaging_switch
@@ -63,7 +63,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
  !
  ! tests for excitons
  !
- real(SP)                 :: n_exc,ELEC,HOLE
+ real(SP)                 :: ELEC,HOLE
  !
  type(QP_t)   :: qp_dummy
  !
@@ -81,8 +81,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
    ! G_collisions(ib,ib,ik)=(0.,1)*en%f(ib,ik)
    !
    do ik=1,E%nk
-     call OBS_rotate(H_rotation(:,:,ik,1),G_sex(:,:,ik),SC_bands(2),-1)
-     call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_bands(2),-1)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_sex(:,:,ik),SC_nbands,-1)
+     call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_nbands,-1)
    enddo
    !
    if (trim(SC_neq_kind)=="matsubara") then
@@ -94,7 +94,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
        ! Compute number of electrons and holes
        !
        G_tmp=G_sex(:,:,ik)
-       call OBS_rotate(H_rotation_ref(:,:,ik,1),G_tmp,SC_bands(2),1)
+       call OBS_rotate(H_rotation_ref(:,:,ik,1),G_tmp,SC_nbands,1)
        do ib=SC_bands(1),SC_bands(2)
          if(E_reference%E(ib,ik,1)> SC_mu(1)) ELEC=ELEC          -real(cI*G_tmp(ib,ib),SP) *Xk%weights(ik)
          if(E_reference%E(ib,ik,1)<=SC_mu(1)) HOLE=HOLE+(spin_occ+real(cI*G_tmp(ib,ib),SP))*Xk%weights(ik)

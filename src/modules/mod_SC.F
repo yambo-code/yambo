@@ -27,6 +27,7 @@ module SC
 #include<memory.h>
  !
  integer           :: SC_bands(2)
+ integer           :: SC_nbands
  integer           :: it_to_start
  integer           :: it_now
  integer           :: SC_iterations
@@ -117,6 +118,8 @@ module SC
      call H_alloc(E,.true.,.true.)
      !
      call H_QP_table_setup(E)
+     !
+     SC_nbands=SC_bands(2)-SC_bands(1)+1
      !
      if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
        YAMBO_ALLOC(QP_Sc,(QP_n_states,1))

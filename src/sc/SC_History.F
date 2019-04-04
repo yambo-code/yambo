@@ -29,7 +29,7 @@ subroutine SC_History(it,E)
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,it_now,SC_description,n_SC_descriptions
+ use SC,             ONLY:SC_nbands,it_now,SC_description,n_SC_descriptions
  !
  implicit none
  !
@@ -40,7 +40,7 @@ subroutine SC_History(it,E)
  !
  integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
  character(schlen), SAVE :: E_file_name(2)
- character(schlen)       :: headers(SC_bands(2)*nkibz)
+ character(schlen)       :: headers(SC_nbands*nkibz)
  !
  b_range(1)=max(n_full_bands-1,1)
  b_range(2)=b_range(1)+2

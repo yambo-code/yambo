@@ -35,6 +35,10 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use interfaces,     ONLY:el_density_and_current,WF_load
  use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+ use com,            ONLY:error
+#endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
@@ -49,7 +53,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
+ integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2),WFbands(2)
  !
  Hzero=cZERO
  !
@@ -80,22 +84,25 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- call WF_load(WF,WF_G_max,WF_Go_indx,(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
+ WFbands=(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/)
+ call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-SC')
  !
 #if defined _RT
  if(l_real_time) then
    rho_n=rho_reference
    if(n_spin>1) magn_n=magn_reference
- else
-#endif
- call el_density_and_current(E,Xk,rho=rho_n)
- !
- if(n_spin>1) call el_magnetization(E,Xk,magn_n)
-#if defined _RT
  endif
 #endif
  !
- V_xc_sc=V_xc
+#if defined _SC
+ if(l_sc_run) then
+   call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
+   if(n_spin>1) then
+     if(H_ref_bands(1)==1) call el_magnetization(E,Xk,magn_n)
+     if(H_ref_bands(1)> 1) call error("SC_bands(1)>1 not coded for magnetic systems")
+   endif
+ endif
+#endif
  !
  ! The Hzero = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -117,6 +124,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  QP_Vxc=cZERO
  !
  call XCo_local(E,k)
+ !
+ V_xc_sc=V_xc
  !
  do i_sp_pol=1,n_sp_pol
    !

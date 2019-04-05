@@ -106,8 +106,8 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
        do ib=SC_bands(1),SC_bands(2)
          do ibp=SC_bands(1),SC_bands(2)
            if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
-           G_sex(ib,ibp,ik) = cI*0.5
-           G_sex(ibp,ib,ik) = cI*0.5
+           G_sex(ib,ibp,ik) = cI*real(ib*ibp,SP)*0.2
+           G_sex(ibp,ib,ik) = cI*real(ib*ibp,SP)*0.2
          enddo
        enddo
      enddo

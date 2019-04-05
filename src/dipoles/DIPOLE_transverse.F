@@ -131,6 +131,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    !
  endif
  !
+                                      live_t_string='Dipoles: P (T):'
  if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T):'
  if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T):'
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T):'

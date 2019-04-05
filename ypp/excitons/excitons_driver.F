@@ -23,7 +23,7 @@
 !
 subroutine excitons_driver(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,pi,schlen,lchlen
+ use pars,          ONLY:SP,pi,schlen
  use R_lattice,     ONLY:bz_samp
  use com,           ONLY:error
  use stderr,        ONLY:intc
@@ -31,8 +31,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin,E_SOC_nbands
  use YPP,           ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,excitons_sort_and_report
- use IO_m,          ONLY:io_control,io_connect,OP_RD_CL,DUMP,NONE,REP,VERIFY
- use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig,variables_BS
+ use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY
+ use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_q,BS_K_coupling,BS_cpl_mode,&
 &                        BS_cpl_K_exchange,BS_cpl_K_corr
 #if defined _YPP_ELPH
@@ -72,8 +72,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  !
  integer                  ::iq,neh
- character(schlen)        ::db_name
- character(lchlen)        ::local_description(100)
  !
  call section('*','Excitonic Properties')
  !
@@ -173,12 +171,14 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    !
    if (BS_K_coupling) then
      do neh=BS_K_dim+1,BS_H_dim
-       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,1)
+       !
+       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,:)
        !
        ! invert conduction <-> valence order
        !
        BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
        BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
+       !
      enddo
    endif
    !

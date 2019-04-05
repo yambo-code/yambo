@@ -23,7 +23,7 @@
 !
 subroutine ypp_INIT_load(defs)
  !
- use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,initmode,&
+ use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp

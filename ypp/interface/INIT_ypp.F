@@ -58,7 +58,6 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,l_NL_exc,RT_conf
- use stderr,         ONLY:intc
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
@@ -652,7 +651,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
-   if (l_spin) call initactivate(1,"Degen_Step FFTGvecs")
+   if (l_spin) call initactivate(1,"Degen_Step")
+   if (l_spin.and..not.l_excitons) call initactivate(1,"FFTGvecs")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif

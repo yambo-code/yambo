@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
+subroutine excitons_non_collinear(lambda,n_lambda,Xk,S_z,S_sq)
  !
  use pars,          ONLY:SP,cZERO
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_H_dim,BS_bands
- use BS_solvers,    ONLY:BS_mat,BSS_eh_table
+ use BS,            ONLY:BS_bands
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_eig
  use com,           ONLY:msg,error,warning
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
@@ -40,8 +40,8 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
 #include<memory.h>
  !
  type(bz_samp)          :: Xk
- integer                :: n_lambda,lambda_s(n_lambda)
- real(SP)               :: S_sq(BS_H_dim),S_z(BS_H_dim)
+ integer                :: n_lambda,lambda(n_lambda)
+ real(SP)               :: S_sq(BSS_n_eig),S_z(BSS_n_eig)
  ! 
  ! Work Space
  !
@@ -62,11 +62,11 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
  do i_lambda=1,n_lambda
    !
-   j_lambda=lambda_s(i_lambda)
+   j_lambda=lambda(i_lambda)
    !
-   call live_timing('Exc_spin@'//trim(intc(j_lambda)),BS_H_dim) 
+   call live_timing('Exc_spin@'//trim(intc(j_lambda)),BSS_n_eig) 
    !
-   do neh1 = 1,BS_H_dim
+   do neh1 = 1,BSS_n_eig
      !
      ikbz1  = BSS_eh_table(neh1,1)
      iv1    = BSS_eh_table(neh1,2)
@@ -74,7 +74,7 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
      ikibz1 = Xk%sstar(ikbz1,1)
      is1    = Xk%sstar(ikbz1,2)
      !
-     do neh2 = 1,BS_H_dim
+     do neh2 = 1,BSS_n_eig
        !
        ikbz2  = BSS_eh_table(neh2,1)
        iv2    = BSS_eh_table(neh2,2)
@@ -121,5 +121,6 @@ subroutine excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
  !
  YAMBO_FREE(WF_symm1)
  YAMBO_FREE(WF_symm2)
+ call WF_free(WF)
  !
 end subroutine

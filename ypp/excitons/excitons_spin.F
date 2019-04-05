@@ -21,12 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
+subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda,n_lambda)
  !
  ! Excitonc Spin
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_H_dim
  use BS_solvers,    ONLY:BSS_n_eig
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,n_spinor
@@ -36,16 +35,16 @@ subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs,lambda_s,n_lambda)
  !
  type(bz_samp) :: Xk
  type(levels)  :: Xen
- complex(SP)   :: BS_R_right(BS_H_dim),BS_E(BS_H_dim)
- integer       :: n_lambda,BS_E_degs(BSS_n_eig),lambda_s(n_lambda)
+ complex(SP)   :: BS_R_right(BSS_n_eig),BS_E(BSS_n_eig)
+ integer       :: n_lambda,BS_E_degs(BSS_n_eig),lambda(n_lambda)
  !
- real(SP)      :: S_z(BS_H_dim),S_sq(BS_H_dim)
+ real(SP)      :: S_z(BSS_n_eig),S_sq(BSS_n_eig)
  !
  call section('=','Reporting sorted Energies, Strengths and Spins')
  !
- if (n_sp_pol==2) call excitons_collinear(BS_E_degs,S_z,S_sq)
+ if (n_sp_pol==2) call excitons_collinear(lambda,n_lambda,BS_E_degs,S_z,S_sq)
  !
- if (n_spinor==2) call excitons_non_collinear(Xk,lambda_s,n_lambda,S_z,S_sq)
+ if (n_spinor==2) call excitons_non_collinear(lambda,n_lambda,Xk,S_z,S_sq)
  !
  call excitons_sort_and_report(Xen,BS_R_right,BS_E,S_z=S_z,S_sq=S_sq)
  !

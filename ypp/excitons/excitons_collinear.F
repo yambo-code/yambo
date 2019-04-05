@@ -21,52 +21,62 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_collinear(deg_list,S_z,S_sq)
+subroutine excitons_collinear(lambda,n_lambda,deg_list,S_z,S_sq)
  !
  use pars,          ONLY:SP
- use BS_solvers,    ONLY:BS_mat
- use BS,            ONLY:BS_H_dim
+ use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_eig
  !
  implicit none
  !
- real(SP)    :: S_sq(BS_H_dim),S_z(BS_H_dim)
- integer     :: deg_list(BS_H_dim)
+ real(SP)    :: S_sq(BSS_n_eig),S_z(BSS_n_eig)
+ integer     :: deg_list(BSS_n_eig),n_lambda,lambda(n_lambda)
  ! 
  ! Work Space
  !
- integer :: lambda,i1,lambda_deg,n_lambda_deg
+ integer :: i_l,i_s,i_deg,n_deg
  !
  S_z(:)=0
  S_sq(:)=0
  !
  ! First calculates S_sq and S_z for all states
  !
- do lambda=1,BS_H_dim
+ do i_l=1,n_lambda
    !
-   do i1=1,BS_H_dim,2
-     S_sq(lambda)=S_sq(lambda)+BS_mat(i1,lambda)*conjg(BS_mat(i1+1,lambda))+&
-&                                 (BS_mat(i1+1,lambda)*conjg(BS_mat(i1,lambda)))
+   do i_s=1,BSS_n_eig
+     write (*,*) BSS_eh_table(i_s,:)
    enddo
+   !
+ enddo
+ stop
+
+
+ do i_l=1,BSS_n_eig 
+   !
+   !
+!   do i1=1,BSS_n_eig,2
+!     S_sq(i_l)=S_sq(i_l)+BS_mat(i1,i_l)*conjg(BS_mat(i1+1,i_l))+&
+!&                              (BS_mat(i1+1,i_l)*conjg(BS_mat(i1,i_l)))
+!   enddo
    !
  enddo
  !
  ! then sum over degenerate states
  !
- do lambda=1,BS_H_dim
+ do i_l=1,BSS_n_eig
    !
-   if (deg_list(lambda)/=lambda) cycle
+   if (deg_list(i_l)/=i_l) cycle
    !
-   n_lambda_deg=count(deg_list==lambda)
+   n_deg=count(deg_list==i_l)
    !
-   do lambda_deg=lambda+1,lambda+n_lambda_deg-1
-     S_sq(lambda)=S_sq(lambda)+S_sq(lambda_deg)
+   do i_deg=i_l+1,i_l+n_deg-1
+     S_sq(i_l)=S_sq(i_l)+S_sq(i_deg)
    enddo
    !
-   S_sq(lambda)=1._SP-S_sq(lambda)
+   S_sq(i_l)=1._SP-S_sq(i_l)
    !
-   do lambda_deg=deg_list(lambda)+1,deg_list(lambda)+n_lambda_deg-1
-     S_sq(lambda_deg)=S_sq(lambda)
-     S_z(lambda_deg)=S_z(lambda)
+   do i_deg=deg_list(i_l)+1,deg_list(i_l)+n_deg-1
+     S_sq(i_deg)=S_sq(i_l)
+     S_z(i_deg)=S_z(i_l)
    enddo
    !
  enddo

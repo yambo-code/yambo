@@ -58,11 +58,11 @@ subroutine NL_output(i_time,i_freq)
  !
  n_files=n_files+1
  short_file_name(n_files)='polarization'
- n_headings(n_files)=4
+ n_headings(n_files)=7
  !
  n_files=n_files+1
  short_file_name(n_files)='e_total'
- n_headings(n_files)=7
+ n_headings(n_files)=4
  !
  if(l_eval_CURRENT) then
    n_files=n_files+1

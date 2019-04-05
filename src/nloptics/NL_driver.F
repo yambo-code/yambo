@@ -41,8 +41,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,eval_COLLISIONS,NL_ng,JGM,TDDFT, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
-&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_P,RT_step,RT_nbands,RT_bands
+&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed,NL_P
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_step,RT_nbands,RT_bands
  use IO_m,           ONLY:IO_and_Messaging_switch,io_COLLs
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,mpi_comm_world
@@ -120,8 +120,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  if(l_use_DIPOLES) then
    call DIP_alloc('DIP_S')
  else
+!    call DIP_alloc('DIP_R')
    if(.not.l_eval_CURRENT) then
-     call DIP_alloc('DIP_R')
      call DIP_alloc('DIP_P')
    endif
  endif
@@ -235,7 +235,7 @@ subroutine NL_driver(E,X,k,q,Dip)
      !
      ! Store Variables
      !
-     NL_P_t (NE_i_time,:)=real(RT_P,SP)
+     NL_P_t (NE_i_time,:)=real(NL_P(1:3),SP)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks

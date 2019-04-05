@@ -43,7 +43,8 @@ module nl_optics
  ! Calculated from the string-averaged discretized geometric phase
  ! see ref. PRB 47, 1651 (1993), or from DIPOLES
  !
- complex(SP)    :: NL_initial_P(3) ! in principle it can be different from zero
+ complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
+ complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
  !
  ! Current
  !

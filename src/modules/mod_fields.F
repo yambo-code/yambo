@@ -155,7 +155,7 @@ module fields
            WtimesT=W_field*T+fr_shift(i_field)
            if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
            if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+W_0* cos(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
          enddo 
        case('SOFTSIN')
          T_0=sigma
@@ -174,7 +174,7 @@ module fields
            !
            if (order==0 ) f_t(i_field)=f_t(i_field)- damp_func*(cos(WtimesT)-1._SP)/W_field
            if (order==1 ) f_t(i_field)=f_t(i_field)+ damp_func*sin(WtimesT)
-           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_0*cos(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+ damp_func*W_field*cos(WtimesT)
            if (order==-1) f_t(i_field)=-2
            !
          enddo 

@@ -140,16 +140,20 @@ subroutine K_correlation_collisions(iB,Xk,q)
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,iB)
  !
+#if !defined _CUDA
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
  !$omp &          i_k_bz,i_p_bz,i_k_s,i_p_s, i_v_k,i_c_k,i_v_p,i_c_p, &
  !$omp &          i_k_sp, i_p_sp, i_s_k_p,i_s_star,H_pos,  &
  !$omp &          K_CORR_collision, i_s_collision)
+#endif
  !
  call OPENMP_update(master_thread)
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
+#if !defined _CUDA
  !$omp do collapse(2), schedule(dynamic)
+#endif
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      !
@@ -208,10 +212,14 @@ subroutine K_correlation_collisions(iB,Xk,q)
      !
    enddo
  enddo
+#if !defined _CUDA
  !$omp end do
+#endif
  !
  call elemental_collision_free(K_CORR_collision)
+#if !defined _CUDA
  !$omp end parallel
+#endif
  !
  call timing('T_space CORR Osc.',OPR='stop')
  !
@@ -252,13 +260,28 @@ subroutine K_correlation_collisions(iB,Xk,q)
      integer,intent(in) :: iB,i_b,i_b_p,i_s_collision, i_k_sp
      type(elemental_collision),intent(inout) :: isc
      integer :: iB_oscillator
+#ifdef _CUDA
+     integer :: ig,ngrho
+     complex(SP), pointer, device :: rhotw_d(:),O_c_d(:,:)
+#endif
      if (.not.O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)) return 
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
      isc%is(1)=i_b
      isc%os(1)=i_b_p
      isc%os(3)=i_s_collision
      call scatter_Bamp(isc)
+#ifdef _CUDA
+     ngrho=isc%ngrho
+     rhotw_d=>isc%rhotw_d
+     O_c_d=>BS_blk(iB)%O_c_d
+     !
+     !$cuf kernel do (1)
+     do ig =1,ngrho
+       O_c_d(ig,iB_oscillator)=rhotw_d(ig)
+     enddo
+#else
      BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
+#endif
      O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp) = .false.
    end subroutine
    !

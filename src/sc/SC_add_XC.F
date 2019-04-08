@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
+subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  !
  ! The definition of the XC part is the same in the two approches. The only
  ! difference is that in _XC the operator is written in the SC basis, while
@@ -63,7 +63,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
  !
  ! tests for excitons
  !
- real(SP)                 :: n_exc,ELEC,HOLE
+ real(SP)                 :: n_exc,ELEC,HOLE,DELTA
  !
  type(QP_t)   :: qp_dummy
  !
@@ -89,6 +89,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
      !
      ELEC=0._SP
      HOLE=0._SP
+     DELTA=0._SP
      do ik=1,E%nk
        !
        ! Compute number of electrons and holes
@@ -98,6 +99,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE)
        do ib=SC_bands(1),SC_bands(2)
          if(E_reference%E(ib,ik,1)> SC_mu(1)) ELEC=ELEC          -real(cI*G_tmp(ib,ib),SP) *Xk%weights(ik)
          if(E_reference%E(ib,ik,1)<=SC_mu(1)) HOLE=HOLE+(spin_occ+real(cI*G_tmp(ib,ib),SP))*Xk%weights(ik)
+         do ibp=SC_bands(1),SC_bands(2)
+           if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
+           DELTA=DELTA-G_tmp(ib,ibp)**2*Xk%weights(ik)
+         enddo
        enddo
        !
        ! Impose starting off diagonal elements

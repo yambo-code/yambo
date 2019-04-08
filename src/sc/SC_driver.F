@@ -93,7 +93,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Work Space
  !
  integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),io_E,io_V,io_WF,i_sp_pol,i_io,io_X_err,io_DIP_err
- real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE
+ real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE,DELTA
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
@@ -310,7 +310,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    ! Exchange & Correlation
    !========================
    !
-   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1,ELEC,HOLE)
+   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1,ELEC,HOLE,DELTA)
    !
    ! Hartree potential
    !===================
@@ -562,8 +562,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      !
      if(trim(SC_neq_kind)=="matsubara") then
-       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS/HOLES    '
-       dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS/HOLES/DELTA    '
+       dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))//'/'//trim(real2ch(DELTA))
      endif
      !
 #if defined _ELECTRIC
@@ -654,8 +654,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    call msg('r' ,'[SC]          on energies [ev]:',E_convergence*HA2EV)
    if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald) [Ha/Ry]:',E_total*(/1._SP,2._SP/))
    if (.not.l_sc_V_is_local)  call msg('r','')
-   if(trim(SC_neq_kind)=="matsubara") &
-&                      call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
+   if(trim(SC_neq_kind)=="matsubara") then
+                       call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
+                       call msg('r' ,'[SC] Order Parameter                :',DELTA)
+   endif
    if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
    if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !

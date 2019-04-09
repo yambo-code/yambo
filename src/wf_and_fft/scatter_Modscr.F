@@ -54,7 +54,6 @@ subroutine scatter_ModScr(isc,mu)
      ig2=i2
      if (ng(1)==1) ig1=ig2
      if (ng(2)==1) ig2=ig1
-!      write(20,*) iq,ig1,ig2,isc%gamp(iq,ig1)
      if (l_col_cut) then
        call set_qpg_true(iq,ig1,bare_qpg_true)
      else
@@ -62,17 +61,20 @@ subroutine scatter_ModScr(isc,mu)
      endif
      if (WF_xc_functional==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then 
 !GAUPBE expression for model exchange see: Song et al. J. Chem. Phys. 138, 241101 (2013)
-!       isc%gamp(i1,i2)= Co*real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu)),SP)
        isc%gamp(i1,i2)= Co*real(exp(-(bare_qpg_true**2)/(4._SP*mu)),SP)
      else
 !       isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
 !            &(1._SP-real(exp(-(bare_qpg(iq,ig1)**2)/(4._SP*mu**2)),SP)) 
+!In case of bare potential lim->q=0 4pi/q^2(1-exp(-q^2/4mu^2)=pi/mu^2 this is
+!not taken into account
+!Note in case of cutoff potential QE does not screen the exchange term: to be
+!verified if it is coorect
        isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
             &(1._SP -real(exp(-(bare_qpg_true**2)/(4._SP*mu**2)),SP)) 
+!       if (i1==1) isc%gamp(i1,i2)=1._SP/(4._SP*mu**2)*d3q_factor/(2._SP*pi)**3
      endif
    enddo
  end do
-write(*,*) "MU",mu
  !
  contains
    !

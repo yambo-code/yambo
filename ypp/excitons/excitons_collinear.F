@@ -21,63 +21,46 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_collinear(lambda,n_lambda,deg_list,S_z,S_sq)
+subroutine excitons_collinear(Singlet,Triplet,S_eh)
  !
  use pars,          ONLY:SP
+ use electrons,     ONLY:spin
+ use BS,            ONLY:BS_H_dim
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_eig
+ use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  !
  implicit none
  !
- real(SP)    :: S_sq(BSS_n_eig),S_z(BSS_n_eig)
- integer     :: deg_list(BSS_n_eig),n_lambda,lambda(n_lambda)
+ real(SP)    :: Singlet(BSS_n_eig),Triplet(BSS_n_eig,3),S_eh(BSS_n_eig)
  ! 
  ! Work Space
  !
- integer :: i_l,i_s,i_deg,n_deg
+ real(SP) :: spin_factor(2)
+ integer  :: i_l,i_s,i_c,i_spin
  !
- S_z(:)=0
- S_sq(:)=0
+ spin_factor=(/1.,-1./)
  !
- ! First calculates S_sq and S_z for all states
- !
- do i_l=1,n_lambda
+ do i_c=1,EXCITONS_n_user_states
    !
-   do i_s=1,BSS_n_eig
-     write (*,*) BSS_eh_table(i_s,:)
+   i_l=EXCITONS_user_indexes(i_c)
+   !
+   !NEW 
+   do i_s=1,BS_H_dim
+     !
+     i_spin=spin(BSS_eh_table(i_s,:))
+     !
+     Triplet(i_l,2)=Triplet(i_l,2)+1./sqrt(2.)*BS_mat(i_s,i_l)*conjg(BS_mat(i_s,i_l))*spin_factor(i_spin)
+     Singlet(i_l)  =Singlet(i_l)  +1./sqrt(2.)*BS_mat(i_s,i_l)*conjg(BS_mat(i_s,i_l))
+     !
    enddo
    !
- enddo
- stop
-
-
- do i_l=1,BSS_n_eig 
+   S_eh(i_l)=sqrt(2.)*abs(Triplet(i_l,2))
    !
-   !
-!   do i1=1,BSS_n_eig,2
-!     S_sq(i_l)=S_sq(i_l)+BS_mat(i1,i_l)*conjg(BS_mat(i1+1,i_l))+&
-!&                              (BS_mat(i1+1,i_l)*conjg(BS_mat(i1,i_l)))
+   !OLD 
+!   do i_s=1,BS_H_dim,2
+!     S_sq(i_l)=S_sq(i_l)+BS_mat(i_s,i_l)*conjg(BS_mat(i_s+1,i_l))+&
+!&                                 (BS_mat(i_s+1,i_l)*conjg(BS_mat(i_s,i_l)))
 !   enddo
-   !
- enddo
- !
- ! then sum over degenerate states
- !
- do i_l=1,BSS_n_eig
-   !
-   if (deg_list(i_l)/=i_l) cycle
-   !
-   n_deg=count(deg_list==i_l)
-   !
-   do i_deg=i_l+1,i_l+n_deg-1
-     S_sq(i_l)=S_sq(i_l)+S_sq(i_deg)
-   enddo
-   !
-   S_sq(i_l)=1._SP-S_sq(i_l)
-   !
-   do i_deg=deg_list(i_l)+1,deg_list(i_l)+n_deg-1
-     S_sq(i_deg)=S_sq(i_l)
-     S_z(i_deg)=S_z(i_l)
-   enddo
    !
  enddo
  !

@@ -98,6 +98,7 @@ module YPP
  logical               ::BANDS_E_and_k_db
  !
  ! SPIN and SOC
+ !
  integer      ::WF_ref(2)
  !
  ! REAL SPACE PLOT
@@ -145,7 +146,9 @@ module YPP
  real(SP)     ::deg_energy   
  real(SP)     ::min_weight   
  real(SP)     ::WF_multiplier   
- character(schlen) ::state_ctl 
+ character(schlen)    ::state_ctl 
+ integer              :: EXCITONS_n_user_states=0
+ integer, allocatable :: EXCITONS_user_indexes(:)
  !
  ! Wannier interface
  !
@@ -243,7 +246,17 @@ module YPP
      !
    end subroutine
    !
-   subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,S_z,S_sq)
+   subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
+     use pars,          ONLY:SP
+     use BS_solvers,    ONLY:BSS_n_eig
+     implicit none
+     integer               :: N,BS_E_degs(BSS_n_eig)
+     real(SP),   optional  :: R(BSS_n_eig)
+     complex(SP),optional  :: C(BSS_n_eig)
+     logical,    optional  :: VERB
+   end subroutine
+   !
+   subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_eh)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
      use electrons,     ONLY:levels
@@ -251,8 +264,9 @@ module YPP
      type(levels)       :: E
      complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      real(SP),optional,pointer :: BS_E_SOC_corr(:,:)
-     real(SP),optional  :: S_z(BS_H_dim)
-     real(SP),optional  :: S_sq(BS_H_dim)
+     real(SP),optional  :: Singlet(BS_H_dim)
+     real(SP),optional  :: Triplet(BS_H_dim,3)
+     real(SP),optional  :: S_eh(BS_H_dim)
    end subroutine
    !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)

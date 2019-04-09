@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
+subroutine excitons_amplitudes(Xk,Xen,BS_E_degs)
  !
  use pars,          ONLY:SP,schlen,pi,cI
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc
- use YPP,           ONLY:min_weight
+ use YPP,           ONLY:min_weight,EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
@@ -38,7 +38,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !
  type(bz_samp)    :: Xk
  type(levels)     :: Xen
- integer          :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
+ integer          :: BS_E_degs(BSS_n_eig)
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
@@ -59,13 +59,13 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda)
  !  io_err=io_DIPOLES(Dip,io_ID)
  !endif
  !
- call msg('s','Processing '//trim(intc(n_lambda))//' states')
+ call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
- do i_lambda=1,n_lambda
+ do i_lambda=1,EXCITONS_n_user_states
    !
    A_weight   =0._SP
    !
-   i_l_grp=lambda_s(i_lambda)
+   i_l_grp=EXCITONS_user_indexes(i_lambda)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(i_l_grp))
    !

@@ -240,6 +240,9 @@ subroutine ypp_INIT_load(defs)
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
  call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
+ ! Excitons
+ !
+ !
  ! WFs
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)

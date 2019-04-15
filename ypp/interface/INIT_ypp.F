@@ -653,6 +653,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
    if (l_spin) call initactivate(1,"Degen_Step")
    if (l_spin.and..not.l_excitons) call initactivate(1,"FFTGvecs")
+   if (l_spin.and.l_excitons) call initactivate(1,"E_treshold R_treshold")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif

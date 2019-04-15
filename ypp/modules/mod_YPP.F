@@ -144,6 +144,8 @@ module YPP
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
+ real(SP)     ::E_treshold=0.
+ real(SP)     ::R_treshold=0.   
  real(SP)     ::min_weight   
  real(SP)     ::WF_multiplier   
  character(schlen)    ::state_ctl 
@@ -268,17 +270,6 @@ module YPP
      real(SP),   optional  :: R(N)
      complex(SP),optional  :: C(N)
      logical,    optional  :: VERB
-   end subroutine
-   !
-   subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_eh)
-     use pars,          ONLY:SP
-     use BS,            ONLY:BS_H_dim
-     implicit none
-     complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
-     real(SP),optional,pointer :: BS_E_SOC_corr(:,:)
-     real(SP),optional  :: Singlet(BS_H_dim)
-     real(SP),optional  :: Triplet(BS_H_dim,3)
-     real(SP),optional  :: S_eh(BS_H_dim)
    end subroutine
    !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)

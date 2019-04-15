@@ -24,7 +24,7 @@
 subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  use pars,          ONLY:SP,cZERO,rZERO
- use BS,            ONLY:BS_bands,BS_H_dim
+ use BS,            ONLY:BS_bands
  use BS_solvers,    ONLY:BS_mat,BSS_n_eig
  use com,           ONLY:msg,error,warning
  use FFT_m,         ONLY:fft_size
@@ -32,11 +32,13 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg,error,warning
- use interfaces,    ONLY:WF_load,WF_free
+ use interfaces,    ONLY:WF_load,WF_free,PARALLEL_index
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
+ use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin
+ use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
  !
 #include<memory.h>
  !
@@ -46,6 +48,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  ! 
  ! Work Space
  !
+ type(PP_indexes)        ::px
  integer                 ::i_eh,i_eh_p,i_c,i_l,i_spin,i_spin_p,i_S,i_M
  type(EXCITON_kin)       ::eh,eh_p
  type(EXCITON_spin)      ::EXC_spin
@@ -59,9 +62,9 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !                 ===============
  !
  EXC_spin%N=maxval( EXCITONS_user_indexes )
- allocate(EXC_spin%N_SM(EXC_spin%N,0:1,-1:1))
- allocate(EXC_spin%S_sq(EXC_spin%N))
- allocate(EXC_spin%S_z(EXC_spin%N))
+ YAMBO_ALLOC(EXC_spin%N_SM,(EXC_spin%N,0:1,-1:1))
+ YAMBO_ALLOC(EXC_spin%S_sq,(EXC_spin%N))
+ YAMBO_ALLOC(EXC_spin%S_z,(EXC_spin%N))
  EXC_spin%S_sq   = rZERO
  EXC_spin%S_z    = rZERO
  EXC_spin%N_SM   = rZERO
@@ -78,13 +81,19 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  YAMBO_ALLOC(WF_eh,(fft_size,n_spinor))
  YAMBO_ALLOC(WF_eh_p,(fft_size,n_spinor))
  !
- call live_timing('Excitonic Spin',BS_H_dim) 
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/BSS_n_eig/))
+ call PP_redux_wait
  !
- do i_eh = 1,BS_H_dim
+ call live_timing('Excitonic Spin',px%n_of_elements(myid+1)) 
+ !
+ do i_eh = 1,BSS_n_eig
+   !
+   if (.not.px%element_1D(i_eh)) cycle
    !
    call excitons_kinematics(Xk,eh,i_eh)
    !
-   do i_eh_p = 1,BS_H_dim
+   do i_eh_p = 1,BSS_n_eig
      !
      call excitons_kinematics(Xk,eh_p,i_eh_p)
      !
@@ -121,21 +130,35 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    !
  enddo !  Matrix elements
  !
- call live_timing()
+ call live_timing() 
  !
  call section('=','Degeneracy average')
  !                 ==================
  EXC_spin%N_SM=real(TMP_SM(:EXC_spin%N,:,:))
+ !
+ call PP_redux_wait(EXC_spin%N_SM)
+ !
  do i_S=0,1
    do i_M=-i_S,i_S
      call excitons_degeneracy_average(EXC_spin%N,BS_E_degs,R=EXC_spin%N_SM(:,i_S,i_M),VERB=i_S==0 )
    enddo
  enddo
  !
+ ! <S> and <S_z> section
+ !======================
+ do i_l=1,EXC_spin%N
+   do i_S=0,1
+     do i_M=-i_S,i_S
+       EXC_spin%S_sq(i_l)=EXC_spin%S_sq(i_l)+real(i_S)*real(i_S+1)*EXC_spin%N_SM(i_l,i_S,i_M)
+       EXC_spin%S_z(i_l) =EXC_spin%S_z(i_l)+real(i_M)*EXC_spin%N_SM(i_l,i_S,i_M)
+     enddo
+   enddo
+ enddo 
+ !
  ! Sorting & reporting'
  !=====================
  !
- !call excitons_sort_and_report(BS_R_right,BS_E,Singlet=Singlet,Triplet=Triplet,S_eh=S_eh)
+ call excitons_sort_and_report(BS_R_right,BS_E,EXC_spin=EXC_spin)
  !
  do i_c=1,EXCITONS_n_user_states
    !
@@ -148,6 +171,10 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
    write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
    write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
+   write (*,*) 
+   write (*,*) "S:", (-1.+sqrt(1.+4*EXC_spin%S_sq(i_l)))/2.
+   write (*,*) "S_z:", EXC_spin%S_z(i_l)
+   write (*,*) 
    write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
    !
  enddo
@@ -158,9 +185,10 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  YAMBO_FREE(WF_eh)
  YAMBO_FREE(WF_eh_p)
  call WF_free(WF)
- deallocate(EXC_spin%N_SM)
- deallocate(EXC_spin%S_sq)
- deallocate(EXC_spin%S_z)
+ YAMBO_FREE(EXC_spin%N_SM)
+ YAMBO_FREE(EXC_spin%S_sq)
+ YAMBO_FREE(EXC_spin%S_z)
+ call PP_indexes_reset(px)
  !
  contains
    !

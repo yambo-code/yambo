@@ -28,7 +28,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc
- use YPP,           ONLY:min_weight,EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPP,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
@@ -129,7 +129,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs)
    titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
-     if (K_weight(ikibz)>min_weight*5._SP) then
+     if (K_weight(ikibz)>EXCITON_weight_treshold*5._SP) then
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
@@ -153,7 +153,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs)
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
+     if (A_weight(neh)/maxval(A_weight)<EXCITON_weight_treshold) cycle
      !
      ikbz = BSS_eh_table(S_indx(neh),1)
      iv = BSS_eh_table(S_indx(neh),2)
@@ -167,7 +167,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs)
      amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikibz,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<min_weight*5._SP) cycle
+     if (A_weight(neh)<EXCITON_weight_treshold*5._SP) cycle
      !
      if(n_sp_pol==1) then
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&

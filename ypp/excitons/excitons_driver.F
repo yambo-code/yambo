@@ -119,7 +119,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if(.not.l_flag) return
  !
- ! Allocation of energies and residuum, then also eigenvector
+ ! Allocation of energies and residuals, then also eigenvector
  !
  YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
  YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
@@ -237,21 +237,24 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
      !
      use pars,   ONLY:schlen
      use stderr, ONLY:STRING_split,intc
-     use YPP,    ONLY:state_ctl,EXCITONS_user_indexes,EXCITONS_n_user_states
-     use com,    ONLY:warning
+     use YPP,    ONLY:state_ctl,EXCITONS_user_indexes,EXCITONS_n_user_states,EXCITON_E_treshold,EXCITON_Res_treshold
+     use com,    ONLY:warning,msg
      !
      implicit none
      !
-     integer          ::i_start,i_end,i_str,i_st,i_st_p,TMP_index(BSS_n_eig),n_user
+     integer          ::i_start,i_end,i_str,i_st,TMP_index(BSS_n_eig),n_user
+     real(SP)         ::Residuals(BSS_n_eig)
      character(schlen)::str_piece(50)
      !
      call STRING_split(state_ctl,str_piece)
      !
      EXCITONS_n_user_states=0
      n_user    =0
-     i_str     =1
      TMP_index =0
      !
+     ! 1. Using the "States" variable
+     !--------------------------------
+     i_str     =1
      do while (i_str<50)
        !
        if (len_trim(str_piece(i_str))==0) exit
@@ -270,24 +273,53 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
          !
          n_user=n_user+1
          !
-         do i_st_p=1,BSS_n_eig
-           if (BS_E_degs(i_st_p)==BS_E_degs(i_st)) then
-             if (.not.any(TMP_index==i_st_p)) then
-               EXCITONS_n_user_states=EXCITONS_n_user_states+1
-               TMP_index(EXCITONS_n_user_states)=i_st_p
-             endif
-           endif
-         enddo
+         call ADD_me_to_the_list(i_st,TMP_index)
          !
        enddo
      enddo
      !
-     if (EXCITONS_n_user_states>n_user) call warning(trim(intc(EXCITONS_n_user_states-n_user))//&
+     ! 2. Using the "En_treshold" variable
+     !------------------------------------
+     if (EXCITON_E_treshold>0.) then
+       do i_st=1,BSS_n_eig
+         if (real(BS_E(i_st))<EXCITON_E_treshold) call ADD_me_to_the_list(i_st,TMP_index)
+       enddo
+     endif
+     !
+     ! 3. Using the "Res_treshold" variable
+     !--------------------------------------
+     if (EXCITON_Res_treshold>0.) then
+       Residuals(:) = BS_R_right(:)*conjg(BS_R_right(:))
+       do i_st=1,BSS_n_eig
+         if (real(Residuals(i_st))>EXCITON_Res_treshold*maxval(Residuals)) call ADD_me_to_the_list(i_st,TMP_index)
+       enddo
+     endif
+     !
+     if (EXCITONS_n_user_states==0) return
+     !
+     if (EXCITONS_n_user_states>n_user) call warning(" "//trim(intc(EXCITONS_n_user_states-n_user))//&
 &                                                    " excitonic states added to the USER selection to preserve degeneracy")
+     call msg("s"," "//trim(intc(EXCITONS_n_user_states))//" excitonic states selected")
      !
      YAMBO_ALLOC(EXCITONS_user_indexes,(EXCITONS_n_user_states))
      EXCITONS_user_indexes=TMP_index(:EXCITONS_n_user_states)
      !
+   end subroutine
+   !
+   subroutine ADD_me_to_the_list(i_state,TMP_index)
+     !
+     use YPP,    ONLY:EXCITONS_n_user_states
+     !
+     integer i_st_p,i_state,TMP_index(BSS_n_eig)
+     !
+     do i_st_p=1,BSS_n_eig
+       if (BS_E_degs(i_st_p)==BS_E_degs(i_state)) then
+         if (.not.any(TMP_index==i_st_p)) then
+           EXCITONS_n_user_states=EXCITONS_n_user_states+1
+           TMP_index(EXCITONS_n_user_states)=i_st_p
+         endif
+       endif
+     enddo
    end subroutine
    !
 end subroutine

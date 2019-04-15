@@ -43,8 +43,8 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  ! Work Space
  !
  integer            :: j1,j2,ia,is,i_mod,ic,n_elements,i_S,i_M,S_indx(BSS_n_eig)
- real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(10)
- character(schlen)  :: titles(7),ch_dummy,dump_ch
+ real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,rv(20)
+ character(schlen)  :: titles(20),ch_dummy,dump_ch
  logical            :: write_widths,write_soc_corr,write_spin,E_mode,I_mode
  !
  ! Excitonc amplitude
@@ -109,7 +109,7 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
        titles(n_elements)='<S_z>'
      endif
      do i_S=0,1
-       do i_M=-1,1
+       do i_M=-i_S,i_S
          if (n_sp_pol==2.and.i_M/=0) cycle
          n_elements=n_elements+1
          titles(n_elements)='|S='//trim(intc(i_S))//' M='//trim(intc(i_M))//'>'
@@ -124,8 +124,7 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    Residuals(:) = BS_R(:)*conjg(BS_R(:))
    if (write_widths)  Residuals(:) = abs(BS_R(:))
-   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*&
-&         d3k_factor*4._SP*pi/q0_def_norm**2*HA2EV
+   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2*HA2EV
    Rmax = maxval(Residuals)
    !
    if (trim(R_normalize)=='yes') Residuals=Residuals/Rmax
@@ -158,8 +157,12 @@ subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
        if (.not.any((/EXCITONS_user_indexes==j2/))) cycle
        n_elements=n_elements+1
        rv(n_elements)=(-1.+sqrt(1.+4*EXC_spin%S_sq(j2)))/2.
+       if (n_spinor==2) then
+         n_elements=n_elements+1
+         rv(n_elements)=EXC_spin%S_z(j2)
+       endif
        do i_S=0,1
-         do i_M=-1,1
+         do i_M=-i_S,i_S
            if (n_sp_pol==2.and.i_M/=0) cycle
            n_elements=n_elements+1
            rv(n_elements)=EXC_spin%N_SM(j2,i_S,i_M)

@@ -29,7 +29,14 @@ subroutine ypp_INIT_load(defs)
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
- use YPP
+ use YPP,           ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
+&                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
+&                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,&
+                         DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
+                         gamma_radius,INTERP_grid,mag_dir,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,&
+                         PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
+                         SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,w90_fname,wannier_bands,&
+&                        WF_multiplier,WF_ref,what_to_write
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
@@ -242,19 +249,23 @@ subroutine ypp_INIT_load(defs)
  !
  ! Excitons
  !
+ call it(defs,'Res_treshold', 'Select states above this optical strength treshold (max normalized to 1.)',&
+&              EXCITON_Res_treshold,verb_level=V_general)
+ call it(defs,'En_treshold', 'Select states below this energy treshold',&
+&              EXCITON_E_treshold,verb_level=V_general,unit=E_unit)
+ call it(defs,'Weight_treshold', 'Print transitions above this weight treshold (max normalized to 1.)',&
+&              EXCITON_weight_treshold,verb_level=V_general)
+ call it(defs,'States','Index of the BS state(s)',state_ctl)
+ call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
+ call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  !
  ! WFs
  !
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit)
- call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',&
-&                           deg_energy,E_unit)
+ call it(defs,'Degen_Step', 'Maximum energy separation of two degenerate states',deg_energy,E_unit)
 #if defined _YPP_ELPH
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
- call it(defs,'MinWeight', 'Print transitions with weight => MinWeight',min_weight,verb_level=V_general)
- call it(defs,'States','Index of the BS state(s)',state_ctl)
- call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
- call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
  !
 #if defined _YPP_MAGNETIC

@@ -49,7 +49,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  ! Work Space
  !
  type(PP_indexes)        ::px
- integer                 ::i_eh,i_eh_p,i_c,i_l,i_spin,i_spin_p,i_S,i_M
+ integer                 ::i_eh,i_eh_p,i_c,i_l,i_S,i_M,s_e,s_h,s_e_p,s_h_p
  type(EXCITON_kin)       ::eh,eh_p
  type(EXCITON_spin)      ::EXC_spin
  complex(SP)             ::cc(n_spin,n_spin),vv(n_spin,n_spin),cc_vv(0:1,-1:1),TMP_SM(BSS_n_eig,0:1,-1:1)
@@ -110,6 +110,21 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
 &                                          conjg(cc(eh%spin,eh_p%spin))*vv(eh%spin,eh_p%spin)
          enddo
        enddo
+     else
+       do i_S=0,1
+         do i_M=-i_S,i_S
+           do s_e=1,2
+             do s_h=1,2
+               do s_e_p=1,2
+                 do s_h_p=1,2
+                   cc_vv(i_S,i_M)=cc_vv(i_S,i_M)+P(i_S,i_M,s_e,s_h)*P(i_S,i_M,s_e_p,s_h_p)*&
+&                                                 conjg(cc(s_e,s_e_p))*vv(s_h,s_h_p)
+                 enddo
+               enddo
+             enddo
+           enddo
+         enddo
+       enddo
      endif
      !
      do i_c=1,EXCITONS_n_user_states
@@ -164,18 +179,19 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    !
    i_l=EXCITONS_user_indexes(i_c)
    !
-   if (BS_E_degs(i_l)/=i_l) cycle
+   if (BS_E_degs(i_l)/=i_l.or.myid>0) cycle
    !
-   write (*,*) 
-   write (*,*) "Exciton: ",i_l
-   write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
-   write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
-   write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
-   write (*,*) 
-   write (*,*) "S:", (-1.+sqrt(1.+4*EXC_spin%S_sq(i_l)))/2.
-   write (*,*) "S_z:", EXC_spin%S_z(i_l)
-   write (*,*) 
-   write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
+   !write (*,*) 
+   !write (*,*) "Exciton: ",i_l
+   !write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
+   !write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
+   !write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
+   !write (*,*) "N(1,1):", EXC_spin%N_SM(i_l,1,1) 
+   !write (*,*) 
+   !write (*,*) "S:", (-1.+sqrt(1.+4*EXC_spin%S_sq(i_l)))/2.
+   !write (*,*) "S_z:", EXC_spin%S_z(i_l)
+   !write (*,*) 
+   !write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
    !
  enddo
  !
@@ -196,10 +212,9 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
      !
      integer     :: n,n_p
      complex(SP) :: inner_product(n_spin,n_spin)
+     integer     :: i_spin,i_spin_p
      !
      inner_product=cZERO
-     !
-     !if ((n.eq.n_p).and.(eh%ik_bz.eq.eh_p%ik_bz)) return 
      !
      call WF_apply_symm((/n,  eh%ik_ibz,  eh%ik_sym,  eh%spin  /),WF_eh)
      call WF_apply_symm((/n_p,eh_p%ik_ibz,eh_p%ik_sym,eh_p%spin/),WF_eh_p)

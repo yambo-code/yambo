@@ -144,9 +144,9 @@ module YPP
  integer      ::ncell(3)     
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
- real(SP)     ::E_treshold=0.
- real(SP)     ::R_treshold=0.   
- real(SP)     ::min_weight   
+ real(SP)     ::EXCITON_E_treshold
+ real(SP)     ::EXCITON_Res_treshold
+ real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
  character(schlen)    ::state_ctl 
  integer              :: EXCITONS_n_user_states=0

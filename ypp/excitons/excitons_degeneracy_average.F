@@ -31,13 +31,15 @@ subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
  implicit none
  !
  integer                 :: N,BS_E_degs(BSS_n_eig)
- real(SP)   , optional   :: R(BSS_n_eig)
- complex(SP), optional   :: C(BSS_n_eig)
+ real(SP)   , optional   :: R(N)
+ complex(SP), optional   :: C(N)
  logical,     optional   :: VERB
  !
  ! Work space
  !
- integer i_l,n_deg,i_deg
+ integer     :: i_l,n_deg,i_deg
+ real(SP)    :: R_save(N)
+ complex(SP) :: C_save(N)
  !
  do i_l=1,N
    !
@@ -59,13 +61,19 @@ subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
        C(i_l)=C(i_l)+C(i_deg)
      endif
    enddo
+   if (present(R)) then
+     R_save(:N)=R(:N)
+   endif
+   if (present(C)) then
+     C_save(:N)=C(:N)
+   endif
    !
-   do i_deg=BS_E_degs(i_l)+1,BS_E_degs(i_l)+n_deg-1
+   do i_deg=BS_E_degs(i_l),BS_E_degs(i_l)+n_deg-1
      if (present(R)) then
-       R(i_deg)=R(i_l)
+       R(i_deg)=R_save(i_l)/real(n_deg)
      endif
      if (present(C)) then
-       C(i_deg)=C(i_l)
+       C(i_deg)=C_save(i_l)/real(n_deg)
      endif
    enddo
    !

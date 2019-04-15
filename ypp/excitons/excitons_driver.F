@@ -135,7 +135,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Sort energies and write to output
  !===================================
- if (l_sort) call excitons_sort_and_report(Xen,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
+ if (l_sort) call excitons_sort_and_report(BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
  ! Sort energies to find degenerate states
  !========================================
@@ -182,7 +182,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! 
  ! Exciton's spin
  !=====================
- if (l_spin)       call exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs)
+ if (l_spin)       call excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  ! Exciton's Amplitude
  !=====================
@@ -270,7 +270,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
          n_user=n_user+1
          !
          do i_st_p=1,BSS_n_eig
-           if (BS_E_degs(i_st_p)==i_st) then
+           if (BS_E_degs(i_st_p)==BS_E_degs(i_st)) then
              if (.not.any(TMP_index==i_st_p)) then
                EXCITONS_n_user_states=EXCITONS_n_user_states+1
                TMP_index(EXCITONS_n_user_states)=i_st_p

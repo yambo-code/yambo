@@ -149,6 +149,20 @@ module YPP
  character(schlen)    ::state_ctl 
  integer              :: EXCITONS_n_user_states=0
  integer, allocatable :: EXCITONS_user_indexes(:)
+ type EXCITON_spin
+   integer               :: N
+   real(SP), allocatable :: N_SM(:,:,:)
+   real(SP), allocatable :: S_sq(:)
+   real(SP), allocatable :: S_z(:)
+ end type EXCITON_spin
+ type EXCITON_kin
+   integer           :: ik_bz = 0
+   integer           :: ik_ibz = 0
+   integer           :: ik_sym = 0
+   integer           :: iv = 0
+   integer           :: ic = 0
+   integer           :: spin = 0
+ end type EXCITON_kin
  !
  ! Wannier interface
  !
@@ -251,17 +265,15 @@ module YPP
      use BS_solvers,    ONLY:BSS_n_eig
      implicit none
      integer               :: N,BS_E_degs(BSS_n_eig)
-     real(SP),   optional  :: R(BSS_n_eig)
-     complex(SP),optional  :: C(BSS_n_eig)
+     real(SP),   optional  :: R(N)
+     complex(SP),optional  :: C(N)
      logical,    optional  :: VERB
    end subroutine
    !
-   subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_eh)
+   subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_eh)
      use pars,          ONLY:SP
      use BS,            ONLY:BS_H_dim
-     use electrons,     ONLY:levels
      implicit none
-     type(levels)       :: E
      complex(SP)        :: BS_R(BS_H_dim),BS_E(BS_H_dim)
      real(SP),optional,pointer :: BS_E_SOC_corr(:,:)
      real(SP),optional  :: Singlet(BS_H_dim)

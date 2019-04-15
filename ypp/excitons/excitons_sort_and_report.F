@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_sh)
+subroutine excitons_sort_and_report(BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_sh)
  !
  use pars,          ONLY:SP,schlen,pi
  use units,         ONLY:HA2EV
- use electrons,     ONLY:spin_occ,levels,spin,E_SOC_nbands,n_sp_pol
+ use electrons,     ONLY:spin_occ,spin,E_SOC_nbands,n_sp_pol
  use stderr,        ONLY:intc,set_real_printed_length
  use BS_solvers,    ONLY:BSS_description,BSS_n_descs,BSS_n_eig
  use com,           ONLY:msg,of_open_close
@@ -36,7 +36,6 @@ subroutine excitons_sort_and_report(E,BS_R,BS_E,BS_E_SOC_corr,Singlet,Triplet,S_
  !
  implicit none 
  !
- type(levels)       :: E
  complex(SP)        :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
  real(SP),pointer   :: BS_E_SOC_corr(:,:)
  real(SP),optional  :: Singlet(BSS_n_eig)

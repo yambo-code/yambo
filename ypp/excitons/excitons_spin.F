@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DV
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,53 +21,171 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exciton_spin(Xk,Xen,BS_R_right,BS_E,BS_E_degs)
+subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
- ! Excitonc Spin
- !
- use pars,          ONLY:SP,rZERO
- use BS_solvers,    ONLY:BSS_n_eig
+ use pars,          ONLY:SP,cZERO,rZERO
+ use BS,            ONLY:BS_bands,BS_H_dim
+ use BS_solvers,    ONLY:BS_mat,BSS_n_eig
+ use com,           ONLY:msg,error,warning
+ use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:levels,n_sp_pol,n_spinor
- use YPP,           ONLY:excitons_sort_and_report,excitons_degeneracy_average,EXCITONS_n_user_states
+ use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
+ use LIVE_t,        ONLY:live_timing
+ use com,           ONLY:msg,error,warning
+ use interfaces,    ONLY:WF_load,WF_free
+ use wave_func,     ONLY:WF,wf_ng
+ use wrapper,       ONLY:Vstar_dot_V
+ use YPP,           ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
+&                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: Xk
- type(levels)  :: Xen
  integer       :: BS_E_degs(BSS_n_eig)
  complex(SP)   :: BS_R_right(BSS_n_eig),BS_E(BSS_n_eig)
- !
- ! Work Space
  ! 
- integer       :: i_c
- real(SP)      :: Triplet(BSS_n_eig,3),&  ! Triplet (-1,0,1) projections
-&                 Singlet(BSS_n_eig),&    ! Singlet projection
-&                 S_eh(BSS_n_eig)         ! e/h S (in pure spin states it is 1,0)
+ ! Work Space
  !
- call section('+','Spin properties')
- !                 ===============
- Singlet = rZERO
- Triplet = rZERO
- S_eh    = rZERO
+ integer                 ::i_eh,i_eh_p,i_c,i_l,i_spin,i_spin_p,i_S,i_M
+ type(EXCITON_kin)       ::eh,eh_p
+ type(EXCITON_spin)      ::EXC_spin
+ complex(SP)             ::cc(n_spin,n_spin),vv(n_spin,n_spin),cc_vv(0:1,-1:1),TMP_SM(BSS_n_eig,0:1,-1:1)
+ real(SP)                ::P(0:1,-1:1,2,2)
+ complex(SP),allocatable ::WF_eh(:,:),WF_eh_p(:,:)
  !
  if (n_sp_pol==1.and.n_spinor==1) return
  !
- if (n_sp_pol==2) call excitons_collinear(Singlet,Triplet,S_eh)
- !if (n_spinor==2) call excitons_non_collinear(Xk,Singlet,Triplet,S_eh)
+ call section('+','Spin properties')
+ !                 ===============
  !
+ EXC_spin%N=maxval( EXCITONS_user_indexes )
+ allocate(EXC_spin%N_SM(EXC_spin%N,0:1,-1:1))
+ allocate(EXC_spin%S_sq(EXC_spin%N))
+ allocate(EXC_spin%S_z(EXC_spin%N))
+ EXC_spin%S_sq   = rZERO
+ EXC_spin%S_z    = rZERO
+ EXC_spin%N_SM   = rZERO
+ TMP_SM = cZERO
+ P      = rZERO
+ !
+ P(0, 0,:,:)=1./sqrt(2.)*reshape((/ 1.,0.,0.,1./),(/2,2/))
+ P(1,-1,:,:)=            reshape((/ 0.,0.,1.,0./),(/2,2/))
+ P(1, 0,:,:)=1./sqrt(2.)*reshape((/-1.,0.,0.,1./),(/2,2/))
+ P(1, 1,:,:)=            reshape((/ 0.,1.,0.,0./),(/2,2/))
+ !
+ call WF_load(WF,wf_ng,1,BS_bands,(/1,Xk%nibz/),space='R',title='-EXCWF')
+ !
+ YAMBO_ALLOC(WF_eh,(fft_size,n_spinor))
+ YAMBO_ALLOC(WF_eh_p,(fft_size,n_spinor))
+ !
+ call live_timing('Excitonic Spin',BS_H_dim) 
+ !
+ do i_eh = 1,BS_H_dim
+   !
+   call excitons_kinematics(Xk,eh,i_eh)
+   !
+   do i_eh_p = 1,BS_H_dim
+     !
+     call excitons_kinematics(Xk,eh_p,i_eh_p)
+     !
+     call elemental_compose(eh%ic,eh_p%ic,cc)
+     !
+     call elemental_compose(eh%iv,eh_p%iv,vv)
+     !
+     cc_vv=rZERO
+     !
+     if (n_sp_pol==2) then
+       do i_S=0,1
+         do i_M=-i_S,i_S
+            cc_vv(i_S,i_M)=cc_vv(i_S,i_M)+P(i_S,i_M,eh%spin,eh%spin)*P(i_S,i_M,eh_p%spin,eh_p%spin)*&
+&                                          conjg(cc(eh%spin,eh_p%spin))*vv(eh%spin,eh_p%spin)
+         enddo
+       enddo
+     endif
+     !
+     do i_c=1,EXCITONS_n_user_states
+       !
+       i_l=EXCITONS_user_indexes(i_c)
+       !
+       do i_S=0,1
+         do i_M=-i_S,i_S
+           TMP_SM(i_l,i_S,i_M)=TMP_SM(i_l,i_S,i_M)+conjg(BS_mat(i_eh,i_l))*BS_mat(i_eh_p,i_l)*cc_vv(i_S,i_M)
+         enddo
+       enddo
+       !
+     enddo
+       !
+   enddo  ! Matrix elements
+   !
+   call live_timing(steps=1)
+   !
+ enddo !  Matrix elements
+ !
+ call live_timing()
  !
  call section('=','Degeneracy average')
  !                 ==================
- call excitons_degeneracy_average( EXCITONS_n_user_states, BS_E_degs, R=Singlet, VERB=.TRUE. )
- call excitons_degeneracy_average( EXCITONS_n_user_states, BS_E_degs, R=S_eh, VERB=.FALSE. )
- do i_c=1,3
-   call excitons_degeneracy_average( EXCITONS_n_user_states, BS_E_degs, R=Triplet(:,i_c), VERB=.FALSE. )
+ EXC_spin%N_SM=real(TMP_SM(:EXC_spin%N,:,:))
+ do i_S=0,1
+   do i_M=-i_S,i_S
+     call excitons_degeneracy_average(EXC_spin%N,BS_E_degs,R=EXC_spin%N_SM(:,i_S,i_M),VERB=i_S==0 )
+   enddo
  enddo
  !
  ! Sorting & reporting'
  !=====================
  !
- call excitons_sort_and_report(Xen,BS_R_right,BS_E,Singlet=Singlet,Triplet=Triplet,S_eh=S_eh)
+ !call excitons_sort_and_report(BS_R_right,BS_E,Singlet=Singlet,Triplet=Triplet,S_eh=S_eh)
  !
-end subroutine exciton_spin   
+ do i_c=1,EXCITONS_n_user_states
+   !
+   i_l=EXCITONS_user_indexes(i_c)
+   !
+   if (BS_E_degs(i_l)/=i_l) cycle
+   !
+   write (*,*) 
+   write (*,*) "Exciton: ",i_l
+   write (*,*) "N(0,0):", EXC_spin%N_SM(i_l,0,0) 
+   write (*,*) "N(1,-1):", EXC_spin%N_SM(i_l,1,-1) 
+   write (*,*) "N(1,0):", EXC_spin%N_SM(i_l,1,0) 
+   write (*,*) "SUM:", sum(EXC_spin%N_SM(i_l,:,:))
+   !
+ enddo
+ !
+ !Clean 
+ !=====
+ !
+ YAMBO_FREE(WF_eh)
+ YAMBO_FREE(WF_eh_p)
+ call WF_free(WF)
+ deallocate(EXC_spin%N_SM)
+ deallocate(EXC_spin%S_sq)
+ deallocate(EXC_spin%S_z)
+ !
+ contains
+   !
+   subroutine elemental_compose(n,n_p,inner_product)
+     !
+     integer     :: n,n_p
+     complex(SP) :: inner_product(n_spin,n_spin)
+     !
+     inner_product=cZERO
+     !
+     !if ((n.eq.n_p).and.(eh%ik_bz.eq.eh_p%ik_bz)) return 
+     !
+     call WF_apply_symm((/n,  eh%ik_ibz,  eh%ik_sym,  eh%spin  /),WF_eh)
+     call WF_apply_symm((/n_p,eh_p%ik_ibz,eh_p%ik_sym,eh_p%spin/),WF_eh_p)
+     !
+     if (n_sp_pol==2) then
+       inner_product(eh%spin,eh_p%spin)=Vstar_dot_V(fft_size,WF_eh(:,1),WF_eh_p(:,1))
+     else
+       do i_spin=1,n_spinor
+         do i_spin_p=1,n_spinor
+           inner_product(i_spin,i_spin_p)=Vstar_dot_V(fft_size,WF_eh(:,i_spin),WF_eh_p(:,i_spin_p))
+         enddo
+       enddo
+     endif
+     !
+   end subroutine
+   !
+end subroutine

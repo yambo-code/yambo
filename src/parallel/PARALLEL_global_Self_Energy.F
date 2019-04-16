@@ -25,18 +25,19 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nqbz,nXkibz,nXkbz
- use drivers,       ONLY:l_eval_collisions
+ use drivers,       ONLY:l_eval_collisions,l_sc_electric
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,&
-&                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu
+&                        COMM_copy,PAR_Q_range,PAR_n_bands,PAR_build_index,ncpu,PAR_INDEX_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,PAR_COM_QP_A2A,PAR_COM_G_b_INDEX, &
 &                        PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k
+ use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k,&
+&                        PAR_INd_DIPk_bz,PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz
  ! INDEX
  use parallel_m,    ONLY:PAR_QP_index,PAR_Q_index,PAR_Q_bz_index,PAR_G_bands_index
  ! DIMENSIONS
@@ -244,10 +245,24 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
 #if defined _ELECTRIC
  !
- ! Parallelization indexes for the Berry Polarization
- !
- call PARALLEL_index(PAR_IND_Xk_bz,(/nXkbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
- call COMM_copy(PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX)
+ if (l_sc_electric) then
+   !
+   ! Parallelization indexes for the Berry Polarization
+   !
+   call PARALLEL_index(PAR_IND_Xk_bz,(/nXkbz/),COMM=PAR_COM_Q_INDEX,CONSECUTIVE=.TRUE.)
+   call COMM_copy(PAR_COM_Q_INDEX,PAR_COM_Xk_ibz_INDEX)
+   !
+   call PAR_INDEX_copy(PAR_IND_Xk_bz,PAR_IND_DIPk_bz)
+   call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
+   !
+   allocate(PAR_DIPk_ibz_index(Xk%nibz))
+   call PAR_build_index(PAR_IND_DIPk_ibz,Xk%nibz,PAR_DIPk_ibz_index,PAR_DIPk_nibz)
+   !
+   ! Overlap indeces for WF distribution
+   !
+   call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz)
+   !
+ endif
  !
 #endif
  !

@@ -568,11 +568,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #if defined _ELECTRIC
      if(l_sc_electric) then
        if(it==1) then
-         dumb_ch= trim(dumb_ch) //'  Initial Pol;'
-         dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
+         dumb_ch= trim(dumb_ch) //'     -  Polarization;'
+         dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
        else
-          dumb_ch= trim(dumb_ch) //'  Polarization;'
-          dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(sqrt(sum(real(Pol(:))**2))))
+          dumb_ch= trim(dumb_ch) //'    -  Polarization;'
+          dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Pol(:))**2))))
        endif
      endif
 #endif
@@ -714,9 +714,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      !
 #if defined _ELECTRIC
-     if(l_SC_electric) then
+     if(l_sc_electric) then
        call ELECTRIC_alloc(E)
-       YAMBO_ALLOC(W_electric,(SC_bands(1):SC_bands(1),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
+       YAMBO_ALLOC(W_electric,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      endif
      YAMBO_ALLOC(H_rotation0,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
 #endif

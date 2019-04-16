@@ -1,5 +1,5 @@
 NL_objs =
-#if defined _NL | defined _ELECTRIC
+#if defined _NL
 NL_objs = PARALLEL_global_Non_Linear.o
 #endif
 #if  _RT

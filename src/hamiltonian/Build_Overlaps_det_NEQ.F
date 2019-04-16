@@ -27,7 +27,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
- use nl_optics,      ONLY:NL_bands
+ use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
@@ -42,7 +42,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  integer,      intent(in) :: i_sp
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
- complex(SP),  intent(in) :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in) :: V_bands(H_ref_bands(2),en%nbf,QP_nk,n_sp_pol)
  complex(SP), intent(out) :: S_det(6)
  complex(SP), intent(out) :: Sm1_plus (en%nbf,en%nbf,6)
  complex(SP), intent(out) :: Sm1_minus(en%nbf,en%nbf,6)
@@ -51,7 +51,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
  integer     :: i2,idx(3),id,ikp,ikm
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
- complex(SP) :: V_tmp(NL_bands(2),en%nbf),tmp_det
+ complex(SP) :: V_tmp(H_ref_bands(2),en%nbf),tmp_det
  !
  S_det    =cZERO
  Sm1_plus =cZERO
@@ -79,11 +79,11 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ikm_ibz=Xk%sstar(ikm,1)
        !
-       call M_by_M_omp('C','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
-&                          NL_bands(2),V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,V_tmp,NL_bands(2))
+       call M_by_M_omp('C','N',H_ref_bands(2),en%nbf,H_ref_nbands,cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
+&                          H_ref_bands(2),V_bands(:,:,ikm_ibz,i_sp),H_ref_nbands,cZERO,V_tmp,H_ref_bands(2))
        !
-       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
+       call M_by_M_omp('C','N',en%nbf,en%nbf,H_ref_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
        !
        call SERIAL_inversion(en%nbf,Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.false.)
        !
@@ -96,11 +96,11 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ikp_ibz=Xk%sstar(ikp,1)
        !
-       call M_by_M_omp('N','N',NL_bands(2),en%nbf,NL_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
-&                  NL_bands(2),V_bands(:,:,ikp_ibz,i_sp),NL_bands(2),cZERO,V_tmp(:,:),NL_bands(2))
+       call M_by_M_omp('N','N',H_ref_bands(2),en%nbf,H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
+&                  H_ref_bands(2),V_bands(:,:,ikp_ibz,i_sp),H_ref_bands(2),cZERO,V_tmp(:,:),H_ref_bands(2))
        !
-       call M_by_M_omp('C','N',en%nbf,en%nbf,NL_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-&                      NL_bands(2),V_tmp,NL_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf)
+       call M_by_M_omp('C','N',en%nbf,en%nbf,H_ref_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
+&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf)
        !
        call SERIAL_inversion(en%nbf,Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.true.)
        !

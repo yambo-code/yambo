@@ -29,6 +29,7 @@ module hamiltonian
 #include<memory.h>
  !
  integer           :: H_ref_bands(2)
+ integer           :: H_ref_nbands
  !
  character(schlen) :: H_potential
  !
@@ -117,6 +118,8 @@ module hamiltonian
        call E_reset(E_reference)
        call E_duplicate(E,E_reference)
      endif
+     !
+     H_ref_nbands=H_ref_bands(2)-H_ref_bands(1)+1
      !
      YAMBO_ALLOC(Hzero,(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),E%nk,n_sp_pol))
      !

@@ -11,7 +11,7 @@ NL_objects =
 NL_objects = Build_Overlaps_det_NEQ.o Build_tilde_vbands.o Build_W_operator.o Berry_polarization_NEQ.o 
 #endif
 #if defined _ELECTRIC
-ELECTRIC_objects = Build_Overlaps_det_NEQ.o Build_W_operator.o Berry_polarization_NEQ.o 
+ELECTRIC_objects = Build_Overlaps_det_NEQ.o Build_tilde_vbands.o Build_W_operator.o Berry_polarization_NEQ.o 
 #endif
 objs = Bare_Hamiltonian.o V_Hartree.o XC_switch.o XC_potentials.o V_qp_basis_to_H.o V_real_space_to_H.o Vgrad_real_space_to_H.o \
        Check_symmetries.o WF_and_dipole_dimensions.o \

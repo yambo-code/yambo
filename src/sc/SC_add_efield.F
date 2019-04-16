@@ -27,7 +27,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
- use fields,         ONLY:A_vecpot,Efield
+ use fields,         ONLY:A_tot,A_ext,Efield
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
  use electrons,      ONLY:n_sp_pol,levels
@@ -44,6 +44,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  ! Working space
  !
  integer :: i_sp_pol,ik
+ logical :: l_induced_field=.false.
  !
  ! Calculate the Berry Polarization and update the Overlaps
  !
@@ -52,7 +53,10 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  ! External Field
  !
- A_vecpot%vecpot_vel=-SPEED_OF_LIGHT*Efield(1)%amplitude*Efield(1)%versor
+ A_ext%vecpot_vel=-SPEED_OF_LIGHT*Efield(1)%amplitude*Efield(1)%versor
+ !
+ A_tot%vecpot_vel=A_ext%vecpot_vel
+ if (l_induced_field) A_tot%vecpot_vel=A_tot%vecpot_vel+Pol
  !
  ! Calculated in the WFo basis
  !
@@ -60,7 +64,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,QP_nk
-     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,W_electric(:,:,ik,i_sp_pol))
+     call Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,W_electric(:,:,ik,i_sp_pol))
    enddo
  enddo
  !

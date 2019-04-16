@@ -60,7 +60,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
 #if defined _ELECTRIC
- use fields,         ONLY:A_vecpot,Efield
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
 #endif
  !
@@ -85,7 +84,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  complex(SP) :: H_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
  !
 #if defined _ELECTRIC
- complex(SP), allocatable :: SC_R0(:,:,:,:)
+ complex(SP), allocatable :: H_rotation0(:,:,:,:)
 #endif
  !
  type(WAVEs)              :: WFo
@@ -132,7 +131,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! Initial Start & Restart 
  !==========================
  ! 
- call SC_start_and_restart(X,E,Xk)
+ call SC_start_and_restart(X,E,Xk,Dip)
  !
  ! DIPOLES
  !=========
@@ -167,7 +166,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
  else if (.not.l_SC_cycle.and.l_SC_RESTART) then
    !
-   ! load SC_R rotation matrices
+   ! load H_rotation matrices
    !=============================
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(2))
    io_WF=io_SC_components('WF',E,ID(2))
@@ -284,7 +283,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #if defined _ELECTRIC
  ! Initial Polarization
  ! ====================
- if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,SC_R(:,1:E%nbf,:,:),Initial_Pol)
+ if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf,:,:),Initial_Pol)
 #endif
  !
  ! SCF cycle & NSC shot
@@ -350,7 +349,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    if(l_sc_electric) then
      !      
-     call SC_add_efield(SC_R(:,1:E%nbf,:,:),E,Xk,Pol)
+     call SC_add_efield(H_rotation(:,1:E%nbf,:,:),E,Xk,Pol)
      Pol=Pol-Initial_Pol
      !
    endif
@@ -605,7 +604,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(1))
    io_E=io_SC_components('E' ,E,ID(1))
    !
-   ! IO [SC_R & Mean Potential]
+   ! IO [H_rotation & Mean Potential]
    !============================
    !
    do i_io=1,2
@@ -712,11 +711,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #if defined _ELECTRIC
      if(l_SC_electric) then
        call ELECTRIC_alloc(E)
-       allocate(W_electric(SC_bands(1):SC_bands(1),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
-       call mem_est("W_electric",(/size(W_electric)/),(/2*SP/))
+       YAMBO_ALLOC(W_electric,(SC_bands(1):SC_bands(1),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      endif
-     allocate(SC_R0(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
-     call mem_est("SC_R0",(/size(QP_Vnl_xc)/),(/2*SP/))
+     YAMBO_ALLOC(H_rotation0,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
 #endif
      !
    end subroutine
@@ -762,8 +759,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #if defined _ELECTRIC
      if(l_SC_electric) then
        call ELECTRIC_free()
-       deallocate(W_electric)
-       call mem_est("W_electric")
+       YAMBO_FREE(W_electric)
      endif
 #endif
      !

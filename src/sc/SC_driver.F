@@ -96,6 +96,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
+ logical                  :: l_load_dipoles
  !
 #if defined _ELECTRIC
  complex(SP) :: Initial_Pol(3),Pol(3)
@@ -136,7 +137,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! DIPOLES
  !=========
  !
- if ((l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0) ) then
+ l_load_dipoles= (l_sc_exx.and.l_SC_cycle) .or. (SC_up_W_iters>0)
+#if defined _ELECTRIC
+ l_load_dipoles=l_load_dipoles.or.l_sc_electric
+#endif
+ if ( l_load_dipoles ) then
    call DIPOLE_dimensions(E,Dip,SC_bands,(/0._SP,0._SP,0._SP/))
    call DIPOLE_IO(k,E,Dip,'read ',io_DIP_err,"SC")
  endif

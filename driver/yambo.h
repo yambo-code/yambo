@@ -89,7 +89,7 @@
 #if defined _MAGNETIC 
   {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
 #endif
-#if defined _ELECTRIC 
+#if defined _ELECTRIC
   {"electric", "m","Static Electric Field",0,0,0,0,0}, 
 #endif
 #if defined _SURF

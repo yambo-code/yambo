@@ -73,15 +73,16 @@ CLEANS   = clean_fast clean clean_all distclean
 PH_PROJ  = yambo_ph ypp_ph
 SC_PROJ  = yambo_sc ypp_sc
 MAG_PROJ = yambo_magnetic ypp_magnetic
+ELEC_PROJ= yambo_electric
 RT_PROJ  = yambo_rt ypp_rt
 NL_PROJ  = yambo_nl ypp_nl
 RTE_PROJ = yambo_rt yambo_qed yambo_pl ypp_rt
 KERR_PROJ= yambo_kerr
-ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS)
-BROKEN   = yambo_electric
+ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(ELEC_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(TESTS)
+BROKEN   =
 TESTS    = 
 SCRIPTS  = ydb.pl
-EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
+EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(ELEC_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KERR_PROJ) $(BROKEN) $(TESTS) $(SCRIPTS)
 #
 # Libraries (ordered for compiling & linking)
 #
@@ -151,25 +152,27 @@ nothing:
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 interfaces:
-	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(INTERFCS) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 core:      
-	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(CORE)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 ph-project:
 	for target in $(PH_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 sc-project:
 	for target in $(SC_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 magn-project:
-	for target in $(MAG_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(MAG_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+elec-project:
+	for target in $(ELEC_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rt-project:
 	for target in $(RT_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 nl-project:
 	for target in $(NL_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rtext-project:
-	for target in $(RTE_PROJ)  ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+	for target in $(RTE_PROJ) ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
 	for target in $(KERR_PROJ); do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: 
-	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target" ; then echo "$$target build failed"; break;fi ; done
+	for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 #
 # External libs #
 #
@@ -348,6 +351,7 @@ define make_message
  for target in $(CORE);      do echo " [core] $$target"         ; done;echo;\
  for target in $(SC_PROJ);   do echo " [sc-project] $$target"   ; done;echo;\
  for target in $(MAG_PROJ);  do echo " [magn-project] $$target" ; done;echo;\
+ for target in $(ELEC_PROJ); do echo " [elec-project] $$target" ; done;echo;\
  for target in $(PH_PROJ);   do echo " [ph-project] $$target"   ; done;echo;\
  for target in $(RT_PROJ);   do echo " [rt-project] $$target"   ; done;echo;\
  for target in $(NL_PROJ);   do echo " [nl-project] $$target"   ; done;echo;\

@@ -43,8 +43,12 @@ subroutine ypp_INIT_load(defs)
 &                               Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,            ONLY:RT_bands
 #endif
+#if defined _YPP_SC
+ use YPP,           ONLY:V_value
+#endif
 #if defined _YPP_ELPH
- use YPP_ELPH
+ use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
+&                        ph_broad,ph_freqs_file,ph_modes_file
 #endif
  !
  implicit none

@@ -68,10 +68,11 @@ subroutine scatter_ModScr(isc,mu)
 !In case of bare potential lim->q=0 4pi/q^2(1-exp(-q^2/4mu^2)=pi/mu^2 this is
 !not taken into account
 !Note in case of cutoff potential QE does not screen the exchange term: to be
-!verified if it is coorect
+!verified if it is coorect, this is not correct. QE in any case use
+!gygi-baldereschi method at the moment not implemented in Yambo.
        isc%gamp(i1,i2)=isc%gamp(i1,i2)*&
             &(1._SP -real(exp(-(bare_qpg_true**2)/(4._SP*mu**2)),SP)) 
-!       if (i1==1) isc%gamp(i1,i2)=1._SP/(4._SP*mu**2)*d3q_factor/(2._SP*pi)**3
+       if (i1==1) isc%gamp(i1,i2)=1._SP/(4._SP*mu**2)*d3q_factor/(2._SP*pi)**3
      endif
    enddo
  end do

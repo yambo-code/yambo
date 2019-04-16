@@ -165,7 +165,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
    do i_S=0,1
      do i_M=-i_S,i_S
        EXC_spin%S_sq(i_l)=EXC_spin%S_sq(i_l)+real(i_S)*real(i_S+1)*EXC_spin%N_SM(i_l,i_S,i_M)
-       EXC_spin%S_z(i_l) =EXC_spin%S_z(i_l)+real(i_M)*EXC_spin%N_SM(i_l,i_S,i_M)
+       EXC_spin%S_z(i_l) =EXC_spin%S_z(i_l)+abs(i_M)*EXC_spin%N_SM(i_l,i_S,i_M)
      enddo
    enddo
  enddo 

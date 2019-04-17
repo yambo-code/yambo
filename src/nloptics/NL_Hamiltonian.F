@@ -35,7 +35,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
  use QP_m,           ONLY:QP_nk
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
  use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_field,rho_reference,&
 &                         Ho_plus_Sigma,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
@@ -218,7 +218,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    enddo
 !$omp end parallel do
    !
-   if(l_use_DIPOLES) then
+   if(l_use_DIPOLES.or.trim(global_gauge)=='velocity') then
      !    
      call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
      !

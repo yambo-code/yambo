@@ -99,7 +99,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  logical                  :: l_load_dipoles
  !
 #if defined _ELECTRIC
- complex(SP) :: Initial_Pol(3),Pol(3)
+ complex(SP) :: Initial_Pol(3),Polarization(3)
 #endif
  !
  ! ws for states spread evaluation
@@ -354,8 +354,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    if(l_sc_electric) then
      !      
-     call SC_add_efield(H_rotation(:,1:E%nbf,:,:),E,Xk,Pol)
-     Pol=Pol-Initial_Pol
+     call SC_add_efield(H_rotation(:,1:E%nbf,:,:),E,Xk,Polarization)
+     Polarization=Polarization-Initial_Pol
      !
    endif
    !
@@ -561,7 +561,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      !
      if(trim(SC_neq_kind)=="matsubara") then
-       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS/HOLES/DELTA    '
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'     -  ELECS  /  HOLES  /  DELTA    '
        dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))//'/'//trim(real2ch(DELTA))
      endif
      !
@@ -572,7 +572,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
        else
           dumb_ch= trim(dumb_ch) //'    -  Polarization;'
-          dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Pol(:))**2))))
+          dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(sqrt(sum(real(Polarization(:))**2))))
        endif
      endif
 #endif
@@ -657,6 +657,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
                        call msg('r' ,'[SC] Electrons and Holes            :',(/ELEC,HOLE/))
                        call msg('r' ,'[SC] Order Parameter                :',DELTA)
    endif
+#if defined _ELECTRIC
+   if(l_sc_electric) then
+      call msg('r' ,'[SC] Polarization [Re]              :', real(Polarization,SP))
+      call msg('r' ,'[SC] Polarization [Im]              :',aimag(Polarization)   )
+   endif
+#endif
    if (l_sc_hartree)   call msg('r' ,'[SC] Hartree Energy          [Ha/Ry]:',E_tot_Hartree*(/1._SP,2._SP/))
    if (l_sc_is_libDFT) call msg('rn','[SC] xc Energy               [Ha/Ry]:',E_tot_xc*(/1._SP,2._SP/))
    !

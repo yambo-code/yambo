@@ -51,7 +51,7 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  Pol=cZERO
  call Berry_polarization_NEQ(E,k,V_bands,Pol)
  !
- return
+ if( Efield(1)%ef_name=="NONE") return
  !
  ! External Field
  !

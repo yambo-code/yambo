@@ -45,6 +45,7 @@ subroutine ELECTR_initial_check(k,Dip)
  !
  if(Efield(1)%intensity==0._SP) then
    call warning("Zero electric field. Turned off")
+   Efield(1)%ef_name="NONE"
    return
  endif
  !

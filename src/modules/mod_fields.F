@@ -268,8 +268,13 @@ module fields
          f_t(i_field)= 0._SP
          if(abs((T-T_0))< sigma) then
            WtimesT=W_0*(T-T_0)+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)= 0._SP
-           if (order==1 ) f_t(i_field)=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos(WtimesT)
+           if (order==0 ) f_t(i_field)=(4.0*W_0*(T-T_0)*cos(WtimesT)*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
+&            +sin(WtimesT)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
+&             W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                          &
+&             ((4.0*W_0*sigma*cos(W_0*sigma)*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
+&            +sin(W_0*sigma)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
+&             W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
+           if (order==1 ) f_t(i_field)=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(WtimesT)
            if (order==2 ) f_t(i_field)=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
 &                                      +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
 &                                      -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)

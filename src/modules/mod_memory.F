@@ -75,21 +75,16 @@ module memory
  !
  interface MEM_dri
    module procedure MEM_clean,MEM_error,&
+&                             MEM_i1, MEM_i2, MEM_i3, MEM_i4, MEM_i5,                  &
+&                             MEM_r1, MEM_r2, MEM_r3, MEM_r4, MEM_r5,                  &
+&                             MEM_c1, MEM_c2, MEM_c3, MEM_c4, MEM_c5, MEM_c6,          &
 #ifndef _DOUBLE
-&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
-&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
-&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_cd3,MEM_rd3,MEM_lp3,&
-&                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,MEM_cd4,&
-&                             MEM_i5,MEM_r5,MEM_c5,       MEM_cd5,&
-&                                           MEM_c6,       MEM_cd6
-#else
-&                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_lp1,&
-&                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,&
-&                             MEM_i3,MEM_r3,MEM_c3,MEM_l3,MEM_lp3,&
-&                             MEM_i4,MEM_r4,MEM_c4,MEM_l4,&
-&                             MEM_i5,MEM_r5,MEM_c5,               &
-&                                           MEM_c6
+&                             MEM_rd1,MEM_rd2,MEM_rd3,                                 &
+&                             MEM_cd1,MEM_cd2,MEM_cd3,MEM_cd4,MEM_cd5,MEM_cd6,         &
 #endif
+&                             MEM_l1, MEM_l2, MEM_l3, MEM_l4,                          &
+&                             MEM_lp1,        MEM_lp3,                                 &
+&                             MEM_ch1,        MEM_ch3
  end interface MEM_dri
  !
  interface  
@@ -164,6 +159,11 @@ module memory
      integer(LP) ::i(:)
      call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
    end subroutine
+   subroutine MEM_ch1(name,ch)
+     character(*)::name
+     character   ::ch(:)
+     call MEM_manager(name,Sz=size(ch),Kn=kind(ch(1)))
+   end subroutine
    subroutine MEM_i2(name,i)
      character(*)::name
      integer     ::i(:,:)
@@ -183,6 +183,11 @@ module memory
      character(*)::name
      integer(LP) ::i(:,:,:)
      call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_ch3(name,ch)
+     character(*)::name
+     character   ::ch(:,:,:)
+     call MEM_manager(name,Sz=size(ch),Kn=kind(ch(1,1,1)))
    end subroutine
    subroutine MEM_i5(name,i)
      character(*)::name

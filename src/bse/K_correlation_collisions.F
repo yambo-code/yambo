@@ -49,6 +49,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
+ use cuda_util_m,   ONLY:cuf_memcpy
 #include<memory.h>
  !
  integer        :: iB
@@ -262,7 +263,8 @@ subroutine K_correlation_collisions(iB,Xk,q)
      integer :: iB_oscillator
 #ifdef _CUDA
      integer :: ig,ngrho
-     complex(SP), pointer, device :: rhotw_d(:),O_c_d(:,:)
+     complex(SP), pointer, device :: rhotw_d(:)
+     complex(SP), pointer, device :: O_c_d(:,:)
 #endif
      if (.not.O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)) return 
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
@@ -271,14 +273,7 @@ subroutine K_correlation_collisions(iB,Xk,q)
      isc%os(3)=i_s_collision
      call scatter_Bamp(isc)
 #ifdef _CUDA
-     ngrho=isc%ngrho
-     rhotw_d=>isc%rhotw_d
-     O_c_d=>BS_blk(iB)%O_c_d
-     !
-     !$cuf kernel do (1)
-     do ig =1,ngrho
-       O_c_d(ig,iB_oscillator)=rhotw_d(ig)
-     enddo
+     call cuf_memcpy(BS_blk(iB)%O_c_d(:,iB_oscillator),isc%rhotw_d,(/1,isc%ngrho/) )
 #else
      BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
 #endif

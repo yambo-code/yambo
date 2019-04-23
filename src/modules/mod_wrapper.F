@@ -51,6 +51,13 @@ module wrapper
 #endif
  end interface
  !
+ interface V_by_V_pwise
+   module procedure V_by_V_pwise_cpu
+#ifdef _CUDA
+   module procedure V_by_V_pwise_gpu
+#endif
+ end interface
+ !
  interface Vstar_dot_V
    module procedure Vstar_dot_V_cpu
 #ifdef _CUDA
@@ -70,6 +77,8 @@ module wrapper
  public :: V_dot_V
  public :: real_V_dot_V
  public :: M_by_V
+ public :: V_by_V_plus_V
+ public :: V_by_V_pwise
  public :: FADEVA
  !
  contains
@@ -342,5 +351,30 @@ module wrapper
      FADEVA=cmplx(rW(1),rW(2),SP)
      !
    end function
+   !
+   subroutine V_by_V_pwise_cpu(N,CZ,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(*),CY(*)
+     complex(SP),intent(out):: CZ(*)
+     !
+     integer :: i
+     do i=1,N
+        CZ(i)=CX(i)*CY(i)
+     enddo
+   end subroutine V_by_V_pwise_cpu
+   !
+#ifdef _CUDA
+   subroutine V_by_V_pwise_gpu(N,CZ,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP), device, intent(in) :: CX(N),CY(N)
+     complex(SP), device, intent(out):: CZ(N)
+     !
+     integer :: i
+     !$cuf kernel do(1) <<<*,*>>> 
+     do i=1,N
+        CZ(i)=CX(i)*CY(i)
+     enddo
+   end subroutine V_by_V_pwise_gpu
+#endif
    !
 end module

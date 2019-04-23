@@ -43,7 +43,7 @@ MODULE cuda_util_m
   !
   INTERFACE cuf_conjg
     MODULE PROCEDURE &
-      cuf_memcpy_c1d
+      cuf_conjg_c1d
   END INTERFACE
   CONTAINS
   !

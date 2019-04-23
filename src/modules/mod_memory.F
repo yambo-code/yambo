@@ -75,6 +75,23 @@ module memory
  !
  interface MEM_dri
    module procedure MEM_clean,MEM_error,&
+#ifdef _CUDA
+#  ifndef _DOUBLE
+&                                            MEM_c1g,MEM_cd1g,& 
+&                                            MEM_c2g,MEM_cd2g,&
+&                                            MEM_c3g,MEM_cd3g,& 
+&                                            MEM_c4g,MEM_cd4g,& 
+&                                            MEM_c5g,MEM_cd5g,& 
+&                                            MEM_c6g,MEM_cd6g,& 
+#  else
+&                                            MEM_c1g,&
+&                                            MEM_c2g,&
+&                                            MEM_c3g,&
+&                                            MEM_c4g,&
+&                                            MEM_c5g,&
+&                                            MEM_c6g,&
+#  endif
+#endif
 #ifndef _DOUBLE
 &                             MEM_i1,MEM_r1,MEM_c1,MEM_l1,MEM_cd1,MEM_rd1,MEM_lp1,&
 &                             MEM_i2,MEM_r2,MEM_c2,MEM_l2,MEM_cd2,MEM_rd2,&
@@ -292,6 +309,70 @@ module memory
      complex(DP) ::c(:,:,:,:,:,:)
      call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
    end subroutine
+#endif
+#ifdef _CUDA
+   subroutine MEM_c1g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+   end subroutine
+   subroutine MEM_c2g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_c3g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_c4g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_c5g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_c6g(name,c)
+     character(*)::name
+     complex(SP), device ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+   end subroutine
+#ifndef _DOUBLE
+   subroutine MEM_cd1g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+   end subroutine
+   subroutine MEM_cd2g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+   end subroutine
+   subroutine MEM_cd3g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+   end subroutine
+   subroutine MEM_cd4g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd5g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+   end subroutine
+   subroutine MEM_cd6g(name,c)
+     character(*)::name
+     complex(DP), device ::c(:,:,:,:,:,:)
+     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+   end subroutine
+#endif
 #endif
    subroutine MEM_l1(name,l)
      character(*)::name

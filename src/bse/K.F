@@ -44,6 +44,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
+#ifdef _CUDA
+ use X_m,          ONLY:X_mat_d
+#endif
  use BS_solvers,   ONLY:BSS_q0
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_n_g_W,BS_Block_size,&
@@ -108,8 +111,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
 #ifdef _CUDA
- attributes(device)   :: Ovv(:),Occ(:),O_times_W(:)
- attributes(device)   :: Ovc(:),Ocv(:)
+ attributes(device)   :: Ovv,Occ,O_times_W
+ attributes(device)   :: Ovc,Ocv
  complex(SP), pointer, device :: O_c_d_iocc(:),O_c_d_iocv(:)
  complex(SP), pointer, device :: O_c_d_iovc(:),O_c_d_iovv(:)
 #endif
@@ -656,8 +659,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end parallel do
 #endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) Ovv=cuf_conjg(Ovv,(/1,BS_n_g_W/))
-           if (i_k_s>nsym/(i_time_rev+1)) Occ=cuf_conjg(Occ,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ovv,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Occ,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !
@@ -717,8 +720,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end parallel do
 #endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) Ovc=cuf_conjg(Ovc,(/1,BS_n_g_W/))
-           if (i_k_s>nsym/(i_time_rev+1)) Ocv=cuf_conjg(Ocv,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ovc,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ocv,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !
@@ -726,7 +729,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              !  O_times_W(i_g1)=Ocv(i_g1)*BS_W(i_g1,1,iq_W)
              !enddo
              !
-             call V_by_V_pwise(BS_n_g_W, O_times_W,Ocv,BS_W(:,1,iq_W))
+             call V_by_V_pwise(BS_n_g_W,O_times_W,Ocv,BS_W(:,1,iq_W))
              !
            else
              !
@@ -833,8 +836,9 @@ function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   ! H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
   !                                  BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
   !
-  use pars,         ONLY: SP,ZERO
-  use BS_m,         ONLY: BS_T_group
+  use pars,         ONLY: SP,rZERO
+  use BS,           ONLY: BS_T_group
+  use wrapper_omp,  ONLY: Vstar_dot_V_omp
   use R_lattice,    ONLY: bare_qpg
 #ifdef _CUDA
   use R_lattice,    ONLY: bare_qpg_d
@@ -857,8 +861,8 @@ function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   BS_T_grp_ip_O_x_d => BS_T_grp_ip%O_x_d
   BS_T_grp_ik_O_x_d => BS_T_grp_ik%O_x_d
   !
-  H_x_r=ZERO
-  H_x_i=ZERO
+  H_x_r=rZERO
+  H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
     H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
@@ -883,8 +887,9 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   !H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
   !                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
   !
-  use pars,         ONLY: SP
-  use BS_m,         ONLY: BS_T_group
+  use pars,         ONLY: SP,rZERO
+  use BS,           ONLY: BS_T_group
+  use wrapper_omp,  ONLY: V_dot_V_omp
   use R_lattice,    ONLY: bare_qpg, minus_G
 #ifdef _CUDA
   use R_lattice,    ONLY: bare_qpg_d, minus_G_d
@@ -907,8 +912,8 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   BS_T_grp_ip_O_x_d => BS_T_grp_ip%O_x_d
   BS_T_grp_ik_O_x_d => BS_T_grp_ik%O_x_d
   !
-  H_x_r=ZERO
-  H_x_i=ZERO
+  H_x_r=rZERO
+  H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
     ig1 = minus_G_d(ig)

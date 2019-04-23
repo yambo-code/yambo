@@ -35,8 +35,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,   ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
- use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_qpg,&
-&                       RIM_anisotropy,minus_G,bare_qpg
+ use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_anisotropy
+#ifdef _CUDA
+ use R_lattice,    ONLY:G_m_G_d,g_rot_d,RIM_qpg=>RIM_qpg_d
+#else
+ use R_lattice,    ONLY:RIM_qpg
+#endif
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_alloc,X_t,X_mat
@@ -55,7 +59,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       deliver_IO_error_message
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
- use wrapper_omp,   ONLY:V_dot_V_omp,Vstar_dot_V_omp,M_by_V_omp
+ use wrapper,       ONLY:V_dot_V,Vstar_dot_V,V_by_V_pwise,M_by_V
+ use cuda_util_m,   ONLY:cuf_conjg,cuf_memcpy
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
@@ -89,15 +94,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  real(SP)   :: sqrt_f_itk,sqrt_f_itp
  !
  complex(SP),allocatable ::BS_W(:,:,:)
+#ifdef _CUDA
+ attributes(device) :: BS_W
+#endif
+ !
  complex(SP),   external ::TDDFT_ALDA_R_space
  logical                 ::W_is_em1s,W_is_pp
  !
  ! Oscillators
  !
- logical    :: load_O_X
+ logical :: load_O_X
+ type(elemental_collision)::isc
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
- type(elemental_collision)::isc
+#ifdef _CUDA
+ attributes(device)   :: Ovv(:),Occ(:),O_times_W(:)
+ attributes(device)   :: Ovc(:),Ocv(:)
+ complex(SP), pointer, device :: O_c_d_iocc(:),O_c_d_iocv(:)
+ complex(SP), pointer, device :: O_c_d_iovc(:),O_c_d_iovv(:)
+#endif
+ !
+ complex(SP), external :: eval_bseK_exchange_resonant
+ complex(SP), external :: eval_bseK_exchange_coupling
  !
  ! I/O
  !
@@ -321,6 +339,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
+#ifdef _CUDA
+   allocate(isc%gamp_d, mold=isc%gamp)
+#endif
    !
    if (.not.l_td_hf) then
      call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
@@ -334,7 +355,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
+#ifdef _CUDA
+     call scatter_Gamp_gpu(isc,'c')
+#else
      call scatter_Gamp(isc,'c')
+#endif
      !
      if (.not.l_td_hf) then
        !
@@ -346,6 +371,24 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        endif
        !
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
+       !
+#ifdef _CUDA
+       X_mat_d=X_mat
+       if (BS_W_is_diagonal) then
+         !$cuf kernel do(1) <<<*,*>>>
+         do i_g2=1, BS_n_g_W
+            BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1))*isc%gamp_d(1,i_g2)
+         enddo
+       else if (.not.BS_W_is_diagonal) then
+         !$cuf kernel do(2) <<<*,*>>>
+         do i_g3=1,BS_n_g_W
+           do i_g2=1,BS_n_g_W
+             BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2,i_g3,1)*isc%gamp_d(i_g2,i_g3)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat_d(i_g3,i_g2,1)*isc%gamp_d(i_g2,i_g3)
+           enddo
+         enddo
+       endif
+#else
        if (BS_W_is_diagonal) then
          forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(1,i_g2)
        else if (.not.BS_W_is_diagonal) then
@@ -355,11 +398,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
            enddo
          enddo
-      endif
-      !
+       endif
+#endif
+       !
      else
        !
+#ifdef _CUDA
+       call cuf_memcpy(BS_W(:,1,iq_W),isc%gamp_d(1,:),(/1,BS_n_g_W/))
+#else
        forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=isc%gamp(1,i_g2)
+#endif
        !
      endif
      ! 
@@ -370,12 +418,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
    !
-   YAMBO_FREE(isc%gamp)
+   call elemental_collision_free(isc)
    !
    if (.not.l_td_hf) call X_alloc('X')
-   !
    X%ng=X%ng_db
-   call elemental_collision_free(isc)
    !
  endif
  !
@@ -443,6 +489,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
+#if !defined _CUDA
    !$omp parallel default(shared), &
    !$omp private(i_Tk,i_Tp, &
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_spin,i_k,i_k_s,is,os,i_k_s_m1,H_pos, &
@@ -450,6 +497,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       ig_W,iq_W,iq_W_s,H_x,H_c, &
    !$omp &       iOcc,i_block_cc,PHASE_1, iOcv, i_block_cv, iOvc, i_block_vc, &
    !$omp &       iOvv,i_block_vv,PHASE_2, i_g1,i_g2, Ovv,Occ,O_times_W,Ovc,Ocv)
+#endif
    !
    call OPENMP_update(master_thread)   
    !
@@ -465,7 +513,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      endif
    endif
    !
+#if !defined _CUDA
    !$omp do collapse(2), schedule(dynamic)
+#endif
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
        !
@@ -531,16 +581,22 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !
            ! :::EXCHANGE    (resonant):::
            !=============================
-           H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
-&                                           BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           !H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
+           !                                 BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           !
+           H_x=eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+           !
          endif
        else 
          if (BS_cpl_K_exchange) then
            !
            ! :::EXCHANGE    (coupling):::
            !=============================
-           H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
-&                                       BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           !H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+           !                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+           !
+           H_x=eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
+           !
          endif
        endif
        !
@@ -581,6 +637,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
+#ifdef _CUDA
+           O_c_d_iocc => BS_blk(i_block_cc)%O_c_d(:,iOcc)
+           O_c_d_iovv => BS_blk(i_block_vv)%O_c_d(:,iOvv)
+           !$cuf kernel do(1) <<<*,*>>>
+           do i_g1=1,BS_n_g_W
+             i_g2=g_rot_d(G_m_G_d(g_rot_d(i_g1,iq_W_s),ig_W),i_k_s_m1)
+             Occ(i_g1)=O_c_d_iocc(i_g2)*PHASE_1
+             Ovv(i_g1)=O_c_d_iovv(i_g2)*PHASE_2
+           enddo
+#else
            !$omp parallel do default(shared), private(i_g1,i_g2)
            do i_g1=1,BS_n_g_W
              i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W),i_k_s_m1)
@@ -588,27 +654,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              Ovv(i_g1)=BS_blk(i_block_vv)%O_c(i_g2,iOvv)*PHASE_2
            enddo
            !$omp end parallel do
+#endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) Ovv=conjg(Ovv)
-           if (i_k_s>nsym/(i_time_rev+1)) Occ=conjg(Occ)
+           if (i_k_s>nsym/(i_time_rev+1)) Ovv=cuf_conjg(Ovv,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) Occ=cuf_conjg(Occ,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !
-             !$omp parallel do default(shared), private(i_g1)
-             do i_g1=1,BS_n_g_W
-               O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
-             enddo
-             !$omp end parallel do
+             !do i_g1=1,BS_n_g_W
+             !  O_times_W(i_g1)=Occ(i_g1)*BS_W(i_g1,1,iq_W)
+             !enddo
+             !
+             call V_by_V_pwise(BS_n_g_W,O_times_W,Occ,BS_W(:,1,iq_W))
              !
            else
              !
              if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
              !
-             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
+             call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Occ(:),O_times_W)
              !
            endif
            !
-           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
+           H_c=Vstar_dot_V(BS_n_g_W,Ovv,O_times_W)*4._SP*pi
            !
          endif
          !
@@ -631,6 +698,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (PHASE_2==cZERO  ) PHASE_2=1._SP
            if (PHASE_2==-99._SP) PHASE_2=1._SP
            !
+#ifdef _CUDA
+           O_c_d_iocv => BS_blk(i_block_cv)%O_c_d(:,iOcv)
+           O_c_d_iovc => BS_blk(i_block_vc)%O_c_d(:,iOvc)
+           !$cuf kernel do (1) <<<*,*>>>
+           do i_g1=1,BS_n_g_W
+             i_g2=g_rot_d(G_m_G_d(g_rot_d(i_g1,iq_W_s),ig_W),i_k_s_m1)
+             Ocv(i_g1)=O_c_d_iocv(i_g2)*PHASE_1
+             Ovc(i_g1)=O_c_d_iovc(i_g2)*PHASE_2
+           enddo
+#else
            !$omp parallel do default(shared), private(i_g1,i_g2)
            do i_g1=1,BS_n_g_W
              i_g2=g_rot(G_m_G(g_rot(i_g1,iq_W_s),ig_W),i_k_s_m1)
@@ -638,27 +715,28 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
              Ovc(i_g1)=BS_blk(i_block_vc)%O_c(i_g2,iOvc)*PHASE_2
            enddo
            !$omp end parallel do
+#endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) Ovc=conjg(Ovc)
-           if (i_k_s>nsym/(i_time_rev+1)) Ocv=conjg(Ocv)
+           if (i_k_s>nsym/(i_time_rev+1)) Ovc=cuf_conjg(Ovc,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) Ocv=cuf_conjg(Ocv,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !
-             !$omp parallel do default(shared), private(i_g1)
-             do i_g1=1,BS_n_g_W
-               O_times_W(i_g1)=Ocv(i_g1)*BS_W(i_g1,1,iq_W)
-             enddo
-             !$omp end parallel do
+             !do i_g1=1,BS_n_g_W
+             !  O_times_W(i_g1)=Ocv(i_g1)*BS_W(i_g1,1,iq_W)
+             !enddo
+             !
+             call V_by_V_pwise(BS_n_g_W, O_times_W,Ocv,BS_W(:,1,iq_W))
              !
            else
              !
              if (iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
              !
-             call M_by_V_omp('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),O_times_W)
+             call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),Ocv(:),O_times_W)
              !
            endif
            !
-           H_c=Vstar_dot_V_omp(BS_n_g_W,Ovc,O_times_W)*4._SP*pi
+           H_c=Vstar_dot_V(BS_n_g_W,Ovc,O_times_W)*4._SP*pi
            !
          endif
          !
@@ -670,7 +748,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
+#if ! defined _CUDA
    !$omp end do
+#endif
    !
    if (BS_res_K_corr.or.BS_cpl_K_corr) then
      YAMBO_FREE(Ovv)
@@ -682,7 +762,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      endif
    endif
    !
+#if ! defined _CUDA
    !$omp end parallel
+#endif
    !
    call BS_oscillators_free(0,i_block)
    if(l_BSE_minimize_memory) then
@@ -739,4 +821,105 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call timing('X T_space Kernel',OPR='stop')
  !
-end subroutine
+end subroutine K
+
+!==============================
+function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
+&                                                     BS_T_grp_ik, i_Tk) result(H_x)
+  !==============================
+  !
+  ! :::EXCHANGE    (resonant):::
+  !=============================
+  ! H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x(:,i_Tp),&
+  !                                  BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+  !
+  use pars,         ONLY: SP,ZERO
+  use BS_m,         ONLY: BS_T_group
+  use R_lattice,    ONLY: bare_qpg
+#ifdef _CUDA
+  use R_lattice,    ONLY: bare_qpg_d
+#endif
+  implicit none
+  !
+  integer,          intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
+  type(BS_T_group), intent(in) :: BS_T_grp_ip,BS_T_grp_ik
+  complex(SP)                  :: H_x
+  !
+#ifdef _CUDA
+  complex(SP), pointer, device :: BS_T_grp_ip_O_x_d(:,:)
+  complex(SP), pointer, device :: BS_T_grp_ik_O_x_d(:,:)
+  integer :: ig
+  real(SP):: H_x_r,H_x_i
+#endif
+
+#ifdef _CUDA
+  !
+  BS_T_grp_ip_O_x_d => BS_T_grp_ip%O_x_d
+  BS_T_grp_ik_O_x_d => BS_T_grp_ik%O_x_d
+  !
+  H_x_r=ZERO
+  H_x_i=ZERO
+  !$cuf kernel do(1) <<<*,*>>>
+  do ig = 1, BS_n_g_exch
+    H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
+    H_x_r=H_x_r+real(H_x)
+    H_x_i=H_x_i+aimag(H_x)
+  enddo
+  H_x=cmplx(H_x_r,H_x_i,SP)
+  !
+#else
+  H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&
+                                   BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+#endif
+end function eval_bseK_exchange_resonant
+
+!==============================
+function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
+&                                                     BS_T_grp_ik, i_Tk) result(H_x)
+  !==============================
+  !
+  ! :::EXCHANGE    (coupling):::
+  !=============================
+  !H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp(i_Tgrp_p)%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+  !                             BS_T_grp(i_Tgrp_k)%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+  !
+  use pars,         ONLY: SP
+  use BS_m,         ONLY: BS_T_group
+  use R_lattice,    ONLY: bare_qpg, minus_G
+#ifdef _CUDA
+  use R_lattice,    ONLY: bare_qpg_d, minus_G_d
+#endif
+  implicit none
+  !
+  integer,          intent(in) :: iq, BS_n_g_exch,i_Tp,i_Tk
+  type(BS_T_group), intent(in) :: BS_T_grp_ip,BS_T_grp_ik
+  complex(SP)                  :: H_x
+  !
+#ifdef _CUDA
+  complex(SP), pointer, device :: BS_T_grp_ip_O_x_d(:,:)
+  complex(SP), pointer, device :: BS_T_grp_ik_O_x_d(:,:)
+  integer :: ig, ig1
+  real(SP):: H_x_r,H_x_i
+#endif
+         
+#ifdef _CUDA
+  !
+  BS_T_grp_ip_O_x_d => BS_T_grp_ip%O_x_d
+  BS_T_grp_ik_O_x_d => BS_T_grp_ik%O_x_d
+  !
+  H_x_r=ZERO
+  H_x_i=ZERO
+  !$cuf kernel do(1) <<<*,*>>>
+  do ig = 1, BS_n_g_exch
+    ig1 = minus_G_d(ig)
+    H_x=BS_T_grp_ip_O_x_d(ig1,i_Tp)*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
+    H_x_r=H_x_r+real(H_x)
+    H_x_i=H_x_i+aimag(H_x)
+  enddo
+  H_x=cmplx(H_x_r,H_x_i,SP)
+#else
+  H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
+                               BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
+#endif
+end function eval_bseK_exchange_coupling
+

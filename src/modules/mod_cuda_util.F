@@ -19,6 +19,7 @@ MODULE cuda_util_m
   IMPLICIT NONE
   !
   PUBLIC :: cuf_memcpy, cuf_memset
+  PUBLIC :: cuf_conjg
   !
   INTERFACE cuf_memcpy
     MODULE PROCEDURE &
@@ -40,6 +41,10 @@ MODULE cuda_util_m
       cuf_memset_c3d
   END INTERFACE
   !
+  INTERFACE cuf_conjg
+    MODULE PROCEDURE &
+      cuf_memcpy_c1d
+  END INTERFACE
   CONTAINS
   !
   SUBROUTINE cuf_memcpy_r1d(array_out, array_in, range1 )
@@ -390,6 +395,29 @@ MODULE cuda_util_m
     ENDDO
     !
   END SUBROUTINE cuf_memset_c3d
+  !
+  SUBROUTINE cuf_conjg_c1d(array, range1)
+    !
+    IMPLICIT NONE
+    !
+    COMPLEX(SP), INTENT(INOUT) :: array(:)
+    INTEGER,     INTENT(IN) ::  range1(2)
+    !
+#if defined(__CUDA)
+    attributes(DEVICE) :: array
+#endif
+    !
+    INTEGER :: i1, d1s, d1e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    !
+    !$cuf kernel do(1)
+    DO i1 = d1s, d1e
+       array(i1) = conjg(array(i1))
+    ENDDO
+    !
+  END SUBROUTINE cuf_conjg_c1d
   !
 END MODULE cuda_util_m
 !

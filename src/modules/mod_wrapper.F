@@ -39,12 +39,29 @@ module wrapper
  !
  interface M_by_V 
    module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
+#ifdef _CUDA
+   module procedure                   mv_c_gpu
+#endif
  end interface
  !
  interface V_by_V_plus_V
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
 #ifdef _CUDA
    module procedure          vv_caxpy_gpu
+#endif
+ end interface
+ !
+ interface Vstar_dot_V
+   module procedure Vstar_dot_V_cpu
+#ifdef _CUDA
+   module procedure Vstar_dot_V_gpu
+#endif
+ end interface
+ !
+ interface V_dot_V
+   module procedure V_dot_V_cpu
+#ifdef _CUDA
+   module procedure V_dot_V_gpu
 #endif
  end interface
  !
@@ -140,6 +157,20 @@ module wrapper
 #endif
    end subroutine mv_c
    !
+#ifdef _CUDA
+   subroutine mv_c_gpu(TRANS,msize,A,X,Y)
+     integer,     intent(in) :: msize
+     complex(SP), device, intent(in) :: A(msize,*),X(*)
+     complex(SP), device, intent(out):: Y(*)
+     character,   intent(in) :: TRANS
+#if defined _DOUBLE
+     call zgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+#else
+     call cgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+#endif
+   end subroutine mv_c_gpu
+#endif
+   !
    subroutine mv_r(TRANS,msize,A,X,Y)
      integer,  intent(in) :: msize
      real(SP), intent(in) :: A(msize,*),X(*)
@@ -226,18 +257,32 @@ module wrapper
    ! DOT PRODUCTS
    !==============
    !
-   complex(SP) function Vstar_dot_V(N,CX,CY)
+   complex(SP) function Vstar_dot_V_cpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_cpu=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V=CDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_cpu=CDOTC(N,CX,1,CY,1)
+#endif
+   end function Vstar_dot_V_cpu
+   !
+#ifdef _CUDA
+   complex(SP) function Vstar_dot_V_gpu(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP), device, intent(in) :: CX(*),CY(*)
+#if defined _DOUBLE
+     complex(SP)::zdotc
+     Vstar_dot_V_gpu=ZDOTC(N,CX,1,CY,1)
+#else
+     complex(SP)::cdotc
+     Vstar_dot_V_gpu=cdotc(N,CX,1,CY,1)
 #endif
      !
-   end function Vstar_dot_V   
+   end function Vstar_dot_V_gpu
+#endif
    !
    real(SP) function real_V_dot_V(N,CX,CY)
      integer, intent(in) :: N
@@ -251,18 +296,31 @@ module wrapper
 #endif
    end function real_V_dot_V
    !
-   complex(SP) function V_dot_V(N,CX,CY)
+   complex(SP) function V_dot_V_cpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V=ZDOTU(N,CX,1,CY,1)
+     V_dot_V_cpu=ZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
-     V_dot_V=CDOTU(N,CX,1,CY,1)
+     V_dot_V_cpu=CDOTU(N,CX,1,CY,1)
 #endif
-     !
-   end function V_dot_V
+   end function V_dot_V_cpu
+   !
+#ifdef _CUDA
+   complex(SP) function V_dot_V_gpu(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP), device, intent(in) :: CX(*),CY(*)
+#if defined _DOUBLE
+     complex(SP)::zdotu
+     V_dot_V_gpu=ZDOTU(N,CX,1,CY,1)
+#else
+     complex(SP)::cdotu
+     V_dot_V_gpu=CDOTU(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_gpu
+#endif
    !
    complex(SP) function FADEVA(Z)
      !

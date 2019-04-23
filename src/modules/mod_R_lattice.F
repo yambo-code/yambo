@@ -108,6 +108,7 @@ module R_lattice
  real(SP),allocatable, device :: g_vec_d(:,:)
  integer ,allocatable, device :: g_rot_d(:,:)
  integer ,allocatable, device :: G_m_G_d(:,:)
+ integer ,allocatable, device :: minus_G_d(:)
 #endif
  !
  ! RIM

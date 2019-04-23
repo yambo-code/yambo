@@ -53,6 +53,7 @@ module D_lattice
  complex(SP),allocatable :: spin_sop(:,:,:)
 #if defined _CUDA
  complex(SP),allocatable, device :: spin_sop_d(:,:,:)
+ integer,    allocatable, device :: sop_inv_d(:)
 #endif
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)
@@ -131,6 +132,11 @@ module D_lattice
      enddo
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'[SYMs] Group table built correctly')
+     !
+#ifdef _CUDA
+     if(allocated(sop_inv_d)) deallocate(sop_inv_d)
+     allocate(sop_inv_d,source=sop_inv)
+#endif
      !
    end subroutine symmetry_group_table
    !

@@ -33,7 +33,7 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
 #ifdef _CUDA
- use R_lattice,    ONLY:g_rot_d
+ use R_lattice,    ONLY:g_rot_d,minus_G_d
 #endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
@@ -75,6 +75,8 @@ subroutine G_shells_finder()
 #ifdef _CUDA
    if (allocated(g_rot_d)) deallocate(g_rot_d)
    allocate(g_rot_d,source=g_rot)
+   if (allocated(minus_G_d)) deallocate(minus_G_d)
+   allocate(minus_G_d,source=minus_G)
 #endif
    return
    !
@@ -86,7 +88,8 @@ subroutine G_shells_finder()
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
 #ifdef _CUDA
-     if (allocated(g_rot_d)) deallocate(g_rot_d)
+     if (allocated(g_rot_d))   deallocate(g_rot_d)
+     if (allocated(minus_G_d)) deallocate(minus_G_d)
 #endif
    endif
    !
@@ -128,9 +131,7 @@ subroutine G_shells_finder()
    !
    if (.not.px%element_1D(i_m)) cycle
    !
-#if defined _OPENMP
 !$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
-#endif
    do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
      !
      ig_1=G_mod_indx(i_1)
@@ -158,9 +159,7 @@ subroutine G_shells_finder()
      enddo
      !
    enddo
-#if defined _OPENMP
 !$omp end parallel do
-#endif
    !
    call live_timing(steps=1)
    !
@@ -220,6 +219,10 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
+#ifdef _CUDA
+   if (allocated(minus_G_d)) deallocate(minus_G_d)
+   allocate(minus_G_d,source=minus_G)
+#endif
  endif
  !
  E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)

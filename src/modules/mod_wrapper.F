@@ -59,7 +59,7 @@ module wrapper
  end interface
  !
  interface Vstar_dot_V
-   module procedure Vstar_dot_V_cpu
+   module procedure Vstar_dot_V_cpu, Vstar_dot_V_2d_cpu
 #ifdef _CUDA
    module procedure Vstar_dot_V_gpu
 #endif
@@ -277,6 +277,18 @@ module wrapper
      Vstar_dot_V_cpu=CDOTC(N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_cpu
+   !
+   complex(SP) function Vstar_dot_V_2d_cpu(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotc
+     Vstar_dot_V_2d_cpu=ZDOTC(N,CX,1,CY,1)
+#else
+     complex(SP)::cdotc
+     Vstar_dot_V_2d_cpu=CDOTC(N,CX,1,CY,1)
+#endif
+   end function Vstar_dot_V_2d_cpu
    !
 #ifdef _CUDA
    complex(SP) function Vstar_dot_V_gpu(N,CX,CY)

@@ -104,7 +104,7 @@ module BS
    !
  end type BS_T_group
  !
- type(BS_T_group), allocatable  :: BS_T_grp(:)
+ type(BS_T_group), allocatable, target :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
  integer                        :: BS_nT_grps
@@ -139,7 +139,7 @@ module BS
  end type BS_block
  !
  integer                    :: n_BS_blks = 0
- type(BS_block), allocatable:: BS_blk(:)
+ type(BS_block), allocatable, target :: BS_blk(:)
  !
  ! WF phases
  !===========

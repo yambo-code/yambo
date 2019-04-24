@@ -35,11 +35,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,   ONLY:WF_load,WF_free
  use functions,    ONLY:K_scatter
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,sop_tab,sop_inv,i_space_inv
- use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_anisotropy
+ use R_lattice,    ONLY:G_m_G,g_rot,qindx_B,bz_samp,RIM_anisotropy,RIM_qpg
 #ifdef _CUDA
- use R_lattice,    ONLY:G_m_G_d,g_rot_d,RIM_qpg=>RIM_qpg_d
-#else
- use R_lattice,    ONLY:RIM_qpg
+ use R_lattice,    ONLY:G_m_G_d,g_rot_d
 #endif
  use com,          ONLY:warning,error,msg
  use LIVE_t,       ONLY:live_timing
@@ -91,10 +89,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer    :: i_block,i_block_vv,i_block_cc,i_block_vc,i_block_cv,i_k_bz,i_p_bz,i_c_k,i_v_k,i_c_p,i_v_p,i_k_s,i_p_s,&
 &              i_Tgrp_k,i_Tgrp_p,i_Tp,i_Tk,i_k_spin,i_p_spin,i_k,i_p,H_pos(2),i_k_s_m1,&
-&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,&
+&              i_k_p_s,i_g1,ig_W,iq_W,iq_W_s,i_g2,i_g3,nibz,&
 &              bands_to_load(2),iOvv,iOcc,iOvc,iOcv,is(4),os(4),isp(4),osp(4)
  complex(SP):: Co,H_x,H_c,PHASE_1,PHASE_2
- real(SP)   :: sqrt_f_itk,sqrt_f_itp
+ real(SP)   :: sqrt_f_itk,sqrt_f_itp,rtmp
  !
  complex(SP),allocatable ::BS_W(:,:,:)
 #ifdef _CUDA
@@ -107,7 +105,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Oscillators
  !
  logical :: load_O_X
- type(elemental_collision)::isc
+ type(elemental_collision), target ::isc
  complex(SP),allocatable  ::Ovv(:),Occ(:),O_times_W(:)
  complex(SP),allocatable  ::Ovc(:),Ocv(:)
 #ifdef _CUDA
@@ -115,6 +113,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  attributes(device)   :: Ovc,Ocv
  complex(SP), pointer, device :: O_c_d_iocc(:),O_c_d_iocv(:)
  complex(SP), pointer, device :: O_c_d_iovc(:),O_c_d_iovv(:)
+ complex(SP), pointer, device :: gamp_d(:,:)
 #endif
  !
  complex(SP), external :: eval_bseK_exchange_resonant
@@ -377,17 +376,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
 #ifdef _CUDA
        X_mat_d=X_mat
+       gamp_d => isc%gamp_d
+       nibz=q%nibz
+       !
        if (BS_W_is_diagonal) then
          !$cuf kernel do(1) <<<*,*>>>
          do i_g2=1, BS_n_g_W
-            BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1))*isc%gamp_d(1,i_g2)
+            BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1))*gamp_d(i_g2,1)
          enddo
        else if (.not.BS_W_is_diagonal) then
          !$cuf kernel do(2) <<<*,*>>>
          do i_g3=1,BS_n_g_W
            do i_g2=1,BS_n_g_W
-             BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2,i_g3,1)*isc%gamp_d(i_g2,i_g3)
-             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat_d(i_g3,i_g2,1)*isc%gamp_d(i_g2,i_g3)
+             BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2,i_g3,1)*gamp_d(i_g2,i_g3)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,nibz+iq_W)=X_mat_d(i_g3,i_g2,1)*gamp_d(i_g2,i_g3)
            enddo
          enddo
        endif
@@ -407,9 +409,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      else
        !
 #ifdef _CUDA
-       call cuf_memcpy(BS_W(:,1,iq_W),isc%gamp_d(1,:),(/1,BS_n_g_W/))
+       call cuf_memcpy(BS_W(:,1,iq_W),isc%gamp_d(:,1),(/1,BS_n_g_W/))
 #else
-       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=isc%gamp(1,i_g2)
+       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=isc%gamp(i_g2,1)
 #endif
        !
      endif
@@ -419,7 +421,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
    ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
    !
-   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
+#ifdef _CUDA
+   if (RIM_anisotropy/=0.) then
+      rtmp=BS_W(1,1,1)
+      rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+      BS_W(1,1,1)=rtmp
+   endif
+#else
+   if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+#endif
    !
    call elemental_collision_free(isc)
    !
@@ -845,9 +855,9 @@ function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
 #endif
   implicit none
   !
-  integer,          intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
-  type(BS_T_group), intent(in) :: BS_T_grp_ip,BS_T_grp_ik
-  complex(SP)                  :: H_x
+  integer,                  intent(in) :: iq,BS_n_g_exch,i_Tp,i_Tk
+  type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
+  complex(SP) :: H_x
   !
 #ifdef _CUDA
   complex(SP), pointer, device :: BS_T_grp_ip_O_x_d(:,:)
@@ -896,9 +906,9 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
 #endif
   implicit none
   !
-  integer,          intent(in) :: iq, BS_n_g_exch,i_Tp,i_Tk
-  type(BS_T_group), intent(in) :: BS_T_grp_ip,BS_T_grp_ik
-  complex(SP)                  :: H_x
+  integer,                  intent(in) :: iq, BS_n_g_exch,i_Tp,i_Tk
+  type(BS_T_group), target, intent(in) :: BS_T_grp_ip,BS_T_grp_ik
+  complex(SP) :: H_x
   !
 #ifdef _CUDA
   complex(SP), pointer, device :: BS_T_grp_ip_O_x_d(:,:)

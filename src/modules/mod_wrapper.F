@@ -59,23 +59,22 @@ module wrapper
  end interface
  !
  interface Vstar_dot_V
-   module procedure Vstar_dot_V_cpu, Vstar_dot_V_2d_cpu
+   module procedure Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
 #ifdef _CUDA
-   module procedure Vstar_dot_V_gpu
+   module procedure Vstar_dot_V_c1_gpu
 #endif
  end interface
  !
  interface V_dot_V
-   module procedure V_dot_V_cpu
+   module procedure V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
 #ifdef _CUDA
-   module procedure V_dot_V_gpu
+   module procedure V_dot_V_c1_gpu
 #endif
  end interface
  !
  public :: V_copy
  public :: Vstar_dot_V
  public :: V_dot_V
- public :: real_V_dot_V
  public :: M_by_V
  public :: V_by_V_plus_V
  public :: V_by_V_pwise
@@ -263,85 +262,105 @@ module wrapper
    end subroutine V_copy   
    !
    !==============
-   ! DOT PRODUCTS
+   ! DOT PRODUCTS: Vstar_dot_V
    !==============
    !
-   complex(SP) function Vstar_dot_V_cpu(N,CX,CY)
+   complex(SP) function Vstar_dot_V_c1_cpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V_cpu=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c1_cpu=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V_cpu=CDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c1_cpu=CDOTC(N,CX,1,CY,1)
 #endif
-   end function Vstar_dot_V_cpu
+   end function Vstar_dot_V_c1_cpu
    !
-   complex(SP) function Vstar_dot_V_2d_cpu(N,CX,CY)
+   complex(SP) function Vstar_dot_V_c2_cpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V_2d_cpu=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c2_cpu=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V_2d_cpu=CDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c2_cpu=CDOTC(N,CX,1,CY,1)
 #endif
-   end function Vstar_dot_V_2d_cpu
+   end function Vstar_dot_V_c2_cpu
    !
 #ifdef _CUDA
-   complex(SP) function Vstar_dot_V_gpu(N,CX,CY)
+   complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP), device, intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V_gpu=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c1_gpu=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V_gpu=cdotc(N,CX,1,CY,1)
+     Vstar_dot_V_c1_gpu=cdotc(N,CX,1,CY,1)
 #endif
      !
-   end function Vstar_dot_V_gpu
+   end function Vstar_dot_V_c1_gpu
 #endif
    !
-   real(SP) function real_V_dot_V(N,CX,CY)
+   !==============
+   ! DOT PRODUCTS: V_dot_V
+   !==============
+   !
+   real(SP) function V_dot_V_r1_cpu(N,CX,CY)
      integer, intent(in) :: N
      real(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      real(SP)::ddot
-     real_V_dot_V=DDOT(N,CX,1,CY,1)
+     V_dot_V_r1_cpu=DDOT(N,CX,1,CY,1)
 #else
      real(SP)::sdot
-     real_V_dot_V=SDOT(N,CX,1,CY,1)
+     V_dot_V_r1_cpu=SDOT(N,CX,1,CY,1)
 #endif
-   end function real_V_dot_V
+   end function V_dot_V_r1_cpu
    !
-   complex(SP) function V_dot_V_cpu(N,CX,CY)
+   complex(SP) function V_dot_V_c1_cpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V_cpu=ZDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_cpu=ZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
-     V_dot_V_cpu=CDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_cpu=CDOTU(N,CX,1,CY,1)
 #endif
-   end function V_dot_V_cpu
+   end function V_dot_V_c1_cpu
+   !
+   complex(SP) function V_dot_V_c2_cpu(N,CX,CY)
+     integer,    intent(in) :: N
+     complex(SP),intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotu
+     V_dot_V_c2_cpu=ZDOTU(N,CX,1,CY,1)
+#else
+     complex(SP)::cdotu
+     V_dot_V_c2_cpu=CDOTU(N,CX,1,CY,1)
+#endif
+   end function V_dot_V_c2_cpu
    !
 #ifdef _CUDA
-   complex(SP) function V_dot_V_gpu(N,CX,CY)
+   complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      integer,    intent(in) :: N
      complex(SP), device, intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V_gpu=ZDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_gpu=ZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
-     V_dot_V_gpu=CDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_gpu=CDOTU(N,CX,1,CY,1)
 #endif
-   end function V_dot_V_gpu
+   end function V_dot_V_c1_gpu
 #endif
+   !
+   !=========
+   ! MISC
+   !=========
    !
    complex(SP) function FADEVA(Z)
      !

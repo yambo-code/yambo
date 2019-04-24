@@ -23,6 +23,7 @@
 !
 subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
+ use pars,           ONLY:SP
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch
  use R_lattice,      ONLY:g_rot,qindx_X,bz_samp

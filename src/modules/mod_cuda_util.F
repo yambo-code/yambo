@@ -28,10 +28,7 @@ MODULE cuda_util_m
       cuf_memcpy_r3d, &
       cuf_memcpy_c1d, &
       cuf_memcpy_c2d, &
-      cuf_memcpy_c3d, &
-      cuf_memcpy_c1d_cpu, &
-      cuf_memcpy_c2d_cpu, &
-      cuf_memcpy_c3d_cpu
+      cuf_memcpy_c3d
   END INTERFACE
   !
   INTERFACE cuf_memset
@@ -224,6 +221,7 @@ MODULE cuda_util_m
     !
   END SUBROUTINE cuf_memcpy_c3d
   !
+#if defined _CUDA
   SUBROUTINE cuf_memcpy_c1d_cpu(array_out, array_in, range1 )
     IMPLICIT NONE
     COMPLEX(SP), INTENT(INOUT) :: array_out(:)
@@ -277,6 +275,7 @@ MODULE cuda_util_m
     array_out(d1s:d1e,d2s:d2e,d3s:d3e ) = array_in(d1s:d1e,d2s:d2e,d3s:d3e )
     !
   END SUBROUTINE cuf_memcpy_c3d_cpu
+#endif
   !
   ! 
   !=====================

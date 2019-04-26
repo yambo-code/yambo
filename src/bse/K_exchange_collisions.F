@@ -118,7 +118,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        call cuf_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
 #else
        call scatter_Bamp(K_EXCH_collision)
-       BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el) K_EXCH_collision%rhotw(:)
+       BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el)=K_EXCH_collision%rhotw(:)
 #endif
        !
      else

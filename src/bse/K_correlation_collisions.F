@@ -40,7 +40,6 @@ subroutine K_correlation_collisions(iB,Xk,q)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
- use parallel_m,    ONLY:myid
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,bz_samp
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_blk,&
@@ -261,11 +260,6 @@ subroutine K_correlation_collisions(iB,Xk,q)
      integer,intent(in) :: iB,i_b,i_b_p,i_s_collision, i_k_sp
      type(elemental_collision),intent(inout) :: isc
      integer :: iB_oscillator
-#ifdef _CUDA
-     integer :: ig,ngrho
-     complex(SP), pointer, device :: rhotw_d(:)
-     complex(SP), pointer, device :: O_c_d(:,:)
-#endif
      if (.not.O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp)) return 
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,i_b,i_b_p,i_k_sp)
      isc%is(1)=i_b

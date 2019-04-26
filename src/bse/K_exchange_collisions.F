@@ -113,16 +113,12 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      if  (i_s==1.or.i_T_grp_last_with_identity_sym<0) then
        !
-       call scatter_Bamp(K_EXCH_collision)
-       !
 #ifdef _CUDA
+       call scatter_Bamp_gpu(K_EXCH_collision)
        call cuf_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
 #else
-       !$omp parallel do default(shared), private(i_g1)
-       do i_g1=1,BS_n_g_exch
-         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
-       enddo
-       !$omp end parallel do
+       call scatter_Bamp(K_EXCH_collision)
+       BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el) K_EXCH_collision%rhotw(:)
 #endif
        !
      else
@@ -150,16 +146,12 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      endif
    else
      !
-     call scatter_Bamp(K_EXCH_collision)
-     !
 #ifdef _CUDA
+     call scatter_Bamp_gpu(K_EXCH_collision)
      call cuf_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
 #else
-     !$omp parallel do default(shared), private(i_g1)
-     do i_g1=1,BS_n_g_exch
-       BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=K_EXCH_collision%rhotw(i_g1)
-     enddo
-     !$omp end parallel do
+     call scatter_Bamp(K_EXCH_collision)
+     BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el)=K_EXCH_collision%rhotw(:)
 #endif
      !
    endif

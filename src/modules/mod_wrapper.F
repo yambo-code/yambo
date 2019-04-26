@@ -30,6 +30,9 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,   ONLY:SP,cI
+#ifdef _CUDA
+ use cublas
+#endif
  !
  implicit none
  !
@@ -172,9 +175,9 @@ module wrapper
      complex(SP), device, intent(out):: Y(*)
      character,   intent(in) :: TRANS
 #if defined _DOUBLE
-     call zgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call cublasZgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
 #else
-     call cgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call cublasCgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
 #endif
    end subroutine mv_c_gpu
 #endif
@@ -221,15 +224,14 @@ module wrapper
    !
 #ifdef _CUDA
    subroutine vv_caxpy_gpu(N, CA, CX,  CY )
-     use cublas
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), device, intent(in) :: CX(*)
      complex(SP), device, intent(out):: CY(*)
 #if defined _DOUBLE
-     call zaxpy(N,CA,CX,1,CY,1)
+     call cublasZaxpy(N,CA,CX,1,CY,1)
 #else
-     call caxpy(N,CA,CX,1,CY,1)
+     call cublasCaxpy(N,CA,CX,1,CY,1)
 #endif
    end subroutine vv_caxpy_gpu
 #endif
@@ -266,6 +268,7 @@ module wrapper
    !==============
    !
    complex(SP) function Vstar_dot_V_c1_cpu(N,CX,CY)
+     implicit none
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
@@ -278,6 +281,7 @@ module wrapper
    end function Vstar_dot_V_c1_cpu
    !
    complex(SP) function Vstar_dot_V_c2_cpu(N,CX,CY)
+     implicit none
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
@@ -291,16 +295,17 @@ module wrapper
    !
 #ifdef _CUDA
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
+     implicit none
      integer,    intent(in) :: N
      complex(SP), device, intent(in) :: CX(*),CY(*)
+     !
 #if defined _DOUBLE
      complex(SP)::zdotc
-     Vstar_dot_V_c1_gpu=ZDOTC(N,CX,1,CY,1)
+     Vstar_dot_V_c1_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-     Vstar_dot_V_c1_gpu=cdotc(N,CX,1,CY,1)
+     Vstar_dot_V_c1_gpu=cublasCdotc(N,CX,1,CY,1)
 #endif
-     !
    end function Vstar_dot_V_c1_gpu
 #endif
    !
@@ -350,10 +355,10 @@ module wrapper
      complex(SP), device, intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
      complex(SP)::zdotu
-     V_dot_V_c1_gpu=ZDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_gpu=cublasZDOTU(N,CX,1,CY,1)
 #else
      complex(SP)::cdotu
-     V_dot_V_c1_gpu=CDOTU(N,CX,1,CY,1)
+     V_dot_V_c1_gpu=cublasCDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V_c1_gpu
 #endif

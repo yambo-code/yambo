@@ -265,10 +265,11 @@ subroutine K_correlation_collisions(iB,Xk,q)
      isc%is(1)=i_b
      isc%os(1)=i_b_p
      isc%os(3)=i_s_collision
-     call scatter_Bamp(isc)
 #ifdef _CUDA
+     call scatter_Bamp_gpu(isc)
      call cuf_memcpy(BS_blk(iB)%O_c_d(:,iB_oscillator),isc%rhotw_d,(/1,isc%ngrho/) )
 #else
+     call scatter_Bamp(isc)
      BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
 #endif
      O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp) = .false.

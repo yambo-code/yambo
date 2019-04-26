@@ -116,9 +116,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP), pointer, device :: gamp_d(:,:)
 #endif
  !
- complex(SP), external :: eval_bseK_exchange_resonant
- complex(SP), external :: eval_bseK_exchange_coupling
- !
  ! I/O
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,XID,ID
@@ -375,7 +372,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
        !
 #ifdef _CUDA
+       ! host->device transfer
        X_mat_d=X_mat
+       !
+       ! CUDA Fortran workarounds
        gamp_d => isc%gamp_d
        nibz=q%nibz
        !
@@ -411,7 +411,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #ifdef _CUDA
        call cuf_memcpy(BS_W(:,1,iq_W),isc%gamp_d(:,1),(/1,BS_n_g_W/))
 #else
-       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=isc%gamp(i_g2,1)
+       BS_W(1:BS_n_g_W,1,iq_W)=isc%gamp(1:BS_n_g_W,1)
 #endif
        !
      endif
@@ -833,8 +833,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call WF_free(WF)
  !
  call timing('X T_space Kernel',OPR='stop')
- !
-end subroutine K
+
+contains
 
 !==============================
 function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
@@ -876,7 +876,7 @@ function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
     H_x=conjg(BS_T_grp_ip_O_x_d(ig,i_Tp))*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
-    H_x_r=H_x_r+real(H_x)
+    H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo
   H_x=cmplx(H_x_r,H_x_i,SP)
@@ -885,6 +885,7 @@ function eval_bseK_exchange_resonant(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   H_x=Vstar_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x(:,i_Tp),&
                                    BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
 #endif
+  !
 end function eval_bseK_exchange_resonant
 
 !==============================
@@ -928,7 +929,7 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   do ig = 1, BS_n_g_exch
     ig1 = minus_G_d(ig)
     H_x=BS_T_grp_ip_O_x_d(ig1,i_Tp)*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
-    H_x_r=H_x_r+real(H_x)
+    H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo
   H_x=cmplx(H_x_r,H_x_i,SP)
@@ -936,5 +937,8 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   H_x=V_dot_V_omp(BS_n_g_exch, BS_T_grp_ip%O_x( minus_G(1:BS_n_g_exch),i_Tp),&
                                BS_T_grp_ik%O_x(:,i_Tk)/bare_qpg(iq,:BS_n_g_exch)**2)
 #endif
+ !
 end function eval_bseK_exchange_coupling
 
+ !
+end subroutine K

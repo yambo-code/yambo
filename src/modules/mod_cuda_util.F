@@ -28,7 +28,10 @@ MODULE cuda_util_m
       cuf_memcpy_r3d, &
       cuf_memcpy_c1d, &
       cuf_memcpy_c2d, &
-      cuf_memcpy_c3d
+      cuf_memcpy_c3d, &
+      cuf_memcpy_c1d_cpu, &
+      cuf_memcpy_c2d_cpu, &
+      cuf_memcpy_c3d_cpu
   END INTERFACE
   !
   INTERFACE cuf_memset
@@ -221,6 +224,64 @@ MODULE cuda_util_m
     !
   END SUBROUTINE cuf_memcpy_c3d
   !
+  SUBROUTINE cuf_memcpy_c1d_cpu(array_out, array_in, range1 )
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array_out(:)
+    COMPLEX(SP), INTENT(IN) :: array_in(:)
+    INTEGER, INTENT(IN) ::  range1(2)
+    !
+    INTEGER :: d1s, d1e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    !
+    array_out(d1s:d1e) = array_in(d1s:d1e)
+    !
+  END SUBROUTINE cuf_memcpy_c1d_cpu
+  !
+  SUBROUTINE cuf_memcpy_c2d_cpu(array_out, array_in, range1, range2 )
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array_out(:,:)
+    COMPLEX(SP), INTENT(IN) :: array_in(:,:)
+    INTEGER, INTENT(IN) ::  range1(2), range2(2)
+    !
+    INTEGER :: d1s, d1e
+    INTEGER :: d2s, d2e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    !
+    array_out(d1s:d1e,d2s:d2e ) = array_in(d1s:d1e,d2s:d2e )
+    !
+  END SUBROUTINE cuf_memcpy_c2d_cpu
+  !
+  SUBROUTINE cuf_memcpy_c3d_cpu(array_out, array_in, range1, range2, range3 )
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array_out(:,:,:)
+    COMPLEX(SP), INTENT(IN) :: array_in(:,:,:)
+    INTEGER, INTENT(IN) ::  range1(2), range2(2), range3(2)
+    !
+    INTEGER :: d1s, d1e
+    INTEGER :: d2s, d2e
+    INTEGER :: d3s, d3e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    d3s = range3(1)
+    d3e = range3(2)
+    !
+    array_out(d1s:d1e,d2s:d2e,d3s:d3e ) = array_in(d1s:d1e,d2s:d2e,d3s:d3e )
+    !
+  END SUBROUTINE cuf_memcpy_c3d_cpu
+  !
+  ! 
+  !=====================
+  ! cuf memset
+  !=====================
   !
   SUBROUTINE cuf_memset_r1d(array_out, val, range1 )
     !

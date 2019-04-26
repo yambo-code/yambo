@@ -49,8 +49,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
+ use cuda_util_m,   ONLY:cuf_memcpy
  !
+#include<dev_defs.h>
 #include<memory.h>
+ !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
  character(*),optional ::mode
@@ -173,11 +176,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
    isc%qs    =1
    !
-#ifdef _CUDA
-   call scatter_Gamp_gpu(isc,'x')
-#else
-   call scatter_Gamp(isc,'x')
-#endif
+   call DEV_SUBNAME(scatter_Gamp)(isc,'x')
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
@@ -191,12 +190,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      if (.not.PAR_IND_Q%element_1D(iq_ibz)) cycle
      !
      isc%qs(2:)=(/iq_ibz,is_ibz/)
+     !
      if (isc%qs(2)/=isc%iqref) then 
-#ifdef _CUDA
-       call scatter_Gamp_gpu(isc,'x')
-#else
-       call scatter_Gamp(isc,'x')
-#endif
+       call DEV_SUBNAME(scatter_Gamp)(isc,'x')
        if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
      endif
      !
@@ -245,35 +241,16 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        isc%os(1)=jb
        iscp%os=isc%os
        !
-#ifdef _CUDA
-       call scatter_Bamp_gpu(isc)
-#else
-       call scatter_Bamp(isc)
-#endif
+       call DEV_SUBNAME(scatter_Bamp)(isc)
        !
        ! Normal case, the density matrix is diagonal
        !
-#ifdef _CUDA
        if (isc%is(1)/=iscp%is(1)) then
-         call scatter_Bamp_gpu(iscp)
+         call DEV_SUBNAME(scatter_Bamp)(iscp)
        else
-         isc_ngrho=isc%ngrho
-         isc_rhotw_d => isc%rhotw_d
-         iscp_rhotw_d => iscp%rhotw_d
-         !
-         !$cuf kernel do(1) <<<*,*>>>
-         do ig = 1, isc_ngrho
-           iscp_rhotw_d(ig)=isc_rhotw_d(ig)
-         enddo
-         !
+         ! iscp%rhotw = isc%rhotw
+         call cuf_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw),(/1,isc%ngrho/))
        endif
-#else
-       if (isc%is(1)/=iscp%is(1)) then
-         call scatter_Bamp(iscp)
-       else
-         iscp%rhotw=isc%rhotw
-       endif
-#endif
        !
 #ifdef _CUDA
        !

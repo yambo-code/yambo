@@ -124,8 +124,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if(COLLISIONS_HXC_MB                         ) N_g_vecs_X  = QP_ng_Sx
  if(COLLISIONS_HXC_MB .or.l_use_COH_collisions) N_g_vecs_C  = QP_ng_Sc
  !
- call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_H)
- call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_X)
+ call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_H,"SH")
+ call fft_check_size(iGo_max,N_g_vecs_C,N_g_vecs_X,"SF")
  !
  if(COLLISIONS_HXC_local) QP_ng_SH=N_g_vecs_H
  if(COLLISIONS_HXC_MB) QP_ng_Sx=N_g_vecs_X

@@ -61,7 +61,7 @@ module parallel_m
  include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
- integer            :: mpi_comm_null =0
+ integer, parameter :: mpi_comm_null =0
 #endif
  !
  integer            :: myid

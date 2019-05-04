@@ -45,11 +45,11 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_load,QP_state_extract_print
- use wrapper_omp,   ONLY:V_dot_V_omp
+ use wrapper,       ONLY:Vstar_dot_VV
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
- use cuda_util_m,   ONLY:cuf_memcpy
+ use dev_util_m,    ONLY:dev_memcpy
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -249,35 +249,16 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call DEV_SUBNAME(scatter_Bamp)(iscp)
        else
          ! iscp%rhotw = isc%rhotw
-         call cuf_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw),(/1,isc%ngrho/))
+         call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw),(/1,isc%ngrho/))
        endif
        !
 #ifdef _CUDA
-       !
-       isc_rhotw_d => isc%rhotw_d
-       iscp_rhotw_d => iscp%rhotw_d
-       isc_gamp_d => isc%gamp_d
-       isc_ngrho=isc%ngrho
-       !
-       DP_Sx_l=0.0
-       !
-       !$cuf kernel do(1) <<<*,*>>>
-       do ig = 1, isc_ngrho
-         DP_Sx_l=DP_Sx_l +isc_rhotw_d(ig)* conjg(iscp_rhotw_d(ig))*isc_gamp_d(ig,1)
-       enddo
+       DP_Sx_l=Vstar_dot_VV(isc%ngrho,iscp%rhotw_d,isc%rhotw_d,isc%gamp_d(:,1))
+#else
+       DP_Sx_l=Vstar_dot_VV(isc%ngrho,iscp%rhotw,isc%rhotw,isc_gamp(:,1))
+#endif
        !
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
-       !       
-#else
-       !
-       !$omp parallel do default(shared), private(ig)
-       do ig = 1, isc%ngrho
-         local_rhotw(ig) = -4._SP/spin_occ*pi*isc%rhotw(ig)*conjg(iscp%rhotw(ig))*E%f(jb,isc%os(2),isc%os(4))
-       enddo
-       !$omp end parallel do
-       !
-       DP_Sx=DP_Sx+V_dot_V_omp(QP_ng_Sx,local_rhotw,isc%gamp(:,1))
-#endif
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
        !

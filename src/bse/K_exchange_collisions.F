@@ -30,7 +30,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use cuda_util_m,    ONLY:cuf_memcpy
+ use dev_util_m,     ONLY:dev_memcpy
 #ifdef _CUDA
  use D_lattice,      ONLY:sop_inv_d
  use R_lattice,      ONLY:g_rot_d
@@ -115,7 +115,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
 #ifdef _CUDA
        call scatter_Bamp_gpu(K_EXCH_collision)
-       call cuf_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
+       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
 #else
        call scatter_Bamp(K_EXCH_collision)
        BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el)=K_EXCH_collision%rhotw(:)
@@ -148,7 +148,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
 #ifdef _CUDA
      call scatter_Bamp_gpu(K_EXCH_collision)
-     call cuf_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
+     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,(/1,BS_n_g_exch/))
 #else
      call scatter_Bamp(K_EXCH_collision)
      BS_T_grp(i_T_grp)%O_x(1:BS_n_g_exch,i_T_el)=K_EXCH_collision%rhotw(:)

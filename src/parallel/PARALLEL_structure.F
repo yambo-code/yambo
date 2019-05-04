@@ -31,9 +31,9 @@ subroutine PARALLEL_structure(n_elements,ROLE)
  use parallel_m,  ONLY:PAR_Q_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs,mycuda_dev
  use interfaces,  ONLY:PARALLEL_check_phase_space
-#ifdef _CUDA
- use mpiDeviceUtil
-#endif
+!#ifdef _CUDA
+! use mpiDeviceUtil
+!#endif
  !
  implicit none
  !

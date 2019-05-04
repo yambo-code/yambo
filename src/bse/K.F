@@ -61,7 +61,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,V_by_V_pwise,M_by_V
- use cuda_util_m,   ONLY:cuf_conjg,cuf_memcpy
+ use dev_util_m,    ONLY:dev_conjg,dev_memcpy
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
@@ -409,7 +409,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      else
        !
 #ifdef _CUDA
-       call cuf_memcpy(BS_W(:,1,iq_W),isc%gamp_d(:,1),(/1,BS_n_g_W/))
+       call dev_memcpy(BS_W(:,1,iq_W),isc%gamp_d(:,1),(/1,BS_n_g_W/))
 #else
        BS_W(1:BS_n_g_W,1,iq_W)=isc%gamp(1:BS_n_g_W,1)
 #endif
@@ -669,8 +669,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end parallel do
 #endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ovv,(/1,BS_n_g_W/))
-           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Occ,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call dev_conjg(Ovv,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call dev_conjg(Occ,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !
@@ -730,8 +730,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            !$omp end parallel do
 #endif
            !
-           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ovc,(/1,BS_n_g_W/))
-           if (i_k_s>nsym/(i_time_rev+1)) call cuf_conjg(Ocv,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call dev_conjg(Ovc,(/1,BS_n_g_W/))
+           if (i_k_s>nsym/(i_time_rev+1)) call dev_conjg(Ocv,(/1,BS_n_g_W/))
            !
            if (BS_W_is_diagonal) then
              !

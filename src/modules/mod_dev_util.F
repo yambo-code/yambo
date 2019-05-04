@@ -6,22 +6,22 @@
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
 ! Utility functions to perform memcpy and memset on the device with CUDA Fortran
-! cuf_memXXX contains a CUF KERNEL to perform the selected operation
+! dev_memXXX contains a CUF KERNEL to perform the selected operation
 !
 #ifdef _CUDA
 #  define __CUDA
 #endif
 
-MODULE cuda_util_m
+MODULE dev_util_m
   !
   USE com, only: SP
   !
   IMPLICIT NONE
   !
-  PUBLIC :: cuf_memcpy, cuf_memset
-  PUBLIC :: cuf_conjg
+  PUBLIC :: dev_memcpy, dev_memset
+  PUBLIC :: dev_conjg
   !
-  INTERFACE cuf_memcpy
+  INTERFACE dev_memcpy
     MODULE PROCEDURE &
       cuf_memcpy_r1d, &
       cuf_memcpy_r2d, &
@@ -31,7 +31,7 @@ MODULE cuda_util_m
       cuf_memcpy_c3d
   END INTERFACE
   !
-  INTERFACE cuf_memset
+  INTERFACE dev_memset
     MODULE PROCEDURE &
       cuf_memset_r1d, &
       cuf_memset_r2d, &
@@ -41,11 +41,12 @@ MODULE cuda_util_m
       cuf_memset_c3d
   END INTERFACE
   !
-  INTERFACE cuf_conjg
+  INTERFACE dev_conjg
     MODULE PROCEDURE &
       cuf_conjg_c1d
   END INTERFACE
-  CONTAINS
+  !
+CONTAINS
   !
   SUBROUTINE cuf_memcpy_r1d(array_out, array_in, range1 )
     !
@@ -221,63 +222,6 @@ MODULE cuda_util_m
     !
   END SUBROUTINE cuf_memcpy_c3d
   !
-#if defined _CUDA
-  SUBROUTINE cuf_memcpy_c1d_cpu(array_out, array_in, range1 )
-    IMPLICIT NONE
-    COMPLEX(SP), INTENT(INOUT) :: array_out(:)
-    COMPLEX(SP), INTENT(IN) :: array_in(:)
-    INTEGER, INTENT(IN) ::  range1(2)
-    !
-    INTEGER :: d1s, d1e
-    !
-    d1s = range1(1)
-    d1e = range1(2)
-    !
-    array_out(d1s:d1e) = array_in(d1s:d1e)
-    !
-  END SUBROUTINE cuf_memcpy_c1d_cpu
-  !
-  SUBROUTINE cuf_memcpy_c2d_cpu(array_out, array_in, range1, range2 )
-    IMPLICIT NONE
-    COMPLEX(SP), INTENT(INOUT) :: array_out(:,:)
-    COMPLEX(SP), INTENT(IN) :: array_in(:,:)
-    INTEGER, INTENT(IN) ::  range1(2), range2(2)
-    !
-    INTEGER :: d1s, d1e
-    INTEGER :: d2s, d2e
-    !
-    d1s = range1(1)
-    d1e = range1(2)
-    d2s = range2(1)
-    d2e = range2(2)
-    !
-    array_out(d1s:d1e,d2s:d2e ) = array_in(d1s:d1e,d2s:d2e )
-    !
-  END SUBROUTINE cuf_memcpy_c2d_cpu
-  !
-  SUBROUTINE cuf_memcpy_c3d_cpu(array_out, array_in, range1, range2, range3 )
-    IMPLICIT NONE
-    COMPLEX(SP), INTENT(INOUT) :: array_out(:,:,:)
-    COMPLEX(SP), INTENT(IN) :: array_in(:,:,:)
-    INTEGER, INTENT(IN) ::  range1(2), range2(2), range3(2)
-    !
-    INTEGER :: d1s, d1e
-    INTEGER :: d2s, d2e
-    INTEGER :: d3s, d3e
-    !
-    d1s = range1(1)
-    d1e = range1(2)
-    d2s = range2(1)
-    d2e = range2(2)
-    d3s = range3(1)
-    d3e = range3(2)
-    !
-    array_out(d1s:d1e,d2s:d2e,d3s:d3e ) = array_in(d1s:d1e,d2s:d2e,d3s:d3e )
-    !
-  END SUBROUTINE cuf_memcpy_c3d_cpu
-#endif
-  !
-  ! 
   !=====================
   ! cuf memset
   !=====================
@@ -479,7 +423,7 @@ MODULE cuda_util_m
     !
   END SUBROUTINE cuf_conjg_c1d
   !
-END MODULE cuda_util_m
+END MODULE dev_util_m
 !
 !
 ! === TEMPLATE USED TO GENERATE THIS FILE ===

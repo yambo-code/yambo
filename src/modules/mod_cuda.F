@@ -22,9 +22,44 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 
+!================
+module cuda_m
+  !================
+  implicit none
+  private
+
+  logical:: have_cuda_devices=.false.
+  character(256) :: cuda_visible_devices=" "
+
+  public :: have_cuda_devices
+  public :: cuda_visible_devices
+  public :: cuda_setup
+
+contains
+
+  subroutine cuda_setup()
+    implicit none
+    !
+#if defined _CUDA
+    have_cuda_devices=.false. 
+    call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
+    if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
+#else
+    have_gpu_devices=.false.
+#endif
+    !
+  end subroutine cuda_setup
+
+end module cuda_m
+
+
+!=========================
+
 #if defined _CUDA
 
+!================
 module mpiDeviceUtil
+  !================
   implicit none
 #if defined(_MPI)
   INCLUDE 'mpif.h'
@@ -53,7 +88,9 @@ module mpiDeviceUtil
        type(C_PTR), value :: a, b
      end function strcmp
   end interface
+
 contains
+
   subroutine assignDevice(dev)
     use cudafor
     implicit none

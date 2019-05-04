@@ -696,7 +696,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (BS_cpl_K_corr.and.i_k_spin==i_p_spin) then
            !
-           ! :::SEX         (resonant):::
+           ! :::SEX         (coupling):::
            !=============================
            !
            iOcv        = BS_blk(i_block)%O_table(1,i_k_p_s,i_c_k,i_v_p,i_k_spin)
@@ -914,7 +914,7 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
 #ifdef _CUDA
   complex(SP), pointer, device :: BS_T_grp_ip_O_x_d(:,:)
   complex(SP), pointer, device :: BS_T_grp_ik_O_x_d(:,:)
-  integer :: ig, ig1
+  integer :: ig
   real(SP):: H_x_r,H_x_i
 #endif
          
@@ -927,8 +927,7 @@ function eval_bseK_exchange_coupling(iq, BS_n_g_exch, BS_T_grp_ip, i_Tp, &
   H_x_i=rZERO
   !$cuf kernel do(1) <<<*,*>>>
   do ig = 1, BS_n_g_exch
-    ig1 = minus_G_d(ig)
-    H_x=BS_T_grp_ip_O_x_d(ig1,i_Tp)*BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
+    H_x = BS_T_grp_ip_O_x_d( minus_G_d(ig),i_Tp) *BS_T_grp_ik_O_x_d(ig,i_Tk)/bare_qpg_d(iq,ig)**2
     H_x_r=H_x_r+real(H_x,SP)
     H_x_i=H_x_i+aimag(H_x)
   enddo

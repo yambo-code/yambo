@@ -50,9 +50,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 #ifdef _CUDA
  use R_lattice,           ONLY:g_vec_d,g_vec
 #endif
- !
+#include<dev_defs.h>
 #include<memory.h>
  !
+integer :: ierr
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
  type(DIPOLE_t),intent(inout) :: Dip
@@ -118,8 +119,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    !
    if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
      YAMBO_ALLOC(kbv,(wf_ng,pp_kbv_dim,4,n_spinor))
+     !
 #ifdef _CUDA
-   allocate(kbv_d,mold=kbv)
+     ! allocations with zero dims seem to be a problem
+     YAMBO_ALLOC(kbv_d,(wf_ng,max(pp_kbv_dim,1),4,n_spinor))
 #endif
    endif
    !
@@ -237,13 +240,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
-#ifdef _CUDA
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv_d)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv_d)
-#else
-         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
-         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
-#endif
+         !
+         if (io_KB_abinit_err==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
+         if (io_KB_pwscf_err ==0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VARNAME(kbv))
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ec may become very large)
@@ -311,8 +310,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
    YAMBO_FREE(Vnl)
  endif
 #ifdef _CUDA
- if (allocated(kbv_d))   deallocate(kbv_d)
- if (allocated(g_vec_d)) deallocate(g_vec_d)
+ YAMBO_FREE(kbv_d)
+ YAMBO_FREE(g_vec_d)
 #endif
  !
  call timing('DIPOLE_transverse',OPR='stop')

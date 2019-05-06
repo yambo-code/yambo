@@ -27,12 +27,12 @@
 
 void options_maker(struct n_options_struct n_options[])
 {
- int i_opt,dummy;
+ int i_opt,dummy,i;
  for(i_opt=0;i_opt<100;i_opt++) {
   n_options[i_opt].long_opt=NULL;
   n_options[i_opt].short_opt=0;
   n_options[i_opt].short_desc=NULL;
-  n_options[i_opt].long_desc=NULL;
+  for(i=0;i<=10;i++) n_options[i_opt].long_desc[i]=NULL;
   n_options[i_opt].yambo_string=NULL;
   n_options[i_opt].project="all";
   n_options[i_opt].n_int=0;
@@ -46,21 +46,21 @@ void options_maker(struct n_options_struct n_options[])
   Help(s) 
  */
  i_opt++;
- n_options[i_opt].short_desc="Short Help";
+ n_options[i_opt].short_desc="Help";
  n_options[i_opt].short_opt='h';
- n_options[i_opt].long_opt="help"; /*help*/
+ n_options[i_opt].long_opt="help"; /*Help*/
  n_options[i_opt].serial_var=1;
  i_opt++;
- n_options[i_opt].short_desc="Long Help";
- n_options[i_opt].short_opt='H';
- n_options[i_opt].long_opt="Help"; /*lhelp*/
+ n_options[i_opt].short_desc="<string> can be an option (e.g. -info optics) or 'version' to get the code configuration";
+ n_options[i_opt].long_opt="info"; /*info*/
  n_options[i_opt].serial_var=1;
+ n_options[i_opt].n_char=1;
  /* 
   Input file 
  */
  i_opt++;
  n_options[i_opt].short_desc="Input file variables verbosity";
- n_options[i_opt].long_desc="<string> can be RL,kpt,sc,qp,io,gen,resp,all,par";
+ n_options[i_opt].long_desc[0]="<string> can be RL,kpt,sc,qp,io,gen,resp,all,par";
  n_options[i_opt].short_opt='V';
  n_options[i_opt].long_opt="Verbosity"; 
  n_options[i_opt].n_char=1;
@@ -108,7 +108,7 @@ void options_maker(struct n_options_struct n_options[])
  n_options[i_opt].n_char=1;
  i_opt++;
  n_options[i_opt].short_desc="Walltime";
- n_options[i_opt].long_desc="Format is DdHhMm with D=days, H=hours and M=minutes";
+ n_options[i_opt].long_desc[0]="Format is DdHhMm with D=days, H=hours and M=minutes";
  n_options[i_opt].long_opt="walltime";
  n_options[i_opt].n_char=1;
  n_options[i_opt].yambo_string="wallt";
@@ -140,7 +140,9 @@ void options_maker(struct n_options_struct n_options[])
  n_options[i_opt].yambo_string="setup";
  i_opt++;
  n_options[i_opt].short_desc="Linear Response optical properties";
- n_options[i_opt].long_desc="Response function solution\nstring=c (G)-space\nstring=b for Bethe-Salpter";
+ n_options[i_opt].long_desc[0]="Response function solution";
+ n_options[i_opt].long_desc[1]="<string>=c Reciprocal-Space";
+ n_options[i_opt].long_desc[2]="<string>=b for Transition-Space Bethe-Salpeter";
  n_options[i_opt].long_opt="optics";
  n_options[i_opt].project="yambo";
  n_options[i_opt].yambo_string="optics";

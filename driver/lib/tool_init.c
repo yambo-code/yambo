@@ -41,7 +41,7 @@ struct tool_struct tool_init( )
  t.desc=tool_desc;
  t.pj=pj;
  sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,
-                                                          t.patchlevel,t.revision,t.hash);
+                                                         t.patchlevel,t.revision,t.hash);
  /*
  printf("TOOL        : %s - %s - %s\n",t.tool,t.desc,t.pj);
  printf("TOOL version: %s\n",t.version_string);

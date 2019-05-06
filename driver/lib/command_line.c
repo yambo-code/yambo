@@ -106,22 +106,30 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  long_options[n_options].val=0;
  int long_index =0;
  while ((opt = getopt_long_only(argc, argv,opt_string,long_options, &long_index )) != -1) {
+  /* No option valid */
   if (opt == '?') {
-    /*usage()opts,1,t);*/
+    usage(opts,t,"help");
     exit(EXIT_FAILURE);
   }
   for(i_opt=0;i_opt<=100;i_opt++) {
    if (opts[i_opt].short_opt==opt) {break;};
   }
-
+  /* Help */
+  if (strcmp(opts[i_opt].long_opt,"help")==0){
+    usage(opts,t,"help");
+    exit(0);
+  }
+  /* Var Info */
+  if (strcmp(opts[i_opt].long_opt,"info")==0){
+    usage(opts,t,optarg);
+    exit(0);
+  }
+  /*
   if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
   if (optarg) {printf (" with arg %s", optarg);}
   printf ("\n");
+  */
 
-  if (strcmp(opts[i_opt].long_opt,"help")==0 || strcmp(opts[i_opt].long_opt,"Help")==0){
-    /*usage()opts,1,t);*/
-    exit(0);
-  }
   if (strcmp(opts[i_opt].long_opt,"Input")==0){y.in_file=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Job")==0){y.job=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"dir")==0){y.in_dir=optarg;continue;}

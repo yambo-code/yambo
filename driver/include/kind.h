@@ -52,24 +52,12 @@ typedef struct yambo_seed_struct
  int  job_N;
 } yambo_seed_struct;
 
-typedef struct options_struct
-{
- char *long_opt;
- char *runlevel;
- char short_opt;
- char *short_desc;
- int   ni;
- int   nr;
- int   nc;
- int   mpion;
-} options_struct;
-
 typedef struct n_options_struct
 {
  char  short_opt;
  char *long_opt;
  char *short_desc;
- char *long_desc;
+ char *long_desc[10];
  char *project;
  char *yambo_string;
  int   n_int;

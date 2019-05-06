@@ -1,10 +1,13 @@
- !
- integer function yambo(&
+!
+integer function yambo(&
 &  np,pid,&
 &  string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N,&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)
  !
  interface  
+   subroutine get_libraries(libraries)
+     character(*), intent(out):: libraries
+   end subroutine
    subroutine get_running_tool(what_is_running)
      character(*), intent(out):: what_is_running
    end subroutine
@@ -24,12 +27,12 @@
  character(com_dir_N), intent(in)    :: com_dir
  character(job_N),     intent(in)    :: job
  !
- integer i_runlevel
- character(100) what_is_running,key,desc,pj
+ integer i_runlevel,i_err
+ character(100) what_is_running,key,desc,pj,libraries
  !
  if (pid==0) then
    !
-   write (*,*) "F driver"
+   write (*,'(/a/)') " F driver"
    write (*,*) "NP, PID   :",np,pid
    write (*,*) "RUNSTRING :",string_N,string
    write (*,*) "INPUT file:",in_file_N,in_file
@@ -40,7 +43,10 @@
   
    what_is_running=" "
    call get_running_tool(what_is_running)
-   write (*,*) "RUNNING   :",trim(what_is_running)
+   write (*,'(/2a)') " RUNNING   :",trim(what_is_running)
+   libraries=" "
+   call get_libraries(libraries)
+   write (*,'(2a/)') " LIBS      :",trim(libraries)
   
    do i_runlevel=1,99
      key=" "
@@ -50,10 +56,9 @@
      call get_runlevel(desc,2,i_runlevel)
      call get_runlevel(pj,3,i_runlevel)
      if (trim(key)=="EMPTY") cycle
-     write (*,*) "RUNLEVEL #",i_runlevel," :",trim(key),'-',trim(desc),'-',trim(pj)
+     write (*,*) "RUNLEVEL #",i_runlevel," KEY:",trim(key),' DESC:',trim(desc),' PJ:',trim(pj)
    enddo
 endif
-
 
 end function
    !

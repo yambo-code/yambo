@@ -58,9 +58,6 @@
 #if defined _SCALAPACK
  char *pj="slk";
 #endif
-#if defined _TEST_MAIN
- char *pj="test";
-#endif
 /*
  tool & desc
 */

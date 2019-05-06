@@ -34,11 +34,13 @@ void options_maker(struct n_options_struct n_options[]);
 
 struct tool_struct tool_init( );
 
-void usage(options_struct *opts,int verbose, struct tool_struct t);
+void usage(n_options_struct *opts, struct tool_struct t, char* what);
 
 void title(FILE *file_name,char *cmnt, struct tool_struct t);
 
 char *running_tool();
+
+char *tool_libraries();
 
 char *runlevel(int *runid, int *id);
 

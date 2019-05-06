@@ -37,11 +37,11 @@ integer function get_the_version(version,subversion,patchlevel,revision,hash)
  !
  include 'version.inc'
  !
- version=code_version(1)
+ version   =code_version(1)
  subversion=code_version(2)
  patchlevel=code_version(3)
- revision=code_revision
- hash=code_hash
+ revision  =code_revision
+ hash      =code_hash
  !
  get_the_version=1
  !

@@ -29,21 +29,58 @@
 #include <driver.h>
 #include <string.h>
 
-char *running_tool()
+char *tool_libraries()
 {
- tool_struct tool;
- tool=tool_init();
- char tmp[100], *c;
- sprintf(tmp,"%s(main)-%s(project)",tool.tool,tool.pj);
- c = malloc(sizeof(tmp)+1);
- strcpy(c,tmp);
+ int i_str,str_len,i_c;
+ char strings[20][20], *c;
+ i_str=0;
+#if defined _MPI
+ strcpy(strings[i_str], "MPI");
+#else
+ strcpy(strings[i_str], "Serial");
+#endif
+#if defined _OPENMP
+ i_str++;
+ strcpy(strings[i_str], "OpenMP");
+#endif
+#if defined _CUDA
+ i_str++;
+ strcpy(strings[i_str], "CUDA");
+#endif
+#if defined _SCALAPACK
+ i_str++;
+ strcpy(strings[i_str], "SCALAPACK");
+#endif
+#if defined _SLEPC
+ i_str++;
+ strcpy(strings[i_str], "SLEPC");
+#endif
+#if defined _PAR_IO
+ i_str++;
+ strcpy(strings[i_str], "HDF5_MPI_IO");
+#elif defined _HDF5_IO
+ i_str++;
+ strcpy(strings[i_str], "HDF5_IO");
+#elif defined _HDF5_LIB
+ i_str++;
+ strcpy(strings[i_str], "HDF5O");
+#endif 
+ str_len=0;
+ for(i_c=0;i_c<=i_str;i_c++) {
+  str_len=str_len+sizeof(strings[i_c]);
+ }
+ c = malloc(str_len+1);
+ for(i_c=0;i_c<=i_str;i_c++) {
+  if (i_c>0) strcat(c,"+");
+  strcat(c,strings[i_c]);
+ }
  return c;
 }
-void C_FUNC(get_running_tool, GET_RUNNING_TOOL)(char *what_is_running)
+void C_FUNC(get_libraries, GET_LIBRARIES)(char *libraries)
 {
- char *c = running_tool();
+ char *c = tool_libraries();
  int len = strlen(c);
- strcpy(what_is_running, c);
- what_is_running[len] = what_is_running[len + 1];
+ strcpy(libraries, c);
+ libraries[len] = libraries[len + 1];
 }
 

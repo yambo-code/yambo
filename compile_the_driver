@@ -1,5 +1,5 @@
 #! /bin/bash
-OPT=" -D_FORTRAN_US -D_TEST_MAIN -D_C_US -D_MPI"
+OPT=" -D_FORTRAN_US -D_TEST_MAIN -D_C_US -D_MPI -D_ELPH -D_CUDA"
 #
 rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o driver/include/*.a driver.x
 

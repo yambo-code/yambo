@@ -84,8 +84,8 @@ void usage(n_options_struct *opts,  struct tool_struct t, char *what)
    }
    if (opts[i_opt].long_desc[0]!= NULL)
    {
-    fprintf(stderr," Description : \t%s",opts[i_opt].long_desc[0]);
-    for(i=1;i<10;i++) {
+    fprintf(stderr," Description :\t%s",opts[i_opt].short_desc);
+    for(i=0;i<10;i++) {
      if (opts[i_opt].long_desc[i]== NULL) continue;
      fprintf(stderr,"\n\t\t%s",opts[i_opt].long_desc[i]);
     }

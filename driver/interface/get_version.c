@@ -22,34 +22,34 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-struct yambo_seed_struct command_line(int argc, char *argv[],struct n_options_struct opts[], struct tool_struct t, int *use_editor, int *use_mpi);
+#include <string.h>
+#include <stdio.h>
+#include <wrapper.h>
+#include <kind.h>
+#include <driver.h>
+#include <version.h>
 
-void input_file(struct yambo_seed_struct y,struct tool_struct t, int *use_editor);
-
-void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor , int *use_mpi );
-
-void load_environments(char *file_name, char* editor);
-
-void options_maker(struct n_options_struct n_options[]);
-
-struct tool_struct tool_init( );
-
-void usage(n_options_struct *opts, struct tool_struct t, char* what);
-
-struct tool_struct versions( );
-
-void title(FILE *file_name,char *cmnt, struct tool_struct t);
-
-char *running_tool();
-
-char *tool_libraries();
-
-char *runlevel(int *runid, int *id);
-
-#if defined _FORTRAN_US
- extern int get_the_version_
-#else
- extern int get_the_version
-#endif
-(int *,int *,int *, int *, char *);
+struct tool_struct versions( )
+{
+ tool_struct t;
+ t.version=YAMBO_VERSION;
+ t.subversion=YAMBO_SUBVERSION;
+ t.patchlevel=YAMBO_PATCHLEVEL;
+ t.revision=YAMBO_REVISION;
+ sprintf(t.hash,"%s",YAMBO_HASH);
+ return(t);
+}
+void C_FUNC(get_version, GET_VERSION)(int *version,int *subversion, int *patchlevel, int *revision, char *hash)
+{
+ tool_struct t;
+ t=versions();
+ *version=t.version;
+ *subversion=t.subversion;
+ *patchlevel=t.patchlevel;
+ *revision=t.revision;
+ strcpy(hash, t.hash);
+ int len = strlen(t.hash);
+ hash[len] = hash[len + 1];
+ /*sprintf(hash,"%s",t.hash);*/
+}
 

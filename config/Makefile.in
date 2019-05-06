@@ -60,7 +60,7 @@ CFGFILES = config/setup config/Makefile config/report config/msg_ydb \
            sbin/make_makefile.sh src/wf_and_fft/sgfft.F  \
            src/tools/.objects Makefile  \
            sbin/objects_store.sh driver/include/editor.h \
-           include/headers/common/have_malloc.h sbin/generate_gpl.sh
+           include/headers/common/have_malloc.h sbin/generate_gpl.sh driver/include/version.h
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif

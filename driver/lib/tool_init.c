@@ -35,7 +35,7 @@
 struct tool_struct tool_init( )
 {
  tool_struct t;
- F90_FUNC(get_the_version)(&t.version,&t.subversion,&t.patchlevel,&t.revision,t.hash);
+ t=versions();
  t.editor=editor;
  t.tool=tool;
  t.desc=tool_desc;

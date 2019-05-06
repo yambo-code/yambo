@@ -5,6 +5,13 @@ integer function yambo(&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)
  !
  interface  
+   subroutine get_version(version,subversion,patchlevel,revision,hash)
+     integer     , intent(out):: version
+     integer     , intent(out):: subversion
+     integer     , intent(out):: patchlevel
+     integer     , intent(out):: revision
+     character(*), intent(out):: hash
+   end subroutine
    subroutine get_libraries(libraries)
      character(*), intent(out):: libraries
    end subroutine
@@ -27,8 +34,8 @@ integer function yambo(&
  character(com_dir_N), intent(in)    :: com_dir
  character(job_N),     intent(in)    :: job
  !
- integer i_runlevel,i_err
- character(100) what_is_running,key,desc,pj,libraries
+ integer i_runlevel,i_err,version,subversion,patchlevel,revision
+ character(100) what_is_running,key,desc,pj,libraries,hash
  !
  if (pid==0) then
    !
@@ -46,7 +53,10 @@ integer function yambo(&
    write (*,'(/2a)') " RUNNING   :",trim(what_is_running)
    libraries=" "
    call get_libraries(libraries)
-   write (*,'(2a/)') " LIBS      :",trim(libraries)
+   write (*,'(2a)') " LIBS      :",trim(libraries)
+   hash=" "
+   call get_version(version,subversion,patchlevel,revision,hash)
+   write (*,'(a,2(i1,a),i1,1x,i5,1x,a/)') " VERSION   :",version,".",subversion,".",patchlevel,revision,trim(hash)
   
    do i_runlevel=1,99
      key=" "

@@ -60,6 +60,7 @@ void usage(n_options_struct *opts,  struct tool_struct t, char *what)
    n_blanks=n_options_chars+2-opts[i_opt].n_int*6-opts[i_opt].n_float*7-opts[i_opt].n_char*9;
    for(i=1;i<=n_blanks;i++) fprintf(stderr," "); 
    fprintf(stderr," :%s",opts[i_opt].short_desc);
+   if (opts[i_opt].long_desc[1]!= NULL) fprintf(stderr," %s%s%s","(more with -info ",opts[i_opt].long_opt,")");
    fprintf(stderr,"\n");
   }
   fprintf(stderr,"\n");

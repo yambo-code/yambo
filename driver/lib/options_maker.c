@@ -221,6 +221,12 @@ void options_maker(struct n_options_struct n_options[])
  n_options[i_opt].long_opt="acfdt";
  n_options[i_opt].project="yambo";
  n_options[i_opt].yambo_string="acfdt";
+ i_opt++;
+ n_options[i_opt].short_desc="ScaLapacK test";
+ n_options[i_opt].long_opt="slktest";
+ n_options[i_opt].short_opt='s';
+ n_options[i_opt].project="yambo";
+ n_options[i_opt].yambo_string="slktest";
  /* 
 
   Projects
@@ -270,20 +276,19 @@ void options_maker(struct n_options_struct n_options[])
  n_options[i_opt].short_opt='s';
  n_options[i_opt].project="yambo_sc";
  n_options[i_opt].yambo_string="scrun";
+ i_opt++;
+ n_options[i_opt].short_desc="Self-Consistent Magnetic Calculations";
+ n_options[i_opt].long_opt="magnetic";
+ n_options[i_opt].short_opt='m';
+ n_options[i_opt].project="yambo_magnetic";
+ n_options[i_opt].yambo_string="magnetic";
+ i_opt++;
+ n_options[i_opt].short_desc="Self-Consistent Static Electric Field Calculations";
+ n_options[i_opt].long_opt="electric";
+ n_options[i_opt].short_opt='m';
+ n_options[i_opt].project="yambo_electric";
+ n_options[i_opt].yambo_string="electric";
 /*
-#if defined _MAGNETIC 
-  {"magnetic", "m","Magnetic [opt=(p)auli,(l)andau,(a)ll]",0,0,1,0,0}, 
-#endif
-#if defined _ELECTRIC 
-  {"electric", "m","Static Electric Field",0,0,0,0,0}, 
-#endif
-#if defined _SURF
-  {"sursp",  "s","Surface Spectroscopy [opt=(r)as/r(e)els/(b)oth]",0,0,1,0,0},
-#endif
-#if defined _SCALAPACK
-  {"slktest",  "s","ScaLapacK test",0,0,0,0,0},
-#endif
-
 #if defined _QED && !defined _ELPH
   {"corrtp", "c","Correlation [opt=(e)lectrons/p(h)otons/(a)ll]",0,0,1,0,0},
 #endif

@@ -33,7 +33,15 @@ void options_control(struct options_struct options[],int *i_opt)
  */
  desc="Input file & Directories";
  *i_opt=*i_opt+1;
+#if defined _yambo || defined _ypp || defined _c2y
  options[*i_opt].short_desc="Input file";
+#endif
+#if defined _a2y || defined _e2y
+ options[*i_opt].short_desc="KSS or WFK file";
+#endif
+#if defined _p2y 
+ options[*i_opt].short_desc="Index file";
+#endif
  options[*i_opt].short_opt='F';
  options[*i_opt].long_opt="Input"; 
  options[*i_opt].n_char=1;
@@ -46,6 +54,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].n_char=1;
  options[*i_opt].serial_var=1;
  options[*i_opt].yambo_string="infver";
+ options[*i_opt].bin="yambo ypp";
  options[*i_opt].section=desc;
  /* 
   Utils
@@ -56,6 +65,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='Q';
  options[*i_opt].long_opt="Quiet"; 
  options[*i_opt].serial_var=1;
+ options[*i_opt].bin="yambo ypp";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Databases properties";
@@ -63,6 +73,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="DBlist";
  options[*i_opt].serial_var=1;
  options[*i_opt].yambo_string="dbpr";
+ options[*i_opt].bin="yambo ypp";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Walltime";
@@ -70,6 +81,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="walltime";
  options[*i_opt].n_char=1;
  options[*i_opt].yambo_string="wallt";
+ options[*i_opt].bin="yambo ypp";
  options[*i_opt].section=desc;
 #if defined _SCALAPACK
  *i_opt=*i_opt+1;
@@ -96,6 +108,7 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='I';
  options[*i_opt].long_opt="Idir"; 
  options[*i_opt].n_char=1;
+ options[*i_opt].bin="yambo ypp";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="I/O directory";

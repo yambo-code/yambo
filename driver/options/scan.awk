@@ -29,13 +29,13 @@ if (a[2] == "\"DESC\"")
 {
  print "DESC" a[4]
 }else{
- print "i_opt++;"
- print "n_options[i_opt].short_desc="a[4]";"
- print "n_options[i_opt].long_desc=\" \";"
- print "n_options[i_opt].long_opt="a[1]";"
- print "n_options[i_opt].short_opt="a[3]";"
- print "n_options[i_opt].project=\"yambo" PJ"\";"
- print "n_options[i_opt].yambo_string="a[2]";"
+ print "*i_opt=*i_opt+1;"
+ print "options[*i_opt].short_desc="a[4]";"
+ print "options[*i_opt].long_opt="a[1]";"
+ print "options[*i_opt].short_opt="a[3]";"
+ print "iptions[*i_opt].bin=\"a2y" PJ"\";"
+ print "options[*i_opt].yambo_string="a[2]";"
+ print "options[*i_opt].section=\"Interface\";"
 }
 }
 

@@ -63,6 +63,10 @@ void options_maker(struct options_struct options[])
  */
  options_projects(options,&i_opt);
  /* 
+  Interfaces
+ */
+ options_interfaces(options,&i_opt);
+ /* 
   Assign dummy short options to variables with only long options
  */
  dummy=57;

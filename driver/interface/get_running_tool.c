@@ -34,7 +34,12 @@ char *running_tool()
  tool_struct tool;
  tool=tool_init();
  char tmp[100], *c;
- sprintf(tmp,"%s(main)-%s(project)",tool.tool,tool.pj);
+ if (strlen(tool.pj)>0)
+ {
+  sprintf(tmp,"%s(main)-%s(project)",tool.tool,tool.pj);
+ }else{
+  sprintf(tmp,"%s",tool.tool);
+ }
  c = malloc(sizeof(tmp)+1);
  strcpy(c,tmp);
  return c;

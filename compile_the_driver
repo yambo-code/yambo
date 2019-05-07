@@ -3,6 +3,10 @@
 PJ=$1
 case "${PJ}"
 in
+e2y) OPT="-D_e2y";;
+p2y) OPT="-D_p2y";;
+c2y) OPT="-D_c2y";;
+a2y) OPT="-D_a2y";;
 ph) OPT="-D_ELPH";;
 pl) OPT="-D_RT -D_SC -D_ELPH -D_PL";;
 sc) OPT="-D_SC";;

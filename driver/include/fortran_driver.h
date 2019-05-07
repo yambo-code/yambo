@@ -42,7 +42,6 @@
 #endif
 /* YPP */
 #if defined _YPP_MAIN
- #include "ypp.h"
  #if defined _FORTRAN_US
   int ypp_i_
  #else
@@ -50,8 +49,7 @@
  #endif
 #endif
 /* A2Y */
-#if defined _a2y
- #include "a2y.h"
+#if defined _A2Y_MAIN
  #if defined _FORTRAN_US
   int a2y_i_
  #else
@@ -59,8 +57,7 @@
  #endif
 #endif
 /* C2Y */
-#if defined _c2y
- #include "c2y.h"
+#if defined _C2Y_MAIN
  #if defined _FORTRAN_US
   int c2y_i_
  #else
@@ -68,8 +65,7 @@
  #endif
 #endif
 /* P2Y */
-#if defined _p2y
- #include "p2y.h"
+#if defined _P2Y_MAIN
  #if defined _FORTRAN_US
   int p2y_i_
  #else
@@ -77,8 +73,7 @@
  #endif
 #endif
 /* E2Y */
-#if defined _e2y
- #include "e2y.h"
+#if defined _E2Y_MAIN
  #if defined _FORTRAN_US
   int e2y_i_
  #else

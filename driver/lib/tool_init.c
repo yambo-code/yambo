@@ -76,19 +76,26 @@ struct tool_struct tool_init( )
 #if defined _QED && defined _RT && defined _ELPH
  pj="qed";
 #endif
- if (pj==NULL) pj=" ";
- t.pj=pj;
 
- t.bin = malloc(strlen(tool)+strlen(pj)+1);
- strcat(t.bin,t.tool);
- strcat(t.bin,"_");
- strcat(t.bin,t.pj);
+ if (pj!=NULL) {
+  t.bin = malloc(strlen(tool)+strlen(pj)+1);
+  strcat(t.bin,t.tool);
+  t.pj=pj;
+  strcat(t.bin,"_");
+  strcat(t.bin,t.pj);
+ }else{
+  t.bin = malloc(strlen(tool));
+  strcat(t.bin,t.tool);
+  pj="";
+  t.pj=pj;
+ }
+ if (pj==NULL) pj=" ";
  sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,
                                                          t.patchlevel,t.revision,t.hash);
- /*
  printf("TOOL        : %s - %s - %s\n",t.tool,t.desc,t.pj);
  printf("TOOL bin    : %s \n",t.bin);
  printf("TOOL version: %s\n",t.version_string);
+ /*
  */
  return(t);
 };

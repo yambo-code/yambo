@@ -25,7 +25,24 @@
 
 */
 #if defined _TEST_MAIN
+ #if defined _a2y
+ char *tool="a2y";
+ #endif
+ #if defined _ypp
+ char *tool="ypp";
+ #endif
+ #if defined _yambo
  char *tool="yambo";
+ #endif
+ #if defined _c2y
+ char *tool="c2y";
+ #endif
+ #if defined _e2y
+ char *tool="e2y";
+ #endif
+ #if defined _p2y
+ char *tool="p2y";
+ #endif
  char *tool_desc="Testing Driver";
 #endif
 #if defined _yambo 
@@ -33,24 +50,28 @@
  char *tool="yambo";
  char *tool_desc="A shiny pot of fun and happiness [C.D.Hogan]";
 #endif
-#if defined _ypp 
+#if defined _ypp_main
  #define _YPP_MAIN
  char *tool="ypp";
  char *tool_desc="Y(ambo) P(ost) P(rocessor)";
 #endif
-#if defined _a2y
+#if defined _a2y_main
+ #define _A2Y_MAIN
  char *tool="a2y";
  char *tool_desc="A(binit) 2 Y(ambo) interface";
 #endif
-#if defined _c2y
+#if defined _c2y_main
+ #define _C2Y_MAIN
  char *tool="c2y";
  char *tool_desc="C(pmd) 2 Y(ambo) interface";
 #endif
-#if defined _p2y
+#if defined _p2y_main
+ #define _P2Y_MAIN
  char *tool="p2y";
  char *tool_desc="P(Wscf) 2 Y(ambo) interface";
 #endif
-#if defined _e2y
+#if defined _e2y_main
+ #define _E2Y_MAIN
  char *tool="e2y";
  char *tool_desc="E(TSF) 2 Y(ambo) interface (0.6)";
 #endif

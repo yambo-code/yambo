@@ -37,7 +37,7 @@ void usage(options_struct *opts,  struct tool_struct t, char *what)
  /*
    Order
  */
- int n_orders=10,n_order_elements;
+ int n_orders=13,n_order_elements;
  char *order[]={
  "Help & version",
  "Input file & Directories",
@@ -50,6 +50,7 @@ void usage(options_struct *opts,  struct tool_struct t, char *what)
  "Real-Time",
  "Total Energy",
  "Utilites",
+ "Interface",
  "undef",
  };
 

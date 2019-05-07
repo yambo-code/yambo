@@ -102,7 +102,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 #include <fortran_arguments.h>
  );
 #endif
-#if defined _c2y 
+#if defined _C2Y_MAIN 
  /* 
    Running the Fortran c2y driver
  ===========================================================================
@@ -111,7 +111,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 #include <fortran_arguments.h>
  );
 #endif
-#if defined _a2y 
+#if defined _A2Y_MAIN 
  /* 
    Running the Fortran a2y driver
  ===========================================================================
@@ -120,7 +120,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 #include <fortran_arguments.h>
  );
 #endif
-#if defined _p2y
+#if defined _P2Y_MAIN
  /* 
    Running the Fortran p2y driver 
  ===========================================================================
@@ -129,7 +129,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 #include <fortran_arguments.h>
  );
 #endif
-#if defined _e2y 
+#if defined _E2Y_MAIN 
  /* 
    Running the Fortran p2y driver 
  ===========================================================================

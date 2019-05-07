@@ -22,7 +22,7 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-struct yambo_seed_struct command_line(int argc, char *argv[],struct n_options_struct opts[], struct tool_struct t, int *use_editor, int *use_mpi);
+struct yambo_seed_struct command_line(int argc, char *argv[],struct options_struct options[], struct tool_struct t, int *use_editor, int *use_mpi);
 
 void input_file(struct yambo_seed_struct y,struct tool_struct t, int *use_editor);
 
@@ -30,21 +30,28 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 
 void load_environments(char *file_name, char* editor);
 
-void options_maker(struct n_options_struct n_options[]);
+void options_maker(struct options_struct n_options[]);
 
 struct tool_struct tool_init( );
 
-void usage(n_options_struct *opts, struct tool_struct t, char* what);
+void usage(struct options_struct options[], struct tool_struct t, char* what);
 
 struct tool_struct versions( );
 
 void title(FILE *file_name,char *cmnt, struct tool_struct t);
+
+int use_me(struct options_struct options[], struct tool_struct t, int i_opt);
 
 char *running_tool();
 
 char *tool_libraries();
 
 char *runlevel(int *runid, int *id);
+
+void options_help(struct options_struct options[],int *i_opt);
+void options_control(struct options_struct options[],int *i_opt);
+void options_yambo(struct options_struct options[],int *i_opt);
+void options_projects(struct options_struct options[],int *i_opt);
 
 #if defined _FORTRAN_US
  extern int get_the_version_

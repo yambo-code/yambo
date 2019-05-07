@@ -20,53 +20,28 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-
 */
-typedef struct tool_struct
-{
- char *editor;
- char *tool;
- char *bin;
- char *desc;
- char version_string[500];
- char hash[500];
- char *pj;
- int  version;
- int  subversion;
- int  patchlevel;
- int  revision;
-} tool_struct;
 
-typedef struct yambo_seed_struct
-{
- char string[500];
- char *in_file;
- char *in_dir;
- char *out_dir;
- char *com_dir;
- char *job;
- int  string_N;
- int  in_file_N;
- int  in_dir_N;
- int  out_dir_N;
- int  com_dir_N;
- int  job_N;
-} yambo_seed_struct;
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <kind.h>
+#include <driver.h>
 
-typedef struct options_struct
+int use_me(struct options_struct options[], struct tool_struct t, int i_opt)
 {
- char  short_opt;
- char *long_opt;
- char *short_desc;
- char *long_desc[10];
- char *bin;
- char *yambo_string;
- char *section;
- int   n_int;
- int   n_float;
- int   n_char;
- int   no_GPL;
- int   optional_var;
- int   serial_var;
-} options_struct;
-
+ char *pch,str[100];
+ if (options[i_opt].short_desc==NULL) return 0;
+ strcpy(str,options[i_opt].bin);
+ pch = strtok (str," ");
+ while (pch != NULL)
+ {
+   if (strcmp(pch,t.tool)==0) return 1;
+   if (strcmp(pch,t.bin)==0) return 1;
+   if (strcmp(pch,"all")==0) return 1;
+   pch = strtok (NULL, " ");
+ }
+};
+/*
+ if (strstr(options[i_opt].bin,t.bin)==NULL) return 0;
+*/

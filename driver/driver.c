@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
  */
  yambo_seed_struct y;
  tool_struct tool;
- struct n_options_struct n_options[100];
+ struct options_struct options[100];
  /* 
   TOOL & Version initialization
  */
@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
  /*
   Options "maker"
  */ 
- options_maker(n_options);
+ options_maker(options);
  /*
   Command line parsing
  */ 
- y=command_line(argc,argv,n_options,tool,&use_editor,&use_mpi);
+ y=command_line(argc,argv,options,tool,&use_editor,&use_mpi);
  /*
   Launcher
  */

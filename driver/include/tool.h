@@ -20,49 +20,12 @@
   License along with this program; if not, write to the Free 
   Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-*/
 
-/*
- PJ's
-*/
-#if defined _yambo || _ypp || _a2y || _c2y || _p2y || _e2y 
- char *pj="none";
-#endif
-#if defined _YPP_ELPH || _ELPH
- char *pj="ph";
-#endif
-#if defined _YPP_RT || _RT
- char *pj="rt";
-#endif
-#if defined _YPP_SC || _SC
- char *pj="sc";
-#endif
-#if defined _YPP_NL || _NL
- char *pj="nl";
-#endif
-#if defined _MAGNETIC
- char *pj="magnetic";
-#endif
-#if defined _ELECTRIC
- char *pj="electric";
-#endif
-#if defined _KERR
- char *pj="kerr";
-#endif
-#if defined _PL
- char *pj="pl";
-#endif
-#if defined _QED
- char *pj="qed";
-#endif
-#if defined _SCALAPACK
- char *pj="slk";
-#endif
-/*
- tool & desc
+  tool & desc
+
 */
 #if defined _TEST_MAIN
- char *tool="driver";
+ char *tool="yambo";
  char *tool_desc="Testing Driver";
 #endif
 #if defined _yambo 

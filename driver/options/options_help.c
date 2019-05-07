@@ -22,51 +22,26 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 
 */
-typedef struct tool_struct
-{
- char *editor;
- char *tool;
- char *bin;
- char *desc;
- char version_string[500];
- char hash[500];
- char *pj;
- int  version;
- int  subversion;
- int  patchlevel;
- int  revision;
-} tool_struct;
+#include <stdio.h>
+#include <kind.h>
 
-typedef struct yambo_seed_struct
+void options_help(struct options_struct options[],int *i_opt)
 {
- char string[500];
- char *in_file;
- char *in_dir;
- char *out_dir;
- char *com_dir;
- char *job;
- int  string_N;
- int  in_file_N;
- int  in_dir_N;
- int  out_dir_N;
- int  com_dir_N;
- int  job_N;
-} yambo_seed_struct;
-
-typedef struct options_struct
-{
- char  short_opt;
- char *long_opt;
- char *short_desc;
- char *long_desc[10];
- char *bin;
- char *yambo_string;
- char *section;
- int   n_int;
- int   n_float;
- int   n_char;
- int   no_GPL;
- int   optional_var;
- int   serial_var;
-} options_struct;
-
+ char *desc="Help & version";
+ /*
+  Help(s) 
+ */
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="<string> can be an option (e.g. -h optics)";
+ options[*i_opt].short_opt='h';
+ options[*i_opt].long_opt="help";
+ options[*i_opt].serial_var=1;
+ options[*i_opt].optional_var=1;
+ options[*i_opt].n_char=1;
+ options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Code version & libraries";
+ options[*i_opt].long_opt="version"; 
+ options[*i_opt].serial_var=1;
+ options[*i_opt].section=desc;
+};

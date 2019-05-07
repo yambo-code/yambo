@@ -55,7 +55,7 @@ The struct option structure has these fields:
 #include <kind.h>
 #include <driver.h>
 
-struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi)
+struct yambo_seed_struct command_line(int argc, char *argv[], struct options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi)
 {
  int n_options,n_vars,opt=0,i_opt;
  char opt_string[100],ch[3];
@@ -82,7 +82,8 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  n_options=0;
  for(i_opt=0;i_opt<=99;i_opt++) {
   /**/
-  if (opts[i_opt].long_opt== NULL ) {break;};
+  if (use_me(opts,t,i_opt)==0) continue;
+  if (opts[i_opt].short_desc== NULL ) {break;};
   /**/
   long_options[n_options].name=opts[i_opt].long_opt;
   long_options[n_options].flag=0;
@@ -93,9 +94,14 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
   if (n_vars ==0) {
    long_options[n_options].has_arg=no_argument;
    strcat(opt_string,ch);
+  }else if (opts[i_opt].optional_var==1){
+   long_options[n_options].has_arg=optional_argument;
+   strcat(opt_string,ch);
+   sprintf(ch,"%s","::");
+   strcat(opt_string,ch);
   }else{
-   long_options[n_options].has_arg=required_argument;
    ch[1]=':';
+   long_options[n_options].has_arg=required_argument;
    strcat(opt_string,ch);
   };
   n_options++;
@@ -108,27 +114,33 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct n_options_s
  while ((opt = getopt_long_only(argc, argv,opt_string,long_options, &long_index )) != -1) {
   /* No option valid */
   if (opt == '?') {
-    usage(opts,t,"help");
+    printf ("%s","\n Use -h to list the options\n");
     exit(EXIT_FAILURE);
   }
   for(i_opt=0;i_opt<=100;i_opt++) {
    if (opts[i_opt].short_opt==opt) {break;};
   }
-  /* Help */
-  if (strcmp(opts[i_opt].long_opt,"help")==0){
-    usage(opts,t,"help");
-    exit(0);
-  }
-  /* Var Info */
-  if (strcmp(opts[i_opt].long_opt,"info")==0){
-    usage(opts,t,optarg);
-    exit(0);
-  }
   /*
   if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
-  if (optarg) {printf (" with arg %s", optarg);}
+  if (optarg != NULL) {printf (" with arg %s", optarg);}
   printf ("\n");
   */
+  /* help */
+  if (strcmp(opts[i_opt].long_opt,"help")==0){
+   if (optarg == NULL && argv[optind] != NULL && argv[optind][0] != '-') {            // not an option
+    usage(opts,t,argv[optind]);
+    ++optind;
+   } else {  // handle case of argument immediately after option
+    if (optarg == NULL) usage(opts,t,"help");
+    if (optarg != NULL) usage(opts,t,optarg);
+   }
+   exit(0);
+  }
+  /* version */
+  if (strcmp(opts[i_opt].long_opt,"version")==0){
+    usage(opts,t,"version");
+    exit(0);
+  }
 
   if (strcmp(opts[i_opt].long_opt,"Input")==0){y.in_file=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Job")==0){y.job=optarg;continue;}

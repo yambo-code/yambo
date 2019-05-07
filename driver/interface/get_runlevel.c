@@ -30,12 +30,12 @@
 
 char *runlevel(int *runid, int *id)
 {
- struct n_options_struct options[100];
+ struct options_struct options[100];
  options_maker(options);
  if (!options[*runid].yambo_string) { return "EMPTY"; }
  if (*id == 1) {return options[*runid].yambo_string;}
  if (*id == 2) {return options[*runid].short_desc;}
- if (*id == 3) {return options[*runid].project;}
+ if (*id == 3) {return options[*runid].bin;}
 }
 void C_FUNC(get_runlevel, GET_RUNLEVEL)(char *key, int *component_id, int *runlevel_id)
 {

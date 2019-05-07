@@ -71,6 +71,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #endif
  use timing_m,      ONLY:timing
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(PAR_matrix), target :: X_par
@@ -88,7 +89,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 &                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows,io_err
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
- complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs)
+ complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
  complex(SP),allocatable  :: Xo_res(:,:)
 #ifdef _CUDA
  complex(SP),allocatable, device :: Xo_res_d(:,:)
@@ -255,8 +256,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+Xo_res(1,1)*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
+     ctmp = DEV_VARNAME(Xo_res)(1,1)
+     !
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+#ifdef _CUDA
+     X_par%blc_d(1,1,:)=X_par%blc(1,1,:)
+#endif
      exit
    enddo
  endif
@@ -275,20 +281,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
    if(Drude_pole) then
-#ifdef _CUDA
-   call error('[X] CUDA Porting not implemented here')
-#endif
      if (master_thread) call live_timing(steps=1)
      cycle
    endif
    !
    ! 1) First compute the residuals
    !================================
-#ifdef _CUDA
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_d,Xo_scatt)
-#else
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
-#endif
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
+
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -319,8 +319,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
      X_par_blc_d => X_par%blc_d
      GreenF_iw=GreenF(iw)
-     !
 #endif
+     !
      X_rows1=X_par%rows(1)
      X_rows2=X_par%rows(2)
      X_cols1=X_par%cols(1)
@@ -352,7 +352,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        X_nrows = X_rows2_l-X_rows1_l+1 
        !
        call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
-
+       !
 #endif
 #if defined _OPENMP && !defined _CUDA
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))

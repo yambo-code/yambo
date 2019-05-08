@@ -86,11 +86,13 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 #
 # Libraries (ordered for compiling & linking)
 #
+DRIVER_LIBS    = interface lib options
+DRIVER_LIBS_LD = driver_interface driver_lib driver_options
+
 BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= driver_interface driver_lib tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
+BASIC_LIBS_LD= $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra bz_ops parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
-DRIVER_LIBS  = interface lib
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup \
                tddft dipoles pol_function qp acfdt bse
@@ -120,7 +122,7 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 # Interfaces
 #
 2YLIBS       = tools modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = driver_interface driver_lib tools memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS_LD    = $(DRIVER_LIBS_LD) tools memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
 #
 # YPP
 #
@@ -231,6 +233,11 @@ yambo: libs
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_yambo"; $(mk_driver_src)
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mksrc)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; $(mkx)
+#
+# DRIVERs tests #
+# 
+driver_yambo:
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver"; $(mk_driver_src)
 #
 # Yambo PROJECTS #
 # 

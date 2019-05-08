@@ -65,7 +65,6 @@ typedef struct options_struct
  int   n_int;
  int   n_float;
  int   n_char;
- int   no_GPL;
  int   optional_var;
  int   serial_var;
 } options_struct;

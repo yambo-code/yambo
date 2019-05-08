@@ -4,26 +4,7 @@ integer function yambo(&
 &  string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N,&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)
  !
- interface  
-   subroutine get_version(version,subversion,patchlevel,revision,hash)
-     integer     , intent(out):: version
-     integer     , intent(out):: subversion
-     integer     , intent(out):: patchlevel
-     integer     , intent(out):: revision
-     character(*), intent(out):: hash
-   end subroutine
-   subroutine get_libraries(libraries)
-     character(*), intent(out):: libraries
-   end subroutine
-   subroutine get_running_tool(what_is_running)
-     character(*), intent(out):: what_is_running
-   end subroutine
-   subroutine get_runlevel_component(component,component_id,runlevel_id)
-     character(*), intent(out):: component
-     integer,      intent(in) :: component_id
-     integer,      intent(in) :: runlevel_id
-   end subroutine
- end interface
+ use C_driver
  !
  integer,              intent(in)    :: np,pid 
  integer,              intent(in)    :: string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N

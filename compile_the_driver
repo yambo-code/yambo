@@ -65,14 +65,25 @@ done
 ar -r ../include/driver_lib.a *.o
 cd ../
 
+cd interface
+cp mod_C_driver.F mod_C_driver.f90
+file_list=`find . -maxdepth 1 -type f | grep -E '\.f90' |grep -v .swp`
+for file in $file_list; do
+ echo $file
+ mpif90 $COMP $LIB $OPT $BIN -c $file -I../include  -I../../include/headers/common 
+done
+cp *.mod ../include
+ar -r ../include/driver_lib.a *.o 
+cd ../
 
-mpicc $COMP $LIB $OPT $BIN -c driver.c -I include -I options -I ../include/headers/common/
+mpicc $COMP $LIB $OPT $BIN -c driver.c -I include -I options -I ../include/headers/common/ 
+
 cp yambo.F yambo.f90
-gfortran -c yambo.f90
+mpif90 -I include -c yambo.f90
 cd ../
 
 rm -f driver.x
-mpif90 -o driver.x driver/driver.o driver/yambo.o driver/include/driver_lib.a
+mpif90 -I driver/include -o driver.x driver/driver.o driver/yambo.o driver/include/driver_lib.a  
 
 ./driver.x -h
 #./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q

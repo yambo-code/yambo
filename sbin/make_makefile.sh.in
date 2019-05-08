@@ -67,7 +67,7 @@ done
 #
 llibs="-L\$(libdir) $llibs"
 lf90include="@F90_MODULE_FLAG@\$(includedir) @F90_MODULE_FLAG@\$(sysinclude)"
-linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser"
+linclude="-I\$(includedir) -I\$(sysinclude) -I\$(includedir)/headers/common -I\$(includedir)/headers/parser -I\$(srcdir)/driver/include"
 if [ @F90_MODULE_FLAG@ != "-I" ]; then
 lf90include="$lf90include $linclude"
 fi

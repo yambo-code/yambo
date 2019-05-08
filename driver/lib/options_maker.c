@@ -34,7 +34,7 @@ void options_maker(struct options_struct options[])
   options[i_opt].long_opt=NULL;
   options[i_opt].short_opt=0;
   options[i_opt].short_desc=NULL;
-  for(i=0;i<=10;i++) options[i_opt].long_desc[i]=NULL;
+  for(i=0;i<10;i++) options[i_opt].long_desc[i]=NULL;
   options[i_opt].yambo_string=NULL;
   options[i_opt].bin="all";
   options[i_opt].n_int=0;
@@ -42,7 +42,6 @@ void options_maker(struct options_struct options[])
   options[i_opt].n_char=0;
   options[i_opt].serial_var=0;
   options[i_opt].optional_var=0;
-  options[i_opt].no_GPL=0;
   options[i_opt].section="undef";
  }
  i_opt=-1;

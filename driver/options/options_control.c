@@ -87,7 +87,6 @@ void options_control(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="ScaLapacK test";
  options[*i_opt].long_opt="slktest";
- options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="slktest";
  options[*i_opt].section=desc;

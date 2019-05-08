@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
  */
  yambo_seed_struct y;
  tool_struct tool;
- struct options_struct options[100];
+ struct options_struct options[200];
  /* 
   TOOL & Version initialization
  */

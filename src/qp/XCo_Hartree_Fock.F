@@ -252,12 +252,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call dev_memcpy(DEV_VARNAME(iscp%rhotw),DEV_VARNAME(isc%rhotw),(/1,isc%ngrho/))
        endif
        !
-#ifdef _CUDA
-       DP_Sx_l=Vstar_dot_VV(isc%ngrho,iscp%rhotw_d,isc%rhotw_d,isc%gamp_d(:,1))
-#else
-       DP_Sx_l=Vstar_dot_VV(isc%ngrho,iscp%rhotw,isc%rhotw,isc_gamp(:,1))
-#endif
-       !
+       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VARNAME(iscp%rhotw),&
+&                                     DEV_VARNAME(isc%rhotw),DEV_VARNAME(isc%gamp)(:,1))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)

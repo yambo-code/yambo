@@ -45,7 +45,7 @@ contains
     call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
     if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
 #else
-    have_gpu_devices=.false.
+    have_cuda_devices=.false.
 #endif
     !
   end subroutine cuda_setup

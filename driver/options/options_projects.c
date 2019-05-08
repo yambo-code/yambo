@@ -36,7 +36,12 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo_sc";
  options[*i_opt].yambo_string="scrun";
  options[*i_opt].short_desc="Self-Consistent Potential";
+ /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
+ /* GPL_EXCLUDE_END */
+ /* GPL_INCLUDE_START 
+ options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(d)ef,(ip)";
+    GPL_INCLUDE_END */
  options[*i_opt].long_desc[1]="(h)artree can be combined with others, i.e. hf, hsex, ... ";
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
@@ -63,22 +68,30 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo_rt yambo_sc";
  options[*i_opt].yambo_string="collisions";
  options[*i_opt].section=desc;
+ /* GPL_EXCLUDE_START */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electron-Phonon Hamiltonian";
  options[*i_opt].long_opt="epham";
  options[*i_opt].bin="yambo_ph";
  options[*i_opt].yambo_string="ElPhHam";
  options[*i_opt].section=desc;
+ /* GPL_EXCLUDE_END */
 
  desc="Real-Time";
  *i_opt=*i_opt+1;
+ /* GPL_EXCLUDE_START */
  options[*i_opt].short_desc="NEQ Real-time dynamics";
  options[*i_opt].long_desc[0]="<string>=(p)ump or probe,(pp)ump & probe, (pn) n external fields";
+ options[*i_opt].n_char=1;
+ /* GPL_EXCLUDE_END */
+ /* GPL_INCLUDE_START 
+ options[*i_opt].short_desc="Real-time Bethe-Salpeter Equation";
+ options[*i_opt].n_char=0;
+    GPL_INCLUDE_END */
  options[*i_opt].long_opt="rt";
  options[*i_opt].short_opt='n';
  options[*i_opt].bin="yambo_rt";
  options[*i_opt].yambo_string="negf";
- options[*i_opt].n_char=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Non-linear spectroscopy";

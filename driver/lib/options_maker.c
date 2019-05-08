@@ -63,6 +63,10 @@ void options_maker(struct options_struct options[])
  */
  options_projects(options,&i_opt);
  /* 
+  Ypp
+ */
+ options_ypp(options,&i_opt);
+ /* 
   Interfaces
  */
  options_interfaces(options,&i_opt);

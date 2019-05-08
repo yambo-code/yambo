@@ -37,21 +37,25 @@ void usage(options_struct *opts,  struct tool_struct t, char *what)
  /*
    Order
  */
- int n_orders=13,n_order_elements;
+ int n_orders=17,n_order_elements;
  char *order[]={
- "Help & version",
- "Input file & Directories",
- "Parallel Control",
- "Initializations",
- "Response Functions",
- "Self-Energy",
- "Bethe-Salpeter Equation",
- "Hamiltonians & Potentials",
- "Real-Time",
- "Total Energy",
- "Utilites",
- "Interface",
- "undef",
+ "Help & version", /* 1 */
+ "Input file & Directories", /* 2 */
+ "Parallel Control", /* 3 */
+ "Initializations", /* 4 */
+ "Response Functions", /* 5 */
+ "Self-Energy", /* 6 */
+ "Bethe-Salpeter Equation", /* 7 */
+ "Hamiltonians & Potentials", /* 8 */
+ "Real-Time", /* 9 */
+ "Total Energy", /* 10 */
+ "Interface", /* 11 */
+ "Brillouin Zone", /* 12 */
+ "Convertions", /* 13 */
+ "Plots", /* 14 */
+ "Utilites", /* 15 */
+ "Wannier", /* 16 */
+ "undef", /* 17 */
  };
 
  if (strcmp(what,"help")==0) {

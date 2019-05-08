@@ -53,6 +53,7 @@ void options_control(struct options_struct options[],int *i_opt);
 void options_yambo(struct options_struct options[],int *i_opt);
 void options_projects(struct options_struct options[],int *i_opt);
 void options_interfaces(struct options_struct options[],int *i_opt);
+void options_ypp(struct options_struct options[],int *i_opt);
 
 #if defined _FORTRAN_US
  extern int get_the_version_

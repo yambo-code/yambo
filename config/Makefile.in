@@ -67,7 +67,7 @@ endif
 ifeq ($(do_e2y),yes)
   e2y   = e2y
 endif
-INTERFCS = a2y c2y $(p2y) $(e2y)
+INTERFCS = c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
@@ -87,7 +87,7 @@ EXE      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(MAG_PROJ) $(RTE_PROJ) $(NL_PROJ) $(KE
 # Libraries (ordered for compiling & linking)
 #
 DRIVER_LIBS    = interface lib options
-DRIVER_LIBS_LD = driver_interface driver_lib driver_options
+DRIVER_LIBS_LD = driver_options driver_interface driver_lib 
 
 BASIC_LIBS   = tools modules memory matrices linear_algebra parallel parser communicate common io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
@@ -236,46 +236,47 @@ yambo: libs
 #
 # DRIVERs tests #
 # 
-driver_yambo:
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver"; $(mk_driver_src)
+driver_yambo: libs
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver -D_ELPH"; $(mk_driver_src)
+	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver -D_ELPH";XLIBS="$(DRIVER_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #
 # 
 yambo_magnetic: libs
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_MAGNETIC -D_SC"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_MAGNETIC -D_SC"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_MAGNETIC -D_SC -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_MAGNETIC -D_SC"; $(mkx)
 yambo_electric: libs
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELECTRIC -D_SC"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELECTRIC -D_SC"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELECTRIC -D_SC -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_electric"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_ELECTRIC -D_SC"; $(mkx)
 yambo_kerr: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_KERR"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_KERR"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_KERR -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_kerr"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_ELPH -D_KERR"; $(mkx)
 yambo_sc: libs
 	@+LIBS2DO="$(PJ_SCLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_sc"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_SCLIBS_LD)"; ADF="-D_SC"; $(mkx)
 yambo_pl: libs
 	@+LIBS2DO="$(PJ_PLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_SC -D_ELPH -D_PL -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_pl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PLLIBS_LD)"; ADF="-D_RT -D_SC -D_ELPH -D_PL"; $(mkx)
 yambo_rt: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_RT -D_ELPH"; $(mkx)
 yambo_nl: libs
 	@+LIBS2DO="$(PJ_NLLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_NL -D_RT -D_ELPH"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_NL -D_RT -D_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_NL -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_NLLIBS_LD)"; ADF="-D_NL -D_RT -D_ELPH"; $(mkx)
 yambo_ph: libs
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; ADF="-D_ELPH"; $(mkx)
 yambo_qed: libs
 	@+LIBS2DO="$(PJ_RTLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_QED -D_RT -D_ELPH"; $(mksrc)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_QED -D_RT -D_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_QED -D_RT -D_ELPH -D_yambo"; $(mk_driver_src)
 	@+X2DO="yambo_qed"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_RTLIBS_LD)"; ADF="-D_QED -D_RT -D_ELPH"; $(mkx)
 #
 # Interfaces #
@@ -284,19 +285,19 @@ interfcs: libs
 	@+LIBS2DO="$(2YLIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 a2y: interfcs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_a2y"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_a2y -D_a2y"; $(mk_driver_src)
 	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 c2y: interfcs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_c2y"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_c2y -D_c2y"; $(mk_driver_src)
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 ifeq ($(do_p2y),yes)
 p2y: interfcs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_p2y"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_p2y -D_p2y"; $(mk_driver_src)
 	@+X2DO="p2y" ; XPATH="interfaces/p2y"; VPATH="$(topdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; ADF="@PW_CPP@"; $(mkx) ;
 endif
 ifeq ($(do_e2y),yes)
 e2y: interfcs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_e2y"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_e2y -D_e2y"; $(mk_driver_src)
 	@+X2DO="e2y" ; XPATH="interfaces/e2y"; VPATH="$(topdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; $(mkx) ;
 endif
 #
@@ -305,7 +306,7 @@ endif
 ypp: libs
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ypp"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ypp -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS_LD)"; X_ypp_LIBS="$(YPP_LIBS_LD)"; $(mk_ypp_x)
 #
 # Ypp projects #
@@ -313,31 +314,31 @@ ypp: libs
 ypp_ph: libs
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH"; $(mksrc)
 	@+LIBS2DO="$(YPPPH_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp";  ADF="-D_YPP_ELPH"; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_ELPH -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPP_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPPH_LIBS_LD) elph"; ADF="-D_YPP_ELPH"; $(mk_ypp_x)
 ypp_rt: libs
 	@+LIBS2DO="$(YPPRT_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_ELPH -D_YPP_RT"; $(mksrc)
 	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp_rt"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_RT"; $(mk_ypp_x)
 ypp_nl: libs
 	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_RT -D_NL -D_ELPH -D_YPP_NL"; $(mksrc)
 	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ELPH -D_YPP_RT -D_YPP_NL -D_YPP_ELPH -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; ADF="-D_YPP_NL -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_x)
 ypp_sc: libs
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC"; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_SC"; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_SC -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp_sc"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_SC"; $(mk_ypp_x)
 ypp_magnetic: libs
 	@+LIBS2DO="$(YPPSC_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_SC -D_MAGNETIC"; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_YPP_SC -D_YPP_MAGNETIC"; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_MAGNETIC"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_YPP_MAGNETIC -D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp_magnetic"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPP_LIBS_LD)"; ADF="-D_YPP_SC -D_YPP_MAGNETIC"; $(mk_ypp_x)
 #

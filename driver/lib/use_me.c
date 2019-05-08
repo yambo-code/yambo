@@ -42,6 +42,3 @@ int use_me(struct options_struct options[], struct tool_struct t, int i_opt)
    pch = strtok (NULL, " ");
  }
 };
-/*
- if (strstr(options[i_opt].bin,t.bin)==NULL) return 0;
-*/

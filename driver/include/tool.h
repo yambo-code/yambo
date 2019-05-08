@@ -56,22 +56,18 @@
  char *tool_desc="Y(ambo) P(ost) P(rocessor)";
 #endif
 #if defined _a2y
- #define _A2Y_MAIN
  char *tool="a2y";
  char *tool_desc="A(binit) 2 Y(ambo) interface";
 #endif
 #if defined _c2y
- #define _C2Y_MAIN
  char *tool="c2y";
  char *tool_desc="C(pmd) 2 Y(ambo) interface";
 #endif
 #if defined _p2y
- #define _P2Y_MAIN
  char *tool="p2y";
  char *tool_desc="P(Wscf) 2 Y(ambo) interface";
 #endif
 #if defined _e2y
- #define _E2Y_MAIN
  char *tool="e2y";
  char *tool_desc="E(TSF) 2 Y(ambo) interface (0.6)";
 #endif

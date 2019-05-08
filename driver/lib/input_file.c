@@ -36,11 +36,9 @@ void input_file(struct yambo_seed_struct y,struct tool_struct t,int use_editor)
  */
 #if !defined _TEST_MAIN
  extern int guess_winsize();
-#endif
  /*
   stdlog?
  */
-#if !defined _TEST_MAIN
  ttd=guess_winsize();
 #endif
  strcpy(edit_line,t.editor);

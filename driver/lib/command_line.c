@@ -121,10 +121,10 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
    if (use_me(opts,t,i_opt)==0) continue;
    if (opts[i_opt].short_opt==opt) {break;};
   }
+  /*
   if (opt > 0) {printf ("GETOPT ouput: %c %s",opts[i_opt].short_opt,opts[i_opt].long_opt);}
   if (optarg != NULL) {printf (" with arg %s", optarg);}
   printf ("\n");
-  /*
   */
   /* help */
   if (strcmp(opts[i_opt].long_opt,"help")==0){

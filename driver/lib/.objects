@@ -1,1 +1,1 @@
-objs = command_line.o input_file.o launcher.o load_environments.o options_maker.o title.o tool_init.o usage.o use_me.o
+objs = launcher.o command_line.o input_file.o load_environments.o options_maker.o title.o tool_init.o usage.o use_me.o

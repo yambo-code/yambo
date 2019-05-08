@@ -25,7 +25,7 @@
  Tool drivers 
 */
 /* TEST */
-#if defined _TEST_MAIN
+#if defined _DRIVER_TEST
  #if defined _FORTRAN_US
   int yambo_
  #else
@@ -43,9 +43,9 @@
 /* YPP */
 #if defined _ypp
  #if defined _FORTRAN_US
-  int ypp_i_
+  int ypp_driver_
  #else
-  int ypp_i
+  int ypp_driver
  #endif
 #endif
 /* A2Y */

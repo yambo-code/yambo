@@ -27,14 +27,14 @@
 #include <string.h>
 #include <kind.h>
 
-void input_file(struct yambo_seed_struct y,struct tool_struct t,int use_editor)
+void input_file(struct yambo_seed_struct y,struct tool_struct t,int *use_editor)
 {
  int ttd;
  char edit_line[100]={'\0'};
  /*
   External functions
  */
-#if !defined _TEST_MAIN
+#if !defined _DRIVER_TEST
  extern int guess_winsize();
  /*
   stdlog?
@@ -43,11 +43,11 @@ void input_file(struct yambo_seed_struct y,struct tool_struct t,int use_editor)
 #endif
  strcpy(edit_line,t.editor);
  strncat(edit_line,y.in_file,strlen(y.in_file));
-#if defined _YAMBO_MAIN || defined _YPP_MAIN 
- if (use_editor == 1 && ttd>0 && strstr(t.editor,"none ")==0)
+#if defined _yambo || defined _ypp 
+ if (*use_editor == 1 && ttd>0 && strstr(t.editor,"none ")==0)
  {
   system(edit_line);
- }else if (use_editor == -2){ 
+ }else if (*use_editor == -2){ 
   fprintf(stderr," \n%s%s %s %s\n\n",t.tool,": input file",y.in_file,"created");
   exit (0);
  };

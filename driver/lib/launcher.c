@@ -62,7 +62,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 
  */
 
-#if defined _TEST_MAIN
+#if defined _DRIVER_TEST
  /*
  fprintf(stderr,"\n\n%s \n","C driver");
  fprintf(stderr,"%s %i\n","np:" ,np);
@@ -84,7 +84,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
  );
 #endif
 
-#if defined _YAMBO_MAIN
+#if defined _yambo
  /* 
    Running the Fortran YAMBO driver 
  ===========================================================================
@@ -93,7 +93,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
 #include <fortran_arguments.h>
  );
 #endif
-#if defined _YPP_MAIN
+#if defined _ypp
  /* 
    Running the Fortran YPP driver
  ===========================================================================

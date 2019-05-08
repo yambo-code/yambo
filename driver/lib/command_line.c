@@ -64,7 +64,9 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
  /* 
   Pre-sets 
  */
- y.in_file=t.tool;
+ y.in_file = malloc(strlen(t.tool)+3);
+ strcpy(y.in_file,t.tool);
+ strcat(y.in_file,".in");
  y.in_dir=".";
  y.out_dir=".";
  y.com_dir=".";
@@ -152,7 +154,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
   if (strcmp(opts[i_opt].long_opt,"Quiet")==0){*use_editor=-1;continue;}
   if (opt > 0) {
    strcat(y.string," ");
-   strcat(y.string,opts[i_opt].long_opt);
+   strcat(y.string,opts[i_opt].yambo_string);
   }
   if (optarg) {
    strcat(y.string," ");

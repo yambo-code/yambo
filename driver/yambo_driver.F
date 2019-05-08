@@ -314,4 +314,4 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
   end subroutine mem_manager_report
   !
-end function
+end function yambo_driver

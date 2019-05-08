@@ -31,7 +31,7 @@ e) OPT="-D_ELECTRIC -D_SC";;
 esac
 
 LIB="-D_MPI -D_CUDA -D_SCALAPACK -D_SLEPC -D_PAR_IO -D_HDF5_IO -D_HDF5_LIB"
-COMP=" -D_FORTRAN_US -D_TEST_MAIN -D_C_US"
+COMP=" -D_FORTRAN_US -D_DRIVER_TEST -D_C_US"
 echo " $COMP $LIB $OPT $BIN"
 #
 rm -f driver/lib/*.o driver/lib/*.a driver/interface/*.o driver/include/*.a driver.x
@@ -78,15 +78,14 @@ cd ../
 
 mpicc $COMP $LIB $OPT $BIN -c driver.c -I include -I options -I ../include/headers/common/ 
 
-cp yambo.F yambo.f90
-mpif90 -I include -c yambo.f90
+cp driver_test.F driver_test.f90
+mpif90 -I include -c driver_test.f90
 cd ../
 
 rm -f driver.x
-mpif90 -I driver/include -o driver.x driver/driver.o driver/yambo.o driver/include/driver_lib.a  
+mpif90 -I driver/include -o driver.x driver/driver.o driver/driver_test.o driver/include/driver_lib.a  
 
-./driver.x -h
+#./driver.x -h
 #./driver.x -x -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -nompi -noopenmp -setup -opt chi -Q
-
 #./driver.x -x -optics c -y d -J jobA1,jobBBB2 -O ODIRONE -I TESTONE -C COMUNICONE -F input_file -t
 

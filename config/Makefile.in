@@ -237,8 +237,8 @@ yambo: libs
 # DRIVERs tests #
 # 
 driver_yambo: libs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver -D_ELPH"; $(mk_driver_src)
-	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_TEST_MAIN -D_yambo_driver -D_ELPH";XLIBS="$(DRIVER_LIBS_LD)"; $(mkx)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver -D_ELPH"; $(mk_driver_src)
+	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver -D_ELPH";XLIBS="$(DRIVER_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #
 # 
@@ -306,7 +306,7 @@ endif
 ypp: libs
 	@+LIBS2DO="$(YPP_MAIN_LIBS)"; XPATH="src" ; VPATH="$(topdir)/src" ; $(mksrc)
 	@+LIBS2DO="$(YPP_LIBS)"; XPATH="ypp" ; VPATH="$(topdir)/ypp" ; $(mk_ypp_src)
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ypp -D_ypp"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_ypp"; $(mk_driver_src)
 	@+X2DO="ypp" ;XPATH="driver"; VPATH="$(topdir)/driver" ; XLIBS="$(YPP_MAIN_LIBS_LD)"; X_ypp_LIBS="$(YPP_LIBS_LD)"; $(mk_ypp_x)
 #
 # Ypp projects #

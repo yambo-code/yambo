@@ -1431,8 +1431,12 @@ module parallel_m
 #if defined _MPI
      character(MPI_MAX_PROCESSOR_NAME) :: machine_name
      integer :: i_err
-     call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
-     host_name=machine_name
+     if (ncpu>1) then
+       call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
+       host_name=machine_name
+     else
+       call igethname(host_name,host_name_length)
+     endif
 #else
      call igethname(host_name,host_name_length)
 #endif

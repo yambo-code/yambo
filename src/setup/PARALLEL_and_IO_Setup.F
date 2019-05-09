@@ -48,9 +48,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
-#if defined _MPI
- !integer                           :: n_string
-#endif
  !
  !
  call section('*','CPU structure, Files & I/O Directories') 

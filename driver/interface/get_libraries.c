@@ -49,7 +49,7 @@ char *tool_libraries()
 #endif
 #if defined _SCALAPACK
  i_str++;
- strcpy(strings[i_str], "SCALAPACK");
+ strcpy(strings[i_str], "SLK");
 #endif
 #if defined _SLEPC
  i_str++;
@@ -63,7 +63,7 @@ char *tool_libraries()
  strcpy(strings[i_str], "HDF5_IO");
 #elif defined _HDF5_LIB
  i_str++;
- strcpy(strings[i_str], "HDF5O");
+ strcpy(strings[i_str], "HDF_LIB");
 #endif 
  str_len=0;
  for(i_c=0;i_c<=i_str;i_c++) {

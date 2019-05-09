@@ -67,7 +67,7 @@ endif
 ifeq ($(do_e2y),yes)
   e2y   = e2y
 endif
-INTERFCS = c2y $(p2y) $(e2y)
+INTERFCS = a2y c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 UTILS    = changelog get_extlibs ext-libs
 CLEANS   = clean_fast clean clean_all distclean
@@ -286,7 +286,7 @@ interfcs: libs
 	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(topdir)/interfaces" ; $(mklib_internal)
 a2y: interfcs
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_a2y -D_a2y"; $(mk_driver_src)
-	@+X2DO="a2y"; XPATH="interfaces/a2y"; VPATH="$(topdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
+	@+X2DO="a2y"; XPATH="interfaces/new_a2y"; VPATH="$(topdir)/interfaces/new_a2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)
 c2y: interfcs
 	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_c2y -D_c2y"; $(mk_driver_src)
 	@+X2DO="c2y"; XPATH="interfaces/c2y"; VPATH="$(topdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; $(mkx)

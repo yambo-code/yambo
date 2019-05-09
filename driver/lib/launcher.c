@@ -63,22 +63,6 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
  */
 
 #if defined _DRIVER_TEST
- /*
- fprintf(stderr,"\n\n%s \n","C driver");
- fprintf(stderr,"%s %i\n","np:" ,np);
- fprintf(stderr,"%s %i\n","pid:",pid);
- if (pid == 0) {
-  fprintf(stderr,"%s %i %s\n","RUNSTRING :",y.string_N,y.string);
-  fprintf(stderr,"%s %i %s\n","INPUT file:",y.in_file_N,y.in_file);
-  fprintf(stderr,"%s %i %s\n","INPUT dir :",y.in_dir_N,y.in_dir);
-  fprintf(stderr,"%s %i %s\n","OUT   dir :",y.out_dir_N,y.out_dir);
-  fprintf(stderr,"%s %i %s\n","COM   dir :",y.com_dir_N,y.com_dir);
-  fprintf(stderr,"%s %i %s\n","JOB       :",y.job_N,y.job);
-  fprintf(stderr,"%s %i   \n","MPI       :",*use_mpi);
-  fprintf(stderr,"%s %i   \n","EDITOR    :",*use_editor);
-  fprintf(stderr,"\n");
- }
- */
  F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );
@@ -143,6 +127,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
  ===========================================================================
  */
  if ( y.in_file_N ==1 && *use_editor==0 ) {*use_editor=1;};
+ if ( y.in_file_N ==0 ) {*use_editor=0;};
  /* 
    Error message
  ===========================================================================

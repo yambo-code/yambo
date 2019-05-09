@@ -70,6 +70,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[0]="<string>=(p)erturbative SOC mapping, (c)onversion";
  options[*i_opt].short_opt='w';
  options[*i_opt].bin="ypp";
+ options[*i_opt].n_char=1;
  options[*i_opt].yambo_string="WFs";
  options[*i_opt].section="Convertions";
  *i_opt=*i_opt+1;

@@ -50,6 +50,5 @@ void C_FUNC(get_version, GET_VERSION)(int *version,int *subversion, int *patchle
  strcpy(hash, t.hash);
  int len = strlen(t.hash);
  hash[len] = hash[len + 1];
- /*sprintf(hash,"%s",t.hash);*/
 }
 

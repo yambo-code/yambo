@@ -29,8 +29,9 @@ subroutine electrons_dos(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use pointers,       ONLY:linkM2M
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,BZ_DbGd_nbands,n_sp_pol
- use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,DOS_is_projected,&
-&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,l_pdos
+ use YPP,            ONLY:output_fname,DOS_bands,DOS_E_step,K_transform,&
+&                         DOS_E_steps,INTERP_grid,electrons_dos_elemental,&
+&                         l_pdos
  use com,            ONLY:msg,of_open_close,warning
  use QP_CTL_m,       ONLY:QP_apply
  use interpolate,    ONLY:INTERPOLATION_driver,GRID_k,INTERP_obj
@@ -77,26 +78,22 @@ subroutine electrons_dos(Xk,Xen)
  ! DOS on the built-in grid
  !===================================================================
  !
- if (.not.DOS_is_projected) then
-   !
-   ! Load the PDOS coefficient
-   !-----------------------------
-   if (l_pdos) then
-     YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
-     call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
-     PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
-   endif
-   !
-   if (n_spinor==2) then
-     YAMBO_ALLOC(SPIN_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
-     call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
-     SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
-   endif
-   !
-    call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
-&                                SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
-   !
+ ! Load the PDOS coefficient
+ !-----------------------------
+ if (l_pdos) then
+   YAMBO_ALLOC(PDOS_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_sp_pol))
+   call electrons_pdos_factors((/1,Xk%nibz/),DOS_bands,PDOS_fac_v)
+   PDOS_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => PDOS_fac_v
  endif
+ !
+ if (n_spinor==2) then
+   YAMBO_ALLOC(SPIN_fac_v,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
+   call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,SPIN_fac_v)
+   SPIN_fac_p(DOS_bands(1):DOS_bands(2),1:Xk%nibz,1:n_spinor) => SPIN_fac_v
+ endif
+ !
+ call electrons_dos_elemental(Xk,Xen,DOS_bands,el_dos(:,:,1),dos_E,&
+&                             SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=l_DbGD)
  !
  ! Define the regural grid for interpolation if (all(interp_grid>0))
  !===================================================================
@@ -113,9 +110,7 @@ subroutine electrons_dos(Xk,Xen)
    IDp=0
    IDs=0
    !
-   if (.not.DOS_is_projected) then
-     call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
-   endif
+   call INTERPOLATION_driver(operation="GRID",GRID=INTERP_grid)
    !
    call INTERPOLATION_driver(bands=DOS_bands,SEED_E=Xen,SEED_k=Xk,operation="E_on_built_in",ID_op=IDe)
    call INTERPOLATION_driver(OUT_k=GRID_k,OUT_E=GRID_E,operation="E_on_built_in")
@@ -165,8 +160,7 @@ subroutine electrons_dos(Xk,Xen)
      do ikbz=1,GRID_k%nbz
        values(2:4)=GRID_k%ptbz(ikbz,:)
        call K_transform(values(2:4),"iku")
-       if (.not.DOS_is_projected) ik=GRID_k%sstar(ikbz,1)
-       if (     DOS_is_projected) ik=ikbz
+       ik=GRID_k%sstar(ikbz,1)
        values(1)=real(ik,SP)
        values(1+4:DOS_bands(2)-DOS_bands(1)+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
        call msg('o grid',' ',values(:DOS_bands(2)-DOS_bands(1)+5),INDENT=0,USE_TABS=.true.)
@@ -176,21 +170,10 @@ subroutine electrons_dos(Xk,Xen)
      !
    enddo
    !
-   if (DOS_is_projected) then
-     !
-     call electrons_dos_project( GRID_E, dos_E, el_dos ) 
-     !
-     return
-     !
-   else
-     !
-     ! DOS
-     !
-     call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
-&                                 SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.)
-     !
-   endif
+   ! DOS
    !
+   call electrons_dos_elemental(GRID_k,GRID_E,DOS_bands,el_dos(:,:,2),dos_E,&
+&                               SPIN_fac_p,PDOS_fac_p,USE_the_DbGd=.FALSE.)
    !
  endif
  !

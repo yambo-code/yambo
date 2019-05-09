@@ -81,7 +81,7 @@ subroutine electrons_pdos_factors(kpts,bands,PDOS_fac)
          if(all(PDOS_l(:)/=-1) .and. (il<         1+PDOS_l(1) .or.il>         1+PDOS_l(2) ) ) cycle
          if(all(PDOS_j(:)/=-1) .and. (j2<nint(2._SP*PDOS_j(1)).or.j2>nint(2._SP*PDOS_j(2))) ) cycle
          !
-         !(2)
+         !PDOS_m(2)
          !
          tmp_fac=tmp_fac+abs(atomic_projections(iproj,ib,ik,i_sp_pol))**2
          !

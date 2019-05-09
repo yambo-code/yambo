@@ -42,6 +42,7 @@ subroutine scatter_Bamp(isc)
  use R_lattice,      ONLY:g_rot
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
  use pseudo,         ONLY:pp_is_uspp
+ use interfaces,     ONLY:WF_apply_symm
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif

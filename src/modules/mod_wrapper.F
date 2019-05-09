@@ -64,7 +64,7 @@ module wrapper
  interface Vstar_dot_V
    module procedure Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
 #ifdef _CUDA
-   module procedure Vstar_dot_V_c1_gpu
+   module procedure Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
 #endif
  end interface
  !
@@ -316,13 +316,24 @@ module wrapper
      complex(SP), device, intent(in) :: CX(*),CY(*)
      !
 #if defined _DOUBLE
-     complex(SP)::zdotc
      Vstar_dot_V_c1_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
-     complex(SP)::cdotc
      Vstar_dot_V_c1_gpu=cublasCdotc(N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_c1_gpu
+   !
+   complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
+     implicit none
+     integer,             intent(in) :: N
+     complex(SP), device, intent(in) :: CX(:,:),CY(:,:)
+     !
+#if defined _DOUBLE
+     Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
+#else
+     Vstar_dot_V_c2_gpu=cublasCdotc(N,CX,1,CY,1)
+#endif
+   end function Vstar_dot_V_c2_gpu
+   !
 #endif
    !
    !==============

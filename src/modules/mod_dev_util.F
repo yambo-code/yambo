@@ -28,7 +28,8 @@ MODULE dev_util_m
       cuf_memcpy_r3d, &
       cuf_memcpy_c1d, &
       cuf_memcpy_c2d, &
-      cuf_memcpy_c3d
+      cuf_memcpy_c3d, &
+      cuf_memcpy_c4d
   END INTERFACE
   !
   INTERFACE dev_memset
@@ -43,7 +44,10 @@ MODULE dev_util_m
   !
   INTERFACE dev_conjg
     MODULE PROCEDURE &
-      cuf_conjg_c1d
+      cuf_conjg_c1d, &
+      cuf_conjg_c2d, &
+      cuf_conjg_c3d, &
+      cuf_conjg_c4d
   END INTERFACE
   !
 CONTAINS
@@ -160,17 +164,13 @@ CONTAINS
   END SUBROUTINE cuf_memcpy_c1d
   !
   SUBROUTINE cuf_memcpy_c2d(array_out, array_in, range1, range2 )
-    !
     IMPLICIT NONE
-    !
     COMPLEX(SP), INTENT(INOUT) :: array_out(:,:)
     COMPLEX(SP), INTENT(IN) :: array_in(:,:)
     INTEGER, INTENT(IN) ::  range1(2), range2(2)
-    !
 #if defined(__CUDA)
     attributes(DEVICE) :: array_out, array_in
 #endif
-    !
     INTEGER :: i1, d1s, d1e
     INTEGER :: i2, d2s, d2e
     !
@@ -189,17 +189,13 @@ CONTAINS
   END SUBROUTINE cuf_memcpy_c2d
   !
   SUBROUTINE cuf_memcpy_c3d(array_out, array_in, range1, range2, range3 )
-    !
     IMPLICIT NONE
-    !
     COMPLEX(SP), INTENT(INOUT) :: array_out(:,:,:)
     COMPLEX(SP), INTENT(IN) :: array_in(:,:,:)
     INTEGER, INTENT(IN) ::  range1(2), range2(2), range3(2)
-    !
 #if defined(__CUDA)
     attributes(DEVICE) :: array_out, array_in
 #endif
-    !
     INTEGER :: i1, d1s, d1e
     INTEGER :: i2, d2s, d2e
     INTEGER :: i3, d3s, d3e
@@ -221,6 +217,41 @@ CONTAINS
     ENDDO
     !
   END SUBROUTINE cuf_memcpy_c3d
+  !
+  SUBROUTINE cuf_memcpy_c4d(array_out, array_in, range1, range2, range3, range4 )
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array_out(:,:,:,:)
+    COMPLEX(SP), INTENT(IN) :: array_in(:,:,:,:)
+    INTEGER, INTENT(IN) ::  range1(2), range2(2), range3(2), range4(2)
+#if defined(__CUDA)
+    attributes(DEVICE) :: array_out, array_in
+#endif
+    INTEGER :: i1, d1s, d1e
+    INTEGER :: i2, d2s, d2e
+    INTEGER :: i3, d3s, d3e
+    INTEGER :: i4, d4s, d4e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    d3s = range3(1)
+    d3e = range3(2)
+    d4s = range4(1)
+    d4e = range4(2)
+    !
+    !$cuf kernel do(4)
+    DO i4 = d4s, d4e
+    DO i3 = d3s, d3e
+    DO i2 = d2s, d2e
+    DO i1 = d1s, d1e
+       array_out(i1,i2,i3,i4) = array_in(i1,i2,i3,i4)
+    ENDDO
+    ENDDO
+    ENDDO
+    ENDDO
+    !
+  END SUBROUTINE cuf_memcpy_c4d
   !
   !=====================
   ! cuf memset
@@ -401,16 +432,12 @@ CONTAINS
   END SUBROUTINE cuf_memset_c3d
   !
   SUBROUTINE cuf_conjg_c1d(array, range1)
-    !
     IMPLICIT NONE
-    !
     COMPLEX(SP), INTENT(INOUT) :: array(:)
     INTEGER,     INTENT(IN) ::  range1(2)
-    !
 #if defined(__CUDA)
     attributes(DEVICE) :: array
 #endif
-    !
     INTEGER :: i1, d1s, d1e
     !
     d1s = range1(1)
@@ -422,6 +449,99 @@ CONTAINS
     ENDDO
     !
   END SUBROUTINE cuf_conjg_c1d
+  !
+  SUBROUTINE cuf_conjg_c2d(array, range1, range2)
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array(:,:)
+    INTEGER,     INTENT(IN) ::  range1(2)
+    INTEGER,     INTENT(IN) ::  range2(2)
+#if defined(__CUDA)
+    attributes(DEVICE) :: array
+#endif
+    INTEGER :: i1, d1s, d1e
+    INTEGER :: i2, d2s, d2e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    !
+    !$cuf kernel do(2)
+    DO i2 = d2s, d2e
+    DO i1 = d1s, d1e
+       array(i1,i2) = conjg(array(i1,i2))
+    ENDDO
+    ENDDO
+    !
+  END SUBROUTINE cuf_conjg_c2d
+  !
+  SUBROUTINE cuf_conjg_c3d(array, range1, range2, range3)
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array(:,:,:)
+    INTEGER,     INTENT(IN) ::  range1(2)
+    INTEGER,     INTENT(IN) ::  range2(2)
+    INTEGER,     INTENT(IN) ::  range3(2)
+#if defined(__CUDA)
+    attributes(DEVICE) :: array
+#endif
+    INTEGER :: i1, d1s, d1e
+    INTEGER :: i2, d2s, d2e
+    INTEGER :: i3, d3s, d3e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    d3s = range3(1)
+    d3e = range3(2)
+    !
+    !$cuf kernel do(3)
+    DO i3 = d3s, d3e
+    DO i2 = d2s, d2e
+    DO i1 = d1s, d1e
+       array(i1,i2,i3) = conjg(array(i1,i2,i3))
+    ENDDO
+    ENDDO
+    ENDDO
+    !
+  END SUBROUTINE cuf_conjg_c3d
+  !
+  SUBROUTINE cuf_conjg_c4d(array, range1, range2, range3, range4)
+    IMPLICIT NONE
+    COMPLEX(SP), INTENT(INOUT) :: array(:,:,:,:)
+    INTEGER,     INTENT(IN) ::  range1(2)
+    INTEGER,     INTENT(IN) ::  range2(2)
+    INTEGER,     INTENT(IN) ::  range3(2)
+    INTEGER,     INTENT(IN) ::  range4(2)
+#if defined(__CUDA)
+    attributes(DEVICE) :: array
+#endif
+    INTEGER :: i1, d1s, d1e
+    INTEGER :: i2, d2s, d2e
+    INTEGER :: i3, d3s, d3e
+    INTEGER :: i4, d4s, d4e
+    !
+    d1s = range1(1)
+    d1e = range1(2)
+    d2s = range2(1)
+    d2e = range2(2)
+    d3s = range3(1)
+    d3e = range3(2)
+    d4s = range4(1)
+    d4e = range4(2)
+    !
+    !$cuf kernel do(4)
+    DO i4 = d4s, d4e
+    DO i3 = d3s, d3e
+    DO i2 = d2s, d2e
+    DO i1 = d1s, d1e
+       array(i1,i2,i3,i4) = conjg(array(i1,i2,i3,i4))
+    ENDDO
+    ENDDO
+    ENDDO
+    ENDDO
+    !
+  END SUBROUTINE cuf_conjg_c4d
   !
 END MODULE dev_util_m
 !

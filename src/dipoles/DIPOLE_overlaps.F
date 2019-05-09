@@ -29,11 +29,14 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
  use electrons,         ONLY:n_spinor,n_sp_pol
- use wrapper_omp,       ONLY:Vstar_dot_V_omp
+ use wrapper,           ONLY:Vstar_dot_V
  use wave_func,         ONLY:wf_ng
  use IO_m,              ONLY:IO_and_Messaging_switch
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
+ use dev_util_m,        ONLY:dev_memcpy
+ use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint
+#include<dev_defs.h>
  !
  implicit none
  !
@@ -47,6 +50,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  complex(SP)       :: WF_symm(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
  complex(SP)       :: WF_shifted(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
  complex(SP)       :: WF_ik(wf_ng,n_spinor,Dip%ib(2),n_sp_pol),WF_ikp(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
+#ifdef _CUDA
+ attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
+#endif
  logical           :: USE_shifted_wf
  !
  ! This is needed to construct grot for all wf_ngs.
@@ -109,7 +115,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
            !
          else
-           WF_shifted=WF_ikp
+           call dev_memcpy(WF_shifted,WF_ikp, (/1,wf_ng/),(/1,n_spinor/),Dip%ib,(/1,n_sp_pol/))
          endif
          !
          !
@@ -118,7 +124,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            do ibp=1,Dip%ib(2)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-                       &  Vstar_dot_V_omp(wf_ng*n_spinor,WF_ik(:wf_ng,:,ib,i_sp_pol),WF_shifted(:wf_ng,:,ibp,i_sp_pol)) 
+                       &  Vstar_dot_V(wf_ng*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_shifted(:,:,ibp,i_sp_pol)) 
            enddo ! ibp
          enddo ! ib
          !

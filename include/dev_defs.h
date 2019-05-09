@@ -23,10 +23,12 @@
 */
  
 #ifdef _CUDA
-#  define DEV_SUBNAME(x)    x##_gpu
-#  define DEV_VARNAME(x)    x##_d
+#  define DEV_SUBNAME(x)        x##_gpu
+#  define DEV_SUBNAME_ALT(x)    x##_gpu
+#  define DEV_VARNAME(x)        x##_d
 #else
-#  define DEV_SUBNAME(x)    x
-#  define DEV_VARNAME(x)    x
+#  define DEV_SUBNAME(x)        x
+#  define DEV_SUBNAME_ALT(x)    x##_cpu
+#  define DEV_VARNAME(x)        x
 #endif
 

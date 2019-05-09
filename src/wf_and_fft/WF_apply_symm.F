@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_apply_symm(isc,WF_symm)
+subroutine WF_apply_symm_cpu(isc,WF_symm)
  !
  use pars,          ONLY:SP
  use wave_func,     ONLY:WF
@@ -51,7 +51,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  !
 #if defined _OPENMP
  if(isc(3)==idt_index) then
-!$omp parallel do default(shared), private(ifft,i_spinor)
+!$omp parallel do default(shared), private(ifft,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ifft = 1, fft_size
        WF_symm(ifft,i_spinor)=WF%c(ifft,i_spinor,i_wf)
@@ -88,7 +88,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  endif
  !
  if(isc(3)>nsym/(i_time_rev+1)) then
-!$omp parallel do default(shared), private(ifft,i_spinor)
+!$omp parallel do default(shared), private(ifft,i_spinor), collapse(2)
    do i_spinor = 1, n_spinor
      do ifft = 1, fft_size
        WF_symm(ifft,i_spinor)=conjg(WF_symm(ifft,i_spinor))
@@ -112,7 +112,7 @@ subroutine WF_apply_symm(isc,WF_symm)
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
 #endif
  !
-end subroutine WF_apply_symm
+end subroutine WF_apply_symm_cpu
 
 #ifdef _CUDA
 subroutine WF_apply_symm_gpu(isc,WF_symm_d)

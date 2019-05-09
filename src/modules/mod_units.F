@@ -29,8 +29,7 @@ module UNITS
  !
  ! [25/8/2011]
  !
- ! To organize better units and convertions the
- ! formato of the variables given here is
+ ! To organize better units and convertions the format of the variables given here is
  !
  ! Format :  U = U2P * P
  ! 
@@ -40,6 +39,18 @@ module UNITS
  !  
  !   1 Hartree = 27.21 eV => AU2EV = 27.21 
  !   1 Bohr = 0.53 A      => AU2ANG= 0.53
+ ! 
+ ! [17/10/2018] 
+ ! 
+ ! Note that, in general, if I have two different units U1 and U2:
+ !
+ !   U1= C12 U2
+ ! 
+ ! this implies that
+ !
+ !   N1 U1 = C12 N1 U2
+ !
+ ! => N2 = C12 N1
  ! 
  ! PREFIXES
  !==========
@@ -135,14 +146,14 @@ module UNITS
  real(SP), parameter  :: AU2J   =4.3597482E-18_SP  ! Ha = AU2J Joule
  real(SP), parameter  :: J2AU   =1._SP/AU2J        ! J  = J2AU Ha
  !
- real(SP), parameter  :: AU2M  =5.2917720859E-11 ! Bohr = AU2M m
+ real(SP), parameter  :: AU2M  =5.2917720859E-11    ! Bohr = AU2M m
  real(SP), parameter  :: M2AU  =1._SP/AU2M          ! m    = M2AU Bohr
  !
  real(SP), parameter  :: AU2SEC =2.418884326505E-17_SP  ! Tau = AU2SEC sec
  real(SP), parameter  :: SEC2AU =1._SP/AU2SEC           ! sec = SEC2AU Tau
  !
- real(SP), parameter  :: AU2VMm1=5.14220632E11_SP    ! V/m = AU2VMm1 AU
- real(SP), parameter  :: VMm12AU=1._SP/AU2VMm1          ! Au  = VMm12AU AU
+ real(SP), parameter  :: AU2VMm1=5.14220632E11_SP       ! V/m = AU2VMm1 AU
+ real(SP), parameter  :: VMm12AU=1._SP/AU2VMm1          ! Au  = VMm12AU V/m
  !
  real(SP), parameter  :: SPEED_OF_LIGHT_SI = 2.99792458E8_SP ! m/sec
  real(SP), parameter  :: SPEED_OF_LIGHT    = 137.03599911_SP ! a.u.

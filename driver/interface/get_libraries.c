@@ -63,7 +63,7 @@ char *tool_libraries()
  strcpy(strings[i_str], "HDF5_IO");
 #elif defined _HDF5_LIB
  i_str++;
- strcpy(strings[i_str], "HDF_LIB");
+ strcpy(strings[i_str], "HDF5_LIB");
 #endif 
  str_len=0;
  for(i_c=0;i_c<=i_str;i_c++) {

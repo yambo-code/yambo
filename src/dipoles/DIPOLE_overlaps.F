@@ -115,7 +115,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
            !
          else
-           call dev_memcpy(WF_shifted,WF_ikp, (/1,wf_ng/),(/1,n_spinor/),Dip%ib,(/1,n_sp_pol/))
+           call dev_memcpy(WF_shifted,WF_ikp, (/1,wf_ng/),(/1,n_spinor/),(/1,Dip%ib(2)/),(/1,n_sp_pol/))
          endif
          !
          !

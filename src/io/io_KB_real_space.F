@@ -23,16 +23,14 @@
 !
 integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
- use pars,             ONLY:schlen,SP
+ use pars,             ONLY:SP
  use stderr,           ONLY:intc
- use R_lattice,        ONLY:ng_vec,nkibz
+ use R_lattice,        ONLY:nkibz
  use electrons,        ONLY:n_spinor
- use FFT_m,            ONLY:FFT_size
  use pseudo,           ONLY:pp_kbv_dim
+ use FFT_m,            ONLY:fft_size
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,frag_WF
- use electrons,        ONLY:n_sp_pol
+&                           io_elemental,io_bulk,io_header,frag_WF
  !
 #include<memory.h>
  !
@@ -42,7 +40,7 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  ! Workspace
  !
- integer :: ik,ifrag,i1,i_sp_pol
+ integer :: ik,ifrag,i_sp_pol
  !
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then

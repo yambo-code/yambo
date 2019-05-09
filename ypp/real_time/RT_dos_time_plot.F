@@ -80,6 +80,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  N_files=1
  l_interp=all(INTERP_grid>0)
  if (l_interp) N_files=2
+ ID_E=0
+ ID_f=0
+ ID_spin=0
  !
  ! Msgs
  !
@@ -214,8 +217,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    do i_E=1,DOS_E_steps
      !
-     if ( dos_E(i_E)>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
-&         dos_E(i_E)<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) ) then
+     if ( dos_E(i_E)>En%E_VBM(1)+5*DOS_broadening+epsilon(1._SP) .and. &
+&         dos_E(i_E)<En%E_CBm(1)-5*DOS_broadening-epsilon(1._SP) ) then
        !
        do i_f=1,N_files
          if (l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(file_n(i_f)))

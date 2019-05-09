@@ -214,14 +214,14 @@ subroutine ypp_INIT_load(defs)
  !
  ! BANDS
  !
- call it(defs,'BANDS_bands',   'Number of bands',BANDS_bands) 
- call it(defs,'BANDS_steps',   'Number of divisions',BANDS_steps) 
+ call it(defs,'BANDS_bands',     'Number of bands',BANDS_bands) 
+ call it(defs,'BANDS_steps',     'Number of divisions',BANDS_steps) 
  call it(defs,'CIRCUIT_E_DB_path',   'SAVE obtained from the QE `bands` run (alternative to %BANDS_kpts)',CIRCUIT_E_DB_path) 
- call it(defs,'BANDS_path',    'BANDS path points labels (G,M,K,L...)',BANDS_path)
+ call it(defs,'BANDS_path',      'BANDS path points labels (G,M,K,L...)',BANDS_path)
  call it('f',defs,'BANDS_built_in', 'Print the bands of the generating points of the circuit using the nearest internal point')
- call it(defs,'INTERP_mode', 'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
- call it(defs,'INTERP_NofNN', 'Number of Nearest sites in the NN method',NN_n_of_nearest)
- call it(defs,'INTERP_Grid', 'Interpolation BZ Grid',INTERP_grid)
+ call it(defs,'INTERP_mode',     'Interpolation mode (NN=nearest point, BOLTZ=boltztrap aproach)',INTERP_mode)
+ call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
+ call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
  !
  ! GPL_EXCLUDE_START

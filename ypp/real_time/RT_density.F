@@ -35,7 +35,7 @@ subroutine RT_density(en,kpt,qpt)
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,RT_delta_occupations
- use YPP,            ONLY:v2plot,output_fname,plot_dim,plot_title,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current

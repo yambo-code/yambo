@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH DS
+! Authors (see AUTHORS file for details): CH DS HM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,20 +21,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
- use etsf_io
- use etsf_io_low_level
- use etsf_data
+integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+ use netcdf
+ use netcdf_data
  use pars,                ONLY: SP,lchlen
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo
+ use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo,&
+&                               com_path
+ use stderr,              ONLY: log_as_a_file,write_to_log,logfile,intc
+ use LIVE_t,              ONLY: live_timing_is_on
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
  use pseudo,              ONLY: PP_alloc_abinit, PP_free
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,mk_dir
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !
@@ -51,24 +53,20 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  type(levels)                 :: en
  type(bz_samp)                :: k
  !
- character(lchlen)            :: KSS_filename,WFK_filename
- integer                      :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
+ integer                      :: ID,io_err,i_sp_pol,ik,ifrag,icycle, ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
- logical                      :: force_kbpp
  ! 
  ! Work Space
  !
- logical                     :: lstat      ! to get informed on error
- type(etsf_io_low_error)     :: error_data ! to store informations about errors
- integer                     :: ncid
+ integer                     :: ncid, netcdf_error
  !
  ! Presets
  !=========
- e2y_i = 0
+ a2y   = 0
  ncpu  = np
  myid  = pid
- call SET_defaults(instr,od,od,'')
+ call SET_defaults(instr,ind,od,com_dir)
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
@@ -76,6 +74,22 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _MEM_CHECK 
  call MEM_defaults( )
 #endif
+ !
+ write_to_log      = .true.
+ live_timing_is_on = .true.
+ !
+ if (log_as_a_file) then
+   if (len_trim(com_path)==0) com_path="./"
+   write (logfile,'(2a)') trim(com_path),'/l-a2y'
+   !
+   if (ncpu>1) then
+     call mk_dir(trim(com_path)//"/LOG")
+     write (logfile,'(2a)') trim(com_path)//'/LOG/l-a2y'
+     logfile=trim(logfile)//"_CPU_"//trim(intc(myid+1))
+   endif
+   !
+ endif
+ !
  !
  ! S/N
  !======
@@ -88,48 +102,38 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! LOGO
  !
  call write_the_logo(6,' ')
- !
  call msg('s','E(TSF) 2 Y(ambo)')
  !
  ! Check input filenames 
  !
  call msg('s','Checking input file ...')
  !
- if(index(trim(inf),'KSS')/=0) ETSF_kind='KSS'
- if(index(trim(inf),'WFK')/=0) ETSF_kind='WFK'
- !
- if(trim(ETSF_kind)=='KSS') then
-   KSS_filename=trim(inf)
-   call msg('s','ETSF KSS file ',trim(KSS_filename))
- endif
- !
- if(trim(ETSF_kind)=='WFK') then
-   WFK_filename=trim(inf)
-   call msg('s','ETSF WFK file ',trim(WFK_filename))
- endif
- !
- if(trim(ETSF_kind)/='KSS'.and.trim(ETSF_kind)/='WFK') then
+ if      (index(trim(inf),'KSS')/=0) then
+   NETCDF_kind='KSS'
+ else if (index(trim(inf),'WFK')/=0) then
+   NETCDF_kind='WFK'
+ else
    call msg('ln','File kind not supported! Use either KSS or WFK filename.')
-   return
- endif
-
+ end if
+ !
+ call msg('s','ETSF file ',trim(inf))
+ !
  if(.not.file_exists(trim(inf))) then
    call msg('ln','File not found! Specify -F filename.')
    return
  endif
  !
+ call msg('s','DBs path set to :',trim(core_io_path))
+ !
  ! Open ETSF file for reading
  !
- if(trim(ETSF_kind)=='KSS') call etsf_io_low_open_read(ncid, trim(KSS_filename), lstat, error_data = error_data)
- if(trim(ETSF_kind)=='WFK') call etsf_io_low_open_read(ncid, trim(WFK_filename), lstat, error_data = error_data)
- !
- if (.not. lstat) call etsf_long_error(error_data)
- call msg('s','DBs path set to :',trim(core_io_path))
+ netcdf_error = nf90_open(path = trim(inf), mode = NF90_NOWRITE, ncid = ncid)
+ call netcdf_check(ncid,netcdf_error, 0)
  !
  ! DB1
  !==========================================
  !
- call e2y_db1(en,k,ncid)
+ call a2y_db1(en,k,ncid)
  !
  if (force_noWFs) then
    !
@@ -147,13 +151,13 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! WF & PP
  !==========================================
  !
- if(trim(ETSF_kind)=='KSS') then
+ if(trim(NETCDF_kind)=='KSS') then
    call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
-   call PP_alloc_abinit()
  endif
  !
- if(trim(ETSF_kind)=='WFK') &
-&  call msg('s',' == Writing DB2 (wavefunctions) ...') 
+ if(trim(NETCDF_kind)=='WFK') then
+   call msg('s',' == Writing DB2 (wavefunctions) ...') 
+ endif
  !
  allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
  !
@@ -167,7 +171,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        !
        ! Read from the etsf-nc file
        !
-       call e2y_wf(wf_disk,i_sp_pol,ik,ib_grp,ncid)
+       call a2y_wf(wf_disk,i_sp_pol,ik,ib_grp,ncid)
        ! 
        ! Write to the YAMBO WF database
        ! 
@@ -175,13 +179,12 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
        io_err=io_WF(ID,wf_disk)
        !
-       if(trim(ETSF_kind)=='KSS') then
-         call e2y_kb_pp(ik,ncid) 
-         if (n_atoms_species_max>0.and.ib_grp==1) then
-           if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-           if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
-           io_err=io_KB_abinit(ID) 
-         endif
+       if(trim(NETCDF_kind)=='KSS') call a2y_kb_pp(ik,ncid) 
+       if(trim(NETCDF_kind)=='WFK') call a2y_kb_pp_wfk(ik,ncid) 
+       if (n_atoms_species_max>0.and.ib_grp==1) then
+         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+         if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+         io_err=io_KB_abinit(ID) 
        endif
        !
      enddo
@@ -191,7 +194,7 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  enddo
  !
  deallocate(wf_disk)
- if(trim(ETSF_kind)=='KSS') call PP_free()
+ if(trim(NETCDF_kind)=='KSS') call PP_free()
  !
  call msg('l','done ==')
  !
@@ -204,14 +207,6 @@ integer function e2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Close file
  !
- call etsf_io_low_close(ncid, lstat, error_data = error_data)
+ netcdf_error = nf90_close(ncid)
  !
 end function
-
- subroutine etsf_long_error(error_data)
-   use etsf_io_low_level, only : etsf_io_low_error, etsf_io_low_error_handle
-   use com, only : error
-   type(etsf_io_low_error), intent(in)     :: error_data
-   call etsf_io_low_error_handle(error_data)
-   call error('YAMBO dies')
- end subroutine etsf_long_error

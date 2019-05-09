@@ -73,7 +73,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran YAMBO driver 
  ===========================================================================
  */
- F90_FUNC(yambo_driver)(
+ F90_FUNC(yambo)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -82,7 +82,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran YPP driver
  ===========================================================================
  */
- F90_FUNC(ypp_driver)(
+ F90_FUNC(ypp)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -91,7 +91,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran c2y driver
  ===========================================================================
  */
- F90_FUNC(c2y_i)(
+ F90_FUNC(c2y)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -100,7 +100,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran a2y driver
  ===========================================================================
  */
- F90_FUNC(a2y_i)(
+ F90_FUNC(a2y)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -109,7 +109,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(p2y_i)(
+ F90_FUNC(p2y)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -118,7 +118,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
    Running the Fortran p2y driver 
  ===========================================================================
  */
- F90_FUNC(e2y_i)(
+ F90_FUNC(e2y)(
 #include <fortran_arguments.h>
  );
 #endif
@@ -127,7 +127,7 @@ void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y
  ===========================================================================
  */
  if ( y.in_file_N ==1 && *use_editor==0 ) {*use_editor=1;};
- if ( y.in_file_N ==0 ) {*use_editor=0;};
+ if ( y.in_file_N ==0                   ) {*use_editor=0;};
  /* 
    Error message
  ===========================================================================

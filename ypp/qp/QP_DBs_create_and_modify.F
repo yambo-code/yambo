@@ -30,7 +30,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  use IO_m,          ONLY:io_control,OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
- use YPP,           ONLY:QP_user_corrections
+ use YPPm,          ONLY:QP_user_corrections
  !
 #include<memory.h>
  !

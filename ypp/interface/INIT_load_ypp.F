@@ -29,7 +29,13 @@ subroutine ypp_INIT_load(defs)
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
- use YPP
+ use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_steps,&
+&                        BZ_DbGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
+&                        DOS_bands,DOS_broadening,DOS_E_range,DOS_E_steps,gamma_radius,INTERP_grid,mag_dir,&
+&                        min_weight,N_path_pts,ncell,ord_dgrid_ipol,p_dir,p_format,PDOS_atoms,PDOS_j,PDOS_kinds,&
+&                        PDOS_l,PDOS_m,PDOS_wfcs,perturbative_SOC_path,r_hole,seed_name,SOC_bands_buffer,&
+&                        SOC_bands_to_map,SOC_split,state_ctl,w90_fname,WF_multiplier,WF_ref,BANDS_path,deg_energy,&
+&                        PtsPath,wannier_bands,what_to_write
 #if defined _YPP_RT
  use YPP_real_time,        ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                               Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
@@ -37,7 +43,8 @@ subroutine ypp_INIT_load(defs)
  use real_time,            ONLY:RT_bands
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH
+ use YPP_ELPH,             ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
+&                               ph_broad,ph_freqs_file,ph_modes_file
 #endif
  !
  implicit none

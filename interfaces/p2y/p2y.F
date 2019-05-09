@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
- use P2Y,                 ONLY:pw_init, pw_close, dftdata_fmt
+ use P2Ym,                ONLY:pw_init, pw_close, dftdata_fmt
  use LOGO,                ONLY:pickup_a_random
  use pars,                ONLY:SP,lchlen,schlen
  use com,                 ONLY:msg,core_io_path,write_the_logo,com_path,file_exists
@@ -66,7 +66,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Presets
  !
- p2y_i =0
+ p2y   =0
  ncpu  =np
  myid  =pid
  call SET_defaults(instr,od,od,com_dir)
@@ -265,5 +265,4 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')
  !
- end function p2y_i
-
+end function p2y

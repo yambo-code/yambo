@@ -24,7 +24,7 @@
 subroutine plot_and_project_1D(V,direction)
  !
  use pars,        ONLY:SP,DP,pi,cI
- use YPP,         ONLY:output_fname
+ use YPPm,        ONLY:output_fname
  use FFT_m,       ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,   ONLY:wf_ng
  use R_lattice,   ONLY:g_vec

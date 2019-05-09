@@ -30,14 +30,14 @@ subroutine electrons_WFs(Xen)
  use com,            ONLY:error
  use electrons,      ONLY:levels,n_spinor,spin,n_sp_pol
  use QP_m,           ONLY:QP_table,QP_n_states
- use YPP,            ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
+ use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
 &                         use_gnuplot,use_cube,nr,l_sp_wf,deg_energy,l_norm_to_one,&
 &                         plot_title
  use com,            ONLY:msg,of_open_close,warning
  use functions,      ONLY:Fermi_fnc_derivative
  use xc_functionals, ONLY:magn
 #if defined _YPP_SC
- use YPP,            ONLY:V_value,l_mean_potential
+ use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP

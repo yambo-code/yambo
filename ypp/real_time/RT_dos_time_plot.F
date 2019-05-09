@@ -29,7 +29,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use pointers,       ONLY:linkM2M
- use YPP,            ONLY:DOS_broadening,DOS_E_steps,electrons_dos_elemental,&
+ use YPPm,           ONLY:DOS_broadening,DOS_E_steps,electrons_dos_elemental,&
 &                         INTERP_grid,DOS_E_step,l_pdos
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time

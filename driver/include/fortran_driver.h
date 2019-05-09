@@ -27,57 +27,57 @@
 /* TEST */
 #if defined _DRIVER_TEST
  #if defined _FORTRAN_US
-  int yambo_
+  int driver_test_
  #else
-  int yambo
+  int driver_test
  #endif
 #endif
 /* YAMBO */
 #if defined _yambo
  #if defined _FORTRAN_US
-  int yambo_driver_
+  int yambo_
  #else
-  int yambo_driver
+  int yambo
  #endif
 #endif
 /* YPP */
 #if defined _ypp
  #if defined _FORTRAN_US
-  int ypp_driver_
+  int ypp_
  #else
-  int ypp_driver
+  int ypp
  #endif
 #endif
 /* A2Y */
 #if defined _a2y
  #if defined _FORTRAN_US
-  int a2y_i_
+  int a2y_
  #else
-  int a2y_i
+  int a2y
  #endif
 #endif
 /* C2Y */
 #if defined _c2y
  #if defined _FORTRAN_US
-  int c2y_i_
+  int c2y_
  #else
-  int c2y_i
+  int c2y
  #endif
 #endif
 /* P2Y */
 #if defined _p2y
  #if defined _FORTRAN_US
-  int p2y_i_
+  int p2y_
  #else
-  int p2y_i
+  int p2y
  #endif
 #endif
 /* E2Y */
 #if defined _e2y
  #if defined _FORTRAN_US
-  int e2y_i_
+  int e2y_
  #else
-  int e2y_i
+  int e2y
  #endif
 #endif
  (int *, int *,int *,int *,int *,int *,int *,int *,

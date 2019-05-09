@@ -29,7 +29,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close,error,file_exists,warning,msg_deliver
- use YPP,            ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
+ use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,PtsPath,n_path_pts,BANDS_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time

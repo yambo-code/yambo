@@ -29,7 +29,7 @@ subroutine k_special(LIST)
  use D_lattice,           ONLY:alat,lattice,a
  use com,                 ONLY:msg,of_open_close,msg_deliver,warning
  use vec_operate,         ONLY:c2a,v_norm
- use YPP,                 ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
+ use YPPm,                ONLY:n_path_pts,PtsPath,K_transform,l_high_sym_pts,&
 &                              SPECIAL_k,n_SPECIAL_k_MAX,CIRCUIT_k,SPECIAL_k_label,&
 &                              n_SPECIAL_k_MAX,CIRCUIT_k_label,coo_out
  use stderr,              ONLY:STRING_split,STRING_match

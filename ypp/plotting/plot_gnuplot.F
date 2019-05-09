@@ -26,7 +26,7 @@ subroutine plot_gnuplot(eval_only)
  use pars,        ONLY:SP,schlen
  use units,       ONLY:BO2ANG
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
+ use YPPm,        ONLY:nr,v2plot,r_hole,v2plot2D,l_norm_to_one,WF_multiplier,plot_dim,&
 &                      plot_title,output_string,l_wavefunction,l_current,use_xcrysden,&
 &                      plot_is_1D,plot_is_2D
  use LIVE_t,      ONLY:live_timing

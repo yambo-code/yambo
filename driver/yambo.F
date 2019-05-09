@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  !Y88b    /   e           e    e      888~~'    ,88~-_   
  ! Y88b  /   d8b         d8b  d8b     888   |  d888   '  
@@ -85,11 +85,11 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  ! Presets
  !
- ncpu         = np
- myid         = pid
- infile       = inf
- yambo_driver = 0
- iinf         = 0 
+ ncpu    = np
+ myid    = pid
+ infile  = inf
+ yambo   = 0
+ iinf    = 0 
  !
  call SET_defaults(instr,ind,od,com_dir)
  call it_reset(1)
@@ -314,4 +314,4 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #endif
   end subroutine mem_manager_report
   !
-end function yambo_driver
+end function yambo

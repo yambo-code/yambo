@@ -27,7 +27,7 @@ subroutine plot_xcrysden()
  use units,       ONLY:BO2ANG
  use LOGO,        ONLY:code_version
  use com,         ONLY:msg
- use YPP,         ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
+ use YPPm,        ONLY:nr,v2plot,ncell,v2plot2D,r_hole,plot_dim,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string,plot_is_2D
  use D_lattice,   ONLY:n_atomic_species,n_atoms_species,a,atom_pos,Z_species,n_atoms
  use LIVE_t,      ONLY:live_timing

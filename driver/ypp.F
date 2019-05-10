@@ -24,6 +24,7 @@
 integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
+ use stderr,              ONLY:write_to_log
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
@@ -127,6 +128,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),COM=NONE,MODE=DUMP,ID=ID)
  i_err=io_GROT(ID) 
  if (i_err/=0) then
+   write_to_log=.TRUE.
    call ypp_finalize("Missing post-setup databases. Please run yambo as it is first.")
    return
  endif

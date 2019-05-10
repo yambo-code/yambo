@@ -1,4 +1,4 @@
-!
+
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -98,7 +98,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
-   if (master_cpu) call initinfio(defs,11)
+   if (master_cpu.and.write_to_report) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif

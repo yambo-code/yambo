@@ -74,7 +74,7 @@ void options_maker(struct options_struct options[], int n_options)
  */
  dummy=57;
  for(i_opt=0;i_opt<n_options;i_opt++){
-  if (options[i_opt].yambo_string=="unused") break;
+  if (!options[i_opt].short_desc) break;
   if (options[i_opt].short_opt > 0 ) continue;
   options[i_opt].short_opt=dummy;
   dummy--;

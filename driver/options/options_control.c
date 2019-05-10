@@ -130,13 +130,18 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="parenv"; 
  options[*i_opt].n_char=1;
  options[*i_opt].section=desc;
+#if defined _MPI
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Switch off MPI support";
  options[*i_opt].long_opt="nompi";
  options[*i_opt].serial_var=1;
  options[*i_opt].section=desc;
+#endif
+#if defined _OPENMP
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Switch off OPENMP support";
  options[*i_opt].long_opt="noopenmp";
+ options[*i_opt].yambo_string="noopenmp";
  options[*i_opt].section=desc;
+#endif
 };

@@ -144,7 +144,6 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
     usage(opts,t,"version",n_options);
     exit(0);
   }
-
   if (strcmp(opts[i_opt].long_opt,"Input")==0){y.in_file=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Job")==0){y.job=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"dir")==0){y.in_dir=optarg;continue;}

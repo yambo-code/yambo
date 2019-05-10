@@ -45,7 +45,7 @@ subroutine INIT_C_driver_runlevels(defs)
    call get_runlevel(bin,3,i_c)
    !
    if (trim(bin)=="EMPTY") cycle
-   if (index(bin,what_is_running)==0) cycle
+   if (index(trim(bin),trim(what_is_running))==0) cycle
    !
    call get_runlevel(string,1,i_c)
    call get_runlevel(desc,2,i_c)

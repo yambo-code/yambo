@@ -237,7 +237,7 @@ yambo: libs
 # DRIVERs tests #
 # 
 driver_yambo: libs
-	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver -D_ELPH"; $(mk_driver_src)
+	@+LIBS2DO="$(DRIVER_LIBS)"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver"; $(mk_driver_src)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; ADF="-D_DRIVER_TEST -D_yambo_driver -D_ELPH";XLIBS="$(DRIVER_LIBS_LD)"; $(mkx)
 #
 # Yambo PROJECTS #

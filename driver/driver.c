@@ -34,13 +34,13 @@ int main(int argc, char *argv[])
  /*
   Work Space
  */
- int np=1,pid=0,use_mpi=1,use_editor=1;
+ int np=1,pid=0,use_mpi=1,use_editor=1,n_options=200;
  /*
   Yambo and Tool structures
  */
  yambo_seed_struct y;
  tool_struct tool;
- struct options_struct options[200];
+ struct options_struct options[n_options];
  /* 
   TOOL & Version initialization
  */
@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
  /*
   Options "maker"
  */ 
- options_maker(options);
+ options_maker(options,n_options);
  /*
   Command line parsing
  */ 
- y=command_line(argc,argv,options,tool,&use_editor,&use_mpi);
+ y=command_line(argc,argv,options,tool,&use_editor,&use_mpi,n_options);
  /*
   Launcher
  */

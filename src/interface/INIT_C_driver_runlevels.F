@@ -21,41 +21,37 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module C_driver
+subroutine INIT_C_driver_runlevels(defs)
+ !
+ use it_m,        ONLY:it,initdefs
+ use pars,        ONLY:lchlen
+ use C_driver,    ONLY:get_runlevel,what_is_running
  !
  implicit none
  !
- integer      :: code_version(3)
- integer      :: code_GPL_revision
- integer      :: code_revision
- character(50):: code_hash
- character(50):: code_libraries
- character(50):: what_is_running
+ type(initdefs) :: defs
  !
- interface  
-   !
-   subroutine get_version(version,subversion,patchlevel,revision,hash)
-     integer     , intent(out):: version
-     integer     , intent(out):: subversion
-     integer     , intent(out):: patchlevel
-     integer     , intent(out):: revision
-     character(*), intent(out):: hash
-   end subroutine
-   !
-   subroutine get_libraries(libraries)
-     character(*), intent(out):: libraries
-   end subroutine
-   !
-   subroutine get_running_tool(what_is_running)
-     character(*), intent(out):: what_is_running
-   end subroutine
-   !
-   subroutine get_runlevel(component,component_id,runlevel_id)
-     character(*), intent(out):: component
-     integer,      intent(in) :: component_id
-     integer,      intent(in) :: runlevel_id
-   end subroutine
-   !
- end interface
+ ! Work Space
  !
-end module C_driver
+ integer           :: i_c,N
+ character(lchlen) :: string,desc,bin
+ !
+ do i_c=0,199
+   !
+   string=" "
+   desc=" "
+   bin=" "
+   !
+   call get_runlevel(bin,3,i_c)
+   !
+   if (trim(bin)=="EMPTY") cycle
+   if (index(bin,what_is_running)==0) cycle
+   !
+   call get_runlevel(string,1,i_c)
+   call get_runlevel(desc,2,i_c)
+   !
+   call it('r',defs,trim(string),'[R] '//trim(desc))
+   !
+ enddo
+ !
+end subroutine

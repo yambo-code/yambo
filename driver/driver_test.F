@@ -1,5 +1,5 @@
 !
-integer function yambo(&
+integer function driver_test(&
 &  np,pid,&
 &  string_N,in_file_N,in_dir_N,out_dir_N,com_dir_N,job_N,&
 &  string,   in_file,   in_dir,   out_dir,   com_dir,   job)
@@ -15,7 +15,7 @@ integer function yambo(&
  character(com_dir_N), intent(in)    :: com_dir
  character(job_N),     intent(in)    :: job
  !
- integer i_runlevel,i_err
+ integer i_runlevel
  character(100) key,desc,pj,hash
  !
  if (pid==0) then
@@ -34,8 +34,7 @@ integer function yambo(&
    write (*,'(2a)') " LIBS      :",trim(code_libraries)
    write (*,'(a,2(i1,a),i1,1x,i5,1x,a/)') " VERSION   :",code_version(1),".",code_version(2),".",&
 &                                         code_version(3),code_revision,trim(code_hash)
-  
-   do i_runlevel=1,99
+   do i_runlevel=0,199
      key=" "
      desc=" "
      pj=" "

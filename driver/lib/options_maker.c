@@ -27,15 +27,15 @@
 #include <driver.h>
 #include <stdlib.h>
 
-void options_maker(struct options_struct options[])
+void options_maker(struct options_struct options[], int n_options)
 {
  int i_opt,dummy,i;
- for(i_opt=0;i_opt<100;i_opt++) {
+ for(i_opt=0;i_opt<n_options;i_opt++) {
   options[i_opt].long_opt=NULL;
   options[i_opt].short_opt=0;
   options[i_opt].short_desc=NULL;
   for(i=0;i<10;i++) options[i_opt].long_desc[i]=NULL;
-  options[i_opt].yambo_string=NULL;
+  options[i_opt].yambo_string="unused";
   options[i_opt].bin="all";
   options[i_opt].n_int=0;
   options[i_opt].n_float=0;
@@ -73,7 +73,8 @@ void options_maker(struct options_struct options[])
   Assign dummy short options to variables with only long options
  */
  dummy=57;
- for(i_opt=0;i_opt<100;i_opt++){
+ for(i_opt=0;i_opt<n_options;i_opt++){
+  if (options[i_opt].yambo_string=="unused") break;
   if (options[i_opt].short_opt > 0 ) continue;
   options[i_opt].short_opt=dummy;
   dummy--;

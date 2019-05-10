@@ -55,9 +55,9 @@ The struct option structure has these fields:
 #include <kind.h>
 #include <driver.h>
 
-struct yambo_seed_struct command_line(int argc, char *argv[], struct options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi)
+struct yambo_seed_struct command_line(int argc, char *argv[], struct options_struct opts[],  struct tool_struct t, int *use_editor, int *use_mpi, int n_options)
 {
- int n_options,n_vars,opt=0,i_opt;
+ int n_active,n_vars,opt=0,i_opt;
  char opt_string[100],ch[3];
  /* */
  yambo_seed_struct y;
@@ -73,45 +73,45 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
  y.job="";
  strcpy(y.string,"");
  /* */
- n_options=0;
- for(i_opt=0;i_opt<=100;i_opt++) {
+ n_active=0;
+ for(i_opt=0;i_opt<n_options;i_opt++) {
   if (opts[i_opt].long_opt== NULL ) {break;};
-  n_options++;
+  n_active++;
  }
  /* */
- struct option long_options[n_options+1];
+ struct option long_options[n_active+1];
  /* */
- n_options=0;
- for(i_opt=0;i_opt<=99;i_opt++) {
+ n_active=0;
+ for(i_opt=0;i_opt<n_options;i_opt++) {
   /**/
   if (use_me(opts,t,i_opt)==0) continue;
   if (opts[i_opt].short_desc== NULL ) {break;};
   /**/
-  long_options[n_options].name=opts[i_opt].long_opt;
-  long_options[n_options].flag=0;
-  long_options[n_options].val=opts[i_opt].short_opt;
+  long_options[n_active].name=opts[i_opt].long_opt;
+  long_options[n_active].flag=0;
+  long_options[n_active].val=opts[i_opt].short_opt;
   /* VARS */
   n_vars=opts[i_opt].n_int+opts[i_opt].n_float+opts[i_opt].n_char;
   sprintf(ch,"%c",opts[i_opt].short_opt);
   if (n_vars ==0) {
-   long_options[n_options].has_arg=no_argument;
+   long_options[n_active].has_arg=no_argument;
    strcat(opt_string,ch);
   }else if (opts[i_opt].optional_var==1){
-   long_options[n_options].has_arg=optional_argument;
+   long_options[n_active].has_arg=optional_argument;
    strcat(opt_string,ch);
    sprintf(ch,"%s","::");
    strcat(opt_string,ch);
   }else{
    ch[1]=':';
-   long_options[n_options].has_arg=required_argument;
+   long_options[n_active].has_arg=required_argument;
    strcat(opt_string,ch);
   };
-  n_options++;
+  n_active++;
  };
- long_options[n_options].name=0;
- long_options[n_options].has_arg=0;
- long_options[n_options].flag=0;
- long_options[n_options].val=0;
+ long_options[n_active].name=0;
+ long_options[n_active].has_arg=0;
+ long_options[n_active].flag=0;
+ long_options[n_active].val=0;
  int long_index =0;
  while ((opt = getopt_long_only(argc, argv,opt_string,long_options, &long_index )) != -1) {
   /* No option valid */
@@ -119,7 +119,7 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
     printf ("%s","\n Use -h to list the options\n");
     exit(EXIT_FAILURE);
   }
-  for(i_opt=0;i_opt<=100;i_opt++) {
+  for(i_opt=0;i_opt<n_options;i_opt++) {
    if (use_me(opts,t,i_opt)==0) continue;
    if (opts[i_opt].short_opt==opt) {break;};
   }
@@ -131,17 +131,17 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
   /* help */
   if (strcmp(opts[i_opt].long_opt,"help")==0){
    if (optarg == NULL && argv[optind] != NULL && argv[optind][0] != '-') {            // not an option
-    usage(opts,t,argv[optind]);
+    usage(opts,t,argv[optind],n_options);
     ++optind;
    } else {  // handle case of argument immediately after option
-    if (optarg == NULL) usage(opts,t,"help");
-    if (optarg != NULL) usage(opts,t,optarg);
+    if (optarg == NULL) usage(opts,t,"help",n_options);
+    if (optarg != NULL) usage(opts,t,optarg,n_options);
    }
    exit(0);
   }
   /* version */
   if (strcmp(opts[i_opt].long_opt,"version")==0){
-    usage(opts,t,"version");
+    usage(opts,t,"version",n_options);
     exit(0);
   }
 

@@ -128,62 +128,39 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
  real(SP) :: IO_times(3)
  !
+ ! RunLevels...
+ !==============
+ !
+ ! ... from C_driver
+ !
+ call INIT_C_driver_runlevels(defs)
+ !
+ ! ... derived
+ !=============
+ !
  !===============
  ! GPL RUNLEVELS
  !===============
- call it('r',defs,'setup',   '[R INI] Initialization') 
- call it('r',defs,'optics',  '[R OPT] Optics')
- call it('r',defs,'chi',     '[R CHI] Dyson equation for Chi.')
- call it('r',defs,'bse',     '[R BSE] Bethe Salpeter Equation.')
- call it('r',defs,'bss',     '[R BSS] Bethe Salpeter Equation solver')
- call it('r',defs,'tddft',   '[R   K] Use TDDFT kernel')
- call it('r',defs,'dipoles', '[R   ] Compute the dipoles')
- call it('r',defs,'em1s',    '[R Xs] Static Inverse Dielectric Matrix')
- call it('r',defs,'em1d',    '[R Xd] Dynamical Inverse Dielectric Matrix')
- call it('r',defs,'ppa',     '[R Xp] Plasmon Pole Approximation')
- call it('r',defs,'HF_and_locXC',   '[R XX] Hartree-Fock Self-energy and Vxc')
- call it('r',defs,'gw0',     '[R GW] GoWo Quasiparticle energy levels')
- call it('r',defs,'life',    '[R GW] GoWo Quasiparticle lifetimes')
- call it('r',defs,'rim_cut', '[R RIM CUT] Coulomb potential')
- call it('r',defs,'cohsex',  '[R Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation')
+ call it('r',defs,'chi',     '[R][CHI] Dyson equation for Chi.')
+ call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
+ call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
+ call it('r',defs,'cohsex',  '[R][Xp] COlumb Hole Screened EXchange')
  !
  ! GPL_EXCLUDE_START
  !
  !===================
  ! NON GPL RUNLEVELS
  !===================
- call it('r',defs,'acfdt',   '[R ETOT] ACFDT Total Energy')
-#if defined _ELPH 
- call it('r',defs,'ElPhHam', '[R] Frohlich Hamiltonian') 
-#endif
  !
  ! GPL_EXCLUDE_END
  !
-#if defined _SC && !defined _RT
- call it('r',defs,'scrun',      '[R] Self-Consistent single-particle calculation') 
-#endif
-#if defined _SC || defined _RT
- call it('r',defs,'collisions', '[R] Eval the extended Collisions')
-#endif
-#if defined _PL
- call it('r',defs,'photolum',   '[R] Photo-Luminescence') 
-#endif
 #if defined _RT
- call it('r',defs,'negf',       '[R] Real-Time dynamics') 
  call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
  call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
 #endif
-#if defined _NL
- call it('r',defs,'nloptics',   '[R NL] Non-linear optics') 
-#endif
 #if defined _RT 
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
-#endif
-#if defined _MAGNETIC
- call it('r',defs,'magnetic','[R] Magnetic fields')
-#endif
-#if defined _ELECTRIC
- call it('r',defs,'electric','[R] Static Electric Field')
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
@@ -193,9 +170,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _QED
  call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
-#endif
-#if defined _SCALAPACK
- call it('r',defs,'slktest','[R] ScaLapacK test') 
 #endif
  !
  !=======
@@ -522,7 +496,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! Non liner optics
  !
  call it(defs,'NLBands',      '[NL] Bands',NL_bands)
- call it(defs,'NLverbosity', '[NL] Verbosity level (low | high)',NL_verb_name) 
+ call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
  call it(defs,'NLstep',       '[NL] Real Time step length',RT_step,unit=Time_unit(1),Verb_level=V_nl_optics)
  call it(defs,'NLtime',       '[NL] Simulation Time',NE_tot_time,unit=Time_unit(1))
  call it(defs,'NLintegrator', '[NL] Integrator ("EULEREXP/RK2/RK4/RK2EXP/HEUN/INVINT/CRANKNIC")',Integrator_name,&

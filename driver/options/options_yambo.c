@@ -42,7 +42,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="gw";
  options[*i_opt].short_opt='p';
  options[*i_opt].bin="yambo";
- options[*i_opt].yambo_string="gwapprox";
+ options[*i_opt].yambo_string="gwapprx";
  options[*i_opt].n_char=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;

@@ -110,7 +110,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=PDOS_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   !PDOS_fac_p => linkM2M(RT_PDOS_fac,shape(RT_PDOS_fac),lbound(RT_PDOS_fac),ubound(RT_PDOS_fac))
    PDOS_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_sp_pol) => RT_PDOS_fac
    YAMBO_FREE(PDOS_fac_v)
  endif
@@ -122,7 +121,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      RT_SPIN_fac(:,RT_carriers%table(i_RT,3),:)=SPIN_fac_v(:, RT_carriers%table(i_RT,2), :)
    enddo
-   !SPIN_fac_p => linkM2M(RT_SPIN_fac,shape(RT_SPIN_FAC),lbound(RT_SPIN_fac),ubound(RT_SPIN_fac))
    SPIN_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_spinor) => RT_SPIN_fac
    YAMBO_FREE(SPIN_fac_v)
  endif
@@ -217,8 +215,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    do i_E=1,DOS_E_steps
      !
-     if ( dos_E(i_E)>En%E_VBM(1)+5*DOS_broadening+epsilon(1._SP) .and. &
-&         dos_E(i_E)<En%E_CBm(1)-5*DOS_broadening-epsilon(1._SP) ) then
+     if ( dos_E(i_E)>En%E_VBM(1)+DOS_broadening+epsilon(1._SP) .and. &
+&         dos_E(i_E)<En%E_CBm(1)-DOS_broadening-epsilon(1._SP) ) then
        !
        do i_f=1,N_files
          if (l_separate_eh.and.(.not.space_printed)) call RT_output("space "//trim(file_n(i_f)))

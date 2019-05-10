@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DV
+! Authors (see AUTHORS file for details): AM
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,44 +21,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_find_degeneracies(BS_E,BS_E_degs)
+subroutine excitons_kinematics(Xk,eh,i_s)
  !
- use pars,          ONLY:SP
- use com,           ONLY:msg
- use vec_operate,   ONLY:sort
- use BS_solvers,    ONLY:BSS_n_eig
- use YPPm,          ONLY:deg_energy
+ use electrons,     ONLY:spin
+ use R_lattice,     ONLY:bz_samp
+ use YPPm,          ONLY:EXCITON_kin
+ use BS_solvers,    ONLY:BSS_eh_table
  !
  implicit none
  !
- complex(SP)   :: BS_E(BSS_n_eig)
- integer       :: BS_E_degs(BSS_n_eig)
+ type(bz_samp)          :: Xk
+ type(EXCITON_kin)      :: eh
+ integer                :: i_s
+ ! 
+ eh%ik_bz   = BSS_eh_table(i_s,1)
+ eh%ik_ibz  = Xk%sstar(eh%ik_bz,1)
+ eh%ik_sym  = Xk%sstar(eh%ik_bz,2)
+ eh%iv      = BSS_eh_table(i_s,2)
+ eh%ic      = BSS_eh_table(i_s,3)
+ eh%spin    =spin(BSS_eh_table(i_s,:))
  !
- ! Work space
- !
- integer :: j1,j2
- integer :: S_indx(BSS_n_eig)
- real(SP):: v2sort(BSS_n_eig)
- !
- call msg('s',':: Sorting energies')
- !==================================
- !
- v2sort=real(BS_E)
- call sort(arrin=v2sort,indx=S_indx)
- !
- BS_E_degs=0
- !
- do j1=1,BSS_n_eig
-   !
-   if (BS_E_degs(S_indx(j1))>0) cycle
-   !
-   BS_E_degs(S_indx(j1))=S_indx(j1)
-   !
-   do j2=j1+1,BSS_n_eig
-     if ( abs( real(BS_E(S_indx(j1)))-real(BS_E(S_indx(j2))) )>deg_energy) exit
-     BS_E_degs(S_indx(j2))=S_indx(j1)
-   enddo
-   !
- enddo
- !
-end subroutine excitons_find_degeneracies
+end subroutine

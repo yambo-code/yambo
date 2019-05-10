@@ -624,16 +624,18 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    if (l_current) call initactivate(1,'CurrentDir')
  endif
  !
+ if (l_spin.and..not.l_excitons) call initactivate(1,"FFTGvecs")
+ !
  if (l_excitons) then
-   call initactivate(1,"States")
+   call initactivate(1,"States En_treshold Res_treshold")
    if (l_amplitude) then
      call INIT_QP_ctl_switch('G')
      call initactivate(1,"DipWeight")
    endif
-   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step MinWeight")
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
    if (l_exc_wf.and..not.l_free_hole) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.l_free_hole) call initactivate(1,"WFMult") 
-   if (l_spin) call initactivate(1,"Degen_Step FFTGvecs")
+   if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif

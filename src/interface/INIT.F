@@ -45,7 +45,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_m,           ONLY:it,initactivate,initdefs,rstatus,initmode,initinfio,&
 &                         infile,infile_dump,ofiles_append,runlevel_is_on,&
-&                         switch_off_runlevel,check_verbosity
+&                         switch_off_runlevel,check_verbosity,nrnlvls,rnlvls
  use parallel_m,     ONLY:PP_redux_wait,master_cpu
  use com,            ONLY:msg,repfile,com_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
@@ -93,7 +93,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
  !
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err,i_r
  !
  ! Presets
  !
@@ -203,7 +203,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  !RUNLEVELS VARIABLES ACTIVATION (LOGICALS FROM INPUT FILE)
  !
- if (.not.any(rstatus>0)) rstatus(1)=-1
+ if (.not.any(rstatus>0)) then
+   do i_r=1,nrnlvls
+     if (trim(rnlvls(i_r,1))=="setup") rstatus(i_r)=-1
+   enddo
+ endif
  call logicalson
  call varsetup2
  call logicalson

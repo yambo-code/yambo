@@ -70,6 +70,7 @@ char *tool_libraries()
   str_len=str_len+sizeof(strings[i_c]);
  }
  c = malloc(str_len+1);
+ strcpy(c,"");
  for(i_c=0;i_c<=i_str;i_c++) {
   if (i_c>0) strcat(c,"+");
   strcat(c,strings[i_c]);

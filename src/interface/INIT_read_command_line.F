@@ -54,8 +54,9 @@ subroutine INIT_read_command_line(rstr,init_)
  !
  ! Work Space
  !
- integer          ::i1,i2,i_field,n_pieces,i_cycle
- character(schlen)::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(nrnlvls)
+ integer            ::i1,i2,i_field,n_pieces,i_cycle
+ integer, parameter ::n_strings_not_allowed=8
+ character(schlen)  ::rstr_piece(2*nrnlvls),strings_to_not_use_as_runlevels(n_strings_not_allowed)
  !
  ! Bug fix (17/9/2012). If any string following a -### identifier contains 
  ! a string related to a runlevel this is erronously switched on. 
@@ -88,7 +89,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! String suitable for runlevel switching?
      !
      if (i1>1) then
-       do i2=1,nrnlvls
+       do i2=1,n_strings_not_allowed
          if (trim(rstr_piece(i1-1)) == trim(strings_to_not_use_as_runlevels(i2))) cycle INPUT_strings_loop
        enddo
      endif

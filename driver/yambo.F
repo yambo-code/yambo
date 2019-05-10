@@ -31,9 +31,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
-&                        l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_elel_corr,l_life,l_acfdt,l_elphoton_corr,l_dipoles,&
-&                        l_nl_optics
+&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -91,7 +90,14 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  yambo   = 0
  iinf    = 0 
  !
+ ! ... Internal Defaults
+ !
  call SET_defaults(instr,ind,od,com_dir)
+ !
+ ! ... C_driver -> YPP information transfer
+ !
+ call C_driver_transfer()
+ !
  call it_reset(1)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
@@ -276,7 +282,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Electron-Phonon Hamiltonian
  !=============================
  !
- driver_now=l_elph_hamiltonian
+ driver_now=l_elph_Hamiltonian
  !
  if (driver_now) call ELPH_Hamiltonian(en,k,q)
  if (driver_now) call mem_manager_report

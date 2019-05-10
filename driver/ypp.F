@@ -74,7 +74,16 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ncpu   =np
  myid   =pid
  infile =inf
+ !
+ ! ... Internal Defaults
+ !
  call SET_defaults(instr,ind,od,com_dir)
+ call YPP_SET_defaults()
+ !
+ ! ... C_driver -> YPP information transfer
+ !
+ call C_driver_transfer()
+ !
  call bz_samp_reset(k)
  call bz_samp_reset(q)
  call bz_samp_reset(Xk)

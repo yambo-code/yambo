@@ -23,17 +23,17 @@
 !
 subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
- use pars,         ONLY:lchlen,schlen,IP,DP
+ use pars,         ONLY:lchlen,schlen,DP
  use drivers,      ONLY:infile_editing
  use com,          ONLY:msg,warning,secnm,error,repfile
  use openmp,       ONLY:master_thread
- use units,        ONLY:Kilobyte,Megabyte
+ use units,        ONLY:Kilobyte
  use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,MEM_element_copy,&
 &                       MEM_err,MEM_treshold,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
 &                       MEM_SAVE_treshold,MAX_MEM_Kb,TOT_MEM_Kb_SAVE,MEMs,&
 &                       N_MEM_max_element_components,MEM_jump_treshold
- use LIVE_t,       ONLY:what_is_running
+ use C_driver,     ONLY:what_is_running
  !
  implicit none
  !
@@ -66,7 +66,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
 #if defined _MEM_CHECK
  !
  just_started=infile_editing
- if (index(what_is_running,"YPP")==0.and.len_trim(repfile)==0) just_started=.TRUE.
+ if (index(what_is_running,"ypp")==0.and.len_trim(repfile)==0) just_started=.TRUE.
  !
  ! REPORTs 
  !=========

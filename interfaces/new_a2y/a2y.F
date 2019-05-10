@@ -22,9 +22,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
+ !
  use netcdf
  use netcdf_data
- use pars,                ONLY: SP,lchlen
+ use pars,                ONLY: SP
  use LOGO,                ONLY: pickup_a_random
  use com,                 ONLY: msg,write_to_report,core_io_path, file_exists,write_the_logo,&
 &                               com_path
@@ -33,7 +34,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
- use pseudo,              ONLY: PP_alloc_abinit, PP_free
+ use pseudo,              ONLY: PP_free
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
  use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,mk_dir
@@ -53,7 +54,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  type(levels)                 :: en
  type(bz_samp)                :: k
  !
- integer                      :: ID,io_err,i_sp_pol,ik,ifrag,icycle, ib_grp
+ integer                      :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  integer,     external        :: io_DB1, io_KB_abinit
  complex(SP), allocatable     :: wf_disk(:,:,:)
  ! 
@@ -66,7 +67,15 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  a2y   = 0
  ncpu  = np
  myid  = pid
+ !
+ ! ... Internal Defaults
+ !
  call SET_defaults(instr,ind,od,com_dir)
+ !
+ ! ... C_driver -> YPP information transfer
+ !
+ call C_driver_transfer()
+ !
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)

@@ -74,14 +74,14 @@ void options_interfaces(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Interface";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Verbose wfc I/O reporting";
- options[*i_opt].long_opt="verb";
+ options[*i_opt].long_opt="verbio";
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="p2y";
  options[*i_opt].yambo_string="verb";
  options[*i_opt].section="Interface";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="States duplication (artificial spin polarization)";
- options[*i_opt].long_opt="dupl";
+ options[*i_opt].long_opt="duplicate";
  options[*i_opt].short_opt='d';
  options[*i_opt].bin="a2y c2y";
  options[*i_opt].yambo_string="dupl";

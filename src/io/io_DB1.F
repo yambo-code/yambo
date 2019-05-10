@@ -26,7 +26,7 @@ integer function io_DB1(E,k,ID)
  use pars,             ONLY:SP
  use units,            ONLY:HA2EV
  use com,              ONLY:error,msg
- use LOGO,             ONLY:code_version,code_revision,code_GPL_revision
+ use C_driver,         ONLY:code_version,code_revision,code_GPL_revision
  use electrons,        ONLY:levels,default_nel,n_spin,n_bands,nel,n_sp_pol,&
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &

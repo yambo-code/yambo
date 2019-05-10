@@ -42,7 +42,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu,PP_redux_wait
- use LIVE_t,         ONLY:what_is_running,live_timing_is_on
+ use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:rm_file,OP_RD_CL,DUMP,io_control,NONE
 #if defined _YPP_SC
@@ -96,30 +96,12 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  integer          ::io_Nonlinear
 #endif
  !
- ! What is running ?
- !
- what_is_running='YPP'
-#if defined _YPP_MAGNETIC
- what_is_running='YPP_MAGNETIC'
-#endif
-#if defined _YPP_ELPH
- what_is_running='YPP_PH'
-#endif
-#if defined _YPP_RT
- what_is_running='YPP_RT'
-#endif
-#if defined _YPP_NL
- what_is_running='YPP_NL'
-#endif
- !
  if (FINALIZE) then
    call call_INIT_load('GameOver')
    if (master_cpu) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
  endif
- !
- call YPP_SET_defaults()
  !
  ! DATABASES 
  !===========

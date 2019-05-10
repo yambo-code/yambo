@@ -40,7 +40,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
- use LIVE_t,         ONLY:what_is_running
+ use C_driver,       ONLY:what_is_running
  use functions,      ONLY:NAN
  !
  implicit none
@@ -68,7 +68,7 @@ subroutine RT_output(what,VALUES,TIME,E)
    if (file_is_todo(i_f)) cycle
    do i_o=1,n_orders
      if (file_is_todo(i_f)) cycle
-     if (index(what_is_running,'YPP')>0) then
+     if (index(what_is_running,'ypp')>0) then
        file_is_todo(i_f) = index(RT_o_file_short(i_f),"YPP-"//trim(orders(i_o)))==1
      else
        file_is_todo(i_f) = index(RT_o_file_short(i_f),trim(orders(i_o)))==1

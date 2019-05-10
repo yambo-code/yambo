@@ -50,7 +50,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:msg,repfile,com_path,&
 &                         write_the_logo,file_exists,rename_file,write_to_report
  use vec_operate,    ONLY:v_norm
- use LIVE_t,         ONLY:live_timing_is_on,what_is_running
+ use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
 &                         QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
@@ -94,34 +94,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(levels)     ::en_sc
  !
  integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
- !
- ! What is running ?
- !
- what_is_running='YAMBO'
-#if defined _ELPH 
- what_is_running='YAMBO_PH'
-#endif
-#if defined _SC
- what_is_running='YAMBO_SC'
-#endif
-#if defined _RT
- what_is_running='YAMBO_RT'
-#endif
-#if defined _NL
- what_is_running='YAMBO_NL'
-#endif
-#if defined _MAGNETIC
- what_is_running='YAMBO_MAGNETIC'
-#endif
-#if defined _ELECTRIC
- what_is_running='YAMBO_ELECTRIC'
-#endif
-#if defined _QED
- what_is_running='YAMBO_QED'
-#endif
-#if defined _PL
- what_is_running='YAMBO_PL'
-#endif
  !
  ! Presets
  !

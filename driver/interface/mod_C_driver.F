@@ -25,7 +25,15 @@ module C_driver
  !
  implicit none
  !
+ integer      :: code_version(3)
+ integer      :: code_GPL_revision
+ integer      :: code_revision
+ character(50):: code_hash
+ character(50):: code_libraries
+ character(50):: what_is_running
+ !
  interface  
+   !
    subroutine get_version(version,subversion,patchlevel,revision,hash)
      integer     , intent(out):: version
      integer     , intent(out):: subversion
@@ -33,17 +41,21 @@ module C_driver
      integer     , intent(out):: revision
      character(*), intent(out):: hash
    end subroutine
+   !
    subroutine get_libraries(libraries)
      character(*), intent(out):: libraries
    end subroutine
+   !
    subroutine get_running_tool(what_is_running)
      character(*), intent(out):: what_is_running
    end subroutine
+   !
    subroutine get_runlevel_component(component,component_id,runlevel_id)
      character(*), intent(out):: component
      integer,      intent(in) :: component_id
      integer,      intent(in) :: runlevel_id
    end subroutine
+   !
  end interface
  !
 end module C_driver

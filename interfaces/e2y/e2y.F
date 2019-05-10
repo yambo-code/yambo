@@ -68,7 +68,15 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  e2y   = 0
  ncpu  = np
  myid  = pid
- call SET_defaults(instr,od,od,'')
+ !
+ ! ... Internal Defaults
+ !
+ call SET_defaults(instr,ind,od,'')
+ !
+ ! ... C_driver -> YPP information transfer
+ !
+ call C_driver_transfer()
+ !
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)

@@ -25,7 +25,7 @@ subroutine plot_cube()
  !
  use pars,        ONLY:SP,schlen
  use FFT_m,       ONLY:fft_dim 
- use LOGO,        ONLY:code_version
+ use C_driver,    ONLY:code_version
  use com,         ONLY:msg
  use YPPm,        ONLY:nr,v2plot,ncell,r_hole,l_free_hole,&
 &                      l_norm_to_one,WF_multiplier,l_exc_wf,plot_title,output_string

@@ -29,10 +29,6 @@ module LIVE_t
  !
  implicit none
  !
- ! What is running ?
- !
- character(schlen) :: what_is_running
- !
  ! Checked
  !
  integer           :: date_time_at_start(6)
@@ -89,6 +85,7 @@ module LIVE_t
    end subroutine
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out,skip_host)
+     use C_driver,    ONLY:what_is_running
      use parallel_m,  ONLY:host_name,host_name_length
      integer,optional    ::dt_in(6),dt_out(6)
      logical,optional    ::skip_host

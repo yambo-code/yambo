@@ -107,8 +107,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! whether to use CUDA lib
  !
- if (idriver==SVD_INVi.or.idriver==INV.or.idriver==DIAGO&
-&                     .or.idriver=MAT_MUL) USE_CUDA=.false.
+ if (idriver==SVD_INV.or.idriver==INV.or.idriver==DIAGO&
+&                    .or.idriver==MAT_MUL) USE_CUDA=.false.
  if (USE_CUDA) lib_in_use=USE_LK
  !
 #if defined _SCALAPACK

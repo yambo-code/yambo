@@ -77,18 +77,18 @@ module memory
    module procedure MEM_clean,MEM_error,&
 #ifdef _CUDA
 #  ifndef _DOUBLE
-&                                            MEM_c1g,MEM_cd1g,& 
-&                                            MEM_c2g,MEM_cd2g,&
-&                                            MEM_c3g,MEM_cd3g,& 
-&                                            MEM_c4g,MEM_cd4g,& 
-&                                            MEM_c5g,MEM_cd5g,& 
+&                             MEM_i1g,       MEM_c1g,MEM_cd1g,& 
+&                             MEM_i2g,       MEM_c2g,MEM_cd2g,&
+&                             MEM_i3g,       MEM_c3g,MEM_cd3g,& 
+&                             MEM_i4g,       MEM_c4g,MEM_cd4g,& 
+&                             MEM_i5g,       MEM_c5g,MEM_cd5g,& 
 &                                            MEM_c6g,MEM_cd6g,& 
 #  else
-&                                            MEM_c1g,&
-&                                            MEM_c2g,&
-&                                            MEM_c3g,&
-&                                            MEM_c4g,&
-&                                            MEM_c5g,&
+&                             MEM_i1g,       MEM_c1g,&
+&                             MEM_i2g,       MEM_c2g,&
+&                             MEM_i3g,       MEM_c3g,&
+&                             MEM_i4g,       MEM_c4g,&
+&                             MEM_i5g,       MEM_c5g,&
 &                                            MEM_c6g,&
 #  endif
 #endif
@@ -206,6 +206,33 @@ module memory
      integer     ::i(:,:,:,:,:)
      call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1,1)))
    end subroutine
+#ifdef _CUDA
+   subroutine MEM_i1g(name,i)
+     character(*)::name
+     integer, device ::i(:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
+   end subroutine
+   subroutine MEM_i2g(name,i)
+     character(*)::name
+     integer, device ::i(:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1)))
+   end subroutine
+   subroutine MEM_i3g(name,i)
+     character(*)::name
+     integer, device ::i(:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+   end subroutine
+   subroutine MEM_i4g(name,i)
+     character(*)::name
+     integer, device ::i(:,:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1)))
+   end subroutine
+   subroutine MEM_i5g(name,i)
+     character(*)::name
+     integer, device ::i(:,:,:,:,:)
+     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1,1)))
+   end subroutine
+#endif
    subroutine MEM_r1(name,r)
      character(*)::name
      real(SP)    ::r(:)

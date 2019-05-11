@@ -25,12 +25,12 @@
 !================
 module cuda_m
   !================
-  implicit none
 #ifdef _CUDA
   use cudafor
   use cublas
   use cusolverDn
 #endif
+  implicit none
   public
 
 #ifdef _CUDA

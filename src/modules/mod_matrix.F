@@ -26,7 +26,7 @@ module matrix
  use pars,       ONLY:schlen,SP
  use parallel_m, ONLY:MPI_comm
  !
- implicit none
+#include<memory.h>
  !
  ! Distributed Matrix structure
  !

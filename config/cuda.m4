@@ -32,7 +32,7 @@ if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
 #
 def_cuda=""
 CUDA_FLAGS=""
-CUDA_LIBS="-Mcudalib=cufft,cublas"
+CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
 
 # Available cc options:
 #    cc20            Compile for compute capability 2.0

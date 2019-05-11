@@ -53,23 +53,18 @@ module linear_algebra
    integer    , allocatable :: v_int(:)
    integer    , allocatable :: vp_int(:)
    !
-   real(SP),    allocatable :: v_real_d(:)
-   real(SP),    allocatable :: vp_real_d(:)
-   complex(SP), allocatable :: v_cmplx_d(:)
-   complex(SP), allocatable :: vp_cmplx_d(:)
-   complex(SP), allocatable :: m1_cmplx_d(:,:)
-   complex(SP), allocatable :: m2_cmplx_d(:,:)
-   integer    , allocatable :: v_int_d(:)
-   integer    , allocatable :: vp_int_d(:)
-   !
    integer                  :: i_fail
-   integer                  :: i_fail_d
    integer                  :: dim
    !
 #ifdef _CUDA
-   attributes(device):: v_real_d, vp_real_d, v_cmplx_d, vp_cmplx_d
-   attributes(device):: m1_cmplx_d, m2_cmplx_d, v_int_d, vp_int_d
-   attributes(device):: i_fail_d
+   real(SP),    allocatable, device :: v_real_d(:)
+   real(SP),    allocatable, device :: vp_real_d(:)
+   complex(SP), allocatable, device :: v_cmplx_d(:)
+   complex(SP), allocatable, device :: vp_cmplx_d(:)
+   complex(SP), allocatable, device :: m1_cmplx_d(:,:)
+   complex(SP), allocatable, device :: m2_cmplx_d(:,:)
+   integer    , allocatable, device :: v_int_d(:)
+   integer    , allocatable, device :: vp_int_d(:)
 #endif
    !
  end type LALGEBRA_WS
@@ -96,6 +91,7 @@ module linear_algebra
      YAMBO_FREE(WS%v_int)
      YAMBO_FREE(WS%vp_int)
      !
+#ifdef _CUDA
      YAMBO_FREE(WS%v_real_d)
      YAMBO_FREE(WS%vp_real_d)
      YAMBO_FREE(WS%v_cmplx_d)
@@ -104,6 +100,7 @@ module linear_algebra
      YAMBO_FREE(WS%m2_cmplx_d)
      YAMBO_FREE(WS%v_int_d)
      YAMBO_FREE(WS%vp_int_d)
+#endif
    end subroutine
    !
    subroutine LINEAR_ALGEBRA_error(calling_subr,message_)

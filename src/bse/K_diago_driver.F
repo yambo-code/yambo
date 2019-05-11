@@ -156,7 +156,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    call K_components_folded_in_serial_arrays(iq)
    !
-   if(l_diago) call K_stored_in_a_big_matrix(iq,"DIAGO")
+   if (l_diago) call K_stored_in_a_big_matrix(iq,"DIAGO")
    !
 #if defined _SLEPC
    if(l_slepc) then

@@ -28,6 +28,8 @@ module linear_algebra
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2
+ integer, parameter :: USE_LK_GPU=11
+ integer, parameter :: USE_SLK_GPU=12
  integer, parameter :: ALREADY_FILLED=3
  integer, parameter :: DIAGO=4
  integer, parameter :: INV=5
@@ -48,6 +50,20 @@ module linear_algebra
    complex(SP), allocatable :: m2_cmplx(:,:)
    integer    , allocatable :: v_int(:)
    integer    , allocatable :: vp_int(:)
+   !
+   real(SP),    allocatable :: v_real_d(:)
+   real(SP),    allocatable :: vp_real_d(:)
+   complex(SP), allocatable :: v_cmplx_d(:)
+   complex(SP), allocatable :: vp_cmplx_d(:)
+   complex(SP), allocatable :: m1_cmplx_d(:,:)
+   complex(SP), allocatable :: m2_cmplx_d(:,:)
+   integer    , allocatable :: v_int_d(:)
+   integer    , allocatable :: vp_int_d(:)
+#ifdef _CUDA
+   attributes(device):: v_real_d, vp_real_d, v_cmplx_d, vp_cmplx_d
+   attributes(device):: m1_cmplx_d, m2_cmplx_d, v_int_d, vp_int_d
+#endif
+   !
    integer                  :: i_fail
    integer                  :: dim
  end type LALGEBRA_WS

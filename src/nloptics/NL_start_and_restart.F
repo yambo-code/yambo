@@ -39,7 +39,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use real_time,      ONLY:rho_reference,RT_P
  use R_lattice,      ONLY:bz_samp,k_map
  use X_m,            ONLY:X_t
- use DIPOLES,        ONLY:DIP_P,DIPOLE_t
+ use DIPOLES,        ONLY:DIPOLE_t
  use hamiltonian,    ONLY:V_hartree_sc,V_xc_sc,H_nl_sc,rho_n
  use X_m,            ONLY:X_t 
  use xc_functionals, ONLY:V_xc,XC_potential_driver
@@ -54,7 +54,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PP_redux_wait
  use stderr,         ONLY:intc
  use IO_m,           ONLY:IO_and_Messaging_switch
- use interfaces,     ONLY:NL_average_operator
+ use NL_interfaces,  ONLY:NL_average_operator
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>

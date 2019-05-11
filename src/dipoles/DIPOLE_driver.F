@@ -50,7 +50,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
-&                         use_shifted_grids_approach,DIP_P,DIP_S,eval_OVERLAPS
+&                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
 &                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
@@ -134,16 +134,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
  Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
- use_dipole_transverse   =Dip%force_v_g_space.or.       use_g_space_approach
+ use_dipole_transverse   =.true.
  idir_not_done           =.true.
  !
- Dip%computed='R P'
+ Dip%computed='R V P'
 #if defined _SC
- if (l_sc_run) Dip%computed='R P P2'
+ if (l_sc_run) Dip%computed='R V P P2'
 #endif
 #if defined _RT
  l_real_time_magn_dipoles=l_real_time.and.n_spin>1
- if (l_real_time_magn_dipoles) Dip%computed='R P P2 Magn'
+ if (l_real_time)              Dip%computed='R V P P2'
+ if (l_real_time_magn_dipoles) Dip%computed='R V P P2 Magn'
 #endif
  !
  if(use_covariant_approach)  eval_OVERLAPS=.true.
@@ -228,6 +229,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')
+ call DIP_alloc('DIP_v')
  if (use_covariant_approach) call DIP_alloc('DIP_S')
 #if defined _RT
  if (l_real_time_magn_dipoles) then
@@ -246,8 +248,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
      !
      call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
      DIP_P=cZERO
+     DIP_v=cZERO
      !
      ! GPL_EXCLUDE_START 
      !
@@ -294,6 +298,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
         ! GPL_EXCLUDE_START 
         !
@@ -328,6 +333,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
           if(iv>=Dip%ib_lim(2)) then
             DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
+            DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             !
             ! GPL_EXCLUDE_START 
             !
@@ -350,6 +356,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
             if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
+              DIP_v (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_v (:,ic,iv,ik_mem,i_sp_pol))
               !
               ! GPL_EXCLUDE_START 
               !

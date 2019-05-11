@@ -53,7 +53,7 @@ integer function variables_DIPOLES(Dip,ID)
  call io_elemental(ID,&
 &     VAR=" [r,Vnl] included       :",L0=Dip%Vnl_included,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
-&     VAR=" Bands ordered          :",L0=Dip%bands_ordered,CHECK=.true.,OP=(/"=="/))
+&     VAR=" Bands ordered          :",L0=Dip%bands_ordered,CHECK=.true.,OP=(/">="/))
  call io_elemental(ID,&
 &     VAR=" Direct v evaluation    :",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,&
@@ -68,7 +68,7 @@ integer function variables_DIPOLES(Dip,ID)
  call io_elemental(ID,VAR="",VAR_SZ=0)
  !
  call io_elemental(ID,VAR="KINDS",VAR_SZ=1,CH0="",MENU=0)
- call io_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0)
  !
  ! Wavefunctions xc 

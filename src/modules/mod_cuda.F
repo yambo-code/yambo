@@ -26,14 +26,34 @@
 module cuda_m
   !================
   implicit none
-  private
+#ifdef _CUDA
+  use cudafor
+  use cublas
+  use cusolverDn
+#endif
+  public
 
+#ifdef _CUDA
+  logical:: have_cuda=.true.
+#else
+  logical:: have_cuda=.false.
+#endif
+  !
   logical:: have_cuda_devices=.false.
   character(256) :: cuda_visible_devices=" "
 
+  logical:: cuda_linalg_init=.false.
+#ifdef _CUDA
+  type(cusolverDnHandle)   :: cusolv_h
+  public :: cusolv_h
+#endif
+
+  public :: have_cuda
   public :: have_cuda_devices
   public :: cuda_visible_devices
   public :: cuda_setup
+  public :: cuda_linalg_init
+  public :: cuda_linalg_setup
 
 contains
 
@@ -49,6 +69,19 @@ contains
 #endif
     !
   end subroutine cuda_setup
+  !
+  subroutine cuda_linalg_setup()
+    use com,  ONLY:error
+    implicit none
+#ifdef _CUDA
+    integer :: istat 
+    istat = cublasInit()
+    if(istat/=0) call error('cublasInit failed')
+    istat = cusolverDnCreate(cusolv_h)
+    if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
+#endif
+    cuda_linalg_init=.true.
+  end subroutine
 
 end module cuda_m
 

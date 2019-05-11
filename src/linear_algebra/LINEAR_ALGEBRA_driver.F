@@ -71,15 +71,21 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  complex(SP)         :: det_
  integer             :: N,lib_in_use
  type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
+ logical             :: USE_CUDA
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
  ! M dimension
  !
+ USE_CUDA=.false.
+ !
  if (present(M_slk)) then
    N=M_slk%N
 #if defined _SCALAPACK 
    if (M_slk%kind=="SLK") lib_in_use=USE_SLK
+#endif
+#if defined _CUDA
+   if (allocated(M_slk%blc_d)) USE_CUDA=.true.
 #endif
  else if (present(M_bse)) then
    N=BS_H_dim
@@ -97,8 +103,13 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    lib_in_use=lib_in
  endif
  if (idriver==SVD_INV.or.(idriver==DIAGO.and.present(E_cmpl))) lib_in_use=USE_LK 
- !
  if (.not.linear_algebra_is_parallel) lib_in_use=USE_LK
+ !
+ ! whether to use CUDA lib
+ !
+ if (idriver==SVD_INVi.or.idriver==INV.or.idriver==DIAGO&
+&                     .or.idriver=MAT_MUL) USE_CUDA=.false.
+ if (USE_CUDA) lib_in_use=USE_LK
  !
 #if defined _SCALAPACK
  if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
@@ -110,7 +121,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if (lib_in_use==USE_SLK) then 
+ if (lib_in_use==USE_SLK.and..not.USE_CUDA) then 
    !
    if (.not.present(M_slk)) then
      !
@@ -201,7 +212,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== SERIAL SECTION ============================================================
  !
- if (lib_in_use==USE_LK) then
+ if (lib_in_use==USE_LK.and..not.USE_CUDA) then
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
@@ -271,6 +282,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    endif
    !
  endif
+ !
+ ! =============== SERIAL SECTION GPU ============================================================
+ !
+#ifdef _CUDA
+ if (lib_in_use==USE_LK.and.USE_CUDA) then
+   !
+   ! ####> LINEAR SYSTEM SOLUTION
+   !
+   if (idriver==LIN_SYS) then
+     call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
+   endif
+   !
+ endif
+#endif
  !
  ! ===========================================================================================
  !

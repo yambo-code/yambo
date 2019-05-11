@@ -78,8 +78,9 @@ module matrix
    integer :: Nb         = 1  ! # of Blocks
    !
    complex(SP), allocatable :: blc(:,:,:)
+   complex(SP), allocatable :: blc_d(:,:,:)
 #ifdef _CUDA
-   complex(SP), allocatable, device :: blc_d(:,:,:)
+   attributes(device):: blc_d
 #endif
    !
  end type PAR_matrix 
@@ -113,6 +114,9 @@ module matrix
      !
      call COMM_reset(M_par%INTER_comm)
      call COMM_reset(M_par%INTRA_comm)
+     !
+     YAMBO_FREE(M_par%blc)
+     YAMBO_FREE(M_par%blc_d)
      !
    end subroutine
  !

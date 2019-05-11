@@ -48,6 +48,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+ use cuda_m,        ONLY:have_cuda
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -92,6 +93,12 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_init( "SLK", BUFFER , X%ng, max(PAR_n_freqs,1) )
  YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
+ !
+ if (have_cuda) then
+   YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+   YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+ endif
+ !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
@@ -197,8 +204,16 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
      ! Linear System
      !
-     BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
+     if (have_cuda) then
+       KERNEL%blc_d=KERNEL%blc
+       BUFFER%blc_d(:,:,BUFFER%I)=Xo%blc(:,:,1)
+     else
+       BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
+     endif
+     !
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
+     !
+     if (have_cuda) BUFFER%blc(:,:,BUFFER%I)=BUFFER%blc_d(:,:,BUFFER%I)
      !
   else
      !

@@ -36,7 +36,7 @@ char *running_tool()
  char tmp[100], *c;
  if (strlen(tool.pj)>0)
  {
-  sprintf(tmp,"%s(main)-%s(project)",tool.tool,tool.pj);
+  sprintf(tmp,"%s_%s",tool.tool,tool.pj);
  }else{
   sprintf(tmp,"%s",tool.tool);
  }

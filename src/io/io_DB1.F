@@ -239,6 +239,7 @@ integer function io_DB1(E,k,ID)
      wf_nb_io=E%nb
      QP_nb=E%nb
      QP_n_G_bands=(/1,E%nb/)
+     !
      if(any(BS_bands(:)==0)) BS_bands=(/1,E%nb/)
 #if defined _SC || defined _RT
      if(any(COLL_bands(:)==0)) COLL_bands=(/1,E%nb/)

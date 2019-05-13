@@ -78,7 +78,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  if (BANDS_bands(1)<RT_bands(1).or.BANDS_bands(2)>RT_bands(2)) then
    BANDS_bands(1)=max(BANDS_bands(1),RT_bands(1))
    BANDS_bands(2)=min(BANDS_bands(2),RT_bands(2))
-   call warning("User bands restricted to "//trim(intc(RT_bands(1)))//" - "//trim(intc(RT_bands(2))))
+   call warning("User bands restricted to "//trim(intc(BANDS_bands(1)))//" - "//trim(intc(BANDS_bands(2))))
  endif
  !
  call section('+',"Loading special Points for the "//trim(lattice)//" lattice")

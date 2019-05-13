@@ -97,7 +97,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
  !
  if (FINALIZE) then
-   call call_INIT_load('GameOver')
+   call call_INIT_load('Game_Over')
    if (master_cpu.and.write_to_report) call initinfio(defs,11)
    if (master_cpu) call ofiles_append(defs=defs)
    return
@@ -166,7 +166,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
  !
  ! Defaults->Defs + Initialization
  !
- call call_INIT_load('load')
+ call call_INIT_load('create_shadow_vars')
  !
  ! Dump internally the input file
  !
@@ -177,6 +177,13 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    call INIT_input_file( )
    !
  endif
+ !
+ !Setup on the basis of the DB read/stdin variables
+ !Here I can propose values to be written in the input file
+ !
+ call before_infile_write_setup( )
+ !
+ call call_INIT_load('load_defaults')
  !
  ! RunLevels on
  !
@@ -396,7 +403,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #if defined _YPP_ELPH
  l_flag=.not.l_sort.and..not.l_atomic_amplitude
 #endif
- if (l_flag) call call_INIT_load('parserload')
+ if (l_flag) call call_INIT_load('parser_input_file')
  !
  l_bz_grids  = runlevel_is_on('bzgrids')
  l_k_grid    = runlevel_is_on('K_grid')
@@ -752,63 +759,77 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    close(11)
  endif
  !
-contains
- !
- subroutine call_INIT_load(mode) 
-   character(*)::mode
+ contains
    !
-   if (mode=='load')       initmode=0
-   if (mode=='todef')      initmode=1
-   if (mode=='Gclose')     initmode=2
-   if (mode=='GameOver')   initmode=3
-   if (mode=='parserload') initmode=4
-   call ypp_INIT_load(defs)
+   subroutine call_INIT_load(mode) 
+     character(*)::mode
+     !
+     if (mode=='create_shadow_vars') initmode=0
+     if (mode=='load_defaults') initmode=1
+     if (mode=='Close_G_vectors') initmode=2
+     if (mode=='Game_Over') initmode=3
+     if (mode=='parser_input_file') initmode=4
+     call INIT_ypp_load(defs)
+     !
+   end subroutine
    !
- end subroutine
- !
- subroutine USER_vector_handle(field)
+   subroutine before_infile_write_setup 
+     !
+     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,wannier_bands
+     use electrons,      ONLY:n_bands
+     !
+     ! After DB reading/stdin logicals I propose here values for the input file
+     ! 
+     SOC_bands_to_map=(/ 1, n_bands /)
+     BANDS_bands=(/1,n_bands/)
+     DOS_bands=(/1,n_bands/)
+     wannier_bands=(/1,n_bands/)
+     !
+   end subroutine
    !
-   use parser_m,       ONLY:PARSER_array
-   !
-   character(*)::field
-   !
-   integer     ::nk,nq_s
-   !
-   call PARSER_array(mode="REAL dimensions",VAR=field,N=nk,M=3)
-   !
-   if (field=="GWKpts") then
-     if (nk> 0) n_u_k_pts=nk
-     if (nk==0) n_u_k_pts=1
-     YAMBO_ALLOC(U_k_pts,(n_u_k_pts,3))
-     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_k_pts)
-     if (nk==0) U_k_pts=0.
-     call PARSER_array(mode="write",VAR=field,DESC='K points list',N=n_u_k_pts,M=3,R_v=U_k_pts)
-   else if (field=="BANDS_kpts") then
-     if (nk> 0) then 
-       n_u_interp_pts=nk
-       YAMBO_ALLOC(U_interp_pts,(n_u_interp_pts,3))
-       call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_interp_pts)
-       call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',&
-&                        N=n_u_interp_pts,M=3,R_v=U_interp_pts)
-     else
-       n_u_interp_pts=0
-       call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',N=0,M=3)
+   subroutine USER_vector_handle(field)
+     !
+     use parser_m,       ONLY:PARSER_array
+     !
+     character(*)::field
+     !
+     integer     ::nk,nq_s
+     !
+     call PARSER_array(mode="REAL dimensions",VAR=field,N=nk,M=3)
+     !
+     if (field=="GWKpts") then
+       if (nk> 0) n_u_k_pts=nk
+       if (nk==0) n_u_k_pts=1
+       YAMBO_ALLOC(U_k_pts,(n_u_k_pts,3))
+       if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_k_pts)
+       if (nk==0) U_k_pts=0.
+       call PARSER_array(mode="write",VAR=field,DESC='K points list',N=n_u_k_pts,M=3,R_v=U_k_pts)
+     else if (field=="BANDS_kpts") then
+       if (nk> 0) then 
+         n_u_interp_pts=nk
+         YAMBO_ALLOC(U_interp_pts,(n_u_interp_pts,3))
+         call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_interp_pts)
+         call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',&
+&                          N=n_u_interp_pts,M=3,R_v=U_interp_pts)
+       else
+         n_u_interp_pts=0
+         call PARSER_array(mode="write",VAR=field,DESC='K points of the bands circuit',N=0,M=3)
+       endif
+     else if (field=="Qpts") then
+       if (nk> 0) n_u_q_pts=nk
+       if (nk==0) n_u_q_pts=1
+       YAMBO_ALLOC(U_q_pts,(n_u_q_pts,3))
+       if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_q_pts)
+       if (nk==0) U_q_pts=0.
+       call PARSER_array(mode="write",VAR=field,DESC='Q points list',&
+&                        N=n_u_q_pts,M=3,R_v=U_q_pts)
+     else if (field=="KShift") then
+       U_q_shifts=0.
+       if (nk> 0) call PARSER_array(mode="read",VAR=field,N=min(nk,3),M=3,R_v=U_q_shifts)
+       call PARSER_array(mode="write",VAR=field,DESC='K-grid shifts (max 3)',&
+&                        N=3,M=3,R_v=U_q_shifts)
      endif
-   else if (field=="Qpts") then
-     if (nk> 0) n_u_q_pts=nk
-     if (nk==0) n_u_q_pts=1
-     YAMBO_ALLOC(U_q_pts,(n_u_q_pts,3))
-     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=nk,M=3,R_v=U_q_pts)
-     if (nk==0) U_q_pts=0.
-     call PARSER_array(mode="write",VAR=field,DESC='Q points list',&
-&                      N=n_u_q_pts,M=3,R_v=U_q_pts)
-   else if (field=="KShift") then
-     U_q_shifts=0.
-     if (nk> 0) call PARSER_array(mode="read",VAR=field,N=min(nk,3),M=3,R_v=U_q_shifts)
-     call PARSER_array(mode="write",VAR=field,DESC='K-grid shifts (max 3)',&
-&                      N=3,M=3,R_v=U_q_shifts)
-   endif
+     !
+   end subroutine
    !
- end subroutine
- !
 end subroutine

@@ -35,7 +35,6 @@ subroutine YPP_SET_defaults()
  use units,          ONLY:FS2AUT
  use D_lattice,      ONLY:alat
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
- use electrons,      ONLY:n_bands
  use com,            ONLY:write_to_report
  use stderr,         ONLY:write_to_log  
  use LIVE_t,         ONLY:live_timing_is_on
@@ -73,7 +72,7 @@ subroutine YPP_SET_defaults()
  DOS_broadening=0.1_SP/HA2EV
  DOS_E_range=(/1._SP,-1._SP/)/HA2EV
  DOS_E_steps=500
- DOS_bands=(/1,n_bands/)
+ DOS_bands=0
  WF_ref=0
  !
  l_pdos=.false.
@@ -110,7 +109,7 @@ subroutine YPP_SET_defaults()
  !
  ! BANDS
  !
- BANDS_bands=(/1,n_bands/)
+ BANDS_bands=0
  BANDS_steps=10
  l_bands=.false.
  INTERP_shell_factor=20._SP
@@ -195,14 +194,14 @@ subroutine YPP_SET_defaults()
  ! WFs perturbative SOC
  !
  perturbative_SOC_path=""
- SOC_bands_to_map=(/ 1, n_bands /)
+ SOC_bands_to_map=0
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
  !
  ! BXSF interpolation
  !
  w90_fname="./w90.bxsf"
- wannier_bands=(/1,n_bands/)
+ wannier_bands=0
  ord_dgrid_ipol = 0
  !
  ! GPL_EXCLUDE_START

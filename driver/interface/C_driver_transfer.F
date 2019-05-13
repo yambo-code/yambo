@@ -24,12 +24,16 @@
 subroutine C_driver_transfer()
  !
  use C_driver,       ONLY:code_version,code_GPL_revision,code_revision,code_hash,&
-&                         code_libraries,get_version,get_libraries,get_running_tool,what_is_running
+&                         code_libraries,get_version,get_libraries,get_running_tool,&
+&                         get_running_project,code_bin,code_tool,code_project
  !
  implicit none
  !
- what_is_running=" "
- call get_running_tool(what_is_running)
+ code_tool=" "
+ call get_running_tool(code_tool)
+ code_project=" "
+ call get_running_tool(code_project)
+ code_bin=trim(code_tool)//"_"//trim(code_project)
  code_libraries=" "
  call get_libraries(code_libraries)
  code_hash=" "

@@ -189,7 +189,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].n_char=1;
  /* GPL_EXCLUDE_END */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="TD-polarization";
+ options[*i_opt].short_desc="TD polarization post-processing";
  /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="<string>=(X)response,Tr(a)bs";
  /* GPL_EXCLUDE_END */
@@ -200,16 +200,16 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt= "polarization";
  options[*i_opt].short_opt='t';
  options[*i_opt].bin="ypp_rt";
- options[*i_opt].yambo_string="RealTime";
+ options[*i_opt].yambo_string="TDpol"; /* TDpol */
  options[*i_opt].section="Real-Time";
  /* GPL_EXCLUDE_START */
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="NEQ plots";
+ options[*i_opt].short_desc="TD components post-processing";
  options[*i_opt].long_opt="rtplot";
  options[*i_opt].short_opt='n';
  options[*i_opt].n_char=2;
  options[*i_opt].bin="ypp_rt";
- options[*i_opt].yambo_string="RealTime";
+ options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
  options[*i_opt].long_desc[0]="<string#1>=(o)ccupations,(l)ifetimes,(d)ensity";
  options[*i_opt].long_desc[1]="<string#1>=o => <string#2>=(b)ands,(t)ime,(e)nergy,(d)os";

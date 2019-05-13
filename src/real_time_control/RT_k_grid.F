@@ -39,7 +39,7 @@ subroutine RT_k_grid(E,k,q)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elel_scatt
  use R_lattice,      ONLY:qindx_S
- use C_driver,       ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use electrons,      ONLY:levels,BZ_DbGd_nkpt,BZ_DbGd_nbands,BZ_DbGd_tot_nk_levels,DbGd_is_symmetry_expanded
  use real_time,      ONLY:DbGd_bz_coo,DbGd_ibz_coo,DbGd_EE_scatt_table,&
 &                         DbGd_EE_percent,DbGd_EE_Nk_table,RT_ibz_coo,&
@@ -126,7 +126,7 @@ subroutine RT_k_grid(E,k,q)
    enddo
  enddo
  !
- if( l_elel_scatt .and. (index(what_is_running,'ypp')==0) ) then
+ if( l_elel_scatt .and. (index(code_bin,'ypp')==0) ) then
    !
    if(.not.allocated(DbGd_EE_scatt_table)) then
      YAMBO_ALLOC(DbGd_EE_scatt_table,(RT_nk,RT_nk))

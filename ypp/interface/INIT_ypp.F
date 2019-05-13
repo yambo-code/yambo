@@ -300,13 +300,19 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    ! GPL_EXCLUDE_END
    !
-   if ( trim(rstr_piece(i1)) == 'RealTime') then
+   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol') then
      !
      l_RT_X           =trim(rstr_piece(i1+1))=='X'
      !
      ! GPL_EXCLUDE_START
-     !
      l_RT_abs         =trim(rstr_piece(i1+1))=='a'
+     ! GPL_EXCLUDE_END
+     !
+   endif
+   !
+   ! GPL_EXCLUDE_START
+   !
+   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDplots') then
      !
      l_RT_occupations =index(rstr_piece(i1+1),'o')>0
      l_RT_lifetimes   =index(rstr_piece(i1+1),'l')>0
@@ -317,9 +323,10 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
      l_RT_energy      =trim(rstr_piece(i1+2))=='e'
      l_RT_dos         =trim(rstr_piece(i1+2))=='d'
      !
-     ! GPL_EXCLUDE_END
-     !
    endif
+   !
+   ! GPL_EXCLUDE_END
+   !
 #endif
    !
 #if defined _YPP_NL
@@ -360,7 +367,8 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    !
    ! GPL_EXCLUDE_END
    !
-   if ( trim(rstr_piece(i1)) == 'RealTime') then
+   if ( trim(rstr_piece(i1)) == 'RealTime' .or. trim(rstr_piece(i1)) == 'TDpol' .or. trim(rstr_piece(i1)) == 'TDplots') then
+     !
      if (l_RT_X)           call initactivate(1,'RT_X')
      !
      ! GPL_EXCLUDE_START
@@ -413,8 +421,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
 #endif
 #if defined _YPP_RT
  !
- l_RealTime         = runlevel_is_on('RealTime')
- !
+ l_RealTime         = runlevel_is_on('RealTime').or.runlevel_is_on('TDplots').or.runlevel_is_on('TDpol')
  l_RT_X             = runlevel_is_on('RT_X')
  !
  ! GPL_EXCLUDE_START
@@ -576,6 +583,7 @@ subroutine INIT_ypp(E,instr,lnstr,FINALIZE)
    endif
    if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
  endif
+ !
  if (l_RealTime) then
    !
    ! GPL_EXCLUDE_START

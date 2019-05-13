@@ -92,11 +92,6 @@ struct tool_struct tool_init( )
  if (pj==NULL) pj=" ";
  sprintf(t.version_string,"%i.%i.%i Revision %i Hash %s",t.version,t.subversion,
                                                          t.patchlevel,t.revision,t.hash);
- /*
- printf("TOOL        : %s - %s - %s\n",t.tool,t.desc,t.pj);
- printf("TOOL bin    : %s \n",t.bin);
- printf("TOOL version: %s\n",t.version_string);
- */
  return(t);
 };
 

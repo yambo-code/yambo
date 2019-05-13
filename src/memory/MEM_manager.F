@@ -33,7 +33,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
 &                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
 &                       MEM_SAVE_treshold,MAX_MEM_Kb,TOT_MEM_Kb_SAVE,MEMs,&
 &                       N_MEM_max_element_components,MEM_jump_treshold
- use C_driver,     ONLY:what_is_running
+ use C_driver,     ONLY:code_bin
  !
  implicit none
  !
@@ -66,7 +66,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
 #if defined _MEM_CHECK
  !
  just_started=infile_editing
- if (index(what_is_running,"ypp")==0.and.len_trim(repfile)==0) just_started=.TRUE.
+ if (index(code_bin,"ypp")==0.and.len_trim(repfile)==0) just_started=.TRUE.
  !
  ! REPORTs 
  !=========

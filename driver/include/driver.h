@@ -43,8 +43,8 @@ void title(FILE *file_name,char *cmnt, struct tool_struct t);
 int use_me(struct options_struct options[], struct tool_struct t, int i_opt);
 
 char *running_tool();
-
-char *tool_libraries();
+char *running_project();
+char *running_libraries();
 
 char *runlevel(int *runid, int *id);
 

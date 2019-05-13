@@ -27,7 +27,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  use QP_m,           ONLY:QP_t,QP_copy
  use com,            ONLY:msg
  use stderr,         ONLY:intc
- use C_driver,       ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use vec_operate,    ONLY:v_is_zero
  !
 #include<memory.h>
@@ -131,7 +131,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    MERGED(i_db)=.TRUE.
  enddo
  !
- if (index(what_is_running,"ypp")>0.and.just_COUNT) then
+ if (index(code_bin,"ypp")>0.and.just_COUNT) then
    !
    call msg('l','detected '//trim(intc(n_GROUNDS))//' family(ies) of QP databases...')
    !

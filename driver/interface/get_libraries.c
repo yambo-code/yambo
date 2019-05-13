@@ -29,7 +29,7 @@
 #include <driver.h>
 #include <string.h>
 
-char *tool_libraries()
+char *running_libraries()
 {
  int i_str,str_len,i_c;
  char strings[20][20], *c;
@@ -79,7 +79,7 @@ char *tool_libraries()
 }
 void C_FUNC(get_libraries, GET_LIBRARIES)(char *libraries)
 {
- char *c = tool_libraries();
+ char *c = running_libraries();
  int len = strlen(c);
  strcpy(libraries, c);
  libraries[len] = libraries[len + 1];

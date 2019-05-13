@@ -29,20 +29,25 @@
 #include <driver.h>
 #include <string.h>
 
-char *running_tool()
+char *running_project()
 {
  tool_struct tool;
  tool=tool_init();
  char *c;
- c = malloc(sizeof(tool.tool)+1);
- strcpy(c,tool.tool);
+ if (tool.pj!=NULL) {
+  c = malloc(sizeof(tool.pj)+1);
+  strcpy(c,tool.pj);
+ }else{
+  c = malloc(2);
+  strcpy(c,"");
+ }
  return c;
 }
-void C_FUNC(get_running_tool, GET_RUNNING_TOOL)(char *code_tool)
+void C_FUNC(get_running_project, GET_RUNNING_TOOL)(char *code_project)
 {
- char *c = running_tool();
+ char *c = running_project();
  int len = strlen(c);
- strcpy(code_tool, c);
- code_tool[len] = code_tool[len + 1];
+ strcpy(code_project, c);
+ code_project[len] = code_project[len + 1];
 }
 

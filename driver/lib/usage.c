@@ -32,8 +32,9 @@ void usage(options_struct *options, struct tool_struct t, char *what, int n_opti
 {
  int i_opt,i,i_o,n_blanks,n_chars;
 
+ char *pj   = running_project();
  char *tool = running_tool();
- char *libs = tool_libraries();
+ char *libs = running_libraries();
  /*
    Order
  */
@@ -103,7 +104,11 @@ void usage(options_struct *options, struct tool_struct t, char *what, int n_opti
   fprintf(stderr,"%s\n\n"," YAMBO developers group (http://www.yambo-code.org)");
 
  }else if (strcmp(what,"version")==0) {
-  fprintf(stderr,"\nThis is %s - %s - Ver. %s \n\n",tool,libs,t.version_string);
+  if (strlen(pj)>0) {
+   fprintf(stderr,"\nThis is %s(%s) - %s - Ver. %s \n\n",tool,pj,libs,t.version_string);
+  }else{
+   fprintf(stderr,"\nThis is %s - %s - Ver. %s \n\n",tool,libs,t.version_string);
+  }
  }else{
   for(i_opt=0;i_opt<n_options;i_opt++) {
    if (use_me(options,t,i_opt)==0) continue;

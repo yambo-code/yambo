@@ -25,7 +25,7 @@ subroutine INIT_C_driver_runlevels(defs)
  !
  use it_m,        ONLY:it,initdefs
  use pars,        ONLY:lchlen
- use C_driver,    ONLY:get_runlevel,what_is_running
+ use C_driver,    ONLY:get_runlevel,code_bin,code_tool
  !
  implicit none
  !
@@ -45,7 +45,7 @@ subroutine INIT_C_driver_runlevels(defs)
    call get_runlevel(bin,3,i_c)
    !
    if (trim(bin)=="EMPTY") cycle
-   if (index(trim(bin),trim(what_is_running))==0) cycle
+   if (index(trim(bin),trim(code_bin))==0.and.index(trim(bin),trim(code_tool))==0) cycle
    !
    call get_runlevel(string,1,i_c)
    call get_runlevel(desc,2,i_c)

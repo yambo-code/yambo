@@ -29,7 +29,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  use parallel_m,     ONLY:IO_write_default,myid,master_cpu
  use stderr,         ONLY:STRING_split,write_to_log
  use LIVE_t,         ONLY:live_timing_is_on
- use C_driver,       ONLY:what_is_running
+ use C_driver,       ONLY:code_bin
  use stderr,         ONLY:write_fragments_IO_log,write_to_log_default
  use timing_m,       ONLY:timing
  implicit none
@@ -140,7 +140,7 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
  !
  ! YPP cannot set to .TRUE. the write_to_report
  !
- if (index(what_is_running,'ypp')>0) write_to_report = local_write_to_report
+ if (index(code_bin,'ypp')>0) write_to_report = local_write_to_report
  !
  call timing('IO_and_Messaging_switch',OPR='stop')
  !

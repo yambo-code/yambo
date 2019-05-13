@@ -101,6 +101,7 @@ subroutine ypp_INIT_load(defs)
  call it('r',defs,'fixsave', '[R] Convert WFs to new format')
  !
 #if defined _YPP_RT
+ call it('r',defs,'RealTime',     '[R] TD Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
 #endif

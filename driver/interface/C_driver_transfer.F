@@ -32,7 +32,7 @@ subroutine C_driver_transfer()
  code_tool=" "
  call get_running_tool(code_tool)
  code_project=" "
- call get_running_tool(code_project)
+ call get_running_project(code_project)
  code_bin=trim(code_tool)//"_"//trim(code_project)
  code_libraries=" "
  call get_libraries(code_libraries)

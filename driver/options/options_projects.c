@@ -33,7 +33,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Self-Consistent Single-Particle Calculations";
  options[*i_opt].long_opt="sc";
  options[*i_opt].short_opt='s';
- options[*i_opt].bin="yambo_sc";
+ options[*i_opt].bin="yambo_sc yambo_electric yambo_magnetic";
  options[*i_opt].yambo_string="scrun";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Potential";
@@ -66,7 +66,7 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Collisions";
  options[*i_opt].long_opt="collisions";
  options[*i_opt].short_opt='e';
- options[*i_opt].bin="yambo_rt yambo_sc";
+ options[*i_opt].bin="yambo_rt yambo_sc yambo_electric yambo_magnetic";
  options[*i_opt].yambo_string="collisions";
  options[*i_opt].section=desc;
  /* GPL_EXCLUDE_START */

@@ -65,7 +65,7 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-install
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean

@@ -545,10 +545,10 @@ define lib_ext_clean
  echo "[CLEAN] External Libraries ... " 
  @for libtoclean in "libxc" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
+   echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \
    $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp *.inc ; \
    cd ../.. ; \
-   echo "[CLEAN] ... $$libtoclean" ; \
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done

@@ -27,10 +27,10 @@ target=$1
 #
 # SAVE the objects relative to the current project (if any)
 #
-if test `find . -name '__*' | wc -l` -ge 1 ; then
+if test `find -maxdepth 0 . -name '__*' | wc -l` -ge 1 ; then
  for file in __*
  do
-  if test `find . -name '*.o' | wc -l` -ge 1 ; then
+  if test `find -maxdepth 0 . -name '*.o' | wc -l` -ge 1 ; then
    if test ! -d .objects$file; then mkdir .objects$file; fi
    mv *.o .objects"$file"/
   fi

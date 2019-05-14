@@ -139,6 +139,7 @@ cat << EOF >> $cdir/Makefile
 	touch \$(lock_file); rm -f \$(dep_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
 	then \$(prefix)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); fi
+	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); fi
 
 \$(dep_file): \$(lock_file)
 	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(prefix)/$cdir/\$(dep_file)

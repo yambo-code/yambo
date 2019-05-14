@@ -27,12 +27,25 @@
 #include <wrapper.h>
 #include <fortran_driver.h>
 #include <kind.h>
+#include <driver.h>
 #if defined _MPI 
  #include <mpi.h>
 #endif
 
 void launcher(int argc, char *argv[],int np, int pid, struct yambo_seed_struct y,int *use_editor, int *use_mpi)
 {
+ /* 
+   Par Environments? Yes? => Return
+ */
+ if (y.parenv_file !=NULL) 
+ {
+  int env_editor=load_environments(y.parenv_file);
+  if (env_editor==1) 
+  {
+   *use_editor=1;
+   return;
+  };
+ };
  /* 
    MPI
  */

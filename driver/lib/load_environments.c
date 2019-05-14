@@ -25,11 +25,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <kind.h>
 
-void load_environments(char *file_name, char *editor)
+int load_environments(char* file_name)
 {
  FILE *fp;
- char edit_line[100]={'\0'},str[100];
+ char str[100];
  char* pch;
  char* token;
  char* var;
@@ -53,7 +54,7 @@ void load_environments(char *file_name, char *editor)
       setenv(var,value,1);
     }
   }
-  /*exit(0);*/
+  return 0;
  }else{
   fp = fopen(file_name, "w+");
   fputs("#\n",fp);
@@ -79,9 +80,6 @@ void load_environments(char *file_name, char *editor)
   fputs("setenv YAMBO_SE_ROLEs q.qp.b\n",fp);
   fputs("setenv YAMBO_RT_ROLEs k.b.q.qp\n",fp);
   fclose(fp);
-  strcpy(edit_line,editor);
-  strncat(edit_line,file_name,strlen(file_name));
-  system(edit_line);
-  exit(0);
+  return 1;
  }
 };

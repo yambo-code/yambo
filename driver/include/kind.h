@@ -45,6 +45,7 @@ typedef struct yambo_seed_struct
  char *out_dir;
  char *com_dir;
  char *job;
+ char *parenv_file;
  int  string_N;
  int  in_file_N;
  int  in_dir_N;

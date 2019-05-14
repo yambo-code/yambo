@@ -30,7 +30,7 @@
 void input_file(struct yambo_seed_struct y,struct tool_struct t,int *use_editor)
 {
  int ttd;
- char edit_line[100]={'\0'};
+ char edit_line[100]={'\0'},file_name[100]={'\0'};
  /*
   External functions
  */
@@ -42,13 +42,15 @@ void input_file(struct yambo_seed_struct y,struct tool_struct t,int *use_editor)
  ttd=guess_winsize();
 #endif
  strcpy(edit_line,t.editor);
- strncat(edit_line,y.in_file,strlen(y.in_file));
+ strcpy(file_name,y.in_file);
+ if (y.parenv_file !=NULL) {strcpy(file_name,y.parenv_file);};
+ strncat(edit_line,file_name,strlen(file_name));
 #if defined _yambo || defined _ypp 
  if (*use_editor == 1 && ttd>0 && strstr(t.editor,"none ")==0)
  {
   system(edit_line);
  }else if (*use_editor == -2){ 
-  fprintf(stderr," \n%s%s %s %s\n\n",t.tool,": input file",y.in_file,"created");
+  fprintf(stderr," \n%s%s %s %s\n\n",t.tool,": input file",file_name,"created");
   exit (0);
  };
 #endif

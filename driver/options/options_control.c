@@ -127,6 +127,7 @@ void options_control(struct options_struct options[],int *i_opt)
  desc="Parallel Control";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Environment Parallel Variables file";
+ options[*i_opt].short_opt='E';
  options[*i_opt].long_opt="parenv"; 
  options[*i_opt].n_char=1;
  options[*i_opt].section=desc;

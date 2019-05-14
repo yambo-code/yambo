@@ -148,9 +148,10 @@ struct yambo_seed_struct command_line(int argc, char *argv[], struct options_str
   if (strcmp(opts[i_opt].long_opt,"Job")==0){y.job=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Idir")==0){y.in_dir=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Cdir")==0){y.com_dir=optarg;continue;}
+  if (strcmp(opts[i_opt].long_opt,"parenv")==0){y.parenv_file=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"Odir")==0){y.out_dir=optarg;continue;}
   if (strcmp(opts[i_opt].long_opt,"nompi")==0){*use_mpi=-1;continue;}
-  if (strcmp(opts[i_opt].long_opt,"Quiet")==0){*use_editor=-1;continue;}
+  if (strcmp(opts[i_opt].long_opt,"Quiet")==0){*use_editor=-2;continue;}
   if (opt > 0) {
    strcat(y.string," ");
    strcat(y.string,opts[i_opt].yambo_string);

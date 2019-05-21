@@ -53,7 +53,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2),WFbands(2)
+ integer     :: ik,ib,i_sp_pol,WFbands(2)
  !
  Hzero=cZERO
  !

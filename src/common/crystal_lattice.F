@@ -116,7 +116,7 @@ subroutine crystal_lattice()
  enddo
  !
  if (  count (.not.lattice_test_failed)  > 1 ) then
-   call warning('Two or more crystal strcutures fit the given cell')
+   call warning('Two or more crystal structures fit the given cell')
  else if (  count (.not.lattice_test_failed) == 1 ) then
    do i_l=1,n_lattices
      if (any(.not.lattice_test_failed(i_l,:))) lattice=lattice_name(i_l)

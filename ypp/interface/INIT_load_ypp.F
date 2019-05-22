@@ -224,7 +224,7 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
  call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
-#if defined _SC
+#if defined _YPP_SC
  call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
 #endif
  !

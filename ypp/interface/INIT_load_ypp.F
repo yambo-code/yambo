@@ -24,7 +24,7 @@
 subroutine ypp_INIT_load(defs)
  !
  use it_m,          ONLY:it,initdefs,E_unit,G_unit,V_general,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_sc
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,Bose_Temp
  use electrons,     ONLY:n_spinor
@@ -46,6 +46,7 @@ subroutine ypp_INIT_load(defs)
 #endif
 #if defined _YPP_SC
  use YPP,           ONLY:V_value
+ use SC,            ONLY:SC_neq_kind
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
@@ -223,6 +224,9 @@ subroutine ypp_INIT_load(defs)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
  call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
+#if defined _SC
+ call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
+#endif
  !
  ! GPL_EXCLUDE_START
  !

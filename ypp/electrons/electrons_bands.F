@@ -47,6 +47,9 @@ subroutine electrons_bands(Xk,Xen)
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_obj,INTERPOLATION_driver
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+#if defined _YPP_SC
+ use SC,             ONLY:SC_neq_kind
+#endif
  !
 #include<memory.h>
  !
@@ -68,7 +71,7 @@ subroutine electrons_bands(Xk,Xen)
  integer               :: ID_proj
  real(SP), allocatable :: proj_values(:,:),proj_fac(:,:,:)
  character(schlen)     :: file_name_proj(2,2)
- logical               :: proj_wfc=.true.
+ logical               :: proj_wfc
 #endif
 
  !
@@ -120,6 +123,8 @@ subroutine electrons_bands(Xk,Xen)
    endif
    !
 #if defined _YPP_SC
+   !
+   proj_wfc=(trim(SC_neq_kind)=="matsubara")
    !
    ! Perform interpolation of projection factors
    !=============================================

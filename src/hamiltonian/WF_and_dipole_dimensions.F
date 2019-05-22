@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_and_dipole_dimensions(X)
+subroutine WF_and_dipole_dimensions(X,Xk)
  !
  use drivers,      ONLY:l_real_time,l_sc_fock,l_sc_exx,l_sc_coh,l_sc_sex,l_sc_srpa,l_use_Hxc_collisions
  use com,          ONLY:warning,msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties
- use R_lattice,    ONLY:qindx_S,G_m_G
+ use R_lattice,    ONLY:qindx_S,G_m_G,k_map,bz_samp
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max
 #if defined _SC
@@ -38,6 +38,9 @@ subroutine WF_and_dipole_dimensions(X)
  implicit none
  !
  type(X_t)         :: X(2)
+ type(bz_samp)     :: Xk
+ !
+ integer           :: NG_tmp
  !
  ! Dipoles dimensions
  !===================
@@ -64,7 +67,8 @@ subroutine WF_and_dipole_dimensions(X)
    !
    if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
      !
-     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
+     NG_TMP=eval_G_minus_G(X(2)%ng,0)
+     !
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      if (l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
      !
@@ -85,6 +89,9 @@ subroutine WF_and_dipole_dimensions(X)
  endif
  !
  WF_G_max=maxval((/QP_ng_SH,QP_ng_Vxc,WF_G_max/))
+ !
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
+ if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
  ! SC shadow variables
  !====================

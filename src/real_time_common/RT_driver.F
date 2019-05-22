@@ -113,7 +113,7 @@ subroutine RT_driver(E,X,k,q,Dip)
  ! Dipoles & WF dimensions
  !=========================
  !
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! Parallel Setups
  !=================

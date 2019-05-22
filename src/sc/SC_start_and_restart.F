@@ -108,7 +108,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  ! Dipoles & dimensions
  !======================
  ! 
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,Xk)
  !
  ! Before reading the SC energies save the KS one in E_reference
  !

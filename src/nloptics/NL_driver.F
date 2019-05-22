@@ -88,7 +88,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! Deallocate qindx_S (used only in previous subroutine)
  ! ========================

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CH, AF, IM
+! Authors (see AUTHORS file for details): CH, DS, AF, IM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PP_PWscf_driver(k)
+subroutine p2y_pseudo(k)
  !
  use pw_struct_module
  use pw_atoms_module
@@ -30,19 +30,15 @@ subroutine PP_PWscf_driver(k)
  !
  use pars,                  ONLY:SP,DP
  use com,                   ONLY:error
- use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
- use X_m,                   ONLY:X_t
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
 &                                PP_nlcc_alloc,PP_nlcc_free
- use com,                   ONLY:msg,warning
- use LIVE_t,                ONLY:live_timing
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_CL,REP
- use interfaces,            ONLY:PARALLEL_index
- use read_pseudo_mod,       ONLY: readpp
+ use read_pseudo_mod,       ONLY:readpp
+ !
  implicit none
  !
  type(bz_samp),    intent(in)  :: k      ! K/Q points
@@ -146,23 +142,23 @@ subroutine PP_PWscf_driver(k)
  !
  ! write USPP data
  !
+ call qe_pseudo_init()
+ call readpp(input_dft)
+ !
+ call pre_init()
+ call allocate_nlpot()
+ !
  if ( any(atoms%pseudo(:)%is_uspp) ) then
    !
 #ifndef _USPP
    call error("[PPs] Ultrasoft PP not supported")
 #endif
-   !
-   call qe_pseudo_init()
-   call readpp(input_dft)
-   !
-   call pre_init()
-   call allocate_nlpot()
    call init_us_1()
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_USPP_pwscf(ID)
    !
-!   call PP_uspp_free()
+   !call PP_uspp_free()
    !
  endif
  !
@@ -173,7 +169,7 @@ subroutine PP_PWscf_driver(k)
  !
  return
  !
-end subroutine PP_PWscf_driver
+end subroutine p2y_pseudo
 !
 subroutine fill_struct(struct)
  use pw_struct_module

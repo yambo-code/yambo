@@ -39,7 +39,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use interfaces,          ONLY: WF_load,WF_free,io_DB1_selective_scan
  use R_lattice,           ONLY: bz_samp,nkibz,q0_shift_norm
  use X_m,                 ONLY: l_X_terminator
- use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_P,num_shifted_grids
+ use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids
  use wrapper,             ONLY: Vstar_dot_V
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
@@ -204,9 +204,13 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            DIP_iR(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm
            !
            !=====
-           ! <P>
+           ! <v>
            !=====
-           if(.not.Dip%force_v_g_space) DIP_P(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
+           if(.not.Dip%force_v_g_space) then
+             ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
+             Dip%v_eff=.true.
+             DIP_v(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
+           endif
            !
            call live_timing(steps=1)
            !

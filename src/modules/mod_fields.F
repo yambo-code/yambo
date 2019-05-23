@@ -138,6 +138,7 @@ module fields
      f_t=cZERO
      fr_shift(1)=0._SP
      fr_shift(2)=pi/2._SP
+     E_field%To=T_0
      !
      if(trim(E_field%ef_pol)=="linear"  ) n_fields=1
      if(trim(E_field%ef_pol)=="circular") n_fields=2

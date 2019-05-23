@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,6 +59,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! ...then the pts
  !
+ YAMBO_FREE(k%ptbz)
  YAMBO_ALLOC(k%ptbz,(k%nbz,3))
  !
  k%units=units

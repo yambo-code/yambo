@@ -34,7 +34,7 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  use DIPOLES,             ONLY:DIPOLE_t
  use stderr,              ONLY:intc
  use wave_func,           ONLY:wf_ng,wf_ncx
- use R_lattice,           ONLY:bz_samp,ng_closed,g_rot,nkibz,ng_vec
+ use R_lattice,           ONLY:bz_samp,g_rot,nkibz
  use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
  use YPP_symm,            ONLY:wf_nc_k_save,wf_igk_save,wf_nc_k_reduced,wf_igk_reduced,&
@@ -63,7 +63,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
  integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
- integer               :: ng_vec_tmp
  !
  real(SP),allocatable     :: pp_kb_store(:,:,:,:,:)
  real(SP),allocatable     :: pp_kbd_store(:,:,:,:,:)
@@ -120,14 +119,13 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  if(io_KB_abinit_err==0) then
    !
-   ng_vec_tmp=ng_vec
-   ng_vec=ng_closed
+   wf_ncx=wf_ncx_save
    !
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_KB_abinit_err=io_KB_abinit(ID) 
    !  
-   YAMBO_ALLOC(pp_kb_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
-   YAMBO_ALLOC(pp_kbd_store,(ng_closed,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
+   YAMBO_ALLOC(pp_kb_store,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
+   YAMBO_ALLOC(pp_kbd_store,(wf_ncx,n_atomic_species,pp_n_l_times_proj_max,n_sp_pol,k_save%nibz))
    YAMBO_ALLOC(pp_kbs_store,(n_atomic_species,pp_n_l_times_proj_max))
    !
    do i_sp_pol=1,n_sp_pol
@@ -146,8 +144,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    enddo
    !
    pp_kbs_store=pp_kbs
-   !
-   ng_vec=ng_vec_tmp
    !
  endif
  !
@@ -175,8 +171,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    pp_kbs_store=pp_kbs
    !
-   !ng_vec=ng_vec_save
-   !
  endif
  !
  if(io_Vnl_err==0) then
@@ -200,26 +194,30 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
    !
    if(io_KB_abinit_err==0) then
      !
-     call msg('s',':: Copying existing database ...')
-     !
-     call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-     call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
-     do i_sp_pol=1,n_sp_pol
-     do ik=1,k_save%nibz
-       ifrag=ik+(i_sp_pol-1)*k_save%nibz
-       ifrag_new=ik+(i_sp_pol-1)*k%nibz
-       fragment_name    ='ns.kb_pp_fragment_'//trim(intc(ifrag))
-       fragment_name_new='ns.kb_pp_fragment_'//trim(intc(ifrag_new))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
-&                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
-       fragment_name='s.kb_pp_fragment_'//trim(intc(ifrag))
-       fragment_name_new='s.kb_pp_fragment_'//trim(intc(ifrag_new))
-       call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
-&                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
-     enddo
-     enddo
-     !
-     call msg('s','done')
+     if (wf_ncx_save==wf_ncx_new) then
+       !
+       call msg('s',':: Copying existing database ...')
+       !
+       call cp_file(trim(core_io_path_save)//"/SAVE/s.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+       call cp_file(trim(core_io_path_save)//"/SAVE/ns.kb_pp",trim(more_io_path)//"/SAVE",ierr)
+       do i_sp_pol=1,n_sp_pol
+       do ik=1,k_save%nibz
+         ifrag=ik+(i_sp_pol-1)*k_save%nibz
+         ifrag_new=ik+(i_sp_pol-1)*k%nibz
+         fragment_name    ='ns.kb_pp_fragment_'//trim(intc(ifrag))
+         fragment_name_new='ns.kb_pp_fragment_'//trim(intc(ifrag_new))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
+  &                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
+         fragment_name='s.kb_pp_fragment_'//trim(intc(ifrag))
+         fragment_name_new='s.kb_pp_fragment_'//trim(intc(ifrag_new))
+         call cp_file(trim(core_io_path_save)//"/SAVE/"//trim(fragment_name),&
+  &                   trim(more_io_path)//"/SAVE/"//trim(fragment_name),ierr)
+       enddo
+       enddo
+       !
+       call msg('s','done')
+       !
+     endif
      !
    endif
    !
@@ -253,6 +251,45 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      pp_kb=0._SP
      pp_kbd=0._SP
      !
+     pp_kb=0._SP
+     pp_kbd=0._SP
+     !
+     if (wf_ncx_new/=wf_ncx_save) then
+       !
+       wf_ncx=wf_ncx_new
+       !
+       call PP_free()
+       call PP_alloc_abinit()
+       !
+       pp_kbs=pp_kbs_store
+       !
+       call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+       io_KB_abinit_err=io_KB_abinit(ID)
+       !
+       call live_timing('PPs comp. reduction.',k_save%nibz*n_sp_pol)
+       !
+       do i_sp_pol=1,n_sp_pol
+       do ik=1,k_save%nibz
+         !
+         ifrag=ik+(i_sp_pol-1)*k%nibz
+         !
+         ik_save=kpoints_map(1,ik)
+         !
+         pp_kb(:,:,:,:) =pp_kb_store(:wf_ncx_new,:,:,:,ik_save)
+         pp_kbd(:,:,:,:)=pp_kbd_store(:wf_ncx_new,:,:,:,ik_save)
+         !
+         call io_control(ACTION=OP_APP_CL,SEC=(/ifrag+1/),ID=ID)
+         io_KB_abinit_err=io_KB_abinit(ID)
+         !
+         call live_timing(steps=1)
+         !
+       enddo
+       enddo
+       !
+       call live_timing()
+       !
+     endif
+     !
      if(n_steps>0) call live_timing('PPs rotation',n_steps)
      !
      do i_sp_pol=1,n_sp_pol
@@ -263,8 +300,17 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
        ik_save=kpoints_map(1,ik)
        is=kpoints_map(2,ik)
        !
-       pp_kb(1:ng_closed,:,:,:) =pp_kb_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
-       pp_kbd(1:ng_closed,:,:,:)=pp_kbd_store(g_rot(1:ng_closed,old_sop_inv(is)),:,:,:,ik_save)
+       do ic=1,wf_nc_k_reduced(ik_save)
+         ig_rot=g_rot(wf_igk_reduced(ic,ik_save),is)
+         do ic_rot=1,wf_nc_k_new(ik)
+           ig=wf_igk_new(ic_rot,ik)
+           if(ig==ig_rot) exit
+         enddo
+         !
+         pp_kb(ic_rot,:,:,:) =pp_kb_store(ic,:,:,:,ik_save)
+         pp_kbd(ic_rot,:,:,:)=pp_kbd_store(ic,:,:,:,ik_save)
+         !
+       enddo
        !
        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)      
        io_KB_abinit_err=io_KB_abinit(ID)
@@ -409,8 +455,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
      !
      do ik=1,k%nibz
        !
-       pp_kb(:ng_closed,:,:,:) =pp_kb_store(:ng_closed,:,:,:,kpoints_map(1,ik))
-       pp_kbd(:ng_closed,:,:,:)=pp_kbd_store(:ng_closed,:,:,:,kpoints_map(1,ik))     
+       pp_kb(:wf_ncx,:,:,:) =pp_kb_store(:wf_ncx,:,:,:,kpoints_map(1,ik))
+       pp_kbd(:wf_ncx,:,:,:)=pp_kbd_store(:wf_ncx,:,:,:,kpoints_map(1,ik))
        !
        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ik+1/),ID=ID)      
        io_KB_abinit_err=io_KB_abinit(ID)

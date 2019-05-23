@@ -111,7 +111,8 @@ subroutine MAG_common_build_A(build)
  endif
  !
  YAMBO_FREE(x_cc)
- call load_cc(.false.,.true.)
+ YAMBO_ALLOC(x_cc,(fft_size,3,1))
+ call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
  !
  ! A(r) Build-Up
  ! Ax , Ay , Az   
@@ -124,39 +125,39 @@ subroutine MAG_common_build_A(build)
        ! The AB effect is implemented only with a flux in the a(3,:) direction
        ! Anyway I'm not sure that this is right if a(3,:) is not perpendicular
        ! to the plane defined by a(1,:) and a(2,:)
-       r_mod=v_norm((/x_cc(ir,1),x_cc(ir,2),0._SP/))
+       r_mod=v_norm((/x_cc(ir,1,1),x_cc(ir,2,1),0._SP/))
        ! Now build up the vector potential         
        if(r_mod<=MAG_radius .or. MAG_radius==0) then
          if(Bx/=0.) then
-           A_magn_z(ir)= 0.5*Bx*x_cc(ir,2)*gauge_factors(1,1)
-           A_magn_y(ir)=-0.5*Bx*x_cc(ir,3)*gauge_factors(2,1)
+           A_magn_z(ir)= 0.5*Bx*x_cc(ir,2,1)*gauge_factors(1,1)
+           A_magn_y(ir)=-0.5*Bx*x_cc(ir,3,1)*gauge_factors(2,1)
          endif
          if(By/=0.) then
-           A_magn_z(ir)=A_magn_z(ir)-0.5*By*x_cc(ir,1)*gauge_factors(1,2)
-           A_magn_x(ir)= 0.5*By*x_cc(ir,3)*gauge_factors(2,2)
+           A_magn_z(ir)=A_magn_z(ir)-0.5*By*x_cc(ir,1,1)*gauge_factors(1,2)
+           A_magn_x(ir)= 0.5*By*x_cc(ir,3,1)*gauge_factors(2,2)
          endif
          if(Bz/=0.) then
-           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*x_cc(ir,2)*gauge_factors(1,3)
-           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*x_cc(ir,1)*gauge_factors(2,3)
+           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*x_cc(ir,2,1)*gauge_factors(1,3)
+           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*x_cc(ir,1,1)*gauge_factors(2,3)
          endif
        else
          ir_table(ir)=.false.
          if(Bx/=0.) then
-           A_magn_z(ir)= 0.5*Bx*MAG_radius**2*x_cc(ir,2)/r_mod**2
-           A_magn_y(ir)=-0.5*Bx*MAG_radius**2*x_cc(ir,3)/r_mod**2
+           A_magn_z(ir)= 0.5*Bx*MAG_radius**2*x_cc(ir,2,1)/r_mod**2
+           A_magn_y(ir)=-0.5*Bx*MAG_radius**2*x_cc(ir,3,1)/r_mod**2
          endif
          if(By/=0.) then
-           A_magn_z(ir)=A_magn_z(ir)-0.5*By*MAG_radius**2*x_cc(ir,1)/r_mod**2
-           A_magn_x(ir)= 0.5*By*MAG_radius**2*x_cc(ir,3)/r_mod**2
+           A_magn_z(ir)=A_magn_z(ir)-0.5*By*MAG_radius**2*x_cc(ir,1,1)/r_mod**2
+           A_magn_x(ir)= 0.5*By*MAG_radius**2*x_cc(ir,3,1)/r_mod**2
          endif
          if(Bz/=0.) then
-           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*MAG_radius**2*x_cc(ir,2)/r_mod**2
-           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*MAG_radius**2*x_cc(ir,1)/r_mod**2
+           A_magn_x(ir)=A_magn_x(ir)-0.5*Bz*MAG_radius**2*x_cc(ir,2,1)/r_mod**2
+           A_magn_y(ir)=A_magn_y(ir)+0.5*Bz*MAG_radius**2*x_cc(ir,1,1)/r_mod**2
          endif
        endif
        if(phase_trick .and. r_mod>phase_radius.and.Bz/=0.) then
-         A_magn_x(ir)=A_magn_x(ir)+SPEED_OF_LIGHT*n_loops*x_cc(ir,2)/r_mod**2
-         A_magn_y(ir)=A_magn_y(ir)-SPEED_OF_LIGHT*n_loops*x_cc(ir,1)/r_mod**2
+         A_magn_x(ir)=A_magn_x(ir)+SPEED_OF_LIGHT*n_loops*x_cc(ir,2,1)/r_mod**2
+         A_magn_y(ir)=A_magn_y(ir)-SPEED_OF_LIGHT*n_loops*x_cc(ir,1,1)/r_mod**2
        endif
      enddo
    enddo

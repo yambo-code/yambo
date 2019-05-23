@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DV
+! Authors (see AUTHORS file for details): DV DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -25,7 +25,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
- use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states,QP_ng_SH,QP_ng_Vxc
+ use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
  use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
@@ -33,8 +33,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
+ use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
-use fft_m,           ONLY:fft_g_table
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
@@ -49,7 +49,7 @@ use fft_m,           ONLY:fft_g_table
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol,iGo_max,iG_bounds_loaded(2)
+ integer     :: ik,ib,i_sp_pol
  !
  Hzero=cZERO
  !
@@ -70,7 +70,9 @@ use fft_m,           ONLY:fft_g_table
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call MAG_H_pseudo(Xk,E)
+   call Pseudo_KB_G_to_R_space(k,E)  
+   call Pseudo_Hamiltonian(Xk,E,.true.)
+   call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !
@@ -108,11 +110,6 @@ use fft_m,           ONLY:fft_g_table
  !========================================
  !
  ! V_hartree
- iG_bounds_loaded=shape(fft_g_table)
-   if (iG_bounds_loaded(1)<max(QP_ng_SH,QP_ng_VXC)) then
-     iGo_max=iG_bounds_loaded(2) 
-     call fft_setup(max(QP_ng_SH,QP_ng_VXC),iGo_max,.false.)
-   endif 
  call V_Hartree(rho_n,V_hartree_sc)
  !
  ! QP_Vxc
@@ -143,7 +140,7 @@ use fft_m,           ONLY:fft_g_table
      ! ... then remove Vh[rho_0] 
      !===========================
      !
-     call V_real_space_to_H(ik,i_sp_pol,-V_hartree_sc,Hzero(:,:,ik,i_sp_pol),WF,'def')
+     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-V_hartree_sc)
      !
      ! ... then remove Vxc[rho_0] also
      !=================================

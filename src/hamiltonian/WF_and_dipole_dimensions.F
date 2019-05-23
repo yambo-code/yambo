@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -27,7 +27,7 @@ subroutine WF_and_dipole_dimensions(X)
  use com,          ONLY:warning,msg
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
- use QP_m,         ONLY:QP_ng_Sx,QP_n_G_bands,COHSEX_use_empties
+ use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties
  use R_lattice,    ONLY:qindx_S,G_m_G
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max
@@ -83,6 +83,8 @@ subroutine WF_and_dipole_dimensions(X)
    endif
    !
  endif
+ !
+ WF_G_max=maxval((/QP_ng_SH,QP_ng_Vxc,WF_G_max/))
  !
  ! SC shadow variables
  !====================

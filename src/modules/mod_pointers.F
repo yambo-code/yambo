@@ -28,8 +28,12 @@ module pointers
  !
  implicit none
  !
+ interface linkM2M
+   module procedure linkM2M_3D_real,linkM2M_3D_real_B
+ end interface
+ !
  interface linkM2V
-   module procedure linkM2V_real,linkM2V_complex
+   module procedure linkM2V_2D_real,linkM2V_2D_complex
  end interface
  !
  interface linkC2R
@@ -44,19 +48,36 @@ module pointers
    !
    ! Interface which links Matrix to Vector
    !
-   function linkM2V_real(M,N) result(VEC_pointer)
+   function linkM2V_2D_real(M,N) result(VEC_pointer)
      real(SP), target  :: M(1,1)
-     integer, intent(in)  :: N(:)
+     integer, intent(in) :: N(:)
      real(SP), pointer :: VEC_pointer(:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
-   end function linkM2V_real
+   end function linkM2V_2D_real
    !
-   function linkM2V_complex(M,N) result(VEC_pointer)
+   function linkM2V_2D_complex(M,N) result(VEC_pointer)
      complex(SP), target  :: M(1,1)
-     integer, intent(in)  :: N(:)
+     integer, intent(in) :: N(:)
      complex(SP), pointer :: VEC_pointer(:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
-   end function linkM2V_complex
+   end function linkM2V_2D_complex
+   !
+   ! Interface which links Matrix to Matrix
+   !
+   function linkM2M_3D_real(M,N) result(M_pointer)
+     real(SP),   target  :: M(1,1,1)
+     integer, intent(in) :: N(3)
+     real(SP), pointer, contiguous :: M_pointer(:,:,:)
+     call C_F_POINTER(C_LOC(M), M_pointer, N )
+   end function linkM2M_3D_real
+   !
+   function linkM2M_3D_real_B(M,N,LB,UB) result(M_pointer)
+     real(SP),   target  :: M(1,1,1)
+     integer, intent(in) :: N(3),LB(3),UB(3)
+     real(SP), pointer, contiguous :: M_pointer(:,:,:)
+     call C_F_POINTER(C_LOC(M), M_pointer, N )
+     M_pointer(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => M_pointer
+   end function linkM2M_3D_real_B
    !
    ! Interface which links Complex to Real
    !

@@ -75,7 +75,7 @@ subroutine COLLISIONS_compose_nl(G_in)
       do ibp=COLL_bands(1),COLL_bands(2)
        do ib=COLL_bands(1),COLL_bands(2)
          !
-         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)/=0) then
+         if (HXC_COLL_element(i_coll_mem)%table(ib,ibp,i_kmq)=="t") then
            RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin)=RT_Vnl_xc(i_n,i_m,i_k_NL,i_spin) &
 &                                               -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_in(ib,ibp,i_kmq)
            i_comp=i_comp+1

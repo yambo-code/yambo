@@ -25,7 +25,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  use pars,           ONLY:SP,schlen,cZERO
  use units,          ONLY:HA2EV
- use drivers,        ONLY:l_sc_coh,l_sc_sex,l_use_Hxc_collisions,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
+ use drivers,        ONLY:l_sc_coh,l_sc_sex,l_sc_is_libDFT,l_eval_collisions,l_sc_hartree,&
 &                         l_sc_exx,l_sc_electric,l_sc_fock,l_use_collisions
  use electrons,      ONLY:levels,nel,n_met_bands,n_sp_pol,n_spin,spin,n_spinor
  use R_lattice,      ONLY:bz_samp,nkibz
@@ -41,8 +41,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free,PARALLEL_WF_distribute,PARALLEL_WF_index,&
-&                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ use interfaces,     ONLY:el_density_and_current,PARALLEL_global_indexes,WF_load,WF_free, &
+&                         PARALLEL_WF_distribute,PARALLEL_WF_index,LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
+ use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg,warning,error
  use X_m,            ONLY:X_t,current_iq,X_alloc
  use DIPOLES,        ONLY:DIPOLE_t
@@ -58,7 +59,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
 #if defined _ELECTRIC
- use fields,         ONLY:A_vecpot,Efield
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
 #endif
  !
@@ -369,11 +369,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #endif
      ! Add local V_xc
      !
-     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WFo,'xc ')
+     if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
      !
      ! Add V_Hartree
      !
-     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WFo,'def')
+     if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
      !
      call PP_redux_wait(H_nl_sc)
      !

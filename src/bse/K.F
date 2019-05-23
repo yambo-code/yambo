@@ -163,7 +163,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !===================
  O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
  !
  ! GPL_EXCLUDE_START
  !

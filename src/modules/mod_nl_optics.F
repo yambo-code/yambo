@@ -36,8 +36,6 @@ module nl_optics
  ! Time steps and step length defined in module real_time.F
  ! --------------------------------------------------------
  !
- integer           :: NL_ng      ! number of G-vectors in the Hartree/TDDFT
- ! 
  ! Polarization 
  ! ------------
  ! Calculated from the string-averaged discretized geometric phase

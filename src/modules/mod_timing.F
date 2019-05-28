@@ -326,7 +326,7 @@ MODULE timing_m
      CHARACTER(15)                      :: sec_str
      CHARACTER(lchlen)                  :: local_ch
      INTEGER                            :: nday,nhour,nmin
-     INTEGER                            :: call_number
+     INTEGER                            :: call_number(1)
      REAL(DP)                           :: total_time,effective_total_time
      REAL(DP)                           :: nsec
      !
@@ -336,8 +336,8 @@ MODULE timing_m
      !
      ! define an average over the pools
      !
-     total_time  = obj%total_time
-     call_number = obj%call_number
+     total_time     = obj%total_time
+     call_number(1) = obj%call_number
      !
      ! do suitable averages only for MPI related clocks
      !
@@ -348,8 +348,8 @@ MODULE timing_m
        CALL PP_redux_wait( total_time )
        total_time = total_time / REAL( ncpu, DP )
        !
-       CALL PP_redux_wait( (/call_number/) )
-       call_number = NINT ( call_number / REAL( ncpu, DP ) )
+       CALL PP_redux_wait( call_number )
+       call_number(1) = NINT ( call_number(1) / REAL( ncpu, DP ) )
        !
      ENDIF
      !
@@ -366,7 +366,7 @@ MODULE timing_m
          nhour = INT( (total_time -86400*nday)/3600 )
          nmin =  INT( (total_time -86400*nday -3600*nhour)/60 )
          nsec =  INT(  total_time -86400*nday -3600*nhour -60*nmin )
-         IF ( call_number == 1 )  THEN
+         IF ( call_number(1) == 1 )  THEN
            IF (nday > 0) THEN
              WRITE (local_ch, '(a40," : ",3x,i2,"d",i2,"h CPU ")') &
                          TRIM(obj%name), nday, nhour
@@ -385,19 +385,19 @@ MODULE timing_m
          ELSE
            IF (nday > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"d",i2,"h CPU (",i10," calls,",f8.3,a)') TRIM(obj%name), nday, nhour, &
-                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
+                   call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSEIF (nhour > 0) THEN
              WRITE(local_ch,'(a40," : ",3x,i2,"h",i2,"m CPU (", &
                    & i10," calls,",f8.3,a)') TRIM(obj%name), nhour, nmin, &
-                   call_number , effective_total_time / REAL( call_number, DP ),sec_str
+                   call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSEIF (nmin > 0) THEN
              WRITE (local_ch, '(a40," : ",i2,"m",f5.2,"s CPU (", &
                    &   i10," calls,",f8.3,a)') TRIM(obj%name), nmin, nsec, &
-                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
+                        call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ELSE
              WRITE (local_ch, '(a40," : ",3x,f5.2,"s CPU (", &
                    &   i10," calls,",f8.3,a)') TRIM(obj%name), nsec, &
-                        call_number , effective_total_time / REAL( call_number, DP ),sec_str
+                        call_number(1) , effective_total_time / REAL( call_number(1), DP ),sec_str
            ENDIF
            if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
            call msg('r',local_ch(:100))
@@ -406,12 +406,12 @@ MODULE timing_m
          !
          ! time in seconds
          !
-         IF ( call_number == 1) THEN
+         IF ( call_number(1) == 1) THEN
            WRITE (local_ch, '(a40," :",f9.2,"s CPU")') TRIM(obj%name), total_time
          ELSE
            WRITE (local_ch, '(a40," :",f9.2,"s CPU (", i8," calls,",f8.3," s avg)")')  &
-                        TRIM(obj%name) , total_time , call_number ,   &
-                        total_time / REAL( call_number, DP )
+                        TRIM(obj%name) , total_time , call_number(1) ,   &
+                        total_time / REAL( call_number(1), DP )
          ENDIF
          if (log_as_a_file) call LIVE_message(message="[TIMING]"//local_ch(:100),lfmt="n")
          call msg('r',local_ch(:100))

@@ -53,7 +53,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  !
  ! Work Space
  !
- integer     :: ir,i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
+ integer     :: i_qp,ib,ibp,i_wf,i_wfp,i_spinor,j_spinor,i_spin,j_spin
  complex(SP) :: c_ws(fft_size,n_spinor)
  complex(SP) :: V_mat(fft_size,n_spin,n_spin)
  logical     :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))

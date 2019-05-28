@@ -34,8 +34,6 @@ integer function variables_DIPOLES(Dip,ID)
  type(DIPOLE_t) :: Dip
  integer        :: ID
  !
- ! Workspace
- !
  call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
  !
  call io_elemental(ID,DB_I1=Dip%db_ib,&

@@ -57,7 +57,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen)     :: lch
- character(schlen)     :: atm_file
+ character(schlen)     :: atm_file,env_file
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
  type(PP_indexes)      :: PAR_IND_wfc_io
@@ -239,12 +239,23 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  if ( file_exists('atomic_proj.xml') .or. file_exists('atomic_proj.dat') ) then
-   call msg('s','== DB4 (Atomproj parameters) ... ')
+   call msg('s','== DB4 (Misc: Atomproj parameters) ... ')
    if ( file_exists('atomic_proj.xml') ) atm_file='atomic_proj.xml'
    if ( file_exists('atomic_proj.dat') ) atm_file='atomic_proj.dat'
    call p2y_atmproj(atm_file,k)
    if(verboseIO) then
-     call msg('s','== DB4 (Atomproj parameters) ... done ==')
+     call msg('s','== DB4 (Misc: Atomproj parameters) ... done ==')
+   else
+     call msg('l',' done ==')
+   endif
+ endif
+ !
+ if ( file_exists('epsilon.cube') ) then
+   call msg('s','== DB4 (Misc: Environ parameters) ... ')
+   env_file='epsilon.cube'
+   call p2y_environ(env_file)
+   if(verboseIO) then
+     call msg('s','== DB4 (Misc: Environ parameters) ... done ==')
    else
      call msg('l',' done ==')
    endif

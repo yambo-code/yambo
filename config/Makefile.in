@@ -117,8 +117,8 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # Interfaces
 #
-2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
-2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart bz_ops
+2YLIBS       = external_c modules memory matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart wf_and_fft bz_ops
+2YLIBS_LD    = external_c memory modules matrices linear_algebra parallel parser communicate common io setup interface stop_and_restart wf_and_fft bz_ops
 #
 # YPP
 #

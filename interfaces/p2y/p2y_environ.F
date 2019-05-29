@@ -117,24 +117,23 @@ subroutine p2y_environ(filename)
  !
  ! (c) compute eps^-1 in reciprocal space
  !
- !
  do ir = 1, fft_size
    epsm1_fft(ir)=cmplx(1.0_SP/eps(ir),0.0_SP,kind=DP)
-! XXX
-!WRITE(999,"(3f15.9)") eps(ir),epsm1_fft(ir)
  enddo
  !
 #if defined _FFTW
+ call dfftw_destroy_plan(fftw_plan)
+ fftw_plan = 0
  call fft_3d(epsm1_fft,fft_dim,-1,fftw_plan)
 #else
  call fft_3d(epsm1_fft,fft_dim,-1)
 #endif
  !
+ epsm1_fft=epsm1_fft/real(fft_size,DP)
+ !
  do ig = 1, ng_vec
    epsm1_g(ig)= cmplx(epsm1_fft(fft_g_table(ig,1)),kind=SP)
  enddo
-! XXX
-!WRITE(1000,"(2f15.9)") epsm1_g
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ENVIRON_pwscf(ID)

@@ -58,7 +58,7 @@ integer function io_ENVIRON_pwscf(ID)
  !
  if (read_is_on(ID)) call environ_alloc(ng_env)
  !
- call io_bulk(ID,VAR="EPS_M1_GSPACE",VAR_SZ=shape(epsm1_g))
+ call io_bulk(ID,VAR="EPS_M1_GSPACE",VAR_SZ=(/2,ng_env/))
  call io_bulk(ID,C1=epsm1_g)
  !
 1 call io_disconnect(ID=ID)

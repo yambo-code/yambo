@@ -91,7 +91,7 @@ module memory
    !
    subroutine MEM_manager(what,Sz,Kn,REPORT)
      character(*)         :: what
-     integer,optional     :: Sz
+     integer(8),optional  :: Sz
      integer,optional     :: Kn
      character(*),optional:: REPORT
    end subroutine 
@@ -146,176 +146,176 @@ module memory
    end subroutine
    subroutine MEM_clean(name,N)
      character(*)::name
-     integer     ::N
+     integer(8)  ::N
      call MEM_manager(name,Sz=N)
    end subroutine
    subroutine MEM_i1(name,i)
      character(*)::name
      integer     ::i(:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1)))
    end subroutine
    subroutine MEM_lp1(name,i)
      character(*)::name
      integer(LP) ::i(:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1)))
    end subroutine
    subroutine MEM_ch1(name,ch)
      character(*)::name
      character   ::ch(:)
-     call MEM_manager(name,Sz=size(ch),Kn=kind(ch(1)))
+     call MEM_manager(name,Sz=size(ch,KIND=8),Kn=kind(ch(1)))
    end subroutine
    subroutine MEM_i2(name,i)
      character(*)::name
      integer     ::i(:,:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1,1)))
    end subroutine
    subroutine MEM_i3(name,i)
      character(*)::name
      integer     ::i(:,:,:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1,1,1)))
    end subroutine
    subroutine MEM_i4(name,i)
      character(*)::name
      integer     ::i(:,:,:,:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1,1,1,1)))
    end subroutine
    subroutine MEM_lp3(name,i)
      character(*)::name
      integer(LP) ::i(:,:,:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1,1,1)))
    end subroutine
    subroutine MEM_ch3(name,ch)
      character(*)::name
      character   ::ch(:,:,:)
-     call MEM_manager(name,Sz=size(ch),Kn=kind(ch(1,1,1)))
+     call MEM_manager(name,Sz=size(ch,KIND=8),Kn=kind(ch(1,1,1)))
    end subroutine
    subroutine MEM_i5(name,i)
      character(*)::name
      integer     ::i(:,:,:,:,:)
-     call MEM_manager(name,Sz=size(i),Kn=kind(i(1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(i,KIND=8),Kn=kind(i(1,1,1,1,1)))
    end subroutine
    subroutine MEM_r1(name,r)
      character(*)::name
      real(SP)    ::r(:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r))
    end subroutine
    subroutine MEM_r2(name,r)
      character(*)::name
      real(SP)    ::r(:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1)))
    end subroutine
 #ifndef _DOUBLE
    subroutine MEM_rd1(name,r)
      character(*)::name
      real(DP)    ::r(:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r))
    end subroutine
    subroutine MEM_rd2(name,r)
      character(*)::name
      real(DP)    ::r(:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1)))
    end subroutine
    subroutine MEM_rd3(name,r)
      character(*)::name
      real(DP)    ::r(:,:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1,1)))
    end subroutine
 #endif
    subroutine MEM_r3(name,r)
      character(*)::name
      real(SP)    ::r(:,:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1,1)))
    end subroutine
    subroutine MEM_r4(name,r)
      character(*)::name
      real(SP)    ::r(:,:,:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1,1,1)))
    end subroutine
    subroutine MEM_r5(name,r)
      character(*)::name
      real(SP)    ::r(:,:,:,:,:)
-     call MEM_manager(name,Sz=size(r),Kn=kind(r(1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(r,KIND=8),Kn=kind(r(1,1,1,1,1)))
    end subroutine
    subroutine MEM_c1(name,c)
      character(*)::name
      complex(SP) ::c(:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1)))
    end subroutine
    subroutine MEM_c2(name,c)
      character(*)::name
      complex(SP) ::c(:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1)))
    end subroutine
    subroutine MEM_c3(name,c)
      character(*)::name
      complex(SP) ::c(:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1)))
    end subroutine
    subroutine MEM_c4(name,c)
      character(*)::name
      complex(SP) ::c(:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1)))
    end subroutine
    subroutine MEM_c5(name,c)
      character(*)::name
      complex(SP) ::c(:,:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1,1)))
    end subroutine
    subroutine MEM_c6(name,c)
      character(*)::name
      complex(SP) ::c(:,:,:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1,1,1)))
    end subroutine
 #ifndef _DOUBLE
    subroutine MEM_cd1(name,c)
      character(*)::name
      complex(DP) ::c(:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1)))
    end subroutine
    subroutine MEM_cd2(name,c)
      character(*)::name
      complex(DP) ::c(:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1)))
    end subroutine
    subroutine MEM_cd3(name,c)
      character(*)::name
      complex(DP) ::c(:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1)))
    end subroutine
    subroutine MEM_cd4(name,c)
      character(*)::name
      complex(DP) ::c(:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1)))
    end subroutine
    subroutine MEM_cd5(name,c)
      character(*)::name
      complex(DP) ::c(:,:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1,1)))
    end subroutine
    subroutine MEM_cd6(name,c)
      character(*)::name
      complex(DP) ::c(:,:,:,:,:,:)
-     call MEM_manager(name,Sz=size(c),Kn=2*kind(c(1,1,1,1,1,1)))
+     call MEM_manager(name,Sz=size(c,KIND=8),Kn=2*kind(c(1,1,1,1,1,1)))
    end subroutine
 #endif
    subroutine MEM_l1(name,l)
      character(*)::name
      logical     ::l(:)
-     call MEM_manager(name,Sz=size(l),Kn=kind(l(1)))
+     call MEM_manager(name,Sz=size(l,KIND=8),Kn=kind(l(1)))
    end subroutine
    subroutine MEM_l2(name,l)
      character(*)::name
      logical     ::l(:,:)
-     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1)))
+     call MEM_manager(name,Sz=size(l,KIND=8),Kn=kind(l(1,1)))
    end subroutine
    subroutine MEM_l3(name,l)
      character(*)::name
      logical     ::l(:,:,:)
-     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1,1)))
+     call MEM_manager(name,Sz=size(l,KIND=8),Kn=kind(l(1,1,1)))
    end subroutine
    subroutine MEM_l4(name,l)
      character(*)::name
      logical     ::l(:,:,:,:)
-     call MEM_manager(name,Sz=size(l),Kn=kind(l(1,1,1,1)))
+     call MEM_manager(name,Sz=size(l,KIND=8),Kn=kind(l(1,1,1,1)))
    end subroutine
 end module memory

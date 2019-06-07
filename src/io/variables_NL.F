@@ -26,7 +26,8 @@ integer function variables_NL(ID,local_description)
  use pars,          ONLY:SP,lchlen
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
-&                        n_NL_descriptions,NL_description,WF_sample_ondisk,n_order,NL_ng
+&                        n_NL_descriptions,NL_description,WF_sample_ondisk,n_order
+ use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:Efield
@@ -46,7 +47,7 @@ integer function variables_NL(ID,local_description)
  !
  ! PARAMETERS
  !
- call io_elemental(ID,VAR="NLPARS",VAR_SZ=12,MENU=0)
+ call io_elemental(ID,VAR="NLPARS",VAR_SZ=13,MENU=0)
  i_desc=i_desc+1
  call io_elemental(ID,VAR=" [RT] Time steps       :",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTION=local_description(i_desc))
@@ -75,7 +76,10 @@ integer function variables_NL(ID,local_description)
  call io_elemental(ID,VAR=" [NL] Induced Field    :",L0=l_RT_induced_field,CHECK=.true.,OP=(/"=="/), & 
 &         DESCRIPTION=local_description(i_desc))
  i_desc=i_desc+1
- call io_elemental(ID,VAR="[NL] Number of G in NL-dynamics  :",I0=NL_ng,CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[NL] Number of G in HARTREE :",I0=QP_ng_SH,CHECK=.true.,OP=(/"=="/), &
+     &         DESCRIPTION=local_description(i_desc))
+ i_desc=i_desc+1
+ call io_elemental(ID,VAR="[NL] Number of G in EXCHANGE(DFT) :",I0=QP_ng_Sx,CHECK=.true.,OP=(/"=="/), &
      &         DESCRIPTION=local_description(i_desc))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !

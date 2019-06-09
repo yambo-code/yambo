@@ -39,6 +39,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
+ ! qindx_C(ikbz,iqbz,1)=okbz
+ ! qindx_C(ikbz,iqbz,2)=iGo
+ !
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use stderr,         ONLY:gen_fmt

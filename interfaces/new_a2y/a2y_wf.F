@@ -47,7 +47,7 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal, i_sp_pol_abinit
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
-  integer        :: wf_igk_save(wf_nc_k(ikibz))
+  integer        :: wf_igk_tmp(wf_nc_k(ikibz))
   integer        :: varid, netcdf_error
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
@@ -62,8 +62,8 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   netcdf_error = nf90_get_var(ncid, varid, wavefunction_section_, start, count)
   !
   if(NETCDF_kind=='WFK') then
-    wf_igk_save = wf_igk(:wf_nc_k(ikibz),ikibz)
-    call sort(wf_igk_save,indx=wf_igk_indx)
+    wf_igk_tmp = wf_igk(:wf_nc_k(ikibz),ikibz)
+    call sort(wf_igk_tmp,indx=wf_igk_indx)
   else
     wf_igk_indx = wf_igk(:wf_nc_k(ikibz),ikibz)
   endif

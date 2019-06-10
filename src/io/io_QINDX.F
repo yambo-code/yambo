@@ -89,13 +89,13 @@ integer function io_QINDX(Xk,q,io_db)
      if (read_is_on(io_db)) then
        YAMBO_ALLOC(q%pt,(q%nibz,3))
      endif
-     call def_variable_bulk(io_db,"Qpts",0,shape(q%pt),SP)
-     call  io_variable_bulk(io_db,0,R2=q%pt)
+     call def_variable_bulk(io_db,"Qpts",10,shape(q%pt),SP)
+     call  io_variable_bulk(io_db,10,R2=q%pt)
    else
      if(.not.allocated(q_pt)) then
        YAMBO_ALLOC(q_pt,(nqibz,3))
-       call def_variable_bulk(io_db,"Qpts",0,shape(q_pt),SP)
-       call  io_variable_bulk(io_db,0,R2=q_pt)
+       call def_variable_bulk(io_db,"Qpts",10,shape(q_pt),SP)
+       call  io_variable_bulk(io_db,10,R2=q_pt)
      endif
      io_QINDX=ioScatt
      goto 1

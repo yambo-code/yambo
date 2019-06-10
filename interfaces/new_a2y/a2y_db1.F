@@ -31,7 +31,7 @@ subroutine a2y_db1(en,k,ncid)
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
- use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit
+ use mod_com2y,            only : print_interface_dimensions, ng_vec_abinit, artificial_spin_pol
  !
 #include<memory.h>
  !
@@ -55,6 +55,8 @@ subroutine a2y_db1(en,k,ncid)
  n_atoms  = netcdf_get_dimension(ncid,"number_of_atoms")
  wf_ncx   = netcdf_get_dimension(ncid,"max_number_of_coefficients")
  n_atomic_species = netcdf_get_dimension(ncid,"number_of_atom_species")
+
+ if (n_sp_pol==1.and.artificial_spin_pol) n_sp_pol=2
 
  n_spin  = max(n_spinor, n_sp_pol)
  k%nibz = nkibz
@@ -214,10 +216,13 @@ contains
   subroutine import_electrons_group
     use electrons,            only : default_nel
     implicit none
-    integer :: varid
+    integer :: varid, n_sp_pol_abinit
     real(SP), allocatable, target :: eigenvalues_(:,:,:)
 
-    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol ) )
+    n_sp_pol_abinit=n_sp_pol
+    if (artificial_spin_pol) n_sp_pol_abinit=1
+
+    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, 1 ) )
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)
@@ -227,12 +232,13 @@ contains
     netcdf_error = nf90_get_var(ncid, varid, eigenvalues_)
     call netcdf_check(ncid,netcdf_error,varid)
 
-    !
-    ! n_spin is inconsistent with n_sp_pol: local copy always needed here.
-    !
-    YAMBO_ALLOC( en%E, (en%nb, k%nibz, n_spin) )
-    en%E(:,:,1:n_sp_pol) = eigenvalues_(:,:,1:n_sp_pol)     ! Type conversion
-    if(n_spinor==2) en%E(:,:,2) = en%E(:,:,1)
+    YAMBO_ALLOC( en%E, (en%nb, k%nibz, n_sp_pol) )
+
+    if (.not. artificial_spin_pol) en%E = eigenvalues_
+    if (      artificial_spin_pol) then 
+      en%E(:,:,1:1) = eigenvalues_
+      en%E(:,:,2:2) = eigenvalues_
+    endif
 
     YAMBO_FREE(eigenvalues_)
 

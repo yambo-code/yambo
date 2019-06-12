@@ -97,6 +97,8 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
      !
      call excitons_kinematics(Xk,eh_p,i_eh_p)
      !
+     if (eh%ik_bz /= eh_p%ik_bz) cycle
+     !
      call elemental_compose(eh%ic,eh_p%ic,cc)
      !
      call elemental_compose(eh%iv,eh_p%iv,vv)
@@ -107,7 +109,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
        do i_S=0,1
          do i_M=-i_S,i_S
             cc_vv(i_S,i_M)=cc_vv(i_S,i_M)+P(i_S,i_M,eh%spin,eh%spin)*P(i_S,i_M,eh_p%spin,eh_p%spin)*&
-&                                          conjg(cc(eh%spin,eh_p%spin))*vv(eh%spin,eh_p%spin)
+&                                              cc(eh%spin,eh_p%spin)*conjg(vv(eh%spin,eh_p%spin))
          enddo
        enddo
      else

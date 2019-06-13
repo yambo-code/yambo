@@ -239,7 +239,7 @@ module wrapper
    end subroutine vv_caxpy
    !
 #ifdef _CUDA
-   subroutine vv_caxpy_gpu(N, CA, CX,  CY )
+   subroutine vv_caxpy_gpu(N, CA, CX, CY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), device, intent(in) :: CX(*)

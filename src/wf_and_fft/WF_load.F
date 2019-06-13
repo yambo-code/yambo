@@ -386,50 +386,38 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          WF%index(ib,ikibz,i_sp_pol)=WF%N
          !
 #ifdef _CUDA
+         ! This is a specialized CUDA version performing FFT on the device
+         !
          if(buffer_is_ok) call error(" [CUDA WF_LOAD] buffering not yet implemented")
-
+         !
          if(WF%space=='R') then
-
-         do i_spinor=1,n_spinor
-           !
-           wf_DP_d=(0._DP,0._DP)
-
-           !$cuf kernel do(1) <<<*,*>>>
-           do ic=1,wf_nc_k(ikibz)
-             ig=wf_igk_d(ic,ikibz)
-             if (ig>wf_ng) cycle
-             igfft=fft_g_table_d(ig,1)
-             !igfft=ig
-             !if (IWFspace==1) igfft=fft_g_table_d(ig,1)
-             !if (IWFspace==2) igfft=ic
-             !if (buffer_is_ok) then
-             !  wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
-             !else
-               wf_DP_d(igfft)=cmplx(wf_disk_d(ic,i_spinor,ib_to_load),kind=DP)
-             !endif
-           enddo
-           !
-           if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-
-             !$cuf kernel do(1)
-             do ic=1,wf_grid_size
-               wfcd(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)
-             enddo             
-
-           else
-
-             call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
-
-             WFN = WF%N
-             !$cuf kernel do(1)
-             do ic=1,wf_grid_size
-               wfcd(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
-             enddo
-
-           endif
-           !
-         enddo  ! i_spinor
-
+            !
+            do i_spinor=1,n_spinor
+              !
+              wf_DP_d=(0._DP,0._DP)
+              npwk=wf_nc_k(ikibz)
+              !
+              !$cuf kernel do(1) <<<*,*>>>
+              do ic=1,npwk
+                !
+                ig=wf_igk_d(ic,ikibz)
+                if (ig>wf_ng) cycle
+                igfft=fft_g_table_d(ig,1)
+                !
+                wf_DP_d(igfft)=cmplx(wf_disk_d(ic,i_spinor,ib_to_load),kind=DP)
+                !
+              enddo
+              !
+              call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
+              !
+              WFN = WF%N
+              !$cuf kernel do(1)
+              do ic=1,wf_grid_size
+                wfcd(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+              enddo
+              !
+            enddo  ! i_spinor
+            !
          else
 #endif
          do i_spinor=1,n_spinor

@@ -420,47 +420,49 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !
          else
 #endif
-         do i_spinor=1,n_spinor
-           !
-           wf_DP=(0._DP,0._DP)
-           do ic=1,wf_nc_k(ikibz)
-             ig=wf_igk(ic,ikibz)
-             if (ig>wf_ng) cycle
-             igfft=ig
-             if (WF%space=='R') igfft=fft_g_table(ig,1)
-             if (WF%space=='C'.or.WF%space=='B') igfft=ic
-             if (buffer_is_ok) then
-               wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
-             else
-               wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_to_load),kind=DP)
-             endif
-           enddo
-           !
-           if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
-             WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)
-             cycle
-           endif
-           !
+            !
+            do i_spinor=1,n_spinor
+              !
+              wf_DP=(0._DP,0._DP)
+              do ic=1,wf_nc_k(ikibz)
+                ig=wf_igk(ic,ikibz)
+                if (ig>wf_ng) cycle
+                igfft=ig
+                if (WF%space=='R') igfft=fft_g_table(ig,1)
+                if (WF%space=='C'.or.WF%space=='B') igfft=ic
+                if (buffer_is_ok) then
+                  wf_DP(igfft)=WF_buffer%c(ic,i_spinor,WF_buffer%index(ib,ikibz,i_sp_pol))
+                else
+                  wf_DP(igfft)=cmplx(wf_disk(ic,i_spinor,ib_to_load),kind=DP)
+                endif
+              enddo
+              !
+              if (WF%space=='G'.or.WF%space=='C'.or.WF%space=='B') then
+                WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)
+                cycle
+              endif
+              !
 #if defined _FFTW
-           call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
+              call fft_3d(wf_DP,fft_dim,+1,fftw_plan)
 #else
-           !
-           ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
-           !
-           call fft_3d(wf_DP,fft_dim,+2)
+              !
+              ! Here we explot (+2 instead of +1) the wfc cutoff when using FFTQE
+              !
+              call fft_3d(wf_DP,fft_dim,+2)
 #endif
-           WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
-           !
-         enddo  ! i_spinor
+              WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+              !
+            enddo  ! i_spinor
 #ifdef _CUDA
          endif
 #endif
+         !
        enddo    ! i_b
        !
        if (.not.buffer_is_ok) then
          YAMBO_FREE(wf_disk)
 #ifdef _CUDA
-         deallocate(wf_disk_d)
+         YAMBO_FREE(wf_disk_d)
 #endif
        endif
        !

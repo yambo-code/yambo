@@ -208,9 +208,14 @@ subroutine NL_initialize(E,k,q)
  !
  ! Deallocate bare_qpg if not required
  !=============================
- if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
-   YAMBO_FREE(bare_qpg)
- endif
+ ! DS 2019/06/18:
+ ! bare_qpg is used by DIPOLE_dimensions
+ ! The dependency maybe likey removed in the future
+ ! For now I'm commenting the following lines
+ !  
+ !if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
+ !  YAMBOX_FREE(bare_qpg)
+ !endif
  !
  ! Frequencies range
  ! =========================

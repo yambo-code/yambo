@@ -140,14 +140,19 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        endif
      endif
      !
-     ! the iv==ic case (XTerm) is dropped because of a
-     ! cancellation with another XTerm contribution to wings and head
-     ! (that, in fact, is not included below, see ig_start=2)
-     !
      DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
      !
      Xo_scatt%rhotw(1)=-conjg(DIP_projected)
-     if (l_X_term_vv.and.iv==ic) Xo_scatt%rhotw(1)=0.0_SP
+     !
+     ! the iv==ic case
+     ! (STANDARD): it is needed for the Drude term
+     ! (XTerm)   : it is dropped because of a cancellation with another XTerm contribution to wings and head
+     !             (that, in fact, is not included below, see ig_start=2)
+     !
+     if (iv==ic) then
+       if (.not.l_X_term_vv) Xo_scatt%rhotw(1)=1.0_SP
+       if (     l_X_term_vv) Xo_scatt%rhotw(1)=0.0_SP
+     endif
      !
    else
      Xo_scatt%is=(/ic,ik,is,i_spin/)

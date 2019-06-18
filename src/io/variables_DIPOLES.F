@@ -23,10 +23,9 @@
 !
 integer function variables_DIPOLES(Dip,ID)
  !
- use pars,          ONLY:lchlen,SP
+ use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t
- use electrons,     ONLY:levels
  use R_lattice,     ONLY:q0_def_norm
  use IO_m,          ONLY:io_variable_elemental,def_variable_elemental,io_status
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
@@ -37,8 +36,6 @@ integer function variables_DIPOLES(Dip,ID)
  integer        :: ID
  !
  ! Workspace
- !
- character(lchlen)  ::local_description
  !
  call def_variable_elemental(ID,"PARS",11,SP,0,par_io_kind="independent")
  !
@@ -65,11 +62,11 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call def_variable_elemental(ID,"APPROACH",1,0,0,par_io_kind="independent")
  call  io_variable_elemental(ID,VAR=" Approach used          :",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/))
- !call io_elemental(ID,"",0)
+ !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call def_variable_elemental(ID,"KINDS",1,0,0,par_io_kind="independent")
  call  io_variable_elemental(ID,VAR=" Dipoles computed       :",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/))
- !call io_elemental(ID,VAR="",VAR_SZ=0)
+ !call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Wavefunctions xc 
  !

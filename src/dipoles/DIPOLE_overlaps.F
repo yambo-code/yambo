@@ -31,7 +31,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper_omp,       ONLY:Vstar_dot_V_omp
  use wave_func,         ONLY:wf_ng
- use IO_m,              ONLY:IO_and_Messaging_switch
+ use IO_m,              ONLY:IO_write
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
  !
@@ -47,14 +47,15 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  complex(SP)       :: WF_symm(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
  complex(SP)       :: WF_shifted(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
  complex(SP)       :: WF_ik(wf_ng,n_spinor,Dip%ib(2),n_sp_pol),WF_ikp(wf_ng,n_spinor,Dip%ib(2),n_sp_pol)
- logical           :: USE_shifted_wf
+ logical           :: USE_shifted_wf,IO_write_save
  !
  ! This is needed to construct grot for all wf_ngs.
  !
- call IO_and_messaging_switch("-io_out")
+ IO_write_save=IO_write
+ IO_write     =.FALSE.
  ng_closed=ng_vec
  call G_shells_finder()
- call IO_and_messaging_switch("+io_out")
+ IO_write     =IO_write_save
  !
  DIP_S=cZERO
  !

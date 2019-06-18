@@ -131,11 +131,13 @@ subroutine a2y_kb_pp_wfk( ikibz, ncid )
   !
   integer               :: ig, ic, ib, ip, ia
   integer               :: wf_igk_indx(wf_nc_k(ikibz))
+  integer               :: wf_igk_tmp(wf_nc_k(ikibz))
   integer               :: start(4), varid, netcdf_error
   real(SP),allocatable  :: pp_section(:,:,:)
   !
   allocate(pp_section( wf_ncx, pp_n_l_times_proj_max, n_atomic_species ))
-  call sort(wf_igk(:wf_nc_k(ikibz),ikibz),indx=wf_igk_indx)
+  wf_igk_tmp = wf_igk(:wf_nc_k(ikibz),ikibz)
+  call sort(wf_igk_tmp,indx=wf_igk_indx)
   start = [1,1,1,ikibz]
   !
   ! Form factors 

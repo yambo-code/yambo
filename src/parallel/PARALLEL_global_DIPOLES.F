@@ -30,7 +30,8 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,PAR_build_index,PAR_n_c_bands,PAR_n_v_bands
+ use parallel_m,    ONLY:ncpu,PARALLEL_n_structures_active,COMM_copy,PAR_index_copy,PAR_build_index,&
+&                        PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_DIPk_ibz_A2A,PAR_COM_DIPk_ibz_INDEX, &
 &                        PAR_COM_CON_INDEX_DIP,PAR_COM_VAL_INDEX_DIP, &
@@ -91,8 +92,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    ! I/O privileges
    !
    if (PARALLEL_n_structures_active>1) then
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_DIPk_ibz_INDEX%my_CHAIN==1.or.&
-&                                                     PAR_COM_DIPk_ibz_INDEX%n_CPU==ncpu)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_DIPk_ibz_A2A%CPU_id==0)
    else
      call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
    endif

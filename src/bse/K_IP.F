@@ -24,7 +24,6 @@
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
- use units,         ONLY:HA2EV
  use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
@@ -33,15 +32,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use vec_operate,   ONLY:v_norm
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
- use X_m,           ONLY:X_t,Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
+ use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
-&                        BSS_n_freqs,BSS_q0,Co_factor,diam_term_exact,BSS_Wd
+&                        BSS_n_freqs,Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PP_redux_wait,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_IND_Xk_ibz,PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
+&                        PAR_Xk_bz_index,PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
 #if defined _PL

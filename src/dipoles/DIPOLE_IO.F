@@ -31,7 +31,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use DIPOLES,    ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_m,       ONLY:io_control,VERIFY,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                     OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_m, ONLY:master_cpu,PP_redux_wait,ncpu,PAR_K_scheme,myid
+ use parallel_m, ONLY:master_cpu,PP_redux_wait,PAR_K_scheme
  !
  implicit none
  !
@@ -44,7 +44,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Work space
  !
- logical           :: write_header,read_header,check,reading,writing,l_vnl(1)
+ logical           :: write_header,read_header,check,reading,writing
  integer           :: ID,ID_S,IO_ACTION,ik_mem,ik,i_sp_pol,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps

@@ -76,9 +76,6 @@ subroutine plot_cube()
    enddo
  enddo
  !
- write(ch,'(2i5)') 1,1 
- call msg(output_string,'',ch,INDENT=0,USE_TABS=.FALSE.)
- !
  ir = 0
  max_=maxval(v2plot)
  if (.not.l_norm_to_one) max_=1.

@@ -36,7 +36,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use com,            ONLY:msg,error,warning
  use stderr,         ONLY:intc,real2ch
  use IO_m,           ONLY:REP,DUMP,NONE
- use vec_operate,    ONLY:cross_product,c2a,define_b_and_DL_vol
+ use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi
 #if defined _SC

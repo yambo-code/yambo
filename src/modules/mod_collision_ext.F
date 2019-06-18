@@ -61,7 +61,7 @@ module collision_ext
  type COLLISIONS_element
    integer               :: I=0         ! State Index 
    integer               :: N=0         ! Linear Dimension
-   integer(LP), allocatable  :: table(:,:,:)
+   character,   allocatable  :: table(:,:,:)
    complex(SP), allocatable  :: v_c(:)       ! SEX and HF
    complex(SP), allocatable  :: v3_c(:,:,:)
    real(SP)   , allocatable  :: v_r(:)       ! GW NEQ collisions

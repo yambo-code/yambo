@@ -24,7 +24,7 @@
 subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  !
  use drivers,       ONLY:l_real_time,l_sc_magnetic
- use pars,          ONLY:SP,DP,cI,cONE
+ use pars,          ONLY:SP,DP,cONE
  use electrons,     ONLY:n_spinor
  use wave_func,     ONLY:wf_ng
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan

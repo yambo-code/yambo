@@ -238,7 +238,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip,FILL_the_groups)
  if (.not.FILL_the_groups) then
    !
    if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
-   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE hase zero dimension !')
+   if (sum(BS_nT_at_k)==0) call   error(' The whole BSE has zero dimension !')
    !
    if (.not.BSS_add_antiresonant.and.BS_not_const_eh_f.and..not.BS_K_coupling) then
      call warning('Fractional e/h occupations. Retarded BSEmode forced.')

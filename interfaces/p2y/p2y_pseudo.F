@@ -30,19 +30,14 @@ subroutine p2y_pseudo(k)
  !
  use pars,                  ONLY:SP,DP
  use com,                   ONLY:error
- use electrons,             ONLY:levels,n_bands,n_spin,n_spinor,n_sp_pol
  use R_lattice,             ONLY:bz_samp,ng_vec
  use D_lattice,             ONLY:n_atomic_species
  use wave_func,             ONLY:wf_nc_k, wf_ncx, wf_igk, wf_ng
- use X_m,                   ONLY:X_t
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
 &                                PP_nlcc_alloc,PP_nlcc_free
- use com,                   ONLY:msg,warning
- use LIVE_t,                ONLY:live_timing
  use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_CL,REP
- use interfaces,            ONLY:PARALLEL_index
- use read_pseudo_mod,       ONLY: readpp
+ use read_pseudo_mod,       ONLY:readpp
  !
  implicit none
  !

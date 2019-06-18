@@ -55,7 +55,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     RIM_anisotropy,RIM_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
- use parallel_m, ONLY:ncpu,CPU_str_reset
+ use parallel_m, ONLY:ncpu,CPU_str_reset,PARALLEL_host_name
  use com,        ONLY:isec,depth,secnm,previous_secmode,of,opened_of,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
@@ -172,6 +172,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call MEM_element_init(MEMs,N_MEM_max)
  call MEM_element_init(LARGE_MEMs,N_MEM_SAVE_max)
+ !
+ ! Node name
+ !
+ call PARALLEL_host_name( )
  !
  ! ZEROs 
  !

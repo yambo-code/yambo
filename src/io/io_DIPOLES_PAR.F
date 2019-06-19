@@ -166,7 +166,7 @@ integer function io_DIPOLES(Dip,ID)
  VAR_ID=3
  VAR_name='DIP_v'
  if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
- if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_P(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+ if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_v(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
  !
  ! GPL_EXCLUDE_START
  !

@@ -39,6 +39,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
+ ! qindx_C(ikbz,iqbz,1)=okbz
+ ! qindx_C(ikbz,iqbz,2)=iGo
+ !
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use stderr,         ONLY:gen_fmt
@@ -47,6 +50,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
+ use BS,             ONLY:BS_res_mode,BS_cpl_mode
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
@@ -82,7 +86,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  user_defined_qpts=.false.
  gamma_point_only=.false.
  !
- if (.not.bse_scattering ) bse_scattering =l_bse
+ if (.not.bse_scattering ) bse_scattering =l_bse .and. (index(BS_res_mode,'c')/=0.or.index(BS_cpl_mode,'c')/=0)
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)

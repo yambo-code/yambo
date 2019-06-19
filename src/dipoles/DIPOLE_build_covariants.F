@@ -75,7 +75,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
- call PARALLEL_WF_index(COMM=PAR_COM_NULL)
+ call PARALLEL_WF_index( )
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !

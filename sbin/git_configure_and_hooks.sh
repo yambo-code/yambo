@@ -91,15 +91,14 @@ if [ -f .check_configure ]; then
   echo "Regenerating configure after merge"
   cp configure configure_save
   autoconf configure.ac > configure
+  rm -fr autom4te.cache
   if [ \$(diff configure configure_save | head -c 5) ]; then
     echo "configure automatically updated after merge"
     rm configure_save
-    rm -fr autom4te.cache
     git add configure
     git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
   else
     rm configure_save
-    rm -fr autom4te.cache
     echo "configure did not need update after merge"
   fi
 fi

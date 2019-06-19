@@ -23,13 +23,16 @@
 !
 integer function io_QINDX(Xk,q,io_db)
  !
+ use pars,           ONLY:SP,IP
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt
  use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,write_is_on,         &
-&                         io_elemental,io_status,io_bulk,read_is_on,write_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB
+&                         io_elemental,io_status,read_is_on,write_is_on,io_header,&
+&                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB,        &
+&                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  type(bz_samp)::q,Xk
  integer      ::io_db
@@ -86,13 +89,13 @@ integer function io_QINDX(Xk,q,io_db)
      if (read_is_on(io_db)) then
        YAMBO_ALLOC(q%pt,(q%nibz,3))
      endif
-     call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q%pt))
-     call io_bulk(io_db,R2=q%pt)
+     call def_variable_bulk(io_db,"Qpts",10,shape(q%pt),SP)
+     call  io_variable_bulk(io_db,10,R2=q%pt)
    else
      if(.not.allocated(q_pt)) then
        YAMBO_ALLOC(q_pt,(nqibz,3))
-       call io_bulk(io_db,VAR="Qpts",VAR_SZ=shape(q_pt))
-       call io_bulk(io_db,R2=q_pt)
+       call def_variable_bulk(io_db,"Qpts",10,shape(q_pt),SP)
+       call  io_variable_bulk(io_db,10,R2=q_pt)
      endif
      io_QINDX=ioScatt
      goto 1
@@ -112,8 +115,8 @@ integer function io_QINDX(Xk,q,io_db)
    io_extension(io_db)='kindx'
    call io_fragment(io_db,i_fragment=1)
    !
-   call io_bulk(io_db,VAR="Qindx",VAR_SZ=shape(qindx_X))
-   call io_bulk(io_db,I3=qindx_X)
+   call def_variable_bulk(io_db,"Qindx",1,shape(qindx_X),IP+100)
+   call  io_variable_bulk(io_db,1,I3=qindx_X)
    !
    if (Xk_grid_is_uniform) then
      !
@@ -121,8 +124,8 @@ integer function io_QINDX(Xk,q,io_db)
      !
      io_extension(io_db)='kindx'
      call io_fragment(io_db,i_fragment=2)
-     call io_bulk(io_db,VAR="Sindx",VAR_SZ=shape(qindx_S))
-     call io_bulk(io_db,I3=qindx_S)
+     call def_variable_bulk(io_db,"Sindx",2,shape(qindx_S),IP+100)
+     call  io_variable_bulk(io_db,2,I3=qindx_S)
    endif
    if (bse_scattering) then
      !
@@ -130,8 +133,8 @@ integer function io_QINDX(Xk,q,io_db)
      !
      io_extension(io_db)='kindx'
      call io_fragment(io_db,i_fragment=3)
-     call io_bulk(io_db,VAR="Bindx",VAR_SZ=shape(qindx_B))
-     call io_bulk(io_db,I3=qindx_B)
+     call def_variable_bulk(io_db,"Bindx",3,shape(qindx_B),IP+100)
+     call  io_variable_bulk(io_db,3,I3=qindx_B)
    endif
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
      !
@@ -139,8 +142,8 @@ integer function io_QINDX(Xk,q,io_db)
      !
      io_extension(io_db)='kindx'
      call io_fragment(io_db,i_fragment=4)
-     call io_bulk(io_db,VAR="Cindx",VAR_SZ=shape(qindx_C))
-     call io_bulk(io_db,I3=qindx_C)
+     call def_variable_bulk(io_db,"Cindx",4,shape(qindx_C),IP+100)
+     call  io_variable_bulk(io_db,4,I3=qindx_C)
    endif
  endif
  !

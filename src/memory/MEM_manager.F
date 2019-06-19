@@ -38,7 +38,7 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  implicit none
  !
  character(*)         :: what
- integer,optional     :: Sz
+ integer(8),optional  :: Sz
  integer,optional     :: Kn
  character(*),optional:: REPORT
  ! 

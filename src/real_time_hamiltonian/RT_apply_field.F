@@ -46,7 +46,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: A_dot_J,E_dot_P,&
+ complex(SP) :: A_dot_J(2),E_dot_P(2),&
 &               ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
@@ -73,8 +73,9 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
      !         A*v accounts for the linear expansion of the gauge correction to the non local potential
      if (.not.l_velocity_gauge_corr) Jtot(1:3)= -DIP_v(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
-     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
-     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
+     A_dot_J(1)=sum(A_vec_pot(1:3)*      Jtot(1:3) )
+     A_dot_J(2)=sum(A_vec_pot(1:3)*conjg(Jtot(1:3)))
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J(1),SP)
    enddo
    !
    do i1=RT_bands(1),RT_bands(2)
@@ -89,9 +90,10 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
        !         A*v accounts for the linear expansion of the gauge correction to the non local potential
        if (.not.l_velocity_gauge_corr) Jtot(:)= -DIP_v(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
-       A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J)
-       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
+       A_dot_J(1)=sum(A_vec_pot(1:3)*      Jtot(1:3) )
+       A_dot_J(2)=sum(A_vec_pot(1:3)*conjg(Jtot(1:3)))
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-A_dot_J(1)
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-A_dot_J(2)
        !
      enddo
    enddo
@@ -107,8 +109,9 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
    do i1=RT_bands(1),RT_bands(2)
      POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
-     E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
-     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P,SP)
+     E_dot_P(1)=sum(E_vec_pot(1:3)*      POL(1:3) )
+     E_dot_P(2)=sum(E_vec_pot(1:3)*conjg(POL(1:3)))
+     H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P(1),SP)
      !
      if(l_update_SOC.and.n_spinor==2) then
        !
@@ -137,9 +140,10 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
        POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
-       E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
-       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      E_dot_P
-       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(E_dot_P)
+       E_dot_P(1)=sum(E_vec_pot(1:3)*      POL(1:3) )
+       E_dot_P(2)=sum(E_vec_pot(1:3)*conjg(POL(1:3)))
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-E_dot_P(1)
+       H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-E_dot_P(2)
        !
        if(l_update_SOC.and.n_spinor==2) then
          Jspinor(:,:,:)=DIP_P_spinor(:,:,:,i2,i1,PAR_Xk_ibz_index(ik))

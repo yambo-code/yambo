@@ -180,7 +180,7 @@ subroutine INIT_barriers()
  ! Non Uniform grids
  !===================
  if (.not.Xk_grid_is_uniform) then
-   on_runlevels='optics chi bse bss'
+   on_runlevels='optics chi bse bss negf'
    if (l_elph_corr) on_runlevels='optics chi bse bss el_ph_corr gw0'
    if (tddft_r_space.or.bse_sex.or.bse_bsfxc) BSK_mode='hartree'    
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_runlevels))

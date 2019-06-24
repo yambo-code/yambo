@@ -112,14 +112,12 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] Quasiparticle Dephasing applied')
    !
-   do ib_1=RT_bands(1),RT_bands(2)
-     do ib_2=ib_1+1,RT_bands(2)
-       !
-       do ik=1,nXkibz
+   do ik=1,nXkibz
+     do ib_1=RT_bands(1),E%nbm
+       do ib_2=E%nbf+1,RT_bands(2)
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     
-       !
      enddo
    enddo
    !

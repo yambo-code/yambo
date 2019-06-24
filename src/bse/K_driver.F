@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,warning
- use stderr,         ONLY:STRING_remove
+ use stderr,         ONLY:STRING_remove,intc
  use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_nbands,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
@@ -112,22 +112,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
  !
- ! GPL_EXCLUDE_END
- !
- ! W RL size setup looking at the max index of G-G' 
- ! =========
- !
- if (.not.l_rpa_IP) then
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
-   if (BS_n_g_W/= Max_G_m_G ) then
-     BS_n_g_W= Max_G_m_G
-     call warning (' W size reduced due to symmetry constraints')
-     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
-   endif
- endif
- !
- ! GPL_EXCLUDE_START  
- !
  if (l_bs_fxc) then
    !==========
    !
@@ -182,6 +166,18 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
+ !
+ ! W RL size setup looking at the max index of G-G' 
+ ! ==================================================
+ if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
+   if (BS_n_g_W> Max_G_m_G ) then
+     call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
+     BS_n_g_W= Max_G_m_G
+     call msg('s','[BSE-W] W size forced by symmetry to be :',BS_n_g_W)
+   endif
+ endif
+ !
  !
  ! PARALLEL SETUP
  !================

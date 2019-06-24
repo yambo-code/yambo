@@ -61,13 +61,14 @@ subroutine WF_apply_symm(isc,WF_symm)
    return
  endif
  !
- if(n_spinor==1) then
- !
+ if (n_spinor==1) then
+   !
 !$omp parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=WF%c(fft_rot_r(ifft,isc(3)),1,i_wf)
    enddo
 !$omp end parallel do
+   !
  endif
  !
  if (n_spinor==2) then
@@ -96,20 +97,26 @@ subroutine WF_apply_symm(isc,WF_symm)
    enddo
 !$omp end parallel do
  endif
+ !
+ ! ELSE on if defined OPENMP
+ !
 #else
+ !
  if(isc(3)==idt_index) then
    WF_symm(:,1)=WF%c(:,1,i_wf)
    if(n_spinor==2) WF_symm(:,2)=WF%c(:,2,i_wf)
    return
  endif
- if(n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),1,i_wf)
+ if (n_spinor==1) WF_symm(:,1)=WF%c(fft_rot_r(:,isc(3)),1,i_wf)
  if (n_spinor==2) then
    WF_symm(:,1)=spin_sop(1,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
 &                    spin_sop(1,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
    WF_symm(:,2)=spin_sop(2,1,isc(3))*WF%c(fft_rot_r(:,isc(3)),1,i_wf)+ &
 &                    spin_sop(2,2,isc(3))*WF%c(fft_rot_r(:,isc(3)),2,i_wf)
  endif
+ !
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
+ !
 #endif
  !
 end subroutine

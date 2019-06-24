@@ -23,11 +23,11 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,lchlen
+ use pars,          ONLY:schlen,lchlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
  use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,io_elemental, &
-&                        io_bulk,io_disconnect,&
+&                        io_variable_bulk,def_variable_bulk,io_disconnect,&
 &                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use xc_functionals,ONLY:GS_xc_kind
@@ -188,8 +188,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    if (read_is_on(ID).and..not.allocated(COLL%state)) then
      YAMBO_ALLOC(COLL%state,(COLL%N,4))
    endif
-   call io_bulk(ID,VAR='COLLISIONS_STATE',VAR_SZ=(/COLL%N,4/))
-   call io_bulk(ID,I2=COLL%state)
+   call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP+100)
+   call  io_variable_bulk(ID,1,I2=COLL%state)
    !
    io_COLLISIONS=io_status(ID)
    if (io_COLLISIONS/=0) goto 1
@@ -221,8 +221,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    call io_fragment(ID,i_fragment=i_coll)
    !
-   call io_bulk(ID,VAR='N_COLLISIONS_STATES',VAR_SZ=(/1/))
-   call io_bulk(ID,I0=COLL_element%N)
+   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100)
+   call  io_variable_bulk(ID,1,I0=COLL_element%N)
    !
  endif
  !
@@ -232,23 +232,23 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_coll)
    !
-   call io_bulk(ID,VAR='COLLISIONS_TABLE',&
-&                    VAR_SZ=(/COLL%D(1,2)-COLL%D(1,1)+1,&
+   call def_variable_bulk(ID,'COLLISIONS_TABLE',1,&
+&                           (/COLL%D(1,2)-COLL%D(1,1)+1,&
 &                             COLL%D(2,2)-COLL%D(2,1)+1,&
-&                             COLL%D(3,2)-COLL%D(3,1)+1/))
+&                             COLL%D(3,2)-COLL%D(3,1)+1/),0)
    !
-   call io_bulk(ID,L3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
-&                                        COLL%D(2,1):COLL%D(2,2),&
-&                                        COLL%D(3,1):COLL%D(3,2)))
+   call  io_variable_bulk(ID,1,CH3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
+&                                                    COLL%D(2,1):COLL%D(2,2),&
+&                                                    COLL%D(3,1):COLL%D(3,2)))
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/COLL_element%N/))
-     call io_bulk(ID,R1=COLL_element%v_r)
+     call def_variable_bulk(ID,'COLLISIONS_v',1,(/COLL_element%N/),SP)
+     call  io_variable_bulk(ID,1,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     call io_bulk(ID,VAR='COLLISIONS_v',VAR_SZ=(/2,COLL_element%N/))
-     call io_bulk(ID,C1=COLL_element%v_c)
+     call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N/),SP)
+     call  io_variable_bulk(ID,1,C1=COLL_element%v_c)
    endif
    !
  endif

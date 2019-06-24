@@ -128,7 +128,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim')
+ if (l_setup) call initactivate(1,'MaxGvecs IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -158,6 +158,9 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
+#if defined _NL || defined _ELECTRIC
+ if (l_dipoles) call initactivate(1,'EvPolarization')
+#endif
  !
  if (l_optics.and.l_chi) then
    !
@@ -250,7 +253,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
    !
-#if defined _NL | defined _ELECTRIC
+#if defined _NL || defined _ELECTRIC
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !

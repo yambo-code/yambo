@@ -29,7 +29,7 @@ subroutine electrons_density(Xk,Xen)
  use electrons,      ONLY:levels
  use FFT_m,          ONLY:fft_size
  use YPP,            ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
-&                         use_gnuplot,use_cube,plot_title
+&                         use_gnuplot,use_cube,plot_title,l_norm_to_one
  use com,            ONLY:msg,of_open_close
  use interfaces,     ONLY:el_density_and_current
  !
@@ -47,6 +47,7 @@ subroutine electrons_density(Xk,Xen)
  !
  call el_density_and_current(Xen,Xk,rho=el_den) 
  v2plot=el_den
+ l_norm_to_one=.false.
  !
  ch_ws='density_'//trim(intc(plot_dim))
  if (use_cube)     output_fname=trim(ch_ws)//'d.cube'

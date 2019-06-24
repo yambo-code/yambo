@@ -60,8 +60,8 @@ module RT_control
  !
  complex(SP), allocatable    :: J_cache(:,:)
  complex(SP), allocatable    :: P_cache(:,:)
- complex(SP), allocatable    :: Ms_cache(:,:)
- complex(SP), allocatable    :: Ml_cache(:,:)
+ complex(SP), allocatable    :: Ms_cache(:,:,:)
+ complex(SP), allocatable    :: Ml_cache(:,:,:)
  !
  ! TD-ABS and RT-BSE [yambo]
  !
@@ -126,9 +126,9 @@ module RT_control
        YAMBO_ALLOC(P_cache,(3,IO_OBS_cache_steps))
        P_cache=cZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ms_cache,(3,3,IO_OBS_cache_steps))
          Ms_cache=cZERO
-         YAMBO_ALLOC(Ml_cache,(3,IO_OBS_cache_steps))
+         YAMBO_ALLOC(Ml_cache,(3,2,IO_OBS_cache_steps))
          Ml_cache=cZERO
        endif
        !

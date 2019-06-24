@@ -90,7 +90,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
    !
    call A_vecpot_reset(A_null)
    !
-   call RT_current_AND_polarization(k,E,G_inp,A_null)
+   call RT_current_AND_polarization(k,E,G_inp,A_null,(/0.,0.,0./))
    !
    ! OPTION 1: "velocity gauge"
    !

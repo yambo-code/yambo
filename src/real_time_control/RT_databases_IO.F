@@ -27,7 +27,7 @@ subroutine RT_databases_IO(E)
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:RT_do_it,ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,IO_OBS_cache_steps
- use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_magn
+ use real_time,      ONLY:NE_i_time,l_NE_dynamics,RT_nk,NE_i_time,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn
  use IO_m,           ONLY:io_control,OP_WR,WR_CL,WR_CL_IF_END,NONE,WR,OP_WR_CL, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END
@@ -58,8 +58,8 @@ subroutine RT_databases_IO(E)
    J_cache(1:3,i_time)=RT_ind_J
    P_cache(1:3,i_time)=RT_P
    if(n_spin>1) then
-     Ms_cache(1:3,i_time)= RT_magn(:,1) 
-     Ml_cache(1:3,i_time)= RT_magn(:,2) 
+     Ms_cache(1:3,1:3,i_time)= RT_spin_magn
+     Ml_cache(1:3,1:2,i_time)= RT_orbt_magn
    endif
    !
  endif

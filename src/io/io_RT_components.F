@@ -64,6 +64,7 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: k_range(2),local_COMM
 #endif
+ real(SP)              :: time_now
  integer               :: nbands,ik,i_spin,i_memory,i_time,db_type
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_track_history,l_JP,l_M,l_D,par_IO
  !
@@ -127,7 +128,8 @@ integer function io_RT_components(what,ID)
  if (l_carriers) l_track_history=io_sec(ID,1)> 1
  if (l_G)        l_track_history=io_sec(ID,1)> 1 .and. SAVE_G_history
  !
- if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string( (NE_i_time-1)*RT_step))
+ time_now=real(NE_i_time-1,SP)*RT_step
+ if (l_track_history) db_name=trim(db_name)//"_Time_"//trim(TIME_string(time_now))
  !
 #if defined _PAR_IO
  if(l_G.and.io_sec(ID,1)> 1) then
@@ -378,19 +380,19 @@ integer function io_RT_components(what,ID)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    if (l_JP) then
-     call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,VAR="Current_TIME"//trim(TIME_string(time_now)),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
      call io_bulk(ID,C2=J_cache)
      !
-     call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,VAR="Polarization_TIME"//trim(TIME_string(time_now)),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
      call io_bulk(ID,C2=P_cache)
    endif
    !
    if(n_spin>1.and.l_M) then
-     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
-     call io_bulk(ID,C2=Ms_cache)
+     call io_bulk(ID,VAR="Spin_Magnetization_TIME"//trim(TIME_string(time_now)),VAR_SZ=(/2,3,3,IO_OBS_cache_steps/))
+     call io_bulk(ID,C3=Ms_cache)
      !
-     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string( (NE_i_time-1)*RT_step )),VAR_SZ=(/2,3,IO_OBS_cache_steps/))
-     call io_bulk(ID,C2=Ml_cache)
+     call io_bulk(ID,VAR="Orbital_Magnetization_TIME"//trim(TIME_string(time_now)),VAR_SZ=(/2,3,2,IO_OBS_cache_steps/))
+     call io_bulk(ID,C3=Ml_cache)
    endif
    !
  endif       

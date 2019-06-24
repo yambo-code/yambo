@@ -54,11 +54,12 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  call timing('RT observables',OPR='start')
  !
- ! Current, Polarization and Magnetization
- !==========================================
+ ! Current, Polarization and Magnetization, Carriers
+ !===================================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
- call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
+ call RT_carriers_number(en,k,NCarr)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  if (.not. RT_do_it('OUT') ) then
    call timing('RT observables',OPR='stop')
@@ -67,9 +68,9 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! GPL_EXCLUDE_START
  !
- ! Carriers
- !==========
- call RT_carriers_number_and_temperature(en,k,NCarr,TFit,EfFit)
+ ! Temperature
+ !=============
+ call RT_temperature(TFit,EfFit)
  !
  ! Energy
  !========

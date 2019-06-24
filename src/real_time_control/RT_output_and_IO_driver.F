@@ -56,7 +56,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    ! GPL_EXCLUDE_START
    !
-   call RT_output(what="open carr magn")
+   call RT_output(what="open carr spin orbt")
    if(eval_energy)  call RT_output(what="open energy")
    if(eval_entropy) call RT_output(what="open therm")
    if(l_RT_update_Energies)  call RT_output(what="open BGR")
@@ -104,7 +104,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Energetics and BGR
    !====================
    !
-   call RT_output('magn',TIME=NE_time*AUT2FS)
+   call RT_output('spin orbt',TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)

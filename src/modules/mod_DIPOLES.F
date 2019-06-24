@@ -49,7 +49,7 @@ module DIPOLES
  complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
- complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_spin(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
@@ -115,7 +115,7 @@ module DIPOLES
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,3))
          DIP_spin=cZERO
        case('DIP_P_spinor')
          if (allocated(DIP_P_spinor).or.n_spinor==1) return

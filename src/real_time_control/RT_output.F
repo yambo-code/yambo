@@ -36,7 +36,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings
  use RT_control,     ONLY:RT_do_it,RT_description,n_RT_descriptions
- use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_magn,l_lftm_fit_temperatures, &
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_mean_lifetimes,RT_spin_magn,RT_orbt_magn,l_lftm_fit_temperatures, &
 &                         EE_prefactor,EP_prefactor,EP_abs_prefactor,RAD_prefactor,    &
 &                         RT_Tfit_lifetimes
  use timing_m,       ONLY:timing
@@ -148,7 +148,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      do i_desc=1,n_RT_descriptions
        call msg('o '//trim(RT_o_file_short(i_f)),'#',trim(RT_description(i_desc)),INDENT=0)
      enddo
-     if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
+     if (n_spin>1.and.trim(RT_o_file_short(i_f))=="spin_magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
        dumb_ch="Equilibrium spin      magnetization is "//&
 &             trim(real2ch(Spin_magn(1)))//", "//trim(real2ch(Spin_magn(2)))//", "//trim(real2ch(Spin_magn(3)))//". "
@@ -187,10 +187,13 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
     !
-     case('magnetization')
-       data_to_dump(2: 4) = real(RT_magn(:,1))
-       data_to_dump(5: 7) = real(RT_magn(:,2))
-       data_to_dump(8:10) = real(RT_magn(:,3))
+     case('spin_magnetization')
+       data_to_dump(2: 4) = real(RT_spin_magn(:,1))
+       data_to_dump(5: 7) = real(RT_spin_magn(:,2))
+       data_to_dump(8:10) = real(RT_spin_magn(:,3))
+     case('orbt_magnetization')
+       data_to_dump(2: 4) = real(RT_orbt_magn(:,1))
+       data_to_dump(5: 7) = real(RT_orbt_magn(:,2))
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

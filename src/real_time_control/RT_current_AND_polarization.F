@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current_AND_polarization(k,E,G_input,A_input)
+subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  ! Evalute current and polarization.
  ! The current includes the diamagnetic contribution only in the velocity gauge.
@@ -41,7 +41,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use D_lattice,      ONLY:DL_vol
  use electrons,      ONLY:nel,levels,n_spin,Spin_magn,Orbital_magn,Itinerant_magn
  use real_time,      ONLY:l_NE_dynamics,RT_ind_J,RT_ind_J_prev,RT_bands,&
-&                         RT_P,RT_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time,&
+&                         RT_P,RT_spin_magn,RT_orbt_magn,RT_P_prev,RT_nk,G_lesser_reference,NE_i_time,&
 &                         RT_dyn_step,l_P_integrating_J,l_velocity_gauge_diam,integrator_step
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
@@ -55,6 +55,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
  type(gauge_field), intent(in) :: A_input
+ real(SP),          intent(in) :: Ncarr(3)
  !
  ! Work Space
  !
@@ -111,12 +112,24 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
    ! C : Spin magnetization
    !
-   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,1)=RT_M_tmp
+   RT_spin_magn(:,1)=RT_M_tmp
+   !
+   if(Ncarr(2)>0._SP) then
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,2),&
+     &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+     RT_spin_magn(:,2)=RT_M_tmp/Ncarr(2)
+   endif
+   !
+   if(Ncarr(3)>0._SP) then
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,3),&
+     &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+     RT_spin_magn(:,3)=RT_M_tmp/Ncarr(3)
+   endif
    !
    if(NE_i_time==1) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin,&
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
@@ -125,7 +138,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,1)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
@@ -135,7 +148,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_magn(:,3)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&

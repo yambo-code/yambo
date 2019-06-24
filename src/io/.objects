@@ -27,7 +27,7 @@ ELPH_objects = io_ELPH.o io_ELPH_old.o
 PARIO_objects =
 SERIO_objects = io_BS.o
 #if defined _PAR_IO
-PARIO_objects = io_BS_PAR.o io_DIPOLES_PAR.o io_Overlaps.o
+PARIO_objects = io_BS_PAR.o io_DIPOLES_PAR.o io_Overlaps_PAR.o
 #else
 SERIO_objects = io_BS.o     io_DIPOLES.o     io_Overlaps.o
 #endif

@@ -69,8 +69,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  write_header  =(     master_cpu.and.writing)
  read_header   =(.not.master_cpu.and.writing).or.reading.or.check
 #endif
- write_header_ovlp  = (     master_cpu.and.writing)                     .and.use_covariant_approach
- read_header_ovlp   =((.not.master_cpu.and.writing).or.reading.or.check).and.use_covariant_approach
+ write_header_ovlp  =write_header.and.use_covariant_approach
+ read_header_ovlp   = read_header.and.use_covariant_approach
  !
  if(write_header) then
    call msg('s','[DIP] Writing dipoles header ')
@@ -121,6 +121,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 #endif
  !
  if(use_covariant_approach) then
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/0/),ID=ID)
+   io_err=io_Overlaps(Dip,ID_S)
+#endif
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
@@ -129,6 +133,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        io_err=io_err+io_Overlaps(Dip,ID_S)
      enddo
    enddo
+#if defined _PAR_IO
+   call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/2+n_sp_pol*Xk%nbz/),ID=ID)
+   io_err=io_Overlaps(Dip,ID_S)
+#endif
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)

@@ -299,7 +299,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
         !
         if (l_real_time_magn_dipoles) then
           call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           if (n_spinor==2) &
 &           call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         endif
@@ -333,7 +333,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
             if (l_real_time_magn_dipoles) then
               DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-              DIP_spin(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
+              DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP)
               if(n_spinor==2) &
 &               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
             endif
@@ -356,7 +356,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
               if (l_real_time_magn_dipoles) then
                 DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
-                DIP_spin(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol,:))
+                DIP_spin(:,iv,ic,ik_mem,i_sp_pol,1)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol,1))
                 if (n_spinor==2) &
 &                 DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
               endif

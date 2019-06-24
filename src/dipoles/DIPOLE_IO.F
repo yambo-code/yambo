@@ -115,6 +115,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
+ if(reading) call project_spin(Dip)
  !
  contains
  !
@@ -176,6 +177,23 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
    if( dir==-1) Dip%v_eff=.false.
    if( dir==+1) Dip%v_eff=.true.
+   !
+ end subroutine
+ !
+ subroutine project_spin(Dip)
+   use DIPOLES,   ONLY:DIP_spin
+   type(DIPOLE_t),  intent(in) :: Dip
+   !
+   do iv=Dip%ib(1),Dip%ib_lim(1) 
+     do ic=Dip%ib_lim(2),Dip%ib(2)
+       !
+       if ( iv<=Xen%nbf.and.ic<=Xen%nbf ) &
+       & DIP_spin(:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
+       if ( iv> Xen%nbf.and.ic> Xen%nbf ) &
+       & DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+       !
+     enddo
+   enddo
    !
  end subroutine
  !

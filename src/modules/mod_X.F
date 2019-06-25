@@ -124,6 +124,7 @@ module X_m
    real(SP)   :: ppaE
    complex(SP):: Wd
    logical          :: Vnl_included
+   logical          :: is_symm
    character(2)     :: ordering
    character(schlen):: f_xc
  end type
@@ -179,6 +180,7 @@ module X_m
      Xo%ngostnts     =Xi%ngostnts
      Xo%ordering     =Xi%ordering
      Xo%Vnl_included =Xi%Vnl_included
+     Xo%is_symm      =Xi%is_symm
      Xo%ehe          =Xi%ehe
      Xo%q0           =Xi%q0
      Xo%cg_percentual=Xi%cg_percentual
@@ -197,6 +199,7 @@ module X_m
      X%ngostnts     =0
      X%whoami       =0
      X%Vnl_included =.false.
+     X%is_symm      =.true.
      if (present(type)) X%whoami=type
      X%ehe          =(/-1._SP,-1._SP/)/HA2EV
      X%q0           =(/1._SP,0._SP,0._SP/)

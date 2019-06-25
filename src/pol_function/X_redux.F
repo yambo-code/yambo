@@ -35,11 +35,12 @@ subroutine X_redux(iq,X_par,Xw,X)
  ! SER/SLK -> PAR/SER interface
  !
  use pars,          ONLY:SP,pi,cZERO,cONE
+ use com,           ONLY:error
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
- use R_lattice,     ONLY:bare_qpg,q_norm
+ use R_lattice,     ONLY:bare_qpg,q_norm,q_pt
  use frequency,     ONLY:w_samp
  use linear_algebra,ONLY:INV,SVD_INV,LIN_SYS,MAT_MUL
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
@@ -48,6 +49,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+ use environ_m,     ONLY:l_environ
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -63,6 +65,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  integer          ::ig1,ig2,iw_par,iw,iw_X(1),INV_MODE,i_LA_pool,&
 &                   PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%n_CPU)
  type(PAR_matrix) ::KERNEL,Xo,BUFFER,K_FXC
+ type(PAR_matrix) ::v_environ, work
  !
  ! Setup 
  !
@@ -92,11 +95,24 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_init( "SLK", BUFFER , X%ng, max(PAR_n_freqs,1) )
  YAMBO_ALLOC(BUFFER%blc,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
  BUFFER%blc=cZERO
+ !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
    K_FXC%blc=cZERO
    call MATRIX_transfer(M=-FXC(:,:,1),M_out=K_FXC)
+ endif
+ !
+ if (l_environ) then
+   call MATRIX_init( "SLK", v_environ , X%ng, 1 )
+   YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
+   v_environ%blc=cZERO
+   call MATRIX_init( "SLK", work , X%ng, 1 )
+   YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
+   work%blc=cZERO
+   !
+   call environ_vpot_init(q_pt(iq,:),v_environ)
+   !
  endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)
@@ -155,7 +171,9 @@ subroutine X_redux(iq,X_par,Xw,X)
    else if (l_lrc_fxc) then
      !
      ! LRC Fxc
-     ! DS : notive that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
+     ! DS : notice that here I've redefined the 1/q^2 kernel for the cases where the cutoff is used
+     !
+     if (l_environ) call error(' [environ not implemented]')
      !
      if (Xo%cols(1)==1) then
        !$omp parallel do default(shared), private(ig1)
@@ -182,14 +200,32 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
-   !$omp parallel do default(shared), private(ig1,ig2)
-   do ig1=Xo%rows(1),Xo%rows(2)
+   if (l_environ) then
+     !
+     ! work = Xo * v_environ
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=Xo,B_slk=v_environ,C_slk=work)
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
      do ig2=Xo%cols(1),Xo%cols(2)
-       KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-       if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       do ig1=Xo%rows(1),Xo%rows(2)
+         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-work%blc(ig1,ig2,1)
+         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       enddo
      enddo
-   enddo
-   !$omp end parallel do
+     !$omp end parallel do
+     !
+   else
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
+     do ig2=Xo%cols(1),Xo%cols(2)
+       do ig1=Xo%rows(1),Xo%rows(2)
+         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+       enddo
+     enddo
+     !$omp end parallel do
+     !
+   endif
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
@@ -200,7 +236,7 @@ subroutine X_redux(iq,X_par,Xw,X)
      BUFFER%blc(:,:,BUFFER%I)=Xo%blc(:,:,1)
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
      !
-  else
+   else
      !
      ! Matrix Inversion + Matmul
      !
@@ -209,13 +245,23 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    endif
    !
-   !$omp parallel do default(shared), private(ig1,ig2)
-   do ig1=Xo%rows(1),Xo%rows(2)
+   if (l_environ) then
+     !
+     ! Note: X * v is not symmetrized here (a flag is present in io_X)
+     ! BUFFER = X * v_environ
+     call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=BUFFER)
+     !
+   else
+     !
+     !$omp parallel do default(shared), private(ig1,ig2)
      do ig2=Xo%cols(1),Xo%cols(2)
-       BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+       do ig1=Xo%rows(1),Xo%rows(2)
+         BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+       enddo
      enddo
-   enddo
-   !$omp end parallel do
+     !$omp end parallel do
+     !
+   endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
    !
@@ -229,6 +275,14 @@ subroutine X_redux(iq,X_par,Xw,X)
  YAMBO_FREE(Xo%blc)
  call MATRIX_reset(KERNEL)
  call MATRIX_reset(Xo)
+ !
+ if (l_environ) then
+   YAMBO_FREE(v_environ%blc)
+   YAMBO_FREE(work%blc)
+   call MATRIX_reset(v_environ)
+   call MATRIX_reset(work)
+ endif
+ !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
    YAMBO_FREE(K_FXC%blc)
    call MATRIX_reset(K_FXC)

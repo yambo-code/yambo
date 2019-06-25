@@ -26,6 +26,8 @@ module environ_m
  use pars,      ONLY:SP
 #include<memory.h>
  !
+ logical  :: l_environ
+ !
  integer  :: nr1,nr2,nr3
  integer  :: ng_env
  complex(SP), allocatable :: epsm1_g(:)

@@ -49,6 +49,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        X_setup_headers
  use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,WF_free
  use matrix,        ONLY:MATRIX_reset
+ use IO_m,          ONLY:io_control,OP_RD_CL,REP
+ use environ_m,     ONLY:l_environ
  !
 #include<memory.h>
  !
@@ -60,11 +62,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq,i_G_shift,n_output
+ integer          :: iw,iq,i_G_shift,n_output,ID,i_err
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,eval_eels,Macroscopic_CPU
  !
- integer,external :: O_select_q_and_G
+ integer,external :: O_select_q_and_G,io_ENVIRON_pwscf
  !
  call section('*','Optics')
  !
@@ -94,6 +96,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
+   !
+   ! ENVIRON
+   !
+   l_environ=.false.
+   if (.not.l_rpa_IP) then
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+     i_err=io_ENVIRON_pwscf(ID)
+     l_environ=(i_err==0)
+   endif
    !
    ! TDDFT setup
    !

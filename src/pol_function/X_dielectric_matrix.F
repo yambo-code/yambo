@@ -48,6 +48,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
 &                        PARALLEL_WF_index,WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
+ use environ_m,     ONLY:l_environ
  !
 #include<memory.h>
  !
@@ -60,21 +61,32 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,APPEND_NO_VERIFY)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ integer              :: iq,Xdb,ID,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X,X_eh_setup
+ integer, external    :: io_X,X_eh_setup,io_ENVIRON_pwscf
  character(1)         :: sec_mode
  !
  ! logicals and control
  !
  self_detect_E_range=.false.
+ X%ngostnts=Dip%ng
+ !
+ ! TERMINATORS
  !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  endif
  !
- X%ngostnts=Dip%ng
+ ! ENVIRON
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID)
+ i_err=io_ENVIRON_pwscf(ID)
+ l_environ=(i_err==0)
+ !
+ ! v X is not symmetrized on output
+ X%is_symm=.not.l_environ     
+ !
  !
  ! TDDFT SETUP (-1 argument)
  !

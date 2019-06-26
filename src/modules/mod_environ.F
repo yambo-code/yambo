@@ -30,7 +30,7 @@ module environ_m
  !
  integer  :: nr1,nr2,nr3
  integer  :: ng_env
- complex(SP), allocatable :: epsm1_g(:)
+ complex(SP), allocatable :: eps_env_g(:)
  !
 contains
  !
@@ -38,11 +38,11 @@ contains
    implicit none 
    integer :: ng_env_
    ng_env=ng_env_
-   YAMBO_ALLOC(epsm1_g,(ng_env))
+   YAMBO_ALLOC(eps_env_g,(ng_env))
  end subroutine environ_alloc
  !
  subroutine environ_free() 
-   YAMBO_FREE(epsm1_g)
+   YAMBO_FREE(eps_env_g)
  end subroutine environ_free
  !
 end module environ_m

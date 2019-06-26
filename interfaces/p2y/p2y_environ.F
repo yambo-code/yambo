@@ -33,7 +33,7 @@ subroutine p2y_environ(filename)
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
- use environ_m,      ONLY:nr1,nr2,nr3,ng_env,epsm1_g,environ_alloc,environ_free
+ use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_g,environ_alloc,environ_free
  use cube_m,         ONLY:cube_read
  !
 #include<memory.h>
@@ -53,7 +53,7 @@ subroutine p2y_environ(filename)
  ! Allocs
  !
  real(SP),    allocatable :: eps(:)
- complex(DP), allocatable :: epsm1_fft(:)
+ complex(DP), allocatable :: eps_fft(:)
 #if defined _FFTQE
  integer, external :: fft_setmap
 #endif
@@ -106,7 +106,7 @@ subroutine p2y_environ(filename)
  ! (b) get PCM epsilon(r)
  !
  YAMBO_ALLOC(eps,(fft_size))
- YAMBO_ALLOC(epsm1_fft,(fft_size))
+ YAMBO_ALLOC(eps_fft,(fft_size))
  call environ_alloc(ng_vec)
  !
  call cube_read(filename,dat=eps,orig=r0,IERR=io_err)
@@ -118,28 +118,28 @@ subroutine p2y_environ(filename)
  ! (c) compute eps^-1 in reciprocal space
  !
  do ir = 1, fft_size
-   epsm1_fft(ir)=cmplx(1.0_SP/eps(ir),0.0_SP,kind=DP)
+   eps_fft(ir)=cmplx(eps(ir),0.0_SP,kind=DP)
  enddo
  !
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
  fftw_plan = 0
- call fft_3d(epsm1_fft,fft_dim,-1,fftw_plan)
+ call fft_3d(eps_fft,fft_dim,-1,fftw_plan)
 #else
- call fft_3d(epsm1_fft,fft_dim,-1)
+ call fft_3d(eps_fft,fft_dim,-1)
 #endif
  !
- epsm1_fft=epsm1_fft/real(fft_size,DP)
+ eps_fft=eps_fft/real(fft_size,DP)
  !
  do ig = 1, ng_vec
-   epsm1_g(ig)= cmplx(epsm1_fft(fft_g_table(ig,1)),kind=SP)
+   eps_env_g(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
  enddo
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
  io_err=io_ENVIRON_pwscf(ID)
  !
  YAMBO_FREE(eps)
- YAMBO_FREE(epsm1_fft)
+ YAMBO_FREE(eps_fft)
  !
  call environ_free()
  !

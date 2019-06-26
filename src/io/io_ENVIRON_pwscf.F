@@ -28,7 +28,7 @@ integer function io_ENVIRON_pwscf(ID)
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
 &                           io_elemental,io_bulk,io_header,&
 &                           read_is_on
- use environ_m,        ONLY:nr1,nr2,nr3,ng_env,epsm1_g,environ_alloc
+ use environ_m,        ONLY:nr1,nr2,nr3,ng_env,eps_env_g,environ_alloc
  !
  implicit none
  !
@@ -58,9 +58,10 @@ integer function io_ENVIRON_pwscf(ID)
  !
  if (read_is_on(ID)) call environ_alloc(ng_env)
  !
- call io_bulk(ID,VAR="EPS_M1_GSPACE",VAR_SZ=(/2,ng_env/))
- call io_bulk(ID,C1=epsm1_g)
+ call io_bulk(ID,VAR="EPS_ENV_GSPACE",VAR_SZ=(/2,ng_env/))
+ call io_bulk(ID,C1=eps_env_g)
  !
 1 call io_disconnect(ID=ID)
  !
 end function io_ENVIRON_pwscf
+

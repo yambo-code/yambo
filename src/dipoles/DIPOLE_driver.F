@@ -298,7 +298,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
         !
         if (l_real_time_magn_dipoles) then
-          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           if (n_spinor==2) &
 &           call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)

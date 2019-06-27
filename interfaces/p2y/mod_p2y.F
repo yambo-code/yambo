@@ -76,7 +76,8 @@ contains
       call msg('s','detected QE data format: ',trim(dftdata_fmt))
       !
    case default
-      call errore("p2y_init"," Unable to find valid QE DFT data",1)
+      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
       
    !

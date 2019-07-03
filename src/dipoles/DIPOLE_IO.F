@@ -63,11 +63,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ID=0
  ID_S=0
 #if defined _PAR_IO
- write_header  =      PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- read_header   =(.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing).or.reading.or.check
+ write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
+ read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
 #else
- write_header  =(     master_cpu.and.writing)
- read_header   =(.not.master_cpu.and.writing).or.reading.or.check
+ write_header  =(      master_cpu.and.writing )
+ read_header   =(.not.(master_cpu.and.writing)).or.reading.or.check
 #endif
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach

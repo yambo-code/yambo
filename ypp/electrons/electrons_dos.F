@@ -69,7 +69,7 @@ subroutine electrons_dos(Xk,Xen)
  call parser('Proj_DOS',l_pdos)
  !
  call QP_state_table_setup(Xen)
- call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='s')
+ call QP_apply(DOS_bands,Xen,Xk,'G',msg_fmt='rs')
  !
  ! Setup
  !=======

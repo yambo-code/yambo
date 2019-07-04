@@ -153,7 +153,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !----------
    ! QP corrections
    if (i_T==1) call QP_state_table_setup(RT_E)
-   call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='s')
+   call QP_apply(RT_bands,RT_E,RT_k,'G',msg_fmt='rs')
    !
    if(.not.l_skip_occ) then
      if(.not.l_sum_equilibrium) call RT_carriers_to_RT_E(En,RT_E,"df")

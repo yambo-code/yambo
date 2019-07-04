@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): CA, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -36,6 +36,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
+ use LIVE_t,            ONLY:live_timing
  use com,               ONLY:error
  !
 #include<memory.h>
@@ -50,12 +51,16 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  real(DP),    allocatable :: rho(:)
  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
- complex(DP), allocatable :: star_1(:,:),star_2(:,:)
+ complex(DP), allocatable :: star_1(:,:)
  real(DP)  :: R2_min,R2
  real(DP), parameter :: twopi=2._SP*pi
  real(SP)  :: v(3),star_vec(3,nsym)
  integer   :: ik,ik2,iv,i1,i2,nstar,Nkm1,info,ikn
  integer, allocatable :: ipiv(:)
+ !
+ ! External
+ !
+ complex(DP) :: ZDOTC,ZDOTU
  !
  Nkm1=Nk-1           ! number of k-points minus 1 in the BZ
  ikn =Nk             ! last k-point index
@@ -64,7 +69,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  YAMBO_ALLOC(rho,(nshells))
  YAMBO_ALLOC(h_mat,(Nkm1,Nkm1))
  YAMBO_ALLOC(star_1,(nshells,Nk))
- YAMBO_ALLOC(star_2,(nshells,Nkm1))
  YAMBO_ALLOC(ipiv,(Nkm1))
  !
  ! Construct delta_epsilon eq. 10
@@ -85,7 +89,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  h_mat =cZERO
  star_1=cZERO
- star_2=cZERO
+ !
+ call live_timing("Definition of star_1",nshells-1)
  !
  do i1=2,nshells
    call make_star(lattice_vectors(:,i1),nsym,int_sop,nstar,star_vec) 
@@ -98,22 +103,29 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
        star_1(i1,ik)=star_1(i1,ik) + exp(cI*twopi*dot_product(v(:),star_vec(:,i2)))
      enddo
    enddo
+   call live_timing(steps=1)
    star_1(i1,:)=star_1(i1,:)/real(nstar)
  enddo
+ call live_timing()
  !
  do ik=1,Nkm1
    star_1(2:nshells,ik) = star_1(2:nshells,ik) - star_1(2:nshells,Nk)
+   star_1(2:nshells,ik) = star_1(2:nshells,ik) / sqrt(rho(2:nshells))
  enddo
  !
+ call live_timing("Computing h_mat",(Nkm1*(Nkm1-1))/2)
  do ik=1,Nkm1
-   star_2(2:nshells,ik)=conjg(star_1(2:nshells,ik))/rho(2:nshells)
- enddo
- !
- do ik=1,Nkm1
-   do ik2=ik,Nkm1
-     h_mat(ik,ik2)=sum(star_1(2:nshells,ik)*star_2(2:nshells,ik2))
+   h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
+   do ik2=ik+1,Nkm1
+     h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
      h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
+     call live_timing(steps=1)
    enddo
+ enddo
+ call live_timing()
+ !
+ do ik=1,Nkm1
+   star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))
  enddo
  !
 #if defined _DOUBLE
@@ -134,19 +146,20 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  engre=cZERO
  !
- forall(i1=2:nshells,iv=1:nvalues)
-   engre(i1,iv)=sum(delta(1:Nkm1,iv)*star_2(i1,1:Nkm1))
- end forall
+ do i1=2,nshells
+   do iv=1,nvalues
+     engre(i1,iv)= ZDOTC(Nkm1,star_1(i1,1:Nkm1)/rho(i1),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
+   enddo
+ enddo
  !
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,ikn) - sum(engre(2:nshells,iv)*star_1(2:nshells,Nk))
+   engre(1,iv)=VALUEs(iv,ikn) - ZDOTU(nshells-1,engre(2:nshells,iv),1,star_1(2:nshells,Nk),1)
  enddo
  !
  ! Deallocation
  !
  YAMBO_FREE(h_mat)
  YAMBO_FREE(star_1)
- YAMBO_FREE(star_2)
  YAMBO_FREE(ipiv)
  YAMBO_FREE(delta)
  YAMBO_FREE(rho)

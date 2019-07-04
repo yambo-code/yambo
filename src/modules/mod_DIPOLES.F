@@ -185,13 +185,12 @@ module DIPOLES
    end subroutine DIPOLES_duplicate
    !
    subroutine DIPOLES_reset(Dip) 
-     use electrons, ONLY:n_bands
      type(DIPOLE_t)::Dip
      Dip%iq=(/1,1/)
-     Dip%ib=(/1,n_bands/)
-     Dip%ib_lim=(/0,0/)
-     Dip%db_ib=(/0,0/)
-     Dip%db_ib_lim=(/0,0/)
+     Dip%ib=(/1,-1/)
+     Dip%ib_lim=(/1,-1/)
+     Dip%db_ib=(/1,-1/)
+     Dip%db_ib_lim=(/1,-1/)
      Dip%ng=0
      Dip%ehe=(/-1._SP,-1._SP/)/HA2EV
      Dip%q0=(/1._SP,0._SP,0._SP/)

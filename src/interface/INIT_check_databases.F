@@ -117,6 +117,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! proposed in the input file.
  !
  X(3)%ib=(/1,en%nb/)
+ Dip%ib= (/1,en%nb/)
  !
  ! gops
  !

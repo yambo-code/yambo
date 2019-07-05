@@ -39,6 +39,7 @@ subroutine RT_Dephasing_Matrix(E)
  !
  integer :: ik,ib_1,ib_2,i1
  real(SP), parameter   :: tresh=1.E-5_SP
+ real(SP), parameter   :: deg_tresh=1.E-3_SP
  !
  ! %DephMatrix fields
  !
@@ -63,8 +64,14 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] External scalar Radiative Scattering lifetime applied')
    !
-   do ib_1=RT_bands(1),RT_bands(2)
-     RT_Deph_Matrix(ib_1,ib_1,:)=1._SP/RAD_LifeTime
+   do ik=1,nXkibz
+     do ib_1=RT_bands(1),RT_bands(2)
+       do ib_2=ib_1,RT_bands(2)
+         if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))>=deg_tresh ) cycle
+         RT_Deph_Matrix(ib_1,ib_2,ik)=1._SP/RAD_LifeTime
+         RT_Deph_Matrix(ib_2,ib_1,ik)=1._SP/RAD_LifeTime
+       enddo
+     enddo
    enddo
    !
  endif
@@ -79,10 +86,13 @@ subroutine RT_Dephasing_Matrix(E)
    !
    call msg('rs','[RT] External scalar Dephasing applied')
    !
-   do ib_1=RT_bands(1),RT_bands(2)
-     do ib_2=ib_1+1,RT_bands(2)
-       RT_Deph_Matrix(ib_1,ib_2,:)=1._SP/Phase_LifeTime
-       RT_Deph_Matrix(ib_2,ib_1,:)=1._SP/Phase_LifeTime
+   do ik=1,nXkibz
+     do ib_1=RT_bands(1),RT_bands(2)
+       do ib_2=ib_1+1,RT_bands(2)
+         if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
+         RT_Deph_Matrix(ib_1,ib_2,ik)=1._SP/Phase_LifeTime
+         RT_Deph_Matrix(ib_2,ib_1,ik)=1._SP/Phase_LifeTime
+       enddo
      enddo
    enddo
    !
@@ -96,6 +106,7 @@ subroutine RT_Dephasing_Matrix(E)
      ib_1=int(RT_INPUT_Deph_limits(i1,1))
      ib_2=int(RT_INPUT_Deph_limits(i1,2))
      ik=int(RT_INPUT_Deph_limits(i1,3))
+     if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
      if(any((/ib_1,ib_2/)>RT_bands(2)).or.any((/ib_1,ib_2/)<RT_bands(1))) &
 &                             call error("DephMatrix indexes out of the range! Wrong band assignment") 
      if(ik<=0.or.ik>nXkibz)   call error("DephMatrix indexes out of the range! Wrong kpoint assignment") 
@@ -115,6 +126,7 @@ subroutine RT_Dephasing_Matrix(E)
    do ik=1,nXkibz
      do ib_1=RT_bands(1),E%nbm
        do ib_2=E%nbf+1,RT_bands(2)
+         if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<deg_tresh ) cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     

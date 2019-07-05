@@ -26,13 +26,14 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! Reads and returns wf_disk for both spins
   !
   use netcdf
-  use netcdf_data,             only : NETCDF_kind,netcdf_check
+  use netcdf_data,           only : NETCDF_kind,netcdf_check
   use pars,                  only : SP,cZERO
   use vec_operate,           only : sort
   use com,                   only : msg, error
   use electrons,             only : n_bands, n_sp_pol, n_spinor
   use R_lattice,             only : nkibz
   use wave_func,             only : wf_ncx,wf_nc_k, wf_igk,wf_nb_io,wf_nb_io_groups
+  use mod_com2y,             only : artificial_spin_pol
   !
   implicit none
   !
@@ -43,23 +44,26 @@ subroutine a2y_wf(wf_disk,i_sp_pol,ikibz,ib_grp, ncid)
   ! 
   ! Work Space
   !
-  integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal
+  integer        :: ib, ierr, npwk, ik, ig, ic, i_spinor, ireal, i_sp_pol_abinit
   integer        :: start(6), count(6), ncvarid
   integer        :: wf_igk_indx(wf_nc_k(ikibz))
-  integer        :: wf_igk_save(wf_nc_k(ikibz))
+  integer        :: wf_igk_tmp(wf_nc_k(ikibz))
   integer        :: varid, netcdf_error
   !
   allocate(wavefunction_section_(2, wf_ncx, n_spinor, n_bands) )
   !
-  start = [1,1,1,1,ikibz,i_sp_pol]
+  i_sp_pol_abinit=i_sp_pol
+  if(artificial_spin_pol) i_sp_pol_abinit=1
+  !
+  start = [1,1,1,1,ikibz,i_sp_pol_abinit]
   count = [2,wf_ncx,n_spinor,n_bands,1,1]
   !
   netcdf_error = nf90_inq_varid(ncid, "coefficients_of_wavefunctions", varid)
   netcdf_error = nf90_get_var(ncid, varid, wavefunction_section_, start, count)
   !
   if(NETCDF_kind=='WFK') then
-    wf_igk_save = wf_igk(:wf_nc_k(ikibz),ikibz)
-    call sort(wf_igk_save,indx=wf_igk_indx)
+    wf_igk_tmp = wf_igk(:wf_nc_k(ikibz),ikibz)
+    call sort(wf_igk_tmp,indx=wf_igk_indx)
   else
     wf_igk_indx = wf_igk(:wf_nc_k(ikibz),ikibz)
   endif

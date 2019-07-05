@@ -27,7 +27,6 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  ! in PRB 69, 085106 (2004)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
- use drivers,        ONLY:l_nl_optics
  use LIVE_t,         ONLY:live_timing
  use interfaces,     ONLY:WF_load,PARALLEL_WF_distribute,WF_free,PARALLEL_WF_index
  use wave_func,      ONLY:WF
@@ -37,8 +36,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use vec_operate,    ONLY:k_periodic_idx
  use matrix_operate, ONLY:hermitian
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                         PAR_DIPk_nbz,PP_redux_wait,PAR_IND_OVLPk_ibz,&
-&                         PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,&
+&                         PAR_DIPk_nbz,PAR_IND_OVLPk_ibz,&
 &                         PAR_IND_CON_BANDS_DIP, PAR_IND_VAL_BANDS_DIP,&
 &                         PAR_COM_DIPk_ibz_INDEX,PAR_COM_NULL
  use com,            ONLY:error,warning,msg
@@ -77,7 +75,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call PARALLEL_WF_distribute(K_index=PAR_IND_OVLPk_ibz,CLEAN_UP=.TRUE.)
  !
- call PARALLEL_WF_index(COMM=PAR_COM_NULL)
+ call PARALLEL_WF_index( )
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space')
  !

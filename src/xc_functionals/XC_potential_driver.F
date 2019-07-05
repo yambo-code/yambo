@@ -104,12 +104,14 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  endif
  !
  if (local_exx_screening.gt.rZERO) then
-   if (present(EXX_FRACTION)) EXX_SCREENING = local_exx_screening 
+   if (present(EXX_SCREENING)) EXX_SCREENING = local_exx_screening 
      if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
        call msg('rsn','[xc] Hybrid functional. EXX GAUPBE parameter: ',EXX_SCREENING)
       else
        call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
      endif
+   if (present(EXX_SCREENING)) EXX_SCREENING = local_exx_screening 
+   call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
  endif
  !
 #if defined _RT

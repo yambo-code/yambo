@@ -45,22 +45,23 @@ package-ready-stamp: uncompress-stamp configure-stamp
 	#
 	touch package-ready-stamp
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) install ) ; fi
-	#
-	chmod u+x $(LIBPATH)/lib/*etsf*.a
-	cp $(LIBPATH)/include/*/* $(LIBPATH)/include
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
 
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
 	
-
+define install
+ cd $(PACKAGE);  $(make) install; chmod u+x $(LIBPATH)/lib/*etsf*.a;  cp $(LIBPATH)/include/*/* $(LIBPATH)/include
+endef    

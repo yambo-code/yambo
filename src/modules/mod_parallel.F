@@ -54,19 +54,26 @@ module parallel_m
  !    - return the maximum and the location 
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
+ !
 #include<memory.h>
  !
 #if defined _MPI
  include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
- integer            :: mpi_comm_null =0
+ integer, parameter :: mpi_comm_null =0
 #endif
  !
  integer            :: myid
  integer            :: ncpu
- integer            :: n_nodes  = 1
- integer            :: n_MPI    = 1
+ integer            :: n_nodes(1)  = 1
+ integer            :: n_IO_nodes  = 1
+ integer            :: n_MPI       = 1
+ !
+ ! Node name
+ !
+ character(lchlen)  :: host_name
+ integer            :: host_name_length
  !
  ! This should be removed and mpi_comm_null used everywhere
  !
@@ -86,9 +93,9 @@ module parallel_m
  !
  ! Communicators
  !
- integer            :: n_groups                =0     ! groups of active chains
+ integer            :: n_groups                =0          ! groups of active chains
  integer            :: nchains_group(2*MAX_N_GROUPS)=0     ! chains limits in the group
- integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1  ! #CPUs in each chain
+ integer            :: ncpu_chain(MAX_N_OF_CHAINS)=1       ! #CPUs in each chain
  !
  ! MPI intra-groups Communicators
  !
@@ -440,7 +447,6 @@ module parallel_m
 &                   i81share,                                        &
 &                   r0share,r1share,r2share,r3share,                 &
 &                   c0share,c1share,c2share,c3share,c4share,c5share, &
-&                   ch0share,                                        &
 #if ! defined _DOUBLE
                     d0share,d1share,d2share,d3share,                 &
 #endif
@@ -670,7 +676,7 @@ module parallel_m
    end subroutine
    !
    subroutine i1share(array,imode,COMM)
-     integer(4):: array(:)
+     integer:: array(:)
      integer, optional :: imode,COMM
 #if defined _MPI
      integer ::omode,LOCAL_COMM
@@ -787,29 +793,6 @@ module parallel_m
      call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine ch0share(chval,COMM)
-     character(lchlen) :: chval
-     integer, optional :: COMM
-#if defined _MPI
-     integer          :: LOCAL_COMM   ! Work Space
-     character(lchlen):: local_chval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     local_chval=' '
-     call mpi_allreduce(chval,local_chval,lchlen,MPI_CHARACTER,mpi_sum,LOCAL_COMM,i_err)
-     chval=local_chval
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine
@@ -1441,6 +1424,21 @@ module parallel_m
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
      if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
      !
+#endif
+   end subroutine
+   !
+   subroutine PARALLEL_host_name
+#if defined _MPI
+     character(MPI_MAX_PROCESSOR_NAME) :: machine_name
+     integer :: i_err
+     if (ncpu>1) then
+       call MPI_GET_PROCESSOR_NAME(machine_name,host_name_length,i_err)
+       host_name=machine_name
+     else
+       call igethname(host_name,host_name_length)
+     endif
+#else
+     call igethname(host_name,host_name_length)
 #endif
    end subroutine
    !

@@ -37,6 +37,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
  use LIVE_t,            ONLY:live_timing
+ use interfaces,        ONLY:PARALLEL_index
+ use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid
  use com,               ONLY:error
  !
 #include<memory.h>
@@ -49,14 +51,21 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
  !
  ! Work Space
  !
+ type(PP_indexes)  :: px
+ real(DP)          :: R2_min,R2
+ real(SP)          :: v(3),star_vec(3,nsym)
+ integer           :: ik,ik2,ik_prod,iv,i1,i2,nstar,Nkm1,info,ikn,Npx(1)
+ !
+ ! Parameters
+ !
+ real(DP), parameter :: twopi=2._SP*pi
+ !
+ ! Allocatable
+ !
  real(DP),    allocatable :: rho(:)
  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
  complex(DP), allocatable :: star_1(:,:)
- real(DP)  :: R2_min,R2
- real(DP), parameter :: twopi=2._SP*pi
- real(SP)  :: v(3),star_vec(3,nsym)
- integer   :: ik,ik2,iv,i1,i2,nstar,Nkm1,info,ikn
- integer, allocatable :: ipiv(:)
+ integer,     allocatable :: ipiv(:)
  !
  ! External
  !
@@ -113,16 +122,29 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID_obj)
    star_1(2:nshells,ik) = star_1(2:nshells,ik) / sqrt(rho(2:nshells))
  enddo
  !
- call live_timing("Computing h_mat",(Nkm1*(Nkm1-1))/2)
+ ! Par Proc
+ !
+ Npx=(Nkm1*(Nkm1+1))/2
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,Npx)
+ !
+ call live_timing("Computing h_mat",px%n_of_elements(myid+1))
+ !
  do ik=1,Nkm1
-   h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
-   do ik2=ik+1,Nkm1
-     h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
-     h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
+   do ik2=ik,Nkm1
+     ik_prod=ik2-ik+1+(ik-1)*(Nkm1-ik+2)
+     if (.not.px%element_1D(ik_prod)) cycle
+     if(ik2==ik) h_mat(ik,ik)=real(ZDOTC(nshells-1,star_1(2:nshells,ik),1,star_1(2:nshells,ik),1),DP)
+     if(ik2/=ik) then
+       h_mat(ik,ik2)=ZDOTC(nshells-1,star_1(2:nshells,ik2),1,star_1(2:nshells,ik),1)
+       h_mat(ik2,ik)=conjg(h_mat(ik,ik2))
+     endif
      call live_timing(steps=1)
    enddo
  enddo
  call live_timing()
+ !
+ call PP_redux_wait(h_mat)
  !
  do ik=1,Nkm1
    star_1(2:nshells,ik) = star_1(2:nshells,ik) * sqrt(rho(2:nshells))

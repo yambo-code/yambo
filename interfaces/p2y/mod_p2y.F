@@ -868,12 +868,15 @@ contains
 &                         exx_is_active=pw_exx_is_active, exxdiv_treatment=pw_exxdiv_treatment,ierr=ierr)
       if (ierr==0) then
          if (pw_exx_is_active) then
-           if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+           if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+           &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
              if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR) then 
-                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') call error('PBE0 allowed only with vcut_ws/spherical divergence treatment')
+                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call error('PBE0 allowed only with vcut_ws/spherical divergence treatment')
              endif
              if(GS_xc_FUNCTIONAL==0) then 
-                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') call error('HF allowed only with vcut_ws/spherical divergence treatment')
+                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call error('HF allowed only with vcut_ws/spherical divergence treatment')
              endif
              GS_exx_FRACTION = pw_exx_fraction
              GS_exx_SCREENING= pw_screening_parameter
@@ -900,15 +903,18 @@ contains
       !
       if (pw_exx_is_active) then
          !
-         if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
-           call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
-&                            screening_parameter=pw_screening_parameter, exxdiv_treatment=pw_exxdiv_treatment, ierr=ierr)
+         if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+         &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+           call qexsd_read_exx(exx_fraction=pw_exx_fraction,screening_parameter=pw_screening_parameter,&
+           &                   exxdiv_treatment=pw_exxdiv_treatment, ierr=ierr)
            if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
            if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR) then 
-             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') call error('PBE0 allowed only with vcut_ws/spherical divergence treatment')
+             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+             &  call error('PBE0 allowed only with vcut_ws/spherical divergence treatment')
            endif
            if(GS_xc_FUNCTIONAL==0) then
-             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') call error('HF allowed only with vcut_ws/spherical divergence treatment')
+             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+             &  call error('HF allowed only with vcut_ws/spherical divergence treatment')
            endif
            GS_exx_FRACTION = pw_exx_fraction
            GS_exx_SCREENING= pw_screening_parameter

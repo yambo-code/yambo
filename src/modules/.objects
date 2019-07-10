@@ -22,11 +22,11 @@ KERR_objects = mod_KERR.o
 #if defined _PL 
 PL_objects = mod_PHOTOLUM.o
 #endif
-CUDA_objects = mod_cuda.o
+DEV_objects = mod_cusolverDn.o mod_cuda.o mod_dev_util.o
 ELPH_objects = mod_ELPH.o mod_ELPH_old.o
 objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_matrix.o mod_SLK.o  \
        mod_linear_algebra.o mod_wrapper.o mod_wrapper_omp.o mod_drivers.o mod_FFT.o\
-       mod_LIVE_t.o  mod_logo.o mod_cutoff_ws.o mod_dev_util.o \
+       mod_LIVE_t.o  mod_logo.o mod_cutoff_ws.o \
        mod_com.o mod_timing.o mod_R_lattice.o mod_electrons.o mod_wave_func.o \
        mod_xc_functionals.o mod_global_XC.o \
        mod_matrix_operate.o mod_D_lattice.o mod_frequency.o \
@@ -36,4 +36,4 @@ objs = mod_pars.o mod_units.o mod_stderr.o mod_memory.o mod_openmp.o mod_paralle
        mod_BS.o mod_BS_solvers.o mod_QP_CTL.o mod_TDDFT.o mod_ACFDT.o $(KERR_objects) \
        mod_pointers.o mod_IO.o $(ELPH_objects) mod_X_output.o mod_POL_FIT.o \
        mod_real_time.o mod_hamiltonian.o $(COMMON_objects) $(SC_objects) $(RT_objects) $(MAGNETIC_objects) $(NL_objects) $(ELECTRIC_objects) \
-       mod_debug.o mod_interfaces.o mod_interpolate_tools.o mod_interpolate.o SET_logicals.o SET_defaults.o $(PL_objects) $(CUDA_objects)
+       mod_debug.o mod_interfaces.o mod_interpolate_tools.o mod_interpolate.o SET_logicals.o SET_defaults.o $(PL_objects) $(DEV_objects)

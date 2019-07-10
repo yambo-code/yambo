@@ -106,16 +106,16 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', '* THREADS TOT(max):',n_max_threads*ncpu)
  call msg('r', '* I/O NODES       :',n_nodes)
 #ifdef _CUDA
- call msg('r', '* CUDA support    :',"yes")
- call msg('r', '* CUDA devices    :',have_cuda_devices)
- call msg('r', '* CUDA visible dev:',trim(cuda_visible_devices))
+ call msg('r', '* CUDA support    : ',"yes")
+ call msg('r', '* CUDA devices    : ',have_cuda_devices)
+ call msg('r', '* CUDA visible dev: ',trim(cuda_visible_devices))
 #endif
 
  !
  ! I/O and more
  !===============
  !
- call msg('rn','* Fragmented WFs  :',frag_WF)
+ call msg('rn','* Fragmented WFs  : ',frag_WF)
  call msg('r','CORE databases in   ',trim(core_io_path))
  call msg('r','Additional I/O in   ',trim(more_io_path))
  call msg('r','Communications in   ',trim(com_path))

@@ -24,10 +24,7 @@
 module linear_algebra
  !
  use pars,       ONLY:SP,schlen
-#ifdef _CUDA
- use cudafor
- use cusolverDn
-#endif
+ use cuda_m
 #include<memory.h>
  !
  integer, parameter :: USE_LK=1

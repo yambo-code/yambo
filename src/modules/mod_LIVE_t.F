@@ -89,28 +89,27 @@ module LIVE_t
    end subroutine
    !
    character(lchlen) function date_and_time_string(dt_in,dt_out,skip_host)
+     use parallel_m,  ONLY:host_name,host_name_length
      integer,optional    ::dt_in(6),dt_out(6)
      logical,optional    ::skip_host
      integer      :: dz(8)
      character(5) :: cz
      character(8) :: cd
      character(10):: ctz
-     character(lchlen) :: host_name
-     integer           :: hn_len
      !
      if (present(dt_in)) then
        dz(:6)=dt_in
      else
        call date_and_time(cd,ctz,cz,dz)
      endif
-     call igethname(host_name,hn_len)
+     !
      if (present(skip_host)) then
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
 &             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6)
      else
        write (date_and_time_string,'(2(i2.2,a),i4.4,a,2(i2.2,a),3a)') &
 &             dz(2),'/',dz(3),'/',dz(1),' at ',dz(5),':',dz(6),' ',&
-&             trim(what_is_running),' @ ',host_name(:hn_len)
+&             trim(what_is_running),' @ ',host_name(:host_name_length)
      endif
      if (present(dt_out)) dt_out=dz(:6)
    end function
@@ -207,8 +206,8 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,write_to_log
-     use parallel_m, ONLY : myid,ncpu
+     use stderr,     ONLY : c_print,logfile,write_to_log,intc
+     use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
      character(*),optional :: lfmt,rfmt,sfmt
@@ -246,6 +245,11 @@ module LIVE_t
      message_composed=trim(message)
      if (ncpu/=1.and.add_CPU_id.and.(index(lfmt_,"n")>0.or.index(lfmt_,"r")>0.)) then
        write (message_composed,'(a,i4.4,2a)') 'P',myid+1,': ',trim(message)
+       if (n_nodes(1)>1) then
+         message_composed='P'//trim(intc(myid+1))//"-"//trim(host_name)//": "//trim(message)
+       else
+         message_composed='P'//trim(intc(myid+1))//": "//trim(message)
+       endif
      endif
      add_cput=live_timing_is_on.and.master_thread
      if (present(CPU_TIME)) then

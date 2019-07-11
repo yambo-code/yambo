@@ -332,6 +332,8 @@ module interfaces
    subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
+     use wave_func,     ONLY:wf_ng
+     use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
@@ -342,6 +344,8 @@ module interfaces
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
+     use wave_func,     ONLY:wf_ng
+     use electrons,     ONLY:n_spinor,n_sp_pol
      implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
@@ -355,6 +359,8 @@ module interfaces
    !
    subroutine WF_apply_symm_cpu(isc,WF_symm)
      use pars,          ONLY:SP
+     use FFT_m,         ONLY:fft_size
+     use electrons,     ONLY:n_spinor
      implicit none
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
@@ -363,6 +369,8 @@ module interfaces
 #ifdef _CUDA
    subroutine WF_apply_symm_gpu(isc,WF_symm_d)
      use pars,          ONLY:SP
+     use FFT_m,         ONLY:fft_size
+     use electrons,     ONLY:n_spinor
      implicit none
      integer,             intent(in)  :: isc(4)
      complex(SP), device, intent(out) :: WF_symm_d(fft_size,n_spinor)

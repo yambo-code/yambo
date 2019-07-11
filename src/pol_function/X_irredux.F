@@ -419,6 +419,11 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !
      endif
      !
+#ifdef _CUDA
+     nullify(X_par_blc_d)
+     if (X_lower_triangle_matrix_in_use)  nullify(X_par_lowtri_blc_d)
+#endif
+     !
    enddo freq_loop
    !
    if (master_thread) call live_timing(steps=1)

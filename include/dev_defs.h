@@ -21,18 +21,22 @@
  Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
- 
-#define PASTE(a) a
-#define ADD_TRAIL_USCORE(a) PASTE(a)_
-#define CAT(a,b) ADD_TRAIL_USCORE(a)b
+
+
+#ifdef __STDC__
+#  define CAT(a,b) a##b 
+#else
+#  define PASTE(a) a
+#  define CAT(a,b) PASTE(a)b
+#endif
 
 #ifdef _CUDA
-#  define DEV_SUBNAME(x)        CAT(x,gpu)
-#  define DEV_SUBNAME_ALT(x)    CAT(x,gpu)
-#  define DEV_VARNAME(x)        CAT(x,d)
+#  define DEV_SUBNAME(x)        CAT(x,_gpu)
+#  define DEV_SUBNAME_ALT(x)    CAT(x,_gpu)
+#  define DEV_VARNAME(x)        CAT(x,_d)
 #else
 #  define DEV_SUBNAME(x)        x
-#  define DEV_SUBNAME_ALT(x)    CAT(x,cpu)
+#  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
 #  define DEV_VARNAME(x)        x
 #endif
 

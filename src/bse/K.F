@@ -354,11 +354,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    do iq_W=1,q%nibz
      !
      isc%qs(2)=iq_W
-#ifdef _CUDA
-     call scatter_Gamp_gpu(isc,'c')
-#else
-     call scatter_Gamp(isc,'c')
-#endif
+     call DEV_SUBNAME(scatter_Gamp)(isc,'c')
      !
      if (.not.l_td_hf) then
        !
@@ -408,11 +404,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        !
-#ifdef _CUDA
-       call dev_memcpy(BS_W(:,1,iq_W),isc%gamp_d(:,1),(/1,BS_n_g_W/))
-#else
-       BS_W(1:BS_n_g_W,1,iq_W)=isc%gamp(1:BS_n_g_W,1)
-#endif
+       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1),(/1,BS_n_g_W/))
        !
      endif
      ! 

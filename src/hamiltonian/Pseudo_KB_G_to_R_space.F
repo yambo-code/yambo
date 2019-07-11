@@ -23,21 +23,15 @@
 !
 subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
- use pars,          ONLY:SP,cZERO
- use drivers,       ONLY:l_sc_magnetic,l_real_time
+ use pars,          ONLY:SP
+ use drivers,       ONLY:l_sc_magnetic
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
- use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF,wf_ng
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use hamiltonian,   ONLY:H_ref_bands,Hzero
-#if defined _RT
- use real_time,     ONLY:Ho_plus_sigma
-#endif
- use interfaces,    ONLY:WF_load,WF_free
  use io_m,          ONLY:OP_WR,WR,WR_CL,RD,RD_CL,io_control
  use timing_m,      ONLY:timing
  !

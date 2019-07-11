@@ -287,7 +287,7 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
 #ifdef _CUDA
-   allocate(wf_igk_d, mold=wf_igk)
+   YAMBO_ALLOC(wf_igk_d,(wf_ncx,k%nibz))
 #endif
    !
    if (ver_is_gt_or_eq(ID,(/3,0,4/))) then 

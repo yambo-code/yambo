@@ -31,7 +31,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use electrons,         ONLY:n_spinor,n_sp_pol
  use wrapper,           ONLY:Vstar_dot_V
  use wave_func,         ONLY:wf_ng
- use IO_m,              ONLY:IO_and_Messaging_switch
+ use IO_m,              ONLY:IO_write
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
  use dev_util_m,        ONLY:dev_memcpy
@@ -53,14 +53,15 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 #ifdef _CUDA
  attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
 #endif
- logical           :: USE_shifted_wf
+ logical           :: USE_shifted_wf,IO_write_save
  !
  ! This is needed to construct grot for all wf_ngs.
  !
- call IO_and_messaging_switch("-io_out")
+ IO_write_save=IO_write
+ IO_write     =.FALSE.
  ng_closed=ng_vec
  call G_shells_finder()
- call IO_and_messaging_switch("+io_out")
+ IO_write     =IO_write_save
  !
  DIP_S=cZERO
  !

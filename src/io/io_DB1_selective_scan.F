@@ -83,7 +83,7 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a)
      YAMBO_FREE(wf_nc_k)
      YAMBO_FREE(wf_igk)
 #ifdef _CUDA
-     if(allocated(wf_igk_d)) deallocate(wf_igk_d)
+     YAMBO_FREE(wf_igk_d)
 #endif
    endif
    if (allocated(n_atoms_species)) then

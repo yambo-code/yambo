@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
+subroutine exciton_WFs(Xk,BS_E_degs)
  !
  use pars,          ONLY:SP,cZERO,cI,pi
  use R_lattice,     ONLY:bz_samp
@@ -33,10 +33,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  use electrons,     ONLY:spin,n_spinor
  use YPP,           ONLY:v2plot,ncell,r_hole,l_free_hole,&
 &                        nr,nr_tot,output_fname,&
-&                        use_xcrysden,use_gnuplot,use_cube,plot_dim
+&                        use_xcrysden,use_gnuplot,use_cube,plot_dim,&
+&                        EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BSS_eh_table,BS_mat,BSS_n_descs,BSS_description,&
 &                        BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_bands
+ use BS,            ONLY:BS_bands,BS_H_dim
  use interfaces,    ONLY:PARALLEL_index,WF_load,WF_free
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
@@ -47,7 +48,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
 #include<memory.h>
  !
  type(bz_samp)     :: Xk
- integer           :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda
+ integer           :: BS_E_degs(BSS_n_eig)
  ! 
  ! Workspace
  !
@@ -134,11 +135,11 @@ subroutine exciton_WFs(Xk,BS_E_degs,lambda_s,n_lambda)
  ! Loop on exc states
  !===================
  !
- call msg('s','Processing '//trim(intc(n_lambda))//' states')
+ call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
- do i_lambda=1,n_lambda
+ do i_lambda=1,EXCITONS_n_user_states
    !
-   j_lambda=lambda_s(i_lambda)
+   j_lambda=EXCITONS_user_indexes(i_lambda)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(j_lambda))
    !

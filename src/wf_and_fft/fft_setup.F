@@ -71,28 +71,22 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  mat(:,2)=scal(2)*mat(:,2)
  mat(:,3)=scal(3)*mat(:,3)
  !
- !allocate(g_vec_rot,mold=g_vec)
  allocate(g_vec_rot(size(g_vec,1),3))
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
 #ifdef _CUDA
- if(SIZE(g_vec_rot,2)>0) allocate(g_vec_rot_d, source=g_vec_rot)
+ allocate(g_vec_rot_d, source=g_vec_rot)
 #endif
  !
  if (.not.ONLY_SIZE) then
-   if (allocated(fft_g_table)) then
-     YAMBO_FREE(fft_g_table)
-   endif
+   YAMBO_FREE(fft_g_table)
    YAMBO_ALLOC(fft_g_table,(max(iG_max,wf_ng),iGo_max))
- endif
+   fft_g_table=0
 #ifdef _CUDA
-   if (.not.ONLY_SIZE) then
-     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
-     ! do we need to protect this allocation?
-     if (SIZE(fft_g_table,1)>0 .and. SIZE(fft_g_table,2)>0) then
-       allocate(fft_g_table_d,mold=fft_g_table)
-     endif 
-   endif
+   YAMBO_FREE(fft_g_table_d)
+   YAMBO_ALLOC(fft_g_table_d,(max(iG_max,wf_ng),iGo_max))
+   fft_g_table_d=0
 #endif
+ endif
  !
  ! SIZE estimation
  !
@@ -103,7 +97,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
  ln=-1
  i4=-1
- if (.not.ONLY_SIZE) fft_g_table=0
  do while(.true.)
    !
 #if defined _FFTQE
@@ -125,9 +118,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        iv_3 = nint(g_vec_rot_d(i1,3) - g_vec_rot_d(i2,3))
        !
        if (i2==1.or.i1<=iG_max) then
-            ln_1=max(ln_1,iv_1)
-            ln_2=max(ln_2,iv_2)
-            ln_3=max(ln_3,iv_3)
+         ln_1=max(ln_1,iv_1)
+         ln_2=max(ln_2,iv_2)
+         ln_3=max(ln_3,iv_3)
        endif
        !
        if (i4>0.and..not.ONLY_SIZE) then
@@ -142,9 +135,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
             fft_g_table_d(i1,i2)=1+temp_1+&
 &                                  temp_2*fft_dim_1+&
 &                                  temp_3*fft_dim_1*fft_dim_2
-
        endif
-
+       !
      enddo
    enddo
 
@@ -169,8 +161,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    !
 #ifdef _CUDA
    if (i4>0.and..not.ONLY_SIZE) then
-!     if (allocated(fft_g_table_d)) deallocate(fft_g_table_d)
-!     allocate(fft_g_table_d,source=fft_g_table)
      fft_g_table = fft_g_table_d
    endif
    ln(1) = ln_1
@@ -194,9 +184,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      cycle
    endif
    !
-   if (allocated(fft_rot_r)) then
-     YAMBO_FREE(fft_rot_r)
-   endif
+   YAMBO_FREE(fft_rot_r)
    YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
    !
    YAMBO_FREE(fft_rot_r_inv)
@@ -246,8 +234,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
    i4=1
 #if defined _CUDA
-   if (allocated(fft_rot_r_d)) deallocate(fft_rot_r_d)
-   if (allocated(fft_rot_r_inv_d)) deallocate(fft_rot_r_inv_d)
+   YAMBO_FREE(fft_rot_r_d)
+   YAMBO_FREE(fft_rot_r_inv_d)
    allocate(fft_rot_r_d,source=fft_rot_r)
    allocate(fft_rot_r_inv_d,source=fft_rot_r_inv)
 #endif
@@ -260,7 +248,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  cufft_plan=0
 #endif
  !
- if (allocated(g_vec_rot)) deallocate(g_vec_rot)
+ YAMBO_FREE(g_vec_rot)
  call timing("FFT_setup",opr="stop")
  !
  contains

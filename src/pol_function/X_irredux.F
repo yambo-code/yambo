@@ -200,9 +200,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !=================================
  !
 #if defined _CUDA
- n_threads_X=1
- call OPENMP_set_threads(n_threads_in=1, use_nested=.false.)
  n_threads_FFT=1
+ n_threads_X=1
+ call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
 #else
 #  if defined _OPENMP
 #    if defined _NESTING

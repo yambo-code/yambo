@@ -97,11 +97,11 @@ module collision_el
      YAMBO_FREE(ggw%WF_symm_o)
      ! 
 #if defined _CUDA
-     if(allocated(ggw%rhotw_d))     deallocate(ggw%rhotw_d)
-     if(allocated(ggw%gamp_d))      deallocate(ggw%gamp_d)
-     if(allocated(ggw%rho_tw_rs_d)) deallocate(ggw%rho_tw_rs_d)
-     if(allocated(ggw%WF_symm_i_d)) deallocate(ggw%WF_symm_i_d)
-     if(allocated(ggw%WF_symm_o_d)) deallocate(ggw%WF_symm_o_d)
+     YAMBO_FREE(ggw%gamp_d)
+     YAMBO_FREE(ggw%rhotw_d)
+     YAMBO_FREE(ggw%rho_tw_rs_d)
+     YAMBO_FREE(ggw%WF_symm_i_d)
+     YAMBO_FREE(ggw%WF_symm_o_d)
 #endif
      !
      ! USPP workspace
@@ -124,6 +124,8 @@ module collision_el
      logical,         OPTIONAL :: GRADIENT
      character(*),    OPTIONAL :: TITLE
      !
+     integer :: RHOSIZE
+     !
      if (present(TITLE)) then
        ggw%name=TITLE
      endif
@@ -133,21 +135,19 @@ module collision_el
        YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
        YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
 #if defined _CUDA
-       allocate(ggw%rho_tw_rs_d(fft_size))
-       allocate(ggw%WF_symm_i_d(fft_size,n_spinor))
-       allocate(ggw%WF_symm_o_d(fft_size,n_spinor))
+       YAMBO_ALLOC(ggw%rho_tw_rs_d,(fft_size))
+       YAMBO_ALLOC(ggw%WF_symm_i_d,(fft_size,n_spinor))
+       YAMBO_ALLOC(ggw%WF_symm_o_d,(fft_size,n_spinor))
 #endif
      endif
      !
      if (present(NG)) then
        if (NG>0) then
-         if (present(GRADIENT)) then
-           YAMBO_ALLOC(ggw%rhotw,(3*NG))
-         else
-           YAMBO_ALLOC(ggw%rhotw,(NG))
-         endif
+         if (     present(GRADIENT)) RHOSIZE=3*NG
+         if (.not.present(GRADIENT)) RHOSIZE=1*NG
+         YAMBO_ALLOC(ggw%rhotw,(RHOSIZE))
 #ifdef _CUDA
-         allocate(ggw%rhotw_d, mold=ggw%rhotw)
+         YAMBO_ALLOC(ggw%rhotw_d,(RHOSIZE))
 #endif
        endif
        ggw%ngrho=NG
@@ -156,7 +156,7 @@ module collision_el
        if (all((/NG_GAMP>0/))) then
          YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
 #ifdef _CUDA
-         allocate(ggw%gamp_d, mold=ggw%gamp)
+         YAMBO_ALLOC(ggw%gamp_d,(NG_GAMP(1),NG_GAMP(2)))
 #endif
        endif
      endif

@@ -93,8 +93,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),allocatable  :: Xo_res(:,:)
 #ifdef _CUDA
  complex(SP),allocatable, device :: Xo_res_d(:,:)
- complex(SP),pointer,     device :: X_par_blc_d(:,:,:)
- complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:,:)
+ complex(SP),pointer,     device :: X_par_blc_d(:,:)
+ complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_X_WORLD_n_CPU
 #endif
@@ -105,12 +105,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !===================
  GreenF                           = cZERO
  drude_GreenF                     = cZERO
- X_par%blc(:,:,:)                 = cZERO
- if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc(:,:,:) = cZERO
-#ifdef _CUDA
- X_par%blc_d(:,:,:)               = cZERO
- if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc_d(:,:,:) = cZERO
-#endif
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -259,7 +253,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
 #ifdef _CUDA
-     X_par%blc_d(1,1,:)=X_par%blc(1,1,:)
+     do iw=1,Xw%n_freqs
+       X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+     enddo
 #endif
      exit
    enddo
@@ -313,37 +309,40 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
-#ifdef _CUDA
-     X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
-     X_par_blc_d => X_par%blc_d
-     GreenF_iw=GreenF(iw)
-#endif
-     !
      X_rows1=X_par%rows(1)
      X_rows2=X_par%rows(2)
      X_cols1=X_par%cols(1)
      X_cols2=X_par%cols(2)
      !
-     !$cuf kernel do(2)
+#ifdef _CUDA
+     !
+     GreenF_iw=GreenF(iw)
+     X_par_blc_d => X_par%blc_d(:,:,iw)
+     if (X_lower_triangle_matrix_in_use)  X_par_lowtri_blc_d => X_par_lower_triangle%blc_d(:,:,iw)
+     !
+     !$cuf kernel do(2) <<<*,*>>>
+     do ig_col=X_cols1,X_cols2
+       do ig1=X_rows1,X_rows2
+         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col)=X_par_blc_d(ig1,ig_col)+GreenF_iw*Xo_res_d(ig1,ig_col)
+       enddo
+     enddo
+     !
+#else
+     !
      do ig_col=X_cols1,X_cols2
        !
-#if defined _OPENMP && ! defined _CUDA
+#  if defined _OPENMP
        if(n_threads_X>1) then
          call OPENMP_compute_mutex(ig_col,mutexid)
          call omp_set_lock(omp_locks(mutexid))
        endif
-#endif
+#  endif
        !
        ! ----    ----
        ! -xxx    -xxx
        ! ---- => ----
        ! ----    ----
        !
-#ifdef _CUDA
-       do ig1=X_rows1,X_rows2
-         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
-       enddo
-#else
        !
        X_rows1_l = X_rows1
        X_rows2_l = min(ig_col,X_rows2)
@@ -351,11 +350,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        !
        call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
        !
-#endif
-#if defined _OPENMP && !defined _CUDA
+#  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
-#endif
+#  endif
      end do
+     !
+#endif
      !
      if (.not.X_FILL_UP_matrix_only) then
 #ifdef _CUDA
@@ -377,18 +377,16 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
              if (PAR_COM_X_WORLD_n_CPU>1) then
-               !
-               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
+               X_par_lowtri_blc_d(ig_row_transp,ig1)=X_par_lowtri_blc_d(ig_row_transp,ig1) + &
 &                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
-               !
-               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+               X_par_blc_d(ig_row_transp,ig1)=X_par_blc_d(ig_row_transp,ig1)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              end if
            end if
-          !
          enddo
          !
 #else
+         !
          X_rows1_l = X_rows1
          X_rows2_l = min(ig_col-1,X_rows2)
          X_nrows = X_rows2_l-X_rows1_l+1
@@ -410,10 +408,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 &                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
-#endif
-#if defined _OPENMP && !defined _CUDA
+         !
+#  if defined _OPENMP
          if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
+#  endif
+         !
 #endif
+         !
        enddo
        !
      endif
@@ -466,18 +467,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
 #ifdef _CUDA
  X_par%blc=X_par%blc_d
- if (X_lower_triangle_matrix_in_use) then
-   X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
- endif
- if (allocated(X_par%blc_d)) deallocate(X_par%blc_d)
- if (allocated(X_par_lower_triangle%blc_d)) deallocate(X_par_lower_triangle%blc_d)
+ if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
+ YAMBO_FREE(X_par%blc_d)
+ YAMBO_FREE(X_par_lower_triangle%blc_d)
 #endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   if (X_lower_triangle_matrix_in_use) then
-     call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   endif
+   if (X_lower_triangle_matrix_in_use) call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  enddo
  !
  call timing('Xo (REDUX)',OPR='stop')

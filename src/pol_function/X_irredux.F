@@ -135,9 +135,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ngrho=X%ng
  if (l_X_terminator) ngrho=maxval(G_m_G)
  !
- if(.not.skip_WF_load) then
-    call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
- endif
+ if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
  call timing('Xo (procedure)',OPR='start')
  !
@@ -178,7 +176,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
- endif 
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -200,9 +198,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !=================================
  !
 #if defined _CUDA
- n_threads_X=1
- call OPENMP_set_threads(n_threads_in=1, use_nested=.false.)
  n_threads_FFT=1
+ n_threads_X=1
+ call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
 #else
 #  if defined _OPENMP
 #    if defined _NESTING

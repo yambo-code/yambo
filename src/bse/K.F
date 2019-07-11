@@ -74,6 +74,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
 #endif
  !
+#include<dev_defs.h>
 #include<memory.h>
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q

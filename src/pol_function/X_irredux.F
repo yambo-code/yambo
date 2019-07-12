@@ -70,9 +70,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
+ use cudafor
  !
 #include<dev_defs.h>
 #include<memory.h>
+! XXX
+integer :: ierr
  !
  type(PAR_matrix), target :: X_par
  type(levels)         :: Xen
@@ -251,21 +254,21 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- if (iq==1.and.master_thread) then
-   do i_cg = 1,coarse_grid_N
-     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
-     if(.not.Drude_pole) cycle
-     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
-     ctmp = DEV_VARNAME(Xo_res)(1,1)
-     !
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
-#ifdef _CUDA
-     X_par%blc_d(1,1,:)=X_par%blc(1,1,:)
-#endif
-     exit
-   enddo
- endif
+! if (iq==1.and.master_thread) then
+!   do i_cg = 1,coarse_grid_N
+!     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+!     if(.not.Drude_pole) cycle
+!     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+!     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
+!     ctmp = DEV_VARNAME(Xo_res)(1,1)
+!     !
+!     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+!#ifdef _CUDA
+!!!!     X_par%blc_d(1,1,:)=X_par%blc(1,1,:)
+!#endif
+!     exit
+!   enddo
+! endif
  !
  ! MAIN LOOP
  !===========
@@ -312,6 +315,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
+! XXX
+write(0,*)
    freq_loop:&
    do iw=1,Xw%n_freqs
      !
@@ -325,8 +330,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      X_rows2=X_par%rows(2)
      X_cols1=X_par%cols(1)
      X_cols2=X_par%cols(2)
+! XXX
+write(0,*) "X_rows, X_cols", X_rows1,X_rows2,X_cols1,X_cols2
+ierr = CudaDeviceSynchronize()
+ierr = cudaGetLastError()
+write(0,*) "before LOOP1 iw, ierr ", iw, ierr
      !
-     !$cuf kernel do(2)
+! XXXX     !$cuf kernel do(2)
      do ig_col=X_cols1,X_cols2
        !
 #if defined _OPENMP && ! defined _CUDA
@@ -341,10 +351,25 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        ! ---- => ----
        ! ----    ----
        !
+X_par_blc_d=0.0
+ierr = CudaDeviceSynchronize()
+ierr = cudaGetLastError()
+write(0,*) "X_par_blc_d  ierr", shape(X_par_blc_d), ierr
+!
+Xo_res_d=0.0
+ierr = CudaDeviceSynchronize()
+ierr = cudaGetLastError()
+write(0,*) "Xo_res_d  ierr", shape(Xo_res_d), ierr
+
 #ifdef _CUDA
+       !$cuf kernel do(1)
        do ig1=X_rows1,X_rows2
          if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
        enddo
+
+ierr = CudaDeviceSynchronize()
+ierr = cudaGetLastError()
+write(0,*) "LOOP1 ig_col, ierr ", ig_col, ierr
 #else
        !
        X_rows1_l = X_rows1
@@ -360,10 +385,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      end do
      !
      if (.not.X_FILL_UP_matrix_only) then
+! XXX
+WRITE(0,*) "inside .not.X_FILL_UP_matrix_only"
 #ifdef _CUDA
        PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
 #endif
-       !$cuf kernel do(2)
+!XXXX       !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
          !
 #if defined _OPENMP && ! defined _CUDA
@@ -375,20 +402,25 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          !
 #ifdef _CUDA
          !
+         !$cuf kernel do(1)
          do ig1=X_rows1,X_rows2
+           !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
+             !
              if (PAR_COM_X_WORLD_n_CPU>1) then
-               !
-               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
-&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) &
+&                                                      +GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
-               !
-               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             end if
-           end if
-          !
+               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw) &
+&                                               +GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             endif
+           endif
+           !
          enddo
+ierr = CudaDeviceSynchronize()
+ierr = cudaGetLastError()
+write(0,*) "LOOP2 ig_col, ierr ", ig_col, ierr
          !
 #else
          X_rows1_l = X_rows1

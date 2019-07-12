@@ -48,12 +48,11 @@ subroutine DEV_SUBNAME_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,
  ! Work space
  !
  integer :: id,ik,is
- complex(SP) :: WF_tmp(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
+ complex(SP) DEV_ATTRIBUTE :: WF_tmp(wf_ng,n_spinor,b_to_shift(1):b_to_shift(2),n_sp_pol)
  integer           :: ig,igp,iG0,ng_max
  integer           :: g0_idx(3,2)
  real(SP)          :: g0_length(3)
 #ifdef _CUDA
- attributes(device) :: WF_tmp
  integer :: i_spinor,i_b,i_sp_pol
  integer :: g0_idx_val
 #endif

@@ -70,12 +70,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
- use cudafor
  !
 #include<dev_defs.h>
 #include<memory.h>
-! XXX
-integer :: ierr
  !
  type(PAR_matrix), target :: X_par
  type(levels)         :: Xen
@@ -96,8 +93,8 @@ integer :: ierr
  complex(SP),allocatable  :: Xo_res(:,:)
 #ifdef _CUDA
  complex(SP),allocatable, device :: Xo_res_d(:,:)
- complex(SP),pointer,     device :: X_par_blc_d(:,:,:)
- complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:,:)
+ complex(SP),pointer,     device :: X_par_blc_d(:,:)
+ complex(SP),pointer,     device :: X_par_lowtri_blc_d(:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_X_WORLD_n_CPU
 #endif
@@ -108,12 +105,6 @@ integer :: ierr
  !===================
  GreenF                           = cZERO
  drude_GreenF                     = cZERO
- X_par%blc(:,:,:)                 = cZERO
- if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc(:,:,:) = cZERO
-#ifdef _CUDA
- X_par%blc_d(:,:,:)               = cZERO
- if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc_d(:,:,:) = cZERO
-#endif
  !
  ! Logicals to use bare or Double Grid GF (no poles accumulation)
  !=======================================================
@@ -138,9 +129,7 @@ integer :: ierr
  ngrho=X%ng
  if (l_X_terminator) ngrho=maxval(G_m_G)
  !
- if(.not.skip_WF_load) then
-    call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
- endif
+ if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
  call timing('Xo (procedure)',OPR='start')
  !
@@ -181,7 +170,7 @@ integer :: ierr
    !
    if (io_RESPONSE.or.(.not.io_RESPONSE.and..not.l_life)) call FREQUENCIES_setup(Xw)
    !
- endif 
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -254,21 +243,23 @@ integer :: ierr
  !
  ! Drude term
  !
-! if (iq==1.and.master_thread) then
-!   do i_cg = 1,coarse_grid_N
-!     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
-!     if(.not.Drude_pole) cycle
-!     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
-!     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
-!     ctmp = DEV_VARNAME(Xo_res)(1,1)
-!     !
-!     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
-!#ifdef _CUDA
-!!!!     X_par%blc_d(1,1,:)=X_par%blc(1,1,:)
-!#endif
-!     exit
-!   enddo
-! endif
+ if (iq==1.and.master_thread) then
+   do i_cg = 1,coarse_grid_N
+     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+     if(.not.Drude_pole) cycle
+     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VARNAME(Xo_res),Xo_scatt)
+     ctmp = DEV_VARNAME(Xo_res)(1,1)
+     !
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)/real(bare_grid_N(i_cg),SP)
+#ifdef _CUDA
+     do iw=1,Xw%n_freqs
+       X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+     enddo
+#endif
+     exit
+   enddo
+ endif
  !
  ! MAIN LOOP
  !===========
@@ -315,62 +306,43 @@ integer :: ierr
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================
-! XXX
-write(0,*)
    freq_loop:&
    do iw=1,Xw%n_freqs
-     !
-#ifdef _CUDA
-     X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
-     X_par_blc_d => X_par%blc_d
-     GreenF_iw=GreenF(iw)
-#endif
      !
      X_rows1=X_par%rows(1)
      X_rows2=X_par%rows(2)
      X_cols1=X_par%cols(1)
      X_cols2=X_par%cols(2)
-! XXX
-write(0,*) "X_rows, X_cols", X_rows1,X_rows2,X_cols1,X_cols2
-ierr = CudaDeviceSynchronize()
-ierr = cudaGetLastError()
-write(0,*) "before LOOP1 iw, ierr ", iw, ierr
      !
-! XXXX     !$cuf kernel do(2)
+#ifdef _CUDA
+     !
+     GreenF_iw=GreenF(iw)
+     X_par_blc_d => X_par%blc_d(:,:,iw)
+     if (X_lower_triangle_matrix_in_use)  X_par_lowtri_blc_d => X_par_lower_triangle%blc_d(:,:,iw)
+     !
+     !$cuf kernel do(2) <<<*,*>>>
+     do ig_col=X_cols1,X_cols2
+       do ig1=X_rows1,X_rows2
+         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col)=X_par_blc_d(ig1,ig_col)+GreenF_iw*Xo_res_d(ig1,ig_col)
+       enddo
+     enddo
+     !
+#else
+     !
      do ig_col=X_cols1,X_cols2
        !
-#if defined _OPENMP && ! defined _CUDA
+#  if defined _OPENMP
        if(n_threads_X>1) then
          call OPENMP_compute_mutex(ig_col,mutexid)
          call omp_set_lock(omp_locks(mutexid))
        endif
-#endif
+#  endif
        !
        ! ----    ----
        ! -xxx    -xxx
        ! ---- => ----
        ! ----    ----
        !
-X_par_blc_d=0.0
-ierr = CudaDeviceSynchronize()
-ierr = cudaGetLastError()
-write(0,*) "X_par_blc_d  ierr", shape(X_par_blc_d), ierr
-!
-Xo_res_d=0.0
-ierr = CudaDeviceSynchronize()
-ierr = cudaGetLastError()
-write(0,*) "Xo_res_d  ierr", shape(Xo_res_d), ierr
-
-#ifdef _CUDA
-       !$cuf kernel do(1)
-       do ig1=X_rows1,X_rows2
-         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
-       enddo
-
-ierr = CudaDeviceSynchronize()
-ierr = cudaGetLastError()
-write(0,*) "LOOP1 ig_col, ierr ", ig_col, ierr
-#else
        !
        X_rows1_l = X_rows1
        X_rows2_l = min(ig_col,X_rows2)
@@ -378,19 +350,18 @@ write(0,*) "LOOP1 ig_col, ierr ", ig_col, ierr
        !
        call V_by_V_plus_V(X_nrows,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
        !
-#endif
-#if defined _OPENMP && !defined _CUDA
+#  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
-#endif
+#  endif
      end do
      !
+#endif
+     !
      if (.not.X_FILL_UP_matrix_only) then
-! XXX
-WRITE(0,*) "inside .not.X_FILL_UP_matrix_only"
 #ifdef _CUDA
        PAR_COM_X_WORLD_n_CPU=PAR_COM_RL_INDEX%n_CPU
 #endif
-!XXXX       !$cuf kernel do(2)
+       !$cuf kernel do(2)
        do ig_col=X_cols1,X_cols2
          !
 #if defined _OPENMP && ! defined _CUDA
@@ -402,27 +373,20 @@ WRITE(0,*) "inside .not.X_FILL_UP_matrix_only"
          !
 #ifdef _CUDA
          !
-         !$cuf kernel do(1)
          do ig1=X_rows1,X_rows2
-           !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
-             !
              if (PAR_COM_X_WORLD_n_CPU>1) then
-               X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) &
-&                                                      +GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+               X_par_lowtri_blc_d(ig_row_transp,ig1)=X_par_lowtri_blc_d(ig_row_transp,ig1) + &
+&                   GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
              else
-               X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw) &
-&                                               +GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
-             endif
-           endif
-           !
+               X_par_blc_d(ig_row_transp,ig1)=X_par_blc_d(ig_row_transp,ig1)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             end if
+           end if
          enddo
-ierr = CudaDeviceSynchronize()
-ierr = cudaGetLastError()
-write(0,*) "LOOP2 ig_col, ierr ", ig_col, ierr
          !
 #else
+         !
          X_rows1_l = X_rows1
          X_rows2_l = min(ig_col-1,X_rows2)
          X_nrows = X_rows2_l-X_rows1_l+1
@@ -444,13 +408,21 @@ write(0,*) "LOOP2 ig_col, ierr ", ig_col, ierr
 &                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
 &                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
-#endif
-#if defined _OPENMP && !defined _CUDA
+         !
+#  if defined _OPENMP
          if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
+#  endif
+         !
 #endif
+         !
        enddo
        !
      endif
+     !
+#ifdef _CUDA
+     nullify(X_par_blc_d)
+     if (X_lower_triangle_matrix_in_use)  nullify(X_par_lowtri_blc_d)
+#endif
      !
    enddo freq_loop
    !
@@ -500,18 +472,14 @@ write(0,*) "LOOP2 ig_col, ierr ", ig_col, ierr
  !
 #ifdef _CUDA
  X_par%blc=X_par%blc_d
- if (X_lower_triangle_matrix_in_use) then
-   X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
- endif
- if (allocated(X_par%blc_d)) deallocate(X_par%blc_d)
- if (allocated(X_par_lower_triangle%blc_d)) deallocate(X_par_lower_triangle%blc_d)
+ if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
+ YAMBO_FREE(X_par%blc_d)
+ YAMBO_FREE(X_par_lower_triangle%blc_d)
 #endif
  !
  do iw=1,Xw%n_freqs
    call PP_redux_wait(X_par%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   if (X_lower_triangle_matrix_in_use) then
-     call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
-   endif
+   if (X_lower_triangle_matrix_in_use) call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  enddo
  !
  call timing('Xo (REDUX)',OPR='stop')

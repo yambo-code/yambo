@@ -45,6 +45,7 @@ subroutine electrons_WFs(Xen)
  use R_lattice,      ONLY:qindx_S
 #endif
 #if defined _YPP_ELPH
+ use interfaces,     ONLY:WF_apply_symm
  use YPP_ELPH,       ONLY:elph_residual_treshold
  use pars,           ONLY:cZERO
  use ELPH,           ONLY:elph_Ham_bands
@@ -79,7 +80,7 @@ subroutine electrons_WFs(Xen)
  integer                 :: ok_ibz,il,ok_s
  real(SP)                :: polaronic_residual(n_max_res),max_residual
  complex(SP)             :: B_n_ok
- complex(SP), allocatable:: v2plot_c(:),wf_rot(:)
+ complex(SP), allocatable:: v2plot_c(:),wf_rot(:,:)
  !
  ! ELPH setup
  !============
@@ -94,7 +95,7 @@ subroutine electrons_WFs(Xen)
    nkpt_to_load  =(/1,nkibz/)
  endif
  YAMBO_ALLOC(v2plot_c,(fft_size))
- YAMBO_ALLOC(wf_rot,(fft_size))
+ YAMBO_ALLOC(wf_rot,(fft_size,n_spinor))
 #endif
  !
 #if defined _YPP_SC 
@@ -180,7 +181,7 @@ subroutine electrons_WFs(Xen)
            !
            call WF_apply_symm((/ibp,ok_ibz,ok_s,1/),wf_rot)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir,1)
            !
          endif
          !

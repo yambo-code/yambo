@@ -438,9 +438,9 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !=======
  YAMBO_FREE(Xo_res)
 #ifdef _CUDA
- if (allocated(Xo_res_d)) deallocate(Xo_res_d)
- if (allocated(rhotw_save_d)) deallocate(rhotw_save_d)
- if (allocated(rhotw_save2_d)) deallocate(rhotw_save2_d)
+ YAMBO_FREE(Xo_res_d)
+ YAMBO_FREE(rhotw_save_d)
+ YAMBO_FREE(rhotw_save2_d)
 #endif
  call elemental_collision_free(Xo_scatt)
  !

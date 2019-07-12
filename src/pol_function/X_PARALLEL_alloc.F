@@ -53,6 +53,9 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  if (mode=="CLEAN") then
    YAMBO_FREE(X_par%blc)
+#ifdef _CUDA
+   YAMBO_FREE(X_par%blc_d)
+#endif
    call MATRIX_reset(X_par)
    return
  endif

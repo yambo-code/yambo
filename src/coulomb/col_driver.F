@@ -156,7 +156,7 @@ subroutine col_driver(bare_NG,q)
    call cutoff_presets()
 #ifdef _CUDA
    YAMBO_FREE(bare_qpg_d)
-   allocate(bare_qpg_d,source=bare_qpg)
+   if (size(bare_qpg)>0) allocate(bare_qpg_d,source=bare_qpg)
 #endif
    return
  endif
@@ -168,7 +168,7 @@ subroutine col_driver(bare_NG,q)
  !
 #ifdef _CUDA
  YAMBO_FREE(bare_qpg_d)
- allocate(bare_qpg_d,source=bare_qpg)
+ if (size(bare_qpg)>0) allocate(bare_qpg_d,source=bare_qpg)
 #endif
  !
 end subroutine

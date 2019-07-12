@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-
 !================
 module cuda_m
   !================
@@ -54,6 +53,7 @@ module cuda_m
   public :: cuda_setup
   public :: cuda_linalg_init
   public :: cuda_linalg_setup
+  public :: cuda_getstat
 
 contains
 
@@ -82,6 +82,14 @@ contains
 #endif
     cuda_linalg_init=.true.
   end subroutine
+
+  function cuda_getstat() result(ierr)
+    implicit none
+    integer :: ierr
+    ierr = CudaDeviceSynchronize()
+    ierr = CudaGetLastError()
+    return
+  end function
 
 end module cuda_m
 

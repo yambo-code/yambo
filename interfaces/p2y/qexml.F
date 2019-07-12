@@ -2323,12 +2323,12 @@ CONTAINS
       ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+       call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
       ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
       ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
       call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
       IF ( ierr/=0 ) RETURN
-       call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+      call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
       call iotk_scan_dat(iunit, "exx_is_active", exx_is_active, IERR=ierr )
       IF ( ierr/=0 ) RETURN
       CALL iotk_scan_end(iunit, "EXACT_EXCHANGE", IERR=ierr )

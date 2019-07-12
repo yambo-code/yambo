@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, AF
+! Authors (see AUTHORS file for details): AM, AF, DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -76,7 +76,8 @@ contains
       call msg('s','detected QE data format: ',trim(dftdata_fmt))
       !
    case default
-      call errore("p2y_init"," Unable to find valid QE DFT data",1)
+      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
       
    !
@@ -840,10 +841,10 @@ contains
  !
  subroutine get_xc
    use com,            ONLY: warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING      
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,&
+&                            XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH,XC_HYB_GGA_XC_B3LYP      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
-
    select case (trim(dftdata_fmt))
    case ("pw_export")
       !
@@ -854,17 +855,31 @@ contains
       call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
+      if (trim(pw_dft)=="B3LYP") call error('For B3LYP calculation use input_dft=B3LYP-V1R')
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
       !
+        GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       call qexml_read_exx(exx_fraction=pw_exx_fraction, &
 &                         screening_parameter=pw_screening_parameter, & 
-&                         exx_is_active=pw_exx_is_active, ierr=ierr)
+&                         exx_is_active=pw_exx_is_active, exxdiv_treatment=pw_exxdiv_treatment,ierr=ierr)
       if (ierr==0) then
-         if (pw_exx_is_active) then 
-            GS_exx_FRACTION = pw_exx_fraction
-            GS_exx_SCREENING= pw_screening_parameter
+         if (pw_exx_is_active) then
+           if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+           &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.& 
+           &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_B3LYP*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
+             GS_exx_FRACTION = pw_exx_fraction
+             GS_exx_SCREENING= pw_screening_parameter
+             if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) GS_exx_SCREENING=0.15 
+           else
+             call error('Hybrid functional: Only HF,PBE0, B3LYP and GAUPBE allowed')
+           endif
          endif
       endif
       !
@@ -876,16 +891,29 @@ contains
       !
       if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
+        GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       !
       if (pw_exx_is_active) then
          !
-         call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
-&                            screening_parameter=pw_screening_parameter, ierr=ierr)
-         if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
-         GS_exx_FRACTION = pw_exx_fraction
-         GS_exx_SCREENING= pw_screening_parameter
+         if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+         &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.&
+         &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_B3LYP*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+           call qexsd_read_exx(exx_fraction=pw_exx_fraction,screening_parameter=pw_screening_parameter,&
+           &                   exxdiv_treatment=pw_exxdiv_treatment, ierr=ierr)
+           if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
+           if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+             &  call error('Hybrids and HF allowed only with vcut_ws/spherical divergence treatment')
+           GS_exx_FRACTION = pw_exx_fraction
+           GS_exx_SCREENING= pw_screening_parameter
+           if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  GS_exx_SCREENING=0.15
          !
+         else
+           call error('Hybrid functional: Only HF,PBE0,B3LYP and GAUPBE allowed')
+         endif
       endif
       !
    case default

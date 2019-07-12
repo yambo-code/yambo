@@ -179,9 +179,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators Setup
  !===================
- O_ng=maxval(G_m_G)
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+ O_ng=1
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   O_ng=maxval(G_m_G)
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+ endif
  !
  ! GPL_EXCLUDE_START
  !
@@ -575,9 +578,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       ig_W   =qindx_B(i_k_bz,i_p_bz,2)
-       iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
-       iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then
+         ig_W   =qindx_B(i_k_bz,i_p_bz,2)
+         iq_W   =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,1)
+         iq_W_s =q%sstar( qindx_B(i_k_bz,i_p_bz,1) ,2)
+       endif
        !
        H_x=cZERO
        H_c=cZERO

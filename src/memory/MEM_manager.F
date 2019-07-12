@@ -36,7 +36,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn)
  implicit none
  !
  character(*), intent(in) :: what
- integer,      intent(in) :: Sz
+ integer(8),   intent(in) :: Sz
  integer,      intent(in) :: Kn
  ! 
  ! Defined in the init
@@ -143,7 +143,7 @@ subroutine MEM_manager_free(what,Sz)
  implicit none
  !
  character(*), intent(in) :: what
- integer,      intent(in) :: Sz
+ integer(8),   intent(in) :: Sz
  ! 
  ! Defined in the init
  !
@@ -232,7 +232,7 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  !
  character(*),     intent(in)  :: what
  logical,          intent(in)  :: adding
- integer,          intent(in)  :: Sz
+ integer(8),       intent(in)  :: Sz
  integer,          intent(out) :: i_SHELF,i_COMPONENT,i_SAVE
  character(schlen),intent(out) :: SHELF,TRUNK
  logical,          intent(out) :: just_started

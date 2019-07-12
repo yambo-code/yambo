@@ -87,6 +87,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  call LINEAR_ALGEBRA_WS_reset(WS)
  WS%dim=n
  YAMBO_ALLOC(WS%v_int_d,(WS%dim))
+ YAMBO_ALLOC(WS%vp_int_d,(WS%dim))
  !
  ! init
  if (.not.cuda_linalg_init) call cuda_linalg_setup()

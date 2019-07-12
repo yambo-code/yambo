@@ -86,8 +86,12 @@ contains
   function cuda_getstat() result(ierr)
     implicit none
     integer :: ierr
+    ierr = 0
+#ifdef _CUDA
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
+    !write(*,*) CudaGetLastMessage(ierr)
+#endif
     return
   end function
 

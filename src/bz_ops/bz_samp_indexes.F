@@ -301,7 +301,19 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call live_timing()
  !
- if (any(qindx_X==0)) call error('Error in Q-grid search [qindx_X]')
+ if (any(qindx_X==0)) then
+   call warning(' Error in Q-grid search [qindx_X]')
+   call q_shadows(.true.)
+   Xk_grid_is_uniform=.false.
+   gamma_point_only=.true.
+   bse_scattering=.false.
+   forall(i1=1:Xk%nbz) qindx_X(1,i1,1)=i1
+   forall(i1=1:Xk%nbz) qindx_X(1,i1,2)=1
+   YAMBO_FREE(qindx_S)
+   YAMBO_FREE(qindx_B)
+   YAMBO_FREE(qindx_C)
+   goto 1
+ endif
  !
  if(coll_scattering) then
    call msg('rn',':: Indices: Scattering and Self-Energy')

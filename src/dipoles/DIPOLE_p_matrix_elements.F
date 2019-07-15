@@ -92,7 +92,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          do ig=1,wf_ng
            rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
 &                         WF_c_d(ig,j_spinor,ic_wf)
-           rho_acc_r=rho_acc_r + real(rho_acc)
+           rho_acc_r=rho_acc_r + real(rho_acc,SP)
            rho_acc_i=rho_acc_i + aimag(rho_acc)
          enddo
          !
@@ -111,7 +111,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      do ig=1,wf_ng
         rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
 &                      WF_c_d(ig,i_spinor,ic_wf)
-        rho_acc_r=rho_acc_r + real(rho_acc)
+        rho_acc_r=rho_acc_r + real(rho_acc,SP)
         rho_acc_i=rho_acc_i + aimag(rho_acc)
      enddo
      enddo

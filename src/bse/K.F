@@ -343,7 +343,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
 #ifdef _CUDA
-   allocate(isc%gamp_d, mold=isc%gamp)
+   YAMBO_ALLOC(isc%gamp_d,(i_g1,BS_n_g_W))
 #endif
    !
    if (.not.l_td_hf) then
@@ -408,7 +408,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        !
-       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1),(/1,BS_n_g_W/))
+       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(1,:),(/1,BS_n_g_W/))
        !
      endif
      ! 

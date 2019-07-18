@@ -64,10 +64,9 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        iq_W_bz=qindx_B(i_k_bz,i_p_bz,1) NEWLINE \
        ig_W   =qindx_B(i_k_bz,i_p_bz,2) NEWLINE \
+       iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
+       iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
      endif NEWLINE \
-     NEWLINE \
-     iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
-     iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
      NEWLINE \
      i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) NEWLINE \
      i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) NEWLINE \
@@ -86,10 +85,9 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) NEWLINE \
        ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2) NEWLINE \
+       iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
+       iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
      endif NEWLINE \
-     NEWLINE \
-     iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
-     iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
      NEWLINE \
      if (BS_K_is_ALDA) then NEWLINE \
        is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol/) NEWLINE \

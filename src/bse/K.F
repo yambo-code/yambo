@@ -341,9 +341,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_ALLOC(BS_W,(BS_n_g_W,i_g1,q%nibz))
    endif
    !
-   YAMBO_ALLOC(isc%gamp,(i_g1,BS_n_g_W))
+   YAMBO_ALLOC(isc%gamp,(BS_n_g_W,i_g1))
 #ifdef _CUDA
-   YAMBO_ALLOC(isc%gamp_d,(i_g1,BS_n_g_W))
+   YAMBO_ALLOC(isc%gamp_d,(BS_n_g_W,i_g1))
 #endif
    !
    if (.not.l_td_hf) then
@@ -395,7 +395,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        endif
 #else
        if (BS_W_is_diagonal) then
-         forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(1,i_g2)
+         forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1))*isc%gamp(i_g2,1)
        else if (.not.BS_W_is_diagonal) then
          do i_g3=1,BS_n_g_W
            do i_g2=1,BS_n_g_W
@@ -408,7 +408,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        !
-       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(1,:),(/1,BS_n_g_W/))
+       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1),(/1,BS_n_g_W/))
        !
      endif
      ! 

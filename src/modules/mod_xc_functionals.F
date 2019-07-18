@@ -169,9 +169,8 @@ module xc_functionals
        f(ixc)%exx_screening=exx_screen
        if (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_HSE06) &
 &        call xc_f90_hyb_gga_xc_hse_set_par(f(ixc)%conf,exx_frac_,exx_screen_)
-       if ((XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_PBEH).or.&
-&          (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_B3LYP)) &
-&        call xc_f90_hyb_gga_xc_pbeh_set_par(f(ixc)%conf,exx_frac_)
+       if (XC_libxcID(f(ixc)%id,ixc)==XC_HYB_GGA_XC_PBEH) & 
+         call xc_f90_hyb_gga_xc_pbeh_set_par(f(ixc)%conf,exx_frac_)
      enddo    
    end subroutine xc_setup_hyb
    

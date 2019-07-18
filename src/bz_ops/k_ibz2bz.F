@@ -59,6 +59,7 @@ subroutine k_ibz2bz(k,units,FORCE_BZ)
  !
  ! ...then the pts
  !
+ YAMBO_FREE(k%ptbz)
  YAMBO_ALLOC(k%ptbz,(k%nbz,3))
  !
  k%units=units

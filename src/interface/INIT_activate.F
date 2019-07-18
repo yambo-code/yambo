@@ -158,6 +158,9 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipPDirect ShiftedPaths')
+#if defined _NL || defined _ELECTRIC
+ if (l_dipoles) call initactivate(1,'EvPolarization')
+#endif
  !
  if (l_optics.and.l_chi) then
    !
@@ -250,7 +253,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DipApproach DipPDirect ShiftedPaths Gauge NoCondSumRule MetDamp')
    !
-#if defined _NL | defined _ELECTRIC
+#if defined _NL || defined _ELECTRIC
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
@@ -545,7 +548,7 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField NLGvecs') 
+   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
    call initactivate(1,'ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
    call init_QP_ctl_switch('G')
  endif

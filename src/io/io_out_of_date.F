@@ -39,6 +39,7 @@ integer function io_out_of_date(ID)
  !
  ! 4.2.0: global change of IO bulk due to the introduction of the COMPLEX interface.
  !        affects only some ndb files
+ !
  if (.not.ver_is_gt_or_eq(ID,(/4,2,0/))) then
    if (index(io_file(ID),'Vnl')==0.and.&
 &      index(io_file(ID),'Double_Grid')==0.and.&
@@ -58,10 +59,17 @@ integer function io_out_of_date(ID)
  endif
  !
  ! 3.0.15: mostly based on io_header changes
+ !
  if (.not.ver_is_gt_or_eq(ID,(/3,0,15/))) return
  !
  ! DB specific
  !=============
+ !
+ REF_rev=16788   ! tables are now defined as integers
+ if (index(io_file(ID),'QINDX')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
+ !
+ REF_rev=16664   ! tables are defined as character
+ if (index(io_file(ID),'COLLISIONS')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return
  !
  REF_rev=5380
  if (index(io_file(ID),'RT_carriers')/=0.and..not.ver_is_gt_or_eq(ID,revision=REF_rev)) return

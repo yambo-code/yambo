@@ -155,11 +155,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators Setup
  !===================
- O_ng=maxval(G_m_G)
+ O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
-   call fft_check_size(1,O_ng,BS_n_g_exch)
+   O_ng=maxval(G_m_G)
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !

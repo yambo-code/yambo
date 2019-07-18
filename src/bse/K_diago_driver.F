@@ -165,7 +165,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !   to a distributed (SLEPC shells / or eventually BLACS) matrix
    ! - The resulting matrix is symmetrized
    !
-   if(l_diago) then
+   if (l_diago) then
      !
      call K_stored_in_a_big_matrix(iq,"DIAGO")
      !

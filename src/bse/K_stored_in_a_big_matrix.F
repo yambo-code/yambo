@@ -36,6 +36,7 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  use BS_solvers,     ONLY:BS_mat,BS_blk,BS_H_dim,BS_K_dim,&
 &                         BSS_perturbative_width,run_inversion,run_Haydock,&
 &                         BS_blks_free,BSS_eh_E,BSS_eh_W
+ use timing_m,       ONLY:timing
  !
 #include <memory.h>
  !
@@ -48,6 +49,8 @@ subroutine K_stored_in_a_big_matrix(iq,what)
  integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),i_B
  !
  if (allocated(BS_mat)) return
+ !
+ call timing('BSE matrix filling',OPR='start')
  !
  YAMBO_ALLOC(BS_mat,(BS_H_dim,BS_H_dim))
  BS_mat    = cZERO
@@ -151,12 +154,18 @@ subroutine K_stored_in_a_big_matrix(iq,what)
    !
  endif
  !
+ call timing('BSE matrix filling',OPR='stop')
+ !
  ! ALL 2 ALL
  !===========
  !
  ! BS_mat lives in the entire world.
  !
+ call timing('BSE matrix (REDUX)',OPR='start')
+ !
  call PP_redux_wait(BS_mat)
+ !
+ call timing('BSE matrix (REDUX)',OPR='stop')
  !
  ! After the folding the %mat's are (in some cases) not needed anymore 
  !

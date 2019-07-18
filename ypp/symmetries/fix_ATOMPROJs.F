@@ -31,7 +31,6 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp
- use D_lattice,           ONLY:n_atomic_species
  use electrons,           ONLY:levels
  use atom_proj
  !

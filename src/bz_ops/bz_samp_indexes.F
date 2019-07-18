@@ -39,6 +39,9 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
  !
+ ! qindx_C(ikbz,iqbz,1)=okbz
+ ! qindx_C(ikbz,iqbz,2)=iGo
+ !
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use stderr,         ONLY:gen_fmt
@@ -47,6 +50,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use vec_operate,    ONLY:v_is_zero,c2a
+ use BS,             ONLY:BS_res_mode,BS_cpl_mode
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
@@ -82,7 +86,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  user_defined_qpts=.false.
  gamma_point_only=.false.
  !
- if (.not.bse_scattering ) bse_scattering =l_bse
+ if (.not.bse_scattering ) bse_scattering =l_bse .and. (index(BS_res_mode,'c')/=0.or.index(BS_cpl_mode,'c')/=0)
  if (.not.coll_scattering) coll_scattering=l_elel_scatt
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
@@ -239,7 +243,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_B(ikbz,okbz,1)=iqbz
  ! qindx_B(ikbz,okbz,2)=iGo
  !
- call live_timing('X indexes',Xk%nbz/n_threads)
+ if (n_threads> Xk%nbz) call live_timing('X indexes',1)
+ if (n_threads<=Xk%nbz) call live_timing('X indexes',Xk%nbz/n_threads)
  !
  if(Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
  !
@@ -300,10 +305,13 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  if(coll_scattering) then
    call msg('rn',':: Indices: Scattering and Self-Energy')
-   call live_timing('SSE indexes',k%nbz/n_threads)
+   if (n_threads> k%nbz) call live_timing('SSE indexes',1)
+   if (n_threads<=k%nbz) call live_timing('SSE indexes',Xk%nbz/n_threads)
  else
    call msg('rn',':: Indices: Self-Energy')
-   call live_timing('SE indexes',(QP_states_k(2)-QP_states_k(1)+1)/n_threads)
+   i1=QP_states_k(2)-QP_states_k(1)+1
+   if (n_threads> i1) call live_timing('SE indexes',1)
+   if (n_threads<=i1) call live_timing('SE indexes',i1/n_threads)
  endif
  !
  call k_ibz2bz(k,'a',.false.)

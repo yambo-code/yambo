@@ -38,9 +38,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- use drivers,        ONLY:l_optics,l_chi,l_em1s,l_ppa,l_cohsex,l_bss,l_bse,l_em1d,&
-&                         l_gw0,l_elel_corr,l_life
- use BS,             ONLY:BS_bands
+ use drivers,        ONLY:l_optics
  use pars,           ONLY:SP,cZERO
  use com,            ONLY:warning
  use electrons,      ONLY:levels,n_sp_pol
@@ -53,12 +51,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS
  use IO_m,           ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_INDEX,&
-&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,&
-&                         mpi_comm_world
+&                         PP_redux_wait,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parser_m,       ONLY:parser
 #if defined _RT || defined _SC || defined _NL
  use drivers,        ONLY:l_real_time,l_sc_run,l_nl_optics
- use com,            ONLY:secnm
 #endif
 #if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
@@ -70,9 +66,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _SC || defined _RT
  use DIPOLES,        ONLY:P_square
  use electrons,      ONLY:n_spin
-#endif
-#if defined _QED
- use drivers,        ONLY:l_elphoton_corr
 #endif
  use timing_m,       ONLY:timing
  !
@@ -86,7 +79,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
  ! Work Space
  !
  integer           :: ik,i_sp_pol,io_err,ib(2)
- logical           :: l_sta_X,l_dyn_X,use_dipole_transverse,idir_not_done(3),&
+ logical           :: use_dipole_transverse,idir_not_done(3),&
 &                     l_real_time_magn_dipoles
  !
  call timing('Dipoles',OPR='start')
@@ -305,7 +298,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,X,Dip)
 #if defined _RT
         !
         if (l_real_time_magn_dipoles) then
-          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,2),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
           if (n_spinor==2) &
 &           call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)

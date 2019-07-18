@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
+subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  !
  use pars,          ONLY:SP,schlen,pi,cI
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp,qindx_X
  use electrons,     ONLY:levels,n_sp_pol,spin
  use stderr,        ONLY:intc,real2ch
- use YPP,           ONLY:min_weight
+ use YPP,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
  use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_n_descs,BSS_description,BSS_n_eig
  use BS,            ONLY:BS_H_dim
  use com,           ONLY:msg,of_open_close
@@ -38,7 +38,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !
  type(bz_samp)    :: Xk
  type(levels)     :: Xen
- integer          :: BS_E_degs(BSS_n_eig),lambda_s(n_lambda),n_lambda,iq
+ integer          :: BS_E_degs(BSS_n_eig),iq
  !
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  integer          :: ikpbz,ikp,isp
@@ -60,13 +60,13 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
  !  io_err=io_DIPOLES(Dip,io_ID)
  !endif
  !
- call msg('s','Processing '//trim(intc(n_lambda))//' states')
+ call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
- do i_lambda=1,n_lambda
+ do i_lambda=1,EXCITONS_n_user_states
    !
    A_weight   =0._SP
    !
-   i_l_grp=lambda_s(i_lambda)
+   i_l_grp=EXCITONS_user_indexes(i_lambda)
    !
    n_lambda_deg=count(BS_E_degs==BS_E_degs(i_l_grp))
    !
@@ -118,7 +118,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    call msg('o weight amp',"#")
    call msg('o weight amp',&
 &   '# Electron-Hole pairs that contributes to Excitonic State '//&
-&   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(min_weight*100)) //'%')
+&   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(EXCITON_weight_treshold*100)) //'%')
    call msg('o weight amp','#')
    !
    ! First summarize the total weight vs K-points
@@ -133,7 +133,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    titles(1:4)=(/'             ','K-point [iku]','             ','Weight       '/)
    call msg('o weight','#',titles(:4),INDENT=0,USE_TABS=.true.)
    do ikibz=1,Xk%nibz
-     if (K_weight(ikibz)>min_weight) then
+     if (K_weight(ikibz)>EXCITON_weight_treshold) then
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
@@ -157,7 +157,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<min_weight) cycle
+     if (A_weight(neh)/maxval(A_weight)<EXCITON_weight_treshold) cycle
      !
      ikbz = BSS_eh_table(S_indx(neh),1)
      iv = BSS_eh_table(S_indx(neh),2)
@@ -175,7 +175,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,lambda_s,n_lambda,iq)
      amp_trans(amp_n_trans,1)=Xen%E(ic,ikibz,i_spin)-Xen%E(iv,ikp,i_spin)
      amp_trans(amp_n_trans,2)=A_weight(neh)
      !
-     if (A_weight(neh)<min_weight) cycle
+     if (A_weight(neh)<EXCITON_weight_treshold) cycle
      !
      if(n_sp_pol==1) then
        call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikp,SP),real(isp,SP),& 

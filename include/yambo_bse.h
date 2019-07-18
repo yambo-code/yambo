@@ -61,8 +61,10 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      i_kmq_s_m1 = sop_inv(i_kmq_s) NEWLINE \
      i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) NEWLINE \
      NEWLINE \
-     iq_W_bz=qindx_B(i_k_bz,i_p_bz,1) NEWLINE \
-     ig_W   =qindx_B(i_k_bz,i_p_bz,2) NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
+       iq_W_bz=qindx_B(i_k_bz,i_p_bz,1) NEWLINE \
+       ig_W   =qindx_B(i_k_bz,i_p_bz,2) NEWLINE \
+     endif NEWLINE \
      NEWLINE \
      iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
      iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
@@ -81,8 +83,10 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      ig_kmq    = qindx_X(iq,i_k_bz,2) NEWLINE \
      ig_pmq    = qindx_X(iq,i_p_bz,2) NEWLINE \
      NEWLINE \
-     iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) NEWLINE \
-     ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2) NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
+       iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) NEWLINE \
+       ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2) NEWLINE \
+     endif NEWLINE \
      NEWLINE \
      iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
      iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \

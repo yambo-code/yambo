@@ -58,7 +58,7 @@ subroutine K_correlation_collisions(iq,i_block,Xk,q)
  !
  ! Work Space
  !
- DEFINE_BKS_COMMON_INDEXES
+ DEFINE_BSK_COMMON_INDEXES
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)

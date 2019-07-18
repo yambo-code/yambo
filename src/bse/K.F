@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,7 +23,7 @@
 !
 subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
- ! K = <2V-W>
+ ! K = <2V-W> for n_spin=1
  !
  use pars,         ONLY:IP,SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
@@ -83,7 +83,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! ... Kernel loop
  !
- DEFINE_BKS_COMMON_INDEXES
+ DEFINE_BSK_COMMON_INDEXES
  integer    :: i_block,O_ng_shift,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)

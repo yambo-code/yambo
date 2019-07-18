@@ -1,3 +1,26 @@
+!
+!        Copyright (C) 2000-2019 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): DS
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
 subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  use pars,         ONLY:SP
@@ -130,7 +153,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  ! Anisotropy correction. Note that isc%gamp(1,1)=RIM_anisotropy while
  ! the \delta(G,G') term must be multiplied by the standard RIM_qpg(1,1)
  !
- if (RIM_anisotropy/=0.) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2.-RIM_anisotropy/2.
+ if (RIM_anisotropy/=0._SP) BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
  !
  YAMBO_FREE(isc%gamp)
  !

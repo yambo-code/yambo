@@ -203,10 +203,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !===================
    call K_observables("ALLOC",W_bss)
    !
-   ! W/X RL size setup looking at the max index of G-G' 
-   ! =========
-   !
-   if (.not.l_rpa_IP) then
+   if (BS_res_K_corr.or.BS_cpl_K_corr) then
+     !
+     ! W/X RL size setup looking at the max index of G-G' 
+     ! =========
      !
      iGo_BSE=maxval(qindx_B(:,:,2))
      iG_BSE =BS_n_g_W

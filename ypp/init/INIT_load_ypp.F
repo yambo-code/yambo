@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -206,6 +206,11 @@ subroutine ypp_INIT_load(defs)
  !
  call it(defs,'Efield1','First external Electric Field',E_field(1,:))
  !
+ call it('f',defs,'RmSpaceInv' , 'Remove Spatial Inversion')
+ call it(defs,'Efield2','Additional external Electric Field',E_field(2,:))
+ call it(defs,'BField',    '[MAG] Magnetic field modulus',B_field,unit=Bfield_unit)
+ call it(defs,'Bpsi',      '[MAG] Magnetic field psi angle [degree]',B_psi,unit='deg')
+ call it(defs,'Btheta',    '[MAG] Magnetic field theta angle [degree]',B_theta,unit='deg')
  !
 #if defined _YPP_RT
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -423,7 +423,7 @@ contains
    b(1,:)=cross_product(a(2,:),a(3,:))*2.0_SP*pi/DL_vol
    b(2,:)=cross_product(a(3,:),a(1,:))*2.0_SP*pi/DL_vol
    b(3,:)=cross_product(a(1,:),a(2,:))*2.0_SP*pi/DL_vol
-
+   DL_vol=abs(DL_vol)
    return
  end subroutine get_cell
  !

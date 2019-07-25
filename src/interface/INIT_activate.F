@@ -83,7 +83,7 @@ subroutine INIT_activate()
  endif
  !
  if(l_sc_run) then
-   call CPU_activate("X_q_0")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
+   call CPU_activate("X_q")  ! Required for finite E-field, l_sc_exx, SC_up_W_iter
  endif
  !
  if ( (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_life) .and. .not.(l_sc_run.or.l_eval_collisions) ) then

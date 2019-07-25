@@ -2323,7 +2323,7 @@ CONTAINS
       ! call iotk_scan_dat(iunit, "nqx1", nqx1, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx2", nqx2, IERR=ierr )
       ! call iotk_scan_dat(iunit, "nqx3", nqx3, IERR=ierr )
-      ! call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+        call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
       ! call iotk_scan_dat(iunit, "yukawa", yukawa, IERR=ierr )
       ! call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
       call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )

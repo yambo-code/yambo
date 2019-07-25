@@ -22,13 +22,12 @@
 !
 subroutine K_Haydock(iq,W)
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use com,            ONLY:error
  use functions,      ONLY:NAN
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use X_m,            ONLY:Epsilon_ii,Alpha,Epsilon_ij,X_drude_term,global_gauge, &
-&                         skip_cond_sum_rule,eval_alpha,eps_2_alpha
- use R_lattice,      ONLY:bare_qpg,q_norm
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
+ use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_n_descs,Haydock_threshold,BSS_description,io_BSS_Haydock,Co_factor,diam_term_exact,&
@@ -566,9 +565,8 @@ subroutine K_Haydock(iq,W)
      real(SP)    :: Co,tmp_tresh
      complex(SP) :: sums,diff
      !
-     real(SP)    :: alpha_factor
-     complex(SP) :: gauge_factor
      complex(SP) :: para_term_w0(2),diam_term_used(2)
+     complex(SP) :: gauge_factor
      complex(SP) :: freq_axis(0:W%n_freqs)
      !
      complex(SP) :: X_o(4,it), YbyX(2)
@@ -596,8 +594,7 @@ subroutine K_Haydock(iq,W)
      para_term_w0  =cZERO
      diam_term_used=cZERO
      !
-     if(trim(global_gauge)=='length'  ) gauge_factor=       cONE*Co/bare_qpg(1,1)**2
-     if(   eval_alpha                 ) alpha_factor=eps_2_alpha*Co/q_norm(1)**2/4._SP/pi
+     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(1,1)**2
      !
      if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
      if (coupling) allocate(X_i(2,it))
@@ -671,7 +668,6 @@ subroutine K_Haydock(iq,W)
        endif
        !
        Epsilon_ii(iw,1)=W%p(iw)
-       if(eval_alpha) Alpha(iw,1)=W%p(iw)
        !
        select case(ii)
        case(1)
@@ -692,9 +688,6 @@ subroutine K_Haydock(iq,W)
      do iw=1,W%n_freqs
        !
        if (trim(global_gauge)=='velocity') gauge_factor=Co/W%p(iw)**2
-       !
-       if ((trim(global_gauge)=='velocity') .and. (eval_alpha.and.i1==1)) &
-       &               Alpha(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*alpha_factor
        !
        if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
        if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor

@@ -29,10 +29,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q_norm
+ use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg
  use electrons,     ONLY:levels,spin_occ,spin,E_SOC_nbands,nel,n_sp_pol
- use X_m,           ONLY:Epsilon_ii,Alpha,Joint_DOS,alpha_dim,eps_2_alpha,eval_alpha, &
-&                        X_drude_term,global_gauge,skip_cond_sum_rule,l_drude
+ use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
+&                        X_drude_term,global_gauge,   &
+&                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_projected
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,BSS_eval_JDOS,&
 &                        BSS_n_freqs,Co_factor,diam_term_exact,BSS_Wd
@@ -97,12 +98,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    YAMBO_ALLOC(Joint_DOS,(BSS_n_freqs,4))
    Joint_DOS=cZERO
    Joint_DOS(:,1) =W_bss%p(:)
- endif
- !
- if (eval_alpha) then
-   YAMBO_ALLOC(Alpha,(BSS_n_freqs,4))
-   Alpha=cZERO
-   Alpha(:,1) =W_bss%p(:)
  endif
  !
 #if defined _PL
@@ -271,10 +266,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    endif
    !
-   if (eval_alpha) then
-     if (trim(global_gauge)=='length'  ) Alpha(:,3)=+Co_factor*Epsilon_ii(:,3)/q_norm(1)**2/4._SP/pi*eps_2_alpha
-   endif
-   !
    if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=1._SP+Co_factor* Epsilon_ii(:,3)                / bare_qpg(1,1)**2
    if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=1._SP+Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
    !
@@ -282,10 +273,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !============
    if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *Co_factor/ bare_qpg(1,1)**2
    if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
-   !
-   if (eval_alpha) then
-     if (trim(global_gauge)=='length'  ) Alpha(:,3)=Alpha(:,3)-drude_GreenF(:)*Co_factor/4._SP/pi*eps_2_alpha
-   endif
    !
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
    !
@@ -322,7 +309,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call K_output_file(iq,"IP")
    !
    YAMBO_FREE(Epsilon_ii)
-   YAMBO_FREE(Alpha)
    YAMBO_FREE(X_drude_term)
    YAMBO_FREE(Joint_DOS)
 #if defined _KERR

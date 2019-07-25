@@ -23,15 +23,15 @@
 !
 subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_it_full)
  !
- use pars,           ONLY:SP,cZERO,pi
+ use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
- use X_m,            ONLY:Epsilon_ii,Alpha,global_gauge,eval_alpha,eps_2_alpha
+ use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
- use R_lattice,      ONLY:bare_qpg,q_norm
+ use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,K_inv_slk,K_slk
+ use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles,Co_factor,K_inv_slk,K_slk
 #if defined _PL
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
@@ -50,7 +50,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
  !
  integer      :: i2,iw,i_L
  character(1) :: Gr
- real(SP)                 :: alpha_factor
  complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:)
 #if defined _PL
@@ -63,13 +62,10 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
    Mm1=cZERO
  endif
  !
- if (eval_alpha) then
-   if (trim(global_gauge)=='length'  ) alpha_factor=-Co_factor/q_norm(1)**2/4._SP/pi*eps_2_alpha
- endif
- !
  do i2=1,iw_2do
    !
    iw=i2+iw_2start-1
+   !
    if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/bare_qpg(1,1)**2
    if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/ W%p(iw) **2
    !
@@ -89,7 +85,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
      if (K_INV_EPS%err(iw)/=0) then
        K_INV_EPS%err(iw)=EPS_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles,gauge_factor,&
 &                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
-       if(eval_alpha) Alpha(iw,2)=Epsilon_ii(iw,2)*alpha_factor/gauge_factor
      endif
      !
 #if defined _PL
@@ -176,7 +171,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
          call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles,V)
        endif
        Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles,V)
-       if(eval_alpha) Alpha(iw,2)=Epsilon_ii(iw,2)*alpha_factor/gauge_factor
      else if(i_L_==2) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
@@ -186,7 +180,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,px,W,Lo,Lo_dim,Lo_n_loop,do_
          call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles),V)
        endif
        Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles),V)
-       if(eval_alpha) Alpha(iw,2)=Epsilon_ii(iw,2)*alpha_factor/gauge_factor
      endif
    end subroutine
    !

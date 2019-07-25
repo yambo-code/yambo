@@ -26,15 +26,14 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
- use X_m,            ONLY:Epsilon_ii,Alpha,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge, &
-&                         skip_cond_sum_rule,eval_alpha,eps_2_alpha
+ use X_m,            ONLY:Epsilon_ii,Epsilon_ij,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:spin_occ,E_SOC_nbands,nel,n_sp_pol
  use frequency,      ONLY:w_samp
  use parallel_m,     ONLY:PP_redux_wait,myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact
  use interfaces,     ONLY:PARALLEL_index
- use R_lattice,      ONLY:nkbz,bare_qpg,q_norm
+ use R_lattice,      ONLY:nkbz,bare_qpg
  !
 #if defined _KERR
  use KERR,           ONLY:B_Hall
@@ -73,7 +72,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  !
  Epsilon_ii(:,2)=cZERO
  Joint_DOS(:,2) =cZERO
- if(eval_alpha) Alpha(:,2)=cZERO
  !
  para_term_w0=cZERO
  !
@@ -172,10 +170,6 @@ subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,
  if (trim(global_gauge)=='velocity') then
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
- endif
- !
- if (eval_alpha) then
-   if (trim(global_gauge)=='length'  ) Alpha(:,2)=+Co_factor*Epsilon_ii(:,2)/q_norm(1)**2/4._SP/pi*eps_2_alpha
  endif
  !
  if(trim(global_gauge)=='length'  ) Epsilon_ii(:,2)=1._SP+(Epsilon_ii(:,2)               )*Co_factor/bare_qpg(1,1)**2

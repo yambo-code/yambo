@@ -23,9 +23,9 @@
 !
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,pi
  use stderr,         ONLY:real2ch
- use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
+ use X_m,            ONLY:Epsilon_ii,Alpha,X_drude_term,l_drude,eval_alpha
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_n_descs,BSS_description,Co_factor,&
 &                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
 &                         K_slk,K_inv_slk
@@ -214,8 +214,9 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
    call K_inversion_engine("any",1,W%n_freqs,PAR_IND_freqs,W,Lo,Lo_dim,Lo_n_loop,.FALSE.)
    !
-   call PP_redux_wait(K_INV_EPS%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
+   call PP_redux_wait(K_INV_EPS%err,  COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
+   if(eval_alpha) call PP_redux_wait(Alpha(:,2),     COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
    call PP_redux_wait(K_INV_PL%err,COMM=PAR_COM_SLK_INDEX_local%COMM)
    call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
@@ -344,6 +345,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      call live_timing()
      call PP_redux_wait(TYP%err,imode=2)
      if (TYP%what=="EPS") call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
+     if (TYP%what=="EPS".and.eval_alpha) call PP_redux_wait(Alpha(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #if defined _PL
      if (TYP%what=="PLS") call PP_redux_wait(PL(:,2),COMM=PAR_COM_SLK_INDEX_local%COMM)
 #endif
@@ -406,6 +408,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
      !
      if (TYP%n_full_inv_freqs>0.and.FULL) then 
        if (TYP%what=="EPS") Epsilon_ii(:,2)=Epsilon_ii(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
+       if (TYP%what=="EPS".and.eval_alpha) Alpha(:,2)=Alpha(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #if defined _PL
        if (TYP%what=="PLS") PL(:,2)=PL(:,2)/real(PAR_COM_SLK_INDEX_local%n_CPU,SP)
 #endif

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,7 +28,7 @@ subroutine K_output_file(iq,mode)
  use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BSS_n_freqs,BSS_q0,K_diago_in_BS_mat
  use BS,        ONLY:BSE_mode,BS_K_is_ALDA
- use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,OPTICS_eels
+ use X_m,       ONLY:Epsilon_ii,Alpha,Joint_DOS,eval_alpha,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
@@ -61,7 +61,7 @@ subroutine K_output_file(iq,mode)
  character(10)     :: name_
  integer           :: iw,n_output_data
  real(SP)          :: output_data(7)
- complex(SP)       :: eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3)
+ complex(SP)       :: eels(BSS_n_freqs,3),refl(BSS_n_freqs,3)
 #if defined _KERR
  complex(SP)       :: beta(BSS_n_freqs,3)
 #endif
@@ -326,8 +326,8 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
- ! EELS & POLARIZABILITY
- !-----------------------
+ ! EELS
+ !-------
  !
  if (eval_eels) then
    !
@@ -335,13 +335,7 @@ subroutine K_output_file(iq,mode)
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
    if (l_Haydock.or.l_Inversion) eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
    !
-   alpha(:,1)=(1._SP+eels(:,1))/4._SP/pi*eps_2_alpha
-   alpha(:,2)=(1._SP+eels(:,2))/4._SP/pi*eps_2_alpha
-   if (l_Haydock.or.l_Inversion) alpha(:,3)=(1._SP+eels(:,3))/4._SP/pi*eps_2_alpha
-   !
    do iw=1,BSS_n_freqs
-     !
-     ! EELS
      !
      output_data(1:5)=(/real(Epsilon_ii(iw,1))*HA2EV,aimag(eels(iw,1)),real(eels(iw,1)),&
 &              aimag(eels(iw,2)),real(eels(iw,2))/)
@@ -352,13 +346,29 @@ subroutine K_output_file(iq,mode)
      if (l_IP) output_data(2:3)=output_data(4:5)
      call msg("o eel",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
      !
-     ! ALPHA
+   enddo
+   !
+ endif
+ !
+ ! ALPHA
+ !-------
+ !
+ if (eval_alpha) then
+   !
+   do iw=1,BSS_n_freqs
      !
-     output_data(1:5)=(/real(Epsilon_ii(iw,1))*HA2EV,aimag(alpha(iw,1)),real(alpha(iw,1)),&
-&              aimag(alpha(iw,2)),real(alpha(iw,2))/)
+     ! Alpha: 2 (int) 3 (non int) 4 (n-1 Haydock/inv shifted)
+     !
+     output_data(1:5)=(/real(Alpha(iw,1))*HA2EV,aimag(Alpha(iw,2)),real(Alpha(iw,2)),&
+  &            aimag(Alpha(iw,3)),real(Alpha(iw,3))/)
+     !
+     ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
+     !
      n_output_data=5
-     if (l_Haydock.or.l_Inversion) n_output_data=7
-     if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(alpha(iw,3)),real(alpha(iw,3))/)
+     if (l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)) then
+       n_output_data=7
+       output_data(6:7)=(/aimag(Alpha(iw,4)),real(Alpha(iw,4))/)
+     endif
      if (l_IP) n_output_data=3
      if (l_IP) output_data(2:3)=output_data(4:5)
      call msg("o alpha",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
@@ -374,8 +384,12 @@ subroutine K_output_file(iq,mode)
  if(l_kerr) then
    !
    if(eval_alpha) then
-     beta(:,1)=Epsilon_ij(:,2)/4._SP/pi*eps_2_alpha
-     beta(:,2)=Epsilon_ij(:,3)/4._SP/pi*eps_2_alpha
+     !
+     ! To be fixed
+     !
+     beta(:,1)=0._SP !Epsilon_ij(:,2)/4._SP/pi*eps_2_alpha
+     beta(:,2)=0._SP !Epsilon_ij(:,3)/4._SP/pi*eps_2_alpha
+     !
    endif
    !
    ! eps_xy

@@ -25,8 +25,9 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use stderr,         ONLY:intc
- use R_lattice,      ONLY:bz_samp,bare_qpg
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
+ use R_lattice,      ONLY:bz_samp,bare_qpg,q_norm
+ use X_m,            ONLY:Epsilon_ii,Alpha,X_drude_term,global_gauge,l_drude,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,&
+&                         skip_cond_sum_rule,eval_alpha,eps_2_alpha
  use electrons,      ONLY:levels,BZ_DbGd_tot_nk_levels,spin
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles,&
@@ -74,6 +75,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 #endif
  !
  Epsilon_ii(:,3:4) = cZERO
+ if(eval_alpha) Alpha(:,3:4) = cZERO
  !
  ! DbGd setup
  !
@@ -241,6 +243,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    !
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+   !
+   if (eval_alpha) then
+     if (trim(global_gauge)=='length'  ) Alpha(:,i_eps)=+Co_factor*Epsilon_ii(:,i_eps)/q_norm(1)**2/4._SP/pi*eps_2_alpha
+   endif
    !
    if(trim(global_gauge)=="length")   Epsilon_ii(:,i_eps)=(1._SP+ Epsilon_ii(:,i_eps)                *Co_factor/bare_qpg(1,1)**2)
    if(trim(global_gauge)=="velocity") Epsilon_ii(:,i_eps)=(1._SP+(Epsilon_ii(:,i_eps)-diam_term_used)*Co_factor/  W%p(:) **2)

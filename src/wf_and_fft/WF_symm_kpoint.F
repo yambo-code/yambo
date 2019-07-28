@@ -81,7 +81,7 @@ subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out_d)
  use wave_func,     ONLY:WF,wf_ng
  use R_lattice,     ONLY:bz_samp,g_rot_d
  use D_lattice,     ONLY:idt_index,spin_sop_d,i_time_rev,nsym
- use dev_util_m,    ONLY:dev_conjg
+ use device_util_m, ONLY:dev_conjg
  !
  implicit none
  !

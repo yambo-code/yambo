@@ -48,7 +48,9 @@ subroutine K_correlation_collisions(iB,Xk,q)
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use dev_util_m,    ONLY:dev_memcpy
+ use device_util_m, ONLY:dev_memcpy
+ !
+#include<dev_defs.h>
 #include<memory.h>
  !
  integer        :: iB
@@ -265,13 +267,10 @@ subroutine K_correlation_collisions(iB,Xk,q)
      isc%is(1)=i_b
      isc%os(1)=i_b_p
      isc%os(3)=i_s_collision
-#ifdef _CUDA
-     call scatter_Bamp_gpu(isc)
-     call dev_memcpy(BS_blk(iB)%O_c_d(:,iB_oscillator),isc%rhotw_d,(/1,isc%ngrho/) )
-#else
-     call scatter_Bamp(isc)
-     BS_blk(iB)%O_c(:,iB_oscillator)=isc%rhotw(:)
-#endif
+     !
+     call DEV_SUBNAME(scatter_Bamp)(isc)
+     call dev_memcpy( DEV_VARNAME(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VARNAME(isc%rhotw) )
+     !
      O_todo_table(i_s_collision,i_b,i_b_p,i_k_sp) = .false.
    end subroutine
    !

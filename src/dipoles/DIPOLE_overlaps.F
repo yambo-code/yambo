@@ -34,7 +34,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use IO_m,              ONLY:IO_write
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,PAR_COM_DIPk_ibz_INDEX,PP_redux_wait
- use dev_util_m,        ONLY:dev_memcpy
+ use device_util_m,     ONLY:dev_memcpy
  use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint
 #include<dev_defs.h>
  !
@@ -116,7 +116,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            call WF_shift_kpoint((/1,Dip%ib(2)/),ikbzp,shift,Xk,WF_ikp,WF_shifted)
            !
          else
-           call dev_memcpy(WF_shifted,WF_ikp, (/1,wf_ng/),(/1,n_spinor/),(/1,Dip%ib(2)/),(/1,n_sp_pol/))
+           call dev_memcpy(WF_shifted,WF_ikp)
          endif
          !
          !

@@ -61,7 +61,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use wrapper,       ONLY:V_dot_V,Vstar_dot_V,V_by_V_pwise,M_by_V
- use dev_util_m,    ONLY:dev_conjg,dev_memcpy
+ use device_util_m, ONLY:dev_conjg,dev_memcpy
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_K
@@ -408,7 +408,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      else
        !
-       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1),(/1,BS_n_g_W/))
+       call dev_memcpy(BS_W(:,1,iq_W),DEV_VARNAME(isc%gamp)(:,1))
        !
      endif
      ! 

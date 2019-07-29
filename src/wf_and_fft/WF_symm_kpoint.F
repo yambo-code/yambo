@@ -149,7 +149,7 @@ subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out_d)
    enddo
    !
    if(is>nsym/(1+i_time_rev)) then
-     call dev_conjg(WF_k_out_d,(/1,wf_ng/),(/1,n_spinor/),b_to_load,(/1,n_sp_pol/))
+     call dev_conjg(WF_k_out_d)
    endif
    !
  endif

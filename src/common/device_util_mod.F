@@ -16,7 +16,7 @@
 module device_util_m
   implicit none
 
-#include<device_util_interf.F>
+#include<../src/common/device_util_interf.F>
 
 end module device_util_m
 

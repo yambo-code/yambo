@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine PARSER_dump_the_additional_lines(ou)
  !
  integer :: i1
  !
- if (infile_editing) open(unit=ou,file=trim(infile),position='append')
+ if (infile_editing.and.ou==12) open(unit=ou,file=trim(infile),position='append')
  do i1=1,nADDITIONAL_flines
    if (master_cpu) then
       if (ou==12) write (ou,'(a)') trim(ADDITIONAL_flines(i1))

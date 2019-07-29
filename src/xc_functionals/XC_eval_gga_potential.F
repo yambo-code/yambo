@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS
@@ -31,7 +31,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   ! 2. vxc_tot(r)   = v1rho(r) + G v_drho(r)   
   ! 
   use pars,          ONLY:SP,DP,cI_DP,PI_DP
-  use R_lattice,     ONLY:g_vec,ng_closed
+  use R_lattice,     ONLY:g_vec
+  use QP_m,          ONLY:QP_ng_Vxc
   use D_lattice,     ONLY:alat
   use electrons,     ONLY:n_spin
   use xc_functionals,ONLY:xc_spin,V_xc
@@ -49,7 +50,8 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   integer       :: ic,ifft,is1,is2,is_xc
   real(SP)      :: Gv_drho(fft_size),v_drho(fft_size,3)
-  complex(DP)   :: Vr(fft_size), Vg(ng_closed)
+  real(SP)      :: fac
+  complex(DP)   :: Vr(fft_size), Vg(QP_ng_Vxc)
   !
   ! 0. define v_drho
   !
@@ -57,14 +59,20 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     v_drho = 0._SP 
     do is2 = 1,n_spin
       is_xc = max(is2*(is1+1)/2,is1*(is2+1)/2)
+      ! In the presence of spin 
+      ! vsigma(2,:) = vsigma_updw(2,:)+vsigma_dwup(2,:)
+      !             = 2*vsigma_updw(2,:)
+      ! thus I set fac to 2._SP to remove the extra 2
+      if (is_xc/=2) fac=1._SP
+      if (is_xc==2) fac=2._SP
       forall(ic=1:3,ifft=1:fft_size) v_drho(ifft,ic) = v_drho(ifft,ic) + &
-&                                         2._SP*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
+&                                         2._SP/fac*real(v1sigma(is_xc,ifft),SP)*drho(ifft,is2,ic)
     end do
     !
     ! 1. this is done by FFTing, by doing the scalar
     !    product with G, and FFT-1 the result
     !
-    Vg(1:ng_closed) = (0._DP,0._DP)
+    Vg(1:QP_ng_Vxc) = (0._DP,0._DP)
     !
     do ic = 1,3
       !
@@ -79,13 +87,13 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
       call fft_3d(Vr,fft_dim,-1)
 #endif
       !
-      Vg(1:ng_closed)=Vg(1:ng_closed)-cI_DP*(2._DP*PI_DP*real(g_vec(1:ng_closed,ic)/alat(ic),DP)) * &
-&                             Vr(fft_g_table(1:ng_closed,1))/real(fft_size,DP)
+      Vg(1:QP_ng_Vxc)=Vg(1:QP_ng_Vxc)-cI_DP*(2._DP*PI_DP*real(g_vec(1:QP_ng_Vxc,ic)/alat(ic),DP)) * &
+&                             Vr(fft_g_table(1:QP_ng_Vxc,1))/real(fft_size,DP)
       !
     end do    
     !
     Vr = (0._DP,0._DP)
-    Vr(fft_g_table(1:ng_closed,1)) = Vg(1:ng_closed)
+    Vr(fft_g_table(1:QP_ng_Vxc,1)) = Vg(1:QP_ng_Vxc)
 #if defined _FFTW
     call dfftw_destroy_plan(fftw_plan)
     fftw_plan = 0

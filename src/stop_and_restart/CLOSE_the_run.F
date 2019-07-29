@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,13 +24,11 @@
 subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  !
  use timing_m,       ONLY:timing_overview,timing_deallocate,global_list
-#if defined _MEM_CHECK 
- use memory,         ONLY:MEM_manager
-#endif
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_reset
+ use DIPOLES,        ONLY:DIPOLE_t
  !
  implicit none
  !
@@ -42,6 +40,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
  type(bz_samp)     ::q,k
  type(X_t)         ::X(4)
  type(w_samp)      ::Xw(4)
+ type(DIPOLE_t)    :: Dip
  integer           ::ierr,i_c
  integer, external ::INIT
  !
@@ -56,20 +55,20 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
    !
  endif
  !
+#if defined _MEM_CHECK 
+ !
  ! Memory Overview
  !=================
  !
  if (MEM) then
    !
-#if defined _MEM_CHECK 
-   !
    call section('*','Memory Overview')
    !
-   call MEM_manager("",REPORT="final")
-   !
-#endif
+   call MEM_report("final")
    !
  endif
+ !
+#endif
  !
  ! GAME OVER :(
  !==============
@@ -90,7 +89,7 @@ subroutine CLOSE_the_run(MEM,TIME,INIT_stop)
      call X_reset(X(i_c),type=i_c)
    enddo
    !
-   ierr=INIT(en,q,k,X,Xw," ",1,.false.,.true.)
+   ierr=INIT(en,q,k,X,Xw,Dip," ",1,.false.,.true.)
    !
  endif
  !

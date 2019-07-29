@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -51,12 +51,14 @@ subroutine RT_start_and_restart(E,k,q)
 &                         RT_E_occupations_reference,RT_ibz_coo,RT_nk,G_lesser, &
 &                         RT_H_occupations_reference,RT_life_delta_occupations,RT_delta_occupations,&
 &                         DbGd_ibz_coo,RT_eh_en,G_MEM_steps,RT_bands,i_MEM_collision,i_MEM_now,&
-&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times
+&                         i_MEM_previous,MEM_pointer,NE_time_step_update_jump,RT_life_extrap_times,&
+&                         l_velocity_gauge_corr
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,REP,VERIFY,NONE
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
+ use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PP_redux_wait
  use stderr,         ONLY:real2ch
  !
@@ -104,8 +106,8 @@ subroutine RT_start_and_restart(E,k,q)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,HARTREE0(:,:,ik,i_sp_pol),WF,'def') 
-       call V_real_space_to_H(ik,i_sp_pol,V_xc,        XC0(:,:,ik,i_sp_pol),WF,'xc ') 
+       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc) 
+       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc) 
      enddo
    enddo
    !
@@ -180,25 +182,34 @@ subroutine RT_start_and_restart(E,k,q)
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/NE_i_time+1/),MODE=VERIFY,ID=ID_OCCUPATIONS)
    io_OCCUPATIONS=io_RT_components('carriers',ID_OCCUPATIONS)
    !
+#if defined _PAR_IO
+   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,RT_nk+1/),ID=ID(5))
+   io_G=io_RT_components('G',ID(5))
+   !
+#else
+   !
    do ik=1,RT_nk
-     !
      call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(5))
      io_G=io_RT_components('G',ID(5))
-     !
-     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+   enddo
+   !
+#endif
+   !
+   ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
+   !
+   do i_memory=1,G_MEM_steps
+     G_lesser(:,:,:,i_memory)=G_lesser_reference(:,:,:)+dG_lesser(:,:,:,i_memory)
+     if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
+     if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
+   enddo
+   !
+   if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+     do ik=1,RT_nk
        call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),MODE=VERIFY,ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
-     endif
-     !
-     ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
-     !
-     do i_memory=1,G_MEM_steps
-       G_lesser(:,:,ik,i_memory)=G_lesser_reference(:,:,ik)+dG_lesser(:,:,ik,i_memory)
-       if (MEM_pointer(i_memory)==NE_i_time  ) i_MEM_now=i_memory
-       if (MEM_pointer(i_memory)==NE_i_time-1) i_MEM_previous=i_memory
-     enddo
-     !
-   enddo
+       enddo
+   endif
    !
    ! Define RT_E/H_occupations_reference
    !
@@ -250,6 +261,15 @@ subroutine RT_start_and_restart(E,k,q)
  !=================================
  !
  if (l_NE_with_fields) call RT_propagate_fields(E,k,A_tot,A_tot,dG_lesser(:,:,:,1),NE_time-RT_step,RT_step)
+ !
+ ! Pseudo potential terms needed for velocity gauge
+ !==================================================
+ !
+ if (l_velocity_gauge_corr) then
+   call Pseudo_KB_G_to_R_space(k,E)
+   call Pseudo_Hamiltonian(k,E,.true.)
+ endif
+ !
  !
  call msg('r','')
  !

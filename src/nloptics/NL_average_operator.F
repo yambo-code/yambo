@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -24,17 +24,17 @@
 subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,V_bands,k,en,TRANS,nK_mem)
  !
- use pars,           ONLY:SP,cI,cZERO,cONE
+ use pars,           ONLY:SP,cZERO,cONE
  use nl_optics,      ONLY:NL_bands,NL_nbands
  use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
- use QP_m,           ONLY:QP_n_states,QP_nk
+ use QP_m,           ONLY:QP_nk
  use electrons,      ONLY:n_sp_pol,n_spin,levels,spin_occ
  use FFT_m,          ONLY:fft_size
- use X_m,            ONLY:Dipole_Energy_treshold
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use H_interfaces,   ONLY:V_real_space_to_H
  !
  implicit none
  !
@@ -54,8 +54,7 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  !
  ! Work Space
  !
- integer     :: ib,ibp,ik,NL_bands2,ik_ibz,i_sp_pol,iE_rim,OUTPUT_dim,i_dir,iv
- real(SP)    :: deltaE,deltaE_DbGd
+ integer     :: ib,ibp,ik,NL_bands2,ik_ibz,i_sp_pol,OUTPUT_dim,i_dir,iv
  complex(SP) :: Hk(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)),VALUE_tmp(3), &
 &               Hk_tmp(NL_bands(2),NL_bands(2)),                                    &
 &               Hk_vec_tmp(3,NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
@@ -164,7 +163,7 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
        !
        ! Warning: for nspinor=2 the Vxc countribution could be wrong
        !
-       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,O_REAL,Hk_tmp,WF,'def')
+       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,Hk_tmp,WF,'def',V=O_REAL)
        !
      endif
      !

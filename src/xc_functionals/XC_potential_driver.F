@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG AM
@@ -32,7 +32,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  use com,            ONLY:msg
  use libxc_funcs_m,  ONLY:XC_LDA_X, XC_LDA_C_PW
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
-&                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done
+&                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done,XC_HYB_GGA_XC_GAUPBE
  use IO_m,           ONLY:IO_and_Messaging_switch
 #if defined _SC
  use drivers,        ONLY:l_sc_run
@@ -104,7 +104,13 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  endif
  !
  if (local_exx_screening.gt.rZERO) then
-   if (present(EXX_FRACTION)) EXX_SCREENING = local_exx_screening 
+   if (present(EXX_SCREENING)) EXX_SCREENING = local_exx_screening 
+     if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+       call msg('rsn','[xc] Hybrid functional. EXX GAUPBE parameter: ',EXX_SCREENING)
+      else
+       call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
+     endif
+   if (present(EXX_SCREENING)) EXX_SCREENING = local_exx_screening 
    call msg('rsn','[xc] Hybrid functional. EXX screening: ',EXX_SCREENING)
  endif
  !

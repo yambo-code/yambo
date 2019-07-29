@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,6 +34,7 @@ module R_lattice
  real(SP) :: k_grid_uc_vol
  real(SP) :: k_grid_b(3,3)
  logical  :: Xk_grid_is_uniform
+ logical  :: Xk_grid_new_mapping
  !
  ! Q/K-sampling
  !
@@ -121,6 +122,7 @@ module R_lattice
  real(SP)                :: cyl_length
  real(SP)                :: box_length(3)
  real(SP)                :: cyl_cut
+ real(SP)                :: ws_cutoff 
  character(schlen)       :: cut_geometry
  character(schlen)       :: cut_description
  complex(SP),allocatable :: bare_qpg(:,:)
@@ -234,6 +236,7 @@ module R_lattice
      cyl_ph_radius=0.
      box_length=0.
      cyl_length=0.
+     ws_cutoff=0.7
      cut_geometry='none'
      cut_description='none'
      CUTOFF_plus_RIM=.false.

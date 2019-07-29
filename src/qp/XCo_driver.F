@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -121,10 +121,10 @@ subroutine XCo_driver(E,k,Xk,q)
    !
  else
    !
-   if (l_screen_hyb) then                          ! 
-     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the 
-     QP_Vnl_sex=QP_Vnl_xc                          ! model nonlocal screened exchange part
-     QP_Vnl_xc=cZERO                               !  
+   if (l_screen_hyb) then                           
+     call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')    ! For screened hybrids calculate the  model nonlocal screened exchange part
+     QP_Vnl_sex=QP_Vnl_xc                        
+     QP_Vnl_xc=cZERO                                
    end if
    !
    call XCo_Hartree_Fock(E,k,xk,q)
@@ -162,6 +162,7 @@ subroutine XCo_driver(E,k,Xk,q)
    if( WF_kind/=H_SE_COHSEX .and. WF_kind/=H_SE_COH .and. WF_kind/=H_SE_SEX ) call XCo_local(E,Xk)
 #else
    call XCo_local(E,Xk)
+!
    if (.not.l_screen_hyb) then
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
    else

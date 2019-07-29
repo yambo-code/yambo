@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH, AF
@@ -25,8 +25,8 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use P2Y,                 ONLY:pw_init, pw_close, dftdata_fmt
  use LOGO,                ONLY:pickup_a_random
- use pars,                ONLY:SP,lchlen
- use com,                 ONLY:msg,core_io_path,write_the_logo,com_path
+ use pars,                ONLY:SP,lchlen,schlen
+ use com,                 ONLY:msg,core_io_path,write_the_logo,com_path,file_exists
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
@@ -39,9 +39,6 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use stderr,              ONLY:intc,logfile,log_as_a_file
  use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
-#if defined _MEM_CHECK 
- use memory,              ONLY : MEM_manager
-#endif
  !
 #include<memory.h>
  !
@@ -57,6 +54,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  character(icd),   intent(in) :: com_dir   
  !
  character(lchlen)     :: lch
+ character(schlen)     :: atm_file
  integer               :: ID,io_err,i_sp_pol,ik,ifrag,ib_grp
  complex(SP), allocatable :: wf_disk(:,:,:)
  type(PP_indexes)      :: PAR_IND_wfc_io
@@ -68,7 +66,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  p2y_i =0
  ncpu  =np
  myid  =pid
- call SET_defaults(instr,od,od,'')
+ call SET_defaults(instr,od,od,com_dir)
  call SET_job_strings_and_dirs(js)
  call interface_presets(instr)
  call bz_samp_reset(k)
@@ -189,14 +187,18 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
         !
         if (.not.PAR_IND_wfc_io%element_2D(ib_grp,ik)) cycle
         !
+        if (ifrag==1.and.ib_grp==1) then
+          call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+          io_err=io_WF(ID)
+        endif
+        !
         ! Read a single wfc component from disk
         !
         call p2y_wf(wf_disk,i_sp_pol,ik,ib_grp)
         !
         ! Write the standard wf header
         !
-        if (ifrag==1.and.ib_grp==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2,1/),ID=ID)
-        if (ifrag> 1.or. ib_grp> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+        call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
         io_err=io_WF(ID,wf_disk)
         !
      enddo
@@ -223,7 +225,7 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (trim(dftdata_fmt) /= "pw_export") then
    !
    call msg('s','== DB3 (PseudoPotential) ... ')
-   call PP_PWscf_driver(k)
+   call p2y_pseudo(k)
    if(verboseIO) then
      call msg('s','== DB3 (PseudoPotential) ... done ==')
    else
@@ -233,21 +235,31 @@ integer function p2y_i(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    call msg('s','Vnl support only with QE v5.0 or later (QEXML, QEXSD).')
  endif
  !
+ if ( file_exists('atomic_proj.xml') .or. file_exists('atomic_proj.dat') ) then
+   call msg('s','== DB4 (Atomproj parameters) ... ')
+   if ( file_exists('atomic_proj.xml') ) atm_file='atomic_proj.xml'
+   if ( file_exists('atomic_proj.dat') ) atm_file='atomic_proj.dat'
+   call p2y_atmproj(atm_file,k)
+   if(verboseIO) then
+     call msg('s','== DB4 (Atomproj parameters) ... done ==')
+   else
+     call msg('l',' done ==')
+   endif
+ endif
  !
  call PARALLEL_wait()
  !
  call pw_close
  !
- ! Memory Overview
- !=================
 #if defined _MEM_CHECK 
  !
- call MEM_manager("",REPORT="final")
+ ! Memory Overview
+ !=================
+ call MEM_report("final")
  !
 #endif
  !
  call msg('s',' == P2Y completed ==')
  call msg('s' ,' ')
  !
- end function p2y_i
-
+end function p2y_i

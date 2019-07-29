@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -29,24 +29,26 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels,n_sp_pol,n_spinor
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
  use drivers,        ONLY:l_use_Hxc_collisions
- use hamiltonian,    ONLY:V_hartree_SC,V_xc_SC,rho_n,H_nl_sc
+ use hamiltonian,    ONLY:rho_n,H_nl_sc,V_hartree_sc,V_xc_sc
  use QP_m,           ONLY:QP_nk
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:global_gauge,X_t
  use fields,         ONLY:A_ext,A_tot,Efield
- use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_field,rho_reference,&
+ use real_time,      ONLY:eval_DFT,eval_HARTREE,l_RT_induced_Field,rho_reference,&
 &                         Ho_plus_Sigma,RT_P,Phase_LifeTime,RT_Vnl_xc,RT_nbands         
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
-&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG,eval_COLLISIONS, & 
-&                         SEX,HF,NL_bands,VAL_BANDS
+&                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
+&                         NL_bands,VAL_BANDS,NL_P
  use global_XC,      ONLY:WF_kind,WF_xc_functional 
  use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use H_interfaces,   ONLY:V_real_space_to_H
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -70,7 +72,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  call timing('NL Hamiltonian',OPR='start')
 #endif
  !
- if(.not.l_use_Hxc_collisions) then
+ if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
    !
    if(eval_HARTREE .or.  eval_DFT) then
      !
@@ -101,22 +103,21 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  ! Evaluate the Polarization 
  ! ===================================================================
  !
- if(l_use_DIPOLES) then
-   call DIP_polarization(E,k,V_bands,RT_P)
-   RT_P=RT_P-NL_initial_P
- else
+ call DIP_polarization(E,k,V_bands,NL_P(4:6))
+ if(.not.l_use_DIPOLES) then
    ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
 #if defined _TIMING
- call timing('NL Hamiltonian',OPR='stop')
+   call timing('NL Hamiltonian',OPR='stop')
 #endif
-   call Berry_Polarization_NEQ(E,k,V_bands,RT_P)
+   call Berry_Polarization_NEQ(E,k,V_bands,NL_P(1:3))
 #if defined _TIMING
- call timing('NL Hamiltonian',OPR='start')
-#endif
-   !
-   RT_P=RT_P-NL_initial_P ! Subtract the initial polarization
-   !
+   call timing('NL Hamiltonian',OPR='start')
+#endif   
+ else
+   NL_P(1:3)=NL_P(4:6)
  endif
+ !
+ NL_P=NL_P-NL_initial_P ! Subtract the initial polarization
  !
  ! Evaluate the external/total field
  !=================================
@@ -136,7 +137,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
     !
     E_vec_pot=-A_ext%vecpot_vel/SPEED_OF_LIGHT
     !
-    if(l_RT_induced_Field) E_vec_pot=E_vec_pot - 4.0*pi*RT_P
+    if(l_RT_induced_Field) E_vec_pot=E_vec_pot - 4.0*pi*NL_P(1:3)
     !
     E_tot=E_vec_pot
     !
@@ -145,11 +146,11 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       alpha_ = NL_LRC_alpha 
       if (Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') &
       &     alpha_  = Alpha_ED(E,Efield(1)%frequency(1))
-           E_vec_pot=E_vec_pot + alpha_*RT_P
+           E_vec_pot=E_vec_pot + alpha_*NL_P(1:3)
       !
     elseif(Correlation==LRC) then
        ! 
-       E_vec_pot=E_vec_pot + NL_LRC_alpha*RT_P
+       E_vec_pot=E_vec_pot + NL_LRC_alpha*NL_P(1:3)
        !
     elseif(Correlation==JGM) then
       !  
@@ -157,7 +158,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
       !
       if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
       !
-      call EXC_macroscopic_JGM(E,RT_P,rho_n,E_xc_pot,V_xc_sc)
+      call EXC_macroscopic_JGM(E,NL_P(1:3),rho_n,E_xc_pot,V_xc_sc)
       V_xc_sc=V_xc_sc-V_xc_0
       E_vec_pot=E_vec_pot +  E_xc_pot - E_xc_0
       !
@@ -194,17 +195,12 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    ! Correlation part Hartree + TDDFT
    ! ================================
    !
-   if(Correlation/=IPA .and. .not.l_use_Hxc_collisions) then
+   if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !  
-     if(n_spinor==1) then
-        if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
-          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc+V_xc_sc,H_nl_sc,WF,'def')
-        elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
-          call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        endif
-     elseif (n_spinor==2) then
-        if (eval_Hartree) call V_real_space_to_H(ik,i_sp_pol,V_hartree_sc,H_nl_sc,WF,'def')
-        if (eval_DFT.or.Correlation==JGM) call V_real_space_to_H(ik,i_sp_pol,V_xc_sc,H_nl_sc,WF,'xc ')
+     if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def+xc',V_hartree_sc,V_xc_sc)
+     elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def',V_hartree_sc)
      endif
      !
    endif
@@ -218,7 +214,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    enddo
 !$omp end parallel do
    !
-   if(l_use_DIPOLES) then
+   if(l_use_DIPOLES.or.trim(global_gauge)=='velocity') then
      !    
      call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
      !

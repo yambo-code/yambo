@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -29,8 +29,9 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  use electrons,      ONLY:n_spinor
  use units,          ONLY:SPEED_OF_LIGHT
  use fields,         ONLY:gauge_field
- use X_m,            ONLY:DIP_iR,DIP_P,DIP_P_spinor,global_gauge
- use real_time,      ONLY:RT_bands,l_update_SOC
+ use DIPOLES,        ONLY:DIP_iR,DIP_P,DIP_v,DIP_P_spinor
+ use X_m,            ONLY:global_gauge
+ use real_time,      ONLY:RT_bands,l_update_SOC,l_velocity_gauge_corr
  use vec_operate,    ONLY:cross_product
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -45,12 +46,15 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,j_spinor
- complex(SP) :: A_dot_J,E_dot_P,ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
+ complex(SP) :: A_dot_J,E_dot_P,&
+&               ExJs(3,n_spinor,n_spinor),A_vec_pot(3),E_vec_pot(3),&
 &               POL(3),Jtot(3),Jspinor(3,n_spinor,n_spinor),sigma_dot_ExJs
  !
  call timing('RT Apply Field',OPR='start')
  !
- if(trim(global_gauge)=='velocity') then
+ select case(trim(global_gauge))
+   !
+ case('velocity')
    !
    ! Velocity gauge
    !================
@@ -62,8 +66,14 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! and the intraband optical matrix elements have been set to zero
    !
    do i1=RT_bands(1),RT_bands(2)
-     Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),1)+A_vec_pot(1:3)/2._SP
-     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
+     !
+     !Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
+     if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
+     !         A*v accounts for the linear expansion of the gauge correction to the non local potential
+     if (.not.l_velocity_gauge_corr) Jtot(1:3)= -DIP_v(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
+     A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(A_dot_J,SP)
    enddo
    !
@@ -71,19 +81,22 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
      do i2=i1+1,RT_bands(2)
        !
        ! Note that (P)_cv = DIP_P (:,iv,ic,:,:)
+       ! the off-diagonal diamagnetic term is zero
        !     
-       Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),1) ! the off-diagonal diamagnetic term is zero
+       !Jtot(:)=-DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol) 
+       ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
+       if (     l_velocity_gauge_corr) Jtot(:)= -DIP_P(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
+       ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.
+       !         A*v accounts for the linear expansion of the gauge correction to the non local potential
+       if (.not.l_velocity_gauge_corr) Jtot(:)= -DIP_v(1:3,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
        A_dot_J=sum(A_vec_pot(1:3)*Jtot(1:3)) 
-       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      A_dot_J
+       H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-     (A_dot_J)
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(A_dot_J)
        !
      enddo
    enddo
    !
-   ! Correction to the pseudo should be included here ... <nk|V(r,r')[exp(iA*(r-r'))-1]|n'k>
-   ! Its low field expansion however gives <nk|iA*[x,V(r,r')]|n'k>, which is included in DIP_P
-   !
- else  
+ case('length')
    !
    ! Length gauge
    !===============
@@ -93,7 +106,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    ! Intraband terms
    !
    do i1=RT_bands(1),RT_bands(2)
-     POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),1)
+     POL(:)=cI*DIP_iR(:,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
      E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
      H_nl_sc(i1,i1)=H_nl_sc(i1,i1)-real(E_dot_P,SP)
      !
@@ -123,7 +136,7 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
        ! Note that (iR)_cv = DIP_iR (:,iv,ic,:,:)
        !
-       POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),1)
+       POL(:)=cI*DIP_iR(:,i2,i1,PAR_Xk_ibz_index(ik),i_sp_pol)
        E_dot_P=sum(E_vec_pot(1:3)*POL(1:3))
        H_nl_sc(i1,i2)=H_nl_sc(i1,i2)-      E_dot_P
        H_nl_sc(i2,i1)=H_nl_sc(i2,i1)-conjg(E_dot_P)
@@ -144,7 +157,8 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
        !
      enddo
    enddo
- endif
+   !
+ end select
  !
  call timing('RT Apply Field',OPR='stop')
  !

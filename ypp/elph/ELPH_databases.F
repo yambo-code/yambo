@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -220,11 +220,14 @@ integer function ELPH_databases(k,E,q)
        !
        ph_freqs_sq(iq_bz,:)=ph_freqs_sq(iq,:)
        !
-       if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,iq_bz+1/),ID=ID)
-       if (iq_bz >1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
+       if (iq_bz==1) then
+         call io_control(ACTION=OP_APP_CL,SEC=(/1/),ID=ID)
+         io_elph_err=io_ELPH(ID,trim(db_name))
+       endif
        !
        call ELPH_gkkp_expand(iq_bz,iq_s,k)
        !
+       call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_elph_err=io_ELPH(ID,trim(db_name))
        !
      enddo
@@ -240,9 +243,12 @@ integer function ELPH_databases(k,E,q)
      !
      if (io_err==-4) call warning("K-grid is not fully q-connected @ Q"//trim(intc(iq)))
      !
-     if (idb==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,iq+1/),ID=ID)
-     if (idb/=1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
+     if (idb==1) then
+       call io_control(ACTION=OP_APP_CL,SEC=(/1/),ID=ID)
+       io_elph_err=io_ELPH(ID,trim(db_name))
+     endif
      !
+     call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_elph_err=io_ELPH(ID,trim(db_name))
      !
    endif

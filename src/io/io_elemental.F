@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,8 +25,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
 &                       R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
 &                       DESCRIPTION,DO_NOT_DUMP)
  !
- use pars,    ONLY:SP,DP,schlen,lchlen,nf90_SP
- use pointers,ONLY:linkC2R
+ use pars,          ONLY:SP,DP,schlen,lchlen,nf90_SP
+ use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use netcdf
  use drivers, ONLY:list_dbs
  use com,     ONLY:msg
@@ -45,7 +45,8 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
  real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
  real(DP),    optional :: D0,DB_D0
- complex(SP), optional :: C0,DB_C0
+ complex(SP), optional, target :: C0
+ complex(SP), optional :: DB_C0
  logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
  character(*),optional :: CH0,DB_CH0,CH1(:)
  character(lchlen),optional :: DESCRIPTION
@@ -58,7 +59,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  integer :: i_db(MAX_DB_ELEMENTS),i_err,nf_error,MENU_
  real(SP):: r_db(MAX_DB_ELEMENTS),r_from_c(2,MAX_DB_ELEMENTS),local_unit
  real(DP):: d_db(MAX_DB_ELEMENTS)
- complex(SP) :: c_db(MAX_DB_ELEMENTS)
+ complex(SP), target :: c_db
  real(SP), pointer  :: RC0(:)
  character(schlen) :: db_ch(MAX_DB_ELEMENTS)
  logical :: CHECK_,DUMP_
@@ -316,7 +317,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  !
  if (present(C0)) then
    if (write_is_on(ID)) then
-     RC0 => linkC2R(C0,(/2/))
+     call C_F_POINTER(C_LOC(C0), RC0, (/2/) )
      nf_error=nf90_put_var(io_unit(ID), io_netcdf_var(ID,1), RC0, (/1/), (/2/))
      call netcdf_call(nf_error,ID)
      r_from_c(1,1)=real(C0)
@@ -324,16 +325,16 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (present(DB_C0)) DB_C0=C0
      if (present(VAR)) call msg(msg_where,VAR,r_from_c(:,1)*local_unit)
    else if (read_is_on(ID)) then
-     RC0 => linkC2R(c_db(1),(/2/))
+     call C_F_POINTER(C_LOC(c_db), RC0, (/2/) )
      nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,1), RC0, (/1/), (/2/))
      call netcdf_call(nf_error,ID)
      r_from_c(1,1)=real(C0)
      r_from_c(2,1)=aimag(C0)
-     if (DUMP_)          C0=c_db(1)
-     if (present(DB_C0)) DB_C0=c_db(1)
+     if (DUMP_)          C0=c_db
+     if (present(DB_C0)) DB_C0=c_db
      ch=""
      if (io_mode(ID)==VERIFY.and.present(OP)) then
-       i_err=c_verify((/C0/),(/c_db(1)/))
+       i_err=c_verify((/C0/),(/c_db/))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
@@ -412,8 +413,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      if (DUMP_)             CH0=db_ch(1)
      if (present(DB_CH0))   DB_CH0=db_ch(1)
      if (io_mode(ID)==VERIFY) then
-       i_err=0
-       if (trim(db_ch(1))/=CH0) i_err=-1
+       i_err=ch_verify(CH0,db_ch(1))
        if (CHECK_) then
          if (io_status(ID)==0) io_status(ID)=i_err
          if (i_err/=0.and.present(VAR)) ch=STRING_pack("*ERR* ",VAR)
@@ -443,21 +443,11 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      integer :: iv1(:),iv2(:),i1
      i_verify=0
      do i1=1,size(iv1)
-       if (OP(i1)=="==") then 
-         if (iv1(i1)/=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (iv1(i1)>=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (iv1(i1)>iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (iv1(i1)<=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (iv1(i1)<iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="==" .and. iv1(i1)/=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<"  .and. iv1(i1)>=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<=" .and. iv1(i1)> iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and. iv1(i1)<=iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and. iv1(i1)< iv2(i1)) i_verify=IO_INCOMPATIBLE_VAR
        if (i_verify/=0) return
      enddo
    end function
@@ -477,21 +467,11 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      enddo
      !
      do i1=1,size(rv1)
-       if (OP(i1)=="==") then 
-         if (abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (rv1(i1)>=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (rv1(i1)>rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (rv1(i1)<=rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (rv1(i1)<rv2(i1)) r_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="==" .and. abs(rv1(i1)-rv2(i1))>eq_accuracy) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<"  .and.     rv1(i1)>=rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<=" .and.     rv1(i1)> rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and.     rv1(i1)<=rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and.     rv1(i1)< rv2(i1)            ) r_verify=IO_INCOMPATIBLE_VAR
        if (r_verify/=0) return
      enddo
    end function
@@ -512,23 +492,29 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      enddo
      !
      do i1=1,size(cv1)
-       if (OP(i1)=="==") then 
-         if (abs(cv1(i1)-cv2(i1))>eq_accuracy) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<") then 
-         if (abs(cv1(i1))>=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)=="<=") then 
-         if (abs(cv1(i1))>abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">") then 
-         if (abs(cv1(i1))<=abs(cv2(i1))) c_verify=IO_INCOMPATIBLE_VAR
-       endif
-       if (OP(i1)==">=") then 
-         if (abs(cv1(i1))<abs(cv2(i1)))  c_verify=IO_INCOMPATIBLE_VAR
-       endif
+       if (OP(i1)=="==" .and. abs(cv1(i1)-cv2(i1))>eq_accuracy) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<"  .and. abs(cv1(i1))>=abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)=="<=" .and. abs(cv1(i1))> abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">"  .and. abs(cv1(i1))<=abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
+       if (OP(i1)==">=" .and. abs(cv1(i1))< abs(cv2(i1))      ) c_verify=IO_INCOMPATIBLE_VAR
        if (c_verify/=0) return
      enddo
+   end function
+   !
+   integer function ch_verify(chv1,chv2)
+     character(*),optional :: chv1,chv2
+     ch_verify=0
+     !
+     if (.not.present(OP) .and. trim(chv1)/=trim(chv2)) ch_verify=IO_INCOMPATIBLE_VAR
+     !
+     if (     present(OP)) then
+       if (OP(1)=="==" .and. trim(chv2)/=trim(chv1)              )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+     endif
+     !
    end function
    !
 end subroutine

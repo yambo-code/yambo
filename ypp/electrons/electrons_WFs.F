@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,6 +38,7 @@ subroutine electrons_WFs(Xen)
  use xc_functionals, ONLY:magn
 #if defined _YPP_SC
  use YPP,            ONLY:V_value,l_mean_potential
+ use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
  use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
@@ -78,7 +79,7 @@ subroutine electrons_WFs(Xen)
  integer                 :: ok_ibz,il,ok_s
  real(SP)                :: polaronic_residual(n_max_res),max_residual
  complex(SP)             :: B_n_ok
- complex(SP), allocatable:: v2plot_c(:),wf_rot(:)
+ complex(SP), allocatable:: v2plot_c(:),wf_rot(:,:)
  !
  ! ELPH setup
  !============
@@ -93,7 +94,7 @@ subroutine electrons_WFs(Xen)
    nkpt_to_load  =(/1,nkibz/)
  endif
  YAMBO_ALLOC(v2plot_c,(fft_size))
- YAMBO_ALLOC(wf_rot,(fft_size))
+ YAMBO_ALLOC(wf_rot,(fft_size,n_spinor))
 #endif
  !
 #if defined _YPP_SC 
@@ -179,7 +180,7 @@ subroutine electrons_WFs(Xen)
            !
            call WF_apply_symm((/ibp,ok_ibz,ok_s,1/),wf_rot)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+B_n_ok*wf_rot(ir,1)
            !
          endif
          !

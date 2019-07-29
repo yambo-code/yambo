@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -249,12 +249,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
 
  if (trim(PARALLEL_STRUCTURE_)/="NONE") then
    ! 
-   if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Zero_Momentum") p_structure=1
+   if (trim(PARALLEL_STRUCTURE)=="DIPOLES")          p_structure=1
    if (trim(PARALLEL_STRUCTURE)=="Response_G_space_Finite_Momentum") p_structure=2
    if (trim(PARALLEL_STRUCTURE)=="Response_G_space") p_structure=3
    if (trim(PARALLEL_STRUCTURE)=="Response_T_space") p_structure=4
-   if (trim(PARALLEL_STRUCTURE)=="Self_Energy") p_structure=5
-   if (trim(PARALLEL_STRUCTURE)=="Real_Time") p_structure=6
+   if (trim(PARALLEL_STRUCTURE)=="Self_Energy")      p_structure=5
+   if (trim(PARALLEL_STRUCTURE)=="Real_Time")        p_structure=6
    if (trim(PARALLEL_STRUCTURE)=="ScaLapacK") p_structure=7
    if (trim(PARALLEL_STRUCTURE)=="Non_Linear") p_structure=8
    !

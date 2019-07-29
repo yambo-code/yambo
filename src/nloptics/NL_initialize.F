@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -23,7 +23,7 @@
 !
 subroutine NL_initialize(E,k,q)
  ! 
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
  use hamiltonian,    ONLY:H_potential
@@ -31,7 +31,7 @@ subroutine NL_initialize(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol
  use com,            ONLY:msg,warning,error
  use zeros,          ONLY:zero_dfl
- use R_lattice,      ONLY:bz_samp,bare_qpg
+ use R_lattice,      ONLY:bz_samp,bare_qpg,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
@@ -50,13 +50,12 @@ subroutine NL_initialize(E,k,q)
  !
  ! Working space
  !
- real(SP) :: Time, WF_sample_range(2) 
+ real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
  integer  :: i1
  !
  ! Parser
  ! ============
  !
- call parser('UseDipoles',           l_use_DIPOLES)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
@@ -69,6 +68,12 @@ subroutine NL_initialize(E,k,q)
  if(DP/=SP)      call error(" Non-linear optics works only in double precision, configure with --enable-dp flag")
  if(n_sp_pol/=1) call error(" Spin-polarized systems not yet implemented")
  if(any(NL_bands(:)==0)) call error("Any of the NLBands limits is 0, change to nv|nc with 0<nv<fermi<nc")
+ !
+ ! K-sampling
+ ! ===========
+ !
+ if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(k,k_map)
+ if(.not.allocated(k%k_table))       call k_build_up_BZ_tables(k)
  !
  ! Integrator ! ============
  !
@@ -107,34 +112,88 @@ subroutine NL_initialize(E,k,q)
       call error("Unknow verbosity level")
  end select
  !
+ ! Check Field
+ ! =========================
+ !
+ ! This part of the code works with only one field
+ !
+ n_ext_fields=1
+ !
+ do i1=1,n_ext_fields
+   !
+   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
+   !
+   if((Efield(i1)%ef_name=='none')) cycle
+   !
+   if(Efield(i1)%intensity==0._SP) &
+&    call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
+     !
+   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) &
+&    call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
+     !
+     Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
+     Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
+     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+     Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
+     Efield(i1)%ef_pol        ="linear"
+     !
+     call Check_symmetries(Efield(i1)%versor)
+     !
+ enddo
+ !
+ if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
+    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
+ !
+ ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
+ ! calcualte the T_0
+ !
+ W_0=Efield(1)%frequency(1)
+ sigma=Efield(1)%width
+ T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+ if(Efield(1)%ef_name=='SPULSE') T_0=sigma
+ !
  ! Important in the Time-dependent Schrodinger Eq.
  ! the Phase_LifeTime is 1/2 of the one used in the 
  ! Non-Equilibrium Green's Function
  !
  Phase_LifeTime=2._SP/NL_damping
  !
- ! Determine the total time from the damping
+ ! Determine the total time from the damping or from T_0
  !
  if(NE_tot_time<=0._SP) then
    !
-   ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
-   !
-   if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
-   !
-   ! Dephasing Time
-   !
-   NE_tot_time=Phase_LifeTime*5._SP
-   !
-   ! Add time to sample the response
-   !
-   NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
-   !
+   if(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') then
+     !  
+     ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
+     !
+     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
+     !
+     ! Dephasing Time
+     !
+     NE_tot_time=Phase_LifeTime*5._SP
+     !
+     ! Add time to sample the response
+     !
+     NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
+     !
+     call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
+     call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     !
+   elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
+&     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
+     !
+     NE_tot_time=3*T_0
+     call msg('sr','Time T_0                [fs]:',T_0*AUT2FS)
+     call msg('sr','Dephasing               [fs]:',Phase_LifeTime*AUT2FS)
+     !
+   else
+     call error("Negative total simulation time! ")
+   endif
+   ! 
  else
    call msg('s',' Total simulation time read from input') 
  endif
  !
- call msg('sr','Dephasing Time          [fs]:',5._SP*Phase_LifeTime*AUT2FS)
- call msg('sr','Sampling  Time          [fs]:',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
  call msg('sr','Total simulation time   [fs]:',NE_tot_time*AUT2FS)
  !
  NE_steps=int(NE_tot_time/RT_step)+1
@@ -226,38 +285,6 @@ subroutine NL_initialize(E,k,q)
    OBS_RT_IO_t%Time(NE_i_time)=Time
  enddo
  !
- ! Check Field
- ! =========================
- !
- ! This part of the code works with only one field
- !
- n_ext_fields=1
- !
- do i1=1,n_ext_fields
-   !
-   Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
-   !
-   if((Efield(i1)%ef_name=='none')) cycle
-   !
-   if(Efield(i1)%intensity==0._SP) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
-     !
-   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
-     !
-     Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
-     Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
-     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
-     Efield(i1)%ef_pol        ="linear"
-     !
-     call Check_symmetries(Efield(i1)%versor)
-     !
- enddo
- !
- if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
-    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
- !
  ! WFs sampling
  ! =========================
  !
@@ -285,6 +312,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Dephasing              [fs]:',Phase_LifeTime*AUT2FS)
  call msg( 'r', 'Efield                     :'//trim(Efield(1)%ef_name))
  call msg( 'r', 'Efield width           [fs]:',Efield(1)%width*AUT2FS)
+ call msg( 'r', 'Efield T_0             [fs]:',T_0)
  call msg( 'r', 'Efield Amplitude      [V/m]:',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          :',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          :',n_frequencies)

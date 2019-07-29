@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -28,8 +28,8 @@ subroutine NL_output(i_time,i_freq)
  use fields,       ONLY:A_tot,A_ext
  use com,          ONLY:msg,of_open_close
  use stderr,       ONLY:intc
- use real_time,    ONLY:NE_steps,RT_step,RT_P
- use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT
+ use real_time,    ONLY:NE_steps,RT_step
+ use nl_optics,    ONLY:NL_er,NL_estep,VERB_LOW,NL_verbosity,NL_J,l_eval_CURRENT,NL_P
  use stderr,       ONLY:set_real_printed_length
  !
  implicit none
@@ -58,7 +58,7 @@ subroutine NL_output(i_time,i_freq)
  !
  n_files=n_files+1
  short_file_name(n_files)='polarization'
- n_headings(n_files)=4
+ n_headings(n_files)=7
  !
  n_files=n_files+1
  short_file_name(n_files)='e_total'
@@ -82,6 +82,7 @@ subroutine NL_output(i_time,i_freq)
    headings(1, 8:10)=(/"A''_x","A''_y","A''_z"/)
    !
    headings(2, 2:4)=(/"Pol_x","Pol_y","Pol_z"/)
+   headings(2, 5:7)=(/"<Dip_x>","<Dip_y>","<Dip_z>"/)
    !
    headings(3, 2:4)=(/"Etot_x","Etot_y","Etot_z"/)
    !
@@ -107,7 +108,8 @@ subroutine NL_output(i_time,i_freq)
  data_to_dump(1,5:7) =real(A_ext%vecpot_vel(:))
  data_to_dump(1,8:10)=real(A_ext%vecpot_acc(:))
  !
- data_to_dump(2,2:4) =real(RT_P(1:3))
+ data_to_dump(2,2:4) =real(NL_P(1:3))
+ data_to_dump(2,5:7) =real(NL_P(4:6))
  !
  data_to_dump(3,2:4) =-real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT
  !

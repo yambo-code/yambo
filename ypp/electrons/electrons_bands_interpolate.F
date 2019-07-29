@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -168,7 +168,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,CIRCUIT_E,GRID_E,CIRCU
      do ik=1,CIRCUIT_k%nbz
        v=CIRCUIT_k%pt(ik,:)
        call c2a(v_in=v,mode="ki2c")
-       ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)  
+       ik_special=k_the_nearest(CIRCUIT_k%pt(ik,:),SPECIAL_k%pt(:SPECIAL_k%nbz,:),SPECIAL_k%nbz,ROTATE_k_ref=.TRUE.,i_err=i_err)
        if (i_err==0) then
          CIRCUIT_k_label(ik)=trim(SPECIAL_k_label(ik_special))
          BANDS_path=trim(BANDS_path)//" "//trim(SPECIAL_k_label(ik_special))

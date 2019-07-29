@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2018 the YAMBO team
+#        Copyright (C) 2000-2019 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -131,37 +131,37 @@ if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
   fi
   #
   if test -d "$with_netcdf_path" ; then 
-      try_libdir="$with_netcdf_path/lib" ;
-      try_incdir="$with_netcdf_path/include" ;
-      tryf_libdir="$with_netcdf_path/lib" ;
-      tryf_incdir="$with_netcdf_path/include" ;
+      try_netcdf_libdir="$with_netcdf_path/lib" ;
+      try_netcdf_incdir="$with_netcdf_path/include" ;
+      try_netcdff_libdir="$with_netcdf_path/lib" ;
+      try_netcdff_incdir="$with_netcdf_path/include" ;
   fi
   if test -d "$with_netcdff_path" ; then 
-      tryf_libdir="$with_netcdff_path/lib" ;
-      tryf_incdir="$with_netcdff_path/include" ;
+      try_netcdff_libdir="$with_netcdff_path/lib" ;
+      try_netcdff_incdir="$with_netcdff_path/include" ;
   fi
   #
-  if test -d "$with_netcdf_libdir"     ; then try_libdir="$with_netcdf_libdir" ; fi
-  if test -d "$with_netcdf_includedir" ; then try_incdir="$with_netcdf_includedir" ; fi
+  if test -d "$with_netcdf_libdir"     ; then try_netcdf_libdir="$with_netcdf_libdir" ; fi
+  if test -d "$with_netcdf_includedir" ; then try_netcdf_incdir="$with_netcdf_includedir" ; fi
   #
-  if test -d "$with_netcdff_libdir"     ; then tryf_libdir="$with_netcdff_libdir" ; fi
-  if test -d "$with_netcdff_includedir" ; then tryf_incdir="$with_netcdff_includedir" ; fi
+  if test -d "$with_netcdff_libdir"     ; then try_netcdff_libdir="$with_netcdff_libdir" ; fi
+  if test -d "$with_netcdff_includedir" ; then try_netcdff_incdir="$with_netcdff_includedir" ; fi
   #
-  if test -z "$try_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
-  if test -z "$try_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
+  if test -z "$try_netcdf_libdir" ; then AC_MSG_ERROR([No lib-dir specified]) ; fi
+  if test -z "$try_netcdf_incdir" ; then AC_MSG_ERROR([No include-dir specified]) ; fi
   #
   AC_LANG([Fortran])
   #
-  try_NETCDF_INCS="$IFLAG$try_incdir" ;
-  if test -d "$tryf_incdir" ; then
-    try_NETCDFF_INCS="$IFLAG$tryf_incdir" ;
+  try_NETCDF_INCS="$IFLAG$try_netcdf_incdir" ;
+  if test -d "$try_netcdff_incdir" ; then
+    try_NETCDFF_INCS="$IFLAG$try_netcdff_incdir" ;
   fi
   #
-  try_NETCDF_LIBS="-L$try_libdir -lnetcdf" ;
-  if test -r $tryf_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$tryf_libdir -lnetcdff" ;
-  elif test -r $try_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$try_libdir -lnetcdff" ;
+  try_NETCDF_LIBS="-L$try_netcdf_libdir -lnetcdf" ;
+  if test -r $try_netcdff_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_netcdff_libdir -lnetcdff" ;
+  elif test -r $try_netcdf_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_netcdf_libdir -lnetcdff" ;
   fi
   #
 elif test x"$with_netcdf_libs" != "x" ; then
@@ -266,17 +266,17 @@ if test x"$enable_hdf5" = "xyes"; then
   # re-define lib and inc dirs
   #
   if test -d "$with_hdf5_path" ; then 
-      try_libdir=$with_hdf5_path/lib
-      try_incdir=$with_hdf5_path/include
+      try_hdf5_libdir=$with_hdf5_path/lib
+      try_hdf5_incdir=$with_hdf5_path/include
   fi
-  if test -d "$with_hdf5_libdir"     ; then try_libdir=$with_hdf5_libdir ; fi
-  if test -d "$with_hdf5_includedir" ; then try_incdir=$with_hdf5_includedir ; fi
+  if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
+  if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
   #
   if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
   #
-  if test -d "$try_libdir" ; then try_HDF5_LIBS="-L$try_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
   #
-  if test -d "$try_incdir" ; then try_HDF5_INCS="$IFLAG$try_incdir" ; fi
+  if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
   save_libs="$LIBS" ;
   save_fcflags="$FCFLAGS" ;
@@ -420,16 +420,13 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf
   def_netcdf="${def_netcdf} -D_HDF5_IO";
 fi
 #
-# HDF5-DATA COMPRESSION
-#
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-fi
-#
-# NETCDF-HDF5 PAR IO
+# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
 #
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
+    enable_hdf5_compression="no";
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_netcdf_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
 fi
 #
 AC_SUBST(NETCDF_LIBS)
@@ -449,5 +446,6 @@ AC_SUBST(compile_netcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)
+AC_SUBST(enable_hdf5_p2y_support)
 
 ])

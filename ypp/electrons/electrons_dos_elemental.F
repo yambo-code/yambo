@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QUIET,FORCE_occ)
+subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
+&                                  WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels
@@ -39,8 +40,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  type(levels),      intent(in)  :: E
  integer,           intent(in)  :: bands(2)
  real(SP),        intent(inout) :: el_dos(:,:),dos_E(:)
+ real(SP), pointer, intent(in)  :: WF_fac(:,:,:)
+ real(SP), pointer, intent(in)  :: PDOS_fac(:,:,:)
  logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
- real(SP), optional, intent(in) :: WF_fac(bands(1):bands(2),k%nibz,2)
  !
  ! Work Space
  ! 
@@ -52,23 +54,19 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
  !==================
  !
  call parser('DOSUsesOcc',USE_occ)
- if (present(FORCE_occ)) then
-   USE_occ=FORCE_occ
- endif
+ if (present(FORCE_occ)) USE_occ=FORCE_occ 
  !
  ! Parallel setup and live_timing
  !================================
  !
  LIVE_t_=.TRUE.
- if (present(QUIET)) then
-   LIVE_t_=.not.QUIET
-   if (QUIET) call IO_and_Messaging_switch("-log")
- endif
+ if (present(QUIET)) LIVE_t_=.not.QUIET
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/DOS_E_steps/))
  !
- if (LIVE_t_) call live_timing('DOS',px%n_of_elements(myid+1))
+ if (.not.LIVE_t_) call IO_and_Messaging_switch("-log")
+ if (     LIVE_t_) call live_timing('DOS',px%n_of_elements(myid+1))
  !
  el_dos=rZERO
  !
@@ -76,23 +74,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,USE_the_DbGd,WF_fac,QU
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   if (present(WF_fac)) then
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                WF_fac=WF_fac,USE_occupations=USE_occ)
-     endif
-   else
-     if (USE_the_DbGd) then
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.TRUE.,&
-&                                USE_occupations=USE_occ)
-     else
-       call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),USE_the_DbGd=.FALSE.,&
-&                                USE_occupations=USE_occ)
-     endif
-   endif
+   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  & ! standard
+&                              USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,& ! optionals
+&                              WF_fac=WF_fac,PDOS_fac=PDOS_fac)                    ! optional pointers
    !
    if (LIVE_t_) call live_timing(steps=1)
    !

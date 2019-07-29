@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2018 the YAMBO team
+!        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -28,8 +28,8 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use com,                 ONLY:core_io_path,more_io_path
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
- use SC,                  ONLY:l_sc_V_is_local,H_nl_sc,SC_bands
- use hamiltonian,         ONLY:H_rotation
+ use SC,                  ONLY:SC_bands
+ use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local
  use electrons,           ONLY:levels,E_reset,n_sp_pol
  use R_lattice,           ONLY:bz_samp,nkibz
  !
@@ -49,7 +49,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  !
  integer               :: ID
  integer               :: io_SC_E_err,io_SC_V_err,io_SC_WF_err
- integer               :: ik
+ integer               :: ik,i_sp_pol
  !
  complex(SP), allocatable :: full_H(:,:,:,:)
  !
@@ -140,7 +140,7 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
    !
    YAMBO_ALLOC(H_nl_sc,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2)))
    !
-   YAMBO_ALLOC(full_H(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k_save%nibz,n_sp_pol))
+   YAMBO_ALLOC(full_H,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),k_save%nibz,n_sp_pol))
    !
    nkibz=k_save%nibz
    !

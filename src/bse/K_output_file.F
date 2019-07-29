@@ -338,10 +338,6 @@ subroutine K_output_file(iq,mode)
    eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eels(:,2)) 
    if (l_Haydock.or.l_Inversion) eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eels(:,3)) 
    !
-   alpha(:,1)=(1._SP+eels(:,1))/4._SP/pi*eps_2_alpha
-   alpha(:,2)=(1._SP+eels(:,2))/4._SP/pi*eps_2_alpha
-   if (l_Haydock.or.l_Inversion) alpha(:,3)=(1._SP+eels(:,3))/4._SP/pi*eps_2_alpha
-   !
    do iw=1,BSS_n_freqs
      !
      ! EELS

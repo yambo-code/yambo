@@ -29,7 +29,7 @@ subroutine K_output_file(iq,mode)
  use BS_solvers,ONLY:BSS_description, BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_descs,BSS_n_freqs,BSS_q0,K_diago_in_BS_mat
  use BS,        ONLY:BSE_mode,BS_K_is_ALDA
- use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,OPTICS_eels
+ use X_m,       ONLY:Epsilon_ii,Joint_DOS,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
@@ -96,11 +96,13 @@ subroutine K_output_file(iq,mode)
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
  if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
  !
- ! EELS / REFLECTIVITY logicals 
+ ! EELS / ALPHA / REFLECTIVITY logicals
  !
- call parser('Reflectivity',eval_reflectivity)
  eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
  eval_alpha=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
+ !
+ call parser('Reflectivity',eval_reflectivity)
+ eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
  !
  title_mode='Ot'
  if (l_INIT) title_mode='ot'
@@ -116,8 +118,8 @@ subroutine K_output_file(iq,mode)
 #if defined _KERR
  if(l_kerr) then
    call of_open_close(off_file_name,title_mode)
-   call of_open_close(moke_file_name,title_mode)
-   if (eval_alpha) call of_open_close(beta_file_name,title_mode)
+   if (.not.eval_alpha) call of_open_close(moke_file_name,title_mode)
+   if (     eval_alpha) call of_open_close(beta_file_name,title_mode)
  endif
 #endif
  if(.not.l_Haydock.and..not.l_Inversion) call of_open_close(jdos_file_name,title_mode)
@@ -132,6 +134,11 @@ subroutine K_output_file(iq,mode)
  if (l_INIT) then 
    call CLOSE_the_files( )
    return
+ endif
+ !
+ if(eval_alpha) then
+   call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o alpha','#')
  endif
  !
 #if defined _KERR
@@ -232,10 +239,12 @@ subroutine K_output_file(iq,mode)
      if (l_IP) call msg("o beta",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
-   call X_setup_headers('moke')
-   if (l_Haydock.or.l_Inversion) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
-   if (l_Diago.or.l_Slepc) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
-   if (l_IP) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   if (.not.eval_alpha)  then
+     call X_setup_headers('moke')
+     if (l_Haydock.or.l_Inversion) call msg("o moke",'#',headers,INDENT=0,USE_TABS=.TRUE.)
+     if (l_Diago.or.l_Slepc) call msg("o moke",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
+     if (l_IP) call msg("o moke",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
+   endif
    !
  endif
 #endif
@@ -405,21 +414,6 @@ subroutine K_output_file(iq,mode)
      if (l_IP) output_data(2:3)=output_data(4:5)
      call msg('o off','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      !
-     if(eval_alpha) then
-       !
-       ! alpha_xy
-       !
-       output_data(1:5)=(/real(Epsilon_ij(iw,1))*HA2EV,aimag(beta(iw,1)),real(beta(iw,1)),&
-&                aimag(beta(iw,3)),real(beta(iw,3))/)
-       n_output_data=5
-       if (l_Haydock.or.l_Inversion) n_output_data=7
-       if (l_Haydock.or.l_Inversion) output_data(6:7)=(/aimag(beta(iw,3)),real(beta(iw,3))/)
-       if (l_IP) n_output_data=3
-       if (l_IP) output_data(2:3)=output_data(4:5)
-       call msg("o beta",'',output_data(:n_output_data),INDENT=-2,USE_TABS=.TRUE.)
-       !
-     endif
-     !
    enddo
    !
    !
@@ -454,36 +448,40 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   ! Kerr parameters
-   !
-   do iw=1,BSS_n_freqs 
-     output_data(1)= real(Epsilon_ii(iw,1))*HA2EV
-     output_data(2)=-aimag(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
-     output_data(3)=-real(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
-     output_data(4)=-aimag(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
-     output_data(5)=-real(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
+   if(.not.eval_alpha) then
      !
-     if( (real(Epsilon_ii(iw,2))==1._SP .or. real(Epsilon_ii(iw,2))==0._SP ) &
-&         .and. aimag(Epsilon_ii(iw,2))==0._SP ) then
-       output_data(2)=0._SP
-       output_data(3)=0._SP
-     endif
-     if( (real(Epsilon_ii(iw,3))==1._SP .or. real(Epsilon_ii(iw,3))==0._SP ) &
-&         .and. aimag(Epsilon_ii(iw,3))==0._SP ) then
-       output_data(4)=0._SP
-       output_data(5)=0._SP
-     endif         
+     ! Kerr parameters
      !
-     n_output_data=5
-     if (l_Haydock.or.l_Inversion) then
-       n_output_data=7
-       output_data(6)=-aimag(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
-       output_data(7)=-real(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
-     endif
-     if (l_IP) n_output_data=3
-     if (l_IP) output_data(2:3)=output_data(4:5)
-     call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
-   enddo
+     do iw=1,BSS_n_freqs 
+       output_data(1)= real(Epsilon_ii(iw,1))*HA2EV
+       output_data(2)=-aimag(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
+       output_data(3)=-real(Epsilon_ij(iw,2)/( (Epsilon_ii(iw,2)-1.0_SP)*sqrt(Epsilon_ii(iw,2)) ) /DEG2RAD)
+       output_data(4)=-aimag(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
+       output_data(5)=-real(Epsilon_ij(iw,3)/( (Epsilon_ii(iw,3)-1.0_SP)*sqrt(Epsilon_ii(iw,3)) ) /DEG2RAD)
+       !
+       if( (real(Epsilon_ii(iw,2))==1._SP .or. real(Epsilon_ii(iw,2))==0._SP ) &
+  &         .and. aimag(Epsilon_ii(iw,2))==0._SP ) then
+         output_data(2)=0._SP
+         output_data(3)=0._SP
+       endif
+       if( (real(Epsilon_ii(iw,3))==1._SP .or. real(Epsilon_ii(iw,3))==0._SP ) &
+  &         .and. aimag(Epsilon_ii(iw,3))==0._SP ) then
+         output_data(4)=0._SP
+         output_data(5)=0._SP
+       endif
+       !
+       n_output_data=5
+       if (l_Haydock.or.l_Inversion) then
+         n_output_data=7
+         output_data(6)=-aimag(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
+         output_data(7)=-real(Epsilon_ij(iw,4)/( (Epsilon_ii(iw,4)-1.0_SP)*sqrt(Epsilon_ii(iw,4)) ) /DEG2RAD)
+       endif
+       if (l_IP) n_output_data=3
+       if (l_IP) output_data(2:3)=output_data(4:5)
+       call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
+     enddo
+     !
+   endif
    !
  endif
  !

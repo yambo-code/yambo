@@ -137,6 +137,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  if(eval_alpha) then
+   ! Alpha units
    call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o alpha','#')
  endif
@@ -158,6 +159,12 @@ subroutine K_output_file(iq,mode)
  if (l_IP) output_data(1)=output_data(2)
  call msg('o eps','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
  call msg('o eps','#')
+ !
+ if(l_kerr .and. eval_alpha) then
+   ! Alpha units
+   call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o beta','#')
+ endif
  !
 #endif
  !

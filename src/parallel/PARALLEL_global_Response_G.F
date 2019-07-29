@@ -23,20 +23,22 @@
 !
 subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
+ use drivers,       ONLY:l_life
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,nXkibz,nXkbz
  use linear_algebra,ONLY:INV
+ use com,           ONLY:error,warning
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_X,OPENMP_set_threads
  use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:ncpu,CPU_structure,PARALLEL_n_structures_active,COMM_copy,PAR_INDEX_copy,PAR_Q_range
+ use parallel_m,    ONLY:ncpu,CPU_structure,COMM_copy,PAR_Q_range
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved,PAR_build_index
  !
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Q_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_Xk_bz_A2A, &
-&                        PAR_COM_Xk_ibz_A2A,PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
+&                        PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_IND_Q
  ! INDEX
@@ -108,6 +110,13 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 &                             TOTAL=PAR_Q_range(2)-PAR_Q_range(1)+1,&
 &                             NCPU=PAR_COM_Q_INDEX%n_CPU)
    !
+   ! AM March 2019. Lifetimes calculations do not support the parallel Q distribution
+   !
+   if (l_life.and.PAR_COM_Q_INDEX%n_CPU>1) then
+     call warning("Parallel Q-distribution still not working for lifetime calculations")
+     call error("USER parallel structure does not fit the current run parameters")
+   endif
+   !
    YAMBO_ALLOC(PAR_Q_index,(PAR_Q_range(2)))
    call PAR_build_index(PAR_IND_Q,PAR_Q_range(2),PAR_Q_index,PAR_nQ)
    !
@@ -129,7 +138,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
    !
    ! Inversion
    !
-   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(1)%nCPU_lin_algebra_INV)
+   call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(3)%nCPU_lin_algebra_INV)
    !
    call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                             NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)

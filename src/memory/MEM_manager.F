@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,34 +21,229 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine MEM_manager(what,Sz,Kn,REPORT)
+subroutine MEM_manager_alloc(what,Sz,Kn)
  !
- use pars,         ONLY:lchlen,schlen,IP,DP
- use drivers,      ONLY:infile_editing
- use com,          ONLY:msg,warning,secnm,error,repfile
+ use pars,         ONLY:schlen,DP
+ use com,          ONLY:warning,secnm,error
+ use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
- use units,        ONLY:Kilobyte,Megabyte
- use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,MEM_element_copy,&
-&                       MEM_err,MEM_treshold,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
-&                       N_MEM_SAVE_elements,MEM_shelf,N_MEM_SAVE_max,MEM_LIBs,mem_string,&
-&                       MEM_SAVE_treshold,MAX_MEM_Kb,TOT_MEM_Kb_SAVE,MEMs,&
-&                       N_MEM_max_element_components,MEM_jump_treshold
- use LIVE_t,       ONLY:what_is_running
+ use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
+&                       MEM_err,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
+&                       N_MEM_SAVE_elements,N_MEM_SAVE_max,MEM_LIBs,&
+&                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,&
+&                       N_MEM_max_element_components
  !
  implicit none
  !
- character(*)         :: what
- integer,optional     :: Sz
- integer,optional     :: Kn
- character(*),optional:: REPORT
+ character(*), intent(in) :: what
+ integer(8),   intent(in) :: Sz
+ integer,      intent(in) :: Kn
  ! 
+ ! Defined in the init
+ !
+ logical           :: just_started
+ integer           :: i_SAVE,i_COMPONENT,i_SHELF
+ character(schlen) :: SHELF,TRUNK
+ !
+ ! Work
+ !
+ real(DP):: LARGE_wk
+ integer :: i_mem,i_el,MEM_now_Kb
+ !
+ if (.not.master_thread) return
+ !
+#if defined _MEM_CHECK
+ !
+ call MEM_manager_init(what,.true.,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
+ !
+ ! Error Message of an already allocated array and/or other errors
+ !=================================================================
+ if (MEM_err/=0) then
+   if (i_SHELF> 0) call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
+   if (i_SHELF<=0) call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
+   return
+ endif
+ if (Sz==0) then
+   call warning("Allocation attempt of "//what//" of zero size.")
+   return
+ endif
+ if (Sz<0) call error("Allocation attempt of "//what//" of negative size.")
+ !
+ ! Database Update
+ !=================
+ !
+ ! ALLOCATION => ADDITION
+ !.......................
+ !
+ LARGE_wk=real(Sz,DP)*real(Kn,DP)/Kilobyte
+ MEM_now_Kb=int(LARGE_wk)
+ !
+ if (MEM_now_Kb==0) MEM_now_Kb=1
+ !
+ TOT_MEM_Kb=TOT_MEM_Kb+MEM_now_Kb
+ !
+ if (TOT_MEM_Kb>MAX_MEM_Kb) MAX_MEM_Kb=TOT_MEM_Kb
+ !
+ if (i_SHELF==0) then
+   if (N_MEM_elements<N_MEM_SAVE_max) then
+     N_MEM_elements=N_MEM_elements+1
+   else
+     call error("Max Number of MEM elements reached.")
+   endif
+   MEMs(N_MEM_elements)%shelf=SHELF
+   MEMs(N_MEM_elements)%use =MEM_now_Kb
+   i_SHELF=N_MEM_elements
+ else
+   MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_Kb
+ endif
+ !
+ if (i_COMPONENT==0) then
+   MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
+   i_COMPONENT=MEMs(i_SHELF)%N
+   if (i_COMPONENT>N_MEM_max_element_components) then
+     call error("Max Number of MEM elements COMPONENTS reached.")
+   endif
+   MEMs(i_SHELF)%desc(i_COMPONENT)=trim(secnm)
+   MEMs(i_SHELF)%name(i_COMPONENT)=what
+   MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
+   MEMs(i_SHELF)%composed(i_COMPONENT)=.FALSE.
+ else
+   MEMs(i_SHELF)%composed(i_COMPONENT)=.TRUE.
+ endif
+ MEMs(i_SHELF)%size(i_COMPONENT)=MEMs(i_SHELF)%size(i_COMPONENT)+Sz
+ !
+ if (MEMs(i_SHELF)%use>MEM_SAVE_treshold.and..not.just_started) then
+   if (i_SAVE==0) then
+     if (N_MEM_SAVE_elements<N_MEM_SAVE_max) then
+       N_MEM_SAVE_elements=N_MEM_SAVE_elements+1
+     else
+       call error("Max Number of LARGE MEM elements reached.")
+     endif
+     call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(N_MEM_SAVE_elements))
+   else
+     call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(i_SAVE))
+   endif
+ endif
+ !
+ if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb)
+ !
+#endif
+ !
+end subroutine MEM_manager_alloc
+!
+!
+subroutine MEM_manager_free(what,Sz)
+ !
+ use pars,         ONLY:schlen,DP
+ use units,        ONLY:Kilobyte
+ use com,          ONLY:warning
+ use openmp,       ONLY:master_thread
+ use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
+ !
+ implicit none
+ !
+ character(*), intent(in) :: what
+ integer(8),   intent(in) :: Sz
+ ! 
+ ! Defined in the init
+ !
+ logical           :: just_started
+ integer           :: i_SAVE,i_COMPONENT,i_SHELF
+ character(schlen) :: SHELF,TRUNK
+ !
+ ! Work space
+ !
+ logical :: verbose=.false.
+ real(DP):: LARGE_wk
+ integer :: i_mem,i_el,MEM_now_Kb
+ !
+ if (.not.master_thread) return
+ !
+#if defined _MEM_CHECK
+ !
+ if(Sz==-1 .and. verbose) then
+   call warning("De-allocation attempt of "//what//" which was not allocated.")
+   return
+ endif
+ !
+ call MEM_manager_init(what,.false.,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
+ !
+ if (.not. (i_SHELF/=0.and.i_COMPONENT/=0) ) return
+ !
+ LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
+ MEM_now_Kb=int(LARGE_wk)
+ TOT_MEM_Kb=TOT_MEM_Kb-MEM_now_Kb
+ !
+ if (MEM_now_Kb==0) MEM_now_Kb=1
+ !
+ MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_Kb
+ MEMs(i_SHELF)%size(i_COMPONENT) = MEMs(i_SHELF)%size(i_COMPONENT)-Sz
+ !
+ if ( MEMs(i_SHELF)%use <= 0 ) then
+   !
+   do i_mem=i_SHELF,N_MEM_elements
+     call MEM_element_copy(MEMs(i_mem+1),MEMs(i_mem))
+   enddo    
+   !
+   N_MEM_elements=N_MEM_elements-1
+   !
+ else if (MEMs(i_SHELF)%size(i_COMPONENT) <= 0) then
+   !
+   do i_el=i_COMPONENT,MEMs(i_SHELF)%N-1
+     MEMs(i_SHELF)%name(i_el)=MEMs(i_SHELF)%name(i_el+1)
+     MEMs(i_SHELF)%desc(i_el)=MEMs(i_SHELF)%desc(i_el+1)
+     MEMs(i_SHELF)%kind(i_el)=MEMs(i_SHELF)%kind(i_el+1)
+     MEMs(i_SHELF)%size(i_el)=MEMs(i_SHELF)%size(i_el+1)
+   enddo    
+   !
+   MEMs(i_SHELF)%N=MEMs(i_SHELF)%N-1
+   !
+ endif
+ !
+ if(.not.just_started) call MEM_manager_messages(what,.false.,MEM_now_Kb)
+ !
+#endif
+ !
+end subroutine MEM_manager_free
+!
+!
+subroutine MEM_manager_error(what)
+ !
+ use com,          ONLY:error
+ use memory,       ONLY:MEM_err
+ !
+ implicit none
+ !
+ character(*), intent(in) :: what
+ !
+ ! Error Message
+ !===============
+ if (MEM_err/=0) call error("Allocation of "//trim(what)//" failed")
+ !
+end subroutine MEM_manager_error
+!
+!
+subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUNK,just_started)
+ !
+ use pars,         ONLY:schlen
+ use drivers,      ONLY:infile_editing
+ use com,          ONLY:repfile,secnm
+ use LIVE_t,       ONLY:what_is_running
+ use memory,       ONLY:MEM_treshold,MEM_shelf,MEM_jump_treshold,MEM_libs,MEMs,&
+&                       MEM_SAVE_treshold
+ !
+ implicit none
+ !
+ character(*),     intent(in)  :: what
+ logical,          intent(in)  :: adding
+ integer(8),       intent(in)  :: Sz
+ integer,          intent(out) :: i_SHELF,i_COMPONENT,i_SAVE
+ character(schlen),intent(out) :: SHELF,TRUNK
+ logical,          intent(out) :: just_started
+ !
  ! Work Space
  !
- logical :: adding,deliver_a_msg,just_started
- real(DP):: LARGE_wk
- integer :: i_mem,i_el,MEM_now_Kb,i_SAVE,i_COMPONENT,i_LIB,i_SHELF
- character(lchlen) :: msg_
- character(schlen) :: SHELF,TRUNK
+ integer :: i_LIB
  integer, external :: MEM_LIB_finder,MEM_shelf_finder,MEM_save_finder,MEM_component_finder
  !
  ! Setup
@@ -56,39 +251,19 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  MEM_SAVE_treshold=10 *MEM_treshold
  MEM_jump_treshold=100*MEM_treshold
  !
- ! Error Message
- !===============
- if (.not.present(REPORT).and.MEM_err/=0.and..not.present(Sz)) call error("Allocation of "//what//" failed")
- !
- if (.not.present(Sz).and..not.present(Kn).and..not.present(REPORT)) return
- if (.not.master_thread) return
- !
 #if defined _MEM_CHECK
  !
  just_started=infile_editing
  if (index(what_is_running,"YPP")==0.and.len_trim(repfile)==0) just_started=.TRUE.
- !
- ! REPORTs 
- !=========
- if (present(REPORT)) then
-   !
-   call MEM_report( REPORT )
-   !
-   return
-   !
- endif
- !
- adding  = present(Kn)
  !
  ! Search the element
  !====================
  !
  !...in the library (here I associate to what a SHELF)
  TRUNK=what
- if (index(what,"%")>0) then
-   TRUNK=what(index(what,"%"):len(what))
- endif
+ if (index(what,"%")>0) TRUNK=what(index(what,"%"):len(what))
  i_LIB=MEM_LIB_finder(trim(TRUNK))
+ !
  if (i_LIB>0) then
    SHELF=MEM_shelf(MEM_LIBs(i_LIB)%shelf)
  else if (index(what,"%")>0) then
@@ -105,129 +280,30 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  endif
  i_SAVE =MEM_save_finder(trim(SHELF))
  !
- ! Error Message of an already allocated array and/or other errors
- !=================================================================
- if (adding) then
-   if (MEM_err/=0) then
-     if (i_SHELF>0) then
-       call warning("Allocation of "//what//" failed. Object was already allocated in "//trim(MEMs(i_SHELF)%shelf))
-     else
-       call warning("Allocation of "//what//" failed. Object was already allocated, tough, not present in the archive.")
-     endif
-     return
-   endif
-   if (Sz==0) then
-     call warning("Allocation attempt of "//what//" of zero size.")
-     return
-   endif
-   if (Sz<0) then
-     call error("Allocation attempt of "//what//" of negative size.")
-   endif
- endif
+#endif
  !
- ! Database Update
- !=================
+end subroutine MEM_manager_init
+!
+!
+subroutine MEM_manager_messages(what,adding,MEM_now_Kb)
  !
- ! ALLOCATION => ADDITION
- !.......................
- if (adding) then
-   !
-   LARGE_wk=real(Sz,DP)*real(Kn,DP)/Kilobyte
-   MEM_now_Kb=int(LARGE_wk)
-   !
-   if (MEM_now_Kb==0) MEM_now_Kb=1
-   !
-   TOT_MEM_Kb=TOT_MEM_Kb+MEM_now_Kb
-   !
-   if (TOT_MEM_Kb>MAX_MEM_Kb) MAX_MEM_Kb=TOT_MEM_Kb
-   !
-   if (i_SHELF==0) then
-     if (N_MEM_elements<N_MEM_SAVE_max) then
-       N_MEM_elements=N_MEM_elements+1
-     else
-       call error("Max Number of MEM elements reached.")
-     endif
-     MEMs(N_MEM_elements)%shelf=SHELF
-     MEMs(N_MEM_elements)%use =MEM_now_Kb
-     i_SHELF=N_MEM_elements
-   else
-     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use+MEM_now_Kb
-   endif
-   !
-   if (i_COMPONENT==0) then
-     MEMs(i_SHELF)%N=MEMs(i_SHELF)%N+1
-     i_COMPONENT=MEMs(i_SHELF)%N
-     if (i_COMPONENT>N_MEM_max_element_components) then
-       call error("Max Number of MEM elements COMPONENTS reached.")
-     endif
-     MEMs(i_SHELF)%desc(i_COMPONENT)=trim(secnm)
-     MEMs(i_SHELF)%name(i_COMPONENT)=what
-     MEMs(i_SHELF)%kind(i_COMPONENT)=Kn
-     MEMs(i_SHELF)%composed(i_COMPONENT)=.FALSE.
-   else
-     MEMs(i_SHELF)%composed(i_COMPONENT)=.TRUE.
-   endif
-   MEMs(i_SHELF)%size(i_COMPONENT)=MEMs(i_SHELF)%size(i_COMPONENT)+Sz
-   !
-   if (MEMs(i_SHELF)%use>MEM_SAVE_treshold.and..not.just_started) then
-     if (i_SAVE==0) then
-       if (N_MEM_SAVE_elements<N_MEM_SAVE_max) then
-         N_MEM_SAVE_elements=N_MEM_SAVE_elements+1
-       else
-         call error("Max Number of LARGE MEM elements reached.")
-       endif
-       call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(N_MEM_SAVE_elements))
-     else
-       call MEM_element_copy(MEMs(i_SHELF),LARGE_MEMs(i_SAVE))
-     endif
-   endif
-   !
- endif
+ use pars,         ONLY:lchlen
+ use com,          ONLY:msg
+ use memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
+&                       MEM_jump_treshold,mem_string
  !
- ! DEALLOCATION => REMOVAL
- !.........................
+ implicit none
  !
- if (.not.adding) then
-   !
-   if (i_SHELF/=0.and.i_COMPONENT/=0) then
-     !
-     LARGE_wk=real(Sz,DP)*real(MEMs(i_SHELF)%kind(i_COMPONENT),DP)/Kilobyte
-     MEM_now_Kb=int(LARGE_wk)
-     TOT_MEM_Kb=TOT_MEM_Kb-MEM_now_Kb
-     !
-     if (MEM_now_Kb==0) MEM_now_Kb=1
-     !
-     MEMs(i_SHELF)%use = MEMs(i_SHELF)%use-MEM_now_Kb
-     MEMs(i_SHELF)%size(i_COMPONENT) = MEMs(i_SHELF)%size(i_COMPONENT)-Sz
-     !
-     if ( MEMs(i_SHELF)%use <= 0 ) then
-       !
-       do i_mem=i_SHELF,N_MEM_elements
-         call MEM_element_copy(MEMs(i_mem+1),MEMs(i_mem))
-       enddo    
-       !
-       N_MEM_elements=N_MEM_elements-1
-       !
-     else if (MEMs(i_SHELF)%size(i_COMPONENT) <= 0) then
-       !
-       do i_el=i_COMPONENT,MEMs(i_SHELF)%N-1
-         MEMs(i_SHELF)%name(i_el)=MEMs(i_SHELF)%name(i_el+1)
-         MEMs(i_SHELF)%desc(i_el)=MEMs(i_SHELF)%desc(i_el+1)
-         MEMs(i_SHELF)%kind(i_el)=MEMs(i_SHELF)%kind(i_el+1)
-         MEMs(i_SHELF)%size(i_el)=MEMs(i_SHELF)%size(i_el+1)
-       enddo    
-       !
-       MEMs(i_SHELF)%N=MEMs(i_SHELF)%N-1
-       !
-     endif
-     !
-   else
-     return
-   endif
-   !
- endif
+ character(*), intent(in) :: what
+ logical,      intent(in) :: adding
+ integer,      intent(in) :: MEM_now_Kb
  !
- if (just_started) return
+ ! Work space
+ !
+ logical           :: deliver_a_msg
+ character(lchlen) :: msg_
+ !
+#if defined _MEM_CHECK
  !
  ! Messages
  !==========
@@ -260,4 +336,4 @@ subroutine MEM_manager(what,Sz,Kn,REPORT)
  !
 #endif
  !
-end subroutine
+end subroutine MEM_manager_messages

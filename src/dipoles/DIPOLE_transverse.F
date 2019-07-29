@@ -25,7 +25,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
  !
  ! This routine returns <iR> and <P^2>.
  !
- use pars,                ONLY:SP,schlen,cZERO,cI
+ use pars,                ONLY:SP,schlen,cZERO
  use drivers,             ONLY:l_sc_run,l_nl_optics
 #if defined _PL
  use drivers,             ONLY:l_photolum
@@ -62,7 +62,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip,l_real_time_magn_dipoles)
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
- real(SP)                     :: Ev_m_Ec,Dipole_energy_treshold
+ real(SP)                     :: Ev_m_Ec,Dipole_Energy_treshold
  !
  !I/O and external functions
  !

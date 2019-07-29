@@ -40,8 +40,7 @@ subroutine p2y_atmproj(filename,k)
  !
  ! Work space
  !
- integer  :: nbnd,nkpts,nspin,ik,i_sp_pol
- integer  :: natomwfc(nsp)!,itypl(nwfcx,nsp)
+ integer  :: nkpts,nspin,ik,i_sp_pol
  !
  ! I/O
  !

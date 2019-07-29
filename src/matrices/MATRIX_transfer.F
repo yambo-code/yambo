@@ -89,7 +89,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  if (present(COMM_name)) then 
    if (l_par_X_G_finite_q) PAR_to_PAR_comm_NAME="X_G_finite_q_"//trim(COMM_name)
-   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_all_q_"//trim(COMM_name)
+   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_"//trim(COMM_name)
  else
    PAR_to_PAR_comm_NAME="NONE"
  endif

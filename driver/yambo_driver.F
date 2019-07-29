@@ -49,9 +49,6 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
-#if defined _MEM_CHECK 
- use memory,        ONLY:MEM_manager
-#endif
  !
  implicit none
  !
@@ -184,7 +181,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
  !
- driver_now=l_em1s.or.l_em1d.or.l_ppa
+ driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa
  !
  if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (driver_now) call mem_manager_report
@@ -230,7 +227,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
  !
  driver_now=l_acfdt
  !
- if (driver_now) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1))
+ if (driver_now) call acfdt_tot_energy(Xen,Xk,En,k,q,X(1),Dip)
  if (driver_now) call mem_manager_report
  !
 #if defined _SC
@@ -310,7 +307,7 @@ integer function yambo_driver(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,o
   !
   subroutine mem_manager_report
 #if defined _MEM_CHECK 
-    call MEM_manager("",REPORT="check")
+    call MEM_report("check")
 #endif
   end subroutine mem_manager_report
   !

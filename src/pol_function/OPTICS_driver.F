@@ -313,9 +313,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      if(l_col_cut) then
        alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-       Alpha(:,1)=(Epsilon_ii(:,2)-1._SP)*alpha_factor
+       Alpha(:,1)=(Epsilon_ii(:,1)-1._SP)*alpha_factor
        if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=(Epsilon_ii(:,3)-1._SP)*alpha_factor
+       if(.not.l_rpa_IP) Alpha(:,2)=(Epsilon_ii(:,2)-1._SP)*alpha_factor
      else
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor

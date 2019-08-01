@@ -331,6 +331,8 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ ! GPL_EXCLUDE_START
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
@@ -345,6 +347,8 @@ subroutine RT_initialize(E,k,q)
  endif
  !
 #endif
+ !
+ ! GPL_EXCLUDE_END
  !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP")   .and.     &
 &                 (.not.eval_energy) .and. (.not.l_velocity_gauge_corr)  .and.     &
